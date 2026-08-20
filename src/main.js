@@ -1356,8 +1356,13 @@ function drawCursor() {
   ctx.fillStyle = '#000';
 }
 
+// a wide radius opens the board on approach...
 const nearBench = (x, y) => x > bench.x - P * 8 && x < bench.x + bench.w + P * 8 &&
                             y > bench.y - P * 8 && y < bench.y + bench.h + P * 4;
+
+// ...but only the bench itself takes a click, so dust around it can still be swept
+const onBench = (x, y) => x > bench.x - P && x < bench.x + bench.w + P &&
+                          y > bench.y - P * 2 && y < bench.y + bench.h;
 
 function placeBoard() {
   boardEl.style.left = `${bench.x - camX}px`;
@@ -1411,9 +1416,9 @@ canvas.addEventListener('pointerdown', e => {
   const p = pos(e);
   mouse = p;
   if (!boulderAlive() && chips.length === 0) { makeBoulder(); dirty = true; return; }
-  if (nearBench(p.x, p.y)) {
+  if (onBench(p.x, p.y)) {
     boardPinned = !boardPinned;
-    showBoard(boardPinned || nearBench(p.x, p.y));
+    showBoard(true);
     return;
   }
   if (boulderAlive() && overBoulder(p.x, p.y)) {
