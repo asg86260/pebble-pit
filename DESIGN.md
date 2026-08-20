@@ -163,7 +163,9 @@ accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 
 ## The goal
 
-One million dust in the hole. The counter reads `n / 1,000,000`.
+One million dust in the hole. The count is painted in the world, standing over the pit mouth,
+and it runs to each new value on an out-cubic ease — longer for a bigger jump, so a purchase
+reads as a withdrawal rather than a number blinking.
 
 One number, and it is both: what is in the hole is the score *and* the money. Buying something
 lifts that dust back out of the pile, so every upgrade is a choice between arriving sooner and

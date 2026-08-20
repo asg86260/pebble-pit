@@ -6,13 +6,6 @@ html, body {
   -webkit-user-select: none; user-select: none;
 }
 canvas { display: block; cursor: crosshair; touch-action: manipulation; }
-#hud {
-  position: fixed; top: 12px; left: 12px; right: 12px;
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: 18px; white-space: nowrap;
-  letter-spacing: .12em; text-transform: uppercase;
-  pointer-events: none;
-}
 /* the board that opens at the workbench */
 #board {
   position: fixed;

@@ -3,10 +3,7 @@ import { load, save, clear } from './save.js';
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const storedEl = document.getElementById('stored');
 const shopEl = document.getElementById('shop');
-const coresEl = document.getElementById('cores');
-const coreBoxEl = document.getElementById('corebox');
 const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
@@ -80,6 +77,7 @@ let coreTaker = null;     // the hauler that has claimed a loose core
 const bench = { x: 0, y: 0, w: 0, h: 0 };
 let boardOpen = false;    // the workbench board is showing
 let shownStored = 0;      // the counter chases the real number
+let tweenFrom = 0, tweenTo = 0, tweenAt = 0, tweenMs = 300;
 let dirty = false;
 
 // two sand grids: the ground the dust lands on, and the pit dug into it
@@ -774,7 +772,7 @@ function restore() {
   if (!s || !gridFromString(s.boulder, s.grid) || typeof s.stored !== 'number') {
     makeBoulder();
     stored = 0;
-    shownStored = 0;
+    shownStored = tweenFrom = tweenTo = 0;
     carryLevel = 0;
     speedLevel = 0;
     autoMine = false;
@@ -798,7 +796,7 @@ function restore() {
     return;
   }
   stored = s.stored;
-  shownStored = stored;
+  shownStored = tweenFrom = tweenTo = stored;
   carryLevel = s.carryLevel || 0;
   speedLevel = s.speedLevel || 0;
   autoMine = !!s.autoMine;
@@ -833,7 +831,7 @@ function reset() {
   clear();
   chips = [];
   stored = 0;
-  shownStored = 0;
+  shownStored = tweenFrom = tweenTo = 0;
   held = 0;
   carryLevel = 0;
   speedLevel = 0;
@@ -1111,6 +1109,24 @@ function drawAir() {
   ctx.fillStyle = '#000';
 }
 
+function drawCount() {
+  const text = fmt(Math.round(shownStored));
+  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#000';
+
+  // over the pit mouth, but kept on screen as you scroll along it
+  const x = Math.max(camX + P * 3, Math.min(pit.x + P * 4, camX + W - P * 30));
+  const y = groundY - P * 3;
+  ctx.fillText(text, x, y);
+
+  if (seenCore) {
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fillText(`${cores} core${cores === 1 ? '' : 's'}`, x, y - P * 3);
+  }
+  ctx.fillStyle = '#000';
+}
+
 function drawBench() {
   ctx.fillStyle = '#000';
   ctx.fillRect(bench.x, bench.y, bench.w, P * 2);                       // top slab
@@ -1326,6 +1342,7 @@ function draw() {
   ctx.stroke();
 
   drawBench();
+  drawCount();
   drawCore();
   drawWorkers();
   drawCursor();
@@ -1392,13 +1409,22 @@ function showBoard(open) {
 
 const fmt = n => n.toLocaleString('en-US');
 
+// the count runs to its new value and eases in at the end, taking longer for a
+// bigger jump so a purchase reads as a real withdrawal
+function tweenCount(now) {
+  if (stored !== tweenTo) {
+    tweenFrom = shownStored;
+    tweenTo = stored;
+    tweenAt = now;
+    tweenMs = Math.max(220, Math.min(900, 180 + Math.abs(tweenTo - tweenFrom) * 1.6));
+  }
+  const t = Math.max(0, Math.min(1, (now - tweenAt) / tweenMs));
+  const ease = 1 - Math.pow(1 - t, 3);                  // out-cubic
+  shownStored = tweenFrom + (tweenTo - tweenFrom) * ease;
+}
+
 function hud() {
-  const gap = stored - shownStored;
-  if (Math.abs(gap) < 1) shownStored = stored;
-  else shownStored += gap * 0.14 + Math.sign(gap);      // never crawls the last few
-  storedEl.textContent = fmt(Math.round(shownStored));
-  coresEl.textContent = cores;
-  coreBoxEl.style.visibility = seenCore ? 'visible' : 'hidden';
+  tweenCount(performance.now());
   if (!boardOpen) return;
 
   for (const el of shopEl.children) {
@@ -1523,7 +1549,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 restore();
