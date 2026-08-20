@@ -304,9 +304,21 @@ function boulderAlive() {
 }
 
 // the boulder's whole footprint, so clicking a chipped-out gap still chips
+// on the rock if there is rock close by: chipped-out gaps still count, but the
+// empty air below it does not, so falling dust can be caught there
 function overBoulder(mx, my) {
   const half = (grid / 2) * P;
-  return mx > cx - half && mx < cx + half && my > cy - half && my < cy + half;
+  if (mx < cx - half || mx > cx + half || my < cy - half || my > cy + half) return false;
+
+  const gx = Math.floor((mx - cx) / P + grid / 2);
+  const gy = Math.floor((my - cy) / P + grid / 2);
+  const near = 4;
+  for (let dy = -near; dy <= near; dy++) {
+    for (let dx = -near; dx <= near; dx++) {
+      if (boulder[gy + dy]?.[gx + dx]) return true;
+    }
+  }
+  return false;
 }
 
 // the cell under the cursor, or the nearest filled one if that spot is already hollow
@@ -327,6 +339,9 @@ function pickCell(mx, my) {
   return best;
 }
 
+// roughly normal, in about -1.5..1.5, most of it near nothing
+const bell = () => Math.random() + Math.random() + Math.random() - 1.5;
+
 function spawnChip(x, y, vx, vy, shade = 1) {
   chips.push({ x, y, vx, vy, s: shade });
 }
@@ -344,8 +359,9 @@ function knockOff(mx, my) {
       const shade = depthShade(left, depthOf());     // how deep it looked, for colour
       boulder[y][x] = left - 1;
       const { px, py } = cellPos(x, y);
-      const away = Math.sign(px - cx) || (Math.random() < 0.5 ? -1 : 1);
-      spawnChip(px, py, away * (0.6 + Math.random() * 2), -(2 + Math.random() * 3), shade);
+      // mostly straight down, with a little drift and a nudge away from the middle
+      spawnChip(px, py, bell() * 1.1 + (px - cx) / (grid * P) * 1.6,
+                -(1.6 + Math.random() * 2.6), shade);
     }
   }
   dirty = true;
@@ -645,7 +661,7 @@ function sweep(mx, my) {
   const lifted = [];
 
   // dust still in flight can be caught on the way down
-  const reach = (BRUSH + 1) * P;
+  const reach = (BRUSH + 2) * P;      // a forgiving window: dust falls quickly
   for (let i = chips.length - 1; i >= 0 && room > 0; i--) {
     const ch = chips[i];
     if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
@@ -962,9 +978,8 @@ function updateWorkers(now) {
       if (now >= w.next) {
         const left = boulder[w.spot.y][w.spot.x];
         boulder[w.spot.y][w.spot.x] = left - 1;
-        const away = Math.sign(px - cx) || 1;
-        spawnChip(px, py, away * (0.5 + Math.random()), -(1.5 + Math.random() * 2),
-                  depthShade(left, depthOf()));
+        spawnChip(px, py, bell() * 0.9 + (px - cx) / (grid * P) * 1.2,
+                  -(1.4 + Math.random() * 2), depthShade(left, depthOf()));
         w.next = now + drillMs() * (0.9 + Math.random() * 0.2);
         dirty = true;
       }
