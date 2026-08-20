@@ -1379,7 +1379,7 @@ function hud() {
   const gap = stored - shownStored;
   if (Math.abs(gap) < 1) shownStored = stored;
   else shownStored += gap * 0.14 + Math.sign(gap);      // never crawls the last few
-  storedEl.textContent = `${fmt(Math.round(shownStored))} / ${fmt(TARGET)}`;
+  storedEl.textContent = fmt(Math.round(shownStored));
   coresEl.textContent = cores;
   coreBoxEl.style.visibility = seenCore ? 'visible' : 'hidden';
   if (!boardOpen) return;
