@@ -180,17 +180,17 @@ what it pays — the counter is a plain count of pixels in the hole.
 
 ## Fitting the window
 
-Nothing about the place changes with the window. The pit is always 240 cells across and 46 deep,
-and the rock keeps its distance from the ground, the lip and the bench. The only things that grow
-with a bigger window are the sky above and the ground to either side; a window taller than the
-world rests its bottom on the pit floor and puts the rest into sky.
+Nothing about the place changes with the window. The pit floor sits on the bottom of the viewport
+and the ground line a fixed 288px above it, so the ground never moves. The pit is always 240 cells
+across and 46 deep, and the rock, the bench and the lip keep their distances. A bigger window is
+only more sky above and more ground either side; the ground runs a long way past both.
 
 Below a certain size the scene scales down instead of rearranging, so a small window shows the
 same place from further away. The zoom is quantised so a cell is always a whole number of screen
 pixels; fractional scaling leaves hairline seams between them.
 
-The pit runs off to the right whatever the window: wheel or arrow keys scroll along it,
-shift-wheel or up/down look along its depth when the window is too short to hold it.
+Scrolling is sideways only — wheel or arrow keys — because there is never anything above or below
+worth moving to.
 
 ## The pit
 

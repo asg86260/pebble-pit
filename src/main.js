@@ -9,15 +9,19 @@ const resetEl = document.getElementById('reset');
 
 const P = 6;              // pixel size
 const TARGET = 1000000;   // dust in the hole: the whole point
-// Distances between the things that matter are fixed; the ground simply runs
-// further left and right to fill whatever window it is given.
-const SKY = 246;          // rock centre, below the top of the world
+// The place is built once and never moves. The pit floor sits on the bottom of
+// the viewport, the ground line a fixed height above it, and the rock, the bench
+// and the lip keep their distances. A bigger window is only more sky and more
+// ground: the ground runs a long way either side of everything.
+const SKY = 2000;         // world above the ground line, so any window has sky
 const DROP = 354;         // rock centre to the ground line
 const TO_LEDGE = 258;     // rock centre to the lip of the pit
 const TO_BENCH = 474;     // rock centre back to the bench
+const GROUND_LEFT = 2400; // ground running away to the left of the bench
 const PIT_ROWS = 46;      // the pit is one fixed size, always
-const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
+const PIT_COLS = 240;
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
+const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 const BASE_R = 12;        // boulder radius in cells at boulder 1
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
@@ -188,22 +192,19 @@ function resize() {
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
 
-  // a small window shows the same scene, smaller: the shape of the place never
-  // changes, it only gets further away
-  const needH = SKY + DROP + PIT_ROWS * P + P * 4;
+  // only a window too small for the pit shrinks the picture, and then in whole
+  // pixels per cell: fractional scaling leaves hairline seams between them
+  const needH = DROP + PIT_ROWS * P + FLOOR_MARGIN + P * 12;
   const needW = TO_BENCH + TO_LEDGE + P * 20;
-  // quantised so a cell is always a whole number of screen pixels: fractional
-  // scaling leaves hairline seams between them
   const raw = Math.min(1, H / needH, W / needW);
   zoom = Math.max(2, Math.floor(P * raw)) / P;
   viewW = W / zoom;
   viewH = H / zoom;
 
-  // the rock sits near the middle of the view, and the bench and the lip keep
-  // their distance from it; the ground stretches to whatever is left over
-  cy = Math.round(SKY / P) * P;
-  groundY = cy + DROP;
-  cx = Math.round(Math.max(TO_BENCH + P * 4, viewW / 2) / P) * P;
+  // fixed places, laid out once and never moved
+  groundY = SKY;
+  cy = groundY - DROP;
+  cx = GROUND_LEFT + TO_BENCH;
 
   pit.x = cx + TO_LEDGE;
   pit.cols = PIT_COLS;
@@ -218,33 +219,26 @@ function resize() {
   bench.y = groundY - bench.h;
 
   worldW = pit.x + pit.w + PIT_PAD * P;
-  worldH = groundY + pit.h + P * 2;
-  clampCam();
-  if (groundY < camY + P * 8 || groundY > camY + viewH) focusGround();   // keep it in sight
-  seedAir();
+  worldH = groundY + pit.h + FLOOR_MARGIN;
 
   floor.x = 0;
   floor.cols = Math.ceil(worldW / P);
   floor.y = groundY - floor.rows * P;
 
+  // the pit floor rests on the bottom of the window; everything above it is sky
+  camY = worldH - viewH;
+  clampCam();
+  seedAir();
+
   resizeGrid(floor);
   resizeGrid(pit);
 }
 
-// put the ground where it reads best: about two thirds down the window
-function focusGround() {
-  const slackY = worldH - viewH;
-  camY = slackY <= 0 ? slackY : Math.max(0, Math.min(groundY - viewH * 0.68, slackY));
-}
-
 // the view can never leave the world; if the window is bigger, it sits still
+// only sideways: the pit floor is pinned to the bottom of the window
 function clampCam() {
   camX = Math.max(0, Math.min(camX, Math.max(0, worldW - viewW)));
-
-  // a window taller than the world rests its bottom on the pit floor, and the
-  // extra height becomes sky; a shorter one scrolls down the pit instead
-  const slackY = worldH - viewH;
-  camY = slackY <= 0 ? slackY : Math.max(0, Math.min(camY, slackY));
+  camY = worldH - viewH;
 }
 
 // keep the grain count across a resize, re-packed flat
@@ -1651,19 +1645,16 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
-function pan(dx, dy = 0) {
-  const wasX = camX, wasY = camY;
+function pan(dx) {
+  const was = camX;
   camX += dx;
-  camY += dy;
   clampCam();
-  if ((camX !== wasX || camY !== wasY) && boardOpen) placeBoard();
+  if (camX !== was && boardOpen) placeBoard();
 }
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  const step = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8;
-  if (e.shiftKey) pan(0, step);          // shift to look up and down the pit
-  else pan(step);
+  pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
 }, { passive: false });
 
 boardEl.addEventListener('pointerleave', () => showBoard(false));
@@ -1671,8 +1662,6 @@ addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
-  if (e.key === 'ArrowDown') pan(0, P * 8);
-  if (e.key === 'ArrowUp') pan(0, -P * 8);
 });
 addEventListener('resize', resize);
 addEventListener('load', resize);
@@ -1703,7 +1692,8 @@ window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x +
 window.__state = () => ({ zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
-focusGround();
+camX = cx - viewW / 2;                   // start looking at the rock
+clampCam();
 restore();
 syncWorkers();
 buildShop();
