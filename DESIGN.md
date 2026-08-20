@@ -68,10 +68,10 @@ Twelve cores, twelve spent. Buy order is the player's choice; everything lands b
 
 ## Catching
 
-The brush is in your hand whenever the button is down, including while swinging at the rock.
-Pixels in flight that pass near the cursor land on it instead of the floor, so you can strike the
-rock and ride the spray down, or press below it and swipe through the fall. The rock still takes a
-swing anywhere in its footprint — clicking its general area must stay easy.
+Swinging and catching are separate gestures. A press on the rock is a swing and nothing else — it
+never collects its own spray. To catch, press below the rock and swipe through the falling dust:
+pixels in flight that pass near the cursor land on it instead of the floor. The rock takes a swing
+anywhere in its footprint, so clicking its general area stays easy.
 
 ## The workbench
 

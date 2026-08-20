@@ -1253,7 +1253,7 @@ function stepCore() {
 function step() {
   updateWorkers(performance.now());
   stepCore();
-  if (mining || dragging) catchAir(mouse.x, mouse.y);   // hold and it catches
+  if (dragging) catchAir(mouse.x, mouse.y);   // swinging does not catch its own spray
 
   if (mining) {
     const now = performance.now();
@@ -1464,9 +1464,6 @@ canvas.addEventListener('pointerdown', e => {
     knockOff(p.x, p.y);
     mining = autoMine;                      // holding only mines once unlocked
     nextHit = performance.now() + MINE_DELAY;
-    dragging = true;                        // but the brush is always in hand
-    trail = [];
-    track(p.x, p.y);
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
