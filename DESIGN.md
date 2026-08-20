@@ -168,9 +168,13 @@ what it pays — the counter is a plain count of pixels in the hole.
 
 ## The pit
 
-The pit is a fixed size, 240 cells wide and 22 deep — about two windows across, so most of it
-sits off the right edge and you scroll (wheel or arrow keys) to see along it. Capacity is 5,280
-grains, and dust goes in one for one: what you mine off the rock is what fills it.
+The pit takes the bottom third of the screen and is 240 cells wide — about two windows across, so
+most of it sits off the right edge and you scroll (wheel or arrow keys) to see along it. That is
+around 12,000 grains, and dust goes in one for one: what you mine off the rock is what fills it.
+
+A million will not fit in it whatever we do — a million 6px cells is 36 million square pixels,
+roughly 250 windowfuls. So the pile settles when it is full and each grain starts counting for
+twice as much: about seven settles across a run.
 
 ## The pit never fills
 

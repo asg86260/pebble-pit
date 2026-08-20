@@ -83,7 +83,7 @@ let shownStored = 0;      // the counter chases the real number
 let dirty = false;
 
 // two sand grids: the ground the dust lands on, and the pit dug into it
-const floor = { x: 0, y: 0, cols: 0, rows: 20, grid: null };
+const floor = { x: 0, y: 0, cols: 0, rows: 14, grid: null };
 const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 22, grid: null };
 
 // --- sand grid helpers ------------------------------------------------------
@@ -160,10 +160,11 @@ function resize() {
   W = canvas.width = innerWidth;
   H = canvas.height = innerHeight;
   cx = Math.round(W / 2 / P) * P;
-  cy = Math.round(H * 0.36 / P) * P;
+  cy = Math.round(H * 0.28 / P) * P;
 
-  // ground line sits high enough that the whole shaft fits underneath it
-  const base = Math.floor((H - (pit.rows + 5) * P) / P) * P;
+  // the pit takes the bottom third of the screen
+  const base = Math.round(H * 0.66 / P) * P;
+  pit.rows = Math.max(8, Math.floor((H - base - P * 3) / P));
 
   pit.x = Math.round((W * 0.72) / P) * P;         // the ledge
   pit.cols = PIT_COLS;                            // fixed, and mostly off screen
@@ -242,7 +243,7 @@ function depthOf() {
 
 function boulderRadius() {
   const want = BASE_R + boulderNo;
-  const room = Math.floor(Math.min(W * 0.34, (groundY - 6 * P) * 0.44) / P);
+  const room = Math.floor(Math.min(W * 0.30, (groundY - floor.rows * P - P * 4) * 0.46) / P);
   return Math.max(6, Math.min(want, room));
 }
 
