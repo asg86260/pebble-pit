@@ -96,11 +96,11 @@ All of them stay plain black-and-white shapes.
 | chipper | square, hollow centre | takes a seat in a ring round the rock that turns as one, but sways and drifts in and out on its own timing, and leans in when it swings; a second ring forms outside when the first is full |
 | driller | square with a bite out of its side | parks on the thickest rock it can find and bores that one spot out, sheet by sheet, judder and all |
 
-**Haulers (move the dust)**
+**Workers (move the dust)**
 
 | Type | Shape | Behaviour |
 |---|---|---|
-| sweeper | outlined square | walks to the nearest dust, scoops, tips it over the ledge; carries its load stacked two abreast overhead, and drops everything to fetch a loose core first |
+| worker | outlined square | walks to the nearest dust, scoops, and tosses it off the lip into the pit; carries its load stacked two abreast overhead, and drops everything to fetch a loose core first |
 | barrow | outlined square towing a dot | slower walk, carries 4× a sweeper's load |
 
 **Structures (no legs, change the world)**

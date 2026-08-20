@@ -471,7 +471,7 @@ const UPGRADES = [
   },
   {
     key: 'unlockhaulers',
-    name: 'first hauler',
+    name: 'first worker',
     cost: () => 2,
     currency: 'core',
     buy: () => { haulersUnlocked = true; haulers++; syncWorkers(); },
@@ -479,7 +479,7 @@ const UPGRADES = [
   },
   {
     key: 'hauler',
-    name: 'haulers',
+    name: 'workers',
     from: () => haulers,
     to: () => haulers + 1,
     cost: () => Math.round(80 * Math.pow(1.7, Math.max(0, haulers - 1))),
@@ -488,7 +488,7 @@ const UPGRADES = [
   },
   {
     key: 'haulcarry',
-    name: 'hauler load',
+    name: 'worker load',
     from: () => haulCap(),
     to: () => haulCap(haulCarryLevel + 1),
     cost: () => Math.round(50 * Math.pow(1.5, haulCarryLevel)),
@@ -497,7 +497,7 @@ const UPGRADES = [
   },
   {
     key: 'haulpace',
-    name: 'hauler pace',
+    name: 'worker pace',
     unit: 'px/s',
     from: () => num(haulSpeed() * 60),
     to: () => num(haulSpeed(haulPaceLevel + 1) * 60),
@@ -611,7 +611,7 @@ function buy(u) {
 const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
-  { title: 'haulers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
+  { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
   { title: 'drillers', keys: ['unlockdrillers', 'driller', 'drillspeed'] }
 ];
 
@@ -922,7 +922,10 @@ function syncWorkers() {
   }
   const needHaulers = haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
-    workers.push({ type: 'hauler', x: Math.random() * pit.x * 0.8, carry: 0, next: 0, goal: 'seek' });
+    workers.push({
+      type: 'hauler', x: Math.random() * pit.x * 0.8, y: 0,
+      carry: 0, next: 0, goal: 'seek'
+    });
   }
 
   // number the miners off so they can be spaced evenly round the rock, and
@@ -1037,6 +1040,7 @@ function updateWorkers(now) {
     }
 
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
+    w.y = groundY - WORKER;
 
     if (w.goal === 'seek') {
       const c = nearestDust(w.x);
@@ -1055,17 +1059,19 @@ function updateWorkers(now) {
       }
       if (w.carry >= haulCap()) w.goal = 'dump';
     } else if (w.goal === 'dump') {
-      const target = pit.x + P;
+      const target = pit.x - WORKER;                 // the lip, where they can stand
       w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * 1.6, Math.abs(target - w.x));
-      if (Math.abs(target - w.x) < P * 1.5) {
+      if (Math.abs(target - w.x) < P) {
         if (w.hasCore) {
           coreItem = { x: pit.x + P * 2, y: groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
           w.hasCore = false;
           dirty = true;
         }
+        // a proper toss off the lip, so it arcs out over the edge
         for (let i = 0; i < w.carry; i++) {
-          spawnChip(pit.x + P + Math.random() * P * 3, groundY - P * 2,
-                    0.4 + Math.random(), -1 - Math.random(),
+          spawnChip(w.x + WORKER / 2, groundY - WORKER - P,
+                    2 + Math.random() * 1.4 + bell() * 0.3,
+                    -(2.4 + Math.random() * 1.6),
                     w.load?.[i] || 1);
         }
         w.carry = 0;
@@ -1173,25 +1179,25 @@ function drawAir() {
 }
 
 function drawCount() {
-  const text = fmt(Math.round(shownStored));
   ctx.font = '13px ui-monospace, "Courier New", monospace';
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#000';
 
   // over the pit mouth, but kept on screen as you scroll along it
   const x = Math.max(camX + P * 3, Math.min(pit.x + P * 4, camX + W - P * 30));
   const y = groundY - P * 3;
-  ctx.fillText(text, x, y);
 
-  // cores are shown as the thing itself, one circle each, no wording
-  if (seenCore) {
-    const r = 4, step = r * 2 + 4;
-    for (let i = 0; i < cores; i++) {
-      const row = Math.floor(i / 10);
-      drawCircle(x + r + (i % 10) * step, y - P * 3 - row * step, r);
-    }
-  }
+  // a grain of dust, then the count of it
   ctx.fillStyle = '#000';
+  ctx.fillRect(x, y - P, P, P);
+  ctx.fillText(fmt(Math.round(shownStored)), x + P * 2, y);
+
+  // a core, then the count of those
+  if (seenCore) {
+    const cy2 = y - P * 3;
+    drawCircle(x + P / 2, cy2 - P / 2, P / 2 + 1);
+    ctx.fillStyle = '#000';
+    ctx.fillText(String(cores), x + P * 2, cy2);
+  }
 }
 
 function drawBench() {
@@ -1498,7 +1504,7 @@ function hud() {
 
   for (const el of shopEl.children) {
     if (el.dataset.sect) {                       // heading, with the headcount
-      const crew = el.dataset.sect === 'haulers' ? haulers
+      const crew = el.dataset.sect === 'workers' ? haulers
                  : el.dataset.sect === 'miners' ? miners : 0;
       el.textContent = crew ? `${el.dataset.sect}  ×${crew}` : el.dataset.sect;
       continue;
