@@ -169,7 +169,9 @@ what it pays — the counter is a plain count of pixels in the hole.
 ## The pit
 
 The pit takes the bottom third of the screen and is 240 cells wide — about two windows across, so
-most of it sits off the right edge and you scroll (wheel or arrow keys) to see along it. That is
+most of it sits off the right edge and you scroll (wheel or arrow keys) to see along it. There is
+ground past its far wall, so scrolling to the end shows you the edge of the thing rather than
+running out of world. That is
 around 12,000 grains, and dust goes in one for one: what you mine off the rock is what fills it.
 
 A million will not fit in it whatever we do — a million 6px cells is 36 million square pixels,

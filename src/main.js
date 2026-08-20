@@ -13,6 +13,7 @@ const resetEl = document.getElementById('reset');
 const P = 6;              // pixel size
 const TARGET = 1000000;   // dust in the hole: the whole point
 const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
+const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 const BASE_R = 12;        // boulder radius in cells at boulder 1
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
@@ -97,9 +98,12 @@ const bottomY = b => b.y + b.rows * P;      // screen y of the grid floor
 const colOf = (b, x) => Math.floor((x - b.x) / P);
 const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 
-// the ground ends at the ledge; everything right of it is open pit
-const blocked = c => floor.x + c * P + P > pit.x;
-const overPitMouth = x => x + P > pit.x;
+// the ground is cut by the pit: open between the near ledge and the far wall
+const blocked = c => {
+  const x = floor.x + c * P;
+  return x + P > pit.x && x < pit.x + pit.w;
+};
+const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
 
 // screen y where a pixel falling down column c would come to rest
 function surfaceY(b, c) {
@@ -177,14 +181,14 @@ function resize() {
   bench.x = Math.round(W * 0.07 / P) * P;
   bench.y = base - bench.h;
 
-  floor.x = 0;
-  floor.cols = Math.floor(W / P);
-  floor.y = base - floor.rows * P;
-  groundY = base;
-
-  worldW = pit.x + pit.w;
+  worldW = pit.x + pit.w + PIT_PAD * P;      // before the floor: it spans the world
   camX = Math.max(0, Math.min(camX, worldW - W));
   seedAir();
+
+  floor.x = 0;
+  floor.cols = Math.ceil(worldW / P);
+  floor.y = base - floor.rows * P;
+  groundY = base;
 
   resizeGrid(floor);
   resizeGrid(pit);
@@ -893,11 +897,13 @@ function thickSpot() {
   return best;
 }
 
+// only dust on this side of the pit: nobody can walk across the trench
 function nearestDust(x) {
-  const from = Math.max(0, Math.min(floor.cols - 1, colOf(floor, x)));
-  for (let d = 0; d < floor.cols; d++) {
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const from = Math.max(0, Math.min(last, colOf(floor, x)));
+  for (let d = 0; d <= last; d++) {
     for (const c of [from - d, from + d]) {
-      if (c < 0 || c >= floor.cols || blocked(c)) continue;
+      if (c < 0 || c > last || blocked(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
@@ -981,6 +987,8 @@ function updateWorkers(now) {
       }
       continue;
     }
+
+    if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
 
     if (w.goal === 'seek') {
       const c = nearestDust(w.x);
@@ -1181,7 +1189,7 @@ function stepCore() {
   // past the ledge it drops down the shaft and banks when it hits the dust
   if (k.x + CORE_SIZE > pit.x && k.y + CORE_SIZE > groundY) {
     if (k.x < pit.x) { k.x = pit.x; k.vx = 0; }
-    if (k.x > worldW - CORE_SIZE) { k.x = worldW - CORE_SIZE; k.vx = 0; }
+    if (k.x > pit.x + pit.w - CORE_SIZE) { k.x = pit.x + pit.w - CORE_SIZE; k.vx = 0; }
     const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, k.x + CORE_SIZE / 2)));
     if (k.y + CORE_SIZE >= surfaceY(pit, pc) + P) {
       const where = k.x + CORE_SIZE / 2;
@@ -1228,7 +1236,7 @@ function step() {
     if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
     if (ch.x > worldW - P) {
       ch.x = worldW - P;
-      ch.vx = (overPitMouth(ch.x) && ch.y + P > groundY) ? 0 : -Math.abs(ch.vx) * 0.3;
+      ch.vx = -Math.abs(ch.vx) * 0.3;
     }
 
     // down the shaft: the pit collects whatever falls through its mouth
@@ -1296,7 +1304,8 @@ function draw() {
   ctx.moveTo(0, groundY + 1);
   ctx.lineTo(pit.x - 1, groundY + 1);
   ctx.lineTo(pit.x - 1, groundY + pit.h + 1);
-  ctx.lineTo(worldW, groundY + pit.h + 1);
+  ctx.lineTo(pit.x + pit.w + 1, groundY + pit.h + 1);
+  ctx.lineTo(pit.x + pit.w + 1, groundY + 1);
   ctx.lineTo(worldW, groundY + 1);
   ctx.stroke();
 
@@ -1503,7 +1512,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ drillers, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 restore();
