@@ -643,6 +643,17 @@ function sweep(mx, my) {
 
   let taken = 0;
   const lifted = [];
+
+  // dust still in flight can be caught on the way down
+  const reach = (BRUSH + 1) * P;
+  for (let i = chips.length - 1; i >= 0 && room > 0; i--) {
+    const ch = chips[i];
+    if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
+    lifted.push(ch.s);
+    chips.splice(i, 1);
+    taken++;
+    room--;
+  }
   const c0 = colOf(floor, mx);
   const r0 = Math.floor((bottomY(floor) - my) / P);
   for (let dr = -BRUSH; dr <= BRUSH && room > 0; dr++) {
@@ -670,15 +681,6 @@ function sweep(mx, my) {
     }
     dirty = true;
   }
-}
-
-// sweeping only starts down where the dust actually lies
-function inDustZone(x, y) {
-  return y > floor.y - P * 4 || overJar(x, y);
-}
-
-function overJar(x, y) {
-  return x > pit.x - P * 2 && x < pit.x + pit.w + P * 2 && y > pit.y - P * 6;
 }
 
 function release(x, y) {
@@ -1419,7 +1421,6 @@ canvas.addEventListener('pointerdown', e => {
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
-  if (!inDustZone(p.x, p.y)) return;              // only the ground can be swept
   dragging = true;
   trail = [];
   track(p.x, p.y);

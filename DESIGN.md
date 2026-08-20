@@ -66,6 +66,12 @@ Current build uses 1.7–1.9 on the worker ladders; that outruns income by bould
 
 Twelve cores, twelve spent. Buy order is the player's choice; everything lands by boulder 12.
 
+## Catching
+
+The brush works in the air as well as on the ground: drag through pixels still falling off the
+rock and they land on the cursor instead of the floor. A drag can start anywhere that is not the
+rock, so catching a burst as it comes off is a real alternative to sweeping it up afterwards.
+
 ## The workbench
 
 The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground at the
