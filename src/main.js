@@ -81,7 +81,7 @@ let tweenFrom = 0, tweenTo = 0, tweenAt = 0, tweenMs = 300;
 let dirty = false;
 
 // two sand grids: the ground the dust lands on, and the pit dug into it
-const floor = { x: 0, y: 0, cols: 0, rows: 14, grid: null };
+const floor = { x: 0, y: 0, cols: 0, rows: 24, grid: null };
 const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 22, grid: null };
 
 // --- sand grid helpers ------------------------------------------------------
@@ -146,6 +146,9 @@ function settle(b, skip) {
           break;
         }
         if (!inside(b, n, r - 1) || (skip && skip(n))) continue;
+        // on the ground a grain only slides where there is a real drop beside it,
+        // so heaps stand up instead of spreading themselves flat
+        if (b === floor && r >= 2 && at(b, n, r - 2)) continue;
         if (!at(b, n, r - 1) && !at(b, n, r)) {
           put(b, c, r, 0);
           put(b, n, r - 1, v);
@@ -244,7 +247,7 @@ function depthOf() {
 
 function boulderRadius() {
   const want = BASE_R + boulderNo;
-  const room = Math.floor(Math.min(W * 0.30, (groundY - floor.rows * P - P * 4) * 0.46) / P);
+  const room = Math.floor(Math.min(W * 0.30, (groundY - P * 20) * 0.46) / P);
   return Math.max(6, Math.min(want, room));
 }
 
