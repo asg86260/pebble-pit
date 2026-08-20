@@ -178,12 +178,18 @@ being further along right now.
 Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
 what it pays — the counter is a plain count of pixels in the hole.
 
-## A fixed world
+## Fitting the window
 
-The world is laid out once, in world pixels, and never scales to the window: the rock, the bench
-and the ledge keep the same distances apart whatever size the browser is. The window is a view
-onto it, and a small window scrolls — wheel or arrow keys across, shift-wheel or up/down keys
-along the depth. Opening the game puts the ground about two thirds down whatever window you have.
+Distances between the things that matter never change: rock to ground, rock to the lip of the pit,
+rock back to the bench. What changes is everything around them — the ground simply runs further
+left and right, and the pit runs deeper, to fill whatever window it is given.
+
+Below a certain size the scene scales down instead of rearranging, so a small window shows the
+same place from further away. The zoom is quantised so a cell is always a whole number of screen
+pixels; fractional scaling leaves hairline seams between them.
+
+The pit still runs off to the right whatever the window: wheel or arrow keys scroll along it,
+shift-wheel or up/down look along its depth.
 
 ## The pit
 
