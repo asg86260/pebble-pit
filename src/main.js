@@ -109,7 +109,7 @@ function surfaceY(b, c) {
   return bottomY(b) - P;
 }
 
-function addGrain(b, x, skip, shade = SHADES.length) {
+function addGrain(b, x, skip, shade = 1) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
   const full = c => at(b, c, b.rows - 1) || (skip && skip(c));
   if (full(col)) {
@@ -223,10 +223,11 @@ function takeCoreCells(n) {
 function fillFlat(b, n) {
   b.grid.fill(0);
   n = Math.min(n, b.cols * b.rows);
+  const shade = 4;                         // repacked dust, middling grey
   for (let r = 0; r < b.rows && n > 0; r++) {
     for (let c = 0; c < b.cols && n > 0; c++) {
       if (b === floor && blocked(c)) continue;
-      put(b, c, r, SHADES.length);
+      put(b, c, r, shade);
       n--;
     }
   }
@@ -322,7 +323,7 @@ function pickCell(mx, my) {
   return best;
 }
 
-function spawnChip(x, y, vx, vy, shade = SHADES.length) {
+function spawnChip(x, y, vx, vy, shade = 1) {
   chips.push({ x, y, vx, vy, s: shade });
 }
 
@@ -336,7 +337,7 @@ function knockOff(mx, my) {
       const x = c.x + dx, y = c.y + dy;
       const left = boulder[y]?.[x];
       if (!left) continue;
-      const shade = depthShade(left, depthOf());   // the sheet coming off the front
+      const shade = depthShade(left, depthOf());     // how deep it looked, for colour
       boulder[y][x] = left - 1;
       const { px, py } = cellPos(x, y);
       const away = Math.sign(px - cx) || (Math.random() < 0.5 ? -1 : 1);
@@ -500,9 +501,8 @@ const UPGRADES = [
 // it compacts, each remaining grain standing for twice as much, so it never fills up
 const PIT_FULL = 1;       // only settle when the pit is genuinely full
 
-function bankDust(x, shade = SHADES.length) {
-  const worth = Math.max(1, shade);        // deep rock pays more than surface
-  stored += worth;
+function bankDust(x, shade = 1) {
+  stored++;                                // every pixel is worth one
   dirty = true;
   pitFrac++;
   if (pitFrac < pitScale) return;
@@ -534,9 +534,9 @@ function compactPit() {
 // paying takes the dust back out of the pit, top layer first
 // what the pile is worth, so the picture and the number never drift apart
 function pileWorth() {
-  let w = 0;
-  for (const v of pit.grid) if (v && v !== CORE_CELL) w += v * pitScale;
-  return w;
+  let n = 0;
+  for (const v of pit.grid) if (v && v !== CORE_CELL) n++;
+  return n * pitScale;
 }
 
 // paying comes out of the hole: grains are lifted off the top until the pile is
@@ -549,7 +549,7 @@ function spend(cost) {
       const v = at(pit, c, r);
       if (!v || v === CORE_CELL) continue;
       put(pit, c, r, 0);
-      worth -= v * pitScale;
+      worth -= pitScale;
     }
   }
 }
@@ -689,7 +689,7 @@ function release(x, y) {
     spawnChip(x + (Math.random() - 0.5) * P * 6, y + (Math.random() - 0.5) * P * 6,
               vx + (Math.random() - 0.5) * 1.4,
               vy + (Math.random() - 0.5) * 1.4,
-              motes[i]?.s || SHADES.length);
+              motes[i]?.s || 1);
   }
   held = 0;
   motes = [];
@@ -1009,7 +1009,7 @@ function updateWorkers(now) {
         for (let i = 0; i < w.carry; i++) {
           spawnChip(pit.x + P + Math.random() * P * 3, groundY - P * 2,
                     0.4 + Math.random(), -1 - Math.random(),
-                    w.load?.[i] || SHADES.length);
+                    w.load?.[i] || 1);
         }
         w.carry = 0;
         w.load = [];
@@ -1117,7 +1117,7 @@ function drawWorkers() {
       // the load rides overhead, stacked two abreast
       const left = Math.round(w.x) + (WORKER - P * 2) / 2;
       for (let i = 0; i < Math.min(w.carry, 24); i++) {
-        ctx.fillStyle = shadeOf(w.load?.[i] || SHADES.length);
+        ctx.fillStyle = shadeOf(w.load?.[i] || 1);
         ctx.fillRect(left + (i % 2) * P, y - P * (Math.floor(i / 2) + 1), P, P);
       }
       ctx.fillStyle = '#000';
@@ -1500,7 +1500,7 @@ window.__preview = n => {
 };
 window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = []; };
 window.__drop = () => { dropCore(); dirty = true; };
-window.__give = n => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w); };
+window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
 window.__state = () => ({ drillers, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 

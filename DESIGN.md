@@ -163,9 +163,8 @@ One number, and it is both: what is in the hole is the score *and* the money. Bu
 lifts that dust back out of the pile, so every upgrade is a choice between arriving sooner and
 being further along right now.
 
-A pixel is worth what it was buried under: one from the thin rim pays 1, one from the middle of a
-six-deep boulder pays 6. Digging deep is the whole economy, which is what makes drillers worth
-hiring and layers worth having.
+Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
+what it pays — the counter is a plain count of pixels in the hole.
 
 ## The pit
 

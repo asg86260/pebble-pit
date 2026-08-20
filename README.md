@@ -9,7 +9,6 @@ Black-and-white pixel clicker. Vite + vanilla JS, canvas.
 - The shop is a **workbench** standing on the ground to the left. Move the cursor near it and its board opens; click the bench to pin the board open, Escape or walk away to close it. Rows are grouped by who the upgrade is for (you / haulers / miners), with core costs marked ◆.
 - Spend pit dust there on: carry capacity, unlocking hold-to-mine, your mining speed, hiring workers, and each worker's own speed and load.
 - The hole is both the goal (one million) and the money: buying an upgrade lifts dust back out of it. Spend to get there faster, or hoard and wait.
-- A pixel is worth its depth, so deep rock pays several times what the rim does.
 - Dust heaped against the ledge four cells deep topples into the pit by itself.
 - Workers are plain squares: **miners** (hollow centre) orbit the boulder and chip at it, **drillers** (a bite out of one side) park on the thickest rock and bore it out, **haulers** (outlined) walk the ground, scoop dust, and tip it over the ledge. Both start slow and carrying one pixel; their upgrades only appear once you own one.
 - Every boulder has a **core** (a white circle) buried at its centre, hidden by the rock until you dig down to it. Strip the rock down to nothing and the core comes loose. It falls and settles on whatever dust is under it, and a new boulder takes its place. Pick the core up by dragging over it and throw it in the pit to bank it — or leave it, and a hauler will fetch it for you — where it joins the pile and gets buried as more dust comes in.
