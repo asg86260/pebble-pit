@@ -11,6 +11,7 @@ const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
 const P = 6;              // pixel size
+const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 const BASE_R = 12;        // boulder radius in cells at boulder 1
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
@@ -33,6 +34,8 @@ const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 const HAUL_BASE = 0.9;    // hauler walking speed, px per frame
 
 let W, H, cx, cy, groundY = 0;
+let worldW = 0;           // the pit runs past the right of the window
+let camX = 0;             // how far the view has been scrolled along it
 let boulder = [];         // rows of ints: 0 empty, 1..n the layer a cell belongs to
 let grid = 46;            // current boulder grid width/height in cells
 let boulderNo = 1;        // how many boulders in; each one adds a layer
@@ -149,8 +152,8 @@ function resize() {
   const base = Math.floor((H - (pit.rows + 5) * P) / P) * P;
 
   pit.x = Math.round((W * 0.72) / P) * P;         // the ledge
-  pit.w = Math.ceil((W - pit.x) / P) * P;         // pit runs to the right edge
-  pit.cols = pit.w / P;
+  pit.cols = PIT_COLS;                            // fixed, and mostly off screen
+  pit.w = pit.cols * P;
   pit.h = pit.rows * P;
   pit.y = base;                                   // mouth is flush with the ground
 
@@ -163,6 +166,9 @@ function resize() {
   floor.cols = Math.floor(W / P);
   floor.y = base - floor.rows * P;
   groundY = base;
+
+  worldW = pit.x + pit.w;
+  camX = Math.max(0, Math.min(camX, worldW - W));
 
   resizeGrid(floor);
   resizeGrid(pit);
@@ -453,7 +459,7 @@ const UPGRADES = [
 
 // the pit pile is a picture of the total, not a one-to-one store: once it gets deep
 // it compacts, each remaining grain standing for twice as much, so it never fills up
-const PIT_FULL = 0.8;
+const PIT_FULL = 1;       // only settle when the pit is genuinely full
 
 function bankDust(x, shade = SHADES.length) {
   stored++;
@@ -461,8 +467,7 @@ function bankDust(x, shade = SHADES.length) {
   pitFrac++;
   if (pitFrac < pitScale) return;
   pitFrac -= pitScale;
-  if (!addGrain(pit, x, null, shade)) compactPit();
-  else if (count(pit) > pit.cols * pit.rows * PIT_FULL) compactPit();
+  if (!addGrain(pit, x, null, shade)) compactPit();   // full: squash and carry on
 }
 
 // squash every column, keeping the profile, and double what a grain is worth.
@@ -1029,7 +1034,7 @@ function stepCore() {
   // past the ledge it drops down the shaft and banks when it hits the dust
   if (k.x + CORE_SIZE > pit.x && k.y + CORE_SIZE > groundY) {
     if (k.x < pit.x) { k.x = pit.x; k.vx = 0; }
-    if (k.x > W - CORE_SIZE) { k.x = W - CORE_SIZE; k.vx = 0; }
+    if (k.x > worldW - CORE_SIZE) { k.x = worldW - CORE_SIZE; k.vx = 0; }
     const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, k.x + CORE_SIZE / 2)));
     if (k.y + CORE_SIZE >= surfaceY(pit, pc) + P) {
       const where = k.x + CORE_SIZE / 2;
@@ -1039,7 +1044,7 @@ function stepCore() {
     return;
   }
 
-  if (k.x > W - CORE_SIZE) { k.x = W - CORE_SIZE; k.vx = -Math.abs(k.vx) * 0.4; }
+  if (k.x > worldW - CORE_SIZE) { k.x = worldW - CORE_SIZE; k.vx = -Math.abs(k.vx) * 0.4; }
 
   // landing on the ground, or on whatever dust is piled there
   const floorY = supportY() - CORE_SIZE;
@@ -1074,8 +1079,8 @@ function step() {
     ch.y += ch.vy;
 
     if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
-    if (ch.x > W - P) {
-      ch.x = W - P;
+    if (ch.x > worldW - P) {
+      ch.x = worldW - P;
       ch.vx = (overPitMouth(ch.x) && ch.y + P > groundY) ? 0 : -Math.abs(ch.vx) * 0.3;
     }
 
@@ -1106,6 +1111,8 @@ function step() {
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
+  ctx.save();
+  ctx.translate(-camX, 0);
   drawCoreBehind();
   ctx.fillStyle = '#000';
 
@@ -1140,13 +1147,15 @@ function draw() {
   ctx.moveTo(0, groundY + 1);
   ctx.lineTo(pit.x - 1, groundY + 1);
   ctx.lineTo(pit.x - 1, groundY + pit.h + 1);
-  ctx.lineTo(W, groundY + pit.h + 1);
+  ctx.lineTo(worldW, groundY + pit.h + 1);
+  ctx.lineTo(worldW, groundY + 1);
   ctx.stroke();
 
   drawBench();
   drawCore();
   drawWorkers();
   drawCursor();
+  ctx.restore();
 
 }
 
@@ -1192,15 +1201,17 @@ function drawCursor() {
 const nearBench = (x, y) => x > bench.x - P * 8 && x < bench.x + bench.w + P * 8 &&
                             y > bench.y - P * 8 && y < bench.y + bench.h + P * 4;
 
+function placeBoard() {
+  boardEl.style.left = `${bench.x - camX}px`;
+  boardEl.style.top = 'auto';
+  boardEl.style.bottom = `${H - bench.y + P * 3}px`;
+}
+
 function showBoard(open) {
   if (open === boardOpen) return;
   boardOpen = open;
   boardEl.hidden = !open;
-  if (open) {
-    boardEl.style.left = `${bench.x}px`;
-    boardEl.style.top = 'auto';
-    boardEl.style.bottom = `${H - bench.y + P * 3}px`;
-  }
+  if (open) placeBoard();
 }
 
 function hud() {
@@ -1230,7 +1241,7 @@ function frame() { step(); draw(); hud(); requestAnimationFrame(frame); }
 // --- input ------------------------------------------------------------------
 function pos(e) {
   const r = canvas.getBoundingClientRect();
-  return { x: e.clientX - r.left, y: e.clientY - r.top };
+  return { x: e.clientX - r.left + camX, y: e.clientY - r.top };
 }
 
 canvas.addEventListener('pointerdown', e => {
@@ -1300,10 +1311,23 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
+function pan(dx) {
+  const at = camX;
+  camX = Math.max(0, Math.min(camX + dx, Math.max(0, worldW - W)));
+  if (camX !== at && boardOpen) placeBoard();
+}
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
+}, { passive: false });
+
 boardEl.addEventListener('pointerleave', () => { if (!boardPinned) showBoard(false); });
 addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'Escape') { boardPinned = false; showBoard(false); }
+  if (e.key === 'ArrowRight') pan(P * 12);
+  if (e.key === 'ArrowLeft') pan(-P * 12);
 });
 addEventListener('resize', resize);
 document.addEventListener('visibilitychange', persist);
@@ -1325,7 +1349,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = n => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w); };
 
-window.__state = () => ({ stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ camX: Math.round(camX), worldW, pitCols: pit.cols, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 restore();

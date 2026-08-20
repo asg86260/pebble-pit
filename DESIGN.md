@@ -155,6 +155,12 @@ to keep going, but no more cores drop.
 Prestige. Ascension. Multipliers on multipliers. A third currency. Timed events. Offline
 accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 
+## The pit
+
+The pit is a fixed size, 240 cells wide and 22 deep — about two windows across, so most of it
+sits off the right edge and you scroll (wheel or arrow keys) to see along it. Capacity is 5,280
+grains, and dust goes in one for one: what you mine off the rock is what fills it.
+
 ## The pit never fills
 
 A run mines ~35,000 dust; the pit holds ~1,300 grains on screen. So the pile is a picture of the
