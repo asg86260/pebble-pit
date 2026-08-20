@@ -159,9 +159,9 @@ accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 
 One million dust in the hole. The counter reads `n / 1,000,000`.
 
-Two numbers, not one: **hole** is what has gone in, and it only ever rises — that is the goal.
-**Dust** is the wallet you spend at the bench. Buying something never takes dust back out of the
-hole.
+One number, and it is both: what is in the hole is the score *and* the money. Buying something
+lifts that dust back out of the pile, so every upgrade is a choice between arriving sooner and
+being further along right now.
 
 A pixel is worth what it was buried under: one from the thin rim pays 1, one from the middle of a
 six-deep boulder pays 6. Digging deep is the whole economy, which is what makes drillers worth
@@ -182,6 +182,10 @@ rather than an interruption. Dust can always be added, so nothing ever blocks.
 
 Same guard on the ground: if the dust bed ever fills, further dust rolls into the pit instead of
 piling up mid-air.
+
+Dust heaped against the ledge topples in on its own once it is four cells deep there. A thin
+scatter just rests against the wall — so throwing everything at the edge is a real tactic, but the
+ground does not quietly drain itself and put the haulers out of work.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
