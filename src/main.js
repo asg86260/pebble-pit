@@ -15,8 +15,7 @@ const SKY = 246;          // rock centre, below the top of the world
 const DROP = 354;         // rock centre to the ground line
 const TO_LEDGE = 258;     // rock centre to the lip of the pit
 const TO_BENCH = 474;     // rock centre back to the bench
-const PIT_MIN_ROWS = 24;
-const PIT_MAX_ROWS = 200;   // deep enough to reach the bottom of any window
+const PIT_ROWS = 46;      // the pit is one fixed size, always
 const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
@@ -191,7 +190,7 @@ function resize() {
 
   // a small window shows the same scene, smaller: the shape of the place never
   // changes, it only gets further away
-  const needH = SKY + DROP + PIT_MIN_ROWS * P + P * 4;
+  const needH = SKY + DROP + PIT_ROWS * P + P * 4;
   const needW = TO_BENCH + TO_LEDGE + P * 20;
   // quantised so a cell is always a whole number of screen pixels: fractional
   // scaling leaves hairline seams between them
@@ -209,8 +208,7 @@ function resize() {
   pit.x = cx + TO_LEDGE;
   pit.cols = PIT_COLS;
   pit.w = pit.cols * P;
-  pit.rows = Math.max(PIT_MIN_ROWS,
-                      Math.min(PIT_MAX_ROWS, Math.floor((viewH - groundY - P * 2) / P)));
+  pit.rows = PIT_ROWS;
   pit.h = pit.rows * P;
   pit.y = groundY;
 
@@ -222,7 +220,7 @@ function resize() {
   worldW = pit.x + pit.w + PIT_PAD * P;
   worldH = groundY + pit.h + P * 2;
   clampCam();
-  if (groundY < camY + P * 8 || groundY > camY + viewH) focusGround();   // keep it in view
+  if (groundY < camY + P * 8 || groundY > camY + viewH) focusGround();   // keep it in sight
   seedAir();
 
   floor.x = 0;
@@ -235,15 +233,18 @@ function resize() {
 
 // put the ground where it reads best: about two thirds down the window
 function focusGround() {
-  camY = Math.max(0, Math.min(groundY - viewH * 0.68, Math.max(0, worldH - viewH)));
+  const slackY = worldH - viewH;
+  camY = slackY <= 0 ? slackY : Math.max(0, Math.min(groundY - viewH * 0.68, slackY));
 }
 
 // the view can never leave the world; if the window is bigger, it sits still
 function clampCam() {
-  const slackX = Math.max(0, worldW - viewW);
-  const slackY = Math.max(0, worldH - viewH);
-  camX = Math.max(0, Math.min(camX, slackX));
-  camY = Math.max(0, Math.min(camY, slackY));
+  camX = Math.max(0, Math.min(camX, Math.max(0, worldW - viewW)));
+
+  // a window taller than the world rests its bottom on the pit floor, and the
+  // extra height becomes sky; a shorter one scrolls down the pit instead
+  const slackY = worldH - viewH;
+  camY = slackY <= 0 ? slackY : Math.max(0, Math.min(camY, slackY));
 }
 
 // keep the grain count across a resize, re-packed flat
