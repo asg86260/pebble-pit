@@ -7,6 +7,7 @@ const storedEl = document.getElementById('stored');
 const shopEl = document.getElementById('shop');
 const coresEl = document.getElementById('cores');
 const coreBoxEl = document.getElementById('corebox');
+const dustEl = document.getElementById('dust');
 const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
@@ -31,6 +32,8 @@ const CAP_STEP = 1;       // extra capacity per upgrade
 const WORKER = P * 3;     // worker square size
 const MINER_BASE = 1400;  // a hired miner starts slower than your own pick
 const MINER_FLOOR = 260;  // fastest a miner can swing
+const DRILL_BASE = 520;   // a driller bites faster than a chipper swings
+const DRILL_FLOOR = 90;
 const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 const HAUL_BASE = 0.9;    // hauler walking speed, px per frame
 
@@ -43,7 +46,8 @@ let boulderNo = 1;        // how many boulders in; each one adds a layer
 let coreBuried = true;    // this boulder still has its core inside it
 let nextBoulderAt = 0;    // ms deadline for the replacement rock to roll in
 let chips = [];           // pixels in flight
-let stored = 0;           // pixels down the pit
+let stored = 0;           // dust you can spend
+let banked = 0;           // dust that has gone in the hole, for the goal
 let held = 0;             // pixels on the cursor mid-sweep
 let dragging = false;
 let carryLevel = 0;       // carry-capacity upgrades bought
@@ -64,8 +68,10 @@ let pitSettles = 0;       // how many times the pile has compacted
 let coreItem = null;      // a core loose in the world
 let heldCore = false;     // a core riding on the cursor
 let pickLevel = 0;        // pixels knocked loose per hit (bought with cores)
-let miners = 0, haulers = 0;
+let miners = 0, haulers = 0, drillers = 0;
 let minerSpeedLevel = 0;  // hired-miner swing speed
+let drillSpeedLevel = 0;  // driller bite speed
+let drillersUnlocked = false;  // core unlock: drillers can be hired
 let haulCarryLevel = 0;   // grains a hauler carries per trip
 let haulPaceLevel = 0;    // hauler walking speed and scoop rate
 let workers = [];         // little squares that mine and ferry dust
@@ -359,6 +365,8 @@ const mineMs = (lvl = speedLevel) => Math.max(MINE_FLOOR, Math.round(MINE_BASE *
 const mineRate = (lvl = speedLevel) => 1000 / mineMs(lvl);
 const minerMs = (lvl = minerSpeedLevel) => Math.max(MINER_FLOOR, Math.round(MINER_BASE * Math.pow(0.82, lvl)));
 const minerRate = (lvl = minerSpeedLevel) => 1000 / minerMs(lvl);
+const drillMs = (lvl = drillSpeedLevel) => Math.max(DRILL_FLOOR, Math.round(DRILL_BASE * Math.pow(0.82, lvl)));
+const drillRate = (lvl = drillSpeedLevel) => 1000 / drillMs(lvl);
 const haulCap = (lvl = haulCarryLevel) => 1 + lvl;
 const haulSpeed = (lvl = haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
 const scoopMs = (lvl = haulPaceLevel) => Math.max(30, Math.round(HAUL_MS * Math.pow(0.85, lvl)));
@@ -405,6 +413,28 @@ const UPGRADES = [
     currency: 'core',
     buy: () => pickLevel++,
     show: () => seenCore
+  },
+  {
+    key: 'unlockdrillers',
+    label: () => 'first driller',
+    cost: () => 3,
+    currency: 'core',
+    buy: () => { drillersUnlocked = true; drillers++; syncWorkers(); },
+    show: () => seenCore && !drillersUnlocked
+  },
+  {
+    key: 'driller',
+    label: () => `hire driller (${drillers})`,
+    cost: () => Math.round(140 * Math.pow(1.6, Math.max(0, drillers - 1))),
+    buy: () => { drillers++; syncWorkers(); },
+    show: () => drillersUnlocked
+  },
+  {
+    key: 'drillspeed',
+    label: () => `driller ${num(drillRate())} -> ${num(drillRate(drillSpeedLevel + 1))} px/s`,
+    cost: () => Math.round(120 * Math.pow(1.7, drillSpeedLevel)),
+    buy: () => drillSpeedLevel++,
+    show: () => drillers > 0 && drillMs() > DRILL_FLOOR
   },
   {
     key: 'unlockminers',
@@ -464,7 +494,9 @@ const UPGRADES = [
 const PIT_FULL = 1;       // only settle when the pit is genuinely full
 
 function bankDust(x, shade = SHADES.length) {
-  stored++;
+  const worth = Math.max(1, shade);        // deep rock pays more than surface
+  stored += worth;
+  banked += worth;
   dirty = true;
   pitFrac++;
   if (pitFrac < pitScale) return;
@@ -495,13 +527,7 @@ function compactPit() {
 
 // paying takes the dust back out of the pit, top layer first
 function spend(cost) {
-  stored -= cost;
-  let left = Math.round(cost / pitScale);
-  for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
-    for (let c = 0; c < pit.cols && left > 0; c++) {
-      if (at(pit, c, r) && at(pit, c, r) !== CORE_CELL) { put(pit, c, r, 0); left--; }
-    }
-  }
+  stored -= cost;                          // the hole keeps what it was given
 }
 
 function buy(u) {
@@ -524,7 +550,8 @@ function buy(u) {
 const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'haulers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
-  { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] }
+  { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
+  { title: 'drillers', keys: ['unlockdrillers', 'driller', 'drillspeed'] }
 ];
 
 // one row per available upgrade, under a heading for the crew it belongs to
@@ -657,6 +684,7 @@ function persist() {
   dirty = false;
   save({
     stored,
+    banked,
     carryLevel,
     speedLevel,
     autoMine,
@@ -670,6 +698,9 @@ function persist() {
     coreLoose: heldCore || !!coreItem,
     miners,
     haulers,
+    drillers,
+    drillSpeedLevel,
+    drillersUnlocked,
     minerSpeedLevel,
     haulCarryLevel,
     haulPaceLevel,
@@ -698,6 +729,7 @@ function restore() {
   if (!s || !gridFromString(s.boulder, s.grid) || typeof s.stored !== 'number') {
     makeBoulder();
     stored = 0;
+    banked = 0;
     carryLevel = 0;
     speedLevel = 0;
     autoMine = false;
@@ -712,12 +744,16 @@ function restore() {
     coreItem = null;
     miners = 0;
     haulers = 0;
+    drillers = 0;
+    drillSpeedLevel = 0;
+    drillersUnlocked = false;
     minerSpeedLevel = 0;
     haulCarryLevel = 0;
     haulPaceLevel = 0;
     return;
   }
   stored = s.stored;
+  banked = s.banked || s.stored;
   carryLevel = s.carryLevel || 0;
   speedLevel = s.speedLevel || 0;
   autoMine = !!s.autoMine;
@@ -736,6 +772,9 @@ function restore() {
   }
   miners = s.miners || 0;
   haulers = s.haulers || 0;
+  drillers = s.drillers || 0;
+  drillSpeedLevel = s.drillSpeedLevel || 0;
+  drillersUnlocked = !!s.drillersUnlocked;
   minerSpeedLevel = s.minerSpeedLevel || 0;
   haulCarryLevel = s.haulCarryLevel || 0;
   haulPaceLevel = s.haulPaceLevel || 0;
@@ -749,6 +788,7 @@ function reset() {
   clear();
   chips = [];
   stored = 0;
+  banked = 0;
   held = 0;
   carryLevel = 0;
   speedLevel = 0;
@@ -765,6 +805,9 @@ function reset() {
   heldCore = false;
   miners = 0;
   haulers = 0;
+  drillers = 0;
+  drillSpeedLevel = 0;
+  drillersUnlocked = false;
   minerSpeedLevel = 0;
   haulCarryLevel = 0;
   haulPaceLevel = 0;
@@ -780,7 +823,7 @@ function reset() {
 
 // --- workers ----------------------------------------------------------------
 function syncWorkers() {
-  const want = { miner: miners, hauler: haulers };
+  const want = { miner: miners, hauler: haulers, driller: drillers };
   workers = workers.filter(w => want[w.type]-- > 0);       // drop any extras
 
   // count what is missing first: pushing while re-reading the length only ever
@@ -796,6 +839,10 @@ function syncWorkers() {
       rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
     });
   }
+  const needDrillers = drillers - have('driller');
+  for (let i = 0; i < needDrillers; i++) {
+    workers.push({ type: 'driller', next: 0, x: cx, y: cy, spot: null, ph: Math.random() * 6.28 });
+  }
   const needHaulers = haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
     workers.push({ type: 'hauler', x: Math.random() * pit.x * 0.8, carry: 0, next: 0, goal: 'seek' });
@@ -809,6 +856,17 @@ function syncWorkers() {
     w.slot = slot++;
     if (!w.next) w.next = performance.now() + minerMs() * (w.slot / Math.max(1, miners));
   }
+}
+
+// somewhere worth drilling: sample a few cells and take the thickest rock
+function thickSpot() {
+  let best = null, deepest = 0;
+  for (let i = 0; i < 40; i++) {
+    const y = Math.floor(Math.random() * grid), x = Math.floor(Math.random() * grid);
+    const v = boulder[y]?.[x] || 0;
+    if (v > deepest) { deepest = v; best = { x, y }; }
+  }
+  return best;
 }
 
 function nearestDust(x) {
@@ -856,6 +914,28 @@ function updateWorkers(now) {
         knockOff(w.x + WORKER / 2, w.y + WORKER / 2);
         w.lunge = 1;
         w.next = now + minerMs() * (0.85 + Math.random() * 0.3);   // never quite in time
+      }
+      continue;
+    }
+
+    if (w.type === 'driller') {
+      // pick a thick spot and stay on it until it is gone
+      if (!w.spot || !boulder[w.spot.y]?.[w.spot.x]) w.spot = thickSpot();
+      if (!w.spot) continue;
+
+      const { px, py } = cellPos(w.spot.x, w.spot.y);
+      const pull = Math.sin(now / 90 + w.ph) * 1.5;      // it judders as it bites
+      w.x = px - WORKER / 2 + P / 2 + pull;
+      w.y = py - WORKER / 2 + P / 2;
+
+      if (now >= w.next) {
+        const left = boulder[w.spot.y][w.spot.x];
+        boulder[w.spot.y][w.spot.x] = left - 1;
+        const away = Math.sign(px - cx) || 1;
+        spawnChip(px, py, away * (0.5 + Math.random()), -(1.5 + Math.random() * 2),
+                  depthShade(left, depthOf()));
+        w.next = now + drillMs() * (0.9 + Math.random() * 0.2);
+        dirty = true;
       }
       continue;
     }
@@ -997,7 +1077,16 @@ function drawWorkers() {
   for (const w of workers) {
     if (w.type === 'miner') {
       ctx.fillRect(Math.round(w.x), Math.round(w.y), WORKER, WORKER);
-      ctx.clearRect(Math.round(w.x) + P, Math.round(w.y) + P, P, P);   // hollow centre
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(Math.round(w.x) + P, Math.round(w.y) + P, P, P);    // hollow centre
+      ctx.fillStyle = '#000';
+    } else if (w.type === 'driller') {
+      const x = Math.round(w.x), y = Math.round(w.y);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y, P, P);                                     // a bite out of it
+      ctx.fillRect(x + P, y + P * 2, P, P);
+      ctx.fillStyle = '#000';
     } else {
       const y = groundY - WORKER;
       ctx.lineWidth = 2;
@@ -1253,7 +1342,8 @@ function showBoard(open) {
 const fmt = n => n.toLocaleString('en-US');
 
 function hud() {
-  storedEl.textContent = `${fmt(stored)} / ${fmt(TARGET)}`;
+  storedEl.textContent = `${fmt(banked)} / ${fmt(TARGET)}`;
+  dustEl.textContent = fmt(stored);
   coresEl.textContent = cores;
   coreBoxEl.style.visibility = seenCore ? 'visible' : 'hidden';
   if (!boardOpen) return;
@@ -1387,7 +1477,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = n => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w); };
 
-window.__state = () => ({ camX: Math.round(camX), worldW, pitCols: pit.cols, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ drillers, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, banked, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 restore();

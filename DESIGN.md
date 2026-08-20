@@ -85,7 +85,7 @@ All of them stay plain black-and-white shapes.
 | Type | Shape | Behaviour |
 |---|---|---|
 | chipper | square, hollow centre | takes a seat in a ring round the rock that turns as one, but sways and drifts in and out on its own timing, and leans in when it swings; a second ring forms outside when the first is full |
-| driller | square with a notch | parks on one spot and bores inward, fast but narrow |
+| driller | square with a bite out of its side | parks on the thickest rock it can find and bores that one spot out, sheet by sheet, judder and all |
 
 **Haulers (move the dust)**
 
@@ -158,6 +158,14 @@ accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 ## The goal
 
 One million dust in the hole. The counter reads `n / 1,000,000`.
+
+Two numbers, not one: **hole** is what has gone in, and it only ever rises — that is the goal.
+**Dust** is the wallet you spend at the bench. Buying something never takes dust back out of the
+hole.
+
+A pixel is worth what it was buried under: one from the thin rim pays 1, one from the middle of a
+six-deep boulder pays 6. Digging deep is the whole economy, which is what makes drillers worth
+hiring and layers worth having.
 
 ## The pit
 
