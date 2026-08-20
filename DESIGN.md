@@ -57,8 +57,8 @@ Current build uses 1.7–1.9 on the worker ladders; that outruns income by bould
 
 | # | Unlock | Cost | Opens |
 |---|---|---|---|
-| 1 | first hauler | 1 | grants one, opens hauler hiring |
-| 2 | first miner | 2 | grants one, opens miner hiring |
+| 1 | first miner | 1 | grants one, opens miner hiring |
+| 2 | first hauler | 2 | grants one, opens hauler hiring |
 | 3 | wide pick | 2 | your hits clear 5 px |
 | 4 | driller | 2 | new miner type |
 | 5 | barrow | 2 | new hauler type |

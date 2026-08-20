@@ -459,7 +459,7 @@ const UPGRADES = [
   {
     key: 'unlockminers',
     label: () => 'first miner',
-    cost: () => 2,
+    cost: () => 1,
     currency: 'core',
     buy: () => { minersUnlocked = true; miners++; syncWorkers(); },
     show: () => seenCore && !minersUnlocked
@@ -481,7 +481,7 @@ const UPGRADES = [
   {
     key: 'unlockhaulers',
     label: () => 'first hauler',
-    cost: () => 1,
+    cost: () => 2,
     currency: 'core',
     buy: () => { haulersUnlocked = true; haulers++; syncWorkers(); },
     show: () => seenCore && !haulersUnlocked
@@ -585,8 +585,8 @@ function buy(u) {
 // the board is grouped by who the upgrade is for, not by what it costs
 const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'haulers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
+  { title: 'haulers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
   { title: 'drillers', keys: ['unlockdrillers', 'driller', 'drillspeed'] }
 ];
 
