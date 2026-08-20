@@ -79,7 +79,6 @@ let orbitPhase = 0;       // the whole ring of miners turns together
 let coreTaker = null;     // the hauler that has claimed a loose core
 const bench = { x: 0, y: 0, w: 0, h: 0 };
 let boardOpen = false;    // the workbench board is showing
-let boardPinned = false;  // clicked open, so it stays while you shop
 let shownStored = 0;      // the counter chases the real number
 let dirty = false;
 
@@ -1356,13 +1355,10 @@ function drawCursor() {
   ctx.fillStyle = '#000';
 }
 
-// a wide radius opens the board on approach...
+// the board opens when the cursor comes near the bench. There is nothing to
+// click: the ground round it sweeps like anywhere else
 const nearBench = (x, y) => x > bench.x - P * 8 && x < bench.x + bench.w + P * 8 &&
                             y > bench.y - P * 8 && y < bench.y + bench.h + P * 4;
-
-// ...but only the bench itself takes a click, so dust around it can still be swept
-const onBench = (x, y) => x > bench.x - P && x < bench.x + bench.w + P &&
-                          y > bench.y - P * 2 && y < bench.y + bench.h;
 
 function placeBoard() {
   boardEl.style.left = `${bench.x - camX}px`;
@@ -1416,11 +1412,6 @@ canvas.addEventListener('pointerdown', e => {
   const p = pos(e);
   mouse = p;
   if (!boulderAlive() && chips.length === 0) { makeBoulder(); dirty = true; return; }
-  if (onBench(p.x, p.y)) {
-    boardPinned = !boardPinned;
-    showBoard(true);
-    return;
-  }
   if (boulderAlive() && overBoulder(p.x, p.y)) {
     knockOff(p.x, p.y);
     mining = autoMine;                      // holding only works once unlocked
@@ -1439,7 +1430,7 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointermove', e => {
   mouse = pos(e);
   track(mouse.x, mouse.y);
-  if (!boardPinned) showBoard(nearBench(mouse.x, mouse.y));
+  showBoard(nearBench(mouse.x, mouse.y));
   if (e.buttons === 0 && (mining || dragging)) { endDrag(e); return; }
   if (dragging) sweep(mouse.x, mouse.y);
 });
@@ -1480,9 +1471,9 @@ resetEl.addEventListener('click', () => {
 });
 
 function pan(dx) {
-  const at = camX;
+  const was = camX;
   camX = Math.max(0, Math.min(camX + dx, Math.max(0, worldW - W)));
-  if (camX !== at && boardOpen) placeBoard();
+  if (camX !== was && boardOpen) placeBoard();
 }
 
 canvas.addEventListener('wheel', e => {
@@ -1490,10 +1481,9 @@ canvas.addEventListener('wheel', e => {
   pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
 }, { passive: false });
 
-boardEl.addEventListener('pointerleave', () => { if (!boardPinned) showBoard(false); });
+boardEl.addEventListener('pointerleave', () => showBoard(false));
 addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
-  if (e.key === 'Escape') { boardPinned = false; showBoard(false); }
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
 });

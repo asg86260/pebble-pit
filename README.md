@@ -6,7 +6,7 @@ Black-and-white pixel clicker. Vite + vanilla JS, canvas.
 - Click the boulder to knock a pixel off at the cursor. It falls and piles up on the ground as dust (falling-sand physics).
 - Drag along the ground to sweep dust onto the cursor, then flick and let go to throw it. Anything past the ledge falls into the pit on the right. The pit is a fixed size that runs well off the right of the window — scroll with the wheel or arrow keys to see along it.
 - The cursor starts able to carry one pixel; the brush shows FULL when loaded.
-- The shop is a **workbench** standing on the ground to the left. Move the cursor near it and its board opens; click the bench to pin the board open, Escape or walk away to close it. Rows are grouped by who the upgrade is for (you / haulers / miners), with core costs marked ◆.
+- The shop is a **workbench** standing on the ground to the left. Move the cursor near it and its board opens; move away and it closes. There is nothing to click — the ground around it sweeps like anywhere else. Rows are grouped by who the upgrade is for (you / haulers / miners), with core costs marked ◆.
 - Spend pit dust there on: carry capacity, unlocking hold-to-mine, your mining speed, hiring workers, and each worker's own speed and load.
 - The hole is both the goal (one million) and the money: buying an upgrade lifts dust back out of it. Spend to get there faster, or hoard and wait.
 - Dust heaped against the ledge four cells deep topples into the pit by itself.

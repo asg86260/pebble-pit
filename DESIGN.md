@@ -69,7 +69,7 @@ Twelve cores, twelve spent. Buy order is the player's choice; everything lands b
 ## The workbench
 
 The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground at the
-left, opposite the pit. Coming near it opens its board; clicking pins it open. Nothing about
+left, opposite the pit. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
 upgrades is on screen while you are mining, which keeps the scene to rock, dust, crew and pit.
 
 The board itself is grouped by crew — you, haulers, miners — with the headcount beside each
