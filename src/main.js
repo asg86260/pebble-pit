@@ -341,20 +341,27 @@ function spawnChip(x, y, vx, vy, shade = 1) {
 function knockOff(mx, my) {
   const c = pickCell(mx, my);
   if (!c) return;
-  const r = pickR();
-  for (let dy = -r; dy <= r; dy++) {
-    for (let dx = -r; dx <= r; dx++) {
-      if (dx * dx + dy * dy > r * r) continue;
+
+  const want = pickCount();
+  const reach = Math.ceil(Math.sqrt(want)) + 1;
+  const near = [];
+  for (let dy = -reach; dy <= reach; dy++) {
+    for (let dx = -reach; dx <= reach; dx++) {
       const x = c.x + dx, y = c.y + dy;
-      const left = boulder[y]?.[x];
-      if (!left) continue;
-      const shade = depthShade(left, depthOf());     // how deep it looked, for colour
-      boulder[y][x] = left - 1;
-      const { px, py } = cellPos(x, y);
-      // mostly straight down, with a little drift and a nudge away from the middle
-      spawnChip(px, py, bell() * 1.1 + (px - cx) / (grid * P) * 1.6,
-                -(1.6 + Math.random() * 2.6), shade);
+      if (!boulder[y]?.[x]) continue;
+      near.push({ x, y, d: dx * dx + dy * dy });
     }
+  }
+  near.sort((a, b) => a.d - b.d);
+
+  for (const cell of near.slice(0, want)) {
+    const left = boulder[cell.y][cell.x];
+    const shade = depthShade(left, depthOf());   // how deep it looked, for colour
+    boulder[cell.y][cell.x] = left - 1;
+    const { px, py } = cellPos(cell.x, cell.y);
+    // mostly straight down, with a little drift and a nudge away from the middle
+    spawnChip(px, py, bell() * 1.1 + (px - cx) / (grid * P) * 1.6,
+              -(1.6 + Math.random() * 2.6), shade);
   }
   dirty = true;
 }
@@ -390,19 +397,10 @@ const drillRate = (lvl = drillSpeedLevel) => 1000 / drillMs(lvl);
 const haulCap = (lvl = haulCarryLevel) => 1 + lvl;
 const haulSpeed = (lvl = haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
 const scoopMs = (lvl = haulPaceLevel) => Math.max(30, Math.round(HAUL_MS * Math.pow(0.85, lvl)));
-const pickR = () => pickLevel;                 // 0 = one pixel a hit
+const pickCount = () => 1 + pickLevel;         // pixels a single swing takes
 
 const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 const rateText = lvl => num(mineRate(lvl));
-
-// how many cells one hit clears, for the label
-const pickCells = lvl => {
-  let n = 0;
-  for (let dy = -lvl; dy <= lvl; dy++) {
-    for (let dx = -lvl; dx <= lvl; dx++) if (dx * dx + dy * dy <= lvl * lvl) n++;
-  }
-  return n;
-};
 
 const UPGRADES = [
   {
@@ -435,9 +433,9 @@ const UPGRADES = [
     key: 'pick',
     name: 'pick',
     unit: 'px',
-    from: () => pickCells(pickLevel),
-    to: () => pickCells(pickLevel + 1),
-    cost: () => 3 + pickLevel * 3,
+    from: () => pickCount(),
+    to: () => pickCount() + 1,
+    cost: () => 2 + pickLevel,
     currency: 'core',
     buy: () => pickLevel++,
     show: () => seenCore
