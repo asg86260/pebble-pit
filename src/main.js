@@ -231,9 +231,6 @@ function resize() {
 
   resizeGrid(floor);
   resizeGrid(pit);
-
-  console.log(`boulder: viewport ${W}x${H}, canvas ${canvas.width}x${canvas.height} ` +
-              `(css ${canvas.style.width} x ${canvas.style.height}), dpr ${dpr}, zoom ${zoom}`);
 }
 
 // put the ground where it reads best: about two thirds down the window
