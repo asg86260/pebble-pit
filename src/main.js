@@ -304,19 +304,10 @@ function boulderAlive() {
 // the boulder's whole footprint, so clicking a chipped-out gap still chips
 // on the rock if there is rock close by: chipped-out gaps still count, but the
 // empty air below it does not, so falling dust can be caught there
+// the rock's whole footprint takes a swing, so clicking its general area works
 function overBoulder(mx, my) {
   const half = (grid / 2) * P;
-  if (mx < cx - half || mx > cx + half || my < cy - half || my > cy + half) return false;
-
-  const gx = Math.floor((mx - cx) / P + grid / 2);
-  const gy = Math.floor((my - cy) / P + grid / 2);
-  const near = 4;
-  for (let dy = -near; dy <= near; dy++) {
-    for (let dx = -near; dx <= near; dx++) {
-      if (boulder[gy + dy]?.[gx + dx]) return true;
-    }
-  }
-  return false;
+  return mx > cx - half && mx < cx + half && my > cy - half && my < cy + half;
 }
 
 // the cell under the cursor, or the nearest filled one if that spot is already hollow
@@ -641,6 +632,29 @@ function throwVel() {
 }
 
 // --- sweeping ---------------------------------------------------------------
+// pixels still in flight are caught if they pass the cursor while it is held
+function catchAir(mx, my) {
+  let room = capacity() - held;
+  if (room <= 0) return;
+
+  const reach = (BRUSH + 2) * P;      // forgiving: dust falls quickly
+  for (let i = chips.length - 1; i >= 0 && room > 0; i--) {
+    const ch = chips[i];
+    if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
+    chips.splice(i, 1);
+    held++;
+    room--;
+    motes.push({
+      s: ch.s,
+      a: Math.random() * Math.PI * 2,
+      d: P * (1 + Math.random() * 2.6),
+      spin: (Math.random() - 0.5) * 0.03,
+      bob: Math.random() * Math.PI * 2
+    });
+    dirty = true;
+  }
+}
+
 // pick up floor dust inside the brush, up to what the cursor can carry
 function sweep(mx, my) {
   // a loose core on the ground is picked up by hand, no capacity needed
@@ -658,16 +672,6 @@ function sweep(mx, my) {
   let taken = 0;
   const lifted = [];
 
-  // dust still in flight can be caught on the way down
-  const reach = (BRUSH + 2) * P;      // a forgiving window: dust falls quickly
-  for (let i = chips.length - 1; i >= 0 && room > 0; i--) {
-    const ch = chips[i];
-    if (Math.abs(ch.x + P / 2 - mx) > reach || Math.abs(ch.y + P / 2 - my) > reach) continue;
-    lifted.push(ch.s);
-    chips.splice(i, 1);
-    taken++;
-    room--;
-  }
   const c0 = colOf(floor, mx);
   const r0 = Math.floor((bottomY(floor) - my) / P);
   for (let dr = -BRUSH; dr <= BRUSH && room > 0; dr++) {
@@ -1249,6 +1253,7 @@ function stepCore() {
 function step() {
   updateWorkers(performance.now());
   stepCore();
+  if (mining || dragging) catchAir(mouse.x, mouse.y);   // hold and it catches
 
   if (mining) {
     const now = performance.now();
@@ -1457,8 +1462,11 @@ canvas.addEventListener('pointerdown', e => {
   if (!boulderAlive() && chips.length === 0) { makeBoulder(); dirty = true; return; }
   if (boulderAlive() && overBoulder(p.x, p.y)) {
     knockOff(p.x, p.y);
-    mining = autoMine;                      // holding only works once unlocked
+    mining = autoMine;                      // holding only mines once unlocked
     nextHit = performance.now() + MINE_DELAY;
+    dragging = true;                        // but the brush is always in hand
+    trail = [];
+    track(p.x, p.y);
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }

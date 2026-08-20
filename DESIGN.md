@@ -68,9 +68,10 @@ Twelve cores, twelve spent. Buy order is the player's choice; everything lands b
 
 ## Catching
 
-The brush works in the air as well as on the ground: drag through pixels still falling off the
-rock and they land on the cursor instead of the floor. A drag can start anywhere that is not the
-rock, so catching a burst as it comes off is a real alternative to sweeping it up afterwards.
+The brush is in your hand whenever the button is down, including while swinging at the rock.
+Pixels in flight that pass near the cursor land on it instead of the floor, so you can strike the
+rock and ride the spray down, or press below it and swipe through the fall. The rock still takes a
+swing anywhere in its footprint — clicking its general area must stay easy.
 
 ## The workbench
 
