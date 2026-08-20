@@ -1081,33 +1081,62 @@ function drawCore() {
   else if (coreItem) drawCoreAt(coreItem.x, coreItem.y);
 }
 
-// a little dust hanging in the air. It drifts, and it passes at a different rate
-// to the ground, so you can tell when the view is moving
+// dust hanging in the air, thrown off the piles themselves: the more dust is
+// lying about, the more of it drifts. They pass at their own rate as the view
+// scrolls, so movement reads without any furniture in the background
 const AIR = [];
+const AIR_CAP = 260;
 
 function seedAir() {
   AIR.length = 0;
-  const n = Math.round((worldW / 900) * 26);
-  for (let i = 0; i < n; i++) {
+}
+
+// a spot just above the dust in a random column of a pile
+function airSource() {
+  const onFloor = Math.random() * (count(floor) + count(pit)) < count(floor);
+  const b = onFloor ? floor : pit;
+  const n = count(b);
+  if (!n) return null;
+
+  for (let tries = 0; tries < 12; tries++) {
+    const c = Math.floor(Math.random() * b.cols);
+    if (!at(b, c, 0)) continue;
+    if (b === floor && blocked(c)) continue;
+    return { x: b.x + c * P + Math.random() * P, y: surfaceY(b, c) - P };
+  }
+  return null;
+}
+
+function stepAir() {
+  const dust = count(floor) + count(pit);
+  const want = Math.min(AIR_CAP, 6 + Math.round(dust / 45));
+
+  if (AIR.length < want && Math.random() < 0.6) {
+    const from = dust > 20 ? airSource() : null;
+    const at0 = from || { x: camX + Math.random() * W, y: Math.random() * groundY };
     AIR.push({
-      x: Math.random() * worldW,
-      y: Math.random() * groundY,
-      vx: (Math.random() - 0.5) * 0.18,
-      vy: -0.05 - Math.random() * 0.12,
+      x: at0.x,
+      y: at0.y,
+      vx: (Math.random() - 0.5) * 0.22,
+      vy: -0.06 - Math.random() * 0.16,
+      life: 300 + Math.random() * 500,
       size: Math.random() < 0.3 ? P / 2 : P / 3,
       far: 0.45 + Math.random() * 0.4
     });
+  }
+
+  for (let i = AIR.length - 1; i >= 0; i--) {
+    const m = AIR[i];
+    m.x += m.vx;
+    m.y += m.vy;
+    m.life--;
+    if (m.life <= 0 || m.y < -P || AIR.length > want + 40) AIR.splice(i, 1);
   }
 }
 
 function drawAir() {
   ctx.fillStyle = '#d9d9d9';
   for (const m of AIR) {
-    m.x += m.vx;
-    m.y += m.vy;
-    if (m.y < -P) { m.y = groundY; m.x = Math.random() * worldW; }
-    if (m.x < -P) m.x = worldW;
-    if (m.x > worldW) m.x = 0;
     ctx.fillRect(Math.round(m.x - camX * m.far), Math.round(m.y), m.size, m.size);
   }
   ctx.fillStyle = '#000';
@@ -1251,6 +1280,7 @@ function stepCore() {
 }
 
 function step() {
+  stepAir();
   updateWorkers(performance.now());
   stepCore();
   if (dragging) catchAir(mouse.x, mouse.y);   // swinging does not catch its own spray
@@ -1554,7 +1584,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ air: AIR.length, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 restore();

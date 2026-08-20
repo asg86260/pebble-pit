@@ -203,5 +203,6 @@ ground does not quietly drain itself and put the haulers out of work.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
-- Dust hangs in the air and drifts, passing at its own rate as the view scrolls, so movement
-  reads without any furniture in the background.
+- Dust hangs in the air, thrown off the piles themselves: motes rise from the surface of whatever
+  is lying about, so a big pit visibly gives off more than a bare one. They pass at their own rate
+  as the view scrolls, which is how movement reads without furniture in the background.
