@@ -155,6 +155,10 @@ to keep going, but no more cores drop.
 Prestige. Ascension. Multipliers on multipliers. A third currency. Timed events. Offline
 accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 
+## The goal
+
+One million dust in the hole. The counter reads `n / 1,000,000`.
+
 ## The pit
 
 The pit is a fixed size, 240 cells wide and 22 deep — about two windows across, so most of it
@@ -173,3 +177,5 @@ piling up mid-air.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
+- Dust hangs in the air and drifts, passing at its own rate as the view scrolls, so movement
+  reads without any furniture in the background.

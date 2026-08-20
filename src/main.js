@@ -11,6 +11,7 @@ const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
 const P = 6;              // pixel size
+const TARGET = 1000000;   // dust in the hole: the whole point
 const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 const BASE_R = 12;        // boulder radius in cells at boulder 1
@@ -169,6 +170,7 @@ function resize() {
 
   worldW = pit.x + pit.w;
   camX = Math.max(0, Math.min(camX, worldW - W));
+  seedAir();
 
   resizeGrid(floor);
   resizeGrid(pit);
@@ -949,6 +951,38 @@ function drawCore() {
   else if (coreItem) drawCoreAt(coreItem.x, coreItem.y);
 }
 
+// a little dust hanging in the air. It drifts, and it passes at a different rate
+// to the ground, so you can tell when the view is moving
+const AIR = [];
+
+function seedAir() {
+  AIR.length = 0;
+  const n = Math.round((worldW / 900) * 26);
+  for (let i = 0; i < n; i++) {
+    AIR.push({
+      x: Math.random() * worldW,
+      y: Math.random() * groundY,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: -0.05 - Math.random() * 0.12,
+      size: Math.random() < 0.3 ? P / 2 : P / 3,
+      far: 0.45 + Math.random() * 0.4
+    });
+  }
+}
+
+function drawAir() {
+  ctx.fillStyle = '#d9d9d9';
+  for (const m of AIR) {
+    m.x += m.vx;
+    m.y += m.vy;
+    if (m.y < -P) { m.y = groundY; m.x = Math.random() * worldW; }
+    if (m.x < -P) m.x = worldW;
+    if (m.x > worldW) m.x = 0;
+    ctx.fillRect(Math.round(m.x - camX * m.far), Math.round(m.y), m.size, m.size);
+  }
+  ctx.fillStyle = '#000';
+}
+
 function drawBench() {
   ctx.fillStyle = '#000';
   ctx.fillRect(bench.x, bench.y, bench.w, P * 2);                       // top slab
@@ -1111,6 +1145,8 @@ function step() {
 
 function draw() {
   ctx.clearRect(0, 0, W, H);
+  drawAir();
+
   ctx.save();
   ctx.translate(-camX, 0);
   drawCoreBehind();
@@ -1214,8 +1250,10 @@ function showBoard(open) {
   if (open) placeBoard();
 }
 
+const fmt = n => n.toLocaleString('en-US');
+
 function hud() {
-  storedEl.textContent = stored;
+  storedEl.textContent = `${fmt(stored)} / ${fmt(TARGET)}`;
   coresEl.textContent = cores;
   coreBoxEl.style.visibility = seenCore ? 'visible' : 'hidden';
   if (!boardOpen) return;
