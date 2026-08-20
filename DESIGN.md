@@ -178,6 +178,13 @@ being further along right now.
 Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
 what it pays — the counter is a plain count of pixels in the hole.
 
+## A fixed world
+
+The world is laid out once, in world pixels, and never scales to the window: the rock, the bench
+and the ledge keep the same distances apart whatever size the browser is. The window is a view
+onto it, and a small window scrolls — wheel or arrow keys across, shift-wheel or up/down keys
+along the depth. Opening the game puts the ground about two thirds down whatever window you have.
+
 ## The pit
 
 The pit takes the bottom third of the screen and is 240 cells wide — about two windows across, so

@@ -9,6 +9,13 @@ const resetEl = document.getElementById('reset');
 
 const P = 6;              // pixel size
 const TARGET = 1000000;   // dust in the hole: the whole point
+// The world is laid out once, in world pixels, and never scales to the window.
+const GROUND_Y = 600;     // where the ground line sits
+const PIT_ROWS = 46;      // pit depth, in cells
+const BOULDER_X = 552;    // the rock stands here, always
+const BOULDER_Y = 246;
+const BENCH_X = 78;       // and the bench here
+const LEDGE_X = 810;      // where the ground stops and the pit begins
 const PIT_COLS = 240;     // the pit is a fixed size, wider than the window
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
@@ -37,7 +44,8 @@ const HAUL_BASE = 0.9;    // hauler walking speed, px per frame
 
 let W, H, cx, cy, groundY = 0;
 let worldW = 0;           // the pit runs past the right of the window
-let camX = 0;             // how far the view has been scrolled along it
+let worldH = 0;
+let camX = 0, camY = 0;   // how far the view has been scrolled over the world
 let boulder = [];         // rows of ints: 0 empty, 1..n the layer a cell belongs to
 let grid = 46;            // current boulder grid width/height in cells
 let boulderNo = 1;        // how many boulders in; each one adds a layer
@@ -160,38 +168,53 @@ function settle(b, skip) {
 }
 
 // --- layout -----------------------------------------------------------------
+// The world is a fixed size and never rearranges: the window is only a view onto
+// it, and a small window scrolls rather than squashing everything together.
 function resize() {
   W = canvas.width = innerWidth;
   H = canvas.height = innerHeight;
-  cx = Math.round(W / 2 / P) * P;
-  cy = Math.round(H * 0.28 / P) * P;
 
-  // the pit takes the bottom third of the screen
-  const base = Math.round(H * 0.66 / P) * P;
-  pit.rows = Math.max(8, Math.floor((H - base - P * 3) / P));
+  cx = BOULDER_X;
+  cy = BOULDER_Y;
+  groundY = GROUND_Y;
 
-  pit.x = Math.round((W * 0.72) / P) * P;         // the ledge
-  pit.cols = PIT_COLS;                            // fixed, and mostly off screen
+  pit.x = LEDGE_X;
+  pit.cols = PIT_COLS;
   pit.w = pit.cols * P;
+  pit.rows = PIT_ROWS;
   pit.h = pit.rows * P;
-  pit.y = base;                                   // mouth is flush with the ground
+  pit.y = GROUND_Y;
 
   bench.w = P * 12;
   bench.h = P * 7;
-  bench.x = Math.round(W * 0.07 / P) * P;
-  bench.y = base - bench.h;
+  bench.x = BENCH_X;
+  bench.y = GROUND_Y - bench.h;
 
-  worldW = pit.x + pit.w + PIT_PAD * P;      // before the floor: it spans the world
-  camX = Math.max(0, Math.min(camX, worldW - W));
+  worldW = pit.x + pit.w + PIT_PAD * P;
+  worldH = GROUND_Y + pit.h + P * 4;
+  clampCam();
+  if (GROUND_Y < camY + P * 8 || GROUND_Y > camY + H) focusGround();   // keep it in view
   seedAir();
 
   floor.x = 0;
   floor.cols = Math.ceil(worldW / P);
-  floor.y = base - floor.rows * P;
-  groundY = base;
+  floor.y = GROUND_Y - floor.rows * P;
 
   resizeGrid(floor);
   resizeGrid(pit);
+}
+
+// put the ground where it reads best: about two thirds down the window
+function focusGround() {
+  camY = Math.max(0, Math.min(GROUND_Y - H * 0.68, Math.max(0, worldH - H)));
+}
+
+// the view can never leave the world; if the window is bigger, it sits still
+function clampCam() {
+  const slackX = Math.max(0, worldW - W);
+  const slackY = Math.max(0, worldH - H);
+  camX = Math.max(0, Math.min(camX, slackX));
+  camY = Math.max(0, Math.min(camY, slackY));
 }
 
 // keep the grain count across a resize, re-packed flat
@@ -247,7 +270,7 @@ function depthOf() {
 
 function boulderRadius() {
   const want = BASE_R + boulderNo;
-  const room = Math.floor(Math.min(W * 0.30, (groundY - P * 20) * 0.46) / P);
+  const room = Math.floor(Math.min((LEDGE_X - BENCH_X) * 0.42, (groundY - P * 20) * 0.46) / P);
   return Math.max(6, Math.min(want, room));
 }
 
@@ -843,7 +866,7 @@ function restore() {
   if (s.coreLoose) {
     coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
-      : { x: W * 0.4, y: groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
+      : { x: worldW * 0.2, y: groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
   miners = s.miners || 0;
   haulers = s.haulers || 0;
@@ -1171,7 +1194,7 @@ function stepAir() {
 function drawAir() {
   ctx.fillStyle = '#d9d9d9';
   for (const m of AIR) {
-    ctx.fillRect(Math.round(m.x - camX * m.far), Math.round(m.y), m.size, m.size);
+    ctx.fillRect(Math.round(m.x - camX * m.far), Math.round(m.y - camY * m.far), m.size, m.size);
   }
   ctx.fillStyle = '#000';
 }
@@ -1182,7 +1205,7 @@ function drawCount() {
 
   // over the pit mouth, but kept on screen as you scroll along it
   const x = Math.max(camX + P * 3, Math.min(pit.x + P * 4, camX + W - P * 30));
-  const y = groundY - P * 3;
+  const y = Math.min(groundY - P * 3, camY + H - P * 3);
 
   // a grain of dust, then the count of it
   ctx.fillStyle = '#000';
@@ -1374,7 +1397,7 @@ function draw() {
   drawAir();
 
   ctx.save();
-  ctx.translate(-camX, 0);
+  ctx.translate(-camX, -camY);
   drawCoreBehind();
   ctx.fillStyle = '#000';
 
@@ -1470,7 +1493,7 @@ const nearBench = (x, y) => x > bench.x - P * 8 && x < bench.x + bench.w + P * 8
 function placeBoard() {
   boardEl.style.left = `${bench.x - camX}px`;
   boardEl.style.top = 'auto';
-  boardEl.style.bottom = `${H - bench.y + P * 3}px`;
+  boardEl.style.bottom = `${H - (bench.y - camY) + P * 3}px`;
 }
 
 function showBoard(open) {
@@ -1527,7 +1550,7 @@ function frame() { step(); draw(); hud(); requestAnimationFrame(frame); }
 // --- input ------------------------------------------------------------------
 function pos(e) {
   const r = canvas.getBoundingClientRect();
-  return { x: e.clientX - r.left + camX, y: e.clientY - r.top };
+  return { x: e.clientX - r.left + camX, y: e.clientY - r.top + camY };
 }
 
 canvas.addEventListener('pointerdown', e => {
@@ -1591,15 +1614,19 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
-function pan(dx) {
-  const was = camX;
-  camX = Math.max(0, Math.min(camX + dx, Math.max(0, worldW - W)));
-  if (camX !== was && boardOpen) placeBoard();
+function pan(dx, dy = 0) {
+  const wasX = camX, wasY = camY;
+  camX += dx;
+  camY += dy;
+  clampCam();
+  if ((camX !== wasX || camY !== wasY) && boardOpen) placeBoard();
 }
 
 canvas.addEventListener('wheel', e => {
   e.preventDefault();
-  pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
+  const step = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8;
+  if (e.shiftKey) pan(0, step);          // shift to look up and down the pit
+  else pan(step);
 }, { passive: false });
 
 boardEl.addEventListener('pointerleave', () => showBoard(false));
@@ -1607,6 +1634,8 @@ addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
+  if (e.key === 'ArrowDown') pan(0, P * 8);
+  if (e.key === 'ArrowUp') pan(0, -P * 8);
 });
 addEventListener('resize', resize);
 document.addEventListener('visibilitychange', persist);
@@ -1628,9 +1657,10 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ air: AIR.length, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
+focusGround();
 restore();
 syncWorkers();
 buildShop();
