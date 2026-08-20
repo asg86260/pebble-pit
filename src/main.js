@@ -48,6 +48,7 @@ let worldW = 0;           // the pit runs past the right of the window
 let worldH = 0;
 let camX = 0, camY = 0;   // how far the view has been scrolled over the world
 let zoom = 1;             // shrinks to fit a small window, never rearranges
+let dpr = 1;
 let viewW = 0, viewH = 0; // what the window covers, in world units
 let boulder = [];         // rows of ints: 0 empty, 1..n the layer a cell belongs to
 let grid = 46;            // current boulder grid width/height in cells
@@ -174,8 +175,14 @@ function settle(b, skip) {
 // The world is a fixed size and never rearranges: the window is only a view onto
 // it, and a small window scrolls rather than squashing everything together.
 function resize() {
-  W = canvas.width = innerWidth;
-  H = canvas.height = innerHeight;
+  // measure the box the canvas actually occupies, and back it with real device
+  // pixels, so the picture always covers the window and stays sharp
+  const box = canvas.getBoundingClientRect();
+  W = Math.max(320, Math.round(box.width) || innerWidth);
+  H = Math.max(240, Math.round(box.height) || innerHeight);
+  dpr = Math.min(2, devicePixelRatio || 1);
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
 
   // a small window shows the same scene, smaller: the shape of the place never
   // changes, it only gets further away
@@ -1209,6 +1216,7 @@ function stepAir() {
 }
 
 function drawAir() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = '#d9d9d9';
   for (const m of AIR) {
     ctx.fillRect(Math.round(m.x - camX * m.far), Math.round(m.y - camY * m.far), m.size, m.size);
@@ -1410,11 +1418,14 @@ function step() {
 }
 
 function draw() {
-  ctx.clearRect(0, 0, W, H);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = '#fff';                       // the page is painted, not assumed
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawAir();
 
   ctx.save();
-  ctx.setTransform(zoom, 0, 0, zoom, Math.round(-camX * zoom), Math.round(-camY * zoom));
+  const k = zoom * dpr;
+  ctx.setTransform(k, 0, 0, k, Math.round(-camX * k), Math.round(-camY * k));
   drawCoreBehind();
   ctx.fillStyle = '#000';
 
@@ -1658,6 +1669,11 @@ addEventListener('keydown', e => {
   if (e.key === 'ArrowUp') pan(0, -P * 8);
 });
 addEventListener('resize', resize);
+visualViewport?.addEventListener('resize', resize);
+setInterval(() => {
+  const box = canvas.getBoundingClientRect();
+  if (Math.round(box.width) !== W || Math.round(box.height) !== H) resize();
+}, 1000);
 document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);

@@ -5,7 +5,17 @@ html, body {
   font: 12px/1.4 ui-monospace, "Courier New", monospace;
   -webkit-user-select: none; user-select: none;
 }
-canvas { display: block; cursor: crosshair; touch-action: manipulation; }
+/* the canvas is the window, whatever happens to the script */
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #fff;
+  cursor: crosshair;
+  touch-action: manipulation;
+}
 /* the board that opens at the workbench */
 #board {
   position: fixed;
