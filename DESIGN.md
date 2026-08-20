@@ -79,8 +79,10 @@ The shop is a thing in the world, not a panel bolted to the corner: a bench on t
 left, opposite the pit. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
 upgrades is on screen while you are mining, which keeps the scene to rock, dust, crew and pit.
 
-The board itself is grouped by crew — you, haulers, miners — with the headcount beside each
-heading and dust costs plain, core costs marked ◆. Deliberately not an upgrade web.
+The board is grouped by crew — you, miners, haulers, drillers — with the headcount beside each
+heading. Every row is the same five columns, so the numbers line up down the page and can be
+scanned rather than read: name, current, arrow, next, cost. Dust costs are plain; core costs carry
+the core's own mark, a circle. Deliberately not an upgrade web.
 
 ## Workers
 
@@ -164,7 +166,8 @@ accrual. Achievement grids. Anything that asks the player to come back tomorrow.
 
 ## The goal
 
-One million dust in the hole. The count is painted in the world, standing over the pit mouth,
+One million dust in the hole. Cores are drawn beside the count as circles, one each, never
+described in words. The count is painted in the world, standing over the pit mouth,
 and it runs to each new value on an out-cubic ease — longer for a bigger jump, so a purchase
 reads as a withdrawal rather than a number blinking.
 

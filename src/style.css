@@ -29,7 +29,10 @@ canvas { display: block; cursor: crosshair; touch-action: manipulation; }
 #shop .sect:first-child { margin-top: 0; }
 
 #shop button {
-  display: flex; justify-content: space-between; gap: 20px;
+  display: grid;
+  grid-template-columns: 9em 2.8em 1.2em 5.6em 4.6em;
+  align-items: baseline;
+  gap: 0 6px;
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -42,7 +45,13 @@ canvas { display: block; cursor: crosshair; touch-action: manipulation; }
 }
 #shop button:hover:not(:disabled) { color: #fff; background: #000; }
 #shop button:disabled { opacity: .3; cursor: default; }
-#shop button .cost { opacity: .7; }
+#shop button .from, #shop button .to { opacity: .75; }
+#shop button .from { text-align: right; }
+#shop button .arrow { text-align: center; opacity: .4; }
+#shop button .cost { text-align: right; opacity: .7; }
+#shop button:hover:not(:disabled) .from,
+#shop button:hover:not(:disabled) .to,
+#shop button:hover:not(:disabled) .arrow,
 #shop button:hover:not(:disabled) .cost { opacity: 1; }
 
 #reset {

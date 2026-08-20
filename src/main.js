@@ -407,58 +407,44 @@ const pickCells = lvl => {
 const UPGRADES = [
   {
     key: 'carry',
-    label: () => `carry ${capacity()} -> ${capacity() + CAP_STEP}`,
+    name: 'carry',
+    from: () => capacity(),
+    to: () => capacity() + CAP_STEP,
     cost: () => Math.round(8 * Math.pow(1.35, carryLevel)),
     buy: () => carryLevel++,
     show: () => true
   },
   {
     key: 'auto',
-    label: () => 'hold to mine',
+    name: 'hold to mine',
     cost: () => 25,
     buy: () => { autoMine = true; },
     show: () => !autoMine
   },
   {
     key: 'speed',
-    label: () => `mine ${rateText(speedLevel)} -> ${rateText(speedLevel + 1)} px/s`,
+    name: 'swing',
+    unit: 'px/s',
+    from: () => rateText(speedLevel),
+    to: () => rateText(speedLevel + 1),
     cost: () => Math.round(20 * Math.pow(1.9, speedLevel)),
     buy: () => speedLevel++,
     show: () => mineMs() > MINE_FLOOR
   },
   {
     key: 'pick',
-    label: () => `pick ${pickCells(pickLevel)} -> ${pickCells(pickLevel + 1)} px`,
+    name: 'pick',
+    unit: 'px',
+    from: () => pickCells(pickLevel),
+    to: () => pickCells(pickLevel + 1),
     cost: () => 3 + pickLevel * 3,
     currency: 'core',
     buy: () => pickLevel++,
     show: () => seenCore
   },
   {
-    key: 'unlockdrillers',
-    label: () => 'first driller',
-    cost: () => 3,
-    currency: 'core',
-    buy: () => { drillersUnlocked = true; drillers++; syncWorkers(); },
-    show: () => seenCore && !drillersUnlocked
-  },
-  {
-    key: 'driller',
-    label: () => `hire driller (${drillers})`,
-    cost: () => Math.round(140 * Math.pow(1.6, Math.max(0, drillers - 1))),
-    buy: () => { drillers++; syncWorkers(); },
-    show: () => drillersUnlocked
-  },
-  {
-    key: 'drillspeed',
-    label: () => `driller ${num(drillRate())} -> ${num(drillRate(drillSpeedLevel + 1))} px/s`,
-    cost: () => Math.round(120 * Math.pow(1.7, drillSpeedLevel)),
-    buy: () => drillSpeedLevel++,
-    show: () => drillers > 0 && drillMs() > DRILL_FLOOR
-  },
-  {
     key: 'unlockminers',
-    label: () => 'first miner',
+    name: 'first miner',
     cost: () => 1,
     currency: 'core',
     buy: () => { minersUnlocked = true; miners++; syncWorkers(); },
@@ -466,21 +452,26 @@ const UPGRADES = [
   },
   {
     key: 'miner',
-    label: () => `hire miner (${miners})`,
+    name: 'miners',
+    from: () => miners,
+    to: () => miners + 1,
     cost: () => Math.round(60 * Math.pow(1.7, Math.max(0, miners - 1))),
     buy: () => { miners++; syncWorkers(); },
     show: () => minersUnlocked
   },
   {
     key: 'minerspeed',
-    label: () => `miner ${num(minerRate())} -> ${num(minerRate(minerSpeedLevel + 1))} px/s`,
+    name: 'miner swing',
+    unit: 'px/s',
+    from: () => num(minerRate()),
+    to: () => num(minerRate(minerSpeedLevel + 1)),
     cost: () => Math.round(70 * Math.pow(1.8, minerSpeedLevel)),
     buy: () => minerSpeedLevel++,
     show: () => miners > 0 && minerMs() > MINER_FLOOR
   },
   {
     key: 'unlockhaulers',
-    label: () => 'first hauler',
+    name: 'first hauler',
     cost: () => 2,
     currency: 'core',
     buy: () => { haulersUnlocked = true; haulers++; syncWorkers(); },
@@ -488,24 +479,58 @@ const UPGRADES = [
   },
   {
     key: 'hauler',
-    label: () => `hire hauler (${haulers})`,
+    name: 'haulers',
+    from: () => haulers,
+    to: () => haulers + 1,
     cost: () => Math.round(80 * Math.pow(1.7, Math.max(0, haulers - 1))),
     buy: () => { haulers++; syncWorkers(); },
     show: () => haulersUnlocked
   },
   {
     key: 'haulcarry',
-    label: () => `hauler load ${haulCap()} -> ${haulCap(haulCarryLevel + 1)}`,
+    name: 'hauler load',
+    from: () => haulCap(),
+    to: () => haulCap(haulCarryLevel + 1),
     cost: () => Math.round(50 * Math.pow(1.5, haulCarryLevel)),
     buy: () => haulCarryLevel++,
     show: () => haulers > 0
   },
   {
     key: 'haulpace',
-    label: () => `hauler pace ${num(haulSpeed() * 60)} -> ${num(haulSpeed(haulPaceLevel + 1) * 60)} px/s`,
+    name: 'hauler pace',
+    unit: 'px/s',
+    from: () => num(haulSpeed() * 60),
+    to: () => num(haulSpeed(haulPaceLevel + 1) * 60),
     cost: () => Math.round(60 * Math.pow(1.7, haulPaceLevel)),
     buy: () => haulPaceLevel++,
     show: () => haulers > 0
+  },
+  {
+    key: 'unlockdrillers',
+    name: 'first driller',
+    cost: () => 3,
+    currency: 'core',
+    buy: () => { drillersUnlocked = true; drillers++; syncWorkers(); },
+    show: () => seenCore && !drillersUnlocked
+  },
+  {
+    key: 'driller',
+    name: 'drillers',
+    from: () => drillers,
+    to: () => drillers + 1,
+    cost: () => Math.round(140 * Math.pow(1.6, Math.max(0, drillers - 1))),
+    buy: () => { drillers++; syncWorkers(); },
+    show: () => drillersUnlocked
+  },
+  {
+    key: 'drillspeed',
+    name: 'driller bite',
+    unit: 'px/s',
+    from: () => num(drillRate()),
+    to: () => num(drillRate(drillSpeedLevel + 1)),
+    cost: () => Math.round(120 * Math.pow(1.7, drillSpeedLevel)),
+    buy: () => drillSpeedLevel++,
+    show: () => drillers > 0 && drillMs() > DRILL_FLOOR
   }
 ];
 
@@ -608,7 +633,9 @@ function buildShop() {
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.key = u.key;
-      b.innerHTML = '<span class="what"></span><span class="cost"></span>';
+      b.innerHTML = '<span class="name"></span><span class="from"></span>' +
+                    '<span class="arrow"></span><span class="to"></span>' +
+                    '<span class="cost"></span>';
       b.addEventListener('click', () => buy(u));
       shopEl.appendChild(b);
     }
@@ -1156,9 +1183,13 @@ function drawCount() {
   const y = groundY - P * 3;
   ctx.fillText(text, x, y);
 
+  // cores are shown as the thing itself, one circle each, no wording
   if (seenCore) {
-    ctx.fillStyle = '#7a7a7a';
-    ctx.fillText(`${cores} core${cores === 1 ? '' : 's'}`, x, y - P * 3);
+    const r = 4, step = r * 2 + 4;
+    for (let i = 0; i < cores; i++) {
+      const row = Math.floor(i / 10);
+      drawCircle(x + r + (i % 10) * step, y - P * 3 - row * step, r);
+    }
   }
   ctx.fillStyle = '#000';
 }
@@ -1475,8 +1506,14 @@ function hud() {
     const u = UPGRADES.find(x => x.key === el.dataset.key);
     const cost = u.cost();
     const core = u.currency === 'core';
-    el.firstChild.textContent = u.label();
-    el.lastChild.textContent = core ? `◆ ${cost}` : String(cost);
+    const [name, from, arrow, to, price] = el.children;
+    const step = u.from ? `${u.from()}` : '';
+
+    name.textContent = u.name;
+    from.textContent = step;
+    arrow.textContent = step ? '→' : '';
+    to.textContent = step ? `${u.to()}${u.unit ? ' ' + u.unit : ''}` : '';
+    price.textContent = core ? `○ ${cost}` : String(cost);
     el.disabled = (core ? cores : stored) < cost;
   }
 }
