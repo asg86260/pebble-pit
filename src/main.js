@@ -175,12 +175,17 @@ function settle(b, skip) {
 // The world is a fixed size and never rearranges: the window is only a view onto
 // it, and a small window scrolls rather than squashing everything together.
 function resize() {
-  // measure the box the canvas actually occupies, and back it with real device
-  // pixels, so the picture always covers the window and stays sharp
-  const box = canvas.getBoundingClientRect();
-  W = Math.max(320, Math.round(box.width) || innerWidth);
-  H = Math.max(240, Math.round(box.height) || innerHeight);
+  // the canvas is told its size outright, in its own inline style and in device
+  // pixels, so it does not depend on the stylesheet or on measuring anything
+  W = Math.max(320, document.documentElement.clientWidth || innerWidth || 320);
+  H = Math.max(240, document.documentElement.clientHeight || innerHeight || 240);
   dpr = Math.min(2, devicePixelRatio || 1);
+
+  canvas.style.position = 'fixed';
+  canvas.style.left = '0';
+  canvas.style.top = '0';
+  canvas.style.width = `${W}px`;
+  canvas.style.height = `${H}px`;
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
 
@@ -226,6 +231,9 @@ function resize() {
 
   resizeGrid(floor);
   resizeGrid(pit);
+
+  console.log(`boulder: viewport ${W}x${H}, canvas ${canvas.width}x${canvas.height} ` +
+              `(css ${canvas.style.width} x ${canvas.style.height}), dpr ${dpr}, zoom ${zoom}`);
 }
 
 // put the ground where it reads best: about two thirds down the window
@@ -1669,11 +1677,12 @@ addEventListener('keydown', e => {
   if (e.key === 'ArrowUp') pan(0, -P * 8);
 });
 addEventListener('resize', resize);
+addEventListener('load', resize);
 visualViewport?.addEventListener('resize', resize);
 setInterval(() => {
-  const box = canvas.getBoundingClientRect();
-  if (Math.round(box.width) !== W || Math.round(box.height) !== H) resize();
-}, 1000);
+  const w = document.documentElement.clientWidth, h = document.documentElement.clientHeight;
+  if (w !== W || h !== H) resize();          // in case a resize event is missed
+}, 500);
 document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);
