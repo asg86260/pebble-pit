@@ -22,6 +22,10 @@ bun install
 bun run dev
 ```
 
+The dev server listens on every interface, so a phone on the same wifi can reach it: use the
+**Network** address Vite prints. The port is pinned to 5183 so that address stays the same,
+which means starting a second server needs an explicit port (`bun run dev --port 5184`).
+
 ## The code
 
 One canvas, twenty small modules, no framework. **ARCHITECTURE.md** says which file owns
