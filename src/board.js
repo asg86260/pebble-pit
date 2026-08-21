@@ -11,11 +11,25 @@ const boardEl = document.getElementById('board');
 export const nearBench = (x, y) => x > bench.x - P * 8 && x < bench.x + bench.w + P * 8 &&
                             y > bench.y - P * 8 && y < bench.y + bench.h + P * 4;
 
+// The board stands on the bench, but it is a real element on a real screen: on a
+// phone the bench can be near an edge, or there can be less room above it than
+// the board is tall. So it is put where the bench is and then pushed back inside
+// the window rather than being allowed to hang off it.
 export function placeBoard() {
-  boardEl.style.left = `${(bench.x - S.camX) * S.zoom}px`;
   boardEl.style.top = 'auto';
-  boardEl.style.bottom = `${S.H - (bench.y - S.camY) * S.zoom + P * 3}px`;
+  boardEl.style.left = '0px';                        // measure it unsqueezed first
+  const w = boardEl.offsetWidth, h = boardEl.offsetHeight;
+
+  const want = (bench.x - S.camX) * S.zoom;
+  boardEl.style.left = `${Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)))}px`;
+
+  const stands = S.H - (bench.y - S.camY) * S.zoom + P * 3;
+  boardEl.style.bottom = `${Math.round(Math.max(GAP, Math.min(stands, S.H - h - GAP)))}px`;
 }
+
+const GAP = 4;                             // never flush against the edge
+
+window.__placeBoard = placeBoard;          // dev: re-seat the board on demand
 
 export function showBoard(open) {
   if (open === S.boardOpen) return;

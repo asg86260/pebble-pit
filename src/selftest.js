@@ -81,6 +81,41 @@ const buy = async key => {
   return true;
 };
 
+
+// pretend to be a particular screen for the length of one check
+async function asScreen(w, h, dpr, fn) {
+  // devicePixelRatio is the window's own property, so deleting it would take it
+  // away for good: put the description back exactly as it was found
+  const el = document.documentElement;
+  const was = [
+    [window, 'devicePixelRatio', Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')],
+    [el, 'clientWidth', Object.getOwnPropertyDescriptor(el, 'clientWidth')],
+    [el, 'clientHeight', Object.getOwnPropertyDescriptor(el, 'clientHeight')]
+  ];
+  const set = (o, k, v) => Object.defineProperty(o, k, { value: v, configurable: true });
+  set(window, 'devicePixelRatio', dpr);
+  set(el, 'clientWidth', w);
+  set(el, 'clientHeight', h);
+  dispatchEvent(new Event('resize'));
+  await sleep(80);
+  try {
+    return await fn();
+  } finally {
+    for (const [o, k, d] of was) {
+      if (d) Object.defineProperty(o, k, d); else delete o[k];
+    }
+    dispatchEvent(new Event('resize'));
+    await sleep(80);
+  }
+}
+
+// a finger rather than a mouse
+const finger = (type, id, x, y) =>
+  canvas().dispatchEvent(new PointerEvent(type, {
+    clientX: x, clientY: y, pointerId: id, isPrimary: id === 1, pointerType: 'touch',
+    buttons: type === 'pointerup' ? 0 : 1, bubbles: true, cancelable: true
+  }));
+
 const TESTS = [
   ['canvas covers the viewport', async () => {
     const c = canvas();
@@ -242,8 +277,12 @@ const TESTS = [
          JSON.stringify(miners)),
       ok(miners.every(([x]) => x > s.rockX - s.rockW / 2 - 24 && x < s.rockX + s.rockW / 2 + 24),
          'they are all on the rock, not orbiting it', JSON.stringify(miners)),
-      ok(new Set(miners.map(([, y]) => y)).size > 1,
-         'they stand at different heights, following the crest')
+      ok(Math.max(...miners.map(([, y]) => y)) - Math.min(...miners.map(([, y]) => y)) <= 6 * 6,
+         'they stand level with each other, because they work a layer',
+         JSON.stringify(miners.map(([, y]) => y))),
+      ok(new Set(miners.map(([x]) => Math.round(x / 18))).size > 1,
+         'and spread out along it rather than stacking up',
+         JSON.stringify(miners.map(([x]) => Math.round(x))))
     ];
   }],
 
@@ -296,6 +335,114 @@ const TESTS = [
       ok(s.apronClear, 'the ground right beside the rock stays bare',
          `${s.apronDust} grains in the apron`)
     ];
+  }],
+
+  ['a cell is a whole number of device pixels', async () => {
+    const checks = [];
+    for (const [w, h, dpr] of [[2560, 1300, 1], [1440, 900, 2], [390, 844, 3], [412, 915, 2.6]]) {
+      await asScreen(w, h, dpr, () => {
+        const s = state();
+        const cell = s.cellDevicePx;
+        checks.push(ok(Math.abs(cell - Math.round(cell)) < 1e-6,
+          `${w}x${h} at ${dpr}x lands on whole device pixels`, `${cell} device px a cell`));
+      });
+    }
+    return checks;
+  }],
+
+  ['the whole works fits a phone', async () => {
+    const checks = [];
+    for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
+                                     [412, 915, 2.6, 'android'], [768, 1024, 2, 'tablet']]) {
+      await asScreen(w, h, dpr, () => {
+        const s = state();
+        const rockLeft = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
+        const lip = (s.pitX - s.camX) * s.zoom;
+        checks.push(ok(rockLeft >= 0 && lip < w,
+          `${name} shows the rock and the pit lip at once`,
+          `rock at ${Math.round(rockLeft)}, lip at ${Math.round(lip)} of ${w}`));
+      });
+    }
+    return checks;
+  }],
+
+  ['two fingers drag the view', async () => {
+    const before = state();
+    finger('pointerdown', 1, 300, 300);
+    finger('pointerdown', 2, 400, 300);
+    for (let i = 1; i <= 8; i++) {
+      finger('pointermove', 1, 300 - i * 12, 300);
+      finger('pointermove', 2, 400 - i * 12, 300);
+      await sleep(16);
+    }
+    finger('pointerup', 1, 204, 300);
+    finger('pointerup', 2, 304, 300);
+    await sleep(100);
+    const after = state();
+    return [
+      ok(after.camX > before.camX, 'the view moves with the fingers',
+         `${before.camX} -> ${after.camX}`),
+      ok(!after.dragging, 'and it is not left mid-sweep'),
+      ok(after.held === before.held, 'a pan does not sweep dust up',
+         `${before.held} -> ${after.held}`)
+    ];
+  }],
+
+  ['a tap opens the board, because there is no hovering', async () => {
+    // start from closed, whatever an earlier check left behind
+    const away = state();
+    canvas().dispatchEvent(new PointerEvent('pointermove', {
+      clientX: 4, clientY: 4, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
+    await sleep(150);
+    const startedClosed = board().hidden;
+
+    const s = state();
+    const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
+
+    const [bx, by] = at(s.benchX + 20, s.groundY - 24);
+    finger('pointerdown', 9, bx, by); await sleep(40); finger('pointerup', 9, bx, by);
+    await sleep(150);
+    const opened = !board().hidden;
+
+    const [ax, ay] = at(s.benchX + 420, s.groundY - 200);
+    finger('pointerdown', 9, ax, ay); await sleep(40); finger('pointerup', 9, ax, ay);
+    await sleep(150);
+    const closed = board().hidden;
+
+    return [
+      ok(startedClosed, 'the board is out of the way to begin with'),
+      ok(opened, 'a tap on the bench opens it'),
+      ok(closed, 'a tap away puts it back')
+    ];
+  }],
+
+  ['the board stays on screen, however small it is', async () => {
+    window.__crew(4, 3, 2);                  // every row showing: the tallest it gets
+    await sleep(250);
+    const checks = [];
+    for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
+                                     [320, 568, 2, 'a small old phone']]) {
+      await asScreen(w, h, dpr, async () => {
+        const el = board();
+        el.hidden = false;
+        window.__placeBoard();
+        await sleep(60);
+        // the window is not really this size, so read what placeBoard wrote
+        // rather than where the browser drew it
+        const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);
+        // the board's own size comes from CSS, which follows the real window and
+        // not the pretend one, so only require it to be tucked in where it fits
+        const bw = el.offsetWidth, bh = el.offsetHeight;
+        const room = bw <= w && bh <= h;
+        checks.push(ok(left >= 0 && bottom >= 0 &&
+                       (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
+          `${name} keeps the whole board inside the window`,
+          `${Math.round(left)}+${bw} wide, ${Math.round(bottom)}+${bh} tall, in ${w}x${h}`));
+        el.hidden = true;
+      });
+    }
+    window.__crew(0, 0, 0);
+    return checks;
   }],
 
   ['mining leaves dust on the ground', async () => {

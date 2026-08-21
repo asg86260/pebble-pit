@@ -26,6 +26,7 @@ canvas {
 #board {
   position: fixed;
   z-index: 10;                 /* the canvas is fixed too, and comes after it */
+  box-sizing: border-box;      /* so a max-height is the height, padding and all */
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 12px;
   background: #fff;
@@ -99,3 +100,29 @@ canvas {
 }
 #reset:hover { opacity: 1; }
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
+
+/* On a phone the board has to fit the screen and be big enough to hit with a
+   thumb, so the columns tighten and the rows grow. It is opened by a tap on the
+   bench rather than by hovering, because there is no hovering.
+   A phone held sideways is a wide, short window, so short counts as small too. */
+@media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
+  #board {
+    padding: 8px 9px;
+    max-width: calc(100vw - 16px);
+    /* in landscape there may be less room above the bench than the board wants:
+       it scrolls inside itself rather than running off the top */
+    max-height: calc(100vh - 16px);
+    overflow-y: auto;
+    letter-spacing: .06em;
+  }
+  #shop { gap: 1px; }
+  #shop button {
+    grid-template-columns: 7.4em 2.4em 1em 4.4em 3.8em;
+    gap: 0 4px;
+    padding: 6px 3px;                /* a thumb, not a cursor */
+    letter-spacing: .06em;
+  }
+  #shop button:hover:not(:disabled) { color: #000; background: none; }
+  #shop button:active:not(:disabled) { color: #fff; background: #000; }
+  #reset { padding: 6px 8px; }
+}

@@ -17,6 +17,27 @@ const canvas = document.getElementById('c');
 const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
+// Every finger currently down, so a second one can mean something different
+// from the first. A mouse only ever has one, so none of this gets in its way.
+const down = new Map();
+let panning = null;                        // where the fingers were last frame
+const TAP_SLOP = 14;                       // pixels a tap may wander and still be a tap
+const TAP_TIME = 500;
+
+const middle = () => {
+  let x = 0, y = 0;
+  for (const p of down.values()) { x += p.x; y += p.y; }
+  return { x: x / down.size, y: y / down.size };
+};
+
+// a second finger means the player wants to look around, not dig: whatever the
+// first one had started is dropped, and the two of them move the view together
+function startPan() {
+  S.mining = false;
+  S.dragging = false;                      // the load stays on the cursor, unthrown
+  panning = middle();
+}
+
 export function pos(e) {
   const r = canvas.getBoundingClientRect();
   return {
@@ -26,6 +47,11 @@ export function pos(e) {
 }
 
 canvas.addEventListener('pointerdown', e => {
+  down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
+                          at: performance.now(), kind: e.pointerType });
+  if (down.size === 2) { startPan(); return; }
+  if (down.size > 2) return;
+
   const p = pos(e);
   S.mouse = p;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
@@ -43,14 +69,39 @@ canvas.addEventListener('pointerdown', e => {
 });
 
 canvas.addEventListener('pointermove', e => {
+  const held = down.get(e.pointerId);
+  if (held) { held.x = e.clientX; held.y = e.clientY; }
+
+  if (panning && down.size >= 2) {           // two fingers: drag the view along
+    const now = middle();
+    pan((panning.x - now.x) / S.zoom);
+    panning = now;
+    return;
+  }
+
   S.mouse = pos(e);
   track(S.mouse.x, S.mouse.y);
-  showBoard(nearBench(S.mouse.x, S.mouse.y));
+  // there is no hovering on a touchscreen, so the board opens on a tap instead
+  if (e.pointerType !== 'touch') showBoard(nearBench(S.mouse.x, S.mouse.y));
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
 
 export function endDrag(e) {
+  const held = down.get(e.pointerId);
+  down.delete(e.pointerId);
+  if (down.size < 2) panning = null;
+
+  // A tap on a touchscreen is what a hover is on a desk: near the bench it opens
+  // the board, anywhere else it puts it away.
+  if (held && held.kind === 'touch' && !panning &&
+      Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
+      performance.now() - held.at < TAP_TIME) {
+    const p = pos(e);
+    if (nearBench(p.x, p.y)) showBoard(!S.boardOpen);
+    else if (S.boardOpen) showBoard(false);
+  }
+
   S.mining = false;
   if (!S.dragging) return;
   S.dragging = false;
@@ -61,6 +112,8 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 addEventListener('pointerup', endDrag);          // catch releases outside the canvas
 addEventListener('blur', () => {
+  down.clear();
+  panning = null;
   S.mining = false;
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });

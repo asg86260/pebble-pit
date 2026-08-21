@@ -7,7 +7,7 @@
 
 import {
   P, SKY, TO_BENCH, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS
 } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 
@@ -45,7 +45,11 @@ export function resize(after) {
   // pixels, so it does not depend on the stylesheet or on measuring anything
   S.W = Math.max(320, document.documentElement.clientWidth || innerWidth || 320);
   S.H = Math.max(240, document.documentElement.clientHeight || innerHeight || 240);
-  S.dpr = Math.min(2, devicePixelRatio || 1);
+  // Draw at the screen's real resolution, not a capped one: a phone reports 3
+  // and looked soft at 2. Back off only if the backing store would get silly --
+  // fill rate is what costs, and that is what the budget is counted in.
+  const want = Math.max(1, devicePixelRatio || 1);
+  S.dpr = Math.max(1, Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H))));
 
   canvas.style.position = 'fixed';
   canvas.style.left = '0';
@@ -56,12 +60,16 @@ export function resize(after) {
   canvas.width = Math.round(S.W * S.dpr);
   canvas.height = Math.round(S.H * S.dpr);
 
-  // only a window too small for the pit shrinks the picture, and then in whole
-  // pixels per cell: fractional scaling leaves hairline seams between them
+  // Only a window too small for the works shrinks the picture. A cell is always
+  // a whole number of *device* pixels -- that is what keeps the hairline seams
+  // out, and it is a finer ladder than whole screen pixels: at three device
+  // pixels to one screen pixel there are three times as many rungs, so a phone
+  // can settle on one that fits the whole works on instead of clamping short.
   const needH = ROCK_SKY + PIT_H + FLOOR_MARGIN + P * 4;
   const needW = TO_LEDGE + ROCK_SKY + P * 20;
   const raw = Math.min(1, S.H / needH, S.W / needW);
-  S.zoom = Math.max(2, Math.floor(P * raw)) / P;
+  const cell = Math.max(1, Math.floor(P * raw * S.dpr));   // device pixels per cell
+  S.zoom = cell / (P * S.dpr);
   S.viewW = S.W / S.zoom;
   S.viewH = S.H / S.zoom;
 

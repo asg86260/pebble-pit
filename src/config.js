@@ -33,6 +33,9 @@ export const PIT_W = 3624;       // and this wide
 export const PIT_GRAINS = [P];
 export const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
+// how many device pixels we are willing to fill a frame, before backing the
+// resolution off. A phone at three to one is about three million
+export const DEVICE_PIXELS = 9e6;
 export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
 // pales as you dig through it; an empty cell is the white page showing through.

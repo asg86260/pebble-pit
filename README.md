@@ -26,6 +26,12 @@ The dev server listens on every interface, so a phone on the same wifi can reach
 **Network** address Vite prints. The port is pinned to 5183 so that address stays the same,
 which means starting a second server needs an explicit port (`bun run dev --port 5184`).
 
+On a phone: a tap on the rock mines it, a drag sweeps dust and flicks it, **two fingers drag
+the view**, and a **tap on the bench** opens the shop — there is no hovering, so hovering
+cannot be how it opens. It draws at the screen's real resolution rather than a capped one,
+and a cell is always a whole number of device pixels, which is both what keeps the seams out
+and what lets a narrow screen find a scale that fits the whole works on.
+
 ## The code
 
 One canvas, twenty small modules, no framework. **ARCHITECTURE.md** says which file owns
