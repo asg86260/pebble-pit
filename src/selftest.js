@@ -264,13 +264,13 @@ const TESTS = [
   }],
 
   ['the crew stand on the rock and work it down', async () => {
-    window.__crew(5, 0, 0);
+    window.__crew(5, 0);
     await sleep(1500);
     const s = state();
     const miners = s.workerPos.filter(p => p[0] === 'm')
                               .map(p => p.split(':')[1].split(',').map(Number));
     const foot = s.rockFoot;
-    window.__crew(0, 0, 0);                    // put them back on the shelf
+    window.__crew(0, 0);                    // put them back on the shelf
     return [
       ok(miners.length === 5, 'five miners are out', `${miners.length}`),
       ok(miners.every(([, y]) => y <= foot), 'nobody is below the ground',
@@ -289,7 +289,7 @@ const TESTS = [
   ['a worker can reach the bank behind the rock', async () => {
     // no miners, so nothing new lands while we watch, and only one heap on the
     // ground: the one on the far side of the hill
-    window.__crew(0, 1, 0);
+    window.__crew(0, 1);
     for (let i = 0; i < 6; i++) await buy('haulpace');   // so it walks at a fair clip
     window.__clearFloor();                     // so the only dust is the heap we make
     await sleep(300);
@@ -309,7 +309,7 @@ const TESTS = [
       if (state().dustLeftOfRock < before.dustLeftOfRock) break;
     }
     const after = state();
-    window.__crew(0, 0, 0);                    // leave the payroll as we found it
+    window.__crew(0, 0);                    // leave the payroll as we found it
     return [
       ok(before.dustLeftOfRock > 0, 'dust is heaped behind the hill to start with',
          `${before.dustLeftOfRock}`),
@@ -321,10 +321,10 @@ const TESTS = [
   }],
 
   ['spoil is aimed, and lands clear of the rock', async () => {
-    window.__crew(6, 0, 0);
+    window.__crew(6, 0);
     await sleep(5000);
     const s = state();
-    window.__crew(0, 0, 0);
+    window.__crew(0, 0);
     const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
     return [
       ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
@@ -417,7 +417,7 @@ const TESTS = [
   }],
 
   ['the board stays on screen, however small it is', async () => {
-    window.__crew(4, 3, 2);                  // every row showing: the tallest it gets
+    window.__crew(4, 3);                     // every row showing: the tallest it gets
     await sleep(250);
     const checks = [];
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
@@ -441,7 +441,7 @@ const TESTS = [
         el.hidden = true;
       });
     }
-    window.__crew(0, 0, 0);
+    window.__crew(0, 0);
     return checks;
   }],
 

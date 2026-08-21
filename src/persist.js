@@ -157,9 +157,6 @@ export function persist() {
     coreLoose: S.heldCore || !!S.coreItem,
     miners: S.miners,
     haulers: S.haulers,
-    drillers: S.drillers,
-    drillSpeedLevel: S.drillSpeedLevel,
-    drillersUnlocked: S.drillersUnlocked,
     minerSpeedLevel: S.minerSpeedLevel,
     haulCarryLevel: S.haulCarryLevel,
     haulPaceLevel: S.haulPaceLevel,
@@ -202,9 +199,6 @@ export function restore() {
     S.coreItem = null;
     S.miners = 0;
     S.haulers = 0;
-    S.drillers = 0;
-    S.drillSpeedLevel = 0;
-    S.drillersUnlocked = false;
     S.minerSpeedLevel = 0;
     S.haulCarryLevel = 0;
     S.haulPaceLevel = 0;
@@ -228,9 +222,6 @@ export function restore() {
   }
   S.miners = s.miners || 0;
   S.haulers = s.haulers || 0;
-  S.drillers = s.drillers || 0;
-  S.drillSpeedLevel = s.drillSpeedLevel || 0;
-  S.drillersUnlocked = !!s.drillersUnlocked;
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
   S.haulCarryLevel = s.haulCarryLevel || 0;
   S.haulPaceLevel = s.haulPaceLevel || 0;
@@ -260,9 +251,6 @@ export function reset() {
   S.heldCore = false;
   S.miners = 0;
   S.haulers = 0;
-  S.drillers = 0;
-  S.drillSpeedLevel = 0;
-  S.drillersUnlocked = false;
   S.minerSpeedLevel = 0;
   S.haulCarryLevel = 0;
   S.haulPaceLevel = 0;

@@ -64,7 +64,6 @@ export const S = {
   workers: [],            // little squares that mine and ferry dust
   miners: 0, minersUnlocked: false, minerSpeedLevel: 0,
   haulers: 0, haulersUnlocked: false, haulCarryLevel: 0, haulPaceLevel: 0,
-  drillers: 0, drillersUnlocked: false, drillSpeedLevel: 0,
 
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },

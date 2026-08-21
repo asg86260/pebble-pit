@@ -116,13 +116,6 @@ export function drawWorkers() {
       ctx.fillStyle = '#fff';
       ctx.fillRect(Math.round(w.x) + P, Math.round(w.y) + P, P, P);    // hollow centre
       ctx.fillStyle = '#000';
-    } else if (w.type === 'driller') {
-      const x = Math.round(w.x), y = Math.round(w.y);
-      ctx.fillRect(x, y, WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + P, y, P, P);                                     // a bite out of it
-      ctx.fillRect(x + P, y + P * 2, P, P);
-      ctx.fillStyle = '#000';
     } else {
       const y = standOn(S.groundY);
       ctx.strokeStyle = '#000';

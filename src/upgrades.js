@@ -7,7 +7,7 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  DRILL_BASE, DRILL_FLOOR, HAUL_MS, HAUL_BASE
+  HAUL_MS, HAUL_BASE
 } from './config.js';
 import { S } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
@@ -24,15 +24,12 @@ export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
 
 const mineGap = swing(MINE_BASE, MINE_FLOOR, 0.8);
 const minerGap = swing(MINER_BASE, MINER_FLOOR, 0.82);
-const drillGap = swing(DRILL_BASE, DRILL_FLOOR, 0.82);
 const scoopGap = swing(HAUL_MS, 30, 0.85);
 
 export const mineMs = (lvl = S.speedLevel) => mineGap(lvl);
 export const mineRate = (lvl = S.speedLevel) => perSecond(mineGap)(lvl);
 export const minerMs = (lvl = S.minerSpeedLevel) => minerGap(lvl);
 export const minerRate = (lvl = S.minerSpeedLevel) => perSecond(minerGap)(lvl);
-export const drillMs = (lvl = S.drillSpeedLevel) => drillGap(lvl);
-export const drillRate = (lvl = S.drillSpeedLevel) => perSecond(drillGap)(lvl);
 export const haulCap = (lvl = S.haulCarryLevel) => 1 + lvl;
 export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
 export const scoopMs = (lvl = S.haulPaceLevel) => scoopGap(lvl);
@@ -81,10 +78,6 @@ const MINERS = crew({
 const WORKERS = crew({
   key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
   cores: 2, base: 80, mult: 1.7, count: 'haulers', unlocked: 'haulersUnlocked'
-});
-const DRILLERS = crew({
-  key: 'driller', unlockKey: 'unlockdrillers', one: 'first driller', many: 'drillers',
-  cores: 3, base: 140, mult: 1.6, count: 'drillers', unlocked: 'drillersUnlocked'
 });
 
 export const UPGRADES = [
@@ -155,17 +148,6 @@ export const UPGRADES = [
     cost: () => Math.round(60 * Math.pow(1.7, S.haulPaceLevel)),
     buy: () => S.haulPaceLevel++,
     show: () => S.haulers > 0
-  },
-  ...DRILLERS,
-  {
-    key: 'drillspeed',
-    name: 'driller bite',
-    unit: 'px/s',
-    from: () => num(drillRate()),
-    to: () => num(drillRate(S.drillSpeedLevel + 1)),
-    cost: () => Math.round(120 * Math.pow(1.7, S.drillSpeedLevel)),
-    buy: () => S.drillSpeedLevel++,
-    show: () => S.drillers > 0 && drillMs() > DRILL_FLOOR
   }
 ];
 
@@ -174,8 +156,7 @@ export const UPGRADES = [
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
-  { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
-  { title: 'drillers', keys: ['unlockdrillers', 'driller', 'drillspeed'] }
+  { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] }
 ];
 
 // Buying is the same shape whatever the row: check you can, take the price out
