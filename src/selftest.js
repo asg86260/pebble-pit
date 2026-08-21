@@ -447,6 +447,8 @@ const TESTS = [
          `${stalled.pitDust - before} grains in`),
       ok(stalled.rock === rockThen, 'the crew down tools instead',
          `${rockThen} -> ${stalled.rock} of rock`),
+      ok(full.dustAtCave === 0, 'and none of it is heaped over the mouth of the cave',
+         `${full.dustAtCave} grains out there`),
       ok(!freed.yardFull, 'clearing the ground puts them back to work'),
       ok(working.rock < rockFreed, 'and the rock starts coming off again',
          `${rockFreed} -> ${working.rock}`)

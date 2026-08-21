@@ -442,15 +442,19 @@ cells deep, and a full yard sent the rest rolling in rather than piling up mid-a
 they banked the whole yard for free and left the haulers with nothing to do, which is the one
 thing the ground must never do.
 
-So the lip of the pit is the second **cliff the sand may not lean on**, the same as the rock's
-apron: a bank may only rise as it gets away from it, and beside the ledge it lies as a thin
-scatter that cannot topple. Throwing dust over the edge is still a real tactic — a flick sends it
-through the air, and anything that crosses the mouth falls in.
+**The yard is the ground the dust may use**: from the mouth of the cave across to the lip of the
+pit, with the rock's apron as the hole in the middle of it. Past either end are places a bank
+would bury rather than fill — the shaft, the beds out beyond it, the strip past the pit's far wall
+— and dust that got there is dust nobody can pick up. Both ends are **cliffs the sand may not lean
+on**, the same as the apron: a bank may only rise as it gets away from them, so it tapers to a thin
+scatter at the cave and at the ledge, where it cannot topple in. Throwing dust over the edge is
+still a real tactic — a flick sends it through the air, and anything that crosses the mouth falls in.
 
-The yard heaped to the brim holds about **36,800 grains**. A little short of that the **crew down
-tools** and stand where they are until the ground has been carried away. That is the shape of the
-choice the job rows ask: another body on the rock is more dust on the ground, and somebody still
-has to move it.
+Heaped to the brim the yard holds about **10,100 grains**, which is the slope of the banks and the
+width of the yard, measured rather than picked. A little short of that the **crew down tools** and
+stand where they are until the ground has been carried away. Two rocks' worth of spoil lying about
+and everybody stops, which is the shape of the choice the job rows ask: another body on the rock
+is more dust on the ground, and somebody still has to move it.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

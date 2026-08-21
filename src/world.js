@@ -28,7 +28,14 @@ export const rockColAt = x => Math.max(0, Math.min(S.gw - 1, Math.floor((x - roc
 // the rock keeps a clear apron around its foot, so the banks stand off it rather
 // than heaping up its flanks and blurring where the rock ends
 export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() + S.gw * P + ROCK_CLEAR;
-export const blocked = c => overPitMouth(floor.x + c * P) || overApron(floor.x + c * P);
+// The yard is the ground the dust is allowed to use: from the mouth of the cave
+// across to the lip of the pit. Everything past either end is somewhere a bank
+// would bury rather than fill -- the shaft, the beds out beyond it, the strip of
+// ground past the pit's far wall -- and dust that got there is dust nobody can
+// pick up. The rock's apron is the hole in the middle of it.
+export const yardLeft = () => cave.x + cave.w;
+export const outsideYard = x => x + P <= yardLeft() || x >= pit.x;
+export const blocked = c => outsideYard(floor.x + c * P) || overApron(floor.x + c * P);
 
 // How far past the apron a column is, in cells, or -1 for one inside it.
 export const pastApron = x => {
@@ -37,18 +44,18 @@ export const pastApron = x => {
 };
 
 // How high the ground may stand in a column. There are two cliffs in this yard
-// that the sand cannot slump over: the rock's bare apron, and the lip of the
-// pit. A bank beside either of them would stand up as a sheer wall -- and a bank
+// that the sand cannot slump over: the rock's bare apron, and either end of the
+// yard. A bank beside any of them would stand up as a sheer wall -- and a bank
 // that reached the lip would tip itself in, four cells at a time, and bank the
 // whole yard for free with nobody carrying anything. So a bank may only rise as
-// it gets away from both, and it lies as a thin scatter against the ledge.
-// Between the two there is as much room as the slope allows.
+// it gets away from all three, and it lies as a thin scatter against the ends.
+// Between them there is as much room as the slope allows.
 export const bankCeiling = c => {
   const x = floor.x + c * P;
   const d = pastApron(x);
   if (d < 0) return 0;
-  const toLip = Math.max(0, (pit.x - (x + P)) / P);        // cells short of the ledge
-  return Math.min(d + 1, toLip) * BANK_SLOPE;
+  const toEnd = Math.min((x + P - yardLeft()) / P, (pit.x - (x + P)) / P);
+  return Math.min(d + 1, Math.max(0, toEnd)) * BANK_SLOPE;
 };
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it
