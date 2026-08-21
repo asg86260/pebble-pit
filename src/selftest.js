@@ -15,6 +15,7 @@ function ok(cond, what, detail = '') {
 const WORKER = 18;                             // a worker square, for tolerances
 const canvas = () => document.getElementById('c');
 const board = () => document.getElementById('board');
+const panel = () => document.getElementById('panel');
 const shop = () => document.getElementById('shop');
 
 const point = (type, x, y, buttons = 1) =>
@@ -916,8 +917,9 @@ const TESTS = [
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
                                      [320, 568, 2, 'a small old phone']]) {
       await asScreen(w, h, dpr, async () => {
-        const el = board();
+        const el = panel();
         el.hidden = false;
+        board().hidden = false;
         window.__placeBoard();
         await sleep(60);
         // the window is not really this size, so read what placeBoard wrote
@@ -1271,8 +1273,11 @@ const TESTS = [
     const checks = [];
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape']]) {
       await asScreen(w, h, dpr, async () => {
-        const el = document.getElementById('lab');
+        // the geometry is the one container's; the lab is a page inside it
+        const el = panel();
         el.hidden = false;
+        document.getElementById('lab').hidden = false;
+        document.getElementById('board').hidden = true;
         window.__placeBoard();
         await sleep(60);
         const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);

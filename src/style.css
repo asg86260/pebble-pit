@@ -34,6 +34,14 @@ canvas {
   letter-spacing: .1em;
   text-transform: uppercase;
   white-space: nowrap;
+  /* One menu for both stations. It fades up where you are standing and, when
+     you walk from the bench to the lab, walks along with you -- but only then:
+     `sliding` is on for the length of the walk and off the rest of the time,
+     because it is re-seated every frame and a transition on `left` would put it
+     a fifth of a second behind the yard whenever you scroll. */
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .13s ease, transform .13s ease;
 }
 .panel[hidden] { display: none; }
 
@@ -248,3 +256,7 @@ canvas {
 #dev button:hover { color: #fff; background: #000; }
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: #000; }
+
+.panel.open { opacity: 1; transform: translateY(0); }
+.panel.sliding { transition: opacity .13s ease, transform .13s ease, left .22s ease, bottom .22s ease; }
+.panel .page[hidden] { display: none; }

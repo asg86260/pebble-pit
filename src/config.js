@@ -188,7 +188,13 @@ export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 // what an upgrade shortens, and what makes sending somebody in a decision.
 export const QUARRY_W = 108;       // the mouth, in world pixels
 export const QUARRY_H = 78;
-export let QUARRY_BASE = 11000;  // a trip at pace 0
+// How often a quarrier swings, as opposed to how often the face gives anything
+// up. They were the same number, so at pace 0 a worker hit the rock once every
+// eleven seconds and stood there the rest of the time. A quarry should look
+// busy whether or not it is being productive.
+export const QUARRY_SWING = 620;
+export const QUARRY_SHUFFLE = 0.35;   // and how fast it works along the face
+export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 

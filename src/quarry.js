@@ -8,7 +8,8 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, SHARD_CELL, someFind } from './config.js';
+import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
+         SHARD_CELL, someFind } from './config.js';
 import { S, quarry } from './state.js';
 import { standOn } from './world.js';
 import { mult } from './lab.js';
@@ -28,7 +29,9 @@ export function newQuarrier() {
     type: 'quarrier',
     goal: 'to',                            // to the rim, then down, then work
     next: 0,
+    swingAt: 0,
     lunge: 0,
+    dir: Math.random() < 0.5 ? -1 : 1,
     seat: 0,                               // where along the floor it stands
     x: quarryFace(),
     y: 0,
@@ -39,6 +42,12 @@ export function newQuarrier() {
 // The floor of the cut, and a spot on it to stand. They space themselves out
 // along it rather than standing in each other, the way the crew on the rock do.
 export const quarryFloor = () => S.groundY + quarry.h;
+
+// somebody already working the stretch this one is about to walk into
+function elbowRoom(w, x) {
+  return S.workers.some(o => o !== w && o.type === 'quarrier' && o.goal === 'work' &&
+                             (o.x - w.x) * w.dir > 0 && Math.abs(o.x - x) < WORKER * 1.3);
+}
 
 function seatX(w) {
   const n = Math.max(1, S.quarriers);
@@ -77,13 +86,28 @@ export function stepQuarrier(w, now) {
   // off and goes up over the rim. Nobody knocks another one loose while the
   // pile outside is full: there would be nowhere to put it.
   w.y = quarryFloor() - WORKER;
-  const to = w.seat || seatX(w);
-  w.x += Math.sign(to - w.x) * Math.min(QUARRY_WALK, Math.abs(to - w.x));
   w.lunge *= 0.82;
   if (S.pileFull.quarry) { w.next = now + quarryMs(); return; }
+
+  // It works along the face rather than standing on one spot: back and forth
+  // between the walls, turning at the ends and before walking into a mate.
+  const lo = quarry.x + P, hi = quarry.x + quarry.w - P - WORKER;
+  const step = w.x + w.dir * QUARRY_SHUFFLE;
+  if (step < lo || step > hi || elbowRoom(w, step)) w.dir = -w.dir;
+  else w.x = step;
+
+  // and it swings on its own rhythm, which is nothing to do with how often the
+  // face gives anything up: a quarry should look busy whether or not it is
+  // being productive, the same as the crew on the rock do.
+  if (now >= w.swingAt) {
+    w.lunge = 1;
+    w.swingAt = now + QUARRY_SWING * (0.7 + Math.random() * 0.6);
+  }
+
   if (now >= w.next) {
     if (w.next) tossOut(w.x + WORKER / 2, w.y + WORKER);
     w.lunge = 1;
+    w.swingAt = now + QUARRY_SWING;
     w.next = now + quarryMs() * (0.85 + Math.random() * 0.3);   // never quite in time
   }
 }

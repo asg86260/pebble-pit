@@ -9,9 +9,10 @@ import { refresh, refreshStats } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
-const boardEl = document.getElementById('board');
 const labShopEl = document.getElementById('labshop');
-const labEl = document.getElementById('lab');
+const panelEl = document.getElementById('panel');
+const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab') };
+const standAt = { bench, lab };
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -39,13 +40,12 @@ function place(el, at) {
 const GAP = 4;                             // never flush against the edge
 
 export function placeBoard() {
-  if (S.boardOpen) place(boardEl, bench);
-  if (S.labBoardOpen) place(labEl, lab);
+  if (at) place(panelEl, standAt[at]);
 }
 
 // dev: seat both boards wherever they belong, open or not, so a check can look
 // at where they would go without going through the whole opening dance
-window.__placeBoard = () => { place(boardEl, bench); place(labEl, lab); };
+window.__placeBoard = () => place(panelEl, standAt[at] || bench);
 
 // The one bit of writing in the yard. Everything else here is a mark you learn,
 // but a station that has stopped needs to say why in words the first time, and a
@@ -66,19 +66,55 @@ export function showTip(text, at) {
   tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(y, S.H - h - GAP)))}px`;
 }
 
-export function showBoard(open) {
-  if (open === S.boardOpen) return;
-  S.boardOpen = open;
-  boardEl.hidden = !open;
-  if (open) { markSectionsSeen(); place(boardEl, bench); }
+// One menu for both stations. It is a thing standing in the yard rather than two
+// things blinking on and off: it fades up where you are, and when you walk from
+// the bench to the lab it walks with you.
+//
+// The slide is only switched on while it is actually moving between stations.
+// The menu is re-seated every frame -- it has to be, or scrolling would leave it
+// behind -- and a transition on `left` would turn every one of those into a
+// two-hundred-millisecond lag behind the yard.
+let at = null;
+let slide = 0;
+let closing = 0;
+
+export function showPanel(want) {
+  if (want === at) return;
+  const wasAt = at;
+  at = want;
+  S.boardOpen = want === 'bench';
+  S.labBoardOpen = want === 'lab';
+
+  if (!want) {                                   // fade out where it stands
+    panelEl.classList.remove('open');
+    clearTimeout(closing);
+    closing = setTimeout(() => {
+      if (at) return;                            // opened again on the way out
+      panelEl.hidden = true;
+      for (const k of Object.keys(pages)) pages[k].hidden = true;
+    }, 140);
+    return;
+  }
+
+  clearTimeout(closing);
+  for (const k of Object.keys(pages)) pages[k].hidden = k !== want;
+  // opening the bench reads every heading on it, the same as it always did
+  if (want === 'bench') markSectionsSeen();
+  if (want === 'lab') refreshStats();
+  panelEl.hidden = false;
+
+  if (wasAt) {                                   // walking from one to the other
+    panelEl.classList.add('sliding');
+    clearTimeout(slide);
+    slide = setTimeout(() => panelEl.classList.remove('sliding'), 240);
+  }
+  place(panelEl, standAt[want]);
+  requestAnimationFrame(() => panelEl.classList.add('open'));
 }
 
-export function showLab(open) {
-  if (open === S.labBoardOpen) return;
-  S.labBoardOpen = open;
-  labEl.hidden = !open;
-  if (open) { refreshStats(); place(labEl, lab); }
-}
+// what the rest of the game still asks for, in the words it already used
+export const showBoard = open => showPanel(open ? 'bench' : at === 'bench' ? null : at);
+export const showLab = open => showPanel(open ? 'lab' : at === 'lab' ? null : at);
 
 export const fmt = n => n.toLocaleString('en-US');
 

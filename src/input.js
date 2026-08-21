@@ -10,14 +10,13 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { overMeteor, knockMeteor } from './meteor.js';
 import { sweep, release, track } from './hands.js';
-import { nearBench, nearLab, showBoard, showLab, placeBoard, showTip } from './board.js';
+import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt } from './render.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
 import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
-const boardEl = document.getElementById('board');
 const resetEl = document.getElementById('reset');
 
 // Every finger currently down, so a second one can mean something different
@@ -90,9 +89,9 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
-    showBoard(nearBench(S.mouse.x, S.mouse.y));
-    askedAbout(S.mouse.x, S.mouse.y);
-    showLab(nearLab(S.mouse.x, S.mouse.y));
+    // one menu: whichever station the cursor is standing at, or none
+    showPanel(nearLab(S.mouse.x, S.mouse.y) ? 'lab'
+            : nearBench(S.mouse.x, S.mouse.y) ? 'bench' : null);
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
@@ -111,9 +110,9 @@ export function endDrag(e) {
     // one board at a time: two of them open at once on a phone screen would
     // simply sit on top of each other
     const p = pos(e);
-    if (nearBench(p.x, p.y)) { const want = !S.boardOpen; showLab(false); showBoard(want); }
-    else if (nearLab(p.x, p.y)) { const want = !S.labBoardOpen; showBoard(false); showLab(want); }
-    else { showBoard(false); showLab(false); }
+    if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench');
+    else if (nearLab(p.x, p.y)) showPanel(S.labBoardOpen ? null : 'lab');
+    else showPanel(null);
   }
 
   S.mining = false;
@@ -175,8 +174,8 @@ canvas.addEventListener('wheel', e => {
   pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
 }, { passive: false });
 
-boardEl.addEventListener('pointerleave', () => showBoard(false));
-document.getElementById('lab').addEventListener('pointerleave', () => showLab(false));
+// the cursor leaving the menu itself closes it, whichever station it is at
+document.getElementById('panel').addEventListener('pointerleave', () => showPanel(null));
 addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'ArrowRight') pan(P * 12);

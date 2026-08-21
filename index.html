@@ -8,14 +8,17 @@
 <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-<div id="board" class="panel" hidden>
-  <div id="shop" class="rows"></div>
-  <button id="reset" type="button">reset progress</button>
-</div>
-
-<div id="lab" class="panel" hidden>
-  <div id="labshop" class="rows"></div>
-  <div id="stats"></div>
+<!-- One menu, not two. It walks along the ground from the bench to the lab and
+     shows whichever of them you are standing at. -->
+<div id="panel" class="panel" hidden>
+  <div id="board" class="page" hidden>
+    <div id="shop" class="rows"></div>
+    <button id="reset" type="button">reset progress</button>
+  </div>
+  <div id="lab" class="page" hidden>
+    <div id="labshop" class="rows"></div>
+    <div id="stats"></div>
+  </div>
 </div>
 
 <div id="tip" hidden></div>
