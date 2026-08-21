@@ -28,14 +28,15 @@ function onScreen(wx, wy) {
   return [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
 }
 
+// the game reports where it put things, so the tests never hold a copy of the layout
 const benchWorld = () => {
   const s = state();
-  return { x: s.pitX - 258 - 474, y: s.groundY };
+  return { x: s.benchX, y: s.groundY };
 };
 
 const boulderWorld = () => {
   const s = state();
-  return { x: s.pitX - 258, y: s.groundY - 354 };
+  return { x: s.rockX, y: s.rockY };
 };
 
 async function hoverBench() {
@@ -45,10 +46,11 @@ async function hoverBench() {
   await sleep(250);
 }
 
-// bank one core the long way round: drop it, carry it, throw it in
+// bank one core the long way round: finish the rock, wait for the core to roll
+// clear of it, carry it, throw it in
 async function bankCore() {
-  window.__drop();
-  for (let i = 0; i < 40 && !state().coreItem?.rest; i++) await sleep(100);
+  window.__next();                             // the last of the rock goes
+  for (let i = 0; i < 60 && !state().coreItem?.rest; i++) await sleep(100);
   const k = state().coreItem;
   if (!k) return false;
 
@@ -132,6 +134,51 @@ const TESTS = [
          JSON.stringify(cells[0])),
       ok(cells.every(c => c[0] && c[4]), 'every row has a name and a price',
          JSON.stringify(cells))
+    ];
+  }],
+
+  ['the rock stands on the ground', async () => {
+    const s = state();
+    return [
+      ok(Math.abs(s.rockFoot - s.groundY) <= 18,
+         'its foot is at the ground line', `${s.rockFoot - s.groundY} below`),
+      ok(s.rockW > s.rockH, 'it is a hill, wider than it is tall', `${s.rockW}x${s.rockH}`),
+      ok(s.rockX + s.rockW / 2 < s.benchX, 'it stands clear of the bench',
+         `rock ends ${Math.round(s.rockX + s.rockW / 2)}, bench at ${s.benchX}`),
+      ok(s.benchX < s.pitX, 'the bench is between the rock and the pit')
+    ];
+  }],
+
+  ['the crew stand on the rock and work it down', async () => {
+    window.__crew(5, 0, 0);
+    await sleep(1500);
+    const s = state();
+    const miners = s.workerPos.filter(p => p[0] === 'm')
+                              .map(p => p.split(':')[1].split(',').map(Number));
+    const foot = s.rockFoot;
+    window.__crew(0, 0, 0);                    // put them back on the shelf
+    return [
+      ok(miners.length === 5, 'five miners are out', `${miners.length}`),
+      ok(miners.every(([, y]) => y <= foot), 'nobody is below the ground',
+         JSON.stringify(miners)),
+      ok(miners.every(([x]) => x > s.rockX - s.rockW / 2 - 24 && x < s.rockX + s.rockW / 2 + 24),
+         'they are all on the rock, not orbiting it', JSON.stringify(miners)),
+      ok(new Set(miners.map(([, y]) => y)).size > 1,
+         'they stand at different heights, following the crest')
+    ];
+  }],
+
+  ['spoil ends up where it can be reached', async () => {
+    window.__crew(6, 0, 0);
+    await sleep(4000);
+    const s = state();
+    window.__crew(0, 0, 0);
+    return [
+      ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
+      ok(s.dustLeftOfRock === 0, 'none of it is stranded behind the hill',
+         `${s.dustLeftOfRock} grains`),
+      ok(s.dustUnderRock === 0, 'and none of it is buried under the hill',
+         `${s.dustUnderRock} grains`)
     ];
   }],
 
@@ -263,14 +310,14 @@ const TESTS = [
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
-    const raw = JSON.parse(localStorage.getItem('boulder-clicker/v3') || 'null');
+    const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4') || 'null');
     return [
       ok(!!raw, 'a save exists'),
       ok(Math.abs(raw.stored - s.stored) <= 20, 'the hole is saved',
          `${raw?.stored} vs ${s.stored}`),
       ok(raw.cores === s.cores, 'cores are saved'),
       ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
-      ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.grid * raw.grid,
+      ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];
   }]

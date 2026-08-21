@@ -1,4 +1,4 @@
-const KEY = 'boulder-clicker/v3';
+const KEY = 'boulder-clicker/v4';
 
 export function load() {
   try {

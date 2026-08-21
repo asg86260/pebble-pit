@@ -15,16 +15,26 @@ const TARGET = 1000000;   // dust in the hole: the whole point
 // and the lip keep their distances. A bigger window is only more sky and more
 // ground: the ground runs a long way either side of everything.
 const SKY = 2000;         // world above the ground line, so any window has sky
-const DROP = 354;         // rock centre to the ground line
-const TO_LEDGE = 258;     // rock centre to the lip of the pit
-const TO_BENCH = 474;     // rock centre back to the bench
-const GROUND_LEFT = 2400; // ground running away to the left of the bench
+// Every site stands on the one ground line, measured out from the rock. The
+// world runs away to the left as sites are unlocked, so walking further out is
+// the progression. The bench, the lab and the pit sit to the right.
+const TO_CAVE = -1000;    // rock centre to the mouth of the cave
+const TO_FARM = -1800;    // rock centre to the near edge of the farm
+const TO_BENCH = 520;     // rock centre to the bench
+const TO_LAB = 820;       // rock centre to the lab
+const TO_LEDGE = 1220;    // rock centre to the lip of the pit
+const GROUND_LEFT = 2400; // ground running away to the left of everything
+const ROCK_W = 60;        // the rock is a hill: this wide in cells at rock 1
+const ROCK_H = 26;        // and this tall
+const ROCK_GROW_W = 4;    // each rock is a little broader than the last
+const ROCK_GROW_H = 2;    // and a little higher
+const ROCK_SINK = 12;     // how far its foot sits under the ground line
+const ROCK_SKY = 340;     // sky kept clear above the ground for the rock to grow into
 const PIT_ROWS = 46;      // the pit is one fixed size, always
 const PIT_COLS = 240;
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
-const BASE_R = 12;        // boulder radius in cells at boulder 1
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
 // pales as you dig through it; an empty cell is the white page showing through.
 // Swap these for hues to add colour.
@@ -55,7 +65,9 @@ let zoom = 1;             // shrinks to fit a small window, never rearranges
 let dpr = 1;
 let viewW = 0, viewH = 0; // what the window covers, in world units
 let boulder = [];         // rows of ints: 0 empty, 1..n the layer a cell belongs to
-let grid = 46;            // current boulder grid width/height in cells
+let gw = ROCK_W;          // rock width in cells
+let gh = ROCK_H;          // rock height in cells
+let rockTops = [];        // topmost rock cell per column, for the crew to stand on
 let boulderNo = 1;        // how many boulders in; each one adds a layer
 let coreBuried = true;    // this boulder still has its core inside it
 let nextBoulderAt = 0;    // ms deadline for the replacement rock to roll in
@@ -89,7 +101,6 @@ let drillersUnlocked = false;  // core unlock: drillers can be hired
 let haulCarryLevel = 0;   // grains a hauler carries per trip
 let haulPaceLevel = 0;    // hauler walking speed and scoop rate
 let workers = [];         // little squares that mine and ferry dust
-let orbitPhase = 0;       // the whole ring of miners turns together
 let coreTaker = null;     // the hauler that has claimed a loose core
 const bench = { x: 0, y: 0, w: 0, h: 0 };
 let boardOpen = false;    // the workbench board is showing
@@ -112,12 +123,13 @@ const bottomY = b => b.y + b.rows * P;      // screen y of the grid floor
 const colOf = (b, x) => Math.floor((x - b.x) / P);
 const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 
-// the ground is cut by the pit: open between the near ledge and the far wall
-const blocked = c => {
-  const x = floor.x + c * P;
-  return x + P > pit.x && x < pit.x + pit.w;
-};
+// the ground is cut by the pit, and the rock stands on the rest of it: dust can
+// settle in neither
 const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
+const rockLeft = () => cx - (gw / 2) * P;
+const overRock = x => x + P > rockLeft() && x < rockLeft() + gw * P;
+const rockColAt = x => Math.max(0, Math.min(gw - 1, Math.floor((x - rockLeft()) / P)));
+const blocked = c => overPitMouth(floor.x + c * P) || overRock(floor.x + c * P);
 
 // screen y where a pixel falling down column c would come to rest
 function surfaceY(b, c) {
@@ -157,7 +169,7 @@ function settle(b, skip) {
         const n = c + d;
         // dust heaped against the ledge topples over the edge. It has to be piled
         // up to do it: a thin scatter just rests against the wall
-        if (b === floor && d > 0 && r >= SPILL_ROW && skip && skip(n) && n < b.cols) {
+        if (b === floor && d > 0 && r >= SPILL_ROW && n < b.cols && overPitMouth(b.x + n * P)) {
           put(b, c, r, 0);
           spawnChip(b.x + n * P, bottomY(b) - (r + 1) * P, 0.6 + Math.random() * 0.6, 0, v);
           break;
@@ -197,8 +209,8 @@ function resize() {
 
   // only a window too small for the pit shrinks the picture, and then in whole
   // pixels per cell: fractional scaling leaves hairline seams between them
-  const needH = DROP + PIT_ROWS * P + FLOOR_MARGIN + P * 12;
-  const needW = TO_BENCH + TO_LEDGE + P * 20;
+  const needH = ROCK_SKY + PIT_ROWS * P + FLOOR_MARGIN + P * 4;
+  const needW = TO_LEDGE + ROCK_SKY + P * 20;
   const raw = Math.min(1, H / needH, W / needW);
   zoom = Math.max(2, Math.floor(P * raw)) / P;
   viewW = W / zoom;
@@ -206,8 +218,8 @@ function resize() {
 
   // fixed places, laid out once and never moved
   groundY = SKY;
-  cy = groundY - DROP;
-  cx = GROUND_LEFT + TO_BENCH;
+  cx = GROUND_LEFT;
+  placeRock();                             // the rock stands on the ground line
 
   pit.x = cx + TO_LEDGE;
   pit.cols = PIT_COLS;
@@ -218,7 +230,7 @@ function resize() {
 
   bench.w = P * 12;
   bench.h = P * 7;
-  bench.x = cx - TO_BENCH;
+  bench.x = cx + TO_BENCH;
   bench.y = groundY - bench.h;
 
   worldW = pit.x + pit.w + PIT_PAD * P;
@@ -295,38 +307,74 @@ function depthOf() {
   return Math.min(MAX_DEPTH, boulderNo);
 }
 
-function boulderRadius() {
-  const want = BASE_R + boulderNo;
-  const room = Math.floor(Math.min(TO_LEDGE * 0.9, (DROP - P * 18) * 0.5) / P);
-  return Math.max(6, Math.min(want, room));
+// how big rock n is, in cells. It may never grow into the bench, nor out of the
+// sky kept clear above the ground line
+function rockSize() {
+  const w = ROCK_W + (boulderNo - 1) * ROCK_GROW_W;
+  const h = ROCK_H + (boulderNo - 1) * ROCK_GROW_H;
+  return {
+    w: Math.max(10, Math.min(w, Math.floor((TO_BENCH - P * 14) * 2 / P))),
+    h: Math.max(6, Math.min(h, Math.floor((ROCK_SKY - P * 4) / P)))
+  };
 }
 
+// the rock's foot sits just under the ground line so it looks planted, not laid
+function placeRock() {
+  cy = groundY + ROCK_SINK - (gh / 2) * P;
+}
+
+// world y of the top of the rock in a column, or the ground where there is none
+function rockTopY(c) {
+  const t = rockTops[c];
+  return t >= 0 ? groundY + ROCK_SINK - (gh - t) * P : groundY;
+}
+
+// the surface the crew stand on, kept per column so nobody walks it every frame
+function refreshRockTops() {
+  rockTops = new Array(gw).fill(-1);
+  for (let c = 0; c < gw; c++) {
+    for (let y = 0; y < gh; y++) if (boulder[y][c]) { rockTops[c] = y; break; }
+  }
+}
+
+// A heightfield, not a disc: a broad hill with crags along its crest, sitting
+// flat on the ground. Cells hold remaining thickness, deepest at the base and
+// through the middle, thinning towards the skyline.
 function makeBoulder() {
-  const rad = boulderRadius();
+  const size = rockSize();
+  gw = size.w;
+  gh = size.h;
   const deep = depthOf();
-  grid = rad * 2 + 2;
-  const mid = grid / 2;
-  const seed = [Math.random() * 6, Math.random() * 6, Math.random() * 6];
+  const seed = [Math.random() * 6, Math.random() * 6, Math.random() * 6,
+                Math.random() < 0.5 ? -1 : 1];
+
+  const crest = [];
+  for (let x = 0; x < gw; x++) {
+    const u = x / (gw - 1);
+    let f = Math.pow(Math.sin(Math.PI * u), 0.42);        // broad, with steep shoulders
+    f *= 1 + 0.16 * (u - 0.5) * seed[3]                   // it leans one way or the other
+           + 0.05 * Math.sin(u * 6.1 + seed[0])           // and the crest is rough, not wavy
+           + 0.07 * Math.sin(u * 14.7 - seed[1])
+           + 0.06 * Math.sin(u * 27.3 + seed[2]);
+    crest.push(Math.max(1, Math.min(gh, Math.round(f * gh))));
+  }
 
   coreBuried = true;
   boulder = [];
-  for (let y = 0; y < grid; y++) {
+  for (let y = 0; y < gh; y++) {
     const row = [];
-    for (let x = 0; x < grid; x++) {
-      const dx = x - mid + 0.5, dy = y - mid + 0.5;
-      const d = Math.hypot(dx, dy);
-      const a = Math.atan2(dy, dx);
-      let edge = rad * 0.94;
-      edge *= 1 + 0.06 * Math.sin(a * 3 + seed[0])
-                + 0.05 * Math.sin(a * 5 - seed[1])
-                + 0.03 * Math.sin(a * 8 + seed[2]);
-      if (d >= edge) { row.push(0); continue; }
-      // domed: thin at the rim, the full stack through the middle
-      const t = Math.sqrt(Math.max(0, 1 - (d / edge) ** 2));
+    for (let x = 0; x < gw; x++) {
+      const up = gh - y;                                   // 1 at the foot, gh at the sky
+      if (up > crest[x]) { row.push(0); continue; }
+      const k = crest[x] <= 1 ? 0 : (up - 1) / (crest[x] - 1);
+      const mid = Math.sqrt(Math.max(0, 1 - ((x / (gw - 1) - 0.5) * 2) ** 2 * 0.55));
+      const t = Math.sqrt(Math.max(0, 1 - k * k)) * mid;
       row.push(Math.max(1, Math.round(deep * t)));
     }
     boulder.push(row);
   }
+  placeRock();
+  refreshRockTops();
 }
 
 function gridToString() {
@@ -335,19 +383,23 @@ function gridToString() {
   return s;
 }
 
-function gridFromString(s, size) {
-  if (typeof s !== 'string' || !size || s.length !== size * size) return false;
-  grid = size;
+function gridFromString(s, w, h) {
+  if (typeof s !== 'string' || !w || !h || s.length !== w * h) return false;
+  gw = w;
+  gh = h;
   boulder = [];
-  for (let y = 0; y < grid; y++) {
+  for (let y = 0; y < gh; y++) {
     const row = [];
-    for (let x = 0; x < grid; x++) row.push(+s[y * grid + x] || 0);
+    for (let x = 0; x < gw; x++) row.push(+s[y * gw + x] || 0);
     boulder.push(row);
   }
+  placeRock();
+  refreshRockTops();
   return true;
 }
 
-const cellPos = (x, y) => ({ px: cx + (x - grid / 2) * P, py: cy + (y - grid / 2) * P });
+// the rock is anchored by its foot, not its middle: it grows upwards and outwards
+const cellPos = (x, y) => ({ px: cx + (x - gw / 2) * P, py: groundY + ROCK_SINK - (gh - y) * P });
 
 function boulderAlive() {
   for (const row of boulder) for (const v of row) if (v) return true;
@@ -359,20 +411,22 @@ function boulderAlive() {
 // empty air below it does not, so falling dust can be caught there
 // the rock's whole footprint takes a swing, so clicking its general area works
 function overBoulder(mx, my) {
-  const half = (grid / 2) * P;
-  return mx > cx - half && mx < cx + half && my > cy - half && my < cy + half;
+  if (!boulderAlive()) return false;         // nothing left to swing at
+  const half = (gw / 2) * P;
+  const foot = groundY + ROCK_SINK;
+  return mx > cx - half && mx < cx + half && my > foot - gh * P && my < foot;
 }
 
 // the cell under the cursor, or the nearest filled one if that spot is already hollow
 function pickCell(mx, my) {
-  const gx = (mx - cx) / P + grid / 2;
-  const gy = (my - cy) / P + grid / 2;
+  const gx = (mx - cx) / P + gw / 2;
+  const gy = gh - (groundY + ROCK_SINK - my) / P;
   const hx = Math.floor(gx), hy = Math.floor(gy);
   if (boulder[hy]?.[hx]) return { x: hx, y: hy };
 
   let best = null, bestD = Infinity;
-  for (let y = 0; y < grid; y++) {
-    for (let x = 0; x < grid; x++) {
+  for (let y = 0; y < gh; y++) {
+    for (let x = 0; x < gw; x++) {
       if (!boulder[y][x]) continue;
       const d = (x + 0.5 - gx) ** 2 + (y + 0.5 - gy) ** 2;
       if (d < bestD) { bestD = d; best = { x, y }; }
@@ -409,22 +463,31 @@ function knockOff(mx, my) {
     const shade = depthShade(left, depthOf());   // how deep it looked, for colour
     boulder[cell.y][cell.x] = left - 1;
     const { px, py } = cellPos(cell.x, cell.y);
-    // mostly straight down, with a little drift and a nudge away from the middle
-    spawnChip(px, py, bell() * 1.1 + (px - cx) / (grid * P) * 1.6,
-              -(1.6 + Math.random() * 2.6), shade);
+    spawnChip(px, py, throwOff(px, 1.1), -(1.6 + Math.random() * 2.6), shade);
   }
   dirty = true;
+  refreshRockTops();
+}
+
+// Rock knocked loose is thrown clear of the hill, towards the bench and the pit.
+// Anything landing on the far side would be stranded behind it, so the spray is
+// biased downhill: a little drift, plus a shove away from the middle.
+function throwOff(px, spread) {
+  const away = (px - cx) / (gw * P) * 2;            // -1 at the left edge, 1 at the right
+  return bell() * spread + away * 1.4 + 1.5;
 }
 
 // the core sits at the middle of the rock and only comes loose when it is bare
 function coreHome() {
-  return { x: cx - CORE_SIZE / 2, y: cy - CORE_SIZE / 2 };
+  return { x: cx - CORE_SIZE / 2, y: groundY + ROCK_SINK - gh * P * 0.42 - CORE_SIZE / 2 };
 }
 
 function dropCore() {
   const h = coreHome();
   coreBuried = false;
-  coreItem = { x: h.x, y: h.y, vx: (Math.random() - 0.5) * 2.4, vy: -3, rest: false };
+  // it rolls out of the hollow the rock left, downhill towards the bench, so it
+  // never comes to rest where the next rock is about to stand
+  coreItem = { x: h.x, y: h.y, vx: 3.4 + Math.random() * 1.4, vy: -4.2, rest: false };
 }
 
 function bankCore(x) {
@@ -848,7 +911,8 @@ function persist() {
     haulCarryLevel,
     haulPaceLevel,
     boulder: gridToString(),
-    grid,
+    gw,
+    gh,
     boulderNo,
     floor: { cols: floor.cols, rows: floor.rows, cells: gridStr(floor) },
     pit: { cols: pit.cols, rows: pit.rows, cells: gridStr(pit) }
@@ -869,7 +933,7 @@ function restoreGrid(b, s) {
 function restore() {
   const s = load();
   boulderNo = s?.boulderNo || 1;
-  if (!s || !gridFromString(s.boulder, s.grid) || typeof s.stored !== 'number') {
+  if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     makeBoulder();
     stored = 0;
     shownStored = tweenFrom = tweenTo = 0;
@@ -966,6 +1030,18 @@ function reset() {
 }
 
 // --- workers ----------------------------------------------------------------
+// the stretch of the crest a miner keeps to itself, or the nearest column that
+// still has rock in it if that stretch has been dug away
+function seatColumn(slot) {
+  const home = Math.max(0, Math.min(gw - 1, Math.round(((slot + 0.5) / Math.max(1, miners)) * gw)));
+  if (rockTops[home] >= 0) return home;
+  for (let d = 1; d < gw; d++) {
+    if (rockTops[home - d] >= 0) return home - d;
+    if (rockTops[home + d] >= 0) return home + d;
+  }
+  return home;
+}
+
 function syncWorkers() {
   const want = { miner: miners, hauler: haulers, driller: drillers };
   workers = workers.filter(w => want[w.type]-- > 0);       // drop any extras
@@ -985,12 +1061,13 @@ function syncWorkers() {
   }
   const needDrillers = drillers - have('driller');
   for (let i = 0; i < needDrillers; i++) {
-    workers.push({ type: 'driller', next: 0, x: cx, y: cy, spot: null, ph: Math.random() * 6.28 });
+    workers.push({ type: 'driller', next: 0, x: cx, y: cy, spot: null,
+      side: i % 2 ? 1 : -1, ph: Math.random() * 6.28 });
   }
   const needHaulers = haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
     workers.push({
-      type: 'hauler', x: Math.random() * pit.x * 0.8, y: 0,
+      type: 'hauler', x: rockLeft() + gw * P + Math.random() * (pit.x - rockLeft() - gw * P), y: 0,
       carry: 0, next: 0, goal: 'seek'
     });
   }
@@ -1006,14 +1083,15 @@ function syncWorkers() {
 }
 
 // somewhere worth drilling: sample a few cells and take the thickest rock
-function thickSpot() {
-  let best = null, deepest = 0;
-  for (let i = 0; i < 40; i++) {
-    const y = Math.floor(Math.random() * grid), x = Math.floor(Math.random() * grid);
-    const v = boulder[y]?.[x] || 0;
-    if (v > deepest) { deepest = v; best = { x, y }; }
+// the outermost standing column on one flank, at its foot: a driller parks there
+// and eats a notch sideways into the hill
+function flankSpot(side) {
+  for (let i = 0; i < gw; i++) {
+    const x = side < 0 ? i : gw - 1 - i;
+    if (rockTops[x] < 0) continue;
+    for (let y = gh - 1; y >= 0; y--) if (boulder[y][x]) return { x, y };
   }
-  return best;
+  return null;
 }
 
 // only dust on this side of the pit: nobody can walk across the trench
@@ -1035,54 +1113,50 @@ function topGrain(c) {
 }
 
 function updateWorkers(now) {
-  orbitPhase += 0.004;
   if (!coreItem || heldCore || !coreItem.rest) coreTaker = null;
   for (const w of workers) {
     if (w.type === 'miner') {
-      // the crew stands in an evenly spaced ring and turns together, so nobody
-      // shares a spot; a second ring forms outside once the first is full
-      const base = (grid / 2) * P + WORKER;
-      const perRing = Math.max(6, Math.floor((2 * Math.PI * base) / (WORKER * 2.2)));
-      const ring = Math.floor(w.slot / perRing);
-      const seat = w.slot % perRing;
-      const inRing = Math.min(perRing, miners - ring * perRing);   // share out the whole circle
+      // The crew climb the hill and work it from the top down. Each one keeps a
+      // stretch of the crest to itself, stands on whatever rock is left there and
+      // sinks with it as the rock goes; when its stretch is bare it ambles along
+      // to the nearest that is not.
       const t = now / 1000;
+      const seat = seatColumn(w.slot);
+      const left = cx - (gw / 2) * P;
+      w.x += (left + (seat + 0.5) * P - WORKER / 2 - w.x) * 0.07;   // an amble, not a jump
 
-      // each one sways round its seat and drifts in and out on its own timing,
-      // and leans into the rock when it swings
-      w.lunge *= 0.86;
-      const angle = (seat / inRing) * Math.PI * 2 + orbitPhase + ring * 0.5
-                  + Math.sin(t * w.sp + w.ph) * w.wob;
-      const rad = base + ring * WORKER * 2
-                + Math.sin(t * w.sp * 0.7 + w.ph * 1.7) * WORKER * 0.5 * w.rw
-                - w.lunge * WORKER * 0.9;
+      const col = Math.max(0, Math.min(gw - 1, Math.round((w.x + WORKER / 2 - left) / P)));
+      const surf = rockTopY(col);
+      w.lunge *= 0.82;
+      // it bobs on its feet, and drops into the swing
+      w.y = surf - WORKER + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
 
-      w.x = cx + Math.cos(angle) * rad - WORKER / 2;
-      w.y = cy + Math.sin(angle) * rad - WORKER / 2;
-      if (boulderAlive() && now >= w.next) {
-        knockOff(w.x + WORKER / 2, w.y + WORKER / 2);
+      if (boulderAlive() && now >= w.next && rockTops[col] >= 0) {
+        knockOff(w.x + WORKER / 2, surf + P / 2);                   // bite what it stands on
         w.lunge = 1;
-        w.next = now + minerMs() * (0.85 + Math.random() * 0.3);   // never quite in time
+        w.next = now + minerMs() * (0.85 + Math.random() * 0.3);    // never quite in time
       }
       continue;
     }
 
     if (w.type === 'driller') {
-      // pick a thick spot and stay on it until it is gone
-      if (!w.spot || !boulder[w.spot.y]?.[w.spot.x]) w.spot = thickSpot();
+      // a driller works the flank instead: it parks at the foot of the hill and
+      // eats a notch sideways into it
+      if (!w.spot || !boulder[w.spot.y]?.[w.spot.x]) w.spot = flankSpot(w.side);
       if (!w.spot) continue;
 
       const { px, py } = cellPos(w.spot.x, w.spot.y);
       const pull = Math.sin(now / 90 + w.ph) * 1.5;      // it judders as it bites
-      w.x = px - WORKER / 2 + P / 2 + pull;
+      w.x = px - WORKER / 2 + P / 2 + pull + w.side * WORKER * 0.6;
       w.y = py - WORKER / 2 + P / 2;
 
       if (now >= w.next) {
-        const left = boulder[w.spot.y][w.spot.x];
-        boulder[w.spot.y][w.spot.x] = left - 1;
-        spawnChip(px, py, bell() * 0.9 + (px - cx) / (grid * P) * 1.2,
-                  -(1.4 + Math.random() * 2), depthShade(left, depthOf()));
+        const had = boulder[w.spot.y][w.spot.x];
+        boulder[w.spot.y][w.spot.x] = had - 1;
+        spawnChip(px, py, throwOff(px, 0.9), -(1.4 + Math.random() * 2),
+                  depthShade(had, depthOf()));
         w.next = now + drillMs() * (0.9 + Math.random() * 0.2);
+        refreshRockTops();
         dirty = true;
       }
       continue;
@@ -1107,6 +1181,7 @@ function updateWorkers(now) {
     }
 
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
+    if (w.x < rockLeft() + gw * P) w.x = rockLeft() + gw * P;   // the hill is in the way
     w.y = groundY - WORKER;
 
     if (w.goal === 'seek') {
@@ -1352,7 +1427,7 @@ function stepCore() {
 
   // the next rock rolls in once the core has dropped out of its way
   if (!coreBuried && !boulderAlive()) {
-    const clear = !coreItem || heldCore || coreItem.y > cy + (grid / 2) * P;
+    const clear = !coreItem || heldCore || coreItem.rest;   // it has rolled clear
     if (clear || performance.now() > nextBoulderAt) {
       boulderNo++;
       makeBoulder();
@@ -1371,6 +1446,15 @@ function stepCore() {
     for (let i = 0; i < cells; i++) top = Math.min(top, pileTop(leftCol() + i));
     return top;
   };
+
+  // A core must never settle under the rock: the next one stands where the last
+  // one did, and a core in its shadow is a core you cannot reach. It rolls out
+  // from the foot of the hill until it is in the open.
+  if (k.rest && k.x + CORE_SIZE > rockLeft() && k.x < rockLeft() + gw * P) {
+    k.rest = false;
+    k.vx = 2.4;
+    k.vy = -1.4;
+  }
 
   // resting until the dust under it goes away
   if (k.rest) {
@@ -1423,7 +1507,7 @@ function step() {
     const now = performance.now();
     nextHit = Math.max(nextHit, now - 500);      // don't burst after a background tab
     while (now >= nextHit) {
-      if (boulderAlive() && overBoulder(mouse.x, mouse.y)) knockOff(mouse.x, mouse.y);
+      if (overBoulder(mouse.x, mouse.y)) knockOff(mouse.x, mouse.y);
       nextHit += mineMs();
     }
   }
@@ -1438,6 +1522,19 @@ function step() {
     if (ch.x > worldW - P) {
       ch.x = worldW - P;
       ch.vx = -Math.abs(ch.vx) * 0.3;
+    }
+
+    // spoil will not lie on the hill. It skitters down the face and off the side,
+    // so nothing ends up stranded on the slope or stacked against the flank
+    if (overRock(ch.x)) {
+      const rc = rockColAt(ch.x);
+      const top = rockTopY(rc);
+      if (rockTops[rc] >= 0 && ch.y + P > top) {
+        ch.y = top - P;
+        if (ch.vy > 0) ch.vy = 0;
+        ch.vx = Math.max(ch.vx, 0) + 0.9;
+        continue;
+      }
     }
 
     // down the shaft: the pit collects whatever falls through its mouth
@@ -1479,8 +1576,8 @@ function draw() {
 
   const deep = depthOf();
   let shade = 0;
-  for (let y = 0; y < grid; y++) {
-    for (let x = 0; x < grid; x++) {
+  for (let y = 0; y < gh; y++) {
+    for (let x = 0; x < gw; x++) {
       const v = boulder[y][x];
       if (!v) continue;
       const band = depthShade(v, deep);
@@ -1636,8 +1733,7 @@ function pos(e) {
 canvas.addEventListener('pointerdown', e => {
   const p = pos(e);
   mouse = p;
-  if (!boulderAlive() && chips.length === 0) { makeBoulder(); dirty = true; return; }
-  if (boulderAlive() && overBoulder(p.x, p.y)) {
+  if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     mining = autoMine;                      // holding only mines once unlocked
     nextHit = performance.now() + MINE_DELAY;
@@ -1729,19 +1825,40 @@ window.__jump = n => { boulderNo = n; coreItem = null; heldCore = false; makeBou
 window.__preview = n => {
   const keep = boulderNo;
   boulderNo = n;
-  const r = boulderRadius(), d = depthOf();
+  const size = rockSize(), d = depthOf();
   boulderNo = keep;
-  // a dome of radius r and depth d holds about 2/3 pi r^2 d
-  return { boulder: n, depth: d, radiusCells: r, approxRock: Math.round(2 / 3 * Math.PI * r * r * d * 0.9) };
+  // a hill w by h, roughly half of that box filled, at about half the full depth
+  return { boulder: n, depth: d, cells: size,
+           approxRock: Math.round(size.w * size.h * 0.5 * d * 0.55) };
 };
 window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = []; };
 window.__drop = () => { dropCore(); dirty = true; };
+window.__crew = (m = 0, h = 0, d = 0) => {   // hire straight off, for looking at things
+  miners = m; haulers = h; drillers = d;
+  minersUnlocked = m > 0; haulersUnlocked = h > 0; drillersUnlocked = d > 0;
+  if (m || h || d) seenCore = true;
+  syncWorkers(); buildShop(); dirty = true;
+};
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ paid: paid.length, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+// how much dust has ended up somewhere the player cannot get at it
+function strandedDust() {
+  let left = 0, under = 0;
+  const l = rockLeft(), r = l + gw * P;
+  for (let c = 0; c < floor.cols; c++) {
+    const x = floor.x + c * P;
+    if (x >= r) continue;
+    let n = 0;
+    for (let row = 0; row < floor.rows; row++) if (at(floor, c, row)) n++;
+    if (x + P <= l) left += n; else under += n;
+  }
+  return { left, under };
+}
+
+window.__state = () => ({ paid: paid.length, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(cx), rockY: Math.round(cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: gw * P, rockH: gh * P, rockFoot: groundY + ROCK_SINK, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), gw, gh, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
-camX = cx - viewW / 2;                   // start looking at the rock
+camX = cx - 420;                         // start looking at the rock, the bench and the pit
 clampCam();
 restore();
 syncWorkers();

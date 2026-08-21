@@ -10,13 +10,64 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
 2. **No fail state.** No timers, no losing dust, no punishment for walking away.
 3. **Every upgrade changes behaviour, not a number.** New worker types over bigger multipliers.
 4. **The simulation is the reward.** You watch the dust pile, the crew walk, the pit fill.
-5. **Two currencies, no more.** Dust scales what you have; cores open what you don't.
+5. **Each currency has one job.** Dust scales what you have, cores open what you don't,
+   and the lab resources multiply the whole operation. A resource that does two jobs is
+   a resource too many.
 6. **Shades, used sparingly.** Six greys reading rock thickness is the whole palette — it is
    depth information, not decoration. Colour is available if something should stand out later.
 7. **The hook is the rock, the reveal is the core.** The first boulder teaches the loop and
    nothing else. The core is buried out of sight, so finishing that boulder is a discovery
    rather than a milestone the UI announced in advance. Later unlocks can be visible rows in
    the shop; this one should not be.
+
+## The world
+
+Every site stands on one ground line. Progression is linear and physical: the world runs off to
+the **left** as you unlock things, so walking further out *is* the tech tree.
+
+```
+   farm        cave        rock      [bench] [lab]        pit
+    ◇            △          ▲▲▲                            ▣
+  ──────────────────────────────────────────────────────────────
+                             ☄  the meteor hangs above, later
+```
+
+You start with the **rock**, the **bench** and the **pit** and nothing else. Ground to the left
+is empty until a site is unlocked there.
+
+| Site | Gives | Unlocked by |
+|---|---|---|
+| **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
+| **cave** — a mouth in the ground; crew walk in and come back carrying | shard ◈ | cores |
+| **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
+| **meteor** — hangs in the sky, mined from below | a rare mark, its own path | late |
+| **bench** | spends dust and cores | — |
+| **lab** | spends shard and spore on multipliers, and shows the stats page | cores |
+| **pit** | holds it all | — |
+
+The rock and the meteor are deliberately different objects. The rock is a **hill**: flat on the
+ground, irregular on top, mined from above by crew who stand on its surface and work their way
+down. The meteor is a **disc** hanging in the air, mined from a ring. They should never be
+confused for each other, so they share no art and no animation.
+
+## The lab
+
+The bench spends dust and cores on the operation. The lab spends shard and spore on
+**multipliers** — the only place real growth comes from, and the only reason a million is
+reachable. Keep these few and large: five or six purchases each across a whole run, not a
+column of them. The lab also has a stats page — dust/s, shard/s, spore/s, cores/s, and time to
+a million at the current rate.
+
+## Crew
+
+Crew are hired by type at the bench and stay put. Each site has its own hire:
+
+| | Works | First one costs |
+|---|---|---|
+| miner | the rock | ◯ 1 |
+| worker | carries dust to the pit | ◯ 2 |
+| spelunker | the cave | ◯ 4 |
+| farmhand | the farm | ◯ 6 |
 
 ## Economy
 
@@ -112,30 +163,45 @@ All of them stay plain black-and-white shapes.
 
 The chute is the cozy end state: dust starts moving without anyone touching it.
 
-## Boulders
+## The rock
 
 Boulder *n* is **n sheets thick** (capped at six) and a little wider than the last, so each one is
 a longer dig. You are mining into the rock, not around it: a hit takes one sheet off the front at
 that spot, and a cell holds how much rock is still stacked there.
 
-The rock is domed — the full stack through the middle, thinning to one sheet at the rim — so the
-edges break through quickly and the centre is the real work.
+The rock is a **hill**, not a disc: a heightfield with a rough crest, sitting flat on the ground
+with its foot a couple of cells under the ground line so it reads as planted rather than laid.
+It is thickest at its base and through the middle, thinning towards the skyline, so the crest
+breaks through quickly and the heart of it is the real work.
+
+The crew work it **from the top down**. Each miner keeps a stretch of the crest to itself, stands
+on whatever rock is left there, and sinks with it as the rock goes; when its stretch is bare it
+ambles along to the nearest that is not. Drillers work the flanks instead, parked at the foot of
+the hill eating a notch sideways into it. Nobody orbits anything.
+
+Spoil is thrown clear, downhill towards the bench, and anything that lands on the slope skitters
+down the face and off the side. Nothing may end up behind the hill or under it: dust the player
+cannot reach is dust the player will resent. There is a test for exactly that.
+
+When the last of the rock goes the core is loose, and it **rolls out** from the foot of the hill
+before it settles — the next rock stands where the last one did, and a core in its shadow
+would be a core you could not pick up.
 
 Shade shows what is left, relative to that boulder's own thickness: dark where it is still thick,
 pale where you have worn it thin, white page where you have punched clean through. Dust keeps the shade of the sheet it came off, so the ground
 and pit end up speckled with light and dark.
 
-| # | Sheets | Radius (cells) | Rock |
+| # | Sheets | Cells (w x h) | Rock |
 |---|---|---|---|
-| 1 | 1 | 13 | ~320 |
-| 2 | 2 | 14 | ~740 |
-| 4 | 4 | 16 | ~1,900 |
-| 6 | 6 | 18 | ~3,700 |
-| 9 | 6 | 21 | ~5,000 |
-| 12 | 6 | 24 | ~6,500 |
+| 1 | 1 | 60 x 26 | ~430 |
+| 2 | 2 | 64 x 28 | ~990 |
+| 4 | 4 | 72 x 32 | ~2,500 |
+| 6 | 6 | 80 x 36 | ~4,800 |
+| 9 | 6 | 92 x 42 | ~6,400 |
+| 12 | 6 | 104 x 48 | ~8,200 |
 
-About 35,000 dust across a run. Radius is clamped to the space above the ground, so the boulder
-never overlaps the world on a small window.
+Size is clamped so the rock can never grow into the bench, nor out of the sky kept clear above
+the ground line.
 
 Traits (veined, hollow, crumbling, dense) are still open as a later pass — depth gives the
 progression on its own for now.
