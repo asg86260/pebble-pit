@@ -18,21 +18,26 @@ const SKY = 2000;         // world above the ground line, so any window has sky
 // Every site stands on the one ground line, measured out from the rock. The
 // world runs away to the left as sites are unlocked, so walking further out is
 // the progression. The bench, the lab and the pit sit to the right.
-const TO_CAVE = -1000;    // rock centre to the mouth of the cave
-const TO_FARM = -1800;    // rock centre to the near edge of the farm
-const TO_BENCH = 520;     // rock centre to the bench
-const TO_LAB = 820;       // rock centre to the lab
-const TO_LEDGE = 1220;    // rock centre to the lip of the pit
+const TO_CAVE = -900;     // rock centre to the mouth of the cave
+const TO_FARM = -1650;    // rock centre to the near edge of the farm
+const TO_BENCH = 420;     // rock centre to the bench
+const TO_LAB = 650;       // rock centre to the lab
+const TO_LEDGE = 900;     // rock centre to the lip of the pit
 const GROUND_LEFT = 2400; // ground running away to the left of everything
 const ROCK_W = 60;        // the rock is a hill: this wide in cells at rock 1
 const ROCK_H = 26;        // and this tall
 const ROCK_GROW_W = 4;    // each rock is a little broader than the last
 const ROCK_GROW_H = 2;    // and a little higher
-const ROCK_SINK = 12;     // how far its foot sits under the ground line
+const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
 const ROCK_SKY = 340;     // sky kept clear above the ground for the rock to grow into
+const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
 const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
-const PIT_W = 3624;       // and this wide, which at one grain a pixel holds a million
-const PIT_GRAINS = [P, 3, 2, 1];   // the pile settles finer as it fills, never smaller
+const PIT_W = 3624;       // and this wide
+// What a grain in the pile is drawn at. A grain is always one dust; adding finer
+// sizes here lets the pile settle to them as it fills, which is how the hole
+// could be made to hold a million. For now it stays one size: dust in the pit
+// looks like dust everywhere else, and the hole holds 27,784.
+const PIT_GRAINS = [P];
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
@@ -110,11 +115,19 @@ let dirty = false;
 // two sand grids: the ground the dust lands on, and the pit dug into it
 // `p` is the size of one grain in that grid. The ground's is fixed; the pit's
 // gets finer as the pile grows, so a million grains still fit in the same hole
-const floor = { x: 0, y: 0, cols: 0, rows: 24, p: P, grid: null };
+// the ground bed is deep, so heaps build to whatever height the sand finds on
+// its own rather than flattening off against a ceiling
+const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null };
 const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null };
 
 // --- sand grid helpers ------------------------------------------------------
 const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
+
+// Shade reads how much rock is left, relative to that rock's own thickness: a
+// rock is black where it is at full thickness and pales as it is worn through.
+// So rock 1, one sheet everywhere, is solid black, and so is the dust off it.
+// Nothing of ours is ever drawn over the rock -- the crew stand on top of it and
+// the spoil lands to either side of it -- so black on black never comes up.
 const depthShade = (v, max) =>
   Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
 const at = (b, c, r) => b.grid[r * b.cols + c];
@@ -128,13 +141,17 @@ const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 const countDust = b => { let n = 0; for (const v of b.grid) if (v && v !== CORE_CELL) n++; return n; };
 
-// the ground is cut by the pit, and the rock stands on the rest of it: dust can
-// settle in neither
+// The only hole in the ground is the pit. The rock stands behind the ground,
+// not on it: spoil heaps in front of its foot and the crew walk past it, which
+// is what a hill at the back of a yard looks like.
 const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
 const rockLeft = () => cx - (gw / 2) * P;
 const overRock = x => x + P > rockLeft() && x < rockLeft() + gw * P;
 const rockColAt = x => Math.max(0, Math.min(gw - 1, Math.floor((x - rockLeft()) / P)));
-const blocked = c => overPitMouth(floor.x + c * P) || overRock(floor.x + c * P);
+// the rock keeps a clear apron around its foot, so the banks stand off it rather
+// than heaping up its flanks and blurring where the rock ends
+const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() + gw * P + ROCK_CLEAR;
+const blocked = c => overPitMouth(floor.x + c * P) || overApron(floor.x + c * P);
 
 // screen y where a pixel falling down column c would come to rest
 function surfaceY(b, c) {
@@ -368,6 +385,14 @@ function rockTopY(c) {
 }
 
 // the surface the crew stand on, kept per column so nobody walks it every frame
+// Where a worker's feet go, given the surface it is standing on. Everything on
+// the ground shares one baseline: snapped to the pixel grid so a row of them
+// lines up, and never below the ground line, so nobody sinks into the earth.
+function standOn(surfaceY) {
+  const y = Math.min(surfaceY, groundY) - WORKER;
+  return Math.round(y / P) * P;
+}
+
 function refreshRockTops() {
   rockTops = new Array(gw).fill(-1);
   for (let c = 0; c < gw; c++) {
@@ -413,6 +438,22 @@ function makeBoulder() {
   }
   placeRock();
   refreshRockTops();
+  clearApron();
+}
+
+// shift any dust the last rock left inside this one's apron out to clear ground,
+// so a bigger rock never lands standing in a heap
+function clearApron() {
+  if (!floor.grid) return;
+  for (let c = 0; c < floor.cols; c++) {
+    if (!blocked(c)) continue;
+    for (let r = 0; r < floor.rows; r++) {
+      const v = at(floor, c, r);
+      if (!v) continue;
+      put(floor, c, r, 0);
+      addGrain(floor, floor.x + c * P, blocked, v);     // to the nearest clear column
+    }
+  }
 }
 
 function gridToString() {
@@ -480,6 +521,32 @@ function spawnChip(x, y, vx, vy, shade = 1) {
   chips.push({ x, y, vx, vy, s: shade });
 }
 
+// Rock knocked loose is *aimed*. A chip goes off whichever side of the rock it
+// was struck from, to a spot on the ground clear of the foot, and is launched on
+// the one arc that gets there: the pop is sized to the distance, and the
+// sideways speed follows from how long that pop keeps it in the air. Nothing is
+// nudged mid-flight and nothing has to be shoved off the rock, so the spray
+// reads as a throw rather than a scatter. Where it lands it heaps up on its own,
+// to whatever height the sand finds -- there is no ceiling on a bank.
+function spawnSpoil(px, py, shade) {
+  const side = px < cx ? -1 : 1;                     // off the nearer side of the rock
+  const land = rockEdge(side) + side * (P * 6 + Math.abs(bell()) * P * 12);
+  const v = aim(px, py, land, P);
+  spawnChip(px, py, v.vx, v.vy, shade);
+}
+
+const rockEdge = side =>
+  side < 0 ? rockLeft() - ROCK_CLEAR : rockLeft() + gw * P + ROCK_CLEAR;
+
+// the one arc from here to there: the pop is sized to the distance, and the
+// sideways speed follows from how long that pop keeps it in the air
+function aim(x, y, land, size) {
+  const drop = Math.max(P, groundY - size - y);
+  const pop = 2 + Math.min(4.5, Math.abs(land - x) / 90);
+  const t = (pop + Math.sqrt(pop * pop + 2 * GRAV * drop)) / GRAV;
+  return { vx: (land - x) / t, vy: -pop };
+}
+
 function knockOff(mx, my) {
   const c = pickCell(mx, my);
   if (!c) return;
@@ -501,18 +568,10 @@ function knockOff(mx, my) {
     const shade = depthShade(left, depthOf());   // how deep it looked, for colour
     boulder[cell.y][cell.x] = left - 1;
     const { px, py } = cellPos(cell.x, cell.y);
-    spawnChip(px, py, throwOff(px, 1.1), -(1.6 + Math.random() * 2.6), shade);
+    spawnSpoil(px, py, shade);
   }
   dirty = true;
   refreshRockTops();
-}
-
-// Rock knocked loose is thrown clear of the hill, towards the bench and the pit.
-// Anything landing on the far side would be stranded behind it, so the spray is
-// biased downhill: a little drift, plus a shove away from the middle.
-function throwOff(px, spread) {
-  const away = (px - cx) / (gw * P) * 2;            // -1 at the left edge, 1 at the right
-  return bell() * spread + away * 1.4 + 1.5;
 }
 
 // the core sits at the middle of the rock and only comes loose when it is bare
@@ -523,9 +582,12 @@ function coreHome() {
 function dropCore() {
   const h = coreHome();
   coreBuried = false;
-  // it rolls out of the hollow the rock left, downhill towards the bench, so it
-  // never comes to rest where the next rock is about to stand
-  coreItem = { x: h.x, y: h.y, vx: 3.4 + Math.random() * 1.4, vy: -4.2, rest: false };
+  // Thrown clear of the rock, out towards the bench. The next rock stands where
+  // the last one did, so a core that settled in its footprint would be one you
+  // could not pick up -- it is aimed past the edge rather than left to roll.
+  const land = rockEdge(1) + P * 3 + Math.random() * P * 8;
+  const v = aim(h.x, h.y, land, CORE_SIZE);
+  coreItem = { x: h.x, y: h.y, vx: v.vx, vy: v.vy, rest: false };
 }
 
 function bankCore(x) {
@@ -707,7 +769,9 @@ const pitCapacity = () => pit.cols * pit.rows;
 
 // Settle the pile to the next grain down. Every grain is kept: each column of
 // the old pile is shared out across the finer columns that stand where it did,
-// so the profile survives and only the resolution changes.
+// so the profile survives and only the resolution changes. With one grain size
+// configured there is nowhere finer to go, and a full pit simply stays full --
+// the count keeps rising, the picture does not.
 function refinePit() {
   if (pitStep >= PIT_GRAINS.length - 1) return;    // already as fine as it gets
 
@@ -748,9 +812,14 @@ function refinePit() {
 
 // paying comes out of the hole: grains are lifted off the top until the pile is
 // worth no more than the counter says
+// The pile always shows as much of the hole as will fit in it: one grain one
+// dust, up to the brim. Spending lifts grains off the top until it says the
+// right thing again -- which is a straight subtraction while there is room, and
+// nothing at all while the pit is over the brim and the pile is already short.
 function spend(cost) {
+  if (window.__spends) window.__spends.push(cost);   // dev: what took dust out
   stored -= cost;
-  let left = cost;                         // one grain is one dust: lift exactly that many
+  let left = countDust(pit) - Math.min(stored, pitCapacity());
   for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
     for (let c = 0; c < pit.cols && left > 0; c++) {
       const v = at(pit, c, r);
@@ -1195,16 +1264,45 @@ function reset() {
 }
 
 // --- workers ----------------------------------------------------------------
-// the stretch of the crest a miner keeps to itself, or the nearest column that
-// still has rock in it if that stretch has been dug away
-function seatColumn(slot) {
-  const home = Math.max(0, Math.min(gw - 1, Math.round(((slot + 0.5) / Math.max(1, miners)) * gw)));
-  if (rockTops[home] >= 0) return home;
-  for (let d = 1; d < gw; d++) {
-    if (rockTops[home - d] >= 0) return home - d;
-    if (rockTops[home + d] >= 0) return home + d;
+// The crew take the hill off in layers. A miner does not stand in one spot and
+// bore a shaft: it walks the top layer, striking the rock under its feet as it
+// goes, so the crest comes off as a row and the next row is exposed underneath.
+// It turns at the ends of the layer and turns before walking into a mate, so the
+// gang works back and forth across the rock like a line of men on a bench.
+const MINE_BAND = 3;      // cells below the peak still counted as the top layer
+const MINER_WALK = 0.5;   // pixels a frame along the row
+
+let peakRow = 0;          // the highest standing rock, recomputed each frame
+
+function findPeak() {
+  peakRow = gh;
+  for (let c = 0; c < gw; c++) {
+    if (rockTops[c] >= 0 && rockTops[c] < peakRow) peakRow = rockTops[c];
   }
-  return home;
+}
+
+const inBand = c =>
+  c >= 0 && c < gw && rockTops[c] >= 0 && rockTops[c] <= peakRow + MINE_BAND;
+
+const colAtX = x => Math.max(0, Math.min(gw - 1, Math.round((x - rockLeft()) / P)));
+
+// the nearest column that is still part of the working layer
+function nearestInBand(from) {
+  for (let d = 0; d < gw; d++) {
+    if (inBand(from - d)) return from - d;
+    if (inBand(from + d)) return from + d;
+  }
+  return from;
+}
+
+// somebody already working the stretch this one is about to walk into
+function elbowed(w, x) {
+  for (const o of workers) {
+    if (o === w || o.type !== 'miner') continue;
+    if ((o.x - w.x) * w.dir <= 0) continue;             // behind it: not in the way
+    if (Math.abs(o.x - x) < WORKER * 1.2) return true;
+  }
+  return false;
 }
 
 function syncWorkers() {
@@ -1217,7 +1315,9 @@ function syncWorkers() {
   const needMiners = miners - have('miner');
   for (let i = 0; i < needMiners; i++) {
     workers.push({
-      type: 'miner', next: 0, x: cx, y: cy, lunge: 0,
+      type: 'miner', next: 0, lunge: 0,
+      x: rockLeft() + Math.random() * gw * P, y: cy,
+      dir: Math.random() < 0.5 ? -1 : 1,
       ph: Math.random() * Math.PI * 2,        // where in its wobble it starts
       sp: 0.5 + Math.random() * 0.9,          // how fast it sways
       wob: 0.05 + Math.random() * 0.10,       // how far it drifts round its seat
@@ -1232,7 +1332,7 @@ function syncWorkers() {
   const needHaulers = haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
     workers.push({
-      type: 'hauler', x: rockLeft() + gw * P + Math.random() * (pit.x - rockLeft() - gw * P), y: 0,
+      type: 'hauler', x: rockLeft() + Math.random() * (pit.x - rockLeft()), y: 0,
       carry: 0, next: 0, goal: 'seek'
     });
   }
@@ -1278,6 +1378,7 @@ function topGrain(c) {
 }
 
 function updateWorkers(now) {
+  if (miners > 0) findPeak();
   if (!coreItem || heldCore || !coreItem.rest) coreTaker = null;
   for (const w of workers) {
     if (w.type === 'miner') {
@@ -1286,15 +1387,27 @@ function updateWorkers(now) {
       // sinks with it as the rock goes; when its stretch is bare it ambles along
       // to the nearest that is not.
       const t = now / 1000;
-      const seat = seatColumn(w.slot);
-      const left = cx - (gw / 2) * P;
-      w.x += (left + (seat + 0.5) * P - WORKER / 2 - w.x) * 0.07;   // an amble, not a jump
 
-      const col = Math.max(0, Math.min(gw - 1, Math.round((w.x + WORKER / 2 - left) / P)));
+      // Walk the layer, turning at its ends and before walking into a mate. A
+      // miner that finds itself off the layer -- because the rest of the gang
+      // took the row down around it, or because it was hired onto a flank --
+      // climbs back to it rather than standing there boring a shaft.
+      const here = colAtX(w.x + WORKER / 2);
+      if (!inBand(here)) {
+        const back = nearestInBand(here);
+        if (back !== here) w.dir = Math.sign(back - here);
+        w.x += w.dir * MINER_WALK * 2.5;              // brisk, it has ground to make up
+      } else {
+        const step = w.x + w.dir * MINER_WALK;
+        if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
+        else w.dir = -w.dir;
+      }
+
+      const col = colAtX(w.x + WORKER / 2);
       const surf = rockTopY(col);
       w.lunge *= 0.82;
       // it bobs on its feet, and drops into the swing
-      w.y = surf - WORKER + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
+      w.y = standOn(surf + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4);
 
       if (boulderAlive() && now >= w.next && rockTops[col] >= 0) {
         knockOff(w.x + WORKER / 2, surf + P / 2);                   // bite what it stands on
@@ -1313,13 +1426,12 @@ function updateWorkers(now) {
       const { px, py } = cellPos(w.spot.x, w.spot.y);
       const pull = Math.sin(now / 90 + w.ph) * 1.5;      // it judders as it bites
       w.x = px - WORKER / 2 + P / 2 + pull + w.side * WORKER * 0.6;
-      w.y = py - WORKER / 2 + P / 2;
+      w.y = standOn(Math.min(py + P, groundY));
 
       if (now >= w.next) {
         const had = boulder[w.spot.y][w.spot.x];
         boulder[w.spot.y][w.spot.x] = had - 1;
-        spawnChip(px, py, throwOff(px, 0.9), -(1.4 + Math.random() * 2),
-                  depthShade(had, depthOf()));
+        spawnSpoil(px, py, depthShade(had, depthOf()));
         w.next = now + drillMs() * (0.9 + Math.random() * 0.2);
         refreshRockTops();
         dirty = true;
@@ -1346,8 +1458,7 @@ function updateWorkers(now) {
     }
 
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
-    if (w.x < rockLeft() + gw * P) w.x = rockLeft() + gw * P;   // the hill is in the way
-    w.y = groundY - WORKER;
+    w.y = standOn(groundY);
 
     if (w.goal === 'seek') {
       const c = nearestDust(w.x);
@@ -1567,7 +1678,8 @@ function drawWorkers() {
       ctx.fillRect(x + P, y + P * 2, P, P);
       ctx.fillStyle = '#000';
     } else {
-      const y = groundY - WORKER;
+      const y = standOn(groundY);
+      ctx.strokeStyle = '#000';
       ctx.lineWidth = 2;
       ctx.strokeRect(Math.round(w.x) + 1, y + 1, WORKER - 2, WORKER - 2);
       // the load rides overhead, stacked two abreast
@@ -1621,13 +1733,16 @@ function stepCore() {
     return top;
   };
 
-  // A core must never settle under the rock: the next one stands where the last
-  // one did, and a core in its shadow is a core you cannot reach. It rolls out
-  // from the foot of the hill until it is in the open.
+  // A core must never settle under the rock. It is aimed clear when it drops,
+  // but a rock that grew over it, or a throw of your own, can still leave one
+  // there: it is relaunched, once, on an arc that clears the edge -- not left to
+  // bounce its way out a few pixels at a time.
   if (k.rest && k.x + CORE_SIZE > rockLeft() && k.x < rockLeft() + gw * P) {
+    const side = k.x + CORE_SIZE / 2 < cx ? -1 : 1;
+    const v = aim(k.x, k.y, rockEdge(side) + side * P * 4, CORE_SIZE);
     k.rest = false;
-    k.vx = 2.4;
-    k.vy = -1.4;
+    k.vx = v.vx;
+    k.vy = v.vy;
   }
 
   // resting until the dust under it goes away
@@ -1698,19 +1813,6 @@ function step() {
       ch.vx = -Math.abs(ch.vx) * 0.3;
     }
 
-    // spoil will not lie on the hill. It skitters down the face and off the side,
-    // so nothing ends up stranded on the slope or stacked against the flank
-    if (overRock(ch.x)) {
-      const rc = rockColAt(ch.x);
-      const top = rockTopY(rc);
-      if (rockTops[rc] >= 0 && ch.y + P > top) {
-        ch.y = top - P;
-        if (ch.vy > 0) ch.vy = 0;
-        ch.vx = Math.max(ch.vx, 0) + 0.9;
-        continue;
-      }
-    }
-
     // down the shaft: the pit collects whatever falls through its mouth
     if (overPitMouth(ch.x) && ch.y + P > groundY) {
       const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, ch.x)));
@@ -1760,6 +1862,7 @@ function draw() {
   const k = zoom * dpr;
   ctx.setTransform(k, 0, 0, k, Math.round(-camX * k), Math.round(-camY * k));
   drawCoreBehind();
+  drawGroundLine();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();
@@ -1786,17 +1889,7 @@ function draw() {
   drawGrid(floor);
   drawPit();
 
-  // ground up to the ledge, then the pit wall dropping away to the right edge
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#000';
-  ctx.beginPath();
-  ctx.moveTo(0, groundY + 1);
-  ctx.lineTo(pit.x - 1, groundY + 1);
-  ctx.lineTo(pit.x - 1, groundY + pit.h + 1);
-  ctx.lineTo(pit.x + pit.w + 1, groundY + pit.h + 1);
-  ctx.lineTo(pit.x + pit.w + 1, groundY + 1);
-  ctx.lineTo(worldW, groundY + 1);
-  ctx.stroke();
+  drawPitOutline();
 
   drawPaid();
   drawBench();
@@ -1810,6 +1903,33 @@ function draw() {
 
 // push whatever changed into the scratch canvas, then blit it into the world at
 // grain size. Cores are drawn on top, as circles, not as pixels
+// The ground runs up to the lip and picks up again past the far wall. It is
+// drawn before the rock, so the rock's foot stands over it: the couple of cells
+// the rock sinks below the line then read as the rock being in front of the
+// ground rather than buried in it.
+function drawGroundLine() {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.beginPath();
+  ctx.moveTo(0, groundY + 1);
+  ctx.lineTo(pit.x - 1, groundY + 1);
+  ctx.moveTo(pit.x + pit.w + 1, groundY + 1);
+  ctx.lineTo(worldW, groundY + 1);
+  ctx.stroke();
+}
+
+// the walls and floor of the pit, over the pile so the hole keeps its edges
+function drawPitOutline() {
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.beginPath();
+  ctx.moveTo(pit.x - 1, groundY + 1);
+  ctx.lineTo(pit.x - 1, groundY + pit.h + 1);
+  ctx.lineTo(pit.x + pit.w + 1, groundY + pit.h + 1);
+  ctx.lineTo(pit.x + pit.w + 1, groundY + 1);
+  ctx.stroke();
+}
+
 function drawPit() {
   if (!pitImage || pitPix.width !== pit.cols || pitPix.height !== pit.rows) {
     pitPix.width = pit.cols;
@@ -2062,6 +2182,7 @@ addEventListener('pagehide', persist);
 setInterval(persist, 1000);
 
 // dev hooks for poking at state from the console
+window.__clearFloor = () => { floor.grid.fill(0); dirty = true; };
 window.__pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); dirty = true; };
 window.__jump = n => { boulderNo = n; coreItem = null; heldCore = false; makeBoulder(); dirty = true; };
 window.__preview = n => {
@@ -2082,7 +2203,23 @@ window.__crew = (m = 0, h = 0, d = 0) => {   // hire straight off, for looking a
   syncWorkers(); buildShop(); dirty = true;
 };
 window.__spend = n => { spend(Math.min(n, stored)); dirty = true; };
-window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
+window.__give = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
+
+// how the banks sit against the rock: nothing in the apron, and the first column
+// of dust outside it only a grain or two tall, so the heap ramps away
+function apronReport() {
+  let inApron = 0, tallest = 0;
+  const near = rockLeft() - ROCK_CLEAR, far = rockLeft() + gw * P + ROCK_CLEAR;
+  for (let c = 0; c < floor.cols; c++) {
+    const x = floor.x + c * P;
+    let h = 0;
+    for (let r = floor.rows - 1; r >= 0; r--) if (at(floor, c, r)) { h = r + 1; break; }
+    if (x + P > near && x < far) { inApron += h; continue; }
+    const d = x < near ? (near - (x + P)) / P : (x - far) / P;
+    if (d < 1) tallest = Math.max(tallest, h);
+  }
+  return { inApron, tallest };
+}
 
 // how much dust has ended up somewhere the player cannot get at it
 function strandedDust() {
@@ -2098,10 +2235,10 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ paid: paid.length, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(cx), rockY: Math.round(cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: gw * P, rockH: gh * P, rockFoot: groundY + ROCK_SINK, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep, groundY, camX: Math.round(camX), worldW, pitCapacity: pitCapacity(), stored, held, cores, boulderNo, depth: depthOf(), gw, gh, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitGrains: count(pit), pitDust: countDust(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ paid: paid.length, apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(cx), rockY: Math.round(cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: gw * P, rockH: gh * P, rockFoot: groundY + ROCK_SINK, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep, groundY, camX: Math.round(camX), worldW, pitCapacity: pitCapacity(), stored, held, cores, boulderNo, depth: depthOf(), gw, gh, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitGrains: count(pit), pitDust: countDust(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
-camX = cx - 420;                         // start looking at the rock, the bench and the pit
+camX = cx - 380;                         // start looking at the rock, the bench and the pit
 clampCam();
 restore();
 syncWorkers();

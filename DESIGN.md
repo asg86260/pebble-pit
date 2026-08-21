@@ -174,14 +174,25 @@ with its foot a couple of cells under the ground line so it reads as planted rat
 It is thickest at its base and through the middle, thinning towards the skyline, so the crest
 breaks through quickly and the heart of it is the real work.
 
-The crew work it **from the top down**. Each miner keeps a stretch of the crest to itself, stands
-on whatever rock is left there, and sinks with it as the rock goes; when its stretch is bare it
-ambles along to the nearest that is not. Drillers work the flanks instead, parked at the foot of
-the hill eating a notch sideways into it. Nobody orbits anything.
+The crew take it off **in layers**. A miner does not stand in one spot and bore a shaft: it walks
+the top layer striking the rock under its feet as it goes, so the crest comes off as a row and the
+next row is exposed underneath. It turns at the ends of the layer and before walking into a mate,
+and one that finds itself off the layer — because the gang took the row down around it — climbs
+back to it. Drillers work the flanks instead, parked at the foot eating a notch sideways in.
+Nobody orbits anything.
 
-Spoil is thrown clear, downhill towards the bench, and anything that lands on the slope skitters
-down the face and off the side. Nothing may end up behind the hill or under it: dust the player
-cannot reach is dust the player will resent. There is a test for exactly that.
+Spoil is **aimed**, not scattered. A chip goes off whichever side of the rock it was struck from,
+to a spot on clear ground past the foot, launched on the one arc that gets there: the pop is sized
+to the distance and the sideways speed follows from how long that pop keeps it up. Nothing is
+nudged mid-flight and nothing is shoved off the rock, so it reads as a throw.
+
+The rock keeps a bare **apron** either side. Spoil may not settle in it, so the two banks stand off
+the rock rather than stacking up its flanks and blurring where the rock ends; a rock that grows
+over an old heap shoves it out to clear ground. Beyond the apron there is no ceiling on a bank:
+it heaps up to whatever height the sand finds on its own.
+
+The crew walk the whole ground, passing in front of the rock, so both banks are reachable. Dust the
+player cannot reach is dust the player will resent, and there is a test for exactly that.
 
 When the last of the rock goes the core is loose, and it **rolls out** from the foot of the hill
 before it settles — the next rock stands where the last one did, and a core in its shadow
@@ -267,38 +278,28 @@ windows to the right, so most of it sits off the edge and you scroll to see alon
 ground past its far wall, so scrolling to the end shows you the edge of the thing rather than
 running out of world.
 
-**It really holds a million.** The pile is the dust, not a picture of it: one grain is one dust,
-always, and paying takes exactly that many grains back out. What changes as it fills is not what
-a grain is worth — it is how big a grain is drawn.
+**The pile is the dust, not a picture of it.** One grain is one dust, always, drawn the same
+size as dust anywhere else, and paying takes exactly as many grains back out as the counter
+loses. The pile always shows as much of the hole as will fit in it: 27,784 grains, about a
+run's worth of mining. Past that the counter keeps going and the pile sits at the brim.
 
-| Grain | Pit is | Holds |
-|---|---|---|
-| 6 px | 604 x 46 | 27,784 |
-| 3 px | 1208 x 92 | 111,136 |
-| 2 px | 1812 x 138 | 250,056 |
-| 1 px | 3624 x 276 | **1,000,224** |
+A million does not fit at this grain, and the goal is parked for now. The machinery to get
+there is still in place: `PIT_GRAINS` lists the sizes a grain may be drawn at, and adding
+finer ones lets the pile **settle** to them as it fills — every grain kept, each column shared
+out across the finer columns standing where it did, so the profile survives and only the
+resolution changes. At one pixel a grain the same hole holds 1,000,224. The arithmetic is
+unforgiving: a million grains needs a million pixels of hole, and since the depth is pinned
+to the window it can only be bought sideways — 2px grains would need a pit seven screens wide,
+3px seventeen. That is the trade whenever the goal comes back.
 
-When the pile reaches the top it **settles to the next grain down**. Every grain is kept: each
-column is shared out across the finer columns standing where it did, so the profile survives and
-only the resolution changes — the pile visibly sinks to a quarter of its height and the dust in
-it gets finer. Three settles across a run, each a quiet beat rather than an interruption. This is
-the opposite of the old compaction, which threw dust away and made a grain stand for more; the
-number and the picture can no longer drift apart, because they are the same thing.
-
-Three things make a million grains affordable:
+Two things keep a big pile cheap, and are worth keeping either way:
 
 - **Drawing.** The pit is painted into a scratch canvas one pixel per grain and blitted up to
-  size, and only the cells that changed are pushed across. A million fillRects a frame is not a
-  drawing routine; one drawImage is.
-- **Settling.** The sand rule runs over a band of columns per frame and picks up where it left
-  off, so the cost per frame is flat whatever the grain. The pile slumps a beat behind itself,
-  which nobody can see.
-- **Saving.** Storing a value per cell is 2.5 MB of speckle written every second. What matters
-  about a pile is its shape and its total, so the save holds the height of every column and how
-  many grains of each shade there are, and the speckle is dealt out again on the way back in.
-  The profile and the count come back exact, in about 2 KB.
-
-Measured with a full pit and a crew working: 6 ms a frame.
+  size, and only the cells that changed are pushed across.
+- **Saving.** A value per cell is megabytes of speckle written every second. What matters
+  about a pile is its shape and its total, so the save holds the height of every column and
+  how many grains of each shade there are, and the speckle is dealt out again on the way back
+  in. The profile and the count come back exact, in about 2 KB.
 
 If the ground bed ever fills, further dust rolls into the pit instead of piling up mid-air.
 

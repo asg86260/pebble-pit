@@ -12,6 +12,7 @@ function ok(cond, what, detail = '') {
   return { pass: false, what, detail };
 }
 
+const WORKER = 18;                             // a worker square, for tolerances
 const canvas = () => document.getElementById('c');
 const board = () => document.getElementById('board');
 const shop = () => document.getElementById('shop');
@@ -116,30 +117,30 @@ const TESTS = [
     ];
   }],
 
-  ['the pit really holds a million', async () => {
-    const checks = [];
-    const grains = [];
-    for (let i = 0; i < 10; i++) {
-      window.__give(100000);
-      await sleep(120);
-      const s = state();
-      grains.push(s.pitGrain);
-      if (s.stored !== s.pitDust) {
-        checks.push(ok(false, 'every dust is a grain in the pile',
-                       `${s.stored} counted, ${s.pitDust} in the pit`));
-        break;
-      }
-    }
+  ['dust in the pit is one grain each', async () => {
+    const cap = state().pitCapacity;
+    window.__give(Math.floor(cap * 0.6));
+    await sleep(600);
     const s = state();
-    return checks.concat([
-      ok(s.stored === 1000000, 'a million goes in', `${s.stored}`),
-      ok(s.pitDust === 1000000, 'and a million is in the pile, one grain each',
-         `${s.pitDust}`),
-      ok(s.pitCapacity >= 1000000, 'with room for it', `${s.pitCapacity}`),
-      ok(s.pitGrain === 1, 'the pile has settled to its finest grain', `${s.pitGrain}`),
-      ok(grains[0] > grains[grains.length - 1], 'it got there by settling, not at once',
-         grains.join(' -> '))
-    ]);
+    return [
+      ok(s.pitGrain === 6, 'a grain in the pile is the same size as dust anywhere else',
+         `${s.pitGrain}px`),
+      ok(s.stored === s.pitDust, 'every dust counted is a grain in the pile',
+         `${s.stored} counted, ${s.pitDust} in the pit`),
+      ok(cap > 20000, 'the hole holds a whole run of mining', `${cap}`)
+    ];
+  }],
+
+  ['filling the pit past the brim does not break it', async () => {
+    const cap = state().pitCapacity;
+    window.__give(cap);                        // well past what the hole can show
+    await sleep(800);
+    const s = state();
+    return [
+      ok(s.pitDust <= cap, 'the pile stops at the brim', `${s.pitDust} of ${cap}`),
+      ok(s.stored > cap, 'and the counter keeps going', `${s.stored}`),
+      ok(s.pitGrain === 6, 'the grain does not change under it', `${s.pitGrain}px`)
+    ];
   }],
 
   ['a full pit still saves and reloads', async () => {
@@ -151,20 +152,21 @@ const TESTS = [
       ok(raw.length < 200 * 1024, 'the save stays small', `${Math.round(raw.length / 1024)}KB`),
       ok(j.stored === s.stored, 'the hole is saved', `${j?.stored}`),
       ok(typeof j.pit?.heights === 'string', 'the pile is saved as its profile'),
-      ok(j.pitStep === 3, 'and the grain it settled to', `${j?.pitStep}`)
+      ok(j.pitStep === 0, 'and the grain it is drawn at', `${j?.pitStep}`)
     ];
   }],
 
   ['spending a full pit takes it back out', async () => {
     const before = state();
-    window.__spend(400000);
+    window.__spend(Math.floor(before.stored / 2));
     await sleep(600);
     const after = state();
     return [
-      ok(after.stored === before.stored - 400000, 'the counter comes down',
+      ok(after.stored === before.stored - Math.floor(before.stored / 2), 'the counter comes down',
          `${before.stored} -> ${after.stored}`),
-      ok(after.pitDust === after.stored, 'and the pile matches it exactly',
-         `${after.pitDust} vs ${after.stored}`),
+      ok(after.pitDust === Math.min(after.stored, after.pitCapacity),
+         'and the pile matches what will fit',
+         `${after.pitDust} in the pit, ${after.stored} counted, ${after.pitCapacity} room`),
       ok(after.paid > 0, 'dust is seen leaving')
     ];
   }],
@@ -200,7 +202,29 @@ const TESTS = [
       ok(s.rockW > s.rockH, 'it is a hill, wider than it is tall', `${s.rockW}x${s.rockH}`),
       ok(s.rockX + s.rockW / 2 < s.benchX, 'it stands clear of the bench',
          `rock ends ${Math.round(s.rockX + s.rockW / 2)}, bench at ${s.benchX}`),
-      ok(s.benchX < s.pitX, 'the bench is between the rock and the pit')
+      ok(s.benchX < s.pitX, 'the bench is between the rock and the pit'),
+      // the whole working area has to sit in a window at once, at the biggest
+      // rock: the meteor is gone, so nothing needs to be pushed out to the left
+      ok(s.pitX - (s.rockX - s.rockW / 2) < 1600, 'rock through pit lip is one screenful',
+         `${Math.round(s.pitX - (s.rockX - s.rockW / 2))} across`),
+      ok(s.benchX - (s.rockX + s.rockW / 2) > 60, 'the rock never grows into the bench',
+         `${Math.round(s.benchX - (s.rockX + s.rockW / 2))} clear`),
+      ok(s.pitX - s.benchX > 300, 'there is ground to sweep between bench and lip',
+         `${Math.round(s.pitX - s.benchX)}`)
+    ];
+  }],
+
+  ['the biggest rock still fits the opening view', async () => {
+    window.__jump(12);
+    await sleep(300);
+    const s = state();
+    const left = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
+    const lip = (s.pitX - s.camX) * s.zoom;
+    window.__jump(1);
+    return [
+      ok(left >= 0, 'the last rock is not cut off on the left', `${Math.round(left)}px in`),
+      ok(lip < innerWidth, 'and the pit lip is still on screen',
+         `lip at ${Math.round(lip)} of ${innerWidth}`)
     ];
   }],
 
@@ -223,17 +247,54 @@ const TESTS = [
     ];
   }],
 
-  ['spoil ends up where it can be reached', async () => {
+  ['a worker can reach the bank behind the rock', async () => {
+    // no miners, so nothing new lands while we watch, and only one heap on the
+    // ground: the one on the far side of the hill
+    window.__crew(0, 1, 0);
+    for (let i = 0; i < 6; i++) await buy('haulpace');   // so it walks at a fair clip
+    window.__clearFloor();                     // so the only dust is the heap we make
+    await sleep(300);
+    const s = state();
+    const behind = s.rockX - s.rockW / 2 - 60;
+    window.__pile(behind, 10);
+    await sleep(400);
+    const before = state();
+
+    let reached = s.rockX;
+    for (let i = 0; i < 150; i++) {
+      await sleep(100);
+      for (const p of state().workerPos) {
+        if (p[0] !== 'h') continue;
+        reached = Math.min(reached, +p.split(':')[1].split(',')[0]);
+      }
+      if (state().dustLeftOfRock < before.dustLeftOfRock) break;
+    }
+    const after = state();
+    window.__crew(0, 0, 0);                    // leave the payroll as we found it
+    return [
+      ok(before.dustLeftOfRock > 0, 'dust is heaped behind the hill to start with',
+         `${before.dustLeftOfRock}`),
+      ok(reached <= s.rockX - s.rockW / 2 + WORKER, 'a worker walks past the hill to get to it',
+         `got to ${Math.round(reached)}, hill starts ${Math.round(s.rockX - s.rockW / 2)}`),
+      ok(after.dustLeftOfRock < before.dustLeftOfRock, 'and starts clearing it',
+         `${before.dustLeftOfRock} -> ${after.dustLeftOfRock}`)
+    ];
+  }],
+
+  ['spoil is aimed, and lands clear of the rock', async () => {
     window.__crew(6, 0, 0);
-    await sleep(4000);
+    await sleep(5000);
     const s = state();
     window.__crew(0, 0, 0);
+    const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
     return [
       ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
-      ok(s.dustLeftOfRock === 0, 'none of it is stranded behind the hill',
-         `${s.dustLeftOfRock} grains`),
-      ok(s.dustUnderRock === 0, 'and none of it is buried under the hill',
-         `${s.dustUnderRock} grains`)
+      ok(s.dustUnderRock === 0, 'none of it comes to rest on or under the rock',
+         `${s.dustUnderRock} grains`),
+      ok(s.dustLeftOfRock > 0 && right > 0, 'both banks get some',
+         `${s.dustLeftOfRock} left, ${right} right`),
+      ok(s.apronClear, 'the ground right beside the rock stays bare',
+         `${s.apronDust} grains in the apron`)
     ];
   }],
 
@@ -336,21 +397,24 @@ const TESTS = [
     await bankCore();
     await hoverBench();
     const hired = await buy('unlockhaulers');
-    for (let i = 0; i < 4; i++) await buy('haulpace');
+    for (let i = 0; i < 6; i++) await buy('haulpace');
+    for (let i = 0; i < 4; i++) await buy('haulcarry');
 
     const s = state();
-    window.__pile(s.pitX - 500, 150);
+    window.__pile(s.pitX - 260, 150);           // within a round trip of the lip
     await sleep(400);
     const before = state();
 
     // watch it work: it should reach the lip carrying something
     let reachedLip = false;
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 200; i++) {
       await sleep(100);
       const w = state().workerPos.find(p => p[0] === 'h');
-      if (!w) continue;
-      const wx = +w.split(':')[1].split(',')[0];
-      if (Math.abs(wx - (state().pitX - 18)) < 24) reachedLip = true;
+      if (w) {
+        const wx = +w.split(':')[1].split(',')[0];
+        if (Math.abs(wx - (state().pitX - WORKER)) < 24) reachedLip = true;
+      }
+      if (reachedLip && state().stored > before.stored) break;
     }
     const after = state();
     return [
