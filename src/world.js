@@ -37,6 +37,17 @@ export const yardLeft = () => cave.x + cave.w;
 export const outsideYard = x => x + P <= yardLeft() || x >= pit.x;
 export const blocked = c => outsideYard(floor.x + c * P) || overApron(floor.x + c * P);
 
+// Where something that is *not* dust may not come to rest: down the hole, down
+// the shaft, or under the rock. Everywhere else on the ground will do. A shard
+// does not heap and does not have to keep to the yard -- it lies where it was
+// dropped until somebody walks out and fetches it, and a spore cut at the beds
+// should stay at the beds rather than being shunted across the world.
+export const overShaft = x => x + P > cave.x && x < cave.x + cave.w;
+export const noRest = c => {
+  const x = floor.x + c * P;
+  return overPitMouth(x) || overApron(x) || overShaft(x);
+};
+
 // How far past the apron a column is, in cells, or -1 for one inside it.
 export const pastApron = x => {
   const near = rockLeft() - ROCK_CLEAR, far = rockLeft() + S.gw * P + ROCK_CLEAR;

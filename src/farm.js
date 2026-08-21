@@ -6,11 +6,12 @@
 // different shape: the cave spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK }
+import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL }
   from './config.js';
 import { S, farm } from './state.js';
 import { standOn } from './world.js';
 import { mult } from './lab.js';
+import { spawnChip } from './dust.js';
 
 // how long one bed takes to come on, at this level of tending
 export const tendMs = (lvl = S.tendLevel) =>
@@ -40,21 +41,11 @@ function pickBed(w) {
   return best < 0 ? w.bed : best;
 }
 
+// Cut, and the spore drops beside the bed and lies in the dust until somebody
+// carries it to the pit.
 function cut(i, x) {
   S.beds[i] = 0;
-  S.crop.push({ x, y: S.groundY - FARM_H, t: 0 });
-  S.spores++;
-  S.seenSpore = true;
-  S.dirty = true;
-}
-
-export function stepCrop() {
-  for (let i = S.crop.length - 1; i >= 0; i--) {
-    const c = S.crop[i];
-    c.t += 0.016;
-    c.y -= 0.6;
-    if (c.t > 1.6) S.crop.splice(i, 1);
-  }
+  spawnChip(x, S.groundY - FARM_H, (Math.random() - 0.5) * 0.8, -1.4, SPORE_CELL);
 }
 
 // one farmhand, one frame

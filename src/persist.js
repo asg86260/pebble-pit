@@ -8,7 +8,7 @@
 import { P, CORE_CELL, SHADES, CORE_SIZE } from './config.js';
 import { load, save, clear } from './save.js';
 import { S, floor, pit, bench } from './state.js';
-import { at, put, count, countDust, fillFlat, addGrain } from './grid.js';
+import { at, put, count, countDust, fillFlat, addGrain, isDust } from './grid.js';
 import { blocked } from './world.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
@@ -63,7 +63,7 @@ export function pitToSave() {
     let n = 0;
     for (let r = 0; r < pit.rows; r++) {
       const v = at(pit, c, r);
-      if (!v || v === CORE_CELL) continue;
+      if (!isDust(v)) continue;                    // the rest are re-seeded from the counts
       n++;
       shades[Math.min(SHADES.length, Math.max(1, v)) - 1]++;
     }
@@ -344,8 +344,6 @@ export function reset() {
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];
-  S.crop = [];
-  S.finds = [];
   syncWorkers();
   resetRates();
   floor.grid.fill(0);

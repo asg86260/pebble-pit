@@ -60,7 +60,14 @@ export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // pales as you dig through it; an empty cell is the white page showing through.
 // Swap these for hues to add colour.
 export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
+// Cells above the shades are not dust. They heap and are carried exactly like
+// it -- a shard on the ground is a grain in the same bed, and a worker scooping
+// a column picks it up without knowing what it is -- but they are counted as
+// themselves when they land in the pit, and the pile draws them as their mark.
 export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among the dust
+export const SHARD_CELL = SHADES.length + 2;
+export const SPORE_CELL = SHADES.length + 3;
+export const SPARK_CELL = SHADES.length + 4;
 export const GRAV = 0.45;
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big

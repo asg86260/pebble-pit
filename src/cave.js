@@ -8,10 +8,11 @@
 // Nothing about the cave is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK } from './config.js';
+import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK, SHARD_CELL } from './config.js';
 import { S, cave } from './state.js';
 import { standOn } from './world.js';
 import { mult } from './lab.js';
+import { spawnChip } from './dust.js';
 
 // how long a trip takes, at this pace
 export const caveMs = (lvl = S.cavePaceLevel) =>
@@ -33,22 +34,11 @@ export function newSpelunker() {
   };
 }
 
-// A shard rising over the mouth: the moment of finding it, which would otherwise
-// be a number quietly going up somewhere else on the screen.
+// A shard comes up and is tossed down by the mouth, where it lies in the dust
+// like anything else. It is not counted there: it is counted when it goes in the
+// pit, which means somebody has to carry it.
 function found(x, y) {
-  S.finds.push({ x, y, t: 0 });
-  S.shards++;
-  S.seenShard = true;
-  S.dirty = true;
-}
-
-export function stepFinds() {
-  for (let i = S.finds.length - 1; i >= 0; i--) {
-    const f = S.finds[i];
-    f.t += 0.016;
-    f.y -= 0.6;
-    if (f.t > 1.6) S.finds.splice(i, 1);
-  }
+  spawnChip(x, y, (Math.random() - 0.5) * 0.8, -1.8, SHARD_CELL);
 }
 
 // one spelunker, one frame

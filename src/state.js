@@ -72,14 +72,12 @@ export const S = {
   shards: 0,
   seenShard: false,       // nothing about shards is shown until one is brought up
   caveOpen: false,        // the cave has been opened
-  finds: [],              // a shard rising over the mouth, on its way to being counted
 
   // --- the farm, and what grows in it ---
   spores: 0,
   seenSpore: false,
   farmOpen: false,
   beds: [],               // how far along each bed is, 0..1
-  crop: [],               // a spore rising off a bed just harvested
 
   // --- the meteor ---
   sparks: 0,

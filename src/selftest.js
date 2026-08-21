@@ -852,21 +852,35 @@ const TESTS = [
     ];
   }],
 
-  ['the cave gives up shards', async () => {
+  // A shard is brought up and set down. Nothing counts it there: somebody has to
+  // walk over and pick it up, the same as everything else in this yard.
+  ['the cave gives up shards, and somebody fetches them', async () => {
     window.__crew(0, 0, 3);                  // three spelunkers, cave open
     const start = state();
-    let wentUnder = false;
+    let wentUnder = false, lay = false;
     for (let i = 0; i < 200; i++) {
       await sleep(100);
-      if (state().underground > 0) wentUnder = true;
-      if (state().shards > start.shards) break;
+      const s = state();
+      if (s.underground > 0) wentUnder = true;
+      if (s.floorMarks.includes('shard')) { lay = true; break; }
+    }
+    const waiting = state();
+    window.__crew(0, 2, 3);                  // now put somebody on carrying
+    let got = false;
+    for (let i = 0; i < 700; i++) {          // the cave is a long walk from the pit
+      await sleep(100);
+      if (state().shards > start.shards) { got = true; break; }
     }
     const after = state();
     window.__crew(0, 0, 0);
     return [
       ok(after.caveOpen, 'the cave is open'),
       ok(wentUnder, 'a spelunker goes down it'),
-      ok(after.shards > start.shards, 'and comes back up with a shard',
+      ok(lay, 'and leaves a shard lying in the dust by the mouth',
+         JSON.stringify(waiting.floorMarks)),
+      ok(waiting.shards === start.shards, 'which is not counted where it lies',
+         `${start.shards} -> ${waiting.shards}`),
+      ok(got, 'a worker walks over for it and that is what counts it',
          `${start.shards} -> ${after.shards}`),
       ok(after.seenShard, 'which is worth showing on the counter')
     ];
@@ -884,18 +898,28 @@ const TESTS = [
   ['the farm grows spores when it is tended', async () => {
     window.__crew(0, 0, 0, 2);               // two farmhands, farm open
     const start = state();
-    let grew = false;
+    let grew = false, lay = false;
     for (let i = 0; i < 250; i++) {
       await sleep(100);
-      if (state().beds.some(b => b > 0.1)) grew = true;
-      if (state().spores > start.spores) break;
+      const s = state();
+      if (s.beds.some(b => b > 0.1)) grew = true;
+      if (s.floorMarks.includes('spore')) { lay = true; break; }
+    }
+    const waiting = state();
+    window.__crew(0, 2, 0, 2);               // somebody to go and get it
+    let got = false;
+    for (let i = 0; i < 700; i++) {          // and the beds are further still
+      await sleep(100);
+      if (state().spores > start.spores) { got = true; break; }
     }
     const after = state();
     return [
       ok(after.farmOpen, 'the farm is open'),
       ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
       ok(grew, 'a bed comes on while it is tended'),
-      ok(after.spores > start.spores, 'and is cut for a spore',
+      ok(lay, 'and is cut for a spore that lies beside it',
+         JSON.stringify(waiting.floorMarks)),
+      ok(got, 'a worker fetches it, and that is what counts it',
          `${start.spores} -> ${after.spores}`),
       ok(after.seenSpore, 'which is worth showing on the counter')
     ];
@@ -981,20 +1005,35 @@ const TESTS = [
     return checks;
   }],
 
-  ['the meteor sheds sparks', async () => {
+  // A spark comes down and lands in the yard as a grain, like everything else
+  // the sites give up. It is counted when it reaches the pit, not before.
+  ['the meteor sheds sparks, and they are carried in', async () => {
+    window.__crew(0, 0);
     window.__meteor(true);
     const start = state();
-    let sawFalling = false;
+    let sawFalling = false, lay = false;
     for (let i = 0; i < 600; i++) {
       await sleep(100);
-      if (state().falling > 0) sawFalling = true;
-      if (state().sparks > start.sparks) break;
+      const s = state();
+      if (s.falling > 0) sawFalling = true;
+      if (s.floorMarks.includes('spark')) { lay = true; break; }
+    }
+    const waiting = state();
+    window.__crew(0, 2);                     // somebody to carry it in
+    let banked = false;
+    for (let i = 0; i < 400; i++) {
+      await sleep(100);
+      if (state().sparks > start.sparks) { banked = true; break; }
     }
     const after = state();
+    window.__crew(0, 0);
     return [
       ok(after.meteorOpen, 'the meteor is up there'),
       ok(sawFalling, 'a spark comes loose and falls'),
-      ok(after.sparks > start.sparks, 'and is counted when it lands',
+      ok(lay, 'and lands in the yard as a grain', JSON.stringify(waiting.floorMarks)),
+      ok(waiting.sparks === start.sparks, 'not counted where it lies',
+         `${start.sparks} -> ${waiting.sparks}`),
+      ok(banked, 'a worker carries it to the pit, and that is what counts it',
          `${start.sparks} -> ${after.sparks}`),
       ok(after.seenSpark, 'which is worth showing on the counter')
     ];
@@ -1112,7 +1151,10 @@ const TESTS = [
   }]
 ];
 
-export async function runTests() {
+// `__test('cave')` runs only the groups whose name says cave. The whole suite is
+// two minutes; one group is seconds, which is the difference between checking a
+// change and putting off checking it.
+export async function runTests(filter = '') {
   const errs = [];
   const onErr = e => errs.push(String(e.message || e));
   addEventListener('error', onErr);
@@ -1121,7 +1163,8 @@ export async function runTests() {
   await sleep(600);
 
   const results = [];
-  for (const [name, fn] of TESTS) {
+  const wanted = TESTS.filter(([name]) => !filter || name.toLowerCase().includes(filter.toLowerCase()));
+  for (const [name, fn] of wanted) {
     let checks;
     try {
       checks = await fn();
@@ -1147,3 +1190,4 @@ export async function runTests() {
 }
 
 window.__test = runTests;
+window.__groups = () => TESTS.map(([name]) => name);

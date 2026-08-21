@@ -7,7 +7,7 @@
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
-import { blocked, standOn, rockLeft } from './world.js';
+import { blocked, standOn, rockLeft, yardLeft } from './world.js';
 import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops } from './rock.js';
 import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
@@ -22,6 +22,8 @@ import { stepFarmhand, newFarmhand } from './farm.js';
 // It turns at the ends of the layer and turns before walking into a mate, so the
 // gang works back and forth across the rock like a line of men on a bench.
 const MINE_BAND = 3;      // cells below the peak still counted as the top layer
+const ROAM_RANGE = 420;   // how far an idle worker will wander for no reason
+const ROAM_PACE = 0.45;   // and how slowly it goes about it
 const MINER_WALK = 0.5;   // pixels a frame along the row
 
 
@@ -100,7 +102,7 @@ export function syncWorkers() {
   for (let i = 0; i < needHaulers; i++) {
     S.workers.push({
       type: 'hauler', x: rockLeft() + Math.random() * (pit.x - rockLeft()), y: 0,
-      carry: 0, next: 0, goal: 'seek', claim: -1
+      carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null
     });
   }
 
@@ -123,11 +125,29 @@ function nearestDust(x, taken) {
   const from = Math.max(0, Math.min(last, colOf(floor, x)));
   for (let d = 0; d <= last; d++) {
     for (const c of [from - d, from + d]) {
-      if (c < 0 || c > last || blocked(c) || taken.has(c)) continue;
+      // Anything in a column is worth fetching, barred or not: a barred column
+      // normally holds nothing, and when it does hold something -- a shard set
+      // down at the beds -- somebody should still go out and get it.
+      if (c < 0 || c > last || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
   return -1;
+}
+
+// Something that is not dust is worth crossing the yard for: it is one grain and
+// it is worth a whole shard. Workers take the nearest column of anything, so
+// without this a shard out at the beds waits for the whole yard to be swept
+// clean first -- which, in a yard with a working crew, is never.
+function nearestMark(w, taken) {
+  let best = -1, bestD = Infinity;
+  for (const m of S.floorMarks) {
+    const c = colOf(floor, m.x);
+    if (c < 0 || c >= floor.cols || taken.has(c) || !at(floor, c, 0)) continue;
+    const d = Math.abs(m.x - w.x);
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
 }
 
 // the columns already spoken for this frame
@@ -238,8 +258,9 @@ export function updateWorkers(now, dt) {
       // the nearest one afresh every frame is what made the crew swarm.
       if (w.claim >= 0 && !at(floor, w.claim, 0)) { taken.delete(w.claim); w.claim = -1; }
       if (w.claim < 0) {
-        const c = nearestDust(w.x, taken);
-        if (c >= 0) { w.claim = c; taken.add(c); }
+        const c = nearestMark(w, taken);                  // a find first, if there is one
+        const pick = c >= 0 ? c : nearestDust(w.x, taken);
+        if (pick >= 0) { w.claim = pick; taken.add(pick); }
       }
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
       const c = w.claim;
@@ -288,7 +309,25 @@ export function updateWorkers(now, dt) {
         S.dirty = true;
       }
     } else {
-      if (nearestDust(w.x, taken) >= 0) w.goal = 'seek';
+      // Nothing to fetch and nothing to carry. Rather than standing to
+      // attention they amble: a spot to stroll to, a stand about when they get
+      // there, then another. A yard at rest should read as at rest, not as
+      // switched off.
+      if (nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; continue; }
+      if (w.roamTo === null || w.roamTo === undefined) {
+        if (now >= (w.restUntil || 0)) {
+          const lo = yardLeft(), hi = pit.x - WORKER;
+          const near = w.x + (Math.random() - 0.5) * ROAM_RANGE;
+          w.roamTo = Math.max(lo, Math.min(hi, near));
+        }
+      } else {
+        const d = w.roamTo - w.x;
+        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE, Math.abs(d));
+        if (Math.abs(d) < 1) {
+          w.roamTo = null;
+          w.restUntil = now + 500 + Math.random() * 3000;
+        }
+      }
     }
   }
 }

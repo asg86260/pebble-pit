@@ -42,9 +42,15 @@ const tab = await (await fetch(`http://127.0.0.1:${PORT}/json/new?${encodeURICom
 const ws = new WebSocket(tab.webSocketDebuggerUrl);
 const waiting = new Map();
 let n = 0;
+const logs = [];
 ws.addEventListener('message', e => {
   const m = JSON.parse(e.data);
   if (waiting.has(m.id)) { waiting.get(m.id)(m); waiting.delete(m.id); }
+  if (m.method === 'Runtime.consoleAPICalled')
+    logs.push(m.params.args.map(a => a.value ?? a.description ?? '').join(' '));
+  if (m.method === 'Runtime.exceptionThrown')
+    logs.push('EXCEPTION ' + (m.params.exceptionDetails.exception?.description ||
+                              m.params.exceptionDetails.text || ''));
 });
 const send = (method, params = {}) =>
   new Promise(res => { const id = ++n; waiting.set(id, res); ws.send(JSON.stringify({ id, method, params })); });
@@ -62,5 +68,8 @@ if (shot) {
 } else {
   console.log(JSON.stringify(out.result?.result?.value ?? out.result, null, 1));
 }
+// anything the page said for itself: a module that would not load says so here
+// and nowhere else, and a silent page is the confusing kind of broken
+if (logs.length) console.log(['--- console ---', ...logs].join(String.fromCharCode(10)));
 own?.kill();
 process.exit(0);

@@ -6,11 +6,13 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHADES } from './config.js';
+import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+         SHADES } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, countDust, bottomY, settleSome } from './grid.js';
+import { at, put, addGrain, countDust, isDust, bottomY, settleSome } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
+import { buildShop } from './shop.js';
 
 // its painter, made fresh whenever the grid underneath changes shape
 export function setPitGrain(step) {
@@ -36,9 +38,16 @@ export function settlePit() {
   settleSome(pit, SETTLE_BUDGET);
 }
 
+// Something goes in the hole. A grain of dust is worth one dust; a shard, a
+// spore or a spark is worth one of itself. Either way it is a grain in the pile
+// from here on, and the pile shows exactly what you are holding.
 export function bankDust(x, shade = 1) {
-  S.stored++;                                // every pixel is worth one
-  S.banked++;                                // the books count what came in, not what is left
+  if (isDust(shade)) {
+    S.stored++;                              // every pixel is worth one
+    S.banked++;                              // the books count what came in, not what is left
+  } else if (shade === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
+  else if (shade === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
+  else if (shade === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
   S.dirty = true;
   if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on
@@ -75,7 +84,7 @@ export function refinePit() {
     const stack = [];
     for (let r = 0; r < oldRows; r++) {
       const v = oldGrid[r * oldCols + c];
-      if (v && v !== CORE_CELL) stack.push(v);     // S.cores are re-seeded after
+      if (isDust(v)) stack.push(v);                // the rest are re-seeded after
     }
     if (!stack.length) continue;
 
@@ -105,7 +114,7 @@ export function spend(cost) {
   for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
     for (let c = 0; c < pit.cols && left > 0; c++) {
       const v = at(pit, c, r);
-      if (!v || v === CORE_CELL) continue;
+      if (!isDust(v)) continue;
       put(pit, c, r, 0);
       left--;
       if (S.paid.length < 200) {               // a few hundred is plenty to read
@@ -125,25 +134,33 @@ export function spend(cost) {
 }
 
 
-// the pile shows exactly the cores you still hold: top up after a resize, and
-// take them back out when they are spent
+// The pile shows exactly what you still hold, of everything that is not dust:
+// top up after a resize or a reload, and take them back out when they are spent.
+// Nothing about where any one of them sits is worth saving, so this is also how
+// they come back from a save.
+const HELD = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
+              [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
+
 export function seedPitCores() {
   if (!pit.grid) return;
-  let have = 0;
-  for (const v of pit.grid) if (v === CORE_CELL) have++;
-  for (let i = have; i < S.cores; i++) {
-    // near the lip, where the dust is and where you can see them: the pit runs
-    // a long way right, and a core out in the empty end is a core nobody finds
-    addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, S.cores))) * 700, null, CORE_CELL);
+  for (const [cell, count] of HELD) {
+    let have = 0;
+    for (const v of pit.grid) if (v === cell) have++;
+    const want = S[count];
+    for (let i = have; i < want; i++) {
+      // near the lip, where the dust is and where you can see them: the pit runs
+      // a long way right, and one out in the empty end is one nobody finds
+      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * 700, null, cell);
+    }
+    if (have > want) takeCoreCells(have - want, cell);
   }
-  if (have > S.cores) takeCoreCells(have - S.cores);
 }
 
-// lift core cells out of the pile, topmost first
-export function takeCoreCells(n) {
+// lift cells of one kind out of the pile, topmost first
+export function takeCoreCells(n, cell = CORE_CELL) {
   for (let r = pit.rows - 1; r >= 0 && n > 0; r--) {
     for (let c = 0; c < pit.cols && n > 0; c++) {
-      if (at(pit, c, r) === CORE_CELL) { put(pit, c, r, 0); n--; }
+      if (at(pit, c, r) === cell) { put(pit, c, r, 0); n--; }
     }
   }
 }

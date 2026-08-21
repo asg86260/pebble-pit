@@ -4,9 +4,10 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
+import { P, SHADES, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+         CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
-import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
+import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
@@ -67,12 +68,6 @@ export function drawCave() {
   ctx.fillRect(x - P * 3, y, P * 3, 3);
   ctx.fillRect(x + w, y, P * 3, 3);
 
-  // whatever has just been brought up, rising over the mouth
-  for (const f of S.finds) {
-    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
-    drawTriangle(f.x, f.y, P, false);
-    ctx.globalAlpha = 1;
-  }
   ctx.fillStyle = '#000';
 }
 
@@ -102,12 +97,22 @@ export function drawFarm() {
     if (S.beds[i] >= 1) drawDiamond(x, top - P, P);
   }
 
-  for (const c of S.crop) {
-    ctx.globalAlpha = Math.max(0, 1 - c.t / 1.6);
-    drawDiamond(c.x, c.y, P);
-    ctx.globalAlpha = 1;
-  }
   ctx.fillStyle = '#000';
+}
+
+// The one mark for each kind of thing, wherever it is being drawn: lying on the
+// ground waiting to be fetched, or rising off the worker that just got it.
+function drawFind(v, x, y) {
+  if (v === CORE_CELL) drawCircle(x, y, P);
+  else if (v === SHARD_CELL) drawTriangle(x, y, P, false);
+  else if (v === SPORE_CELL) drawDiamond(x, y, P);
+  else drawSpark(x, y, P);
+}
+
+// whatever is not dust, lying in the yard where it was dropped or dumped
+export function drawFloorMarks() {
+  ctx.fillStyle = '#000';
+  for (const m of S.floorMarks) drawFind(m.v, m.x, m.y);
 }
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
@@ -361,6 +366,7 @@ export function draw() {
   ctx.fillStyle = '#000';
 
   for (const ch of S.chips) {
+    if (!isDust(ch.s)) { ctx.fillStyle = '#000'; drawFind(ch.s, Math.round(ch.x), Math.round(ch.y)); continue; }
     ctx.fillStyle = shadeOf(ch.s);
     ctx.fillRect(Math.round(ch.x), Math.round(ch.y), P, P);
   }
@@ -375,6 +381,7 @@ export function draw() {
   drawBench();
   drawCount();
   drawCore();
+  drawFloorMarks();        // shards and the like lying in the yard
   drawWorkers();
   drawCursor();
   ctx.restore();
@@ -415,14 +422,20 @@ export function drawPit() {
   drawPitCores();
 }
 
+// Everything in the pile that is not dust: cores, and whatever the sites have
+// given up. The pile shows exactly what you hold, so spending takes them back
+// out of it.
 export function drawPitCores() {
   const rad = P * 1.2, pad = rad + 2;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
-      if (at(pit, c, r) !== CORE_CELL) continue;
+      const v = at(pit, c, r);
+      if (!v || isDust(v)) continue;
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
-      drawCircle(Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad),
-                 Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad), rad);
+      const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
+      const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
+      if (v === CORE_CELL) drawCircle(cx, cy, rad);
+      else drawFind(v, cx, cy);
     }
   }
   ctx.fillStyle = '#000';

@@ -14,9 +14,14 @@
 // Cells hold a shade, 1..SHADES.length, or 0 for empty. Anything above that is
 // for the owner to mean what it likes by (the pit puts cores in its pile).
 
-import { SHADES, CORE_CELL } from './config.js';
+import { SHADES } from './config.js';
 
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
+
+// A cell holds a shade of dust, or something that is not dust at all: a core,
+// a shard, a spore, a spark. They live in the same beds and move the same way;
+// what they are not is worth one dust.
+export const isDust = v => v > 0 && v <= SHADES.length;
 
 // Shade reads how much rock is left, relative to that rock's own thickness: a
 // rock is black where it is at full thickness and pales as it is worn through.
@@ -38,7 +43,7 @@ export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 export const countDust = b => {
   let n = 0;
-  for (const v of b.grid) if (v && v !== CORE_CELL) n++;
+  for (const v of b.grid) if (isDust(v)) n++;
   return n;
 };
 
@@ -63,9 +68,12 @@ export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
-export function addGrain(b, x, skip = b.blocked, shade = 1) {
+// `free` ignores the ceiling: what a bank may stand at is about heaps of dust,
+// and a single thing that is not dust lies where it was dropped.
+export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
-  const full = c => at(b, c, b.rows - 1) || (skip && skip(c)) || !roomFor(b, c, topRow(b, c) + 1);
+  const full = c => at(b, c, b.rows - 1) || (skip && skip(c)) ||
+                    (!free && !roomFor(b, c, topRow(b, c) + 1));
   if (full(col)) {
     let alt = -1;
     for (let d = 1; d < b.cols; d++) {
