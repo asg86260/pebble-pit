@@ -1192,7 +1192,9 @@ const TESTS = [
     const spores = showing.finds.filter(f => f === 'spore').length;
     run(0.3);
     const stillThere = state();
-    run(1.5);
+    // wait for it rather than guessing how long the cut and the throw take
+    const landed = runUntil(
+      () => state().finds.filter(f => f === 'spore').length > spores, 20);
     const after = state();
     window.__crew(0, 0, 0, 0);
     return [
@@ -1201,8 +1203,8 @@ const TESTS = [
       ok(stillThere.beds[i] >= 1, 'which stays there to be looked at',
          `${stillThere.beds[i]}`),
       ok(after.beds[i] < 1, 'until the farmhand takes it off', `${after.beds[i]}`),
-      ok(after.finds.filter(f => f === 'spore').length > spores,
-         'and then it is lying in the farm pile')
+      ok(landed, 'and then it is lying in the farm pile',
+         `${spores} -> ${after.finds.filter(f => f === 'spore').length}`)
     ];
   }],
 

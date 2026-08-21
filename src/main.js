@@ -376,4 +376,9 @@ document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);
 
+// The dev panel, and only when this is being run with `bun run dev`. The
+// condition is a constant at build time, so a build drops the import and the
+// file with it -- there is no way for any of it to reach a player.
+if (import.meta.env.DEV) import('./dev.js');
+
 requestAnimationFrame(frame);

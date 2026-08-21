@@ -45,6 +45,14 @@ decides how it plays.
 node tools/unresolved.mjs     # names a module uses but cannot see
 ```
 
+## While you are working on it
+
+Press **`** for a dev panel: crew by job, currencies, sites, which boulder,
+running the clock on, and sliders for the numbers most worth arguing with — the
+zoom, the slope of a pile, what a pile holds, every pace in the game. It moves
+them while the game runs, because that is how they were found. It is loaded only
+by `bun run dev` and a build has none of it in it.
+
 ## Testing
 
 Open the game and run `__test()` in the browser console. It drives the game through the same

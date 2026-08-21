@@ -11,7 +11,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 
 const GLOBALS = new Set(`Math Object Array String Number Boolean JSON Date Promise Set Map
 Uint8Array document window console performance requestAnimationFrame setInterval setTimeout
-clearTimeout addEventListener removeEventListener innerWidth innerHeight devicePixelRatio
+clearTimeout addEventListener removeEventListener dispatchEvent innerWidth innerHeight devicePixelRatio
 localStorage visualViewport PointerEvent KeyboardEvent Infinity NaN undefined parseInt
 parseFloat isNaN location navigator Error`.split(/\s+/));
 

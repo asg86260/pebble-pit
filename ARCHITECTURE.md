@@ -124,6 +124,25 @@ time. Reordering these is a visual change, not a tidy-up.
 **`persist.js` must know about every new field on `S`** that should survive a
 reload. Nothing warns you if it does not.
 
+## The dev panel
+
+`dev.js` is a panel of buttons and sliders over the top right of the yard:
+backtick opens and closes it, and it remembers which. Crew by job, currencies,
+sites, which boulder, running the clock on a few seconds at a time, and sliders
+for the numbers most worth arguing with -- the zoom, the slope of a pile, what a
+pile holds, every pace in the game.
+
+It exists because most of the numbers here were found by sitting with the game
+and pushing them about, not by working them out. The tunable ones are `export
+let` in `config.js` rather than `const`, and modules import the binding rather
+than a copy, so moving a slider changes the game in the same frame. `TUNABLE`
+lists them and the panel builds itself from that list, so a new knob is one line
+in `config.js`.
+
+It is loaded behind `import.meta.env.DEV`, which is a constant at build time, so
+a build drops the import, the file, and the whole tunable list with it. Checked:
+`devrow`, `dev-open` and `TUNABLE` appear nowhere in `dist`.
+
 ## Checking your work
 
 ```

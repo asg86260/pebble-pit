@@ -7,7 +7,7 @@ export const P = 6;              // pixel size, in world units
 // turning it down shows more yard at once rather than rearranging anything.
 // A cell still has to be a whole number of *device* pixels, so the screen's own
 // ratio is rounded against this rather than against P.
-export const CELL = 5;
+export let CELL = 5;
 export const TARGET = 1000000;   // dust in the hole: the whole point
 // The place is built once and never moves. The pit floor sits on the bottom of
 // the viewport, the ground line a fixed height above it, and the rock, the bench
@@ -60,7 +60,7 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 // Without it the apron is a cliff the sand cannot slump over, and the bank
 // stands up against the rock as a sheer wall however tall it gets. 1.5 is the
 // angle the sand finds on its own, so both faces of a heap read the same.
-export const BANK_SLOPE = 1.5;
+export let BANK_SLOPE = 1.5;
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 export const PIT_W = 3624;       // and this wide
 // What a grain in the pile is drawn at. A grain is always one dust; adding finer
@@ -131,16 +131,16 @@ export const FIND_COLOR = {
 export const findKind = v =>
   v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
 export const someFind = base => base + Math.floor(Math.random() * FIND_TONES);
-export const GRAV = 0.45;
+export let GRAV = 0.45;
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
-export const MINE_BASE = 460;    // gap between held hits at speed level 0
+export let MINE_BASE = 460;    // gap between held hits at speed level 0
 export const MINE_FLOOR = 75;    // fastest the pick will ever swing (13.3 px/s)
 export const CAP_BASE = 1;       // pixels you can carry at level 0
 export const CAP_STEP = 1;       // extra capacity per upgrade
 export const WORKER = P * 3;     // worker square size
-export const MINER_BASE = 1100;  // a hired miner starts slower than your own pick
+export let MINER_BASE = 1100;  // a hired miner starts slower than your own pick
 export const MINER_FLOOR = 260;  // fastest a miner can swing
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
@@ -169,14 +169,14 @@ export const PILE_LIMIT = { rock: 1400, quarry: 180, farm: 180 };
 // so at the limit the crew mine exactly as fast as the crew carry. That is not
 // a stutter, it is the yard finding its level.
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
-export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
+export let HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // --- between rocks ----------------------------------------------------------
 // The last pixel of a boulder is the end of a long job, so it gets a beat. The
 // crew take five on the bare ground, and the next rock comes down out of the sky
 // rather than being there the next time you look.
-export const DANCE_MS = 5000;    // how long the crew celebrate a finished rock
+export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
 export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the last
 export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
@@ -188,7 +188,7 @@ export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 // what an upgrade shortens, and what makes sending somebody in a decision.
 export const QUARRY_W = 108;       // the mouth, in world pixels
 export const QUARRY_H = 78;
-export const QUARRY_BASE = 11000;  // a trip at pace 0
+export let QUARRY_BASE = 11000;  // a trip at pace 0
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 
@@ -199,13 +199,13 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 export const FARM_BEDS = 7;
 export const FARM_GAP = 42;      // world pixels between one bed and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
-export const TEND_BASE = 9000;   // to bring one bed on at tending 0
+export let TEND_BASE = 9000;   // to bring one bed on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
 // A ripe bed is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
-export const CUT_MS = 700;
+export let CUT_MS = 700;
 
 // --- the meteor -------------------------------------------------------------
 // It hangs in the sky over the yard and sheds a spark now and then. Sparks are
@@ -213,5 +213,66 @@ export const CUT_MS = 700;
 export const TO_METEOR = 138;    // rock centre to the meteor, sideways
 export const METEOR_UP = 420;    // and how far above the ground line it hangs
 export const METEOR_R = 46;
-export const SPARK_BASE = 42000; // between sparks, at spark 0
+export let SPARK_BASE = 42000; // between sparks, at spark 0
 export const SPARK_FLOOR = 9000;
+
+
+// --- turning the knobs ------------------------------------------------------
+// A handful of these are `let` rather than `const` so a dev panel can move them
+// while the game is running. Modules import the binding, not a copy, so a change
+// here is a change everywhere the moment it is made -- which is the whole point:
+// the way to find a good number is to sit with the game and push it about.
+//
+// Nothing outside this file writes them. `tune` is the only door in, and the
+// panel builds itself out of TUNABLE rather than knowing any of them by name.
+export const TUNABLE = [
+  { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true },
+  { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
+  { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
+  { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
+  { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
+  { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
+  { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
+  { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
+  { key: 'SPARK_BASE', label: 'between sparks', min: 500, max: 60000, step: 500 },
+  { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
+  { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
+  { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
+  { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
+  { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 }
+];
+
+export function tuned(key) {
+  switch (key) {
+    case 'CELL': return CELL;
+    case 'BANK_SLOPE': return BANK_SLOPE;
+    case 'GRAV': return GRAV;
+    case 'MINE_BASE': return MINE_BASE;
+    case 'MINER_BASE': return MINER_BASE;
+    case 'HAUL_BASE': return HAUL_BASE;
+    case 'QUARRY_BASE': return QUARRY_BASE;
+    case 'TEND_BASE': return TEND_BASE;
+    case 'SPARK_BASE': return SPARK_BASE;
+    case 'CUT_MS': return CUT_MS;
+    case 'DANCE_MS': return DANCE_MS;
+    default: return PILE_LIMIT[key.split('.')[1]];
+  }
+}
+
+export function tune(key, v) {
+  switch (key) {
+    case 'CELL': CELL = v; break;
+    case 'BANK_SLOPE': BANK_SLOPE = v; break;
+    case 'GRAV': GRAV = v; break;
+    case 'MINE_BASE': MINE_BASE = v; break;
+    case 'MINER_BASE': MINER_BASE = v; break;
+    case 'HAUL_BASE': HAUL_BASE = v; break;
+    case 'QUARRY_BASE': QUARRY_BASE = v; break;
+    case 'TEND_BASE': TEND_BASE = v; break;
+    case 'SPARK_BASE': SPARK_BASE = v; break;
+    case 'CUT_MS': CUT_MS = v; break;
+    case 'DANCE_MS': DANCE_MS = v; break;
+    default: PILE_LIMIT[key.split('.')[1]] = v;
+  }
+  return tuned(key);
+}
