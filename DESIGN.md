@@ -109,8 +109,9 @@ One pool also means one price curve. It is gentler than the four it replaced "+D
 than 1.7 "+D+" because it is no longer four separate ladders climbed in parallel.
 
 The cave and the farm ask for the same thing in different shapes. A spelunker spends its time
-**away** — down the shaft, off the surface entirely. A farmhand spends its time **standing
-still** at a bed. Either way the body is not carrying dust, which is what makes assigning one a
+**away** — down the shaft, off the surface entirely. A farmhand spends its time **standing at a bed** — stooping over
+it on its own rhythm and shifting its weight between times, because a farm should look tended
+whether or not anything is ripening this second. Either way the body is not carrying dust, which is what makes assigning one a
 decision rather than a free tap.
 
 ## Economy
@@ -453,6 +454,13 @@ The pit is **one fixed hole**: 3624 world pixels across and 276 deep, always. It
 windows to the right, so most of it sits off the edge and you scroll to see along it. There is
 ground past its far wall, so scrolling to the end shows you the edge of the thing rather than
 running out of world.
+
+**Once the hole is full the pile keeps going**, heaping up over the mouth rather than stopping
+dead at the ground line — but only over the mouth. It is the same bed of sand and the bed is only
+as wide as the hole, so the pile can rise but it can never get out onto the ground. Inside the hole
+it lies level, because a hole fills up; above the brim it is a heap, highest at the lip where it is
+tipped in and leaning away down the length of the hole. Without that lean it filled the near end to
+the very top and stopped, which is a wall rather than a pile.
 
 **The pile is the dust, not a picture of it.** One grain is one dust, always, drawn the same
 size as dust anywhere else, and paying takes exactly as many grains back out as the counter

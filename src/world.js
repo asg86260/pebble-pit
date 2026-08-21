@@ -8,7 +8,7 @@
 import {
   P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
+  PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
 } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
@@ -138,10 +138,10 @@ export function resize(after) {
 
   pit.x = S.cx + TO_LEDGE;
   pit.w = PIT_W;
-  pit.h = PIT_H;
+  pit.h = PIT_H + PIT_HEAP;              // the hole, and room to heap over it
   pit.cols = PIT_W / pit.p;
-  pit.rows = PIT_H / pit.p;
-  pit.y = S.groundY;
+  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
+  pit.y = S.groundY - PIT_HEAP;          // the bed starts above the ground line
 
   bench.w = P * 12;
   bench.h = P * 7;
@@ -172,7 +172,7 @@ export function resize(after) {
   farm.y = S.groundY;
 
   S.worldW = pit.x + pit.w + PIT_PAD * P;
-  S.worldH = S.groundY + pit.h + FLOOR_MARGIN;
+  S.worldH = S.groundY + PIT_H + FLOOR_MARGIN;
 
   floor.x = 0;
   floor.cols = Math.ceil(S.worldW / P);

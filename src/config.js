@@ -68,6 +68,16 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 // angle the sand finds on its own, so both faces of a heap read the same.
 export let BANK_SLOPE = 1.5;
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
+// And this much room above the brim. Once the hole itself is full the pile keeps
+// going, heaping up over the mouth rather than stopping dead at the ground line
+// -- but only over the mouth: it is the same bed of sand, which is only as wide
+// as the hole, so it can rise but it can never get out onto the ground.
+export const PIT_HEAP = 150;
+// And how the surplus lies. Inside the hole the pile is level, because a hole
+// fills up. Above the brim it is a heap: highest at the lip, where it is tipped
+// in, leaning away down the length of the hole. Without that it fills the near
+// end to the very top and stops dead, which is a wall rather than a pile.
+export const PIT_HEAP_SLOPE = 0.12;   // rows of surplus lost per column along
 export const PIT_W = 3624;       // and this wide
 // What a grain in the pile is drawn at. A grain is always one dust; adding finer
 // sizes here lets the pile settle to them as it fills, which is how the hole
@@ -215,6 +225,10 @@ export const FARM_WALK = 1.1;
 // A ripe bed is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
+// How often a farmhand stoops over the bed it is working. Like the quarry, this
+// is nothing to do with how fast the crop comes on: a farm should look tended
+// whether or not anything is ripening this second.
+export const TEND_STOOP = 780;
 export let CUT_MS = 700;
 
 // --- turning the knobs ------------------------------------------------------

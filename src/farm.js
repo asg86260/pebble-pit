@@ -6,7 +6,7 @@
 // different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, SPORE_CELL, someFind }
+import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
 import { standOn } from './world.js';
@@ -29,7 +29,11 @@ export function plantBeds() {
 
 export function newFarmhand() {
   plantBeds();
-  return { type: 'farmhand', goal: 'to', bed: 0, cutAt: 0, x: bedX(0), y: 0, carry: 0 };
+  return {
+    type: 'farmhand', goal: 'to', bed: 0, cutAt: 0, stoopAt: 0, lunge: 0,
+    bob: Math.random() * Math.PI * 2,      // its own rhythm, so a row of them is not a chorus
+    x: bedX(0), y: 0, carry: 0
+  };
 }
 
 // the bed most worth walking to: the one furthest along that nobody else has
@@ -69,6 +73,16 @@ export function stepFarmhand(w, now, dt) {
 
   // standing over it, bringing it on -- unless the last crop is still lying in
   // the pile behind, in which case there is no sense cutting another
+  // It works the bed rather than standing to attention beside it: it stoops over
+  // it on its own rhythm and shifts its weight between times. Whether the farm
+  // is producing and whether it looks tended are two different questions.
+  w.lunge *= 0.84;
+  if (now >= w.stoopAt) {
+    w.lunge = 1;
+    w.stoopAt = now + TEND_STOOP * (0.75 + Math.random() * 0.6);
+  }
+  w.x = bedX(w.bed) - WORKER - P * 2 + Math.sin(now / 620 + w.bob) * P * 0.9;
+
   if (S.pileFull.farm) return;
   const i = w.bed;
 

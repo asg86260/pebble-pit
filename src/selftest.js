@@ -210,9 +210,11 @@ const TESTS = [
 
   ['ground is pinned to the bottom', async () => {
     const s = state();
-    const pitFloorFromBottom = innerHeight - onScreen(0, s.groundY + s.pitRows * 6)[1];
+    // the floor of the hole, which is not the top of the bed: the pile is
+    // allowed to heap above the brim, so the bed starts above the ground line
+    const pitFloorFromBottom = innerHeight - onScreen(0, s.groundY + s.pitDepth)[1];
     const groundFromBottom = innerHeight - onScreen(0, s.groundY)[1];
-    const expected = (s.pitRows * 6 + 12) * s.zoom;
+    const expected = (s.pitDepth + 12) * s.zoom;
     return [
       ok(Math.abs(pitFloorFromBottom - 12 * s.zoom) < 4,
          'pit floor rests on the bottom edge', `${Math.round(pitFloorFromBottom)}px up`),
@@ -224,11 +226,15 @@ const TESTS = [
   ['the pit is always the same hole', async () => {
     const s = state();
     return [
-      ok(s.pitRows * s.pitGrain === 276, 'the hole is 276 deep whatever the grain',
-         `${s.pitRows} x ${s.pitGrain}`),
+      ok(s.pitHoleRows * s.pitGrain === 276, 'the hole is 276 deep whatever the grain',
+         `${s.pitHoleRows} x ${s.pitGrain}`),
       ok(s.pitW === 3624, 'and 3624 across', `${s.pitW}`),
-      ok(s.pitCapacity === (3624 / s.pitGrain) * (276 / s.pitGrain),
-         'capacity follows from the grain', `${s.pitCapacity} at grain ${s.pitGrain}`)
+      // the hole itself, plus whatever the heap over the brim is allowed to be
+      ok(s.pitCapacity > (3624 / s.pitGrain) * (276 / s.pitGrain),
+         'it holds the hole and then some, for the heap over the mouth',
+         `${s.pitCapacity} at grain ${s.pitGrain}`),
+      ok(s.pitCapacity < (3624 / s.pitGrain) * (276 / s.pitGrain) * 1.2,
+         'but the heap is a heap, not another hole', `${s.pitCapacity}`)
     ];
   }],
 
@@ -252,7 +258,12 @@ const TESTS = [
     await sleep(800);
     const s = state();
     return [
-      ok(s.pitDust <= cap, 'the pile stops at the brim', `${s.pitDust} of ${cap}`),
+      // it does not stop at the brim any more -- it heaps over the mouth -- but
+      // it stops at what the bed will hold, and never gets out onto the ground
+      ok(s.pitDust <= cap, 'the pile stops at what the bed holds',
+         `${s.pitDust} of ${cap}`),
+      ok(s.pitDust > (3624 / s.pitGrain) * (276 / s.pitGrain),
+         'having heaped up over the mouth on the way', `${s.pitDust}`),
       ok(s.stored > cap, 'and the counter keeps going', `${s.stored}`),
       ok(s.pitGrain === 6, 'the grain does not change under it', `${s.pitGrain}px`)
     ];
@@ -294,10 +305,14 @@ const TESTS = [
     window.__next();                          // the last of it goes
     run(0.5);
     const partying = state();
-    const feet = partying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
-    run(0.7);
+    // watched across the dance rather than at two moments in it: they hop about
+    // three times a second, and two samples can easily catch the same height
+    const heights = new Set();
+    for (let i = 0; i < 60; i++) {
+      run(1 / 60);
+      heights.add(state().workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]).join());
+    }
     const stillPartying = state();
-    const feetNow = stillPartying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
     let sky = 0;
     for (let i = 0; i < 400 && !sky; i++) {    // catch it on its way down
       run(1 / 60);
@@ -310,8 +325,8 @@ const TESTS = [
       ok(partying.dancing, 'the crew are dancing the moment the rock is off'),
       ok(stillPartying.rock === 0, 'and the next rock has not turned up yet',
          `${stillPartying.rock} of rock`),
-      ok(feet.join() !== feetNow.join(), 'they are off the ground doing it',
-         `${feet.join()} then ${feetNow.join()}`),
+      ok(heights.size > 1, 'they are off the ground doing it',
+         `${heights.size} different heights across a second of it`),
       ok(sky > 0, 'the next rock comes down out of the sky', `caught it ${sky}px up`),
       ok(landed && after.rockFoot === after.groundY, 'and lands on the ground line',
          `foot ${after.rockFoot}, ground ${after.groundY}`),

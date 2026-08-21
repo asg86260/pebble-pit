@@ -6,7 +6,7 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
+import { P, PIT_W, PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
          findKind, someFind,
          SHADES } from './config.js';
 import { S, pit } from './state.js';
@@ -20,17 +20,21 @@ export function setPitGrain(step) {
   S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
   pit.p = PIT_GRAINS[S.pitStep];
   pit.cols = PIT_W / pit.p;
-  pit.rows = PIT_H / pit.p;
+  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
   pit.grid = new Uint8Array(pit.cols * pit.rows);
   pit.painter = makePainter(pit);
   pit.onPut = pit.painter.mark;
+  if (pit.ceiling) measurePit();
 }
 
 // nothing bars the pile, it just fills; it lies flat rather than heaping; and
 // every change is told to the painter
 export function wirePit() {
   pit.blocked = null;                      // nothing bars the pile, it just fills
-  pit.repose = false;                      // and it lies flat rather than heaping
+  pit.repose = false;                      // and inside the hole it lies flat
+  // but what stands above the brim is a heap, and leans away from the lip
+  pit.ceiling = c => PIT_H / pit.p + Math.max(0, PIT_HEAP / pit.p - c * PIT_HEAP_SLOPE);
+  measurePit();
   if (!pit.painter) pit.painter = makePainter(pit);
   pit.onPut = pit.painter.mark;            // every change is told to the painter
 }
@@ -55,8 +59,22 @@ export function bankDust(x, shade = 1) {
   }
 }
 
-// how many dust the pit could hold at its current grain
-export const pitCapacity = () => pit.cols * pit.rows;
+// How much the bed can actually hold, which is no longer the whole of it: the
+// hole fills to the brim everywhere, and above the brim only as much as the
+// heap is allowed to lean. Counted once when the bed changes shape rather than
+// every time somebody pays for something.
+export function measurePit() {
+  let n = 0;
+  for (let c = 0; c < pit.cols; c++) {
+    // a column holds every row *below* its ceiling, so a ceiling of 71.4 is
+    // seventy-two rows and not seventy-one
+    n += Math.min(pit.rows, Math.ceil(pit.ceiling ? pit.ceiling(c) : pit.rows));
+  }
+  pit.cap = n;
+  return n;
+}
+
+export const pitCapacity = () => pit.cap || pit.cols * pit.rows;
 
 // Settle the pile to the next grain down. Every grain is kept: each column of
 // the old pile is shared out across the finer columns that stand where it did,
@@ -70,7 +88,7 @@ export function refinePit() {
   S.pitStep++;
   pit.p = PIT_GRAINS[S.pitStep];
   pit.cols = PIT_W / pit.p;
-  pit.rows = PIT_H / pit.p;
+  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
   pit.grid = new Uint8Array(pit.cols * pit.rows);
 
   // Where each old column lands. The ratio is not always a whole number (three

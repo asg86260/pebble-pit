@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
+import { P, PIT_H, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -375,7 +375,7 @@ export function drawWorkers() {
     if (underground(w)) continue;          // down the quarry, not on the surface
 
     if (w.type === 'farmhand') {
-      const x = Math.round(w.x), y = Math.round(w.y);
+      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       ctx.fillRect(x, y, WORKER, WORKER);
       ctx.fillStyle = '#fff';
       ctx.fillRect(x + P, y + P * 2, P, P);   // stooped: the notch is low
@@ -497,8 +497,8 @@ export function drawPitOutline() {
   ctx.strokeStyle = '#000';
   ctx.beginPath();
   ctx.moveTo(pit.x - 1, S.groundY + 1);
-  ctx.lineTo(pit.x - 1, S.groundY + pit.h + 1);
-  ctx.lineTo(pit.x + pit.w + 1, S.groundY + pit.h + 1);
+  ctx.lineTo(pit.x - 1, S.groundY + PIT_H + 1);
+  ctx.lineTo(pit.x + pit.w + 1, S.groundY + PIT_H + 1);
   ctx.lineTo(pit.x + pit.w + 1, S.groundY + 1);
   ctx.stroke();
 }
