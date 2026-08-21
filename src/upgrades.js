@@ -14,16 +14,28 @@ import { spend, takeCoreCells } from './pit.js';
 import { syncWorkers } from './crew.js';
 import { buildShop } from './shop.js';
 
+// Every swing in the game is the same shape: a gap in milliseconds that shrinks
+// by a fixed fraction per level and never goes below a floor. One function, five
+// swings -- the next kind of worker gets its speed for a line.
+const swing = (base, floor, per) => lvl => Math.max(floor, Math.round(base * Math.pow(per, lvl)));
+const perSecond = ms => lvl => 1000 / ms(lvl);
+
 export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
-export const mineMs = (lvl = S.speedLevel) => Math.max(MINE_FLOOR, Math.round(MINE_BASE * Math.pow(0.8, lvl)));
-export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
-export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(MINER_FLOOR, Math.round(MINER_BASE * Math.pow(0.82, lvl)));
-export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
-export const drillMs = (lvl = S.drillSpeedLevel) => Math.max(DRILL_FLOOR, Math.round(DRILL_BASE * Math.pow(0.82, lvl)));
-export const drillRate = (lvl = S.drillSpeedLevel) => 1000 / drillMs(lvl);
+
+const mineGap = swing(MINE_BASE, MINE_FLOOR, 0.8);
+const minerGap = swing(MINER_BASE, MINER_FLOOR, 0.82);
+const drillGap = swing(DRILL_BASE, DRILL_FLOOR, 0.82);
+const scoopGap = swing(HAUL_MS, 30, 0.85);
+
+export const mineMs = (lvl = S.speedLevel) => mineGap(lvl);
+export const mineRate = (lvl = S.speedLevel) => perSecond(mineGap)(lvl);
+export const minerMs = (lvl = S.minerSpeedLevel) => minerGap(lvl);
+export const minerRate = (lvl = S.minerSpeedLevel) => perSecond(minerGap)(lvl);
+export const drillMs = (lvl = S.drillSpeedLevel) => drillGap(lvl);
+export const drillRate = (lvl = S.drillSpeedLevel) => perSecond(drillGap)(lvl);
 export const haulCap = (lvl = S.haulCarryLevel) => 1 + lvl;
 export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
-export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(30, Math.round(HAUL_MS * Math.pow(0.85, lvl)));
+export const scoopMs = (lvl = S.haulPaceLevel) => scoopGap(lvl);
 export const pickCount = () => 1 + S.pickLevel;         // pixels a single swing takes
 
 // units are the marks themselves: a grain of dust, a grain a second
@@ -34,6 +46,46 @@ export const UNITS = {
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 export const rateText = lvl => num(mineRate(lvl));
+
+
+// Hiring is the same story three times over, and will be five when the cave and
+// the farm open: a core-priced row that unlocks the type and hires the first
+// one, then a dust-priced row that hires the next. The stat rows differ enough
+// to be worth writing out, so they are not folded in here.
+function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked }) {
+  return [
+    {
+      key: unlockKey,
+      name: one,
+      cost: () => cores,
+      currency: 'core',
+      buy: () => { S[unlocked] = true; S[count]++; syncWorkers(); },
+      show: () => S.seenCore && !S[unlocked]
+    },
+    {
+      key,
+      name: many,
+      from: () => S[count],
+      to: () => S[count] + 1,
+      cost: () => Math.round(base * Math.pow(mult, Math.max(0, S[count] - 1))),
+      buy: () => { S[count]++; syncWorkers(); },
+      show: () => S[unlocked]
+    }
+  ];
+}
+
+const MINERS = crew({
+  key: 'miner', unlockKey: 'unlockminers', one: 'first miner', many: 'miners',
+  cores: 1, base: 60, mult: 1.7, count: 'miners', unlocked: 'minersUnlocked'
+});
+const WORKERS = crew({
+  key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
+  cores: 2, base: 80, mult: 1.7, count: 'haulers', unlocked: 'haulersUnlocked'
+});
+const DRILLERS = crew({
+  key: 'driller', unlockKey: 'unlockdrillers', one: 'first driller', many: 'drillers',
+  cores: 3, base: 140, mult: 1.6, count: 'drillers', unlocked: 'drillersUnlocked'
+});
 
 export const UPGRADES = [
   {
@@ -73,23 +125,7 @@ export const UPGRADES = [
     buy: () => S.pickLevel++,
     show: () => S.seenCore
   },
-  {
-    key: 'unlockminers',
-    name: 'first miner',
-    cost: () => 1,
-    currency: 'core',
-    buy: () => { S.minersUnlocked = true; S.miners++; syncWorkers(); },
-    show: () => S.seenCore && !S.minersUnlocked
-  },
-  {
-    key: 'miner',
-    name: 'miners',
-    from: () => S.miners,
-    to: () => S.miners + 1,
-    cost: () => Math.round(60 * Math.pow(1.7, Math.max(0, S.miners - 1))),
-    buy: () => { S.miners++; syncWorkers(); },
-    show: () => S.minersUnlocked
-  },
+  ...MINERS,
   {
     key: 'minerspeed',
     name: 'miner swing',
@@ -100,23 +136,7 @@ export const UPGRADES = [
     buy: () => S.minerSpeedLevel++,
     show: () => S.miners > 0 && minerMs() > MINER_FLOOR
   },
-  {
-    key: 'unlockhaulers',
-    name: 'first worker',
-    cost: () => 2,
-    currency: 'core',
-    buy: () => { S.haulersUnlocked = true; S.haulers++; syncWorkers(); },
-    show: () => S.seenCore && !S.haulersUnlocked
-  },
-  {
-    key: 'hauler',
-    name: 'workers',
-    from: () => S.haulers,
-    to: () => S.haulers + 1,
-    cost: () => Math.round(80 * Math.pow(1.7, Math.max(0, S.haulers - 1))),
-    buy: () => { S.haulers++; syncWorkers(); },
-    show: () => S.haulersUnlocked
-  },
+  ...WORKERS,
   {
     key: 'haulcarry',
     name: 'worker load',
@@ -136,23 +156,7 @@ export const UPGRADES = [
     buy: () => S.haulPaceLevel++,
     show: () => S.haulers > 0
   },
-  {
-    key: 'unlockdrillers',
-    name: 'first driller',
-    cost: () => 3,
-    currency: 'core',
-    buy: () => { S.drillersUnlocked = true; S.drillers++; syncWorkers(); },
-    show: () => S.seenCore && !S.drillersUnlocked
-  },
-  {
-    key: 'driller',
-    name: 'drillers',
-    from: () => S.drillers,
-    to: () => S.drillers + 1,
-    cost: () => Math.round(140 * Math.pow(1.6, Math.max(0, S.drillers - 1))),
-    buy: () => { S.drillers++; syncWorkers(); },
-    show: () => S.drillersUnlocked
-  },
+  ...DRILLERS,
   {
     key: 'drillspeed',
     name: 'driller bite',

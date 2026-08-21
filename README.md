@@ -22,6 +22,17 @@ bun install
 bun run dev
 ```
 
+## The code
+
+One canvas, twenty small modules, no framework. **ARCHITECTURE.md** says which file owns
+what and where a new upgrade, worker, bed of sand or site goes. The short version: modules
+own behaviour, `state.js` owns every fact that changes, `config.js` owns every number that
+decides how it plays.
+
+```
+node tools/unresolved.mjs     # names a module uses but cannot see
+```
+
 ## Testing
 
 Open the game and run `__test()` in the browser console. It drives the game through the same
