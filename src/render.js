@@ -12,7 +12,7 @@ import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
 
 import { AIR } from './air.js';
-import { capacity } from './upgrades.js';
+import { capacity, benchMark } from './upgrades.js';
 import { underground } from './cave.js';
 import { bedX, bedTop } from './farm.js';
 import { charge } from './meteor.js';
@@ -258,14 +258,26 @@ export function drawCount() {
   }
 }
 
+// The bench is not in the yard until there is something on it worth buying, and
+// once it is there it says so without being opened: a dot for something you can
+// afford this second, a flag for a heading you have never seen. A flag is worth
+// more than a dot -- one more row under `you` is not news, a whole new group is.
 export function drawBench() {
+  if (!S.seenBench) return;
   ctx.fillStyle = '#000';
   ctx.fillRect(bench.x, bench.y, bench.w, P * 2);                       // top slab
   ctx.fillRect(bench.x + P, bench.y + P * 2, P * 2, bench.h - P * 2);   // legs
   ctx.fillRect(bench.x + bench.w - P * 3, bench.y + P * 2, P * 2, bench.h - P * 2);
   ctx.fillRect(bench.x + P * 4, bench.y - P * 2, P * 2, P * 2);         // something clamped to it
   if (S.boardOpen) return;
-  ctx.fillRect(bench.x + bench.w / 2 - P / 2, bench.y - P * 5, P, P);   // a dot when idle
+  const x = bench.x + bench.w / 2 - P;             // a whole cell, so it stays square
+  const mark = benchMark();
+  if (mark === 'flag') {
+    ctx.fillRect(x, bench.y - P * 7, P, P * 7);                         // a post on the bench
+    ctx.fillRect(x + P, bench.y - P * 7, P * 2, P * 2);                 // with a flag on it
+  } else if (mark === 'dot') {
+    ctx.fillRect(x, bench.y - P * 5, P, P);                             // just a dot
+  }
 }
 
 export function drawWorkers() {

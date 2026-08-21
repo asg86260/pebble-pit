@@ -12,8 +12,10 @@ import { bankDust } from './pit.js';
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => Math.random() + Math.random() + Math.random() - 1.5;
 
-export function spawnChip(x, y, vx, vy, shade = 1) {
-  S.chips.push({ x, y, vx, vy, s: shade });
+// `land` is where an aimed chip is meant to come down. A chip without one comes
+// down wherever it meets the ground, which is what a swept or spilled grain does.
+export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
+  S.chips.push({ x, y, vx, vy, s: shade, land });
 }
 
 // Rock knocked loose is *aimed*. A chip goes off whichever side of the rock it
@@ -27,7 +29,7 @@ export function spawnSpoil(px, py, shade) {
   const side = px < S.cx ? -1 : 1;                     // off the nearer side of the rock
   const land = rockEdge(side) + side * (P * 6 + Math.abs(bell()) * P * 12);
   const v = aim(px, py, land, P);
-  spawnChip(px, py, v.vx, v.vy, shade);
+  spawnChip(px, py, v.vx, v.vy, shade, land);
 }
 
 // the one arc from here to there: the pop is sized to the distance, and the

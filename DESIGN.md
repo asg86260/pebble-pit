@@ -80,16 +80,26 @@ balance made a big purchase show as forty thousand dust a minute of *negative* p
 
 ## Crew
 
-Crew are hired by type at the bench and stay put. Each site has its own hire:
+**There is one kind of body.** You hire a worker, and where it works is a separate question you
+can answer again whenever you like. A worker with no job carries dust to the pit, so hauling is
+not a job you hire into "+D+" it is what the ones you have not put anywhere are already doing.
 
-| | Works | First one costs |
+| | Costs | What it is |
 |---|---|---|
-| miner | the rock | ◯ 1 |
-| worker | carries dust to the pit | ◯ 2 |
-| spelunker | the cave | ◯ 3 |
-| farmhand | the farm | ◯ 5 |
+| first worker | ◯ 1 | the one body you buy with a core |
+| workers | ■ 60, then 81, 109... | every body after that |
+| on the rock / down the cave / at the beds | free, both ways | where they work |
 
-And two more cores open the places rather than the people: the lab at ◯ 7 and the meteor at ◯ 9.
+Sites are still bought with cores "+D+" the cave at ◯ 3, the farm at ◯ 5, the lab at ◯ 7, the meteor at
+◯ 9 "+D+" but a site now buys the **place** and nobody in it. Who works it is the same question as who
+works the rock, asked again.
+
+That is the whole trade: a body on the rock is a body not carrying, and the dust it knocks loose
+piles up on the ground until somebody fetches it. Nothing is spent to change your mind, because a
+decision you cannot take back is one you make by reading a wiki rather than by watching the yard.
+
+One pool also means one price curve. It is gentler than the four it replaced "+D+" 1.35 a body rather
+than 1.7 "+D+" because it is no longer four separate ladders climbed in parallel.
 
 The cave and the farm ask for the same thing in different shapes. A spelunker spends its time
 **away** — down the shaft, off the surface entirely. A farmhand spends its time **standing
@@ -144,16 +154,18 @@ A core is a rock, so this ladder is really "how many rocks until everything is o
 
 | Unlock | Cost | Opens |
 |---|---|---|
-| first miner | ◯ 1 | grants one, opens miner hiring |
-| first worker | ◯ 2 | grants one, opens worker hiring |
-| open the cave | ◯ 3 | the shaft, and spelunkers |
-| break the ground | ◯ 5 | the beds, and farmhands |
+| first worker | ◯ 1 | the crew: one body, and hiring for dust from then on |
+| open the cave | ◯ 3 | the shaft, to put workers down |
+| break the ground | ◯ 5 | the beds, to put workers at |
 | build the lab | ◯ 7 | multipliers and the books |
 | call it down | ◯ 9 | the meteor |
-| pick | ◯ 2, then 3, 4... | one more pixel a swing, for you *and* every miner |
+| pick | ◯ 2, then 3, 4... | one more pixel a swing, for you |
+| miner bite | ◯ 3, then 4, 5... | one more pixel a swing, for every miner |
 
-Twenty-seven cores opens every place. The pick competes with all of it for the same cores, which
-is the one real spending decision in the game: pace now, or a new place to put people.
+Twenty-five cores opens every place. The two picks compete with all of it for the same cores, which
+is the one real spending decision in the game: pace now, or a new place to put people. Your swing
+and a miner's are bought apart — one row that bought both was doing two jobs at once, and it sat
+under `you` while half of what it paid for was out on the rock.
 
 Opening a site glides the view to it. It is four cores and a row in a menu, and the thing bought
 is off the left of the screen; without that, nothing appears to happen.
@@ -171,9 +183,27 @@ The shop is a thing in the world, not a panel bolted to the corner: a bench on t
 left, opposite the pit. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
 upgrades is on screen while you are mining, which keeps the scene to rock, dust, crew and pit.
 
-The board is grouped by where the work is — you, miners, workers, the cave, the farm, the lab,
-the sky — with the headcount beside each
-heading. Every row is the same five columns, so the numbers line up down the page and can be
+**The bench is not there until it is worth something.** A game that cannot afford a single row has
+no bench in it — the yard is a rock, the ground and the pit, and nothing else. The first upgrade you
+can pay for is what puts the bench in the world, and it stays from then on: one that came and went
+would be worse than one that sat there empty. Everything else in the game already works this way —
+no currency is drawn until you have seen one — and the bench is the last thing that did not.
+
+It says what it has without being opened, in one mark above the slab:
+
+| Mark | Means |
+|---|---|
+| nothing | you have read the board and cannot afford anything new |
+| a dot | there is a row on it you could buy right now |
+| a flag on a post | a whole heading you have never seen has appeared |
+
+A flag outranks a dot, because one more row under a heading you have already read is not news and
+a new group is. Opening the board reads every heading on it, and the flag comes down.
+
+The board is grouped by where the work is — you, the crew, the rock, the cave, the farm, the lab,
+the sky — with the headcount beside each heading. Each place that can be worked carries a **job
+row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board
+that spends nothing, and it is the only one you can run backwards. Every row is the same five columns, so the numbers line up down the page and can be
 scanned rather than read: name, current, arrow, next, cost. Costs and units carry the marks the game
 itself draws: a filled square for a grain of dust, a ring for a core. A rate reads `2.2 → 2.7 ■/s`
 rather than naming pixels. Deliberately not an upgrade web.
@@ -193,8 +223,18 @@ All of them stay plain black-and-white shapes.
 
 | Type | Shape | Behaviour |
 |---|---|---|
-| worker | outlined square | walks to the nearest dust, scoops, and tosses it off the lip into the pit; carries its load stacked two abreast overhead, and drops everything to fetch a loose core first |
+| worker | outlined square | walks to the nearest dust **nobody else has set off for**, scoops, and tosses it off the lip into the pit; carries its load stacked two abreast overhead, and drops everything to fetch a loose core first |
 | barrow | outlined square towing a dot | slower walk, carries 4× a sweeper's load |
+
+**One grain, one worker.** A worker claims the column it is walking to and keeps it until that
+column is bare. Every worker working out the nearest dust for itself, every frame, is the same
+answer for all of them — so a single grain behind the crew turned the whole line round, and turned
+it round again the moment the first of them reached it. Claiming is also what stops six workers
+queueing at one column while the rest of the yard sits there.
+
+A worker walks **quicker with its hands free** than with a load on. The trip out is the part that
+costs nothing, so it is the part that should be quick, and a laden worker reading as heavy is
+worth more than a laden worker reading as fast.
 
 **Structures (no legs, change the world)**
 
@@ -229,11 +269,29 @@ nudged mid-flight and nothing is shoved off the rock, so it reads as a throw.
 
 The rock keeps a bare **apron** either side. Spoil may not settle in it, so the two banks stand off
 the rock rather than stacking up its flanks and blurring where the rock ends; a rock that grows
-over an old heap shoves it out to clear ground. Beyond the apron there is no ceiling on a bank:
-it heaps up to whatever height the sand finds on its own.
+over an old heap shoves it out to clear ground.
+
+That bare strip is a cliff the sand cannot slump over, so a bank beside it needs somewhere to
+lean or it stands straight up against the rock as a sheer wall. **A bank may only rise as it
+gets away from the rock** — a cell and a half of height per cell of distance, which is the angle
+the sand finds on its own, so both faces of a heap read the same. Out on clear ground there is no
+ceiling at all: it heaps to whatever height it likes.
+
+An aimed chip also **clears whatever it is thrown over**. Coming down on the near face of a bank
+is the other half of how the wall was built: every chip landed on the slope facing the rock and
+the heap grew back up to the foot. A chip lands where it was aimed, or on bare ground, and
+nowhere short of it.
 
 The crew walk the whole ground, passing in front of the rock, so both banks are reachable. Dust the
 player cannot reach is dust the player will resent, and there is a test for exactly that.
+
+**Finishing one is worth a moment.** The last pixel of a boulder is the end of a long job, so the
+yard marks it: the core comes loose, the crew stop working and hop about on the bare ground for
+five seconds — a line of them, each a beat behind the last — and only then does the next rock come
+**down out of the sky**, landing on the ground it needs and shaking a few grains off the top of
+both banks as it hits. Those grains were already lying there; nothing about the landing makes dust
+out of nothing. A game with nobody hired skips the dance, because five seconds of standing about is
+most of the early game.
 
 When the last of the rock goes the core is loose, and it **rolls out** from the foot of the hill
 before it settles — the next rock stands where the last one did, and a core in its shadow
@@ -332,6 +390,13 @@ same place from further away. **A cell is always a whole number of *device* pixe
 what keeps hairline seams out, and on a screen at three device pixels to one it is three times as
 fine a ladder, which is what lets a phone find a scale the whole works fits in. It draws at the
 screen's real resolution, backing off only against a fill budget.
+
+The other half of that rule is that **every world position is a whole number of cells** — the
+sky above the ground line included. The rock is the only thing drawn a cell at a time, so it is
+the only thing that shows when the rule slips: two squares sharing an edge on a fraction of a
+device pixel are each antialiased against the page, and the seam between them comes out grey.
+The rock is kept an even number of cells wide for the same reason, since it is anchored by its
+middle. There is a test for it at every cell size a window can pick.
 
 Scrolling is sideways only, because there is never anything above or below worth moving to.
 Wheel, arrow keys, or **two fingers** — a phone has no wheel, and one finger is already sweeping.

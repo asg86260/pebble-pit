@@ -3,7 +3,7 @@
 
 import { P } from './config.js';
 import { S, bench, lab } from './state.js';
-import { UPGRADES } from './upgrades.js';
+import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES } from './lab.js';
 import { refresh, refreshStats } from './shop.js';
 
@@ -16,7 +16,7 @@ const labEl = document.getElementById('lab');
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
                           y > r.y - P * 8 && y < r.y + r.h + P * 4;
 
-export const nearBench = (x, y) => near(bench, x, y);
+export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
 export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 
 // The board stands on the bench, but it is a real element on a real screen: on a
@@ -50,7 +50,7 @@ export function showBoard(open) {
   if (open === S.boardOpen) return;
   S.boardOpen = open;
   boardEl.hidden = !open;
-  if (open) place(boardEl, bench);
+  if (open) { markSectionsSeen(); place(boardEl, bench); }
 }
 
 export function showLab(open) {
@@ -78,8 +78,8 @@ export function tweenCount(now) {
 
 // how many bodies a section has, so a heading can say so
 const headcount = title =>
-  title === 'workers' ? S.haulers :
-  title === 'miners' ? S.miners :
+  title === 'the crew' ? S.crew :
+  title === 'the rock' ? S.miners :
   title === 'the cave' ? S.spelunkers :
   title === 'the farm' ? S.farmhands : 0;
 

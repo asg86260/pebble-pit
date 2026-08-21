@@ -6,12 +6,12 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, DROP_GRAV, JOLT_GRAINS
 } from './config.js';
 import { S, floor } from './state.js';
-import { at, put, addGrain, depthShade } from './grid.js';
-import { blocked } from './world.js';
-import { spawnSpoil } from './dust.js';
+import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
+import { blocked, rockLeft, rockEdge } from './world.js';
+import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount } from './upgrades.js';
 
 // --- boulder ----------------------------------------------------------------
@@ -30,21 +30,70 @@ export function depthOf() {
 export function rockSize() {
   const w = Math.round(ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W);
   const h = Math.round(ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H);
+  // The width is kept even. The rock is anchored by its middle, so an odd width
+  // puts its left edge half a cell off the grid, and half a cell is a fraction
+  // of a device pixel: every column then seams against its neighbour.
+  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((TO_BENCH - P * 14) * 2 / P)));
   return {
-    w: Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((TO_BENCH - P * 14) * 2 / P))),
+    w: wide - (wide % 2),
     h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))
   };
 }
 
+// Where the foot of the rock is right now. A new rock comes down out of the sky,
+// so for the second it is falling that is above where it will stand -- and it
+// comes down a whole cell at a time, because a rock drawn half a device pixel
+// off is a rock with a hairline through every row of it.
+export const rockFootY = () =>
+  S.groundY + ROCK_SINK - Math.round(S.rockFall / P) * P;
+
 // the rock's foot sits just under the ground line so it looks planted, not laid
 export function placeRock() {
-  S.cy = S.groundY + ROCK_SINK - (S.gh / 2) * P;
+  S.cy = rockFootY() - (S.gh / 2) * P;
+}
+
+// One frame of a new rock coming down. It lands, shoves the dust out of the
+// ground it needs, and knocks a few grains off the tops of the two banks.
+export function stepRock() {
+  if (S.rockFall <= 0) return;
+  S.rockFallV += DROP_GRAV;
+  S.rockFall -= S.rockFallV;
+  if (S.rockFall <= 0) {
+    S.rockFall = 0;
+    S.rockFallV = 0;
+    clearApron();
+    jolt();
+    S.dirty = true;
+  }
+  placeRock();
+}
+
+// The landing shakes the banks: a grain hops off the top of each heap either
+// side. They are the grains that were already lying there, thrown -- nothing
+// here makes dust out of nothing, because every pixel is worth exactly one.
+function jolt() {
+  let left = JOLT_GRAINS;
+  for (let d = 0; d < 30 && left > 0; d++) {
+    for (const side of [-1, 1]) {
+      const c = colOf(floor, rockEdge(side) + side * d * P);
+      if (c < 0 || c >= floor.cols) continue;
+      for (let r = floor.rows - 1; r >= 0; r--) {
+        const v = at(floor, c, r);
+        if (!v) continue;
+        put(floor, c, r, 0);
+        spawnChip(floor.x + c * P, bottomY(floor) - (r + 1) * P,
+                  side * (0.2 + Math.random() * 0.5), -(1.2 + Math.random() * 1.4), v);
+        left--;
+        break;                              // one off the top of each column
+      }
+    }
+  }
 }
 
 // world y of the top of the rock in a column, or the ground where there is none
 export function rockTopY(c) {
   const t = S.rockTops[c];
-  return t >= 0 ? S.groundY + ROCK_SINK - (S.gh - t) * P : S.groundY;
+  return t >= 0 ? rockFootY() - (S.gh - t) * P : S.groundY;
 }
 
 // the surface the crew stand on, kept per column so nobody walks it every frame
@@ -58,7 +107,7 @@ export function refreshRockTops() {
 // A heightfield, not a disc: a broad hill with crags along its crest, sitting
 // flat on the ground. Cells hold remaining thickness, deepest at the base and
 // through the middle, thinning towards the skyline.
-export function makeBoulder() {
+export function makeBoulder(fromSky = false) {
   const size = rockSize();
   S.gw = size.w;
   S.gh = size.h;
@@ -91,9 +140,14 @@ export function makeBoulder() {
     }
     S.boulder.push(row);
   }
+  // A rock that is on its way down clears the ground it needs when it gets
+  // there, not before: the dust under it is nobody's problem while it is in
+  // the air.
+  S.rockFall = fromSky ? ROCK_DROP : 0;
+  S.rockFallV = 0;
   placeRock();
   refreshRockTops();
-  clearApron();
+  if (!fromSky) clearApron();
 }
 
 // shift any dust the last rock left inside this one's apron out to clear ground,
@@ -133,7 +187,7 @@ export function gridFromString(s, w, h) {
 }
 
 // the rock is anchored by its foot, not its middle: it grows upwards and outwards
-export const cellPos = (x, y) => ({ px: S.cx + (x - S.gw / 2) * P, py: S.groundY + ROCK_SINK - (S.gh - y) * P });
+export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S.gh - y) * P });
 
 export function boulderAlive() {
   for (const row of S.boulder) for (const v of row) if (v) return true;
@@ -145,16 +199,16 @@ export function boulderAlive() {
 // empty air below it does not, so falling dust can be caught there
 // the rock's whole footprint takes a swing, so clicking its general area works
 export function overBoulder(mx, my) {
-  if (!boulderAlive()) return false;         // nothing left to swing at
-  const half = (S.gw / 2) * P;
-  const foot = S.groundY + ROCK_SINK;
-  return mx > S.cx - half && mx < S.cx + half && my > foot - S.gh * P && my < foot;
+  if (!boulderAlive() || S.rockFall > 0) return false;   // nothing to swing at yet
+  const left = rockLeft();
+  const foot = rockFootY();
+  return mx > left && mx < left + S.gw * P && my > foot - S.gh * P && my < foot;
 }
 
 // the cell under the cursor, or the nearest filled one if that spot is already hollow
 export function pickCell(mx, my) {
-  const gx = (mx - S.cx) / P + S.gw / 2;
-  const gy = S.gh - (S.groundY + ROCK_SINK - my) / P;
+  const gx = (mx - rockLeft()) / P;
+  const gy = S.gh - (rockFootY() - my) / P;
   const hx = Math.floor(gx), hy = Math.floor(gy);
   if (S.boulder[hy]?.[hx]) return { x: hx, y: hy };
 
@@ -169,11 +223,12 @@ export function pickCell(mx, my) {
   return best;
 }
 
-export function knockOff(mx, my) {
+// `want` is how many pixels this swing takes. Your pick and a miner's are two
+// different tools, so whoever is swinging says which.
+export function knockOff(mx, my, want = pickCount()) {
   const c = pickCell(mx, my);
   if (!c) return;
 
-  const want = pickCount();
   const reach = Math.ceil(Math.sqrt(want)) + 1;
   const near = [];
   for (let dy = -reach; dy <= reach; dy++) {

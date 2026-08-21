@@ -13,6 +13,7 @@ import { blocked } from './world.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
 import { syncWorkers } from './crew.js';
+import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
 
@@ -153,13 +154,17 @@ export function persist() {
     autoMine: S.autoMine,
     cores: S.cores,
     seenCore: S.seenCore,
+    seenBench: S.seenBench,
+    seenSects: S.seenSects,
     pitStep: S.pitStep,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
+    crew: S.crew,
     miners: S.miners,
     haulers: S.haulers,
     minerSpeedLevel: S.minerSpeedLevel,
+    minerPickLevel: S.minerPickLevel,
     haulCarryLevel: S.haulCarryLevel,
     haulPaceLevel: S.haulPaceLevel,
     shards: S.shards,
@@ -209,16 +214,18 @@ export function restore() {
     S.carryLevel = 0;
     S.speedLevel = 0;
     S.autoMine = false;
-    S.haulersUnlocked = false;
-    S.minersUnlocked = false;
+    S.crew = 0;
     S.cores = 0;
     S.seenCore = false;
+    S.seenBench = false;
+    S.seenSects = [];
     S.pitStep = 0;
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
     S.haulers = 0;
     S.minerSpeedLevel = 0;
+    S.minerPickLevel = 0;
     S.haulCarryLevel = 0;
     S.haulPaceLevel = 0;
     S.shards = 0;
@@ -245,10 +252,10 @@ export function restore() {
   S.carryLevel = s.carryLevel || 0;
   S.speedLevel = s.speedLevel || 0;
   S.autoMine = !!s.autoMine;
-  S.haulersUnlocked = !!s.haulersUnlocked;
-  S.minersUnlocked = !!s.minersUnlocked;
   S.cores = s.cores || 0;
   S.seenCore = !!s.seenCore || S.cores > 0;
+  S.seenBench = !!s.seenBench;
+  S.seenSects = Array.isArray(s.seenSects) ? s.seenSects : [];
   setPitGrain(s.pitStep || 0);
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
@@ -257,8 +264,16 @@ export function restore() {
       : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
   S.miners = s.miners || 0;
-  S.haulers = s.haulers || 0;
+  S.spelunkers = s.spelunkers || 0;
+  S.farmhands = s.farmhands || 0;
+  // A save from before the crew was one pool has a headcount per job and no
+  // total. Adding them up is the whole migration: the same bodies, on the same
+  // jobs, and now they can be moved.
+  S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (s.spelunkers || 0) + (s.farmhands || 0);
+  rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
+  // A save from when one pick row bought both keeps what its miners had.
+  S.minerPickLevel = s.minerPickLevel ?? (s.pickLevel || 0);
   S.haulCarryLevel = s.haulCarryLevel || 0;
   S.haulPaceLevel = s.haulPaceLevel || 0;
   S.shards = s.shards || 0;
@@ -295,10 +310,11 @@ export function reset() {
   S.carryLevel = 0;
   S.speedLevel = 0;
   S.autoMine = false;
-  S.haulersUnlocked = false;
-  S.minersUnlocked = false;
+  S.crew = 0;
   S.cores = 0;
   S.seenCore = false;
+  S.seenBench = false;
+  S.seenSects = [];
   setPitGrain(0);
   S.pickLevel = 0;
   S.coreItem = null;
@@ -306,6 +322,7 @@ export function reset() {
   S.miners = 0;
   S.haulers = 0;
   S.minerSpeedLevel = 0;
+  S.minerPickLevel = 0;
   S.haulCarryLevel = 0;
   S.haulPaceLevel = 0;
   S.shards = 0;
