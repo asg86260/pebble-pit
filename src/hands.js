@@ -3,12 +3,11 @@
 // Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
 // anything still in the air can be caught on the way past.
 
-import { P, BRUSH, GRAV, CORE_SIZE, FIND_SIZE, MINE_DELAY } from './config.js';
+import { P, BRUSH, GRAV, CORE_SIZE, MINE_DELAY } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { spawnChip } from './dust.js';
-import { spawnFind } from './finds.js';
 import { bankDust } from './pit.js';
 import { capacity } from './upgrades.js';
 import { now } from './clock.js';
@@ -65,20 +64,6 @@ export function sweep(mx, my) {
     S.dirty = true;
   }
 
-  // A shard, a spore or a spark is picked up by hand as well, the same as a
-  // core: it is one thing rather than a load, so it costs no carrying room. They
-  // stopped being grains when they were given bodies, and a hand that could pick
-  // up the dust around one but not the thing itself is a hand missing a trick.
-  for (let i = S.finds.length - 1; i >= 0; i--) {
-    const f = S.finds[i];
-    if (!f.rest || f.counted) continue;
-    if (Math.abs(f.x + FIND_SIZE / 2 - mx) > FIND_SIZE * 1.5) continue;
-    if (Math.abs(f.y + FIND_SIZE / 2 - my) > FIND_SIZE * 1.5) continue;
-    S.finds.splice(i, 1);
-    S.heldFinds.push(f.v);
-    S.dirty = true;
-  }
-
   let room = capacity() - S.held;
   if (room <= 0) return;
 
@@ -116,13 +101,6 @@ export function sweep(mx, my) {
 
 export function release(x, y) {
   const { vx, vy } = throwVel();
-  // whatever was picked up by hand goes back out of it, thrown the same way
-  for (const v of S.heldFinds) {
-    spawnFind(v, x - FIND_SIZE / 2 + (Math.random() - 0.5) * P * 4,
-              y - FIND_SIZE / 2 + (Math.random() - 0.5) * P * 4,
-              vx + (Math.random() - 0.5) * 0.6, vy + (Math.random() - 0.5) * 0.6);
-  }
-  if (S.heldFinds.length) { S.heldFinds = []; S.dirty = true; }
   if (S.heldCore) {
     S.heldCore = false;
     S.coreItem = { x: x - CORE_SIZE / 2, y: y - CORE_SIZE / 2, vx, vy, rest: false };

@@ -492,40 +492,28 @@ const TESTS = [
   // walk to the lip, and stand there for ever reaching for something the lip
   // would not let it reach. Two workers stuck like that is a yard that has
   // quietly stopped, and it took half the suite runs with it.
+  // Over the hole is in the hole. A chip that crosses the mouth is banked
+  // whatever it is, so nothing can come to rest lying over the lip where a
+  // worker could see it, walk to the ledge, and reach for it for ever.
   ['nothing is left lying over the mouth of the pit', async () => {
-    window.__crew(0, 2);
-    quickCrew();
+    window.__crew(0, 0);
     window.__clearFloor();
     run(0.5);
-    const s = state();
-    const before = s.shards;
-    // drop a dozen straight over the lip, so they land on each other
-    for (let i = 0; i < 12; i++) window.__toss('shard', s.pitX + 12);
-    run(6);
+    const before = state().shards;
+    for (let i = 0; i < 12; i++) window.__toss('shard', state().pitX + 12);
+    run(4);
     const after = state();
-    const stranded = after.findPos.filter(p => !p.endsWith('c'));
-    window.__crew(0, 0);
+    const nearLip = after.findAll
+      .map(t => +t.split(',')[0])
+      .filter(x => x > after.pitX - 60);
     return [
       ok(after.shards === before + 12, 'every one of them is counted',
          `${before} -> ${after.shards}`),
-      ok(stranded.length === 0, 'none is left lying over the mouth uncounted',
-         JSON.stringify(after.findPos)),
-      ok(after.crewDetail.every(d => !d.includes('|h') || d.includes('|h0')),
-         'and nobody is stuck at the lip holding one', JSON.stringify(after.crewDetail))
+      ok(nearLip.length === 0, 'none is left lying over the mouth',
+         JSON.stringify(nearLip))
     ];
   }],
 
-  // Two things had to be true before a heap of these looked like a heap. Down
-  // is bigger, or a roll asks for a *higher* place beside it and nothing ever
-  // rolls. And a resting one stands in a slot one body wide, or they perch on
-  // each other at any offset at all and the whole lot reads as a mess.
-  // They stopped being grains when they were given bodies, and a hand that could
-  // sweep up the dust around a shard but not the shard itself is a hand missing
-  // a trick. It is picked up like a core: one thing, not a load, no room needed.
-  // Clearing a handful should put somebody back to work, because that is what
-  // clearing a handful looks like it ought to do. Any hysteresis at all is a
-  // chore: at a twentieth of the limit you had to fetch seventy grains before
-  // anybody picked up a pick, and a sweep of the brush lifts about five.
   ['clearing a handful puts the crew back to work', async () => {
     window.__crew(4, 0);
     window.__clearFloor();
@@ -563,29 +551,27 @@ const TESTS = [
     ];
   }],
 
-  ['a shard can be picked up by hand and thrown', async () => {
+  // A shard is a grain of dust as far as the ground and the hand are concerned:
+  // it is swept up with everything else, rides the cursor, and is thrown the
+  // same way. It costs carrying room, because it is one grain of your load.
+  ['a shard is swept up and thrown like anything else', async () => {
     window.__crew(0, 0);
     window.__clearFloor();
     run(0.5);
-    const s = state();
-    const p = s.piles.find(q => q.key === 'cave');
-    window.__toss('shard', p.from + 120);
+    const s0 = state();
+    const p = s0.piles.find(q => q.key === 'cave');
+    window.__toss('shard', p.from + 60);
     run(3);
     const lying = state();
-    // the one just tossed, not whichever find happens to be first in the list:
-    // by now there are others resting in the pit from earlier checks
     const mine = lying.findAll.map(t => t.split(',').map(Number))
                               .filter(a => a[0] > p.from && a[0] < p.to);
-    const at = mine[0];
 
-    // sweep the cursor over it, the way a hand picks up a core
-    const [sx, sy] = onScreen(at[0] + 6, s.groundY - at[1] + 6);
+    const [sx, sy] = onScreen(mine[0][0], s0.groundY - mine[0][1]);
     point('pointerdown', sx, sy);
     for (let i = 0; i < 4; i++) { point('pointermove', sx, sy); await sleep(20); }
     const inHand = state();
 
-    // and fling it towards the pit
-    const [px, py] = onScreen(s.pitX + 40, s.groundY - 120);
+    const [px, py] = onScreen(s0.pitX + 40, s0.groundY - 120);
     for (let i = 1; i <= 6; i++) {
       point('pointermove', sx + (px - sx) * i / 6, sy + (py - sy) * i / 6);
       await sleep(16);
@@ -594,16 +580,17 @@ const TESTS = [
     run(4);
     const after = state();
     return [
-      ok(mine.length >= 1, 'a shard is lying there to start with'),
-      ok(inHand.heldFinds === 1, 'sweeping over it picks it up',
-         `${inHand.heldFinds} in hand`),
-      ok(inHand.held === 0, 'and it costs no carrying room', `${inHand.held} of dust`),
-      ok(after.heldFinds === 0, 'letting go throws it'),
-      ok(after.shards > lying.shards, 'thrown into the pit, it counts',
+      ok(mine.length === 1, 'a shard is lying there to start with'),
+      ok(inHand.held > 0, 'sweeping over it lifts it like any other grain',
+         `${inHand.held} in hand`),
+      ok(after.shards > lying.shards, 'and thrown into the pit it counts as a shard',
          `${lying.shards} -> ${after.shards}`)
     ];
   }],
 
+  // They are dust with a different mark on them, so they heap the way dust
+  // heaps: the same grid, the same repose, the same ceiling. There is no second
+  // implementation of any of it to drift out of step.
   ['a heap of finds heaps, rather than stacking', async () => {
     window.__crew(0, 0);
     window.__clearFloor();
@@ -611,40 +598,27 @@ const TESTS = [
     const p = state().piles.find(q => q.key === 'cave');
     for (let i = 0; i < 30; i++) { window.__toss('shard', p.from + 30); run(0.3); }
     run(10);
-    // only the ones dropped here: finds already banked in the pit are still
-    // lying in it, and they are none of this check's business
     const at = state().findAll.map(t => t.split(',').map(Number))
                               .filter(a => a[0] > p.from - 40 && a[0] < p.to + 40);
-    const xs = at.map(a => a[0]), tall = Math.max(...at.map(a => a[1]));
-    const spread = Math.max(...xs) - Math.min(...xs);
-    // how far out from the near end of the strip the tallest column stands
+    const xs = at.map(a => a[0]);
     const tops = {};
     for (const [x, h] of at) tops[x] = Math.max(tops[x] || 0, h);
     const near = Math.min(...xs);
-    const peak = (+Object.keys(tops).reduce((a, b) => tops[b] > tops[a] ? b : a) - near) / 12;
-    window.__clearFloor();
+    const peak = (+Object.keys(tops).reduce((a, b) => tops[b] > tops[a] ? b : a) - near) / 6;
+    const tall = Math.max(...at.map(a => a[1]));
     return [
       ok(at.length === 30, 'all thirty are lying there', `${at.length}`),
-      ok(spread > 60, 'they spread out along the ground', `${spread}px across`),
-      ok(tall <= 30 * 12 / 3, 'rather than going up in a column',
-         `${tall / 12} bodies at the peak`),
-      ok(at.every(a => a[1] % 12 === 0), 'and each sits squarely on what is under it',
-         JSON.stringify(at.slice(0, 6))),
-      // A resting find stands in a slot one body wide, the same as a grain of
-      // sand stands in a cell. Without that they perch on each other at any
-      // offset at all: two bodies three pixels apart, drawn twelve wide.
-      ok(at.every(a => a[0] % 12 === 0), 'every one of them stands in a slot',
-         JSON.stringify(at.map(a => a[0]).slice(0, 8))),
+      ok(Math.max(...xs) - Math.min(...xs) >= 36, 'they spread out along the ground',
+         `${Math.max(...xs) - Math.min(...xs)}px across`),
+      ok(tall <= 30 * 6 / 3, 'rather than going up in a column',
+         `${tall / 6} cells at the peak`),
+      ok(at.every(a => a[0] % 6 === 0 && a[1] % 6 === 0),
+         'every one of them sits in a cell, like a grain of dust',
+         JSON.stringify(at.slice(0, 4))),
       ok(new Set(at.map(a => a.join(','))).size === at.length,
-         'and no two are in the same place'),
-      ok(at.every(a => at.every(b => a === b || a[0] === b[0] ||
-                                     Math.abs(a[0] - b[0]) >= 12)),
-         'so none of them overlaps the next'),
-      // The same rule the dust keeps: a pile may only rise as it gets away from
-      // the station behind it. Without it they went up in a column against the
-      // station while the dust beside them sloped away properly.
+         'and no two are in the same cell'),
       ok(peak > 0, 'the heap leans away from the station rather than standing on it',
-         `tallest column is ${peak} bodies out from the near end`)
+         `tallest column is ${peak} cells out from the near end`)
     ];
   }],
 

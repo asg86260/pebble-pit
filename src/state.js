@@ -32,7 +32,7 @@ export const S = {
   rockTops: [],           // topmost rock cell per column, for the crew to stand on
   tick: 0,                // frames, for the things not worth doing in all of them
   floorGrains: 0,         // dust lying about the yard, counted now and then
-  finds: [],              // shards, spores and sparks: bodies of their own, two cells square
+  floorMarks: [],         // and where anything in it that is not dust has come to rest
   // Every station piles to its right, into a strip of ground of its own. The
   // strips are worked out when the world is laid out and when the rock changes
   // size; what is lying in each is counted twice a second, with the rest of the
@@ -52,7 +52,6 @@ export const S = {
   chips: [],              // knocked loose, still flying
   paid: [],               // flying out of the pit to the bench, on the way to being spent
   motes: [],              // the load drifting round the cursor
-  heldFinds: [],          // and any shards, spores or sparks picked up by hand
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
 

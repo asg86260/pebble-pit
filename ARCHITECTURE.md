@@ -103,6 +103,12 @@ Sites are placed by their distance from the rock, so adding one moves nothing
 else. Unlocking one should `lookAt()` it: it is several cores and a row in a
 menu, and the thing bought is off the left of the screen.
 
+**Anything that piles up is a cell in a bed.** Dust, shards, spores, sparks and
+cores are all values in the same grids, told apart by `isDust` and by the mark
+drawn on them. Do not give a new one a physics of its own: it was tried, and the
+rules the two systems did not share — the ceiling, the lattice, the angle of
+repose — were each a bug, found one at a time.
+
 **A new currency.** A line in `MARK` and one in `purse` in `upgrades.js`, a
 branch in `buy`, a mark in the stylesheet, a shape in `render.js`, and a row on
 the counter. Five exist; each has exactly one job, which is the rule worth

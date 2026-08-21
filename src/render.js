@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, MARK_SIZE, FIND_SIZE, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+import { P, SHADES, MARK_SIZE, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -201,8 +201,9 @@ export function overPileMark(key, mx, my) {
 // The things the sites give up, lying where they came to rest. Each has a body
 // two cells square and its glyph fills it, so what you see is what it is and
 // what it collides as -- which is why they stack now instead of overlapping.
-export function drawFinds() {
-  for (const f of S.finds) drawMark(f.v, f.x + FIND_SIZE / 2, f.y + FIND_SIZE / 2);
+export function drawFloorMarks() {
+  ctx.fillStyle = '#000';
+  for (const m of S.floorMarks) drawMark(m.v, m.x, m.y);
 }
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
@@ -413,12 +414,6 @@ export function drawWorkers() {
                  left + (i % 2) * P + P / 2,
                  y - P * (Math.floor(i / 2) + 1) + P / 2);
       }
-      // and anything carried whole rides on top of the load, as what it is
-      if (w.holding) {
-        const stack = Math.ceil(Math.min(w.carry, 24) / 2);
-        drawMark(w.holding, Math.round(w.x) + WORKER / 2,
-                 y - P * (stack + 1) - FIND_SIZE / 2);
-      }
       ctx.fillStyle = '#000';
       if (w.hasCore) {
         const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
@@ -472,7 +467,7 @@ export function draw() {
   drawPaid();
   drawBench();
   drawCore();
-  drawFinds();             // shards and the like, lying where they came to rest
+  drawFloorMarks();        // shards and the like, lying in the dust where they landed
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawWorkers();
   drawCursor();
@@ -523,11 +518,12 @@ export function drawPitCores() {
   const pad = MARK_SIZE / 2 + 1;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
-      if (at(pit, c, r) !== CORE_CELL) continue;     // the rest have bodies of their own
+      const v = at(pit, c, r);
+      if (!v || isDust(v)) continue;                // dust the painter has already drawn
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      drawMark(CORE_CELL, cx, cy);
+      drawMark(v, cx, cy);
     }
   }
   ctx.fillStyle = '#000';
@@ -541,11 +537,6 @@ export function drawGrid(b) {
 
 // the carried dust drifts loosely around the cursor
 export function drawCursor() {
-  // a thing picked up by hand rides the cursor as what it is
-  S.heldFinds.forEach((v, i) => {
-    const a = i / Math.max(1, S.heldFinds.length) * Math.PI * 2 + now() / 900;
-    drawMark(v, S.mouse.x + Math.cos(a) * P * 3, S.mouse.y + Math.sin(a) * P * 3);
-  });
   if (!S.held) return;
   const t = now() / 1000;
   for (const m of S.motes) {

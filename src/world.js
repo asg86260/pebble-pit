@@ -54,17 +54,6 @@ export function pileAt(x) {
 export const yardLeft = () => (S.piles[0] ? S.piles[0].from : 0);
 export const blocked = c => !pileAt(floor.x + c * P);
 
-// Where something that is *not* dust may not come to rest: down the hole, down
-// the shaft, or under the rock. Everywhere else on the ground will do. A shard
-// does not heap and does not have to keep to the yard -- it lies where it was
-// dropped until somebody walks out and fetches it, and a spore cut at the beds
-// should stay at the beds rather than being shunted across the world.
-export const overShaft = x => x + P > cave.x && x < cave.x + cave.w;
-export const noRest = c => {
-  const x = floor.x + c * P;
-  return overPitMouth(x) || overApron(x) || overShaft(x);
-};
-
 // which pile a station's own output belongs in
 export const pileOf = key => S.piles.find(p => p.key === key);
 

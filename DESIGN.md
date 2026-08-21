@@ -369,19 +369,12 @@ that actually matters. The lab is the only place a multiplier lives.)*
 ## The counter
 
 Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
-a shard a triangle, a spore a hexagon, a spark a cross. A shard, a spore and a spark are **not grains of dust**. Each has a body two cells on a side, with
-real falling and real stacking: they come to rest on the ground, on the dust, on the pile in the
-pit or on each other, and they **roll off** anything they land on top of if there is a lower place
-beside them — the same rule the sand keeps, at the size of a body rather than a grain. And a resting one stands in a **slot one body wide**, the same way a grain of
-sand stands in a cell one grain wide — that is the whole difference between a pile and a mess.
-While one is in the air its x is wherever the throw put it; the moment it lands it takes the
-nearest slot, and from then on it is in that slot or the one next door. Forty dropped on one spot
-come out as a clean pyramid six rows high. They keep **the same ceiling the dust keeps** — a pile
-may only rise as it gets away from the station behind it — so a heap of shards leans away from the
-cave exactly as the spoil leans away from the rock, rather than standing up against it. Without the lattice they perched on each other at any
-offset at all: bodies twelve wide sitting two and three pixels apart. That is what
-turns a run of them dropped in one spot from a needle into a heap. They stay in the pile they were
-thrown into: a pile is a pile, and it has to be countable against its own limit.
+a shard a triangle, a spore a hexagon, a spark a cross. A shard, a spore and a spark **are grains of dust**, as far as the ground is concerned. They fall,
+heap, slump, are swept up, are carried and are tipped in by exactly the same code — the same grid,
+the same repose, the same ceiling, the same pile limits. What differs is the mark drawn on the cell
+and what it is worth when it reaches the pit. There is no second implementation of "a thing in a
+pile" to drift out of step with the first, and every rule they did not share turned out to be a bug
+waiting: the ceiling, the lattice, the repose angle, all found the hard way.
 
 **One glyph, one size, everywhere.** Each is drawn inside the same cell-sized box — in the air, on
 the ground, in the pile, on the cursor and in a worker's hands — because a cell is what a grain

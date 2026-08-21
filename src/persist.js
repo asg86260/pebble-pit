@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, CORE_CELL, SHADES, CORE_SIZE, FIND_SIZE } from './config.js';
+import { P, CORE_CELL, SHADES, CORE_SIZE } from './config.js';
 import { load, save, clear } from './save.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, count, countDust, fillFlat, addGrain, isDust } from './grid.js';
@@ -14,7 +14,6 @@ import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTop
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
 import { syncWorkers } from './crew.js';
 import { rebalance } from './upgrades.js';
-import { isFind } from './finds.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
 
@@ -163,11 +162,6 @@ export function persist() {
     coreLoose: S.heldCore || !!S.coreItem,
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
-    // what is lying about, and whatever is in your hand: neither has been
-    // counted, and a reload pocketing either would be the game taking it back
-    finds: S.finds.filter(f => !f.counted)
-                  .map(f => ({ v: f.v, x: Math.round(f.x) }))
-                  .concat(S.heldFinds.map(v => ({ v, x: Math.round(S.mouse.x) }))),
     crew: S.crew,
     miners: S.miners,
     haulers: S.haulers,
@@ -223,8 +217,7 @@ export function restore() {
     S.speedLevel = 0;
     S.autoMine = false;
     S.crew = 0;
-    S.finds = [];
-    S.cores = 0;
+      S.cores = 0;
     S.seenCore = false;
     S.seenBench = false;
     S.seenSects = [];
@@ -278,12 +271,6 @@ export function restore() {
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
-  S.finds = Array.isArray(s.finds)
-    ? s.finds.filter(f => f && isFind(f.v))
-             .map(f => ({ v: f.v, x: +f.x || 0, y: S.groundY - FIND_SIZE,
-                          vx: 0, vy: 0, rest: false, counted: false }))
-    : [];
-  S.heldFinds = [];
   S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (s.spelunkers || 0) + (s.farmhands || 0);
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
@@ -318,7 +305,6 @@ export function reset() {
   clear();
   S.chips = [];
   S.paid = [];
-  S.finds = [];
   S.stored = 0;
   S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;

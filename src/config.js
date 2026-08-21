@@ -91,11 +91,13 @@ export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#
 // pixels across is a smudge -- so it is drawn a little larger than its cell,
 // with the page showing through behind it. That white surround is what keeps two
 // of them side by side readable as two things rather than one shape.
-// A thing that is not dust is two cells on a side: that is the size it is drawn
-// and the size it collides as, which is the whole point. A one-cell body under a
-// two-cell picture is what made them overlap and stack wrong.
-export const FIND_SIZE = 12;
-export const MARK_SIZE = FIND_SIZE;
+// A thing that is not dust is one cell, exactly like a grain of dust, because it
+// *is* a grain of dust as far as the ground is concerned -- it falls, heaps,
+// slumps, is scooped and is carried by the same code, and differs only in the
+// mark drawn on it and what it is worth when it lands in the pit. Two systems
+// that both mean "a thing in a pile" is one system too many, and every rule they
+// did not share was a bug waiting: the ceiling, the lattice, the repose angle.
+export const MARK_SIZE = P;
 export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among the dust
 export const SHARD_CELL = SHADES.length + 2;
 export const SPORE_CELL = SHADES.length + 3;

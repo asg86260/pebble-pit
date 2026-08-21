@@ -12,7 +12,6 @@ import {
 import { S, cave, farm, lab, meteor } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
-import { takeFind } from './finds.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
 import { caveMs, caveRate } from './cave.js';
@@ -343,9 +342,9 @@ export function buy(u) {
   // everything but dust is one grain in the pile, so paying lifts that many of
   // them back out of it -- the pile always shows exactly what you are holding
   else if (money === 'core') { S.cores -= cost; takeCoreCells(cost, CORE_CELL); }
-  else if (money === 'shard') { S.shards -= cost; takeFind(SHARD_CELL, cost); }
-  else if (money === 'spore') { S.spores -= cost; takeFind(SPORE_CELL, cost); }
-  else if (money === 'spark') { S.sparks -= cost; takeFind(SPARK_CELL, cost); }
+  else if (money === 'shard') { S.shards -= cost; takeCoreCells(cost, SHARD_CELL); }
+  else if (money === 'spore') { S.spores -= cost; takeCoreCells(cost, SPORE_CELL); }
+  else if (money === 'spark') { S.sparks -= cost; takeCoreCells(cost, SPARK_CELL); }
 
   u.buy();
   S.dirty = true;
