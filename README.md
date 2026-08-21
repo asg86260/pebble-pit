@@ -56,5 +56,7 @@ losing.
 
 Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n dust, `__drop()`
 releases a core, `__jump(n)` swaps in rock n, `__pile(x, n)` heaps dust on the ground,
-`__crew(miners, workers, drillers)` hires a crew outright, `__next()` finishes the rock,
+`__crew(miners, workers, spelunkers, farmhands)` hires a crew outright, `__next()` finishes the
+rock, `__grant({shards, spores, sparks, cores})` and `__levels({...})` set up a plausible game,
+`__lab()` and `__meteor()` open those,
 `__spend(n)` takes n dust back out of the pit.

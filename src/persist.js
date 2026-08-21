@@ -127,7 +127,7 @@ export function pitFromSave(sv) {
     const h = Math.min(pit.rows, Math.max(0, heights[c]));
     for (let r = 0; r < h; r++) pit.grid[r * pit.cols + c] = pick();
   }
-  S.pitPainted = false;
+  pit.painter.repaint();
   return true;
 }
 
@@ -191,11 +191,11 @@ export function restoreGrid(b, s) {
   if (!s) return;
   b.grid.fill(0);
   if (s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
-    if (b === pit) S.pitPainted = false;
+    if (b.painter) b.painter.repaint();
     return;
   }
   fillFlat(b, gridCount(s.cells));   // a different shape: re-pack the same amount
-  if (b === pit) S.pitPainted = false;
+  if (b.painter) b.painter.repaint();
 }
 
 export function restore() {
@@ -333,6 +333,8 @@ export function reset() {
   resetRates();
   floor.grid.fill(0);
   pit.grid.fill(0);
+  floor.painter.repaint();
+  pit.painter.repaint();
   S.boulderNo = 1;
   makeBoulder();
   buildShop();

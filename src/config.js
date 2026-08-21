@@ -41,6 +41,10 @@ export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of th
 // how many device pixels we are willing to fill a frame, before backing the
 // resolution off. A phone at three to one is about three million
 export const DEVICE_PIXELS = 9e6;
+// cells of sand any one grid is allowed to look at in a frame. The ground can
+// hold a hundred thousand and the pit a million; walking either every frame is
+// the most expensive thing in the game, and settling a band at a time is free
+export const SETTLE_BUDGET = 40000;
 export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
 // pales as you dig through it; an empty cell is the white page showing through.

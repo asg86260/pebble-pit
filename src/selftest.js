@@ -771,6 +771,44 @@ const TESTS = [
     ];
   }],
 
+  ['the places are revealed one at a time', async () => {
+    const rows = () => [...shop().querySelectorAll('button')].map(b => b.dataset.key);
+    const has = k => rows().includes(k);
+
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
+    await sleep(400);
+    const fresh = rows();
+
+    window.__grant({ cores: 4 });
+    await sleep(150);
+    const withCore = { cave: has('unlockcave'), farm: has('unlockfarm'),
+                       lab: has('unlocklab'), meteor: has('unlockmeteor') };
+
+    window.__crew(1, 1, 1);                  // the cave open
+    await sleep(150);
+    const withCave = { farm: has('unlockfarm'), lab: has('unlocklab') };
+
+    window.__grant({ shards: 3 });
+    await sleep(150);
+    const withShard = { lab: has('unlocklab'), meteor: has('unlockmeteor') };
+
+    window.__lab(true);
+    await sleep(150);
+    const withLab = { meteor: has('unlockmeteor') };
+
+    window.__crew(0, 0);
+    return [
+      ok(!fresh.includes('pick') && !fresh.includes('unlockcave'),
+         'a fresh game offers nothing about cores or places', fresh.join(' ')),
+      ok(withCore.cave && !withCore.farm && !withCore.lab && !withCore.meteor,
+         'the first core offers the cave, and only the cave',
+         JSON.stringify(withCore)),
+      ok(withCave.farm && !withCave.lab, 'opening the cave offers the farm'),
+      ok(withShard.lab && !withShard.meteor, 'a shard in hand offers the lab'),
+      ok(withLab.meteor, 'and the lab offers the sky')
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write

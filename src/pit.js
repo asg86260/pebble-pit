@@ -8,53 +8,32 @@
 
 import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHADES } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, countDust, bottomY, settle } from './grid.js';
+import { at, put, addGrain, countDust, bottomY, settleSome } from './grid.js';
+import { SETTLE_BUDGET } from './config.js';
+import { makePainter } from './painter.js';
 
-// The pit is drawn through a scratch canvas one pixel per grain, blitted up to
-// size. A million fillRects a frame is not a drawing routine; one drawImage is.
-export const pitPix = document.createElement('canvas');
-export const pitPixCtx = pitPix.getContext('2d', { willReadFrequently: true });
-
-// SHADES as packed RGBA, so a grain is one array write
-export const SHADE_RGBA = SHADES.map(h => {
-  const n = parseInt(h.slice(1), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255];
-});
-
-export function markPit(c, r) {
-  if (c < S.pitLo) S.pitLo = c;
-  if (c > S.pitHi) S.pitHi = c;
-  if (r < S.pitTop || S.pitTop < 0) S.pitTop = r;
-  if (r > S.pitBot) S.pitBot = r;
-}
-
+// its painter, made fresh whenever the grid underneath changes shape
 export function setPitGrain(step) {
   S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
   pit.p = PIT_GRAINS[S.pitStep];
   pit.cols = PIT_W / pit.p;
   pit.rows = PIT_H / pit.p;
   pit.grid = new Uint8Array(pit.cols * pit.rows);
-  S.pitPainted = false;
+  pit.painter = makePainter(pit);
+  pit.onPut = pit.painter.mark;
 }
 
 // nothing bars the pile, it just fills; it lies flat rather than heaping; and
 // every change is told to the painter
 export function wirePit() {
-  pit.blocked = null;
-  pit.repose = false;
-  pit.onPut = markPit;
+  pit.blocked = null;                      // nothing bars the pile, it just fills
+  pit.repose = false;                      // and it lies flat rather than heaping
+  if (!pit.painter) pit.painter = makePainter(pit);
+  pit.onPut = pit.painter.mark;            // every change is told to the painter
 }
 
-// A million cells is too many to walk every frame, so the pit is settled a band
-// of columns at a time, picking up where it left off. The pile slumps a beat
-// behind itself, which nobody can see, and the frame cost is flat.
-const SETTLE_BUDGET = 40000;               // cells of pit to look at per frame
-
 export function settlePit() {
-  const band = Math.max(1, Math.min(pit.cols, Math.floor(SETTLE_BUDGET / pit.rows)));
-  settle(pit, null, S.settleAt, Math.min(pit.cols, S.settleAt + band));
-  S.settleAt += band;
-  if (S.settleAt >= pit.cols) S.settleAt = 0;
+  settleSome(pit, SETTLE_BUDGET);
 }
 
 export function bankDust(x, shade = 1) {
@@ -109,7 +88,7 @@ export function refinePit() {
     }
   }
   seedPitCores();
-  S.pitPainted = false;
+  pit.painter.repaint();
   S.dirty = true;
 }
 

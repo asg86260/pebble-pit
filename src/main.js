@@ -8,9 +8,9 @@
 import './style.css';
 import './selftest.js';        // adds __test() to the console
 
-import { P, GRAV, ROCK_SINK, SPILL_ROW, ROCK_CLEAR } from './config.js';
+import { P, GRAV, ROCK_SINK, SPILL_ROW, ROCK_CLEAR, SETTLE_BUDGET } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
-import { at, addGrain, colOf, surfaceY, settle, resizeGrid, count, countDust } from './grid.js';
+import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, count, countDust } from './grid.js';
 import { resize, clampCam, stepCamera, blocked, overPitMouth, rockLeft } from './world.js';
 import { placeRock, makeBoulder, overBoulder, knockOff, boulderAlive, depthOf, rockSize } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, spend, pitCapacity } from './pit.js';
@@ -20,6 +20,7 @@ import { stepFinds } from './cave.js';
 import { stepCrop } from './farm.js';
 import { sampleRates, mult, rates } from './lab.js';
 import { stepMeteor } from './meteor.js';
+import { makePainter } from './painter.js';
 import { updateWorkers, syncWorkers } from './crew.js';
 import { catchAir } from './hands.js';
 import { seedAir, stepAir, AIR } from './air.js';
@@ -34,6 +35,8 @@ import './input.js';           // the mouse, the wheel and the keyboard
 // A new bed of sand somewhere else is another few lines like this, not another
 // copy of the sand rules.
 function wireGround() {
+  if (!floor.painter) floor.painter = makePainter(floor);
+  floor.onPut = floor.painter.mark;
   floor.blocked = blocked;
   floor.repose = true;                     // heaps on the ground stand up
   floor.spillsInto = overPitMouth;         // and topple over the lip
@@ -110,14 +113,14 @@ function step() {
     }
   }
 
-  settle(floor);
+  settleSome(floor, SETTLE_BUDGET);
   settlePit();
 }
 
 
 function frame() { step(); draw(); hud(); requestAnimationFrame(frame); }
 
-window.__clearFloor = () => { floor.grid.fill(0); S.dirty = true; };
+window.__clearFloor = () => { floor.grid.fill(0); floor.painter.repaint(); S.dirty = true; };
 window.__pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); S.dirty = true; };
 window.__jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); S.dirty = true; };
 window.__preview = n => {

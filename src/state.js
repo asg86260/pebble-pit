@@ -106,17 +106,14 @@ export const S = {
   dirty: false,           // something changed worth saving
   lastFrame: 0,           // for the length of the last frame
   dustSeen: 0, dustSeenAt: 0,   // a cached count, for how many motes drift about
-  settleAt: 0,            // the column the pit settler got to last frame
-  pitImage: null,         // the pit's pixels, one per grain
-  pitPainted: false,      // false means repaint the whole pile
-  pitLo: 0, pitHi: -1, pitTop: -1, pitBot: 0   // what has changed since the last paint
+  settleAt: 0             // the column the pit settler got to last frame
 };
 
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --
 // and the bench. These are mutated in place and never reassigned, so they are
 // consts rather than fields on S. `p` is the size of one grain in that grid.
-export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null };
-export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null };
+export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null };
+export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const cave = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };

@@ -108,6 +108,11 @@ const FARMHANDS = crew({
   cores: 5, base: 400, mult: 1.7, count: 'farmhands', unlocked: 'farmOpen',
   onOpen: () => lookAt(farm.x + farm.w / 2)
 });
+// One place at a time. Banking a single core used to reveal every site in the
+// game at once, which spoils the whole chain: each one is a surprise that the
+// last one earns.
+SPELUNKERS[0].show = () => S.seenCore && !S.caveOpen;
+FARMHANDS[0].show = () => S.caveOpen && !S.farmOpen;
 const WORKERS = crew({
   key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
   cores: 2, base: 80, mult: 1.7, count: 'haulers', unlocked: 'haulersUnlocked'

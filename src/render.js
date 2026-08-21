@@ -10,7 +10,7 @@ import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
-import { pitPix, pitPixCtx, SHADE_RGBA } from './pit.js';
+
 import { AIR } from './air.js';
 import { capacity } from './upgrades.js';
 import { underground } from './cave.js';
@@ -399,44 +399,10 @@ export function drawPitOutline() {
 }
 
 export function drawPit() {
-  if (!S.pitImage || pitPix.width !== pit.cols || pitPix.height !== pit.rows) {
-    pitPix.width = pit.cols;
-    pitPix.height = pit.rows;
-    S.pitImage = pitPixCtx.createImageData(pit.cols, pit.rows);
-    S.pitPainted = false;
-  }
-
-  if (!S.pitPainted) { S.pitLo = 0; S.pitHi = pit.cols - 1; S.pitTop = 0; S.pitBot = pit.rows - 1; }
-
-  if (S.pitHi >= S.pitLo && S.pitTop >= 0) {
-    const d = S.pitImage.data;
-    for (let r = S.pitTop; r <= S.pitBot; r++) {
-      // row 0 is the floor of the pit, so the image is drawn upside down
-      const py = pit.rows - 1 - r;
-      for (let c = S.pitLo; c <= S.pitHi; c++) {
-        const v = at(pit, c, r);
-        const i = (py * pit.cols + c) * 4;
-        if (!v) { d[i + 3] = 0; continue; }
-        const rgba = SHADE_RGBA[Math.min(SHADES.length, Math.max(1, v)) - 1];
-        d[i] = rgba[0]; d[i + 1] = rgba[1]; d[i + 2] = rgba[2]; d[i + 3] = 255;
-      }
-    }
-    pitPixCtx.putImageData(S.pitImage, 0, 0, S.pitLo, pit.rows - 1 - S.pitBot,
-                           S.pitHi - S.pitLo + 1, S.pitBot - S.pitTop + 1);
-    S.pitPainted = true;
-    S.pitLo = pit.cols; S.pitHi = -1; S.pitTop = -1; S.pitBot = 0;
-  }
-
-  const sm = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;       // grains are squares, not smudges
-  ctx.drawImage(pitPix, pit.x, pit.y, pit.w, pit.h);
-  ctx.imageSmoothingEnabled = sm;
-
+  pit.painter.paint(ctx, pit.x, pit.y, pit.w, pit.h);
   drawPitCores();
 }
 
-// a core draws bigger than the grain it sits in, so keep the whole circle inside
-// the pile's walls and floor rather than letting it poke through
 export function drawPitCores() {
   const rad = P * 1.2, pad = rad + 2;
   for (let r = 0; r < pit.rows; r++) {
@@ -450,28 +416,10 @@ export function drawPitCores() {
   ctx.fillStyle = '#000';
 }
 
+// the ground, through its own painter for the same reason as the pit: an
+// under-staffed yard can leave fifty thousand grains lying about
 export function drawGrid(b) {
-  let shade = 0;
-  const buried = [];
-  for (let r = 0; r < b.rows; r++) {
-    for (let c = 0; c < b.cols; c++) {
-      const v = at(b, c, r);
-      if (!v) continue;
-      const x = b.x + c * b.p, y = bottomY(b) - (r + 1) * b.p;
-      if (v === CORE_CELL) { buried.push([x, y]); continue; }
-      if (v !== shade) { shade = v; ctx.fillStyle = shadeOf(v); }
-      ctx.fillRect(x, y, b.p, b.p);
-    }
-  }
-  // a core draws bigger than the cell it sits in, so keep the whole circle inside
-  // the pile's walls and floor rather than letting it poke through
-  const rad = P * 1.2, pad = rad + 2;
-  for (const [x, y] of buried) {
-    const cxp = Math.min(Math.max(x + P / 2, b.x + pad), b.x + b.cols * P - pad);
-    const cyp = Math.min(Math.max(y + P / 2, b.y + pad), bottomY(b) - pad);
-    drawCircle(cxp, cyp, rad);
-  }
-  ctx.fillStyle = '#000';
+  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p);
 }
 
 // the carried dust drifts loosely around the cursor

@@ -22,6 +22,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `config.js` | every tunable number | yes — no logic |
 | `state.js` | every mutable fact, plus the two sand grids and every site's rect | yes — no logic |
 | `grid.js` | the falling-sand rules, and nothing that knows what sand is *for* | yes |
+| `painter.js` | drawing a sand grid through a scratch canvas | yes |
 | `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
 | `cave.js` | the shaft, and spelunkers going down it | yes |
@@ -62,10 +63,24 @@ blocked(c)                    columns dust may not settle in
 onPut(c, r)                   told about every cell written
 repose                        heaps stand up instead of spreading flat
 spillsInto(x), spillsAt, spill(x, y, v)    where a heap topples over an edge
+painter                       a makePainter(), with its mark as the onPut
 ```
 
 That is four lines and an object, not another copy of the sand rules. See
 `wireGround` in `main.js` and `wirePit` in `pit.js` for the two that exist.
+
+**Any grid big enough to matter needs two things**, and both are easy to forget
+because the game is fine without them until it suddenly is not:
+
+- a **painter**, or it is drawn a grain at a time
+- **`settleSome(b, SETTLE_BUDGET)`** rather than `settle(b)`, or the sand rules
+  walk every cell every frame
+
+The ground holds a hundred thousand cells and the pit a million. Walking either
+one every frame was, measured, the most expensive thing in the game — a heaped
+yard put the frame over budget on its own. Settled in bands the cost is flat
+whatever is lying about, and the sand slumps a beat behind itself, which nobody
+can see.
 
 **A new site.** Four of them went in this way and it held up every time:
 

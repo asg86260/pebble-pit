@@ -107,9 +107,20 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
   }
 }
 
+// A big grid is too many cells to walk every frame, so it is settled a band of
+// columns at a time, picking up where it left off. The sand slumps a beat behind
+// itself, which nobody can see, and the frame cost is flat whatever the size.
+export function settleSome(b, budget) {
+  const band = Math.max(1, Math.min(b.cols, Math.floor(budget / b.rows)));
+  const from = b.settleAt || 0;
+  settle(b, undefined, from, Math.min(b.cols, from + band));
+  b.settleAt = from + band >= b.cols ? 0 : from + band;
+}
+
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
+  if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);
   const shade = 4;                         // repacked dust, middling grey
   for (let r = 0; r < b.rows && n > 0; r++) {
@@ -128,4 +139,5 @@ export function resizeGrid(b) {
   if (b.grid && b.grid.length === want) return;
   b.grid = new Uint8Array(want);
   fillFlat(b, had);
+  if (b.painter) b.painter.repaint();
 }
