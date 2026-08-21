@@ -9,7 +9,7 @@ import { P, SHADES, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
-import { boulderAlive, depthOf, cellPos } from './rock.js';
+import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
 import { coreHome } from './core.js';
 
 import { AIR } from './air.js';
@@ -107,6 +107,26 @@ function drawFind(v, x, y) {
   else if (v === SHARD_CELL) drawTriangle(x, y, P, false);
   else if (v === SPORE_CELL) drawDiamond(x, y, P);
   else drawSpark(x, y, P);
+}
+
+// A station whose pile is full has stopped, and says so: a bar over it, which is
+// the one mark in the game that means nothing is happening. It sits above the
+// station rather than above the pile, because the station is the thing that has
+// stopped and the pile is only why.
+export function drawPileMarks() {
+  ctx.fillStyle = '#000';
+  for (const p of S.piles) {
+    if (!S.pileFull[p.key]) continue;
+    const at = p.key === 'rock' ? { x: S.cx, y: rockTopY(Math.floor(S.gw / 2)) }
+             : p.key === 'cave' ? { x: cave.x + cave.w / 2, y: S.groundY }
+             : { x: farm.x + farm.w / 2, y: S.groundY - FARM_H };
+    // High enough to clear the crew standing on the thing, and wide enough to be
+    // a bar rather than a speck: it has to be readable from wherever you happen
+    // to be looking, because it is the only thing in the yard that means stop.
+    const x = Math.round(at.x / P) * P - P * 4;
+    const y = Math.round((at.y - P * 11) / P) * P;
+    ctx.fillRect(x, y, P * 8, P * 2);
+  }
 }
 
 // whatever is not dust, lying in the yard where it was dropped or dumped
@@ -382,6 +402,7 @@ export function draw() {
   drawCount();
   drawCore();
   drawFloorMarks();        // shards and the like lying in the yard
+  drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawWorkers();
   drawCursor();
   ctx.restore();

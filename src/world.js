@@ -7,6 +7,7 @@
 
 import {
   P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
+  ROCK_PILE_TO, PILE_GAP,
   PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H, SIDE_PAD,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
@@ -28,14 +29,30 @@ export const rockColAt = x => Math.max(0, Math.min(S.gw - 1, Math.floor((x - roc
 // the rock keeps a clear apron around its foot, so the banks stand off it rather
 // than heaping up its flanks and blurring where the rock ends
 export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() + S.gw * P + ROCK_CLEAR;
-// The yard is the ground the dust is allowed to use: from the mouth of the cave
-// across to the lip of the pit. Everything past either end is somewhere a bank
-// would bury rather than fill -- the shaft, the beds out beyond it, the strip of
-// ground past the pit's far wall -- and dust that got there is dust nobody can
-// pick up. The rock's apron is the hole in the middle of it.
-export const yardLeft = () => cave.x + cave.w;
-export const outsideYard = x => x + P <= yardLeft() || x >= pit.x;
-export const blocked = c => outsideYard(floor.x + c * P) || overApron(floor.x + c * P);
+// Every station piles to its right, into a strip of ground that belongs to it,
+// and each strip stops short of the next station along. Nothing may heap
+// anywhere else, so the ground between them stays bare and every pile is
+// legibly somebody's -- and a pile that fills is that station's problem rather
+// than the whole yard's.
+//
+// They are worked out when the world is laid out and when the rock changes size,
+// not per column: `blocked` is asked about a column thousands of times a frame.
+export function refreshPiles() {
+  S.piles = [
+    { key: 'farm', from: farm.x + farm.w, to: cave.x - PILE_GAP },
+    { key: 'cave', from: cave.x + cave.w, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
+    { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
+  ];
+}
+
+// which pile a spot on the ground belongs to, or null for the bare ground between
+export function pileAt(x) {
+  for (const p of S.piles) if (x + P > p.from && x < p.to) return p;
+  return null;
+}
+
+export const yardLeft = () => (S.piles[0] ? S.piles[0].from : 0);
+export const blocked = c => !pileAt(floor.x + c * P);
 
 // Where something that is *not* dust may not come to rest: down the hole, down
 // the shaft, or under the rock. Everywhere else on the ground will do. A shard
@@ -47,6 +64,9 @@ export const noRest = c => {
   const x = floor.x + c * P;
   return overPitMouth(x) || overApron(x) || overShaft(x);
 };
+
+// which pile a station's own output belongs in
+export const pileOf = key => S.piles.find(p => p.key === key);
 
 // How far past the apron a column is, in cells, or -1 for one inside it.
 export const pastApron = x => {
@@ -63,10 +83,13 @@ export const pastApron = x => {
 // Between them there is as much room as the slope allows.
 export const bankCeiling = c => {
   const x = floor.x + c * P;
-  const d = pastApron(x);
-  if (d < 0) return 0;
-  const toEnd = Math.min((x + P - yardLeft()) / P, (pit.x - (x + P)) / P);
-  return Math.min(d + 1, Math.max(0, toEnd)) * BANK_SLOPE;
+  const p = pileAt(x);
+  if (!p) return 0;
+  // both ends of a pile are cliffs the sand may not lean on: the station behind
+  // it and the bare ground in front of it. So it rises only as it gets away from
+  // them, which is what stops it standing up as a wall against either.
+  const toEnd = Math.min((x + P - p.from) / P, (p.to - (x + P)) / P);
+  return Math.max(0, toEnd) * BANK_SLOPE;
 };
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it
@@ -167,6 +190,7 @@ export function resize(after) {
   S.camY = S.worldH - S.viewH;
   clampCam();
 
+  refreshPiles();                          // and each station's strip of ground
   if (after) after();                      // the sites settle themselves into it
 }
 

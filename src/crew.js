@@ -186,10 +186,10 @@ export function updateWorkers(now, dt) {
       // stretch of the crest to itself, stands on whatever rock is left there and
       // sinks with it as the rock goes; when its stretch is bare it ambles along
       // to the nearest that is not.
-      // The yard is heaped to the brim. The crew stand where they are until it
-      // has been carried away: dust with nowhere to go used to roll into the
-      // pit, which banks it for nothing and leaves the haulers with no job.
-      if (S.yardFull) {
+      // The rock's pile is full. The crew stand where they are until it has
+      // been carried away: dust with nowhere to go used to roll into the pit,
+      // which banks it for nothing and leaves the haulers with no job.
+      if (S.pileFull.rock) {
         w.y = standOn(rockTopY(colAtX(w.x + WORKER / 2)));
         w.lunge *= 0.82;
         w.next = now + minerMs();

@@ -524,6 +524,45 @@ const TESTS = [
     ];
   }],
 
+  // Every station piles to its right, into a strip of ground of its own, and the
+  // strip has a size. A pile that fills stops the station behind it -- that is
+  // the whole of the choice the job rows ask, made visible in the yard.
+  ['each station piles to its right, and stops when its pile is full', async () => {
+    window.__crew(2, 0);
+    window.__clearFloor();
+    await sleep(400);
+    const s = state();
+    const order = s.piles.map(p => p.key).join(' ');
+    // fill the rock's strip by hand rather than waiting eight minutes for it
+    for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
+      const p = state().piles.find(q => q.key === 'rock');
+      window.__pile(p.from + Math.random() * (p.to - p.from), 60);
+      await sleep(40);
+    }
+    const full = state();
+    const rockThen = full.rock;
+    await sleep(2500);
+    const stalled = state();
+    window.__clearFloor();
+    await sleep(1500);
+    const freed = state();
+    const rockFreed = freed.rock;
+    await sleep(2500);
+    const working = state();
+    window.__crew(0, 0);
+    return [
+      ok(order === 'farm cave rock', 'the strips run farm, cave, rock, left to right', order),
+      ok(s.piles.every((p, i) => i === 0 || p.from >= s.piles[i - 1].to),
+         'and none of them runs into the next', JSON.stringify(s.piles)),
+      ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
+      ok(stalled.rock === rockThen, 'and the crew stop working while it is',
+         `${rockThen} -> ${stalled.rock} of rock`),
+      ok(!freed.yardFull, 'clearing it puts them back to work'),
+      ok(working.rock < rockFreed, 'and the rock starts coming off again',
+         `${rockFreed} -> ${working.rock}`)
+    ];
+  }],
+
   ['a worker can reach the bank behind the rock', async () => {
     // no miners, so nothing new lands while we watch, and only one heap on the
     // ground: the one on the far side of the hill
@@ -568,8 +607,10 @@ const TESTS = [
       ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
       ok(s.dustUnderRock === 0, 'none of it comes to rest on or under the rock',
          `${s.dustUnderRock} grains`),
-      ok(s.dustLeftOfRock > 0 && right > 0, 'both banks get some',
-         `${s.dustLeftOfRock} left, ${right} right`),
+      // One pile, on the side the pit is on. Two banks either side meant half
+      // the spoil landed on the far side of the hill from everything else.
+      ok(right > 0 && s.pileCount.rock > 0, "it all goes into the rock's own pile",
+         `${s.pileCount.rock} in the pile, ${right} right of the rock`),
       ok(s.apronClear, 'the ground right beside the rock stays bare',
          `${s.apronDust} grains in the apron`),
       // The apron is a cliff the sand cannot slump over, so without a ceiling on

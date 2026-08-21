@@ -266,10 +266,12 @@ and one that finds itself off the layer — because the gang took the row down a
 back to it. Drillers work the flanks instead, parked at the foot eating a notch sideways in.
 Nobody orbits anything.
 
-Spoil is **aimed**, not scattered. A chip goes off whichever side of the rock it was struck from,
-to a spot on clear ground past the foot, launched on the one arc that gets there: the pop is sized
-to the distance and the sideways speed follows from how long that pop keeps it up. Nothing is
-nudged mid-flight and nothing is shoved off the rock, so it reads as a throw.
+Spoil is **aimed**, not scattered, and it all goes **one way**: to the right, into the strip of
+ground that belongs to the rock, launched on the one arc that gets there. The pop is sized to the
+distance and the sideways speed follows from how long that pop keeps it up. Nothing is nudged
+mid-flight and nothing is shoved off the rock, so it reads as a throw. Two banks either side meant
+half the spoil landed on the far side of the hill from everything else and somebody had to walk
+round it; one pile, on the side the pit is on, is the whole yard flowing one way.
 
 The rock keeps a bare **apron** either side. Spoil may not settle in it, so the two banks stand off
 the rock rather than stacking up its flanks and blurring where the rock ends; a rock that grows
@@ -286,7 +288,7 @@ is the other half of how the wall was built: every chip landed on the slope faci
 the heap grew back up to the foot. A chip lands where it was aimed, or on bare ground, and
 nowhere short of it.
 
-The crew walk the whole ground, passing in front of the rock, so both banks are reachable. Dust the
+The crew walk the whole ground, passing in front of the rock, so every pile is reachable. Dust the
 player cannot reach is dust the player will resent, and there is a test for exactly that.
 
 **Finishing one is worth a moment.** The last pixel of a boulder is the end of a long job, so the
@@ -442,19 +444,37 @@ cells deep, and a full yard sent the rest rolling in rather than piling up mid-a
 they banked the whole yard for free and left the haulers with nothing to do, which is the one
 thing the ground must never do.
 
-**The yard is the ground the dust may use**: from the mouth of the cave across to the lip of the
-pit, with the rock's apron as the hole in the middle of it. Past either end are places a bank
-would bury rather than fill — the shaft, the beds out beyond it, the strip past the pit's far wall
-— and dust that got there is dust nobody can pick up. Both ends are **cliffs the sand may not lean
-on**, the same as the apron: a bank may only rise as it gets away from them, so it tapers to a thin
-scatter at the cave and at the ledge, where it cannot topple in. Throwing dust over the edge is
-still a real tactic — a flick sends it through the air, and anything that crosses the mouth falls in.
+**Every station piles to its right**, into a strip of ground that belongs to it. The world reads
+station, pile, station, pile, all the way along — the farm and its crop, the cave and what comes up
+it, the rock and its spoil — and then the bench, the lab and the hole it all ends up in:
 
-Heaped to the brim the yard holds about **10,100 grains**, which is the slope of the banks and the
-width of the yard, measured rather than picked. A little short of that the **crew down tools** and
-stand where they are until the ground has been carried away. Two rocks' worth of spoil lying about
-and everybody stops, which is the shape of the choice the job rows ask: another body on the rock
-is more dust on the ground, and somebody still has to move it.
+```
+farm | farm pile | cave | cave pile | rock | rock pile | bench  lab | pit
+```
+
+Nothing heaps anywhere else. The ground between the strips stays bare, so every pile is legibly
+somebody's, and a pile that fills is that station's problem rather than the whole yard's. Both ends
+of a strip are **cliffs the sand may not lean on** — the station behind it, the bare ground in front
+— so a pile rises only as it gets away from them and cannot stand up as a wall against either. A
+wider rock is a narrower strip beside it, which is its own quiet pressure.
+
+**A full pile stops the station behind it.** The miners stand where they are, nobody goes down the
+cave for another shard, and the beds stop coming on. A **bar over the station** says so — the one
+mark in the game that means nothing is happening. They start again once a carrier has taken a
+quarter of it away, so a single grain being fetched cannot make them stutter.
+
+That is the whole of the choice the job rows ask, made visible in the yard: another body on the
+rock fills the strip faster, and somebody still has to move it. The rock's strip holds a bit over
+two thousand grains and stops at 1,800, well short of physically full, so a chip is never told
+there is nowhere to put it. A rock is worth more than one pile, so a body on the rock is only worth
+having if somebody is carrying.
+
+**Nothing gets into the pit without being carried or thrown.** That is the rule the ground has to
+keep. It used to leak two ways: a heap against the ledge tipped itself in once it was four cells
+deep, and a full yard sent the rest rolling in rather than piling up mid-air. Between them they
+banked the whole yard for free and left the haulers with nothing to do. Throwing dust over the edge
+is still a real tactic — a flick sends it through the air, and anything that crosses the mouth
+falls in.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

@@ -10,7 +10,7 @@ import {
 } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
-import { blocked, rockLeft, rockEdge } from './world.js';
+import { blocked, rockLeft, rockEdge, refreshPiles } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount } from './upgrades.js';
 
@@ -145,6 +145,7 @@ export function makeBoulder(fromSky = false) {
   // the air.
   S.rockFall = fromSky ? ROCK_DROP : 0;
   S.rockFallV = 0;
+  refreshPiles();            // a wider rock is a narrower pile beside it
   placeRock();
   refreshRockTops();
   if (!fromSky) clearApron();

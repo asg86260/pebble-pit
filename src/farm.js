@@ -9,9 +9,9 @@
 import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL }
   from './config.js';
 import { S, farm } from './state.js';
-import { standOn } from './world.js';
+import { standOn, pileOf } from './world.js';
 import { mult } from './lab.js';
-import { spawnChip } from './dust.js';
+import { spawnChip, aim } from './dust.js';
 
 // how long one bed takes to come on, at this level of tending
 export const tendMs = (lvl = S.tendLevel) =>
@@ -45,7 +45,11 @@ function pickBed(w) {
 // carries it to the pit.
 function cut(i, x) {
   S.beds[i] = 0;
-  spawnChip(x, S.groundY - FARM_H, (Math.random() - 0.5) * 0.8, -1.4, SPORE_CELL);
+  const p = pileOf('farm');
+  const y = S.groundY - FARM_H;
+  const land = p ? p.from + P * 2 + Math.random() * Math.max(P, (p.to - p.from) * 0.5) : x + P * 6;
+  const v = aim(x, y, land, P);
+  spawnChip(x, y, v.vx, v.vy, SPORE_CELL, land);
 }
 
 // one farmhand, one frame
@@ -62,7 +66,9 @@ export function stepFarmhand(w, now, dt) {
     return;
   }
 
-  // standing over it, bringing it on
+  // standing over it, bringing it on -- unless the last crop is still lying in
+  // the pile behind, in which case there is no sense cutting another
+  if (S.pileFull.farm) return;
   S.beds[w.bed] = Math.min(1, S.beds[w.bed] + dt / tendMs());
   if (S.beds[w.bed] >= 1) {
     cut(w.bed, bedX(w.bed));

@@ -16,11 +16,17 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // Every site stands on the one ground line, measured out from the rock. The
 // world runs away to the left as sites are unlocked, so walking further out is
 // the progression. The bench, the lab and the pit sit to the right.
-export const TO_CAVE = -900;     // rock centre to the mouth of the cave
-export const TO_FARM = -1650;    // rock centre to the near edge of the farm
-export const TO_BENCH = 420;     // rock centre to the bench
-export const TO_LAB = 648;       // rock centre to the lab
-export const TO_LEDGE = 900;     // rock centre to the lip of the pit
+// Every station piles to its right, into a strip of ground of its own, and each
+// strip has a size. So the world reads right to left as station, pile, station,
+// pile: the farm, its beds' crop; the cave, what comes up it; the rock, its
+// spoil; and then the bench, the lab and the hole everything ends up in.
+export const TO_FARM = -1500;    // rock centre to the near edge of the farm
+export const TO_CAVE = -828;     // rock centre to the mouth of the cave
+export const TO_BENCH = 780;     // rock centre to the bench
+export const TO_LAB = 960;       // rock centre to the lab
+export const TO_LEDGE = 1140;    // rock centre to the lip of the pit
+export const ROCK_PILE_TO = 756; // and how far right the rock's own spoil may reach
+export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
 export const GROUND_LEFT = 2400; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
@@ -85,8 +91,13 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // so a chip is never told there is nowhere to put it. Two rocks' worth of spoil
 // on the ground and everybody stops: another body on the rock is more dust
 // lying about, and somebody still has to move it.
-export const GROUND_FULL = 9000;    // grains lying about before the crew stop
-export const GROUND_CLEAR = 7500;   // and how far it has to come down before they start again
+// What a pile may hold before the station behind it stops. The rock's strip
+// holds a bit over two thousand grains at this slope, so it stops well short of
+// physically full -- a chip is never told there is nowhere to put it, and a rock
+// is more than one pile's worth, so a body on the rock is only worth having if
+// somebody is carrying. The sites deal in ones, so theirs are counted in ones.
+export const PILE_LIMIT = { rock: 1800, cave: 12, farm: 12 };
+export const PILE_CLEAR = 0.75;     // and how far down it has to come to start again
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free

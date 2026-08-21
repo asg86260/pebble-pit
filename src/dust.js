@@ -6,7 +6,7 @@
 import { P, GRAV, CORE_SIZE } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain, surfaceY, colOf } from './grid.js';
-import { blocked, overPitMouth, rockEdge } from './world.js';
+import { blocked, overPitMouth, rockEdge, pileOf } from './world.js';
 import { bankDust } from './pit.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
@@ -25,9 +25,15 @@ export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
 // nudged mid-flight and nothing has to be shoved off the rock, so the spray
 // reads as a throw rather than a scatter. Where it lands it heaps up on its own,
 // to whatever height the sand finds -- there is no ceiling on a bank.
+// Everything comes off the rock to the *right*, into the strip of ground that
+// belongs to it. Two banks either side meant half the spoil landed on the far
+// side of the hill from everything else and somebody had to walk round it; one
+// pile, on the side the pit is on, is the whole yard flowing one way.
 export function spawnSpoil(px, py, shade) {
-  const side = px < S.cx ? -1 : 1;                     // off the nearer side of the rock
-  const land = rockEdge(side) + side * (P * 6 + Math.abs(bell()) * P * 12);
+  const p = pileOf('rock');
+  const near = p ? p.from : rockEdge(1);
+  const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
+  const land = Math.min(far, near + P * 2 + Math.abs(bell()) * (far - near) * 0.45);
   const v = aim(px, py, land, P);
   spawnChip(px, py, v.vx, v.vy, shade, land);
 }

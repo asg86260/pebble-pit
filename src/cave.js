@@ -10,9 +10,9 @@
 
 import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK, SHARD_CELL } from './config.js';
 import { S, cave } from './state.js';
-import { standOn } from './world.js';
+import { standOn, pileOf } from './world.js';
 import { mult } from './lab.js';
-import { spawnChip } from './dust.js';
+import { spawnChip, aim } from './dust.js';
 
 // how long a trip takes, at this pace
 export const caveMs = (lvl = S.cavePaceLevel) =>
@@ -38,7 +38,10 @@ export function newSpelunker() {
 // like anything else. It is not counted there: it is counted when it goes in the
 // pit, which means somebody has to carry it.
 function found(x, y) {
-  spawnChip(x, y, (Math.random() - 0.5) * 0.8, -1.8, SHARD_CELL);
+  const p = pileOf('cave');
+  const land = p ? p.from + P * 2 + Math.random() * Math.max(P, (p.to - p.from) * 0.5) : x + P * 6;
+  const v = aim(x, y, land, P);
+  spawnChip(x, y, v.vx, v.vy, SHARD_CELL, land);
 }
 
 // one spelunker, one frame
@@ -49,7 +52,8 @@ export function stepSpelunker(w, now) {
   if (w.goal === 'to') {
     const d = mouth - w.x;
     w.x += Math.sign(d) * Math.min(CAVE_WALK, Math.abs(d));
-    if (Math.abs(d) < 1) { w.goal = 'in'; w.until = now + caveMs(); }
+    // nobody goes down for another one while the last lot is still lying about
+    if (Math.abs(d) < 1 && !S.pileFull.cave) { w.goal = 'in'; w.until = now + caveMs(); }
     return;
   }
 

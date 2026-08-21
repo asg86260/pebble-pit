@@ -32,7 +32,14 @@ export const S = {
   rockTops: [],           // topmost rock cell per column, for the crew to stand on
   tick: 0,                // frames, for the things not worth doing in all of them
   floorGrains: 0,         // dust lying about the yard, counted now and then
-  yardFull: false,        // and whether there is room for any more of it
+  floorMarks: [],         // where the things that are not dust have come to rest
+  // Every station piles to its right, into a strip of ground of its own. The
+  // strips are worked out when the world is laid out and when the rock changes
+  // size; what is lying in each is counted twice a second, with the rest of the
+  // survey of the ground.
+  piles: [],              // each station's strip: { key, from, to }
+  pileCount: {},          // what is lying in each of them
+  pileFull: {},           // and which of them have stopped their station
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
