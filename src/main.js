@@ -183,6 +183,8 @@ window.__meteor = (open = true) => {
 // Put a body where you want it. Most of what a check waits for is a worker
 // walking the length of the world, which proves nothing the walking tests do
 // not already prove and costs half a minute a time.
+// look somewhere, for a screenshot or a check that wants to see the far end
+window.__look = x => { S.camX = x; S.camTo = null; clampCam(); S.dirty = true; return Math.round(S.camX); };
 window.__place = (type, x) => {
   const w = S.workers.find(o => o.type === type);
   if (w) { w.x = x; w.claim = -1; w.goal = 'seek'; }

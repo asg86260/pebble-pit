@@ -1,7 +1,13 @@
 // Every number that decides how the game looks and plays, and nothing that
 // changes while it runs. If you are tuning the game, it is all in here.
 
-export const P = 6;              // pixel size
+export const P = 6;              // pixel size, in world units
+// How big a cell is drawn, in screen pixels. This is the whole of the zoom: the
+// picture never scales to fit a window, so this is the size the game is, and
+// turning it down shows more yard at once rather than rearranging anything.
+// A cell still has to be a whole number of *device* pixels, so the screen's own
+// ratio is rounded against this rather than against P.
+export const CELL = 5;
 export const TARGET = 1000000;   // dust in the hole: the whole point
 // The place is built once and never moves. The pit floor sits on the bottom of
 // the viewport, the ground line a fixed height above it, and the rock, the bench

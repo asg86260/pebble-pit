@@ -662,13 +662,15 @@ const TESTS = [
   // not the whole works at once.
   ['a small window shows less, not smaller', async () => {
     const checks = [];
+    const zoomWas = state().zoom;               // whatever the game is drawn at
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
                                      [412, 915, 2.6, 'android'], [768, 1024, 2, 'tablet']]) {
       await asScreen(w, h, dpr, () => {
         const s = state();
         const rockLeft = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
         const rockRight = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
-        checks.push(ok(s.zoom === 1, `${name} draws at full size`, `zoom ${s.zoom}`));
+        checks.push(ok(Math.abs(s.zoom - zoomWas) < 1e-9,
+          `${name} draws at the same size as everywhere else`, `zoom ${s.zoom}`));
         checks.push(ok(rockRight > 0 && rockLeft < w, `${name} is looking at the rock`,
           `rock ${Math.round(rockLeft)}..${Math.round(rockRight)} of ${w}`));
       });

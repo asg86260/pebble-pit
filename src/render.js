@@ -34,7 +34,7 @@ export function drawTriangle(x, y, r, hollow) {
   if (hollow) {
     ctx.fillStyle = '#fff';
     ctx.fill();
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.max(1, r / 3);
     ctx.strokeStyle = '#000';
     ctx.stroke();
   } else {
@@ -102,11 +102,15 @@ export function drawFarm() {
 
 // The one mark for each kind of thing, wherever it is being drawn: lying on the
 // ground waiting to be fetched, or rising off the worker that just got it.
-function drawFind(v, x, y) {
-  if (v === CORE_CELL) drawCircle(x, y, P);
-  else if (v === SHARD_CELL) drawTriangle(x, y, P, false);
-  else if (v === SPORE_CELL) drawDiamond(x, y, P);
-  else drawSpark(x, y, P);
+// One grain, one cell -- for these as much as for dust. They were drawn at a
+// radius of a whole cell, which makes a mark two cells across, so two of them
+// side by side overlapped and a column of them ran into each other. A mark is
+// the size of the thing it stands for, and the thing it stands for is one grain.
+function drawFind(v, x, y, r = P / 2) {
+  if (v === CORE_CELL) drawCircle(x, y, r);
+  else if (v === SHARD_CELL) drawTriangle(x, y, r, false);
+  else if (v === SPORE_CELL) drawDiamond(x, y, r);
+  else drawSpark(x, y, r);
 }
 
 // A station whose pile is full has stopped, and says so: a bar over it, which is
@@ -199,7 +203,7 @@ export function drawCircle(cxp, cyp, r) {
   ctx.arc(cxp, cyp, r, 0, Math.PI * 2);
   ctx.fillStyle = '#fff';
   ctx.fill();
-  ctx.lineWidth = 2;
+  ctx.lineWidth = Math.max(1, r / 3);
   ctx.strokeStyle = '#000';
   ctx.stroke();
   ctx.fillStyle = '#000';
@@ -458,7 +462,7 @@ export function drawPit() {
 // given up. The pile shows exactly what you hold, so spending takes them back
 // out of it.
 export function drawPitCores() {
-  const rad = P * 1.2, pad = rad + 2;
+  const rad = pit.p / 2, pad = rad;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
       const v = at(pit, c, r);
@@ -466,8 +470,7 @@ export function drawPitCores() {
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      if (v === CORE_CELL) drawCircle(cx, cy, rad);
-      else drawFind(v, cx, cy);
+      drawFind(v, cx, cy, rad);
     }
   }
   ctx.fillStyle = '#000';

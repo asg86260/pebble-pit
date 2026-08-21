@@ -6,7 +6,7 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
+  P, CELL, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP,
   PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
@@ -122,7 +122,7 @@ export function resize(after) {
   // out grey. It is the same rule as every world position being a whole cell.
   const want = Math.max(1, devicePixelRatio || 1);
   const fit = Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H)));
-  S.dpr = Math.max(1, Math.round(P * fit)) / P;
+  S.dpr = Math.max(1, Math.round(CELL * fit)) / CELL;
 
   canvas.style.position = 'fixed';
   canvas.style.left = '0';
@@ -139,9 +139,9 @@ export function resize(after) {
   // thing that rearranges itself around your window. The game asks for about
   // 830px of height to show the sky, the ground and the whole depth of the pit;
   // anything shorter loses sky off the top, which is the part with nothing in it.
-  S.zoom = 1;
-  S.viewW = S.W;
-  S.viewH = S.H;
+  S.zoom = CELL / P;
+  S.viewW = S.W / S.zoom;
+  S.viewH = S.H / S.zoom;
 
   // fixed places, laid out once and never moved
   S.groundY = SKY;

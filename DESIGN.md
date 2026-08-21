@@ -369,7 +369,10 @@ that actually matters. The lab is the only place a multiplier lives.)*
 ## The counter
 
 Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
-a shard a triangle, a spore a diamond, a spark a cross. They stack over the pit mouth, and each
+a shard a triangle, a spore a diamond, a spark a cross. Out in the world each of them is **one
+grain in one cell**, the same size as a grain of dust, because that is what it is: they were drawn
+at a radius of a whole cell, which makes a mark two cells across, and two of them side by side
+overlapped. They stack over the pit mouth, and each
 one only appears once you have seen one.
 
 The dust count runs to each new value on an out-cubic ease — longer for a bigger jump, so a
@@ -391,7 +394,9 @@ and the ground line a fixed height above it, so the ground never moves. The pit 
 world pixels across and 276 deep, and every site keeps its distance from the rock. A bigger
 window is only more sky above and more ground either side.
 
-**The picture never scales.** A small window shows *less* of the yard, not a smaller one: a cell is
+**The picture never scales.** `CELL` in `config.js` is the whole of the zoom — the screen pixels a
+cell is drawn at, and therefore the size the game is. Turning it down shows more yard at once
+rather than rearranging anything. A small window shows *less* of the yard, not a smaller one: a cell is
 a cell whatever you are looking at this on, and the works is a fixed thing you scroll along rather
 than a thing that rearranges itself around your window. The game asks for about **840px of height**
 — enough for the sky the rock and the meteor stand in, the ground, and the whole depth of the pit
