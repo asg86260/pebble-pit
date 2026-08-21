@@ -2,8 +2,11 @@ html, body {
   margin: 0; height: 100%;
   background: #fff; color: #000;
   overflow: hidden;
+  /* on a phone: no rubber-banding or pull-to-refresh behind the game */
+  overscroll-behavior: none;
   font: 12px/1.4 ui-monospace, "Courier New", monospace;
   -webkit-user-select: none; user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 /* the canvas is the window, whatever happens to the script */
 canvas {
@@ -15,7 +18,9 @@ canvas {
   display: block;
   background: #fff;
   cursor: crosshair;
-  touch-action: manipulation;
+  /* every touch on the canvas is the game's: a drag sweeps dust, and the browser
+     does not get to pan or pinch it away */
+  touch-action: none;
 }
 /* the board that opens at the workbench */
 #board {
