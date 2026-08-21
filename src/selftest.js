@@ -515,6 +515,33 @@ const TESTS = [
     ];
   }],
 
+  // Down is bigger. A roll asked for a *higher* place beside it for a while,
+  // which never exists once a thing is resting, so nothing ever rolled and a run
+  // of them dropped in one spot went straight up into the sky.
+  ['a heap of finds heaps, rather than stacking', async () => {
+    window.__crew(0, 0);
+    window.__clearFloor();
+    run(0.5);
+    const p = state().piles.find(q => q.key === 'cave');
+    for (let i = 0; i < 24; i++) { window.__toss('shard', p.from + 120); run(0.3); }
+    run(10);
+    // only the ones dropped here: finds already banked in the pit are still
+    // lying in it, and they are none of this check's business
+    const at = state().findAll.map(t => t.split(',').map(Number))
+                              .filter(a => a[0] > p.from - 40 && a[0] < p.to + 40);
+    const xs = at.map(a => a[0]), tall = Math.max(...at.map(a => a[1]));
+    const spread = Math.max(...xs) - Math.min(...xs);
+    window.__clearFloor();
+    return [
+      ok(at.length === 24, 'all two dozen are lying there', `${at.length}`),
+      ok(spread > 60, 'they spread out along the ground', `${spread}px across`),
+      ok(tall <= 24 * 12 / 3, 'rather than going up in a column',
+         `${tall / 12} bodies at the peak`),
+      ok(at.every(a => a[1] % 12 === 0), 'and each sits squarely on what is under it',
+         JSON.stringify(at.slice(0, 6)))
+    ];
+  }],
+
   ['a worker can reach dust at the far end of a pile', async () => {
     window.__crew(0, 0);                        // lay it down before anyone can take it
     window.__clearFloor();

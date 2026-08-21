@@ -80,11 +80,14 @@ function penned(f, x) {
 // turns a run of them dropped in one spot from a needle into a heap, and it is
 // what makes a heap slump when somebody takes one out of the bottom of it.
 function wantsToRoll(f) {
-  const l = penned(f, f.x - FIND_SIZE) ? restAt(f, f.x - FIND_SIZE) : Infinity;
-  const r = penned(f, f.x + FIND_SIZE) ? restAt(f, f.x + FIND_SIZE) : Infinity;
-  const lower = Math.min(l, r);
-  if (lower >= f.y - FIND_SIZE / 2) return 0;      // nothing worth rolling into
-  return l < r ? -1 : 1;
+  // Down is *bigger*: a lower place beside it is one with a larger y. Getting
+  // that backwards asked for a higher place instead, which never exists once
+  // something is resting, so nothing ever rolled and they stacked into the sky.
+  const l = penned(f, f.x - FIND_SIZE) ? restAt(f, f.x - FIND_SIZE) : -Infinity;
+  const r = penned(f, f.x + FIND_SIZE) ? restAt(f, f.x + FIND_SIZE) : -Infinity;
+  const lower = Math.max(l, r);
+  if (lower <= f.y + FIND_SIZE / 2) return 0;      // nothing worth rolling into
+  return l > r ? -1 : 1;
 }
 
 export function stepFinds() {

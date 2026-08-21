@@ -372,7 +372,9 @@ Every currency is drawn as a mark, never described in words: dust a filled squar
 a shard a triangle, a spore a hexagon, a spark a cross. A shard, a spore and a spark are **not grains of dust**. Each has a body two cells on a side, with
 real falling and real stacking: they come to rest on the ground, on the dust, on the pile in the
 pit or on each other, and they **roll off** anything they land on top of if there is a lower place
-beside them — the same rule the sand keeps, at the size of a body rather than a grain. That is what
+beside them — the same rule the sand keeps, at the size of a body rather than a grain. Two dozen
+dropped on one spot come out as a mound four high with sloped shoulders, which is what a pile of
+anything looks like. That is what
 turns a run of them dropped in one spot from a needle into a heap. They stay in the pile they were
 thrown into: a pile is a pile, and it has to be countable against its own limit.
 
