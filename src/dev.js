@@ -68,14 +68,12 @@ line('give', box => {
   button(box, 'core', () => window.__grant({ cores: 5 }));
   button(box, 'shard', () => window.__grant({ shards: 5 }));
   button(box, 'spore', () => window.__grant({ spores: 5 }));
-  button(box, 'spark', () => window.__grant({ sparks: 5 }));
 });
 
 line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
   button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
   button(box, 'lab', () => window.__lab(!S.labOpen));
-  button(box, 'sky', () => window.__meteor(!S.meteorOpen));
 });
 
 line('boulder', box => {

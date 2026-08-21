@@ -86,17 +86,10 @@ export const S = {
   farmOpen: false,
   beds: [],               // how far along each bed is, 0..1
 
-  // --- the meteor ---
-  sparks: 0,
-  seenSpark: false,
-  meteorOpen: false,
-  meteorAt: 0,            // when the next spark comes loose
-  falling: [],            // sparks on their way down
-
   // --- the lab ---
   labOpen: false,
   labBoardOpen: false,
-  mult: { swing: 0, haul: 0, quarry: 0, tend: 0, works: 0 },
+  mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
 
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -139,4 +132,4 @@ export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
-export const meteor = { x: 0, y: 0, r: 0 };
+export const sky = { x: 0, y: 0, r: 0 };   // the thing hanging out past the farm

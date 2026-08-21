@@ -924,10 +924,13 @@ const TESTS = [
         await sleep(60);
         // the window is not really this size, so read what placeBoard wrote
         // rather than where the browser drew it
-        const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);
+        // it is placed with a transform now, so that is where its corner is
+        const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform) || [0, 0, 0];
+        const left = +m[1], top = +m[2];
         // the board's own size comes from CSS, which follows the real window and
         // not the pretend one, so only require it to be tucked in where it fits
         const bw = el.offsetWidth, bh = el.offsetHeight;
+        const bottom = h - top - bh;
         const room = bw <= w && bh <= h;
         checks.push(ok(left >= 0 && bottom >= 0 &&
                        (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
@@ -1186,10 +1189,12 @@ const TESTS = [
     let ripe = false;
     for (let i = 0; i < 3000 && !ripe; i++) {
       run(1 / 60);
-      ripe = state().beds.some(b => b >= 1);
+      // a bed with a spore on it, not merely one left standing ripe by an
+      // earlier check: the tone is what says this one just grew
+      ripe = state().bedTone.some(t => t > 0);
     }
     const showing = state();
-    const i = showing.beds.findIndex(b => b >= 1);
+    const i = showing.bedTone.findIndex(t => t > 0);
     const tone = showing.bedTone[i];
     const spores = showing.finds.filter(f => f === 'spore').length;
     run(0.3);
@@ -1280,8 +1285,11 @@ const TESTS = [
         document.getElementById('board').hidden = true;
         window.__placeBoard();
         await sleep(60);
-        const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);
+        // it is placed with a transform, so that is where its corner is
+        const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform) || [0, 0, 0];
+        const left = +m[1], top = +m[2];
         const bw = el.offsetWidth, bh = el.offsetHeight;
+        const bottom = h - top - bh;
         const room = bw <= w && bh <= h;
         checks.push(ok(left >= 0 && bottom >= 0 &&
                        (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
@@ -1295,56 +1303,6 @@ const TESTS = [
 
   // A spark comes down and lands in the yard as a grain, like everything else
   // the sites give up. It is counted when it reaches the pit, not before.
-  ['the meteor sheds sparks, and they are carried in', async () => {
-    window.__crew(0, 0);
-    window.__meteor(true);
-    const start = state();
-    let sawFalling = false;
-    const lay = runUntil(() => {
-      sawFalling = sawFalling || state().falling > 0;
-      return state().finds.includes('spark');
-    }, 40);
-    const waiting = state();
-
-    window.__crew(0, 2);                     // somebody to carry it in
-    window.__place('hauler', waiting.rockX);
-    quickCrew();
-    const banked = runUntil(() => state().sparks > start.sparks, 90);
-    const after = state();
-    window.__crew(0, 0);
-    return [
-      ok(after.meteorOpen, 'the meteor is up there'),
-      ok(sawFalling, 'a spark comes loose and falls'),
-      ok(lay, 'and lands in the yard with a body of its own',
-         JSON.stringify(waiting.finds)),
-      ok(waiting.sparks === start.sparks, 'not counted where it lies',
-         `${start.sparks} -> ${waiting.sparks}`),
-      ok(banked, 'a worker carries it to the pit, and that is what counts it',
-         `${start.sparks} -> ${after.sparks}`),
-      ok(after.seenSpark, 'which is worth showing on the counter')
-    ];
-  }],
-
-  // The picture does not scale to fit, so the sky is only as tall as the window
-  // leaves it. These are windows at or above the height the game asks for; a
-  // shorter one loses sky off the top, and eventually the meteor with it.
-  ['the meteor hangs clear of the rock and stays on screen', async () => {
-    const checks = [];
-    for (const [w, h, dpr, name] of [[2560, 1300, 1, 'big desktop'], [1440, 900, 2, 'laptop'],
-                                     [1280, 1000, 1, 'narrow window'], [900, 840, 2, 'the minimum']]) {
-      await asScreen(w, h, dpr, () => {
-        const s = state();
-        const top = (s.meteorY - 54 - s.camY) * s.zoom;
-        checks.push(ok(top >= 0 && top < h, `${name} keeps the meteor in the window`,
-          `top at ${Math.round(top)} of ${h}`));
-        checks.push(ok(s.meteorY + 54 < s.groundY - s.rockH,
-          `${name} keeps it above the rock`,
-          `meteor bottom ${Math.round(s.meteorY + 54)}, rock top ${Math.round(s.groundY - s.rockH)}`));
-      });
-    }
-    return checks;
-  }],
-
   ['rocks stop growing, because they never stop coming', async () => {
     window.__jump(40);
     await sleep(200);
@@ -1389,7 +1347,7 @@ const TESTS = [
     window.__grant({ cores: 4 });
     await sleep(150);
     const withCore = { quarry: has('unlockquarry'), farm: has('unlockfarm'),
-                       lab: has('unlocklab'), meteor: has('unlockmeteor') };
+                       lab: has('unlocklab') };
 
     window.__crew(1, 1, 1);                  // the quarry open
     await sleep(150);
@@ -1397,22 +1355,20 @@ const TESTS = [
 
     window.__grant({ shards: 3 });
     await sleep(150);
-    const withShard = { lab: has('unlocklab'), meteor: has('unlockmeteor') };
+    const withShard = { lab: has('unlocklab') };
 
     window.__lab(true);
     await sleep(150);
-    const withLab = { meteor: has('unlockmeteor') };
 
     window.__crew(0, 0);
     return [
       ok(!fresh.includes('pick') && !fresh.includes('unlockquarry'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withCore.quarry && !withCore.farm && !withCore.lab && !withCore.meteor,
+      ok(withCore.quarry && !withCore.farm && !withCore.lab,
          'the first core offers the quarry, and only the quarry',
          JSON.stringify(withCore)),
       ok(withCave.farm && !withCave.lab, 'opening the quarry offers the farm'),
-      ok(withShard.lab && !withShard.meteor, 'a shard in hand offers the lab'),
-      ok(withLab.meteor, 'and the lab offers the sky')
+      ok(withShard.lab, 'a shard in hand offers the lab')
     ];
   }],
 

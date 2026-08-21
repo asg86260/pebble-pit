@@ -29,7 +29,6 @@ the **left** as you unlock things, so walking further out *is* the tech tree.
    farm        cave        rock      [bench] [lab]        pit
     ◇            △          ▲▲▲                            ▣
   ──────────────────────────────────────────────────────────────
-                             ☄  the meteor hangs above, later
 ```
 
 You start with the **rock**, the **bench** and the **pit** and nothing else. Ground to the left
@@ -40,24 +39,20 @@ is empty until a site is unlocked there.
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
 | **quarry** — an open cut; crew work its floor where you can see them | shard ◈ | cores |
 | **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
-| **meteor** — hangs in the sky over the yard | spark ✚ | late, after the lab |
 | **bench** | spends dust and cores | — |
 | **lab** | spends shard and spore on multipliers, and shows the stats page | cores |
 | **pit** | holds it all | — |
 
-The rock and the meteor are deliberately different objects. The rock is a **hill**: flat on the
-ground, irregular on top, worked from above by a crew standing on it. The meteor is a **circle
-hanging in the sky** that sheds a spark on its own and can be knocked once it is charged. They
-share no art, no animation and no verb.
+The rock is a **hill**: flat on the ground, irregular on top, worked from above by a crew
+standing on it.
 
 All the art is flat shapes: no textures, no gradients. It is a black-and-white game and mostly
 stays one — **the ground is always grey**, because grey is how deep the rock was and that is the
 only thing it is allowed to mean.
 
 **Colour arrives slowly, and only where it means something.** The first of it is what the sites
-give up. A shard, a spore and a spark never came off the rock, so a colour can say something about
-them that shade cannot: the cave is a cold blue, the farm is green because it grew, the sky is an
-ember. Each grain carries **its own tone** out of four, so a heap of shards speckles the way a heap
+give up. A shard and a spore never came off the rock, so a colour can say something about
+them that shade cannot: the cave is a cold blue, the farm is green because it grew, and that is the whole palette for now. Each grain carries **its own tone** out of four, so a heap of shards speckles the way a heap
 of dust speckles.
 
 That also settles how they are drawn. Out in the yard they are solid cells painted by the same pass
@@ -82,7 +77,6 @@ wherever it came from, and that rule stays. Growth comes from doing the same wor
 | stronger backs | shard ◈ | worker pace and scooping |
 | deeper shafts | spore ◇ | cave trips |
 | richer beds | spore ◇ | tending |
-| the whole works | spark ✚ | all four of the above, on top |
 
 Four ladders and an apex, and no more. Five currencies with a wall of percentages behind them is
 where cozy turns into a spreadsheet.
@@ -104,8 +98,7 @@ not a job you hire into "+D+" it is what the ones you have not put anywhere are 
 | workers | ■ 60, then 81, 109... | every body after that |
 | on the rock / down the cave / at the beds | free, both ways | where they work |
 
-Sites are still bought with cores "+D+" the cave at ◯ 3, the farm at ◯ 5, the lab at ◯ 7, the meteor at
-◯ 9 "+D+" but a site now buys the **place** and nobody in it. Who works it is the same question as who
+Sites are still bought with cores "+D+" the cave at ◯ 3, the farm at ◯ 5 and the lab at ◯ 7 "+D+" but a site now buys the **place** and nobody in it. Who works it is the same question as who
 works the rock, asked again.
 
 That is the whole trade: a body on the rock is a body not carrying, and the dust it knocks loose
@@ -125,10 +118,9 @@ decision rather than a free tap.
 | | Mark | Source | Spends on |
 |---|---|---|---|
 | **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
-| **Core** | ring | one per rock finished | places: the cave, the farm, the lab, the meteor, and the pick |
+| **Core** | ring | one per rock finished | places: the quarry, the farm, the lab, and the picks |
 | **Shard** | triangle | a spelunker's trip | lab: swing and haul pace |
 | **Spore** | hexagon | a bed cut | lab: cave and tending pace |
-| **Spark** | cross | the meteor sheds one | lab: pace on everything at once |
 
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
 and the pile is the dust rather than a picture of it.
@@ -172,7 +164,6 @@ A core is a rock, so this ladder is really "how many rocks until everything is o
 | open the cave | ◯ 3 | the shaft, to put workers down |
 | break the ground | ◯ 5 | the beds, to put workers at |
 | build the lab | ◯ 7 | multipliers and the books |
-| call it down | ◯ 9 | the meteor |
 | pick | ◯ 2, then 3, 4... | one more pixel a swing, for you |
 | miner bite | ◯ 3, then 4, 5... | one more pixel a swing, for every miner |
 
@@ -214,8 +205,7 @@ It says what it has without being opened, in one mark above the slab:
 A flag outranks a dot, because one more row under a heading you have already read is not news and
 a new group is. Opening the board reads every heading on it, and the flag comes down.
 
-The board is grouped by where the work is — you, the crew, the rock, the cave, the farm, the lab,
-the sky — with the headcount beside each heading. Each place that can be worked carries a **job
+The board is grouped by where the work is — you, the crew, the rock, the cave, the farm and the lab — with the headcount beside each heading. Each place that can be worked carries a **job
 row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board
 that spends nothing, and it is the only one you can run backwards. Every row is the same five columns, so the numbers line up down the page and can be
 scanned rather than read: name, current, arrow, next, cost. Costs and units carry the marks the game
@@ -377,13 +367,15 @@ Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything 
 player to come back tomorrow. No score, no summary screen, no percentage-of-a-percentage.
 
 *(An earlier version of this list said "a third currency". There are five now
-— dust, cores, shards, spores, sparks — and each has exactly one job, which is the rule
+— dust, cores, shards, spores — and each has exactly one job, which is the rule
 that actually matters. The lab is the only place a multiplier lives.)*
 
 ## The counter
 
 Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
-a shard a triangle, a spore a hexagon, a spark a cross. A shard, a spore and a spark **are grains of dust**, as far as the ground is concerned. They fall,
+a shard a triangle, a spore a hexagon.
+
+A shard and a spore **are grains of dust**, as far as the ground is concerned. They fall,
 heap, slump, are swept up, are carried and are tipped in by exactly the same code — the same grid,
 the same repose, the same ceiling, the same pile limits. What differs is the mark drawn on the cell
 and what it is worth when it reaches the pit. There is no second implementation of "a thing in a
@@ -428,7 +420,7 @@ cell is drawn at, and therefore the size the game is. Turning it down shows more
 rather than rearranging anything. A small window shows *less* of the yard, not a smaller one: a cell is
 a cell whatever you are looking at this on, and the works is a fixed thing you scroll along rather
 than a thing that rearranges itself around your window. The game asks for about **840px of height**
-— enough for the sky the rock and the meteor stand in, the ground, and the whole depth of the pit
+— enough for the sky the rock stands in, the ground, and the whole depth of the pit
 — and a shorter window loses sky off the top, which is the part with nothing in it. This is not a
 responsive layout and does not want to be one. The **counter is the exception**: it is read rather than looked at, so it is drawn in screen pixels
 and stays the size it is however far the yard has been scaled down. Everything else is furniture

@@ -4,9 +4,9 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+import { P, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, meteor } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
@@ -16,7 +16,6 @@ import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
 import { underground } from './quarry.js';
 import { bedX, bedTop } from './farm.js';
-import { charge } from './meteor.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
 import { now } from './clock.js';
@@ -35,7 +34,7 @@ export function drawTriangle(x, y, r, hollow) {
   if (hollow) {
     ctx.fillStyle = '#fff';
     ctx.fill();
-    ctx.lineWidth = Math.max(1, r / 3);
+    ctx.lineWidth = Math.max(1, r / 6);
     ctx.strokeStyle = '#000';
     ctx.stroke();
   } else {
@@ -175,6 +174,21 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
   ctx.fillStyle = '#000';
 }
 
+// The thing in the sky: a plain black circle a long way out past the farm, with
+// a ring around it. It does nothing at all -- it is the far end of the world,
+// and something to have walked towards.
+export function drawSky() {
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(sky.x, sky.y, sky.r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sky.x, sky.y, sky.r + P * 2, 0, Math.PI * 2);
+  ctx.stroke();
+}
+
 // A station whose pile is full has stopped, and says so: a bar over it, which is
 // the one mark in the game that means nothing is happening. It sits above the
 // station rather than above the pile, because the station is the thing that has
@@ -188,8 +202,10 @@ export function drawPileMarks() {
     // sits low in its own outline, so the mark hangs below the middle of it.
     drawTriangle(at.x, at.y, P * 4, true);
     ctx.fillStyle = '#000';
-    ctx.fillRect(at.x - P / 2, at.y - P, P, P * 2);
-    ctx.fillRect(at.x - P / 2, at.y + P * 2, P, P);
+    // the mark sits inside the outline rather than on it: a triangle's base is
+    // its lowest edge, and a dot resting on that reads as a smudge
+    ctx.fillRect(at.x - P / 2, at.y - P, P, P * 1.6);
+    ctx.fillRect(at.x - P / 2, at.y + P * 1.4, P, P);
   }
 }
 
@@ -220,36 +236,7 @@ export function overPileMark(key, mx, my) {
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
 // else that stands on this ground.
-// a spark: a four-armed cross, the mark that means the meteor
-export function drawSpark(x, y, r) {
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x - r / 3, y - r, r * 2 / 3, r * 2);
-  ctx.fillRect(x - r, y - r / 3, r * 2, r * 2 / 3);
-}
 
-// The meteor: a plain black circle hanging in the sky, with a ring round it that
-// closes as it charges, so you can see one is due without a bar or a number.
-export function drawMeteor() {
-  if (!S.meteorOpen) return;
-  const { x, y, r } = meteor;
-
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  const c = charge(now());
-  if (c > 0) {
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(x, y, r + 8, -Math.PI / 2, -Math.PI / 2 + c * Math.PI * 2);
-    ctx.stroke();
-  }
-
-  for (const f of S.falling) drawSpark(f.x, f.y, P);
-  ctx.fillStyle = '#000';
-}
 
 export function drawLab() {
   if (!S.labOpen) return;
@@ -359,7 +346,6 @@ export function drawCount() {
   line(S.seenCore, CORE_CELL, String(S.cores));
   line(S.seenShard, SHARD_CELL, fmt(S.shards));
   line(S.seenSpore, SPORE_CELL, fmt(S.spores));
-  line(S.seenSpark, SPARK_CELL, fmt(S.sparks));
 }
 
 // The bench is not in the yard until there is something on it worth buying, and
@@ -448,8 +434,8 @@ export function draw() {
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
   drawFarm();
+  drawSky();
   drawLab();
-  drawMeteor();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();

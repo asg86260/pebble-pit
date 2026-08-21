@@ -6,12 +6,12 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, CELL, SKY, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
+  P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP,
   PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
-  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
+  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
 } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, meteor } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -149,9 +149,9 @@ export function resize(after) {
   bench.y = S.groundY - bench.h;
 
   // the one thing that is not on the ground
-  meteor.x = S.cx + TO_METEOR;
-  meteor.y = S.groundY - METEOR_UP;
-  meteor.r = METEOR_R;
+  sky.x = S.cx + TO_SKY;
+  sky.y = S.groundY - SKY_UP;
+  sky.r = SKY_R;
 
   lab.w = P * 14;
   lab.h = P * 10;

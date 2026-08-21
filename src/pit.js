@@ -6,7 +6,7 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
          findKind, someFind,
          SHADES } from './config.js';
 import { S, pit } from './state.js';
@@ -40,7 +40,7 @@ export function settlePit() {
 }
 
 // Something goes in the hole. A grain of dust is worth one dust; a shard, a
-// spore or a spark is worth one of itself. Either way it is a grain in the pile
+// or a spore is worth one of itself. Either way it is a grain in the pile
 // from here on, and the pile shows exactly what you are holding.
 export function bankDust(x, shade = 1) {
   if (isDust(shade)) {
@@ -48,7 +48,6 @@ export function bankDust(x, shade = 1) {
     S.banked++;                              // the books count what came in, not what is left
   } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
   else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
-  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
   S.dirty = true;
   if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on
@@ -140,7 +139,7 @@ export function spend(cost) {
 // Nothing about where any one of them sits is worth saving, so this is also how
 // they come back from a save.
 const HELD = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
-              [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
+              [SPORE_CELL, 'spores']];
 
 export function seedPitCores() {
   if (!pit.grid) return;

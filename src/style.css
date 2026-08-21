@@ -25,23 +25,13 @@ canvas {
 /* the boards that open at the workbench and at the lab */
 .panel {
   position: fixed;
+  left: 0; top: 0;
   z-index: 10;                 /* the canvas is fixed too, and comes after it */
-  box-sizing: border-box;      /* so a max-height is the height, padding and all */
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 10px 12px;
-  background: #fff;
-  border: 2px solid #000;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  /* One menu for both stations. It fades up where you are standing and, when
-     you walk from the bench to the lab, walks along with you -- but only then:
-     `sliding` is on for the length of the walk and off the rest of the time,
-     because it is re-seated every frame and a transition on `left` would put it
-     a fifth of a second behind the yard whenever you scroll. */
-  opacity: 0;
-  transform: translateY(4px);
-  transition: opacity .13s ease, transform .13s ease;
+  /* Kept on a layer of its own and left alone there. The canvas underneath
+     repaints every frame; a menu that keeps having its layer rebuilt over the
+     top of that is a menu that flickers. */
+  will-change: transform;
+  backface-visibility: hidden;
 }
 .panel[hidden] { display: none; }
 
@@ -56,7 +46,7 @@ canvas {
 
 .rows button {
   display: grid;
-  grid-template-columns: 9em 2.8em 1.2em 5.6em 4.6em;
+  grid-template-columns: 11.2em 2.8em 1.2em 6.4em 4.6em;
   align-items: baseline;
   gap: 0 6px;
   font: inherit;
@@ -71,25 +61,27 @@ canvas {
 }
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
 .rows button:disabled { opacity: .3; cursor: default; }
-/* the same marks the game itself draws: a grain of dust, and a core */
-.dust, .core, .shard, .spore, .spark {
+/* The same marks the game draws in the yard, in the same colours: a grain of
+   dust, a core, a shard, a spore. The board and the world speak one alphabet,
+   so what you buy something with looks like the thing you have been watching
+   pile up. */
+.dust, .core, .shard, .spore {
   display: inline-block;
   vertical-align: baseline;
-  color: currentColor;
 }
-.dust { width: 6px; height: 6px; background: currentColor; }
+.dust { width: 7px; height: 7px; background: currentColor; }
 .core {
-  width: 7px; height: 7px;
+  width: 8px; height: 8px;
   border: 1.5px solid currentColor;
   border-radius: 50%;
 }
-/* a shard: the mark that means the cave */
+/* a shard: the mark that means the quarry */
 .shard {
   display: inline-block;
   width: 0; height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-bottom: 7px solid #2f5fd0;    /* the cave */
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-bottom: 8px solid #2f5fd0;    /* the quarry */
 }
 /* a spark: the mark that means the meteor */
 .spark {
@@ -104,7 +96,7 @@ canvas {
    draws out in the yard -- the board and the world use one alphabet. */
 .spore {
   display: inline-block;
-  width: 7px; height: 7px;
+  width: 9px; height: 9px;
   background: #2e9e4b;   /* the farm */
   clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
 }
@@ -122,7 +114,7 @@ canvas {
    it is not a price row and does not look like one. */
 .rows .job {
   display: grid;
-  grid-template-columns: 9em 1.8em 2.2em 1.8em;
+  grid-template-columns: 11.2em 1.8em 2.2em 1.8em;
   align-items: baseline;
   gap: 0 6px;
   letter-spacing: .1em;
@@ -175,7 +167,7 @@ canvas {
    bench rather than by hovering, because there is no hovering.
    A phone held sideways is a wide, short window, so short counts as small too. */
 @media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
-  .panel {
+  .panel .sheet {
     padding: 8px 9px;
     max-width: calc(100vw - 16px);
     /* in landscape there may be less room above the bench than the board wants:
@@ -186,12 +178,12 @@ canvas {
   }
   .rows { gap: 1px; }
   .rows button {
-    grid-template-columns: 7.4em 2.4em 1em 4.4em 3.8em;
+    grid-template-columns: 9.4em 2.4em 1em 5.4em 3.8em;
     gap: 0 4px;
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
   }
-  .rows .job { grid-template-columns: 7.4em 2em 2em 2em; gap: 0 4px; padding: 4px 3px; }
+  .rows .job { grid-template-columns: 9.4em 2em 2em 2em; gap: 0 4px; padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
@@ -257,6 +249,25 @@ canvas {
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: #000; }
 
-.panel.open { opacity: 1; transform: translateY(0); }
-.panel.sliding { transition: opacity .13s ease, transform .13s ease, left .22s ease, bottom .22s ease; }
+/* The container is a positioner and nothing else: it carries the transform that
+   puts the menu where it stands, and slides only while it is walking from one
+   station to the other. Everything you can see is the sheet inside it, which is
+   what fades. Two elements, so the two transforms never fight. */
+.panel.sliding { transition: transform .15s cubic-bezier(.2, .9, .25, 1); }
+
+.panel .sheet {
+  box-sizing: border-box;      /* so a max-height is the height, padding and all */
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 2px solid #000;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(3px) scale(.985);
+  transform-origin: 0 100%;
+  transition: opacity .08s linear, transform .1s cubic-bezier(.2, .9, .25, 1);
+}
+.panel.open .sheet { opacity: 1; transform: none; }
 .panel .page[hidden] { display: none; }

@@ -8,7 +8,6 @@ import { P, MINE_DELAY, WORKER } from './config.js';
 import { S, bench } from './state.js';
 import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
-import { overMeteor, knockMeteor } from './meteor.js';
 import { sweep, release, track } from './hands.js';
 import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt } from './render.js';
@@ -56,10 +55,6 @@ canvas.addEventListener('pointerdown', e => {
 
   const p = pos(e);
   S.mouse = p;
-  if (overMeteor(p.x, p.y)) {                 // knock a charged spark loose
-    knockMeteor(now());
-    return;
-  }
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     S.mining = S.autoMine;                      // holding only mines once unlocked

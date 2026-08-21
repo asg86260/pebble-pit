@@ -25,16 +25,36 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 // phone the bench can be near an edge, or there can be less room above it than
 // the board is tall. So it is put where the bench is and then pushed back inside
 // the window rather than being allowed to hang off it.
-function place(el, at) {
-  el.style.top = 'auto';
-  el.style.left = '0px';                             // measure it unsqueezed first
-  const w = el.offsetWidth, h = el.offsetHeight;
+// Moved with a transform rather than with `left` and `bottom`. Those are layout:
+// animating them makes the browser lay the page out again every frame of the
+// slide, which is exactly what a menu sliding along in steps looks like. A
+// transform is handed to the compositor and moves smoothly.
+// Measured when it opens, when it changes page and when the window changes --
+// not every frame. Reading `offsetWidth` forces the browser to lay the page out,
+// and doing that sixty times a second for a menu whose size did not change is
+// work for nothing.
+let sized = { w: 0, h: 0 };
+export function remeasure() {
+  sized = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
+}
 
+// And it is only written when it actually moves. Assigning the same transform
+// every frame invalidates the layer the menu is drawn on, sixty times a second,
+// over a canvas that is also repainting -- which is a good way to make a menu
+// flicker for no reason anybody can see in the code.
+let put = '';
+
+function place(el, at) {
+  const w = sized.w || el.offsetWidth, h = sized.h || el.offsetHeight;
   const want = (at.x - S.camX) * S.zoom;
-  el.style.left = `${Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)))}px`;
+  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
-  el.style.bottom = `${Math.round(Math.max(GAP, Math.min(stands, S.H - h - GAP)))}px`;
+  const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - h - GAP)));
+  const y = Math.round(S.H - bottom - h);
+
+  const to = `translate3d(${x}px, ${y}px, 0)`;
+  if (to !== put) { el.style.transform = to; put = to; }
 }
 
 const GAP = 4;                             // never flush against the edge
@@ -102,6 +122,7 @@ export function showPanel(want) {
   if (want === 'bench') markSectionsSeen();
   if (want === 'lab') refreshStats();
   panelEl.hidden = false;
+  remeasure();
 
   if (wasAt) {                                   // walking from one to the other
     panelEl.classList.add('sliding');

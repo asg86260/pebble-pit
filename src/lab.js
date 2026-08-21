@@ -15,14 +15,14 @@ import { S } from './state.js';
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
 export const STEP = 1.25;
 
-// `works` is on top of everything, which is what makes a spark worth the trip
+// each multiplier stands on its own
 export const mult = k =>
-  Math.pow(STEP, S.mult[k] || 0) * (k === 'works' ? 1 : Math.pow(STEP, S.mult.works || 0));
+  Math.pow(STEP, S.mult[k] || 0);
 
 export const LAB_UPGRADES = [
   {
     key: 'labswing',
-    name: 'sharper picks',
+    name: 'swing speed',
     from: () => `x${mult('swing').toFixed(2)}`,
     to: () => `x${(mult('swing') * STEP).toFixed(2)}`,
     cost: () => Math.round(3 * Math.pow(1.9, S.mult.swing)),
@@ -32,7 +32,7 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labhaul',
-    name: 'stronger backs',
+    name: 'carry speed',
     from: () => `x${mult('haul').toFixed(2)}`,
     to: () => `x${(mult('haul') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.haul)),
@@ -42,7 +42,7 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labcave',
-    name: 'deeper shafts',
+    name: 'quarry pace',
     from: () => `x${mult('quarry').toFixed(2)}`,
     to: () => `x${(mult('quarry') * STEP).toFixed(2)}`,
     cost: () => Math.round(3 * Math.pow(1.9, S.mult.quarry)),
@@ -52,7 +52,7 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labtend',
-    name: 'richer beds',
+    name: 'bed pace',
     from: () => `x${mult('tend').toFixed(2)}`,
     to: () => `x${(mult('tend') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.tend)),
@@ -60,23 +60,12 @@ export const LAB_UPGRADES = [
     buy: () => S.mult.tend++,
     show: () => true
   }
-  ,
-  {
-    key: 'labworks',
-    name: 'the whole works',
-    from: () => `x${mult('works').toFixed(2)}`,
-    to: () => `x${(mult('works') * STEP).toFixed(2)}`,
-    cost: () => Math.round(2 * Math.pow(2.1, S.mult.works)),
-    currency: 'spark',
-    buy: () => S.mult.works++,
-    show: () => S.seenSpark
-  }
+
 ];
 
 export const LAB_SECTIONS = [
   { title: 'the work', keys: ['labswing', 'labhaul'] },
-  { title: 'the ground', keys: ['labcave', 'labtend'] },
-  { title: 'the sky', keys: ['labworks'] }
+  { title: 'the ground', keys: ['labcave', 'labtend'] }
 ];
 
 // --- the books --------------------------------------------------------------
@@ -125,7 +114,6 @@ export function bookRows() {
   ];
   if (S.seenShard) rows.push(['shards a minute', rates.shards.toFixed(1), 'shard']);
   if (S.seenSpore) rows.push(['spores a minute', rates.spores.toFixed(1), 'spore']);
-  if (S.seenSpark) rows.push(['sparks', S.sparks, 'spark']);
   if (S.seenCore) rows.push(['rocks finished', S.boulderNo - 1, 'core']);
   rows.push(['crew', S.miners + S.haulers + S.quarriers + S.farmhands, '']);
   return rows;

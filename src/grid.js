@@ -19,7 +19,7 @@ import { SHADES } from './config.js';
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 
 // A cell holds a shade of dust, or something that is not dust at all: a core,
-// a shard, a spore, a spark. They live in the same beds and move the same way;
+// a shard or a spore. They live in the same beds and move the same way;
 // what they are not is worth one dust.
 export const isDust = v => v > 0 && v <= SHADES.length;
 

@@ -15,9 +15,9 @@ export const TARGET = 1000000;   // dust in the hole: the whole point
 // ground: the ground runs a long way either side of everything.
 // The height the game asks for. The picture never scales to fit, so this is not
 // a breakpoint -- it is what the yard needs to show the sky the rock and the
-// meteor stand in, the ground, and the whole depth of the pit. A shorter window
+// rock stands in, the ground, and the whole depth of the pit. A shorter window
 // loses sky off the top, which is the part with nothing in it, and eventually
-// the top of the meteor. It does not rearrange and it does not shrink.
+// the top of the rock. It does not rearrange and it does not shrink.
 export const MIN_H = 840;
 export const SKY = 1998;         // world above the ground line, so any window has sky
 // Every world coordinate below is a whole number of cells away from the last,
@@ -32,6 +32,12 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // strip has a size. So the world reads right to left as station, pile, station,
 // pile: the farm, its beds' crop; the quarry, what comes up it; the rock, its
 // spoil; and then the bench, the lab and the hole everything ends up in.
+// The thing in the sky. It sheds nothing and cannot be clicked -- the sparks it
+// used to give are gone. It hangs a long way out past the farm, over the empty
+// end of the ground, so that walking left has something at the end of it.
+export const TO_SKY = -2280;     // rock centre to the thing in the sky
+export const SKY_UP = 460;       // and how far above the ground line it hangs
+export const SKY_R = 46;
 export const TO_FARM = -1500;    // rock centre to the near edge of the farm
 export const TO_QUARRY = -828;     // rock centre to the mouth of the quarry
 export const TO_BENCH = 720;     // rock centre to the bench
@@ -45,7 +51,7 @@ export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
-export const ROCK_SKY = 520;     // sky kept clear above the ground, for the rock and the meteor
+export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
 // Room either side of the works, so it is not flush against the window. It is
 // part of the width the layout insists on showing at once, so it is also part
 // of how far the picture is scaled down on a narrow window -- widening the
@@ -110,8 +116,7 @@ export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among
 export const FIND_TONES = 4;
 export const SHARD_CELL = CORE_CELL + 1;                  // and the three after it
 export const SPORE_CELL = SHARD_CELL + FIND_TONES;
-export const SPARK_CELL = SPORE_CELL + FIND_TONES;
-export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
+export const FIND_TOP = SPORE_CELL + FIND_TONES - 1;
 
 // The first colour in the game, and the reason it goes here first: everything
 // the *ground* makes is a grey, because grey is how deep the rock was. The
@@ -123,8 +128,7 @@ export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
 // Flat and strong, not pastel: this is a game of flat shapes on white paper.
 export const FIND_COLOR = {
   [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
-  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
-  [SPARK_CELL]: ['#f4ae4a', '#ee9720', '#e8890c', '#bd6f0a']    // the sky: an ember
+  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a']    // the farm: green, it grew
 };
 
 // which kind a cell belongs to, and one of that kind with a tone of its own
@@ -213,16 +217,6 @@ export const FARM_WALK = 1.1;
 // off from exactly where it grew.
 export let CUT_MS = 700;
 
-// --- the meteor -------------------------------------------------------------
-// It hangs in the sky over the yard and sheds a spark now and then. Sparks are
-// rare and buy one thing, at the lab: pace on everything at once.
-export const TO_METEOR = 138;    // rock centre to the meteor, sideways
-export const METEOR_UP = 420;    // and how far above the ground line it hangs
-export const METEOR_R = 46;
-export let SPARK_BASE = 42000; // between sparks, at spark 0
-export const SPARK_FLOOR = 9000;
-
-
 // --- turning the knobs ------------------------------------------------------
 // A handful of these are `let` rather than `const` so a dev panel can move them
 // while the game is running. Modules import the binding, not a copy, so a change
@@ -240,7 +234,6 @@ export const TUNABLE = [
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
-  { key: 'SPARK_BASE', label: 'between sparks', min: 500, max: 60000, step: 500 },
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
@@ -258,7 +251,6 @@ export function tuned(key) {
     case 'HAUL_BASE': return HAUL_BASE;
     case 'QUARRY_BASE': return QUARRY_BASE;
     case 'TEND_BASE': return TEND_BASE;
-    case 'SPARK_BASE': return SPARK_BASE;
     case 'CUT_MS': return CUT_MS;
     case 'DANCE_MS': return DANCE_MS;
     default: return PILE_LIMIT[key.split('.')[1]];
@@ -275,7 +267,6 @@ export function tune(key, v) {
     case 'HAUL_BASE': HAUL_BASE = v; break;
     case 'QUARRY_BASE': QUARRY_BASE = v; break;
     case 'TEND_BASE': TEND_BASE = v; break;
-    case 'SPARK_BASE': SPARK_BASE = v; break;
     case 'CUT_MS': CUT_MS = v; break;
     case 'DANCE_MS': DANCE_MS = v; break;
     default: PILE_LIMIT[key.split('.')[1]] = v;

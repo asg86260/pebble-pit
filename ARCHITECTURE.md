@@ -28,7 +28,6 @@ field or two on `S` and a constant or two in `config.js`.
 | `quarry.js` | the open cut, and the crew working its floor | yes |
 | `farm.js` | the beds, and farmhands tending them | yes |
 | `lab.js` | the multipliers, and the books | yes |
-| `meteor.js` | the thing in the sky, and sparks off it | yes |
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
 | `core.js` | the thing buried in each rock | yes |
@@ -36,7 +35,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `air.js` | the motes drifting off the piles | yes |
 | `upgrades.js` | what the bench sells and what it costs | yes |
 | `shop.js` | turning those rows into a board | yes |
-| `board.js` | where the board sits; the counter above the pit | yes |
+| `board.js` | the one menu: where it stands, and the counter above the pit | yes |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
 | `render.js` | everything drawn, nothing decided | painting **order** matters |

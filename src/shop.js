@@ -13,8 +13,34 @@ const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
 const statsEl = document.getElementById('stats');
 
-// one row per available upgrade, under a heading for whatever it belongs to
+// What is on the board right now, as a string. If it has not changed there is
+// nothing to build: the numbers on the rows are refreshed every frame anyway,
+// and only the *set* of rows needs the DOM touched.
+function shape(list, sections) {
+  const out = [];
+  for (const sect of sections) {
+    const rows = sect.keys.filter(k => {
+      const u = list.find(x => x.key === k);
+      return u && u.show();
+    });
+    if (rows.length) out.push(sect.title, ...rows);
+  }
+  return out.join(',');
+}
+
+const built = new WeakMap();
+
+// One row per available upgrade, under a heading for whatever it belongs to.
+//
+// It is rebuilt only when the set of rows changes. Rebuilding throws away every
+// row element and makes new ones, which takes the row under the cursor with it
+// -- and the hover on it. A worker tipping a shard into the pit rebuilt the
+// whole board, so the highlight blinked off every time anybody banked anything.
 function build(el, list, sections) {
+  const now = shape(list, sections);
+  if (built.get(el) === now) return;
+  built.set(el, now);
+
   el.textContent = '';
   for (const sect of sections) {
     const rows = sect.keys

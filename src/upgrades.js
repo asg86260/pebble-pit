@@ -9,9 +9,9 @@ import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S, quarry, farm, lab, meteor } from './state.js';
+import { S, quarry, farm, lab } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
+import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
 import { quarryMs, quarryRate } from './quarry.js';
@@ -50,8 +50,7 @@ export const MARK = {
   dust: '<i class="dust"></i>',
   core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
-  spore: '<i class="spore"></i>',
-  spark: '<i class="spark"></i>'
+  spore: '<i class="spore"></i>'
 };
 
 // what you have of one
@@ -59,7 +58,7 @@ export const purse = money =>
   money === 'core' ? S.cores :
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
-  money === 'spark' ? S.sparks : S.stored;
+  S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
 export const UNITS = {
@@ -245,7 +244,7 @@ export const UPGRADES = [
     show: () => S.crew > 0
   },
   CAVE,
-  jobRow('quarryjob', 'down the quarry', 'quarriers', () => S.quarryOpen),
+  jobRow('quarryjob', 'in the quarry', 'quarriers', () => S.quarryOpen),
   {
     key: 'quarrypace',
     name: 'quarry lamps',
@@ -264,14 +263,7 @@ export const UPGRADES = [
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
     show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
   },
-  {
-    key: 'unlockmeteor',
-    name: 'call it down',
-    cost: () => 9,
-    currency: 'core',
-    buy: () => { S.meteorOpen = true; S.meteorAt = 0; lookAt(meteor.x); },
-    show: () => S.labOpen && !S.meteorOpen
-  },
+
   FARM,
   jobRow('farmjob', 'at the beds', 'farmhands', () => S.farmOpen),
   {
@@ -294,8 +286,7 @@ export const SECTIONS = [
   { title: 'the rock', keys: ['mine', 'minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry', 'quarryjob', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmjob', 'tend'] },
-  { title: 'the lab', keys: ['unlocklab'] },
-  { title: 'the sky', keys: ['unlockmeteor'] }
+  { title: 'the lab', keys: ['unlocklab'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built
@@ -344,7 +335,6 @@ export function buy(u) {
   else if (money === 'core') { S.cores -= cost; takeCoreCells(cost, CORE_CELL); }
   else if (money === 'shard') { S.shards -= cost; takeCoreCells(cost, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= cost; takeCoreCells(cost, SPORE_CELL); }
-  else if (money === 'spark') { S.sparks -= cost; takeCoreCells(cost, SPARK_CELL); }
 
   u.buy();
   S.dirty = true;
