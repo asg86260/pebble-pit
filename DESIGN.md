@@ -376,7 +376,9 @@ beside them — the same rule the sand keeps, at the size of a body rather than 
 sand stands in a cell one grain wide — that is the whole difference between a pile and a mess.
 While one is in the air its x is wherever the throw put it; the moment it lands it takes the
 nearest slot, and from then on it is in that slot or the one next door. Forty dropped on one spot
-come out as a clean pyramid six rows high. Without the lattice they perched on each other at any
+come out as a clean pyramid six rows high. They keep **the same ceiling the dust keeps** — a pile
+may only rise as it gets away from the station behind it — so a heap of shards leans away from the
+cave exactly as the spoil leans away from the rock, rather than standing up against it. Without the lattice they perched on each other at any
 offset at all: bodies twelve wide sitting two and three pixels apart. That is what
 turns a run of them dropped in one spot from a needle into a heap. They stay in the pile they were
 thrown into: a pile is a pile, and it has to be countable against its own limit.
@@ -386,6 +388,10 @@ the ground, in the pile, on the cursor and in a worker's hands — because a cel
 occupies and what it collides as. A mark bigger than its cell lies about where the thing is, and
 marks of different sizes read as different *amounts* of something rather than different things.
 The board's marks are the same shapes, so the world and the shop speak one alphabet.
+
+A find is **picked up by hand** as well, like a core: one thing rather than a load, so it costs no
+carrying room, and letting go throws it. Thrown over the lip it counts, the same as if a worker had
+carried it.
 
 And whatever is being carried is drawn as **what it is**: a worker walking a shard to the pit is
 visibly walking a shard, not a grey grain, and so is the load drifting round your own cursor. They stack over the pit mouth, and each

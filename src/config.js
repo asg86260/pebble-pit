@@ -131,11 +131,12 @@ export const FIND_WEIGHT = 1;
 // twelve is a station that is stopped nearly all the time. These are the same
 // fraction of what the ground actually holds as the rock's is.
 export const PILE_LIMIT = { rock: 1400, cave: 180, farm: 180 };
-// How far a pile has to come down before its station starts again. This only
-// exists to stop one grain being carried away restarting a station that puts one
-// straight back, so it wants to be a nudge and not a chore -- at three quarters
-// the rock needed 350 grains fetched before anybody picked up a pick again.
-export const PILE_CLEAR = 0.95;
+// There is no hysteresis on a full pile, and it turns out there should not be.
+// Any at all is a chore: at 0.95 you had to clear seventy grains before anybody
+// picked up a pick again, and a sweep of the brush lifts a handful. A station
+// stops when its pile is full and starts the moment there is room for one more,
+// so at the limit the crew mine exactly as fast as the crew carry. That is not
+// a stutter, it is the yard finding its level.
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free

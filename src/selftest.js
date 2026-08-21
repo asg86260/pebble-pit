@@ -519,12 +519,97 @@ const TESTS = [
   // is bigger, or a roll asks for a *higher* place beside it and nothing ever
   // rolls. And a resting one stands in a slot one body wide, or they perch on
   // each other at any offset at all and the whole lot reads as a mess.
+  // They stopped being grains when they were given bodies, and a hand that could
+  // sweep up the dust around a shard but not the shard itself is a hand missing
+  // a trick. It is picked up like a core: one thing, not a load, no room needed.
+  // Clearing a handful should put somebody back to work, because that is what
+  // clearing a handful looks like it ought to do. Any hysteresis at all is a
+  // chore: at a twentieth of the limit you had to fetch seventy grains before
+  // anybody picked up a pick, and a sweep of the brush lifts about five.
+  ['clearing a handful puts the crew back to work', async () => {
+    window.__crew(4, 0);
+    window.__clearFloor();
+    run(0.5);
+    // fill it to just under, then let the crew tip it over themselves, so the
+    // pile stops where mining stops it rather than where a test dumped it
+    const strip = () => state().piles.find(q => q.key === 'rock');
+    for (let i = 0; i < 300 && state().pileCount.rock < 1330; i++) {
+      const q = strip();
+      window.__pile(q.from + Math.random() * (q.to - q.from) * 0.8, 20);
+      run(0.1);
+    }
+    const stopped = runUntil(() => state().pileFull.rock, 60);
+    const full = state();
+    const rockThen = full.rock;
+    run(2);
+    const stalled = state();
+
+    const took = window.__take('rock', 6);
+    run(0.5);
+    const freed = state();
+    const rockFreed = freed.rock;
+    run(2);
+    const working = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(stopped, 'the pile fills and the crew stop', `${full.pileCount.rock} grains`),
+      ok(stalled.rock === rockThen, 'and stay stopped', `${rockThen} -> ${stalled.rock}`),
+      ok(took === 6, 'six grains come off the pile', `${took}`),
+      ok(!freed.pileFull.rock, 'which is enough to make room',
+         `${freed.pileCount.rock} grains`),
+      ok(working.rock < rockFreed, 'and they are swinging again',
+         `${rockFreed} -> ${working.rock}`)
+    ];
+  }],
+
+  ['a shard can be picked up by hand and thrown', async () => {
+    window.__crew(0, 0);
+    window.__clearFloor();
+    run(0.5);
+    const s = state();
+    const p = s.piles.find(q => q.key === 'cave');
+    window.__toss('shard', p.from + 120);
+    run(3);
+    const lying = state();
+    // the one just tossed, not whichever find happens to be first in the list:
+    // by now there are others resting in the pit from earlier checks
+    const mine = lying.findAll.map(t => t.split(',').map(Number))
+                              .filter(a => a[0] > p.from && a[0] < p.to);
+    const at = mine[0];
+
+    // sweep the cursor over it, the way a hand picks up a core
+    const [sx, sy] = onScreen(at[0] + 6, s.groundY - at[1] + 6);
+    point('pointerdown', sx, sy);
+    for (let i = 0; i < 4; i++) { point('pointermove', sx, sy); await sleep(20); }
+    const inHand = state();
+
+    // and fling it towards the pit
+    const [px, py] = onScreen(s.pitX + 40, s.groundY - 120);
+    for (let i = 1; i <= 6; i++) {
+      point('pointermove', sx + (px - sx) * i / 6, sy + (py - sy) * i / 6);
+      await sleep(16);
+    }
+    point('pointerup', px, py);
+    run(4);
+    const after = state();
+    return [
+      ok(mine.length >= 1, 'a shard is lying there to start with'),
+      ok(inHand.heldFinds === 1, 'sweeping over it picks it up',
+         `${inHand.heldFinds} in hand`),
+      ok(inHand.held === 0, 'and it costs no carrying room', `${inHand.held} of dust`),
+      ok(after.heldFinds === 0, 'letting go throws it'),
+      ok(after.shards > lying.shards, 'thrown into the pit, it counts',
+         `${lying.shards} -> ${after.shards}`)
+    ];
+  }],
+
   ['a heap of finds heaps, rather than stacking', async () => {
     window.__crew(0, 0);
     window.__clearFloor();
     run(0.5);
     const p = state().piles.find(q => q.key === 'cave');
-    for (let i = 0; i < 24; i++) { window.__toss('shard', p.from + 120); run(0.3); }
+    for (let i = 0; i < 30; i++) { window.__toss('shard', p.from + 30); run(0.3); }
     run(10);
     // only the ones dropped here: finds already banked in the pit are still
     // lying in it, and they are none of this check's business
@@ -532,11 +617,16 @@ const TESTS = [
                               .filter(a => a[0] > p.from - 40 && a[0] < p.to + 40);
     const xs = at.map(a => a[0]), tall = Math.max(...at.map(a => a[1]));
     const spread = Math.max(...xs) - Math.min(...xs);
+    // how far out from the near end of the strip the tallest column stands
+    const tops = {};
+    for (const [x, h] of at) tops[x] = Math.max(tops[x] || 0, h);
+    const near = Math.min(...xs);
+    const peak = (+Object.keys(tops).reduce((a, b) => tops[b] > tops[a] ? b : a) - near) / 12;
     window.__clearFloor();
     return [
-      ok(at.length === 24, 'all two dozen are lying there', `${at.length}`),
+      ok(at.length === 30, 'all thirty are lying there', `${at.length}`),
       ok(spread > 60, 'they spread out along the ground', `${spread}px across`),
-      ok(tall <= 24 * 12 / 3, 'rather than going up in a column',
+      ok(tall <= 30 * 12 / 3, 'rather than going up in a column',
          `${tall / 12} bodies at the peak`),
       ok(at.every(a => a[1] % 12 === 0), 'and each sits squarely on what is under it',
          JSON.stringify(at.slice(0, 6))),
@@ -549,7 +639,12 @@ const TESTS = [
          'and no two are in the same place'),
       ok(at.every(a => at.every(b => a === b || a[0] === b[0] ||
                                      Math.abs(a[0] - b[0]) >= 12)),
-         'so none of them overlaps the next')
+         'so none of them overlaps the next'),
+      // The same rule the dust keeps: a pile may only rise as it gets away from
+      // the station behind it. Without it they went up in a column against the
+      // station while the dust beside them sloped away properly.
+      ok(peak > 0, 'the heap leans away from the station rather than standing on it',
+         `tallest column is ${peak} bodies out from the near end`)
     ];
   }],
 

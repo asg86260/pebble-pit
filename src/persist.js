@@ -163,8 +163,11 @@ export function persist() {
     coreLoose: S.heldCore || !!S.coreItem,
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
+    // what is lying about, and whatever is in your hand: neither has been
+    // counted, and a reload pocketing either would be the game taking it back
     finds: S.finds.filter(f => !f.counted)
-                  .map(f => ({ v: f.v, x: Math.round(f.x) })),
+                  .map(f => ({ v: f.v, x: Math.round(f.x) }))
+                  .concat(S.heldFinds.map(v => ({ v, x: Math.round(S.mouse.x) }))),
     crew: S.crew,
     miners: S.miners,
     haulers: S.haulers,
@@ -280,6 +283,7 @@ export function restore() {
              .map(f => ({ v: f.v, x: +f.x || 0, y: S.groundY - FIND_SIZE,
                           vx: 0, vy: 0, rest: false, counted: false }))
     : [];
+  S.heldFinds = [];
   S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (s.spelunkers || 0) + (s.farmhands || 0);
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;

@@ -120,11 +120,10 @@ export function drawMark(v, x, y, size = MARK_SIZE) {
     ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
     return;
   }
+  // No backing square. It was there to keep two of these readable when they
+  // overlapped, and they cannot overlap any more: a resting one stands in a slot
+  // of its own. A white box behind a triangle is a white box on the ground.
   const h = size / 2;
-  // the page showing through behind it, so one lying against another still
-  // reads as two things rather than one shape
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(Math.round(x - h) - 1, Math.round(y - h) - 1, size + 2, size + 2);
   ctx.fillStyle = '#000';
   if (v === CORE_CELL) {
     const lw = Math.max(1, size / 4);
@@ -542,6 +541,11 @@ export function drawGrid(b) {
 
 // the carried dust drifts loosely around the cursor
 export function drawCursor() {
+  // a thing picked up by hand rides the cursor as what it is
+  S.heldFinds.forEach((v, i) => {
+    const a = i / Math.max(1, S.heldFinds.length) * Math.PI * 2 + now() / 900;
+    drawMark(v, S.mouse.x + Math.cos(a) * P * 3, S.mouse.y + Math.sin(a) * P * 3);
+  });
   if (!S.held) return;
   const t = now() / 1000;
   for (const m of S.motes) {

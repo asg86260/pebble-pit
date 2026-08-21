@@ -52,6 +52,7 @@ export const S = {
   chips: [],              // knocked loose, still flying
   paid: [],               // flying out of the pit to the bench, on the way to being spent
   motes: [],              // the load drifting round the cursor
+  heldFinds: [],          // and any shards, spores or sparks picked up by hand
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
 

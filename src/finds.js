@@ -18,8 +18,8 @@
 
 import { P, GRAV, FIND_SIZE, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { S, floor, pit } from './state.js';
-import { surfaceY, colOf } from './grid.js';
-import { overPitMouth, pileAt } from './world.js';
+import { surfaceY, colOf, bottomY } from './grid.js';
+import { overPitMouth, pileAt, bankCeiling } from './world.js';
 
 const COUNT = { [SHARD_CELL]: 'shards', [SPORE_CELL]: 'spores', [SPARK_CELL]: 'sparks' };
 const SEEN = { [SHARD_CELL]: 'seenShard', [SPORE_CELL]: 'seenSpore', [SPARK_CELL]: 'seenSpark' };
@@ -58,6 +58,17 @@ function penned(f, x) {
   return x + FIND_SIZE > p.from && x < p.to;
 }
 
+// The top a pile may reach in this slot -- the same rule, from the same place,
+// that shapes the dust. Both ends of a strip are cliffs the sand may not lean
+// on: the station behind it and the bare ground in front. So a pile rises only
+// as it gets away from them, and it cannot stand up as a wall against either.
+// Finds were not asking, which is why they went up against the station in a
+// column while the dust beside them sloped away properly.
+function ceilingY(x) {
+  const c = colOf(floor, x + FIND_SIZE / 2);
+  return bottomY(floor) - Math.floor(bankCeiling(c)) * P;
+}
+
 // Where a body standing in this slot would come to rest: on the sand under it,
 // or on the topmost of its fellows already in the slot. `below` is the height to
 // look down from, so a body only rests on what is genuinely beneath it.
@@ -86,11 +97,21 @@ export function stepFinds(bias = 0) {
       // Then it slides, exactly as a grain of sand does: one slot along, if that
       // slot's floor is a whole body lower than where it is standing. Down is
       // bigger -- a lower place has a larger y.
+      //
+      // And if it is standing above what a pile may reach here, it moves along
+      // whether or not the next slot is lower, towards whichever side has the
+      // headroom. That is what turns a column against the station into a heap
+      // that leans away from it.
+      const above = f.y < ceilingY(f.x);
       const first = ((f.x / FIND_SIZE + bias) & 1) ? -1 : 1;   // alternate, so heaps stay even
-      for (const d of [first, -first]) {
-        const nx = f.x + d * FIND_SIZE;
+      const ways = above
+        ? [f.x - FIND_SIZE, f.x + FIND_SIZE].sort((a, b) => ceilingY(a) - ceilingY(b))
+        : [f.x + first * FIND_SIZE, f.x - first * FIND_SIZE];
+      for (const nx of ways) {
         if (!penned(f, nx)) continue;
-        if (restY(nx, f, f.y) < f.y + FIND_SIZE) continue;     // not a whole body lower
+        const there = restY(nx, f, f.y);
+        if (there < ceilingY(nx)) continue;                    // no room there either
+        if (!above && there < f.y + FIND_SIZE) continue;        // not a whole body lower
         f.x = nx;
         f.rest = false;                                        // and let it fall the step
         f.vx = 0;
