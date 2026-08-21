@@ -30,10 +30,10 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // the progression. The bench, the lab and the pit sit to the right.
 // Every station piles to its right, into a strip of ground of its own, and each
 // strip has a size. So the world reads right to left as station, pile, station,
-// pile: the farm, its beds' crop; the cave, what comes up it; the rock, its
+// pile: the farm, its beds' crop; the quarry, what comes up it; the rock, its
 // spoil; and then the bench, the lab and the hole everything ends up in.
 export const TO_FARM = -1500;    // rock centre to the near edge of the farm
-export const TO_CAVE = -828;     // rock centre to the mouth of the cave
+export const TO_QUARRY = -828;     // rock centre to the mouth of the quarry
 export const TO_BENCH = 720;     // rock centre to the bench
 export const TO_LAB = 840;       // rock centre to the lab
 export const TO_LEDGE = 1080;    // rock centre to the lip of the pit
@@ -122,7 +122,7 @@ export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
 //
 // Flat and strong, not pastel: this is a game of flat shapes on white paper.
 export const FIND_COLOR = {
-  [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the cave: a cold blue
+  [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
   [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
   [SPARK_CELL]: ['#f4ae4a', '#ee9720', '#e8890c', '#bd6f0a']    // the sky: an ember
 };
@@ -142,7 +142,7 @@ export const CAP_STEP = 1;       // extra capacity per upgrade
 export const WORKER = P * 3;     // worker square size
 export const MINER_BASE = 1100;  // a hired miner starts slower than your own pick
 export const MINER_FLOOR = 260;  // fastest a miner can swing
-// The yard runs from the mouth of the cave to the lip of the pit, and heaped to
+// The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
 // so a chip is never told there is nowhere to put it. Two rocks' worth of spoil
@@ -154,14 +154,14 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // is more than one pile's worth, so a body on the rock is only worth having if
 // somebody is carrying. The sites deal in ones, so theirs are counted in ones.
 // What one find counts for against a pile's limit. The sites deal in ones and
-// the rock deals in thousands, so a shard lying in the cave's pile has to be
+// the rock deals in thousands, so a shard lying in the quarry's pile has to be
 // worth more than the grain of dust it is sitting next to.
 export const FIND_WEIGHT = 1;
 // A site's strip is 420px, which is 35 bodies across and holds about 300 of them
 // heaped. Twelve was a guess and it was a bad one: a station that stops after
 // twelve is a station that is stopped nearly all the time. These are the same
 // fraction of what the ground actually holds as the rock's is.
-export const PILE_LIMIT = { rock: 1400, cave: 180, farm: 180 };
+export const PILE_LIMIT = { rock: 1400, quarry: 180, farm: 180 };
 // There is no hysteresis on a full pile, and it turns out there should not be.
 // Any at all is a chore: at 0.95 you had to clear seventy grains before anybody
 // picked up a pick again, and a sweep of the brush lifts a handful. A station
@@ -182,20 +182,20 @@ export const ROCK_DROP = 620;    // world pixels above its place that a new rock
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
 export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 
-// --- the cave ---------------------------------------------------------------
+// --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
 // come back out with a shard. The trip time is the whole of the mechanic: it is
 // what an upgrade shortens, and what makes sending somebody in a decision.
-export const CAVE_W = 108;       // the mouth, in world pixels
-export const CAVE_H = 78;
-export const CAVE_BASE = 11000;  // a trip at pace 0
-export const CAVE_FLOOR = 2200;  // the quickest a trip will ever be
-export const CAVE_WALK = 1.1;    // a spelunker's walking speed, px per frame
+export const QUARRY_W = 108;       // the mouth, in world pixels
+export const QUARRY_H = 78;
+export const QUARRY_BASE = 11000;  // a trip at pace 0
+export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
+export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 
 // --- the farm ---------------------------------------------------------------
-// Beds out past the cave. Nothing grows in them on its own: a farmhand stands
+// Beds out past the quarry. Nothing grows in them on its own: a farmhand stands
 // at a bed and tends it, and it grows while tended. So the crop is the crew's
-// attention, which is the same trade the cave asks for in a different shape.
+// attention, which is the same trade the quarry asks for in a different shape.
 export const FARM_BEDS = 7;
 export const FARM_GAP = 42;      // world pixels between one bed and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands

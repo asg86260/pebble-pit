@@ -81,7 +81,7 @@ function runUntil(done, limit = 60) {
 // Checks that are about *what* a worker does should not sit through *how long*
 // it takes. There are checks of their own for pace and for the length of a walk.
 function quickCrew() {
-  window.__levels({ haulPaceLevel: 20, haulCarryLevel: 4, cavePaceLevel: 10, tendLevel: 10 });
+  window.__levels({ haulPaceLevel: 20, haulCarryLevel: 4, quarryPaceLevel: 10, tendLevel: 10 });
 }
 
 function haveRock() {
@@ -478,8 +478,8 @@ const TESTS = [
          `${stalled.pitDust - before} grains in`),
       ok(stalled.rock === rockThen, 'the crew down tools instead',
          `${rockThen} -> ${stalled.rock} of rock`),
-      ok(full.dustAtCave === 0, 'and none of it is heaped over the mouth of the cave',
-         `${full.dustAtCave} grains out there`),
+      ok(full.dustAtQuarry === 0, 'and none of it is heaped over the mouth of the quarry',
+         `${full.dustAtQuarry} grains out there`),
       ok(!freed.yardFull, 'clearing the ground puts them back to work'),
       ok(working.rock < rockFreed, 'and the rock starts coming off again',
          `${rockFreed} -> ${working.rock}`)
@@ -559,7 +559,7 @@ const TESTS = [
     window.__clearFloor();
     run(0.5);
     const s0 = state();
-    const p = s0.piles.find(q => q.key === 'cave');
+    const p = s0.piles.find(q => q.key === 'quarry');
     window.__toss('shard', p.from + 60);
     run(3);
     const lying = state();
@@ -599,7 +599,7 @@ const TESTS = [
     window.__crew(0, 0);
     window.__clearFloor();
     run(0.5);
-    const p = state().piles.find(q => q.key === 'cave');
+    const p = state().piles.find(q => q.key === 'quarry');
     for (let i = 0; i < 24; i++) { window.__toss('shard', p.from + 40); run(0.25); }
     run(8);
     const cells = state().findCells.filter(c => c.x > p.from - 40 && c.x < p.to + 40);
@@ -617,7 +617,7 @@ const TESTS = [
     window.__crew(0, 0);
     window.__clearFloor();
     run(0.5);
-    const p = state().piles.find(q => q.key === 'cave');
+    const p = state().piles.find(q => q.key === 'quarry');
     for (let i = 0; i < 30; i++) { window.__toss('shard', p.from + 30); run(0.3); }
     run(10);
     const at = state().findAll.map(t => t.split(',').map(Number))
@@ -747,7 +747,7 @@ const TESTS = [
     const working = state();
     window.__crew(0, 0);
     return [
-      ok(order === 'farm cave rock', 'the strips run farm, cave, rock, left to right', order),
+      ok(order === 'farm quarry rock', 'the strips run farm, quarry, rock, left to right', order),
       ok(s.piles.every((p, i) => i === 0 || p.from >= s.piles[i - 1].to),
          'and none of them runs into the next', JSON.stringify(s.piles)),
       ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
@@ -1099,27 +1099,31 @@ const TESTS = [
 
   // A shard is brought up and set down. Nothing counts it there: somebody has to
   // walk over and pick it up, the same as everything else in this yard.
-  ['the cave gives up shards, and somebody fetches them', async () => {
-    window.__crew(0, 0, 3);                  // three spelunkers, cave open
+  ['the quarry gives up shards, and somebody fetches them', async () => {
+    window.__crew(0, 0, 3);                  // three quarriers, quarry open
     quickCrew();
     window.__clearFloor();
     const start = state();
-    let wentUnder = false;
+    // Nobody is out of sight any more: they climb down and work the floor of the
+    // cut where you can watch them, which is the whole point of a cut.
+    let onTheFloor = false;
     const lay = runUntil(() => {
-      wentUnder = wentUnder || state().underground > 0;
-      return state().finds.includes('shard');
+      const s = state();
+      onTheFloor = onTheFloor || s.workerPos.some(p =>
+        p[0] === 'q' && +p.split(',')[1] > s.groundY);
+      return s.finds.includes('shard');
     }, 40);
     const waiting = state();
 
     window.__crew(0, 2, 3);                  // now put somebody on carrying
-    window.__place('hauler', waiting.caveX);
+    window.__place('hauler', waiting.quarryX);
     quickCrew();
     const got = runUntil(() => state().shards > start.shards, 60);
     const after = state();
     window.__crew(0, 0, 0);
     return [
-      ok(after.caveOpen, 'the cave is open'),
-      ok(wentUnder, 'a spelunker goes down it'),
+      ok(after.quarryOpen, 'the quarry is open'),
+      ok(onTheFloor, 'a quarrier climbs down and works its floor'),
       ok(lay, 'and leaves a shard lying in the dust by the mouth',
          JSON.stringify(waiting.finds)),
       ok(waiting.shards === start.shards, 'which is not counted where it lies',
@@ -1130,12 +1134,12 @@ const TESTS = [
     ];
   }],
 
-  ['the cave is a hole in the ground, left of the rock', async () => {
+  ['the quarry is a hole in the ground, left of the rock', async () => {
     const s = state();
     return [
-      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'it is out past the rock',
-         `cave ends ${s.caveX + s.caveW}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
-      ok(s.caveW > 0 && s.caveW < 200, 'and it is a mouth, not a canyon', `${s.caveW}`)
+      ok(s.quarryX + s.quarryW < s.rockX - s.rockW / 2, 'it is out past the rock',
+         `quarry ends ${s.quarryX + s.quarryW}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
+      ok(s.quarryW > 0 && s.quarryW < 200, 'and it is a mouth, not a canyon', `${s.quarryW}`)
     ];
   }],
 
@@ -1183,9 +1187,9 @@ const TESTS = [
   ['the sites are laid out left of the rock, in order', async () => {
     const s = state();
     return [
-      ok(s.farmX + s.farmW < s.caveX, 'the farm is out past the cave',
-         `farm ends ${Math.round(s.farmX + s.farmW)}, cave at ${s.caveX}`),
-      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'and the cave past the rock'),
+      ok(s.farmX + s.farmW < s.quarryX, 'the farm is out past the quarry',
+         `farm ends ${Math.round(s.farmX + s.farmW)}, quarry at ${s.quarryX}`),
+      ok(s.quarryX + s.quarryW < s.rockX - s.rockW / 2, 'and the quarry past the rock'),
       ok(s.rockX < s.benchX && s.benchX < s.pitX, 'with the bench between rock and pit')
     ];
   }],
@@ -1207,15 +1211,15 @@ const TESTS = [
     const opened = !el.hidden;
     const before = state();
     const swing = el.querySelector('button[data-key="labswing"]');
-    const cave = el.querySelector('button[data-key="labcave"]');
+    const quarry = el.querySelector('button[data-key="labcave"]');
     if (swing) swing.click();
-    if (cave) cave.click();
+    if (quarry) quarry.click();
     await sleep(200);
     const after = state();
 
     return [
       ok(opened, 'the lab board opens at the lab'),
-      ok(!!swing && !!cave, 'it sells pace in shards and in spores'),
+      ok(!!swing && !!quarry, 'it sells pace in shards and in spores'),
       ok(after.mult.swing === before.mult.swing + 1, 'a multiplier goes up when bought'),
       ok(after.mineMs < before.mineMs, 'and the swing really is faster',
          `${before.mineMs}ms -> ${after.mineMs}ms`),
@@ -1343,10 +1347,10 @@ const TESTS = [
 
     window.__grant({ cores: 4 });
     await sleep(150);
-    const withCore = { cave: has('unlockcave'), farm: has('unlockfarm'),
+    const withCore = { quarry: has('unlockquarry'), farm: has('unlockfarm'),
                        lab: has('unlocklab'), meteor: has('unlockmeteor') };
 
-    window.__crew(1, 1, 1);                  // the cave open
+    window.__crew(1, 1, 1);                  // the quarry open
     await sleep(150);
     const withCave = { farm: has('unlockfarm'), lab: has('unlocklab') };
 
@@ -1360,12 +1364,12 @@ const TESTS = [
 
     window.__crew(0, 0);
     return [
-      ok(!fresh.includes('pick') && !fresh.includes('unlockcave'),
+      ok(!fresh.includes('pick') && !fresh.includes('unlockquarry'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withCore.cave && !withCore.farm && !withCore.lab && !withCore.meteor,
-         'the first core offers the cave, and only the cave',
+      ok(withCore.quarry && !withCore.farm && !withCore.lab && !withCore.meteor,
+         'the first core offers the quarry, and only the quarry',
          JSON.stringify(withCore)),
-      ok(withCave.farm && !withCave.lab, 'opening the cave offers the farm'),
+      ok(withCave.farm && !withCave.lab, 'opening the quarry offers the farm'),
       ok(withShard.lab && !withShard.meteor, 'a shard in hand offers the lab'),
       ok(withLab.meteor, 'and the lab offers the sky')
     ];
@@ -1382,7 +1386,7 @@ const TESTS = [
       ok(raw.cores === s.cores, 'cores are saved'),
       ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
       ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
-      ok(raw.caveOpen === s.caveOpen, 'and whether the cave is open'),
+      ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),
       ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
       ok(Array.isArray(raw.beds), 'and how far along every bed is'),
       ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
@@ -1395,7 +1399,7 @@ const TESTS = [
   }]
 ];
 
-// `__test('cave')` runs only the groups whose name says cave. The whole suite is
+// `__test('quarry')` runs only the groups whose name says quarry. The whole suite is
 // two minutes; one group is seconds, which is the difference between checking a
 // change and putting off checking it.
 export async function runTests(filter = '') {

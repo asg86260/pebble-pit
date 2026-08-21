@@ -43,11 +43,11 @@ export const LAB_UPGRADES = [
   {
     key: 'labcave',
     name: 'deeper shafts',
-    from: () => `x${mult('cave').toFixed(2)}`,
-    to: () => `x${(mult('cave') * STEP).toFixed(2)}`,
-    cost: () => Math.round(3 * Math.pow(1.9, S.mult.cave)),
+    from: () => `x${mult('quarry').toFixed(2)}`,
+    to: () => `x${(mult('quarry') * STEP).toFixed(2)}`,
+    cost: () => Math.round(3 * Math.pow(1.9, S.mult.quarry)),
     currency: 'spore',
-    buy: () => S.mult.cave++,
+    buy: () => S.mult.quarry++,
     show: () => true
   },
   {
@@ -127,6 +127,6 @@ export function bookRows() {
   if (S.seenSpore) rows.push(['spores a minute', rates.spores.toFixed(1), 'spore']);
   if (S.seenSpark) rows.push(['sparks', S.sparks, 'spark']);
   if (S.seenCore) rows.push(['rocks finished', S.boulderNo - 1, 'core']);
-  rows.push(['crew', S.miners + S.haulers + S.spelunkers + S.farmhands, '']);
+  rows.push(['crew', S.miners + S.haulers + S.quarriers + S.farmhands, '']);
   return rows;
 }

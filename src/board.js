@@ -100,7 +100,7 @@ export function tweenCount(now) {
 const headcount = title =>
   title === 'the crew' ? S.crew :
   title === 'the rock' ? S.miners :
-  title === 'the cave' ? S.spelunkers :
+  title === 'the quarry' ? S.quarriers :
   title === 'the farm' ? S.farmhands : 0;
 
 export function hud() {

@@ -1,17 +1,17 @@
-// The farm: beds out past the cave.
+// The farm: beds out past the quarry.
 //
 // Nothing grows in them on its own. A farmhand stands at a bed and tends it, and
 // it comes on while tended; when it is ripe it is cut and a spore rises off it.
-// So the crop is the crew's attention -- the same trade the cave asks for, in a
-// different shape: the cave spends a worker's *time away*, the farm spends a
+// So the crop is the crew's attention -- the same trade the quarry asks for, in a
+// different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
 import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
-import { standOn, pileOf } from './world.js';
+import { standOn } from './world.js';
 import { mult } from './lab.js';
-import { spawnChip, aim } from './dust.js';
+import { spawnSpoil } from './dust.js';
 
 // how long one bed takes to come on, at this level of tending
 export const tendMs = (lvl = S.tendLevel) =>
@@ -45,11 +45,7 @@ function pickBed(w) {
 // carries it to the pit.
 function cut(i, x) {
   S.beds[i] = 0;
-  const p = pileOf('farm');
-  const y = S.groundY - FARM_H;
-  const land = p ? p.from + P * 2 + Math.random() * Math.max(P, (p.to - p.from) * 0.5) : x + P * 6;
-  const v = aim(x, y, land, P);
-  spawnChip(x, y, v.vx, v.vy, someFind(SPORE_CELL), land);
+  spawnSpoil(x, S.groundY - FARM_H, someFind(SPORE_CELL), 'farm');
 }
 
 // one farmhand, one frame

@@ -75,10 +75,10 @@ export const S = {
   pickLevel: 0,
   autoMine: false,
 
-  // --- the cave, and what comes out of it ---
+  // --- the quarry, and what comes out of it ---
   shards: 0,
   seenShard: false,       // nothing about shards is shown until one is brought up
-  caveOpen: false,        // the cave has been opened
+  quarryOpen: false,        // the quarry has been opened
 
   // --- the farm, and what grows in it ---
   spores: 0,
@@ -96,7 +96,7 @@ export const S = {
   // --- the lab ---
   labOpen: false,
   labBoardOpen: false,
-  mult: { swing: 0, haul: 0, cave: 0, tend: 0, works: 0 },
+  mult: { swing: 0, haul: 0, quarry: 0, tend: 0, works: 0 },
 
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -107,7 +107,7 @@ export const S = {
   crew: 0,                // bodies hired, all told
   miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
-  spelunkers: 0, cavePaceLevel: 0,
+  quarriers: 0, quarryPaceLevel: 0,
   farmhands: 0, tendLevel: 0,
 
   // --- what you are doing right now ---
@@ -136,7 +136,7 @@ export const S = {
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
-export const cave = { x: 0, y: 0, w: 0, h: 0 };
+export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
 export const meteor = { x: 0, y: 0, r: 0 };

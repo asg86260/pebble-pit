@@ -6,12 +6,12 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, CELL, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
+  P, CELL, SKY, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H,
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
-import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, meteor } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -39,8 +39,8 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 // not per column: `blocked` is asked about a column thousands of times a frame.
 export function refreshPiles() {
   S.piles = [
-    { key: 'farm', from: farm.x + farm.w, to: cave.x - PILE_GAP },
-    { key: 'cave', from: cave.x + cave.w, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
+    { key: 'farm', from: farm.x + farm.w, to: quarry.x - PILE_GAP },
+    { key: 'quarry', from: quarry.x + quarry.w, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
 }
@@ -158,14 +158,14 @@ export function resize(after) {
   lab.x = S.cx + TO_LAB;
   lab.y = S.groundY - lab.h;
 
-  // the cave is a hole in the ground, so it hangs below the line rather than
+  // the quarry is a hole in the ground, so it hangs below the line rather than
   // standing on it
-  cave.w = CAVE_W;
-  cave.h = CAVE_H;
-  cave.x = S.cx + TO_CAVE;
-  cave.y = S.groundY;
+  quarry.w = QUARRY_W;
+  quarry.h = QUARRY_H;
+  quarry.x = S.cx + TO_QUARRY;
+  quarry.y = S.groundY;
 
-  // the beds stand on the ground, out past the cave
+  // the beds stand on the ground, out past the quarry
   farm.w = (FARM_BEDS - 1) * FARM_GAP;
   farm.h = FARM_H;
   farm.x = S.cx + TO_FARM;

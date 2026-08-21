@@ -25,7 +25,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `painter.js` | drawing a sand grid through a scratch canvas | yes |
 | `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
-| `cave.js` | the shaft, and spelunkers going down it | yes |
+| `quarry.js` | the open cut, and the crew working its floor | yes |
 | `farm.js` | the beds, and farmhands tending them | yes |
 | `lab.js` | the multipliers, and the books | yes |
 | `meteor.js` | the thing in the sky, and sparks off it | yes |
@@ -61,7 +61,7 @@ its count goes in `JOBS` and on `S`. Add a `type` branch in `updateWorkers` and 
 shape in `drawWorkers`. `S.haulers` is never assigned anywhere but `rebalance()`
 — it is whatever is left over once every job has taken its share.
 
-**A new bed of sand** — a cave floor, a farm bed. `grid.js` takes any object of
+**A new bed of sand** — a farm bed, say. `grid.js` takes any object of
 the shape documented at the top of it, with optional hooks:
 
 ```
@@ -129,7 +129,7 @@ reload. Nothing warns you if it does not.
 ```
 node tools/unresolved.mjs     # names a module uses but cannot see
 node tools/headless.mjs       # runs __test() in a headless browser, no install
-node tools/headless.mjs "window.__test('cave')"      # one group, seconds not minutes
+node tools/headless.mjs "window.__test('quarry')"    # one group, seconds not minutes
 ```
 
 **Checks run the clock rather than sit through it.** `clock.js` is the only thing
@@ -155,7 +155,7 @@ touch, saving and both boards. It resets the save first, so run it on a game you
 do not mind losing.
 
 Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,sparks,cores})
-__crew(miners,workers,spelunkers,farmhands) __levels({...}) __lab() __meteor()
+__crew(miners,workers,quarriers,farmhands) __levels({...}) __lab() __meteor()
 __jump(n) __next() __drop() __pile(x,n) __clearFloor()`.
 
 **Balance by measuring, and measure a plausible game.** `__levels()` and

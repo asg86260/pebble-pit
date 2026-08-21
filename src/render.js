@@ -6,7 +6,7 @@
 
 import { P, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
-import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
@@ -14,7 +14,7 @@ import { coreHome } from './core.js';
 
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
-import { underground } from './cave.js';
+import { underground } from './quarry.js';
 import { bedX, bedTop } from './farm.js';
 import { charge } from './meteor.js';
 import { fmt } from './board.js';
@@ -25,7 +25,7 @@ const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
 export { canvas };
 
-// a shard: a triangle, filled or hollow, the mark that means the cave
+// a shard: a triangle, filled or hollow, the mark that means the quarry
 export function drawTriangle(x, y, r, hollow) {
   ctx.beginPath();
   ctx.moveTo(x, y - r);
@@ -45,32 +45,34 @@ export function drawTriangle(x, y, r, hollow) {
   ctx.fillStyle = '#000';
 }
 
-// The mouth of the cave: a shaft going down, so the ground line breaks across it
+// The mouth of the quarry: a shaft going down, so the ground line breaks across it
 // and the dark carries on below. Drawn downwards rather than as an arch standing
 // on the ground, which read as a black lozenge sitting on a wire.
-export function drawCave() {
-  if (!S.caveOpen) return;
-  const { x, y, w, h } = cave;
-  const lip = P * 2;
+export function drawQuarry() {
+  if (!S.quarryOpen) return;
+  const { x, y, w, h } = quarry;
 
-  ctx.fillStyle = '#fff';                  // the ground line stops at the hole
-  ctx.fillRect(x - 1, y - 1, w + 2, 5);
+  // An open cut, not a shaft: a straight-sided hole with a floor you can see the
+  // crew standing on. The ground line stops at each rim and picks up after it,
+  // the same way it does at the pit.
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y - 2, w, h + 2);        // the hole is empty air, not a black slab
 
-  ctx.fillStyle = '#000';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + w, y);
-  ctx.lineTo(x + w - lip, y + h);          // it narrows as it goes down
-  ctx.lineTo(x + lip, y + h);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(x + 1, y - 1);
+  ctx.lineTo(x + 1, y + h - 1);            // near wall
+  ctx.lineTo(x + w - 1, y + h - 1);        // the floor they work
+  ctx.lineTo(x + w - 1, y - 1);            // far wall
+  ctx.stroke();
 
   // the ground either side of it, thickened into a lip you could stand on
+  ctx.fillStyle = '#000';
   ctx.fillRect(x - P * 3, y, P * 3, 3);
   ctx.fillRect(x + w, y, P * 3, 3);
-
-  ctx.fillStyle = '#000';
 }
+
 
 // a diamond: no longer a currency mark, kept because it is a shape worth having
 export function drawDiamond(x, y, r) {
@@ -196,11 +198,11 @@ export function drawPileMarks() {
 // depth already keeps clear on screen.
 export function pileMarkAt(key) {
   const x = key === 'rock' ? S.cx
-          : key === 'cave' ? cave.x + cave.w / 2
+          : key === 'quarry' ? quarry.x + quarry.w / 2
           : farm.x + farm.w / 2;
-  // clear of the station itself: the cave hangs below the ground line, so a
+  // clear of the station itself: the quarry hangs below the ground line, so a
   // mark under the ground would be a mark down the shaft
-  const y = key === 'cave' ? cave.y + cave.h + P * 5 : S.groundY + P * 7;
+  const y = key === 'quarry' ? quarry.y + quarry.h + P * 5 : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -383,7 +385,7 @@ export function drawBench() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    if (underground(w)) continue;          // down the cave, not on the surface
+    if (underground(w)) continue;          // down the quarry, not on the surface
 
     if (w.type === 'farmhand') {
       const x = Math.round(w.x), y = Math.round(w.y);
@@ -394,8 +396,8 @@ export function drawWorkers() {
       continue;
     }
 
-    if (w.type === 'spelunker') {
-      const x = Math.round(w.x), y = Math.round(w.y);
+    if (w.type === 'quarrier') {
+      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       ctx.fillRect(x, y, WORKER, WORKER);
       ctx.fillStyle = '#fff';
       ctx.fillRect(x + P, y, P, P);         // a lamp on its head
@@ -443,7 +445,7 @@ export function draw() {
   ctx.setTransform(k, 0, 0, k, Math.round(-S.camX * k), Math.round(-S.camY * k));
   drawCoreBehind();
   drawGroundLine();
-  drawCave();              // a hole in the ground, so it goes down with the ground
+  drawQuarry();              // a hole in the ground, so it goes down with the ground
   drawFarm();
   drawLab();
   drawMeteor();

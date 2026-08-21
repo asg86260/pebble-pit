@@ -1,7 +1,7 @@
 // The falling-sand grid, and nothing else.
 //
 // A grid is any object of the shape below. Nothing in here knows what a rock or
-// a pit or a worker is, so a new one -- a cave floor, a farm bed -- is a new
+// a pit or a worker is, so a new one -- a quarry floor, a farm bed -- is a new
 // object, not new code.
 //
 //   { x, y, cols, rows, p, grid }        where and how big, and the cells

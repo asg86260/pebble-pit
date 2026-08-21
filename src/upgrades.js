@@ -7,14 +7,14 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE, CAVE_FLOOR, TEND_FLOOR
+  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S, cave, farm, lab, meteor } from './state.js';
+import { S, quarry, farm, lab, meteor } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
-import { caveMs, caveRate } from './cave.js';
+import { quarryMs, quarryRate } from './quarry.js';
 import { mult } from './lab.js';
 import { tendMs, tendRate } from './farm.js';
 import { buildShop } from './shop.js';
@@ -77,7 +77,7 @@ export const rateText = lvl => num(mineRate(lvl));
 // — a core for the first, dust for the next — and it carries dust until you put
 // it on something else. A job is a count, not a purchase, so every one of them
 // can be taken back the moment you want the dust moving again.
-export const JOBS = ['miners', 'spelunkers', 'farmhands'];
+export const JOBS = ['miners', 'quarriers', 'farmhands'];
 
 // bodies with nothing else to do. They are the haulers, always
 export const idle = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
@@ -151,9 +151,9 @@ const site = ({ key, name, cores, open, at, show }) => ({
 });
 
 const CAVE = site({
-  key: 'unlockcave', name: 'open the cave', cores: 3, open: 'caveOpen',
-  at: () => cave.x + cave.w / 2,               // show them what they just bought
-  show: () => S.seenCore && !S.caveOpen
+  key: 'unlockquarry', name: 'open the quarry', cores: 3, open: 'quarryOpen',
+  at: () => quarry.x + quarry.w / 2,               // show them what they just bought
+  show: () => S.seenCore && !S.quarryOpen
 });
 // One place at a time. Banking a single core used to reveal every site in the
 // game at once, which spoils the whole chain: each one is a surprise that the
@@ -161,7 +161,7 @@ const CAVE = site({
 const FARM = site({
   key: 'unlockfarm', name: 'break the ground', cores: 5, open: 'farmOpen',
   at: () => farm.x + farm.w / 2,
-  show: () => S.caveOpen && !S.farmOpen
+  show: () => S.quarryOpen && !S.farmOpen
 });
 
 export const UPGRADES = [
@@ -245,16 +245,16 @@ export const UPGRADES = [
     show: () => S.crew > 0
   },
   CAVE,
-  jobRow('cavejob', 'down the cave', 'spelunkers', () => S.caveOpen),
+  jobRow('quarryjob', 'down the quarry', 'quarriers', () => S.quarryOpen),
   {
-    key: 'cavepace',
-    name: 'cave lamps',
+    key: 'quarrypace',
+    name: 'quarry lamps',
     unit: 'trips/min',
-    from: () => num(caveRate()),
-    to: () => num(caveRate(S.cavePaceLevel + 1)),
-    cost: () => Math.round(180 * Math.pow(1.75, S.cavePaceLevel)),
-    buy: () => S.cavePaceLevel++,
-    show: () => S.caveOpen && caveMs() > CAVE_FLOOR
+    from: () => num(quarryRate()),
+    to: () => num(quarryRate(S.quarryPaceLevel + 1)),
+    cost: () => Math.round(180 * Math.pow(1.75, S.quarryPaceLevel)),
+    buy: () => S.quarryPaceLevel++,
+    show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
   },
   {
     key: 'unlocklab',
@@ -292,7 +292,7 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['firstworker', 'worker', 'haulcarry', 'haulpace'] },
   { title: 'the rock', keys: ['mine', 'minerpick', 'minerspeed'] },
-  { title: 'the cave', keys: ['unlockcave', 'cavejob', 'cavepace'] },
+  { title: 'the quarry', keys: ['unlockquarry', 'quarryjob', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmjob', 'tend'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the sky', keys: ['unlockmeteor'] }

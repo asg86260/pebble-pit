@@ -171,9 +171,9 @@ export function persist() {
     haulPaceLevel: S.haulPaceLevel,
     shards: S.shards,
     seenShard: S.seenShard,
-    caveOpen: S.caveOpen,
-    spelunkers: S.spelunkers,
-    cavePaceLevel: S.cavePaceLevel,
+    quarryOpen: S.quarryOpen,
+    quarriers: S.quarriers,
+    quarryPaceLevel: S.quarryPaceLevel,
     spores: S.spores,
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
@@ -232,9 +232,9 @@ export function restore() {
     S.haulPaceLevel = 0;
     S.shards = 0;
     S.seenShard = false;
-    S.caveOpen = false;
-    S.spelunkers = 0;
-    S.cavePaceLevel = 0;
+    S.quarryOpen = false;
+    S.quarriers = 0;
+    S.quarryPaceLevel = 0;
     S.spores = 0;
     S.seenSpore = false;
     S.farmOpen = false;
@@ -266,12 +266,14 @@ export function restore() {
       : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
   S.miners = s.miners || 0;
-  S.spelunkers = s.spelunkers || 0;
+  // A save from when the quarry was a cave. The place changed and the people
+  // changed name with it; what they had done is still theirs.
+  S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
   S.farmhands = s.farmhands || 0;
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
-  S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (s.spelunkers || 0) + (s.farmhands || 0);
+  S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0);
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
   // A save from when one pick row bought both keeps what its miners had.
@@ -280,9 +282,8 @@ export function restore() {
   S.haulPaceLevel = s.haulPaceLevel || 0;
   S.shards = s.shards || 0;
   S.seenShard = !!s.seenShard || S.shards > 0;
-  S.caveOpen = !!s.caveOpen;
-  S.spelunkers = s.spelunkers || 0;
-  S.cavePaceLevel = s.cavePaceLevel || 0;
+  S.quarryOpen = !!(s.quarryOpen ?? s.caveOpen);
+  S.quarryPaceLevel = s.quarryPaceLevel ?? s.cavePaceLevel ?? 0;
   S.spores = s.spores || 0;
   S.seenSpore = !!s.seenSpore || S.spores > 0;
   S.farmOpen = !!s.farmOpen;
@@ -293,7 +294,8 @@ export function restore() {
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.meteorOpen = !!s.meteorOpen;
   S.meteorAt = 0;
-  if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] || 0;
+  // the lab's quarry multiplier answered to `cave` before the place was renamed
+  if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
   if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
@@ -329,9 +331,9 @@ export function reset() {
   S.haulPaceLevel = 0;
   S.shards = 0;
   S.seenShard = false;
-  S.caveOpen = false;
-  S.spelunkers = 0;
-  S.cavePaceLevel = 0;
+  S.quarryOpen = false;
+  S.quarriers = 0;
+  S.quarryPaceLevel = 0;
   S.spores = 0;
   S.seenSpore = false;
   S.farmOpen = false;

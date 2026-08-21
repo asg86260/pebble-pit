@@ -38,7 +38,7 @@ is empty until a site is unlocked there.
 | Site | Gives | Unlocked by |
 |---|---|---|
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
-| **cave** — a mouth in the ground; crew walk in and come back carrying | shard ◈ | cores |
+| **quarry** — an open cut; crew work its floor where you can see them | shard ◈ | cores |
 | **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
 | **meteor** — hangs in the sky over the yard | spark ✚ | late, after the lab |
 | **bench** | spends dust and cores | — |

@@ -29,8 +29,8 @@ export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
 // belongs to it. Two banks either side meant half the spoil landed on the far
 // side of the hill from everything else and somebody had to walk round it; one
 // pile, on the side the pit is on, is the whole yard flowing one way.
-export function spawnSpoil(px, py, shade) {
-  const p = pileOf('rock');
+export function spawnSpoil(px, py, shade, key = 'rock') {
+  const p = pileOf(key);
   const near = p ? p.from : rockEdge(1);
   const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
   const land = Math.min(far, near + P * 2 + Math.abs(bell()) * (far - near) * 0.45);
@@ -38,12 +38,18 @@ export function spawnSpoil(px, py, shade) {
   spawnChip(px, py, v.vx, v.vy, shade, land);
 }
 
-// the one arc from here to there: the pop is sized to the distance, and the
-// sideways speed follows from how long that pop keeps it in the air
+// The one arc from here to there: the pop is sized to the distance, and the
+// sideways speed follows from how long that pop keeps it in the air.
+//
+// It also works from *below* where it is going, which is what the quarry needs:
+// thrown off the floor of an open cut, the pop has to lift it over the rim
+// before any of the rest applies. That is one number, not another throw.
 export function aim(x, y, land, size) {
-  const drop = Math.max(P, S.groundY - size - y);
-  const pop = 2 + Math.min(4.5, Math.abs(land - x) / 90);
-  const t = (pop + Math.sqrt(pop * pop + 2 * GRAV * drop)) / GRAV;
+  const target = S.groundY - size;                     // the line it comes down to
+  const climb = Math.max(0, y - target);               // how far up before any of that
+  const pop = Math.max(2 + Math.min(4.5, Math.abs(land - x) / 90),
+                       Math.sqrt(2 * GRAV * (climb + P * 8)));
+  const t = (pop + Math.sqrt(Math.max(0, pop * pop + 2 * GRAV * (target - y)))) / GRAV;
   return { vx: (land - x) / t, vy: -pop };
 }
 

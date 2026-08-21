@@ -2,7 +2,7 @@
 //
 // Miners take the rock off in layers; workers carry dust to the pit. A new kind
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
-// cave and the farm arrive, its own file.
+// quarry and the farm arrive, its own file.
 
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
 import { S, floor, pit, bench } from './state.js';
@@ -13,7 +13,7 @@ import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
-import { stepSpelunker, newSpelunker } from './cave.js';
+import { stepQuarrier, newQuarrier } from './quarry.js';
 import { stepFarmhand, newFarmhand } from './farm.js';
 import { now } from './clock.js';
 
@@ -60,7 +60,7 @@ export function elbowed(w, x) {
 }
 
 export function syncWorkers() {
-  const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers,
+  const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
@@ -93,8 +93,8 @@ export function syncWorkers() {
       rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
     });
   }
-  const needSpelunkers = S.spelunkers - have('spelunker');
-  for (let i = 0; i < needSpelunkers; i++) S.workers.push(newSpelunker());
+  const needSpelunkers = S.quarriers - have('quarrier');
+  for (let i = 0; i < needSpelunkers; i++) S.workers.push(newQuarrier());
 
   const needFarmhands = S.farmhands - have('farmhand');
   for (let i = 0; i < needFarmhands; i++) S.workers.push(newFarmhand());
@@ -228,7 +228,7 @@ export function updateWorkers(now, dt) {
       continue;
     }
 
-    if (w.type === 'spelunker') { stepSpelunker(w, now); continue; }
+    if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
