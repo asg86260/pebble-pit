@@ -51,7 +51,7 @@ hanging in the sky** that sheds a spark on its own and can be knocked once it is
 share no art, no animation and no verb.
 
 All the art is flat monotone shapes: no textures, no gradients. The cave is a shaft that narrows
-as it goes down, the farm is a stalk per bed with a diamond on top when it is ripe, the lab is a
+as it goes down, the farm is a stalk per bed with a spore on top when it is ripe, the lab is a
 block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
 ## The lab
@@ -113,7 +113,7 @@ decision rather than a free tap.
 | **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
 | **Core** | ring | one per rock finished | places: the cave, the farm, the lab, the meteor, and the pick |
 | **Shard** | triangle | a spelunker's trip | lab: swing and haul pace |
-| **Spore** | diamond | a bed cut | lab: cave and tending pace |
+| **Spore** | hexagon | a bed cut | lab: cave and tending pace |
 | **Spark** | cross | the meteor sheds one | lab: pace on everything at once |
 
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
@@ -369,10 +369,14 @@ that actually matters. The lab is the only place a multiplier lives.)*
 ## The counter
 
 Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
-a shard a triangle, a spore a diamond, a spark a cross. Out in the world each of them is **one
-grain in one cell**, the same size as a grain of dust, because that is what it is: they were drawn
-at a radius of a whole cell, which makes a mark two cells across, and two of them side by side
-overlapped. They stack over the pit mouth, and each
+a shard a triangle, a spore a hexagon, a spark a cross. **One glyph, one size, everywhere.** Each is drawn inside the same cell-sized box — in the air, on
+the ground, in the pile, on the cursor and in a worker's hands — because a cell is what a grain
+occupies and what it collides as. A mark bigger than its cell lies about where the thing is, and
+marks of different sizes read as different *amounts* of something rather than different things.
+The board's marks are the same shapes, so the world and the shop speak one alphabet.
+
+And whatever is being carried is drawn as **what it is**: a worker walking a shard to the pit is
+visibly walking a shard, not a grey grain, and so is the load drifting round your own cursor. They stack over the pit mouth, and each
 one only appears once you have seen one.
 
 The dust count runs to each new value on an out-cubic ease — longer for a bigger jump, so a

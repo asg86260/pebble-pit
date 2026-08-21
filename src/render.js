@@ -71,7 +71,7 @@ export function drawCave() {
   ctx.fillStyle = '#000';
 }
 
-// a spore: a diamond, the mark that means the farm
+// a diamond: no longer a currency mark, kept because it is a shape worth having
 export function drawDiamond(x, y, r) {
   ctx.beginPath();
   ctx.moveTo(x, y - r);
@@ -83,7 +83,7 @@ export function drawDiamond(x, y, r) {
   ctx.fill();
 }
 
-// The beds: a stalk per bed, as tall as the bed is far along, with a diamond on
+// The beds: a stalk per bed, as tall as the bed is far along, with a spore on
 // top once it is ripe. A bare bed is a notch in the ground, so an untended farm
 // still reads as a farm.
 export function drawFarm() {
@@ -94,7 +94,7 @@ export function drawFarm() {
     ctx.fillRect(x - P, S.groundY - 2, P * 2, 3);          // the bed itself
     const top = Math.round(bedTop(i));
     if (S.beds[i] > 0.02) ctx.fillRect(x - 1, top, 2, S.groundY - top);
-    if (S.beds[i] >= 1) drawDiamond(x, top - P, P);
+    if (S.beds[i] >= 1) drawMark(SPORE_CELL, x, top - P);
   }
 
   ctx.fillStyle = '#000';
@@ -106,11 +106,54 @@ export function drawFarm() {
 // radius of a whole cell, which makes a mark two cells across, so two of them
 // side by side overlapped and a column of them ran into each other. A mark is
 // the size of the thing it stands for, and the thing it stands for is one grain.
-function drawFind(v, x, y, r = P / 2) {
-  if (v === CORE_CELL) drawCircle(x, y, r);
-  else if (v === SHARD_CELL) drawTriangle(x, y, r, false);
-  else if (v === SPORE_CELL) drawDiamond(x, y, r);
-  else drawSpark(x, y, r);
+// One glyph, one size, everywhere a grain is drawn outside the sand painter: in
+// the air, on the ground, in the pile, on the cursor and in a worker's hands.
+//
+// Every one is drawn inside the same cell-sized box, centred on `x, y`. A cell
+// is what a grain occupies and what it collides as, so a mark bigger than its
+// cell is a mark that lies about where the thing is -- and marks of different
+// sizes read as different amounts of something rather than different things.
+export function drawMark(v, x, y, size = P) {
+  const h = size / 2;
+  if (isDust(v)) {
+    ctx.fillStyle = shadeOf(v);
+    ctx.fillRect(Math.round(x - h), Math.round(y - h), size, size);
+    return;
+  }
+  ctx.fillStyle = '#000';
+  if (v === CORE_CELL) {
+    const lw = Math.max(1, size / 4);
+    ctx.beginPath();
+    ctx.arc(x, y, Math.max(0.5, h - lw / 2), 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.lineWidth = lw;
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+  } else if (v === SHARD_CELL) {
+    ctx.beginPath();
+    ctx.moveTo(x, y - h);
+    ctx.lineTo(x + h, y + h);
+    ctx.lineTo(x - h, y + h);
+    ctx.closePath();
+    ctx.fill();
+  } else if (v === SPORE_CELL) {
+    const k = h * 0.866;                       // flat-topped, so it fills the width
+    ctx.beginPath();
+    ctx.moveTo(x - h, y);
+    ctx.lineTo(x - h / 2, y - k);
+    ctx.lineTo(x + h / 2, y - k);
+    ctx.lineTo(x + h, y);
+    ctx.lineTo(x + h / 2, y + k);
+    ctx.lineTo(x - h / 2, y + k);
+    ctx.closePath();
+    ctx.fill();
+  } else {
+    const t = size / 3;
+    ctx.fillRect(x - t / 2, y - h, t, size);
+    ctx.fillRect(x - h, y - t / 2, size, t);
+  }
+  ctx.fillStyle = '#000';
 }
 
 // A station whose pile is full has stopped, and says so: a bar over it, which is
@@ -151,7 +194,7 @@ export function overPileMark(key, mx, my) {
 // whatever is not dust, lying in the yard where it was dropped or dumped
 export function drawFloorMarks() {
   ctx.fillStyle = '#000';
-  for (const m of S.floorMarks) drawFind(m.v, m.x, m.y);
+  for (const m of S.floorMarks) drawMark(m.v, m.x, m.y);
 }
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
@@ -261,7 +304,7 @@ export function drawPaid() {
 // cell is a cell; a number you have to squint at is just a number you cannot
 // read. It still sits over the pit mouth, and still slides along to stay on
 // screen as you scroll the length of the hole.
-const MARK = 7;          // a mark on the counter, in screen pixels
+const MARK = 9;          // a mark on the counter, in screen pixels
 const ROW = 19;          // and the gap between one row and the next
 
 export function drawCount() {
@@ -284,17 +327,18 @@ export function drawCount() {
 
   // then one row for every other kind, each shown only once you have seen one
   let row = y;
-  const line = (seen, mark, text) => {
+  // the same glyph the world draws, at the same size as each other
+  const line = (seen, cell, text) => {
     if (!seen) return;
     row -= ROW;
-    mark(x + MARK / 2, row - MARK / 2, MARK / 2 + 1);
+    drawMark(cell, x + MARK / 2, row - MARK / 2, MARK);
     ctx.fillStyle = '#000';
     ctx.fillText(text, x + MARK * 2, row);
   };
-  line(S.seenCore, (a, b, r) => drawCircle(a, b, r), String(S.cores));
-  line(S.seenShard, (a, b, r) => drawTriangle(a, b - 1, r, false), fmt(S.shards));
-  line(S.seenSpore, (a, b, r) => drawDiamond(a, b, r), fmt(S.spores));
-  line(S.seenSpark, (a, b, r) => drawSpark(a, b, r), fmt(S.sparks));
+  line(S.seenCore, CORE_CELL, String(S.cores));
+  line(S.seenShard, SHARD_CELL, fmt(S.shards));
+  line(S.seenSpore, SPORE_CELL, fmt(S.spores));
+  line(S.seenSpark, SPARK_CELL, fmt(S.sparks));
 }
 
 // The bench is not in the yard until there is something on it worth buying, and
@@ -338,7 +382,7 @@ export function drawWorkers() {
       ctx.fillStyle = '#fff';
       ctx.fillRect(x + P, y, P, P);         // a lamp on its head
       ctx.fillStyle = '#000';
-      if (w.carry) drawTriangle(x + WORKER / 2, y - P * 2, P, false);
+      if (w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
       continue;
     }
 
@@ -354,9 +398,12 @@ export function drawWorkers() {
       ctx.strokeRect(Math.round(w.x) + 1, y + 1, WORKER - 2, WORKER - 2);
       // the load rides overhead, stacked two abreast
       const left = Math.round(w.x) + (WORKER - P * 2) / 2;
+      // a load is drawn grain by grain as whatever each grain is, so a worker
+      // walking a shard to the pit is visibly walking a shard to the pit
       for (let i = 0; i < Math.min(w.carry, 24); i++) {
-        ctx.fillStyle = shadeOf(w.load?.[i] || 1);
-        ctx.fillRect(left + (i % 2) * P, y - P * (Math.floor(i / 2) + 1), P, P);
+        drawMark(w.load?.[i] || 1,
+                 left + (i % 2) * P + P / 2,
+                 y - P * (Math.floor(i / 2) + 1) + P / 2);
       }
       ctx.fillStyle = '#000';
       if (w.hasCore) {
@@ -399,11 +446,8 @@ export function draw() {
 
   ctx.fillStyle = '#000';
 
-  for (const ch of S.chips) {
-    if (!isDust(ch.s)) { ctx.fillStyle = '#000'; drawFind(ch.s, Math.round(ch.x), Math.round(ch.y)); continue; }
-    ctx.fillStyle = shadeOf(ch.s);
-    ctx.fillRect(Math.round(ch.x), Math.round(ch.y), P, P);
-  }
+  // a chip is a grain in the air, drawn as whatever it is
+  for (const ch of S.chips) drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2);
   ctx.fillStyle = '#000';
 
   drawGrid(floor);
@@ -470,7 +514,7 @@ export function drawPitCores() {
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      drawFind(v, cx, cy, rad);
+      drawMark(v, cx, cy, pit.p);
     }
   }
   ctx.fillStyle = '#000';
@@ -486,13 +530,11 @@ export function drawGrid(b) {
 export function drawCursor() {
   if (!S.held) return;
   const t = performance.now() / 1000;
-  let shade = 0;
   for (const m of S.motes) {
     m.a += m.spin;
-    if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
     const x = S.mouse.x + Math.cos(m.a) * m.d + Math.sin(t * 1.7 + m.bob) * 2;
     const y = S.mouse.y + Math.sin(m.a) * m.d + Math.cos(t * 1.3 + m.bob) * 2;
-    ctx.fillRect(Math.round(x), Math.round(y), P, P);
+    drawMark(m.s, Math.round(x) + P / 2, Math.round(y) + P / 2);   // what it is, not a grain of dust
   }
   ctx.fillStyle = '#000';
 }

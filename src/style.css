@@ -92,12 +92,13 @@ canvas {
     linear-gradient(currentColor, currentColor) center/2px 7px no-repeat,
     linear-gradient(currentColor, currentColor) center/7px 2px no-repeat;
 }
-/* a spore: the mark that means the farm */
+/* a spore: the mark that means the farm. A hexagon, the same shape the game
+   draws out in the yard -- the board and the world use one alphabet. */
 .spore {
   display: inline-block;
-  width: 6px; height: 6px;
+  width: 7px; height: 7px;
   background: currentColor;
-  transform: rotate(45deg);
+  clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
 }
 
 .rows button .from, .rows button .to { opacity: .75; }
