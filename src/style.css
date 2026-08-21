@@ -57,6 +57,19 @@ canvas {
 }
 #shop button:hover:not(:disabled) { color: #fff; background: #000; }
 #shop button:disabled { opacity: .3; cursor: default; }
+/* the same marks the game itself draws: a grain of dust, and a core */
+.dust, .core {
+  display: inline-block;
+  vertical-align: baseline;
+  color: currentColor;
+}
+.dust { width: 6px; height: 6px; background: currentColor; }
+.core {
+  width: 7px; height: 7px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
 #shop button .from, #shop button .to { opacity: .75; }
 #shop button .from { text-align: right; }
 #shop button .arrow { text-align: center; opacity: .4; }

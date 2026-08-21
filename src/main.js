@@ -448,6 +448,12 @@ const haulSpeed = (lvl = haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
 const scoopMs = (lvl = haulPaceLevel) => Math.max(30, Math.round(HAUL_MS * Math.pow(0.85, lvl)));
 const pickCount = () => 1 + pickLevel;         // pixels a single swing takes
 
+// units are the marks themselves: a grain of dust, a grain a second
+const UNITS = {
+  'px': '<i class="dust"></i>',
+  'px/s': '<i class="dust"></i>/s'
+};
+
 const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 const rateText = lvl => num(mineRate(lvl));
 
@@ -1569,8 +1575,8 @@ function hud() {
     name.textContent = u.name;
     from.textContent = step;
     arrow.textContent = step ? '→' : '';
-    to.textContent = step ? `${u.to()}${u.unit ? ' ' + u.unit : ''}` : '';
-    price.textContent = core ? `○ ${cost}` : String(cost);
+    to.innerHTML = step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '';
+    price.innerHTML = core ? `<i class="core"></i> ${cost}` : `<i class="dust"></i> ${cost}`;
     el.disabled = (core ? cores : stored) < cost;
   }
 }

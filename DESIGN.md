@@ -81,8 +81,9 @@ upgrades is on screen while you are mining, which keeps the scene to rock, dust,
 
 The board is grouped by crew — you, miners, haulers, drillers — with the headcount beside each
 heading. Every row is the same five columns, so the numbers line up down the page and can be
-scanned rather than read: name, current, arrow, next, cost. Dust costs are plain; core costs carry
-the core's own mark, a circle. Deliberately not an upgrade web.
+scanned rather than read: name, current, arrow, next, cost. Costs and units carry the marks the game
+itself draws: a filled square for a grain of dust, a ring for a core. A rate reads `2.2 → 2.7 ■/s`
+rather than naming pixels. Deliberately not an upgrade web.
 
 ## Workers
 
