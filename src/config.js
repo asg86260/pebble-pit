@@ -56,3 +56,13 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 export const SPILL_ROW = 4;      // how high dust must be heaped at the ledge to topple in
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed, px per frame
+
+// --- the cave ---------------------------------------------------------------
+// A mouth in the ground away to the left. Crew walk in, are gone a while, and
+// come back out with a shard. The trip time is the whole of the mechanic: it is
+// what an upgrade shortens, and what makes sending somebody in a decision.
+export const CAVE_W = 108;       // the mouth, in world pixels
+export const CAVE_H = 78;
+export const CAVE_BASE = 11000;  // a trip at pace 0
+export const CAVE_FLOOR = 2200;  // the quickest a trip will ever be
+export const CAVE_WALK = 1.1;    // a spelunker's walking speed, px per frame

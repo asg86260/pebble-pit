@@ -573,6 +573,35 @@ const TESTS = [
     ];
   }],
 
+  ['the cave gives up shards', async () => {
+    window.__crew(0, 0, 3);                  // three spelunkers, cave open
+    const start = state();
+    let wentUnder = false;
+    for (let i = 0; i < 200; i++) {
+      await sleep(100);
+      if (state().underground > 0) wentUnder = true;
+      if (state().shards > start.shards) break;
+    }
+    const after = state();
+    window.__crew(0, 0, 0);
+    return [
+      ok(after.caveOpen, 'the cave is open'),
+      ok(wentUnder, 'a spelunker goes down it'),
+      ok(after.shards > start.shards, 'and comes back up with a shard',
+         `${start.shards} -> ${after.shards}`),
+      ok(after.seenShard, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['the cave is a hole in the ground, left of the rock', async () => {
+    const s = state();
+    return [
+      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'it is out past the rock',
+         `cave ends ${s.caveX + s.caveW}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
+      ok(s.caveW > 0 && s.caveW < 200, 'and it is a mouth, not a canyon', `${s.caveW}`)
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
@@ -583,6 +612,8 @@ const TESTS = [
          `${raw?.stored} vs ${s.stored}`),
       ok(raw.cores === s.cores, 'cores are saved'),
       ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
+      ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
+      ok(raw.caveOpen === s.caveOpen, 'and whether the cave is open'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];

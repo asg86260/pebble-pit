@@ -6,10 +6,10 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, SKY, TO_BENCH, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS
+  P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H
 } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { S, floor, pit, bench, cave } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -89,6 +89,13 @@ export function resize(after) {
   bench.x = S.cx + TO_BENCH;
   bench.y = S.groundY - bench.h;
 
+  // the cave is a hole in the ground, so it hangs below the line rather than
+  // standing on it
+  cave.w = CAVE_W;
+  cave.h = CAVE_H;
+  cave.x = S.cx + TO_CAVE;
+  cave.y = S.groundY;
+
   S.worldW = pit.x + pit.w + PIT_PAD * P;
   S.worldH = S.groundY + pit.h + FLOOR_MARGIN;
 
@@ -105,6 +112,22 @@ export function resize(after) {
 
 // the view can never leave the world; if the window is bigger, it sits still
 // only sideways: the pit floor is pinned to the bottom of the window
+// Send the view somewhere, gently. Opening a new site is four cores and a row
+// in a menu; without this the player buys it and nothing appears to happen,
+// because the thing they bought is off the left of the screen.
+export function lookAt(x) {
+  S.camTo = x - S.viewW / 2;
+}
+
+// one frame of that glide
+export function stepCamera() {
+  if (S.camTo === null) return;
+  const d = S.camTo - S.camX;
+  if (Math.abs(d) < 1) { S.camX = S.camTo; S.camTo = null; }
+  else S.camX += d * 0.12;
+  clampCam();
+}
+
 export function clampCam() {
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
   S.camY = S.worldH - S.viewH;

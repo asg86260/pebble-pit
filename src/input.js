@@ -138,6 +138,7 @@ resetEl.addEventListener('click', () => {
 });
 
 export function pan(dx) {
+  S.camTo = null;                          // the player takes the view back
   const was = S.camX;
   S.camX += dx;
   clampCam();

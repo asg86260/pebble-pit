@@ -5,7 +5,7 @@
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
 import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { S, floor, pit, bench, cave } from './state.js';
 import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -13,12 +13,66 @@ import { coreHome } from './core.js';
 import { pitPix, pitPixCtx, SHADE_RGBA } from './pit.js';
 import { AIR } from './air.js';
 import { capacity } from './upgrades.js';
+import { underground } from './cave.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
 
 const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
 export { canvas };
+
+// a shard: a triangle, filled or hollow, the mark that means the cave
+export function drawTriangle(x, y, r, hollow) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y + r * 0.8);
+  ctx.lineTo(x - r, y + r * 0.8);
+  ctx.closePath();
+  if (hollow) {
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#000';
+    ctx.fill();
+  }
+  ctx.fillStyle = '#000';
+}
+
+// The mouth of the cave: a shaft going down, so the ground line breaks across it
+// and the dark carries on below. Drawn downwards rather than as an arch standing
+// on the ground, which read as a black lozenge sitting on a wire.
+export function drawCave() {
+  if (!S.caveOpen) return;
+  const { x, y, w, h } = cave;
+  const lip = P * 2;
+
+  ctx.fillStyle = '#fff';                  // the ground line stops at the hole
+  ctx.fillRect(x - 1, y - 1, w + 2, 5);
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w - lip, y + h);          // it narrows as it goes down
+  ctx.lineTo(x + lip, y + h);
+  ctx.closePath();
+  ctx.fill();
+
+  // the ground either side of it, thickened into a lip you could stand on
+  ctx.fillRect(x - P * 3, y, P * 3, 3);
+  ctx.fillRect(x + w, y, P * 3, 3);
+
+  // whatever has just been brought up, rising over the mouth
+  for (const f of S.finds) {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+    drawTriangle(f.x, f.y, P, false);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = '#000';
+}
 
 export function drawCircle(cxp, cyp, r) {
   ctx.beginPath();
@@ -91,11 +145,20 @@ export function drawCount() {
   ctx.fillText(fmt(Math.round(S.shownStored)), x + P * 2, y);
 
   // a core, then the count of those
+  let row = y;
   if (S.seenCore) {
-    const cy2 = y - P * 3;
-    drawCircle(x + P / 2, cy2 - P / 2, P / 2 + 1);
+    row -= P * 3;
+    drawCircle(x + P / 2, row - P / 2, P / 2 + 1);
     ctx.fillStyle = '#000';
-    ctx.fillText(String(S.cores), x + P * 2, cy2);
+    ctx.fillText(String(S.cores), x + P * 2, row);
+  }
+
+  // and a shard, once the cave has given one up
+  if (S.seenShard) {
+    row -= P * 3;
+    drawTriangle(x + P / 2, row - P / 2 - 1, P / 2 + 1, false);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.shards), x + P * 2, row);
   }
 }
 
@@ -111,6 +174,18 @@ export function drawBench() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
+    if (underground(w)) continue;          // down the cave, not on the surface
+
+    if (w.type === 'spelunker') {
+      const x = Math.round(w.x), y = Math.round(w.y);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y, P, P);         // a lamp on its head
+      ctx.fillStyle = '#000';
+      if (w.carry) drawTriangle(x + WORKER / 2, y - P * 2, P, false);
+      continue;
+    }
+
     if (w.type === 'miner') {
       ctx.fillRect(Math.round(w.x), Math.round(w.y), WORKER, WORKER);
       ctx.fillStyle = '#fff';
@@ -147,6 +222,7 @@ export function draw() {
   ctx.setTransform(k, 0, 0, k, Math.round(-S.camX * k), Math.round(-S.camY * k));
   drawCoreBehind();
   drawGroundLine();
+  drawCave();              // a hole in the ground, so it goes down with the ground
   ctx.fillStyle = '#000';
 
   const deep = depthOf();

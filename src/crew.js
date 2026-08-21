@@ -13,6 +13,7 @@ import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs } from './upgrades.js';
+import { stepSpelunker, newSpelunker } from './cave.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -55,7 +56,7 @@ export function elbowed(w, x) {
 }
 
 export function syncWorkers() {
-  const want = { miner: S.miners, hauler: S.haulers };
+  const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers };
   S.workers = S.workers.filter(w => want[w.type]-- > 0);       // drop any extras
 
   // count what is missing first: pushing while re-reading the length only ever
@@ -73,6 +74,9 @@ export function syncWorkers() {
       rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
     });
   }
+  const needSpelunkers = S.spelunkers - have('spelunker');
+  for (let i = 0; i < needSpelunkers; i++) S.workers.push(newSpelunker());
+
   const needHaulers = S.haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
     S.workers.push({
@@ -148,6 +152,8 @@ export function updateWorkers(now) {
       }
       continue;
     }
+
+    if (w.type === 'spelunker') { stepSpelunker(w, now); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
     // all over the ledge

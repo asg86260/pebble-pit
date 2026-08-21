@@ -7,11 +7,13 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE
+  HAUL_MS, HAUL_BASE, CAVE_FLOOR
 } from './config.js';
-import { S } from './state.js';
+import { S, cave } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
+import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
+import { caveMs, caveRate } from './cave.js';
 import { buildShop } from './shop.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
@@ -38,7 +40,8 @@ export const pickCount = () => 1 + S.pickLevel;         // pixels a single swing
 // units are the marks themselves: a grain of dust, a grain a second
 export const UNITS = {
   'px': '<i class="dust"></i>',
-  'px/s': '<i class="dust"></i>/s'
+  'px/s': '<i class="dust"></i>/s',
+  'trips/min': '<i class="shard"></i>/min'
 };
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
@@ -49,14 +52,14 @@ export const rateText = lvl => num(mineRate(lvl));
 // the farm open: a core-priced row that unlocks the type and hires the first
 // one, then a dust-priced row that hires the next. The stat rows differ enough
 // to be worth writing out, so they are not folded in here.
-function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked }) {
+function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked, onOpen }) {
   return [
     {
       key: unlockKey,
       name: one,
       cost: () => cores,
       currency: 'core',
-      buy: () => { S[unlocked] = true; S[count]++; syncWorkers(); },
+      buy: () => { S[unlocked] = true; S[count]++; syncWorkers(); if (onOpen) onOpen(); },
       show: () => S.seenCore && !S[unlocked]
     },
     {
@@ -74,6 +77,11 @@ function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked })
 const MINERS = crew({
   key: 'miner', unlockKey: 'unlockminers', one: 'first miner', many: 'miners',
   cores: 1, base: 60, mult: 1.7, count: 'miners', unlocked: 'minersUnlocked'
+});
+const SPELUNKERS = crew({
+  key: 'spelunker', unlockKey: 'unlockcave', one: 'open the cave', many: 'spelunkers',
+  cores: 4, base: 220, mult: 1.7, count: 'spelunkers', unlocked: 'caveOpen',
+  onOpen: () => lookAt(cave.x + cave.w / 2)    // show them what they just bought
 });
 const WORKERS = crew({
   key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
@@ -148,6 +156,17 @@ export const UPGRADES = [
     cost: () => Math.round(60 * Math.pow(1.7, S.haulPaceLevel)),
     buy: () => S.haulPaceLevel++,
     show: () => S.haulers > 0
+  },
+  ...SPELUNKERS,
+  {
+    key: 'cavepace',
+    name: 'cave lamps',
+    unit: 'trips/min',
+    from: () => num(caveRate()),
+    to: () => num(caveRate(S.cavePaceLevel + 1)),
+    cost: () => Math.round(180 * Math.pow(1.75, S.cavePaceLevel)),
+    buy: () => S.cavePaceLevel++,
+    show: () => S.spelunkers > 0 && caveMs() > CAVE_FLOOR
   }
 ];
 
@@ -156,7 +175,8 @@ export const UPGRADES = [
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
-  { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] }
+  { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
+  { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] }
 ];
 
 // Buying is the same shape whatever the row: check you can, take the price out

@@ -160,6 +160,11 @@ export function persist() {
     minerSpeedLevel: S.minerSpeedLevel,
     haulCarryLevel: S.haulCarryLevel,
     haulPaceLevel: S.haulPaceLevel,
+    shards: S.shards,
+    seenShard: S.seenShard,
+    caveOpen: S.caveOpen,
+    spelunkers: S.spelunkers,
+    cavePaceLevel: S.cavePaceLevel,
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
@@ -202,6 +207,11 @@ export function restore() {
     S.minerSpeedLevel = 0;
     S.haulCarryLevel = 0;
     S.haulPaceLevel = 0;
+    S.shards = 0;
+    S.seenShard = false;
+    S.caveOpen = false;
+    S.spelunkers = 0;
+    S.cavePaceLevel = 0;
     return;
   }
   S.stored = s.stored;
@@ -225,6 +235,11 @@ export function restore() {
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
   S.haulCarryLevel = s.haulCarryLevel || 0;
   S.haulPaceLevel = s.haulPaceLevel || 0;
+  S.shards = s.shards || 0;
+  S.seenShard = !!s.seenShard || S.shards > 0;
+  S.caveOpen = !!s.caveOpen;
+  S.spelunkers = s.spelunkers || 0;
+  S.cavePaceLevel = s.cavePaceLevel || 0;
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
@@ -254,6 +269,12 @@ export function reset() {
   S.minerSpeedLevel = 0;
   S.haulCarryLevel = 0;
   S.haulPaceLevel = 0;
+  S.shards = 0;
+  S.seenShard = false;
+  S.caveOpen = false;
+  S.spelunkers = 0;
+  S.cavePaceLevel = 0;
+  S.finds = [];
   syncWorkers();
   floor.grid.fill(0);
   pit.grid.fill(0);

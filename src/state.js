@@ -19,6 +19,7 @@ export const S = {
   dpr: 1,                 // device pixels per screen pixel
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
+  camTo: null,            // somewhere the view is gliding to, or null
   worldW: 0, worldH: 0,   // the world is wider than the window; the pit runs off it
 
   // --- where things stand ---
@@ -60,10 +61,17 @@ export const S = {
   pickLevel: 0,
   autoMine: false,
 
+  // --- the cave, and what comes out of it ---
+  shards: 0,
+  seenShard: false,       // nothing about shards is shown until one is brought up
+  caveOpen: false,        // the cave has been opened
+  finds: [],              // a shard rising over the mouth, on its way to being counted
+
   // --- the crew ---
   workers: [],            // little squares that mine and ferry dust
   miners: 0, minersUnlocked: false, minerSpeedLevel: 0,
   haulers: 0, haulersUnlocked: false, haulCarryLevel: 0, haulPaceLevel: 0,
+  spelunkers: 0, cavePaceLevel: 0,
 
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
@@ -88,3 +96,4 @@ export const S = {
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
+export const cave = { x: 0, y: 0, w: 0, h: 0 };
