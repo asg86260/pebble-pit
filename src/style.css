@@ -81,7 +81,7 @@ canvas {
   width: 0; height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-bottom: 7px solid currentColor;
+  border-bottom: 7px solid #2f5fd0;    /* the cave */
 }
 /* a spark: the mark that means the meteor */
 .spark {
@@ -89,15 +89,15 @@ canvas {
   position: relative;
   width: 7px; height: 7px;
   background:
-    linear-gradient(currentColor, currentColor) center/2px 7px no-repeat,
-    linear-gradient(currentColor, currentColor) center/7px 2px no-repeat;
+    linear-gradient(#e8890c, #e8890c) center/2px 7px no-repeat,   /* the sky */
+    linear-gradient(#e8890c, #e8890c) center/7px 2px no-repeat;
 }
 /* a spore: the mark that means the farm. A hexagon, the same shape the game
    draws out in the yard -- the board and the world use one alphabet. */
 .spore {
   display: inline-block;
   width: 7px; height: 7px;
-  background: currentColor;
+  background: #2e9e4b;   /* the farm */
   clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
 }
 

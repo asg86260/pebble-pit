@@ -6,7 +6,7 @@
 // different shape: the cave spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL }
+import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
 import { standOn, pileOf } from './world.js';
@@ -49,7 +49,7 @@ function cut(i, x) {
   const y = S.groundY - FARM_H;
   const land = p ? p.from + P * 2 + Math.random() * Math.max(P, (p.to - p.from) * 0.5) : x + P * 6;
   const v = aim(x, y, land, P);
-  spawnChip(x, y, v.vx, v.vy, SPORE_CELL, land);
+  spawnChip(x, y, v.vx, v.vy, someFind(SPORE_CELL), land);
 }
 
 // one farmhand, one frame

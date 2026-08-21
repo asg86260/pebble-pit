@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, MARK_SIZE, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+import { P, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -114,17 +114,29 @@ export function drawFarm() {
 // is what a grain occupies and what it collides as, so a mark bigger than its
 // cell is a mark that lies about where the thing is -- and marks of different
 // sizes read as different amounts of something rather than different things.
-export function drawMark(v, x, y, size = MARK_SIZE) {
+// `glyph` draws the shape it stands for, which is what the counter and anything
+// else with room to spare wants. Out in the yard there is no room to spare: a
+// find is a solid cell of its own colour, exactly as the painter draws it in a
+// pile, because that is the only thing that tiles.
+export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
   if (isDust(v)) {                             // a grain of dust is a grain: one cell
     ctx.fillStyle = shadeOf(v);
     ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    return;
+  }
+  const tones = FIND_COLOR[findKind(v)];
+  if (!glyph && tones) {
+    ctx.fillStyle = tones[v - findKind(v)];
+    ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    ctx.fillStyle = '#000';
     return;
   }
   // No backing square. It was there to keep two of these readable when they
   // overlapped, and they cannot overlap any more: a resting one stands in a slot
   // of its own. A white box behind a triangle is a white box on the ground.
   const h = size / 2;
-  ctx.fillStyle = '#000';
+  ctx.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
+  const kind = findKind(v) || v;
   if (v === CORE_CELL) {
     const lw = Math.max(1, size / 4);
     ctx.beginPath();
@@ -134,14 +146,14 @@ export function drawMark(v, x, y, size = MARK_SIZE) {
     ctx.lineWidth = lw;
     ctx.strokeStyle = '#000';
     ctx.stroke();
-  } else if (v === SHARD_CELL) {
+  } else if (kind === SHARD_CELL) {
     ctx.beginPath();
     ctx.moveTo(x, y - h);
     ctx.lineTo(x + h, y + h);
     ctx.lineTo(x - h, y + h);
     ctx.closePath();
     ctx.fill();
-  } else if (v === SPORE_CELL) {
+  } else if (kind === SPORE_CELL) {
     const k = h * 0.866;                       // flat-topped, so it fills the width
     ctx.beginPath();
     ctx.moveTo(x - h, y);
@@ -201,10 +213,7 @@ export function overPileMark(key, mx, my) {
 // The things the sites give up, lying where they came to rest. Each has a body
 // two cells square and its glyph fills it, so what you see is what it is and
 // what it collides as -- which is why they stack now instead of overlapping.
-export function drawFloorMarks() {
-  ctx.fillStyle = '#000';
-  for (const m of S.floorMarks) drawMark(m.v, m.x, m.y);
-}
+
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
 // else that stands on this ground.
@@ -340,7 +349,7 @@ export function drawCount() {
   const line = (seen, cell, text) => {
     if (!seen) return;
     row -= ROW;
-    drawMark(cell, x + MARK / 2, row - MARK / 2, MARK);
+    drawMark(cell, x + MARK / 2, row - MARK / 2, MARK, true);
     ctx.fillStyle = '#000';
     ctx.fillText(text, x + MARK * 2, row);
   };
@@ -467,7 +476,6 @@ export function draw() {
   drawPaid();
   drawBench();
   drawCore();
-  drawFloorMarks();        // shards and the like, lying in the dust where they landed
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawWorkers();
   drawCursor();
@@ -518,12 +526,12 @@ export function drawPitCores() {
   const pad = MARK_SIZE / 2 + 1;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
-      const v = at(pit, c, r);
-      if (!v || isDust(v)) continue;                // dust the painter has already drawn
+      // only cores: everything else in the pile is painted with the dust
+      if (at(pit, c, r) !== CORE_CELL) continue;
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      drawMark(v, cx, cy);
+      drawMark(CORE_CELL, cx, cy, MARK_SIZE, true);
     }
   }
   ctx.fillStyle = '#000';

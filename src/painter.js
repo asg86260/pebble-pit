@@ -11,13 +11,25 @@
 // a grid can keep values of its own in cells (the pit keeps cores in its pile)
 // and draw them itself, on top.
 
-import { SHADES } from './config.js';
+import { SHADES, FIND_COLOR } from './config.js';
 
-// the shades as packed RGBA, so a grain is four array writes
-const RGBA = SHADES.map(h => {
+const rgb = h => {
   const n = parseInt(h.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-});
+};
+
+// the shades as packed RGBA, so a grain is four array writes
+const RGBA = SHADES.map(rgb);
+
+// and the colours for the cells that are not dust. A shard in a pile is painted
+// by the same pass that paints the dust around it, which is what makes a heap of
+// them as solid as a heap of anything else. Anything with no colour here is
+// still left clear, for its owner to draw on top -- the pit's cores are drawn as
+// rings that way, because a core is a thing rather than a grain.
+const EXTRA = new Map();
+for (const [base, tones] of Object.entries(FIND_COLOR)) {
+  tones.forEach((h, i) => EXTRA.set(+base + i, rgb(h)));
+}
 
 export function makePainter(b) {
   const canvas = document.createElement('canvas');
@@ -54,9 +66,9 @@ export function makePainter(b) {
         for (let c = lo; c <= hi; c++) {
           const v = b.grid[r * b.cols + c];
           const i = (py * b.cols + c) * 4;
-          const rgb = v >= 1 && v <= RGBA.length ? RGBA[v - 1] : null;
-          if (!rgb) { d[i + 3] = 0; continue; }
-          d[i] = rgb[0]; d[i + 1] = rgb[1]; d[i + 2] = rgb[2]; d[i + 3] = 255;
+          const col = v >= 1 && v <= RGBA.length ? RGBA[v - 1] : EXTRA.get(v);
+          if (!col) { d[i + 3] = 0; continue; }
+          d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
         }
       }
       ctx.putImageData(image, 0, 0, lo, b.rows - 1 - bot, hi - lo + 1, bot - top + 1);

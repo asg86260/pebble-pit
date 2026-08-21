@@ -8,7 +8,7 @@
 // Nothing about the cave is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK, SHARD_CELL } from './config.js';
+import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK, SHARD_CELL, someFind } from './config.js';
 import { S, cave } from './state.js';
 import { standOn, pileOf } from './world.js';
 import { mult } from './lab.js';
@@ -41,7 +41,7 @@ function found(x, y) {
   const p = pileOf('cave');
   const land = p ? p.from + P * 2 + Math.random() * Math.max(P, (p.to - p.from) * 0.5) : x + P * 6;
   const v = aim(x, y, land, P);
-  spawnChip(x, y, v.vx, v.vy, SHARD_CELL, land);
+  spawnChip(x, y, v.vx, v.vy, someFind(SHARD_CELL), land);
 }
 
 // one spelunker, one frame

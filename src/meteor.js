@@ -8,7 +8,7 @@
 // Sparks are rare and buy exactly one thing, at the lab: pace on everything at
 // once. That is what makes them worth crossing the yard for.
 
-import { GRAV, SPARK_BASE, SPARK_FLOOR, METEOR_R, P, SPARK_CELL } from './config.js';
+import { GRAV, SPARK_BASE, SPARK_FLOOR, METEOR_R, P, SPARK_CELL, someFind } from './config.js';
 import { S, meteor } from './state.js';
 import { spawnChip } from './dust.js';
 
@@ -53,7 +53,7 @@ export function stepMeteor(now) {
     f.y += f.vy;
     if (f.y >= S.groundY - P) {
       S.falling.splice(i, 1);
-      spawnChip(f.x, f.y, 0, 0, SPARK_CELL);       // from here it is a grain like any other
+      spawnChip(f.x, f.y, 0, 0, someFind(SPARK_CELL));       // from here it is a grain like any other
     }
   }
 }

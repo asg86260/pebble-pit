@@ -80,7 +80,9 @@ export const SETTLE_BUDGET = 40000;
 export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // A cell holds how much rock is still stacked there. Thick rock is dark, and it
 // pales as you dig through it; an empty cell is the white page showing through.
-// Swap these for hues to add colour.
+// These stay grey on purpose: shade is how deep the rock was, and it is not
+// free to mean anything else. Colour in this game belongs to the things that
+// never came off the rock.
 export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
 // Cells above the shades are not dust. They heap and are carried exactly like
 // it -- a shard on the ground is a grain in the same bed, and a worker scooping
@@ -99,9 +101,36 @@ export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#
 // did not share was a bug waiting: the ceiling, the lattice, the repose angle.
 export const MARK_SIZE = P;
 export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among the dust
-export const SHARD_CELL = SHADES.length + 2;
-export const SPORE_CELL = SHADES.length + 3;
-export const SPARK_CELL = SHADES.length + 4;
+
+// Each kind of find gets a run of cell values rather than one, because each
+// grain carries its own tone: a heap of shards is a speckle of blues the way a
+// heap of dust is a speckle of greys. The tone has to live in the cell and not
+// be worked out from where the cell is -- a grain slides as the heap settles,
+// and a grain that changed colour on its way down a slope would be a mess.
+export const FIND_TONES = 4;
+export const SHARD_CELL = CORE_CELL + 1;                  // and the three after it
+export const SPORE_CELL = SHARD_CELL + FIND_TONES;
+export const SPARK_CELL = SPORE_CELL + FIND_TONES;
+export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
+
+// The first colour in the game, and the reason it goes here first: everything
+// the *ground* makes is a grey, because grey is how deep the rock was. The
+// things the sites give up are not dust and never came off the rock, so they are
+// the one thing a colour can mean something about. And a solid coloured cell
+// tiles a heap exactly the way a grey one does -- a triangle fills half its cell
+// however neatly it stacks, so a heap of them is half air by geometry.
+//
+// Flat and strong, not pastel: this is a game of flat shapes on white paper.
+export const FIND_COLOR = {
+  [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the cave: a cold blue
+  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
+  [SPARK_CELL]: ['#f4ae4a', '#ee9720', '#e8890c', '#bd6f0a']    // the sky: an ember
+};
+
+// which kind a cell belongs to, and one of that kind with a tone of its own
+export const findKind = v =>
+  v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
+export const someFind = base => base + Math.floor(Math.random() * FIND_TONES);
 export const GRAV = 0.45;
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big

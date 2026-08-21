@@ -7,6 +7,7 @@
 // settle to them as it fills, keeping every grain and only losing resolution.
 
 import { P, PIT_W, PIT_H, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+         findKind, someFind,
          SHADES } from './config.js';
 import { S, pit } from './state.js';
 import { at, put, addGrain, countDust, isDust, bottomY, settleSome } from './grid.js';
@@ -45,9 +46,9 @@ export function bankDust(x, shade = 1) {
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left
-  } else if (shade === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
-  else if (shade === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
-  else if (shade === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
+  } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
+  else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
+  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
   S.dirty = true;
   if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on
@@ -145,12 +146,13 @@ export function seedPitCores() {
   if (!pit.grid) return;
   for (const [cell, count] of HELD) {
     let have = 0;
-    for (const v of pit.grid) if (v === cell) have++;
+    for (const v of pit.grid) if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) have++;
     const want = S[count];
     for (let i = have; i < want; i++) {
       // near the lip, where the dust is and where you can see them: the pit runs
       // a long way right, and one out in the empty end is one nobody finds
-      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * 700, null, cell);
+      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * 700, null,
+               cell === CORE_CELL ? cell : someFind(cell));
     }
     if (have > want) takeCoreCells(have - want, cell);
   }
@@ -160,7 +162,12 @@ export function seedPitCores() {
 export function takeCoreCells(n, cell = CORE_CELL) {
   for (let r = pit.rows - 1; r >= 0 && n > 0; r--) {
     for (let c = 0; c < pit.cols && n > 0; c++) {
-      if (at(pit, c, r) === cell) { put(pit, c, r, 0); n--; }
+      const v = at(pit, c, r);
+      // by kind, not by tone: a shard is a shard whichever blue it happens to be
+      if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) {
+        put(pit, c, r, 0);
+        n--;
+      }
     }
   }
 }

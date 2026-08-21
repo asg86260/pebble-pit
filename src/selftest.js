@@ -591,6 +591,28 @@ const TESTS = [
   // They are dust with a different mark on them, so they heap the way dust
   // heaps: the same grid, the same repose, the same ceiling. There is no second
   // implementation of any of it to drift out of step.
+  // The first colour in the game. Everything the ground makes is a grey, because
+  // grey is how deep the rock was; the things the sites give up never came off
+  // the rock, so they are the one thing a colour can mean something about. Each
+  // grain carries its own tone, so a heap of them speckles like a heap of dust.
+  ['what the sites give up comes in colours, and in tones', async () => {
+    window.__crew(0, 0);
+    window.__clearFloor();
+    run(0.5);
+    const p = state().piles.find(q => q.key === 'cave');
+    for (let i = 0; i < 24; i++) { window.__toss('shard', p.from + 40); run(0.25); }
+    run(8);
+    const cells = state().findCells.filter(c => c.x > p.from - 40 && c.x < p.to + 40);
+    const tones = new Set(cells.map(c => c.v));
+    return [
+      ok(cells.length === 24, 'all of them are there', `${cells.length}`),
+      ok(cells.every(c => c.kind === 'shard'), 'and every one is a shard',
+         JSON.stringify([...new Set(cells.map(c => c.kind))])),
+      ok(tones.size > 1, 'they are not all the same tone', `${tones.size} tones`),
+      ok(tones.size <= 4, 'and no more tones than the kind has', `${tones.size}`)
+    ];
+  }],
+
   ['a heap of finds heaps, rather than stacking', async () => {
     window.__crew(0, 0);
     window.__clearFloor();

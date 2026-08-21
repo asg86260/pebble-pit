@@ -50,7 +50,21 @@ ground, irregular on top, worked from above by a crew standing on it. The meteor
 hanging in the sky** that sheds a spark on its own and can be knocked once it is charged. They
 share no art, no animation and no verb.
 
-All the art is flat monotone shapes: no textures, no gradients. The cave is a shaft that narrows
+All the art is flat shapes: no textures, no gradients. It is a black-and-white game and mostly
+stays one — **the ground is always grey**, because grey is how deep the rock was and that is the
+only thing it is allowed to mean.
+
+**Colour arrives slowly, and only where it means something.** The first of it is what the sites
+give up. A shard, a spore and a spark never came off the rock, so a colour can say something about
+them that shade cannot: the cave is a cold blue, the farm is green because it grew, the sky is an
+ember. Each grain carries **its own tone** out of four, so a heap of shards speckles the way a heap
+of dust speckles.
+
+That also settles how they are drawn. Out in the yard they are solid cells painted by the same pass
+that paints the dust, which is the only thing that tiles: a triangle fills half its cell however
+neatly it stacks, so a heap of triangles is half air by geometry. The **shapes are kept for the
+counter and the shop**, where there is room and white paper behind them, so the shape and the
+colour are learned together. The cave is a shaft that narrows
 as it goes down, the farm is a stalk per bed with a spore on top when it is ripe, the lab is a
 block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
