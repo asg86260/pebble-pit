@@ -72,7 +72,15 @@ export const CAP_STEP = 1;       // extra capacity per upgrade
 export const WORKER = P * 3;     // worker square size
 export const MINER_BASE = 1100;  // a hired miner starts slower than your own pick
 export const MINER_FLOOR = 260;  // fastest a miner can swing
-export const SPILL_ROW = 4;      // how high dust must be heaped at the ledge to topple in
+// The yard heaped to the brim holds about 36,800 grains, with the slope of the
+// banks deciding it. The crew down tools a little short of that, so a chip never
+// has to be told there is nowhere to put it -- the alternative was dust rolling
+// straight into the pit, which banks the whole yard for free and puts the
+// haulers out of work. Turn these down and the ground fills sooner, which makes
+// the choice between another body on the rock and another one carrying bite
+// harder and earlier.
+export const GROUND_FULL = 34000;   // grains lying about before the crew stop
+export const GROUND_CLEAR = 30000;  // and how far it has to come down before they start again
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free

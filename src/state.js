@@ -30,6 +30,9 @@ export const S = {
   boulder: [],            // rows of ints: 0 empty, else the rock still stacked there
   gw: 0, gh: 0,           // its size in cells
   rockTops: [],           // topmost rock cell per column, for the crew to stand on
+  tick: 0,                // frames, for the things not worth doing in all of them
+  floorGrains: 0,         // dust lying about the yard, counted now and then
+  yardFull: false,        // and whether there is room for any more of it
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down

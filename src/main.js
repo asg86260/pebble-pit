@@ -8,7 +8,8 @@
 import './style.css';
 import './selftest.js';        // adds __test() to the console
 
-import { P, GRAV, ROCK_SINK, SPILL_ROW, ROCK_CLEAR, SETTLE_BUDGET, HAUL_EMPTY } from './config.js';
+import { P, GRAV, ROCK_SINK, ROCK_CLEAR, SETTLE_BUDGET, HAUL_EMPTY,
+         GROUND_FULL, GROUND_CLEAR } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, count, countDust } from './grid.js';
 import { resize, clampCam, stepCamera, blocked, bankCeiling, overPitMouth, rockLeft } from './world.js';
@@ -40,9 +41,11 @@ function wireGround() {
   floor.blocked = blocked;
   floor.ceiling = bankCeiling;             // and lean away from the rock rather than against it
   floor.repose = true;                     // heaps on the ground stand up
-  floor.spillsInto = overPitMouth;         // and topple over the lip
-  floor.spillsAt = SPILL_ROW;
-  floor.spill = (x, y, v) => spawnChip(x, y, 0.6 + Math.random() * 0.6, 0, v);
+  // Nothing topples over the lip on its own any more. Dust may not stand deep
+  // enough beside the ledge to do it: a heap that could tip itself in banked the
+  // whole yard for free and put the haulers out of work, which is the one thing
+  // the ground must never do. `grid.js` still has the hooks; nothing uses them.
+  //   floor.spillsInto = overPitMouth; floor.spillsAt = 4; floor.spill = ...
 }
 
 // Laying out the world moves things; this is what each site does about it. The
@@ -73,6 +76,15 @@ function step() {
   const now = performance.now();
   const dt = Math.min(100, now - (S.lastFrame || now));   // a long tab-out is not a long frame
   S.lastFrame = now;
+  // How much is lying about. Counting fifty thousand cells is not a thing to do
+  // every frame, and the answer moves by a grain at a time, so it is counted
+  // twice a second and the crew are told to stop or start on that.
+  S.tick++;
+  if (S.tick % 30 === 1) {
+    S.floorGrains = count(floor);
+    if (S.floorGrains >= GROUND_FULL) S.yardFull = true;
+    else if (S.floorGrains < GROUND_CLEAR) S.yardFull = false;
+  }
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
   stepCore();
@@ -208,7 +220,7 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: performance.now() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, caveOpen: S.caveOpen, labOpen: S.labOpen, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), sparks: S.sparks, seenSpark: S.seenSpark, meteorOpen: S.meteorOpen, meteorX: Math.round(meteor.x), meteorY: Math.round(meteor.y), falling: S.falling.length, spelunkers: S.spelunkers, caveX: Math.round(cave.x), caveW: cave.w, spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, beds: S.beds.map(b => +b.toFixed(2)), underground: S.workers.filter(w => w.type === 'spelunker' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: performance.now() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, caveOpen: S.caveOpen, labOpen: S.labOpen, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), sparks: S.sparks, seenSpark: S.seenSpark, meteorOpen: S.meteorOpen, meteorX: Math.round(meteor.x), meteorY: Math.round(meteor.y), falling: S.falling.length, spelunkers: S.spelunkers, caveX: Math.round(cave.x), caveW: cave.w, spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, beds: S.beds.map(b => +b.toFixed(2)), underground: S.workers.filter(w => w.type === 'spelunker' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: S.yardFull, floorGrains: S.floorGrains, pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s) });
 
 relayout();
 restore();

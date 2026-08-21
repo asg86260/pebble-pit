@@ -36,14 +36,19 @@ export const pastApron = x => {
   return x + P <= near ? (near - (x + P)) / P : x >= far ? (x - far) / P : -1;
 };
 
-// How high the ground may stand in a column. Dust may not settle in the apron at
-// all, and just outside it a bank may only rise as it gets away from the rock --
-// otherwise the apron is a cliff the sand can never slump over, and the bank
-// stands against the rock as a sheer wall instead of a heap. Everywhere else
-// there is no ceiling: a bank out on clear ground heaps to whatever it likes.
+// How high the ground may stand in a column. There are two cliffs in this yard
+// that the sand cannot slump over: the rock's bare apron, and the lip of the
+// pit. A bank beside either of them would stand up as a sheer wall -- and a bank
+// that reached the lip would tip itself in, four cells at a time, and bank the
+// whole yard for free with nobody carrying anything. So a bank may only rise as
+// it gets away from both, and it lies as a thin scatter against the ledge.
+// Between the two there is as much room as the slope allows.
 export const bankCeiling = c => {
-  const d = pastApron(floor.x + c * P);
-  return d < 0 ? 0 : (d + 1) * BANK_SLOPE;
+  const x = floor.x + c * P;
+  const d = pastApron(x);
+  if (d < 0) return 0;
+  const toLip = Math.max(0, (pit.x - (x + P)) / P);        // cells short of the ledge
+  return Math.min(d + 1, toLip) * BANK_SLOPE;
 };
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it

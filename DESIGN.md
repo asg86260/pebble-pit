@@ -226,6 +226,10 @@ All of them stay plain black-and-white shapes.
 | worker | outlined square | walks to the nearest dust **nobody else has set off for**, scoops, and tosses it off the lip into the pit; carries its load stacked two abreast overhead, and drops everything to fetch a loose core first |
 | barrow | outlined square towing a dot | slower walk, carries 4× a sweeper's load |
 
+**The crew stop when there is nowhere to put it.** A miner with a full yard under it stands where
+it is rather than knocking loose dust that has nowhere to go. Clearing the ground starts them
+again.
+
 **One grain, one worker.** A worker claims the column it is walking to and keeps it until that
 column is bare. Every worker working out the nearest dust for itself, every frame, is the same
 answer for all of them — so a single grain behind the crew turned the whole line round, and turned
@@ -432,11 +436,21 @@ Two things keep a big pile cheap, and are worth keeping either way:
   how many grains of each shade there are, and the speckle is dealt out again on the way back
   in. The profile and the count come back exact, in about 2 KB.
 
-If the ground bed ever fills, further dust rolls into the pit instead of piling up mid-air.
+**Nothing gets into the pit without being carried or thrown.** That is the rule the ground has to
+keep, and it used to leak two ways. A heap against the ledge tipped itself in once it was four
+cells deep, and a full yard sent the rest rolling in rather than piling up mid-air. Between them
+they banked the whole yard for free and left the haulers with nothing to do, which is the one
+thing the ground must never do.
 
-Dust heaped against the ledge topples in on its own once it is four cells deep there. A thin
-scatter just rests against the wall — so throwing everything at the edge is a real tactic, but the
-ground does not quietly drain itself and put the haulers out of work.
+So the lip of the pit is the second **cliff the sand may not lean on**, the same as the rock's
+apron: a bank may only rise as it gets away from it, and beside the ledge it lies as a thin
+scatter that cannot topple. Throwing dust over the edge is still a real tactic — a flick sends it
+through the air, and anything that crosses the mouth falls in.
+
+The yard heaped to the brim holds about **36,800 grains**. A little short of that the **crew down
+tools** and stand where they are until the ground has been carried away. That is the shape of the
+choice the job rows ask: another body on the rock is more dust on the ground, and somebody still
+has to move it.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

@@ -405,6 +405,54 @@ const TESTS = [
   // The last columns of ground sit further right than a worker is allowed to
   // stand, so one that had to be standing on a column to scoop it stood at the
   // lip for ever with the dust a hand's width away.
+  // Two ways the yard used to bank dust with nobody carrying it: a heap that
+  // reached the lip tipped itself in four cells at a time, and once the ground
+  // was full the rest rolled straight into the pit. Both put the haulers out of
+  // a job, which is the one thing the ground must never do.
+  ['the ground never banks dust by itself', async () => {
+    window.__crew(3, 0);
+    window.__clearFloor();
+    await sleep(400);
+    const s = state();
+    const before = state().pitDust;
+    // heap it at the ledge, far more than the old four-deep topple needed
+    for (let i = 0; i < 40; i++) window.__pile(s.pitX - 30, 200);
+    await sleep(1200);
+    const heaped = state();
+
+    // now fill the whole yard and watch the crew stop rather than the dust roll in
+    for (let i = 0; i < 120 && !state().yardFull; i++) {
+      for (let k = 0; k < 24; k++) window.__pile(s.rockX - 700 + Math.random() * 1600, 80);
+      await sleep(40);
+    }
+    const full = state();
+    const rockThen = full.rock;
+    await sleep(2500);
+    const stalled = state();
+    window.__clearFloor();
+    await sleep(1200);
+    const freed = state();
+    const rockFreed = freed.rock;
+    await sleep(2500);
+    const working = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      // a handful is what was already in the air when the ground ran out; in play
+      // the crew stop before it can, so nothing is ever homeless
+      ok(heaped.pitDust - before <= 20, 'a heap at the ledge does not topple in on its own',
+         `${before} -> ${heaped.pitDust} in the pit`),
+      ok(full.yardFull, 'the yard fills up', `${full.floorGrains} grains`),
+      ok(stalled.pitDust - before <= 20, 'and nothing rolls in but what was already flying',
+         `${stalled.pitDust - before} grains in`),
+      ok(stalled.rock === rockThen, 'the crew down tools instead',
+         `${rockThen} -> ${stalled.rock} of rock`),
+      ok(!freed.yardFull, 'clearing the ground puts them back to work'),
+      ok(working.rock < rockFreed, 'and the rock starts coming off again',
+         `${rockFreed} -> ${working.rock}`)
+    ];
+  }],
+
   ['a worker can reach dust right on the lip', async () => {
     window.__crew(0, 1);
     window.__clearFloor();
