@@ -22,4 +22,14 @@ bun install
 bun run dev
 ```
 
-Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n dust, `__drop()` releases a core.
+## Testing
+
+Open the game and run `__test()` in the browser console. It drives the game through the same
+hooks the console has and checks the things that have broken before: the canvas covering the
+window, the ground pinned to the bottom, the pit's fixed size, the shop board opening at the bench
+and sitting above the canvas, mining, throwing, spending, the counter easing, cores banking, and
+miners and workers doing their jobs. It resets the save first, so run it on a game you do not mind
+losing.
+
+Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n dust, `__drop()`
+releases a core, `__jump(n)` swaps in boulder n, `__pile(x, n)` heaps dust on the ground.

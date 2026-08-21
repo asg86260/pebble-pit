@@ -1,5 +1,6 @@
 import './style.css';
 import { load, save, clear } from './save.js';
+import './selftest.js';        // adds __test() to the console
 
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -187,6 +188,7 @@ function resize() {
   canvas.style.position = 'fixed';
   canvas.style.left = '0';
   canvas.style.top = '0';
+  canvas.style.zIndex = '0';
   canvas.style.width = `${W}px`;
   canvas.style.height = `${H}px`;
   canvas.width = Math.round(W * dpr);

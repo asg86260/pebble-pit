@@ -9,6 +9,7 @@ html, body {
 canvas {
   position: fixed;
   inset: 0;
+  z-index: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -19,6 +20,7 @@ canvas {
 /* the board that opens at the workbench */
 #board {
   position: fixed;
+  z-index: 10;                 /* the canvas is fixed too, and comes after it */
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 12px;
   background: #fff;
