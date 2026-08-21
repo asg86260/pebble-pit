@@ -173,8 +173,9 @@ and it runs to each new value on an out-cubic ease — longer for a bigger jump,
 reads as a withdrawal rather than a number blinking.
 
 One number, and it is both: what is in the hole is the score *and* the money. Buying something
-lifts that dust back out of the pile, so every upgrade is a choice between arriving sooner and
-being further along right now.
+lifts that dust back out of the pile — you watch it stream out of the pit, arc across, and vanish
+into the bench — so every upgrade is a choice between arriving sooner and being further along
+right now.
 
 Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
 what it pays — the counter is a plain count of pixels in the hole.

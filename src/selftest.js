@@ -169,6 +169,23 @@ const TESTS = [
     ];
   }],
 
+  ['paying flies the dust to the bench', async () => {
+    window.__give(600);
+    await sleep(300);
+    await hoverBench();
+    const before = state();
+    await buy('carry');
+    await sleep(120);
+    const mid = state();
+    await sleep(2000);
+    const after = state();
+    return [
+      ok(mid.paid > 0, 'dust leaves the pit when you pay', `${mid.paid} in flight`),
+      ok(after.paid === 0, 'and all of it reaches the bench', `${after.paid} left over`),
+      ok(after.pitGrains < before.pitGrains, 'the pile is smaller for it')
+    ];
+  }],
+
   ['the counter runs to its value', async () => {
     const before = state().shown;
     window.__give(2000);

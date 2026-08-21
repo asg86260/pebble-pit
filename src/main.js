@@ -73,6 +73,7 @@ let nextHit = 0;
 let mouse = { x: -99, y: -99 };
 let trail = [];           // recent cursor samples, for working out a throw
 let motes = [];           // the floating pixels riding with the cursor
+let paid = [];            // dust on its way out of the pit to the bench
 let cores = 0;            // cores banked in the pit
 let seenCore = false;     // a core has been banked at least once
 let pitScale = 1;         // dust each drawn grain in the pit stands for
@@ -640,6 +641,18 @@ function spend(cost) {
       if (!v || v === CORE_CELL) continue;
       put(pit, c, r, 0);
       worth -= pitScale;
+      if (paid.length < 200) {               // a few hundred is plenty to read
+        paid.push({
+          x0: pit.x + c * P,
+          y0: bottomY(pit) - (r + 1) * P,
+          x: pit.x + c * P,
+          y: bottomY(pit) - (r + 1) * P,
+          t: -Math.random() * 0.5,           // they leave in a stream, not a block
+          rate: 0.012 + Math.random() * 0.01,
+          lift: 60 + Math.random() * 90,     // how high it arcs on the way
+          s: v
+        });
+      }
     }
   }
 }
@@ -917,6 +930,7 @@ function restore() {
 function reset() {
   clear();
   chips = [];
+  paid = [];
   stored = 0;
   shownStored = tweenFrom = tweenTo = 0;
   held = 0;
@@ -1196,6 +1210,31 @@ function airSource() {
   return null;
 }
 
+// paid dust arcs out of the pit to the bench and is gone; a flight it always
+// finishes, rather than a pull it can circle forever
+function stepPaid() {
+  const tx = bench.x + bench.w / 2, ty = bench.y - P * 2;
+  for (let i = paid.length - 1; i >= 0; i--) {
+    const m = paid[i];
+    m.t += m.rate;
+    if (m.t >= 1) { paid.splice(i, 1); continue; }
+    if (m.t <= 0) continue;
+
+    const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out
+    m.x = m.x0 + (tx - m.x0) * e;
+    m.y = m.y0 + (ty - m.y0) * e - Math.sin(e * Math.PI) * m.lift;
+  }
+}
+
+function drawPaid() {
+  let shade = 0;
+  for (const m of paid) {
+    if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
+    ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
+  }
+  ctx.fillStyle = '#000';
+}
+
 function stepAir() {
   const dust = count(floor) + count(pit);
   const want = Math.min(AIR_CAP, 6 + Math.round(dust / 45));
@@ -1375,6 +1414,7 @@ function stepCore() {
 
 function step() {
   stepAir();
+  stepPaid();
   updateWorkers(performance.now());
   stepCore();
   if (dragging) catchAir(mouse.x, mouse.y);   // swinging does not catch its own spray
@@ -1473,6 +1513,7 @@ function draw() {
   ctx.lineTo(worldW, groundY + 1);
   ctx.stroke();
 
+  drawPaid();
   drawBench();
   drawCount();
   drawCore();
@@ -1697,7 +1738,7 @@ window.__next = () => { boulder = boulder.map(row => row.map(() => 0)); chips = 
 window.__drop = () => { dropCore(); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
-window.__state = () => ({ zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ paid: paid.length, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), grid, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 camX = cx - viewW / 2;                   // start looking at the rock
