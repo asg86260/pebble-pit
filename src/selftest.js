@@ -602,6 +602,48 @@ const TESTS = [
     ];
   }],
 
+  ['the farm grows spores when it is tended', async () => {
+    window.__crew(0, 0, 0, 2);               // two farmhands, farm open
+    const start = state();
+    let grew = false;
+    for (let i = 0; i < 250; i++) {
+      await sleep(100);
+      if (state().beds.some(b => b > 0.1)) grew = true;
+      if (state().spores > start.spores) break;
+    }
+    const after = state();
+    return [
+      ok(after.farmOpen, 'the farm is open'),
+      ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
+      ok(grew, 'a bed comes on while it is tended'),
+      ok(after.spores > start.spores, 'and is cut for a spore',
+         `${start.spores} -> ${after.spores}`),
+      ok(after.seenSpore, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['nothing grows in an untended farm', async () => {
+    window.__crew(0, 0, 0, 0);               // everybody off the farm
+    await sleep(200);
+    const before = state();
+    await sleep(1500);
+    const after = state();
+    return [
+      ok(after.spores === before.spores, 'the crop does not come on by itself',
+         `${before.spores} -> ${after.spores}`)
+    ];
+  }],
+
+  ['the sites are laid out left of the rock, in order', async () => {
+    const s = state();
+    return [
+      ok(s.farmX + s.farmW < s.caveX, 'the farm is out past the cave',
+         `farm ends ${Math.round(s.farmX + s.farmW)}, cave at ${s.caveX}`),
+      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'and the cave past the rock'),
+      ok(s.rockX < s.benchX && s.benchX < s.pitX, 'with the bench between rock and pit')
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
@@ -614,6 +656,8 @@ const TESTS = [
       ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
       ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
       ok(raw.caveOpen === s.caveOpen, 'and whether the cave is open'),
+      ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
+      ok(Array.isArray(raw.beds), 'and how far along every bed is'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];

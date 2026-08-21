@@ -64,7 +64,7 @@ canvas {
 #shop button:hover:not(:disabled) { color: #fff; background: #000; }
 #shop button:disabled { opacity: .3; cursor: default; }
 /* the same marks the game itself draws: a grain of dust, and a core */
-.dust, .core, .shard {
+.dust, .core, .shard, .spore {
   display: inline-block;
   vertical-align: baseline;
   color: currentColor;
@@ -82,6 +82,13 @@ canvas {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-bottom: 7px solid currentColor;
+}
+/* a spore: the mark that means the farm */
+.spore {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: currentColor;
+  transform: rotate(45deg);
 }
 
 #shop button .from, #shop button .to { opacity: .75; }

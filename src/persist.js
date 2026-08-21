@@ -165,6 +165,12 @@ export function persist() {
     caveOpen: S.caveOpen,
     spelunkers: S.spelunkers,
     cavePaceLevel: S.cavePaceLevel,
+    spores: S.spores,
+    seenSpore: S.seenSpore,
+    farmOpen: S.farmOpen,
+    farmhands: S.farmhands,
+    tendLevel: S.tendLevel,
+    beds: S.beds.map(b => Math.round(b * 100)),
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
@@ -212,6 +218,12 @@ export function restore() {
     S.caveOpen = false;
     S.spelunkers = 0;
     S.cavePaceLevel = 0;
+    S.spores = 0;
+    S.seenSpore = false;
+    S.farmOpen = false;
+    S.farmhands = 0;
+    S.tendLevel = 0;
+    S.beds = [];
     return;
   }
   S.stored = s.stored;
@@ -240,6 +252,12 @@ export function restore() {
   S.caveOpen = !!s.caveOpen;
   S.spelunkers = s.spelunkers || 0;
   S.cavePaceLevel = s.cavePaceLevel || 0;
+  S.spores = s.spores || 0;
+  S.seenSpore = !!s.seenSpore || S.spores > 0;
+  S.farmOpen = !!s.farmOpen;
+  S.farmhands = s.farmhands || 0;
+  S.tendLevel = s.tendLevel || 0;
+  if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
@@ -274,6 +292,13 @@ export function reset() {
   S.caveOpen = false;
   S.spelunkers = 0;
   S.cavePaceLevel = 0;
+  S.spores = 0;
+  S.seenSpore = false;
+  S.farmOpen = false;
+  S.farmhands = 0;
+  S.tendLevel = 0;
+  S.beds = [];
+  S.crop = [];
   S.finds = [];
   syncWorkers();
   floor.grid.fill(0);

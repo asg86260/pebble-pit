@@ -7,13 +7,14 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE, CAVE_FLOOR
+  HAUL_MS, HAUL_BASE, CAVE_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S, cave } from './state.js';
+import { S, cave, farm } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
 import { caveMs, caveRate } from './cave.js';
+import { tendMs, tendRate } from './farm.js';
 import { buildShop } from './shop.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
@@ -41,7 +42,8 @@ export const pickCount = () => 1 + S.pickLevel;         // pixels a single swing
 export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
-  'trips/min': '<i class="shard"></i>/min'
+  'trips/min': '<i class="shard"></i>/min',
+  'beds/min': '<i class="spore"></i>/min'
 };
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
@@ -82,6 +84,11 @@ const SPELUNKERS = crew({
   key: 'spelunker', unlockKey: 'unlockcave', one: 'open the cave', many: 'spelunkers',
   cores: 4, base: 220, mult: 1.7, count: 'spelunkers', unlocked: 'caveOpen',
   onOpen: () => lookAt(cave.x + cave.w / 2)    // show them what they just bought
+});
+const FARMHANDS = crew({
+  key: 'farmhand', unlockKey: 'unlockfarm', one: 'break the ground', many: 'farmhands',
+  cores: 7, base: 400, mult: 1.7, count: 'farmhands', unlocked: 'farmOpen',
+  onOpen: () => lookAt(farm.x + farm.w / 2)
 });
 const WORKERS = crew({
   key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
@@ -167,6 +174,17 @@ export const UPGRADES = [
     cost: () => Math.round(180 * Math.pow(1.75, S.cavePaceLevel)),
     buy: () => S.cavePaceLevel++,
     show: () => S.spelunkers > 0 && caveMs() > CAVE_FLOOR
+  },
+  ...FARMHANDS,
+  {
+    key: 'tend',
+    name: 'tending',
+    unit: 'beds/min',
+    from: () => num(tendRate()),
+    to: () => num(tendRate(S.tendLevel + 1)),
+    cost: () => Math.round(320 * Math.pow(1.75, S.tendLevel)),
+    buy: () => S.tendLevel++,
+    show: () => S.farmhands > 0 && tendMs() > TEND_FLOOR
   }
 ];
 
@@ -176,7 +194,8 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
   { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
-  { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] }
+  { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] },
+  { title: 'the farm', keys: ['unlockfarm', 'farmhand', 'tend'] }
 ];
 
 // Buying is the same shape whatever the row: check you can, take the price out

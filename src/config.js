@@ -66,3 +66,14 @@ export const CAVE_H = 78;
 export const CAVE_BASE = 11000;  // a trip at pace 0
 export const CAVE_FLOOR = 2200;  // the quickest a trip will ever be
 export const CAVE_WALK = 1.1;    // a spelunker's walking speed, px per frame
+
+// --- the farm ---------------------------------------------------------------
+// Beds out past the cave. Nothing grows in them on its own: a farmhand stands
+// at a bed and tends it, and it grows while tended. So the crop is the crew's
+// attention, which is the same trade the cave asks for in a different shape.
+export const FARM_BEDS = 7;
+export const FARM_GAP = 42;      // world pixels between one bed and the next
+export const FARM_H = 54;        // how tall a ripe stalk stands
+export const TEND_BASE = 9000;   // to bring one bed on at tending 0
+export const TEND_FLOOR = 1800;
+export const FARM_WALK = 1.1;

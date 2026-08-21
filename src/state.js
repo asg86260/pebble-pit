@@ -67,11 +67,19 @@ export const S = {
   caveOpen: false,        // the cave has been opened
   finds: [],              // a shard rising over the mouth, on its way to being counted
 
+  // --- the farm, and what grows in it ---
+  spores: 0,
+  seenSpore: false,
+  farmOpen: false,
+  beds: [],               // how far along each bed is, 0..1
+  crop: [],               // a spore rising off a bed just harvested
+
   // --- the crew ---
   workers: [],            // little squares that mine and ferry dust
   miners: 0, minersUnlocked: false, minerSpeedLevel: 0,
   haulers: 0, haulersUnlocked: false, haulCarryLevel: 0, haulPaceLevel: 0,
   spelunkers: 0, cavePaceLevel: 0,
+  farmhands: 0, tendLevel: 0,
 
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
@@ -83,6 +91,7 @@ export const S = {
 
   // --- housekeeping ---
   dirty: false,           // something changed worth saving
+  lastFrame: 0,           // for the length of the last frame
   dustSeen: 0, dustSeenAt: 0,   // a cached count, for how many motes drift about
   settleAt: 0,            // the column the pit settler got to last frame
   pitImage: null,         // the pit's pixels, one per grain
@@ -97,3 +106,4 @@ export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const cave = { x: 0, y: 0, w: 0, h: 0 };
+export const farm = { x: 0, y: 0, w: 0, h: 0 };

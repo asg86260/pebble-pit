@@ -14,6 +14,7 @@ import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs } from './upgrades.js';
 import { stepSpelunker, newSpelunker } from './cave.js';
+import { stepFarmhand, newFarmhand } from './farm.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -56,7 +57,8 @@ export function elbowed(w, x) {
 }
 
 export function syncWorkers() {
-  const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers };
+  const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers,
+                 farmhand: S.farmhands };
   S.workers = S.workers.filter(w => want[w.type]-- > 0);       // drop any extras
 
   // count what is missing first: pushing while re-reading the length only ever
@@ -76,6 +78,9 @@ export function syncWorkers() {
   }
   const needSpelunkers = S.spelunkers - have('spelunker');
   for (let i = 0; i < needSpelunkers; i++) S.workers.push(newSpelunker());
+
+  const needFarmhands = S.farmhands - have('farmhand');
+  for (let i = 0; i < needFarmhands; i++) S.workers.push(newFarmhand());
 
   const needHaulers = S.haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
@@ -113,7 +118,7 @@ export function topGrain(c) {
   return -1;
 }
 
-export function updateWorkers(now) {
+export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
@@ -154,6 +159,7 @@ export function updateWorkers(now) {
     }
 
     if (w.type === 'spelunker') { stepSpelunker(w, now); continue; }
+    if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
     // all over the ledge

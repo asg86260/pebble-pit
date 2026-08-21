@@ -4,8 +4,8 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET } from './config.js';
-import { S, floor, pit, bench, cave } from './state.js';
+import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
+import { S, floor, pit, bench, cave, farm } from './state.js';
 import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -14,6 +14,7 @@ import { pitPix, pitPixCtx, SHADE_RGBA } from './pit.js';
 import { AIR } from './air.js';
 import { capacity } from './upgrades.js';
 import { underground } from './cave.js';
+import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
 
@@ -69,6 +70,40 @@ export function drawCave() {
   for (const f of S.finds) {
     ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
     drawTriangle(f.x, f.y, P, false);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = '#000';
+}
+
+// a spore: a diamond, the mark that means the farm
+export function drawDiamond(x, y, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fillStyle = '#000';
+  ctx.fill();
+}
+
+// The beds: a stalk per bed, as tall as the bed is far along, with a diamond on
+// top once it is ripe. A bare bed is a notch in the ground, so an untended farm
+// still reads as a farm.
+export function drawFarm() {
+  if (!S.farmOpen) return;
+  ctx.fillStyle = '#000';
+  for (let i = 0; i < S.beds.length; i++) {
+    const x = Math.round(bedX(i));
+    ctx.fillRect(x - P, S.groundY - 2, P * 2, 3);          // the bed itself
+    const top = Math.round(bedTop(i));
+    if (S.beds[i] > 0.02) ctx.fillRect(x - 1, top, 2, S.groundY - top);
+    if (S.beds[i] >= 1) drawDiamond(x, top - P, P);
+  }
+
+  for (const c of S.crop) {
+    ctx.globalAlpha = Math.max(0, 1 - c.t / 1.6);
+    drawDiamond(c.x, c.y, P);
     ctx.globalAlpha = 1;
   }
   ctx.fillStyle = '#000';
@@ -160,6 +195,14 @@ export function drawCount() {
     ctx.fillStyle = '#000';
     ctx.fillText(fmt(S.shards), x + P * 2, row);
   }
+
+  // and a spore, once the farm has grown one
+  if (S.seenSpore) {
+    row -= P * 3;
+    drawDiamond(x + P / 2, row - P / 2, P / 2 + 1);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.spores), x + P * 2, row);
+  }
 }
 
 export function drawBench() {
@@ -175,6 +218,15 @@ export function drawBench() {
 export function drawWorkers() {
   for (const w of S.workers) {
     if (underground(w)) continue;          // down the cave, not on the surface
+
+    if (w.type === 'farmhand') {
+      const x = Math.round(w.x), y = Math.round(w.y);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y + P * 2, P, P);   // stooped: the notch is low
+      ctx.fillStyle = '#000';
+      continue;
+    }
 
     if (w.type === 'spelunker') {
       const x = Math.round(w.x), y = Math.round(w.y);
@@ -223,6 +275,7 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawCave();              // a hole in the ground, so it goes down with the ground
+  drawFarm();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();
