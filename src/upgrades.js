@@ -7,11 +7,15 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  DRILL_BASE, DRILL_FLOOR, HAUL_MS, HAUL_BASE
+  HAUL_MS, HAUL_BASE, CAVE_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S } from './state.js';
+import { S, cave, farm, lab, meteor } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
+import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
+import { caveMs, caveRate } from './cave.js';
+import { mult } from './lab.js';
+import { tendMs, tendRate } from './farm.js';
 import { buildShop } from './shop.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
@@ -24,24 +28,40 @@ export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
 
 const mineGap = swing(MINE_BASE, MINE_FLOOR, 0.8);
 const minerGap = swing(MINER_BASE, MINER_FLOOR, 0.82);
-const drillGap = swing(DRILL_BASE, DRILL_FLOOR, 0.82);
 const scoopGap = swing(HAUL_MS, 30, 0.85);
 
-export const mineMs = (lvl = S.speedLevel) => mineGap(lvl);
-export const mineRate = (lvl = S.speedLevel) => perSecond(mineGap)(lvl);
-export const minerMs = (lvl = S.minerSpeedLevel) => minerGap(lvl);
-export const minerRate = (lvl = S.minerSpeedLevel) => perSecond(minerGap)(lvl);
-export const drillMs = (lvl = S.drillSpeedLevel) => drillGap(lvl);
-export const drillRate = (lvl = S.drillSpeedLevel) => perSecond(drillGap)(lvl);
+export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
+export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
+export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(1, minerGap(lvl) / mult('swing'));
+export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
 export const haulCap = (lvl = S.haulCarryLevel) => 1 + lvl;
-export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
-export const scoopMs = (lvl = S.haulPaceLevel) => scoopGap(lvl);
+export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl) * mult('haul');
+export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
 export const pickCount = () => 1 + S.pickLevel;         // pixels a single swing takes
+
+// Every currency is a mark, never a word. Adding one is a line here and a line
+// in the stylesheet.
+export const MARK = {
+  dust: '<i class="dust"></i>',
+  core: '<i class="core"></i>',
+  shard: '<i class="shard"></i>',
+  spore: '<i class="spore"></i>',
+  spark: '<i class="spark"></i>'
+};
+
+// what you have of one
+export const purse = money =>
+  money === 'core' ? S.cores :
+  money === 'shard' ? S.shards :
+  money === 'spore' ? S.spores :
+  money === 'spark' ? S.sparks : S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
 export const UNITS = {
   'px': '<i class="dust"></i>',
-  'px/s': '<i class="dust"></i>/s'
+  'px/s': '<i class="dust"></i>/s',
+  'trips/min': '<i class="shard"></i>/min',
+  'beds/min': '<i class="spore"></i>/min'
 };
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
@@ -52,14 +72,14 @@ export const rateText = lvl => num(mineRate(lvl));
 // the farm open: a core-priced row that unlocks the type and hires the first
 // one, then a dust-priced row that hires the next. The stat rows differ enough
 // to be worth writing out, so they are not folded in here.
-function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked }) {
+function crew({ key, unlockKey, one, many, cores, base, mult, count, unlocked, onOpen }) {
   return [
     {
       key: unlockKey,
       name: one,
       cost: () => cores,
       currency: 'core',
-      buy: () => { S[unlocked] = true; S[count]++; syncWorkers(); },
+      buy: () => { S[unlocked] = true; S[count]++; syncWorkers(); if (onOpen) onOpen(); },
       show: () => S.seenCore && !S[unlocked]
     },
     {
@@ -78,13 +98,24 @@ const MINERS = crew({
   key: 'miner', unlockKey: 'unlockminers', one: 'first miner', many: 'miners',
   cores: 1, base: 60, mult: 1.7, count: 'miners', unlocked: 'minersUnlocked'
 });
+const SPELUNKERS = crew({
+  key: 'spelunker', unlockKey: 'unlockcave', one: 'open the cave', many: 'spelunkers',
+  cores: 3, base: 220, mult: 1.7, count: 'spelunkers', unlocked: 'caveOpen',
+  onOpen: () => lookAt(cave.x + cave.w / 2)    // show them what they just bought
+});
+const FARMHANDS = crew({
+  key: 'farmhand', unlockKey: 'unlockfarm', one: 'break the ground', many: 'farmhands',
+  cores: 5, base: 400, mult: 1.7, count: 'farmhands', unlocked: 'farmOpen',
+  onOpen: () => lookAt(farm.x + farm.w / 2)
+});
+// One place at a time. Banking a single core used to reveal every site in the
+// game at once, which spoils the whole chain: each one is a surprise that the
+// last one earns.
+SPELUNKERS[0].show = () => S.seenCore && !S.caveOpen;
+FARMHANDS[0].show = () => S.caveOpen && !S.farmOpen;
 const WORKERS = crew({
   key: 'hauler', unlockKey: 'unlockhaulers', one: 'first worker', many: 'workers',
   cores: 2, base: 80, mult: 1.7, count: 'haulers', unlocked: 'haulersUnlocked'
-});
-const DRILLERS = crew({
-  key: 'driller', unlockKey: 'unlockdrillers', one: 'first driller', many: 'drillers',
-  cores: 3, base: 140, mult: 1.6, count: 'drillers', unlocked: 'drillersUnlocked'
 });
 
 export const UPGRADES = [
@@ -156,16 +187,43 @@ export const UPGRADES = [
     buy: () => S.haulPaceLevel++,
     show: () => S.haulers > 0
   },
-  ...DRILLERS,
+  ...SPELUNKERS,
   {
-    key: 'drillspeed',
-    name: 'driller bite',
-    unit: 'px/s',
-    from: () => num(drillRate()),
-    to: () => num(drillRate(S.drillSpeedLevel + 1)),
-    cost: () => Math.round(120 * Math.pow(1.7, S.drillSpeedLevel)),
-    buy: () => S.drillSpeedLevel++,
-    show: () => S.drillers > 0 && drillMs() > DRILL_FLOOR
+    key: 'cavepace',
+    name: 'cave lamps',
+    unit: 'trips/min',
+    from: () => num(caveRate()),
+    to: () => num(caveRate(S.cavePaceLevel + 1)),
+    cost: () => Math.round(180 * Math.pow(1.75, S.cavePaceLevel)),
+    buy: () => S.cavePaceLevel++,
+    show: () => S.spelunkers > 0 && caveMs() > CAVE_FLOOR
+  },
+  {
+    key: 'unlocklab',
+    name: 'build the lab',
+    cost: () => 7,
+    currency: 'core',
+    buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
+    show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
+  },
+  {
+    key: 'unlockmeteor',
+    name: 'call it down',
+    cost: () => 9,
+    currency: 'core',
+    buy: () => { S.meteorOpen = true; S.meteorAt = 0; lookAt(meteor.x); },
+    show: () => S.labOpen && !S.meteorOpen
+  },
+  ...FARMHANDS,
+  {
+    key: 'tend',
+    name: 'tending',
+    unit: 'beds/min',
+    from: () => num(tendRate()),
+    to: () => num(tendRate(S.tendLevel + 1)),
+    cost: () => Math.round(320 * Math.pow(1.75, S.tendLevel)),
+    buy: () => S.tendLevel++,
+    show: () => S.farmhands > 0 && tendMs() > TEND_FLOOR
   }
 ];
 
@@ -175,22 +233,26 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
   { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
-  { title: 'drillers', keys: ['unlockdrillers', 'driller', 'drillspeed'] }
+  { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] },
+  { title: 'the farm', keys: ['unlockfarm', 'farmhand', 'tend'] },
+  { title: 'the lab', keys: ['unlocklab'] },
+  { title: 'the sky', keys: ['unlockmeteor'] }
 ];
 
-// Buying is the same shape whatever the row: check you can, take the price out
-// of wherever it is kept, then let the row do its one thing.
+// Buying is the same shape whatever the row and whatever it is priced in: check
+// you can afford it, take the price out of wherever that currency is kept, then
+// let the row do its one thing.
 export function buy(u) {
   const cost = u.cost();
-  if (!u.show()) return;
-  if (u.currency === 'core') {
-    if (S.cores < cost) return;
-    S.cores -= cost;
-    takeCoreCells(cost);
-  } else {
-    if (S.stored < cost) return;
-    spend(cost);
-  }
+  const money = u.currency || 'dust';
+  if (!u.show() || purse(money) < cost) return;
+
+  if (money === 'dust') spend(cost);              // lifted back out of the pile
+  else if (money === 'core') { S.cores -= cost; takeCoreCells(cost); }
+  else if (money === 'shard') S.shards -= cost;
+  else if (money === 'spore') S.spores -= cost;
+  else if (money === 'spark') S.sparks -= cost;
+
   u.buy();
   S.dirty = true;
   buildShop();

@@ -52,6 +52,8 @@ const declared = src => {
     m[1].split(',').forEach(p => add(p.split(/[=:]/)[0].replace(/^\.+/, ''))));
   each(/([A-Za-z_$][\w$]*)\s*=>/g, m => add(m[1]));
   each(/catch\s*\(\s*([A-Za-z_$][\w$]*)/g, m => add(m[1]));
+  // a destructured array parameter: `([a, b], i) => ...` declares a and b
+  each(/\(\s*\[([^\]]*)\]/g, m => m[1].split(',').forEach(add));
   // a destructured parameter: `function f({ a, b })` declares a and b
   each(/(?:function\s*\w*\s*|=>\s*|\(\s*)\{([^{}]*)\}\s*\)/g, m =>
     m[1].split(',').forEach(p => add(p.split(/[=:]/).pop())));

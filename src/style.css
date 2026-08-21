@@ -22,8 +22,8 @@ canvas {
      does not get to pan or pinch it away */
   touch-action: none;
 }
-/* the board that opens at the workbench */
-#board {
+/* the boards that open at the workbench and at the lab */
+.panel {
   position: fixed;
   z-index: 10;                 /* the canvas is fixed too, and comes after it */
   box-sizing: border-box;      /* so a max-height is the height, padding and all */
@@ -35,18 +35,18 @@ canvas {
   text-transform: uppercase;
   white-space: nowrap;
 }
-#board[hidden] { display: none; }
+.panel[hidden] { display: none; }
 
-#shop { display: flex; flex-direction: column; gap: 3px; }
+.rows { display: flex; flex-direction: column; gap: 3px; }
 
-#shop .sect {
+.rows .sect {
   margin-top: 6px;
   opacity: .4;
   border-bottom: 1px solid #000;
 }
-#shop .sect:first-child { margin-top: 0; }
+.rows .sect:first-child { margin-top: 0; }
 
-#shop button {
+.rows button {
   display: grid;
   grid-template-columns: 9em 2.8em 1.2em 5.6em 4.6em;
   align-items: baseline;
@@ -61,10 +61,10 @@ canvas {
   padding: 2px 3px;
   cursor: pointer;
 }
-#shop button:hover:not(:disabled) { color: #fff; background: #000; }
-#shop button:disabled { opacity: .3; cursor: default; }
+.rows button:hover:not(:disabled) { color: #fff; background: #000; }
+.rows button:disabled { opacity: .3; cursor: default; }
 /* the same marks the game itself draws: a grain of dust, and a core */
-.dust, .core {
+.dust, .core, .shard, .spore, .spark {
   display: inline-block;
   vertical-align: baseline;
   color: currentColor;
@@ -75,15 +75,39 @@ canvas {
   border: 1.5px solid currentColor;
   border-radius: 50%;
 }
+/* a shard: the mark that means the cave */
+.shard {
+  display: inline-block;
+  width: 0; height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 7px solid currentColor;
+}
+/* a spark: the mark that means the meteor */
+.spark {
+  display: inline-block;
+  position: relative;
+  width: 7px; height: 7px;
+  background:
+    linear-gradient(currentColor, currentColor) center/2px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) center/7px 2px no-repeat;
+}
+/* a spore: the mark that means the farm */
+.spore {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: currentColor;
+  transform: rotate(45deg);
+}
 
-#shop button .from, #shop button .to { opacity: .75; }
-#shop button .from { text-align: right; }
-#shop button .arrow { text-align: center; opacity: .4; }
-#shop button .cost { text-align: right; opacity: .7; }
-#shop button:hover:not(:disabled) .from,
-#shop button:hover:not(:disabled) .to,
-#shop button:hover:not(:disabled) .arrow,
-#shop button:hover:not(:disabled) .cost { opacity: 1; }
+.rows button .from, .rows button .to { opacity: .75; }
+.rows button .from { text-align: right; }
+.rows button .arrow { text-align: center; opacity: .4; }
+.rows button .cost { text-align: right; opacity: .7; }
+.rows button:hover:not(:disabled) .from,
+.rows button:hover:not(:disabled) .to,
+.rows button:hover:not(:disabled) .arrow,
+.rows button:hover:not(:disabled) .cost { opacity: 1; }
 
 #reset {
   align-self: flex-start;
@@ -106,7 +130,7 @@ canvas {
    bench rather than by hovering, because there is no hovering.
    A phone held sideways is a wide, short window, so short counts as small too. */
 @media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
-  #board {
+  .panel {
     padding: 8px 9px;
     max-width: calc(100vw - 16px);
     /* in landscape there may be less room above the bench than the board wants:
@@ -115,14 +139,35 @@ canvas {
     overflow-y: auto;
     letter-spacing: .06em;
   }
-  #shop { gap: 1px; }
-  #shop button {
+  .rows { gap: 1px; }
+  .rows button {
     grid-template-columns: 7.4em 2.4em 1em 4.4em 3.8em;
     gap: 0 4px;
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
   }
-  #shop button:hover:not(:disabled) { color: #000; background: none; }
-  #shop button:active:not(:disabled) { color: #fff; background: #000; }
+  .rows button:hover:not(:disabled) { color: #000; background: none; }
+  .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #reset { padding: 6px 8px; }
 }
+
+/* the lab's rows say longer things than the bench's, and its values are
+   multipliers rather than counts, so it gets its own column widths */
+#lab .rows button { grid-template-columns: 10.5em 3.6em 1.2em 4.2em 4.4em; }
+@media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
+  #lab .rows button { grid-template-columns: 8.6em 3.2em 1em 3.6em 3.6em; }
+}
+
+/* the lab's stats page: a plain list of rates, under its rows */
+#stats {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #000;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  opacity: .75;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+#stats b { font-weight: normal; text-align: right; }

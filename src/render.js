@@ -4,21 +4,155 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
+import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
-import { pitPix, pitPixCtx, SHADE_RGBA } from './pit.js';
+
 import { AIR } from './air.js';
 import { capacity } from './upgrades.js';
+import { underground } from './cave.js';
+import { bedX, bedTop } from './farm.js';
+import { charge } from './meteor.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
 
 const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
 export { canvas };
+
+// a shard: a triangle, filled or hollow, the mark that means the cave
+export function drawTriangle(x, y, r, hollow) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y + r * 0.8);
+  ctx.lineTo(x - r, y + r * 0.8);
+  ctx.closePath();
+  if (hollow) {
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = '#000';
+    ctx.fill();
+  }
+  ctx.fillStyle = '#000';
+}
+
+// The mouth of the cave: a shaft going down, so the ground line breaks across it
+// and the dark carries on below. Drawn downwards rather than as an arch standing
+// on the ground, which read as a black lozenge sitting on a wire.
+export function drawCave() {
+  if (!S.caveOpen) return;
+  const { x, y, w, h } = cave;
+  const lip = P * 2;
+
+  ctx.fillStyle = '#fff';                  // the ground line stops at the hole
+  ctx.fillRect(x - 1, y - 1, w + 2, 5);
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w - lip, y + h);          // it narrows as it goes down
+  ctx.lineTo(x + lip, y + h);
+  ctx.closePath();
+  ctx.fill();
+
+  // the ground either side of it, thickened into a lip you could stand on
+  ctx.fillRect(x - P * 3, y, P * 3, 3);
+  ctx.fillRect(x + w, y, P * 3, 3);
+
+  // whatever has just been brought up, rising over the mouth
+  for (const f of S.finds) {
+    ctx.globalAlpha = Math.max(0, 1 - f.t / 1.6);
+    drawTriangle(f.x, f.y, P, false);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = '#000';
+}
+
+// a spore: a diamond, the mark that means the farm
+export function drawDiamond(x, y, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+  ctx.fillStyle = '#000';
+  ctx.fill();
+}
+
+// The beds: a stalk per bed, as tall as the bed is far along, with a diamond on
+// top once it is ripe. A bare bed is a notch in the ground, so an untended farm
+// still reads as a farm.
+export function drawFarm() {
+  if (!S.farmOpen) return;
+  ctx.fillStyle = '#000';
+  for (let i = 0; i < S.beds.length; i++) {
+    const x = Math.round(bedX(i));
+    ctx.fillRect(x - P, S.groundY - 2, P * 2, 3);          // the bed itself
+    const top = Math.round(bedTop(i));
+    if (S.beds[i] > 0.02) ctx.fillRect(x - 1, top, 2, S.groundY - top);
+    if (S.beds[i] >= 1) drawDiamond(x, top - P, P);
+  }
+
+  for (const c of S.crop) {
+    ctx.globalAlpha = Math.max(0, 1 - c.t / 1.6);
+    drawDiamond(c.x, c.y, P);
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = '#000';
+}
+
+// The lab: a squat block with a chimney. Flat black shapes, like everything
+// else that stands on this ground.
+// a spark: a four-armed cross, the mark that means the meteor
+export function drawSpark(x, y, r) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x - r / 3, y - r, r * 2 / 3, r * 2);
+  ctx.fillRect(x - r, y - r / 3, r * 2, r * 2 / 3);
+}
+
+// The meteor: a plain black circle hanging in the sky, with a ring round it that
+// closes as it charges, so you can see one is due without a bar or a number.
+export function drawMeteor() {
+  if (!S.meteorOpen) return;
+  const { x, y, r } = meteor;
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  const c = charge(performance.now());
+  if (c > 0) {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 8, -Math.PI / 2, -Math.PI / 2 + c * Math.PI * 2);
+    ctx.stroke();
+  }
+
+  for (const f of S.falling) drawSpark(f.x, f.y, P);
+  ctx.fillStyle = '#000';
+}
+
+export function drawLab() {
+  if (!S.labOpen) return;
+  const { x, y, w, h } = lab;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y + h * 0.35, w, h * 0.65);              // the body
+  ctx.fillRect(x + w * 0.18, y, w * 0.2, h * 0.35);        // a chimney
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + w * 0.55, y + h * 0.55, P * 3, P * 3);  // a window
+  ctx.fillStyle = '#000';
+}
 
 export function drawCircle(cxp, cyp, r) {
   ctx.beginPath();
@@ -91,11 +225,36 @@ export function drawCount() {
   ctx.fillText(fmt(Math.round(S.shownStored)), x + P * 2, y);
 
   // a core, then the count of those
+  let row = y;
   if (S.seenCore) {
-    const cy2 = y - P * 3;
-    drawCircle(x + P / 2, cy2 - P / 2, P / 2 + 1);
+    row -= P * 3;
+    drawCircle(x + P / 2, row - P / 2, P / 2 + 1);
     ctx.fillStyle = '#000';
-    ctx.fillText(String(S.cores), x + P * 2, cy2);
+    ctx.fillText(String(S.cores), x + P * 2, row);
+  }
+
+  // and a shard, once the cave has given one up
+  if (S.seenShard) {
+    row -= P * 3;
+    drawTriangle(x + P / 2, row - P / 2 - 1, P / 2 + 1, false);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.shards), x + P * 2, row);
+  }
+
+  // and a spore, once the farm has grown one
+  if (S.seenSpore) {
+    row -= P * 3;
+    drawDiamond(x + P / 2, row - P / 2, P / 2 + 1);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.spores), x + P * 2, row);
+  }
+
+  // and a spark, once one has come down
+  if (S.seenSpark) {
+    row -= P * 3;
+    drawSpark(x + P / 2, row - P / 2, P / 2 + 1);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.sparks), x + P * 2, row);
   }
 }
 
@@ -111,17 +270,31 @@ export function drawBench() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
+    if (underground(w)) continue;          // down the cave, not on the surface
+
+    if (w.type === 'farmhand') {
+      const x = Math.round(w.x), y = Math.round(w.y);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y + P * 2, P, P);   // stooped: the notch is low
+      ctx.fillStyle = '#000';
+      continue;
+    }
+
+    if (w.type === 'spelunker') {
+      const x = Math.round(w.x), y = Math.round(w.y);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y, P, P);         // a lamp on its head
+      ctx.fillStyle = '#000';
+      if (w.carry) drawTriangle(x + WORKER / 2, y - P * 2, P, false);
+      continue;
+    }
+
     if (w.type === 'miner') {
       ctx.fillRect(Math.round(w.x), Math.round(w.y), WORKER, WORKER);
       ctx.fillStyle = '#fff';
       ctx.fillRect(Math.round(w.x) + P, Math.round(w.y) + P, P, P);    // hollow centre
-      ctx.fillStyle = '#000';
-    } else if (w.type === 'driller') {
-      const x = Math.round(w.x), y = Math.round(w.y);
-      ctx.fillRect(x, y, WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + P, y, P, P);                                     // a bite out of it
-      ctx.fillRect(x + P, y + P * 2, P, P);
       ctx.fillStyle = '#000';
     } else {
       const y = standOn(S.groundY);
@@ -154,6 +327,10 @@ export function draw() {
   ctx.setTransform(k, 0, 0, k, Math.round(-S.camX * k), Math.round(-S.camY * k));
   drawCoreBehind();
   drawGroundLine();
+  drawCave();              // a hole in the ground, so it goes down with the ground
+  drawFarm();
+  drawLab();
+  drawMeteor();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();
@@ -222,44 +399,10 @@ export function drawPitOutline() {
 }
 
 export function drawPit() {
-  if (!S.pitImage || pitPix.width !== pit.cols || pitPix.height !== pit.rows) {
-    pitPix.width = pit.cols;
-    pitPix.height = pit.rows;
-    S.pitImage = pitPixCtx.createImageData(pit.cols, pit.rows);
-    S.pitPainted = false;
-  }
-
-  if (!S.pitPainted) { S.pitLo = 0; S.pitHi = pit.cols - 1; S.pitTop = 0; S.pitBot = pit.rows - 1; }
-
-  if (S.pitHi >= S.pitLo && S.pitTop >= 0) {
-    const d = S.pitImage.data;
-    for (let r = S.pitTop; r <= S.pitBot; r++) {
-      // row 0 is the floor of the pit, so the image is drawn upside down
-      const py = pit.rows - 1 - r;
-      for (let c = S.pitLo; c <= S.pitHi; c++) {
-        const v = at(pit, c, r);
-        const i = (py * pit.cols + c) * 4;
-        if (!v) { d[i + 3] = 0; continue; }
-        const rgba = SHADE_RGBA[Math.min(SHADES.length, Math.max(1, v)) - 1];
-        d[i] = rgba[0]; d[i + 1] = rgba[1]; d[i + 2] = rgba[2]; d[i + 3] = 255;
-      }
-    }
-    pitPixCtx.putImageData(S.pitImage, 0, 0, S.pitLo, pit.rows - 1 - S.pitBot,
-                           S.pitHi - S.pitLo + 1, S.pitBot - S.pitTop + 1);
-    S.pitPainted = true;
-    S.pitLo = pit.cols; S.pitHi = -1; S.pitTop = -1; S.pitBot = 0;
-  }
-
-  const sm = ctx.imageSmoothingEnabled;
-  ctx.imageSmoothingEnabled = false;       // grains are squares, not smudges
-  ctx.drawImage(pitPix, pit.x, pit.y, pit.w, pit.h);
-  ctx.imageSmoothingEnabled = sm;
-
+  pit.painter.paint(ctx, pit.x, pit.y, pit.w, pit.h);
   drawPitCores();
 }
 
-// a core draws bigger than the grain it sits in, so keep the whole circle inside
-// the pile's walls and floor rather than letting it poke through
 export function drawPitCores() {
   const rad = P * 1.2, pad = rad + 2;
   for (let r = 0; r < pit.rows; r++) {
@@ -273,28 +416,10 @@ export function drawPitCores() {
   ctx.fillStyle = '#000';
 }
 
+// the ground, through its own painter for the same reason as the pit: an
+// under-staffed yard can leave fifty thousand grains lying about
 export function drawGrid(b) {
-  let shade = 0;
-  const buried = [];
-  for (let r = 0; r < b.rows; r++) {
-    for (let c = 0; c < b.cols; c++) {
-      const v = at(b, c, r);
-      if (!v) continue;
-      const x = b.x + c * b.p, y = bottomY(b) - (r + 1) * b.p;
-      if (v === CORE_CELL) { buried.push([x, y]); continue; }
-      if (v !== shade) { shade = v; ctx.fillStyle = shadeOf(v); }
-      ctx.fillRect(x, y, b.p, b.p);
-    }
-  }
-  // a core draws bigger than the cell it sits in, so keep the whole circle inside
-  // the pile's walls and floor rather than letting it poke through
-  const rad = P * 1.2, pad = rad + 2;
-  for (const [x, y] of buried) {
-    const cxp = Math.min(Math.max(x + P / 2, b.x + pad), b.x + b.cols * P - pad);
-    const cyp = Math.min(Math.max(y + P / 2, b.y + pad), bottomY(b) - pad);
-    drawCircle(cxp, cyp, rad);
-  }
-  ctx.fillStyle = '#000';
+  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p);
 }
 
 // the carried dust drifts loosely around the cursor

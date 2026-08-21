@@ -8,8 +8,9 @@ import { P, MINE_DELAY, WORKER } from './config.js';
 import { S, bench } from './state.js';
 import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
+import { overMeteor, knockMeteor } from './meteor.js';
 import { sweep, release, track } from './hands.js';
-import { nearBench, showBoard, placeBoard } from './board.js';
+import { nearBench, nearLab, showBoard, showLab, placeBoard } from './board.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
 
@@ -54,6 +55,10 @@ canvas.addEventListener('pointerdown', e => {
 
   const p = pos(e);
   S.mouse = p;
+  if (overMeteor(p.x, p.y)) {                 // knock a charged spark loose
+    knockMeteor(performance.now());
+    return;
+  }
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     S.mining = S.autoMine;                      // holding only mines once unlocked
@@ -82,7 +87,10 @@ canvas.addEventListener('pointermove', e => {
   S.mouse = pos(e);
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
-  if (e.pointerType !== 'touch') showBoard(nearBench(S.mouse.x, S.mouse.y));
+  if (e.pointerType !== 'touch') {
+    showBoard(nearBench(S.mouse.x, S.mouse.y));
+    showLab(nearLab(S.mouse.x, S.mouse.y));
+  }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
@@ -97,9 +105,12 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning &&
       Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
       performance.now() - held.at < TAP_TIME) {
+    // one board at a time: two of them open at once on a phone screen would
+    // simply sit on top of each other
     const p = pos(e);
-    if (nearBench(p.x, p.y)) showBoard(!S.boardOpen);
-    else if (S.boardOpen) showBoard(false);
+    if (nearBench(p.x, p.y)) { const want = !S.boardOpen; showLab(false); showBoard(want); }
+    else if (nearLab(p.x, p.y)) { const want = !S.labBoardOpen; showBoard(false); showLab(want); }
+    else { showBoard(false); showLab(false); }
   }
 
   S.mining = false;
@@ -138,6 +149,7 @@ resetEl.addEventListener('click', () => {
 });
 
 export function pan(dx) {
+  S.camTo = null;                          // the player takes the view back
   const was = S.camX;
   S.camX += dx;
   clampCam();
@@ -150,6 +162,7 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 boardEl.addEventListener('pointerleave', () => showBoard(false));
+document.getElementById('lab').addEventListener('pointerleave', () => showLab(false));
 addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'ArrowRight') pan(P * 12);

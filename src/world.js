@@ -6,10 +6,11 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, SKY, TO_BENCH, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS
+  P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H, SIDE_PAD,
+  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -66,7 +67,7 @@ export function resize(after) {
   // pixels to one screen pixel there are three times as many rungs, so a phone
   // can settle on one that fits the whole works on instead of clamping short.
   const needH = ROCK_SKY + PIT_H + FLOOR_MARGIN + P * 4;
-  const needW = TO_LEDGE + ROCK_SKY + P * 20;
+  const needW = TO_LEDGE + SIDE_PAD + P * 20;
   const raw = Math.min(1, S.H / needH, S.W / needW);
   const cell = Math.max(1, Math.floor(P * raw * S.dpr));   // device pixels per cell
   S.zoom = cell / (P * S.dpr);
@@ -89,6 +90,29 @@ export function resize(after) {
   bench.x = S.cx + TO_BENCH;
   bench.y = S.groundY - bench.h;
 
+  // the one thing that is not on the ground
+  meteor.x = S.cx + TO_METEOR;
+  meteor.y = S.groundY - METEOR_UP;
+  meteor.r = METEOR_R;
+
+  lab.w = P * 14;
+  lab.h = P * 10;
+  lab.x = S.cx + TO_LAB;
+  lab.y = S.groundY - lab.h;
+
+  // the cave is a hole in the ground, so it hangs below the line rather than
+  // standing on it
+  cave.w = CAVE_W;
+  cave.h = CAVE_H;
+  cave.x = S.cx + TO_CAVE;
+  cave.y = S.groundY;
+
+  // the beds stand on the ground, out past the cave
+  farm.w = (FARM_BEDS - 1) * FARM_GAP;
+  farm.h = FARM_H;
+  farm.x = S.cx + TO_FARM;
+  farm.y = S.groundY;
+
   S.worldW = pit.x + pit.w + PIT_PAD * P;
   S.worldH = S.groundY + pit.h + FLOOR_MARGIN;
 
@@ -105,6 +129,22 @@ export function resize(after) {
 
 // the view can never leave the world; if the window is bigger, it sits still
 // only sideways: the pit floor is pinned to the bottom of the window
+// Send the view somewhere, gently. Opening a new site is four cores and a row
+// in a menu; without this the player buys it and nothing appears to happen,
+// because the thing they bought is off the left of the screen.
+export function lookAt(x) {
+  S.camTo = x - S.viewW / 2;
+}
+
+// one frame of that glide
+export function stepCamera() {
+  if (S.camTo === null) return;
+  const d = S.camTo - S.camX;
+  if (Math.abs(d) < 1) { S.camX = S.camTo; S.camTo = null; }
+  else S.camX += d * 0.12;
+  clampCam();
+}
+
 export function clampCam() {
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
   S.camY = S.worldH - S.viewH;

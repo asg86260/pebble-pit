@@ -5,8 +5,8 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
 
 ## Pillars
 
-1. **Finite.** Twelve boulders, then it stops. Twelve circles end up scattered through the pit,
-   one per boulder — dug out of the pile rather than displayed on a shelf.
+1. **It does not end.** Rocks keep coming, each a little bigger than the last until they
+   plateau. One core per rock, so a core is a rock, and cores are what open everything.
 2. **No fail state.** No timers, no losing dust, no punishment for walking away.
 3. **Every upgrade changes behaviour, not a number.** New worker types over bigger multipliers.
 4. **The simulation is the reward.** You watch the dust pile, the crew walk, the pit fill.
@@ -40,23 +40,43 @@ is empty until a site is unlocked there.
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
 | **cave** — a mouth in the ground; crew walk in and come back carrying | shard ◈ | cores |
 | **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
-| **meteor** — hangs in the sky, mined from below | a rare mark, its own path | late |
+| **meteor** — hangs in the sky over the yard | spark ✚ | late, after the lab |
 | **bench** | spends dust and cores | — |
 | **lab** | spends shard and spore on multipliers, and shows the stats page | cores |
 | **pit** | holds it all | — |
 
 The rock and the meteor are deliberately different objects. The rock is a **hill**: flat on the
-ground, irregular on top, mined from above by crew who stand on its surface and work their way
-down. The meteor is a **disc** hanging in the air, mined from a ring. They should never be
-confused for each other, so they share no art and no animation.
+ground, irregular on top, worked from above by a crew standing on it. The meteor is a **circle
+hanging in the sky** that sheds a spark on its own and can be knocked once it is charged. They
+share no art, no animation and no verb.
+
+All the art is flat monotone shapes: no textures, no gradients. The cave is a shaft that narrows
+as it goes down, the farm is a stalk per bed with a diamond on top when it is ripe, the lab is a
+block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
 ## The lab
 
-The bench spends dust and cores on the operation. The lab spends shard and spore on
-**multipliers** — the only place real growth comes from, and the only reason a million is
-reachable. Keep these few and large: five or six purchases each across a whole run, not a
-column of them. The lab also has a stats page — dust/s, shard/s, spore/s, cores/s, and time to
-a million at the current rate.
+The bench sells you **more** — another miner, another worker, another trip. The lab sells you
+**faster**, and it is the only place a multiplier lives.
+
+Everything it sells is a *rate*, never a yield: a pixel of rock is worth exactly one dust
+wherever it came from, and that rule stays. Growth comes from doing the same work sooner.
+
+| Row | Costs | Multiplies |
+|---|---|---|
+| sharper picks | shard ◈ | every swing, yours and the crew's |
+| stronger backs | shard ◈ | worker pace and scooping |
+| deeper shafts | spore ◇ | cave trips |
+| richer beds | spore ◇ | tending |
+| the whole works | spark ✚ | all four of the above, on top |
+
+Four ladders and an apex, and no more. Five currencies with a wall of percentages behind them is
+where cozy turns into a spreadsheet.
+
+It also keeps the books, because nobody can tell whether a purchase helped by watching a pile:
+dust, shards and spores a minute, smoothed, plus what is in the hole, rocks finished and the size
+of the crew. Rates are read off **lifetime totals**, never off the balance — reading them off the
+balance made a big purchase show as forty thousand dust a minute of *negative* production.
 
 ## Crew
 
@@ -66,15 +86,28 @@ Crew are hired by type at the bench and stay put. Each site has its own hire:
 |---|---|---|
 | miner | the rock | ◯ 1 |
 | worker | carries dust to the pit | ◯ 2 |
-| spelunker | the cave | ◯ 4 |
-| farmhand | the farm | ◯ 6 |
+| spelunker | the cave | ◯ 3 |
+| farmhand | the farm | ◯ 5 |
+
+And two more cores open the places rather than the people: the lab at ◯ 7 and the meteor at ◯ 9.
+
+The cave and the farm ask for the same thing in different shapes. A spelunker spends its time
+**away** — down the shaft, off the surface entirely. A farmhand spends its time **standing
+still** at a bed. Either way the body is not carrying dust, which is what makes assigning one a
+decision rather than a free tap.
 
 ## Economy
 
-| | Source | Spends on | Total in a run |
+| | Mark | Source | Spends on |
 |---|---|---|---|
-| **Dust** | one per rock pixel (two from dense rock) | numbers: carry, speed, hires, worker stats | ~35,000 mined |
-| **Cores** | one per finished boulder | unlocks: new worker types, new tools | 12 |
+| **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
+| **Core** | ring | one per rock finished | places: the cave, the farm, the lab, the meteor, and the pick |
+| **Shard** | triangle | a spelunker's trip | lab: swing and haul pace |
+| **Spore** | diamond | a bed cut | lab: cave and tending pace |
+| **Spark** | cross | the meteor sheds one | lab: pace on everything at once |
+
+Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
+and the pile is the dust rather than a picture of it.
 
 Sweep radius is fixed at 3 cells — it was an upgrade and got cut; widening the brush changed
 nothing you could feel, because carry capacity is the real limit on a sweep.
@@ -83,11 +116,12 @@ Costs grow exponentially, output grows linearly — the standard incremental see
 use `base × mult^owned`. Keep `mult` in the 1.35–1.6 band; the genre sits at 1.07–1.15 for
 hundreds of purchases, but our ladders are 6–15 levels, so we need steeper.
 
-Cores are fixed-price and scarce — twelve exist, and the unlock ladder costs exactly twelve.
-Everything is buyable by the end, nothing is buyable early.
+Cores are fixed-price and scarce: one a rock, for ever. The ladder of places costs twenty-seven
+of them and the pick competes for the same pile, so nothing is buyable early and the order is
+the player's to choose.
 
-The whole dust tree below costs about 14,500. A full run mines roughly 35,000. That surplus is
-deliberate: in a cozy game you should finish the tree with room to spare, not scrape at it.
+Dust should never be the thing you are short of for long. In a cozy game you finish a ladder with
+room to spare rather than scraping at it; the scarce thing is cores, and cores are just time.
 
 ## Dust upgrades
 
@@ -104,18 +138,25 @@ deliberate: in a cozy game you should finish the tree with room to spare, not sc
 
 Current build uses 1.7–1.9 on the worker ladders; that outruns income by boulder 6. Drop to 1.5.
 
-## Core unlocks — the twelve
+## Core unlocks
 
-| # | Unlock | Cost | Opens |
-|---|---|---|---|
-| 1 | first miner | 1 | grants one, opens miner hiring |
-| 2 | first hauler | 2 | grants one, opens hauler hiring |
-| 3 | pick | 2, then 3, 4... | one more pixel a swing |
-| 4 | driller | 2 | new miner type |
-| 5 | barrow | 2 | new hauler type |
-| 6 | chute | 3 | a permanent structure |
+A core is a rock, so this ladder is really "how many rocks until everything is open".
 
-Twelve cores, twelve spent. Buy order is the player's choice; everything lands by boulder 12.
+| Unlock | Cost | Opens |
+|---|---|---|
+| first miner | ◯ 1 | grants one, opens miner hiring |
+| first worker | ◯ 2 | grants one, opens worker hiring |
+| open the cave | ◯ 3 | the shaft, and spelunkers |
+| break the ground | ◯ 5 | the beds, and farmhands |
+| build the lab | ◯ 7 | multipliers and the books |
+| call it down | ◯ 9 | the meteor |
+| pick | ◯ 2, then 3, 4... | one more pixel a swing, for you *and* every miner |
+
+Twenty-seven cores opens every place. The pick competes with all of it for the same cores, which
+is the one real spending decision in the game: pace now, or a new place to put people.
+
+Opening a site glides the view to it. It is four cores and a row in a menu, and the thing bought
+is off the left of the screen; without that, nothing appears to happen.
 
 ## Catching
 
@@ -130,7 +171,8 @@ The shop is a thing in the world, not a panel bolted to the corner: a bench on t
 left, opposite the pit. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
 upgrades is on screen while you are mining, which keeps the scene to rock, dust, crew and pit.
 
-The board is grouped by crew — you, miners, haulers, drillers — with the headcount beside each
+The board is grouped by where the work is — you, miners, workers, the cave, the farm, the lab,
+the sky — with the headcount beside each
 heading. Every row is the same five columns, so the numbers line up down the page and can be
 scanned rather than read: name, current, arrow, next, cost. Costs and units carry the marks the game
 itself draws: a filled square for a grain of dust, a ring for a core. A rate reads `2.2 → 2.7 ■/s`
@@ -146,7 +188,6 @@ All of them stay plain black-and-white shapes.
 | Type | Shape | Behaviour |
 |---|---|---|
 | chipper | square, hollow centre | takes a seat in a ring round the rock that turns as one, but sways and drifts in and out on its own timing, and leans in when it swings; a second ring forms outside when the first is full |
-| driller | square with a bite out of its side | parks on the thickest rock it can find and bores that one spot out, sheet by sheet, judder and all |
 
 **Workers (move the dust)**
 
@@ -221,55 +262,80 @@ progression on its own for now.
 
 Per-boulder clear time is the spine. Rough targets:
 
-| Stage | Crew | Rate | Per boulder |
+Measured against a real core budget — cores are one a rock, and the sites cost 1, 2, 3, 5, 7 and 9
+of them, with pick levels competing for the same cores:
+
+| Rock | What you have | Rock holds | Per rock |
 |---|---|---|---|
-| boulder 1 | you alone, 2.2 px/s | 2 px/s | ~10 min |
-| boulder 3 | you + 2 chippers | 4 px/s | ~7 min |
-| boulder 6 | 4 miners, held pick | 12 px/s | ~3 min |
-| boulder 10 | full crew + drillers | 30 px/s | ~1 min |
+| 1 | you alone | ~660 | ~4 min |
+| 3 | first miner, first worker | ~1,400 | ~5 min |
+| 6 | the cave open, 3 miners | ~3,600 | ~6 min |
+| 9 | pick 1, 4 miners | ~5,800 | ~4 min |
+| 12 | pick 2, 5 miners | ~9,000 | ~3 min |
+| 20 | the farm, pick 3, lab pace | ~13,000 | ~1 min |
 
-Front-loaded effort, back-loaded watching. That shape is what makes it cozy rather than grindy.
+Front-loaded effort, back-loaded watching. The hump at rocks three to six is deliberate: that is
+where you are buying your first crew and feeling the cost of it. About eighty minutes to have
+every site open, and it keeps accelerating after that.
 
-## Ending
+Balance this by measuring, not by reading the table. `__levels()` and `__crew()` put the game in
+a plausible state; a measurement taken on a *fresh* one reads as ten to fifty minutes a rock and
+will send you off rewriting the wrong thing.
 
-After boulder 12 no new boulder appears. The crew sweeps the last dust into the pit, the pit
-levels off, the workers stop where they stand. No score, no summary screen, no "prestige for
-+5%". The save records it as finished; clicking still spawns plain boulders forever if you want
-to keep going, but no more cores drop.
+## No ending
+
+Rocks keep coming and keep dropping cores. They grow until they plateau at about what the
+twentieth is, because something that grows for ever would fill the sky and eventually reach the
+meteor.
+
+What changes over a run is the shape of your attention. Early on you are swinging; by the middle
+you are choosing who to hire and where to put them; by the end you are watching a yard that runs
+itself and deciding what the lab should make faster. There is no finish line, and nothing is
+taken away to make you start again.
 
 ## Not doing
 
-Prestige. Ascension. Multipliers on multipliers. A third currency. Timed events. Offline
-accrual. Achievement grids. Anything that asks the player to come back tomorrow.
+Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
+player to come back tomorrow. No score, no summary screen, no percentage-of-a-percentage.
 
-## The goal
+*(An earlier version of this list said "a third currency". There are five now
+— dust, cores, shards, spores, sparks — and each has exactly one job, which is the rule
+that actually matters. The lab is the only place a multiplier lives.)*
 
-One million dust in the hole. Cores are drawn beside the count as circles, one each, never
-described in words. The count is painted in the world, standing over the pit mouth,
-and it runs to each new value on an out-cubic ease — longer for a bigger jump, so a purchase
-reads as a withdrawal rather than a number blinking.
+## The counter
 
-One number, and it is both: what is in the hole is the score *and* the money. Buying something
-lifts that dust back out of the pile — you watch it stream out of the pit, arc across, and vanish
-into the bench — so every upgrade is a choice between arriving sooner and being further along
-right now.
+Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
+a shard a triangle, a spore a diamond, a spark a cross. They stack over the pit mouth, and each
+one only appears once you have seen one.
+
+The dust count runs to each new value on an out-cubic ease — longer for a bigger jump, so a
+purchase reads as a withdrawal rather than a number blinking. Buying something lifts that dust
+back out of the pile: you watch it stream out of the pit, arc across, and vanish into the bench.
+So every dust purchase is a choice between arriving sooner and being further along right now.
 
 Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
-what it pays — the counter is a plain count of pixels in the hole.
+what it pays. That rule is why the lab sells rates and never yields.
+
+*(There was a target of a million dust. It is parked, not cancelled: `PIT_GRAINS` in config.js
+still holds the machinery that would let the pile settle to a finer grain and hold one. See
+**The pit**.)*
 
 ## Fitting the window
 
 Nothing about the place changes with the window. The pit floor sits on the bottom of the viewport
-and the ground line a fixed 288px above it, so the ground never moves. The pit is always 240 cells
-across and 46 deep, and the rock, the bench and the lip keep their distances. A bigger window is
-only more sky above and more ground either side; the ground runs a long way past both.
+and the ground line a fixed height above it, so the ground never moves. The pit is always 3624
+world pixels across and 276 deep, and every site keeps its distance from the rock. A bigger
+window is only more sky above and more ground either side.
 
 Below a certain size the scene scales down instead of rearranging, so a small window shows the
-same place from further away. The zoom is quantised so a cell is always a whole number of screen
-pixels; fractional scaling leaves hairline seams between them.
+same place from further away. **A cell is always a whole number of *device* pixels** — that is
+what keeps hairline seams out, and on a screen at three device pixels to one it is three times as
+fine a ladder, which is what lets a phone find a scale the whole works fits in. It draws at the
+screen's real resolution, backing off only against a fill budget.
 
-Scrolling is sideways only — wheel or arrow keys — because there is never anything above or below
-worth moving to.
+Scrolling is sideways only, because there is never anything above or below worth moving to.
+Wheel, arrow keys, or **two fingers** — a phone has no wheel, and one finger is already sweeping.
+A tap opens a board at the bench or the lab, because a finger cannot hover.
 
 ## The pit
 

@@ -264,13 +264,13 @@ const TESTS = [
   }],
 
   ['the crew stand on the rock and work it down', async () => {
-    window.__crew(5, 0, 0);
+    window.__crew(5, 0);
     await sleep(1500);
     const s = state();
     const miners = s.workerPos.filter(p => p[0] === 'm')
                               .map(p => p.split(':')[1].split(',').map(Number));
     const foot = s.rockFoot;
-    window.__crew(0, 0, 0);                    // put them back on the shelf
+    window.__crew(0, 0);                    // put them back on the shelf
     return [
       ok(miners.length === 5, 'five miners are out', `${miners.length}`),
       ok(miners.every(([, y]) => y <= foot), 'nobody is below the ground',
@@ -289,7 +289,7 @@ const TESTS = [
   ['a worker can reach the bank behind the rock', async () => {
     // no miners, so nothing new lands while we watch, and only one heap on the
     // ground: the one on the far side of the hill
-    window.__crew(0, 1, 0);
+    window.__crew(0, 1);
     for (let i = 0; i < 6; i++) await buy('haulpace');   // so it walks at a fair clip
     window.__clearFloor();                     // so the only dust is the heap we make
     await sleep(300);
@@ -309,7 +309,7 @@ const TESTS = [
       if (state().dustLeftOfRock < before.dustLeftOfRock) break;
     }
     const after = state();
-    window.__crew(0, 0, 0);                    // leave the payroll as we found it
+    window.__crew(0, 0);                    // leave the payroll as we found it
     return [
       ok(before.dustLeftOfRock > 0, 'dust is heaped behind the hill to start with',
          `${before.dustLeftOfRock}`),
@@ -321,10 +321,10 @@ const TESTS = [
   }],
 
   ['spoil is aimed, and lands clear of the rock', async () => {
-    window.__crew(6, 0, 0);
+    window.__crew(6, 0);
     await sleep(5000);
     const s = state();
-    window.__crew(0, 0, 0);
+    window.__crew(0, 0);
     const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
     return [
       ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
@@ -417,7 +417,7 @@ const TESTS = [
   }],
 
   ['the board stays on screen, however small it is', async () => {
-    window.__crew(4, 3, 2);                  // every row showing: the tallest it gets
+    window.__crew(4, 3);                     // every row showing: the tallest it gets
     await sleep(250);
     const checks = [];
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
@@ -441,7 +441,7 @@ const TESTS = [
         el.hidden = true;
       });
     }
-    window.__crew(0, 0, 0);
+    window.__crew(0, 0);
     return checks;
   }],
 
@@ -573,6 +573,242 @@ const TESTS = [
     ];
   }],
 
+  ['the cave gives up shards', async () => {
+    window.__crew(0, 0, 3);                  // three spelunkers, cave open
+    const start = state();
+    let wentUnder = false;
+    for (let i = 0; i < 200; i++) {
+      await sleep(100);
+      if (state().underground > 0) wentUnder = true;
+      if (state().shards > start.shards) break;
+    }
+    const after = state();
+    window.__crew(0, 0, 0);
+    return [
+      ok(after.caveOpen, 'the cave is open'),
+      ok(wentUnder, 'a spelunker goes down it'),
+      ok(after.shards > start.shards, 'and comes back up with a shard',
+         `${start.shards} -> ${after.shards}`),
+      ok(after.seenShard, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['the cave is a hole in the ground, left of the rock', async () => {
+    const s = state();
+    return [
+      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'it is out past the rock',
+         `cave ends ${s.caveX + s.caveW}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
+      ok(s.caveW > 0 && s.caveW < 200, 'and it is a mouth, not a canyon', `${s.caveW}`)
+    ];
+  }],
+
+  ['the farm grows spores when it is tended', async () => {
+    window.__crew(0, 0, 0, 2);               // two farmhands, farm open
+    const start = state();
+    let grew = false;
+    for (let i = 0; i < 250; i++) {
+      await sleep(100);
+      if (state().beds.some(b => b > 0.1)) grew = true;
+      if (state().spores > start.spores) break;
+    }
+    const after = state();
+    return [
+      ok(after.farmOpen, 'the farm is open'),
+      ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
+      ok(grew, 'a bed comes on while it is tended'),
+      ok(after.spores > start.spores, 'and is cut for a spore',
+         `${start.spores} -> ${after.spores}`),
+      ok(after.seenSpore, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['nothing grows in an untended farm', async () => {
+    window.__crew(0, 0, 0, 0);               // everybody off the farm
+    await sleep(200);
+    const before = state();
+    await sleep(1500);
+    const after = state();
+    return [
+      ok(after.spores === before.spores, 'the crop does not come on by itself',
+         `${before.spores} -> ${after.spores}`)
+    ];
+  }],
+
+  ['the sites are laid out left of the rock, in order', async () => {
+    const s = state();
+    return [
+      ok(s.farmX + s.farmW < s.caveX, 'the farm is out past the cave',
+         `farm ends ${Math.round(s.farmX + s.farmW)}, cave at ${s.caveX}`),
+      ok(s.caveX + s.caveW < s.rockX - s.rockW / 2, 'and the cave past the rock'),
+      ok(s.rockX < s.benchX && s.benchX < s.pitX, 'with the bench between rock and pit')
+    ];
+  }],
+
+  ['the lab sells pace, and it bites', async () => {
+    window.__crew(4, 2, 2, 2);
+    window.__lab(true);
+    window.__grant({ shards: 60, spores: 60 });
+    await sleep(300);
+
+    const el = document.getElementById('lab');
+    const s = state();
+    const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
+    const [lx, ly] = at(s.labX + 20, s.groundY - 30);
+    canvas().dispatchEvent(new PointerEvent('pointermove', {
+      clientX: lx, clientY: ly, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
+    await sleep(200);
+
+    const opened = !el.hidden;
+    const before = state();
+    const swing = el.querySelector('button[data-key="labswing"]');
+    const cave = el.querySelector('button[data-key="labcave"]');
+    if (swing) swing.click();
+    if (cave) cave.click();
+    await sleep(200);
+    const after = state();
+
+    return [
+      ok(opened, 'the lab board opens at the lab'),
+      ok(!!swing && !!cave, 'it sells pace in shards and in spores'),
+      ok(after.mult.swing === before.mult.swing + 1, 'a multiplier goes up when bought'),
+      ok(after.mineMs < before.mineMs, 'and the swing really is faster',
+         `${before.mineMs}ms -> ${after.mineMs}ms`),
+      ok(after.shards < before.shards, 'shards are spent on it',
+         `${before.shards} -> ${after.shards}`),
+      ok(after.spores < before.spores, 'and spores on the other one',
+         `${before.spores} -> ${after.spores}`),
+      ok(document.querySelectorAll('#stats b').length > 0, 'and it keeps the books')
+    ];
+  }],
+
+  ['the lab board stays inside the window too', async () => {
+    const checks = [];
+    for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape']]) {
+      await asScreen(w, h, dpr, async () => {
+        const el = document.getElementById('lab');
+        el.hidden = false;
+        window.__placeBoard();
+        await sleep(60);
+        const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);
+        const bw = el.offsetWidth, bh = el.offsetHeight;
+        const room = bw <= w && bh <= h;
+        checks.push(ok(left >= 0 && bottom >= 0 &&
+                       (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
+          `${name} keeps the lab board inside the window`,
+          `${Math.round(left)}+${bw} wide, ${Math.round(bottom)}+${bh} tall, in ${w}x${h}`));
+      });
+    }
+    document.getElementById('lab').hidden = true;
+    return checks;
+  }],
+
+  ['the meteor sheds sparks', async () => {
+    window.__meteor(true);
+    const start = state();
+    let sawFalling = false;
+    for (let i = 0; i < 600; i++) {
+      await sleep(100);
+      if (state().falling > 0) sawFalling = true;
+      if (state().sparks > start.sparks) break;
+    }
+    const after = state();
+    return [
+      ok(after.meteorOpen, 'the meteor is up there'),
+      ok(sawFalling, 'a spark comes loose and falls'),
+      ok(after.sparks > start.sparks, 'and is counted when it lands',
+         `${start.sparks} -> ${after.sparks}`),
+      ok(after.seenSpark, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['the meteor hangs clear of the rock and stays on screen', async () => {
+    const checks = [];
+    for (const [w, h, dpr, name] of [[2560, 1300, 1, 'big desktop'], [1440, 900, 2, 'laptop'],
+                                     [1280, 700, 1, 'short window'], [844, 390, 3, 'landscape']]) {
+      await asScreen(w, h, dpr, () => {
+        const s = state();
+        const top = (s.meteorY - 54 - s.camY) * s.zoom;
+        checks.push(ok(top >= 0 && top < h, `${name} keeps the meteor in the window`,
+          `top at ${Math.round(top)} of ${h}`));
+        checks.push(ok(s.meteorY + 54 < s.groundY - s.rockH,
+          `${name} keeps it above the rock`,
+          `meteor bottom ${Math.round(s.meteorY + 54)}, rock top ${Math.round(s.groundY - s.rockH)}`));
+      });
+    }
+    return checks;
+  }],
+
+  ['rocks stop growing, because they never stop coming', async () => {
+    window.__jump(40);
+    await sleep(200);
+    const forty = state();
+    window.__jump(400);
+    await sleep(200);
+    const far = state();
+    window.__jump(1);
+    await sleep(200);
+    return [
+      ok(far.rockW === forty.rockW && far.rockH === forty.rockH,
+         'rock four hundred is no bigger than rock forty',
+         `${forty.rockW}x${forty.rockH} vs ${far.rockW}x${far.rockH}`),
+      ok(far.rockH < 520, 'and still fits under the sky', `${far.rockH}`),
+      ok(far.rockW < 900 - 108, 'and never reaches the bench', `${far.rockW}`)
+    ];
+  }],
+
+  ['the books report what was made, not what is left', async () => {
+    window.__crew(6, 3);
+    window.__give(8000, 4);
+    await sleep(2500);
+    const before = state().rates.banked;
+    window.__spend(6000);                    // a big purchase
+    await sleep(2500);
+    const after = state().rates.banked;
+    return [
+      ok(before > 0, 'production reads while dust is coming in', `${before}/min`),
+      ok(after >= 0, 'and buying something does not read as negative production',
+         `${after}/min`)
+    ];
+  }],
+
+  ['the places are revealed one at a time', async () => {
+    const rows = () => [...shop().querySelectorAll('button')].map(b => b.dataset.key);
+    const has = k => rows().includes(k);
+
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
+    await sleep(400);
+    const fresh = rows();
+
+    window.__grant({ cores: 4 });
+    await sleep(150);
+    const withCore = { cave: has('unlockcave'), farm: has('unlockfarm'),
+                       lab: has('unlocklab'), meteor: has('unlockmeteor') };
+
+    window.__crew(1, 1, 1);                  // the cave open
+    await sleep(150);
+    const withCave = { farm: has('unlockfarm'), lab: has('unlocklab') };
+
+    window.__grant({ shards: 3 });
+    await sleep(150);
+    const withShard = { lab: has('unlocklab'), meteor: has('unlockmeteor') };
+
+    window.__lab(true);
+    await sleep(150);
+    const withLab = { meteor: has('unlockmeteor') };
+
+    window.__crew(0, 0);
+    return [
+      ok(!fresh.includes('pick') && !fresh.includes('unlockcave'),
+         'a fresh game offers nothing about cores or places', fresh.join(' ')),
+      ok(withCore.cave && !withCore.farm && !withCore.lab && !withCore.meteor,
+         'the first core offers the cave, and only the cave',
+         JSON.stringify(withCore)),
+      ok(withCave.farm && !withCave.lab, 'opening the cave offers the farm'),
+      ok(withShard.lab && !withShard.meteor, 'a shard in hand offers the lab'),
+      ok(withLab.meteor, 'and the lab offers the sky')
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
@@ -583,6 +819,14 @@ const TESTS = [
          `${raw?.stored} vs ${s.stored}`),
       ok(raw.cores === s.cores, 'cores are saved'),
       ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
+      ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
+      ok(raw.caveOpen === s.caveOpen, 'and whether the cave is open'),
+      ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
+      ok(Array.isArray(raw.beds), 'and how far along every bed is'),
+      ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
+      ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
+      ok(raw.sparks === s.sparks, 'sparks are saved', `${raw?.sparks} vs ${s.sparks}`),
+      ok(raw.meteorOpen === s.meteorOpen, 'and whether the meteor is up'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];

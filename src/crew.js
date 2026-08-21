@@ -1,8 +1,8 @@
 // The crew: who they are, where they stand and what they do with their hands.
 //
-// Miners take the rock off in layers, drillers work its flanks, workers carry
-// dust to the pit. A new kind of worker is a new `type` and a new branch in
-// updateWorkers -- and, when the cave and the farm arrive, its own file.
+// Miners take the rock off in layers; workers carry dust to the pit. A new kind
+// of worker is a new `type` and a new branch in updateWorkers -- and, when the
+// cave and the farm arrive, its own file.
 
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS } from './config.js';
 import { S, floor, pit, bench } from './state.js';
@@ -12,7 +12,9 @@ import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops } f
 import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
-import { minerMs, drillMs, haulCap, haulSpeed, scoopMs } from './upgrades.js';
+import { minerMs, haulCap, haulSpeed, scoopMs } from './upgrades.js';
+import { stepSpelunker, newSpelunker } from './cave.js';
+import { stepFarmhand, newFarmhand } from './farm.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -55,7 +57,8 @@ export function elbowed(w, x) {
 }
 
 export function syncWorkers() {
-  const want = { miner: S.miners, hauler: S.haulers, driller: S.drillers };
+  const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers,
+                 farmhand: S.farmhands };
   S.workers = S.workers.filter(w => want[w.type]-- > 0);       // drop any extras
 
   // count what is missing first: pushing while re-reading the length only ever
@@ -73,11 +76,12 @@ export function syncWorkers() {
       rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
     });
   }
-  const needDrillers = S.drillers - have('driller');
-  for (let i = 0; i < needDrillers; i++) {
-    S.workers.push({ type: 'driller', next: 0, x: S.cx, y: S.cy, spot: null,
-      side: i % 2 ? 1 : -1, ph: Math.random() * 6.28 });
-  }
+  const needSpelunkers = S.spelunkers - have('spelunker');
+  for (let i = 0; i < needSpelunkers; i++) S.workers.push(newSpelunker());
+
+  const needFarmhands = S.farmhands - have('farmhand');
+  for (let i = 0; i < needFarmhands; i++) S.workers.push(newFarmhand());
+
   const needHaulers = S.haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
     S.workers.push({
@@ -97,19 +101,7 @@ export function syncWorkers() {
 }
 
 // somewhere worth drilling: sample a few cells and take the thickest rock
-// the outermost standing column on one flank, at its foot: a driller parks there
-// and eats a notch sideways into the hill
-export function flankSpot(side) {
-  for (let i = 0; i < S.gw; i++) {
-    const x = side < 0 ? i : S.gw - 1 - i;
-    if (S.rockTops[x] < 0) continue;
-    for (let y = S.gh - 1; y >= 0; y--) if (S.boulder[y][x]) return { x, y };
-  }
-  return null;
-}
-
-// only dust on this side of the pit: nobody can walk across the trench
-export function nearestDust(x) {
+function nearestDust(x) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const from = Math.max(0, Math.min(last, colOf(floor, x)));
   for (let d = 0; d <= last; d++) {
@@ -126,7 +118,7 @@ export function topGrain(c) {
   return -1;
 }
 
-export function updateWorkers(now) {
+export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
@@ -166,27 +158,8 @@ export function updateWorkers(now) {
       continue;
     }
 
-    if (w.type === 'driller') {
-      // a driller works the flank instead: it parks at the foot of the hill and
-      // eats a notch sideways into it
-      if (!w.spot || !S.boulder[w.spot.y]?.[w.spot.x]) w.spot = flankSpot(w.side);
-      if (!w.spot) continue;
-
-      const { px, py } = cellPos(w.spot.x, w.spot.y);
-      const pull = Math.sin(now / 90 + w.ph) * 1.5;      // it judders as it bites
-      w.x = px - WORKER / 2 + P / 2 + pull + w.side * WORKER * 0.6;
-      w.y = standOn(Math.min(py + P, S.groundY));
-
-      if (now >= w.next) {
-        const had = S.boulder[w.spot.y][w.spot.x];
-        S.boulder[w.spot.y][w.spot.x] = had - 1;
-        spawnSpoil(px, py, depthShade(had, depthOf()));
-        w.next = now + drillMs() * (0.9 + Math.random() * 0.2);
-        refreshRockTops();
-        S.dirty = true;
-      }
-      continue;
-    }
+    if (w.type === 'spelunker') { stepSpelunker(w, now); continue; }
+    if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
     // all over the ledge

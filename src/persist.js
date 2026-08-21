@@ -14,6 +14,7 @@ import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTop
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
 import { syncWorkers } from './crew.js';
 import { buildShop } from './shop.js';
+import { resetRates } from './lab.js';
 
 // A full pit is a million cells, which is a million characters written to
 // localStorage every second if you store it a digit at a time. A pile is nearly
@@ -126,7 +127,7 @@ export function pitFromSave(sv) {
     const h = Math.min(pit.rows, Math.max(0, heights[c]));
     for (let r = 0; r < h; r++) pit.grid[r * pit.cols + c] = pick();
   }
-  S.pitPainted = false;
+  pit.painter.repaint();
   return true;
 }
 
@@ -146,6 +147,7 @@ export function persist() {
   S.dirty = false;
   save({
     stored: S.stored,
+    banked: S.banked,
     carryLevel: S.carryLevel,
     speedLevel: S.speedLevel,
     autoMine: S.autoMine,
@@ -157,12 +159,25 @@ export function persist() {
     coreLoose: S.heldCore || !!S.coreItem,
     miners: S.miners,
     haulers: S.haulers,
-    drillers: S.drillers,
-    drillSpeedLevel: S.drillSpeedLevel,
-    drillersUnlocked: S.drillersUnlocked,
     minerSpeedLevel: S.minerSpeedLevel,
     haulCarryLevel: S.haulCarryLevel,
     haulPaceLevel: S.haulPaceLevel,
+    shards: S.shards,
+    seenShard: S.seenShard,
+    caveOpen: S.caveOpen,
+    spelunkers: S.spelunkers,
+    cavePaceLevel: S.cavePaceLevel,
+    spores: S.spores,
+    seenSpore: S.seenSpore,
+    farmOpen: S.farmOpen,
+    farmhands: S.farmhands,
+    tendLevel: S.tendLevel,
+    labOpen: S.labOpen,
+    sparks: S.sparks,
+    seenSpark: S.seenSpark,
+    meteorOpen: S.meteorOpen,
+    mult: { ...S.mult },
+    beds: S.beds.map(b => Math.round(b * 100)),
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
@@ -176,11 +191,11 @@ export function restoreGrid(b, s) {
   if (!s) return;
   b.grid.fill(0);
   if (s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
-    if (b === pit) S.pitPainted = false;
+    if (b.painter) b.painter.repaint();
     return;
   }
   fillFlat(b, gridCount(s.cells));   // a different shape: re-pack the same amount
-  if (b === pit) S.pitPainted = false;
+  if (b.painter) b.painter.repaint();
 }
 
 export function restore() {
@@ -189,6 +204,7 @@ export function restore() {
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     makeBoulder();
     S.stored = 0;
+    S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
     S.carryLevel = 0;
     S.speedLevel = 0;
@@ -202,15 +218,29 @@ export function restore() {
     S.coreItem = null;
     S.miners = 0;
     S.haulers = 0;
-    S.drillers = 0;
-    S.drillSpeedLevel = 0;
-    S.drillersUnlocked = false;
     S.minerSpeedLevel = 0;
     S.haulCarryLevel = 0;
     S.haulPaceLevel = 0;
+    S.shards = 0;
+    S.seenShard = false;
+    S.caveOpen = false;
+    S.spelunkers = 0;
+    S.cavePaceLevel = 0;
+    S.spores = 0;
+    S.seenSpore = false;
+    S.farmOpen = false;
+    S.farmhands = 0;
+    S.tendLevel = 0;
+    S.labOpen = false;
+    S.sparks = 0;
+    S.seenSpark = false;
+    S.meteorOpen = false;
+    for (const k of Object.keys(S.mult)) S.mult[k] = 0;
+    S.beds = [];
     return;
   }
   S.stored = s.stored;
+  S.banked = s.banked || s.stored || 0;
   S.shownStored = S.tweenFrom = S.tweenTo = S.stored;
   S.carryLevel = s.carryLevel || 0;
   S.speedLevel = s.speedLevel || 0;
@@ -228,12 +258,26 @@ export function restore() {
   }
   S.miners = s.miners || 0;
   S.haulers = s.haulers || 0;
-  S.drillers = s.drillers || 0;
-  S.drillSpeedLevel = s.drillSpeedLevel || 0;
-  S.drillersUnlocked = !!s.drillersUnlocked;
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
   S.haulCarryLevel = s.haulCarryLevel || 0;
   S.haulPaceLevel = s.haulPaceLevel || 0;
+  S.shards = s.shards || 0;
+  S.seenShard = !!s.seenShard || S.shards > 0;
+  S.caveOpen = !!s.caveOpen;
+  S.spelunkers = s.spelunkers || 0;
+  S.cavePaceLevel = s.cavePaceLevel || 0;
+  S.spores = s.spores || 0;
+  S.seenSpore = !!s.seenSpore || S.spores > 0;
+  S.farmOpen = !!s.farmOpen;
+  S.farmhands = s.farmhands || 0;
+  S.tendLevel = s.tendLevel || 0;
+  S.labOpen = !!s.labOpen;
+  S.sparks = s.sparks || 0;
+  S.seenSpark = !!s.seenSpark || S.sparks > 0;
+  S.meteorOpen = !!s.meteorOpen;
+  S.meteorAt = 0;
+  if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] || 0;
+  if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
@@ -245,6 +289,7 @@ export function reset() {
   S.chips = [];
   S.paid = [];
   S.stored = 0;
+  S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;
   S.held = 0;
   S.carryLevel = 0;
@@ -260,15 +305,36 @@ export function reset() {
   S.heldCore = false;
   S.miners = 0;
   S.haulers = 0;
-  S.drillers = 0;
-  S.drillSpeedLevel = 0;
-  S.drillersUnlocked = false;
   S.minerSpeedLevel = 0;
   S.haulCarryLevel = 0;
   S.haulPaceLevel = 0;
+  S.shards = 0;
+  S.seenShard = false;
+  S.caveOpen = false;
+  S.spelunkers = 0;
+  S.cavePaceLevel = 0;
+  S.spores = 0;
+  S.seenSpore = false;
+  S.farmOpen = false;
+  S.farmhands = 0;
+  S.tendLevel = 0;
+  S.labOpen = false;
+  S.labBoardOpen = false;
+  S.sparks = 0;
+  S.seenSpark = false;
+  S.meteorOpen = false;
+  S.meteorAt = 0;
+  S.falling = [];
+  for (const k of Object.keys(S.mult)) S.mult[k] = 0;
+  S.beds = [];
+  S.crop = [];
+  S.finds = [];
   syncWorkers();
+  resetRates();
   floor.grid.fill(0);
   pit.grid.fill(0);
+  floor.painter.repaint();
+  pit.painter.repaint();
   S.boulderNo = 1;
   makeBoulder();
   buildShop();
