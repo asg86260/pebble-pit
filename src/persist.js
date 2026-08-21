@@ -185,6 +185,7 @@ export function persist() {
     meteorOpen: S.meteorOpen,
     mult: { ...S.mult },
     beds: S.beds.map(b => Math.round(b * 100)),
+    bedTone: [...S.bedTone],
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
@@ -246,6 +247,8 @@ export function restore() {
     S.meteorOpen = false;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.beds = [];
+  S.bedTone = [];
+    S.bedTone = [];
     return;
   }
   S.stored = s.stored;
@@ -297,6 +300,8 @@ export function restore() {
   // the lab's quarry multiplier answered to `cave` before the place was renamed
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
   if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
+  // a ripe bed keeps the spore that grew on it, tone and all
+  if (Array.isArray(s.bedTone)) S.bedTone = s.bedTone.map(v => +v || 0);
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
@@ -348,6 +353,7 @@ export function reset() {
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];
+  S.bedTone = [];
   syncWorkers();
   resetRates();
   floor.grid.fill(0);

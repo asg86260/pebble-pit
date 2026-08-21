@@ -97,7 +97,8 @@ export function drawFarm() {
     ctx.fillRect(x - P, S.groundY - 2, P * 2, 3);          // the bed itself
     const top = Math.round(bedTop(i));
     if (S.beds[i] > 0.02) ctx.fillRect(x - 1, top, 2, S.groundY - top);
-    if (S.beds[i] >= 1) drawMark(SPORE_CELL, x, top - P);
+    // the spore that grew on it, sitting at the tip of the stalk until it is cut
+    if (S.beds[i] >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x, top - P);
   }
 
   ctx.fillStyle = '#000';

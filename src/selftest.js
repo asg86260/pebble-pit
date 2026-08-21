@@ -1172,6 +1172,40 @@ const TESTS = [
     ];
   }],
 
+  // A spore is a thing that grew, and it should be seen to have grown. It forms
+  // at the tip of the stalk the moment the bed is ripe and sits there until the
+  // farmhand takes it off -- from exactly where it grew, in the tone it grew in.
+  ['a ripe bed shows its spore before it is cut', async () => {
+    window.__crew(0, 0, 0, 1);
+    quickCrew();
+    window.__clearFloor();
+    // a frame at a time, not a second: it is only ripe for as long as it takes
+    // the farmhand to cut it, and a second-wide step steps right over that
+    let ripe = false;
+    for (let i = 0; i < 3000 && !ripe; i++) {
+      run(1 / 60);
+      ripe = state().beds.some(b => b >= 1);
+    }
+    const showing = state();
+    const i = showing.beds.findIndex(b => b >= 1);
+    const tone = showing.bedTone[i];
+    const spores = showing.finds.filter(f => f === 'spore').length;
+    run(0.3);
+    const stillThere = state();
+    run(1.5);
+    const after = state();
+    window.__crew(0, 0, 0, 0);
+    return [
+      ok(ripe, 'a bed comes ripe'),
+      ok(tone > 0, 'and a spore forms on it', `tone ${tone}`),
+      ok(stillThere.beds[i] >= 1, 'which stays there to be looked at',
+         `${stillThere.beds[i]}`),
+      ok(after.beds[i] < 1, 'until the farmhand takes it off', `${after.beds[i]}`),
+      ok(after.finds.filter(f => f === 'spore').length > spores,
+         'and then it is lying in the farm pile')
+    ];
+  }],
+
   ['nothing grows in an untended farm', async () => {
     window.__crew(0, 0, 0, 0);               // everybody off the farm
     await sleep(200);

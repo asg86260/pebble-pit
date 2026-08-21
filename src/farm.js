@@ -6,7 +6,7 @@
 // different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, SPORE_CELL, someFind }
+import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
 import { standOn } from './world.js';
@@ -24,11 +24,12 @@ export const bedTop = i => S.groundY - FARM_H * S.beds[i];
 
 export function plantBeds() {
   if (S.beds.length !== FARM_BEDS) S.beds = new Array(FARM_BEDS).fill(0);
+  if (S.bedTone.length !== FARM_BEDS) S.bedTone = new Array(FARM_BEDS).fill(0);
 }
 
 export function newFarmhand() {
   plantBeds();
-  return { type: 'farmhand', goal: 'to', bed: 0, x: bedX(0), y: 0, carry: 0 };
+  return { type: 'farmhand', goal: 'to', bed: 0, cutAt: 0, x: bedX(0), y: 0, carry: 0 };
 }
 
 // the bed most worth walking to: the one furthest along that nobody else has
@@ -43,9 +44,13 @@ function pickBed(w) {
 
 // Cut, and the spore drops beside the bed and lies in the dust until somebody
 // carries it to the pit.
+// Cut, and the spore leaves from the tip of the stalk it grew on -- the same
+// one that has been sitting there since it ripened, in the same tone.
 function cut(i, x) {
+  const tone = S.bedTone[i] || someFind(SPORE_CELL);
+  spawnSpoil(x, bedTop(i) - P, tone, 'farm');
   S.beds[i] = 0;
-  spawnSpoil(x, S.groundY - FARM_H, someFind(SPORE_CELL), 'farm');
+  S.bedTone[i] = 0;
 }
 
 // one farmhand, one frame
@@ -65,10 +70,26 @@ export function stepFarmhand(w, now, dt) {
   // standing over it, bringing it on -- unless the last crop is still lying in
   // the pile behind, in which case there is no sense cutting another
   if (S.pileFull.farm) return;
-  S.beds[w.bed] = Math.min(1, S.beds[w.bed] + dt / tendMs());
-  if (S.beds[w.bed] >= 1) {
-    cut(w.bed, bedX(w.bed));
-    w.bed = pickBed(w);
-    w.goal = 'to';
+  const i = w.bed;
+
+  // bringing it on. The moment it is ripe a spore forms at the tip of the stalk
+  // and stays there: it is a thing that grew, and it should be seen to have
+  // grown before anybody takes it away.
+  if (S.beds[i] < 1) {
+    S.beds[i] = Math.min(1, S.beds[i] + dt / tendMs());
+    if (S.beds[i] >= 1) {
+      S.bedTone[i] = someFind(SPORE_CELL);
+      w.cutAt = now + CUT_MS;
+      S.dirty = true;
+    }
+    return;
   }
+
+  // then it is taken off, from exactly where it grew
+  if (!w.cutAt) w.cutAt = now + CUT_MS;         // walked up to one already ripe
+  if (now < w.cutAt) return;
+  cut(i, bedX(i));
+  w.cutAt = 0;
+  w.bed = pickBed(w);
+  w.goal = 'to';
 }

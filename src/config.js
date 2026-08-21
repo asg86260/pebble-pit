@@ -202,6 +202,10 @@ export const FARM_H = 54;        // how tall a ripe stalk stands
 export const TEND_BASE = 9000;   // to bring one bed on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
+// A ripe bed is not cut the instant it ripens. The spore forms at the tip of
+// the stalk and sits there long enough to be seen, and the farmhand takes it
+// off from exactly where it grew.
+export const CUT_MS = 700;
 
 // --- the meteor -------------------------------------------------------------
 // It hangs in the sky over the yard and sheds a spark now and then. Sparks are
