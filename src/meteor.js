@@ -10,7 +10,7 @@
 
 import { GRAV, SPARK_BASE, SPARK_FLOOR, METEOR_R, P, SPARK_CELL } from './config.js';
 import { S, meteor } from './state.js';
-import { spawnChip } from './dust.js';
+import { spawnFind } from './finds.js';
 
 // how long between sparks
 export const sparkMs = () => Math.max(SPARK_FLOOR, SPARK_BASE);
@@ -53,7 +53,7 @@ export function stepMeteor(now) {
     f.y += f.vy;
     if (f.y >= S.groundY - P) {
       S.falling.splice(i, 1);
-      spawnChip(f.x, f.y, 0, 0, SPARK_CELL);       // from here it is a grain like any other
+      spawnFind(SPARK_CELL, f.x, f.y, 0, 0);       // from here it is a body like the rest
     }
   }
 }

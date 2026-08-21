@@ -369,7 +369,14 @@ that actually matters. The lab is the only place a multiplier lives.)*
 ## The counter
 
 Every currency is drawn as a mark, never described in words: dust a filled square, a core a ring,
-a shard a triangle, a spore a hexagon, a spark a cross. **One glyph, one size, everywhere.** Each is drawn inside the same cell-sized box — in the air, on
+a shard a triangle, a spore a hexagon, a spark a cross. A shard, a spore and a spark are **not grains of dust**. Each has a body two cells on a side, with
+real falling and real stacking: they come to rest on the ground, on the dust, on the pile in the
+pit or on each other, and they **roll off** anything they land on top of if there is a lower place
+beside them — the same rule the sand keeps, at the size of a body rather than a grain. That is what
+turns a run of them dropped in one spot from a needle into a heap. They stay in the pile they were
+thrown into: a pile is a pile, and it has to be countable against its own limit.
+
+**One glyph, one size, everywhere.** Each is drawn inside the same cell-sized box — in the air, on
 the ground, in the pile, on the cursor and in a worker's hands — because a cell is what a grain
 occupies and what it collides as. A mark bigger than its cell lies about where the thing is, and
 marks of different sizes read as different *amounts* of something rather than different things.

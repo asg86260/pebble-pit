@@ -9,7 +9,8 @@ import './style.css';
 import './selftest.js';        // adds __test() to the console
 
 import { P, GRAV, ROCK_SINK, ROCK_CLEAR, SETTLE_BUDGET, HAUL_EMPTY,
-         PILE_LIMIT, PILE_CLEAR, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
+         PILE_LIMIT, PILE_CLEAR, FIND_SIZE, FIND_WEIGHT,
+         CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, addGrain, colOf, surfaceY, settleSome, resizeGrid, count, countDust,
          isDust, bottomY } from './grid.js';
@@ -19,6 +20,7 @@ import { placeRock, makeBoulder, overBoulder, knockOff, boulderAlive, depthOf, r
 import { wirePit, setPitGrain, settlePit, bankDust, spend, pitCapacity } from './pit.js';
 import { spawnChip } from './dust.js';
 import { stepCore, dropCore } from './core.js';
+import { stepFinds, spawnFind } from './finds.js';
 import { sampleRates, mult, rates } from './lab.js';
 import { stepMeteor } from './meteor.js';
 import { makePainter } from './painter.js';
@@ -31,6 +33,7 @@ import { buildShop } from './shop.js';
 import { persist, restore, reset } from './persist.js';
 import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, canAfford, benchMark, rebalance, assign, idle } from './upgrades.js';
 import './input.js';           // the mouse, the wheel and the keyboard
+import { now as clockNow, tick, advance } from './clock.js';
 
 // The ground is the ground because of these: the grid module knows none of it.
 // A new bed of sand somewhere else is another few lines like this, not another
@@ -69,16 +72,19 @@ function step() {
   stepCamera();
   stepAir();
   stepPaid();
-  sampleRates(performance.now());
-  stepMeteor(performance.now());
-  const now = performance.now();
+  sampleRates(clockNow());
+  stepMeteor(clockNow());
+  const now = clockNow();
   const dt = Math.min(100, now - (S.lastFrame || now));   // a long tab-out is not a long frame
   S.lastFrame = now;
   // How much is lying about. Counting fifty thousand cells is not a thing to do
   // every frame, and the answer moves by a grain at a time, so it is counted
   // twice a second and the crew are told to stop or start on that.
   S.tick++;
-  if (S.tick % 30 === 1) surveyFloor();
+  // four times a second, not twice: this is what tells a station it has room
+  // again, and waiting half a second to notice reads as the crew dawdling.
+  if (S.tick % 15 === 1) surveyFloor();
+  stepFinds();                                // what the sites have given up
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
   stepCore();
@@ -136,9 +142,17 @@ function step() {
 }
 
 
-function frame() { step(); draw(); hud(); requestAnimationFrame(frame); }
+function frame() { tick(); step(); draw(); hud(); requestAnimationFrame(frame); }
 
-window.__clearFloor = () => { floor.grid.fill(0); floor.painter.repaint(); S.dirty = true; };
+// clear the yard: the dust lying about and anything the sites have given up and
+// nobody has carried in. Both are 'what is lying around out there'.
+window.__clearFloor = () => {
+  floor.grid.fill(0);
+  floor.painter.repaint();
+  S.finds = S.finds.filter(f => f.counted);
+  for (const w of S.workers) { w.findItem = null; w.holding = 0; }
+  S.dirty = true;
+};
 window.__pile = (x, n) => { for (let i = 0; i < n; i++) addGrain(floor, x, blocked); S.dirty = true; };
 window.__jump = n => { S.boulderNo = n; S.coreItem = null; S.heldCore = false; makeBoulder(); S.dirty = true; };
 window.__preview = n => {
@@ -176,7 +190,7 @@ window.__levels = (o = {}) => {             // set upgrade levels, for weighing 
 // terrible thing to sit through in a check: opening it sheds one at once.
 window.__meteor = (open = true) => {
   S.meteorOpen = open;
-  S.meteorAt = performance.now();
+  S.meteorAt = clockNow();
   buildShop();
   S.dirty = true;
 };
@@ -184,6 +198,25 @@ window.__meteor = (open = true) => {
 // walking the length of the world, which proves nothing the walking tests do
 // not already prove and costs half a minute a time.
 // look somewhere, for a screenshot or a check that wants to see the far end
+// Run the yard forward without waiting for it. Everything that asks the time
+// asks the clock, so this is the same game running, just with the handle turned
+// by hand: a check that wants to watch a worker walk two thousand pixels runs
+// the steps instead of sitting through the seconds, and gets the same answer
+// every time rather than one that depends on how fast the machine is.
+window.__fast = (seconds = 1) => {
+  const frames = Math.round(seconds * 60);
+  for (let i = 0; i < frames; i++) {
+    advance(1000 / 60);
+    step();
+  }
+  S.dirty = true;
+  return frames;
+};
+// drop one of something where you like, for a check that wants to watch it land
+window.__toss = (kind, x, y = S.groundY - 60) => {
+  const v = { shard: SHARD_CELL, spore: SPORE_CELL, spark: SPARK_CELL }[kind];
+  if (v) spawnFind(v, x, y, 0, 0);
+};
 window.__look = x => { S.camX = x; S.camTo = null; clampCam(); S.dirty = true; return Math.round(S.camX); };
 window.__place = (type, x) => {
   const w = S.workers.find(o => o.type === type);
@@ -232,34 +265,31 @@ function apronReport() {
   return { inApron, tallest, crest };
 }
 
-// One walk of the ground, twice a second, for the two things worth knowing about
+// One walk of the ground, four times a second, for the things worth knowing about
 // it and not worth working out every frame: how much is lying there, and where
 // anything that is not dust has come to rest. A mark is drawn only where it is
 // the top of its column -- one under a foot of dust is buried, and looks it.
 function surveyFloor() {
-  const marks = [];
   const count = {};
   for (const p of S.piles) count[p.key] = 0;
   let grains = 0;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
     const pile = pileAt(x);
-    let top = -1, mark = null, n = 0;
-    for (let r = 0; r < floor.rows; r++) {
-      const v = at(floor, c, r);
-      if (!v) continue;
-      n++;
-      top = r;
-      if (!isDust(v)) mark = { v, r };
-    }
+    let n = 0;
+    for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
     grains += n;
     if (pile) count[pile.key] += n;
-    if (mark && mark.r === top) {
-      marks.push({ v: mark.v, x: x + P / 2, y: bottomY(floor) - (top + 1) * P + P / 2 });
-    }
+  }
+  // A find is not a grain and is not in the grid, but it is lying in somebody's
+  // pile and it is what stops that station: a shard on the ground is worth a
+  // whole shard, so it counts for more than the grain of dust it displaces.
+  for (const f of S.finds) {
+    if (f.counted) continue;
+    const pile = pileAt(f.x + FIND_SIZE / 2);
+    if (pile) count[pile.key] += FIND_WEIGHT;
   }
   S.floorGrains = grains;
-  S.floorMarks = marks;
   S.pileCount = count;
 
   // A pile that is full stops the station behind it, and has to come down a
@@ -300,8 +330,9 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: performance.now() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, caveOpen: S.caveOpen, labOpen: S.labOpen, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), sparks: S.sparks, seenSpark: S.seenSpark, meteorOpen: S.meteorOpen, meteorX: Math.round(meteor.x), meteorY: Math.round(meteor.y), falling: S.falling.length, floorMarks: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
-                                       [SPORE_CELL]: 'spore', [SPARK_CELL]: 'spark' })[m.v]), spelunkers: S.spelunkers, caveX: Math.round(cave.x), caveW: cave.w, spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, beds: S.beds.map(b => +b.toFixed(2)), underground: S.workers.filter(w => w.type === 'spelunker' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: !!S.pileFull.rock, pileCount: { ...S.pileCount }, pileFull: { ...S.pileFull }, pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key), piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })), floorGrains: S.floorGrains, dustAtCave: dustAtCave(), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, caveOpen: S.caveOpen, labOpen: S.labOpen, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), sparks: S.sparks, seenSpark: S.seenSpark, meteorOpen: S.meteorOpen, meteorX: Math.round(meteor.x), meteorY: Math.round(meteor.y), falling: S.falling.length, finds: S.finds.map(f => ({ [SHARD_CELL]: 'shard', [SPORE_CELL]: 'spore',
+                                             [SPARK_CELL]: 'spark' })[f.v]),
+  findsAtRest: S.finds.filter(f => f.rest).length, findPos: S.finds.slice(0, 6).map(f => `${Math.round(f.x)}${f.rest ? 'r' : 'f'}${f.counted ? 'c' : ''}`), haulPace: +haulSpeed().toFixed(2), holding: S.workers.filter(w => w.holding).length, spelunkers: S.spelunkers, caveX: Math.round(cave.x), caveW: cave.w, spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, beds: S.beds.map(b => +b.toFixed(2)), underground: S.workers.filter(w => w.type === 'spelunker' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|h${w.holding || 0}|c${w.carry || 0}|k${w.claim ?? '-'}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: !!S.pileFull.rock, pileCount: { ...S.pileCount }, pileFull: { ...S.pileFull }, pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key), piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })), floorGrains: S.floorGrains, dustAtCave: dustAtCave(), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s) });
 
 relayout();
 restore();

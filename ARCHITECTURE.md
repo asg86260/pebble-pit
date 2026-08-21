@@ -126,8 +126,17 @@ node tools/headless.mjs       # runs __test() in a headless browser, no install
 node tools/headless.mjs "window.__test('cave')"      # one group, seconds not minutes
 ```
 
-The whole suite is two minutes and one group is a few seconds, so iterate on the
-group and run the whole thing before committing. `__test()` reports its slowest
+**Checks run the clock rather than sit through it.** `clock.js` is the only thing
+in the game that knows the time, and `__fast(seconds)` turns its handle by hand:
+twenty seconds of yard in a few milliseconds, and the same twenty seconds every
+run. `run(s)` and `runUntil(fn, limit)` in the suite are the two ways to use it,
+and the limit is in *game* seconds, so a check is a fact about the game rather
+than about how fast the machine is. Anything that waits on the DOM or on a real
+pointer still sleeps; nothing else should.
+
+That is worth more than the speed. Sleeping checks were failing about half of
+all runs, and every one of those failures was the same real bug wearing a
+different hat. `__test()` reports its slowest
 groups; when one of them grows, it is almost always a check sitting through
 something the game does slowly on purpose — a walk the length of the world, a
 bed ripening, forty-two seconds between sparks. `__place(type, x)` stands a body

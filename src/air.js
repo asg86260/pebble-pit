@@ -8,6 +8,7 @@ import { S, floor, pit } from './state.js';
 import { at, count, surfaceY } from './grid.js';
 import { blocked } from './world.js';
 import { ctx } from './render.js';
+import { now } from './clock.js';
 
 export const AIR = [];
 const AIR_CAP = 260;
@@ -31,7 +32,7 @@ function airSource() {
 // paid dust arcs out of the pit to the bench and is gone; a flight it always
 // finishes, rather than a pull it can circle forever
 export function stepAir() {
-  const dust = dustAbout(performance.now());
+  const dust = dustAbout(now());
   const want = Math.min(AIR_CAP, 6 + Math.round(dust / 45));
 
   if (AIR.length < want && Math.random() < 0.6) {

@@ -38,16 +38,11 @@ export function settlePit() {
   settleSome(pit, SETTLE_BUDGET);
 }
 
-// Something goes in the hole. A grain of dust is worth one dust; a shard, a
-// spore or a spark is worth one of itself. Either way it is a grain in the pile
-// from here on, and the pile shows exactly what you are holding.
+// A grain of dust goes in the hole and is worth one dust. Everything else that
+// ends up in there has a body of its own and lies on the pile rather than in it.
 export function bankDust(x, shade = 1) {
-  if (isDust(shade)) {
-    S.stored++;                              // every pixel is worth one
-    S.banked++;                              // the books count what came in, not what is left
-  } else if (shade === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
-  else if (shade === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
-  else if (shade === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
+  S.stored++;                                // every pixel is worth one
+  S.banked++;                                // the books count what came in, not what is left
   S.dirty = true;
   if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on
@@ -138,8 +133,7 @@ export function spend(cost) {
 // top up after a resize or a reload, and take them back out when they are spent.
 // Nothing about where any one of them sits is worth saving, so this is also how
 // they come back from a save.
-const HELD = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
-              [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
+const HELD = [[CORE_CELL, 'cores']];
 
 export function seedPitCores() {
   if (!pit.grid) return;

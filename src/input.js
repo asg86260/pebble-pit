@@ -14,6 +14,7 @@ import { nearBench, nearLab, showBoard, showLab, placeBoard, showTip } from './b
 import { overPileMark, pileMarkAt } from './render.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
+import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
 const boardEl = document.getElementById('board');
@@ -50,20 +51,20 @@ export function pos(e) {
 
 canvas.addEventListener('pointerdown', e => {
   down.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY,
-                          at: performance.now(), kind: e.pointerType });
+                          at: now(), kind: e.pointerType });
   if (down.size === 2) { startPan(); return; }
   if (down.size > 2) return;
 
   const p = pos(e);
   S.mouse = p;
   if (overMeteor(p.x, p.y)) {                 // knock a charged spark loose
-    knockMeteor(performance.now());
+    knockMeteor(now());
     return;
   }
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     S.mining = S.autoMine;                      // holding only mines once unlocked
-    S.nextHit = performance.now() + MINE_DELAY;
+    S.nextHit = now() + MINE_DELAY;
     try { canvas.setPointerCapture(e.pointerId); } catch {}
     return;
   }
@@ -106,7 +107,7 @@ export function endDrag(e) {
   // the board, anywhere else it puts it away.
   if (held && held.kind === 'touch' && !panning &&
       Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
-      performance.now() - held.at < TAP_TIME) {
+      now() - held.at < TAP_TIME) {
     // one board at a time: two of them open at once on a phone screen would
     // simply sit on top of each other
     const p = pos(e);

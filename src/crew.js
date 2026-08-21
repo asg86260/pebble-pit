@@ -4,7 +4,7 @@
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // cave and the farm arrive, its own file.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY, FIND_SIZE } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, rockLeft, yardLeft } from './world.js';
@@ -15,6 +15,8 @@ import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
 import { stepSpelunker, newSpelunker } from './cave.js';
 import { stepFarmhand, newFarmhand } from './farm.js';
+import { nearestFind, pickUp, spawnFind } from './finds.js';
+import { now } from './clock.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -74,6 +76,7 @@ export function syncWorkers() {
       S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
       if (S.coreTaker === w) S.coreTaker = null;
     }
+    if (w.holding) { spawnFind(w.holding, w.x, S.groundY - FIND_SIZE, 0, -1); w.holding = 0; }
   }
   S.workers = keep;
 
@@ -102,7 +105,7 @@ export function syncWorkers() {
   for (let i = 0; i < needHaulers; i++) {
     S.workers.push({
       type: 'hauler', x: rockLeft() + Math.random() * (pit.x - rockLeft()), y: 0,
-      carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null
+      carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null, findItem: null, holding: 0
     });
   }
 
@@ -112,7 +115,7 @@ export function syncWorkers() {
   for (const w of S.workers) {
     if (w.type !== 'miner') continue;
     w.slot = slot++;
-    if (!w.next) w.next = performance.now() + minerMs() * (w.slot / Math.max(1, S.miners));
+    if (!w.next) w.next = now() + minerMs() * (w.slot / Math.max(1, S.miners));
   }
 }
 
@@ -133,21 +136,6 @@ function nearestDust(x, taken) {
     }
   }
   return -1;
-}
-
-// Something that is not dust is worth crossing the yard for: it is one grain and
-// it is worth a whole shard. Workers take the nearest column of anything, so
-// without this a shard out at the beds waits for the whole yard to be swept
-// clean first -- which, in a yard with a working crew, is never.
-function nearestMark(w, taken) {
-  let best = -1, bestD = Infinity;
-  for (const m of S.floorMarks) {
-    const c = colOf(floor, m.x);
-    if (c < 0 || c >= floor.cols || taken.has(c) || !at(floor, c, 0)) continue;
-    const d = Math.abs(m.x - w.x);
-    if (d < bestD) { bestD = d; best = c; }
-  }
-  return best;
 }
 
 // the columns already spoken for this frame
@@ -253,14 +241,33 @@ export function updateWorkers(now, dt) {
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
     w.y = standOn(S.groundY);
 
+    // A shard, a spore or a spark lying about is worth crossing the yard for:
+    // it is one thing and it is worth a whole shard, where a column of dust is
+    // worth a few grains. It is carried whole and tipped over the lip.
+    if (!w.hasCore && (w.goal === 'seek' || w.goal === 'idle')) {
+      if (w.findItem && !S.finds.includes(w.findItem)) w.findItem = null;
+      if (!w.findItem && !w.holding) w.findItem = nearestFind(w);
+      if (w.findItem) {
+        const f = w.findItem;
+        const to = f.x - WORKER / 2 + FIND_SIZE / 2;
+        w.x += Math.sign(to - w.x) * Math.min(haulSpeed() * HAUL_EMPTY, Math.abs(to - w.x));
+        if (Math.abs(to - w.x) < P) {
+          pickUp(f);
+          w.holding = f.v;
+          w.findItem = null;
+          w.goal = 'dump';
+        }
+        continue;
+      }
+    }
+
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking
       // the nearest one afresh every frame is what made the crew swarm.
       if (w.claim >= 0 && !at(floor, w.claim, 0)) { taken.delete(w.claim); w.claim = -1; }
       if (w.claim < 0) {
-        const c = nearestMark(w, taken);                  // a find first, if there is one
-        const pick = c >= 0 ? c : nearestDust(w.x, taken);
-        if (pick >= 0) { w.claim = pick; taken.add(pick); }
+        const c = nearestDust(w.x, taken);
+        if (c >= 0) { w.claim = c; taken.add(c); }
       }
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
       const c = w.claim;
@@ -291,6 +298,12 @@ export function updateWorkers(now, dt) {
       const target = pit.x - WORKER;                 // the lip, where they can stand
       w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P) {
+        if (w.holding) {                          // over the lip it goes, whole
+          spawnFind(w.holding, w.x + WORKER / 2, S.groundY - WORKER - P,
+                    2 + Math.random() * 1.2, -(2 + Math.random() * 1.2));
+          w.holding = 0;
+          S.dirty = true;
+        }
         if (w.hasCore) {
           S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
           w.hasCore = false;

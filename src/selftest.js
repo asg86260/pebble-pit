@@ -61,19 +61,34 @@ async function hoverBench() {
 // The crew take five when a rock is finished and the next one comes down out of
 // the sky after them, so between rocks there is a stretch with nothing to mine.
 // A check that wants a rock has to wait for one.
+// Run the yard forward without waiting for it: `__fast(20)` is twenty seconds of
+// game in a few milliseconds, and the same twenty seconds every time it is run.
+// A check that sleeps and hopes passes on a fast machine and fails on a slow
+// one; a check that turns the handle a fixed number of times does not.
+const run = (seconds) => window.__fast(seconds);
+
+// Run until something is true, a second of game at a time, up to a limit. The
+// limit is in game seconds, not real ones, so it is a fact about the game
+// rather than about the machine.
+function runUntil(done, limit = 60) {
+  for (let i = 0; i < limit; i++) {
+    window.__fast(1);
+    if (done()) return true;
+  }
+  return false;
+}
+
 // Checks that are about *what* a worker does should not sit through *how long*
 // it takes. There are checks of their own for pace and for the length of a walk.
 function quickCrew() {
-  window.__levels({ haulPaceLevel: 10, haulCarryLevel: 4, cavePaceLevel: 10, tendLevel: 10 });
+  window.__levels({ haulPaceLevel: 20, haulCarryLevel: 4, cavePaceLevel: 10, tendLevel: 10 });
 }
 
-async function haveRock() {
-  for (let i = 0; i < 150; i++) {
+function haveRock() {
+  return runUntil(() => {
     const s = state();
-    if (s.rock > 0 && !s.rockFall && !s.dancing) return true;
-    await sleep(100);
-  }
-  return false;
+    return s.rock > 0 && !s.rockFall && !s.dancing;
+  }, 30);
 }
 
 async function bankCore() {
@@ -95,7 +110,7 @@ async function bankCore() {
   point('pointerup', tx, ty);
   for (let i = 0; i < 40; i++) {
     await sleep(100);
-    if (!state().coreItem && !state().heldCore) { await haveRock(); return true; }
+    if (!state().coreItem && !state().heldCore) { haveRock(); return true; }
   }
   return false;
 }
@@ -274,20 +289,20 @@ const TESTS = [
   // about on the bare ground, and only then does the next one come down.
   ['a finished rock is worth a moment', async () => {
     window.__crew(3, 0);
-    await haveRock();
+    haveRock();
     window.__next();                          // the last of it goes
-    await sleep(400);
+    run(0.5);
     const partying = state();
     const feet = partying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
-    await sleep(700);
+    run(0.7);
     const stillPartying = state();
     const feetNow = stillPartying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
     let sky = 0;
-    for (let i = 0; i < 120; i++) {           // catch it on its way down
-      await sleep(50);
-      if (state().rockFall > 0) { sky = state().rockFall; break; }
+    for (let i = 0; i < 400 && !sky; i++) {    // catch it on its way down
+      run(1 / 60);
+      if (state().rockFall > 0) sky = state().rockFall;
     }
-    const landed = await haveRock();
+    const landed = haveRock();
     const after = state();
     window.__crew(0, 0);
     return [
@@ -426,28 +441,30 @@ const TESTS = [
   ['the ground never banks dust by itself', async () => {
     window.__crew(3, 0);
     window.__clearFloor();
-    await sleep(400);
+    run(1);
     const s = state();
     const before = state().pitDust;
     // heap it at the ledge, far more than the old four-deep topple needed
     for (let i = 0; i < 40; i++) window.__pile(s.pitX - 30, 200);
-    await sleep(1200);
+    run(2);
     const heaped = state();
 
-    // now fill the whole yard and watch the crew stop rather than the dust roll in
-    for (let i = 0; i < 120 && !state().yardFull; i++) {
-      for (let k = 0; k < 24; k++) window.__pile(s.rockX - 700 + Math.random() * 1600, 80);
-      await sleep(40);
+    // now fill the rock's strip and watch the crew stop rather than the dust roll in
+    const strip = () => state().piles.find(q => q.key === 'rock');
+    for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
+      const p = strip();
+      window.__pile(p.from + Math.random() * (p.to - p.from), 80);
+      run(0.2);
     }
     const full = state();
     const rockThen = full.rock;
-    await sleep(2500);
+    run(4);
     const stalled = state();
     window.__clearFloor();
-    await sleep(1200);
+    run(2);
     const freed = state();
     const rockFreed = freed.rock;
-    await sleep(2500);
+    run(4);
     const working = state();
     window.__crew(0, 0);
     window.__clearFloor();
@@ -456,7 +473,7 @@ const TESTS = [
       // the crew stop before it can, so nothing is ever homeless
       ok(heaped.pitDust - before <= 20, 'a heap at the ledge does not topple in on its own',
          `${before} -> ${heaped.pitDust} in the pit`),
-      ok(full.yardFull, 'the yard fills up', `${full.floorGrains} grains`),
+      ok(full.yardFull, "the rock's pile fills up", `${full.pileCount.rock} grains`),
       ok(stalled.pitDust - before <= 20, 'and nothing rolls in but what was already flying',
          `${stalled.pitDust - before} grains in`),
       ok(stalled.rock === rockThen, 'the crew down tools instead',
@@ -469,22 +486,47 @@ const TESTS = [
     ];
   }],
 
+  // Over the hole is in the hole. One landing on top of the ones already in
+  // there rests above the ground line, and while the count asked it to be below
+  // the line it lay over the mouth uncounted -- where a worker could see it,
+  // walk to the lip, and stand there for ever reaching for something the lip
+  // would not let it reach. Two workers stuck like that is a yard that has
+  // quietly stopped, and it took half the suite runs with it.
+  ['nothing is left lying over the mouth of the pit', async () => {
+    window.__crew(0, 2);
+    quickCrew();
+    window.__clearFloor();
+    run(0.5);
+    const s = state();
+    const before = s.shards;
+    // drop a dozen straight over the lip, so they land on each other
+    for (let i = 0; i < 12; i++) window.__toss('shard', s.pitX + 12);
+    run(6);
+    const after = state();
+    const stranded = after.findPos.filter(p => !p.endsWith('c'));
+    window.__crew(0, 0);
+    return [
+      ok(after.shards === before + 12, 'every one of them is counted',
+         `${before} -> ${after.shards}`),
+      ok(stranded.length === 0, 'none is left lying over the mouth uncounted',
+         JSON.stringify(after.findPos)),
+      ok(after.crewDetail.every(d => !d.includes('|h') || d.includes('|h0')),
+         'and nobody is stuck at the lip holding one', JSON.stringify(after.crewDetail))
+    ];
+  }],
+
   ['a worker can reach dust at the far end of a pile', async () => {
     window.__crew(0, 0);                        // lay it down before anyone can take it
     window.__clearFloor();
-    await sleep(300);
+    run(0.5);
     const s = state();
     const rock = s.piles.find(p => p.key === 'rock');
     window.__pile(rock.to - 12, 3);             // the last column of the strip
-    await sleep(300);
+    run(0.5);
     const before = state();
     window.__crew(0, 1);
     quickCrew();
-    let cleared = false;
-    for (let i = 0; i < 120; i++) {
-      await sleep(100);
-      if (state().stored > before.stored) { cleared = true; break; }
-    }
+    const cleared = runUntil(() => state().stored > before.stored, 30);
     window.__crew(0, 0);
     return [
       ok(before.floor > 0, 'dust is lying at the far end to start with',
@@ -500,12 +542,20 @@ const TESTS = [
   ['workers do not all go for the same grain', async () => {
     window.__crew(0, 3);
     window.__clearFloor();
-    await sleep(300);
+    run(0.5);
     const s = state();
-    for (const at of [0.30, 0.45, 0.60]) window.__pile(s.pitX * at, 12);
-    await sleep(1200);
+    for (const at of [0.30, 0.45, 0.60]) window.__pile(s.pitX * at, 90);
+    // Watched over a stretch rather than glanced at: a claim only lasts until
+    // the column is bare, and a fast crew can clear three small heaps between
+    // one look and the next.
+    let claims = [], best = 0;
+    for (let i = 0; i < 30; i++) {
+      run(0.1);
+      const now = state().claims.filter(c => c >= 0);
+      const spread = new Set(now).size;
+      if (spread > best) { best = spread; claims = now; }
+    }
     const busy = state();
-    const claims = busy.claims.filter(c => c >= 0);
     window.__crew(0, 0);
     return [
       ok(claims.length >= 2, 'the workers are spread over the piles', JSON.stringify(busy.claims)),
@@ -547,24 +597,24 @@ const TESTS = [
   ['each station piles to its right, and stops when its pile is full', async () => {
     window.__crew(2, 0);
     window.__clearFloor();
-    await sleep(400);
+    run(1);
     const s = state();
     const order = s.piles.map(p => p.key).join(' ');
     // fill the rock's strip by hand rather than waiting eight minutes for it
     for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
       const p = state().piles.find(q => q.key === 'rock');
       window.__pile(p.from + Math.random() * (p.to - p.from), 60);
-      await sleep(40);
+      run(0.2);
     }
     const full = state();
     const rockThen = full.rock;
-    await sleep(2500);
+    run(4);
     const stalled = state();
     window.__clearFloor();
-    await sleep(1500);
+    run(2);
     const freed = state();
     const rockFreed = freed.rock;
-    await sleep(2500);
+    run(4);
     const working = state();
     window.__crew(0, 0);
     return [
@@ -574,7 +624,7 @@ const TESTS = [
       ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
       ok(stalled.rock === rockThen, 'and the crew stop working while it is',
          `${rockThen} -> ${stalled.rock} of rock`),
-      ok(full.pileMarks.includes('rock'), 'the station says so, under it', 
+      ok(full.pileMarks.includes('rock'), 'the station says so, under it',
          JSON.stringify(full.pileMarks)),
       ok(!freed.yardFull, 'clearing it puts them back to work'),
       ok(!freed.pileMarks.includes('rock'), 'and the mark comes down with it'),
@@ -619,7 +669,7 @@ const TESTS = [
 
   ['spoil is aimed, and lands clear of the rock', async () => {
     window.__crew(6, 0);
-    await sleep(5000);
+    run(5);
     const s = state();
     window.__crew(0, 0);
     const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
@@ -839,13 +889,13 @@ const TESTS = [
   // One pool of bodies: you buy a worker, and where it works is a separate
   // question you can answer again at any time.
   ['a worker put on the rock works it', async () => {
-    await haveRock();
+    haveRock();
     await hoverBench();
     const hired = await buy('firstworker');
     const idlingFirst = state();
     const moved = await put('mine', 'more');
     const before = state();
-    await sleep(3000);
+    run(3);
     const after = state();
     return [
       ok(hired, 'the first worker can be bought with a core'),
@@ -922,32 +972,27 @@ const TESTS = [
   // walk over and pick it up, the same as everything else in this yard.
   ['the cave gives up shards, and somebody fetches them', async () => {
     window.__crew(0, 0, 3);                  // three spelunkers, cave open
-    quickCrew();                             // a trip is eleven seconds at pace 0
-    window.__clearFloor();                   // and nobody goes down for a full pile
+    quickCrew();
+    window.__clearFloor();
     const start = state();
-    let wentUnder = false, lay = false;
-    for (let i = 0; i < 200; i++) {
-      await sleep(100);
-      const s = state();
-      if (s.underground > 0) wentUnder = true;
-      if (s.floorMarks.includes('shard')) { lay = true; break; }
-    }
+    let wentUnder = false;
+    const lay = runUntil(() => {
+      wentUnder = wentUnder || state().underground > 0;
+      return state().finds.includes('shard');
+    }, 40);
     const waiting = state();
+
     window.__crew(0, 2, 3);                  // now put somebody on carrying
-    window.__place('hauler', state().caveX);
-    quickCrew();  // stood by it: the long walk is another check's job
-    let got = false;
-    for (let i = 0; i < 300; i++) {
-      await sleep(100);
-      if (state().shards > start.shards) { got = true; break; }
-    }
+    window.__place('hauler', waiting.caveX);
+    quickCrew();
+    const got = runUntil(() => state().shards > start.shards, 60);
     const after = state();
     window.__crew(0, 0, 0);
     return [
       ok(after.caveOpen, 'the cave is open'),
       ok(wentUnder, 'a spelunker goes down it'),
       ok(lay, 'and leaves a shard lying in the dust by the mouth',
-         JSON.stringify(waiting.floorMarks)),
+         JSON.stringify(waiting.finds)),
       ok(waiting.shards === start.shards, 'which is not counted where it lies',
          `${start.shards} -> ${waiting.shards}`),
       ok(got, 'a worker walks over for it and that is what counts it',
@@ -967,32 +1012,27 @@ const TESTS = [
 
   ['the farm grows spores when it is tended', async () => {
     window.__crew(0, 0, 0, 2);               // two farmhands, farm open
-    quickCrew();                             // a bed is nine seconds at tending 0
-    window.__clearFloor();                   // and nothing is cut into a full pile
-    const start = state();
-    let grew = false, lay = false;
-    for (let i = 0; i < 250; i++) {
-      await sleep(100);
-      const s = state();
-      if (s.beds.some(b => b > 0.1)) grew = true;
-      if (s.floorMarks.includes('spore')) { lay = true; break; }
-    }
-    const waiting = state();
-    window.__crew(0, 2, 0, 2);               // somebody to go and get it
-    window.__place('hauler', state().farmX);
     quickCrew();
-    let got = false;
-    for (let i = 0; i < 300; i++) {
-      await sleep(100);
-      if (state().spores > start.spores) { got = true; break; }
-    }
+    window.__clearFloor();
+    const start = state();
+    let grew = false;
+    const lay = runUntil(() => {
+      grew = grew || state().beds.some(b => b > 0.1);
+      return state().finds.includes('spore');
+    }, 40);
+    const waiting = state();
+
+    window.__crew(0, 2, 0, 2);               // somebody to go and get it
+    window.__place('hauler', waiting.farmX);
+    quickCrew();
+    const got = runUntil(() => state().spores > start.spores, 90);
     const after = state();
     return [
       ok(after.farmOpen, 'the farm is open'),
       ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
       ok(grew, 'a bed comes on while it is tended'),
       ok(lay, 'and is cut for a spore that lies beside it',
-         JSON.stringify(waiting.floorMarks)),
+         JSON.stringify(waiting.finds)),
       ok(got, 'a worker fetches it, and that is what counts it',
          `${start.spores} -> ${after.spores}`),
       ok(after.seenSpore, 'which is worth showing on the counter')
@@ -1085,28 +1125,24 @@ const TESTS = [
     window.__crew(0, 0);
     window.__meteor(true);
     const start = state();
-    let sawFalling = false, lay = false;
-    for (let i = 0; i < 600; i++) {
-      await sleep(100);
-      const s = state();
-      if (s.falling > 0) sawFalling = true;
-      if (s.floorMarks.includes('spark')) { lay = true; break; }
-    }
+    let sawFalling = false;
+    const lay = runUntil(() => {
+      sawFalling = sawFalling || state().falling > 0;
+      return state().finds.includes('spark');
+    }, 40);
     const waiting = state();
+
     window.__crew(0, 2);                     // somebody to carry it in
     window.__place('hauler', waiting.rockX);
     quickCrew();
-    let banked = false;
-    for (let i = 0; i < 300; i++) {
-      await sleep(100);
-      if (state().sparks > start.sparks) { banked = true; break; }
-    }
+    const banked = runUntil(() => state().sparks > start.sparks, 90);
     const after = state();
     window.__crew(0, 0);
     return [
       ok(after.meteorOpen, 'the meteor is up there'),
       ok(sawFalling, 'a spark comes loose and falls'),
-      ok(lay, 'and lands in the yard as a grain', JSON.stringify(waiting.floorMarks)),
+      ok(lay, 'and lands in the yard with a body of its own',
+         JSON.stringify(waiting.finds)),
       ok(waiting.sparks === start.sparks, 'not counted where it lies',
          `${start.sparks} -> ${waiting.sparks}`),
       ok(banked, 'a worker carries it to the pit, and that is what counts it',

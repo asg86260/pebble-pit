@@ -16,7 +16,7 @@ localStorage visualViewport PointerEvent KeyboardEvent Infinity NaN undefined pa
 parseFloat isNaN location navigator Error`.split(/\s+/));
 
 const KEYWORDS = new Set(`new typeof instanceof return if else for while do switch case break
-continue function const let var class extends export import from default try catch finally
+continue function const let var class extends export import from default try catch finally as
 throw delete void in of async await yield static get set null true false this`.split(/\s+/));
 
 const declared = src => {

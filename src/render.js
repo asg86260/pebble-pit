@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SHADES, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+import { P, SHADES, MARK_SIZE, FIND_SIZE, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -19,6 +19,7 @@ import { bedX, bedTop } from './farm.js';
 import { charge } from './meteor.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
+import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
@@ -113,13 +114,17 @@ export function drawFarm() {
 // is what a grain occupies and what it collides as, so a mark bigger than its
 // cell is a mark that lies about where the thing is -- and marks of different
 // sizes read as different amounts of something rather than different things.
-export function drawMark(v, x, y, size = P) {
-  const h = size / 2;
-  if (isDust(v)) {
+export function drawMark(v, x, y, size = MARK_SIZE) {
+  if (isDust(v)) {                             // a grain of dust is a grain: one cell
     ctx.fillStyle = shadeOf(v);
-    ctx.fillRect(Math.round(x - h), Math.round(y - h), size, size);
+    ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
     return;
   }
+  const h = size / 2;
+  // the page showing through behind it, so one lying against another still
+  // reads as two things rather than one shape
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(Math.round(x - h) - 1, Math.round(y - h) - 1, size + 2, size + 2);
   ctx.fillStyle = '#000';
   if (v === CORE_CELL) {
     const lw = Math.max(1, size / 4);
@@ -182,7 +187,10 @@ export function pileMarkAt(key) {
   const x = key === 'rock' ? S.cx
           : key === 'cave' ? cave.x + cave.w / 2
           : farm.x + farm.w / 2;
-  return { x: Math.round(x / P) * P, y: S.groundY + P * 7 };
+  // clear of the station itself: the cave hangs below the ground line, so a
+  // mark under the ground would be a mark down the shaft
+  const y = key === 'cave' ? cave.y + cave.h + P * 5 : S.groundY + P * 7;
+  return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
 }
 
 // where the cursor has to be to be asking about one
@@ -191,10 +199,11 @@ export function overPileMark(key, mx, my) {
   return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
 }
 
-// whatever is not dust, lying in the yard where it was dropped or dumped
-export function drawFloorMarks() {
-  ctx.fillStyle = '#000';
-  for (const m of S.floorMarks) drawMark(m.v, m.x, m.y);
+// The things the sites give up, lying where they came to rest. Each has a body
+// two cells square and its glyph fills it, so what you see is what it is and
+// what it collides as -- which is why they stack now instead of overlapping.
+export function drawFinds() {
+  for (const f of S.finds) drawMark(f.v, f.x + FIND_SIZE / 2, f.y + FIND_SIZE / 2);
 }
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
@@ -217,7 +226,7 @@ export function drawMeteor() {
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();
 
-  const c = charge(performance.now());
+  const c = charge(now());
   if (c > 0) {
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 3;
@@ -405,6 +414,12 @@ export function drawWorkers() {
                  left + (i % 2) * P + P / 2,
                  y - P * (Math.floor(i / 2) + 1) + P / 2);
       }
+      // and anything carried whole rides on top of the load, as what it is
+      if (w.holding) {
+        const stack = Math.ceil(Math.min(w.carry, 24) / 2);
+        drawMark(w.holding, Math.round(w.x) + WORKER / 2,
+                 y - P * (stack + 1) - FIND_SIZE / 2);
+      }
       ctx.fillStyle = '#000';
       if (w.hasCore) {
         const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
@@ -458,7 +473,7 @@ export function draw() {
   drawPaid();
   drawBench();
   drawCore();
-  drawFloorMarks();        // shards and the like lying in the yard
+  drawFinds();             // shards and the like, lying where they came to rest
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawWorkers();
   drawCursor();
@@ -506,15 +521,14 @@ export function drawPit() {
 // given up. The pile shows exactly what you hold, so spending takes them back
 // out of it.
 export function drawPitCores() {
-  const rad = pit.p / 2, pad = rad;
+  const pad = MARK_SIZE / 2 + 1;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
-      const v = at(pit, c, r);
-      if (!v || isDust(v)) continue;
+      if (at(pit, c, r) !== CORE_CELL) continue;     // the rest have bodies of their own
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      drawMark(v, cx, cy, pit.p);
+      drawMark(CORE_CELL, cx, cy);
     }
   }
   ctx.fillStyle = '#000';
@@ -529,7 +543,7 @@ export function drawGrid(b) {
 // the carried dust drifts loosely around the cursor
 export function drawCursor() {
   if (!S.held) return;
-  const t = performance.now() / 1000;
+  const t = now() / 1000;
   for (const m of S.motes) {
     m.a += m.spin;
     const x = S.mouse.x + Math.cos(m.a) * m.d + Math.sin(t * 1.7 + m.bob) * 2;

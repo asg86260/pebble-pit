@@ -13,6 +13,7 @@ import { boulderAlive, makeBoulder } from './rock.js';
 import { rockLeft } from './world.js';
 import { bankDust } from './pit.js';
 import { blocked } from './world.js';
+import { now } from './clock.js';
 
 // the core sits at the middle of the rock and only comes loose when it is bare
 export function coreHome() {
@@ -51,8 +52,8 @@ export function stepCore() {
     dropCore();
     // No dancers, no dance: on a game with nobody hired yet this would be five
     // seconds of standing about, and that is most of the early game.
-    S.danceUntil = S.miners > 0 ? performance.now() + DANCE_MS : 0;
-    S.nextBoulderAt = performance.now() + 2500;      // backstop if it never falls clear
+    S.danceUntil = S.miners > 0 ? now() + DANCE_MS : 0;
+    S.nextBoulderAt = now() + 2500;      // backstop if it never falls clear
     S.dirty = true;
   }
 
@@ -61,7 +62,7 @@ export function stepCore() {
     const clear = !S.coreItem || S.heldCore || S.coreItem.rest;   // it has rolled clear
     // Nothing lands on top of the celebration. The next rock waits for the
     // crew to finish, then comes down out of the sky on to the bare ground.
-    if ((clear || performance.now() > S.nextBoulderAt) && performance.now() >= S.danceUntil) {
+    if ((clear || now() > S.nextBoulderAt) && now() >= S.danceUntil) {
       S.boulderNo++;
       makeBoulder(true);
       S.dirty = true;

@@ -10,12 +10,13 @@ import { blocked, overPitMouth } from './world.js';
 import { spawnChip } from './dust.js';
 import { bankDust } from './pit.js';
 import { capacity } from './upgrades.js';
+import { now } from './clock.js';
 
 export const THROW = 9;          // cursor px/ms -> pixel velocity
 export const THROW_MAX = 17;
 
 export function track(x, y) {
-  S.trail.push({ x, y, t: performance.now() });
+  S.trail.push({ x, y, t: now() });
   if (S.trail.length > 5) S.trail.shift();
 }
 
@@ -24,7 +25,7 @@ export function throwVel() {
   if (S.trail.length < 2) return { vx: 0, vy: 0 };
   const a = S.trail[0], b = S.trail[S.trail.length - 1];
   const dt = Math.max(16, b.t - a.t);
-  if (performance.now() - b.t > 120) return { vx: 0, vy: 0 };   // paused before letting go
+  if (now() - b.t > 120) return { vx: 0, vy: 0 };   // paused before letting go
   const clamp = v => Math.max(-THROW_MAX, Math.min(THROW_MAX, v));
   return { vx: clamp((b.x - a.x) / dt * THROW), vy: clamp((b.y - a.y) / dt * THROW) };
 }

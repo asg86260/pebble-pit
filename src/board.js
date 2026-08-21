@@ -6,6 +6,7 @@ import { S, bench, lab } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES } from './lab.js';
 import { refresh, refreshStats } from './shop.js';
+import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
 const boardEl = document.getElementById('board');
@@ -103,7 +104,7 @@ const headcount = title =>
   title === 'the farm' ? S.farmhands : 0;
 
 export function hud() {
-  tweenCount(performance.now());
+  tweenCount(now());
   if (S.boardOpen) refresh(shopEl, UPGRADES, headcount);
   if (S.labBoardOpen) { refresh(labShopEl, LAB_UPGRADES, null); refreshStats(); }
   // A board is placed when it opens, and it is empty at that moment: its rows

@@ -86,6 +86,16 @@ export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#
 // it -- a shard on the ground is a grain in the same bed, and a worker scooping
 // a column picks it up without knowing what it is -- but they are counted as
 // themselves when they land in the pit, and the pile draws them as their mark.
+// How big a thing that is not dust is drawn, in world pixels. It occupies one
+// cell and collides as one, but a cell is five screen pixels and a triangle five
+// pixels across is a smudge -- so it is drawn a little larger than its cell,
+// with the page showing through behind it. That white surround is what keeps two
+// of them side by side readable as two things rather than one shape.
+// A thing that is not dust is two cells on a side: that is the size it is drawn
+// and the size it collides as, which is the whole point. A one-cell body under a
+// two-cell picture is what made them overlap and stack wrong.
+export const FIND_SIZE = 12;
+export const MARK_SIZE = FIND_SIZE;
 export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among the dust
 export const SHARD_CELL = SHADES.length + 2;
 export const SPORE_CELL = SHADES.length + 3;
@@ -112,8 +122,20 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // physically full -- a chip is never told there is nowhere to put it, and a rock
 // is more than one pile's worth, so a body on the rock is only worth having if
 // somebody is carrying. The sites deal in ones, so theirs are counted in ones.
-export const PILE_LIMIT = { rock: 1400, cave: 12, farm: 12 };
-export const PILE_CLEAR = 0.75;     // and how far down it has to come to start again
+// What one find counts for against a pile's limit. The sites deal in ones and
+// the rock deals in thousands, so a shard lying in the cave's pile has to be
+// worth more than the grain of dust it is sitting next to.
+export const FIND_WEIGHT = 1;
+// A site's strip is 420px, which is 35 bodies across and holds about 300 of them
+// heaped. Twelve was a guess and it was a bad one: a station that stops after
+// twelve is a station that is stopped nearly all the time. These are the same
+// fraction of what the ground actually holds as the rock's is.
+export const PILE_LIMIT = { rock: 1400, cave: 180, farm: 180 };
+// How far a pile has to come down before its station starts again. This only
+// exists to stop one grain being carried away restarting a station that puts one
+// straight back, so it wants to be a nudge and not a chore -- at three quarters
+// the rock needed 350 grains fetched before anybody picked up a pick again.
+export const PILE_CLEAR = 0.95;
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
