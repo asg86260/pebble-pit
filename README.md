@@ -14,7 +14,7 @@ Black-and-white pixel clicker. Vite + vanilla JS, canvas.
 - Every boulder has a **core** (a white circle) buried at its centre, hidden by the rock until you dig down to it. Strip the rock down to nothing and the core comes loose. It rolls out from the foot of the hill before it settles — the next rock stands where the last one did, so a core left in its shadow would be one you could not pick up — and then a new rock takes its place. Pick the core up by dragging over it and throw it in the pit to bank it — or leave it, and a hauler will fetch it for you — where it joins the pile and gets buried as more dust comes in.
 - Nothing about cores is shown until you bank your first one — no counter, no shop rows.
 - Cores buy the fundamental unlocks, not numbers: **first miner** (1 core, which hires one for you), **first hauler** (2 cores, likewise), and the **pick**, one more pixel a swing each time (2 cores, then 3, 4...). Everything else — carry, mining speed, hiring and upgrading workers — is bought with dust.
-- The pit never fills: at 80% the pile settles and each remaining grain counts for twice as much, so there is always room. If the ground bed ever fills, extra dust rolls into the pit.
+- **The pit really holds a million.** The pile is the dust, not a picture of it: one grain is one dust, and paying takes exactly that many grains back out. What changes as it fills is how big a grain is drawn — when the pile reaches the top it settles to the next grain down, six pixels to three to two to one, keeping every grain and only losing resolution. At one pixel a grain the hole holds 1,000,224. If the ground bed ever fills, extra dust rolls into the pit.
 - Everything saves to localStorage — boulder damage, ground dust, pit contents, upgrades, crew. Reset with the button under the shop (click twice to confirm), or the `r` key.
 
 ```
@@ -26,11 +26,12 @@ bun run dev
 
 Open the game and run `__test()` in the browser console. It drives the game through the same
 hooks the console has and checks the things that have broken before: the canvas covering the
-window, the ground pinned to the bottom, the pit's fixed size, the shop board opening at the bench
+window, the ground pinned to the bottom, the pit's fixed size and its million-grain capacity, the shop board opening at the bench
 and sitting above the canvas, mining, throwing, spending, the counter easing, cores banking, and
 miners and workers doing their jobs. It resets the save first, so run it on a game you do not mind
 losing.
 
 Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n dust, `__drop()`
 releases a core, `__jump(n)` swaps in rock n, `__pile(x, n)` heaps dust on the ground,
-`__crew(miners, workers, drillers)` hires a crew outright, `__next()` finishes the rock.
+`__crew(miners, workers, drillers)` hires a crew outright, `__next()` finishes the rock,
+`__spend(n)` takes n dust back out of the pit.

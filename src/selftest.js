@@ -105,12 +105,67 @@ const TESTS = [
     ];
   }],
 
-  ['pit is always the same size', async () => {
+  ['the pit is always the same hole', async () => {
     const s = state();
     return [
-      ok(s.pitRows === 46, 'pit is 46 deep', `${s.pitRows}`),
-      ok(Math.round(s.pitW / 6) === 240, 'pit is 240 across', `${Math.round(s.pitW / 6)}`),
-      ok(s.pitCapacity === 46 * 240, 'capacity follows from those', `${s.pitCapacity}`)
+      ok(s.pitRows * s.pitGrain === 276, 'the hole is 276 deep whatever the grain',
+         `${s.pitRows} x ${s.pitGrain}`),
+      ok(s.pitW === 3624, 'and 3624 across', `${s.pitW}`),
+      ok(s.pitCapacity === (3624 / s.pitGrain) * (276 / s.pitGrain),
+         'capacity follows from the grain', `${s.pitCapacity} at grain ${s.pitGrain}`)
+    ];
+  }],
+
+  ['the pit really holds a million', async () => {
+    const checks = [];
+    const grains = [];
+    for (let i = 0; i < 10; i++) {
+      window.__give(100000);
+      await sleep(120);
+      const s = state();
+      grains.push(s.pitGrain);
+      if (s.stored !== s.pitDust) {
+        checks.push(ok(false, 'every dust is a grain in the pile',
+                       `${s.stored} counted, ${s.pitDust} in the pit`));
+        break;
+      }
+    }
+    const s = state();
+    return checks.concat([
+      ok(s.stored === 1000000, 'a million goes in', `${s.stored}`),
+      ok(s.pitDust === 1000000, 'and a million is in the pile, one grain each',
+         `${s.pitDust}`),
+      ok(s.pitCapacity >= 1000000, 'with room for it', `${s.pitCapacity}`),
+      ok(s.pitGrain === 1, 'the pile has settled to its finest grain', `${s.pitGrain}`),
+      ok(grains[0] > grains[grains.length - 1], 'it got there by settling, not at once',
+         grains.join(' -> '))
+    ]);
+  }],
+
+  ['a full pit still saves and reloads', async () => {
+    await sleep(1200);
+    const raw = localStorage.getItem('boulder-clicker/v4');
+    const s = state();
+    const j = JSON.parse(raw || 'null');
+    return [
+      ok(raw.length < 200 * 1024, 'the save stays small', `${Math.round(raw.length / 1024)}KB`),
+      ok(j.stored === s.stored, 'the hole is saved', `${j?.stored}`),
+      ok(typeof j.pit?.heights === 'string', 'the pile is saved as its profile'),
+      ok(j.pitStep === 3, 'and the grain it settled to', `${j?.pitStep}`)
+    ];
+  }],
+
+  ['spending a full pit takes it back out', async () => {
+    const before = state();
+    window.__spend(400000);
+    await sleep(600);
+    const after = state();
+    return [
+      ok(after.stored === before.stored - 400000, 'the counter comes down',
+         `${before.stored} -> ${after.stored}`),
+      ok(after.pitDust === after.stored, 'and the pile matches it exactly',
+         `${after.pitDust} vs ${after.stored}`),
+      ok(after.paid > 0, 'dust is seen leaving')
     ];
   }],
 

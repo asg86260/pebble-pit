@@ -262,25 +262,45 @@ worth moving to.
 
 ## The pit
 
-The pit takes the bottom third of the screen and is 240 cells wide — about two windows across, so
-most of it sits off the right edge and you scroll (wheel or arrow keys) to see along it. There is
+The pit is **one fixed hole**: 3624 world pixels across and 276 deep, always. It runs about two
+windows to the right, so most of it sits off the edge and you scroll to see along it. There is
 ground past its far wall, so scrolling to the end shows you the edge of the thing rather than
-running out of world. That is
-around 12,000 grains, and dust goes in one for one: what you mine off the rock is what fills it.
+running out of world.
 
-A million will not fit in it whatever we do — a million 6px cells is 36 million square pixels,
-roughly 250 windowfuls. So the pile settles when it is full and each grain starts counting for
-twice as much: about seven settles across a run.
+**It really holds a million.** The pile is the dust, not a picture of it: one grain is one dust,
+always, and paying takes exactly that many grains back out. What changes as it fills is not what
+a grain is worth — it is how big a grain is drawn.
 
-## The pit never fills
+| Grain | Pit is | Holds |
+|---|---|---|
+| 6 px | 604 x 46 | 27,784 |
+| 3 px | 1208 x 92 | 111,136 |
+| 2 px | 1812 x 138 | 250,056 |
+| 1 px | 3624 x 276 | **1,000,224** |
 
-A run mines ~35,000 dust; the pit holds ~1,300 grains on screen. So the pile is a picture of the
-total, not a store of it. When it reaches 80% it **settles**: every column is squashed, and each
-remaining grain is worth twice what it was. Eight settles across a run, each one a quiet beat
-rather than an interruption. Dust can always be added, so nothing ever blocks.
+When the pile reaches the top it **settles to the next grain down**. Every grain is kept: each
+column is shared out across the finer columns standing where it did, so the profile survives and
+only the resolution changes — the pile visibly sinks to a quarter of its height and the dust in
+it gets finer. Three settles across a run, each a quiet beat rather than an interruption. This is
+the opposite of the old compaction, which threw dust away and made a grain stand for more; the
+number and the picture can no longer drift apart, because they are the same thing.
 
-Same guard on the ground: if the dust bed ever fills, further dust rolls into the pit instead of
-piling up mid-air.
+Three things make a million grains affordable:
+
+- **Drawing.** The pit is painted into a scratch canvas one pixel per grain and blitted up to
+  size, and only the cells that changed are pushed across. A million fillRects a frame is not a
+  drawing routine; one drawImage is.
+- **Settling.** The sand rule runs over a band of columns per frame and picks up where it left
+  off, so the cost per frame is flat whatever the grain. The pile slumps a beat behind itself,
+  which nobody can see.
+- **Saving.** Storing a value per cell is 2.5 MB of speckle written every second. What matters
+  about a pile is its shape and its total, so the save holds the height of every column and how
+  many grains of each shade there are, and the speckle is dealt out again on the way back in.
+  The profile and the count come back exact, in about 2 KB.
+
+Measured with a full pit and a crew working: 6 ms a frame.
+
+If the ground bed ever fills, further dust rolls into the pit instead of piling up mid-air.
 
 Dust heaped against the ledge topples in on its own once it is four cells deep there. A thin
 scatter just rests against the wall — so throwing everything at the edge is a real tactic, but the

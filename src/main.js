@@ -30,8 +30,9 @@ const ROCK_GROW_W = 4;    // each rock is a little broader than the last
 const ROCK_GROW_H = 2;    // and a little higher
 const ROCK_SINK = 12;     // how far its foot sits under the ground line
 const ROCK_SKY = 340;     // sky kept clear above the ground for the rock to grow into
-const PIT_ROWS = 46;      // the pit is one fixed size, always
-const PIT_COLS = 240;
+const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
+const PIT_W = 3624;       // and this wide, which at one grain a pixel holds a million
+const PIT_GRAINS = [P, 3, 2, 1];   // the pile settles finer as it fills, never smaller
 const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
@@ -88,9 +89,7 @@ let motes = [];           // the floating pixels riding with the cursor
 let paid = [];            // dust on its way out of the pit to the bench
 let cores = 0;            // cores banked in the pit
 let seenCore = false;     // a core has been banked at least once
-let pitScale = 1;         // dust each drawn grain in the pit stands for
-let pitFrac = 0;          // dust banked since the last drawn grain
-let pitSettles = 0;       // how many times the pile has compacted
+let pitStep = 0;          // how many times the pile has settled to a finer grain
 let coreItem = null;      // a core loose in the world
 let heldCore = false;     // a core riding on the cursor
 let pickLevel = 0;        // pixels knocked loose per hit (bought with cores)
@@ -109,19 +108,25 @@ let tweenFrom = 0, tweenTo = 0, tweenAt = 0, tweenMs = 300;
 let dirty = false;
 
 // two sand grids: the ground the dust lands on, and the pit dug into it
-const floor = { x: 0, y: 0, cols: 0, rows: 24, grid: null };
-const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 22, grid: null };
+// `p` is the size of one grain in that grid. The ground's is fixed; the pit's
+// gets finer as the pile grows, so a million grains still fit in the same hole
+const floor = { x: 0, y: 0, cols: 0, rows: 24, p: P, grid: null };
+const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null };
 
 // --- sand grid helpers ------------------------------------------------------
 const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 const depthShade = (v, max) =>
   Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
 const at = (b, c, r) => b.grid[r * b.cols + c];
-const put = (b, c, r, v) => { b.grid[r * b.cols + c] = v; };
+const put = (b, c, r, v) => {
+  b.grid[r * b.cols + c] = v;
+  if (b === pit) markPit(c, r);
+};
 const inside = (b, c, r) => c >= 0 && c < b.cols && r >= 0 && r < b.rows;
-const bottomY = b => b.y + b.rows * P;      // screen y of the grid floor
-const colOf = (b, x) => Math.floor((x - b.x) / P);
+const bottomY = b => b.y + b.rows * b.p;    // screen y of the grid floor
+const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
+const countDust = b => { let n = 0; for (const v of b.grid) if (v && v !== CORE_CELL) n++; return n; };
 
 // the ground is cut by the pit, and the rock stands on the rest of it: dust can
 // settle in neither
@@ -134,9 +139,9 @@ const blocked = c => overPitMouth(floor.x + c * P) || overRock(floor.x + c * P);
 // screen y where a pixel falling down column c would come to rest
 function surfaceY(b, c) {
   for (let r = b.rows - 1; r >= 0; r--) {
-    if (at(b, c, r)) return bottomY(b) - (r + 2) * P;
+    if (at(b, c, r)) return bottomY(b) - (r + 2) * b.p;
   }
-  return bottomY(b) - P;
+  return bottomY(b) - b.p;
 }
 
 function addGrain(b, x, skip, shade = 1) {
@@ -158,9 +163,9 @@ function addGrain(b, x, skip, shade = 1) {
 }
 
 // one sand tick: unsupported grains fall, then slump sideways
-function settle(b, skip) {
+function settle(b, skip, from = 0, to = b.cols) {
   for (let r = 1; r < b.rows; r++) {
-    for (let c = 0; c < b.cols; c++) {
+    for (let c = from; c < to; c++) {
       if (!at(b, c, r)) continue;
       const v = at(b, c, r);
       if (!at(b, c, r - 1)) { put(b, c, r, 0); put(b, c, r - 1, v); continue; }
@@ -209,7 +214,7 @@ function resize() {
 
   // only a window too small for the pit shrinks the picture, and then in whole
   // pixels per cell: fractional scaling leaves hairline seams between them
-  const needH = ROCK_SKY + PIT_ROWS * P + FLOOR_MARGIN + P * 4;
+  const needH = ROCK_SKY + PIT_H + FLOOR_MARGIN + P * 4;
   const needW = TO_LEDGE + ROCK_SKY + P * 20;
   const raw = Math.min(1, H / needH, W / needW);
   zoom = Math.max(2, Math.floor(P * raw)) / P;
@@ -222,10 +227,10 @@ function resize() {
   placeRock();                             // the rock stands on the ground line
 
   pit.x = cx + TO_LEDGE;
-  pit.cols = PIT_COLS;
-  pit.w = pit.cols * P;
-  pit.rows = PIT_ROWS;
-  pit.h = pit.rows * P;
+  pit.w = PIT_W;
+  pit.h = PIT_H;
+  pit.cols = PIT_W / pit.p;
+  pit.rows = PIT_H / pit.p;
   pit.y = groundY;
 
   bench.w = P * 12;
@@ -246,7 +251,7 @@ function resize() {
   seedAir();
 
   resizeGrid(floor);
-  resizeGrid(pit);
+  if (!pit.grid) setPitGrain(pitStep);     // the pit never changes with the window
 }
 
 // the view can never leave the world; if the window is bigger, it sits still
@@ -254,6 +259,37 @@ function resize() {
 function clampCam() {
   camX = Math.max(0, Math.min(camX, Math.max(0, worldW - viewW)));
   camY = worldH - viewH;
+}
+
+// The pit is drawn through a scratch canvas one pixel per grain, blitted up to
+// size. A million fillRects a frame is not a drawing routine; one drawImage is.
+// Only the cells that changed are pushed across, so a busy pile costs a strip.
+const pitPix = document.createElement('canvas');
+const pitPixCtx = pitPix.getContext('2d', { willReadFrequently: true });
+let pitImage = null;                       // the pixels, one per grain
+let pitPainted = false;                    // false means repaint the whole thing
+let pitLo = 0, pitHi = -1, pitTop = -1, pitBot = 0;   // what has changed since
+
+// SHADES as packed RGBA, so a grain is one array write
+const SHADE_RGBA = SHADES.map(h => {
+  const n = parseInt(h.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 255];
+});
+
+function markPit(c, r) {
+  if (c < pitLo) pitLo = c;
+  if (c > pitHi) pitHi = c;
+  if (r < pitTop || pitTop < 0) pitTop = r;
+  if (r > pitBot) pitBot = r;
+}
+
+function setPitGrain(step) {
+  pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
+  pit.p = PIT_GRAINS[pitStep];
+  pit.cols = PIT_W / pit.p;
+  pit.rows = PIT_H / pit.p;
+  pit.grid = new Uint8Array(pit.cols * pit.rows);
+  pitPainted = false;
 }
 
 // keep the grain count across a resize, re-packed flat
@@ -273,7 +309,9 @@ function seedPitCores() {
   let have = 0;
   for (const v of pit.grid) if (v === CORE_CELL) have++;
   for (let i = have; i < cores; i++) {
-    addGrain(pit, pit.x + (0.15 + 0.7 * ((i + 0.5) / Math.max(1, cores))) * pit.w, null, CORE_CELL);
+    // near the lip, where the dust is and where you can see them: the pit runs
+    // a long way right, and a core out in the empty end is a core nobody finds
+    addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, cores))) * 700, null, CORE_CELL);
   }
   if (have > cores) takeCoreCells(have - cores);
 }
@@ -651,65 +689,80 @@ const UPGRADES = [
   }
 ];
 
-// the pit pile is a picture of the total, not a one-to-one store: once it gets deep
-// it compacts, each remaining grain standing for twice as much, so it never fills up
-const PIT_FULL = 1;       // only settle when the pit is genuinely full
-
+// The pile in the pit is the real thing, not a picture of it: one grain is one
+// dust, always. What changes as it fills is how big a grain is drawn. The hole
+// stays the same hole; the dust in it settles finer, six pixels to three to two
+// to one, and at one pixel a grain the pit holds a million.
 function bankDust(x, shade = 1) {
   stored++;                                // every pixel is worth one
   dirty = true;
-  pitFrac++;
-  if (pitFrac < pitScale) return;
-  pitFrac -= pitScale;
-  if (!addGrain(pit, x, null, shade)) compactPit();   // full: squash and carry on
-}
-
-// squash every column, keeping the profile, and double what a grain is worth.
-// each settle keeps a little more than the last, so the pit trends towards full
-// over a run instead of sawtoothing around the same level
-function compactPit() {
-  const keepFrac = Math.min(0.85, 0.5 + 0.07 * pitSettles);
-  for (let c = 0; c < pit.cols; c++) {
-    const col = [], keptCores = [];
-    for (let r = 0; r < pit.rows; r++) {
-      const v = at(pit, c, r);
-      if (!v) continue;
-      if (v === CORE_CELL) keptCores.push(v);
-      else col.push(v);
-    }
-    const keep = Math.min(pit.rows - keptCores.length, Math.ceil(col.length * keepFrac));
-    const stack = col.slice(0, Math.max(0, keep)).concat(keptCores);
-    for (let r = 0; r < pit.rows; r++) put(pit, c, r, stack[r] || 0);
+  if (!addGrain(pit, x, null, shade)) {
+    refinePit();                           // full: settle finer and carry on
+    addGrain(pit, x, null, shade);
   }
-  pitScale *= 2;
-  pitSettles++;
 }
 
-// paying takes the dust back out of the pit, top layer first
-// what the pile is worth, so the picture and the number never drift apart
-function pileWorth() {
-  let n = 0;
-  for (const v of pit.grid) if (v && v !== CORE_CELL) n++;
-  return n * pitScale;
+// how many dust the pit could hold at its current grain
+const pitCapacity = () => pit.cols * pit.rows;
+
+// Settle the pile to the next grain down. Every grain is kept: each column of
+// the old pile is shared out across the finer columns that stand where it did,
+// so the profile survives and only the resolution changes.
+function refinePit() {
+  if (pitStep >= PIT_GRAINS.length - 1) return;    // already as fine as it gets
+
+  const oldP = pit.p, oldCols = pit.cols, oldRows = pit.rows, oldGrid = pit.grid;
+  pitStep++;
+  pit.p = PIT_GRAINS[pitStep];
+  pit.cols = PIT_W / pit.p;
+  pit.rows = PIT_H / pit.p;
+  pit.grid = new Uint8Array(pit.cols * pit.rows);
+
+  // Where each old column lands. The ratio is not always a whole number (three
+  // pixels to two is one and a half), so a column's span is taken from the
+  // boundaries rather than assumed: spans of one and two alternate, and every
+  // finer column is claimed exactly once. Nothing is dropped on the floor.
+  const k = oldP / pit.p;
+  const edge = c => Math.min(pit.cols, Math.floor(c * k));
+
+  for (let c = 0; c < oldCols; c++) {
+    const stack = [];
+    for (let r = 0; r < oldRows; r++) {
+      const v = oldGrid[r * oldCols + c];
+      if (v && v !== CORE_CELL) stack.push(v);     // cores are re-seeded after
+    }
+    if (!stack.length) continue;
+
+    const a = edge(c);
+    const span = Math.max(1, edge(c + 1) - a);
+    for (let i = 0; i < stack.length; i++) {
+      const nc = a + (i % span);
+      const nr = (i - i % span) / span;
+      if (nc < pit.cols && nr < pit.rows) put(pit, nc, nr, stack[i]);
+    }
+  }
+  seedPitCores();
+  pitPainted = false;
+  dirty = true;
 }
 
 // paying comes out of the hole: grains are lifted off the top until the pile is
 // worth no more than the counter says
 function spend(cost) {
   stored -= cost;
-  let worth = pileWorth();
-  for (let r = pit.rows - 1; r >= 0 && worth > stored; r--) {
-    for (let c = 0; c < pit.cols && worth > stored; c++) {
+  let left = cost;                         // one grain is one dust: lift exactly that many
+  for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
+    for (let c = 0; c < pit.cols && left > 0; c++) {
       const v = at(pit, c, r);
       if (!v || v === CORE_CELL) continue;
       put(pit, c, r, 0);
-      worth -= pitScale;
+      left--;
       if (paid.length < 200) {               // a few hundred is plenty to read
         paid.push({
-          x0: pit.x + c * P,
-          y0: bottomY(pit) - (r + 1) * P,
-          x: pit.x + c * P,
-          y: bottomY(pit) - (r + 1) * P,
+          x0: pit.x + c * pit.p,
+          y0: bottomY(pit) - (r + 1) * pit.p,
+          x: pit.x + c * pit.p,
+          y: bottomY(pit) - (r + 1) * pit.p,
           t: -Math.random() * 0.5,           // they leave in a stream, not a block
           rate: 0.012 + Math.random() * 0.01,
           lift: 60 + Math.random() * 90,     // how high it arcs on the way
@@ -880,11 +933,131 @@ function release(x, y) {
 }
 
 // --- persistence ------------------------------------------------------------
-const gridStr = b => {
-  let s = '';
-  for (let i = 0; i < b.grid.length; i++) s += String(b.grid[i] || 0);
-  return s;
-};
+// A full pit is a million cells, which is a million characters written to
+// localStorage every second if you store it a digit at a time. A pile is nearly
+// all long runs of the same value, so store the runs: "value x length", and a
+// full pit comes out a few kilobytes.
+function gridStr(b) {
+  const out = [];
+  let run = b.grid[0] || 0, len = 1;
+  for (let i = 1; i < b.grid.length; i++) {
+    const v = b.grid[i] || 0;
+    if (v === run) { len++; continue; }
+    out.push(run + 'x' + len);
+    run = v;
+    len = 1;
+  }
+  out.push(run + 'x' + len);
+  return out.join('.');
+}
+
+// fills the grid from a run-length string; false if it does not fit
+function gridFill(b, str) {
+  if (typeof str !== 'string' || !str) return false;
+  let i = 0;
+  for (const part of str.split('.')) {
+    const x = part.indexOf('x');
+    if (x < 0) return false;
+    const v = +part.slice(0, x), len = +part.slice(x + 1);
+    if (!(len >= 0) || i + len > b.grid.length) return false;
+    if (v) b.grid.fill(v, i, i + len);
+    i += len;
+  }
+  return i === b.grid.length;
+}
+
+// A million grains stored one value per cell is two and a half megabytes of
+// speckle, written every second. What actually matters about the pile is its
+// shape and its total: the shade of any one grain is decoration. So the pit is
+// stored as the height of every column plus how many grains of each shade there
+// are, and the speckle is dealt out again on the way back in. The profile and
+// the count come back exact; you cannot tell which grain moved.
+function pitToSave() {
+  const heights = new Array(pit.cols).fill(0);
+  const shades = new Array(SHADES.length).fill(0);
+  for (let c = 0; c < pit.cols; c++) {
+    let n = 0;
+    for (let r = 0; r < pit.rows; r++) {
+      const v = at(pit, c, r);
+      if (!v || v === CORE_CELL) continue;
+      n++;
+      shades[Math.min(SHADES.length, Math.max(1, v)) - 1]++;
+    }
+    heights[c] = n;
+  }
+  return { cols: pit.cols, rows: pit.rows, heights: runs(heights), shades };
+}
+
+// run-length a list of numbers: "value x length", runs joined by dots
+function runs(list) {
+  const out = [];
+  let run = list[0], len = 1;
+  for (let i = 1; i < list.length; i++) {
+    if (list[i] === run) { len++; continue; }
+    out.push(run + 'x' + len);
+    run = list[i];
+    len = 1;
+  }
+  out.push(run + 'x' + len);
+  return out.join('.');
+}
+
+function unruns(str, want) {
+  const list = new Array(want).fill(0);
+  let i = 0;
+  for (const part of String(str || '').split('.')) {
+    const x = part.indexOf('x');
+    if (x < 0) return null;
+    const v = +part.slice(0, x), len = +part.slice(x + 1);
+    if (!(len >= 0) || i + len > want) return null;
+    list.fill(v, i, i + len);
+    i += len;
+  }
+  return i === want ? list : null;
+}
+
+function pitFromSave(sv) {
+  if (!sv || sv.cols !== pit.cols || sv.rows !== pit.rows) return false;
+  const heights = unruns(sv.heights, pit.cols);
+  if (!heights) return false;
+
+  // a cumulative distribution over the shades, so the speckle comes back in the
+  // same proportions it went out in
+  const counts = Array.isArray(sv.shades) ? sv.shades : [];
+  let total = 0;
+  for (const n of counts) total += n || 0;
+  const cum = [];
+  let acc = 0;
+  for (let i = 0; i < SHADES.length; i++) { acc += counts[i] || 0; cum.push(acc); }
+
+  let seed = 1;
+  const pick = () => {
+    if (!total) return 1;
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;   // enough randomness for dust
+    const t = (seed / 0x7fffffff) * total;
+    for (let i = 0; i < cum.length; i++) if (t < cum[i]) return i + 1;
+    return SHADES.length;
+  };
+
+  pit.grid.fill(0);
+  for (let c = 0; c < pit.cols; c++) {
+    const h = Math.min(pit.rows, Math.max(0, heights[c]));
+    for (let r = 0; r < h; r++) pit.grid[r * pit.cols + c] = pick();
+  }
+  pitPainted = false;
+  return true;
+}
+
+// how many cells a run-length string holds, without unpacking it
+function gridCount(str) {
+  if (typeof str !== 'string') return 0;
+  let n = 0;
+  for (const part of str.split('.')) {
+    const x = part.indexOf('x');
+    if (x > 0 && part[0] !== '0') n += +part.slice(x + 1);
+  }
+  return n;
+}
 
 function persist() {
   if (!dirty) return;
@@ -896,9 +1069,7 @@ function persist() {
     autoMine,
     cores,
     seenCore,
-    pitScale,
-    pitFrac,
-    pitSettles,
+    pitStep,
     pickLevel,
     core: coreItem && !heldCore ? { x: coreItem.x, y: coreItem.y } : null,
     coreLoose: heldCore || !!coreItem,
@@ -915,19 +1086,19 @@ function persist() {
     gh,
     boulderNo,
     floor: { cols: floor.cols, rows: floor.rows, cells: gridStr(floor) },
-    pit: { cols: pit.cols, rows: pit.rows, cells: gridStr(pit) }
+    pit: pitToSave()
   });
 }
 
 function restoreGrid(b, s) {
   if (!s) return;
-  if (s.cols === b.cols && s.rows === b.rows && s.cells?.length === b.cols * b.rows) {
-    for (let i = 0; i < b.grid.length; i++) b.grid[i] = +s.cells[i] || 0;
-  } else if (typeof s.cells === 'string') {
-    let n = 0;
-    for (const ch of s.cells) if (ch !== '0') n++;
-    fillFlat(b, n);          // different window size: re-pack the same amount
+  b.grid.fill(0);
+  if (s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
+    if (b === pit) pitPainted = false;
+    return;
   }
+  fillFlat(b, gridCount(s.cells));   // a different shape: re-pack the same amount
+  if (b === pit) pitPainted = false;
 }
 
 function restore() {
@@ -944,9 +1115,7 @@ function restore() {
     minersUnlocked = false;
     cores = 0;
     seenCore = false;
-    pitScale = 1;
-    pitFrac = 0;
-    pitSettles = 0;
+    pitStep = 0;
     pickLevel = 0;
     coreItem = null;
     miners = 0;
@@ -968,9 +1137,7 @@ function restore() {
   minersUnlocked = !!s.minersUnlocked;
   cores = s.cores || 0;
   seenCore = !!s.seenCore || cores > 0;
-  pitScale = s.pitScale || 1;
-  pitFrac = s.pitFrac || 0;
-  pitSettles = s.pitSettles || 0;
+  setPitGrain(s.pitStep || 0);
   pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
     coreItem = s.core
@@ -986,7 +1153,7 @@ function restore() {
   haulCarryLevel = s.haulCarryLevel || 0;
   haulPaceLevel = s.haulPaceLevel || 0;
   restoreGrid(floor, s.floor);
-  restoreGrid(pit, s.pit);
+  if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
   coreBuried = boulderAlive() || !(s.coreLoose || heldCore);
 }
@@ -1005,9 +1172,7 @@ function reset() {
   minersUnlocked = false;
   cores = 0;
   seenCore = false;
-  pitScale = 1;
-  pitFrac = 0;
-  pitSettles = 0;
+  setPitGrain(0);
   pickLevel = 0;
   coreItem = null;
   heldCore = false;
@@ -1271,16 +1436,12 @@ function seedAir() {
 
 // a spot just above the dust in a random column of a pile
 function airSource() {
-  const onFloor = Math.random() * (count(floor) + count(pit)) < count(floor);
-  const b = onFloor ? floor : pit;
-  const n = count(b);
-  if (!n) return null;
-
+  const b = Math.random() < 0.5 ? floor : pit;
   for (let tries = 0; tries < 12; tries++) {
     const c = Math.floor(Math.random() * b.cols);
     if (!at(b, c, 0)) continue;
     if (b === floor && blocked(c)) continue;
-    return { x: b.x + c * P + Math.random() * P, y: surfaceY(b, c) - P };
+    return { x: b.x + c * b.p + Math.random() * b.p, y: surfaceY(b, c) - P };
   }
   return null;
 }
@@ -1310,8 +1471,21 @@ function drawPaid() {
   ctx.fillStyle = '#000';
 }
 
+let dustSeen = 0, dustSeenAt = 0;
+
+// roughly how much dust is lying about, refreshed a few times a second: this
+// only sets how many motes drift in the air, and counting a full pit every
+// frame would cost more than the whole rest of the game
+function dustAbout(now) {
+  if (now - dustSeenAt > 400) {
+    dustSeen = count(floor) + count(pit);
+    dustSeenAt = now;
+  }
+  return dustSeen;
+}
+
 function stepAir() {
-  const dust = count(floor) + count(pit);
+  const dust = dustAbout(performance.now());
   const want = Math.min(AIR_CAP, 6 + Math.round(dust / 45));
 
   if (AIR.length < want && Math.random() < 0.6) {
@@ -1559,7 +1733,21 @@ function step() {
   }
 
   settle(floor, blocked);
-  settle(pit, null);
+  settlePit();
+}
+
+// A million cells is too many to walk every frame, so the pit is settled a band
+// of columns at a time, picking up where it left off. The pile slumps a beat
+// behind itself, which nobody can see, and the frame cost is flat whatever the
+// grain.
+const SETTLE_BUDGET = 40000;               // cells of pit to look at per frame
+let settleAt = 0;                          // the column it got to last time
+
+function settlePit() {
+  const band = Math.max(1, Math.min(pit.cols, Math.floor(SETTLE_BUDGET / pit.rows)));
+  settle(pit, null, settleAt, Math.min(pit.cols, settleAt + band));
+  settleAt += band;
+  if (settleAt >= pit.cols) settleAt = 0;
 }
 
 function draw() {
@@ -1596,7 +1784,7 @@ function draw() {
   ctx.fillStyle = '#000';
 
   drawGrid(floor);
-  drawGrid(pit);
+  drawPit();
 
   // ground up to the ledge, then the pit wall dropping away to the right edge
   ctx.lineWidth = 2;
@@ -1620,6 +1808,60 @@ function draw() {
 
 }
 
+// push whatever changed into the scratch canvas, then blit it into the world at
+// grain size. Cores are drawn on top, as circles, not as pixels
+function drawPit() {
+  if (!pitImage || pitPix.width !== pit.cols || pitPix.height !== pit.rows) {
+    pitPix.width = pit.cols;
+    pitPix.height = pit.rows;
+    pitImage = pitPixCtx.createImageData(pit.cols, pit.rows);
+    pitPainted = false;
+  }
+
+  if (!pitPainted) { pitLo = 0; pitHi = pit.cols - 1; pitTop = 0; pitBot = pit.rows - 1; }
+
+  if (pitHi >= pitLo && pitTop >= 0) {
+    const d = pitImage.data;
+    for (let r = pitTop; r <= pitBot; r++) {
+      // row 0 is the floor of the pit, so the image is drawn upside down
+      const py = pit.rows - 1 - r;
+      for (let c = pitLo; c <= pitHi; c++) {
+        const v = at(pit, c, r);
+        const i = (py * pit.cols + c) * 4;
+        if (!v) { d[i + 3] = 0; continue; }
+        const rgba = SHADE_RGBA[Math.min(SHADES.length, Math.max(1, v)) - 1];
+        d[i] = rgba[0]; d[i + 1] = rgba[1]; d[i + 2] = rgba[2]; d[i + 3] = 255;
+      }
+    }
+    pitPixCtx.putImageData(pitImage, 0, 0, pitLo, pit.rows - 1 - pitBot,
+                           pitHi - pitLo + 1, pitBot - pitTop + 1);
+    pitPainted = true;
+    pitLo = pit.cols; pitHi = -1; pitTop = -1; pitBot = 0;
+  }
+
+  const sm = ctx.imageSmoothingEnabled;
+  ctx.imageSmoothingEnabled = false;       // grains are squares, not smudges
+  ctx.drawImage(pitPix, pit.x, pit.y, pit.w, pit.h);
+  ctx.imageSmoothingEnabled = sm;
+
+  drawPitCores();
+}
+
+// a core draws bigger than the grain it sits in, so keep the whole circle inside
+// the pile's walls and floor rather than letting it poke through
+function drawPitCores() {
+  const rad = P * 1.2, pad = rad + 2;
+  for (let r = 0; r < pit.rows; r++) {
+    for (let c = 0; c < pit.cols; c++) {
+      if (at(pit, c, r) !== CORE_CELL) continue;
+      const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
+      drawCircle(Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad),
+                 Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad), rad);
+    }
+  }
+  ctx.fillStyle = '#000';
+}
+
 function drawGrid(b) {
   let shade = 0;
   const buried = [];
@@ -1627,10 +1869,10 @@ function drawGrid(b) {
     for (let c = 0; c < b.cols; c++) {
       const v = at(b, c, r);
       if (!v) continue;
-      const x = b.x + c * P, y = bottomY(b) - (r + 1) * P;
+      const x = b.x + c * b.p, y = bottomY(b) - (r + 1) * b.p;
       if (v === CORE_CELL) { buried.push([x, y]); continue; }
       if (v !== shade) { shade = v; ctx.fillStyle = shadeOf(v); }
-      ctx.fillRect(x, y, P, P);
+      ctx.fillRect(x, y, b.p, b.p);
     }
   }
   // a core draws bigger than the cell it sits in, so keep the whole circle inside
@@ -1839,6 +2081,7 @@ window.__crew = (m = 0, h = 0, d = 0) => {   // hire straight off, for looking a
   if (m || h || d) seenCore = true;
   syncWorkers(); buildShop(); dirty = true;
 };
+window.__spend = n => { spend(Math.min(n, stored)); dirty = true; };
 window.__give = (n, shade = 1) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
 // how much dust has ended up somewhere the player cannot get at it
@@ -1855,7 +2098,7 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ paid: paid.length, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(cx), rockY: Math.round(cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: gw * P, rockH: gh * P, rockFoot: groundY + ROCK_SINK, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, groundY, camX: Math.round(camX), worldW, pitCapacity: pit.cols * pit.rows, stored, held, cores, boulderNo, depth: depthOf(), gw, gh, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitScale, pitSettles, pitGrains: count(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
+window.__state = () => ({ paid: paid.length, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(cx), rockY: Math.round(cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: gw * P, rockH: gh * P, rockFoot: groundY + ROCK_SINK, zoom: +zoom.toFixed(3), viewW: Math.round(viewW), viewH: Math.round(viewH), air: AIR.length, camY: Math.round(camY), worldH, shown: Math.round(shownStored), drillers, pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitGrain: pit.p, pitStep, groundY, camX: Math.round(camX), worldW, pitCapacity: pitCapacity(), stored, held, cores, boulderNo, depth: depthOf(), gw, gh, rock: boulder.flat().reduce((a, b) => a + b, 0), seenCore, pitGrains: count(pit), pitDust: countDust(pit), haulersUnlocked, minersUnlocked, heldCore, coreItem: coreItem && { x: Math.round(coreItem.x), y: Math.round(coreItem.y), rest: coreItem.rest }, pickLevel, carryLevel, speedLevel, autoMine, miners, haulers, minerSpeedLevel, haulCarryLevel, haulPaceLevel, haulCap: haulCap(), minerMs: minerMs(), workers: workers.length, workerPos: workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), mining, dragging, mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), pit: count(pit), chips: chips.length, chipShades: chips.slice(0, 8).map(c => c.s) });
 
 resize();
 camX = cx - 420;                         // start looking at the rock, the bench and the pit
