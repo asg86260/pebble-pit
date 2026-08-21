@@ -1,29 +1,31 @@
-// The board that opens at the workbench.
+// Turning a list of upgrades into rows on a board, and keeping them current.
 //
-// It knows how to turn `UPGRADES` into rows and keep them current; it does not
-// know what any of them do. A new upgrade appears here without this file
-// changing.
+// It knows nothing about what any upgrade does, and nothing about which board it
+// is filling: the bench and the lab are the same code with a different list. A
+// new upgrade appears without this file changing, and a third board would be
+// three lines.
 
-import { P } from './config.js';
-import { S, bench } from './state.js';
-import { UPGRADES, SECTIONS, UNITS, buy } from './upgrades.js';
+import { S } from './state.js';
+import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
+import { LAB_UPGRADES, LAB_SECTIONS, bookRows } from './lab.js';
 
 const shopEl = document.getElementById('shop');
-const boardEl = document.getElementById('board');
+const labEl = document.getElementById('labshop');
+const statsEl = document.getElementById('stats');
 
-// one row per available upgrade, under a heading for the crew it belongs to
-export function buildShop() {
-  shopEl.textContent = '';
-  for (const sect of SECTIONS) {
+// one row per available upgrade, under a heading for whatever it belongs to
+function build(el, list, sections) {
+  el.textContent = '';
+  for (const sect of sections) {
     const rows = sect.keys
-      .map(k => UPGRADES.find(u => u.key === k))
+      .map(k => list.find(u => u.key === k))
       .filter(u => u && u.show());
     if (!rows.length) continue;
 
     const head = document.createElement('div');
     head.className = 'sect';
     head.dataset.sect = sect.title;
-    shopEl.appendChild(head);
+    el.appendChild(head);
 
     for (const u of rows) {
       const b = document.createElement('button');
@@ -33,11 +35,55 @@ export function buildShop() {
                     '<span class="arrow"></span><span class="to"></span>' +
                     '<span class="cost"></span>';
       b.addEventListener('click', () => buy(u));
-      shopEl.appendChild(b);
+      el.appendChild(b);
     }
   }
 }
 
+// the numbers on the rows, every frame the board is open
+export function refresh(el, list, headcount) {
+  for (const row of el.children) {
+    if (row.dataset.sect) {
+      const n = headcount ? headcount(row.dataset.sect) : 0;
+      row.textContent = n ? `${row.dataset.sect}  x${n}` : row.dataset.sect;
+      continue;
+    }
+    const u = list.find(x => x.key === row.dataset.key);
+    if (!u) continue;
+    const cost = u.cost();
+    const money = u.currency || 'dust';
+    const [name, from, arrow, to, price] = row.children;
+    const step = u.from ? `${u.from()}` : '';
 
+    name.textContent = u.name;
+    from.textContent = step;
+    arrow.textContent = step ? '→' : '';
+    to.innerHTML = step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '';
+    price.innerHTML = `${MARK[money]} ${cost}`;
+    row.disabled = purse(money) < cost;
+  }
+}
 
-// the board is grouped by who the upgrade is for, not by what it costs
+export function buildShop() {
+  build(shopEl, UPGRADES, SECTIONS);
+  build(labEl, LAB_UPGRADES, LAB_SECTIONS);
+}
+
+// the lab's books, rebuilt whole because it is half a dozen short rows
+export function refreshStats() {
+  const rows = bookRows();
+  if (statsEl.childElementCount !== rows.length * 2) {
+    statsEl.textContent = '';
+    for (const _ of rows) {
+      statsEl.appendChild(document.createElement('span'));
+      statsEl.appendChild(document.createElement('b'));
+    }
+  }
+  rows.forEach(([label, value, mark], i) => {
+    statsEl.children[i * 2].textContent = label;
+    statsEl.children[i * 2 + 1].innerHTML =
+      `${typeof value === 'number' ? value.toLocaleString('en-US') : value} ${mark ? MARK[mark] : ''}`;
+  });
+}
+
+export { UPGRADES, LAB_UPGRADES };

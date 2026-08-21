@@ -74,6 +74,11 @@ export const S = {
   beds: [],               // how far along each bed is, 0..1
   crop: [],               // a spore rising off a bed just harvested
 
+  // --- the lab ---
+  labOpen: false,
+  labBoardOpen: false,
+  mult: { swing: 0, haul: 0, cave: 0, tend: 0 },
+
   // --- the crew ---
   workers: [],            // little squares that mine and ferry dust
   miners: 0, minersUnlocked: false, minerSpeedLevel: 0,
@@ -107,3 +112,4 @@ export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null 
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const cave = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
+export const lab = { x: 0, y: 0, w: 0, h: 0 };

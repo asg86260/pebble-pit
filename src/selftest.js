@@ -644,6 +644,64 @@ const TESTS = [
     ];
   }],
 
+  ['the lab sells pace, and it bites', async () => {
+    window.__crew(4, 2, 2, 2);
+    window.__lab(true);
+    window.__grant({ shards: 60, spores: 60 });
+    await sleep(300);
+
+    const el = document.getElementById('lab');
+    const s = state();
+    const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
+    const [lx, ly] = at(s.labX + 20, s.groundY - 30);
+    canvas().dispatchEvent(new PointerEvent('pointermove', {
+      clientX: lx, clientY: ly, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
+    await sleep(200);
+
+    const opened = !el.hidden;
+    const before = state();
+    const swing = el.querySelector('button[data-key="labswing"]');
+    const cave = el.querySelector('button[data-key="labcave"]');
+    if (swing) swing.click();
+    if (cave) cave.click();
+    await sleep(200);
+    const after = state();
+
+    return [
+      ok(opened, 'the lab board opens at the lab'),
+      ok(!!swing && !!cave, 'it sells pace in shards and in spores'),
+      ok(after.mult.swing === before.mult.swing + 1, 'a multiplier goes up when bought'),
+      ok(after.mineMs < before.mineMs, 'and the swing really is faster',
+         `${before.mineMs}ms -> ${after.mineMs}ms`),
+      ok(after.shards < before.shards, 'shards are spent on it',
+         `${before.shards} -> ${after.shards}`),
+      ok(after.spores < before.spores, 'and spores on the other one',
+         `${before.spores} -> ${after.spores}`),
+      ok(document.querySelectorAll('#stats b').length > 0, 'and it keeps the books')
+    ];
+  }],
+
+  ['the lab board stays inside the window too', async () => {
+    const checks = [];
+    for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape']]) {
+      await asScreen(w, h, dpr, async () => {
+        const el = document.getElementById('lab');
+        el.hidden = false;
+        window.__placeBoard();
+        await sleep(60);
+        const left = parseFloat(el.style.left), bottom = parseFloat(el.style.bottom);
+        const bw = el.offsetWidth, bh = el.offsetHeight;
+        const room = bw <= w && bh <= h;
+        checks.push(ok(left >= 0 && bottom >= 0 &&
+                       (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
+          `${name} keeps the lab board inside the window`,
+          `${Math.round(left)}+${bw} wide, ${Math.round(bottom)}+${bh} tall, in ${w}x${h}`));
+      });
+    }
+    document.getElementById('lab').hidden = true;
+    return checks;
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
@@ -658,6 +716,8 @@ const TESTS = [
       ok(raw.caveOpen === s.caveOpen, 'and whether the cave is open'),
       ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
       ok(Array.isArray(raw.beds), 'and how far along every bed is'),
+      ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
+      ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];

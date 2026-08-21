@@ -9,11 +9,12 @@ import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, CAVE_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S, cave, farm } from './state.js';
+import { S, cave, farm, lab } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
 import { caveMs, caveRate } from './cave.js';
+import { mult } from './lab.js';
 import { tendMs, tendRate } from './farm.js';
 import { buildShop } from './shop.js';
 
@@ -29,14 +30,29 @@ const mineGap = swing(MINE_BASE, MINE_FLOOR, 0.8);
 const minerGap = swing(MINER_BASE, MINER_FLOOR, 0.82);
 const scoopGap = swing(HAUL_MS, 30, 0.85);
 
-export const mineMs = (lvl = S.speedLevel) => mineGap(lvl);
-export const mineRate = (lvl = S.speedLevel) => perSecond(mineGap)(lvl);
-export const minerMs = (lvl = S.minerSpeedLevel) => minerGap(lvl);
-export const minerRate = (lvl = S.minerSpeedLevel) => perSecond(minerGap)(lvl);
+export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
+export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
+export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(1, minerGap(lvl) / mult('swing'));
+export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
 export const haulCap = (lvl = S.haulCarryLevel) => 1 + lvl;
-export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl);
-export const scoopMs = (lvl = S.haulPaceLevel) => scoopGap(lvl);
+export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl) * mult('haul');
+export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
 export const pickCount = () => 1 + S.pickLevel;         // pixels a single swing takes
+
+// Every currency is a mark, never a word. Adding one is a line here and a line
+// in the stylesheet.
+export const MARK = {
+  dust: '<i class="dust"></i>',
+  core: '<i class="core"></i>',
+  shard: '<i class="shard"></i>',
+  spore: '<i class="spore"></i>'
+};
+
+// what you have of one
+export const purse = money =>
+  money === 'core' ? S.cores :
+  money === 'shard' ? S.shards :
+  money === 'spore' ? S.spores : S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
 export const UNITS = {
@@ -175,6 +191,14 @@ export const UPGRADES = [
     buy: () => S.cavePaceLevel++,
     show: () => S.spelunkers > 0 && caveMs() > CAVE_FLOOR
   },
+  {
+    key: 'unlocklab',
+    name: 'build the lab',
+    cost: () => 10,
+    currency: 'core',
+    buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
+    show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
+  },
   ...FARMHANDS,
   {
     key: 'tend',
@@ -195,22 +219,23 @@ export const SECTIONS = [
   { title: 'miners', keys: ['unlockminers', 'miner', 'minerspeed'] },
   { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
   { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] },
-  { title: 'the farm', keys: ['unlockfarm', 'farmhand', 'tend'] }
+  { title: 'the farm', keys: ['unlockfarm', 'farmhand', 'tend'] },
+  { title: 'the lab', keys: ['unlocklab'] }
 ];
 
-// Buying is the same shape whatever the row: check you can, take the price out
-// of wherever it is kept, then let the row do its one thing.
+// Buying is the same shape whatever the row and whatever it is priced in: check
+// you can afford it, take the price out of wherever that currency is kept, then
+// let the row do its one thing.
 export function buy(u) {
   const cost = u.cost();
-  if (!u.show()) return;
-  if (u.currency === 'core') {
-    if (S.cores < cost) return;
-    S.cores -= cost;
-    takeCoreCells(cost);
-  } else {
-    if (S.stored < cost) return;
-    spend(cost);
-  }
+  const money = u.currency || 'dust';
+  if (!u.show() || purse(money) < cost) return;
+
+  if (money === 'dust') spend(cost);              // lifted back out of the pile
+  else if (money === 'core') { S.cores -= cost; takeCoreCells(cost); }
+  else if (money === 'shard') S.shards -= cost;
+  else if (money === 'spore') S.spores -= cost;
+
   u.buy();
   S.dirty = true;
   buildShop();

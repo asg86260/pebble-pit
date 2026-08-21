@@ -11,10 +11,11 @@
 import { P, WORKER, CAVE_BASE, CAVE_FLOOR, CAVE_WALK } from './config.js';
 import { S, cave } from './state.js';
 import { standOn } from './world.js';
+import { mult } from './lab.js';
 
 // how long a trip takes, at this pace
 export const caveMs = (lvl = S.cavePaceLevel) =>
-  Math.max(CAVE_FLOOR, Math.round(CAVE_BASE * Math.pow(0.82, lvl)));
+  Math.max(500, Math.round(Math.max(CAVE_FLOOR, CAVE_BASE * Math.pow(0.82, lvl)) / mult('cave')));
 
 export const caveRate = (lvl = S.cavePaceLevel) => 60000 / caveMs(lvl);   // trips a minute
 

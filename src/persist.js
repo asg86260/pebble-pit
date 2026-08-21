@@ -14,6 +14,7 @@ import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTop
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
 import { syncWorkers } from './crew.js';
 import { buildShop } from './shop.js';
+import { resetRates } from './lab.js';
 
 // A full pit is a million cells, which is a million characters written to
 // localStorage every second if you store it a digit at a time. A pile is nearly
@@ -170,6 +171,8 @@ export function persist() {
     farmOpen: S.farmOpen,
     farmhands: S.farmhands,
     tendLevel: S.tendLevel,
+    labOpen: S.labOpen,
+    mult: { ...S.mult },
     beds: S.beds.map(b => Math.round(b * 100)),
     boulder: gridToString(),
     gw: S.gw,
@@ -223,6 +226,8 @@ export function restore() {
     S.farmOpen = false;
     S.farmhands = 0;
     S.tendLevel = 0;
+    S.labOpen = false;
+    for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.beds = [];
     return;
   }
@@ -257,6 +262,8 @@ export function restore() {
   S.farmOpen = !!s.farmOpen;
   S.farmhands = s.farmhands || 0;
   S.tendLevel = s.tendLevel || 0;
+  S.labOpen = !!s.labOpen;
+  if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] || 0;
   if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
@@ -297,10 +304,14 @@ export function reset() {
   S.farmOpen = false;
   S.farmhands = 0;
   S.tendLevel = 0;
+  S.labOpen = false;
+  S.labBoardOpen = false;
+  for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];
   S.crop = [];
   S.finds = [];
   syncWorkers();
+  resetRates();
   floor.grid.fill(0);
   pit.grid.fill(0);
   S.boulderNo = 1;

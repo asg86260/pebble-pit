@@ -5,7 +5,7 @@
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
 import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
-import { S, floor, pit, bench, cave, farm } from './state.js';
+import { S, floor, pit, bench, cave, farm, lab } from './state.js';
 import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -106,6 +106,19 @@ export function drawFarm() {
     drawDiamond(c.x, c.y, P);
     ctx.globalAlpha = 1;
   }
+  ctx.fillStyle = '#000';
+}
+
+// The lab: a squat block with a chimney. Flat black shapes, like everything
+// else that stands on this ground.
+export function drawLab() {
+  if (!S.labOpen) return;
+  const { x, y, w, h } = lab;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y + h * 0.35, w, h * 0.65);              // the body
+  ctx.fillRect(x + w * 0.18, y, w * 0.2, h * 0.35);        // a chimney
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + w * 0.55, y + h * 0.55, P * 3, P * 3);  // a window
   ctx.fillStyle = '#000';
 }
 
@@ -276,6 +289,7 @@ export function draw() {
   drawGroundLine();
   drawCave();              // a hole in the ground, so it goes down with the ground
   drawFarm();
+  drawLab();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();

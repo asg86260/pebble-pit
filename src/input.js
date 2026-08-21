@@ -9,7 +9,7 @@ import { S, bench } from './state.js';
 import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track } from './hands.js';
-import { nearBench, showBoard, placeBoard } from './board.js';
+import { nearBench, nearLab, showBoard, showLab, placeBoard } from './board.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
 
@@ -82,7 +82,10 @@ canvas.addEventListener('pointermove', e => {
   S.mouse = pos(e);
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
-  if (e.pointerType !== 'touch') showBoard(nearBench(S.mouse.x, S.mouse.y));
+  if (e.pointerType !== 'touch') {
+    showBoard(nearBench(S.mouse.x, S.mouse.y));
+    showLab(nearLab(S.mouse.x, S.mouse.y));
+  }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
 });
@@ -99,7 +102,8 @@ export function endDrag(e) {
       performance.now() - held.at < TAP_TIME) {
     const p = pos(e);
     if (nearBench(p.x, p.y)) showBoard(!S.boardOpen);
-    else if (S.boardOpen) showBoard(false);
+    else if (nearLab(p.x, p.y)) showLab(!S.labBoardOpen);
+    else { showBoard(false); showLab(false); }
   }
 
   S.mining = false;
@@ -151,6 +155,7 @@ canvas.addEventListener('wheel', e => {
 }, { passive: false });
 
 boardEl.addEventListener('pointerleave', () => showBoard(false));
+document.getElementById('lab').addEventListener('pointerleave', () => showLab(false));
 addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') reset();
   if (e.key === 'ArrowRight') pan(P * 12);

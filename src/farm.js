@@ -10,10 +10,11 @@ import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WAL
   from './config.js';
 import { S, farm } from './state.js';
 import { standOn } from './world.js';
+import { mult } from './lab.js';
 
 // how long one bed takes to come on, at this level of tending
 export const tendMs = (lvl = S.tendLevel) =>
-  Math.max(TEND_FLOOR, Math.round(TEND_BASE * Math.pow(0.82, lvl)));
+  Math.max(400, Math.round(Math.max(TEND_FLOOR, TEND_BASE * Math.pow(0.82, lvl)) / mult('tend')));
 
 export const tendRate = (lvl = S.tendLevel) => 60000 / tendMs(lvl);   // beds a minute
 

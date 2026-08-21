@@ -8,9 +8,9 @@
 import {
   P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
   PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H,
-  TO_FARM, FARM_BEDS, FARM_GAP, FARM_H
+  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
 } from './config.js';
-import { S, floor, pit, bench, cave, farm } from './state.js';
+import { S, floor, pit, bench, cave, farm, lab } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -89,6 +89,11 @@ export function resize(after) {
   bench.h = P * 7;
   bench.x = S.cx + TO_BENCH;
   bench.y = S.groundY - bench.h;
+
+  lab.w = P * 14;
+  lab.h = P * 10;
+  lab.x = S.cx + TO_LAB;
+  lab.y = S.groundY - lab.h;
 
   // the cave is a hole in the ground, so it hangs below the line rather than
   // standing on it
