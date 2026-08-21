@@ -105,9 +105,11 @@ export function endDrag(e) {
   if (held && held.kind === 'touch' && !panning &&
       Math.hypot(e.clientX - held.x0, e.clientY - held.y0) < TAP_SLOP &&
       performance.now() - held.at < TAP_TIME) {
+    // one board at a time: two of them open at once on a phone screen would
+    // simply sit on top of each other
     const p = pos(e);
-    if (nearBench(p.x, p.y)) showBoard(!S.boardOpen);
-    else if (nearLab(p.x, p.y)) showLab(!S.labBoardOpen);
+    if (nearBench(p.x, p.y)) { const want = !S.boardOpen; showLab(false); showBoard(want); }
+    else if (nearLab(p.x, p.y)) { const want = !S.labBoardOpen; showBoard(false); showLab(want); }
     else { showBoard(false); showLab(false); }
   }
 

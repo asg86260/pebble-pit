@@ -147,6 +147,7 @@ export function persist() {
   S.dirty = false;
   save({
     stored: S.stored,
+    banked: S.banked,
     carryLevel: S.carryLevel,
     speedLevel: S.speedLevel,
     autoMine: S.autoMine,
@@ -203,6 +204,7 @@ export function restore() {
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     makeBoulder();
     S.stored = 0;
+    S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
     S.carryLevel = 0;
     S.speedLevel = 0;
@@ -238,6 +240,7 @@ export function restore() {
     return;
   }
   S.stored = s.stored;
+  S.banked = s.banked || s.stored || 0;
   S.shownStored = S.tweenFrom = S.tweenTo = S.stored;
   S.carryLevel = s.carryLevel || 0;
   S.speedLevel = s.speedLevel || 0;
@@ -286,6 +289,7 @@ export function reset() {
   S.chips = [];
   S.paid = [];
   S.stored = 0;
+  S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;
   S.held = 0;
   S.carryLevel = 0;

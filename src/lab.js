@@ -84,10 +84,13 @@ export const LAB_SECTIONS = [
 // smoothed, because a raw per-second count of something that arrives in lumps
 // reads as noise.
 
-const WATCH = ['stored', 'shards', 'spores', 'cores'];
+// What the books watch. All of these only ever go up: a rate is what the
+// operation *made*, and reading it off the balance meant a big purchase showed
+// as forty thousand dust a minute of negative production.
+const WATCH = ['banked', 'shards', 'spores', 'cores'];
 const EASE = 0.25;                         // how fast the reading follows reality
 
-export const rates = { stored: 0, shards: 0, spores: 0, cores: 0 };
+export const rates = { banked: 0, shards: 0, spores: 0, cores: 0 };
 let last = null, lastAt = 0;
 
 // after a reset the books are meaningless: a counter going to zero is not a
@@ -112,12 +115,12 @@ export function sampleRates(now) {
   lastAt = now;
 }
 
-const snapshot = () => ({ stored: S.stored, shards: S.shards, spores: S.spores, cores: S.cores });
+const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });
 
 // what the stats page says, in the order it says it
 export function bookRows() {
   const rows = [
-    ['dust a minute', Math.round(rates.stored), 'dust'],
+    ['dust a minute', Math.round(rates.banked), 'dust'],
     ['in the hole', S.stored, 'dust']
   ];
   if (S.seenShard) rows.push(['shards a minute', rates.shards.toFixed(1), 'shard']);

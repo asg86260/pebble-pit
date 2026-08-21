@@ -59,6 +59,7 @@ export function settlePit() {
 
 export function bankDust(x, shade = 1) {
   S.stored++;                                // every pixel is worth one
+  S.banked++;                                // the books count what came in, not what is left
   S.dirty = true;
   if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on

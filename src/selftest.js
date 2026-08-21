@@ -756,6 +756,21 @@ const TESTS = [
     ];
   }],
 
+  ['the books report what was made, not what is left', async () => {
+    window.__crew(6, 3);
+    window.__give(8000, 4);
+    await sleep(2500);
+    const before = state().rates.banked;
+    window.__spend(6000);                    // a big purchase
+    await sleep(2500);
+    const after = state().rates.banked;
+    return [
+      ok(before > 0, 'production reads while dust is coming in', `${before}/min`),
+      ok(after >= 0, 'and buying something does not read as negative production',
+         `${after}/min`)
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write

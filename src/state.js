@@ -44,6 +44,7 @@ export const S = {
 
   // --- the hole ---
   stored: 0,              // dust in the hole: the whole point
+  banked: 0,              // and every grain ever put in it, which only goes up
   shownStored: 0,         // the counter chases the real number
   tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
   pitStep: 0,             // how many times the pile has settled to a finer grain

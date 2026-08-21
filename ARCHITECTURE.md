@@ -20,14 +20,18 @@ field or two on `S` and a constant or two in `config.js`.
 | File | Owns | Safe to change alone? |
 |---|---|---|
 | `config.js` | every tunable number | yes — no logic |
-| `state.js` | every mutable fact, plus the two sand grids and the bench | yes — no logic |
+| `state.js` | every mutable fact, plus the two sand grids and every site's rect | yes — no logic |
 | `grid.js` | the falling-sand rules, and nothing that knows what sand is *for* | yes |
 | `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
+| `cave.js` | the shaft, and spelunkers going down it | yes |
+| `farm.js` | the beds, and farmhands tending them | yes |
+| `lab.js` | the multipliers, and the books | yes |
+| `meteor.js` | the thing in the sky, and sparks off it | yes |
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
 | `core.js` | the thing buried in each rock | yes |
-| `crew.js` | miners, drillers, workers | yes |
+| `crew.js` | miners, workers, and the two site crews | yes |
 | `air.js` | the motes drifting off the piles | yes |
 | `upgrades.js` | what the bench sells and what it costs | yes |
 | `shop.js` | turning those rows into a board | yes |
@@ -63,10 +67,24 @@ spillsInto(x), spillsAt, spill(x, y, v)    where a heap topples over an edge
 That is four lines and an object, not another copy of the sand rules. See
 `wireGround` in `main.js` and `wirePit` in `pit.js` for the two that exist.
 
-**A new site** — the cave, the farm, the lab. A distance from the rock in
-`config.js`, a line in `layout` in `world.js`, and its own file for the
-behaviour. Sites are placed by their distance from the rock, so nothing else
-moves. Add its step to `step()` and its draw to `draw()` in painting order.
+**A new site.** Four of them went in this way and it held up every time:
+
+1. a distance from the rock and its own tuning numbers in `config.js`
+2. its rect and its state in `state.js`, its placement in `layout` in `world.js`
+3. one new file for the behaviour
+4. a hire row via `crew({...})` in `upgrades.js`, and an unlock row priced in cores
+5. a `draw` in `render.js`, in painting order, and a step in `main.js`
+6. its fields in `persist.js` — nothing warns you if you forget
+7. checks in `selftest.js`
+
+Sites are placed by their distance from the rock, so adding one moves nothing
+else. Unlocking one should `lookAt()` it: it is several cores and a row in a
+menu, and the thing bought is off the left of the screen.
+
+**A new currency.** A line in `MARK` and one in `purse` in `upgrades.js`, a
+branch in `buy`, a mark in the stylesheet, a shape in `render.js`, and a row on
+the counter. Five exist; each has exactly one job, which is the rule worth
+keeping.
 
 ## Two things to be careful of
 
@@ -84,9 +102,16 @@ reload. Nothing warns you if it does not.
 node tools/unresolved.mjs     # names a module uses but cannot see
 ```
 
-Then open the game and run `__test()` in the console — 76 checks covering the
-layout, mining, the crew, the pit, spending, saving and the shop. It resets the
-save first, so run it on a game you do not mind losing.
+Then open the game and run `__test()` in the console — 143 checks covering the
+layout on seven screen sizes, mining, the crew, every site, the pit, spending,
+touch, saving and both boards. It resets the save first, so run it on a game you
+do not mind losing.
 
-Dev hooks: `__state() __give(n) __spend(n) __crew(m,h,d) __jump(n) __next()
-__drop() __pile(x,n) __clearFloor()`.
+Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,sparks,cores})
+__crew(miners,workers,spelunkers,farmhands) __levels({...}) __lab() __meteor()
+__jump(n) __next() __drop() __pile(x,n) __clearFloor()`.
+
+**Balance by measuring, and measure a plausible game.** `__levels()` and
+`__crew()` exist for that. A measurement taken on a fresh save reads as ten to
+fifty minutes a rock, because nothing has been bought, and will send you off
+rewriting the wrong thing.
