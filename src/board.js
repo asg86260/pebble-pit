@@ -46,6 +46,25 @@ export function placeBoard() {
 // at where they would go without going through the whole opening dance
 window.__placeBoard = () => { place(boardEl, bench); place(labEl, lab); };
 
+// The one bit of writing in the yard. Everything else here is a mark you learn,
+// but a station that has stopped needs to say why in words the first time, and a
+// tooltip is the only place words are cheap: it is not on screen until asked for.
+const tipEl = document.getElementById('tip');
+let tipFor = null;
+
+export function showTip(text, at) {
+  if (!text) {
+    if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
+    return;
+  }
+  if (text !== tipFor) { tipEl.textContent = text; tipEl.hidden = false; tipFor = text; }
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  const x = (at.x - S.camX) * S.zoom - w / 2;
+  const y = (at.y - S.camY) * S.zoom + P * 4;
+  tipEl.style.left = `${Math.round(Math.max(GAP, Math.min(x, S.W - w - GAP)))}px`;
+  tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(y, S.H - h - GAP)))}px`;
+}
+
 export function showBoard(open) {
   if (open === S.boardOpen) return;
   S.boardOpen = open;

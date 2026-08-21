@@ -10,7 +10,8 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { overMeteor, knockMeteor } from './meteor.js';
 import { sweep, release, track } from './hands.js';
-import { nearBench, nearLab, showBoard, showLab, placeBoard } from './board.js';
+import { nearBench, nearLab, showBoard, showLab, placeBoard, showTip } from './board.js';
+import { overPileMark, pileMarkAt } from './render.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
 
@@ -89,6 +90,7 @@ canvas.addEventListener('pointermove', e => {
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
     showBoard(nearBench(S.mouse.x, S.mouse.y));
+    askedAbout(S.mouse.x, S.mouse.y);
     showLab(nearLab(S.mouse.x, S.mouse.y));
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
@@ -148,7 +150,18 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
-export function pan(dx) {
+export // A stopped station says why, in the one place words are cheap: under the
+// cursor, and only when the cursor goes looking.
+function askedAbout(x, y) {
+  for (const p of S.piles) {
+    if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
+    showTip('pile is full', pileMarkAt(p.key));
+    return;
+  }
+  showTip(null);
+}
+
+function pan(dx) {
   S.camTo = null;                          // the player takes the view back
   const was = S.camX;
   S.camX += dx;

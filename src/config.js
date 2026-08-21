@@ -22,10 +22,10 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // spoil; and then the bench, the lab and the hole everything ends up in.
 export const TO_FARM = -1500;    // rock centre to the near edge of the farm
 export const TO_CAVE = -828;     // rock centre to the mouth of the cave
-export const TO_BENCH = 780;     // rock centre to the bench
-export const TO_LAB = 960;       // rock centre to the lab
-export const TO_LEDGE = 1140;    // rock centre to the lip of the pit
-export const ROCK_PILE_TO = 756; // and how far right the rock's own spoil may reach
+export const TO_BENCH = 720;     // rock centre to the bench
+export const TO_LAB = 840;       // rock centre to the lab
+export const TO_LEDGE = 1080;    // rock centre to the lip of the pit
+export const ROCK_PILE_TO = 696; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
 export const GROUND_LEFT = 2400; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
@@ -34,7 +34,11 @@ export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
 export const ROCK_SKY = 520;     // sky kept clear above the ground, for the rock and the meteor
-export const SIDE_PAD = 340;     // and room either side of the works, so it is not flush
+// Room either side of the works, so it is not flush against the window. It is
+// part of the width the layout insists on showing at once, so it is also part
+// of how far the picture is scaled down on a narrow window -- widening the
+// world without taking it back scales the whole yard, counter and all.
+export const SIDE_PAD = 160;
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_W_MAX = 92;
@@ -96,7 +100,7 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // physically full -- a chip is never told there is nowhere to put it, and a rock
 // is more than one pile's worth, so a body on the rock is only worth having if
 // somebody is carrying. The sites deal in ones, so theirs are counted in ones.
-export const PILE_LIMIT = { rock: 1800, cave: 12, farm: 12 };
+export const PILE_LIMIT = { rock: 1400, cave: 12, farm: 12 };
 export const PILE_CLEAR = 0.75;     // and how far down it has to come to start again
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame

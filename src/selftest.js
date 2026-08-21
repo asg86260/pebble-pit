@@ -557,7 +557,10 @@ const TESTS = [
       ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
       ok(stalled.rock === rockThen, 'and the crew stop working while it is',
          `${rockThen} -> ${stalled.rock} of rock`),
+      ok(full.pileMarks.includes('rock'), 'the station says so, under it', 
+         JSON.stringify(full.pileMarks)),
       ok(!freed.yardFull, 'clearing it puts them back to work'),
+      ok(!freed.pileMarks.includes('rock'), 'and the mark comes down with it'),
       ok(working.rock < rockFreed, 'and the rock starts coming off again',
          `${rockFreed} -> ${working.rock}`)
     ];

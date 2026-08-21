@@ -392,7 +392,16 @@ world pixels across and 276 deep, and every site keeps its distance from the roc
 window is only more sky above and more ground either side.
 
 Below a certain size the scene scales down instead of rearranging, so a small window shows the
-same place from further away. **A cell is always a whole number of *device* pixels** — that is
+same place from further away. The **counter is the exception**: it is read rather than looked at, so it is drawn in screen pixels
+and stays the size it is however far the yard has been scaled down. Everything else is furniture
+and a cell is a cell; a number you have to squint at is just a number you cannot read. The room its
+digits need is measured, not guessed, so it cannot clip its own number at seven figures.
+
+Widening the world costs zoom. `SIDE_PAD + TO_LEDGE` is the width the layout insists on showing at
+once, so pushing the pit further right scales the whole yard down a step on any window narrower
+than that. Moving something out therefore means pulling something else in.
+
+**A cell is always a whole number of *device* pixels** — that is
 what keeps hairline seams out, and on a screen at three device pixels to one it is three times as
 fine a ladder, which is what lets a phone find a scale the whole works fits in. It draws at the
 screen's real resolution, backing off only against a fill budget.
@@ -459,8 +468,9 @@ of a strip are **cliffs the sand may not lean on** — the station behind it, th
 wider rock is a narrower strip beside it, which is its own quiet pressure.
 
 **A full pile stops the station behind it.** The miners stand where they are, nobody goes down the
-cave for another shard, and the beds stop coming on. A **bar over the station** says so — the one
-mark in the game that means nothing is happening. They start again once a carrier has taken a
+cave for another shard, and the beds stop coming on. A **warning triangle under the station** says
+so — the one mark in the game that means nothing is happening — and hovering it says *pile is full*
+in words. It is the only writing in the yard, and it is only there when asked for. They start again once a carrier has taken a
 quarter of it away, so a single grain being fetched cannot make them stutter.
 
 That is the whole of the choice the job rows ask, made visible in the yard: another body on the

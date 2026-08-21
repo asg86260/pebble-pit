@@ -117,16 +117,31 @@ export function drawPileMarks() {
   ctx.fillStyle = '#000';
   for (const p of S.piles) {
     if (!S.pileFull[p.key]) continue;
-    const at = p.key === 'rock' ? { x: S.cx, y: rockTopY(Math.floor(S.gw / 2)) }
-             : p.key === 'cave' ? { x: cave.x + cave.w / 2, y: S.groundY }
-             : { x: farm.x + farm.w / 2, y: S.groundY - FARM_H };
-    // High enough to clear the crew standing on the thing, and wide enough to be
-    // a bar rather than a speck: it has to be readable from wherever you happen
-    // to be looking, because it is the only thing in the yard that means stop.
-    const x = Math.round(at.x / P) * P - P * 4;
-    const y = Math.round((at.y - P * 11) / P) * P;
-    ctx.fillRect(x, y, P * 8, P * 2);
+    const at = pileMarkAt(p.key);
+    // a warning triangle: hollow, with a bar and a dot inside it. A triangle
+    // sits low in its own outline, so the mark hangs below the middle of it.
+    drawTriangle(at.x, at.y, P * 4, true);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(at.x - P / 2, at.y - P, P, P * 2);
+    ctx.fillRect(at.x - P / 2, at.y + P * 2, P, P);
   }
+}
+
+// Under the station, not over it: the pile is the station's problem and the mark
+// belongs with the thing that has stopped, and there is nothing else down there
+// to read it against. It sits below the ground line, in the space the pit's
+// depth already keeps clear on screen.
+export function pileMarkAt(key) {
+  const x = key === 'rock' ? S.cx
+          : key === 'cave' ? cave.x + cave.w / 2
+          : farm.x + farm.w / 2;
+  return { x: Math.round(x / P) * P, y: S.groundY + P * 7 };
+}
+
+// where the cursor has to be to be asking about one
+export function overPileMark(key, mx, my) {
+  const at = pileMarkAt(key);
+  return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
 }
 
 // whatever is not dust, lying in the yard where it was dropped or dumped
@@ -236,51 +251,46 @@ export function drawPaid() {
 }
 
 
+// The counter is the one thing here that is read rather than looked at, so it is
+// drawn in **screen** pixels and stays the size it is however far the yard has
+// been scaled down to fit the window. Everything else is world furniture and a
+// cell is a cell; a number you have to squint at is just a number you cannot
+// read. It still sits over the pit mouth, and still slides along to stay on
+// screen as you scroll the length of the hole.
+const MARK = 7;          // a mark on the counter, in screen pixels
+const ROW = 19;          // and the gap between one row and the next
+
 export function drawCount() {
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.font = '13px ui-monospace, "Courier New", monospace';
   ctx.textAlign = 'left';
 
-  // over the pit mouth, but kept on screen as you scroll along it
-  const x = Math.max(S.camX + P * 3, Math.min(pit.x + P * 4, S.camX + S.viewW - P * 30));
-  const y = Math.min(S.groundY - P * 3, S.camY + S.viewH - P * 3);
+  // The dust count is the widest thing on it and it grows a digit at a time, so
+  // the room it needs is measured rather than guessed: a counter that clips its
+  // own number at seven figures is a counter that fails exactly when it matters.
+  const dust = fmt(Math.round(S.shownStored));
+  const wide = MARK * 2 + ctx.measureText(dust).width + 10;
+  const x = Math.max(10, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
+  const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - 10);
 
   // a grain of dust, then the count of it
   ctx.fillStyle = '#000';
-  ctx.fillRect(x, y - P, P, P);
-  ctx.fillText(fmt(Math.round(S.shownStored)), x + P * 2, y);
+  ctx.fillRect(x, y - MARK, MARK, MARK);
+  ctx.fillText(dust, x + MARK * 2, y);
 
-  // a core, then the count of those
+  // then one row for every other kind, each shown only once you have seen one
   let row = y;
-  if (S.seenCore) {
-    row -= P * 3;
-    drawCircle(x + P / 2, row - P / 2, P / 2 + 1);
+  const line = (seen, mark, text) => {
+    if (!seen) return;
+    row -= ROW;
+    mark(x + MARK / 2, row - MARK / 2, MARK / 2 + 1);
     ctx.fillStyle = '#000';
-    ctx.fillText(String(S.cores), x + P * 2, row);
-  }
-
-  // and a shard, once the cave has given one up
-  if (S.seenShard) {
-    row -= P * 3;
-    drawTriangle(x + P / 2, row - P / 2 - 1, P / 2 + 1, false);
-    ctx.fillStyle = '#000';
-    ctx.fillText(fmt(S.shards), x + P * 2, row);
-  }
-
-  // and a spore, once the farm has grown one
-  if (S.seenSpore) {
-    row -= P * 3;
-    drawDiamond(x + P / 2, row - P / 2, P / 2 + 1);
-    ctx.fillStyle = '#000';
-    ctx.fillText(fmt(S.spores), x + P * 2, row);
-  }
-
-  // and a spark, once one has come down
-  if (S.seenSpark) {
-    row -= P * 3;
-    drawSpark(x + P / 2, row - P / 2, P / 2 + 1);
-    ctx.fillStyle = '#000';
-    ctx.fillText(fmt(S.sparks), x + P * 2, row);
-  }
+    ctx.fillText(text, x + MARK * 2, row);
+  };
+  line(S.seenCore, (a, b, r) => drawCircle(a, b, r), String(S.cores));
+  line(S.seenShard, (a, b, r) => drawTriangle(a, b - 1, r, false), fmt(S.shards));
+  line(S.seenSpore, (a, b, r) => drawDiamond(a, b, r), fmt(S.spores));
+  line(S.seenSpark, (a, b, r) => drawSpark(a, b, r), fmt(S.sparks));
 }
 
 // The bench is not in the yard until there is something on it worth buying, and
@@ -399,13 +409,14 @@ export function draw() {
 
   drawPaid();
   drawBench();
-  drawCount();
   drawCore();
   drawFloorMarks();        // shards and the like lying in the yard
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawWorkers();
   drawCursor();
   ctx.restore();
+
+  drawCount();             // last, and in screen pixels: it is read, not looked at
 
 }
 

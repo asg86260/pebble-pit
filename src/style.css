@@ -129,6 +129,22 @@ canvas {
   letter-spacing: 0;
 }
 
+/* The tooltip: the only words in the yard, and only when asked for. It reads
+   like the boards do, because it is the same voice. */
+#tip {
+  position: fixed;
+  z-index: 3;
+  padding: 3px 6px;
+  background: #fff;
+  border: 1px solid #000;
+  font: 12px ui-monospace, "Courier New", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #000;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 #reset {
   align-self: flex-start;
   margin-top: 8px;
