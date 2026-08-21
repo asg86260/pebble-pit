@@ -84,7 +84,7 @@ function step() {
   // four times a second, not twice: this is what tells a station it has room
   // again, and waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();
-  stepFinds();                                // what the sites have given up
+  stepFinds(S.tick);                          // what the sites have given up
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
   stepCore();

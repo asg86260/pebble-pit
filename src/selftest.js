@@ -515,9 +515,10 @@ const TESTS = [
     ];
   }],
 
-  // Down is bigger. A roll asked for a *higher* place beside it for a while,
-  // which never exists once a thing is resting, so nothing ever rolled and a run
-  // of them dropped in one spot went straight up into the sky.
+  // Two things had to be true before a heap of these looked like a heap. Down
+  // is bigger, or a roll asks for a *higher* place beside it and nothing ever
+  // rolls. And a resting one stands in a slot one body wide, or they perch on
+  // each other at any offset at all and the whole lot reads as a mess.
   ['a heap of finds heaps, rather than stacking', async () => {
     window.__crew(0, 0);
     window.__clearFloor();
@@ -538,7 +539,17 @@ const TESTS = [
       ok(tall <= 24 * 12 / 3, 'rather than going up in a column',
          `${tall / 12} bodies at the peak`),
       ok(at.every(a => a[1] % 12 === 0), 'and each sits squarely on what is under it',
-         JSON.stringify(at.slice(0, 6)))
+         JSON.stringify(at.slice(0, 6))),
+      // A resting find stands in a slot one body wide, the same as a grain of
+      // sand stands in a cell. Without that they perch on each other at any
+      // offset at all: two bodies three pixels apart, drawn twelve wide.
+      ok(at.every(a => a[0] % 12 === 0), 'every one of them stands in a slot',
+         JSON.stringify(at.map(a => a[0]).slice(0, 8))),
+      ok(new Set(at.map(a => a.join(','))).size === at.length,
+         'and no two are in the same place'),
+      ok(at.every(a => at.every(b => a === b || a[0] === b[0] ||
+                                     Math.abs(a[0] - b[0]) >= 12)),
+         'so none of them overlaps the next')
     ];
   }],
 

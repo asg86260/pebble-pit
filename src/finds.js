@@ -1,19 +1,24 @@
 // A shard, a spore, a spark: the things the sites give up.
 //
 // These are not grains of dust and pretending they were is what made them look
-// wrong. A grain is one cell and collides as one cell; a shard is drawn as a
-// triangle two cells across, and a two-cell picture on a one-cell body means two
-// of them side by side overlap and a heap of them reads as mush.
+// wrong. A grain is one cell and collides as one cell; a shard is drawn two
+// cells across, and a two-cell picture on a one-cell body means two of them side
+// by side overlap and a heap of them reads as mush.
 //
-// So they have a body of their own: a square two cells on a side, with real
-// falling and real stacking. They come to rest on whatever is under them --
-// the ground, the dust, the pile in the pit, or another one of themselves --
-// and never on top of each other by halves. Everything else about them is the
-// same as before: somebody has to carry one to the pit for it to count.
+// So they have a body of their own, two cells on a side -- and, just as
+// importantly, they stand on a **lattice** one body wide, the same way the sand
+// stands on a lattice one grain wide. That is the whole difference between a
+// pile and a mess. While one is in the air its x is whatever the throw made it;
+// the moment it lands it takes the nearest slot, and from then on it is either
+// in that slot or in the one next door. Whole steps, so a heap settles and then
+// stops, rather than jittering between two places that are nearly the same.
+//
+// Everything else about them is the same as it was: somebody has to carry one to
+// the pit for it to count.
 
 import { P, GRAV, FIND_SIZE, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { S, floor, pit } from './state.js';
-import { surfaceY, colOf, at } from './grid.js';
+import { surfaceY, colOf } from './grid.js';
 import { overPitMouth, pileAt } from './world.js';
 
 const COUNT = { [SHARD_CELL]: 'shards', [SPORE_CELL]: 'spores', [SPARK_CELL]: 'sparks' };
@@ -27,7 +32,6 @@ export function spawnFind(v, x, y, vx = 0, vy = 0) {
   S.dirty = true;
 }
 
-// counted the moment it is over the hole: from there it can only go in
 function countIn(f) {
   if (f.counted) return;
   f.counted = true;
@@ -42,32 +46,11 @@ export function takeFind(v, n = 1) {
   }
 }
 
-// The top of whatever is under this one: the sand it is standing on, and any of
-// its fellows whose ground it shares. Its own body is two cells wide, so both
-// columns have to hold it up.
-// what it would come to rest on if it were over there instead
-function restAt(f, x) {
-  return groundUnder({ x, y: f.y, v: f.v }, f) - FIND_SIZE;
-}
+// the slot a body lands in: the lattice is one body wide
+const slotOf = x => Math.round(x / FIND_SIZE) * FIND_SIZE;
 
-function groundUnder(f, ignore) {
-  const bed = overPitMouth(f.x + FIND_SIZE / 2) ? pit : floor;
-  let top = Infinity;
-  for (let x = f.x; x < f.x + FIND_SIZE; x += P) {
-    const c = Math.max(0, Math.min(bed.cols - 1, colOf(bed, x)));
-    top = Math.min(top, surfaceY(bed, c) + P);        // the top of it, not the air above
-  }
-  for (const o of S.finds) {
-    if (o === f || o === ignore) continue;
-    if (o.x + FIND_SIZE <= f.x || o.x >= f.x + FIND_SIZE) continue;   // not in its way
-    if (o.y + FIND_SIZE <= f.y + 1) continue;                          // above it, not under
-    top = Math.min(top, o.y);
-  }
-  return top;
-}
-
-// Where it may roll to. A find thrown into a station's pile belongs to that
-// pile: it may tumble about inside it and it may not tumble out of it, which is
+// Where a find that is thrown into a station's pile may go. It belongs to that
+// pile: it may settle about inside it and it may not wander out of it, which is
 // what keeps a pile a pile and keeps it countable against its own limit.
 function penned(f, x) {
   const p = pileAt(f.x + FIND_SIZE / 2);
@@ -75,55 +58,68 @@ function penned(f, x) {
   return x + FIND_SIZE > p.from && x < p.to;
 }
 
-// A thing at rest with a lower place beside it rolls into it. This is the same
-// rule the sand keeps, at the size of a body rather than a grain: it is what
-// turns a run of them dropped in one spot from a needle into a heap, and it is
-// what makes a heap slump when somebody takes one out of the bottom of it.
-function wantsToRoll(f) {
-  // Down is *bigger*: a lower place beside it is one with a larger y. Getting
-  // that backwards asked for a higher place instead, which never exists once
-  // something is resting, so nothing ever rolled and they stacked into the sky.
-  const l = penned(f, f.x - FIND_SIZE) ? restAt(f, f.x - FIND_SIZE) : -Infinity;
-  const r = penned(f, f.x + FIND_SIZE) ? restAt(f, f.x + FIND_SIZE) : -Infinity;
-  const lower = Math.max(l, r);
-  if (lower <= f.y + FIND_SIZE / 2) return 0;      // nothing worth rolling into
-  return l > r ? -1 : 1;
+// Where a body standing in this slot would come to rest: on the sand under it,
+// or on the topmost of its fellows already in the slot. `below` is the height to
+// look down from, so a body only rests on what is genuinely beneath it.
+function restY(x, ignore, below) {
+  const bed = overPitMouth(x + FIND_SIZE / 2) ? pit : floor;
+  let top = Infinity;
+  for (let k = x; k < x + FIND_SIZE; k += P) {
+    const c = Math.max(0, Math.min(bed.cols - 1, colOf(bed, k)));
+    top = Math.min(top, surfaceY(bed, c) + P);
+  }
+  for (const o of S.finds) {
+    if (o === ignore || !o.rest || o.x !== x) continue;    // a slot holds a column
+    if (o.y < below) continue;                             // above it, not under it
+    top = Math.min(top, o.y);
+  }
+  return top - FIND_SIZE;
 }
 
-export function stepFinds() {
+export function stepFinds(bias = 0) {
   for (const f of S.finds) {
-    const floorY = groundUnder(f) - FIND_SIZE;
-
     if (f.rest) {
-      if (f.y < floorY - 0.5) f.rest = false;        // what held it up has gone
-      else {
-        f.y = floorY;
-        const way = wantsToRoll(f);
-        if (!way) continue;
-        f.rest = false;                             // tip over the edge of it
-        f.vx = way * (0.35 + Math.random() * 0.35);
-        f.vy = -0.3;
+      const here = restY(f.x, f, f.y);
+      if (f.y < here - 0.5) { f.rest = false; continue; }  // what held it up has gone
+      f.y = here;
+
+      // Then it slides, exactly as a grain of sand does: one slot along, if that
+      // slot's floor is a whole body lower than where it is standing. Down is
+      // bigger -- a lower place has a larger y.
+      const first = ((f.x / FIND_SIZE + bias) & 1) ? -1 : 1;   // alternate, so heaps stay even
+      for (const d of [first, -first]) {
+        const nx = f.x + d * FIND_SIZE;
+        if (!penned(f, nx)) continue;
+        if (restY(nx, f, f.y) < f.y + FIND_SIZE) continue;     // not a whole body lower
+        f.x = nx;
+        f.rest = false;                                        // and let it fall the step
+        f.vx = 0;
+        f.vy = 0;
+        break;
       }
+      continue;
     }
 
     f.vy += GRAV;
     f.x += f.vx;
     f.y += f.vy;
-    f.vx *= 0.97;                                   // it is tumbling, not sliding
-    if (!penned(f, f.x)) { f.x -= f.vx; f.vx = 0; } // and not out of its own pile
+    if (!penned(f, f.x)) { f.x -= f.vx; f.vx = 0; }        // not out of its own pile
+
     // Over the hole is in the hole. There is no depth test: one landing on top
-    // of the ones already in there rests above the ground line, and a test that
+    // of those already in there rests above the ground line, and a test that
     // asked it to be below the line left it lying over the mouth uncounted --
     // where workers could see it, walk to the lip, and stand there for ever
     // reaching for something the lip would not let them reach.
     if (overPitMouth(f.x + FIND_SIZE / 2)) countIn(f);
 
-    const rest = groundUnder(f) - FIND_SIZE;
-    if (f.y >= rest && f.vy >= 0) {
-      f.y = rest;
+    const slot = slotOf(f.x);
+    const land = restY(slot, f, f.y);
+    if (f.y >= land) {
+      f.x = slot;                                          // it lands in a slot
+      f.y = land;
+      f.vx = 0;
       f.vy = 0;
-      f.vx *= 0.4;                                  // it lands and settles down
-      if (Math.abs(f.vx) < 0.06) { f.vx = 0; f.rest = true; }
+      f.rest = true;
       S.dirty = true;
     }
   }
