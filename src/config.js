@@ -22,7 +22,12 @@ export const ROCK_H = 26;        // and this tall
 export const ROCK_GROW_W = 4;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 2;    // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
-export const ROCK_SKY = 340;     // sky kept clear above the ground for the rock to grow into
+export const ROCK_SKY = 520;     // sky kept clear above the ground, for the rock and the meteor
+export const SIDE_PAD = 340;     // and room either side of the works, so it is not flush
+// Rocks go on for ever, so they must stop growing at some point or rock ninety
+// would fill the sky. They plateau at about what the twelfth was.
+export const ROCK_W_MAX = 104;
+export const ROCK_H_MAX = 48;
 export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 export const PIT_W = 3624;       // and this wide
@@ -77,3 +82,12 @@ export const FARM_H = 54;        // how tall a ripe stalk stands
 export const TEND_BASE = 9000;   // to bring one bed on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
+
+// --- the meteor -------------------------------------------------------------
+// It hangs in the sky over the yard and sheds a spark now and then. Sparks are
+// rare and buy one thing, at the lab: pace on everything at once.
+export const TO_METEOR = 140;    // rock centre to the meteor, sideways
+export const METEOR_UP = 420;    // and how far above the ground line it hangs
+export const METEOR_R = 46;
+export const SPARK_BASE = 42000; // between sparks, at spark 0
+export const SPARK_FLOOR = 9000;

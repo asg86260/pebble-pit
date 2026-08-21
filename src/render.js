@@ -5,7 +5,7 @@
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
 import { P, SHADES, CORE_CELL, CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
-import { S, floor, pit, bench, cave, farm, lab } from './state.js';
+import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 import { at, bottomY, shadeOf, depthShade, count } from './grid.js';
 import { rockLeft, overRock, standOn } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -15,6 +15,7 @@ import { AIR } from './air.js';
 import { capacity } from './upgrades.js';
 import { underground } from './cave.js';
 import { bedX, bedTop } from './farm.js';
+import { charge } from './meteor.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
 
@@ -111,6 +112,37 @@ export function drawFarm() {
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
 // else that stands on this ground.
+// a spark: a four-armed cross, the mark that means the meteor
+export function drawSpark(x, y, r) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x - r / 3, y - r, r * 2 / 3, r * 2);
+  ctx.fillRect(x - r, y - r / 3, r * 2, r * 2 / 3);
+}
+
+// The meteor: a plain black circle hanging in the sky, with a ring round it that
+// closes as it charges, so you can see one is due without a bar or a number.
+export function drawMeteor() {
+  if (!S.meteorOpen) return;
+  const { x, y, r } = meteor;
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  const c = charge(performance.now());
+  if (c > 0) {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 8, -Math.PI / 2, -Math.PI / 2 + c * Math.PI * 2);
+    ctx.stroke();
+  }
+
+  for (const f of S.falling) drawSpark(f.x, f.y, P);
+  ctx.fillStyle = '#000';
+}
+
 export function drawLab() {
   if (!S.labOpen) return;
   const { x, y, w, h } = lab;
@@ -216,6 +248,14 @@ export function drawCount() {
     ctx.fillStyle = '#000';
     ctx.fillText(fmt(S.spores), x + P * 2, row);
   }
+
+  // and a spark, once one has come down
+  if (S.seenSpark) {
+    row -= P * 3;
+    drawSpark(x + P / 2, row - P / 2, P / 2 + 1);
+    ctx.fillStyle = '#000';
+    ctx.fillText(fmt(S.sparks), x + P * 2, row);
+  }
 }
 
 export function drawBench() {
@@ -290,6 +330,7 @@ export function draw() {
   drawCave();              // a hole in the ground, so it goes down with the ground
   drawFarm();
   drawLab();
+  drawMeteor();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();

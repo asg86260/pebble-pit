@@ -702,6 +702,59 @@ const TESTS = [
     return checks;
   }],
 
+  ['the meteor sheds sparks', async () => {
+    window.__meteor(true);
+    const start = state();
+    let sawFalling = false;
+    for (let i = 0; i < 600; i++) {
+      await sleep(100);
+      if (state().falling > 0) sawFalling = true;
+      if (state().sparks > start.sparks) break;
+    }
+    const after = state();
+    return [
+      ok(after.meteorOpen, 'the meteor is up there'),
+      ok(sawFalling, 'a spark comes loose and falls'),
+      ok(after.sparks > start.sparks, 'and is counted when it lands',
+         `${start.sparks} -> ${after.sparks}`),
+      ok(after.seenSpark, 'which is worth showing on the counter')
+    ];
+  }],
+
+  ['the meteor hangs clear of the rock and stays on screen', async () => {
+    const checks = [];
+    for (const [w, h, dpr, name] of [[2560, 1300, 1, 'big desktop'], [1440, 900, 2, 'laptop'],
+                                     [1280, 700, 1, 'short window'], [844, 390, 3, 'landscape']]) {
+      await asScreen(w, h, dpr, () => {
+        const s = state();
+        const top = (s.meteorY - 54 - s.camY) * s.zoom;
+        checks.push(ok(top >= 0 && top < h, `${name} keeps the meteor in the window`,
+          `top at ${Math.round(top)} of ${h}`));
+        checks.push(ok(s.meteorY + 54 < s.groundY - s.rockH,
+          `${name} keeps it above the rock`,
+          `meteor bottom ${Math.round(s.meteorY + 54)}, rock top ${Math.round(s.groundY - s.rockH)}`));
+      });
+    }
+    return checks;
+  }],
+
+  ['rocks stop growing, because they never stop coming', async () => {
+    window.__jump(12);
+    await sleep(200);
+    const twelve = state();
+    window.__jump(90);
+    await sleep(200);
+    const ninety = state();
+    window.__jump(1);
+    await sleep(200);
+    return [
+      ok(ninety.rockW === twelve.rockW && ninety.rockH === twelve.rockH,
+         'rock ninety is no bigger than rock twelve',
+         `${twelve.rockW}x${twelve.rockH} vs ${ninety.rockW}x${ninety.rockH}`),
+      ok(ninety.rockH < 520, 'and still fits under the sky', `${ninety.rockH}`)
+    ];
+  }],
+
   ['the save keeps what matters', async () => {
     const s = state();
     await sleep(1200);                       // let it write
@@ -718,6 +771,8 @@ const TESTS = [
       ok(Array.isArray(raw.beds), 'and how far along every bed is'),
       ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
       ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
+      ok(raw.sparks === s.sparks, 'sparks are saved', `${raw?.sparks} vs ${s.sparks}`),
+      ok(raw.meteorOpen === s.meteorOpen, 'and whether the meteor is up'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];

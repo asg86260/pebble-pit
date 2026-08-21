@@ -15,7 +15,9 @@ import { S } from './state.js';
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
 export const STEP = 1.25;
 
-export const mult = k => Math.pow(STEP, S.mult[k] || 0);
+// `works` is on top of everything, which is what makes a spark worth the trip
+export const mult = k =>
+  Math.pow(STEP, S.mult[k] || 0) * (k === 'works' ? 1 : Math.pow(STEP, S.mult.works || 0));
 
 export const LAB_UPGRADES = [
   {
@@ -58,11 +60,23 @@ export const LAB_UPGRADES = [
     buy: () => S.mult.tend++,
     show: () => true
   }
+  ,
+  {
+    key: 'labworks',
+    name: 'the whole works',
+    from: () => `x${mult('works').toFixed(2)}`,
+    to: () => `x${(mult('works') * STEP).toFixed(2)}`,
+    cost: () => Math.round(2 * Math.pow(2.1, S.mult.works)),
+    currency: 'spark',
+    buy: () => S.mult.works++,
+    show: () => S.seenSpark
+  }
 ];
 
 export const LAB_SECTIONS = [
   { title: 'the work', keys: ['labswing', 'labhaul'] },
-  { title: 'the ground', keys: ['labcave', 'labtend'] }
+  { title: 'the ground', keys: ['labcave', 'labtend'] },
+  { title: 'the sky', keys: ['labworks'] }
 ];
 
 // --- the books --------------------------------------------------------------
@@ -108,6 +122,7 @@ export function bookRows() {
   ];
   if (S.seenShard) rows.push(['shards a minute', rates.shards.toFixed(1), 'shard']);
   if (S.seenSpore) rows.push(['spores a minute', rates.spores.toFixed(1), 'spore']);
+  if (S.seenSpark) rows.push(['sparks', S.sparks, 'spark']);
   if (S.seenCore) rows.push(['rocks finished', S.boulderNo - 1, 'core']);
   rows.push(['crew', S.miners + S.haulers + S.spelunkers + S.farmhands, '']);
   return rows;

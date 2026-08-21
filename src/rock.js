@@ -6,7 +6,7 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  TO_BENCH
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH
 } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade } from './grid.js';
@@ -27,8 +27,8 @@ export function rockSize() {
   const w = ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W;
   const h = ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H;
   return {
-    w: Math.max(10, Math.min(w, Math.floor((TO_BENCH - P * 14) * 2 / P))),
-    h: Math.max(6, Math.min(h, Math.floor((ROCK_SKY - P * 4) / P)))
+    w: Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((TO_BENCH - P * 14) * 2 / P))),
+    h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))
   };
 }
 

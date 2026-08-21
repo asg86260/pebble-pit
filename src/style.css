@@ -64,7 +64,7 @@ canvas {
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
 .rows button:disabled { opacity: .3; cursor: default; }
 /* the same marks the game itself draws: a grain of dust, and a core */
-.dust, .core, .shard, .spore {
+.dust, .core, .shard, .spore, .spark {
   display: inline-block;
   vertical-align: baseline;
   color: currentColor;
@@ -82,6 +82,15 @@ canvas {
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
   border-bottom: 7px solid currentColor;
+}
+/* a spark: the mark that means the meteor */
+.spark {
+  display: inline-block;
+  position: relative;
+  width: 7px; height: 7px;
+  background:
+    linear-gradient(currentColor, currentColor) center/2px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) center/7px 2px no-repeat;
 }
 /* a spore: the mark that means the farm */
 .spore {

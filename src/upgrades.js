@@ -9,7 +9,7 @@ import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, CAVE_FLOOR, TEND_FLOOR
 } from './config.js';
-import { S, cave, farm, lab } from './state.js';
+import { S, cave, farm, lab, meteor } from './state.js';
 import { spend, takeCoreCells } from './pit.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
@@ -45,14 +45,16 @@ export const MARK = {
   dust: '<i class="dust"></i>',
   core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
-  spore: '<i class="spore"></i>'
+  spore: '<i class="spore"></i>',
+  spark: '<i class="spark"></i>'
 };
 
 // what you have of one
 export const purse = money =>
   money === 'core' ? S.cores :
   money === 'shard' ? S.shards :
-  money === 'spore' ? S.spores : S.stored;
+  money === 'spore' ? S.spores :
+  money === 'spark' ? S.sparks : S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
 export const UNITS = {
@@ -199,6 +201,14 @@ export const UPGRADES = [
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
     show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
   },
+  {
+    key: 'unlockmeteor',
+    name: 'call it down',
+    cost: () => 15,
+    currency: 'core',
+    buy: () => { S.meteorOpen = true; S.meteorAt = 0; lookAt(meteor.x); },
+    show: () => S.labOpen && !S.meteorOpen
+  },
   ...FARMHANDS,
   {
     key: 'tend',
@@ -220,7 +230,8 @@ export const SECTIONS = [
   { title: 'workers', keys: ['unlockhaulers', 'hauler', 'haulcarry', 'haulpace'] },
   { title: 'the cave', keys: ['unlockcave', 'spelunker', 'cavepace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmhand', 'tend'] },
-  { title: 'the lab', keys: ['unlocklab'] }
+  { title: 'the lab', keys: ['unlocklab'] },
+  { title: 'the sky', keys: ['unlockmeteor'] }
 ];
 
 // Buying is the same shape whatever the row and whatever it is priced in: check
@@ -235,6 +246,7 @@ export function buy(u) {
   else if (money === 'core') { S.cores -= cost; takeCoreCells(cost); }
   else if (money === 'shard') S.shards -= cost;
   else if (money === 'spore') S.spores -= cost;
+  else if (money === 'spark') S.sparks -= cost;
 
   u.buy();
   S.dirty = true;

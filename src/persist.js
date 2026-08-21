@@ -172,6 +172,9 @@ export function persist() {
     farmhands: S.farmhands,
     tendLevel: S.tendLevel,
     labOpen: S.labOpen,
+    sparks: S.sparks,
+    seenSpark: S.seenSpark,
+    meteorOpen: S.meteorOpen,
     mult: { ...S.mult },
     beds: S.beds.map(b => Math.round(b * 100)),
     boulder: gridToString(),
@@ -227,6 +230,9 @@ export function restore() {
     S.farmhands = 0;
     S.tendLevel = 0;
     S.labOpen = false;
+    S.sparks = 0;
+    S.seenSpark = false;
+    S.meteorOpen = false;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.beds = [];
     return;
@@ -263,6 +269,10 @@ export function restore() {
   S.farmhands = s.farmhands || 0;
   S.tendLevel = s.tendLevel || 0;
   S.labOpen = !!s.labOpen;
+  S.sparks = s.sparks || 0;
+  S.seenSpark = !!s.seenSpark || S.sparks > 0;
+  S.meteorOpen = !!s.meteorOpen;
+  S.meteorAt = 0;
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] || 0;
   if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   restoreGrid(floor, s.floor);
@@ -306,6 +316,11 @@ export function reset() {
   S.tendLevel = 0;
   S.labOpen = false;
   S.labBoardOpen = false;
+  S.sparks = 0;
+  S.seenSpark = false;
+  S.meteorOpen = false;
+  S.meteorAt = 0;
+  S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];
   S.crop = [];

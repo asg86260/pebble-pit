@@ -7,10 +7,10 @@
 
 import {
   P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H,
-  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H, SIDE_PAD,
+  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
-import { S, floor, pit, bench, cave, farm, lab } from './state.js';
+import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
 
 const canvas = document.getElementById('c');
 
@@ -67,7 +67,7 @@ export function resize(after) {
   // pixels to one screen pixel there are three times as many rungs, so a phone
   // can settle on one that fits the whole works on instead of clamping short.
   const needH = ROCK_SKY + PIT_H + FLOOR_MARGIN + P * 4;
-  const needW = TO_LEDGE + ROCK_SKY + P * 20;
+  const needW = TO_LEDGE + SIDE_PAD + P * 20;
   const raw = Math.min(1, S.H / needH, S.W / needW);
   const cell = Math.max(1, Math.floor(P * raw * S.dpr));   // device pixels per cell
   S.zoom = cell / (P * S.dpr);
@@ -89,6 +89,11 @@ export function resize(after) {
   bench.h = P * 7;
   bench.x = S.cx + TO_BENCH;
   bench.y = S.groundY - bench.h;
+
+  // the one thing that is not on the ground
+  meteor.x = S.cx + TO_METEOR;
+  meteor.y = S.groundY - METEOR_UP;
+  meteor.r = METEOR_R;
 
   lab.w = P * 14;
   lab.h = P * 10;
