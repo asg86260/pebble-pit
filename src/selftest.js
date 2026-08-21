@@ -61,6 +61,12 @@ async function hoverBench() {
 // The crew take five when a rock is finished and the next one comes down out of
 // the sky after them, so between rocks there is a stretch with nothing to mine.
 // A check that wants a rock has to wait for one.
+// Checks that are about *what* a worker does should not sit through *how long*
+// it takes. There are checks of their own for pace and for the length of a walk.
+function quickCrew() {
+  window.__levels({ haulPaceLevel: 10, haulCarryLevel: 4, cavePaceLevel: 10, tendLevel: 10 });
+}
+
 async function haveRock() {
   for (let i = 0; i < 150; i++) {
     const s = state();
@@ -365,17 +371,25 @@ const TESTS = [
     ];
   }],
 
-  ['the biggest rock still fits the opening view', async () => {
+  ['the opening view is looking at the rock', async () => {
     window.__jump(12);
     await sleep(300);
     const s = state();
     const left = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
-    const lip = (s.pitX - s.camX) * s.zoom;
+    const right = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
+    let deskFits = false;
+    await asScreen(1440, 900, 1, () => {
+      const d = state();
+      deskFits = (d.rockX - d.rockW / 2 - d.camX) * d.zoom >= 0 &&
+                 (d.pitX - d.camX) * d.zoom < 1440;
+    });
     window.__jump(1);
     return [
       ok(left >= 0, 'the last rock is not cut off on the left', `${Math.round(left)}px in`),
-      ok(lip < innerWidth, 'and the pit lip is still on screen',
-         `lip at ${Math.round(lip)} of ${innerWidth}`)
+      ok(right < innerWidth, 'and you can see the whole of it',
+         `ends at ${Math.round(right)} of ${innerWidth}`),
+      // it no longer has to fit every window, but it has to fit a desk
+      ok(deskFits, 'a desk-sized window shows the rock and the pit lip at once')
     ];
   }],
 
@@ -455,24 +469,27 @@ const TESTS = [
     ];
   }],
 
-  ['a worker can reach dust right on the lip', async () => {
-    window.__crew(0, 1);
+  ['a worker can reach dust at the far end of a pile', async () => {
+    window.__crew(0, 0);                        // lay it down before anyone can take it
     window.__clearFloor();
     await sleep(300);
     const s = state();
-    window.__pile(s.pitX - 12, 3);              // the last of the ground, and not deep
-    await sleep(400);
+    const rock = s.piles.find(p => p.key === 'rock');
+    window.__pile(rock.to - 12, 3);             // the last column of the strip
+    await sleep(300);
     const before = state();
+    window.__crew(0, 1);
+    quickCrew();
     let cleared = false;
     for (let i = 0; i < 120; i++) {
       await sleep(100);
-      if (state().floor < before.floor) { cleared = true; break; }
+      if (state().stored > before.stored) { cleared = true; break; }
     }
     window.__crew(0, 0);
     return [
-      ok(before.floor > 0, 'dust is lying on the very edge to start with',
+      ok(before.floor > 0, 'dust is lying at the far end to start with',
          `${before.floor} grains`),
-      ok(cleared, 'a worker gets to it rather than standing at the lip',
+      ok(cleared, 'a worker gets to it rather than stopping short',
          `${before.floor} still there`)
     ];
   }],
@@ -570,7 +587,7 @@ const TESTS = [
     // no miners, so nothing new lands while we watch, and only one heap on the
     // ground: the one on the far side of the hill
     window.__crew(0, 1);
-    for (let i = 0; i < 6; i++) await buy('haulpace');   // so it walks at a fair clip
+    quickCrew();                               // so it walks at a fair clip
     window.__clearFloor();                     // so the only dust is the heap we make
     await sleep(300);
     const s = state();
@@ -639,17 +656,21 @@ const TESTS = [
     return checks;
   }],
 
-  ['the whole works fits a phone', async () => {
+  // The picture never shrinks to fit. A cell is a cell whatever you are looking
+  // at this on, so a narrow window shows less of the yard rather than a smaller
+  // one: what a small screen owes you is the rock and somewhere to put the dust,
+  // not the whole works at once.
+  ['a small window shows less, not smaller', async () => {
     const checks = [];
     for (const [w, h, dpr, name] of [[390, 844, 3, 'portrait'], [844, 390, 3, 'landscape'],
                                      [412, 915, 2.6, 'android'], [768, 1024, 2, 'tablet']]) {
       await asScreen(w, h, dpr, () => {
         const s = state();
         const rockLeft = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
-        const lip = (s.pitX - s.camX) * s.zoom;
-        checks.push(ok(rockLeft >= 0 && lip < w,
-          `${name} shows the rock and the pit lip at once`,
-          `rock at ${Math.round(rockLeft)}, lip at ${Math.round(lip)} of ${w}`));
+        const rockRight = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
+        checks.push(ok(s.zoom === 1, `${name} draws at full size`, `zoom ${s.zoom}`));
+        checks.push(ok(rockRight > 0 && rockLeft < w, `${name} is looking at the rock`,
+          `rock ${Math.round(rockLeft)}..${Math.round(rockRight)} of ${w}`));
       });
     }
     return checks;
@@ -867,8 +888,7 @@ const TESTS = [
     await bankCore();
     await hoverBench();
     const hired = await buy('firstworker') || state().crew > 0;
-    for (let i = 0; i < 6; i++) await buy('haulpace');
-    for (let i = 0; i < 4; i++) await buy('haulcarry');
+    quickCrew();
 
     const s = state();
     window.__pile(s.pitX - 260, 150);           // within a round trip of the lip
@@ -900,6 +920,8 @@ const TESTS = [
   // walk over and pick it up, the same as everything else in this yard.
   ['the cave gives up shards, and somebody fetches them', async () => {
     window.__crew(0, 0, 3);                  // three spelunkers, cave open
+    quickCrew();                             // a trip is eleven seconds at pace 0
+    window.__clearFloor();                   // and nobody goes down for a full pile
     const start = state();
     let wentUnder = false, lay = false;
     for (let i = 0; i < 200; i++) {
@@ -910,8 +932,10 @@ const TESTS = [
     }
     const waiting = state();
     window.__crew(0, 2, 3);                  // now put somebody on carrying
+    window.__place('hauler', state().caveX);
+    quickCrew();  // stood by it: the long walk is another check's job
     let got = false;
-    for (let i = 0; i < 700; i++) {          // the cave is a long walk from the pit
+    for (let i = 0; i < 300; i++) {
       await sleep(100);
       if (state().shards > start.shards) { got = true; break; }
     }
@@ -941,6 +965,8 @@ const TESTS = [
 
   ['the farm grows spores when it is tended', async () => {
     window.__crew(0, 0, 0, 2);               // two farmhands, farm open
+    quickCrew();                             // a bed is nine seconds at tending 0
+    window.__clearFloor();                   // and nothing is cut into a full pile
     const start = state();
     let grew = false, lay = false;
     for (let i = 0; i < 250; i++) {
@@ -951,8 +977,10 @@ const TESTS = [
     }
     const waiting = state();
     window.__crew(0, 2, 0, 2);               // somebody to go and get it
+    window.__place('hauler', state().farmX);
+    quickCrew();
     let got = false;
-    for (let i = 0; i < 700; i++) {          // and the beds are further still
+    for (let i = 0; i < 300; i++) {
       await sleep(100);
       if (state().spores > start.spores) { got = true; break; }
     }
@@ -1064,8 +1092,10 @@ const TESTS = [
     }
     const waiting = state();
     window.__crew(0, 2);                     // somebody to carry it in
+    window.__place('hauler', waiting.rockX);
+    quickCrew();
     let banked = false;
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 300; i++) {
       await sleep(100);
       if (state().sparks > start.sparks) { banked = true; break; }
     }
@@ -1083,10 +1113,13 @@ const TESTS = [
     ];
   }],
 
+  // The picture does not scale to fit, so the sky is only as tall as the window
+  // leaves it. These are windows at or above the height the game asks for; a
+  // shorter one loses sky off the top, and eventually the meteor with it.
   ['the meteor hangs clear of the rock and stays on screen', async () => {
     const checks = [];
     for (const [w, h, dpr, name] of [[2560, 1300, 1, 'big desktop'], [1440, 900, 2, 'laptop'],
-                                     [1280, 700, 1, 'short window'], [844, 390, 3, 'landscape']]) {
+                                     [1280, 1000, 1, 'narrow window'], [900, 840, 2, 'the minimum']]) {
       await asScreen(w, h, dpr, () => {
         const s = state();
         const top = (s.meteorY - 54 - s.camY) * s.zoom;
@@ -1207,16 +1240,20 @@ export async function runTests(filter = '') {
   await sleep(600);
 
   const results = [];
+  const timing = [];
   const wanted = TESTS.filter(([name]) => !filter || name.toLowerCase().includes(filter.toLowerCase()));
   for (const [name, fn] of wanted) {
     let checks;
+    const t0 = performance.now();
     try {
       checks = await fn();
     } catch (e) {
       checks = [{ pass: false, what: 'threw', detail: String(e && e.stack || e) }];
     }
+    timing.push([name, Math.round(performance.now() - t0)]);
     for (const c of checks) results.push({ ...c, group: name });
   }
+  timing.sort((a, b) => b[1] - a[1]);
   removeEventListener('error', onErr);
 
   const failed = results.filter(r => !r.pass);
@@ -1228,6 +1265,8 @@ export async function runTests(filter = '') {
   return {
     passed: results.length - failed.length,
     total: results.length,
+    seconds: Math.round(timing.reduce((n, t) => n + t[1], 0) / 1000),
+    slowest: timing.slice(0, 8).map(([n, ms]) => `${(ms / 1000).toFixed(1)}s ${n}`),
     failures: failed.map(f => `${f.group}: ${f.what}${f.detail ? ` — ${f.detail}` : ''}`),
     errors: errs
   };

@@ -391,8 +391,12 @@ and the ground line a fixed height above it, so the ground never moves. The pit 
 world pixels across and 276 deep, and every site keeps its distance from the rock. A bigger
 window is only more sky above and more ground either side.
 
-Below a certain size the scene scales down instead of rearranging, so a small window shows the
-same place from further away. The **counter is the exception**: it is read rather than looked at, so it is drawn in screen pixels
+**The picture never scales.** A small window shows *less* of the yard, not a smaller one: a cell is
+a cell whatever you are looking at this on, and the works is a fixed thing you scroll along rather
+than a thing that rearranges itself around your window. The game asks for about **840px of height**
+— enough for the sky the rock and the meteor stand in, the ground, and the whole depth of the pit
+— and a shorter window loses sky off the top, which is the part with nothing in it. This is not a
+responsive layout and does not want to be one. The **counter is the exception**: it is read rather than looked at, so it is drawn in screen pixels
 and stays the size it is however far the yard has been scaled down. Everything else is furniture
 and a cell is a cell; a number you have to squint at is just a number you cannot read. The room its
 digits need is measured, not guessed, so it cannot clip its own number at seven figures.

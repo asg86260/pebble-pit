@@ -8,7 +8,7 @@
 import {
   P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP,
-  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H, SIDE_PAD,
+  PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
 import { S, floor, pit, bench, cave, farm, lab, meteor } from './state.js';
@@ -115,8 +115,14 @@ export function resize(after) {
   // Draw at the screen's real resolution, not a capped one: a phone reports 3
   // and looked soft at 2. Back off only if the backing store would get silly --
   // fill rate is what costs, and that is what the budget is counted in.
+  //
+  // The ratio is then rounded so that a cell is a whole number of device pixels.
+  // That is not tidiness: a cell drawn across a fraction of a device pixel is a
+  // cell antialiased against the page, and the seam between two of them comes
+  // out grey. It is the same rule as every world position being a whole cell.
   const want = Math.max(1, devicePixelRatio || 1);
-  S.dpr = Math.max(1, Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H))));
+  const fit = Math.min(want, Math.sqrt(DEVICE_PIXELS / (S.W * S.H)));
+  S.dpr = Math.max(1, Math.round(P * fit)) / P;
 
   canvas.style.position = 'fixed';
   canvas.style.left = '0';
@@ -127,18 +133,15 @@ export function resize(after) {
   canvas.width = Math.round(S.W * S.dpr);
   canvas.height = Math.round(S.H * S.dpr);
 
-  // Only a window too small for the works shrinks the picture. A cell is always
-  // a whole number of *device* pixels -- that is what keeps the hairline seams
-  // out, and it is a finer ladder than whole screen pixels: at three device
-  // pixels to one screen pixel there are three times as many rungs, so a phone
-  // can settle on one that fits the whole works on instead of clamping short.
-  const needH = ROCK_SKY + PIT_H + FLOOR_MARGIN + P * 4;
-  const needW = TO_LEDGE + SIDE_PAD + P * 20;
-  const raw = Math.min(1, S.H / needH, S.W / needW);
-  const cell = Math.max(1, Math.floor(P * raw * S.dpr));   // device pixels per cell
-  S.zoom = cell / (P * S.dpr);
-  S.viewW = S.W / S.zoom;
-  S.viewH = S.H / S.zoom;
+  // The picture is always the same size. A small window does not shrink the
+  // yard, it just shows less of it: a cell is a cell whatever you are looking
+  // at this on, and the works is a fixed thing you scroll along rather than a
+  // thing that rearranges itself around your window. The game asks for about
+  // 830px of height to show the sky, the ground and the whole depth of the pit;
+  // anything shorter loses sky off the top, which is the part with nothing in it.
+  S.zoom = 1;
+  S.viewW = S.W;
+  S.viewH = S.H;
 
   // fixed places, laid out once and never moved
   S.groundY = SKY;

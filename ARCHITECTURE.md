@@ -123,7 +123,16 @@ reload. Nothing warns you if it does not.
 ```
 node tools/unresolved.mjs     # names a module uses but cannot see
 node tools/headless.mjs       # runs __test() in a headless browser, no install
+node tools/headless.mjs "window.__test('cave')"      # one group, seconds not minutes
 ```
+
+The whole suite is two minutes and one group is a few seconds, so iterate on the
+group and run the whole thing before committing. `__test()` reports its slowest
+groups; when one of them grows, it is almost always a check sitting through
+something the game does slowly on purpose — a walk the length of the world, a
+bed ripening, forty-two seconds between sparks. `__place(type, x)` stands a body
+where it is needed and `__levels({...})` buys the pace, which is how those get
+back under a few seconds without testing anything less.
 
 Then open the game and run `__test()` in the console — 143 checks covering the
 layout on seven screen sizes, mining, the crew, every site, the pit, spending,

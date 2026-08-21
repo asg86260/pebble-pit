@@ -172,7 +172,22 @@ window.__levels = (o = {}) => {             // set upgrade levels, for weighing 
   if (o.mult) for (const k of Object.keys(S.mult)) if (k in o.mult) S.mult[k] = o.mult[k];
   buildShop(); S.dirty = true;
 };
-window.__meteor = (open = true) => { S.meteorOpen = open; S.meteorAt = 0; buildShop(); S.dirty = true; };
+// A spark is forty-two seconds apart in play, which is a fine rhythm and a
+// terrible thing to sit through in a check: opening it sheds one at once.
+window.__meteor = (open = true) => {
+  S.meteorOpen = open;
+  S.meteorAt = performance.now();
+  buildShop();
+  S.dirty = true;
+};
+// Put a body where you want it. Most of what a check waits for is a worker
+// walking the length of the world, which proves nothing the walking tests do
+// not already prove and costs half a minute a time.
+window.__place = (type, x) => {
+  const w = S.workers.find(o => o.type === type);
+  if (w) { w.x = x; w.claim = -1; w.goal = 'seek'; }
+  return !!w;
+};
 window.__lab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
 window.__grant = (o = {}) => {              // shards and spores, for looking at things
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
@@ -182,6 +197,20 @@ window.__grant = (o = {}) => {              // shards and spores, for looking at
   buildShop(); S.dirty = true;
 };
 window.__spend = n => { spend(Math.min(n, S.stored)); S.dirty = true; };
+// what the pile actually looks like, sampled across the hole: dust arrives at
+// the lip, so the shape of it is the shape of how it got there
+window.__pitProfile = (n = 20) => {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const c = Math.floor(i * (pit.cols - 1) / (n - 1));
+    let h = 0;
+    for (let r = pit.rows - 1; r >= 0; r--) if (at(pit, c, r)) { h = r + 1; break; }
+    out.push(h);
+  }
+  return out;
+};
+// bank at the lip, the way a worker tips it in
+window.__tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * 40, shade); };
 window.__give = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * pit.w, shade); };
 
 // how the banks sit against the rock: nothing in the apron, and the first column

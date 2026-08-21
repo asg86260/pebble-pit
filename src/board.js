@@ -106,5 +106,10 @@ export function hud() {
   tweenCount(performance.now());
   if (S.boardOpen) refresh(shopEl, UPGRADES, headcount);
   if (S.labBoardOpen) { refresh(labShopEl, LAB_UPGRADES, null); refreshStats(); }
+  // A board is placed when it opens, and it is empty at that moment: its rows
+  // are filled on the next frame, and a board that grew a row after being
+  // seated could end up hanging off the top of a short window. Seating it every
+  // frame is a couple of style writes and it can never be wrong.
+  placeBoard();
 }
 

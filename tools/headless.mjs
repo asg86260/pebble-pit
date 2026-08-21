@@ -58,7 +58,12 @@ const send = (method, params = {}) =>
 await new Promise(r => ws.addEventListener('open', r));
 await send('Runtime.enable');
 await send('Page.enable');
-await new Promise(r => setTimeout(r, 3500));       // the game lays itself out
+// wait for the game to be there rather than guessing at how long it takes
+for (let i = 0; i < 100; i++) {
+  const probe = await send('Runtime.evaluate', { expression: 'typeof window.__test', returnByValue: true });
+  if (probe.result?.result?.value === 'function') break;
+  await new Promise(r => setTimeout(r, 100));
+}
 
 const out = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
 if (shot) {

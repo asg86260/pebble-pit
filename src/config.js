@@ -7,6 +7,12 @@ export const TARGET = 1000000;   // dust in the hole: the whole point
 // the viewport, the ground line a fixed height above it, and the rock, the bench
 // and the lip keep their distances. A bigger window is only more sky and more
 // ground: the ground runs a long way either side of everything.
+// The height the game asks for. The picture never scales to fit, so this is not
+// a breakpoint -- it is what the yard needs to show the sky the rock and the
+// meteor stand in, the ground, and the whole depth of the pit. A shorter window
+// loses sky off the top, which is the part with nothing in it, and eventually
+// the top of the meteor. It does not rearrange and it does not shrink.
+export const MIN_H = 840;
 export const SKY = 1998;         // world above the ground line, so any window has sky
 // Every world coordinate below is a whole number of cells away from the last,
 // SKY included. That is not tidiness: a cell is a whole number of device
