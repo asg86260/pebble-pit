@@ -139,6 +139,14 @@ window.__crew = (m = 0, h = 0, sp = 0, f = 0) => {   // hire straight off, for l
   if (m || h || sp || f) S.seenCore = true;
   syncWorkers(); buildShop(); S.dirty = true;
 };
+window.__levels = (o = {}) => {             // set upgrade levels, for weighing balance
+  for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'minerSpeedLevel',
+                   'haulCarryLevel', 'haulPaceLevel', 'cavePaceLevel', 'tendLevel']) {
+    if (k in o) S[k] = o[k];
+  }
+  if (o.mult) for (const k of Object.keys(S.mult)) if (k in o.mult) S.mult[k] = o.mult[k];
+  buildShop(); S.dirty = true;
+};
 window.__meteor = (open = true) => { S.meteorOpen = open; S.meteorAt = 0; buildShop(); S.dirty = true; };
 window.__lab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
 window.__grant = (o = {}) => {              // shards and spores, for looking at things

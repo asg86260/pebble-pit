@@ -17,15 +17,19 @@ import { pickCount } from './upgrades.js';
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
 // one is a longer dig. Cells hold remaining thickness, deepest in the middle.
+// Thickness is what makes a rock a long dig, and it used to go up with every
+// rock, which -- on top of the rock getting wider and taller as well -- tripled
+// the material over the first six and made the early ones a slog. It comes on
+// every other rock now.
 export function depthOf() {
-  return Math.min(MAX_DEPTH, S.boulderNo);
+  return Math.min(MAX_DEPTH, 1 + Math.floor(S.boulderNo / 2));
 }
 
 // how big rock n is, in cells. It may never grow into the bench, nor out of the
 // sky kept clear above the ground line
 export function rockSize() {
-  const w = ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W;
-  const h = ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H;
+  const w = Math.round(ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W);
+  const h = Math.round(ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H);
   return {
     w: Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((TO_BENCH - P * 14) * 2 / P))),
     h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))

@@ -100,12 +100,12 @@ const MINERS = crew({
 });
 const SPELUNKERS = crew({
   key: 'spelunker', unlockKey: 'unlockcave', one: 'open the cave', many: 'spelunkers',
-  cores: 4, base: 220, mult: 1.7, count: 'spelunkers', unlocked: 'caveOpen',
+  cores: 3, base: 220, mult: 1.7, count: 'spelunkers', unlocked: 'caveOpen',
   onOpen: () => lookAt(cave.x + cave.w / 2)    // show them what they just bought
 });
 const FARMHANDS = crew({
   key: 'farmhand', unlockKey: 'unlockfarm', one: 'break the ground', many: 'farmhands',
-  cores: 7, base: 400, mult: 1.7, count: 'farmhands', unlocked: 'farmOpen',
+  cores: 5, base: 400, mult: 1.7, count: 'farmhands', unlocked: 'farmOpen',
   onOpen: () => lookAt(farm.x + farm.w / 2)
 });
 const WORKERS = crew({
@@ -196,7 +196,7 @@ export const UPGRADES = [
   {
     key: 'unlocklab',
     name: 'build the lab',
-    cost: () => 10,
+    cost: () => 7,
     currency: 'core',
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
     show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
@@ -204,7 +204,7 @@ export const UPGRADES = [
   {
     key: 'unlockmeteor',
     name: 'call it down',
-    cost: () => 15,
+    cost: () => 9,
     currency: 'core',
     buy: () => { S.meteorOpen = true; S.meteorAt = 0; lookAt(meteor.x); },
     show: () => S.labOpen && !S.meteorOpen

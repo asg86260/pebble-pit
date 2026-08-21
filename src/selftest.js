@@ -739,19 +739,20 @@ const TESTS = [
   }],
 
   ['rocks stop growing, because they never stop coming', async () => {
-    window.__jump(12);
+    window.__jump(40);
     await sleep(200);
-    const twelve = state();
-    window.__jump(90);
+    const forty = state();
+    window.__jump(400);
     await sleep(200);
-    const ninety = state();
+    const far = state();
     window.__jump(1);
     await sleep(200);
     return [
-      ok(ninety.rockW === twelve.rockW && ninety.rockH === twelve.rockH,
-         'rock ninety is no bigger than rock twelve',
-         `${twelve.rockW}x${twelve.rockH} vs ${ninety.rockW}x${ninety.rockH}`),
-      ok(ninety.rockH < 520, 'and still fits under the sky', `${ninety.rockH}`)
+      ok(far.rockW === forty.rockW && far.rockH === forty.rockH,
+         'rock four hundred is no bigger than rock forty',
+         `${forty.rockW}x${forty.rockH} vs ${far.rockW}x${far.rockH}`),
+      ok(far.rockH < 520, 'and still fits under the sky', `${far.rockH}`),
+      ok(far.rockW < 900 - 108, 'and never reaches the bench', `${far.rockW}`)
     ];
   }],
 
