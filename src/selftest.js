@@ -40,7 +40,16 @@ const boulderWorld = () => {
   return { x: s.rockX, y: s.rockY };
 };
 
+// The bench is not in the yard until the first upgrade is affordable, so a check
+// that wants to open it has to earn it first.
+async function haveBench() {
+  if (state().seenBench) return;
+  window.__give(100);
+  for (let i = 0; i < 30 && !state().seenBench; i++) await sleep(40);
+}
+
 async function hoverBench() {
+  await haveBench();
   const b = benchWorld();
   const [x, y] = onScreen(b.x + 20, b.y - 30);
   point('pointermove', x, y, 0);
@@ -49,6 +58,18 @@ async function hoverBench() {
 
 // bank one core the long way round: finish the rock, wait for the core to roll
 // clear of it, carry it, throw it in
+// The crew take five when a rock is finished and the next one comes down out of
+// the sky after them, so between rocks there is a stretch with nothing to mine.
+// A check that wants a rock has to wait for one.
+async function haveRock() {
+  for (let i = 0; i < 150; i++) {
+    const s = state();
+    if (s.rock > 0 && !s.rockFall && !s.dancing) return true;
+    await sleep(100);
+  }
+  return false;
+}
+
 async function bankCore() {
   window.__next();                             // the last of the rock goes
   for (let i = 0; i < 60 && !state().coreItem?.rest; i++) await sleep(100);
@@ -68,10 +89,19 @@ async function bankCore() {
   point('pointerup', tx, ty);
   for (let i = 0; i < 40; i++) {
     await sleep(100);
-    if (!state().coreItem && !state().heldCore) return true;
+    if (!state().coreItem && !state().heldCore) { await haveRock(); return true; }
   }
   return false;
 }
+
+// a job row: click the more or the less beside its count
+const put = async (key, which) => {
+  const b = shop().querySelector(`.job[data-job="${key}"] .${which}`);
+  if (!b || b.disabled) return false;
+  b.click();
+  await sleep(150);
+  return true;
+};
 
 const buy = async key => {
   const b = shop().querySelector(`button[data-key="${key}"]`);
@@ -117,6 +147,34 @@ const finger = (type, id, x, y) =>
   }));
 
 const TESTS = [
+  // Nothing is shown before it can be used: the bench is not in the yard until
+  // there is a row on it you can afford, and once it is there it says what it
+  // has without being opened.
+  // This one goes first, on the fresh game the suite resets to: the bench only
+  // arrives once, and nothing after here would ever see it missing.
+  ['the bench arrives when there is something to buy', async () => {
+    const bare = state();
+    window.__give(100);
+    for (let i = 0; i < 30 && !state().seenBench; i++) await sleep(40);
+    const earned = state();
+    await hoverBench();                       // reading the board marks it read
+    await sleep(150);
+    point('pointermove', 4, 4, 0);
+    await sleep(250);
+    const read = state();
+    return [
+      ok(!bare.seenBench, 'no bench on a game that cannot afford anything'),
+      ok(!bare.benchMark, 'and nothing drawn over it', `${bare.benchMark}`),
+      ok(earned.seenBench, 'it arrives with the first row you can afford'),
+      ok(earned.benchMark === 'flag', 'a group you have never seen flies a flag',
+         `${earned.benchMark}`),
+      ok(read.benchMark === 'dot', 'once read it is back to a dot for what you can afford',
+         `${read.benchMark}`),
+      ok(read.seenSects.includes('you'), 'the heading counts as read',
+         JSON.stringify(read.seenSects))
+    ];
+  }],
+
   ['canvas covers the viewport', async () => {
     const c = canvas();
     const r = c.getBoundingClientRect();
@@ -206,6 +264,40 @@ const TESTS = [
     ];
   }],
 
+  // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
+  // about on the bare ground, and only then does the next one come down.
+  ['a finished rock is worth a moment', async () => {
+    window.__crew(3, 0);
+    await haveRock();
+    window.__next();                          // the last of it goes
+    await sleep(400);
+    const partying = state();
+    const feet = partying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
+    await sleep(700);
+    const stillPartying = state();
+    const feetNow = stillPartying.workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]);
+    let sky = 0;
+    for (let i = 0; i < 120; i++) {           // catch it on its way down
+      await sleep(50);
+      if (state().rockFall > 0) { sky = state().rockFall; break; }
+    }
+    const landed = await haveRock();
+    const after = state();
+    window.__crew(0, 0);
+    return [
+      ok(partying.dancing, 'the crew are dancing the moment the rock is off'),
+      ok(stillPartying.rock === 0, 'and the next rock has not turned up yet',
+         `${stillPartying.rock} of rock`),
+      ok(feet.join() !== feetNow.join(), 'they are off the ground doing it',
+         `${feet.join()} then ${feetNow.join()}`),
+      ok(sky > 0, 'the next rock comes down out of the sky', `caught it ${sky}px up`),
+      ok(landed && after.rockFoot === after.groundY, 'and lands on the ground line',
+         `foot ${after.rockFoot}, ground ${after.groundY}`),
+      ok(after.apronClear, 'clearing the ground it needs as it lands',
+         `${after.apronDust} grains in the apron`)
+    ];
+  }],
+
   ['shop opens at the bench and is not buried', async () => {
     await hoverBench();
     const b = board();
@@ -249,6 +341,30 @@ const TESTS = [
     ];
   }],
 
+  // The rock is the only thing drawn a cell at a time, so it is the only thing
+  // that seams: two rects sharing an edge on a fraction of a device pixel are
+  // each antialiased against the page, and the seam between them comes out grey.
+  // The layout picks a whole number of device pixels per cell, and this checks
+  // the other half of it -- that the rock's own edges land on that same ladder,
+  // at every cell size a window can ask for.
+  ['the rock lands on whole device pixels', async () => {
+    const s = state();
+    const off = v => Math.abs(v - Math.round(v));
+    const sizes = [1, 2, 3, 4, 5, 6];                 // device pixels a cell may be
+    const rows = sizes.filter(cell => off(s.rockFoot * (cell / 6)) > 1e-9);
+    const cols = sizes.filter(cell => off(s.rockLeftX * (cell / 6)) > 1e-9);
+    return [
+      ok(off(s.cellDevicePx) < 1e-9, 'a cell is a whole number of device pixels',
+         `${s.cellDevicePx}`),
+      ok(rows.length === 0, 'the rock stands on the device grid at every cell size',
+         `seams at ${rows.join(', ')}px a cell`),
+      ok(cols.length === 0, 'and its left edge does too',
+         `seams at ${cols.join(', ')}px a cell`),
+      ok((s.rockW / 6) % 2 === 0, 'the rock is an even number of cells across',
+         `${s.rockW / 6} cells`)
+    ];
+  }],
+
   ['the biggest rock still fits the opening view', async () => {
     window.__jump(12);
     await sleep(300);
@@ -283,6 +399,78 @@ const TESTS = [
       ok(new Set(miners.map(([x]) => Math.round(x / 18))).size > 1,
          'and spread out along it rather than stacking up',
          JSON.stringify(miners.map(([x]) => Math.round(x))))
+    ];
+  }],
+
+  // The last columns of ground sit further right than a worker is allowed to
+  // stand, so one that had to be standing on a column to scoop it stood at the
+  // lip for ever with the dust a hand's width away.
+  ['a worker can reach dust right on the lip', async () => {
+    window.__crew(0, 1);
+    window.__clearFloor();
+    await sleep(300);
+    const s = state();
+    window.__pile(s.pitX - 12, 3);              // the last of the ground, and not deep
+    await sleep(400);
+    const before = state();
+    let cleared = false;
+    for (let i = 0; i < 120; i++) {
+      await sleep(100);
+      if (state().floor < before.floor) { cleared = true; break; }
+    }
+    window.__crew(0, 0);
+    return [
+      ok(before.floor > 0, 'dust is lying on the very edge to start with',
+         `${before.floor} grains`),
+      ok(cleared, 'a worker gets to it rather than standing at the lip',
+         `${before.floor} still there`)
+    ];
+  }],
+
+  // Every worker used to work out the same answer to "where is the nearest
+  // dust", so a single grain behind the crew turned the whole line round, and
+  // turned it round again the moment the first of them picked it up.
+  ['workers do not all go for the same grain', async () => {
+    window.__crew(0, 3);
+    window.__clearFloor();
+    await sleep(300);
+    const s = state();
+    for (const at of [0.30, 0.45, 0.60]) window.__pile(s.pitX * at, 12);
+    await sleep(1200);
+    const busy = state();
+    const claims = busy.claims.filter(c => c >= 0);
+    window.__crew(0, 0);
+    return [
+      ok(claims.length >= 2, 'the workers are spread over the piles', JSON.stringify(busy.claims)),
+      ok(new Set(claims).size === claims.length, 'no two set off for the same column',
+         JSON.stringify(claims)),
+      ok(busy.pace.empty > busy.pace.laden, 'and a worker moves quicker with its hands free',
+         `${busy.pace.empty} empty, ${busy.pace.laden} laden`)
+    ];
+  }],
+
+  // Your pick and a miner's are two different tools. One row that bought both
+  // was doing two jobs, and it sat under `you` while half of it was on the rock.
+  ['your pick and a miner bite are bought apart', async () => {
+    window.__crew(1, 0);
+    window.__grant({ cores: 12 });
+    await hoverBench();
+    const before = state();
+    const gotBite = await buy('minerpick');
+    const mid = state();
+    const gotPick = await buy('pick');
+    const after = state();
+    window.__crew(0, 0);
+    return [
+      ok(gotBite, 'the rock has a bite row of its own'),
+      ok(mid.minerPickLevel === before.minerPickLevel + 1, 'buying it moves the miners',
+         `${before.minerPickLevel} -> ${mid.minerPickLevel}`),
+      ok(mid.pickLevel === before.pickLevel, 'and leaves your own pick alone',
+         `${before.pickLevel} -> ${mid.pickLevel}`),
+      ok(gotPick && after.pickLevel === mid.pickLevel + 1, 'your pick still buys your own swing',
+         `${mid.pickLevel} -> ${after.pickLevel}`),
+      ok(after.minerPickLevel === mid.minerPickLevel, 'and not theirs',
+         `${mid.minerPickLevel} -> ${after.minerPickLevel}`)
     ];
   }],
 
@@ -333,7 +521,14 @@ const TESTS = [
       ok(s.dustLeftOfRock > 0 && right > 0, 'both banks get some',
          `${s.dustLeftOfRock} left, ${right} right`),
       ok(s.apronClear, 'the ground right beside the rock stays bare',
-         `${s.apronDust} grains in the apron`)
+         `${s.apronDust} grains in the apron`),
+      // The apron is a cliff the sand cannot slump over, so without a ceiling on
+      // how high a column may stand near it the bank grows straight up against
+      // the rock as a sheer wall. It has to lean away instead.
+      ok(s.heapAtRock <= 3, 'the bank does not stand up as a wall at the rock',
+         `${s.heapAtRock} cells high against the apron`),
+      ok(s.bankCrest > s.heapAtRock, 'it leans away from the rock, high point further out',
+         `${s.heapAtRock} at the apron, ${s.bankCrest} at its crest`)
     ];
   }],
 
@@ -396,6 +591,7 @@ const TESTS = [
     await sleep(150);
     const startedClosed = board().hidden;
 
+    await haveBench();
     const s = state();
     const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
 
@@ -417,6 +613,7 @@ const TESTS = [
   }],
 
   ['the board stays on screen, however small it is', async () => {
+    await haveBench();
     window.__crew(4, 3);                     // every row showing: the tallest it gets
     await sleep(250);
     const checks = [];
@@ -522,17 +719,49 @@ const TESTS = [
     ];
   }],
 
-  ['a hired miner works the rock', async () => {
+  // One pool of bodies: you buy a worker, and where it works is a separate
+  // question you can answer again at any time.
+  ['a worker put on the rock works it', async () => {
+    await haveRock();
     await hoverBench();
-    const hired = await buy('unlockminers');
-    const before = state().rock;
+    const hired = await buy('firstworker');
+    const idlingFirst = state();
+    const moved = await put('mine', 'more');
+    const before = state();
     await sleep(3000);
     const after = state();
     return [
-      ok(hired, 'first miner can be bought with a core'),
-      ok(after.miners === 1, 'one miner is on the payroll', `${after.miners}`),
-      ok(after.workers === 1, 'and exists as a worker', `${after.workers}`),
-      ok(after.rock < before, 'rock is coming off', `${before} -> ${after.rock}`)
+      ok(hired, 'the first worker can be bought with a core'),
+      ok(idlingFirst.crew === 1, 'it is on the payroll', `${idlingFirst.crew}`),
+      ok(idlingFirst.miners === 0 && idlingFirst.haulers === 1,
+         'and carries dust until it is put on something',
+         `${idlingFirst.miners} mining, ${idlingFirst.haulers} carrying`),
+      ok(moved, 'the rock has a job row to put it on'),
+      ok(after.miners === 1 && after.haulers === 0, 'now it is on the rock and not carrying',
+         `${after.miners} mining, ${after.haulers} carrying`),
+      ok(after.crew === 1, 'and it is the same body, not a second hire', `${after.crew}`),
+      ok(after.rock < before.rock, 'rock is coming off', `${before.rock} -> ${after.rock}`)
+    ];
+  }],
+
+  ['a worker can be taken off a job again', async () => {
+    window.__crew(1, 0);                        // one body, on the rock
+    await hoverBench();
+    const on = state();
+    const back = await put('mine', 'less');
+    await sleep(200);
+    const off = state();
+    const tooMany = await put('mine', 'more') && await put('mine', 'more');
+    const capped = state();
+    window.__crew(0, 0);
+    return [
+      ok(on.miners === 1 && on.idle === 0, 'it starts on the rock', `${on.miners} mining`),
+      ok(back, 'the job row lets it go'),
+      ok(off.miners === 0 && off.haulers === 1, 'and it goes back to carrying dust',
+         `${off.miners} mining, ${off.haulers} carrying`),
+      ok(!tooMany, 'a body it does not have cannot be put anywhere'),
+      ok(capped.miners + capped.haulers === capped.crew,
+         'the crew always adds up', `${capped.miners}+${capped.haulers} of ${capped.crew}`)
     ];
   }],
 
@@ -543,7 +772,7 @@ const TESTS = [
     await bankCore();
     await bankCore();
     await hoverBench();
-    const hired = await buy('unlockhaulers');
+    const hired = await buy('firstworker') || state().crew > 0;
     for (let i = 0; i < 6; i++) await buy('haulpace');
     for (let i = 0; i < 4; i++) await buy('haulcarry');
 
@@ -565,7 +794,7 @@ const TESTS = [
     }
     const after = state();
     return [
-      ok(hired, 'first worker can be bought with cores'),
+      ok(hired, 'there is a worker to carry it'),
       ok(after.haulers >= 1, 'a worker is on the payroll'),
       ok(reachedLip, 'the worker walks its load to the lip'),
       ok(after.stored > before.stored, 'and dust arrives in the hole',

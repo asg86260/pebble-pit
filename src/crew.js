@@ -4,7 +4,7 @@
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // cave and the farm arrive, its own file.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, rockLeft } from './world.js';
@@ -12,7 +12,7 @@ import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops } f
 import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
-import { minerMs, haulCap, haulSpeed, scoopMs } from './upgrades.js';
+import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
 import { stepSpelunker, newSpelunker } from './cave.js';
 import { stepFarmhand, newFarmhand } from './farm.js';
 
@@ -59,7 +59,21 @@ export function elbowed(w, x) {
 export function syncWorkers() {
   const want = { miner: S.miners, hauler: S.haulers, spelunker: S.spelunkers,
                  farmhand: S.farmhands };
-  S.workers = S.workers.filter(w => want[w.type]-- > 0);       // drop any extras
+  // Bodies are moved between jobs, not bought and sold, so one that is stood
+  // down is usually one that has just been put on something else. Whatever it
+  // was carrying goes on the ground at its feet: every pixel is worth one dust
+  // wherever it came from, and losing a load to a reshuffle would break that.
+  const keep = [], stood = [];
+  for (const w of S.workers) (want[w.type]-- > 0 ? keep : stood).push(w);
+  for (const w of stood) {
+    for (let i = 0; i < (w.carry || 0); i++)
+      spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
+    if (w.hasCore) {
+      S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
+      if (S.coreTaker === w) S.coreTaker = null;
+    }
+  }
+  S.workers = keep;
 
   // count what is missing first: pushing while re-reading the length only ever
   // creates half of them
@@ -86,7 +100,7 @@ export function syncWorkers() {
   for (let i = 0; i < needHaulers; i++) {
     S.workers.push({
       type: 'hauler', x: rockLeft() + Math.random() * (pit.x - rockLeft()), y: 0,
-      carry: 0, next: 0, goal: 'seek'
+      carry: 0, next: 0, goal: 'seek', claim: -1
     });
   }
 
@@ -100,17 +114,27 @@ export function syncWorkers() {
   }
 }
 
-// somewhere worth drilling: sample a few cells and take the thickest rock
-function nearestDust(x) {
+// The nearest column of dust that nobody else has set off for. One column, one
+// worker: without that, every worker in the yard works out the same answer and
+// the whole line turns round for a single grain behind them, then turns round
+// again when the first of them picks it up.
+function nearestDust(x, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
   const from = Math.max(0, Math.min(last, colOf(floor, x)));
   for (let d = 0; d <= last; d++) {
     for (const c of [from - d, from + d]) {
-      if (c < 0 || c > last || blocked(c)) continue;
+      if (c < 0 || c > last || blocked(c) || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
   return -1;
+}
+
+// the columns already spoken for this frame
+function claims() {
+  const taken = new Set();
+  for (const w of S.workers) if (w.type === 'hauler' && w.claim >= 0) taken.add(w.claim);
+  return taken;
 }
 
 export function topGrain(c) {
@@ -120,9 +144,24 @@ export function topGrain(c) {
 
 export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
+  const taken = claims();
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
     if (w.type === 'miner') {
+      // The rock is off. The crew take five on the bare ground: a hop on the
+      // spot, each one a beat behind the last, so it reads as a line of them
+      // rather than one animation played five times. It runs until the next
+      // rock has come down, so nobody is caught mid-hop underneath it.
+      if (now < S.danceUntil || S.rockFall > 0) {
+        const beat = now / 1000 * DANCE_BEAT + w.slot * 0.5;
+        const hop = Math.abs(Math.sin(beat * Math.PI));
+        w.y = standOn(S.groundY) - Math.round(hop * 2) * P;
+        w.x += Math.sin(beat * Math.PI * 0.5) * 0.4;
+        w.lunge = 0;
+        w.next = now + minerMs();              // nobody swings at nothing
+        continue;
+      }
+
       // The crew climb the hill and work it from the top down. Each one keeps a
       // stretch of the crest to itself, stands on whatever rock is left there and
       // sinks with it as the rock goes; when its stretch is bare it ambles along
@@ -151,7 +190,7 @@ export function updateWorkers(now, dt) {
       w.y = standOn(surf + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4);
 
       if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
-        knockOff(w.x + WORKER / 2, surf + P / 2);                   // bite what it stands on
+        knockOff(w.x + WORKER / 2, surf + P / 2, minerBite());     // bite what it stands on
         w.lunge = 1;
         w.next = now + minerMs() * (0.85 + Math.random() * 0.3);    // never quite in time
       }
@@ -167,8 +206,10 @@ export function updateWorkers(now, dt) {
         S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
         (!S.coreTaker || S.coreTaker === w)) {
       S.coreTaker = w;
+      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
       const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-      w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
+      const pace = haulSpeed() * HAUL_EMPTY;
+      w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P * 2) {
         S.coreItem = null;
         S.coreTaker = null;
@@ -183,11 +224,25 @@ export function updateWorkers(now, dt) {
     w.y = standOn(S.groundY);
 
     if (w.goal === 'seek') {
-      const c = nearestDust(w.x);
-      if (c < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
+      // It keeps the column it set off for until that column is bare. Picking
+      // the nearest one afresh every frame is what made the crew swarm.
+      if (w.claim >= 0 && !at(floor, w.claim, 0)) { taken.delete(w.claim); w.claim = -1; }
+      if (w.claim < 0) {
+        const c = nearestDust(w.x, taken);
+        if (c >= 0) { w.claim = c; taken.add(c); }
+      }
+      if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
+      const c = w.claim;
       const target = floor.x + c * P;
-      w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
-      if (Math.abs(target - w.x) < P && now >= w.next) {
+      // hands free, so it moves; a load is what slows it down
+      const pace = haulSpeed() * HAUL_EMPTY;
+      w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
+      // It scoops what is under it, not what its left edge is exactly on. The
+      // last two columns before the lip sit further right than a worker is
+      // allowed to stand, so a worker that had to be standing on them stood at
+      // the lip for ever with the dust a hand's width away.
+      const under = target >= w.x - P && target <= w.x + WORKER;
+      if (under && now >= w.next) {
         const r = topGrain(c);
         if (r >= 0) {
           (w.load ||= []).push(at(floor, c, r));
@@ -197,10 +252,13 @@ export function updateWorkers(now, dt) {
           S.dirty = true;
         }
       }
-      if (w.carry >= haulCap()) w.goal = 'dump';
+      if (w.carry >= haulCap()) {
+        if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+        w.goal = 'dump';
+      }
     } else if (w.goal === 'dump') {
       const target = pit.x - WORKER;                 // the lip, where they can stand
-      w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * 1.6, Math.abs(target - w.x));
+      w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P) {
         if (w.hasCore) {
           S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
@@ -220,7 +278,7 @@ export function updateWorkers(now, dt) {
         S.dirty = true;
       }
     } else {
-      if (nearestDust(w.x) >= 0) w.goal = 'seek';
+      if (nearestDust(w.x, taken) >= 0) w.goal = 'seek';
     }
   }
 }

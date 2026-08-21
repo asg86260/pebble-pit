@@ -6,6 +6,7 @@
 //
 //   { x, y, cols, rows, p, grid }        where and how big, and the cells
 //   blocked(c)                           optional: columns dust may not settle in
+//   ceiling(c)                           optional: how high a column may stand
 //   onPut(c, r)                          optional: told about every cell written
 //   repose                               optional: heaps stand up instead of spreading flat
 //   spillsInto(x), spillsAt, spill(x, y, v)   optional: where a heap topples over an edge
@@ -55,11 +56,16 @@ export function topRow(b, c) {
   return -1;
 }
 
+// how high a column is allowed to stand. A grid with no ceiling has no limit:
+// this is how a bank is kept from standing up as a wall against whatever is
+// beside it, by letting it rise only as it gets further away.
+export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
+
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
 export function addGrain(b, x, skip = b.blocked, shade = 1) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
-  const full = c => at(b, c, b.rows - 1) || (skip && skip(c));
+  const full = c => at(b, c, b.rows - 1) || (skip && skip(c)) || !roomFor(b, c, topRow(b, c) + 1);
   if (full(col)) {
     let alt = -1;
     for (let d = 1; d < b.cols; d++) {
@@ -94,6 +100,7 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
           break;
         }
         if (!inside(b, n, r - 1) || (skip && skip(n))) continue;
+        if (!roomFor(b, n, r - 1)) continue;          // that column may not stand that high
         // where heaps stand up, a grain only slides if there is a real drop
         // beside it, so a pile keeps its shape instead of spreading flat
         if (b.repose && r >= 2 && at(b, n, r - 2)) continue;

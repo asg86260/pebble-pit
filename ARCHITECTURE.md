@@ -51,15 +51,22 @@ field or two on `S` and a constant or two in `config.js`.
 `SECTIONS`. Every field is a function of the current game, so a row never holds a
 stale number. Nothing else changes — the board builds itself from the list.
 
-**A new kind of worker.** A `crew({...})` call in `upgrades.js` gives you the
-unlock row and the hire row; add a `type` branch in `updateWorkers` and a shape
-in `drawWorkers`. Its counters go on `S`.
+The bench works the same list out loud: `canAfford` and `unseenSection` in
+`upgrades.js` are what decide whether it is in the yard at all and which mark
+it wears, so a new row or a new section is picked up without touching them.
+
+**A new job for the crew.** There is only one kind of body: `jobRow(...)` in
+`upgrades.js` gives you the row that moves workers on to it and off it again, and
+its count goes in `JOBS` and on `S`. Add a `type` branch in `updateWorkers` and a
+shape in `drawWorkers`. `S.haulers` is never assigned anywhere but `rebalance()`
+— it is whatever is left over once every job has taken its share.
 
 **A new bed of sand** — a cave floor, a farm bed. `grid.js` takes any object of
 the shape documented at the top of it, with optional hooks:
 
 ```
 blocked(c)                    columns dust may not settle in
+ceiling(c)                    how high a column may stand
 onPut(c, r)                   told about every cell written
 repose                        heaps stand up instead of spreading flat
 spillsInto(x), spillsAt, spill(x, y, v)    where a heap topples over an edge
@@ -115,6 +122,7 @@ reload. Nothing warns you if it does not.
 
 ```
 node tools/unresolved.mjs     # names a module uses but cannot see
+node tools/headless.mjs       # runs __test() in a headless browser, no install
 ```
 
 Then open the game and run `__test()` in the console — 143 checks covering the

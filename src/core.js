@@ -1,6 +1,6 @@
 // The core buried in each rock: how it comes loose, and how it is banked.
 
-import { P, CORE_SIZE, CORE_CELL, ROCK_SINK } from './config.js';
+import { P, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS } from './config.js';
 import { S, pit } from './state.js';
 import { addGrain } from './grid.js';
 import { rockEdge } from './world.js';
@@ -49,6 +49,9 @@ export function stepCore() {
   // the moment the last pixel goes, the core is loose and falls from the middle
   if (S.coreBuried && !boulderAlive()) {
     dropCore();
+    // No dancers, no dance: on a game with nobody hired yet this would be five
+    // seconds of standing about, and that is most of the early game.
+    S.danceUntil = S.miners > 0 ? performance.now() + DANCE_MS : 0;
     S.nextBoulderAt = performance.now() + 2500;      // backstop if it never falls clear
     S.dirty = true;
   }
@@ -56,9 +59,11 @@ export function stepCore() {
   // the next rock rolls in once the core has dropped out of its way
   if (!S.coreBuried && !boulderAlive()) {
     const clear = !S.coreItem || S.heldCore || S.coreItem.rest;   // it has rolled clear
-    if (clear || performance.now() > S.nextBoulderAt) {
+    // Nothing lands on top of the celebration. The next rock waits for the
+    // crew to finish, then comes down out of the sky on to the bare ground.
+    if ((clear || performance.now() > S.nextBoulderAt) && performance.now() >= S.danceUntil) {
       S.boulderNo++;
-      makeBoulder();
+      makeBoulder(true);
       S.dirty = true;
     }
   }

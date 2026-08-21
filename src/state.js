@@ -32,6 +32,9 @@ export const S = {
   rockTops: [],           // topmost rock cell per column, for the crew to stand on
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
+  rockFall: 0,            // world pixels a new rock still has to come down
+  rockFallV: 0,           // how fast it is coming
+  danceUntil: 0,          // the crew are celebrating the last one until this moment
   nextBoulderAt: 0,       // backstop, in case a core never falls clear
   peakRow: 0,             // the highest standing rock, recomputed each frame
 
@@ -88,9 +91,14 @@ export const S = {
   mult: { swing: 0, haul: 0, cave: 0, tend: 0, works: 0 },
 
   // --- the crew ---
+  // One pool of bodies, hired once and put wherever you like. A job is a count
+  // of how many are on it, and carrying dust is what the rest do: `haulers` is
+  // always the ones left over, never a job you hire into. That is what makes
+  // putting somebody on the rock a decision rather than a purchase.
   workers: [],            // little squares that mine and ferry dust
-  miners: 0, minersUnlocked: false, minerSpeedLevel: 0,
-  haulers: 0, haulersUnlocked: false, haulCarryLevel: 0, haulPaceLevel: 0,
+  crew: 0,                // bodies hired, all told
+  miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
+  haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   spelunkers: 0, cavePaceLevel: 0,
   farmhands: 0, tendLevel: 0,
 
@@ -99,6 +107,11 @@ export const S = {
   mining: false,
   dragging: false,
   nextHit: 0,
+  // The bench is not there until there is something on it worth buying, and it
+  // carries a mark when there is: a dot for something you can afford now, a
+  // flag for a whole group of rows you have never seen.
+  seenBench: false,       // the bench has been earned and stays from then on
+  seenSects: [],          // headings that were on the board last time it was open
   boardOpen: false,       // the workbench board is showing
   resetArmed: 0,          // the reset button wants a second click
 

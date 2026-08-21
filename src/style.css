@@ -109,6 +109,26 @@ canvas {
 .rows button:hover:not(:disabled) .arrow,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
+/* A job row: a count of bodies between a less and a more. It spends nothing, so
+   it is not a price row and does not look like one. */
+.rows .job {
+  display: grid;
+  grid-template-columns: 9em 1.8em 2.2em 1.8em;
+  align-items: baseline;
+  gap: 0 6px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 3px;
+}
+.rows .job .count { text-align: center; }
+.rows .job button {
+  display: block;
+  grid-template-columns: none;
+  text-align: center;
+  padding: 0 2px;
+  letter-spacing: 0;
+}
+
 #reset {
   align-self: flex-start;
   margin-top: 8px;
@@ -146,6 +166,8 @@ canvas {
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
   }
+  .rows .job { grid-template-columns: 7.4em 2em 2em 2em; gap: 0 4px; padding: 4px 3px; }
+  .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #reset { padding: 6px 8px; }

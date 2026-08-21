@@ -7,14 +7,19 @@ export const TARGET = 1000000;   // dust in the hole: the whole point
 // the viewport, the ground line a fixed height above it, and the rock, the bench
 // and the lip keep their distances. A bigger window is only more sky and more
 // ground: the ground runs a long way either side of everything.
-export const SKY = 2000;         // world above the ground line, so any window has sky
+export const SKY = 1998;         // world above the ground line, so any window has sky
+// Every world coordinate below is a whole number of cells away from the last,
+// SKY included. That is not tidiness: a cell is a whole number of device
+// pixels, so a world position that is half a cell off lands the rock's rows
+// between device pixels and the canvas antialiases a hairline into every
+// seam between them. 1998 is 333 cells; 2000 was not a whole number of any.
 // Every site stands on the one ground line, measured out from the rock. The
 // world runs away to the left as sites are unlocked, so walking further out is
 // the progression. The bench, the lab and the pit sit to the right.
 export const TO_CAVE = -900;     // rock centre to the mouth of the cave
 export const TO_FARM = -1650;    // rock centre to the near edge of the farm
 export const TO_BENCH = 420;     // rock centre to the bench
-export const TO_LAB = 650;       // rock centre to the lab
+export const TO_LAB = 648;       // rock centre to the lab
 export const TO_LEDGE = 900;     // rock centre to the lip of the pit
 export const GROUND_LEFT = 2400; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
@@ -29,6 +34,11 @@ export const SIDE_PAD = 340;     // and room either side of the works, so it is 
 export const ROCK_W_MAX = 92;
 export const ROCK_H_MAX = 42;
 export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
+// A bank may stand this many cells high per cell of distance from the apron.
+// Without it the apron is a cliff the sand cannot slump over, and the bank
+// stands up against the rock as a sheer wall however tall it gets. 1.5 is the
+// angle the sand finds on its own, so both faces of a heap read the same.
+export const BANK_SLOPE = 1.5;
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 export const PIT_W = 3624;       // and this wide
 // What a grain in the pile is drawn at. A grain is always one dust; adding finer
@@ -64,7 +74,18 @@ export const MINER_BASE = 1100;  // a hired miner starts slower than your own pi
 export const MINER_FLOOR = 260;  // fastest a miner can swing
 export const SPILL_ROW = 4;      // how high dust must be heaped at the ledge to topple in
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
-export const HAUL_BASE = 0.9;    // hauler walking speed, px per frame
+export const HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
+export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
+
+// --- between rocks ----------------------------------------------------------
+// The last pixel of a boulder is the end of a long job, so it gets a beat. The
+// crew take five on the bare ground, and the next rock comes down out of the sky
+// rather than being there the next time you look.
+export const DANCE_MS = 5000;    // how long the crew celebrate a finished rock
+export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the last
+export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
+export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
+export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 
 // --- the cave ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
@@ -90,7 +111,7 @@ export const FARM_WALK = 1.1;
 // --- the meteor -------------------------------------------------------------
 // It hangs in the sky over the yard and sheds a spark now and then. Sparks are
 // rare and buy one thing, at the lab: pace on everything at once.
-export const TO_METEOR = 140;    // rock centre to the meteor, sideways
+export const TO_METEOR = 138;    // rock centre to the meteor, sideways
 export const METEOR_UP = 420;    // and how far above the ground line it hangs
 export const METEOR_R = 46;
 export const SPARK_BASE = 42000; // between sparks, at spark 0

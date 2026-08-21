@@ -28,6 +28,21 @@ function build(el, list, sections) {
     el.appendChild(head);
 
     for (const u of rows) {
+      // A job row moves bodies rather than spending anything, so it is a count
+      // between two buttons instead of one button with a price on it.
+      if (u.job) {
+        const row = document.createElement('div');
+        row.className = 'job';
+        row.dataset.job = u.key;
+        row.innerHTML = '<span class="name"></span><button type="button" class="less">-</button>' +
+                        '<span class="count"></span><button type="button" class="more">+</button>';
+        row.children[0].textContent = u.name;
+        row.children[1].addEventListener('click', () => u.less());
+        row.children[3].addEventListener('click', () => u.more());
+        el.appendChild(row);
+        continue;
+      }
+
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.key = u.key;
@@ -46,6 +61,14 @@ export function refresh(el, list, headcount) {
     if (row.dataset.sect) {
       const n = headcount ? headcount(row.dataset.sect) : 0;
       row.textContent = n ? `${row.dataset.sect}  x${n}` : row.dataset.sect;
+      continue;
+    }
+    if (row.dataset.job) {
+      const u = list.find(x => x.key === row.dataset.job);
+      if (!u) continue;
+      row.children[1].disabled = u.count() < 1;
+      row.children[2].textContent = u.count();
+      row.children[3].disabled = u.spare() < 1;
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);

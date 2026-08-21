@@ -6,7 +6,7 @@
 // config.js and a line in `layout` below.
 
 import {
-  P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR,
+  P, SKY, TO_BENCH, TO_CAVE, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   PIT_H, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, CAVE_W, CAVE_H, SIDE_PAD,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, TO_METEOR, METEOR_UP, METEOR_R
 } from './config.js';
@@ -18,13 +18,33 @@ const canvas = document.getElementById('c');
 // not on it: spoil heaps in front of its foot and the crew walk past it, which
 // is what a hill at the back of a yard looks like.
 export const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
-export const rockLeft = () => S.cx - (S.gw / 2) * P;
+// The rock is anchored by its middle, so an odd width would put this edge half
+// a cell off the grid -- and half a cell is a fraction of a device pixel, which
+// the canvas draws as a hairline down every seam. Snapped, so a rock loaded from
+// an older save stands square too. Everything about the rock measures from here.
+export const rockLeft = () => Math.round((S.cx - (S.gw / 2) * P) / P) * P;
 export const overRock = x => x + P > rockLeft() && x < rockLeft() + S.gw * P;
 export const rockColAt = x => Math.max(0, Math.min(S.gw - 1, Math.floor((x - rockLeft()) / P)));
 // the rock keeps a clear apron around its foot, so the banks stand off it rather
 // than heaping up its flanks and blurring where the rock ends
 export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() + S.gw * P + ROCK_CLEAR;
 export const blocked = c => overPitMouth(floor.x + c * P) || overApron(floor.x + c * P);
+
+// How far past the apron a column is, in cells, or -1 for one inside it.
+export const pastApron = x => {
+  const near = rockLeft() - ROCK_CLEAR, far = rockLeft() + S.gw * P + ROCK_CLEAR;
+  return x + P <= near ? (near - (x + P)) / P : x >= far ? (x - far) / P : -1;
+};
+
+// How high the ground may stand in a column. Dust may not settle in the apron at
+// all, and just outside it a bank may only rise as it gets away from the rock --
+// otherwise the apron is a cliff the sand can never slump over, and the bank
+// stands against the rock as a sheer wall instead of a heap. Everywhere else
+// there is no ceiling: a bank out on clear ground heaps to whatever it likes.
+export const bankCeiling = c => {
+  const d = pastApron(floor.x + c * P);
+  return d < 0 ? 0 : (d + 1) * BANK_SLOPE;
+};
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it
 export const rockEdge = side =>
