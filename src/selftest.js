@@ -368,7 +368,7 @@ const TESTS = [
          `rock ends ${Math.round(s.rockX + s.rockW / 2)}, bench at ${s.benchX}`),
       ok(s.benchX < s.pitX, 'the bench is between the rock and the pit'),
       // the whole working area has to sit in a window at once, at the biggest
-      // rock: the meteor is gone, so nothing needs to be pushed out to the left
+      // rock: nothing needs to be pushed out to the left of it
       ok(s.pitX - (s.rockX - s.rockW / 2) < 1600, 'rock through pit lip is one screenful',
          `${Math.round(s.pitX - (s.rockX - s.rockW / 2))} across`),
       ok(s.benchX - (s.rockX + s.rockW / 2) > 60, 'the rock never grows into the bench',
@@ -1337,8 +1337,6 @@ const TESTS = [
     return checks;
   }],
 
-  // A spark comes down and lands in the yard as a grain, like everything else
-  // the sites give up. It is counted when it reaches the pit, not before.
   ['rocks stop growing, because they never stop coming', async () => {
     window.__jump(40);
     await sleep(200);
@@ -1424,8 +1422,8 @@ const TESTS = [
       ok(Array.isArray(raw.beds), 'and how far along every bed is'),
       ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
       ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
-      ok(raw.sparks === s.sparks, 'sparks are saved', `${raw?.sparks} vs ${s.sparks}`),
-      ok(raw.meteorOpen === s.meteorOpen, 'and whether the meteor is up'),
+      ok(raw.labbers === s.labbers, 'who is in the lab', `${raw?.labbers} vs ${s.labbers}`),
+      ok(!raw.research === !s.research, 'and whatever it is working on'),
       ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
          'the rock is saved cell by cell')
     ];
