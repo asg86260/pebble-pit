@@ -529,8 +529,28 @@ banked the whole yard for free and left the haulers with nothing to do. Throwing
 is still a real tactic — a flick sends it through the air, and anything that crosses the mouth
 falls in.
 
+## The air
+
+Nothing stands in the background of this game — no hills, no clouds, no furniture of any kind — so
+the dust hanging in the yard is load-bearing rather than decorative. It is the only thing the view
+has to move against, and the only thing keeping a yard nobody is working in from reading as a still
+picture.
+
+It hangs in **three bands at three distances**, and one number — how far off the band is — settles
+everything about it at once: the far ones are pale, small, slow, and barely take the camera's
+movement; the near ones are darker, bigger, sweep past, and are drawn *over* the yard rather than
+behind it, so dust passes in front of the rock.
+
+What gets it into the air is the yard itself. Motes are born off the surface of whatever is lying
+about — so a full pit visibly gives off more than a bare one — and off the boots of a worker who is
+actually walking, which is the one part of the weather plainly caused by something you are watching.
+Most of it climbs; a fraction is heavier grit that sinks instead, and settles when it reaches the
+ground line. The whole field leans on a wind made of two slow swings pulling against each other, so
+it never sits still and never repeats on a beat you could count.
+
+Motes live in **screen pixels, not world ones**: they are weather, not scenery. A mote with a place
+in the world spends nearly all of the game outside the window, which is exactly where the old ones
+went.
+
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
-- Dust hangs in the air, thrown off the piles themselves: motes rise from the surface of whatever
-  is lying about, so a big pit visibly gives off more than a bare one. They pass at their own rate
-  as the view scrolls, which is how movement reads without furniture in the background.

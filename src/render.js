@@ -18,7 +18,7 @@ import { underground } from './quarry.js';
 import { indoors } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
-import { drawAir } from './air.js';
+import { drawAir, drawAirNear } from './air.js';
 import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
@@ -539,6 +539,8 @@ export function draw() {
   drawWorkers();
   drawCursor();
   ctx.restore();
+
+  drawAirNear();           // the nearest dust passes in front of the yard, not behind it
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 
