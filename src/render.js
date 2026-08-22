@@ -86,53 +86,44 @@ export function drawDiamond(x, y, r) {
 export function drawFarm() {
   if (!S.farmOpen) return;
 
-  // A bed is a structure, not a scratch. It was two cells tall on a ground line
-  // in a world where the rock is forty, so a farm nobody was working read as a
-  // row of bumps you would not look twice at. Four cells across, three deep,
-  // with a post standing proud at each end and the earth turned over between
-  // them -- and something always growing in it, even untended.
   // The farm needs a silhouette or it is just texture on the ground line: a post
   // at either end of the row, with a stub of rail running off it, so the plot
-  // reads as somewhere fenced and kept even when nothing is growing.
-  const postH = P * 10, gate = P * 5;
-  for (const px of [farm.x - gate, farm.x + farm.w + gate - P * 2]) {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(px, S.groundY - postH, P * 2, postH);
-    const inward = px < farm.x ? P * 2 : -P * 3;
-    ctx.fillRect(px + inward, S.groundY - postH + P * 2, P * 3, P);
-    ctx.fillRect(px + inward, S.groundY - postH + P * 5, P * 3, P);
+  // reads as somewhere fenced and kept even when nothing is growing. Kept low
+  // and thin -- it is there to bracket the beds, not to be the thing you look at.
+  const postH = P * 6, gate = P * 3;
+  ctx.fillStyle = '#000';
+  for (const px of [farm.x - gate, farm.x + farm.w + gate - P]) {
+    ctx.fillRect(px, S.groundY - postH, P, postH);
+    ctx.fillRect(px + (px < farm.x ? P : -P * 2), S.groundY - postH + P * 2, P * 2, P);
   }
 
+  // A bed is three cells across and two deep, with the earth turned over in it.
+  // Small, but a shape rather than a scratch, and it has something in it even
+  // when nobody has been by to tend it.
   for (let i = 0; i < S.beds.length; i++) {
     const x = Math.round(bedX(i) / P) * P;
-    const soil = S.groundY - P * 3;
+    const soil = S.groundY - P * 2;
 
     ctx.fillStyle = '#000';
-    ctx.fillRect(x - P * 2, soil, P * 4, P * 3);        // the plot
-    ctx.fillRect(x - P * 2, soil - P, P, P);            // a post at each end
-    ctx.fillRect(x + P, soil - P, P, P);
+    ctx.fillRect(x - P, soil, P * 3, P * 2);           // the plot
     ctx.fillStyle = '#fff';
-    ctx.fillRect(x - P, soil, P, P);                    // earth turned over
-    ctx.fillRect(x + P * 0, soil + P, P, P);
+    ctx.fillRect(x - P, soil + P, P, P);              // earth turned over
+    ctx.fillRect(x + P, soil, P, P);
     ctx.fillStyle = '#000';
 
     const grown = S.beds[i];
-    const top = S.groundY - P * 3 - Math.round(FARM_H * grown / P) * P;
+    if (grown <= 0.02) { ctx.fillRect(x, soil - P, P, P); continue; }
 
-    // even an untended bed has something in it
-    if (grown <= 0.02) {
-      ctx.fillRect(x, soil - P, P, P);
-      continue;
-    }
-
-    ctx.fillRect(x, top, P, soil - top);                // the stalk
+    const top = soil - Math.round(FARM_H * grown / P) * P;
+    ctx.fillRect(x, top, P, soil - top);              // the stalk
     const tall = soil - top;
-    if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);     // a leaf either side
+    if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);   // a leaf either side
     if (tall > P * 5) ctx.fillRect(x + P, top + P * 4, P, P);
 
     if (grown >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
   }
 }
+
 
 
 
