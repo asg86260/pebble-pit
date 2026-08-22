@@ -26,6 +26,7 @@ import { makePainter } from './painter.js';
 import { updateWorkers, syncWorkers } from './crew.js';
 import { catchAir } from './hands.js';
 import { seedAir, stepAir, AIR } from './air.js';
+import { seedWeather, stepWeather, sendBirds, skyReport, BIRDS } from './weather.js';
 import { draw, stepPaid } from './render.js';
 import { hud, remeasure } from './board.js';
 import { buildShop } from './shop.js';
@@ -59,6 +60,7 @@ function settleIntoWorld() {
   resizeGrid(floor);
   if (!pit.grid) setPitGrain(S.pitStep);   // the pit never changes with the window
   seedAir();
+  seedWeather();       // and a sky that is already full of cloud
 }
 
 export function relayout() { resize(settleIntoWorld); remeasure(); }
@@ -73,6 +75,7 @@ function step() {
   stepPaid();
   sampleRates(clockNow());
   const now = clockNow();
+  stepWeather(now);
   const dt = Math.min(100, now - (S.lastFrame || now));   // a long tab-out is not a long frame
   S.lastFrame = now;
   // How much is lying about. Counting fifty thousand cells is not a thing to do
@@ -167,6 +170,7 @@ window.__preview = n => {
 };
 window.__next = () => { S.boulder = S.boulder.map(row => row.map(() => 0)); S.chips = []; };
 window.__drop = () => { dropCore(); S.dirty = true; };
+window.__birds = () => { sendBirds(); return BIRDS.length; };   // a lot of birds now, rather than in a minute
 window.__crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb;
   S.miners = m; S.quarriers = sp; S.farmhands = f; S.labbers = lb;
@@ -344,7 +348,7 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: PIT_H / pit.p, pitDepth: PIT_H, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.length, research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
+window.__state = () => ({ paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, sky: skyReport(), camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: PIT_H / pit.p, pitDepth: PIT_H, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.length, research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, labBoardOpen: S.labBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
                                     [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
   // reported by the cell they are in, not the middle of the mark drawn on it
   findAll: S.floorMarks.map(m =>

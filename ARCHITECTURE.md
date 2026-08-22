@@ -33,6 +33,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `core.js` | the thing buried in each rock | yes |
 | `crew.js` | miners, workers, and the two site crews | yes |
 | `air.js` | the motes drifting off the piles | yes |
+| `weather.js` | the clouds and the birds, far behind everything | yes |
 | `upgrades.js` | what the bench sells and what it costs | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
