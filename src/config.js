@@ -203,7 +203,15 @@ export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands
 // rather than being there the next time you look.
 export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
 export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the last
+// How far up a new rock starts. It used to be this number flat, and this number
+// is most of the way up a window rather than off the top of one -- so the rock
+// appeared out of nothing in the middle of the sky and fell the second half of
+// the way. It comes in over the top edge now, which means the drop is measured
+// against the window rather than being one number: a tall window has to be
+// cleared by more than a short one. This is the least it will ever be, for a
+// window so short that the top edge is nearer than this.
 export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
+export const ROCK_DROP_CLEAR = 72;  // and how far above the top edge it waits, out of sight
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
 export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 // And the view is knocked about by it. A rock coming down out of the sky used

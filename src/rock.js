@@ -6,7 +6,7 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, DROP_GRAV, JOLT_GRAINS,
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS,
   ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
 import { S, floor } from './state.js';
@@ -68,6 +68,16 @@ export function dropZone() {
   S.boulderNo = was;
   const half = Math.round((size.w / 2) * P);
   return { from: S.cx - half - ROCK_CLEAR, to: S.cx + half + ROCK_CLEAR };
+}
+
+// How far above its place a new rock starts, so that it comes in over the top
+// of the window rather than appearing halfway up the sky. The view is pinned to
+// the bottom of the world, so the top edge is a fixed distance above the ground
+// line for a given window -- measure to it, put the rock's foot a little further
+// up than that, and the whole of it is out of sight until it drops into frame.
+export function dropHeight() {
+  const overhead = S.groundY - S.camY;          // ground line to the top of the window
+  return Math.max(ROCK_DROP, overhead + ROCK_DROP_CLEAR);
 }
 
 // One frame of a new rock coming down. It lands, shoves the dust out of the
@@ -165,7 +175,7 @@ export function makeBoulder(fromSky = false) {
   // A rock that is on its way down clears the ground it needs when it gets
   // there, not before: the dust under it is nobody's problem while it is in
   // the air.
-  S.rockFall = fromSky ? ROCK_DROP : 0;
+  S.rockFall = fromSky ? dropHeight() : 0;
   S.rockFallV = 0;
   refreshPiles();            // a wider rock is a narrower pile beside it
   placeRock();
