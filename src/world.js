@@ -93,6 +93,16 @@ export function standOn(surfaceY) {
   return Math.round(y / P) * P;
 }
 
+// The bridge over the quarry, as a span. It is here rather than in the drawing
+// because where it starts and stops has to land on solid ground either side of a
+// mouth that moves with the rock, and that is worth being able to check.
+export function bridgeSpan() {
+  return {
+    x0: Math.round((quarry.x - P) / P) * P,                  // a cell onto the near rim
+    x1: Math.round((quarry.x + quarry.w + P) / P) * P        // and a cell onto the far one
+  };
+}
+
 // --- layout -----------------------------------------------------------------
 // The world is a fixed size and never rearranges: the window is only a view onto
 // it, and a small window scrolls rather than squashing everything together.

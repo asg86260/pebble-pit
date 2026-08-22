@@ -8,7 +8,7 @@ import { P, PIT_H, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CEL
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { rockLeft, overRock, standOn } from './world.js';
+import { rockLeft, overRock, standOn, bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
 import { coreHome } from './core.js';
 
@@ -83,6 +83,32 @@ export function drawDiamond(x, y, r) {
 // The beds: a stalk per bed, as tall as the bed is far along, with a spore on
 // top once it is ripe. A bare bed is a notch in the ground, so an untended farm
 // still reads as a farm.
+// A bridge over the cut. The crew crossed the mouth in mid-air before this --
+// the ground line stops at one rim and picks up at the other, and everybody
+// walked the gap. Nothing about how they walk changed, they still cross at
+// ground level; the span is just the truth of it. It is planked with the cut
+// showing between the boards, because a solid deck would fill the hole back in
+// and there would be no quarry left to look at. The middle is left clear of
+// posts: that is where a quarrier already climbs down.
+export function drawBridge() {
+  if (!S.quarryOpen) return;
+  const { x0, x1 } = bridgeSpan();
+  const span = x1 - x0;
+  const rail = S.groundY - P * 3;                         // about head height
+
+  ctx.fillStyle = '#000';
+  for (let x = x0; x < x1; x += P * 2) ctx.fillRect(x, S.groundY, P, P);   // the boards
+  ctx.fillRect(x0, S.groundY + P, span, 2);               // a stringer, so it is one span
+
+  // A rail on the far side, and a newel at each end to stand it up. Posts along
+  // the span boxed the mouth in like a crate: four uprights, a rail over the top
+  // and the deck under it closed the shape, and the hole stopped reading as a
+  // hole. Two is enough to say handrail.
+  ctx.fillRect(x0, rail, span, 2);
+  ctx.fillRect(x0, rail, P, P * 3);
+  ctx.fillRect(x1 - P, rail, P, P * 3);
+}
+
 export function drawFarm() {
   if (!S.farmOpen) return;
 
@@ -481,6 +507,7 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
+  drawBridge();              // and the way across it
   drawFarm();
   drawSky();
   drawLab();

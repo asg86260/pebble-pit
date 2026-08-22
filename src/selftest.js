@@ -1260,6 +1260,28 @@ const TESTS = [
   // The crew go inside the lab, so there is nothing to watch. The chimney is the
   // whole of the signal, and it says the one thing worth saying: that somebody
   // is in there working. Paid-for research with an empty lab does not smoke.
+  // The crew crossed the mouth in mid-air: the ground line stops at one rim and
+  // picks up at the other, and everyone walked the gap. The span is what makes
+  // that honest, so it has to actually reach solid ground both sides of a mouth
+  // that moves with the rock, and leave the way down clear.
+  ['there is a bridge over the quarry', async () => {
+    window.__crew(0, 0, 2);
+    run(1);
+    const s = state();
+    const b = s.bridge;
+    const mouth = [s.quarryX, s.quarryX + s.quarryW];
+    return [
+      ok(b.x0 < mouth[0] && b.x1 > mouth[1], 'it spans the whole mouth',
+         `${b.x0}..${b.x1} over ${mouth[0]}..${mouth[1]}`),
+      ok(mouth[0] - b.x0 === b.x1 - mouth[1], 'and lands the same on either rim',
+         `${mouth[0] - b.x0} / ${b.x1 - mouth[1]}`),
+      ok((b.x0 % 6 === 0) && (b.x1 % 6 === 0), 'both ends sit on the lattice',
+         `${b.x0} ${b.x1}`),
+      ok(s.quarryFaceX > b.x0 + 6 && s.quarryFaceX < b.x1 - 12,
+         'and the way down is clear of a newel', `face ${s.quarryFaceX}`)
+    ];
+  }],
+
   ['the lab smokes while it is being worked', async () => {
     window.__grant({ shards: 20, cores: 9 });
     window.__lab(true);
