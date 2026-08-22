@@ -7,11 +7,10 @@
 
 import { S } from './state.js';
 import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
-import { LAB_UPGRADES, LAB_SECTIONS, bookRows } from './lab.js';
+import { LAB_UPGRADES, LAB_SECTIONS, progress } from './lab.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
-const statsEl = document.getElementById('stats');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -104,6 +103,19 @@ export function refresh(el, list, headcount) {
     const [name, from, arrow, to, price] = row.children;
     const step = u.from ? `${u.from()}` : '';
 
+    // A piece of research under way says so in place of its numbers, and
+    // nothing else on that board can be started until it is finished.
+    if (S.research && list === LAB_UPGRADES) {
+      const mine = S.research.key === u.key;
+      name.textContent = u.name;
+      from.textContent = mine ? 'working' : '';
+      arrow.textContent = '';
+      to.textContent = mine ? `${Math.round(progress() * 100)}%` : '';
+      price.innerHTML = mine ? '' : `${MARK[money]} ${cost}`;
+      row.disabled = true;
+      continue;
+    }
+
     name.textContent = u.name;
     from.textContent = step;
     arrow.textContent = step ? '→' : '';
@@ -118,21 +130,6 @@ export function buildShop() {
   build(labEl, LAB_UPGRADES, LAB_SECTIONS);
 }
 
-// the lab's books, rebuilt whole because it is half a dozen short rows
-export function refreshStats() {
-  const rows = bookRows();
-  if (statsEl.childElementCount !== rows.length * 2) {
-    statsEl.textContent = '';
-    for (const _ of rows) {
-      statsEl.appendChild(document.createElement('span'));
-      statsEl.appendChild(document.createElement('b'));
-    }
-  }
-  rows.forEach(([label, value, mark], i) => {
-    statsEl.children[i * 2].textContent = label;
-    statsEl.children[i * 2 + 1].innerHTML =
-      `${typeof value === 'number' ? value.toLocaleString('en-US') : value} ${mark ? MARK[mark] : ''}`;
-  });
-}
+
 
 export { UPGRADES, LAB_UPGRADES };

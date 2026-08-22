@@ -15,6 +15,7 @@ import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
 import { stepQuarrier, newQuarrier } from './quarry.js';
 import { stepFarmhand, newFarmhand } from './farm.js';
+import { stepLabber, newLabber } from './lab.js';
 import { now } from './clock.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -61,7 +62,7 @@ export function elbowed(w, x) {
 
 export function syncWorkers() {
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
-                 farmhand: S.farmhands };
+                 farmhand: S.farmhands, labber: S.labbers };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
@@ -98,6 +99,9 @@ export function syncWorkers() {
 
   const needFarmhands = S.farmhands - have('farmhand');
   for (let i = 0; i < needFarmhands; i++) S.workers.push(newFarmhand());
+
+  const needLabbers = S.labbers - have('labber');
+  for (let i = 0; i < needLabbers; i++) S.workers.push(newLabber());
 
   const needHaulers = S.haulers - have('hauler');
   for (let i = 0; i < needHaulers; i++) {
@@ -230,6 +234,7 @@ export function updateWorkers(now, dt) {
 
     if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
+    if (w.type === 'labber') { stepLabber(w, now); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
     // all over the ledge

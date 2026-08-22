@@ -374,6 +374,15 @@ export function drawWorkers() {
   for (const w of S.workers) {
     if (underground(w)) continue;          // down the quarry, not on the surface
 
+    if (w.type === 'labber') {
+      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
+      ctx.fillRect(x, y, WORKER, WORKER);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(x + P, y + P, P, P);     // a hollow middle, like a miner's
+      ctx.fillStyle = '#000';
+      continue;
+    }
+
     if (w.type === 'farmhand') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       ctx.fillRect(x, y, WORKER, WORKER);

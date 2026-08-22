@@ -33,9 +33,9 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // pile: the farm, its beds' crop; the quarry, what comes up it; the rock, its
 // spoil; and then the bench, the lab and the hole everything ends up in.
 // The thing in the sky. It sheds nothing and cannot be clicked -- the sparks it
-// used to give are gone. It hangs a long way out past the farm, over the empty
-// end of the ground, so that walking left has something at the end of it.
-export const TO_SKY = -2280;     // rock centre to the thing in the sky
+// used to give are gone. It hangs just out past the farm, over the far end of
+// the ground, so that walking left has something at the end of it.
+export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
 export const TO_FARM = -1500;    // rock centre to the near edge of the farm
@@ -228,6 +228,16 @@ export const FARM_WALK = 1.1;
 // How often a farmhand stoops over the bed it is working. Like the quarry, this
 // is nothing to do with how fast the crop comes on: a farm should look tended
 // whether or not anything is ripening this second.
+// --- the lab ----------------------------------------------------------------
+// Research is not bought, it is *worked*. Paying for it starts it; what finishes
+// it is bodies standing in the lab, and nothing else -- an empty lab makes no
+// progress at all, however much you have paid. So the lab competes for the crew
+// with the rock, the quarry and the beds, which is the only real question this
+// game asks.
+export const LAB_EFFORT = 1;      // a worker does one second of work a second
+export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
+export const LAB_STOOP = 900;     // how often one of them bends over the bench
+
 export const TEND_STOOP = 780;
 export let CUT_MS = 700;
 
@@ -249,6 +259,7 @@ export const TUNABLE = [
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
+  { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5 },
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
   { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
@@ -266,6 +277,7 @@ export function tuned(key) {
     case 'QUARRY_BASE': return QUARRY_BASE;
     case 'TEND_BASE': return TEND_BASE;
     case 'CUT_MS': return CUT_MS;
+    case 'LAB_WORK': return LAB_WORK;
     case 'DANCE_MS': return DANCE_MS;
     default: return PILE_LIMIT[key.split('.')[1]];
   }
@@ -282,6 +294,7 @@ export function tune(key, v) {
     case 'QUARRY_BASE': QUARRY_BASE = v; break;
     case 'TEND_BASE': TEND_BASE = v; break;
     case 'CUT_MS': CUT_MS = v; break;
+    case 'LAB_WORK': LAB_WORK = v; break;
     case 'DANCE_MS': DANCE_MS = v; break;
     default: PILE_LIMIT[key.split('.')[1]] = v;
   }

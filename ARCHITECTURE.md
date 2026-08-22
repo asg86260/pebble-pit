@@ -27,7 +27,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
 | `quarry.js` | the open cut, and the crew working its floor | yes |
 | `farm.js` | the beds, and farmhands tending them | yes |
-| `lab.js` | the multipliers, and the books | yes |
+| `lab.js` | the research, who works it, and the multipliers it pays out | yes |
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
 | `core.js` | the thing buried in each rock | yes |

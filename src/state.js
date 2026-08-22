@@ -87,6 +87,9 @@ export const S = {
   beds: [],               // how far along each bed is, 0..1
 
   // --- the lab ---
+  // what the lab is working on, if anything: one piece at a time, and it only
+  // moves while somebody is in there
+  research: null,         // { key, done } -- worker-seconds put in so far
   labOpen: false,
   labBoardOpen: false,
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
@@ -101,6 +104,7 @@ export const S = {
   miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   quarriers: 0, quarryPaceLevel: 0,
+  labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 
   // --- what you are doing right now ---

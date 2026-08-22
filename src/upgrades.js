@@ -76,7 +76,7 @@ export const rateText = lvl => num(mineRate(lvl));
 // — a core for the first, dust for the next — and it carries dust until you put
 // it on something else. A job is a count, not a purchase, so every one of them
 // can be taken back the moment you want the dust moving again.
-export const JOBS = ['miners', 'quarriers', 'farmhands'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers'];
 
 // bodies with nothing else to do. They are the haulers, always
 export const idle = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
@@ -266,6 +266,7 @@ export const UPGRADES = [
 
   FARM,
   jobRow('farmjob', 'at the beds', 'farmhands', () => S.farmOpen),
+  jobRow('labjob', 'in the lab', 'labbers', () => S.labOpen),
   {
     key: 'tend',
     name: 'tending',
@@ -286,7 +287,7 @@ export const SECTIONS = [
   { title: 'the rock', keys: ['mine', 'minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry', 'quarryjob', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmjob', 'tend'] },
-  { title: 'the lab', keys: ['unlocklab'] }
+  { title: 'the lab', keys: ['unlocklab', 'labjob'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

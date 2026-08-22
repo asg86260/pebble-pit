@@ -178,6 +178,8 @@ export function persist() {
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
     farmhands: S.farmhands,
+    labbers: S.labbers,
+    research: S.research && { ...S.research },
     tendLevel: S.tendLevel,
     labOpen: S.labOpen,
     mult: { ...S.mult },
@@ -237,6 +239,8 @@ export function restore() {
     S.seenSpore = false;
     S.farmOpen = false;
     S.farmhands = 0;
+    S.labbers = 0;
+    S.research = null;
     S.tendLevel = 0;
     S.labOpen = false;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
@@ -267,6 +271,9 @@ export function restore() {
   // changed name with it; what they had done is still theirs.
   S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
   S.farmhands = s.farmhands || 0;
+  S.labbers = s.labbers || 0;
+  // a piece of research keeps whatever the crew already put into it
+  S.research = s.research && s.research.key ? { key: s.research.key, done: +s.research.done || 0 } : null;
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
@@ -333,6 +340,8 @@ export function reset() {
   S.seenSpore = false;
   S.farmOpen = false;
   S.farmhands = 0;
+  S.labbers = 0;
+  S.research = null;
   S.tendLevel = 0;
   S.labOpen = false;
   S.labBoardOpen = false;

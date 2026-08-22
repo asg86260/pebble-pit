@@ -65,26 +65,24 @@ block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
 ## The lab
 
-The bench sells you **more** — another miner, another worker, another trip. The lab sells you
-**faster**, and it is the only place a multiplier lives.
+The bench sells you **more**: another worker, another body on the rock. The lab sells you
+**faster**, across the whole operation at once, and it is the only place a multiplier lives.
+Everything it sells is a rate — a pixel of rock is worth exactly one dust wherever it came from,
+which is a rule the game keeps, so growth has to come from doing the same work sooner.
 
-Everything it sells is a *rate*, never a yield: a pixel of rock is worth exactly one dust
-wherever it came from, and that rule stays. Growth comes from doing the same work sooner.
+**Nothing in it is bought outright.** Paying for a piece of research *starts* it. What finishes it
+is bodies standing in the lab doing the work, measured in worker-seconds: two of them finish it
+twice as fast as one, and an empty lab makes no progress at all however much you have paid. One
+piece at a time, because a lab does one thing at a time, and the row says `working 45%` while it
+runs.
 
-| Row | Costs | Multiplies |
-|---|---|---|
-| sharper picks | shard ◈ | every swing, yours and the crew's |
-| stronger backs | shard ◈ | worker pace and scooping |
-| deeper shafts | spore ◇ | cave trips |
-| richer beds | spore ◇ | tending |
+So the lab is a **station like any other** — it takes a job row and it competes for the crew with
+the rock, the quarry and the beds. That is the one question this game asks: who is doing what. A
+multiplier you can simply buy is a number; a multiplier that costs you four bodies off the rock for
+a minute is a decision.
 
-Four ladders and an apex, and no more. Five currencies with a wall of percentages behind them is
-where cozy turns into a spreadsheet.
-
-It also keeps the books, because nobody can tell whether a purchase helped by watching a pile:
-dust, shards and spores a minute, smoothed, plus what is in the hole, rocks finished and the size
-of the crew. Rates are read off **lifetime totals**, never off the balance — reading them off the
-balance made a big purchase show as forty thousand dust a minute of *negative* production.
+It keeps no books. Rates and totals belong on the counter and in the upgrade rows, where the number
+is next to the thing it is about.
 
 ## Crew
 

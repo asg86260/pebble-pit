@@ -1,15 +1,20 @@
-// The lab: where shards and spores turn into pace.
+// The lab: where shards and spores and a body's time turn into pace.
 //
-// The bench sells you *more* -- another miner, another worker, another trip. The
+// The bench sells you *more* -- another worker, another body on the rock. The
 // lab sells you *faster*, across the whole operation at once, and it is the only
-// place a multiplier lives. Everything it sells is a rate: a pixel of rock is
+// place a multiplier lives.
+//
+// Nothing here is bought outright. Paying starts a piece of research; what
+// finishes it is somebody standing in the lab doing the work, and an empty lab
+// makes no progress at all however much you have paid. So the lab competes for
+// the crew with the rock, the quarry and the beds, which is the one real
+// question this game asks: who is doing what. Everything it sells is a rate: a pixel of rock is
 // still worth exactly one dust wherever it came from, which is a rule the game
 // keeps, so growth has to come from doing the same work sooner.
-//
-// It also keeps the books. Nobody can tell whether a purchase helped by watching
-// a pile, so the lab reports what the operation is actually doing per minute.
 
-import { S } from './state.js';
+import { S, lab } from './state.js';
+import { standOn } from './world.js';
+import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_STOOP } from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -19,6 +24,61 @@ export const STEP = 1.25;
 export const mult = k =>
   Math.pow(STEP, S.mult[k] || 0);
 
+// what a piece of research asks of the crew, in worker-seconds
+export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, S.mult[FIELD[key]] || 0));
+
+const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
+
+// start one. Only one at a time: a lab does one thing at a time.
+export function begin(key) {
+  if (S.research) return;
+  S.research = { key, done: 0 };
+  S.dirty = true;
+}
+
+// how far along it is, 0..1
+export const progress = () =>
+  S.research ? Math.min(1, S.research.done / workFor(S.research.key)) : 0;
+
+// One frame of it. Nothing happens without bodies in the lab -- that is the
+// whole of the mechanic, and why the row says nothing is moving when it is not.
+export function stepLab(dt) {
+  if (!S.research || !S.labbers) return;
+  S.research.done += S.labbers * LAB_EFFORT * (dt / 1000);
+  if (S.research.done < workFor(S.research.key)) return;
+  S.mult[FIELD[S.research.key]]++;
+  S.research = null;
+  S.dirty = true;
+}
+
+// A body in the lab. It walks there, stands along the front of it, and bends
+// over the bench on its own rhythm -- the same idea as the quarry and the beds:
+// whether a place is productive and whether it looks worked are two questions.
+export function newLabber() {
+  return {
+    type: 'labber', goal: 'to', stoopAt: 0, lunge: 0,
+    bob: Math.random() * Math.PI * 2,
+    x: lab.x, y: 0
+  };
+}
+
+export function stepLabber(w, now) {
+  const n = Math.max(1, S.labbers);
+  const i = Math.max(0, S.workers.filter(o => o.type === 'labber').indexOf(w));
+  const seat = lab.x + P + ((i + 0.5) / n) * (lab.w - P * 2 - WORKER);
+
+  w.y = standOn(S.groundY);
+  const d = seat - w.x;
+  if (Math.abs(d) > 1) { w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d)); return; }
+
+  w.lunge *= 0.84;
+  if (now >= w.stoopAt) {
+    w.lunge = 1;
+    w.stoopAt = now + LAB_STOOP * (0.75 + Math.random() * 0.6);
+  }
+  w.x = seat + Math.sin(now / 700 + w.bob) * P * 0.7;
+}
+
 export const LAB_UPGRADES = [
   {
     key: 'labswing',
@@ -27,7 +87,7 @@ export const LAB_UPGRADES = [
     to: () => `x${(mult('swing') * STEP).toFixed(2)}`,
     cost: () => Math.round(3 * Math.pow(1.9, S.mult.swing)),
     currency: 'shard',
-    buy: () => S.mult.swing++,
+    buy: () => begin('labswing'),
     show: () => true
   },
   {
@@ -37,7 +97,7 @@ export const LAB_UPGRADES = [
     to: () => `x${(mult('haul') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.haul)),
     currency: 'shard',
-    buy: () => S.mult.haul++,
+    buy: () => begin('labhaul'),
     show: () => true
   },
   {
@@ -47,7 +107,7 @@ export const LAB_UPGRADES = [
     to: () => `x${(mult('quarry') * STEP).toFixed(2)}`,
     cost: () => Math.round(3 * Math.pow(1.9, S.mult.quarry)),
     currency: 'spore',
-    buy: () => S.mult.quarry++,
+    buy: () => begin('labcave'),
     show: () => true
   },
   {
@@ -57,7 +117,7 @@ export const LAB_UPGRADES = [
     to: () => `x${(mult('tend') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.tend)),
     currency: 'spore',
-    buy: () => S.mult.tend++,
+    buy: () => begin('labtend'),
     show: () => true
   }
 
@@ -106,15 +166,4 @@ export function sampleRates(now) {
 
 const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });
 
-// what the stats page says, in the order it says it
-export function bookRows() {
-  const rows = [
-    ['dust a minute', Math.round(rates.banked), 'dust'],
-    ['in the hole', S.stored, 'dust']
-  ];
-  if (S.seenShard) rows.push(['shards a minute', rates.shards.toFixed(1), 'shard']);
-  if (S.seenSpore) rows.push(['spores a minute', rates.spores.toFixed(1), 'spore']);
-  if (S.seenCore) rows.push(['rocks finished', S.boulderNo - 1, 'core']);
-  rows.push(['crew', S.miners + S.haulers + S.quarriers + S.farmhands, '']);
-  return rows;
-}
+

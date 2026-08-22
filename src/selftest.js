@@ -1252,11 +1252,14 @@ const TESTS = [
     ];
   }],
 
-  ['the lab sells pace, and it bites', async () => {
-    window.__crew(4, 2, 2, 2);
+  // Nothing in the lab is bought outright any more. Paying starts a piece of
+  // research; what finishes it is bodies standing in the lab, and an empty lab
+  // makes no progress at all however much you have paid.
+  ['research is started with shards and finished with people', async () => {
+    window.__crew(0, 3);
     window.__lab(true);
     window.__grant({ shards: 60, spores: 60 });
-    await sleep(300);
+    run(1);
 
     const el = document.getElementById('lab');
     const s = state();
@@ -1269,23 +1272,41 @@ const TESTS = [
     const opened = !el.hidden;
     const before = state();
     const swing = el.querySelector('button[data-key="labswing"]');
-    const quarry = el.querySelector('button[data-key="labcave"]');
-    if (swing) swing.click();
-    if (quarry) quarry.click();
-    await sleep(200);
-    const after = state();
+    const rows = el.querySelectorAll('button').length;
 
+    swing.click();                               // start it, do not buy it
+    await sleep(120);
+    const started = state();
+
+    run(12);                                     // and leave the lab empty
+    const empty = state();
+
+    window.__assign('labbers', 1);
+    window.__assign('labbers', 1);
+    run(5);
+    const part = state();
+    run(40);
+    const after = state();
+    window.__crew(0, 0);
     return [
       ok(opened, 'the lab board opens at the lab'),
-      ok(!!swing && !!quarry, 'it sells pace in shards and in spores'),
-      ok(after.mult.swing === before.mult.swing + 1, 'a multiplier goes up when bought'),
-      ok(after.mineMs < before.mineMs, 'and the swing really is faster',
-         `${before.mineMs}ms -> ${after.mineMs}ms`),
-      ok(after.shards < before.shards, 'shards are spent on it',
-         `${before.shards} -> ${after.shards}`),
-      ok(after.spores < before.spores, 'and spores on the other one',
-         `${before.spores} -> ${after.spores}`),
-      ok(document.querySelectorAll('#stats b').length > 0, 'and it keeps the books')
+      ok(rows >= 4, 'and offers what it can research', `${rows} rows`),
+      ok(!!started.research, 'clicking one starts it rather than buying it',
+         JSON.stringify(started.research)),
+      ok(started.shards < before.shards, 'and it is paid for up front',
+         `${before.shards} -> ${started.shards}`),
+      ok(started.mult.swing === before.mult.swing,
+         'the multiplier does not move on paying', `${started.mult.swing}`),
+      ok(empty.research && empty.research.at === 0,
+         'an empty lab gets no work done at all',
+         `${empty.research && empty.research.at}`),
+      ok(part.labbers === 2 && part.research && part.research.at > 0.15,
+         'two bodies in it and it moves', `${part.research && part.research.at}`),
+      ok(!after.research && after.mult.swing === before.mult.swing + 1,
+         'and finishing it is what raises the multiplier',
+         `${before.mult.swing} -> ${after.mult.swing}`),
+      ok(after.mineMs < before.mineMs, 'which really is a faster swing',
+         `${before.mineMs}ms -> ${after.mineMs}ms`)
     ];
   }],
 

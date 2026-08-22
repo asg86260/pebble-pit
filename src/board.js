@@ -5,7 +5,7 @@ import { P } from './config.js';
 import { S, bench, lab } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES } from './lab.js';
-import { refresh, refreshStats } from './shop.js';
+import { refresh } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -120,7 +120,6 @@ export function showPanel(want) {
   for (const k of Object.keys(pages)) pages[k].hidden = k !== want;
   // opening the bench reads every heading on it, the same as it always did
   if (want === 'bench') markSectionsSeen();
-  if (want === 'lab') refreshStats();
   panelEl.hidden = false;
   remeasure();
 
@@ -163,7 +162,7 @@ const headcount = title =>
 export function hud() {
   tweenCount(now());
   if (S.boardOpen) refresh(shopEl, UPGRADES, headcount);
-  if (S.labBoardOpen) { refresh(labShopEl, LAB_UPGRADES, null); refreshStats(); }
+  if (S.labBoardOpen) refresh(labShopEl, LAB_UPGRADES, null);
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every
