@@ -1340,7 +1340,7 @@ const TESTS = [
     run(1);
     const idle = state();
 
-    document.querySelectorAll('#labshop button')[0].click();
+    document.querySelector('#labshop button[data-key]').click();
     await sleep(120);
     run(3);
     const paidButEmpty = state();
@@ -1389,7 +1389,7 @@ const TESTS = [
     const opened = !el.hidden;
     const before = state();
     const swing = el.querySelector('button[data-key="labswing"]');
-    const rows = el.querySelectorAll('button').length;
+    const rows = el.querySelectorAll('button[data-key]').length;
 
     swing.click();                               // start it, do not buy it
     await sleep(120);
@@ -1424,6 +1424,66 @@ const TESTS = [
          `${before.mult.swing} -> ${after.mult.swing}`),
       ok(after.mineMs < before.mineMs, 'which really is a faster swing',
          `${before.mineMs}ms -> ${after.mineMs}ms`)
+    ];
+  }],
+
+  // The crew are inside the lab and the chimney goes out the moment they are
+  // done, so the end of a piece of research is the one thing here you would
+  // otherwise miss entirely. It leaves a mark standing over the lab, and the
+  // mark comes down when the board it belongs to is read.
+  ['a finished piece of research says so over the lab', async () => {
+    const point_ = (x, y) => canvas().dispatchEvent(new PointerEvent('pointermove', {
+      clientX: x, clientY: y, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
+    const away = () => point_(4, 4);             // nobody standing at any station
+    const atLab = () => {
+      const s = state();
+      point_((s.labX + 20 - s.camX) * s.zoom, (s.groundY - 30 - s.camY) * s.zoom);
+    };
+
+    window.__abandon();
+    window.__crew(0, 3);
+    window.__lab(true);
+    window.__grant({ shards: 60, spores: 60 });
+    run(1);
+
+    atLab();                                     // go and stand at it
+    await sleep(220);
+
+    const el = document.getElementById('lab');
+    const more = el.querySelector('.job[data-job="labcrew"] .more');
+    more.click(); more.click();
+    const staffed = state();
+
+    el.querySelector('button[data-key="labswing"]').click();
+    await sleep(140);
+    const started = state();
+
+    away();                                      // and walk off while they work
+    await sleep(220);
+    const finished = runUntil(() => !state().research, 120);
+    const done = state();
+
+    atLab();
+    await sleep(220);
+    const read = state();
+
+    window.__crew(0, 0);
+    window.__abandon();
+    away();
+    await sleep(160);
+    return [
+      ok(staffed.labbers === 2, 'the lab board puts bodies in the lab itself',
+         `${staffed.labbers}`),
+      ok(!!started.research && started.labDone === null,
+         'and starting a piece leaves nothing to report yet',
+         JSON.stringify(started.research)),
+      ok(finished, 'two bodies see it through'),
+      ok(!done.research && done.labDone === 'labswing',
+         'a finished piece is remembered rather than just vanishing',
+         `${done.labDone}`),
+      ok(done.smoke > 0, 'and the chimney gives it one last plume', `${done.smoke}`),
+      ok(read.labDone === null, 'reading the board is what takes the mark down',
+         `${read.labDone}`)
     ];
   }],
 

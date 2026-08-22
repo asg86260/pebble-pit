@@ -10,7 +10,8 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
-import { overPileMark, pileMarkAt } from './render.js';
+import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
+import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { mineMs } from './upgrades.js';
 import { now } from './clock.js';
@@ -151,6 +152,10 @@ function askedAbout(x, y) {
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));
+    return;
+  }
+  if (S.labDone && overLabMark(x, y)) {
+    showTip(doneName(), labMarkAt());
     return;
   }
   showTip(null);

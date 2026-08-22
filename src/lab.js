@@ -13,6 +13,7 @@
 // keeps, so growth has to come from doing the same work sooner.
 
 import { S, lab } from './state.js';
+import { assign, idle } from './upgrades.js';
 import { walkY } from './world.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE } from './config.js';
@@ -47,8 +48,37 @@ export function stepLab(dt) {
   if (!S.research || !S.labbers) return;
   S.research.done += S.labbers * LAB_EFFORT * (dt / 1000);
   if (S.research.done < workFor(S.research.key)) return;
-  S.mult[FIELD[S.research.key]]++;
+  const key = S.research.key;
+  S.mult[FIELD[key]]++;
   S.research = null;
+  S.labDone = key;                 // a mark over the lab until somebody looks
+  cough();                         // and one last plume off the chimney
+  S.dirty = true;
+}
+
+// The chimney stops the moment the work is done, which is a signal made of
+// nothing happening. So finishing gets a puff of its own: a plume already
+// strung out up the sky, so it reads as the last of it rather than the start.
+const DONE_PUFFS = 8;
+function cough() {
+  for (let i = 0; i < DONE_PUFFS; i++) S.smoke.push({
+    x: lab.x + lab.w * 0.28 + (Math.random() - 0.5) * P * 2,
+    y: lab.y - i * P,
+    drift: (Math.random() - 0.5) * 0.35,
+    t: i * SMOKE_LIFE / (DONE_PUFFS * 1.6)
+  });
+}
+
+// what finished, in the words the row used
+export const doneName = () => {
+  const u = LAB_UPGRADES.find(x => x.key === S.labDone);
+  return u ? `${u.name} done` : 'research done';
+};
+
+// and reading it is what clears the mark
+export function markLabSeen() {
+  if (!S.labDone) return;
+  S.labDone = null;
   S.dirty = true;
 }
 
@@ -97,6 +127,19 @@ export function stepLabber(w) {
 }
 
 export const LAB_UPGRADES = [
+  // Who is standing in it, on the board that belongs to it. The bench can move
+  // bodies about too, but the lab is where you are when you start a piece of
+  // research, and walking back to the bench to staff it is a walk for nothing.
+  {
+    key: 'labcrew',
+    name: 'in the lab',
+    job: 'labbers',
+    count: () => S.labbers,
+    spare: () => idle(),
+    less: () => assign('labbers', -1),
+    more: () => assign('labbers', 1),
+    show: () => true
+  },
   {
     key: 'labswing',
     name: 'swing speed',
@@ -141,6 +184,7 @@ export const LAB_UPGRADES = [
 ];
 
 export const LAB_SECTIONS = [
+  { title: 'the crew', keys: ['labcrew'] },
   { title: 'the work', keys: ['labswing', 'labhaul'] },
   { title: 'the ground', keys: ['labcave', 'labtend'] }
 ];

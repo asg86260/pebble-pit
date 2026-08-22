@@ -4,7 +4,7 @@
 import { P } from './config.js';
 import { S, bench, lab } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
-import { LAB_UPGRADES } from './lab.js';
+import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { refresh } from './shop.js';
 import { now } from './clock.js';
 
@@ -162,7 +162,9 @@ const headcount = title =>
 export function hud() {
   tweenCount(now());
   if (S.boardOpen) refresh(shopEl, UPGRADES, headcount);
-  if (S.labBoardOpen) refresh(labShopEl, LAB_UPGRADES, null);
+  // the lab board being open is what reads its news, whether it was already
+  // open when the work finished or you walked over because of the mark
+  if (S.labBoardOpen) { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every

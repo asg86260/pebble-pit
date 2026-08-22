@@ -95,6 +95,11 @@ export const S = {
   skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
   labOpen: false,
   labBoardOpen: false,
+  // A finished piece of research nobody has been to see yet. The crew are
+  // inside the lab where you cannot watch them, so the one moment worth
+  // reporting is the moment the work is done -- and it is kept until it is
+  // read, because it usually happens while you are looking somewhere else.
+  labDone: null,
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
 
   // --- the crew ---
