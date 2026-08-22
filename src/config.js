@@ -299,6 +299,38 @@ export const BIRD_SPEED = 1.6;    // world pixels a frame: a lot crosses the vie
 export const TEND_STOOP = 780;
 export let CUT_MS = 700;
 
+// --- the air ----------------------------------------------------------------
+// Nothing stands in the background of this game: no hills, no clouds, no
+// furniture of any kind. So the dust hanging in the air is load-bearing rather
+// than decorative -- it is the only thing the view has to move against, and the
+// only thing keeping a yard nobody is working in from reading as a still
+// picture.
+//
+// It hangs in three bands at different distances. One number sets everything
+// about a band at once, because that is what distance does: the far ones are
+// pale, small, slow, and barely take the camera's movement at all; the near
+// ones are darker, bigger, and sweep past. Splitting those apart only lets a
+// band drift out of agreement with itself.
+export const AIR_BANDS = [
+  //  take: the share of the camera's movement the band takes, 1 being the yard itself
+  { take: 0.20, tone: '#dedede', size: 1, pace: 0.35, share: 0.44, front: false },
+  { take: 0.46, tone: '#c2c2c2', size: 2, pace: 0.62, share: 0.36, front: false },
+  // the near band is drawn *over* the world rather than behind it, which is the
+  // whole of why the yard has any depth: dust passes in front of the rock
+  { take: 0.90, tone: '#a6a6a6', size: 3, pace: 1.00, share: 0.20, front: true }
+];
+export const AIR_FLOOR = 95;      // motes over a bare yard, before anything is lying about
+export const AIR_PER_DUST = 22;   // and one more for every this much dust on the ground
+export const AIR_CAP = 420;       // however much is lying about
+export const AIR_RISE = 0.10;     // screen pixels a mote climbs in a frame
+export const AIR_SINK = 0.06;     // and the heavier grit that goes the other way
+export const AIR_GRIT = 0.16;     // the share of the air that is that grit
+export const AIR_WOBBLE = 0.16;   // how far a mote swims either side of its drift
+export const AIR_GUST = 0.34;     // and the wind the whole field leans on
+export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
+export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
+export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches
+
 // --- turning the knobs ------------------------------------------------------
 // A handful of these are `let` rather than `const` so a dev panel can move them
 // while the game is running. Modules import the binding, not a copy, so a change

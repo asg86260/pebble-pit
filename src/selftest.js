@@ -1526,6 +1526,38 @@ const TESTS = [
     ];
   }],
 
+  ['the air thickens with what is lying about, and keeps out of the ground', async () => {
+    // The air is the only thing in the background of this game, so it is the
+    // only thing that says the view is moving. What it must not do is drift
+    // about inside solid ground, and what it must do is answer the yard.
+    window.__clearFloor();
+    run(4);
+    const bare = state();
+
+    window.__pile(bare.rockX + 300, 2400);       // a heap where the spoil goes
+    run(20);                                     // the air comes on a mote at a time
+    const heaped = state();
+
+    window.__clearFloor();
+    run(20);
+    const swept = state();
+
+    return [
+      ok(bare.air > 0, 'a bare yard still has dust hanging in it', `${bare.air}`),
+      // what the yard asks for, not what the screen is carrying: a stocked pit
+      // asks for more than the cap allows, and by then the count says nothing
+      ok(heaped.airWant > bare.airWant, 'a heap in the yard puts more of it up',
+         `${bare.airWant} bare, ${heaped.airWant} heaped`),
+      ok(swept.airWant < heaped.airWant, 'and carrying the heap away thins it again',
+         `${heaped.airWant} heaped, ${swept.airWant} swept`),
+      ok(heaped.airFront > 0, 'some of it passes in front of the yard, not behind it',
+         `${heaped.airFront} of ${heaped.air}`),
+      ok(bare.airUnder === 0 && heaped.airUnder === 0 && swept.airUnder === 0,
+         'and none of it is under the ground',
+         `${bare.airUnder}/${heaped.airUnder}/${swept.airUnder}`)
+    ];
+  }],
+
   ['the thing in the sky is benched', async () => {
     const s = state();
     return [

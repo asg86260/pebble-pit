@@ -1,70 +1,224 @@
 // The dust hanging in the air. It rises off whatever is lying about, so a big
-// pit visibly gives off more than a bare one, and it drifts past at its own rate
-// as the view scrolls -- which is how movement reads with nothing in the
-// background to move against.
+// pit visibly gives off more than a bare one, it leans on a wind that never
+// quite settles, and it passes at its own rate as the view scrolls -- which is
+// how movement reads with nothing in the background to move against.
+//
+// Motes are kept in *screen* pixels rather than world ones. They are weather,
+// not scenery: what they have to do is be in front of you, and a mote with a
+// place in the world spends nearly all of the game outside the window, which is
+// exactly where the old ones went. What ties them to the yard is where they are
+// born -- off the top of a real pile -- and after that they belong to the air.
 
-import { P } from './config.js';
-import { S, floor, pit } from './state.js';
+import { P, WORKER, AIR_BANDS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
+         AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND } from './config.js';
+import { PIT_H } from './config.js';
+import { S, floor, pit, quarry } from './state.js';
 import { at, count, surfaceY } from './grid.js';
-import { blocked } from './world.js';
+import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now } from './clock.js';
 
 export const AIR = [];
-const AIR_CAP = 260;
+
+const MARGIN = 24;                 // how far past the edge a mote may sit before it wraps
+let camWasX = 0, camWasY = 0;      // last frame's camera, for how far the field has to slide
 
 export function seedAir() {
   AIR.length = 0;
+  camWasX = S.camX;
+  camWasY = S.camY;
+  // the air is already there when you arrive: it does not fade in over the first
+  // few seconds of a new game
+  for (let i = 0; i < AIR_FLOOR; i++) AIR.push(born(true));
 }
 
-// a spot just above the dust in a random column of a pile
-function airSource() {
+// which band a new mote belongs to, by the share each one is meant to hold
+function pickBand() {
+  let r = Math.random();
+  for (const b of AIR_BANDS) { r -= b.share; if (r <= 0) return b; }
+  return AIR_BANDS[AIR_BANDS.length - 1];
+}
+
+// where the ground line is on the screen, which is where dust hangs thickest
+const groundOnScreen = () => (S.groundY - S.camY) * S.zoom;
+
+// How far a mote may sink at a given place on the screen before it has landed.
+// The ground stops it -- dust does not drift about inside solid ground -- except
+// where the ground is open. The pit mouth and the quarry are holes with air in
+// them, and the pit is the biggest dust source in the game: culling at the
+// ground line would kill every mote it gave off in the frame it was born.
+function floorAt(x) {
+  const g = groundOnScreen();
+  // the line is off the top of the window: you are looking down the hole, and
+  // there is nothing in view to land on
+  if (g <= 40) return Infinity;
+  const wx = x / S.zoom + S.camX;
+  if (overPitMouth(wx)) return (S.groundY + PIT_H - S.camY) * S.zoom;
+  if (S.quarryOpen && wx > quarry.x && wx < quarry.x + quarry.w)
+    return (S.groundY + quarry.h - S.camY) * S.zoom;
+  return g;
+}
+
+// A spot at the feet of somebody who is actually walking, in screen pixels.
+// Where each of them was last frame is kept out here rather than on the worker,
+// because a worker is a thing the game saves and this is a thing the air wants.
+const wasAt = new WeakMap();
+
+function offAWalker() {
+  const crew = S.workers;
+  if (!crew.length) return null;
+  for (let tries = 0; tries < 6; tries++) {
+    const w = crew[Math.floor(Math.random() * crew.length)];
+    const was = wasAt.get(w);
+    if (was === undefined || Math.abs(w.x - was) < 0.3) continue;   // standing still: no dust
+    const x = (w.x + Math.random() * WORKER - S.camX) * S.zoom;
+    const y = (w.y + WORKER - S.camY) * S.zoom - 2;   // just clear of the boots
+    if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
+    return { x, y };
+  }
+  return null;
+}
+
+// walked in from `stepAir` once a frame, after the crew have moved
+function rememberWalkers() {
+  for (const w of S.workers) wasAt.set(w, w.x);
+}
+
+// a spot just above the dust in a random column of a pile, in screen pixels, or
+// null if there is nothing lying about within the window
+function offAPile() {
   const b = Math.random() < 0.5 ? floor : pit;
   for (let tries = 0; tries < 12; tries++) {
     const c = Math.floor(Math.random() * b.cols);
     if (!at(b, c, 0)) continue;
     if (b === floor && blocked(c)) continue;
-    return { x: b.x + c * b.p + Math.random() * b.p, y: surfaceY(b, c) - P };
+    const x = (b.x + c * b.p + Math.random() * b.p - S.camX) * S.zoom;
+    const y = (surfaceY(b, c) - P - S.camY) * S.zoom;
+    if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
+    return { x, y };
   }
   return null;
 }
 
-// paid dust arcs out of the pit to the bench and is gone; a flight it always
-// finishes, rather than a pull it can circle forever
-export function stepAir() {
-  const dust = dustAbout(now());
-  const want = Math.min(AIR_CAP, 6 + Math.round(dust / 45));
+// Put a mote somewhere it can be seen. `anywhere` scatters it across the whole
+// window, which is what a seeded field wants; without it a mote comes in low --
+// off a pile if there is one, otherwise off the ground line -- because dust
+// gets into the air by being kicked into it, and starting them all at random
+// heights reads as snow.
+function place(m, anywhere) {
+  // boots first: the crew crossing the yard stir up more than the yard does by
+  // sitting there, and dust at somebody's feet is the one bit of the air that
+  // is plainly caused by something you are watching
+  const from = anywhere ? null
+             : offAWalker() || (S.dustSeen > 20 ? offAPile() : null);
+  if (from) { m.x = from.x; m.y = from.y; return m; }
 
-  if (AIR.length < want && Math.random() < 0.6) {
-    const from = dust > 20 ? airSource() : null;
-    const at0 = from || { x: S.camX + Math.random() * S.W, y: Math.random() * S.groundY };
-    AIR.push({
-      x: at0.x,
-      y: at0.y,
-      vx: (Math.random() - 0.5) * 0.22,
-      vy: -0.06 - Math.random() * 0.16,
-      life: 300 + Math.random() * 500,
-      size: Math.random() < 0.3 ? P / 2 : P / 3,
-      far: 0.45 + Math.random() * 0.4
-    });
-  }
+  m.x = Math.random() * S.W;
+  if (anywhere && Math.random() > AIR_LOW) { m.y = Math.random() * S.H; return m; }
 
-  for (let i = AIR.length - 1; i >= 0; i--) {
-    const m = AIR[i];
-    m.x += m.vx;
-    m.y += m.vy;
-    m.life--;
-    if (m.life <= 0 || m.y < -P || AIR.length > want + 40) AIR.splice(i, 1);
-  }
+  // low: in the band of air just over the ground, clamped to the window so a
+  // ground line scrolled off the bottom does not take the whole field with it
+  const g = Math.min(Math.max(groundOnScreen(), 0), S.H);
+  m.y = g - Math.random() * AIR_LOW_BAND * S.zoom;
+  if (m.y < 0 || m.y > S.H) m.y = Math.random() * S.H;
+  return m;
 }
 
-export function drawAir() {
-  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  ctx.fillStyle = '#d9d9d9';
+function born(anywhere) {
+  const b = pickBand();
+  const grit = Math.random() < AIR_GRIT;
+  return place({
+    b,
+    grit,                                        // heavier: it sinks instead of climbing
+    vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + Math.random() * 0.8),
+    phase: Math.random() * Math.PI * 2,          // so they do not all swim together
+    swim: 700 + Math.random() * 900
+  }, anywhere);
+}
+
+// The wind: two slow swings pulling against each other, so it leans one way for
+// a while and then the other and never repeats on a beat you could count.
+function windAt(t) {
+  return AIR_GUST * (Math.sin(t / AIR_GUST_MS) * 0.7
+                   + Math.sin(t / (AIR_GUST_MS * 0.37) + 1.3) * 0.3);
+}
+
+// How many motes the yard is asking for, before the cap. A well-stocked pit
+// asks for far more than the screen can carry -- the cap is what stops the air
+// turning to soup -- so this is the number that actually answers the yard.
+const appetite = t => AIR_FLOOR + Math.round(dustAbout(t) / AIR_PER_DUST);
+
+export function stepAir() {
+  const t = now();
+  const want = Math.min(AIR_CAP, appetite(t));
+  const wind = windAt(t);
+
+  // how far the field has to slide to stay put: the camera moved, and each band
+  // takes its own share of that
+  const dx = (S.camX - camWasX) * S.zoom;
+  const dy = (S.camY - camWasY) * S.zoom;
+  camWasX = S.camX;
+  camWasY = S.camY;
+
+  // the air thickens and thins a mote at a time, so a pile being carried away
+  // does not put a hole in the sky
+  if (AIR.length < want) AIR.push(born(false));
+  else if (AIR.length > want + 8) AIR.splice(Math.floor(Math.random() * AIR.length), 1);
+
   for (const m of AIR) {
-    ctx.fillRect(Math.round(m.x - S.camX * m.far), Math.round(m.y - S.camY * m.far), m.size, m.size);
+    m.x += wind * m.b.pace + Math.cos(t / m.swim + m.phase) * AIR_WOBBLE * m.b.pace - dx * m.b.take;
+    m.y += m.vy - dy * m.b.take;
+
+    // off the sides it comes back on the other one, which keeps the field even
+    // however long the camera pans one way
+    if (m.x < -MARGIN) m.x += S.W + MARGIN * 2;
+    else if (m.x > S.W + MARGIN) m.x -= S.W + MARGIN * 2;
+
+    // off the top, or down onto whatever is under it, it is a new mote kicked
+    // up somewhere else rather than a wrapped one: dust that climbed out of the
+    // picture does not come back down, and grit that has settled has settled
+    if (m.y < -MARGIN || m.y > S.H + MARGIN || m.y > floorAt(m.x)) place(m, false);
+  }
+
+  rememberWalkers();
+}
+
+// Behind the world. Drawn in screen pixels, which is the point of the whole
+// exercise: these have no size in the yard and do not zoom with it.
+export function drawAir() {
+  paint(false);
+}
+
+// And in front of it -- the near band only, so the yard has something between
+// you and the rock.
+export function drawAirNear() {
+  paint(true);
+}
+
+function paint(front) {
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  for (const b of AIR_BANDS) {
+    if (b.front !== front) continue;
+    ctx.fillStyle = b.tone;
+    for (const m of AIR) {
+      if (m.b !== b) continue;
+      ctx.fillRect(Math.round(m.x), Math.round(m.y), b.size, b.size);
+    }
   }
   ctx.fillStyle = '#000';
+}
+
+
+// What the air is doing, for the checks: how much of it there is, how much of
+// it is in the band drawn in front of the yard, and whether any of it has got in
+// under the ground -- which is the one thing that would look plainly wrong.
+export function airReport() {
+  let under = 0, front = 0;
+  for (const m of AIR) {
+    if (m.y > floorAt(m.x) + 1) under++;
+    if (m.b.front) front++;
+  }
+  return { n: AIR.length, under, front, want: appetite(now()) };
 }
 
 
@@ -78,5 +232,3 @@ export function dustAbout(now) {
   }
   return S.dustSeen;
 }
-
-

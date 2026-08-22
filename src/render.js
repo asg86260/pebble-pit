@@ -18,7 +18,7 @@ import { underground, quarryCut } from './quarry.js';
 import { indoors } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
-import { drawAir } from './air.js';
+import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
 
@@ -500,19 +500,28 @@ export function draw() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#fff';                       // the page is painted, not assumed
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawAir();
-
-  ctx.save();
   const k = S.zoom * S.dpr;
   // Where you are looking, plus whatever the yard is still rocking through. The
   // shake goes in before the rounding, not after: the offset lands on a whole
   // device pixel like everything else, so a rock coming down does not put a
   // hairline through every seam in the picture for half a second.
-  ctx.setTransform(k, 0, 0, k,
+  const world = () => ctx.setTransform(k, 0, 0, k,
                    Math.round((-S.camX + S.shakeX) * k),
                    Math.round((-S.camY + S.shakeY) * k));
-  drawClouds();              // the far end of everything, so it goes down first
+
+  // The sky goes down first: clouds and birds are the far end of everything.
+  // Then the dust, which hangs in front of them -- it is weather in the yard and
+  // not something out on the horizon, so a cloud must never paint over it.
+  ctx.save();
+  world();
+  drawClouds();
   drawBirds();
+  ctx.restore();
+
+  drawAir();
+
+  ctx.save();
+  world();
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
@@ -554,6 +563,8 @@ export function draw() {
   drawWorkers();
   drawCursor();
   ctx.restore();
+
+  drawAirNear();           // the nearest dust passes in front of the yard, not behind it
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 
