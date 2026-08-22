@@ -294,6 +294,13 @@ export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is t
 export const BIRD_TONE = '#5f5f5f';
 export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next
 export const BIRD_FLOCK = 4;      // at most this many in a lot
+// A bird can be clicked, and shakes a few grains loose as it bolts. It is the
+// one thing in the sky you can touch, and the amount is deliberately small: it
+// is a thing to notice, not a thing to farm -- they cross when they cross, and
+// no upgrade has anything to say about them.
+export const BIRD_REACH = P * 5;  // how near the click has to be, in world pixels
+export const BIRD_DUST = 5;       // grains shaken loose
+export const BIRD_BOLT = 1.5;     // and how much the rest of the lot quicken
 export const BIRD_SPEED = 1.6;    // world pixels a frame: a lot crosses the view in about a quarter of a minute
 
 export const TEND_STOOP = 780;

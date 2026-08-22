@@ -1558,6 +1558,44 @@ const TESTS = [
     ];
   }],
 
+  // The one thing in the sky you can touch. It is worth a few grains, and the
+  // grains have to be worth having: aimed into the rock's own strip of ground,
+  // where the haulers already work, rather than dropped in the far yard where
+  // nobody would ever go and fetch them.
+  ['a bird can be startled, and drops a little dust', async () => {
+    window.__crew(0, 0, 0, 0);                   // nobody to fetch it while we watch
+    window.__clearFloor();
+    run(1);
+    const clear = state().floor;
+    const bank = state().stored;
+    window.__birds();
+    const s = state();
+    const bird = s.sky.birdWorld[0];
+    const [x, y] = onScreen(bird.x, bird.y);
+    point('pointerdown', x, y);
+    point('pointerup', x, y, 0);
+    const hit = state();
+    run(3);                                      // long enough for them to come down
+    const settled = state();
+    const strip = settled.piles.find(p => p.key === 'rock');
+
+    return [
+      ok(hit.sky.birds === s.sky.birds - 1, 'the one that was clicked is gone',
+         `${s.sky.birds} -> ${hit.sky.birds}`),
+      ok(hit.chips > 0, 'and it shook some dust loose', `${hit.chips} in the air`),
+      ok(hit.chipShades.every(v => v > 0), 'every grain of it is a grain and not an empty cell',
+         hit.chipShades.join(' ')),
+      ok(settled.chips === 0 && settled.floor === clear + hit.chips,
+         'all of which lands, and none of it is lost on the way',
+         `${hit.chips} shaken, ${settled.floor - clear} down`),
+      ok(settled.pileCount.rock === settled.floor - clear,
+         'in the strip of ground the rock pours into, where somebody will fetch it',
+         `${settled.pileCount.rock} of ${settled.floor - clear} inside ${strip.from}..${strip.to}`),
+      ok(settled.stored === bank, 'and none of it is banked for free',
+         `${bank} -> ${settled.stored}`)
+    ];
+  }],
+
   ['the thing in the sky is benched', async () => {
     const s = state();
     return [
