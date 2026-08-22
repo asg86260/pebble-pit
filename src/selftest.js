@@ -1390,6 +1390,49 @@ const TESTS = [
     ];
   }],
 
+  // Clouds and birds are the only things in the game that are purely scenery, so
+  // the one thing they must never do is get in the way: they stay in the strip of
+  // sky above the height a rock can reach, and they stay in the view when it is
+  // scrolled, which is what the parallax is for -- a fixed sky would slide off the
+  // side of the world and leave an empty one behind.
+  ['the sky has clouds in it, and birds now and then', async () => {
+    const before = state().sky;
+    run(2);
+    window.__look(0);
+    run(2);
+    const near = state().sky;
+    window.__look(1e6);                          // the far end of the world
+    run(2);
+    const far = state().sky;
+    window.__birds();
+    const flock = state().sky;
+    run(4);
+    const later = state().sky;
+
+    const above = s => s.cloudY.every(y => y <= s.low) && s.cloudY.every(y => y >= s.top);
+    const inView = s => s.cloudAcross.filter(x => x > -200 && x < state().viewW).length;
+
+    return [
+      ok(before.clouds === near.clouds && near.clouds === far.clouds,
+         'the same few clouds are kept wherever you are looking',
+         `${before.clouds} / ${near.clouds} / ${far.clouds}`),
+      ok(above(near) && above(far), 'they keep to the sky above the rock',
+         `${near.low} floor, lowest ${Math.max(...near.cloudY)}`),
+      ok(inView(near) >= 2 && inView(far) >= 2, 'and there are some in view at either end',
+         `${inView(near)} / ${inView(far)}`),
+      ok(far.fars.every(f => f > 0 && f < 1), 'each one sits at its own distance',
+         far.fars.join(' ')),
+      ok(near.drifts, 'and they drift'),
+      ok(flock.birds >= 2 && flock.birds <= 4, 'birds come in twos and threes',
+         `${flock.birds}`),
+      ok(flock.birdY.every(y => y <= flock.low + 20), 'flying no lower than the clouds do',
+         flock.birdY.join(' ')),
+      ok(later.birds >= flock.birds &&
+         flock.birdAcross.every((x, i) => x !== later.birdAcross[i]),
+         'and every one of them is crossing', flock.birdAcross.join(' ') + ' -> ' + later.birdAcross.join(' '))
+    ];
+  }],
+
   ['the thing in the sky is benched', async () => {
     const s = state();
     return [

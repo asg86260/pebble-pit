@@ -19,6 +19,7 @@ import { indoors } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
+import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
@@ -504,6 +505,8 @@ export function draw() {
   ctx.save();
   const k = S.zoom * S.dpr;
   ctx.setTransform(k, 0, 0, k, Math.round(-S.camX * k), Math.round(-S.camY * k));
+  drawClouds();              // the far end of everything, so it goes down first
+  drawBirds();
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground

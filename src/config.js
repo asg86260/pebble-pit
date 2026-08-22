@@ -266,6 +266,20 @@ export const SMOKE_MS = 380;      // between puffs, with one body in there
 export const SMOKE_LIFE = 2.4;    // seconds a puff lasts
 export const SMOKE_RISE = 0.4;    // and how fast it goes up
 
+// --- the sky ----------------------------------------------------------------
+// Clouds and birds, and nothing else up there. They are the far end of the
+// parallax the dust already does close up, and they are deliberately faint: a
+// cloud is two greys well lighter than the lightest rock shade, because the six
+// shades mean depth of rock and nothing in the sky is allowed to borrow them.
+export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in view
+export const CLOUD_TONE = '#efefef';
+export const CLOUD_UNDER = '#e3e3e3';   // the bottom bar, so a cloud has an underside
+export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
+export const BIRD_TONE = '#5f5f5f';
+export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next
+export const BIRD_FLOCK = 4;      // at most this many in a lot
+export const BIRD_SPEED = 1.6;    // world pixels a frame: a lot crosses the view in about a quarter of a minute
+
 export const TEND_STOOP = 780;
 export let CUT_MS = 700;
 
