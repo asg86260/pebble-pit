@@ -51,6 +51,11 @@ export const TO_LAB = 840;       // rock centre to the lab
 export const TO_LEDGE = 1080;    // rock centre to the lip of the pit
 export const ROCK_PILE_TO = 696; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
+// And bare ground kept between a station and the *start* of its own pile, so
+// the heap stands off the thing that made it instead of burying it. The farm
+// clears its last bed; the quarry clears the far ramp of the bridge, which
+// comes down well past the mouth. The rock has ROCK_CLEAR for the same job.
+export const PILE_STANDOFF = { farm: P * 5, quarry: P * 12 };
 export const GROUND_LEFT = 2400; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
@@ -206,8 +211,19 @@ export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
 // come back out with a shard. The trip time is the whole of the mechanic: it is
 // what an upgrade shortens, and what makes sending somebody in a decision.
-export const QUARRY_W = 108;       // the mouth, in world pixels
-export const QUARRY_H = 78;
+export const QUARRY_W = 156;       // the mouth, in world pixels
+export const QUARRY_H = 126;
+// It is a worked cut, not a hole somebody cut with a square. Both walls come
+// down in benches and the floor they leave is uneven, which is what months of
+// working a face does to one. The shape is a pattern rather than a scatter: a
+// quarry that reshuffled itself every frame would be a different quarry every
+// time you looked at it, so this is worked out once and kept.
+// Each bench is [how far in, how far down], as a share of the mouth. The drops
+// are normalised, so they always land the last one exactly on the floor.
+export const QUARRY_NEAR_BENCH = [[0.00, 0.30], [0.05, 0.22], [0.03, 0.20], [0.03, 0.28]];
+export const QUARRY_FAR_BENCH = [[0.00, 0.36], [0.04, 0.24], [0.03, 0.22], [0.02, 0.18]];
+export const QUARRY_FLOOR_STEP = 4;   // cells of floor per stretch
+export const QUARRY_FLOOR_JAG = [0, 1, 2, 1, 0, 2, 1, 0];  // and cells of relief on each
 // How often a quarrier swings, as opposed to how often the face gives anything
 // up. They were the same number, so at pace 0 a worker hit the rock once every
 // eleven seconds and stood there the rest of the time. A quarry should look

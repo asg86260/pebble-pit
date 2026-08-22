@@ -14,7 +14,7 @@ import { coreHome } from './core.js';
 
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
-import { underground } from './quarry.js';
+import { underground, quarryCut } from './quarry.js';
 import { indoors } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
@@ -45,25 +45,31 @@ export function drawTriangle(x, y, r, hollow) {
   ctx.fillStyle = '#000';
 }
 
-// The mouth of the quarry: a shaft going down, so the ground line breaks across it
-// and the dark carries on below. Drawn downwards rather than as an arch standing
-// on the ground, which read as a black lozenge sitting on a wire.
+// The mouth of the quarry: an open cut going down, so the ground line breaks
+// across it and the walls carry on below. Drawn downwards rather than as an arch
+// standing on the ground, which read as a black lozenge sitting on a wire.
 export function drawQuarry() {
   if (!S.quarryOpen) return;
   const { x, y, w, h } = quarry;
   const E = 2;                             // how thick a cut edge is
 
-  // An open cut, not a shaft. Drawn as three filled bars rather than a stroked
-  // path with a lip laid over each rim: a stroke straddles the line it is on, so
-  // it half-covered the ground line and the lips then doubled up on top of that,
-  // which is the thickened, overlapping mess along each rim.
+  // The hole is empty air first: white over the mouth, which is what breaks the
+  // ground line cleanly across it. Then the one outline -- both walls stepping
+  // down in benches and the uneven floor between them -- as a single stroked
+  // path. It is one line, so nothing doubles up where the parts meet, which is
+  // what three separate filled bars used to do along each rim.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y - E, w, h + E);         // the hole is empty air, and it cuts
-                                            // the ground line cleanly
+  ctx.fillRect(x, y - E, w, h + E);
+
+  const pts = quarryCut().outline;
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = E;
+  ctx.lineJoin = 'miter';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.stroke();
   ctx.fillStyle = '#000';
-  ctx.fillRect(x, y - E, E, h + E);         // near wall
-  ctx.fillRect(x + w - E, y - E, E, h + E); // far wall
-  ctx.fillRect(x, y + h - E, w, E);         // the floor they work
 }
 
 

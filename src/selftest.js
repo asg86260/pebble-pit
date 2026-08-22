@@ -1154,6 +1154,33 @@ const TESTS = [
     ];
   }],
 
+  // A worked cut, not a box. Both walls come down in benches and the floor they
+  // leave is uneven -- and the floor is not just drawing: the crew stand on it,
+  // so a quarrier's feet have to be on the stretch of floor it is over.
+  ['the quarry is a worked cut, benched and uneven', async () => {
+    window.__crew(0, 0, 3);
+    quickCrew();
+    run(6);
+    const s = state();
+    const c = s.quarryCut;
+    const q = s.workerPos.filter(p => p[0] === 'q').map(p => +p.split(',')[1]);
+    const feet = new Set(q);
+    return [
+      ok(c.deep - s.groundY > 100 && s.quarryW > 120,
+         'it is a cut somebody has been down for a while, not a step down',
+         `${s.quarryW} wide, ${c.deep - s.groundY} deep`),
+      ok(c.rims === 2 && c.corners > 12, 'it is a stepped outline, not four corners',
+         `${c.corners} corners, ${c.rims} at the rim`),
+      ok(new Set(c.steps).size > 1 && Math.max(...c.steps) > 0,
+         'and the floor it leaves is uneven', c.steps.join(' ')),
+      ok(c.from > s.quarryX && c.to < s.quarryX + s.quarryW,
+         'the walls eat in, so the floor is narrower than the mouth',
+         `${c.from}..${c.to} in ${s.quarryX}..${s.quarryX + s.quarryW}`),
+      ok(q.length === 3 && feet.size > 1, 'and the crew stand on it, not on one line',
+         q.join(' '))
+    ];
+  }],
+
   ['the quarry is a hole in the ground, left of the rock', async () => {
     const s = state();
     return [

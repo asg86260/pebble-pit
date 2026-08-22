@@ -7,7 +7,7 @@
 
 import {
   P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
-  ROCK_PILE_TO, PILE_GAP,
+  ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF,
   PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
 } from './config.js';
@@ -39,8 +39,8 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 // not per column: `blocked` is asked about a column thousands of times a frame.
 export function refreshPiles() {
   S.piles = [
-    { key: 'farm', from: farm.x + farm.w, to: quarry.x - PILE_GAP },
-    { key: 'quarry', from: quarry.x + quarry.w, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
+    { key: 'farm', from: farm.x + farm.w + PILE_STANDOFF.farm, to: quarry.x - PILE_GAP },
+    { key: 'quarry', from: quarry.x + quarry.w + PILE_STANDOFF.quarry, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
 }
