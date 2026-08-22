@@ -90,6 +90,7 @@ export const S = {
   // what the lab is working on, if anything: one piece at a time, and it only
   // moves while somebody is in there
   research: null,         // { key, done } -- worker-seconds put in so far
+  skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
   labOpen: false,
   labBoardOpen: false,
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },

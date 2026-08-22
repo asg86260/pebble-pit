@@ -74,6 +74,7 @@ line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
   button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
   button(box, 'lab', () => window.__lab(!S.labOpen));
+  button(box, 'sky', () => { S.skyShown = !S.skyShown; });
 });
 
 line('boulder', box => {

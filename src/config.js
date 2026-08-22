@@ -32,9 +32,15 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // strip has a size. So the world reads right to left as station, pile, station,
 // pile: the farm, its beds' crop; the quarry, what comes up it; the rock, its
 // spoil; and then the bench, the lab and the hole everything ends up in.
-// The thing in the sky. It sheds nothing and cannot be clicked -- the sparks it
-// used to give are gone. It hangs just out past the farm, over the far end of
-// the ground, so that walking left has something at the end of it.
+// The thing in the sky is **benched**: it is not in the game. It sheds nothing
+// and cannot be clicked, because the sparks it used to give are gone, and a
+// thing that hangs there doing nothing is a thing that raises a question the
+// game has no answer to.
+//
+// It is kept rather than deleted, the way the million is: everything it needs is
+// still here, and the dev panel has a switch that puts it back in the sky so it
+// can be looked at. If it ever comes back for real it will need a reason to be
+// there -- a place people go, or something worth walking out for.
 export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;

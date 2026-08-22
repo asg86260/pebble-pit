@@ -365,6 +365,12 @@ taken away to make you start again.
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
 player to come back tomorrow. No score, no summary screen, no percentage-of-a-percentage.
 
+*(The thing in the sky is **benched**, not deleted. It used to shed sparks; the sparks are gone,
+and an object that hangs there doing nothing raises a question the game has no answer to. Everything
+it needs is still in the code and the dev panel has a switch that puts it back so it can be looked
+at. If it returns it will need a reason to be there — a place people go, or something worth walking
+out for.)*
+
 *(An earlier version of this list said "a third currency". There are five now
 — dust, cores, shards, spores — and each has exactly one job, which is the rule
 that actually matters. The lab is the only place a multiplier lives.)*

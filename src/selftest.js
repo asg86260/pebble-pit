@@ -1255,6 +1255,16 @@ const TESTS = [
   // Nothing in the lab is bought outright any more. Paying starts a piece of
   // research; what finishes it is bodies standing in the lab, and an empty lab
   // makes no progress at all however much you have paid.
+  // Benched rather than deleted: everything it needs is still here, and the dev
+  // panel can put it back in the sky to be looked at. It is not in the game.
+  ['the thing in the sky is benched', async () => {
+    const s = state();
+    return [
+      ok(!s.skyShown, 'it is not in the sky'),
+      ok(typeof s.skyShown === 'boolean', 'but the switch for it still exists')
+    ];
+  }],
+
   ['research is started with shards and finished with people', async () => {
     window.__crew(0, 3);
     window.__lab(true);

@@ -178,6 +178,7 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
 // a ring around it. It does nothing at all -- it is the far end of the world,
 // and something to have walked towards.
 export function drawSky() {
+  if (!S.skyShown) return;                 // benched: see the note in config.js
   ctx.fillStyle = '#000';
   ctx.beginPath();
   ctx.arc(sky.x, sky.y, sky.r, 0, Math.PI * 2);
