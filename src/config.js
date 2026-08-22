@@ -206,6 +206,22 @@ export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the la
 export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
 export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
+// And the view is knocked about by it. A rock coming down out of the sky used
+// to arrive in silence: a few grains hopped off the banks and nothing else in
+// the yard admitted anything had happened. The view rocks and settles, which is
+// the only thing in the game that says how heavy the thing is.
+export let SHAKE_LAND = 15;      // world pixels the landing throws the view
+export const SHAKE_RATE = 0.9;   // radians a frame it rocks through
+export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
+// Nothing is standing under it when it lands. The crew get out of the footprint
+// while the last rock's celebration is on, and a body still in it once the rock
+// is in the air walks out at a pace nobody walks anywhere else.
+export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
+// A stopped crew is not a frozen crew. When the pile is full the miners stand
+// down and shift about on the spot -- slowly, and nothing like the dance, which
+// is three hops a second.
+export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
+export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
 // --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
@@ -303,6 +319,7 @@ export const TUNABLE = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
   { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5 },
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
+  { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1 },
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
   { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
   { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 }
@@ -321,6 +338,7 @@ export function tuned(key) {
     case 'CUT_MS': return CUT_MS;
     case 'LAB_WORK': return LAB_WORK;
     case 'DANCE_MS': return DANCE_MS;
+    case 'SHAKE_LAND': return SHAKE_LAND;
     default: return PILE_LIMIT[key.split('.')[1]];
   }
 }
@@ -338,6 +356,7 @@ export function tune(key, v) {
     case 'CUT_MS': CUT_MS = v; break;
     case 'LAB_WORK': LAB_WORK = v; break;
     case 'DANCE_MS': DANCE_MS = v; break;
+    case 'SHAKE_LAND': SHAKE_LAND = v; break;
     default: PILE_LIMIT[key.split('.')[1]] = v;
   }
   return tuned(key);

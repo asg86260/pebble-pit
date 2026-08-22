@@ -9,6 +9,7 @@ import {
   P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF,
   PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
+  SHAKE_RATE, SHAKE_DECAY,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
 } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
@@ -240,6 +241,39 @@ export function stepCamera() {
 export function clampCam() {
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
   S.camY = S.worldH - S.viewH;
+}
+
+// Knock the view. Something heavy has hit the ground and the ground is what the
+// whole picture is standing on, so everything in the world moves together --
+// this is not the camera being pushed, it is the yard being shaken, and it is
+// added on top of wherever you happen to be looking.
+export function shakeView(amount) {
+  if (amount <= S.shake) return;      // a small knock does not interrupt a big one
+  S.shake = amount;
+  S.shakePh = 0;
+}
+
+// One frame of it: a rock that rings and dies away rather than a jitter. It
+// mostly rocks up and down, because that is the direction the thing came from,
+// with a slower and shallower sway across. The offsets stay in world pixels and
+// are rounded to whole device pixels where they are used, so a shaking yard is
+// as crisp as a still one.
+export function stepShake() {
+  if (!S.shake) return;
+  S.shakePh += SHAKE_RATE;
+  S.shake *= SHAKE_DECAY;
+  if (S.shake < 0.2) { S.shake = 0; S.shakeX = 0; S.shakeY = 0; return; }
+
+  // It may only rock as far as there is world to rock into. The view is already
+  // pinned to the edges of the place -- the pit floor sits on the bottom of the
+  // window and the ground runs out sideways -- so an unchecked shake would show
+  // the page through underneath the pit, which is worse than no shake at all.
+  const overX = Math.max(0, S.worldW - S.viewW);
+  const room = { l: S.camX, r: overX - S.camX, u: FLOOR_MARGIN };
+  const y = Math.sin(S.shakePh) * S.shake;
+  const x = Math.sin(S.shakePh * 0.6 + 1.7) * S.shake * 0.35;
+  S.shakeY = Math.max(-room.u, y);              // down is sky, and there is plenty of it
+  S.shakeX = Math.max(-room.r, Math.min(room.l, x));
 }
 
 // The pit is drawn through a scratch canvas one pixel per grain, blitted up to
