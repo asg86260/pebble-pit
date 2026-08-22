@@ -172,7 +172,10 @@ window.__preview = n => {
 };
 window.__next = () => { S.boulder = S.boulder.map(row => row.map(() => 0)); S.chips = []; };
 window.__drop = () => { dropCore(); S.dirty = true; };
-window.__birds = () => { sendBirds(); return BIRDS.length; };   // a lot of birds now, rather than in a minute
+// a lot of birds now, rather than in a minute. It clears whatever was still up
+// there first, so a check that asks for a flock gets that flock and not it plus
+// the leavings of the last one.
+window.__birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(); return BIRDS.length; };
 window.__crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb;
   S.miners = m; S.quarriers = sp; S.farmhands = f; S.labbers = lb;

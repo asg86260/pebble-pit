@@ -13,8 +13,11 @@
 // a shade.
 
 import { P, ROCK_SKY, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED } from './config.js';
+         BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
+         BIRD_BOLT } from './config.js';
 import { S } from './state.js';
+import { pileOf } from './world.js';
+import { spawnChip, aim, bell } from './dust.js';
 import { ctx } from './render.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
@@ -119,6 +122,7 @@ export function skyReport() {
     cloudAcross: CLOUDS.map(across),
     birdY: BIRDS.map(b => Math.round(b.y)),
     birdAcross: BIRDS.map(across),
+    birdWorld: BIRDS.map(b => ({ x: skyX(b), y: Math.round(b.y / P) * P })),
     drifts: CLOUDS.every(c => c.vx > 0),
     fars: CLOUDS.map(c => +c.far.toFixed(2))
   };
@@ -144,6 +148,41 @@ export function sendBirds() {
       beat: 0.12 + Math.random() * 0.06
     });
   }
+}
+
+// A bird is worth a click. It carries nothing -- what it drops is a few grains
+// shaken loose as it bolts, aimed into the rock's own strip of ground the way
+// spoil is, so it lands where the crew already work rather than out in the far
+// yard where nothing would ever fetch it. The rest of the lot break for it too:
+// a flock that carried on in formation after one of them was startled would say
+// the click had not landed.
+export function startle(wx, wy) {
+  for (let i = 0; i < BIRDS.length; i++) {
+    const b = BIRDS[i];
+    if (Math.abs(wx - skyX(b)) > BIRD_REACH || Math.abs(wy - b.y) > BIRD_REACH) continue;
+
+    const p = pileOf('rock');
+    const near = p ? p.from : S.cx;
+    const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
+    const from = skyX(b);
+    for (let n = 0; n < BIRD_DUST; n++) {
+      const land = near + Math.abs(bell()) * (far - near) * 0.4;
+      const v = aim(from, b.y, Math.min(far, land), P);
+      // the two palest shades, and never 0: a cell of 0 is an empty one, and a
+      // grain spawned as one lands nowhere and is counted as nothing
+      spawnChip(from, b.y, v.vx, v.vy, 1 + Math.floor(Math.random() * 2), Math.min(far, land));
+    }
+
+    BIRDS.splice(i, 1);
+    for (const other of BIRDS) {
+      if (Math.abs(other.y - b.y) > P * 30) continue;    // the ones it was flying with
+      other.vx *= BIRD_BOLT;
+      other.beat *= BIRD_BOLT;
+    }
+    S.dirty = true;
+    return BIRD_DUST;
+  }
+  return 0;
 }
 
 // Both are drawn inside the world transform, so a cell is still a cell, but at
