@@ -7,7 +7,7 @@
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
-import { blocked, standOn, rockLeft, yardLeft } from './world.js';
+import { blocked, standOn, walkY, rockLeft, yardLeft } from './world.js';
 import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops } from './rock.js';
 import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
@@ -257,7 +257,7 @@ export function updateWorkers(now, dt) {
     }
 
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
-    w.y = standOn(S.groundY);
+    w.y = walkY(w.x + WORKER / 2);
 
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking

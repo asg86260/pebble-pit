@@ -1261,24 +1261,75 @@ const TESTS = [
   // whole of the signal, and it says the one thing worth saying: that somebody
   // is in there working. Paid-for research with an empty lab does not smoke.
   // The crew crossed the mouth in mid-air: the ground line stops at one rim and
-  // picks up at the other, and everyone walked the gap. The span is what makes
-  // that honest, so it has to actually reach solid ground both sides of a mouth
-  // that moves with the rock, and leave the way down clear.
+  // picks up at the other, and everyone walked the gap. The bridge is what makes
+  // that honest, so it is not scenery -- groundAt() has to put the crew on it,
+  // and it has to reach solid ground either side of a mouth that moves with the
+  // rock.
   ['there is a bridge over the quarry', async () => {
-    window.__crew(0, 0, 2);
+    window.__crew(0, 2, 1);
     run(1);
     const s = state();
-    const b = s.bridge;
+    const { x0, d0, d1, x1, top } = s.bridge;
     const mouth = [s.quarryX, s.quarryX + s.quarryW];
+    const p = s.deckWalk;                        // sampled across and past both ends
+    const angle = Math.atan((s.groundY - top) / (d0 - x0)) * 180 / Math.PI;
+
     return [
-      ok(b.x0 < mouth[0] && b.x1 > mouth[1], 'it spans the whole mouth',
-         `${b.x0}..${b.x1} over ${mouth[0]}..${mouth[1]}`),
-      ok(mouth[0] - b.x0 === b.x1 - mouth[1], 'and lands the same on either rim',
-         `${mouth[0] - b.x0} / ${b.x1 - mouth[1]}`),
-      ok((b.x0 % 6 === 0) && (b.x1 % 6 === 0), 'both ends sit on the lattice',
-         `${b.x0} ${b.x1}`),
-      ok(s.quarryFaceX > b.x0 + 6 && s.quarryFaceX < b.x1 - 12,
-         'and the way down is clear of a newel', `face ${s.quarryFaceX}`)
+      ok(d0 <= mouth[0] && d1 >= mouth[1], 'the flat deck covers the whole mouth',
+         `${d0}..${d1} over ${mouth[0]}..${mouth[1]}`),
+      ok(x0 - 0 < d0 && x1 > d1 && d0 - x0 === x1 - d1,
+         'with a ramp of the same run either side', `${d0 - x0} / ${x1 - d1}`),
+      ok(Math.abs(angle - 20) < 0.1, 'and they rise at twenty degrees',
+         `${angle.toFixed(2)} deg`),
+      ok([x0, d0, d1, x1].every(v => v % 6 === 0), 'every corner sits on the lattice',
+         `${x0} ${d0} ${d1} ${x1}`),
+      ok(p[0] === s.groundY && p[p.length - 1] === s.groundY,
+         'off either end you are back on the ground', `${p[0]} / ${p[p.length - 1]}`),
+      ok(p[1] > p[2] && p[2] > p[3], 'walking on it climbs', p.join(' ')),
+      ok(p[3] === top && p[4] === top && p[5] === top, 'levels off over the hole',
+         p.slice(3, 6).join(' ')),
+      ok(p[6] < p[7] && p[7] < p[8], 'and comes back down the other side',
+         p.slice(6).join(' ')),
+      ok(p.every(v => v <= s.groundY), 'and never dips below the ground doing it',
+         p.join(' '))
+    ];
+  }],
+
+  // Scenery would have been cheaper. This is the check that it is not scenery:
+  // somebody fetching from the far pile has to actually ride over the mouth
+  // rather than walk across the gap on nothing, the way they used to.
+  ['the crew walk the bridge rather than the air', async () => {
+    window.__crew(0, 3, 1);
+    quickCrew();
+    const s0 = state();
+    const { x0, x1 } = s0.bridge;
+
+    // something worth fetching on the far side of the hole, so a hauler has a
+    // reason to cross at all
+    const farm = s0.piles.find(p => p.key === 'farm');
+    window.__pile(Math.round((farm.from + farm.to) / 2), 40);
+
+    let seen = 0, high = null;
+    for (let i = 0; i < 80; i++) {
+      window.__fast(0.2);                       // finer than a second: a crossing is short
+      for (const w of state().workerPos) {
+        const [t, xy] = w.split(':');
+        const [x, y] = xy.split(',').map(Number);
+        if (t === 'q' || x < x0 || x > x1) continue;
+        seen++;
+        if (high === null || y < high) high = y;
+      }
+    }
+    window.__crew(0, 0);
+
+    return [
+      ok(seen > 0, 'somebody crosses the mouth at all', `${seen} samples over it`),
+      ok(high !== null && high < s0.groundY - 18,
+         'and the bridge carries them above the ground line doing it',
+         `highest top edge ${high}, ground line ${s0.groundY}`),
+      ok(high !== null && high <= s0.bridge.top - 18 + 1,
+         'right up onto the deck, not just the foot of a ramp',
+         `${high} vs deck ${s0.bridge.top - 18}`)
     ];
   }],
 

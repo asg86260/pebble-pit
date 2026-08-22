@@ -11,7 +11,7 @@
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
          SHARD_CELL, someFind } from './config.js';
 import { S, quarry } from './state.js';
-import { standOn } from './world.js';
+import { walkY } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -68,7 +68,7 @@ export function stepQuarrier(w, now) {
 
   // walk to the rim along the ground
   if (w.goal === 'to') {
-    w.y = standOn(S.groundY);
+    w.y = walkY(w.x + WORKER / 2);
     const d = rim - w.x;
     w.x += Math.sign(d) * Math.min(QUARRY_WALK, Math.abs(d));
     if (Math.abs(d) < 1) { w.goal = 'down'; w.seat = seatX(w); }

@@ -93,15 +93,38 @@ export function standOn(surfaceY) {
   return Math.round(y / P) * P;
 }
 
-// The bridge over the quarry, as a span. It is here rather than in the drawing
-// because where it starts and stops has to land on solid ground either side of a
-// mouth that moves with the rock, and that is worth being able to check.
+// The bridge over the quarry: a ramp up, a flat deck over the mouth, a ramp
+// down, and the crew walk every bit of it. Twenty degrees is a rise of four
+// cells over a run of eleven -- 19.98 degrees, which is as close to twenty as
+// this lattice gets, and both ends land on a whole cell.
+export const BRIDGE_RISE = P * 4;
+export const BRIDGE_RUN = P * 11;
+
 export function bridgeSpan() {
-  return {
-    x0: Math.round((quarry.x - P) / P) * P,                  // a cell onto the near rim
-    x1: Math.round((quarry.x + quarry.w + P) / P) * P        // and a cell onto the far one
-  };
+  const d0 = Math.round(quarry.x / P) * P;                 // the deck covers the mouth
+  const d1 = Math.round((quarry.x + quarry.w) / P) * P;
+  return { x0: d0 - BRIDGE_RUN, d0, d1, x1: d1 + BRIDGE_RUN,
+           top: S.groundY - BRIDGE_RISE };
 }
+
+// The surface underfoot at x. Everywhere in the world this is just the ground
+// line; over the quarry it is whichever part of the bridge is above that point.
+// Before the quarry is opened there is no bridge and no hole, so it is ground
+// there too.
+export function groundAt(x) {
+  if (!S.quarryOpen) return S.groundY;
+  const { x0, d0, d1, x1, top } = bridgeSpan();
+  if (x <= x0 || x >= x1) return S.groundY;
+  if (x < d0) return S.groundY - BRIDGE_RISE * (x - x0) / BRIDGE_RUN;   // up the near ramp
+  if (x > d1) return S.groundY - BRIDGE_RISE * (x1 - x) / BRIDGE_RUN;   // down the far one
+  return top;                                                           // across the deck
+}
+
+// Where a walker's top edge goes at x. Not snapped to the lattice the way
+// standOn is: on a ramp that would step the crew up in six-pixel jumps and
+// leave them floating off a line drawn straight.
+export const walkY = x => Math.min(groundAt(x), S.groundY) - WORKER;
+
 
 // --- layout -----------------------------------------------------------------
 // The world is a fixed size and never rearranges: the window is only a view onto

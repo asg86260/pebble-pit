@@ -13,7 +13,7 @@
 // keeps, so growth has to come from doing the same work sooner.
 
 import { S, lab } from './state.js';
-import { standOn } from './world.js';
+import { walkY } from './world.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE } from './config.js';
 
@@ -90,7 +90,7 @@ export function stepSmoke(now, dt) {
 export function stepLabber(w) {
   if (w.goal === 'in') return;                 // through the door, out of sight
 
-  w.y = standOn(S.groundY);
+  w.y = walkY(w.x + WORKER / 2);
   const d = labDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
   w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));

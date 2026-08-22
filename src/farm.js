@@ -9,7 +9,7 @@
 import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
-import { standOn } from './world.js';
+import { walkY } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -60,7 +60,7 @@ function cut(i, x) {
 // one farmhand, one frame
 export function stepFarmhand(w, now, dt) {
   plantBeds();
-  w.y = standOn(S.groundY);
+  w.y = walkY(w.x + WORKER / 2);
 
   if (w.goal === 'to') {
     // stand beside the bed, not on top of it, so the crop can be seen growing
