@@ -371,6 +371,48 @@ const TESTS = [
     ];
   }],
 
+  // A rock that starts halfway up the sky appears out of nothing in the middle of
+  // the window and falls the second half of the way. It has to come in over the
+  // top edge, which means the drop is measured against the window: a tall one has
+  // to be cleared by more than a short one.
+  ['a new rock comes in over the top of the window', async () => {
+    // the first frame of a fall, and how far down the screen its foot is then
+    const catchOne = () => {
+      window.__next();
+      for (let i = 0; i < 900; i++) {
+        run(1 / 60);
+        const s = state();
+        if (s.rockFall > 0) return { s, footY: (s.rockFoot - s.camY) * s.zoom };
+      }
+      return null;
+    };
+
+    window.__crew(1, 0);
+    haveRock();
+    const near = catchOne();
+    const landed = haveRock();
+    const after = state();
+
+    // and again on a window half as tall again, which has further to clear
+    let tall = null;
+    await asScreen(1000, 1300, 1, async () => { haveRock(); tall = catchOne(); haveRock(); });
+    window.__crew(0, 0);
+
+    return [
+      ok(near !== null, 'a rock is caught on its way down'),
+      ok(near && near.footY < 0, 'the whole of it starts above the top of the window',
+         near && `its foot is ${Math.round(near.footY)}px down the screen`),
+      ok(landed && after.rockFoot === after.groundY,
+         'and it still lands on the ground line',
+         `foot ${after.rockFoot}, ground ${after.groundY}`),
+      ok(tall !== null && tall.footY < 0, 'a taller window is cleared too',
+         tall && `foot ${Math.round(tall.footY)}px down a ${tall.s.H}px window`),
+      ok(tall && near && tall.s.rockFall > near.s.rockFall,
+         'and it is dropped from higher up to do it',
+         tall && near && `${near.s.rockFall} on ${near.s.H}px, ${tall.s.rockFall} on ${tall.s.H}px`)
+    ];
+  }],
+
   // The next rock lands on the ground the crew were standing on, so they get out
   // of its footprint before it arrives rather than being buried by it.
   ['the crew get out from under the next rock', async () => {
