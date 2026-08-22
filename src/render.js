@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, PIT_H, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
+import { P, PIT_H, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -15,6 +15,7 @@ import { coreHome } from './core.js';
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
 import { underground } from './quarry.js';
+import { indoors } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
 import { drawAir } from './air.js';
@@ -50,27 +51,21 @@ export function drawTriangle(x, y, r, hollow) {
 export function drawQuarry() {
   if (!S.quarryOpen) return;
   const { x, y, w, h } = quarry;
+  const E = 2;                             // how thick a cut edge is
 
-  // An open cut, not a shaft: a straight-sided hole with a floor you can see the
-  // crew standing on. The ground line stops at each rim and picks up after it,
-  // the same way it does at the pit.
+  // An open cut, not a shaft. Drawn as three filled bars rather than a stroked
+  // path with a lip laid over each rim: a stroke straddles the line it is on, so
+  // it half-covered the ground line and the lips then doubled up on top of that,
+  // which is the thickened, overlapping mess along each rim.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y - 2, w, h + 2);        // the hole is empty air, not a black slab
-
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x + 1, y - 1);
-  ctx.lineTo(x + 1, y + h - 1);            // near wall
-  ctx.lineTo(x + w - 1, y + h - 1);        // the floor they work
-  ctx.lineTo(x + w - 1, y - 1);            // far wall
-  ctx.stroke();
-
-  // the ground either side of it, thickened into a lip you could stand on
+  ctx.fillRect(x, y - E, w, h + E);         // the hole is empty air, and it cuts
+                                            // the ground line cleanly
   ctx.fillStyle = '#000';
-  ctx.fillRect(x - P * 3, y, P * 3, 3);
-  ctx.fillRect(x + w, y, P * 3, 3);
+  ctx.fillRect(x, y - E, E, h + E);         // near wall
+  ctx.fillRect(x + w - E, y - E, E, h + E); // far wall
+  ctx.fillRect(x, y + h - E, w, E);         // the floor they work
 }
+
 
 
 // a diamond: no longer a currency mark, kept because it is a shape worth having
@@ -91,36 +86,54 @@ export function drawDiamond(x, y, r) {
 export function drawFarm() {
   if (!S.farmOpen) return;
 
-  // A bed is a bed before anything is growing in it. It used to be a twelve by
-  // three dash on the ground line, which meant an untended farm was a row of
-  // scratches you could walk past without noticing there was a farm there.
+  // A bed is a structure, not a scratch. It was two cells tall on a ground line
+  // in a world where the rock is forty, so a farm nobody was working read as a
+  // row of bumps you would not look twice at. Four cells across, three deep,
+  // with a post standing proud at each end and the earth turned over between
+  // them -- and something always growing in it, even untended.
+  // The farm needs a silhouette or it is just texture on the ground line: a post
+  // at either end of the row, with a stub of rail running off it, so the plot
+  // reads as somewhere fenced and kept even when nothing is growing.
+  const postH = P * 10, gate = P * 5;
+  for (const px of [farm.x - gate, farm.x + farm.w + gate - P * 2]) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(px, S.groundY - postH, P * 2, postH);
+    const inward = px < farm.x ? P * 2 : -P * 3;
+    ctx.fillRect(px + inward, S.groundY - postH + P * 2, P * 3, P);
+    ctx.fillRect(px + inward, S.groundY - postH + P * 5, P * 3, P);
+  }
+
   for (let i = 0; i < S.beds.length; i++) {
     const x = Math.round(bedX(i) / P) * P;
-    const soil = S.groundY - P * 2;
+    const soil = S.groundY - P * 3;
 
     ctx.fillStyle = '#000';
-    ctx.fillRect(x - P * 2, soil, P * 4, P * 2);       // the plot, raised off the ground
+    ctx.fillRect(x - P * 2, soil, P * 4, P * 3);        // the plot
+    ctx.fillRect(x - P * 2, soil - P, P, P);            // a post at each end
+    ctx.fillRect(x + P, soil - P, P, P);
     ctx.fillStyle = '#fff';
-    ctx.fillRect(x - P, soil, P, P);                   // and the earth turned over in it
-    ctx.fillRect(x + P, soil, P, P);
+    ctx.fillRect(x - P, soil, P, P);                    // earth turned over
+    ctx.fillRect(x + P * 0, soil + P, P, P);
     ctx.fillStyle = '#000';
 
     const grown = S.beds[i];
-    if (grown <= 0.02) continue;
+    const top = S.groundY - P * 3 - Math.round(FARM_H * grown / P) * P;
 
-    // the stalk, a cell wide so it and the spore on it are the same thing wide
-    const top = S.groundY - Math.round(FARM_H * grown / P) * P;
-    ctx.fillRect(x, top, P, soil - top);
+    // even an untended bed has something in it
+    if (grown <= 0.02) {
+      ctx.fillRect(x, soil - P, P, P);
+      continue;
+    }
 
-    // a leaf either side as it comes on, always below the tip
+    ctx.fillRect(x, top, P, soil - top);                // the stalk
     const tall = soil - top;
-    if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);
+    if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);     // a leaf either side
     if (tall > P * 5) ctx.fillRect(x + P, top + P * 4, P, P);
 
-    // and the spore that grew on it, sitting at the tip until it is cut
     if (grown >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
   }
 }
+
 
 
 // The one mark for each kind of thing, wherever it is being drawn: lying on the
@@ -208,6 +221,20 @@ export function drawSky() {
   ctx.beginPath();
   ctx.arc(sky.x, sky.y, sky.r + P * 2, 0, Math.PI * 2);
   ctx.stroke();
+}
+
+// Smoke off the lab's chimney. It is the only thing that says the place is being
+// worked, because the crew are inside it -- so it is worth its own few pixels.
+export function drawSmoke() {
+  for (const p of S.smoke) {
+    const k = p.t / SMOKE_LIFE;
+    const size = Math.round(P * (1 + k * 1.4));
+    ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
 }
 
 // A station whose pile is full has stopped, and says so: a bar over it, which is
@@ -393,7 +420,7 @@ export function drawBench() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    if (underground(w)) continue;          // down the quarry, not on the surface
+    if (underground(w) || indoors(w)) continue;   // out of sight: in the lab, or below
 
     if (w.type === 'labber') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
@@ -466,6 +493,7 @@ export function draw() {
   drawFarm();
   drawSky();
   drawLab();
+  drawSmoke();
   ctx.fillStyle = '#000';
 
   const deep = depthOf();

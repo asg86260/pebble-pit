@@ -233,7 +233,7 @@ const TESTS = [
       ok(s.pitCapacity > (3624 / s.pitGrain) * (276 / s.pitGrain),
          'it holds the hole and then some, for the heap over the mouth',
          `${s.pitCapacity} at grain ${s.pitGrain}`),
-      ok(s.pitCapacity < (3624 / s.pitGrain) * (276 / s.pitGrain) * 1.2,
+      ok(s.pitCapacity < (3624 / s.pitGrain) * (276 / s.pitGrain) * 1.5,
          'but the heap is a heap, not another hole', `${s.pitCapacity}`)
     ];
   }],
@@ -1257,6 +1257,39 @@ const TESTS = [
   // makes no progress at all however much you have paid.
   // Benched rather than deleted: everything it needs is still here, and the dev
   // panel can put it back in the sky to be looked at. It is not in the game.
+  // The crew go inside the lab, so there is nothing to watch. The chimney is the
+  // whole of the signal, and it says the one thing worth saying: that somebody
+  // is in there working. Paid-for research with an empty lab does not smoke.
+  ['the lab smokes while it is being worked', async () => {
+    window.__grant({ shards: 20, cores: 9 });
+    window.__lab(true);
+    window.__crew(0, 2);
+    run(1);
+    const idle = state();
+
+    document.querySelectorAll('#labshop button')[0].click();
+    await sleep(120);
+    run(3);
+    const paidButEmpty = state();
+
+    window.__assign('labbers', 1);
+    window.__assign('labbers', 1);
+    run(4);
+    const worked = state();
+    window.__crew(0, 0);
+    window.__abandon();                          // do not leave it in flight
+    return [
+      ok(idle.smoke === 0, 'an idle lab does not smoke', `${idle.smoke}`),
+      ok(paidButEmpty.smoke === 0, 'nor does one that is paid for and empty',
+         `${paidButEmpty.smoke}`),
+      ok(worked.smoke > 0, 'it smokes once somebody is in there on it',
+         `${worked.smoke} puffs`),
+      ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 2,
+         'and they are inside it, not standing about in front',
+         JSON.stringify(worked.crewDetail.filter(d => d[0] === 'l')))
+    ];
+  }],
+
   ['the thing in the sky is benched', async () => {
     const s = state();
     return [
@@ -1266,6 +1299,7 @@ const TESTS = [
   }],
 
   ['research is started with shards and finished with people', async () => {
+    window.__abandon();                          // whatever ran before us
     window.__crew(0, 3);
     window.__lab(true);
     window.__grant({ shards: 60, spores: 60 });

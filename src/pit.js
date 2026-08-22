@@ -32,8 +32,16 @@ export function setPitGrain(step) {
 export function wirePit() {
   pit.blocked = null;                      // nothing bars the pile, it just fills
   pit.repose = false;                      // and inside the hole it lies flat
-  // but what stands above the brim is a heap, and leans away from the lip
-  pit.ceiling = c => PIT_H / pit.p + Math.max(0, PIT_HEAP / pit.p - c * PIT_HEAP_SLOPE);
+  // What stands above the brim is a heap in the middle of the hole, and nothing
+  // at either end. Two rules, and they are both about not lying to you:
+  //
+  //   the hole fills first  -- nothing goes over the brim while there is still
+  //                            room down there, so a pile above the ground line
+  //                            always means the hole underneath it is full;
+  //   and it heaps from the -- so it tapers away to nothing at the lip instead
+  //   middle                   of standing there as a wall against the ground.
+  pit.holeCap = pit.cols * (PIT_H / pit.p);
+  pit.ceiling = c => S.stored < pit.holeCap ? PIT_H / pit.p : heapCeiling(c);
   measurePit();
   if (!pit.painter) pit.painter = makePainter(pit);
   pit.onPut = pit.painter.mark;            // every change is told to the painter
@@ -63,12 +71,18 @@ export function bankDust(x, shade = 1) {
 // hole fills to the brim everywhere, and above the brim only as much as the
 // heap is allowed to lean. Counted once when the bed changes shape rather than
 // every time somebody pays for something.
+// how high a column may stand once the hole beneath it is full
+function heapCeiling(c) {
+  const fromEnd = Math.min(c, pit.cols - 1 - c);
+  return PIT_H / pit.p + Math.min(PIT_HEAP / pit.p, fromEnd * PIT_HEAP_SLOPE);
+}
+
 export function measurePit() {
   let n = 0;
   for (let c = 0; c < pit.cols; c++) {
     // a column holds every row *below* its ceiling, so a ceiling of 71.4 is
     // seventy-two rows and not seventy-one
-    n += Math.min(pit.rows, Math.ceil(pit.ceiling ? pit.ceiling(c) : pit.rows));
+    n += Math.min(pit.rows, Math.ceil(pit.ceiling ? heapCeiling(c) : pit.rows));
   }
   pit.cap = n;
   return n;

@@ -14,7 +14,8 @@
 
 import { S, lab } from './state.js';
 import { standOn } from './world.js';
-import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_STOOP } from './config.js';
+import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK,
+         SMOKE_MS, SMOKE_LIFE, SMOKE_RISE } from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -51,32 +52,48 @@ export function stepLab(dt) {
   S.dirty = true;
 }
 
-// A body in the lab. It walks there, stands along the front of it, and bends
-// over the bench on its own rhythm -- the same idea as the quarry and the beds:
-// whether a place is productive and whether it looks worked are two questions.
+// A body in the lab walks to the door and goes in. There is nothing to watch
+// after that, on purpose: what a lab looks like from outside is a chimney.
 export function newLabber() {
   return {
-    type: 'labber', goal: 'to', stoopAt: 0, lunge: 0,
-    bob: Math.random() * Math.PI * 2,
+    type: 'labber', goal: 'to',
     x: lab.x, y: 0
   };
 }
 
-export function stepLabber(w, now) {
-  const n = Math.max(1, S.labbers);
-  const i = Math.max(0, S.workers.filter(o => o.type === 'labber').indexOf(w));
-  const seat = lab.x + P + ((i + 0.5) / n) * (lab.w - P * 2 - WORKER);
+// the door, and who is through it
+export const labDoor = () => lab.x + lab.w * 0.62;
+export const indoors = w => w.type === 'labber' && w.goal === 'in';
+
+// A puff off the chimney, and only when there is someone in there working on
+// something. The chimney is the whole of the signal, because the crew are inside
+// where you cannot see them.
+export function stepSmoke(now, dt) {
+  if (S.research && S.labbers && now >= S.smokeAt) {
+    S.smoke.push({
+      x: lab.x + lab.w * 0.28 + (Math.random() - 0.5) * P,
+      y: lab.y,
+      drift: (Math.random() - 0.5) * 0.25,
+      t: 0
+    });
+    S.smokeAt = now + SMOKE_MS / Math.min(4, S.labbers);
+  }
+  for (let i = S.smoke.length - 1; i >= 0; i--) {
+    const p = S.smoke[i];
+    p.t += dt / 1000;
+    p.y -= SMOKE_RISE;
+    p.x += p.drift;
+    if (p.t > SMOKE_LIFE) S.smoke.splice(i, 1);
+  }
+}
+
+export function stepLabber(w) {
+  if (w.goal === 'in') return;                 // through the door, out of sight
 
   w.y = standOn(S.groundY);
-  const d = seat - w.x;
-  if (Math.abs(d) > 1) { w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d)); return; }
-
-  w.lunge *= 0.84;
-  if (now >= w.stoopAt) {
-    w.lunge = 1;
-    w.stoopAt = now + LAB_STOOP * (0.75 + Math.random() * 0.6);
-  }
-  w.x = seat + Math.sin(now / 700 + w.bob) * P * 0.7;
+  const d = labDoor() - WORKER / 2 - w.x;
+  if (Math.abs(d) < 1) { w.goal = 'in'; return; }
+  w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
 }
 
 export const LAB_UPGRADES = [

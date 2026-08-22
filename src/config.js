@@ -242,7 +242,13 @@ export const FARM_WALK = 1.1;
 // game asks.
 export const LAB_EFFORT = 1;      // a worker does one second of work a second
 export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
-export const LAB_STOOP = 900;     // how often one of them bends over the bench
+// The crew go *inside* the lab, so there is nothing to watch. What tells you it
+// is being worked is the chimney: it smokes while somebody is in there on a
+// piece of research, and harder the more of them there are. An idle lab, or a
+// lab with research paid for and nobody in it, does not smoke at all.
+export const SMOKE_MS = 380;      // between puffs, with one body in there
+export const SMOKE_LIFE = 2.4;    // seconds a puff lasts
+export const SMOKE_RISE = 0.4;    // and how fast it goes up
 
 export const TEND_STOOP = 780;
 export let CUT_MS = 700;

@@ -60,7 +60,7 @@ that paints the dust, which is the only thing that tiles: a triangle fills half 
 neatly it stacks, so a heap of triangles is half air by geometry. The **shapes are kept for the
 counter and the shop**, where there is room and white paper behind them, so the shape and the
 colour are learned together. The cave is a shaft that narrows
-as it goes down, the farm is a stalk per bed with a spore on top when it is ripe, the lab is a
+as it goes down, the farm is a row of raised beds with a stalk out of each tended one, the lab is a
 block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
 ## The lab
@@ -462,9 +462,10 @@ running out of world.
 **Once the hole is full the pile keeps going**, heaping up over the mouth rather than stopping
 dead at the ground line — but only over the mouth. It is the same bed of sand and the bed is only
 as wide as the hole, so the pile can rise but it can never get out onto the ground. Inside the hole
-it lies level, because a hole fills up; above the brim it is a heap, highest at the lip where it is
-tipped in and leaning away down the length of the hole. Without that lean it filled the near end to
-the very top and stopped, which is a wall rather than a pile.
+it lies level, because a hole fills up. And nothing goes over the brim while there is still room
+down there, so a pile standing above the ground line always means the hole underneath it is full.
+What stands above it heaps **from the middle**, tapering away to nothing at either end — a pile at
+the lip would be a wall against the ground, which is not what a pile does.
 
 **The pile is the dust, not a picture of it.** One grain is one dust, always, drawn the same
 size as dust anywhere else, and paying takes exactly as many grains back out as the counter

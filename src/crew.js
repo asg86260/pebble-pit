@@ -234,7 +234,7 @@ export function updateWorkers(now, dt) {
 
     if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
-    if (w.type === 'labber') { stepLabber(w, now); continue; }
+    if (w.type === 'labber') { stepLabber(w); continue; }
 
     // hauler: fetch a loose core if there is one, else scoop dust, then tip it
     // all over the ledge
