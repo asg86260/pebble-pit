@@ -20,6 +20,13 @@ export const S = {
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
   camTo: null,            // somewhere the view is gliding to, or null
+  // A knock the view is still rocking through, and where that has it this
+  // frame. It is not part of the camera: the camera is where you are looking
+  // and this is the ground moving under it, so it is added at the last moment
+  // and clamped by nothing.
+  shake: 0,               // how much of a knock is left, in world pixels
+  shakePh: 0,             // where in the rocking it is
+  shakeX: 0, shakeY: 0,   // and what that comes to this frame
   worldW: 0, worldH: 0,   // the world is wider than the window; the pit runs off it
 
   // --- where things stand ---

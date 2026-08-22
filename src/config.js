@@ -51,6 +51,11 @@ export const TO_LAB = 840;       // rock centre to the lab
 export const TO_LEDGE = 1080;    // rock centre to the lip of the pit
 export const ROCK_PILE_TO = 696; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
+// And bare ground kept between a station and the *start* of its own pile, so
+// the heap stands off the thing that made it instead of burying it. The farm
+// clears its last bed; the quarry clears the far ramp of the bridge, which
+// comes down well past the mouth. The rock has ROCK_CLEAR for the same job.
+export const PILE_STANDOFF = { farm: P * 5, quarry: P * 12 };
 export const GROUND_LEFT = 2400; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
@@ -201,13 +206,40 @@ export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the la
 export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
 export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
+// And the view is knocked about by it. A rock coming down out of the sky used
+// to arrive in silence: a few grains hopped off the banks and nothing else in
+// the yard admitted anything had happened. The view rocks and settles, which is
+// the only thing in the game that says how heavy the thing is.
+export let SHAKE_LAND = 15;      // world pixels the landing throws the view
+export const SHAKE_RATE = 0.9;   // radians a frame it rocks through
+export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
+// Nothing is standing under it when it lands. The crew get out of the footprint
+// while the last rock's celebration is on, and a body still in it once the rock
+// is in the air walks out at a pace nobody walks anywhere else.
+export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
+// A stopped crew is not a frozen crew. When the pile is full the miners stand
+// down and shift about on the spot -- slowly, and nothing like the dance, which
+// is three hops a second.
+export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
+export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
 // --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
 // come back out with a shard. The trip time is the whole of the mechanic: it is
 // what an upgrade shortens, and what makes sending somebody in a decision.
-export const QUARRY_W = 108;       // the mouth, in world pixels
-export const QUARRY_H = 78;
+export const QUARRY_W = 156;       // the mouth, in world pixels
+export const QUARRY_H = 126;
+// It is a worked cut, not a hole somebody cut with a square. Both walls come
+// down in benches and the floor they leave is uneven, which is what months of
+// working a face does to one. The shape is a pattern rather than a scatter: a
+// quarry that reshuffled itself every frame would be a different quarry every
+// time you looked at it, so this is worked out once and kept.
+// Each bench is [how far in, how far down], as a share of the mouth. The drops
+// are normalised, so they always land the last one exactly on the floor.
+export const QUARRY_NEAR_BENCH = [[0.00, 0.30], [0.05, 0.22], [0.03, 0.20], [0.03, 0.28]];
+export const QUARRY_FAR_BENCH = [[0.00, 0.36], [0.04, 0.24], [0.03, 0.22], [0.02, 0.18]];
+export const QUARRY_FLOOR_STEP = 4;   // cells of floor per stretch
+export const QUARRY_FLOOR_JAG = [0, 1, 2, 1, 0, 2, 1, 0];  // and cells of relief on each
 // How often a quarrier swings, as opposed to how often the face gives anything
 // up. They were the same number, so at pace 0 a worker hit the rock once every
 // eleven seconds and stood there the rest of the time. A quarry should look
@@ -250,8 +282,61 @@ export const SMOKE_MS = 380;      // between puffs, with one body in there
 export const SMOKE_LIFE = 2.4;    // seconds a puff lasts
 export const SMOKE_RISE = 0.4;    // and how fast it goes up
 
+// --- the sky ----------------------------------------------------------------
+// Clouds and birds, and nothing else up there. They are the far end of the
+// parallax the dust already does close up, and they are deliberately faint: a
+// cloud is two greys well lighter than the lightest rock shade, because the six
+// shades mean depth of rock and nothing in the sky is allowed to borrow them.
+export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in view
+export const CLOUD_TONE = '#efefef';
+export const CLOUD_UNDER = '#e3e3e3';   // the bottom bar, so a cloud has an underside
+export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off
+export const BIRD_TONE = '#5f5f5f';
+export const BIRD_GAP = 26000;    // milliseconds between one lot of birds and the next
+export const BIRD_FLOCK = 4;      // at most this many in a lot
+// A bird can be clicked, and shakes a few grains loose as it bolts. It is the
+// one thing in the sky you can touch, and the amount is deliberately small: it
+// is a thing to notice, not a thing to farm -- they cross when they cross, and
+// no upgrade has anything to say about them.
+export const BIRD_REACH = P * 5;  // how near the click has to be, in world pixels
+export const BIRD_DUST = 5;       // grains shaken loose
+export const BIRD_BOLT = 1.5;     // and how much the rest of the lot quicken
+export const BIRD_SPEED = 1.6;    // world pixels a frame: a lot crosses the view in about a quarter of a minute
+
 export const TEND_STOOP = 780;
 export let CUT_MS = 700;
+
+// --- the air ----------------------------------------------------------------
+// Nothing stands in the background of this game: no hills, no clouds, no
+// furniture of any kind. So the dust hanging in the air is load-bearing rather
+// than decorative -- it is the only thing the view has to move against, and the
+// only thing keeping a yard nobody is working in from reading as a still
+// picture.
+//
+// It hangs in three bands at different distances. One number sets everything
+// about a band at once, because that is what distance does: the far ones are
+// pale, small, slow, and barely take the camera's movement at all; the near
+// ones are darker, bigger, and sweep past. Splitting those apart only lets a
+// band drift out of agreement with itself.
+export const AIR_BANDS = [
+  //  take: the share of the camera's movement the band takes, 1 being the yard itself
+  { take: 0.20, tone: '#dedede', size: 1, pace: 0.35, share: 0.44, front: false },
+  { take: 0.46, tone: '#c2c2c2', size: 2, pace: 0.62, share: 0.36, front: false },
+  // the near band is drawn *over* the world rather than behind it, which is the
+  // whole of why the yard has any depth: dust passes in front of the rock
+  { take: 0.90, tone: '#a6a6a6', size: 3, pace: 1.00, share: 0.20, front: true }
+];
+export const AIR_FLOOR = 95;      // motes over a bare yard, before anything is lying about
+export const AIR_PER_DUST = 22;   // and one more for every this much dust on the ground
+export const AIR_CAP = 420;       // however much is lying about
+export const AIR_RISE = 0.10;     // screen pixels a mote climbs in a frame
+export const AIR_SINK = 0.06;     // and the heavier grit that goes the other way
+export const AIR_GRIT = 0.16;     // the share of the air that is that grit
+export const AIR_WOBBLE = 0.16;   // how far a mote swims either side of its drift
+export const AIR_GUST = 0.34;     // and the wind the whole field leans on
+export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
+export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
+export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches
 
 // --- turning the knobs ------------------------------------------------------
 // A handful of these are `let` rather than `const` so a dev panel can move them
@@ -273,6 +358,7 @@ export const TUNABLE = [
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
   { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5 },
   { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
+  { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1 },
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
   { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
   { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 }
@@ -291,6 +377,7 @@ export function tuned(key) {
     case 'CUT_MS': return CUT_MS;
     case 'LAB_WORK': return LAB_WORK;
     case 'DANCE_MS': return DANCE_MS;
+    case 'SHAKE_LAND': return SHAKE_LAND;
     default: return PILE_LIMIT[key.split('.')[1]];
   }
 }
@@ -308,6 +395,7 @@ export function tune(key, v) {
     case 'CUT_MS': CUT_MS = v; break;
     case 'LAB_WORK': LAB_WORK = v; break;
     case 'DANCE_MS': DANCE_MS = v; break;
+    case 'SHAKE_LAND': SHAKE_LAND = v; break;
     default: PILE_LIMIT[key.split('.')[1]] = v;
   }
   return tuned(key);

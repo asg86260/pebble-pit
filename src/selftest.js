@@ -12,6 +12,7 @@ function ok(cond, what, detail = '') {
   return { pass: false, what, detail };
 }
 
+const P = 6;                                   // a cell, for the piles
 const WORKER = 18;                             // a worker square, for tolerances
 const canvas = () => document.getElementById('c');
 const board = () => document.getElementById('board');
@@ -332,6 +333,98 @@ const TESTS = [
          `foot ${after.rockFoot}, ground ${after.groundY}`),
       ok(after.apronClear, 'clearing the ground it needs as it lands',
          `${after.apronDust} grains in the apron`)
+    ];
+  }],
+
+  // A rock is a heavy thing coming out of the sky, and until it knocked the view
+  // about it landed in silence. The shake has to die away on its own, and it has
+  // to keep the picture on whole device pixels while it does it.
+  ['the landing knocks the yard about', async () => {
+    window.__crew(2, 0);
+    haveRock();
+    window.__next();
+    let peak = 0, atLanding = null, quietOnTheWayDown = true;
+    for (let i = 0; i < 900 && atLanding === null; i++) {
+      run(1 / 60);
+      const s = state();
+      if (s.rockFall > 0 && s.shake > 0) quietOnTheWayDown = false;
+      peak = Math.max(peak, s.shake);
+      if (s.rock > 0 && !s.rockFall && peak > 0) atLanding = s;
+    }
+    // and then watch it ring: the offsets are read after the landing, because
+    // the frame it lands on is the frame the shake is set, not spent
+    const moved = new Set();
+    for (let i = 0; i < 60; i++) { run(1 / 60); moved.add(state().shakeOff.join()); }
+    const still = runUntil(() => state().shake === 0, 5);
+    const rest = state();
+    window.__crew(0, 0);
+    return [
+      ok(peak > 0, 'the landing throws the view', `${peak} world pixels of it`),
+      ok(atLanding !== null && quietOnTheWayDown,
+         'and it is the landing that does it, not the fall'),
+      ok(moved.size > 2, 'it rocks rather than jumping once',
+         `${moved.size} different offsets`),
+      ok(still && rest.shake === 0, 'and it settles back on its own',
+         `${rest.shake} left`),
+      ok(rest.shakeOff[0] === 0 && rest.shakeOff[1] === 0,
+         'leaving the view exactly where it was', rest.shakeOff.join())
+    ];
+  }],
+
+  // The next rock lands on the ground the crew were standing on, so they get out
+  // of its footprint before it arrives rather than being buried by it.
+  ['the crew get out from under the next rock', async () => {
+    window.__crew(4, 3);
+    quickCrew();
+    haveRock();
+    window.__next();
+    const inZone = s => !s.dropZone ? [] : s.workerPos.filter(w => {
+      const x = +w.split(':')[1].split(',')[0];
+      return x + WORKER > s.dropZone[0] && x < s.dropZone[1];
+    });
+    let told = false, late = 0, landed = null;
+    for (let i = 0; i < 900 && landed === null; i++) {
+      run(1 / 60);
+      const s = state();
+      if (s.dropZone) told = true;
+      // the last of the fall is when it matters: by then the ground is spoken for
+      if (s.rockFall > 0 && s.rockFall < 200 && inZone(s).length) late++;
+      if (s.rock > 0 && !s.rockFall && told) landed = s;
+    }
+    const under = landed ? inZone({ ...landed, dropZone: landed.dropZone }) : ['no rock'];
+    window.__crew(0, 0);
+    return [
+      ok(told, 'they are told where it is coming down before it is there'),
+      ok(landed !== null, 'and it comes down'),
+      ok(late === 0, 'nobody is still in the way as it drops',
+         `${late} frames with somebody in it`),
+      ok(under.length === 0, 'and nobody is under it when it lands', under.join(' '))
+    ];
+  }],
+
+  // A crew that has been stood down is still a crew standing there. Frozen
+  // squares read as a bug; shifting about reads as waiting.
+  ['a stood-down crew shifts about', async () => {
+    window.__crew(3, 0);
+    haveRock();
+    const strip = state().piles.find(p => p.key === 'rock');
+    for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
+    const full = runUntil(() => state().pileFull.rock, 30);
+    const before = state();
+    const poses = new Set();
+    for (let i = 0; i < 240; i++) {
+      run(1 / 60);
+      poses.add(state().workerPos.filter(w => w[0] === 'm').join('|'));
+    }
+    const after = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(full, 'the rock\'s pile fills and the crew stand down'),
+      ok(after.rock === before.rock, 'nothing more comes off the rock',
+         `${before.rock} -> ${after.rock}`),
+      ok(poses.size > 10, 'but they are not stood frozen',
+         `${poses.size} poses across four seconds`)
     ];
   }],
 
@@ -1154,6 +1247,33 @@ const TESTS = [
     ];
   }],
 
+  // A worked cut, not a box. Both walls come down in benches and the floor they
+  // leave is uneven -- and the floor is not just drawing: the crew stand on it,
+  // so a quarrier's feet have to be on the stretch of floor it is over.
+  ['the quarry is a worked cut, benched and uneven', async () => {
+    window.__crew(0, 0, 3);
+    quickCrew();
+    run(6);
+    const s = state();
+    const c = s.quarryCut;
+    const q = s.workerPos.filter(p => p[0] === 'q').map(p => +p.split(',')[1]);
+    const feet = new Set(q);
+    return [
+      ok(c.deep - s.groundY > 100 && s.quarryW > 120,
+         'it is a cut somebody has been down for a while, not a step down',
+         `${s.quarryW} wide, ${c.deep - s.groundY} deep`),
+      ok(c.rims === 2 && c.corners > 12, 'it is a stepped outline, not four corners',
+         `${c.corners} corners, ${c.rims} at the rim`),
+      ok(new Set(c.steps).size > 1 && Math.max(...c.steps) > 0,
+         'and the floor it leaves is uneven', c.steps.join(' ')),
+      ok(c.from > s.quarryX && c.to < s.quarryX + s.quarryW,
+         'the walls eat in, so the floor is narrower than the mouth',
+         `${c.from}..${c.to} in ${s.quarryX}..${s.quarryX + s.quarryW}`),
+      ok(q.length === 3 && feet.size > 1, 'and the crew stand on it, not on one line',
+         q.join(' '))
+    ];
+  }],
+
   ['the quarry is a hole in the ground, left of the rock', async () => {
     const s = state();
     return [
@@ -1360,6 +1480,119 @@ const TESTS = [
       ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 2,
          'and they are inside it, not standing about in front',
          JSON.stringify(worked.crewDetail.filter(d => d[0] === 'l')))
+    ];
+  }],
+
+  // Clouds and birds are the only things in the game that are purely scenery, so
+  // the one thing they must never do is get in the way: they stay in the strip of
+  // sky above the height a rock can reach, and they stay in the view when it is
+  // scrolled, which is what the parallax is for -- a fixed sky would slide off the
+  // side of the world and leave an empty one behind.
+  ['the sky has clouds in it, and birds now and then', async () => {
+    const before = state().sky;
+    run(2);
+    window.__look(0);
+    run(2);
+    const near = state().sky;
+    window.__look(1e6);                          // the far end of the world
+    run(2);
+    const far = state().sky;
+    window.__birds();
+    const flock = state().sky;
+    run(4);
+    const later = state().sky;
+
+    const above = s => s.cloudY.every(y => y <= s.low) && s.cloudY.every(y => y >= s.top);
+    const inView = s => s.cloudAcross.filter(x => x > -200 && x < state().viewW).length;
+
+    return [
+      ok(before.clouds === near.clouds && near.clouds === far.clouds,
+         'the same few clouds are kept wherever you are looking',
+         `${before.clouds} / ${near.clouds} / ${far.clouds}`),
+      ok(above(near) && above(far), 'they keep to the sky above the rock',
+         `${near.low} floor, lowest ${Math.max(...near.cloudY)}`),
+      ok(inView(near) >= 2 && inView(far) >= 2, 'and there are some in view at either end',
+         `${inView(near)} / ${inView(far)}`),
+      ok(far.fars.every(f => f > 0 && f < 1), 'each one sits at its own distance',
+         far.fars.join(' ')),
+      ok(near.drifts, 'and they drift'),
+      ok(flock.birds >= 2 && flock.birds <= 4, 'birds come in twos and threes',
+         `${flock.birds}`),
+      ok(flock.birdY.every(y => y <= flock.low + 20), 'flying no lower than the clouds do',
+         flock.birdY.join(' ')),
+      ok(later.birds >= flock.birds &&
+         flock.birdAcross.every((x, i) => x !== later.birdAcross[i]),
+         'and every one of them is crossing', flock.birdAcross.join(' ') + ' -> ' + later.birdAcross.join(' '))
+    ];
+  }],
+
+  ['the air thickens with what is lying about, and keeps out of the ground', async () => {
+    // The air is the only thing in the background of this game, so it is the
+    // only thing that says the view is moving. What it must not do is drift
+    // about inside solid ground, and what it must do is answer the yard.
+    window.__clearFloor();
+    run(4);
+    const bare = state();
+
+    window.__pile(bare.rockX + 300, 2400);       // a heap where the spoil goes
+    run(20);                                     // the air comes on a mote at a time
+    const heaped = state();
+
+    window.__clearFloor();
+    run(20);
+    const swept = state();
+
+    return [
+      ok(bare.air > 0, 'a bare yard still has dust hanging in it', `${bare.air}`),
+      // what the yard asks for, not what the screen is carrying: a stocked pit
+      // asks for more than the cap allows, and by then the count says nothing
+      ok(heaped.airWant > bare.airWant, 'a heap in the yard puts more of it up',
+         `${bare.airWant} bare, ${heaped.airWant} heaped`),
+      ok(swept.airWant < heaped.airWant, 'and carrying the heap away thins it again',
+         `${heaped.airWant} heaped, ${swept.airWant} swept`),
+      ok(heaped.airFront > 0, 'some of it passes in front of the yard, not behind it',
+         `${heaped.airFront} of ${heaped.air}`),
+      ok(bare.airUnder === 0 && heaped.airUnder === 0 && swept.airUnder === 0,
+         'and none of it is under the ground',
+         `${bare.airUnder}/${heaped.airUnder}/${swept.airUnder}`)
+    ];
+  }],
+
+  // The one thing in the sky you can touch. It is worth a few grains, and the
+  // grains have to be worth having: aimed into the rock's own strip of ground,
+  // where the haulers already work, rather than dropped in the far yard where
+  // nobody would ever go and fetch them.
+  ['a bird can be startled, and drops a little dust', async () => {
+    window.__crew(0, 0, 0, 0);                   // nobody to fetch it while we watch
+    window.__clearFloor();
+    run(1);
+    const clear = state().floor;
+    const bank = state().stored;
+    window.__birds();
+    const s = state();
+    const bird = s.sky.birdWorld[0];
+    const [x, y] = onScreen(bird.x, bird.y);
+    point('pointerdown', x, y);
+    point('pointerup', x, y, 0);
+    const hit = state();
+    run(3);                                      // long enough for them to come down
+    const settled = state();
+    const strip = settled.piles.find(p => p.key === 'rock');
+
+    return [
+      ok(hit.sky.birds === s.sky.birds - 1, 'the one that was clicked is gone',
+         `${s.sky.birds} -> ${hit.sky.birds}`),
+      ok(hit.chips > 0, 'and it shook some dust loose', `${hit.chips} in the air`),
+      ok(hit.chipShades.every(v => v > 0), 'every grain of it is a grain and not an empty cell',
+         hit.chipShades.join(' ')),
+      ok(settled.chips === 0 && settled.floor === clear + hit.chips,
+         'all of which lands, and none of it is lost on the way',
+         `${hit.chips} shaken, ${settled.floor - clear} down`),
+      ok(settled.pileCount.rock === settled.floor - clear,
+         'in the strip of ground the rock pours into, where somebody will fetch it',
+         `${settled.pileCount.rock} of ${settled.floor - clear} inside ${strip.from}..${strip.to}`),
+      ok(settled.stored === bank, 'and none of it is banked for free',
+         `${bank} -> ${settled.stored}`)
     ];
   }],
 

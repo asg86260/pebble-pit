@@ -9,6 +9,7 @@
 // cores is shown until one is banked.
 
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
+         QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          SHARD_CELL, someFind } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY } from './world.js';
@@ -39,9 +40,88 @@ export function newQuarrier() {
   };
 }
 
-// The floor of the cut, and a spot on it to stand. They space themselves out
-// along it rather than standing in each other, the way the crew on the rock do.
-export const quarryFloor = () => S.groundY + quarry.h;
+// The shape of the cut: both walls stepping down in benches, and the uneven
+// floor between them. It is worked out from the mouth once and kept, because
+// nothing about it moves unless the world is laid out again -- and because
+// `quarryFloor` is asked where the ground is once per quarrier per frame.
+//
+// The benches are scenery, but the floor is not: the crew stand on it, so the
+// same numbers that draw it are the ones that put their feet down.
+let cut = null, cutKey = '';
+
+export function quarryCut() {
+  const key = `${quarry.x}|${quarry.w}|${quarry.h}|${S.groundY}`;
+  if (cut && cutKey === key) return cut;
+
+  const snap = v => Math.round(v / P) * P;
+  const deep = snap(S.groundY + quarry.h);
+
+  // one wall, rim to floor. `dir` is which way it eats into the mouth, and the
+  // drops are shares of the depth, so the last bench lands exactly on the floor
+  // however the pattern is edited.
+  const wall = (benches, x0, dir) => {
+    const total = benches.reduce((a, b) => a + b[1], 0);
+    const pts = [[x0, S.groundY]];
+    let x = x0, y = S.groundY;
+    benches.forEach(([inset, drop], i) => {
+      x = snap(x + dir * inset * quarry.w);
+      pts.push([x, y]);                                          // in along the bench
+      y = i === benches.length - 1 ? deep : snap(y + (drop / total) * quarry.h);
+      pts.push([x, y]);                                          // and down the face
+    });
+    return pts;
+  };
+
+  const near = wall(QUARRY_NEAR_BENCH, quarry.x, 1);
+  const far = wall(QUARRY_FAR_BENCH, quarry.x + quarry.w, -1);
+  const from = near[near.length - 1][0], to = far[far.length - 1][0];
+
+  // and the floor, in stretches a few cells wide, each sitting a cell or two
+  // above the deepest line
+  const floor = [];
+  for (let i = 0, x = from; x < to; i++) {
+    const nx = Math.min(to, x + QUARRY_FLOOR_STEP * P);
+    floor.push({ from: x, to: nx, y: deep - QUARRY_FLOOR_JAG[i % QUARRY_FLOOR_JAG.length] * P });
+    x = nx;
+  }
+
+  // Each wall's toe meets the floor it actually runs into, rather than the
+  // deepest line: a wall that dropped past its own floor left a slot at the
+  // bottom that reads as a crack rather than a corner.
+  near[near.length - 1][1] = floor[0].y;
+  far[far.length - 1][1] = floor[floor.length - 1].y;
+
+  // The whole outline, rim to rim, for whoever has to draw it -- with the
+  // repeats dropped, because a bench of no width and a stretch of floor that
+  // carries on at the same height both put the same point in twice.
+  const outline = [];
+  const add = ([x, y]) => {
+    const last = outline[outline.length - 1];
+    if (!last || last[0] !== x || last[1] !== y) outline.push([x, y]);
+  };
+  near.forEach(add);
+  for (const f of floor) { add([f.from, f.y]); add([f.to, f.y]); }
+  far.reverse().forEach(add);
+
+  cutKey = key;
+  return (cut = { outline, floor, from, to, deep });
+}
+
+// The floor of the cut underfoot at x, or its deepest line if nobody is asking
+// about a particular spot. They space themselves out along it rather than
+// standing in each other, the way the crew on the rock do.
+export function quarryFloor(x = null) {
+  const c = quarryCut();
+  if (x === null) return c.deep;
+  for (const s of c.floor) if (x >= s.from && x < s.to) return s.y;
+  return c.deep;
+}
+
+// the stretch of floor a quarrier may work: between the toes of the two walls
+export const quarryBand = () => {
+  const c = quarryCut();
+  return { lo: c.from, hi: Math.max(c.from, c.to - WORKER) };
+};
 
 // somebody already working the stretch this one is about to walk into
 function elbowRoom(w, x) {
@@ -52,7 +132,8 @@ function elbowRoom(w, x) {
 function seatX(w) {
   const n = Math.max(1, S.quarriers);
   const i = Math.max(0, S.workers.filter(o => o.type === 'quarrier').indexOf(w));
-  return quarry.x + P + ((i + 0.5) / n) * (quarry.w - P * 2 - WORKER);
+  const { lo, hi } = quarryBand();
+  return lo + ((i + 0.5) / n) * (hi - lo);
 }
 
 // A shard knocked off the face is thrown out of the cut and into the quarry's
@@ -77,21 +158,22 @@ export function stepQuarrier(w, now) {
 
   // climb down the near wall, then take a spot along the floor
   if (w.goal === 'down') {
-    w.y = Math.min(w.y + QUARRY_WALK * 2, quarryFloor() - WORKER);
-    if (w.y >= quarryFloor() - WORKER) { w.y = quarryFloor() - WORKER; w.goal = 'work'; }
+    const foot = quarryFloor(w.x + WORKER / 2) - WORKER;
+    w.y = Math.min(w.y + QUARRY_WALK * 2, foot);
+    if (w.y >= foot) { w.y = foot; w.goal = 'work'; }
     return;
   }
 
   // At the face. It swings like a miner does, and every so often a shard comes
   // off and goes up over the rim. Nobody knocks another one loose while the
   // pile outside is full: there would be nowhere to put it.
-  w.y = quarryFloor() - WORKER;
+  w.y = quarryFloor(w.x + WORKER / 2) - WORKER;   // the floor is uneven, so they walk it
   w.lunge *= 0.82;
   if (S.pileFull.quarry) { w.next = now + quarryMs(); return; }
 
   // It works along the face rather than standing on one spot: back and forth
   // between the walls, turning at the ends and before walking into a mate.
-  const lo = quarry.x + P, hi = quarry.x + quarry.w - P - WORKER;
+  const { lo, hi } = quarryBand();
   const step = w.x + w.dir * QUARRY_SHUFFLE;
   if (step < lo || step > hi || elbowRoom(w, step)) w.dir = -w.dir;
   else w.x = step;

@@ -9,6 +9,7 @@ import { S, bench } from './state.js';
 import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track } from './hands.js';
+import { startle } from './weather.js';
 import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
@@ -56,6 +57,8 @@ canvas.addEventListener('pointerdown', e => {
 
   const p = pos(e);
   S.mouse = p;
+  // the sky is checked first, though nothing up there is ever over the rock
+  if (startle(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     S.mining = S.autoMine;                      // holding only mines once unlocked
