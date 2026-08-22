@@ -4,11 +4,12 @@
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // quarry and the farm arrive, its own file.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY } from './config.js';
+import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY,
+         DUCK_PACE, IDLE_BEAT, IDLE_STRIDE } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, walkY, rockLeft, yardLeft } from './world.js';
-import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops } from './rock.js';
+import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops, dropZone } from './rock.js';
 import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
@@ -58,6 +59,24 @@ export function elbowed(w, x) {
     if (Math.abs(o.x - x) < WORKER * 1.2) return true;
   }
   return false;
+}
+
+// Get out from under it. A body is in the way while any part of its square is
+// over the ground the next rock is coming down on, and it leaves by whichever
+// side it is nearer -- crossing under a falling rock to reach the far side is
+// not getting out of the way. Returns whether it is still moving, so whatever
+// the worker was doing waits until it is clear.
+function duck(w, zone) {
+  if (!zone) return false;
+  const mid = w.x + WORKER / 2;
+  if (w.x + WORKER <= zone.from || w.x >= zone.to) return false;
+  // A cell past the edge rather than exactly on it. The zone is worked out from
+  // the size the coming rock *will* be, and that is a rounded number: a body
+  // walked to the line lands a pixel inside it as often as not, and a body
+  // stood with its shoulder against the rock does not read as out of the way.
+  const out = mid < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
+  w.x += Math.sign(out - w.x) * Math.min(DUCK_PACE, Math.abs(out - w.x));
+  return true;
 }
 
 export function syncWorkers() {
@@ -169,6 +188,7 @@ export function topGrain(c) {
 
 export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
+  const zone = dropZone();          // the ground nobody may be standing on
   const taken = claims();
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
@@ -178,12 +198,18 @@ export function updateWorkers(now, dt) {
       // rather than one animation played five times. It runs until the next
       // rock has come down, so nobody is caught mid-hop underneath it.
       if (now < S.danceUntil || S.rockFall > 0) {
+        w.idleAt = null;
+        w.lunge = 0;
+        w.next = now + minerMs();              // nobody swings at nothing
+        // The next rock lands where the last one stood, and the last one is
+        // what they were standing on. So the first thing they do when the job
+        // is off is walk out of its footprint -- and they celebrate from
+        // there, rather than being stood under a rock coming out of the sky.
+        if (duck(w, zone)) { w.y = standOn(S.groundY); continue; }
         const beat = now / 1000 * DANCE_BEAT + w.slot * 0.5;
         const hop = Math.abs(Math.sin(beat * Math.PI));
         w.y = standOn(S.groundY) - Math.round(hop * 2) * P;
         w.x += Math.sin(beat * Math.PI * 0.5) * 0.4;
-        w.lunge = 0;
-        w.next = now + minerMs();              // nobody swings at nothing
         continue;
       }
 
@@ -195,11 +221,22 @@ export function updateWorkers(now, dt) {
       // been carried away: dust with nowhere to go used to roll into the pit,
       // which banks it for nothing and leaves the haulers with no job.
       if (S.pileFull.rock) {
-        w.y = standOn(rockTopY(colAtX(w.x + WORKER / 2)));
+        // Standing down is not being switched off. It shifts its weight where
+        // it stands: a slow pace of about a cell either side of the spot it
+        // stopped on, and now and then it straightens up. Every miner has its
+        // own phase already, so a stopped gang reads as a gang standing about
+        // rather than as one animation played five times -- and it is nothing
+        // like the dance, which is three hops a second and goes nowhere.
+        if (w.idleAt == null) w.idleAt = w.x;
+        const idle = now / 1000 * IDLE_BEAT + w.ph;
+        w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
+        const surf = rockTopY(colAtX(w.x + WORKER / 2));
+        w.y = standOn(surf) - (Math.sin(idle) > 0.9 ? P : 0);
         w.lunge *= 0.82;
         w.next = now + minerMs();
         continue;
       }
+      w.idleAt = null;
 
       const t = now / 1000;
 
@@ -236,8 +273,12 @@ export function updateWorkers(now, dt) {
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }
 
-    // hauler: fetch a loose core if there is one, else scoop dust, then tip it
-    // all over the ledge
+    // hauler: a rock coming down beats anything it was carrying or fetching.
+    // It keeps its claim and picks the job up again on the far side.
+    if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); continue; }
+
+    // fetch a loose core if there is one, else scoop dust, then tip it all
+    // over the ledge
     if ((w.goal === 'seek' || w.goal === 'idle') &&
         S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
         (!S.coreTaker || S.coreTaker === w)) {

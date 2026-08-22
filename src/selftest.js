@@ -12,6 +12,7 @@ function ok(cond, what, detail = '') {
   return { pass: false, what, detail };
 }
 
+const P = 6;                                   // a cell, for the piles
 const WORKER = 18;                             // a worker square, for tolerances
 const canvas = () => document.getElementById('c');
 const board = () => document.getElementById('board');
@@ -332,6 +333,98 @@ const TESTS = [
          `foot ${after.rockFoot}, ground ${after.groundY}`),
       ok(after.apronClear, 'clearing the ground it needs as it lands',
          `${after.apronDust} grains in the apron`)
+    ];
+  }],
+
+  // A rock is a heavy thing coming out of the sky, and until it knocked the view
+  // about it landed in silence. The shake has to die away on its own, and it has
+  // to keep the picture on whole device pixels while it does it.
+  ['the landing knocks the yard about', async () => {
+    window.__crew(2, 0);
+    haveRock();
+    window.__next();
+    let peak = 0, atLanding = null, quietOnTheWayDown = true;
+    for (let i = 0; i < 900 && atLanding === null; i++) {
+      run(1 / 60);
+      const s = state();
+      if (s.rockFall > 0 && s.shake > 0) quietOnTheWayDown = false;
+      peak = Math.max(peak, s.shake);
+      if (s.rock > 0 && !s.rockFall && peak > 0) atLanding = s;
+    }
+    // and then watch it ring: the offsets are read after the landing, because
+    // the frame it lands on is the frame the shake is set, not spent
+    const moved = new Set();
+    for (let i = 0; i < 60; i++) { run(1 / 60); moved.add(state().shakeOff.join()); }
+    const still = runUntil(() => state().shake === 0, 5);
+    const rest = state();
+    window.__crew(0, 0);
+    return [
+      ok(peak > 0, 'the landing throws the view', `${peak} world pixels of it`),
+      ok(atLanding !== null && quietOnTheWayDown,
+         'and it is the landing that does it, not the fall'),
+      ok(moved.size > 2, 'it rocks rather than jumping once',
+         `${moved.size} different offsets`),
+      ok(still && rest.shake === 0, 'and it settles back on its own',
+         `${rest.shake} left`),
+      ok(rest.shakeOff[0] === 0 && rest.shakeOff[1] === 0,
+         'leaving the view exactly where it was', rest.shakeOff.join())
+    ];
+  }],
+
+  // The next rock lands on the ground the crew were standing on, so they get out
+  // of its footprint before it arrives rather than being buried by it.
+  ['the crew get out from under the next rock', async () => {
+    window.__crew(4, 3);
+    quickCrew();
+    haveRock();
+    window.__next();
+    const inZone = s => !s.dropZone ? [] : s.workerPos.filter(w => {
+      const x = +w.split(':')[1].split(',')[0];
+      return x + WORKER > s.dropZone[0] && x < s.dropZone[1];
+    });
+    let told = false, late = 0, landed = null;
+    for (let i = 0; i < 900 && landed === null; i++) {
+      run(1 / 60);
+      const s = state();
+      if (s.dropZone) told = true;
+      // the last of the fall is when it matters: by then the ground is spoken for
+      if (s.rockFall > 0 && s.rockFall < 200 && inZone(s).length) late++;
+      if (s.rock > 0 && !s.rockFall && told) landed = s;
+    }
+    const under = landed ? inZone({ ...landed, dropZone: landed.dropZone }) : ['no rock'];
+    window.__crew(0, 0);
+    return [
+      ok(told, 'they are told where it is coming down before it is there'),
+      ok(landed !== null, 'and it comes down'),
+      ok(late === 0, 'nobody is still in the way as it drops',
+         `${late} frames with somebody in it`),
+      ok(under.length === 0, 'and nobody is under it when it lands', under.join(' '))
+    ];
+  }],
+
+  // A crew that has been stood down is still a crew standing there. Frozen
+  // squares read as a bug; shifting about reads as waiting.
+  ['a stood-down crew shifts about', async () => {
+    window.__crew(3, 0);
+    haveRock();
+    const strip = state().piles.find(p => p.key === 'rock');
+    for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
+    const full = runUntil(() => state().pileFull.rock, 30);
+    const before = state();
+    const poses = new Set();
+    for (let i = 0; i < 240; i++) {
+      run(1 / 60);
+      poses.add(state().workerPos.filter(w => w[0] === 'm').join('|'));
+    }
+    const after = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(full, 'the rock\'s pile fills and the crew stand down'),
+      ok(after.rock === before.rock, 'nothing more comes off the rock',
+         `${before.rock} -> ${after.rock}`),
+      ok(poses.size > 10, 'but they are not stood frozen',
+         `${poses.size} poses across four seconds`)
     ];
   }],
 

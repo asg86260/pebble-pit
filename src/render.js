@@ -497,7 +497,13 @@ export function draw() {
 
   ctx.save();
   const k = S.zoom * S.dpr;
-  ctx.setTransform(k, 0, 0, k, Math.round(-S.camX * k), Math.round(-S.camY * k));
+  // Where you are looking, plus whatever the yard is still rocking through. The
+  // shake goes in before the rounding, not after: the offset lands on a whole
+  // device pixel like everything else, so a rock coming down does not put a
+  // hairline through every seam in the picture for half a second.
+  ctx.setTransform(k, 0, 0, k,
+                   Math.round((-S.camX + S.shakeX) * k),
+                   Math.round((-S.camY + S.shakeY) * k));
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground

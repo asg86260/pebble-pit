@@ -6,11 +6,12 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, DROP_GRAV, JOLT_GRAINS
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, DROP_GRAV, JOLT_GRAINS,
+  ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
-import { blocked, rockLeft, rockEdge, refreshPiles } from './world.js';
+import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount } from './upgrades.js';
 
@@ -52,6 +53,23 @@ export function placeRock() {
   S.cy = rockFootY() - (S.gh / 2) * P;
 }
 
+// The ground the next rock is coming down on, or null when nothing is on its
+// way. The crew have to be out of it *before* it arrives, which means they have
+// to be told about it before it exists: between rocks the size is the next
+// number's, and once one is in the air it is simply where that one is landing.
+// It is the rock's footprint plus its apron, so nobody is left standing with a
+// cliff face against their shoulder.
+export function dropZone() {
+  if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
+  if (boulderAlive()) return null;
+  const was = S.boulderNo;
+  S.boulderNo = was + 1;
+  const size = rockSize();
+  S.boulderNo = was;
+  const half = Math.round((size.w / 2) * P);
+  return { from: S.cx - half - ROCK_CLEAR, to: S.cx + half + ROCK_CLEAR };
+}
+
 // One frame of a new rock coming down. It lands, shoves the dust out of the
 // ground it needs, and knocks a few grains off the tops of the two banks.
 export function stepRock() {
@@ -63,6 +81,10 @@ export function stepRock() {
     S.rockFallV = 0;
     clearApron();
     jolt();
+    // and the yard takes the weight of it. A taller rock is a heavier one, so
+    // the knock is measured against the first rock rather than being one size
+    // for all of them: rock ninety should land like rock ninety.
+    shakeView(SHAKE_LAND * Math.min(1.6, S.gh / ROCK_H));
     S.dirty = true;
   }
   placeRock();
