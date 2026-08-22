@@ -90,18 +90,38 @@ export function drawDiamond(x, y, r) {
 // still reads as a farm.
 export function drawFarm() {
   if (!S.farmOpen) return;
-  ctx.fillStyle = '#000';
-  for (let i = 0; i < S.beds.length; i++) {
-    const x = Math.round(bedX(i));
-    ctx.fillRect(x - P, S.groundY - 2, P * 2, 3);          // the bed itself
-    const top = Math.round(bedTop(i));
-    if (S.beds[i] > 0.02) ctx.fillRect(x - 1, top, 2, S.groundY - top);
-    // the spore that grew on it, sitting at the tip of the stalk until it is cut
-    if (S.beds[i] >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x, top - P);
-  }
 
-  ctx.fillStyle = '#000';
+  // A bed is a bed before anything is growing in it. It used to be a twelve by
+  // three dash on the ground line, which meant an untended farm was a row of
+  // scratches you could walk past without noticing there was a farm there.
+  for (let i = 0; i < S.beds.length; i++) {
+    const x = Math.round(bedX(i) / P) * P;
+    const soil = S.groundY - P * 2;
+
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - P * 2, soil, P * 4, P * 2);       // the plot, raised off the ground
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x - P, soil, P, P);                   // and the earth turned over in it
+    ctx.fillRect(x + P, soil, P, P);
+    ctx.fillStyle = '#000';
+
+    const grown = S.beds[i];
+    if (grown <= 0.02) continue;
+
+    // the stalk, a cell wide so it and the spore on it are the same thing wide
+    const top = S.groundY - Math.round(FARM_H * grown / P) * P;
+    ctx.fillRect(x, top, P, soil - top);
+
+    // a leaf either side as it comes on, always below the tip
+    const tall = soil - top;
+    if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);
+    if (tall > P * 5) ctx.fillRect(x + P, top + P * 4, P, P);
+
+    // and the spore that grew on it, sitting at the tip until it is cut
+    if (grown >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
+  }
 }
+
 
 // The one mark for each kind of thing, wherever it is being drawn: lying on the
 // ground waiting to be fetched, or rising off the worker that just got it.
