@@ -452,12 +452,26 @@ export function tune(key, v) {
 // room it has at rock one, because the rock grows into this ground and the
 // shacks may not be standing in it when it does.
 export const HOUSE_TO = -420;      // rock centre to the middle of the plot
-// How long a window takes to go through its whole day: curtained for a while,
-// open for much longer, and somebody crossing it now and then. Rooms are put on
-// their own beat off their own number, so a wall of them never blinks together.
-// Slow on purpose -- this is meant to be caught out of the corner of the eye
-// while you are doing something else, not watched.
-export const HOUSE_BEAT = 15000;
+// How often one window in the settlement opens or closes its curtain. One, and
+// the whole place, not one each.
+//
+// Every window used to run its own cycle: a curtain drawing across, a pause, a
+// figure crossing the light. None of it read. A window is two cells wide, so
+// anything animated *inside* one has two frames to do it in -- full, half, gone
+// -- and two frames is not a curtain closing, it is a flicker. Worse, twenty
+// rooms on twenty cycles meant several were always mid-something, and a wall of
+// small things changing at once is the definition of busy.
+//
+// So nothing moves inside a window now: it is open or it is curtained, in one
+// step, and one window in the settlement changes every this often. Something is
+// always subtly different from the last time you looked, and you never catch two
+// of them at it.
+export const HOUSE_FLIP_MS = 8000;
+// And how much of the settlement has its curtains across at any one time. Left
+// to itself the walk only ever shut windows, so the place drifted towards every
+// curtain drawn and sat there: a wall of grey is as uniform as a wall of white,
+// and takes two minutes to get boring in. A third keeps the front mixed.
+export const HOUSE_SHUT = 0.3;
 // A drawn curtain. Not black: a window that goes black is a window that vanishes
 // into the wall, and a wall full of holes that keep opening and shutting is the
 // busiest thing on screen. Grey says the window is still there and somebody has

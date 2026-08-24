@@ -16,11 +16,10 @@
 // own: `S.crew` says everything about it there is to say, and every wobble in it
 // is worked out from a room's number rather than from anything random.
 
-import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_BEAT,
+import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
          HOUSE_CURTAIN, HOUSE_PUFF_MS } from './config.js';
 import { S, bench } from './state.js';
 import { rockLeft } from './world.js';
-import { now } from './clock.js';
 
 // The middle of the plot, and it never moves. The rock grows leftwards into
 // this ground as the game goes on, so what the block has to fit is the room
@@ -94,21 +93,6 @@ export function holes() {
     : { x: r.x + P * 2, y: r.y + P * 2, w: P * 2, h: P * 2, i: r.i });
 }
 
-// What a window is doing at time t: how much of it is lit, and whether somebody
-// is crossing it. Each room keeps its own beat, worked out from its own number,
-// so a course of windows never blinks as one -- and every one of them spends most
-// of its time simply lit, because a wall that is always doing something is as
-// dead as a wall that never does anything.
-function life(i, t) {
-  const beat = HOUSE_BEAT * (1 + (i % 5) * 0.19);
-  const u = ((t / beat) + i * 0.37) % 1;
-  if (u < 0.04) return { open: 1 - u / 0.04 };            // the curtain goes across
-  if (u < 0.16) return { open: 0 };                       // and stays across a while
-  if (u < 0.20) return { open: (u - 0.16) / 0.04 };       // and is drawn back again
-  if (u > 0.70 && u < 0.76) return { open: 1, cross: (u - 0.70) / 0.06 };
-  return { open: 1 };
-}
-
 // The chimney stands on the top of the left-hand column, so it rises with the
 // building the way a flue does when another storey goes on under it. It is the
 // one thing here that is allowed to move as the settlement grows, because going
@@ -123,7 +107,32 @@ export function chimneyAt() {
 
 // A puff off it, now and then. It goes into the same list the lab's chimney uses
 // -- one thing in this game knows how smoke rises, and it is not this file.
+// One window changes its mind, every so often. Which one walks round the
+// settlement rather than being drawn out of a hat, and it walks by the golden
+// ratio: a whole-number stride shares a factor with the room count sooner or
+// later -- a stride of seven in fourteen rooms picked the same two windows for
+// ever -- and this one lands somewhere new whatever the crew has grown to.
+//
+// Room zero is skipped: that is the doorway, and a doorway does not have a
+// curtain, so a turn spent on it is a turn where nothing happens.
+const GOLDEN = 0.6180339887;
+
+export function stepShutters(now) {
+  if (S.crew < 2 || now < S.shutterAt) return;
+  S.shutterAt = now + HOUSE_FLIP_MS;
+
+  // Either one more goes across, or the one that has been across longest comes
+  // back: one window changes, and the number of them stays about where it was.
+  const want = Math.max(1, Math.round((S.crew - 1) * HOUSE_SHUT));
+  if (S.shutters.length >= want) { S.shutters.shift(); return; }
+  for (let k = 0; k < 8; k++) {
+    const i = 1 + Math.floor(((S.shutterN++ * GOLDEN) % 1) * (S.crew - 1));
+    if (!S.shutters.includes(i)) { S.shutters.push(i); return; }
+  }
+}
+
 export function stepHouse(now) {
+  stepShutters(now);
   const at = chimneyAt();
   if (!at || now < S.houseSmokeAt) return;
   S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + Math.random() * 0.8);
@@ -198,25 +207,9 @@ export function drawHouses(ctx) {
   // with anybody in it. Nothing here is random -- a room's beat comes off its own
   // number -- and none of it is fast: it is meant to be caught out of the corner
   // of the eye rather than watched.
-  const t = now();
   for (const h of holes()) {
-    if (h.door) {                                       // a doorway is always open
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(h.x, h.y, h.w, h.h);
-      continue;
-    }
-    const { open, cross } = life(h.i, t);
-    ctx.fillStyle = HOUSE_CURTAIN;                      // the curtain, behind the light
+    ctx.fillStyle = !h.door && S.shutters.includes(h.i) ? HOUSE_CURTAIN : '#fff';
     ctx.fillRect(h.x, h.y, h.w, h.h);
-    const w = Math.round(h.w * open / P) * P;           // and it draws a cell at a time
-    if (w <= 0) continue;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(h.x, h.y, w, h.h);
-    // somebody passing between the lamp and the window
-    if (cross !== undefined) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(h.x + Math.round(cross * (w - P) / P) * P, h.y, P, h.h);
-    }
   }
 
   ctx.fillStyle = '#000';

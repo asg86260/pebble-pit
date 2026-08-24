@@ -100,6 +100,9 @@ export const S = {
   smoke: [],              // puffs off the chimney while it is being worked
   smokeAt: 0,
   houseSmokeAt: 0,      // and when the crew's own chimney last had a puff
+  shutters: [],         // rooms with the curtain across, by room number
+  shutterAt: 0,         // when the next one of them changes its mind
+  shutterN: 0,          // how many have, which is what picks the next
   skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
   labOpen: false,
   labBoardOpen: false,

@@ -311,6 +311,9 @@ export function restore() {
 
 export function reset() {
   clear();
+  // the curtains are somebody's, and there is nobody here now
+  S.shutters = [];
+  S.shutterAt = 0;
   S.chips = [];
   S.paid = [];
   S.stored = 0;
