@@ -459,7 +459,6 @@ export const HOUSE_CUBE = P * 3;   // one body, one shack, the size of the body
 // the ground is the cheap direction, and a place that spreads before it climbs
 // reads as somewhere people live rather than as a block of flats.
 export const HOUSE_COLS = 9;
-export const HOUSE_LINE = 2;       // walls and roof, drawn at the ground line's weight
 // --- Track TRAVEL: a body walks to its work ---------------------------------
 
 // Moving somebody between jobs is not sacking one and hiring another: the same

@@ -6,18 +6,17 @@
 // at -- a room per body, on the bare ground between the bench and the rock, with
 // the door a new hire walks out of.
 //
-// It is one settlement rather than a row of huts, and that is the whole of the
-// drawing. Rooms in a course share their walls; a roof goes only where there is
-// sky over the room; a door goes only where somebody could walk out of it, and
-// the storeys above get windows instead. It spreads along the ground before it
-// climbs, and gives up a room every other storey as it goes, so what it leaves
-// is a stepped profile rather than a block with a flat side.
+// It is one shape rather than a row of huts. It spreads along the ground before
+// it climbs and gives up a room every other storey, so what it leaves is a
+// stepped profile with a lip over every part of it that has sky above -- and
+// that profile, not any detail inside it, is what makes it read as somewhere
+// people live rather than as a box.
 //
 // Nothing here can be clicked, hovered or opened, and it holds no state of its
 // own: `S.crew` says everything about it there is to say, and every wobble in it
 // is worked out from a room's number rather than from anything random.
 
-import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_LINE } from './config.js';
+import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS } from './config.js';
 import { S, bench } from './state.js';
 import { rockLeft } from './world.js';
 
@@ -33,16 +32,23 @@ export const houseCx = () => Math.round((S.cx + HOUSE_TO) / P) * P;
 // randomness in this file, and none anywhere near the drawing.
 const wonk = i => ((i * 7 + 3) % 3) - 1;
 
-// How many rooms stand in course c. The place was built by adding a room at a
-// time to what was already standing, so a course is never wider than the one
-// holding it up, and it gives up a room every other storey as it climbs.
+// How wide the settlement stands on the ground, for a crew of n: wide enough
+// that a pile which loses a room every storey holds all of them. A pile of base
+// b holds b + (b-1) + ... = b(b+1)/2, so the base is that read backwards.
 //
-// That taper is the whole shape of the thing. Left to go straight up it becomes
-// a tenement -- thirty bodies made a seven-storey block with a flat side -- and a
-// tenement is a building, not a settlement. Narrowing as it rises spreads the
-// crew along the ground first and leaves a stepped profile behind, which is what
-// a place that grew a room at a time actually looks like.
-const courseWide = c => Math.max(1, HOUSE_COLS - Math.floor(c / 2));
+// The base growing with the crew is what makes the thing look built. A fixed
+// base can only add storeys, and a stack of nine, eight, seven is a rectangle
+// with a nick out of one corner -- at nine wide, losing a room a storey is a
+// change of a ninth and reads as no change at all. Grown from the crew, the
+// whole silhouette moves every few hires: it spreads, and the steps stay steep
+// enough to see.
+const baseWide = n => Math.min(HOUSE_COLS, Math.ceil((Math.sqrt(8 * n + 1) - 1) / 2));
+
+// And how many stand in course c of a pile with that base. A room a storey, down
+// to a floor of three: past the point where the plot cannot spread any further
+// the pile has to go up, and a tower that tapers to a needle is worse than one
+// that stops tapering.
+const courseWide = (c, base) => Math.max(Math.max(1, Math.min(3, base - 1)), base - c);
 
 // Every room, bottom course first and left to right within a course. Rooms in a
 // course touch, which is the point: they share their walls, so what stands there
@@ -53,9 +59,10 @@ export function cubes() {
   const n = S.crew;
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
+  const base = baseWide(n);
   const courses = [];
   for (let placed = 0, c = 0; placed < n; c++) {
-    const take = Math.min(courseWide(c), n - placed);
+    const take = Math.min(courseWide(c, base), n - placed);
     courses.push(take);
     placed += take;
   }
@@ -87,163 +94,59 @@ export function doorAt() {
 
 // --- drawing -----------------------------------------------------------------
 
-// The settlement is drawn as one thing, not as a pile of things.
+// The settlement is drawn the way everything else in this yard is drawn: as a
+// solid black shape with a few white holes knocked in it.
 //
-// It was a stack of complete little huts first, each with its own four walls and
-// its own roof, and it read as exactly that: boxes that happened to be touching.
-// What makes a place look built-onto rather than stacked up is that the parts
-// share: a wall between two rooms is one wall, a roof only goes where there is
-// weather above, and a door only goes where somebody could walk out of it. So
-// nothing here draws a room -- it draws the edges of the whole settlement, and
-// what is inside those edges is rooms.
+// It was outlined first -- white rooms with black walls, roofs, windows, vents,
+// aerials, a ladder, props. At the four times zoom it was drawn at, that read as
+// a shanty town. At the size the game is actually played, it read as a patch of
+// grey lace: a cell is five screen pixels, so a two-pixel wall and a six-pixel
+// window are a scribble, and the whole thing was busier than the rock while
+// being the wrong value against it. The rock is a black mass. The bench and the
+// lab are black shapes with a notch or two knocked out. A building that is white
+// with black lines round it is the only thing in the picture drawn inside out.
+//
+// So: the mass, a lip along whatever has sky over it, and a hole where a door or
+// a window goes. Everything that survived is something you can see at 1x.
 export function drawHouses(ctx) {
   const rooms = cubes();
   if (!rooms.length) return;
   const C = HOUSE_CUBE;
   const room = (x, y) => rooms.some(r => r.x === x && r.y === y);
+  // Where a room's hole goes, or whether it has one at all. Read off where the
+  // room stands rather than off a counter, so it keeps its face between frames.
+  //
+  // Two thirds of the rooms have one, and they sit in different corners: holes
+  // punched in the same spot in every room line up into rows and columns, and a
+  // grid of identical windows is a factory. What is wanted is a wall somebody
+  // cut a hole in when they needed one.
+  const tell = r => Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11;
+  const holed = r => tell(r) % 3 !== 0;
+  const across = r => [0, P, P * 2][tell(r) % 3];
 
-  // The mass, in white. Everything after this is a line drawn on top of it, and
-  // the sky and the ground must not show through the middle of a building.
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = '#000';
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
 
+  // The eaves: a lip over whatever has sky above it, hanging a cell past the end
+  // of a run of rooms. It is the only thing that says roof rather than top edge,
+  // and because a course steps back as it climbs, the lips step with it -- which
+  // is the whole of the ramshackle now, and it survives being small.
+  for (const r of rooms) {
+    if (room(r.x, r.y - C)) continue;
+    const l = room(r.x - C, r.y) ? 0 : P;
+    const w = C + l + (room(r.x + C, r.y) ? 0 : P);
+    ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
+  }
+
+  // And the holes, knocked back out in white: a door on the ground where somebody
+  // could walk out of one, a window upstairs.
+  ctx.fillStyle = '#fff';
+  for (const r of rooms) {
+    if (!holed(r)) continue;
+    if (r.y + C === S.groundY) ctx.fillRect(r.x + P, r.y + C - P * 2, P, P * 2);
+    else ctx.fillRect(r.x + across(r), r.y + (tell(r) % 2 ? P : P * 2) - P, P, P);
+  }
   ctx.fillStyle = '#000';
-  const T = HOUSE_LINE;
-  const post = (x, y) => ctx.fillRect(x - T / 2, y, T, C);      // an upright
-  const beam = (x, y, w) => ctx.fillRect(x, y - T / 2, w, T);   // and a level run
-  // Which face a room wears, read off where it stands rather than off a counter:
-  // a room keeps the same one from frame to frame, and its neighbour does not
-  // wear it too. Five is a prime against both of the strides in here, so the
-  // pattern never lines up with a course or a column.
-  const tell = (r, salt) => (Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11 + salt * 3) % 5;
-
-  // Walls, each one drawn once however many rooms it stands between: the left
-  // wall always, the right only where nothing carries on. That is the whole
-  // difference between a settlement and a row of boxes -- neighbours hold each
-  // other up instead of standing back to back with two walls between them.
-  for (const r of rooms) {
-    post(r.x, r.y);
-    if (!room(r.x + C, r.y)) post(r.x + C, r.y);
-    if (!room(r.x, r.y + C)) beam(r.x, r.y + C, C);             // a floor over open air
-    if (room(r.x, r.y - C)) beam(r.x, r.y, C);                  // the floor of the one above
-  }
-
-  // Roofs, only where there is sky over the room. A course with another course
-  // on top of it has a floor, not a roof, and drawing a roof under a floor is
-  // what made the old stack read as separate huts piled up. Each one leans its
-  // own way and hangs over its walls, so the skyline is a run of tin sheets at
-  // odds with each other rather than one flat lid.
-  ctx.lineWidth = T;
-  ctx.strokeStyle = '#000';
-  for (const r of rooms) {
-    if (room(r.x, r.y - C)) continue;
-    const lift = r.lean > 0 ? [T, 0] : [0, T];
-    ctx.beginPath();
-    ctx.moveTo(r.x - P / 2, r.y + lift[0]);
-    ctx.lineTo(r.x + C + P / 2, r.y + lift[1]);
-    ctx.stroke();
-  }
-
-  // A door where somebody could actually use one, which is the ground floor, and
-  // not on every room: a settlement has fewer ways in than it has rooms.
-  for (const r of rooms) {
-    if (r.y + C === S.groundY && r.lean > 0) ctx.fillRect(r.x + P, r.y + C - P * 2, P, P * 2);
-  }
-
-  // What the upper storeys have instead of doors, and it is not one window over
-  // and over. A room is three cells square, so there is only ever one mark's
-  // worth of room in it -- the variety has to come from *which* mark, not from
-  // where it sits. A window, a window down on the floor, a vent, a wall with
-  // nothing in it at all, and one room in five with two things going on.
-  //
-  // Which one a room gets is read off where it stands rather than off a counter,
-  // so a room keeps its face from frame to frame, and two side by side do not
-  // wear the same one.
-  for (const r of rooms) {
-    if (r.y + C === S.groundY) continue;
-    const slit = (x, y) => ctx.fillRect(x, y + (P - T) / 2, P, T);
-    switch (tell(r, 0)) {
-      case 0: ctx.fillRect(r.x + P, r.y + P, P, P); break;              // a window
-      case 1: ctx.fillRect(r.x + P, r.y + P * 2, P, P); break;          // one down at the floor
-      case 2: slit(r.x + P, r.y + P); break;                            // a vent
-      case 3: break;                                                    // shuttered, nobody in
-      default: ctx.fillRect(r.x + P, r.y + P, P, P); slit(r.x + P, r.y + P * 2);
-    }
-  }
-
-  // Roofs are where a shanty keeps its things. Only rooms with sky over them can
-  // carry any, only some of them do, and no two next to each other carry the
-  // same -- a barrel for water, a stovepipe, or an aerial. This is the one part
-  // of the drawing that is not architecture, and it is what stops the top edge
-  // reading as the top edge of a diagram.
-  for (const r of rooms) {
-    if (room(r.x, r.y - C)) continue;
-    const top = r.y - (r.lean > 0 ? 0 : T);
-    switch (tell(r, 1)) {
-      case 0:                                                           // a water barrel
-        ctx.fillRect(r.x + P, top - P, P, P);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(r.x + P, top - P + (P - T) / 2, P, T);             // its hoop
-        ctx.fillStyle = '#000';
-        break;
-      case 1:                                                           // a stovepipe
-        ctx.fillRect(r.x + P * 2, top - P * 2, T, P * 2);
-        ctx.fillRect(r.x + P * 2 - T, top - P * 2, P, T);
-        break;
-      case 2:                                                           // an aerial
-        ctx.fillRect(r.x + P, top - P * 2, T, P * 2);
-        ctx.fillRect(r.x + P - T, top - P * 2, P, T);
-        ctx.fillRect(r.x + P - T, top - P, P, T);
-        break;
-    }
-  }
-
-  // Where a course steps back, the roof it left behind is a terrace, and a
-  // terrace somebody uses has a rail on it and a way up off it. Both together
-  // are what makes the upper storeys look lived on rather than looked at.
-  for (const r of rooms) {
-    if (room(r.x, r.y - C)) continue;
-    if (!room(r.x + C, r.y - C)) continue;         // nothing steps up off this one
-    const rail = r.y - P * 2;
-    ctx.fillRect(r.x + T, rail, C - T * 2, T);                          // the rail
-    ctx.fillRect(r.x + T, rail, T, P * 2);                              // and its two posts
-    ctx.fillRect(r.x + C - T * 2, rail, T, P * 2);
-    ladder(ctx, r.x + C - P, r.y - C, C);                               // up to the next storey
-  }
-
-  // And the ladder up the end of it, from the ground to the second storey. What
-  // it says is that the place is used -- somebody climbs that to get home -- and
-  // it ties the courses into one address rather than floors that happen to be
-  // stacked.
-  const left = Math.min(...rooms.map(r => r.x));
-  if (rooms.some(r => r.y + C * 2 <= S.groundY)) ladder(ctx, left - P, S.groundY - C * 2, C * 2);
-
-  // Props against the end walls. Everything else here is upright or level, and a
-  // place thrown up out of what was lying about leans on something: two diagonals
-  // are the whole of it, and they are the only lines in the picture that are
-  // neither.
-  if (rooms.some(r => r.y + C * 2 <= S.groundY)) {
-    const right = Math.max(...rooms.map(r => r.x)) + C;
-    ctx.lineWidth = T;
-    for (const [x, d] of [[left, -1], [right, 1]]) {
-      ctx.beginPath();
-      ctx.moveTo(x + d * P * 2, S.groundY);
-      ctx.lineTo(x, S.groundY - C);
-      ctx.stroke();
-    }
-  }
-
-  ctx.fillStyle = '#000';
-  ctx.strokeStyle = '#000';
-}
-
-// A ladder: two rails and the rungs between them, drawn from a height down to
-// whatever it is standing on.
-function ladder(ctx, x, top, tall) {
-  const T = HOUSE_LINE;
-  ctx.fillRect(x, top, T, tall);
-  ctx.fillRect(x + P, top, T, tall);
-  for (let y = top + P; y < top + tall; y += P) ctx.fillRect(x, y - T / 2, P, T);
 }
 
 // what is standing on the plot, and how much room it has left either side, for
