@@ -1626,6 +1626,17 @@ const TESTS = [
     window.__jump(30);
     const big = state().houses;
     const onGrid = big.cells.every(c => c.split(',').every(v => +v % P === 0));
+
+    // every room, at every crew size it has ever stood at
+    const seen = {}, moved = [];
+    for (let n = 1; n <= 26; n++) {
+      window.__crew(n, 0, 0, 0, 0);
+      state().houses.cells.forEach((c, k) => {
+        if (seen[k] && seen[k] !== c) moved.push(`${n}: room ${k} ${seen[k]} -> ${c}`);
+        seen[k] = c;
+      });
+    }
+    const settled = moved.length === 0;
     window.__crew(0, 0, 0, 0, 0);
     window.__jump(1);
     return [
@@ -1641,7 +1652,14 @@ const TESTS = [
          `${big.ofBench}px`),
       ok(big.ofApron > 0, 'and clear of the apron at the biggest rock',
          `${big.ofApron}px`),
-      ok(onGrid, 'every cube sits on the lattice')
+      ok(onGrid, 'every cube sits on the lattice'),
+      // Building is additive. Taking somebody on adds a room; it does not move
+      // the rooms that were already standing, and it did once -- the base was
+      // worked out from the size of the crew, so every hire rebuilt the place
+      // and the one thing you should have been able to watch happen was the one
+      // thing you could not.
+      ok(settled, 'and a hire adds a room without moving the ones already there',
+         settled ? '1 through 26' : moved.slice(0, 3).join('; '))
     ];
   }],
 

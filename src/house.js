@@ -32,23 +32,17 @@ export const houseCx = () => Math.round((S.cx + HOUSE_TO) / P) * P;
 // randomness in this file, and none anywhere near the drawing.
 const wonk = i => ((i * 7 + 3) % 3) - 1;
 
-// How wide the settlement stands on the ground, for a crew of n: wide enough
-// that a pile which loses a room every storey holds all of them. A pile of base
-// b holds b + (b-1) + ... = b(b+1)/2, so the base is that read backwards.
+// How many rooms stand in course c: the base, losing one a storey, never fewer
+// than three. A fixed sequence, and it has to be fixed.
 //
-// The base growing with the crew is what makes the thing look built. A fixed
-// base can only add storeys, and a stack of nine, eight, seven is a rectangle
-// with a nick out of one corner -- at nine wide, losing a room a storey is a
-// change of a ninth and reads as no change at all. Grown from the crew, the
-// whole silhouette moves every few hires: it spreads, and the steps stay steep
-// enough to see.
-const baseWide = n => Math.min(HOUSE_COLS, Math.ceil((Math.sqrt(8 * n + 1) - 1) / 2));
-
-// And how many stand in course c of a pile with that base. A room a storey, down
-// to a floor of three: past the point where the plot cannot spread any further
-// the pile has to go up, and a tower that tapers to a needle is worse than one
-// that stops tapering.
-const courseWide = (c, base) => Math.max(Math.max(1, Math.min(3, base - 1)), base - c);
+// It was worked out from the size of the crew for a while -- a wider base for
+// more bodies, so the whole silhouette spread as you hired. That looked better
+// standing still and was wrong in motion: taking somebody on rebuilt the place.
+// Rooms moved, windows moved, the door moved, and the one thing hiring should
+// obviously do -- add a room -- was the one thing you could not see happen.
+// Building is additive. Room seventeen stands where room seventeen stands
+// whether the crew is eighteen or eighty.
+const courseWide = c => Math.max(3, HOUSE_COLS - c);
 
 // Every room, bottom course first and left to right within a course. Rooms in a
 // course touch, which is the point: they share their walls, so what stands there
@@ -59,27 +53,22 @@ export function cubes() {
   const n = S.crew;
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
-  const base = baseWide(n);
-  const courses = [];
-  for (let placed = 0, c = 0; placed < n; c++) {
-    const take = Math.min(courseWide(c, base), n - placed);
-    courses.push(take);
-    placed += take;
-  }
+  // The left edge of the ground course, and it never moves: it is worked out
+  // from a full base rather than from what is standing, so the settlement fills
+  // its plot from one end instead of sliding along it as it grows.
+  const foot = Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
-  // Centred on the plot by its base, so the settlement grows away from the bench
-  // and the rock at the same rate and stays clear of both.
-  let left = Math.round((houseCx() - courses[0] * HOUSE_CUBE / 2) / P) * P;
   const out = [];
-  for (let c = 0; c < courses.length; c++) {
-    // A narrower course steps in from the end of the one under it rather than
-    // sitting square on it. Only ever by one room, and only when there is a room
-    // spare underneath, so every wall lands on something solid.
-    if (c > 0 && courses[c] < courses[c - 1] && wonk(c) > 0) left += HOUSE_CUBE;
-    for (let k = 0; k < courses[c]; k++) {
-      out.push({ x: left + k * HOUSE_CUBE, y: S.groundY - (c + 1) * HOUSE_CUBE,
-                 lean: wonk(c + k) || 1, i: out.length });
+  for (let i = 0, c = 0, left = foot, placed = 0; i < n; i++) {
+    if (i - placed === courseWide(c)) {          // that course is full: start the next
+      placed = i;
+      // A narrower course steps in from the end of the one under it rather than
+      // sitting square on it -- and by a fixed amount for that storey, so the
+      // step is a fact about the course and not about how many people live here.
+      if (wonk(++c) > 0) left += HOUSE_CUBE;
     }
+    out.push({ x: left + (i - placed) * HOUSE_CUBE, y: S.groundY - (c + 1) * HOUSE_CUBE,
+               lean: wonk(c + i - placed) || 1, i });
   }
   return out;
 }
@@ -123,36 +112,48 @@ export function drawHouses(ctx) {
   const tell = r => Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11;
   const holed = r => tell(r) % 3 !== 0;
 
-  // But never against an outside wall. A room is three cells across and the hole
-  // is one of them, so a hole in the outer cell of a room on the outside of the
-  // settlement is not a window -- it is a bite taken out of the silhouette, and
-  // at this size the shape is the whole of what the thing says. A hole may only
-  // go where there is black on every side of it: hard against a wall it shares
-  // with the room next door, and in the middle of one it does not.
-  const spots = r => {
-    const out = [P];                                    // the middle is always safe
-    if (room(r.x - C, r.y)) out.push(0);
-    if (room(r.x + C, r.y)) out.push(P * 2);
-    return out;
+  // But never against an outside wall, and never touching another hole.
+  //
+  // A room is three cells across and a hole is one of them, so a hole in the
+  // outer cell of a room on the outside of the settlement is a bite out of the
+  // silhouette rather than a window. Worse, two rooms each punching a hole
+  // against the wall they share makes one window two cells wide, and a course
+  // offset by one turns a run of them into a staircase of white going up through
+  // the building. Neither is a window; both read as damage.
+  //
+  // So a hole goes in only where there is wall on every side of it -- including
+  // diagonally, and including wall that has already been cut through for
+  // somebody else's window. Rooms are asked in the order they were built, so the
+  // answer is the same every time, and a room that cannot have one goes without.
+  const cut = new Set();
+  const key = (x, y) => `${x},${y}`;
+  const clear = (x, y) => {
+    for (let dx = -P; dx <= P; dx += P)
+      for (let dy = -P; dy <= P; dy += P)
+        if (cut.has(key(x + dx, y + dy))) return false;
+    return true;
+  };
+  const punch = (x, y, tall) => {
+    ctx.fillRect(x, y, P, tall);
+    for (let k = 0; k < tall; k += P) cut.add(key(x, y + k));
   };
 
+  // The mass. Everything after this is a hole knocked back out of it.
   ctx.fillStyle = '#000';
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
 
-  // The eaves: a lip over whatever has sky above it, hanging a cell past the end
-  // of a run of rooms. It is the only thing that says roof rather than top edge,
-  // and because a course steps back as it climbs, the lips step with it -- which
-  // is the whole of the ramshackle now, and it survives being small.
+  // The eaves: a lip over whatever has sky above it, hanging half a cell past
+  // the end of a run of rooms. It is the only thing that says roof rather than
+  // top edge, and because a course steps back as it climbs, the lips step with
+  // it -- which is the whole of the ramshackle now, and it survives being small.
   for (const r of rooms) {
     if (room(r.x, r.y - C)) continue;
-    const over = P / 2;                          // how far the lip hangs past a wall
+    const over = P / 2;
     const l = room(r.x - C, r.y) ? 0 : over;
     const w = C + l + (room(r.x + C, r.y) ? 0 : over);
     ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
   }
 
-  // And the holes, knocked back out in white: a door on the ground where somebody
-  // could walk out of one, a window upstairs.
   // One door, and it is the one a new hire walks out of. A door is a cell across
   // and two high, which is a third of a room: put one in every ground room and
   // the bottom course is an arcade of legs holding a lintel up -- at one or two
@@ -164,15 +165,21 @@ export function drawHouses(ctx) {
     .reduce((best, r) => Math.abs(r.x + C / 2 - doorAt().x) < Math.abs(best.x + C / 2 - doorAt().x) ? r : best);
 
   ctx.fillStyle = '#fff';
-  ctx.fillRect(door.x + P, door.y + C - P * 2, P, P * 2);
+  punch(door.x + P, door.y + C - P * 2, P * 2);
+
   for (const r of rooms) {
-    if (r === door || !holed(r)) continue;
-    const across = spots(r);
-    // never in the top row of a room with sky over it, which would cut the lip
-    // off its own roof, and never on the floor of one standing on the ground
-    const down = room(r.x, r.y - C) && tell(r) % 2 ? 0 : P;
-    ctx.fillRect(r.x + across[tell(r) % across.length], r.y + down, P, P);
+    if (r === door) continue;
+    // the middle of the room first, then hard against a wall it shares with the
+    // room next door: the middle is the one place that is always safe from the
+    // outside, so it is what a room falls back to
+    const spots = [[r.x + P, r.y + P]];
+    if (room(r.x - C, r.y)) spots.push([r.x, r.y + P]);
+    if (room(r.x + C, r.y)) spots.push([r.x + P * 2, r.y + P]);
+    if (room(r.x, r.y - C)) spots.push([r.x + P, r.y]);
+    const at = spots[tell(r) % spots.length];
+    if (holed(r) && clear(at[0], at[1])) punch(at[0], at[1], P);
   }
+
   ctx.fillStyle = '#000';
 }
 
