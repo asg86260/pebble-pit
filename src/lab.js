@@ -15,7 +15,8 @@
 import { S, lab } from './state.js';
 import { assign, idle } from './upgrades.js';
 import { walkY } from './world.js';
-import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK,
+import { now } from './clock.js';
+import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE } from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
@@ -42,11 +43,34 @@ export function begin(key) {
 export const progress = () =>
   S.research ? Math.min(1, S.research.done / workFor(S.research.key)) : 0;
 
+// Nothing in the game takes a body off the lab, so a lab that has finished its
+// research is a room of people standing about in it for good. They let
+// themselves out: after LAB_IDLE_MS of nothing to work on, one walks out and
+// goes back to carrying dust, and the next one waits its turn, so a lab empties
+// as people drifting off rather than as a room emptying in a frame.
+//
+// The clock only runs on somebody who is actually inside. A body still crossing
+// the yard to get there has not spent a moment doing nothing yet, and turning it
+// round halfway is not a decision anybody watching would recognise.
+//
+// Starting a new piece of research does not fetch anyone back. The roster under
+// the lab is how it is staffed, and being staffed without asking is the same
+// surprise in the other direction.
+function letIdleGo() {
+  if (S.research || !S.workers.some(indoors)) { S.labIdleAt = 0; return; }
+  if (!S.labIdleAt) { S.labIdleAt = now(); return; }
+  if (now() - S.labIdleAt < LAB_IDLE_MS) return;
+  S.labIdleAt = 0;
+  assign('labbers', -1);
+}
+
 // One frame of it. Nothing happens without bodies in the lab -- that is the
 // whole of the mechanic, and why the row says nothing is moving when it is not.
 export function stepLab(dt) {
-  if (!S.research || !S.labbers) return;
-  S.research.done += S.labbers * LAB_EFFORT * (dt / 1000);
+  letIdleGo();
+  const on = inLab();
+  if (!S.research || !on) return;
+  S.research.done += on * LAB_EFFORT * (dt / 1000);
   if (S.research.done < workFor(S.research.key)) return;
   const key = S.research.key;
   S.mult[FIELD[key]]++;
@@ -95,18 +119,24 @@ export function newLabber() {
 export const labDoor = () => lab.x + lab.w * 0.62;
 export const indoors = w => w.type === 'labber' && w.goal === 'in';
 
+// How many are actually in there working. It is not `S.labbers`: that counts
+// everybody the lab has been given, and one of them may still be halfway across
+// the yard on its way over. Nobody does the work until they are through the door.
+export const inLab = () => S.workers.filter(indoors).length;
+
 // A puff off the chimney, and only when there is someone in there working on
 // something. The chimney is the whole of the signal, because the crew are inside
 // where you cannot see them.
 export function stepSmoke(now, dt) {
-  if (S.research && S.labbers && now >= S.smokeAt) {
+  const on = inLab();
+  if (S.research && on && now >= S.smokeAt) {
     S.smoke.push({
       x: lab.x + lab.w * 0.28 + (Math.random() - 0.5) * P,
       y: lab.y,
       drift: (Math.random() - 0.5) * 0.25,
       t: 0
     });
-    S.smokeAt = now + SMOKE_MS / Math.min(4, S.labbers);
+    S.smokeAt = now + SMOKE_MS / Math.min(4, on);
   }
   for (let i = S.smoke.length - 1; i >= 0; i--) {
     const p = S.smoke[i];
