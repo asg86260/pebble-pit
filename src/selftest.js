@@ -1383,10 +1383,11 @@ const TESTS = [
     window.__assign('labbers', 1);
     const sent = state();
     const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('l|in')), 200);
-    // LAB_IDLE_MS is four seconds, so two is still waiting and six is well past
-    run(2);
+    // LAB_IDLE_MS is twenty seconds: the grace to get some work started before
+    // the people you sent over give up on you
+    run(10);                                     // half way: still standing there
     const waiting = state();
-    run(4);
+    run(15);                                     // and well past it
     const gone = state();
     window.__crew(0, 0);
     return [

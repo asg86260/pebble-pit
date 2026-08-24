@@ -484,7 +484,13 @@ export const COMMUTE_SLOP = P * 2;
 export const CLIMB_PACE = QUARRY_WALK * 2;
 // How long a lab with nothing to research keeps somebody standing in it before
 // they let themselves out and go back to carrying dust.
-export const LAB_IDLE_MS = 4000;
+//
+// Twenty seconds, not four. Four was long enough to prove the rule and far too
+// short to play with: staffing the lab and then starting the work is the
+// obvious order to do it in, and the walk over is twenty seconds by itself, so
+// a body sent to an empty lab turned round and left before the player could open
+// the board and pay for anything. This is the grace to get the work started.
+export const LAB_IDLE_MS = 20000;
 // --- Track PILES ------------------------------------------------------------
 // How wide a station's own heap stands, in cells. A pile you cannot read is a
 // number you have to go and look up: 180 grains along seventy cells lie two
