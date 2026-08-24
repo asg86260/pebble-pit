@@ -16,21 +16,17 @@
 // own: `S.crew` says everything about it there is to say, and every wobble in it
 // is worked out from a room's number rather than from anything random.
 
-import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS } from './config.js';
+import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_BEAT,
+         HOUSE_CURTAIN, HOUSE_PUFF_MS } from './config.js';
 import { S, bench } from './state.js';
 import { rockLeft } from './world.js';
+import { now } from './clock.js';
 
 // The middle of the plot, and it never moves. The rock grows leftwards into
 // this ground as the game goes on, so what the block has to fit is the room
 // left at the biggest rock -- 240px between the bench and the apron -- and not
 // the room it has at rock one.
 export const houseCx = () => Math.round((S.cx + HOUSE_TO) / P) * P;
-
-// Which way a thing at i leans, and where it sits off true. The same every time
-// for the same i: a settlement that reshuffled itself between frames would be
-// one nobody could look at. This is the whole of the ramshackle -- there is no
-// randomness in this file, and none anywhere near the drawing.
-const wonk = i => ((i * 7 + 3) % 3) - 1;
 
 // How many rooms stand in course c: the base, losing one a storey, never fewer
 // than three. A fixed sequence, and it has to be fixed.
@@ -58,17 +54,15 @@ export function cubes() {
   // its plot from one end instead of sliding along it as it grows.
   const foot = Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
 
+  // Every course starts at the same edge and is shorter than the one below, so
+  // the settlement steps back from one side and stands square on the other.
+  // Courses used to sit a room off each other, which looked hand-built standing
+  // still and made the whole place restless as it grew: with everything else
+  // held still, the wobble was the only thing moving, and it read as a fault.
   const out = [];
-  for (let i = 0, c = 0, left = foot, placed = 0; i < n; i++) {
-    if (i - placed === courseWide(c)) {          // that course is full: start the next
-      placed = i;
-      // A narrower course steps in from the end of the one under it rather than
-      // sitting square on it -- and by a fixed amount for that storey, so the
-      // step is a fact about the course and not about how many people live here.
-      if (wonk(++c) > 0) left += HOUSE_CUBE;
-    }
-    out.push({ x: left + (i - placed) * HOUSE_CUBE, y: S.groundY - (c + 1) * HOUSE_CUBE,
-               lean: wonk(c + i - placed) || 1, i });
+  for (let i = 0, c = 0, placed = 0; i < n; i++) {
+    if (i - placed === courseWide(c)) { placed = i; c++; }   // that course is full
+    out.push({ x: foot + (i - placed) * HOUSE_CUBE, y: S.groundY - (c + 1) * HOUSE_CUBE, i });
   }
   return out;
 }
@@ -78,7 +72,65 @@ export function cubes() {
 // work rather than appearing at it. Nothing in this file moves anybody -- the
 // walk belongs to the crew, and this is only the address.
 export function doorAt() {
-  return { x: houseCx() };
+  return { x: Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P + HOUSE_CUBE / 2 };
+}
+
+// Where the holes go: the door in the first room built, and one window dead in
+// the middle of every room after it. A pure function of a room's number and
+// nothing else -- not of its neighbours, not of how many people live here.
+//
+// Every room the same, on purpose. Two rooms in three used to have a window and
+// the third went blank, which gave the wall some life to look at and made every
+// hire a small rearrangement to read: a new room, and the pattern of dark and
+// light along the course shifted with it. When the only thing that changes is
+// one more room exactly like the last one, the change is the room.
+export function holes() {
+  const C = HOUSE_CUBE;
+  return cubes().map(r => r.i === 0
+    // A doorway four cells across, which is wider than the body that walks out
+    // of it. A door somebody plainly could not fit through is the fastest way to
+    // make a building read as a model of a building.
+    ? { x: r.x + P, y: r.y + C - P * 4, w: P * 4, h: P * 4, door: true, i: r.i }
+    : { x: r.x + P * 2, y: r.y + P * 2, w: P * 2, h: P * 2, i: r.i });
+}
+
+// What a window is doing at time t: how much of it is lit, and whether somebody
+// is crossing it. Each room keeps its own beat, worked out from its own number,
+// so a course of windows never blinks as one -- and every one of them spends most
+// of its time simply lit, because a wall that is always doing something is as
+// dead as a wall that never does anything.
+function life(i, t) {
+  const beat = HOUSE_BEAT * (1 + (i % 5) * 0.19);
+  const u = ((t / beat) + i * 0.37) % 1;
+  if (u < 0.04) return { open: 1 - u / 0.04 };            // the curtain goes across
+  if (u < 0.16) return { open: 0 };                       // and stays across a while
+  if (u < 0.20) return { open: (u - 0.16) / 0.04 };       // and is drawn back again
+  if (u > 0.70 && u < 0.76) return { open: 1, cross: (u - 0.70) / 0.06 };
+  return { open: 1 };
+}
+
+// The chimney stands on the top of the left-hand column, so it rises with the
+// building the way a flue does when another storey goes on under it. It is the
+// one thing here that is allowed to move as the settlement grows, because going
+// up with it is what a chimney does.
+export function chimneyAt() {
+  const rooms = cubes();
+  if (!rooms.length) return null;
+  const left = Math.min(...rooms.map(r => r.x));
+  const top = Math.min(...rooms.filter(r => r.x === left).map(r => r.y));
+  return { x: left + P * 2, y: top };
+}
+
+// A puff off it, now and then. It goes into the same list the lab's chimney uses
+// -- one thing in this game knows how smoke rises, and it is not this file.
+export function stepHouse(now) {
+  const at = chimneyAt();
+  if (!at || now < S.houseSmokeAt) return;
+  S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + Math.random() * 0.8);
+  // Marked as the crew's, because the lab's chimney means something specific --
+  // that research is being worked on -- and a check reads it. Two chimneys, one
+  // list, and only one of them is a signal.
+  S.smoke.push({ x: at.x + P, y: at.y - P * 4, drift: (Math.random() - 0.5) * 0.25, t: 0, house: true });
 }
 
 // --- drawing -----------------------------------------------------------------
@@ -102,42 +154,6 @@ export function drawHouses(ctx) {
   if (!rooms.length) return;
   const C = HOUSE_CUBE;
   const room = (x, y) => rooms.some(r => r.x === x && r.y === y);
-  // Where a room's hole goes, or whether it has one at all. Read off where the
-  // room stands rather than off a counter, so it keeps its face between frames.
-  //
-  // Two thirds of the rooms have one, and they sit in different corners: holes
-  // punched in the same spot in every room line up into rows and columns, and a
-  // grid of identical windows is a factory. What is wanted is a wall somebody
-  // cut a hole in when they needed one.
-  const tell = r => Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11;
-  const holed = r => tell(r) % 3 !== 0;
-
-  // But never against an outside wall, and never touching another hole.
-  //
-  // A room is three cells across and a hole is one of them, so a hole in the
-  // outer cell of a room on the outside of the settlement is a bite out of the
-  // silhouette rather than a window. Worse, two rooms each punching a hole
-  // against the wall they share makes one window two cells wide, and a course
-  // offset by one turns a run of them into a staircase of white going up through
-  // the building. Neither is a window; both read as damage.
-  //
-  // So a hole goes in only where there is wall on every side of it -- including
-  // diagonally, and including wall that has already been cut through for
-  // somebody else's window. Rooms are asked in the order they were built, so the
-  // answer is the same every time, and a room that cannot have one goes without.
-  const cut = new Set();
-  const key = (x, y) => `${x},${y}`;
-  const clear = (x, y) => {
-    for (let dx = -P; dx <= P; dx += P)
-      for (let dy = -P; dy <= P; dy += P)
-        if (cut.has(key(x + dx, y + dy))) return false;
-    return true;
-  };
-  const punch = (x, y, tall) => {
-    ctx.fillRect(x, y, P, tall);
-    for (let k = 0; k < tall; k += P) cut.add(key(x, y + k));
-  };
-
   // The mass. Everything after this is a hole knocked back out of it.
   ctx.fillStyle = '#000';
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
@@ -154,30 +170,53 @@ export function drawHouses(ctx) {
     ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
   }
 
-  // One door, and it is the one a new hire walks out of. A door is a cell across
-  // and two high, which is a third of a room: put one in every ground room and
-  // the bottom course is an arcade of legs holding a lintel up -- at one or two
-  // bodies the whole settlement read as a table. A place has one way in anyway,
-  // and making it *the* way in means the door you can see is the door somebody
-  // actually comes through.
-  const door = rooms
-    .filter(r => r.y + C === S.groundY)
-    .reduce((best, r) => Math.abs(r.x + C / 2 - doorAt().x) < Math.abs(best.x + C / 2 - doorAt().x) ? r : best);
+  // The chimney: a stack on the top of the left-hand column with a lip on it,
+  // drawn with the mass because it is part of the building rather than something
+  // standing on it.
+  const flue = chimneyAt();
+  ctx.fillRect(flue.x, flue.y - P * 4, P * 2, P * 4);
+  ctx.fillRect(flue.x - P / 2, flue.y - P * 4, P * 3, P);
 
-  ctx.fillStyle = '#fff';
-  punch(door.x + P, door.y + C - P * 2, P * 2);
-
-  for (const r of rooms) {
-    if (r === door) continue;
-    // the middle of the room first, then hard against a wall it shares with the
-    // room next door: the middle is the one place that is always safe from the
-    // outside, so it is what a room falls back to
-    const spots = [[r.x + P, r.y + P]];
-    if (room(r.x - C, r.y)) spots.push([r.x, r.y + P]);
-    if (room(r.x + C, r.y)) spots.push([r.x + P * 2, r.y + P]);
-    if (room(r.x, r.y - C)) spots.push([r.x + P, r.y]);
-    const at = spots[tell(r) % spots.length];
-    if (holed(r) && clear(at[0], at[1])) punch(at[0], at[1], P);
+  // The holes, and every one of them dead in the middle of its room.
+  //
+  // They used to be chosen from wherever there was wall to spare -- against a
+  // shared wall if the room had a neighbour, in the middle if it did not. Which
+  // meant a room's window depended on its neighbours, so building a room moved
+  // the window in the room beside it, and two rooms punching against the wall
+  // between them made one window two cells wide. Reading anything about a room
+  // off the rooms around it is what made the place shuffle every time somebody
+  // was hired.
+  //
+  // The middle asks nothing of anybody: cells of wall clear on every side, the
+  // same cells whether the room is the end of the settlement or buried in it,
+  // and never touching its neighbour's however the courses step. Nothing here
+  // can grow into anything else, which is the whole point of it.
+  //
+  // And they are the one part of this that moves. A settlement of people who are
+  // all out at work is a shape; a curtain going across, a room going dark and
+  // somebody crossing the light is the difference between a building and a place
+  // with anybody in it. Nothing here is random -- a room's beat comes off its own
+  // number -- and none of it is fast: it is meant to be caught out of the corner
+  // of the eye rather than watched.
+  const t = now();
+  for (const h of holes()) {
+    if (h.door) {                                       // a doorway is always open
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(h.x, h.y, h.w, h.h);
+      continue;
+    }
+    const { open, cross } = life(h.i, t);
+    ctx.fillStyle = HOUSE_CURTAIN;                      // the curtain, behind the light
+    ctx.fillRect(h.x, h.y, h.w, h.h);
+    const w = Math.round(h.w * open / P) * P;           // and it draws a cell at a time
+    if (w <= 0) continue;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(h.x, h.y, w, h.h);
+    // somebody passing between the lamp and the window
+    if (cross !== undefined) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(h.x + Math.round(cross * (w - P) / P) * P, h.y, P, h.h);
+    }
   }
 
   ctx.fillStyle = '#000';
@@ -199,6 +238,7 @@ export function houseReport() {
     base: cs.length ? Math.max(...cs.map(c => c.y)) + HOUSE_CUBE : null,
     foot: S.groundY,
     door: doorAt().x,
+    holes: holes().map(h => `${h.x},${h.y},${h.h}`),
     ofBench: left === null ? null : Math.round(left - (bench.x + bench.w)),
     ofApron: right === null ? null : Math.round(rockLeft() - ROCK_CLEAR - right),
     cells: cs.map(c => `${c.x},${c.y}`)

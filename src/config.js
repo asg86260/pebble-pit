@@ -452,13 +452,30 @@ export function tune(key, v) {
 // room it has at rock one, because the rock grows into this ground and the
 // shacks may not be standing in it when it does.
 export const HOUSE_TO = -420;      // rock centre to the middle of the plot
-export const HOUSE_CUBE = P * 3;   // one body, one shack, the size of the body
-// How wide the settlement may stand, in rooms. Nine of them is 162px inside a
-// plot of 240, which leaves it clear of the bench on one side and the rock's
-// apron on the other at the biggest rock the game allows. It is wide on purpose:
-// the ground is the cheap direction, and a place that spreads before it climbs
-// reads as somewhere people live rather than as a block of flats.
-export const HOUSE_COLS = 9;
+// How long a window takes to go through its whole day: curtained for a while,
+// open for much longer, and somebody crossing it now and then. Rooms are put on
+// their own beat off their own number, so a wall of them never blinks together.
+// Slow on purpose -- this is meant to be caught out of the corner of the eye
+// while you are doing something else, not watched.
+export const HOUSE_BEAT = 15000;
+// A drawn curtain. Not black: a window that goes black is a window that vanishes
+// into the wall, and a wall full of holes that keep opening and shutting is the
+// busiest thing on screen. Grey says the window is still there and somebody has
+// pulled something across it.
+export const HOUSE_CURTAIN = '#8f8f8f';
+// How often the chimney puffs. It is a hearth, not a furnace: the lab smokes
+// steadily because work is being done in it, and this says something quieter --
+// that somebody is in.
+export const HOUSE_PUFF_MS = 5200;
+// A room is twice the body that lives in it. It was exactly one body across for
+// a while, which meant a door -- a third of a room -- was half the width of the
+// worker walking out of it, and the whole settlement read as a doll's house
+// parked next to people it could not have held.
+export const HOUSE_CUBE = P * 6;
+// How wide the settlement may stand, in rooms. Six at the size a room is now is
+// 216px inside a plot of 240, so it still clears the bench on one side and the
+// rock's apron on the other at the biggest rock the game allows.
+export const HOUSE_COLS = 6;
 // --- Track TRAVEL: a body walks to its work ---------------------------------
 
 // Moving somebody between jobs is not sacking one and hiring another: the same

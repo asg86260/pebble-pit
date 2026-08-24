@@ -99,6 +99,7 @@ export const S = {
   research: null,         // { key, done } -- worker-seconds put in so far
   smoke: [],              // puffs off the chimney while it is being worked
   smokeAt: 0,
+  houseSmokeAt: 0,      // and when the crew's own chimney last had a puff
   skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
   labOpen: false,
   labBoardOpen: false,

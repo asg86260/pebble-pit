@@ -1631,10 +1631,17 @@ const TESTS = [
     const seen = {}, moved = [];
     for (let n = 1; n <= 26; n++) {
       window.__crew(n, 0, 0, 0, 0);
-      state().houses.cells.forEach((c, k) => {
-        if (seen[k] && seen[k] !== c) moved.push(`${n}: room ${k} ${seen[k]} -> ${c}`);
-        seen[k] = c;
-      });
+      const h = state().houses;
+      // Rooms and the holes cut in them, each list keyed on its own count: a
+      // window that jumps when the room next door is built is the same fault as
+      // a room that moves, and it is the one that survived the first go at this.
+      for (const [what, list] of [['room', h.cells], ['hole', h.holes]]) {
+        list.forEach((c, k) => {
+          const key = `${what} ${k}`;
+          if (seen[key] && seen[key] !== c) moved.push(`${n}: ${key} was ${seen[key]}, now ${c}`);
+          seen[key] = c;
+        });
+      }
     }
     const settled = moved.length === 0;
     window.__crew(0, 0, 0, 0, 0);
