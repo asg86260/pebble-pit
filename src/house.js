@@ -111,6 +111,11 @@ export function drawHouses(ctx) {
   const T = HOUSE_LINE;
   const post = (x, y) => ctx.fillRect(x - T / 2, y, T, C);      // an upright
   const beam = (x, y, w) => ctx.fillRect(x, y - T / 2, w, T);   // and a level run
+  // Which face a room wears, read off where it stands rather than off a counter:
+  // a room keeps the same one from frame to frame, and its neighbour does not
+  // wear it too. Five is a prime against both of the strides in here, so the
+  // pattern never lines up with a course or a column.
+  const tell = (r, salt) => (Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11 + salt * 3) % 5;
 
   // Walls, each one drawn once however many rooms it stands between: the left
   // wall always, the right only where nothing carries on. That is the whole
@@ -140,30 +145,105 @@ export function drawHouses(ctx) {
   }
 
   // A door where somebody could actually use one, which is the ground floor, and
-  // not on every room: a settlement has fewer ways in than it has rooms. The
-  // rooms above get a window instead, which is the only thing in the picture
-  // that says the upper storeys are lived in rather than piled on.
+  // not on every room: a settlement has fewer ways in than it has rooms.
   for (const r of rooms) {
-    const ground = r.y + C === S.groundY;
-    if (ground && r.lean > 0) ctx.fillRect(r.x + P, r.y + C - P * 2, P, P * 2);
-    else if (!ground && r.lean > 0) ctx.fillRect(r.x + P, r.y + P, P, P);
+    if (r.y + C === S.groundY && r.lean > 0) ctx.fillRect(r.x + P, r.y + C - P * 2, P, P * 2);
   }
 
-  // And a ladder up the end of it, from the ground to the second storey. It is
-  // the one part that is not a wall or a hole in one: what it says is that the
-  // place is used -- somebody climbs that to get home -- and it ties the courses
-  // together into one address instead of two floors that happen to be stacked.
-  const upper = rooms.filter(r => r.y + C * 2 <= S.groundY);
-  if (upper.length) {
-    const foot = Math.min(...rooms.map(r => r.x)) - P;
-    const top = S.groundY - C * 2;
-    ctx.fillRect(foot, top, T, C * 2);
-    ctx.fillRect(foot + P, top, T, C * 2);
-    for (let y = top + P; y < S.groundY; y += P) ctx.fillRect(foot, y - T / 2, P, T);
+  // What the upper storeys have instead of doors, and it is not one window over
+  // and over. A room is three cells square, so there is only ever one mark's
+  // worth of room in it -- the variety has to come from *which* mark, not from
+  // where it sits. A window, a window down on the floor, a vent, a wall with
+  // nothing in it at all, and one room in five with two things going on.
+  //
+  // Which one a room gets is read off where it stands rather than off a counter,
+  // so a room keeps its face from frame to frame, and two side by side do not
+  // wear the same one.
+  for (const r of rooms) {
+    if (r.y + C === S.groundY) continue;
+    const slit = (x, y) => ctx.fillRect(x, y + (P - T) / 2, P, T);
+    switch (tell(r, 0)) {
+      case 0: ctx.fillRect(r.x + P, r.y + P, P, P); break;              // a window
+      case 1: ctx.fillRect(r.x + P, r.y + P * 2, P, P); break;          // one down at the floor
+      case 2: slit(r.x + P, r.y + P); break;                            // a vent
+      case 3: break;                                                    // shuttered, nobody in
+      default: ctx.fillRect(r.x + P, r.y + P, P, P); slit(r.x + P, r.y + P * 2);
+    }
+  }
+
+  // Roofs are where a shanty keeps its things. Only rooms with sky over them can
+  // carry any, only some of them do, and no two next to each other carry the
+  // same -- a barrel for water, a stovepipe, or an aerial. This is the one part
+  // of the drawing that is not architecture, and it is what stops the top edge
+  // reading as the top edge of a diagram.
+  for (const r of rooms) {
+    if (room(r.x, r.y - C)) continue;
+    const top = r.y - (r.lean > 0 ? 0 : T);
+    switch (tell(r, 1)) {
+      case 0:                                                           // a water barrel
+        ctx.fillRect(r.x + P, top - P, P, P);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(r.x + P, top - P + (P - T) / 2, P, T);             // its hoop
+        ctx.fillStyle = '#000';
+        break;
+      case 1:                                                           // a stovepipe
+        ctx.fillRect(r.x + P * 2, top - P * 2, T, P * 2);
+        ctx.fillRect(r.x + P * 2 - T, top - P * 2, P, T);
+        break;
+      case 2:                                                           // an aerial
+        ctx.fillRect(r.x + P, top - P * 2, T, P * 2);
+        ctx.fillRect(r.x + P - T, top - P * 2, P, T);
+        ctx.fillRect(r.x + P - T, top - P, P, T);
+        break;
+    }
+  }
+
+  // Where a course steps back, the roof it left behind is a terrace, and a
+  // terrace somebody uses has a rail on it and a way up off it. Both together
+  // are what makes the upper storeys look lived on rather than looked at.
+  for (const r of rooms) {
+    if (room(r.x, r.y - C)) continue;
+    if (!room(r.x + C, r.y - C)) continue;         // nothing steps up off this one
+    const rail = r.y - P * 2;
+    ctx.fillRect(r.x + T, rail, C - T * 2, T);                          // the rail
+    ctx.fillRect(r.x + T, rail, T, P * 2);                              // and its two posts
+    ctx.fillRect(r.x + C - T * 2, rail, T, P * 2);
+    ladder(ctx, r.x + C - P, r.y - C, C);                               // up to the next storey
+  }
+
+  // And the ladder up the end of it, from the ground to the second storey. What
+  // it says is that the place is used -- somebody climbs that to get home -- and
+  // it ties the courses into one address rather than floors that happen to be
+  // stacked.
+  const left = Math.min(...rooms.map(r => r.x));
+  if (rooms.some(r => r.y + C * 2 <= S.groundY)) ladder(ctx, left - P, S.groundY - C * 2, C * 2);
+
+  // Props against the end walls. Everything else here is upright or level, and a
+  // place thrown up out of what was lying about leans on something: two diagonals
+  // are the whole of it, and they are the only lines in the picture that are
+  // neither.
+  if (rooms.some(r => r.y + C * 2 <= S.groundY)) {
+    const right = Math.max(...rooms.map(r => r.x)) + C;
+    ctx.lineWidth = T;
+    for (const [x, d] of [[left, -1], [right, 1]]) {
+      ctx.beginPath();
+      ctx.moveTo(x + d * P * 2, S.groundY);
+      ctx.lineTo(x, S.groundY - C);
+      ctx.stroke();
+    }
   }
 
   ctx.fillStyle = '#000';
   ctx.strokeStyle = '#000';
+}
+
+// A ladder: two rails and the rungs between them, drawn from a height down to
+// whatever it is standing on.
+function ladder(ctx, x, top, tall) {
+  const T = HOUSE_LINE;
+  ctx.fillRect(x, top, T, tall);
+  ctx.fillRect(x + P, top, T, tall);
+  for (let y = top + P; y < top + tall; y += P) ctx.fillRect(x, y - T / 2, P, T);
 }
 
 // what is standing on the plot, and how much room it has left either side, for
