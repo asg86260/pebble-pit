@@ -7,7 +7,7 @@
 
 import {
   P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
-  ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF,
+  ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase,
   PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   SHAKE_RATE, SHAKE_DECAY,
   TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, BENCH_W
@@ -40,10 +40,21 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 // not per column: `blocked` is asked about a column thousands of times a frame.
 export function refreshPiles() {
   S.piles = [
-    { key: 'farm', from: farm.x + farm.w + PILE_STANDOFF.farm, to: quarry.x - PILE_GAP },
-    { key: 'quarry', from: quarry.x + quarry.w + PILE_STANDOFF.quarry, to: bench.x - PILE_GAP },
+    heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
+    heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, bench.x - PILE_GAP),
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
+}
+
+// A site's strip is cut down to the width its limit actually needs, so what it
+// makes heaps up into a mound instead of lying along the whole run to the next
+// station. The far end is the ground it may not cross whatever the numbers say,
+// so a big enough limit gives back the old scatter rather than burying the
+// neighbour. It stays against its own station: the pile is that station's, and
+// it is where the throw already aims.
+function heap(key, from, end) {
+  const to = Math.round((from + heapBase(key) * P) / P) * P;
+  return { key, from, to: Math.min(to, end) };
 }
 
 // which pile a spot on the ground belongs to, or null for the bare ground between

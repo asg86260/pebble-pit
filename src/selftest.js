@@ -1012,6 +1012,71 @@ const TESTS = [
     ];
   }],
 
+  // A pile you cannot read is a number you have to go and look up. Spread along
+  // seventy cells, a site's output lies two deep whether there is a quarter of
+  // it or the lot, and only the warning triangle says which. Its strip is now
+  // only as wide as its limit needs, so what it makes stands up: a quarter is a
+  // nub against the station, and the limit is a crest across the middle of it.
+  ['a full pile is a heap you can read', async () => {
+    window.__grant({ cores: 8 });
+    window.__crew(0, 0, 4, 0);                 // quarriers, and nobody to carry it off
+    quickCrew();
+    window.__clearFloor();
+    run(1);
+
+    const strip = () => state().piles.find(p => p.key === 'quarry');
+    // how high every column of the pile stands, in cells, left to right. The
+    // pile is all shards, so where the marks are is where the pile is.
+    const profile = () => {
+      const p = strip();
+      const tops = new Array(Math.round((p.to - p.from) / P)).fill(0);
+      for (const t of state().findAll) {
+        const [x, y] = t.split(',').map(Number);
+        if (x < p.from || x >= p.to) continue;
+        const c = Math.round((x - p.from) / P);
+        tops[c] = Math.max(tops[c], y / P + 1);
+      }
+      return tops;
+    };
+    const tall = tops => Math.max(...tops);
+    const wide = tops => tops.filter(h => h > 0).length;
+
+    const part = runUntil(() => state().pileCount.quarry >= 45, 120) && profile();
+    const filled = runUntil(() => state().pileFull.quarry, 300);
+    run(2);                                    // and whatever was still in the air
+    const full = state();
+    const crest = profile();
+    const cells = crest.length;
+    const peak = crest.indexOf(tall(crest));
+    window.__crew(0, 0, 0, 0);
+    window.__clearFloor();
+
+    return [
+      ok(cells <= 30, 'a site heaps into a strip narrow enough to stand up in',
+         `${cells} cells across`),
+      ok(part && tall(part) >= wide(part) / 3,
+         'a quarter of a pile is already a mound rather than a scatter',
+         part && `${tall(part)} cells high over ${wide(part)} across`),
+      ok(filled, 'and it fills to its limit', `${full.pileCount.quarry} grains`),
+      ok(full.pileCount.quarry >= 180,
+         'which is the same count it has always been full at',
+         `${full.pileCount.quarry} grains`),
+      ok(full.pileMarks.includes('quarry'), 'the station says so, under it',
+         JSON.stringify(full.pileMarks)),
+      ok(tall(crest) > tall(part) * 1.5, 'the heap grew upward as it filled, not only along',
+         `${part && tall(part)} cells at a quarter, ${tall(crest)} full`),
+      // A full pile is a triangle standing on the whole strip: its high point is
+      // in the middle of it, not against either end, which is what says at a
+      // glance that there is no more room rather than merely a lot lying there.
+      ok(tall(crest) >= cells / 2,
+         'a full one stands at its crest', `${tall(crest)} cells over ${cells}`),
+      ok(peak > cells / 4 && peak < cells * 3 / 4,
+         'and the crest is in the middle of the strip', `column ${peak} of ${cells}`),
+      ok(crest.every((h, c) => h <= (Math.min(c + 1, cells - 1 - c) * 1.5) + 1),
+         'with nothing standing up as a wall at either end', JSON.stringify(crest))
+    ];
+  }],
+
   ['a cell is a whole number of device pixels', async () => {
     const checks = [];
     for (const [w, h, dpr] of [[2560, 1300, 1], [1440, 900, 2], [390, 844, 3], [412, 915, 2.6]]) {
@@ -1483,14 +1548,16 @@ const TESTS = [
     window.__crew(0, 0, 0, 1);
     quickCrew();
     window.__clearFloor();
+    // A bed with a spore on it, not merely one left standing ripe by an earlier
+    // check. A bed nobody is working keeps its tone for ever, so a check that
+    // picked one of those would sit waiting for a farmhand at the other end of
+    // the farm to come and cut it: the ones already ripe are named on the way in
+    // and skipped, and what is left is a bed that ripened while this watched.
+    const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
+    const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
     // a frame at a time, not a second: it is only ripe for as long as it takes
     // the farmhand to cut it, and a second-wide step steps right over that
     let ripe = false;
-    // a bed with a spore on it, not merely one left standing ripe by an earlier
-    // check: the tone is what says this one just grew, and the beds an earlier
-    // check left ripe still carry theirs, so they are named and skipped
-    const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
-    const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
     for (let i = 0; i < 3000 && !ripe; i++) {
       run(1 / 60);
       ripe = fresh(state()) >= 0;
