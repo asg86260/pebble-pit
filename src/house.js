@@ -122,7 +122,19 @@ export function drawHouses(ctx) {
   // cut a hole in when they needed one.
   const tell = r => Math.round(r.x / P) * 7 + Math.round(r.y / P) * 11;
   const holed = r => tell(r) % 3 !== 0;
-  const across = r => [0, P, P * 2][tell(r) % 3];
+
+  // But never against an outside wall. A room is three cells across and the hole
+  // is one of them, so a hole in the outer cell of a room on the outside of the
+  // settlement is not a window -- it is a bite taken out of the silhouette, and
+  // at this size the shape is the whole of what the thing says. A hole may only
+  // go where there is black on every side of it: hard against a wall it shares
+  // with the room next door, and in the middle of one it does not.
+  const spots = r => {
+    const out = [P];                                    // the middle is always safe
+    if (room(r.x - C, r.y)) out.push(0);
+    if (room(r.x + C, r.y)) out.push(P * 2);
+    return out;
+  };
 
   ctx.fillStyle = '#000';
   for (const r of rooms) ctx.fillRect(r.x, r.y, C, C);
@@ -133,18 +145,33 @@ export function drawHouses(ctx) {
   // is the whole of the ramshackle now, and it survives being small.
   for (const r of rooms) {
     if (room(r.x, r.y - C)) continue;
-    const l = room(r.x - C, r.y) ? 0 : P;
-    const w = C + l + (room(r.x + C, r.y) ? 0 : P);
+    const over = P / 2;                          // how far the lip hangs past a wall
+    const l = room(r.x - C, r.y) ? 0 : over;
+    const w = C + l + (room(r.x + C, r.y) ? 0 : over);
     ctx.fillRect(r.x - l, r.y - P / 2, w, P / 2);
   }
 
   // And the holes, knocked back out in white: a door on the ground where somebody
   // could walk out of one, a window upstairs.
+  // One door, and it is the one a new hire walks out of. A door is a cell across
+  // and two high, which is a third of a room: put one in every ground room and
+  // the bottom course is an arcade of legs holding a lintel up -- at one or two
+  // bodies the whole settlement read as a table. A place has one way in anyway,
+  // and making it *the* way in means the door you can see is the door somebody
+  // actually comes through.
+  const door = rooms
+    .filter(r => r.y + C === S.groundY)
+    .reduce((best, r) => Math.abs(r.x + C / 2 - doorAt().x) < Math.abs(best.x + C / 2 - doorAt().x) ? r : best);
+
   ctx.fillStyle = '#fff';
+  ctx.fillRect(door.x + P, door.y + C - P * 2, P, P * 2);
   for (const r of rooms) {
-    if (!holed(r)) continue;
-    if (r.y + C === S.groundY) ctx.fillRect(r.x + P, r.y + C - P * 2, P, P * 2);
-    else ctx.fillRect(r.x + across(r), r.y + (tell(r) % 2 ? P : P * 2) - P, P, P);
+    if (r === door || !holed(r)) continue;
+    const across = spots(r);
+    // never in the top row of a room with sky over it, which would cut the lip
+    // off its own roof, and never on the floor of one standing on the ground
+    const down = room(r.x, r.y - C) && tell(r) % 2 ? 0 : P;
+    ctx.fillRect(r.x + across[tell(r) % across.length], r.y + down, P, P);
   }
   ctx.fillStyle = '#000';
 }
