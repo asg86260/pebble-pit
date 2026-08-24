@@ -440,3 +440,18 @@ export function tune(key, v) {
   }
   return tuned(key);
 }
+
+// --- Track HOUSE -------------------------------------------------------------
+// Where the crew live: a cube per body, on the strip of bare ground between the
+// bench and the rock. That strip is the narrowest in the yard and it never gets
+// any wider -- the rock grows leftwards until it is P * 14 off the bench, and
+// its apron takes ROCK_CLEAR of that -- so the block is sized to the ten cells
+// left at the biggest rock the game allows, not to the room it has at rock one.
+export const HOUSE_TO = -330;      // rock centre to the middle of the plot
+export const HOUSE_CUBE = P * 2;   // one body, one cube
+export const HOUSE_COLS = 4;       // and this many abreast before the block goes up
+// The line between two cubes, so a full stack is countable instead of being one
+// black rectangle. A hairline, like the ground line, rather than a cell: a cell
+// is what this yard is built of, and a cell of white between every cube read as
+// scaffolding rather than as the joint between two walls.
+export const HOUSE_JOINT = 2;

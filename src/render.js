@@ -19,6 +19,7 @@ import { indoors, progress } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
 import { drawRoster, drawRosterCounts } from './roster.js';
+import { drawHouses, houseReport } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
@@ -26,6 +27,10 @@ import { now } from './clock.js';
 const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
 export { canvas };
+
+// The house is scenery this file draws; its report goes out through here so that
+// main.js has one import for the whole of the drawing side.
+export { houseReport };
 
 // a shard: a triangle, filled or hollow, the mark that means the quarry
 export function drawTriangle(x, y, r, hollow) {
@@ -613,6 +618,7 @@ export function draw() {
 
   drawPaid();
   drawBench();
+  drawHouses(ctx);         // where the crew live, behind them: a body walking past is in front of it
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself

@@ -1426,6 +1426,41 @@ const TESTS = [
     ];
   }],
 
+  // The crew live in a block of cubes between the bench and the rock, one cube
+  // a body. It is the narrowest strip of ground in the yard and the rock grows
+  // into it, so the two things worth checking are that it is not there before
+  // anybody is hired and that it never touches either neighbour -- at the
+  // biggest rock the game allows, which is where the strip is at its narrowest.
+  ['the crew have somewhere to live', async () => {
+    window.__crew(0, 0, 0, 0, 0);
+    const empty = state().houses;
+    window.__crew(1, 0, 0, 0, 0);
+    const one = state().houses;
+    window.__crew(6, 6, 0, 0, 0);
+    const twelve = state().houses;
+    const grew = twelve.top < one.top;              // up the screen is a smaller y
+    window.__jump(30);
+    const big = state().houses;
+    const onGrid = big.cells.every(c => c.split(',').every(v => +v % P === 0));
+    window.__crew(0, 0, 0, 0, 0);
+    window.__jump(1);
+    return [
+      ok(empty.cubes === 0, 'nothing stands there until somebody is hired',
+         `${empty.cubes} cubes`),
+      ok(one.cubes === 1 && twelve.cubes === 12, 'then it is a cube a body',
+         `${one.cubes} / ${twelve.cubes}`),
+      ok(grew, 'and the block goes up as the crew does',
+         `${one.top} -> ${twelve.top}`),
+      ok(big.base === big.foot, 'the bottom course stands on the ground line',
+         `${big.base} / ${big.foot}`),
+      ok(big.ofBench > 0, 'it stands clear of the bench',
+         `${big.ofBench}px`),
+      ok(big.ofApron > 0, 'and clear of the apron at the biggest rock',
+         `${big.ofApron}px`),
+      ok(onGrid, 'every cube sits on the lattice')
+    ];
+  }],
+
   // Nothing in the lab is bought outright any more. Paying starts a piece of
   // research; what finishes it is bodies standing in the lab, and an empty lab
   // makes no progress at all however much you have paid.
