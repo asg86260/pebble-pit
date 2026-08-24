@@ -10,7 +10,7 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { startle } from './weather.js';
-import { nearBench, nearLab, nearSchool, showPanel, placeBoard, showTip } from './board.js';
+import { nearBench, nearLab, nearSchool, nearCasino, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
          overPitMark, pitMarkAt } from './render.js';
 import { doneName } from './lab.js';
@@ -97,6 +97,7 @@ canvas.addEventListener('pointermove', e => {
     // one menu: whichever station the cursor is standing at, or none
     showPanel(nearLab(S.mouse.x, S.mouse.y) ? 'lab'
             : nearSchool(S.mouse.x, S.mouse.y) ? 'school'
+            : nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
             : nearBench(S.mouse.x, S.mouse.y) ? 'bench' : null);
     // and whatever the cursor is asking about, which is not the same question:
     // a board opens because you walked up to a station, a tooltip opens because
@@ -123,6 +124,7 @@ export function endDrag(e) {
     if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench');
     else if (nearLab(p.x, p.y)) showPanel(S.labBoardOpen ? null : 'lab');
     else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school');
+    else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino');
     else showPanel(null);
   }
 

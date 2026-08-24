@@ -115,26 +115,45 @@ export function chimneyAt() {
 
 // A puff off it, now and then. It goes into the same list the lab's chimney uses
 // -- one thing in this game knows how smoke rises, and it is not this file.
-// One window changes its mind, every so often. Which one walks round the
-// settlement rather than being drawn out of a hat, and it walks by the golden
-// ratio: a whole-number stride shares a factor with the room count sooner or
-// later -- a stride of seven in fourteen rooms picked the same two windows for
-// ever -- and this one lands somewhere new whatever the crew has grown to.
+// --- who is in ----------------------------------------------------------------
+// A light in a window means somebody is behind it, and that is the only thing it
+// is allowed to mean. Bodies with nothing to carry knock off and come here (see
+// crew.js), so the front of the settlement is a reading of how much of the crew
+// is out at work: a lit wall is a yard standing idle, and a dark one is
+// everybody out on the ground where you can see them.
 //
-// Room zero is skipped: that is the doorway, and a doorway does not have a
-// curtain, so a turn spent on it is a turn where nothing happens.
+// Rooms are lit from the bottom up, in the order they were built, because a
+// scatter of lit rooms would read as a pattern somebody chose. Room zero is the
+// doorway and is not a window.
+export const homeCount = () => S.workers.filter(w => w.inside).length;
+export const lit = i => i > 0 && i <= homeCount();
+
+// One lit window changes its mind, every so often -- somebody pulling something
+// across it. Which one walks round the settlement rather than being drawn out of
+// a hat, and it walks by the golden ratio: a whole-number stride shares a factor
+// with the room count sooner or later -- a stride of seven in fourteen rooms
+// picked the same two windows for ever -- and this one lands somewhere new
+// whatever the crew has grown to.
+//
+// It only ever touches rooms with somebody in them. A curtain across a dark room
+// is a change nobody can see, and it would spend the walk's turns on windows
+// that are already grey.
 const GOLDEN = 0.6180339887;
 
 export function stepShutters(now) {
-  if (S.crew < 2 || now < S.shutterAt) return;
+  const home = homeCount();
+  // a curtain across an empty room is nothing; drop any that are left over from
+  // when somebody lived in it
+  if (S.shutters.some(i => !lit(i))) S.shutters = S.shutters.filter(lit);
+  if (home < 2 || now < S.shutterAt) return;
   S.shutterAt = now + HOUSE_FLIP_MS;
 
   // Either one more goes across, or the one that has been across longest comes
   // back: one window changes, and the number of them stays about where it was.
-  const want = Math.max(1, Math.round((S.crew - 1) * HOUSE_SHUT));
+  const want = Math.max(1, Math.round(home * HOUSE_SHUT));
   if (S.shutters.length >= want) { S.shutters.shift(); return; }
   for (let k = 0; k < 8; k++) {
-    const i = 1 + Math.floor(((S.shutterN++ * GOLDEN) % 1) * (S.crew - 1));
+    const i = 1 + Math.floor(((S.shutterN++ * GOLDEN) % 1) * home);
     if (!S.shutters.includes(i)) { S.shutters.push(i); return; }
   }
 }
@@ -142,7 +161,10 @@ export function stepShutters(now) {
 export function stepHouse(now) {
   stepShutters(now);
   const at = chimneyAt();
-  if (!at || now < S.houseSmokeAt) return;
+  // The hearth is lit by whoever is sitting at it. A chimney smoking over an
+  // empty house is the building claiming somebody is in when the windows say
+  // otherwise, and the two have to agree or neither is worth looking at.
+  if (!at || !homeCount() || now < S.houseSmokeAt) return;
   S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + Math.random() * 0.8);
   // Marked as the crew's, because the lab's chimney means something specific --
   // that research is being worked on -- and a check reads it. Two chimneys, one
@@ -215,8 +237,14 @@ export function drawHouses(ctx) {
   // with anybody in it. Nothing here is random -- a room's beat comes off its own
   // number -- and none of it is fast: it is meant to be caught out of the corner
   // of the eye rather than watched.
+  // The doorway is always a hole -- it is a way in, not a light. A window is
+  // white when there is somebody behind it and grey when there is not, and grey
+  // is also what a drawn curtain looks like, which is the right answer both
+  // times: what the colour says is whether there is anything to see.
   for (const h of holes()) {
-    ctx.fillStyle = !h.door && S.shutters.includes(h.i) ? HOUSE_CURTAIN : '#fff';
+    ctx.fillStyle = h.door ? '#fff'
+      : lit(h.i) && !S.shutters.includes(h.i) ? '#fff'
+      : HOUSE_CURTAIN;
     ctx.fillRect(h.x, h.y, h.w, h.h);
   }
 
@@ -233,6 +261,8 @@ export function houseReport() {
   const right = cs.length ? Math.max(...cs.map(c => c.x)) + HOUSE_CUBE : null;
   return {
     cubes: cs.length,
+    home: homeCount(),
+    lights: holes().filter(h => !h.door && lit(h.i) && !S.shutters.includes(h.i)).length,
     cube: HOUSE_CUBE,
     left, right,
     top: cs.length ? Math.min(...cs.map(c => c.y)) : null,

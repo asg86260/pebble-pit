@@ -6,10 +6,10 @@
 // different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { P, WORKER, FARM_BEDS, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
+import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
 import { S, farm } from './state.js';
-import { walkY } from './world.js';
+import { walkY, bedCount } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -22,9 +22,15 @@ export const tendRate = (lvl = S.tendLevel) => 60000 / tendMs(lvl);   // beds a 
 export const bedX = i => farm.x + i * FARM_GAP;
 export const bedTop = i => S.groundY - FARM_H * S.beds[i];
 
+// The plot as it stands. Beds are broken one at a time, so this grows and the
+// beds already in the ground are left exactly as they were: a bed you had
+// half-tended when you paid for the next one is a bed still half-tended.
 export function plantBeds() {
-  if (S.beds.length !== FARM_BEDS) S.beds = new Array(FARM_BEDS).fill(0);
-  if (S.bedTone.length !== FARM_BEDS) S.bedTone = new Array(FARM_BEDS).fill(0);
+  const n = bedCount();
+  while (S.beds.length < n) S.beds.push(0);
+  while (S.bedTone.length < n) S.bedTone.push(0);
+  if (S.beds.length > n) S.beds.length = n;
+  if (S.bedTone.length > n) S.bedTone.length = n;
 }
 
 export function newFarmhand() {
@@ -60,6 +66,9 @@ function cut(i, x) {
 // one farmhand, one frame
 export function stepFarmhand(w, now, dt) {
   plantBeds();
+  // a bed that is not there any more -- a save from a wider plot -- is not a
+  // bed anybody can stand at
+  if (w.bed >= S.beds.length) { w.bed = pickBed(w); w.goal = 'to'; }
   w.y = walkY(w.x + WORKER / 2);
 
   if (w.goal === 'to') {
@@ -83,7 +92,8 @@ export function stepFarmhand(w, now, dt) {
   }
   w.x = bedX(w.bed) - WORKER - P * 2 + Math.sin(now / 620 + w.bob) * P * 0.9;
 
-  if (S.pileFull.farm) return;
+  if (S.pileFull.farm) { w.resting = true; return; }
+  w.resting = false;
   const i = w.bed;
 
   // bringing it on. The moment it is ripe a spore forms at the tip of the stalk

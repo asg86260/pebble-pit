@@ -9,29 +9,32 @@ import './style.css';
 import './selftest.js';        // adds __test() to the console
 
 import { P, PIT_H, GRAV, ROCK_SINK, ROCK_CLEAR, SETTLE_BUDGET, HAUL_EMPTY,
-         PILE_LIMIT, findKind, someFind,
+         PILE_LIMIT, findKind, someFind, QUARRY_BENCH0, FARM_BEDS0,
          CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, school } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, school, casino } from './state.js';
 import { plantBeds } from './farm.js';
 import { rosterReport } from './roster.js';
+import { stepBreaks, breakReport } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, count, countDust,
          isDust, bottomY } from './grid.js';
 import { resize, clampCam, stepCamera, blocked, bankCeiling, overPitMouth,
          rockLeft, yardLeft, pileAt, refreshPiles, bridgeSpan, groundAt,
-         stepShake } from './world.js';
+         stepShake, resite, benches, bedCount } from './world.js';
 import { placeRock, makeBoulder, overBoulder, knockOff, boulderAlive, depthOf, rockSize, stepRock, rockFootY, dropZone } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, spend, pitCapacity, pitDepth, pitFull, digPit, digsLeft } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
-import { quarryFace, quarryCut } from './quarry.js';
+import { quarryFace, quarryCut, ladder } from './quarry.js';
 import { stepCore, dropCore } from './core.js';
 import { sampleRates, mult, rates, stepLab, stepSmoke, workFor, progress } from './lab.js';
 import { makePainter } from './painter.js';
-import { updateWorkers, syncWorkers } from './crew.js';
+import { updateWorkers, syncWorkers, pitFree } from './crew.js';
 import { catchAir } from './hands.js';
 import { seedAir, stepAir, AIR, airReport } from './air.js';
 import { seedWeather, stepWeather, sendBirds, skyReport, BIRDS } from './weather.js';
 import { draw, stepPaid } from './render.js';
 import { houseReport, stepHouse } from './house.js';
+import { stepCasino, pot, spinning, stakeOf, chipName } from './casino.js';
+import { stepIntro, stepBuried, introRunning, buriedVisible, skipIntro } from './intro.js';
 import { hud, remeasure } from './board.js';
 import { buildShop } from './shop.js';
 import { persist, restore, reset } from './persist.js';
@@ -99,8 +102,12 @@ function step() {
   if (S.tick % 15 === 1) surveyFloor();
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
+  stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on
   stepSmoke(now, dt);                         // which the chimney says out loud
+  stepCasino(dt);                             // and the wheel, if there is anything on the table
+  stepIntro(now);                             // and, once and once only, the two of them
+  stepBuried(now);                            // and whoever is under the rock, when they can be seen
   stepHouse(now);                             // and the crew's own hearth, now and then
   stepCore();
   if (S.dragging) catchAir(S.mouse.x, S.mouse.y);   // swinging does not catch its own spray
@@ -146,7 +153,10 @@ function step() {
       // to carry on out and land on the ground behind the pit.
       if (ch.vx > 0 && ch.x + P > pit.x + pit.w) { ch.x = pit.x + pit.w - P; ch.vx = 0; }
       if (ch.vy > 0 && ch.y >= surfaceY(pit, pc)) {
-        bankDust(ch.x, ch.s);
+        // The hole would not take it -- everything counts against the same
+        // capacity now, finds included. It is not swallowed: it comes back out
+        // on to the ground by the lip and lies there until a dig makes room.
+        if (!bankDust(ch.x, ch.s)) spawnSpoil(pit.x - P * 4, S.groundY - P * 4, ch.s, 'rock');
         S.chips.splice(i, 1);
         continue;
       }
@@ -203,6 +213,13 @@ window.__birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(); r
 window.__crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb;
   S.miners = m; S.quarriers = sp; S.farmhands = f; S.labbers = lb;
+  S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
+  // The cut and the plot only hold so many, so a hook asked for four down the
+  // quarry gets a quarry with four benches in it rather than two of the four
+  // sent back to carrying dust.
+  S.benchLevel = Math.max(S.benchLevel, sp - QUARRY_BENCH0);
+  S.bedLevel = Math.max(S.bedLevel, f - FARM_BEDS0);
+  resite();
   rebalance();                                      // and the rest carry dust
   if (sp > 0) S.quarryOpen = true;
   if (f > 0) S.farmOpen = true;
@@ -211,7 +228,7 @@ window.__crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straight of
 };
 // dev: build the school and hand out trades without paying for them
 window.__school = (o = {}) => {
-  S.schoolOpen = true;
+  S.schoolOpen = o.open ?? true;
   for (const k of ['breakers', 'carters', 'blasters', 'growers'])
     if (o[k] != null) S[k] = o[k];
   rebalance(); syncWorkers(); buildShop(); S.dirty = true;
@@ -231,9 +248,10 @@ window.__beds = () => {
 window.__levels = (o = {}) => {             // set upgrade levels, for weighing balance
   for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'minerSpeedLevel',
                    'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
-                   'quarryPaceLevel', 'tendLevel']) {
+                   'quarryPaceLevel', 'tendLevel', 'benchLevel', 'bedLevel']) {
     if (k in o) S[k] = o[k];
   }
+  resite(); rebalance(); syncWorkers();
   if (o.mult) for (const k of Object.keys(S.mult)) if (k in o.mult) S.mult[k] = o.mult[k];
   buildShop(); S.dirty = true;
 };
@@ -288,7 +306,14 @@ window.__place = (type, x) => {
 // somewhere else entirely.
 window.__abandon = () => { S.research = null; buildShop(); S.dirty = true; };
 // back to a new game, for a check that wants a known state
-window.__reset = () => { reset(); };
+// dev: back to a game nobody has played. The opening is skipped unless it is
+// the thing being looked at: five seconds of two squares talking in front of
+// every check in the suite is five seconds of nothing being checked.
+window.__reset = (intro = false) => { reset(); if (!intro) skipIntro(); };
+// dev: come back to the game the way a page refresh does -- write what is here,
+// then read it back into an empty yard. Nothing else in the checks can tell the
+// difference between a reload and this.
+window.__reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 window.__lab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
 window.__grant = (o = {}) => {              // shards and spores, for looking at things
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
@@ -418,7 +443,7 @@ function strandedDust() {
   return { left, under };
 }
 
-window.__state = () => ({ houses: houseReport(), paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), benchW: bench.w, rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), shake: +S.shake.toFixed(2), shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)], dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, airUnder: airReport().under, airFront: airReport().front, airKinds: airReport().kinds, airWant: airReport().want, sky: skyReport(), camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: pitDepth() / pit.p, pitDepth: pitDepth(), pitFullDepth: PIT_H, pitLevel: S.pitLevel, pitDigsLeft: digsLeft(), pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), pitFull: pitFull(), dustPastPit: dustPastPit(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.filter(p => !p.house).length, houseSmoke: S.smoke.filter(p => p.house).length, shutters: [...S.shutters].sort((a, b) => a - b), research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, labDone: S.labDone, labBoardOpen: S.labBoardOpen, schoolBoardOpen: S.schoolBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
+window.__state = () => ({ houses: houseReport(), paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), benchW: bench.w, rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), shake: +S.shake.toFixed(2), shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)], dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length, airUnder: airReport().under, airFront: airReport().front, airKinds: airReport().kinds, airWant: airReport().want, sky: skyReport(), camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: pitDepth() / pit.p, pitDepth: pitDepth(), pitFullDepth: PIT_H, pitLevel: S.pitLevel, pitDigsLeft: digsLeft(), pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), pitFull: pitFull(), dustPastPit: dustPastPit(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, intro: S.intro, introDone: S.introDone, pair: S.pair.length, buried: S.buried, buriedVisible: buriedVisible(), casinoOpen: S.casinoOpen, casinoBoardOpen: S.casinoBoardOpen, pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() }, spinning: spinning(), hand: S.hand && { won: S.hand.won, n: S.hand.n }, chip: chipName(), stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') }, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.filter(p => !p.house && !p.cig).length, cigSmoke: S.smoke.filter(p => p.cig).length, houseSmoke: S.smoke.filter(p => p.house).length, shutters: [...S.shutters].sort((a, b) => a - b), research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, labDone: S.labDone, labBoardOpen: S.labBoardOpen, schoolBoardOpen: S.schoolBoardOpen, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), casinoX: Math.round(casino.x), wheel: +S.wheel.toFixed(2), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
                                     [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
   // reported by the cell they are in, not the middle of the mark drawn on it
   findAll: S.floorMarks.map(m =>
@@ -427,7 +452,7 @@ window.__state = () => ({ houses: houseReport(), paid: S.paid.length, dpr: S.dpr
     kind: ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard', [SPORE_CELL]: 'spore'
            })[findKind(m.v) || m.v] })),
   commuting: S.workers.filter(w => w.walking).map(w => `${w.type[0]}|${Math.round(w.x)}>${Math.round(w.walkTo)}`),
-  haulPace: +haulSpeed().toFixed(2), quarriers: S.quarriers, quarryX: Math.round(quarry.x), quarryW: quarry.w, bridge: bridgeSpan(), deckWalk: [-70, -40, -10, 0, quarry.w / 2, quarry.w, quarry.w + 10, quarry.w + 40, quarry.w + 70].map(d => Math.round(groundAt(quarry.x + d))), quarryFaceX: Math.round(quarryFace()), quarryCut: (c => ({ from: c.from, to: c.to, deep: c.deep, steps: c.floor.map(f => (c.deep - f.y) / P), rims: c.outline.filter(([, y]) => y === S.groundY).length, corners: c.outline.length }))(quarryCut()), spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, beds: S.beds.map(b => +b.toFixed(2)), bedTone: [...S.bedTone], underground: S.workers.filter(w => w.type === 'quarrier' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), roster: rosterReport(), openCamX: Math.round(openingCamX()), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: !!S.pileFull.rock, pileCount: { ...S.pileCount }, pileFull: { ...S.pileFull }, schoolOpen: S.schoolOpen, schoolX: Math.round(school.x), breakers: S.breakers, carters: S.carters, blasters: S.blasters, growers: S.growers, trained: S.workers.filter(w => w.trained).map(w => w.type[0]).sort().join(''), pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key), piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })), floorGrains: S.floorGrains, dustAtQuarry: dustAtQuarry(), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s) });
+  haulPace: +haulSpeed().toFixed(2), quarriers: S.quarriers, quarryX: Math.round(quarry.x), quarryW: quarry.w, bridge: bridgeSpan(), deckWalk: [-70, -40, -10, 0, quarry.w / 2, quarry.w, quarry.w + 10, quarry.w + 40, quarry.w + 70].map(d => Math.round(groundAt(quarry.x + d))), quarryFaceX: Math.round(quarryFace()), ladder: (l => ({ x: Math.round(l.x), top: Math.round(l.top), foot: Math.round(l.foot) }))(ladder()), benches: benches(), benchLevel: S.benchLevel, quarryH: quarry.h, quarryCut: (c => ({ from: c.from, to: c.to, deep: c.deep, steps: c.floor.map(f => (c.deep - f.y) / P), rims: c.outline.filter(([, y]) => y === S.groundY).length, corners: c.outline.length }))(quarryCut()), spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, bedCount: bedCount(), bedLevel: S.bedLevel, beds: S.beds.map(b => +b.toFixed(2)), bedTone: [...S.bedTone], underground: S.workers.filter(w => w.type === 'quarrier' && w.goal === 'in').length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), roster: rosterReport(), openCamX: Math.round(openingCamX()), heldCore: S.heldCore, coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), pitFree: pitFree(), booked: S.workers.reduce((n, w) => n + (w.booked || 0), 0), carried: S.workers.reduce((n, w) => n + (w.carry || 0), 0), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}`), mining: S.mining, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: !!S.pileFull.rock, pileCount: { ...S.pileCount }, pileFull: { ...S.pileFull }, pileLimit: { ...PILE_LIMIT }, schoolOpen: S.schoolOpen, schoolX: Math.round(school.x), breakers: S.breakers, carters: S.carters, blasters: S.blasters, growers: S.growers, trained: S.workers.filter(w => w.trained).map(w => w.type[0]).sort().join(''), pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key), piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })), floorGrains: S.floorGrains, dustAtQuarry: dustAtQuarry(), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s), breaks: breakReport(), resting: S.workers.filter(w => w.resting).length });
 
 relayout();
 restore();

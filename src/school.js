@@ -41,13 +41,19 @@ export const TRADES = [
 export const tradeCost = t =>
   Math.round(TRADE_COST * Math.pow(TRADE_RATE, S[t.count]));
 
-// Somebody already doing that job goes and learns it, so there has to be one of
-// them who has not. Nobody is hired here and nobody changes job: the count of
-// people on the rock is the same after as before, and one of them now has a hat.
-const spare = t => S[t.job] - S[t.count];
-
+// Nobody is taught here any more and nobody is nailed down: what is bought is
+// the kit, and it stays at the station. Whoever is standing there picks it up,
+// and whoever is sent there next picks up whatever the last one put down.
+//
+// There is no ceiling on it. There used to be one -- a hat a bench, a hat a bed,
+// and never more of either than there were bodies in the yard -- from back when
+// a hat was a body that had been upgraded, and buying one more than you had
+// people for was buying nothing. Kit is not a person: a helmet on the stand is a
+// helmet the next hire puts on the moment you take them on, and stocking the
+// rock before you have staffed it is a perfectly sensible thing to do with a
+// pile of shards. What limits it is the price, which doubles-and-a-bit every
+// time, and that is limit enough.
 function train(t) {
-  if (spare(t) < 1) return;
   S[t.count]++;
   rebalance();
   syncWorkers();
@@ -62,10 +68,7 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   cost: () => tradeCost(t),
   currency: 'shard',
   buy: () => train(t),
-  // A trade with nobody on that job to teach it is a row that would take your
-  // shards and change nothing. It is greyed by the board's own affording rule
-  // when you cannot pay; this is the other half of it.
-  show: () => S.schoolOpen && spare(t) > 0
+  show: () => S.schoolOpen
 }));
 
 export const SCHOOL_SECTIONS = [

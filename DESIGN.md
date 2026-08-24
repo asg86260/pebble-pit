@@ -20,6 +20,26 @@ A short, finite, cozy incremental. No prestige, no ascension, no reset loop. One
    rather than a milestone the UI announced in advance. Later unlocks can be visible rows in
    the shop; this one should not be.
 
+## The opening
+
+The game used to start with a rock already sitting on the ground and a cursor to hit it with.
+Nothing said why, and *why* is the one question an incremental never answers: you are clicking
+because clicking is what there is.
+
+So it starts **before** the rock. Two squares are stood on the bare ground talking to each other —
+the same dots two bodies pass back and forth on a break, which is the whole of the vocabulary this
+game has for people getting on — and then a boulder comes down out of the sky on one of them.
+
+Everything after that is one body trying to get its mate out. That is what the crew is for, what
+the pit is for, and why the rocks keep coming: **the one underneath is still alive.** Every time
+the last of a rock goes you can see them down there, on the bare ground, saying the same dots.
+And every time, before anybody can get them out, the next one lands.
+
+It costs the game one thing: **you start with a body** rather than buying the first with a core.
+That is the story's price and it is worth paying — a game that opens on somebody you are digging
+out is a game with a reason in it. It plays once, on a game that has never been played, and never
+again.
+
 ## The world
 
 Every site stands on one ground line. Progression is linear and physical: the world runs off to
@@ -37,10 +57,10 @@ is empty until a site is unlocked there.
 | Site | Gives | Unlocked by |
 |---|---|---|
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
-| **quarry** — an open cut; crew work its floor where you can see them | shard ◈ | cores |
-| **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
+| **quarry** — an open cut; crew work its floor where you can see them | shard ◈ | cores, then its own shards |
+| **farm** — something growing on the spoil; crew tend it | spore ◇ | cores, then its own spores |
 | **bench** | spends dust, cores and shards | — |
-| **school** | spends shards on trades: a body that works twice as hard at one thing and will do nothing else | shards |
+| **school** | spends shards on kit: a hat or a cart that stays at a station and doubles whoever is wearing it | shards |
 | **lab** | spends shard and spore on multipliers, and shows the stats page | cores |
 | **pit** | holds it all, and is dug wider and deeper as you pay for it | you start with a scrape |
 
@@ -64,6 +84,29 @@ colour are learned together. The cave is a shaft that narrows
 as it goes down, the farm is a row of raised beds with a stalk out of each tended one, the lab is a
 block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
+## A site pays for itself
+
+**Cores buy the place; the place buys everything after that.** The two sites that make something are
+the two that grow, and they grow on what they themselves give up — which is the whole answer to
+"what is the quarry *for*" on the day you open it, before the lab is anything you could afford.
+
+**Both grow the same way: one more place for one more body to stand.**
+
+| | Comes with | Grows to | Costs | Looks like |
+|---|---|---|---|---|
+| the cut | 2 benches | 5 | ◈ 3, then 5, 9… | the hole goes down another bench |
+| the plot | 3 beds | 7 | ◇ 2, then 3, 6… | another bed appears in the row |
+
+A cut holds one body a bench and a plot one a bed, and there is nowhere else down there to put
+anybody — so the plus button under either station goes pale with hands still spare, and the way to
+send a fourth body down the quarry is to go and buy it a bench. That is the one place in the game
+where a headcount is *bought* rather than moved, and it is bought in the coin the station itself
+makes.
+
+The pace of each is priced the same way — lamps in shards, tending in spores. Dust is the one thing
+the quarry has nothing to do with, and a place paid for out of the wrong pocket is a bill with
+nothing at the end of it.
+
 ## The lab
 
 The bench sells you **more**: another worker, another body on the rock. The lab sells you
@@ -85,6 +128,11 @@ than reporting a state, and it comes down when the lab board is read. The lab's 
 the **crew row** as well as the bench's, because the lab is where you are standing when you start
 a piece of research and walking back to the bench to staff it is a walk for nothing.
 
+**Starting a piece of research calls back whoever the lab let out.** An empty lab sends its people
+home after a while — that is the game tidying up after itself — and making you walk over and undo
+that before anything can happen is a chore rather than a decision. Only the ones it sent, and only
+if they are still spare: a body you have since put on the rock stays on the rock.
+
 So the lab is a **station like any other** — it takes a job row and it competes for the crew with
 the rock, the quarry and the beds. That is the one question this game asks: who is doing what. A
 multiplier you can simply buy is a number; a multiplier that costs you four bodies off the rock for
@@ -92,6 +140,52 @@ a minute is a decision.
 
 It keeps no books. Rates and totals belong on the counter and in the upgrade rows, where the number
 is next to the thing it is about.
+
+## The casino
+
+**The one place in the yard that makes nothing.** Everywhere else, a thing you buy does something
+for ever after. This takes what you have and hands some of it back, and the whole of it is a
+decision you keep making rather than a purchase you make once. It is the last thing on the ground,
+out past the lab — the longest walk, on purpose, for the place that produces nothing — and it costs
+◯ 6.
+
+**One table, one pot, and putting a chip down is the spin.** You pick how much — ◾ 10, 100, 1,000
+or everything you have — and which of dust, shards or spores it comes out of, and the wheel goes
+round: **six in ten it is doubled, four in ten it is gone.** One gesture, not two: an earlier
+version opened the pot at half the stake and had it climb back over half a minute, which was a
+puzzle rather than a bet — you put something down and then watched a number go up.
+
+If it came off, the pot is sitting there and you decide again:
+
+| | |
+|---|---|
+| **bank it** | take it and walk out |
+| **spin again** | six in ten it doubles, four in ten it is gone |
+
+Six in ten is generous on any one spin and ruinous kept up, which is the whole of what a casino is:
+every spin is worth taking and taking them all ends at nothing with certainty. **When to stop is
+the game**, and it is the only thing in this yard you can actually lose.
+
+**A settled hand says which way it went** — a tick or a cross in a box standing over the building
+for a few seconds, in the same place the lab's news stands. A wheel that stopped and told you
+nothing is a wheel you had to have been watching, and you are usually somewhere else in the yard.
+
+**It has a sign, and the sign is the one piece of writing in the yard.** Every other building says
+what it is by being the shape it is — a chimney, a row of beds, a hole in the ground — and a casino
+says what it is by shouting. CASINO runs down a board on the roof with a chase of lights round the
+border, and the lights are the reason it is there: nothing else in this yard blinks, so from the
+far end of the ground the only thing moving out past the lab is that.
+
+**A pot has to have somewhere to land.** Everything ends up in the hole and the hole has a limit, so
+banking is refused while the pit is full — and the pot *stays on the table* until there is room, the
+same as a core the hole refuses waits on the ground by the lip. Nothing here is ever lost to a rule
+about sand, and a full hole is a reason to dig rather than a hand you lose.
+
+**It is a building with a wheel in it**: a block with one big round hole knocked out. Everything
+else in this yard is a shape with holes in it and a wheel is the one thing properly round, so it is
+the whole of the building rather than a detail on it. It turns while there is a pot on the table and
+spins in earnest while a ride is being settled — the rows say what the numbers are, and the wheel
+says whether anything is happening.
 
 ## Crew
 
@@ -105,6 +199,10 @@ not a job you hire into "+D+" it is what the ones you have not put anywhere are 
 | workers | ■ 60, then 81, 109... | every body after that |
 | on the rock / down the cave / at the beds | free, both ways | where they work |
 
+Moving somebody is walked, not popped — and walked at **the crew's own pace**, hands free, with a
+floor under it so an unupgraded crew is no slower at it than it ever was. A pace upgrade that did
+not apply to the one trip you are actually watching is an upgrade that does not apply.
+
 Sites are still bought with cores "+D+" the cave at ◯ 3, the farm at ◯ 5 and the lab at ◯ 7 "+D+" but a site now buys the **place** and nobody in it. Who works it is the same question as who
 works the rock, asked again.
 
@@ -114,6 +212,14 @@ decision you cannot take back is one you make by reading a wiki rather than by w
 
 One pool also means one price curve. It is gentler than the four it replaced "+D+" 1.35 a body rather
 than 1.7 "+D+" because it is no longer four separate ladders climbed in parallel.
+
+**There is a ladder.** Bodies used to sink into the cut and rise out of it wherever they happened to
+be standing, straight down through the air in the middle of the mouth — the one thing in this yard
+that was plainly not a thing that could happen, when everything else walks, climbs a wall or goes
+through a door. So a ladder stands in the near corner where the wall's toe is, head a cell proud of
+the rim and clear of the bridge deck over it. Going in is walking to its head and coming down it;
+coming out is walking back along the floor to its foot and going up. One place, worked out from the
+cut, so the rungs you can see and the line a body climbs are the same line by construction.
 
 The cave and the farm ask for the same thing in different shapes. A spelunker spends its time
 **away** — down the shaft, off the surface entirely. A farmhand spends its time **standing at a bed** — stooping over
@@ -127,8 +233,8 @@ decision rather than a free tap.
 |---|---|---|---|
 | **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
 | **Core** | ring | one per rock finished | places: the quarry, the farm, the lab, and the picks |
-| **Shard** | triangle | a spelunker's trip | lab: swing and haul pace |
-| **Spore** | hexagon | a bed cut | lab: cave and tending pace |
+| **Shard** | triangle | a quarrier's trip | the cut's next bench, its lamps, the school and its kit; lab: swing and haul pace |
+| **Spore** | hexagon | a bed cut | the next bed, and tending; lab: quarry and tending pace |
 
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
 and the pile is the dust rather than a picture of it.
@@ -196,22 +302,52 @@ anywhere in its footprint, so clicking its general area stays easy.
 them can be taken back the moment you want the dust moving again. That makes an assignment free,
 and something that is free is never really chosen.
 
-**A trade is the one exception, and it is what a shard is first good for.** Everything the quarry
-gave up used to sit in the counter doing nothing until the lab was built — three cores and a farm
-away — and a currency you cannot spend reads as scenery. Four shards put the school up; after that
-a shard sends somebody to it, and what comes back works twice as hard at one thing and will do
-nothing else:
+**What the school sells is kit, and the kit belongs to the station.** Four shards put the school
+up; after that a shard buys a hat for the rock or a cart for the lip, and whoever is standing there
+picks it up:
 
-| | is | does | cannot |
-|---|---|---|---|
-| **breaker** | a miner | takes twice the bite out of the rock | be taken off the rock |
-| **carter** | a hauler | drags a cart, and carries twice a load in it | be put on anything else |
-| **blaster** | a quarrier | brings one up twice as often | be taken off the face |
-| **grower** | a farmhand | brings a bed on twice as fast | be taken off the beds |
+| | is | does |
+|---|---|---|
+| **breaker** | a helmet on the rock | takes twice the bite out of the rock |
+| **carter** | a cart at the lip | carries twice a load, in the cart |
+| **blaster** | a helmet in the cut | brings one up twice as often |
+| **grower** | a hat at the beds | brings a bed on twice as fast |
 
-What you paid for is the staying as much as the work. The roster's minus button under a station
-greys out once the only bodies left on it have the trade, and a carter is not counted among the
-spare hands, so there is nobody there to send down the quarry.
+**Nothing about it is instant.** A hat bought is a hat *put out at the station*, on a stand with the
+count over it — one of the thing and a figure, the way every other count in this yard is written,
+rather than a row of helmets on the ground you would have to count. A body sent to the rock walks
+over to the stand, picks one up and puts it on, and only then climbs the hill; a body taken off the
+rock walks back and puts it down before it goes anywhere else. Buy a helmet while three are already
+working and one of them comes down the hill to fetch it, one at a time. What you see is the errand,
+which is the difference between kit and a statistic.
+
+**The stand comes before the work, not after.** A body put on the rock used to walk to the middle of
+it, then back down to the stand, then up the hill again — three trips to do one thing, and the one
+part of this anybody watching would call wrong. And what a body is *wearing* is asked of the kit,
+never of the job: somebody taken off the rock counts as a hauler the moment you take them off, and
+for the whole walk back they were drawn dragging a cart they had never picked up.
+
+**Each trade's is its own shape**, and all of them are one bar across the top of the square with one
+cell of difference — which is as much difference as an eighteen-pixel body will carry. A **helmet**
+is a bare bar: on the rock, what is on your head is for the rock. A **lamp** is that bar with a cell
+standing proud of it: the cut is the one place in the yard with no daylight in it. A **brim** hangs a
+cell over each side with a crown on top: out in the beds all day, and the only hat here that is
+about the sun. A carter wears none — what you see of a carter is the cart.
+
+**There is no ceiling on it.** There used to be — a hat a bench, a hat a bed, never more of either
+than there were bodies in the yard — from back when a hat *was* a body that had been upgraded, and
+buying one more than you had people for was buying nothing. Kit is not a person: a helmet on the
+stand is a helmet the next hire puts on the moment you take them on, and stocking the rock before
+you have staffed it is a sensible thing to do with a pile of shards. The price is the limit.
+
+**Nobody is ever nailed down.** It was a body that got upgraded once and would then do nothing else
+for the rest of the run — a decision you make in your first ten minutes and live with: thirteen
+carts bought early were thirteen bodies that could never work a bed. Now the hat stays where the
+work is. Take everybody off the rock and the helmets stay lying on it; send somebody back and they
+are wearing one before they arrive. A station may own more kit than it has people, and the spare
+lies on the ground there — visibly, as the thing itself put down — waiting for the next body you
+send. Nothing is ever wasted and nothing is ever locked.
+
 
 **It is a building, not a section on the bench.** The bench is the shop; this is a decision about
 people, and the two read differently for being made in different places — which is also why the
@@ -222,6 +358,43 @@ Nobody in this yard has a name — a job is a count and a body is whichever body
 it — so a trade is not something a person carries around either. It is **the first n of the bodies
 on that job**, worked out in one place. Move somebody off the rock and the hat goes to whoever is
 left, which is what the count model already means everywhere else.
+
+## Knocking off
+
+**A yard with nothing in it to carry is a yard nobody needs to be stood in.** A body with no dust to
+fetch ambles for a while, and then — after a long stretch of it, staggered per body so they trickle
+off rather than clocking out together — walks to the door it was hired out of and goes in. It costs
+nothing and it is never a decision you regret: dust on the ground brings every one of them straight
+back out.
+
+**The windows are who is in.** A room is white when there is somebody behind it and grey when there
+is not, lit from the bottom up in the order the rooms were built. So the front of the settlement
+reads the yard back to you: a lit wall is a works standing idle, a dark one is everybody out on the
+ground where you can see them. A drawn curtain is grey too, which is the right answer both times —
+what the colour says is whether there is anything to see. And the chimney only smokes when somebody
+is in, because a hearth over an empty house is the building claiming something the windows deny.
+
+## Breaks
+
+**The yard at rest.** A body with nothing to do already ambles rather than standing to attention;
+this is what it does during the standing about, and it is the only thing in the game that is purely
+for watching. Nothing here makes, spends or moves anything, and a break that produced something
+would be a break you farmed.
+
+**Most of the time nothing happens at all.** A body that has been standing about a while gets a
+*chance* at a break rather than a turn at one, and about two turns in three come to nothing. What
+makes a cigarette worth noticing is that the last four times you looked over there, nobody was
+having one.
+
+**A break only ever happens to a body that had stopped anyway** — a miner stood down because the
+yard is full, a hauler with nothing left to fetch, a quarrier at a face with nowhere to tip another
+shard. Nobody downs tools to have one, so the pace of the works is exactly what it was before.
+
+What they get up to is drawn in cells and never in words. A **cigarette** is the one that is not a
+mark at all: it is a puff of the same smoke the lab's chimney makes, at a little over half the size,
+off a body instead of off a roof. A **note** over the head is singing, a **burst** is swearing, and
+**dots** are talking — and dots going back and forth between two bodies who have turned to face each
+other is a conversation, which is a thing you read off the pair rather than off either of them.
 
 **The roster counts them.** Under the headcount at each station, a second line: the mark that
 trade wears out in the yard, and how many of them there are. Three of the four show the hatted
@@ -255,7 +428,7 @@ price, and because the board's own numbers already run down its right-hand edge.
 the first time you have seen one, the same rule the counter goes by. On a phone there is no room
 beside it, so it lies along the top instead.
 
-**A board with nothing on it says so.** The school sells one trade per job and runs out of them, and
+**A board with nothing on it says so.** A board whose rows are not open yet renders blank, and
 an empty sheet is a bug you have to rule out before you can believe it. It says `nobody left to
 teach` instead.
 
@@ -315,6 +488,22 @@ All of them stay plain black-and-white shapes.
 **The crew stop when there is nowhere to put it.** A miner with a full yard under it stands where
 it is rather than knocking loose dust that has nowhere to go. Clearing the ground starts them
 again.
+
+**Room in the hole is claimed the same way a column is.** A hauler says how much it is going for
+*before* it goes, and the room it asked for is spoken for until it tips. Without that, every body in
+the yard set off with empty hands, filled them, walked to the lip and only then found out the hole
+was full — eight workers stood at the brim holding a load each, with nowhere to put any of it and no
+way to put it back. Room for five is one worker going for five, not five workers going for a load
+each. Dust it has not booked stays on the ground, which is somewhere, rather than in a pair of
+hands, which is not.
+
+**Finds are counted in with everything else.** A shard, a spore and a core take a grain of room the
+same as a grain of dust does: one capacity, one queue. They used to go in over the ceiling on the
+grounds that a find is a thing you went and got rather than a grain that happened — but a hole that
+holds everything except the four things it does not hold is a hole with a rule you cannot see, and
+the counter over it stops being a reading of what is down there. So a shard on the ground with a
+full hole behind it stays on the ground, and a core arriving at one waits in plain sight by the lip
+until a dig makes room. Nothing is ever swallowed; what is refused lands beside the hole.
 
 **One grain, one worker.** A worker claims the column it is walking to and keeps it until that
 column is bare. Every worker working out the nearest dust for itself, every frame, is the same
@@ -376,6 +565,11 @@ nowhere short of it.
 
 The crew walk the whole ground, passing in front of the rock, so every pile is reachable. Dust the
 player cannot reach is dust the player will resent, and there is a test for exactly that.
+
+**The dance is the miners' business.** Nobody may walk under a rock that is in the air, and the crew
+clear the footprint before it starts coming down — but the five seconds of celebration are five
+seconds of bare ground, and freezing the whole yard through them stopped every hauler in the works
+every time a rock finished. They carry on. Only what is actually overhead stops anybody.
 
 **Finishing one is worth a moment.** The last pixel of a boulder is the end of a long job, so the
 yard marks it: the core comes loose, the crew stop working and hop about on the bare ground for

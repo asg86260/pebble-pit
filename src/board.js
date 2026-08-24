@@ -2,21 +2,23 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school } from './state.js';
+import { S, bench, lab, school, casino } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
+import { CASINO_UPGRADES } from './casino.js';
 import { refresh } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
 const labShopEl = document.getElementById('labshop');
 const schoolShopEl = document.getElementById('schoolshop');
+const casinoShopEl = document.getElementById('casinoshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
-                school: document.getElementById('school') };
-const standAt = { bench, lab, school };
+                school: document.getElementById('school'), casino: document.getElementById('casino') };
+const standAt = { bench, lab, school, casino };
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -25,6 +27,7 @@ const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
 export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
+export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 
 // The board stands on the bench, but it is a real element on a real screen: on a
 // phone the bench can be near an edge, or there can be less room above it than
@@ -112,6 +115,7 @@ export function showPanel(want) {
   S.boardOpen = want === 'bench';
   S.labBoardOpen = want === 'lab';
   S.schoolBoardOpen = want === 'school';
+  S.casinoBoardOpen = want === 'casino';
 
   if (!want) {                                   // fade out where it stands
     panelEl.classList.remove('open');
@@ -183,6 +187,7 @@ function fill(which) {
   // open when the work finished or you walked over because of the mark
   if (which === 'lab') { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
   if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, null);
+  if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
 }
 
 // What you have to spend, beside the board that is asking for it. Every price on

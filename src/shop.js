@@ -9,10 +9,12 @@ import { S } from './state.js';
 import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
+import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
 const schoolEl = document.getElementById('schoolshop');
+const casinoEl = document.getElementById('casinoshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -62,6 +64,22 @@ function build(el, list, sections, empty) {
     el.appendChild(head);
 
     for (const u of rows) {
+      // A dial is the same shape as a job row -- a setting between two buttons --
+      // for a setting that is not a headcount. The casino's chip is the only
+      // one: how much goes on the table is chosen, and choosing spends nothing.
+      if (u.dial) {
+        const row = document.createElement('div');
+        row.className = 'job';
+        row.dataset.dial = u.key;
+        row.innerHTML = '<span class="name"></span><button type="button" class="less">-</button>' +
+                        '<span class="count"></span><button type="button" class="more">+</button>';
+        row.children[0].textContent = u.name;
+        row.children[1].addEventListener('click', () => u.less());
+        row.children[3].addEventListener('click', () => u.more());
+        el.appendChild(row);
+        continue;
+      }
+
       // A job row moves bodies rather than spending anything, so it is a count
       // between two buttons instead of one button with a price on it.
       if (u.job) {
@@ -125,6 +143,14 @@ export function refresh(el, list, headcount) {
       }
       continue;
     }
+    if (row.dataset.dial) {
+      const u = list.find(x => x.key === row.dataset.dial);
+      if (!u) continue;
+      grey(row.children[1], u.lo());
+      say(row.children[2], u.value());
+      grey(row.children[3], u.hi());
+      continue;
+    }
     if (row.dataset.job) {
       const u = list.find(x => x.key === row.dataset.job);
       if (!u) continue;
@@ -157,13 +183,18 @@ export function refresh(el, list, headcount) {
     say(from, step);
     say(arrow, step ? '→' : '');
     sayHTML(to, step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '');
-    sayHTML(price, `${MARK[money]} ${cost}`);
-    grey(row, purse(money) < cost);
+    // A row that is not a purchase says what it *pays* where a price would go.
+    // The casino's two decisions are the only ones: neither costs anything, and
+    // the number either of them is about is the one on the table.
+    sayHTML(price, u.price ? u.price() : `${MARK[money]} ${cost}`);
+    grey(row, u.price ? !!u.dead?.() : purse(money) < cost);
   }
 }
 
 export function buildShop() {
   build(shopEl, UPGRADES, SECTIONS, 'nothing to sell');
+  // The table is empty between hands, and says so rather than standing blank.
+  build(casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table');
   build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
@@ -172,4 +203,4 @@ export function buildShop() {
 
 
 
-export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES };
+export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES };

@@ -47,6 +47,17 @@ export const S = {
   piles: [],              // each station's strip: { key, from, to }
   pileCount: {},          // what is lying in each of them
   pileFull: {},           // and which of them have stopped their station
+  // --- the opening, and the one under the rock ---
+  // Nothing about this is scenery: the body under the boulder is why there is a
+  // crew, a pit and a rock that keeps coming. See intro.js.
+  intro: null,            // 'chat' while the two of them are talking, then never again
+  introDone: false,
+  introAt: 0,
+  introSaid: 0,
+  pair: [],               // the two of them, before the rock
+  buried: false,          // somebody is under it, and still alive
+  buriedSay: null,
+  buriedSayAt: 0,
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
@@ -97,12 +108,15 @@ export const S = {
   shards: 0,
   seenShard: false,       // nothing about shards is shown until one is brought up
   quarryOpen: false,        // the quarry has been opened
+  benchLevel: 0,          // benches taken out of the cut past the two it starts with
 
   // --- the farm, and what grows in it ---
   spores: 0,
   seenSpore: false,
   farmOpen: false,
+  bedLevel: 0,            // beds broken past the three the ground comes with
   beds: [],               // how far along each bed is, 0..1
+  bedTone: [],            // and the spore standing ripe on it, if there is one
 
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
@@ -116,6 +130,21 @@ export const S = {
   shutterN: 0,          // how many have, which is what picks the next
   skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
   labOpen: false,
+
+  // --- the casino ---
+  // One table, one pot. `pot` is null until something is staked, and what is on
+  // it is `n` of `cur` -- the same currencies everything else in the game is
+  // priced in, because a chip you can only use here would be a fifth currency.
+  casinoOpen: false,
+  casinoBoardOpen: false,
+  pot: null,              // { cur, stake, n, at } -- what is on the table
+  wheel: 0,               // where the wheel has turned to
+  spinUntil: 0,           // and until when it is being spun in earnest
+  spinWon: false,         // what it is about to land on, decided when it starts
+  chip: 0,                // which of CASINO_CHIPS is on the table
+  // The hand that just settled, kept for a few seconds so a wheel you were not
+  // watching still tells you which way it went.
+  hand: null,             // { won, n, cur, at }
   labBoardOpen: false,
   // A finished piece of research nobody has been to see yet. The crew are
   // inside the lab where you cannot watch them, so the one moment worth
@@ -126,6 +155,10 @@ export const S = {
   // takes a body off the lab, so this is what eventually does: it is a stopwatch
   // rather than a fact about the game, so it is not worth saving.
   labIdleAt: 0,
+  // How many the lab let out for want of anything to do. Starting a piece of
+  // research calls exactly these back, so the game undoing its own tidying is
+  // not a chore it hands to you.
+  labLeft: 0,
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
 
   // --- the crew ---
@@ -171,4 +204,5 @@ export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
+export const casino = { x: 0, y: 0, w: 0, h: 0 };
 export const sky = { x: 0, y: 0, r: 0 };   // the thing hanging out past the farm

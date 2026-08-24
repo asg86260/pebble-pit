@@ -22,8 +22,31 @@ export const quarryMs = (lvl = S.quarryPaceLevel) =>
 
 export const quarryRate = (lvl = S.quarryPaceLevel) => 60000 / quarryMs(lvl);   // trips a minute
 
-// where a quarrier stands to go in
-export const quarryFace = () => quarry.x + quarry.w / 2 - WORKER / 2;
+// --- the ladder ---------------------------------------------------------------
+// Bodies used to sink into the cut and rise out of it wherever they happened to
+// be standing, straight down through the air in the middle of the mouth. That
+// is the one thing in this yard that was plainly not a thing that could happen:
+// everything else walks, climbs a wall or goes through a door.
+//
+// So there is a ladder, in the near corner where the wall's toe is -- one place,
+// worked out from the cut, so the rungs you can see and the line a body climbs
+// are the same line by construction. Going in is walking to the head of it and
+// coming down it; coming out is walking back along the floor to its foot and
+// going up.
+export const LADDER_W = P * 3;         // stile to stile
+// Its head stands a cell proud of the rim and no more: the bridge's deck runs
+// over the mouth four cells up, and a ladder poking through the road is a
+// ladder in the way of the thing that crosses it.
+export const LADDER_OVER = P;
+
+export function ladder() {
+  const c = quarryCut();
+  const x = Math.round(c.from / P) * P;
+  return { x, w: LADDER_W, top: S.groundY - LADDER_OVER, foot: quarryFloor(c.from + P) };
+}
+
+// where a quarrier stands to get on it, going either way
+export const quarryFace = () => ladder().x + LADDER_W / 2 - WORKER / 2;
 
 export function newQuarrier() {
   return {
@@ -147,18 +170,19 @@ function tossOut(x, y) {
 export function stepQuarrier(w, now) {
   const rim = quarryFace();
 
-  // walk to the rim along the ground
+  // walk along the ground to the head of the ladder
   if (w.goal === 'to') {
     w.y = walkY(w.x + WORKER / 2);
     const d = rim - w.x;
     w.x += Math.sign(d) * Math.min(QUARRY_WALK, Math.abs(d));
-    if (Math.abs(d) < 1) { w.goal = 'down'; w.seat = seatX(w); }
+    if (Math.abs(d) < 1) { w.x = rim; w.goal = 'down'; w.seat = seatX(w); }
     return;
   }
 
-  // climb down the near wall, then take a spot along the floor
+  // down the ladder, hand over hand, and off it at the bottom
   if (w.goal === 'down') {
-    const foot = quarryFloor(w.x + WORKER / 2) - WORKER;
+    w.x = rim;                                   // it holds on: nothing drifts
+    const foot = ladder().foot - WORKER;
     w.y = Math.min(w.y + CLIMB_PACE, foot);
     if (w.y >= foot) { w.y = foot; w.goal = 'work'; }
     return;
@@ -169,7 +193,10 @@ export function stepQuarrier(w, now) {
   // pile outside is full: there would be nowhere to put it.
   w.y = quarryFloor(w.x + WORKER / 2) - WORKER;   // the floor is uneven, so they walk it
   w.lunge *= 0.82;
-  if (S.pileFull.quarry) { w.next = now + quarryMs(); return; }
+  // The pile outside is full, so there is nowhere to put another shard and
+  // nothing to do but stand about on the floor of the cut. See break.js.
+  if (S.pileFull.quarry) { w.resting = true; w.next = now + quarryMs(); return; }
+  w.resting = false;
 
   // It works along the face rather than standing on one spot: back and forth
   // between the walls, turning at the ends and before walking into a mate.

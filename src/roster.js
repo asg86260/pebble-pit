@@ -14,7 +14,8 @@
 
 import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, pit } from './state.js';
-import { assign, idle, nailed } from './upgrades.js';
+import { groundAt, kitX } from './world.js';
+import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -29,25 +30,32 @@ export const POSTS = [
   { key: 'labjob', job: 'labbers',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   { key: 'farmjob', job: 'farmhands',
-    at: () => farm.x + farm.w / 2, show: () => S.farmOpen },
+    at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: 'quarriers',
     at: () => quarry.x + quarry.w / 2, show: () => S.quarryOpen,
     // the quarry is a hole: a roster under the ground line there would be a
     // roster down the shaft, so it stands clear of the floor of it
-    below: () => quarry.h + P * 12 },
+    // The quarry is a hole, so its roster used to stand below the floor of it --
+    // which walked off the bottom of the world as soon as the cut was taken
+    // down a bench or two, taking the counter with it. It stands *over* the
+    // mouth instead: the one station whose own ground is not somewhere a
+    // roster can go, so it goes in the sky above it.
+    above: () => P * 13,
+    kit: true },
   { key: 'mine', job: 'miners',
-    at: () => S.cx, show: () => S.crew > 0 },
+    at: () => S.cx, show: () => S.crew > 0, kit: true },
   // The haulers' own place is the lip they tip over, which is the one bit of
   // ground they all end up at whatever they are carrying and wherever from.
   { key: 'carry', job: 'haulers',
-    at: () => pit.x - P * 12, show: () => S.crew > 0, fixed: true }
+    at: () => pit.x - P * 12, show: () => S.crew > 0, fixed: true, kit: true }
 ];
 
 // Where a post's roster stands, in world units. Well below the ground line: the
 // bar over a station that has stopped is already just under it, and two marks
 // in one place are two marks nobody reads.
 export function postAt(p) {
-  const y = S.groundY + (p.below ? p.below() : P * 14);
+  const y = p.above ? S.groundY - p.above()
+                    : S.groundY + (p.below ? p.below() : P * 14);
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -75,6 +83,36 @@ function boxes(p) {
 
 export const posts = () => POSTS.filter(p => p.show());
 
+// --- the kit stand ------------------------------------------------------------
+// A hat belongs to the station, so a hat nobody is wearing is a hat waiting at
+// it. That is the whole of the rule made visible: take everybody off the rock
+// and the helmets stay there, and a body sent over walks to this spot, picks one
+// up and puts it on before it does a stroke of work.
+//
+// It is one stand with one hat on it and a number over it, not a row of hats on
+// the ground. A row was honest and unreadable: six carts along the lip is a
+// fence, thirty is a wall, and the count -- the thing you actually want off a
+// glance -- had to be got by counting them. One of the thing, and a figure, is
+// how every other count in this yard is written.
+//
+// What each trade wears is its own shape, so the stand at the beds and the stand
+// at the cut are different things standing there rather than the same grey lump
+// in two places.
+export const KIT_MARK = { miners: 'helmet', quarriers: 'lamp', farmhands: 'brim',
+                          haulers: 'cart' };
+
+export function kitStands() {
+  const out = [];
+  for (const p of POSTS) {
+    if (!p.kit || !p.show()) continue;
+    const n = spareKit(p.job);
+    if (n < 1) continue;
+    const x = Math.round(kitX(p.job) / P) * P;
+    out.push({ job: p.job, mark: KIT_MARK[p.job], n, x, y: Math.round(groundAt(x) / P) * P });
+  }
+  return out;
+}
+
 const inside = (b, x, y) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h;
 
 // A click on a roster, in world units: true if it was one, so the yard knows
@@ -89,7 +127,7 @@ export function rosterHit(x, y) {
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
     if (inside(b.less, x, y)) { assign(p.job, -1); return true; }
-    if (inside(b.more, x, y)) { if (idle() > 0) assign(p.job, 1); return true; }
+    if (inside(b.more, x, y)) { assign(p.job, 1); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
   }
   return false;
@@ -112,21 +150,25 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart) {
     // like out in the yard, so the line under the count and the bodies walking
     // about are obviously the same fact. Three of the four wear a hat; a carter
     // drags a cart, and the cart is the thing you see, so the cart is the mark.
-    if (nailed(p.job) > 0) {
+    if (hats(p.job) > 0) {
       drawBody(b.trade.x, b.trade.y);
       // A carter is a body *with* a cart -- a cart on its own is a cart nobody
       // is pulling. It trails to the left, exactly as it does in the yard, into
       // the slot the minus button would be in: carrying is the one post that has
       // no buttons, because you never put a body *on* it, so the room is there.
       if (p.job === 'haulers') drawCart(b.trade.x, b.trade.y, 1);
-      else drawHat(b.trade.x, b.trade.y);
+      else drawHat(b.trade.x, b.trade.y, KIT_MARK[p.job], true);
     }
 
     if (p.fixed) continue;                       // carrying is read, not set
-    // pale once there is nobody left who *can* be taken off: the ones still
-    // there are nailed to it
-    button(ctx, b.less, '-', n > nailed(p.job));
-    button(ctx, b.more, '+', spare > 0);
+    // Nobody is ever stuck at a post now: the hat belongs to the station, so the
+    // minus button is live whenever there is anybody there to take off.
+    button(ctx, b.less, '-', n > 0);
+    // and pale on the other side either when there is nobody spare to send or
+    // when the place has nowhere left to put one: a cut holds one body a bench
+    // and a plot one a bed, so the way to send a fourth body down the quarry is
+    // to go and buy it a bench.
+    button(ctx, b.more, '+', spare > 0 && roomAt(p.job) > 0);
   }
 }
 
@@ -165,9 +207,12 @@ export function drawRosterCounts(ctx, screenAt) {
     const b = boxes(p);
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
     ctx.fillText(String(S[p.job]), Math.round(at.x), Math.round(at.y));
-    if (nailed(p.job) > 0) {
+    // What the station owns, not what is being worn: a rock with four helmets
+    // and one body on it still has four helmets, and the point of the number is
+    // that it tells you what is waiting there for the next body you send.
+    if (hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
-      ctx.fillText(String(nailed(p.job)), Math.round(t.x), Math.round(t.y));
+      ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
     }
   }
   ctx.textAlign = 'left';
@@ -178,9 +223,11 @@ export function drawRosterCounts(ctx, screenAt) {
 export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
-    return { key: p.key, job: p.job, n: S[p.job], nailed: nailed(p.job), fixed: !!p.fixed,
-             trade: nailed(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
-             mark: p.job === 'haulers' ? 'cart' : 'hat',
+    return { key: p.key, job: p.job, n: S[p.job], hats: hats(p.job), worn: worn(p.job),
+             spareKit: spareKit(p.job), fixed: !!p.fixed,
+             room: Math.min(99, roomAt(p.job)),
+             trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
+             mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
   });

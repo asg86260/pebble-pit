@@ -14,6 +14,7 @@ import { rockLeft } from './world.js';
 import { bankDust } from './pit.js';
 import { blocked } from './world.js';
 import { now } from './clock.js';
+import { introRunning } from './intro.js';
 
 // the core sits at the middle of the rock and only comes loose when it is bare
 export function coreHome() {
@@ -31,16 +32,19 @@ export function dropCore() {
   S.coreItem = { x: h.x, y: h.y, vx: v.vx, vy: v.vy, rest: false };
 }
 
+// A core into the hole, if the hole will have it. It takes a grain of room like
+// everything else does -- one capacity, one queue -- so a full pit turns one
+// away, and false means the core is still out there and still yours. It is never
+// lost: the caller leaves it lying where it is until there is somewhere to put
+// it, which is a hole you have to dig rather than a core you dropped.
 export function bankCore(x) {
+  const at = (x ?? pit.x + pit.w / 2) + (Math.random() - 0.5) * P * 10;
+  if (!addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL)) return false;
   S.cores++;
   S.seenCore = true;
-  const at = (x ?? pit.x + pit.w / 2) + (Math.random() - 0.5) * P * 10;
-  // over the ceiling if it has to be: the ceiling is a limit on how high dust
-  // may heap, not on what the bed will hold, and a core the hole refused would
-  // be a core you carried across the yard for nothing
-  addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL, true);
   S.dirty = true;
   buildShop();              // core-priced rows appear the first time one lands
+  return true;
 }
 
 
@@ -50,6 +54,11 @@ export function pileTop(col) {
 }
 
 export function stepCore() {
+  // Nothing rolls in while the opening is running. The yard is deliberately
+  // empty for those few seconds -- two squares and bare ground -- and the rule
+  // below, that a bare yard gets a rock, is exactly the rule that would fill it.
+  if (introRunning()) return;
+
   // the moment the last pixel goes, the core is loose and falls from the middle
   if (S.coreBuried && !boulderAlive()) {
     dropCore();
@@ -115,8 +124,13 @@ export function stepCore() {
     const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, k.x + CORE_SIZE / 2)));
     if (k.y + CORE_SIZE >= surfaceY(pit, pc) + P) {
       const where = k.x + CORE_SIZE / 2;
-      S.coreItem = null;
-      bankCore(where);
+      if (bankCore(where)) { S.coreItem = null; return; }
+      // The hole would not take it. It is thrown back out on to the ground by
+      // the lip and waits there, in plain sight, until a dig makes room.
+      const v = aim(k.x, k.y, pit.x - P * 6, CORE_SIZE);
+      k.vx = v.vx;
+      k.vy = v.vy;
+      k.rest = false;
     }
     return;
   }

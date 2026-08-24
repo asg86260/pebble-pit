@@ -32,10 +32,20 @@ export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, S.mult[FIELD[
 
 const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
 
-// start one. Only one at a time: a lab does one thing at a time.
+// Start one. Only one at a time: a lab does one thing at a time.
+//
+// And it calls back whoever let themselves out. A body that walked out of an
+// empty lab did so because there was nothing to do in it; the moment there is,
+// the reason it left has gone. Making you walk back to the roster and put the
+// same people back in is asking you to undo something the game did on its own.
+//
+// Only the ones the lab itself sent home, and only if they are still spare: a
+// body you have since put on the rock stays on the rock.
 export function begin(key) {
   if (S.research) return;
   S.research = { key, done: 0 };
+  while (S.labLeft > 0 && idle() > 0) { assign('labbers', 1); S.labLeft--; }
+  S.labLeft = 0;
   S.dirty = true;
 }
 
@@ -53,14 +63,17 @@ export const progress = () =>
 // the yard to get there has not spent a moment doing nothing yet, and turning it
 // round halfway is not a decision anybody watching would recognise.
 //
-// Starting a new piece of research does not fetch anyone back. The roster under
-// the lab is how it is staffed, and being staffed without asking is the same
-// surprise in the other direction.
+// And it is remembered. Starting a new piece of research calls back exactly the
+// bodies the lab let out -- see `begin`. It used not to, on the grounds that
+// being staffed without asking is a surprise; but the lab emptying itself was
+// the game's own tidying, and making you go and undo it before anything can
+// happen is a chore rather than a decision.
 function letIdleGo() {
   if (S.research || !S.workers.some(indoors)) { S.labIdleAt = 0; return; }
   if (!S.labIdleAt) { S.labIdleAt = now(); return; }
   if (now() - S.labIdleAt < LAB_IDLE_MS) return;
   S.labIdleAt = 0;
+  S.labLeft++;                     // remembered, so starting something fetches it back
   assign('labbers', -1);
 }
 

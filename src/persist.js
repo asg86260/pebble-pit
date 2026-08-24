@@ -5,14 +5,15 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, CORE_CELL, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0 } from './config.js';
+import { P, CORE_CELL, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, count, countDust, fillFlat, addGrain, isDust, recount } from './grid.js';
-import { blocked } from './world.js';
+import { blocked, resite } from './world.js';
+import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
-import { syncWorkers } from './crew.js';
+import { syncWorkers, wearKitOnLoad } from './crew.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
@@ -181,6 +182,7 @@ export function persist() {
     quarryOpen: S.quarryOpen,
     quarriers: S.quarriers,
     quarryPaceLevel: S.quarryPaceLevel,
+    benchLevel: S.benchLevel,
     spores: S.spores,
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
@@ -188,8 +190,15 @@ export function persist() {
     labbers: S.labbers,
     research: S.research && { ...S.research },
     labDone: S.labDone,
+    labLeft: S.labLeft,
     tendLevel: S.tendLevel,
+    bedLevel: S.bedLevel,
     labOpen: S.labOpen,
+    introDone: S.introDone,
+    buried: S.buried,
+    casinoOpen: S.casinoOpen,
+    pot: S.pot && { ...S.pot },
+    chip: S.chip,
     mult: { ...S.mult },
     beds: S.beds.map(b => Math.round(b * 100)),
     bedTone: [...S.bedTone],
@@ -217,7 +226,12 @@ export function restore() {
   const s = load();
   S.boulderNo = s?.boulderNo || 1;
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
+    // A game that has never been played does not start with a rock. It starts
+    // with two people, and the rock is what happens to them -- see intro.js.
     makeBoulder();
+    S.boulder = S.boulder.map(row => row.map(() => 0));
+    S.coreBuried = false;
+    startIntro();
     S.stored = 0;
     S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
@@ -249,6 +263,7 @@ export function restore() {
     S.quarryOpen = false;
     S.quarriers = 0;
     S.quarryPaceLevel = 0;
+    S.benchLevel = 0;
     S.spores = 0;
     S.seenSpore = false;
     S.farmOpen = false;
@@ -256,8 +271,12 @@ export function restore() {
     S.labbers = 0;
     S.research = null;
     S.labDone = null;
+    S.labLeft = 0;
     S.tendLevel = 0;
+    S.bedLevel = 0;
     S.labOpen = false;
+    S.casinoOpen = false;
+    S.pot = null;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.beds = [];
   S.bedTone = [];
@@ -298,12 +317,20 @@ export function restore() {
   // A save from when the quarry was a cave. The place changed and the people
   // changed name with it; what they had done is still theirs.
   S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
+  // How far the two growing sites have been grown. A save from before either of
+  // them grew has everybody it had standing in a place that now has room for
+  // two, so the places are grandfathered up to the crew that is already in
+  // them: the game does not take a body off a bed it used to have.
+  S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
+  S.bedLevel = Math.max(+s.bedLevel || 0, (s.farmhands || 0) - FARM_BEDS0);
   S.farmhands = s.farmhands || 0;
   S.labbers = s.labbers || 0;
   // a piece of research keeps whatever the crew already put into it
   S.research = s.research && s.research.key ? { key: s.research.key, done: +s.research.done || 0 } : null;
   // and one that finished while you were away is still news when you come back
   S.labDone = s.labDone || null;
+  // and how many it let out, so a reload does not lose the ones it owes you
+  S.labLeft = +s.labLeft || 0;
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
@@ -324,11 +351,28 @@ export function restore() {
   S.farmhands = s.farmhands || 0;
   S.tendLevel = s.tendLevel || 0;
   S.labOpen = !!s.labOpen;
+  // The opening happens once, ever. Coming back to a saved game is coming back
+  // to a yard where it already happened.
+  S.introDone = !!s.introDone;
+  S.intro = null;
+  S.pair = [];
+  S.buried = s.buried ?? !!s.introDone;
+  S.casinoOpen = !!s.casinoOpen;
+  // A pot left on the table is still on it. It comes back ripe -- the clock it
+  // was climbing on is wall time, and a hand you left an hour ago is a hand you
+  // left long enough.
+  S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
+  S.spinUntil = 0;
+  S.chip = Math.max(0, +s.chip || 0);
+  S.hand = null;                 // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
   if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
   // a ripe bed keeps the spore that grew on it, tone and all
   if (Array.isArray(s.bedTone)) S.bedTone = s.bedTone.map(v => +v || 0);
+  resite();                    // the cut is as deep and the plot as wide as it was
+  syncWorkers();               // the crew, from the counts
+  wearKitOnLoad();             // still wearing what they were wearing
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
@@ -375,6 +419,7 @@ export function reset() {
   S.quarryOpen = false;
   S.quarriers = 0;
   S.quarryPaceLevel = 0;
+  S.benchLevel = 0;
   S.spores = 0;
   S.seenSpore = false;
   S.farmOpen = false;
@@ -382,9 +427,15 @@ export function reset() {
   S.labbers = 0;
   S.research = null;
   S.labDone = null;
+  S.labLeft = 0;
   S.tendLevel = 0;
+  S.bedLevel = 0;
   S.labOpen = false;
   S.labBoardOpen = false;
+  S.casinoOpen = false;
+  S.casinoBoardOpen = false;
+  S.pot = null;
+  S.spinUntil = 0;
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];
@@ -397,7 +448,12 @@ export function reset() {
   floor.painter.repaint();
   pit.painter.repaint();
   S.boulderNo = 1;
+  S.introDone = false;
+  S.buried = false;
   makeBoulder();
+  S.boulder = S.boulder.map(row => row.map(() => 0));
+  S.coreBuried = false;
+  startIntro();                    // a reset is a game that has never been played
   buildShop();
   S.dirty = true;
   persist();

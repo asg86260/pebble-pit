@@ -70,6 +70,46 @@ export const TO_QUARRY = -1284;  // rock centre to the mouth of the quarry
 export const TO_BENCH = -336;    // rock centre to the bench
 export const BENCH_W = P * 12;   // and how wide it stands
 export const TO_LAB = -2184;     // rock centre to the lab, at the far end
+// --- the opening --------------------------------------------------------------
+// Two squares stood on the bare ground talking, and then a rock. Long enough
+// that you read it as two people rather than as a loading screen, short enough
+// that nobody sits through it twice -- and it only ever happens once, on a game
+// that has never been played. See intro.js.
+export const INTRO_CHAT_MS = 5200;
+export const INTRO_BEAT = 780;    // between one of them saying something and the other
+export const INTRO_APART = 26;    // and how far apart they stand, in world pixels
+
+// --- the casino ---------------------------------------------------------------
+// The last thing on the ground, out past the lab. It is the far end of the walk
+// on purpose: it is the one place in the yard that makes nothing, and a place
+// that makes nothing should be a place you went to.
+export const TO_CASINO = -2556;
+export const CASINO_W = P * 18;
+export const CASINO_H = P * 12;
+export const CASINO_CORES = 6;   // what it costs to have it built
+// Putting a stake down *is* the spin. There was a version where the pot opened
+// at half and climbed back to the stake over half a minute, and it was a puzzle
+// rather than a bet: you put something down and then watched a number go up,
+// which is neither gambling nor anything you could explain to somebody watching.
+//
+// So: the chip goes down, the wheel goes round, and it is doubled or it is gone.
+// If it came off, the pot is sitting there and you decide again -- bank it, or
+// put the whole of it back on. Six in ten is generous on any one spin and
+// ruinous kept up, which is the whole of what a casino is: every spin is worth
+// taking and taking them all ends at nothing. When to stop is the game.
+export const CASINO_ODDS = 0.6;
+export const CASINO_SPIN_MS = 1400;  // how long the wheel is spinning on a ride
+export const CASINO_WHEEL = 0.6;     // radians a second it idles round at
+// What goes on the table. Four chips and one of them is everything you have:
+// the size of the bet is most of what a bet feels like, and a stake worked out
+// for you as a share of your holdings is a stake nobody chose. `all` is the one
+// that is not a number, and it is the one the whole thing is for.
+export const CASINO_CHIPS = [10, 100, 1000, 'all'];
+// How long a settled hand stands over the building saying which way it went. A
+// wheel that stopped and told you nothing is a wheel you have to have been
+// watching, and the yard already has a mark for news you missed -- the lab's
+// tick. This is the same idea with two answers.
+export const CASINO_SAY_MS = 4000;
 // The school stands on the bare ground between the quarry's spoil and the crew's
 // own front doors, which is the stretch everybody walks twice a shift. Where you
 // go to learn a trade is on the way to work, and it is the last thing on this
@@ -259,7 +299,15 @@ export const FIND_WEIGHT = 1;
 // heaped. Twelve was a guess and it was a bad one: a station that stops after
 // twelve is a station that is stopped nearly all the time. These are the same
 // fraction of what the ground actually holds as the rock's is.
-export const PILE_LIMIT = { rock: 1400, quarry: 180, farm: 180 };
+//
+// The rock's own was 1400 and is half that now. A pile that big is most of a
+// rock lying on the ground: it took a long time to build, a long time to clear,
+// and for most of that time the yard was one enormous heap with a stopped gang
+// standing over it. Seven hundred fills sooner, so the crew find their level
+// sooner and the ground beside the rock reads as a working bank rather than as
+// a second hill. It costs nothing: the limit is when the miners *wait*, not how
+// much dust the game will ever give you.
+export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180 };
 // There is no hysteresis on a full pile, and it turns out there should not be.
 // Any at all is a chore: at 0.95 you had to clear seventy grains before anybody
 // picked up a pick again, and a sweep of the brush lifts a handful. A station
@@ -304,12 +352,43 @@ export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
+// --- breaks -------------------------------------------------------------------
+// What a body does during the standing about. None of it makes, spends or moves
+// anything, and none of it ever happens to somebody who was working: a break is
+// only ever taken by a body that had already stopped. See break.js.
+//
+// The gap between them is long, and most of the time nothing happens at all. A
+// yard where everybody is always smoking is a yard where nobody is ever just
+// standing there, and the standing there is the thing this is decorating rather
+// than replacing -- so a body that has been about a while gets a *chance* at a
+// break rather than a turn at one, and a stopped crew is mostly a stopped crew
+// with one of them, now and then, doing something.
+export const BREAK_WAIT = 24000;  // typical gap before a stood-about body gets a turn
+export const BREAK_ODDS = 0.35;   // and how often a turn comes to anything
+export const BREAK_LIFE = 6000;   // roughly how long one lasts
+export const BREAK_BEAT = 900;    // between a puff, a note or a word
+export const BREAK_NEAR = 96;     // world pixels: how far a conversation carries
+export const SAY_LIFE = 900;      // how long a mark stands over a head
+
 // --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and
 // come back out with a shard. The trip time is the whole of the mechanic: it is
 // what an upgrade shortens, and what makes sending somebody in a decision.
 export const QUARRY_W = 156;       // the mouth, in world pixels
-export const QUARRY_H = 126;
+export const QUARRY_H = 126;      // and how deep the first cut goes
+// How many bodies a cut holds, and how it comes to hold more.
+//
+// A fresh cut is two benches of standing room and no more, so the third body
+// you want down there is a thing you have to buy rather than a slider you drag.
+// What buys it is a shard -- the quarry paying for its own next bench is the
+// whole reason to open the quarry at all, and it is a place growing rather than
+// a number going up: every bench taken out is another step down the wall you
+// can see from the rim.
+export const QUARRY_BENCH0 = 2;    // bodies a fresh cut has room for
+export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
+export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
+export const BENCH_COST = 3;       // shards for the first of them
+export const BENCH_RATE = 1.7;     // and how much steeper each one gets
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a
@@ -335,7 +414,13 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // Beds out past the quarry. Nothing grows in them on its own: a farmhand stands
 // at a bed and tends it, and it grows while tended. So the crop is the crew's
 // attention, which is the same trade the quarry asks for in a different shape.
-export const FARM_BEDS = 7;
+// The beds are broken one at a time, and a bed is a place for one body: the
+// same bargain the quarry makes, in the shape the farm makes it. Three come
+// with the ground; the rest are broken with what the ground gives up.
+export const FARM_BEDS0 = 3;     // beds the ground comes with
+export const FARM_BEDS_MAX = 7;  // and the whole plot, once it is all broken
+export const BED_COST = 2;       // spores for the first bed after the three
+export const BED_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one bed and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
 // Bare ground kept between the end bed and the post that brackets it. A fence
@@ -540,6 +625,17 @@ export const HOUSE_CURTAIN = '#8f8f8f';
 // steadily because work is being done in it, and this says something quieter --
 // that somebody is in.
 export const HOUSE_PUFF_MS = 5200;
+// --- knocking off -------------------------------------------------------------
+// How long a body with nothing to carry will hang about the yard before it goes
+// home. Long, and staggered per body: the point is a yard that empties over a
+// minute or two while there is nothing to do, not a crew that downs tools
+// together the instant the last grain is lifted. They come straight back out
+// the moment there is dust on the ground.
+// It has to be longer than a break's turn comes round, or the yard empties
+// before anybody has stood in it long enough to light anything -- knocking off
+// and taking five are the same idle stretch, and this is the far end of it.
+export const HOME_AFTER = 60000;  // idle before a body knocks off
+export const HOME_WALK = 1.15;    // and how fast it walks there, px per frame
 // A room is twice the body that lives in it. It was exactly one body across for
 // a while, which meant a door -- a third of a room -- was half the width of the
 // worker walking out of it, and the whole settlement read as a doll's house
@@ -556,12 +652,16 @@ export const HOUSE_COLS = 6;
 //
 // It was 0.9 first, which was a tax nobody had costed: the yard is 3600px
 // across, so the lab to the pit was a sixty-five second walk and moving one body
-// was a minute of watching it. Reading it off the crew's own legs
-// (`haulSpeed() * HAUL_EMPTY`) was tried next and went the other way -- a crew
-// with the pace upgrade bought crossed the whole world in a blink, which is the
-// popping this was built to get rid of, arriving by another road. So: a number,
-// the same for everybody all game, fast enough not to be a chore and slow enough
-// that you watch somebody go.
+// was a minute of watching it.
+//
+// It is the crew's own legs now, and this is the floor under them: whatever a
+// body walks at with its hands free, or this, whichever is quicker. A pace
+// upgrade is a pace upgrade -- a crew you have paid to make quick that still
+// ambles across the yard when you move it is the upgrade not applying to the
+// one trip you are actually watching. The floor is what stops the other end of
+// it: at level nothing the crew's own pace is slower than this, and a walk that
+// got *longer* because nothing had been bought yet is a walk nobody would read
+// as a body going somewhere.
 export const COMMUTE_PACE = 2.4;
 // Near enough to have arrived. A station is a place rather than a pixel, and a
 // body made to land exactly on one would shuffle on the spot for ever.

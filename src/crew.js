@@ -6,16 +6,16 @@
 
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY,
          DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
-         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE } from './config.js';
+         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
-import { blocked, standOn, walkY, rockLeft, yardLeft } from './world.js';
+import { blocked, standOn, walkY, rockLeft, yardLeft, kitX } from './world.js';
 import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops, dropZone } from './rock.js';
 import { spawnChip, spawnSpoil, bell, aim } from './dust.js';
 import { depthShade } from './grid.js';
-import { bankDust, pitFull } from './pit.js';
-import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
-import { stepQuarrier, newQuarrier, quarryFace } from './quarry.js';
+import { bankDust, pitFull, pitRoom } from './pit.js';
+import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF } from './upgrades.js';
+import { stepQuarrier, newQuarrier, quarryFace, quarryFloor } from './quarry.js';
 import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor } from './lab.js';
 import { now } from './clock.js';
@@ -77,8 +77,15 @@ const sideOf = (zone, x) => x + WORKER <= zone.from ? -1 : x >= zone.to ? 1 : 0;
 // land -- not to set off and be shoved back by the duck every other frame, which
 // is what used to happen: out, in, out, in, all the way down, and a body still
 // half in the footprint when the rock arrived.
+// And only while there is something overhead. The zone stands for the whole
+// beat between rocks -- the crew's five seconds on the bare ground as well as
+// the fall -- because a body has to be *out* of the footprint before the rock
+// starts coming down. But standing still for all of it stopped the whole yard
+// dead every time a rock finished: the dance is the miners' business, and a
+// hauler halfway to the lip has no reason to wait on it. Nobody may cross while
+// the rock is in the air; before that the ground is bare and they carry on.
 const across = (zone, x, target) =>
-  !!zone && sideOf(zone, x) !== sideOf(zone, target);
+  !!zone && S.rockFall > 0 && sideOf(zone, x) !== sideOf(zone, target);
 
 function duck(w, zone) {
   if (!zone) return false;
@@ -99,6 +106,12 @@ function duck(w, zone) {
 // of why the housing is there, and why the door is an address the housing keeps
 // rather than a number this file holds a copy of.
 export const hireSpot = () => doorAt();
+
+// A body that has knocked off and gone in. It is the same idea as a labber
+// through the door or a quarrier down the cut: out of sight, still counted, and
+// still on the same job the moment it comes back out.
+export const atHome = w => !!w.inside;
+export const homeCount = () => S.workers.filter(atHome).length;
 
 function newMiner() {
   return {
@@ -143,14 +156,96 @@ function stationX(type) {
 
 // Give a body its new job's own fields -- exactly the ones that job's factory
 // hands out -- so from here on nothing can tell it from one made on the spot.
-// Where it is standing is the one thing it keeps: it walked here.
+// Where it is standing is the one thing it keeps: it walked here. And what is on
+// its head, which is a thing it is carrying rather than a field of the job.
 function settle(w) {
+  const hat = w.trained, of = w.kitOf;
   const fresh = FACTORY[w.type]();
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
   Object.assign(w, fresh);
+  w.trained = hat;
+  w.kitOf = of;
+  w.legs = null;
   w.walkTo = null;
   w.walking = false;
+}
+
+// --- the kit walk -------------------------------------------------------------
+// A hat is a thing lying on the ground until somebody goes and gets it. Nothing
+// about it is instant: a body put on the rock walks over to where the helmets
+// are, picks one up, and only then climbs the hill in it -- and a body taken off
+// the rock walks back and puts it down before it goes anywhere else, because a
+// carter who wandered off with the cart is a cart the lip has lost.
+//
+// So a commute is a list of legs rather than one destination. Each leg is
+// somewhere to stand and one thing to do when you get there, and the last of
+// them is always the work itself.
+function nextLeg(w) {
+  const leg = w.legs && w.legs.shift();
+  if (!leg) { settle(w); return; }
+  w.leg = leg.do;
+  w.walkTo = leg.to;
+  w.walking = true;
+}
+
+function arrive(w) {
+  // put down where it was found, or picked up the same way -- and `kitOf`
+  // travels with it, because what a body is wearing is a fact about the kit and
+  // not about the job it happens to be on this second
+  if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
+  if (w.leg === 'wear') { w.trained = true; w.kitOf = w.wanting; w.wanting = null; }
+  S.dirty = true;
+  if (w.legs && w.legs.length) { nextLeg(w); return; }
+  if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false; return; }
+  settle(w);
+}
+
+// A body already at work whose station has a hat lying spare, and which is free
+// to go and get it: hands empty, not walking anywhere, not indoors. One at a
+// time per station, so buying four helmets is four trips rather than the whole
+// gang filing down the hill at once.
+const KIT_JOBS = ['miners', 'haulers', 'quarriers', 'farmhands'];
+
+// somebody on that job who could go on an errand right now: hands empty, not
+// already walking, and not indoors
+const freeAt = (job, hatted) => S.workers.find(o =>
+  JOB_OF[o.type] === job && !!o.trained === hatted && !o.walking &&
+  !o.inside && !o.carry && !o.hasCore);
+
+// Kit already spoken for by somebody on their way to it. Without this, two
+// bodies put on the rock in the same breath both set off for the last helmet
+// and one of them arrives at an empty stand.
+const claimed = job => S.workers.filter(o => o.wanting === job).length;
+export const kitFree = job => spareKit(job) - claimed(job);
+
+function stepKit() {
+  for (const job of KIT_JOBS) {
+    if (S.workers.some(o => o.walking && o.fetching === job)) continue;   // one errand a station
+
+    // A hat lying spare and somebody bare-headed to come and get it.
+    if (kitFree(job) > 0) {
+      const w = freeAt(job, false);
+      if (w) { errand(w, job, 'wear'); continue; }
+    }
+    // Or the other way about: a head wearing kit the station does not own any
+    // more. That cannot happen by playing -- hats are never sold -- but a save
+    // from another shape of the game or a dev hook can leave one, and a body
+    // walking about in a helmet nobody paid for is a helmet counted twice.
+    if (worn(job) > hats(job)) {
+      const w = freeAt(job, true);
+      if (w) errand(w, job, 'drop');
+    }
+  }
+}
+
+// The kit, then straight back to the work -- and 'back' rather than 'work',
+// because it never left the job and re-settling it would drop what it was doing.
+function errand(w, job, what) {
+  w.fetching = job;
+  if (what === 'wear') w.wanting = job;
+  w.legs = [{ to: kitX(job), do: what }, { to: stationX(w.type) ?? w.x, do: 'back' }];
+  nextLeg(w);
 }
 
 // Put a body that has just been stood down onto a job that is short of one,
@@ -160,15 +255,52 @@ function settle(w) {
 // any of the work, until it gets there.
 function retask(w, type) {
   w.type = type;
+  w.fetching = null;
+  w.wanting = null;
+  const job = JOB_OF[type];
+  const legs = [];
+  // The hat goes back where it came from first, and it is put down before the
+  // body is anywhere near its new job. `kitOf` rather than the old job: those
+  // are the same thing every time except when a body is retasked twice in a row
+  // and is still holding the first station's kit.
+  if (w.trained && kitX(w.kitOf) !== null) legs.push({ to: kitX(w.kitOf), do: 'drop' });
+  // Then the new station's stand, if there is anything on it -- *before* the
+  // work, not after. Walking to the middle of the rock, then back down to the
+  // stand, then up the hill again is three trips to do one thing, and it is the
+  // one bit of this anybody watching would call wrong.
+  if (!w.trained && kitX(job) !== null && kitFree(job) > 0) {
+    w.wanting = job;
+    legs.push({ to: kitX(job), do: 'wear' });
+  }
   const to = stationX(type);
-  if (to === null) { settle(w); return; }
-  w.walkTo = to;
-  w.walking = true;
+  if (to !== null) legs.push({ to, do: 'work' });
+  if (!legs.length) { w.trained = false; w.kitOf = null; settle(w); return; }
+  w.legs = legs;
+  nextLeg(w);
 }
 
 // One frame of that walk. Nothing else happens on the way -- it does not mine,
 // carry, tend, research or cut until it is standing where the job is.
+// The pace a body crosses the yard at when it has been put on something else.
+// Its own legs, hands free -- it is carrying nothing -- with COMMUTE_PACE as the
+// floor so an unupgraded crew is no slower at it than it ever was.
+const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
+
 function stepCommute(w, zone) {
+  // Out of the hole by the way it came in. A body down the cut walks along the
+  // floor to the foot of the ladder and goes up it: rising through the wall
+  // wherever it happened to be standing was the same not-a-thing-that-happens
+  // as sinking into the ground, and the ladder is there to be used both ways.
+  if (w.y > S.groundY) {
+    const foot = quarryFace();
+    if (Math.abs(w.x - foot) > 1) {
+      w.y = quarryFloor(w.x + WORKER / 2) - WORKER;
+      w.x += Math.sign(foot - w.x) * Math.min(commutePace(), Math.abs(foot - w.x));
+      return;
+    }
+    w.x = foot;
+  }
+
   // The level of the ground first, and only then along it. A quarrier is at work
   // below the ground line, and setting off from down there would take it up
   // through the wall of the cut on the diagonal; it climbs the way it came down.
@@ -182,9 +314,10 @@ function stepCommute(w, zone) {
   if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); return; }
 
   const d = w.walkTo - w.x;
-  w.x += Math.sign(d) * Math.min(COMMUTE_PACE, Math.abs(d));
+  w.face = Math.sign(d) || w.face || 1;        // a cart is dragged behind
+  w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
   w.y = walkY(w.x + WORKER / 2);               // the bridge carries a commuter too
-  if (Math.abs(d) < COMMUTE_SLOP) settle(w);
+  if (Math.abs(d) < COMMUTE_SLOP) arrive(w);
 }
 
 export function syncWorkers() {
@@ -210,6 +343,7 @@ export function syncWorkers() {
     w.load = [];
     w.hasCore = false;
     w.claim = -1;
+    unbook(w);                     // and the room it had booked goes back
   }
   S.workers = keep;
 
@@ -238,26 +372,73 @@ export function syncWorkers() {
     if (!w.next) w.next = now() + minerMs() * (w.slot / Math.max(1, S.miners));
   }
 
-  // Which of them have a trade. Nobody in this yard has a name -- a job is a
-  // count and a body is whichever body happens to be doing it -- so a trade is
-  // not something a person carries around either: it is the first n of the
-  // bodies on that job, worked out here and nowhere else. Move somebody off and
-  // the hat goes to whoever is left, which is what the count model already
-  // means everywhere else.
-  mark('miner', S.breakers);
-  mark('hauler', S.carters);
-  mark('quarrier', S.blasters);
-  mark('farmhand', S.growers);
+  // Nothing here hands out hats. A hat is on a head because that body walked
+  // over and picked it up, and it comes off because it walked back and put it
+  // down -- see `retask` and `stepKit`. A brand new body starts bare-headed and
+  // goes and gets one like everybody else.
 }
 
-// `trained` is the one flag: what it means is decided where the work is done, so
-// a new trade is a count and a doubling, not another field on a worker.
-function mark(type, n) {
-  let left = n;
-  for (const w of S.workers) {
-    if (w.type !== type) continue;
-    w.trained = left-- > 0;
+// --- coming back to it --------------------------------------------------------
+// Bodies are not saved: the crew is a set of counts, and `syncWorkers` builds
+// the people from them when the game comes back. So who was wearing what is not
+// saved either, and everybody used to walk back in bare-headed with the stands
+// piled high -- a shift's worth of errands to redo for nothing.
+//
+// The rule is the obvious one: you left them at work in it, so they are at work
+// in it. Each station's hats go on that many of the bodies standing at it, and
+// the rest stay on the stand. Nobody walks for these: they never took them off.
+export function wearKitOnLoad() {
+  for (const job of KIT_JOBS) {
+    let left = hats(job);
+    for (const w of S.workers) {
+      if (JOB_OF[w.type] !== job) continue;
+      const on = left-- > 0;
+      w.trained = on;
+      w.kitOf = on ? job : null;
+    }
   }
+}
+
+// --- booking the hole ---------------------------------------------------------
+// A hauler says how much it is going for *before* it goes, and the room it
+// asked for is spoken for until it tips.
+//
+// Without that, every body in the yard set off with an empty pair of hands,
+// filled them, walked to the lip and only then found out the hole was full --
+// eight workers stood at the brim holding a load each, with nowhere to put any
+// of it and no way to put it back. Room in the hole is a resource like a column
+// of dust is a resource, and the fix is the same one the columns already use:
+// claim it at the moment you decide, and hold the claim until you have spent it.
+//
+// So a trip is `w.booked` grains of dust and no more. Room for five is one
+// worker going for five, not five workers going for a load each.
+//
+// Everything is in this. A shard, a spore and a core take a grain of room the
+// same as a grain of dust does: one capacity, one queue. A hole that held
+// everything except the four things it did not hold was a hole with a rule you
+// could not see, and it let a body set off for a find with a full pit behind it
+// and stand at the lip holding one.
+const bookings = () => S.workers.reduce((n, o) => n + (o.booked || 0), 0);
+export const pitFree = () => pitRoom() - bookings();
+
+// what one body carries in a trip -- a cart holds twice
+const load = w => haulCap() * (w.trained ? 2 : 1);
+
+// what it may still take this trip, and taking one more off it
+const roomOnBoard = w => (w.booked || 0) - (w.took || 0);
+const tookOne = w => { w.took = (w.took || 0) + 1; };
+
+// Book what is going: whatever is left of a load, or whatever the hole has left,
+// whichever is less. Returns what it managed to get.
+function bookRoom(w, want = load(w)) {
+  if (roomOnBoard(w) < 1) w.booked = (w.took || 0) + Math.max(0, Math.min(want, pitFree()));
+  return roomOnBoard(w);
+}
+
+// Hands empty and nothing owed: the trip is over, so the room goes back.
+function unbook(w) {
+  w.booked = 0;
+  w.took = 0;
 }
 
 // The nearest column of dust that nobody else has set off for. One column, one
@@ -325,6 +506,7 @@ export function updateWorkers(now, dt) {
     }
   }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
+  stepKit();                        // and anybody with kit to go and fetch or put back
   for (const w of S.workers) {
     // on its way to a job it has just been put on, and doing none of it yet
     if (w.walking) { stepCommute(w, zone); continue; }
@@ -335,6 +517,7 @@ export function updateWorkers(now, dt) {
       // rather than one animation played five times. It runs until the next
       // rock has come down, so nobody is caught mid-hop underneath it.
       if (now < S.danceUntil || S.rockFall > 0) {
+        w.resting = false;                     // a dance is not a break
         w.idleAt = null;
         w.lunge = 0;
         w.next = now + minerMs();              // nobody swings at nothing
@@ -358,6 +541,7 @@ export function updateWorkers(now, dt) {
       // been carried away: dust with nowhere to go used to roll into the pit,
       // which banks it for nothing and leaves the haulers with no job.
       if (S.pileFull.rock) {
+        w.resting = true;                      // stopped, and free to take five
         // Standing down is not being switched off. It shifts its weight where
         // it stands: a slow pace of about a cell either side of the spot it
         // stopped on, and now and then it straightens up. Every miner has its
@@ -373,6 +557,7 @@ export function updateWorkers(now, dt) {
         w.next = now + minerMs();
         continue;
       }
+      w.resting = false;
       w.idleAt = null;
 
       const t = now / 1000;
@@ -420,7 +605,7 @@ export function updateWorkers(now, dt) {
     // over the ledge
     if ((w.goal === 'seek' || w.goal === 'idle') &&
         S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
-        (!S.coreTaker || S.coreTaker === w)) {
+        (!S.coreTaker || S.coreTaker === w) && bookRoom(w, 1) > 0) {
       S.coreTaker = w;
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
       const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
@@ -431,6 +616,7 @@ export function updateWorkers(now, dt) {
         S.coreItem = null;
         S.coreTaker = null;
         w.hasCore = true;
+        tookOne(w);                            // a core is a grain of the hole too
         w.goal = 'dump';
         S.dirty = true;
       }
@@ -440,26 +626,37 @@ export function updateWorkers(now, dt) {
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
     w.y = walkY(w.x + WORKER / 2);
 
-    // The hole is full. A hauler with nowhere to put dust stands down rather
-    // than walking to the lip and throwing it at a brim, the same as a gang
-    // stops when the pile it is filling has no room left. It keeps whatever it
-    // is already carrying -- a load tipped into a full pit is a load lost -- and
-    // picks the job up the moment a dig makes room. A core is not dust and the
-    // hole always takes one, so somebody carrying one finishes the trip.
-    const noRoom = pitFull() && !w.hasCore;
+    // Nothing to go for and nothing owing. A hauler with no room booked and none
+    // to book stands down rather than walking to the lip and throwing at a brim,
+    // the same as a gang stops when the pile it is filling has no room left. It
+    // keeps whatever it is already carrying -- a load tipped into a full pit is
+    // a load lost -- and picks the job up the moment a dig makes room.
+    //
+    // Somebody already on a trip is left to finish it: the room it is holding is
+    // room it booked, and turning it round at the lip is the exact thing this is
+    // here to stop. A core is not dust and the hole always takes one.
+    const noRoom = !w.hasCore && !w.carry && roomOnBoard(w) < 1 && pitFree() < 1;
     if (noRoom && w.goal !== 'idle') {
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+      unbook(w);
       w.goal = 'idle';
     }
 
+    w.resting = false;
+    if (w.goal !== 'idle' && w.goal !== 'home') w.idleSince = 0;
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking
       // the nearest one afresh every frame is what made the crew swarm.
       if (w.claim >= 0 && !at(floor, w.claim, 0)) { taken.delete(w.claim); w.claim = -1; }
       if (w.claim < 0) {
-        const c = nearestMark(w, taken);                  // a find first, if there is one
-        const pick = c >= 0 ? c : nearestDust(w.x, taken);
-        if (pick >= 0) { w.claim = pick; taken.add(pick); }
+        // Book the hole before picking a column, not after filling your hands.
+        // Nothing at all is fetched without room for it -- a shard on the ground
+        // with a full hole behind it is a shard that stays on the ground.
+        if (bookRoom(w) > 0) {
+          const c = nearestMark(w, taken);                // a find first, if there is one
+          const pick = c >= 0 ? c : nearestDust(w.x, taken);
+          if (pick >= 0) { w.claim = pick; taken.add(pick); }
+        }
       }
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
       const c = w.claim;
@@ -477,14 +674,26 @@ export function updateWorkers(now, dt) {
       if (under && now >= w.next) {
         const r = topGrain(c);
         if (r >= 0) {
-          (w.load ||= []).push(at(floor, c, r));
-          put(floor, c, r, 0);
-          w.carry++;
-          w.next = now + scoopMs();
-          S.dirty = true;
+          // A grain is worth taking only if this trip booked room for it --
+          // otherwise it stays on the ground, which is somewhere, rather than in
+          // a pair of hands, which is not. Dust or find, it is the same rule.
+          if (roomOnBoard(w) > 0) {
+            (w.load ||= []).push(at(floor, c, r));
+            put(floor, c, r, 0);
+            w.carry++;
+            tookOne(w);
+            w.next = now + scoopMs();
+            S.dirty = true;
+          } else {
+            // the booking is used up: this trip is done
+            taken.delete(c);
+            w.claim = -1;
+            w.goal = w.carry ? 'dump' : 'idle';
+            continue;
+          }
         }
       }
-      if (w.carry >= haulCap() * (w.trained ? 2 : 1)) {     // a cart holds twice
+      if (w.carry >= load(w)) {                  // a cart holds twice
         if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
         w.goal = 'dump';
       }
@@ -515,17 +724,51 @@ export function updateWorkers(now, dt) {
         }
         w.carry = 0;
         w.load = [];
+        unbook(w);                             // the room it booked is spent
         w.goal = 'seek';
         S.dirty = true;
       }
+    } else if (w.goal === 'home') {
+      // Knocked off. It walks to the door it was hired out of and goes in, and
+      // the moment there is dust on the ground it comes straight back out --
+      // which is the one thing that has to be true of this, because a crew you
+      // cannot get back is a crew you would never let go in the first place.
+      w.resting = false;
+      if (!noRoom && nearestDust(w.x, taken) >= 0) {
+        w.inside = false;
+        w.goal = 'seek';
+        continue;
+      }
+      unbook(w);
+      if (w.inside) continue;                    // in out of it, and nothing to watch
+      const door = hireSpot().x;
+      if (across(zone, w.x, door)) continue;     // wait for the rock to land
+      w.face = Math.sign(door - w.x) || w.face || 1;
+      w.x += Math.sign(door - w.x) * Math.min(HOME_WALK, Math.abs(door - w.x));
+      w.y = walkY(w.x + WORKER / 2);
+      if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
     } else {
       // Nothing to fetch and nothing to carry. Rather than standing to
       // attention they amble: a spot to stroll to, a stand about when they get
       // there, then another. A yard at rest should read as at rest, not as
       // switched off.
-      if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; continue; }
+      unbook(w);                  // idle hands hold no room
+      if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; continue; }
+
+      // A yard with nothing in it to carry is a yard nobody needs to be stood
+      // in. After a good while of it -- staggered, so they trickle off rather
+      // than clocking out together -- a body goes home. It is not a rate and it
+      // costs nothing: every one of them is back the moment there is work.
+      if (!w.idleSince) w.idleSince = now + HOME_AFTER * (0.6 + Math.random() * 0.9);
+      if (!w.brk && now >= w.idleSince) { w.goal = 'home'; w.roamTo = null; continue; }
+      // Stood still between strolls is the one moment a hauler is properly
+      // stopped, and it is the only moment it is allowed a break: a body
+      // walking somewhere is on its way there.
+      w.resting = w.roamTo === null || w.roamTo === undefined;
       if (w.roamTo === null || w.roamTo === undefined) {
-        if (now >= (w.restUntil || 0)) {
+        // and it stays put while it is having one: a body that wandered off
+        // mid-cigarette would be a body that was never really standing there
+        if (!w.brk && now >= (w.restUntil || 0)) {
           const lo = yardLeft(), hi = pit.x - WORKER;
           const near = w.x + (Math.random() - 0.5) * ROAM_RANGE;
           w.roamTo = Math.max(lo, Math.min(hi, near));

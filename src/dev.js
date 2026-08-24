@@ -6,8 +6,9 @@
 // found by sitting with it rather than by working them out.
 //
 // It is loaded only under `vite dev`: main.js reaches for it behind
-// `import.meta.env.DEV`, so a build never sees this file at all. Backtick opens
-// and closes it; it starts closed and remembers which you chose.
+// `import.meta.env.DEV`, so a build never sees this file at all. Backtick or
+// tilde -- the same key, shift or no shift -- opens and closes it; it starts
+// closed and remembers which you chose.
 
 import { S } from './state.js';
 import { TUNABLE, tune, tuned } from './config.js';
@@ -193,7 +194,10 @@ setInterval(refresh, 250);
 refresh();
 
 addEventListener('keydown', e => {
-  if (e.key !== '`') return;
+  // The key, not the character on it: backtick and tilde are the same key with
+  // and without shift, and a panel that opened on one and not the other is a
+  // panel that does not open when you hold shift by accident.
+  if (e.key !== '`' && e.key !== '~' && e.code !== 'Backquote') return;
   el.hidden = !el.hidden;
   localStorage.setItem(KEY, el.hidden ? '0' : '1');
 });

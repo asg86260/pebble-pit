@@ -10,9 +10,10 @@ import {
   ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase,
   PIT_H, PIT_HEAP, PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   SHAKE_RATE, SHAKE_DECAY,
-  TO_FARM, TO_LAB, TO_SCHOOL, SCHOOL_W, SCHOOL_H, FARM_BEDS, FARM_GAP, FARM_H, BENCH_W
+  TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H, BENCH_W,
+  QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN
 } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino } from './state.js';
 import { shapePit } from './pit.js';
 
 const canvas = document.getElementById('c');
@@ -39,6 +40,46 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 //
 // They are worked out when the world is laid out and when the rock changes size,
 // not per column: `blocked` is asked about a column thousands of times a frame.
+// --- how big the two growing sites are ---------------------------------------
+// The quarry and the farm are the only places in the yard that get bigger for
+// what they themselves give up. Both grow the same way: one more bench, one
+// more bed, one more body that has somewhere to stand. Everything that has to
+// know how big they are asks here, so a purchase changes one number and the
+// world, the roster and the shop all follow it.
+export const benches = () => Math.min(QUARRY_BENCH_MAX, QUARRY_BENCH0 + S.benchLevel);
+export const quarryDepth = () => QUARRY_H + S.benchLevel * QUARRY_DEEPEN;
+export const bedCount = () => Math.min(FARM_BEDS_MAX, FARM_BEDS0 + S.bedLevel);
+
+// A site that has just grown. It is not a relayout: nothing else in the yard
+// moves, and the pile strips are the one thing beside the site itself that has
+// to be told, because a wider farm is a shorter run of ground to heap on.
+export function resite() {
+  quarry.h = quarryDepth();
+  farm.w = (bedCount() - 1) * FARM_GAP;
+  refreshPiles();
+}
+
+// Where a station's kit lies when nobody is wearing it, and where a body walks
+// to put it on or take it off. One place decides it, so the pile of helmets you
+// can see on the ground and the spot a worker walks to are the same spot by
+// construction rather than by two files agreeing.
+//
+// Out to the *left* of the station, which is the way the yard runs -- and clear
+// of the work itself: the rock's is in the bare apron, the lip's is back from
+// the edge, and the two holes have theirs on the ground beside the mouth.
+export const kitX = job =>
+  job === 'miners' ? rockLeft() - P * 4 :
+  // well back from the lip: the full-hole warning stands five cells short of
+  // the edge, and a trestle under a warning triangle is two marks in one place
+  job === 'haulers' ? pit.x - P * 16 :
+  // clear of the bridge: the ramp up to the deck starts right at the mouth, and
+  // a trestle standing on a slope is a trestle about to fall over
+  job === 'quarriers' ? quarry.x - BRIDGE_RUN - P * 5 :
+  // clear of the first bed and of whoever is stooping over it: a farmhand
+  // stands a body's width off its bed, which is where a stand four cells out
+  // would be standing too
+  job === 'farmhands' ? farm.x - P * 18 : null;
+
 export function refreshPiles() {
   S.piles = [
     heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
@@ -211,18 +252,27 @@ export function resize(after) {
   lab.x = S.cx + TO_LAB;
   lab.y = S.groundY - lab.h;
 
+  // The last thing on the ground. Everything the cores open lies further out
+  // than the last, and the one place that makes nothing is the longest walk.
+  casino.w = CASINO_W;
+  casino.h = CASINO_H;
+  casino.x = S.cx + TO_CASINO;
+  casino.y = S.groundY - casino.h;
+
   // the quarry is a hole in the ground, so it hangs below the line rather than
   // standing on it
   quarry.w = QUARRY_W;
-  quarry.h = QUARRY_H;
   quarry.x = S.cx + TO_QUARRY;
   quarry.y = S.groundY;
 
   // the beds stand on the ground, out past the quarry
-  farm.w = (FARM_BEDS - 1) * FARM_GAP;
   farm.h = FARM_H;
   farm.x = S.cx + TO_FARM;
   farm.y = S.groundY;
+
+  // and the two things about them that are not fixed: how deep the cut has been
+  // taken and how many beds have been broken
+  resite();
 
   // The world is the size of the finished works, not of today's. It is laid out
   // around the hole the pit can ever be, so digging widens the hole and not the

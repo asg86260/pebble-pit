@@ -6,7 +6,7 @@
 
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H, FARM_GATE } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
@@ -15,11 +15,14 @@ import { pitDepth, pitFull } from './pit.js';
 
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
-import { underground, quarryCut } from './quarry.js';
+import { underground, quarryCut, ladder } from './quarry.js';
 import { indoors, progress } from './lab.js';
+import { spinning, pot } from './casino.js';
+import { buriedVisible, buriedAt } from './intro.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
-import { drawRoster, drawRosterCounts } from './roster.js';
+import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
+import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
@@ -76,10 +79,25 @@ export function drawQuarry() {
   ctx.moveTo(pts[0][0], pts[0][1]);
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
   ctx.stroke();
+  drawLadder();
   ctx.fillStyle = '#000';
 }
 
+// The ladder in the near corner, head a cell proud of the rim the way a
+// ladder's is. Stiles and rungs are lines rather than cells: a cell-thick stile
+// with a cell-thick rung every other cell is nine tenths black, which is a post,
+// and what makes a ladder read is the air between the rungs.
+const RAIL = 2, RUNG_GAP = P * 2;
 
+function drawLadder() {
+  const l = ladder();
+  ctx.fillStyle = '#000';
+  const h = l.foot - l.top;
+  ctx.fillRect(l.x, l.top, RAIL, h);
+  ctx.fillRect(l.x + l.w - RAIL, l.top, RAIL, h);
+  for (let y = l.top + RUNG_GAP; y < l.foot - RAIL; y += RUNG_GAP)
+    ctx.fillRect(l.x, Math.round(y), l.w, RAIL);
+}
 
 // a diamond: no longer a currency mark, kept because it is a shape worth having
 export function drawDiamond(x, y, r) {
@@ -245,12 +263,13 @@ export function drawSky() {
   ctx.stroke();
 }
 
-// Smoke off the lab's chimney. It is the only thing that says the place is being
-// worked, because the crew are inside it -- so it is worth its own few pixels.
+// Smoke off the lab's chimney -- and off a cigarette, which is the same smoke
+// at a little over half the size. It is the only thing that says the lab is
+// being worked, because the crew are inside it, so it is worth its own pixels.
 export function drawSmoke() {
   for (const p of S.smoke) {
     const k = p.t / SMOKE_LIFE;
-    const size = Math.round(P * (1 + k * 1.4));
+    const size = Math.round(P * (p.s || 1) * (1 + k * 1.4));
     ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
     ctx.fillStyle = '#000';
     ctx.fillRect(Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
@@ -369,6 +388,171 @@ export function drawLab() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + w * 0.55, y + h * 0.55, P * 3, P * 3);  // a window
   ctx.fillStyle = '#000';
+}
+
+// The casino: a block with one big round hole knocked out of it, and a wheel in
+// the hole. Everything else in this yard is a shape with holes in it, and a
+// wheel is the one thing that is properly round -- which is why it is the whole
+// of the building rather than a detail on it.
+//
+// The wheel turns while there is a pot on the table and spins in earnest while a
+// ride is being settled, and that is the entire signal: the rows say what the
+// numbers are, and this says whether anything is happening.
+const SPOKES = 6;
+
+// --- the sign -----------------------------------------------------------------
+// The one place in this yard with writing on it, and it has earned it: every
+// other building says what it is by being the shape it is -- a chimney, a row of
+// beds, a hole in the ground -- and a casino says what it is by shouting. A sign
+// is what the building *is* rather than a label somebody stuck on it.
+//
+// Letters are five cells square, stacked down a board narrower than the block it
+// stands on, with a chase of lights round the edge. The lights are the whole
+// reason it is here: nothing else in the yard blinks, so from the far end of the
+// ground the only thing moving out past the lab is this.
+// Five cells across and four down. Four rather than five because the sign has to
+// stand on the roof and still have its top in the window: six letters five deep
+// ran a good hundred pixels past the sky you can see, and a sign whose top you
+// can never read is a sign that is not a sign.
+const GLYPH = {
+  C: ['11111', '10000', '10000', '11111'],
+  A: ['01110', '10001', '11111', '10001'],
+  S: ['11111', '11000', '00011', '11111'],
+  I: ['11111', '00100', '00100', '11111'],
+  N: ['11001', '10101', '10101', '10011'],
+  O: ['01110', '10001', '10001', '01110']
+};
+const WORD = 'CASINO';
+// A letter is five glyph-cells square and every glyph-cell is two world cells:
+// at one, the whole word came to twenty-four screen pixels and read as a stack
+// of smudges. A sign is for being read from the far end of the ground.
+const SCALE = 2;
+const GLYPH_H = 4, GLYPH_W = 5, GLYPH_GAP = 1, SIGN_PAD = 1;
+const SIGN_W = GLYPH_W * SCALE + SIGN_PAD * 2;                         // in cells
+const SIGN_H = WORD.length * (GLYPH_H * SCALE + GLYPH_GAP) - GLYPH_GAP + SIGN_PAD * 2;
+const CHASE_MS = 130;            // how fast a light walks round the border
+const CHASE_EVERY = 3;           // and how many dark ones stand between the lit
+
+// On the roof, stood up out of the middle of it, which is where a casino puts
+// its name. What that costs is height -- the whole of it has to be inside the
+// sky you can actually see -- which is why the letters are four cells deep
+// rather than five.
+function drawSign() {
+  const x = Math.round((casino.x + casino.w / 2 - (SIGN_W * P) / 2) / P) * P;
+  const y = Math.round((casino.y - SIGN_H * P) / P) * P;
+
+  // the board itself: white paper with a black edge, like everything else here
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y, SIGN_W * P, SIGN_H * P);
+  ctx.lineWidth = Math.max(1, P / 3);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(x, y, SIGN_W * P, SIGN_H * P);
+
+  // the word, down the board
+  ctx.fillStyle = '#000';
+  WORD.split('').forEach((ch, n) => {
+    const rows = GLYPH[ch];
+    const top = SIGN_PAD + n * (GLYPH_H * SCALE + GLYPH_GAP);
+    for (let r = 0; r < GLYPH_H; r++)
+      for (let c = 0; c < GLYPH_W; c++)
+        if (rows[r][c] === '1')
+          ctx.fillRect(x + (SIGN_PAD + c * SCALE) * P, y + (top + r * SCALE) * P,
+                       P * SCALE, P * SCALE);
+  });
+
+  // and the lights, walking round the edge. A whole cell at a time, like
+  // everything that moves in this game: a bulb is on or it is off.
+  const step = Math.floor(now() / CHASE_MS);
+  ringCells().forEach(([cx, cy], i) => {
+    if ((i + step) % CHASE_EVERY) return;
+    ctx.fillRect(x + cx * P, y + cy * P, P, P);
+  });
+}
+
+// every cell round the border of the sign, in order, so a light walking the
+// list walks the edge
+let ring = null;
+function ringCells() {
+  if (ring) return ring;
+  ring = [];
+  for (let c = 0; c < SIGN_W; c++) ring.push([c, 0]);
+  for (let r = 1; r < SIGN_H; r++) ring.push([SIGN_W - 1, r]);
+  for (let c = SIGN_W - 2; c >= 0; c--) ring.push([c, SIGN_H - 1]);
+  for (let r = SIGN_H - 2; r > 0; r--) ring.push([0, r]);
+  return ring;
+}
+
+export function drawCasino() {
+  if (!S.casinoOpen) return;
+  const { x, y, w, h } = casino;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, w, h);                                // the block
+
+  const cx = x + w / 2, cy = y + h * 0.46, r = Math.min(w, h) * 0.32;
+  ctx.fillStyle = '#fff';                                  // the wheel, cut out of it
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // and the spokes, which are the only thing about it you can see turning
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = spinning() ? 3 : 2;
+  ctx.beginPath();
+  for (let i = 0; i < SPOKES; i++) {
+    const a = S.wheel + (i / SPOKES) * Math.PI * 2;
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  ctx.stroke();
+  // the hub, so the spokes meet something rather than converging on paper
+  ctx.beginPath();
+  ctx.arc(cx, cy, P * 0.9, 0, Math.PI * 2);
+  ctx.fill();
+
+  // a door, because somebody goes in
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + w - P * 5, y + h - P * 5, P * 3, P * 5);
+  ctx.fillStyle = '#000';
+
+  drawSign();
+}
+
+// Which way the last hand went, standing over the casino for a few seconds.
+//
+// A wheel that stopped and told you nothing is a wheel you had to have been
+// watching, and you are usually somewhere else in the yard. So a settled hand
+// leaves a mark, in the same box the lab's news stands in: a tick for a win,
+// with what it is now worth written under it, and a cross for a hand that is
+// gone. Two answers, one shape each, and neither of them a word.
+const CROSS = [[-2, -2], [-1, -1], [0, 0], [1, 1], [2, 2],
+               [2, -2], [1, -1], [-1, 1], [-2, 2]];
+
+export function casinoMarkAt() {
+  return { x: Math.round((casino.x + casino.w / 2) / P) * P,
+           y: Math.round((casino.y - P * 8) / P) * P };
+}
+
+export function drawCasinoMark() {
+  if (!S.casinoOpen || !S.hand) return;
+  const at = casinoMarkAt();
+  const y = at.y + Math.round(Math.sin(now() / 500)) * P;
+  const won = S.hand.won;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+  ctx.lineWidth = Math.max(1, P / 3);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+
+  ctx.fillStyle = '#000';
+  for (const [dx, dy] of (won ? TICK : CROSS))
+    ctx.fillRect(at.x + dx * P - P / 2, y + dy * P - P / 2, P, P);
+
+  // and what is on the table now, under the mark, in the mark of whatever was
+  // staked -- a win is a number as much as it is a yes
+  if (!won || !S.hand.n) return;
+  drawMark(S.hand.cur === 'shard' ? SHARD_CELL : S.hand.cur === 'spore' ? SPORE_CELL : 4,
+           at.x - P * 2, y + P * 5.5);
 }
 
 // The lab finished something while you were looking somewhere else. The
@@ -580,17 +764,48 @@ export function drawBody(x, y) {
   ctx.fillStyle = '#000';
 }
 
-// A body that is not going anywhere, and says so. Both marks are one cell:
-// anything finer than that on an eighteen-pixel square is a smudge, and both of
-// them have to read at a glance from across the yard, because what they are for
-// is telling you at a glance who is nailed down.
+// The kit, on a body or on the ground. Both marks are one cell: anything finer
+// than that on an eighteen-pixel square is a smudge, and both of them have to
+// read at a glance from across the yard, because what they are for is telling
+// you at a glance who has picked up what.
 //
-// A breaker wears a hat -- a solid bar across the top of the square, the
-// only filled thing on a body and reads as a helmet rather than as a hair.
-export function drawHat(x, y) {
+// A trade wears its own. All three are the same solid bar across the top of the
+// square -- the only filled thing on a body, and the one thing that reads as
+// headgear rather than as hair -- with one cell of difference each, which is
+// exactly as much difference as an eighteen-pixel square will carry:
+//
+//   helmet  a bare bar. The rock, where the thing on your head is for the rock
+//           landing on it and nothing else.
+//   lamp    a bar with a cell standing proud of the middle of it. The cut is
+//           the one place in the yard with no daylight in it.
+//   brim    a bar hanging a cell over each side, with a crown on top. Out in the
+//           beds all day, and the only hat here that is about the sun.
+//
+// A carter wears no hat at all: what you see of a carter is the cart.
+// `tight` pulls the sun hat's brim in by a cell each side. It is for the roster,
+// where the mark stands in a slot with a number beside it and a brim at full
+// span reaches under the digits; out in the yard it wears its proper width.
+export function drawHat(x, y, kind = 'helmet', tight = false) {
   ctx.fillStyle = '#000';
+  if (kind === 'brim') {
+    // Two clear cells of brim past the body on each side, and a low crown on
+    // top of it. Narrower than this and it was a helmet somebody had sat on:
+    // what says sun hat is the overhang, so the overhang is most of the shape.
+    const over = tight ? P : P * 2;
+    ctx.fillRect(x - over, y - P, WORKER + over * 2, P);
+    ctx.fillRect(x + P * 2, y - P * 2, WORKER - P * 4, P);
+    return;
+  }
   ctx.fillRect(x, y - P, WORKER, P);
+  if (kind === 'lamp') ctx.fillRect(x + WORKER / 2 - P / 2, y - P * 2, P, P);
 }
+
+// What a body has on. It is asked of the *kit* -- which station the thing came
+// off -- and never of the job the body is doing, because those two are different
+// for the length of the walk back: somebody taken off the rock is a hauler as
+// far as the books are concerned and is still carrying the rock's helmet, and
+// drawing it as a hauler put a cart behind it for the whole of that walk.
+const wearing = w => w.trained ? KIT_MARK[w.kitOf] || null : null;
 
 // A carter drags a cart: a box on the ground behind it, hitched by a shaft, and
 // what it is carrying rides *in* the cart rather than over its head. That is the
@@ -633,14 +848,126 @@ function drawCart(x, y, face) {
   ctx.fillRect(c.back < 0 ? c.x + CART_W : x + WORKER, c.y + CART_H / 2 - 1, P + 1, 2);
 }
 
+// The kit nobody is wearing, lying on the ground where the work is. A hat sits
+// on the ground as the same bar it is on a head, and a cart as the same box it
+// is behind one: what you are looking at is the thing itself put down, not an
+// icon for it, so picking it up is obviously what happens when somebody walks
+// over there.
+// The kit waiting at a station: a stand with one of the thing on it, and over it
+// the figure for how many there are. A trestle -- a slab and two legs, five
+// cells across -- because a helmet lying on bare ground reads as a helmet
+// somebody dropped, and this is gear put out ready.
+const STAND_W = P * 5, STAND_H = P * 3;
+
+export function drawKitStands() {
+  ctx.fillStyle = '#000';
+  for (const k of kitStands()) {
+    const top = k.y - STAND_H;
+    ctx.fillRect(k.x - P, top, STAND_W, P);                       // the slab
+    ctx.fillRect(k.x - P, top + P, P, STAND_H - P);               // and its legs
+    ctx.fillRect(k.x + STAND_W - P * 2, top + P, P, STAND_H - P);
+    // and the one on it, standing on the slab the way it stands on a head
+    if (k.mark === 'cart') drawCartBox(k.x - P, top - CART_H);
+    else drawHat(k.x + (STAND_W - P * 2 - WORKER) / 2, top, k.mark);
+  }
+}
+
+// And the figure over it, in screen pixels like every other number in the yard:
+// a count is type, and type scaled by five sixths is type with a fuzzy edge.
+function drawKitCounts(screenAt) {
+  const stands = kitStands();
+  if (!stands.length) return;
+  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000';
+  for (const k of stands) {
+    const at = screenAt(k.x - P + STAND_W / 2, k.y - STAND_H - P * 3);
+    ctx.fillText(String(k.n), Math.round(at.x), Math.round(at.y));
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+// --- what a body on a break has to say ----------------------------------------
+// Never words. The yard has no writing in it anywhere and is not about to start
+// on the strength of somebody having a smoke, so a thing said is a mark: a note
+// is singing, a burst is swearing, and dots are talking -- and dots going back
+// and forth between two bodies facing each other is a conversation, which is a
+// thing you read off the pair rather than off either of them.
+//
+// All of it is cells, like everything else, and all of it stands a clear cell
+// above the head so it never touches the load a worker is carrying.
+function drawSay(w) {
+  const x = Math.round(w.x) + WORKER / 2;
+  const top = Math.round(w.y) - P * 2;
+  ctx.fillStyle = '#000';
+
+  if (w.say.mark === 'dots') {
+    const n = w.say.n || 2;
+    for (let i = 0; i < n; i++)
+      ctx.fillRect(Math.round(x - (n * P) / 2 + i * P), top - P, P - 1, P - 1);
+    return;
+  }
+
+  if (w.say.mark === 'note') {
+    // a head and a stem: the smallest thing that is unmistakably a note
+    ctx.fillRect(Math.round(x - P), top - P, P, P);
+    ctx.fillRect(Math.round(x), top - P * 2, P - 2, P + 1);
+    return;
+  }
+
+  // a burst: four cells off a corner, which is the shape a swear word is in
+  // every comic ever drawn
+  for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0], [0, 1]])
+    ctx.fillRect(Math.round(x + dx * P) - P / 2, top - P + dy * P, P - 1, P - 1);
+}
+
+export function drawSays() {
+  for (const w of S.workers) {
+    if (!w.say || underground(w) || indoors(w) || atHome(w)) continue;
+    drawSay(w);
+  }
+  ctx.fillStyle = '#000';
+}
+
+// --- the two of them, and the one under the rock -----------------------------
+// The opening is two squares talking on the bare ground. They are drawn here
+// rather than being workers, because they are not: nobody has been hired yet and
+// one of them is about to stop being anybody at all.
+//
+// And afterwards, every time the last of a rock goes, the one underneath is
+// there -- alive, on the bare ground, saying the same dots two people say to
+// each other anywhere else in this yard. Then the next rock lands on them. That
+// is the whole story and it is told in shapes.
+function drawSaying(x, y, n) {
+  ctx.fillStyle = '#000';
+  const mid = x + WORKER / 2;
+  for (let i = 0; i < n; i++)
+    ctx.fillRect(Math.round(mid - (n * P) / 2 + i * P), y - P * 3, P - 1, P - 1);
+}
+
+export function drawIntro() {
+  for (const b of S.pair) {
+    const x = Math.round(b.x), y = Math.round(b.y);
+    drawBody(x, y);
+    if (b.say) drawSaying(x, y, b.say.n);
+  }
+
+  if (!buriedVisible()) return;
+  const at = buriedAt();
+  drawBody(at.x, at.y);
+  if (S.buriedSay) drawSaying(at.x, at.y, S.buriedSay.n);
+}
+
 export function drawWorkers() {
   for (const w of S.workers) {
-    if (underground(w) || indoors(w)) continue;   // out of sight: in the lab, or below
+    if (underground(w) || indoors(w) || atHome(w)) continue;   // out of sight: in the lab, down the cut, or home
 
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       drawBody(x, y);
-      if (w.trained) drawHat(x, y);
+      if (wearing(w) && wearing(w) !== 'cart') drawHat(x, y, wearing(w));
       // what a quarrier is bringing up rides over its head, the way a load does
       if (w.type === 'quarrier' && w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
       continue;
@@ -648,15 +975,19 @@ export function drawWorkers() {
 
     if (w.type === 'miner') {
       drawBody(Math.round(w.x), Math.round(w.y));
-      if (w.trained) drawHat(Math.round(w.x), Math.round(w.y));
+      if (wearing(w) && wearing(w) !== 'cart') drawHat(Math.round(w.x), Math.round(w.y), wearing(w));
     } else {
       // where it actually is, not where the ground line is: on the bridge those
       // are different, and it was the ground line that won
       const y = Math.round(w.y);
       const x = Math.round(w.x);
-      const cart = w.trained ? cartBox(x, y, w.face || 1) : null;
+      const cart = wearing(w) === 'cart' ? cartBox(x, y, w.face || 1) : null;
       if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
       drawBody(x, y);
+      // and a hauler still carrying somewhere else's kit back to it wears that,
+      // not a cart it never picked up
+      const hat = wearing(w);
+      if (hat && hat !== 'cart') drawHat(x, y, hat);
       // A load is drawn grain by grain as whatever each grain is, so a worker
       // walking a shard to the pit is visibly walking a shard to the pit. It
       // rides overhead, stacked two abreast -- or in the cart, four abreast,
@@ -712,6 +1043,7 @@ export function draw() {
   drawFarm();
   drawSky();
   drawLab();
+  drawCasino();
   drawSchool();
   drawSmoke();
   ctx.fillStyle = '#000';
@@ -747,8 +1079,12 @@ export function draw() {
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
   drawLabMark();           // and a tick over it if it finished something
+  drawCasinoMark();        // and which way the last hand at the table went
+  drawKitStands();                                // and the kit put out ready at each of them
   drawRoster(ctx, drawBody, drawHat, drawCart);   // who is working here, under the place they work
+  drawIntro();             // the two of them, or whoever is under the rock
   drawWorkers();
+  drawSays();              // and what any of them stood about is saying
   drawCursor();
   ctx.restore();
 
@@ -758,8 +1094,10 @@ export function draw() {
   // with the yard rather than pinned to the window: the number belongs to the
   // badge beside it, shake and all.
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  drawRosterCounts(ctx, (wx, wy) => ({ x: (wx - S.camX + S.shakeX) * S.zoom,
-                                       y: (wy - S.camY + S.shakeY) * S.zoom }));
+  const screenAt = (wx, wy) => ({ x: (wx - S.camX + S.shakeX) * S.zoom,
+                                 y: (wy - S.camY + S.shakeY) * S.zoom });
+  drawRosterCounts(ctx, screenAt);
+  drawKitCounts(screenAt);       // and how many are waiting on each stand
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 

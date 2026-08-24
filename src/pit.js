@@ -139,22 +139,27 @@ export function settlePit() {
 // game does not do. When there is no room the dust does not go in and is not
 // counted, and the way to bank another grain is to dig.
 //
-// A find is not dust and is never turned away. There are a handful of them in a
-// whole game, each one is a thing you go and get rather than a grain that
-// happens, and a shard bouncing off a full pit would be a lost afternoon. They
-// go in over the ceiling -- which is a limit on how high dust may heap, not on
-// what the bed will physically hold.
+// A find is counted in with everything else. It used to go in over the ceiling
+// on the grounds that a shard is a thing you went and got rather than a grain
+// that happened -- but a hole that holds everything except the four things it
+// does not hold is a hole with a rule you cannot see, and the counter over it
+// stops being a reading of what is down there. One capacity, one queue: a shard
+// takes a grain of room the same as a grain of dust does, and the crew book it
+// the same way.
 export const pitFull = () => pit.n >= pitCapacity();
+
+// Grains of dust the hole would still take. What the crew book their trips
+// against: see `pitFree` in crew.js.
+export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 
 // Something goes in the hole. A grain of dust is worth one dust; a shard, a
 // or a spore is worth one of itself. Either way it is a grain in the pile
 // from here on, and the pile shows exactly what you are holding. False means
 // the hole would not take it, and whatever was carrying it still has it.
 export function bankDust(x, shade = 1) {
-  const find = !isDust(shade);
-  if (!addGrain(pit, x, null, shade, find)) {
+  if (!addGrain(pit, x, null, shade)) {
     refinePit();                           // full: settle finer and carry on
-    if (!addGrain(pit, x, null, shade, find)) return false;
+    if (!addGrain(pit, x, null, shade)) return false;
   }
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
