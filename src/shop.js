@@ -89,6 +89,12 @@ export function refresh(el, list, headcount) {
       // one, is appended after as its own element rather than folded into the
       // words, so the count can be styled apart from a title that stays dim.
       const n = headcount ? headcount(row.dataset.sect) : 0;
+      // And only when it actually changes. This runs every frame the board is
+      // open, and building a fresh element sixty times a second lays the whole
+      // panel out sixty times a second, for a number that moves when you move
+      // somebody. The board is careful about this everywhere else; so is this.
+      if (row.dataset.count === String(n)) continue;
+      row.dataset.count = n;
       row.textContent = row.dataset.sect;
       if (n) {
         const badge = document.createElement('span');
