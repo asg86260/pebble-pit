@@ -23,7 +23,7 @@ export function coreHome() {
 export function dropCore() {
   const h = coreHome();
   S.coreBuried = false;
-  // Thrown clear of the rock, out towards the bench. The next rock stands where
+  // Thrown clear of the rock, out over its own spoil. The next rock stands where
   // the last one did, so a core that settled in its footprint would be one you
   // could not pick up -- it is aimed past the edge rather than left to roll.
   const land = rockEdge(1) + P * 3 + Math.random() * P * 8;

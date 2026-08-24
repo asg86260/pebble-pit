@@ -114,7 +114,7 @@ for (const t of TUNABLE) {
 }
 
 line('', box => {
-  button(box, 'reset the game', () => dispatchEvent(new KeyboardEvent('keydown', { key: 'r' })));
+  button(box, 'reset the game', () => window.__reset());
 });
 
 function refresh() {

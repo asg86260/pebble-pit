@@ -27,11 +27,12 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // seam between them. 1998 is 333 cells; 2000 was not a whole number of any.
 // Every site stands on the one ground line, measured out from the rock. The
 // world runs away to the left as sites are unlocked, so walking further out is
-// the progression. The bench, the lab and the pit sit to the right.
+// the progression. The pit is the one fixed end, out to the right.
 // Every station piles to its right, into a strip of ground of its own, and each
-// strip has a size. So the world reads right to left as station, pile, station,
-// pile: the farm, its beds' crop; the quarry, what comes up it; the rock, its
-// spoil; and then the bench, the lab and the hole everything ends up in.
+// strip has a size. So the world reads right to left from the hole everything
+// ends up in: the pit; the rock's own spoil; the rock; the bench you buy at,
+// stood just off its flank; then the quarry and what comes up it, the farm and
+// its beds' crop, and the lab at the far end.
 // The thing in the sky is **benched**: it is not in the game. It sheds nothing
 // and cannot be clicked, because the sparks it used to give are gone, and a
 // thing that hangs there doing nothing is a thing that raises a question the
@@ -44,19 +45,28 @@ export const SKY = 1998;         // world above the ground line, so any window h
 export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
-export const TO_FARM = -1500;    // rock centre to the near edge of the farm
-export const TO_QUARRY = -828;     // rock centre to the mouth of the quarry
-export const TO_BENCH = 720;     // rock centre to the bench
-export const TO_LAB = 840;       // rock centre to the lab
-export const TO_LEDGE = 1080;    // rock centre to the lip of the pit
-export const ROCK_PILE_TO = 696; // and how far right the rock's own spoil may reach
+export const TO_FARM = -1776;    // rock centre to the near edge of the farm
+export const TO_QUARRY = -1104;  // rock centre to the mouth of the quarry
+// The bench stands just off the rock's left flank, between it and the quarry:
+// the thing you buy at is the first thing out from the rock, and everything the
+// cores open up lies further out again.
+export const TO_BENCH = -432;    // rock centre to the bench
+export const BENCH_W = P * 12;   // and how wide it stands
+export const TO_LAB = -2004;     // rock centre to the lab, at the far end
+export const TO_LEDGE = 840;     // rock centre to the lip of the pit
+// The rock is the only thing left on this side, so the ground the bench and the
+// lab used to stand on is its spoil's now: the pile runs out towards the lip and
+// stops a sweep short of it, rather than ending in a stretch of bare ground.
+export const ROCK_PILE_TO = 780; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
 // And bare ground kept between a station and the *start* of its own pile, so
 // the heap stands off the thing that made it instead of burying it. The farm
 // clears its last bed; the quarry clears the far ramp of the bridge, which
 // comes down well past the mouth. The rock has ROCK_CLEAR for the same job.
-export const PILE_STANDOFF = { farm: P * 5, quarry: P * 12 };
-export const GROUND_LEFT = 2400; // ground running away to the left of everything
+// The farm's own heap has to clear its fence, not just its last bed, which is
+// why this is more than FARM_GATE rather than measured off the beds.
+export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
+export const GROUND_LEFT = 2700; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
@@ -265,6 +275,10 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 export const FARM_BEDS = 7;
 export const FARM_GAP = 42;      // world pixels between one bed and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
+// Bare ground kept between the end bed and the post that brackets it. A fence
+// standing right against the crop reads as a crop growing through a fence: the
+// plot wants a margin, the way a picture wants one.
+export const FARM_GATE = P * 6;
 export let TEND_BASE = 9000;   // to bring one bed on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
@@ -328,18 +342,36 @@ export let CUT_MS = 700;
 // band drift out of agreement with itself.
 export const AIR_BANDS = [
   //  take: the share of the camera's movement the band takes, 1 being the yard itself
-  { take: 0.20, tone: '#dedede', size: 1, pace: 0.35, share: 0.44, front: false },
-  { take: 0.46, tone: '#c2c2c2', size: 2, pace: 0.62, share: 0.36, front: false },
+  { take: 0.20, size: 1, pace: 0.35, share: 0.44, front: false },
+  { take: 0.46, size: 2, pace: 0.62, share: 0.36, front: false },
   // the near band is drawn *over* the world rather than behind it, which is the
   // whole of why the yard has any depth: dust passes in front of the rock
-  { take: 0.90, tone: '#a6a6a6', size: 3, pace: 1.00, share: 0.20, front: true }
+  { take: 0.90, size: 3, pace: 1.00, share: 0.20, front: true }
 ];
+// A mote is the colour of whatever kicked it up. The yard's own dust is grey,
+// what hangs over the quarry is the shard's blue and what comes off the beds is
+// the spore's green -- so the far end of the yard reads as its own place from
+// across the world, before you can make out anything standing in it.
+//
+// One tone per band, in the same order: a mote further back is paler, whatever
+// it is made of, because that is what makes the bands read as depth rather than
+// as three sizes of speck. The colours are the pale end of the same two hues the
+// shards and spores are drawn in, so the air over a site and the stuff that
+// comes out of it are plainly the same material.
+export const AIR_KINDS = ['dust', 'shard', 'spore'];
+export const AIR_TINTS = {
+  dust:  ['#dedede', '#c2c2c2', '#a6a6a6'],
+  shard: ['#ccd8f4', '#a8bce9', '#8aa2dc'],
+  spore: ['#cfe8d7', '#a4d2b2', '#80bf93']
+};
 export const AIR_FLOOR = 95;      // motes over a bare yard, before anything is lying about
 export const AIR_PER_DUST = 22;   // and one more for every this much dust on the ground
 export const AIR_CAP = 420;       // however much is lying about
 export const AIR_RISE = 0.10;     // screen pixels a mote climbs in a frame
 export const AIR_SINK = 0.06;     // and the heavier grit that goes the other way
 export const AIR_GRIT = 0.16;     // the share of the air that is that grit
+export const AIR_SITE = 0.35;     // share of new motes that come off an open site in view
+export const AIR_SITE_UP = P * 10;  // and how high above the ground line they are born
 export const AIR_WOBBLE = 0.16;   // how far a mote swims either side of its drift
 export const AIR_GUST = 0.34;     // and the wind the whole field leans on
 export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of

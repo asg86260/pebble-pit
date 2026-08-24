@@ -5,7 +5,7 @@
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
 import { P, PIT_H, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
-         CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H } from './config.js';
+         CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H, FARM_GATE } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, bridgeSpan } from './world.js';
@@ -15,9 +15,10 @@ import { coreHome } from './core.js';
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
 import { underground, quarryCut } from './quarry.js';
-import { indoors } from './lab.js';
+import { indoors, progress } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
+import { drawRoster, drawRosterCounts } from './roster.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
@@ -115,9 +116,9 @@ export function drawFarm() {
   // at either end of the row, with a stub of rail running off it, so the plot
   // reads as somewhere fenced and kept even when nothing is growing. Kept low
   // and thin -- it is there to bracket the beds, not to be the thing you look at.
-  const postH = P * 6, gate = P * 3;
+  const postH = P * 6;
   ctx.fillStyle = '#000';
-  for (const px of [farm.x - gate, farm.x + farm.w + gate - P]) {
+  for (const px of [farm.x - FARM_GATE, farm.x + farm.w + FARM_GATE - P]) {
     ctx.fillRect(px, S.groundY - postH, P, postH);
     ctx.fillRect(px + (px < farm.x ? P : -P * 2), S.groundY - postH + P * 2, P * 2, P);
   }
@@ -322,6 +323,32 @@ export function drawLab() {
 // a state, and it stays there until somebody opens the lab.
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
+// A piece of research under way, over the lab: a bar that fills. It reads from
+// across the yard, which a percentage in a menu never did -- the lab works while
+// you are somewhere else entirely, and a number you have to walk over and open a
+// board to see is a number you check once and then forget is running.
+//
+// It fills a cell at a time rather than smoothly, like everything else that
+// moves in this game, and it does not move at all while the lab is empty --
+// which is the mechanic, said by the thing itself instead of by a caption.
+export function drawLabBar() {
+  if (!S.labOpen || !S.research) return;
+  const at = labMarkAt();
+  const w = P * 14, h = P * 3;
+  const x = at.x - w / 2, y = at.y - h / 2;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y, w, h);
+  ctx.lineWidth = Math.max(1, P / 3);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.fillStyle = '#000';
+  const room = w - P * 2;
+  const done = Math.round(room * progress() / P) * P;
+  if (done > 0) ctx.fillRect(x + P, y + P, done, h - P * 2);
+}
+
 export function drawLabMark() {
   if (!S.labOpen || !S.labDone) return;
   const at = labMarkAt();
@@ -472,50 +499,40 @@ export function drawBench() {
   }
 }
 
+// The body: one hollow square, whoever it is. Each job used to carry a mark of
+// its own -- a lamp on a quarrier's head, a low notch on a stooping farmhand, a
+// hollow centre on a miner -- and every one of them was a thing to learn before
+// the yard could be read. Where somebody is standing already says what they are
+// doing: the one on the rock is mining it, the one at a bed is tending it. So
+// the marks went, and what is left is a body.
+//
+// Drawn here rather than in each branch of `drawWorkers`, because the roster
+// under each station draws the same square beside its count.
+export function drawBody(x, y) {
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+}
+
 export function drawWorkers() {
   for (const w of S.workers) {
     if (underground(w) || indoors(w)) continue;   // out of sight: in the lab, or below
 
-    if (w.type === 'labber') {
+    if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
-      ctx.fillRect(x, y, WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + P, y + P, P, P);     // a hollow middle, like a miner's
-      ctx.fillStyle = '#000';
-      continue;
-    }
-
-    if (w.type === 'farmhand') {
-      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
-      ctx.fillRect(x, y, WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + P, y + P * 2, P, P);   // stooped: the notch is low
-      ctx.fillStyle = '#000';
-      continue;
-    }
-
-    if (w.type === 'quarrier') {
-      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
-      ctx.fillRect(x, y, WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(x + P, y, P, P);         // a lamp on its head
-      ctx.fillStyle = '#000';
-      if (w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
+      drawBody(x, y);
+      // what a quarrier is bringing up rides over its head, the way a load does
+      if (w.type === 'quarrier' && w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
       continue;
     }
 
     if (w.type === 'miner') {
-      ctx.fillRect(Math.round(w.x), Math.round(w.y), WORKER, WORKER);
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(Math.round(w.x) + P, Math.round(w.y) + P, P, P);    // hollow centre
-      ctx.fillStyle = '#000';
+      drawBody(Math.round(w.x), Math.round(w.y));
     } else {
       // where it actually is, not where the ground line is: on the bridge those
       // are different, and it was the ground line that won
       const y = Math.round(w.y);
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(Math.round(w.x) + 1, y + 1, WORKER - 2, WORKER - 2);
+      drawBody(Math.round(w.x), y);
       // the load rides overhead, stacked two abreast
       const left = Math.round(w.x) + (WORKER - P * 2) / 2;
       // a load is drawn grain by grain as whatever each grain is, so a worker
@@ -598,12 +615,21 @@ export function draw() {
   drawBench();
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
-  drawLabMark();           // and a tick over the lab if it finished something
+  drawLabBar();            // how far along the lab is, over the lab itself
+  drawLabMark();           // and a tick over it if it finished something
+  drawRoster(ctx, drawBody);   // who is working here, under the place they work
   drawWorkers();
   drawCursor();
   ctx.restore();
 
   drawAirNear();           // the nearest dust passes in front of the yard, not behind it
+
+  // The roster's counts, in screen pixels so the digits stay sharp, but moved
+  // with the yard rather than pinned to the window: the number belongs to the
+  // badge beside it, shake and all.
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  drawRosterCounts(ctx, (wx, wy) => ({ x: (wx - S.camX + S.shakeX) * S.zoom,
+                                       y: (wy - S.camY + S.shakeY) * S.zoom }));
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 

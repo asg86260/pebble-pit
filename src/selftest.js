@@ -117,13 +117,18 @@ async function bankCore() {
   return false;
 }
 
-// a job row: click the more or the less beside its count
+// A roster: click the less or the more under the station itself. The game
+// reports where its buttons are, so this aims at the real control through the
+// real pointer path rather than calling assign() behind the yard's back.
 const put = async (key, which) => {
-  const b = shop().querySelector(`.job[data-job="${key}"] .${which}`);
-  if (!b || b.disabled) return false;
-  b.click();
+  const p = state().roster.find(r => r.key === key);
+  if (!p || p.fixed) return false;
+  const was = state()[p.job];
+  const [x, y] = onScreen(...p[which]);
+  point('pointerdown', x, y);
+  point('pointerup', x, y);
   await sleep(150);
-  return true;
+  return state()[p.job] !== was;
 };
 
 const buy = async key => {
@@ -499,17 +504,17 @@ const TESTS = [
       ok(Math.abs(s.rockFoot - s.groundY) <= 18,
          'its foot is at the ground line', `${s.rockFoot - s.groundY} below`),
       ok(s.rockW > s.rockH, 'it is a hill, wider than it is tall', `${s.rockW}x${s.rockH}`),
-      ok(s.rockX + s.rockW / 2 < s.benchX, 'it stands clear of the bench',
-         `rock ends ${Math.round(s.rockX + s.rockW / 2)}, bench at ${s.benchX}`),
-      ok(s.benchX < s.pitX, 'the bench is between the rock and the pit'),
+      ok(s.benchX + s.benchW < s.rockX - s.rockW / 2, 'it stands clear of the bench',
+         `bench ends ${Math.round(s.benchX + s.benchW)}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
+      ok(s.benchX < s.rockX && s.rockX < s.pitX, 'the rock is between the bench and the pit'),
       // the whole working area has to sit in a window at once, at the biggest
-      // rock: nothing needs to be pushed out to the left of it
-      ok(s.pitX - (s.rockX - s.rockW / 2) < 1600, 'rock through pit lip is one screenful',
-         `${Math.round(s.pitX - (s.rockX - s.rockW / 2))} across`),
-      ok(s.benchX - (s.rockX + s.rockW / 2) > 60, 'the rock never grows into the bench',
-         `${Math.round(s.benchX - (s.rockX + s.rockW / 2))} clear`),
-      ok(s.pitX - s.benchX > 300, 'there is ground to sweep between bench and lip',
-         `${Math.round(s.pitX - s.benchX)}`)
+      // rock: the bench, the rock and the lip of the pit are one screenful
+      ok(s.pitX - s.benchX < 1600, 'bench through pit lip is one screenful',
+         `${Math.round(s.pitX - s.benchX)} across`),
+      ok((s.rockX - s.rockW / 2) - (s.benchX + s.benchW) > 60, 'the rock never grows into the bench',
+         `${Math.round((s.rockX - s.rockW / 2) - (s.benchX + s.benchW))} clear`),
+      ok(s.pitX - (s.rockX + s.rockW / 2) > 300, 'there is ground to sweep between rock and lip',
+         `${Math.round(s.pitX - (s.rockX + s.rockW / 2))}`)
     ];
   }],
 
@@ -554,6 +559,10 @@ const TESTS = [
       ok(left >= 0, 'the last rock is not cut off on the left', `${Math.round(left)}px in`),
       ok(right < innerWidth, 'and you can see the whole of it',
          `ends at ${Math.round(right)} of ${innerWidth}`),
+      // the bench stands off the rock's far flank now, so the view has to open
+      // wide enough to the left to show it arriving
+      ok(s.benchX >= s.camX, 'the bench is in the opening view',
+         `bench at ${Math.round(s.benchX)}, view starts ${Math.round(s.camX)}`),
       // it no longer has to fit every window, but it has to fit a desk
       ok(deskFits, 'a desk-sized window shows the rock and the pit lip at once')
     ];
@@ -921,7 +930,7 @@ const TESTS = [
     window.__clearFloor();                     // so the only dust is the heap we make
     await sleep(300);
     const s = state();
-    const behind = s.rockX - s.rockW / 2 - 60;
+    const behind = s.piles.find(p => p.key === 'quarry').to - 60;
     window.__pile(behind, 10);
     await sleep(400);
     const before = state();
@@ -1187,7 +1196,7 @@ const TESTS = [
       ok(idlingFirst.miners === 0 && idlingFirst.haulers === 1,
          'and carries dust until it is put on something',
          `${idlingFirst.miners} mining, ${idlingFirst.haulers} carrying`),
-      ok(moved, 'the rock has a job row to put it on'),
+      ok(moved, 'the rock has a roster under it to put it on'),
       ok(after.miners === 1 && after.haulers === 0, 'now it is on the rock and not carrying',
          `${after.miners} mining, ${after.haulers} carrying`),
       ok(after.crew === 1, 'and it is the same body, not a second hire', `${after.crew}`),
@@ -1207,7 +1216,7 @@ const TESTS = [
     window.__crew(0, 0);
     return [
       ok(on.miners === 1 && on.idle === 0, 'it starts on the rock', `${on.miners} mining`),
-      ok(back, 'the job row lets it go'),
+      ok(back, 'the roster lets it go'),
       ok(off.miners === 0 && off.haulers === 1, 'and it goes back to carrying dust',
          `${off.miners} mining, ${off.haulers} carrying`),
       ok(!tooMany, 'a body it does not have cannot be put anywhere'),
@@ -1409,8 +1418,11 @@ const TESTS = [
     return [
       ok(s.farmX + s.farmW < s.quarryX, 'the farm is out past the quarry',
          `farm ends ${Math.round(s.farmX + s.farmW)}, quarry at ${s.quarryX}`),
-      ok(s.quarryX + s.quarryW < s.rockX - s.rockW / 2, 'and the quarry past the rock'),
-      ok(s.rockX < s.benchX && s.benchX < s.pitX, 'with the bench between rock and pit')
+      ok(s.labX < s.farmX, 'and the lab out past the farm, at the far end',
+         `lab at ${Math.round(s.labX)}, farm at ${Math.round(s.farmX)}`),
+      ok(s.quarryX + s.quarryW < s.benchX, 'the quarry stands past the bench'),
+      ok(s.benchX + s.benchW < s.rockX && s.rockX < s.pitX,
+         'and the bench off the rock, between it and the quarry')
     ];
   }],
 
@@ -1597,6 +1609,38 @@ const TESTS = [
       ok(bare.airUnder === 0 && heaped.airUnder === 0 && swept.airUnder === 0,
          'and none of it is under the ground',
          `${bare.airUnder}/${heaped.airUnder}/${swept.airUnder}`)
+    ];
+  }],
+
+  // A mote is the colour of what kicked it up, which is the only thing in the
+  // game that says what the far end of the yard is from across the world: blue
+  // air over the quarry, green over the beds, grey everywhere else.
+  ['the air over a site is the colour of what comes out of it', async () => {
+    window.__reset();
+    run(4);
+    const yard = state();                        // nothing open: a grey yard
+
+    window.__grant({ cores: 8 });
+    window.__crew(0, 0, 2, 0);                   // opens the quarry, and works it
+    window.__look(state().quarryX - 100);
+    run(20);
+    const atQuarry = state();
+
+    window.__crew(0, 0, 0, 2);                   // and the beds
+    window.__look(state().farmX - 100);
+    run(20);
+    const atFarm = state();
+
+    return [
+      ok(yard.airKinds.shard === 0 && yard.airKinds.spore === 0,
+         'a yard with nothing open gives off nothing but dust',
+         JSON.stringify(yard.airKinds)),
+      ok(atQuarry.airKinds.shard > 0, 'the air over the quarry comes up blue',
+         `${atQuarry.airKinds.shard} of ${atQuarry.air}`),
+      ok(atFarm.airKinds.spore > 0, 'and the air over the beds comes off green',
+         `${atFarm.airKinds.spore} of ${atFarm.air}`),
+      ok(atFarm.airKinds.dust > 0, 'the yard itself is still grey',
+         `${atFarm.airKinds.dust} of ${atFarm.air}`)
     ];
   }],
 
@@ -1826,7 +1870,7 @@ const TESTS = [
     const rows = () => [...shop().querySelectorAll('button')].map(b => b.dataset.key);
     const has = k => rows().includes(k);
 
-    dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));
+    window.__reset();
     await sleep(400);
     const fresh = rows();
 
@@ -1890,7 +1934,7 @@ export async function runTests(filter = '') {
   const onErr = e => errs.push(String(e.message || e));
   addEventListener('error', onErr);
 
-  dispatchEvent(new KeyboardEvent('keydown', { key: 'r' }));   // known state
+  window.__reset();                                            // known state
   await sleep(600);
 
   const results = [];

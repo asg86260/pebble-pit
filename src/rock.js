@@ -6,7 +6,7 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS,
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS,
   ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
 import { S, floor } from './state.js';
@@ -34,7 +34,11 @@ export function rockSize() {
   // The width is kept even. The rock is anchored by its middle, so an odd width
   // puts its left edge half a cell off the grid, and half a cell is a fraction
   // of a device pixel: every column then seams against its neighbour.
-  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((TO_BENCH - P * 14) * 2 / P)));
+  // The bench stands off one flank, so what the rock has to spread into is the
+  // gap to whichever of its edges faces the rock -- and it keeps a hand's width
+  // clear of that, rather than growing up against it.
+  const toBench = Math.abs(TO_BENCH < 0 ? TO_BENCH + BENCH_W : TO_BENCH);
+  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((toBench - P * 14) * 2 / P)));
   return {
     w: wide - (wide % 2),
     h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))

@@ -14,6 +14,7 @@ import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
+import { rosterHit } from './roster.js';
 import { mineMs } from './upgrades.js';
 import { now } from './clock.js';
 
@@ -59,6 +60,9 @@ canvas.addEventListener('pointerdown', e => {
   S.mouse = p;
   // the sky is checked first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
+  // then the rosters: they stand well under the ground line, where a click has
+  // nothing else to mean, but they are still controls and go before the yard
+  if (rosterHit(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     knockOff(p.x, p.y);
     S.mining = S.autoMine;                      // holding only mines once unlocked
@@ -180,7 +184,11 @@ canvas.addEventListener('wheel', e => {
 // the cursor leaving the menu itself closes it, whichever station it is at
 document.getElementById('panel').addEventListener('pointerleave', () => showPanel(null));
 addEventListener('keydown', e => {
-  if (e.key === 'r' || e.key === 'R') reset();
+  // ctrl+R is the browser reloading, not the player asking for a new game
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  // and a bare r wipes a run with no way back, so it stays a dev shortcut: what
+  // a player gets is the reset button, which asks twice
+  if (import.meta.env.DEV && (e.key === 'r' || e.key === 'R')) reset();
   if (e.key === 'ArrowRight') pan(P * 12);
   if (e.key === 'ArrowLeft') pan(-P * 12);
 });

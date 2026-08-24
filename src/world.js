@@ -10,7 +10,7 @@ import {
   ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF,
   PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   SHAKE_RATE, SHAKE_DECAY,
-  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H
+  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, BENCH_W
 } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
 
@@ -41,7 +41,7 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 export function refreshPiles() {
   S.piles = [
     { key: 'farm', from: farm.x + farm.w + PILE_STANDOFF.farm, to: quarry.x - PILE_GAP },
-    { key: 'quarry', from: quarry.x + quarry.w + PILE_STANDOFF.quarry, to: rockLeft() - ROCK_CLEAR - PILE_GAP },
+    { key: 'quarry', from: quarry.x + quarry.w + PILE_STANDOFF.quarry, to: bench.x - PILE_GAP },
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
 }
@@ -177,7 +177,7 @@ export function resize(after) {
   pit.rows = (PIT_H + PIT_HEAP) / pit.p;
   pit.y = S.groundY - PIT_HEAP;          // the bed starts above the ground line
 
-  bench.w = P * 12;
+  bench.w = BENCH_W;
   bench.h = P * 7;
   bench.x = S.cx + TO_BENCH;
   bench.y = S.groundY - bench.h;

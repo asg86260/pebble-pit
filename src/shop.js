@@ -7,7 +7,7 @@
 
 import { S } from './state.js';
 import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
-import { LAB_UPGRADES, LAB_SECTIONS, progress } from './lab.js';
+import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
@@ -110,7 +110,7 @@ export function refresh(el, list, headcount) {
       name.textContent = u.name;
       from.textContent = mine ? 'working' : '';
       arrow.textContent = '';
-      to.textContent = mine ? `${Math.round(progress() * 100)}%` : '';
+      to.textContent = '';                 // how far along is a bar over the lab now
       price.innerHTML = mine ? '' : `${MARK[money]} ${cost}`;
       row.disabled = true;
       continue;

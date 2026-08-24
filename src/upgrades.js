@@ -107,15 +107,12 @@ export function assign(job, d) {
   buildShop();
 }
 
-// A row that moves bodies rather than spending anything. The board draws it as
-// a count with a less and a more beside it; nothing else on the bench does that.
-const jobRow = (key, name, count, show) => ({
-  key, name, job: count, show,
-  count: () => S[count],
-  spare: () => idle(),
-  less: () => assign(count, -1),
-  more: () => assign(count, 1)
-});
+// Where a body works is not on the bench any more: every station carries its own
+// count and its own two buttons, under the place the work happens. The bench
+// sells things, and moving somebody from the beds to the rock was never a
+// purchase. `roster.js` is where that lives now; the lab keeps a row of its own,
+// because starting a piece of research and staffing it are one job and the lab
+// is where you are standing when you do it.
 
 // The one thing you hire. Everything else is where you put them.
 const HIRE = [
@@ -188,7 +185,8 @@ export const UPGRADES = [
     to: () => rateText(S.speedLevel + 1),
     cost: () => Math.round(20 * Math.pow(1.9, S.speedLevel)),
     buy: () => S.speedLevel++,
-    show: () => mineMs() > MINE_FLOOR
+    // faster swings only read as an upgrade once the swinging is automatic
+    show: () => S.autoMine && mineMs() > MINE_FLOOR
   },
   {
     key: 'pick',
@@ -202,7 +200,6 @@ export const UPGRADES = [
     show: () => S.seenCore
   },
   ...HIRE,
-  jobRow('mine', 'on the rock', 'miners', () => S.crew > 0),
   {
     key: 'minerpick',
     name: 'miner bite',
@@ -244,7 +241,6 @@ export const UPGRADES = [
     show: () => S.crew > 0
   },
   CAVE,
-  jobRow('quarryjob', 'in the quarry', 'quarriers', () => S.quarryOpen),
   {
     key: 'quarrypace',
     name: 'quarry lamps',
@@ -265,8 +261,6 @@ export const UPGRADES = [
   },
 
   FARM,
-  jobRow('farmjob', 'at the beds', 'farmhands', () => S.farmOpen),
-  jobRow('labjob', 'in the lab', 'labbers', () => S.labOpen),
   {
     key: 'tend',
     name: 'tending',
@@ -284,10 +278,10 @@ export const UPGRADES = [
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['firstworker', 'worker', 'haulcarry', 'haulpace'] },
-  { title: 'the rock', keys: ['mine', 'minerpick', 'minerspeed'] },
-  { title: 'the quarry', keys: ['unlockquarry', 'quarryjob', 'quarrypace'] },
-  { title: 'the farm', keys: ['unlockfarm', 'farmjob', 'tend'] },
-  { title: 'the lab', keys: ['unlocklab', 'labjob'] }
+  { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
+  { title: 'the quarry', keys: ['unlockquarry', 'quarrypace'] },
+  { title: 'the farm', keys: ['unlockfarm', 'tend'] },
+  { title: 'the lab', keys: ['unlocklab'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

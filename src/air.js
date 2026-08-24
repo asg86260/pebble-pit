@@ -9,10 +9,11 @@
 // exactly where the old ones went. What ties them to the yard is where they are
 // born -- off the top of a real pile -- and after that they belong to the air.
 
-import { P, WORKER, AIR_BANDS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
-         AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND } from './config.js';
+import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
+         AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND,
+         AIR_SITE, AIR_SITE_UP } from './config.js';
 import { PIT_H } from './config.js';
-import { S, floor, pit, quarry } from './state.js';
+import { S, floor, pit, quarry, farm } from './state.js';
 import { at, count, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
@@ -100,6 +101,42 @@ function offAPile() {
   return null;
 }
 
+// What the air is made of over a given place on the screen. The yard is dust;
+// the quarry and the beds give off their own, and a little past their edges
+// too, because a hole in the ground does not stop breathing at its rim. A site
+// that is not open yet is bare ground and gives off nothing but dust.
+//
+// This is asked of a mote every frame rather than once when it is born. The
+// colour is a property of the air over a place, not of a speck: motes live for
+// thousands of frames, so a field that took its colours at birth would take
+// minutes to turn blue after the quarry opened, and would then carry that blue
+// out over the rest of the world on the wind. Asked every frame, the haze over
+// a site is its colour the moment you look at it, and stays put.
+const OVER = P * 6;                // how far past a site's edge its air reaches
+
+function kindAt(sx) {
+  const wx = sx / S.zoom + S.camX;
+  if (S.farmOpen && wx > farm.x - OVER && wx < farm.x + farm.w + OVER) return 'spore';
+  if (S.quarryOpen && wx > quarry.x - OVER && wx < quarry.x + quarry.w + OVER) return 'shard';
+  return 'dust';
+}
+
+// A site gives off its own air whether or not anybody is standing in it: the
+// quarry breathes out of the ground, the beds off the crop. Without this the
+// only coloured motes are the ones a walker happens to kick up, and a farmhand
+// stood at a bed is not walking, so the beds gave off nothing at all.
+function offASite() {
+  const open = [];
+  if (S.quarryOpen) open.push(quarry);
+  if (S.farmOpen) open.push(farm);
+  if (!open.length) return null;
+  const site = open[Math.floor(Math.random() * open.length)];
+  const x = (site.x + Math.random() * site.w - S.camX) * S.zoom;
+  const y = (S.groundY - Math.random() * AIR_SITE_UP - S.camY) * S.zoom;
+  if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) return null;
+  return { x, y };
+}
+
 // Put a mote somewhere it can be seen. `anywhere` scatters it across the whole
 // window, which is what a seeded field wants; without it a mote comes in low --
 // off a pile if there is one, otherwise off the ground line -- because dust
@@ -110,10 +147,12 @@ function place(m, anywhere) {
   // sitting there, and dust at somebody's feet is the one bit of the air that
   // is plainly caused by something you are watching
   const from = anywhere ? null
-             : offAWalker() || (S.dustSeen > 20 ? offAPile() : null);
-  if (from) { m.x = from.x; m.y = from.y; return m; }
+             : (Math.random() < AIR_SITE ? offASite() : null)
+               || offAWalker() || (S.dustSeen > 20 ? offAPile() : null);
+  if (from) { m.x = from.x; m.y = from.y; m.kind = kindAt(m.x); return m; }
 
   m.x = Math.random() * S.W;
+  m.kind = kindAt(m.x);
   if (anywhere && Math.random() > AIR_LOW) { m.y = Math.random() * S.H; return m; }
 
   // low: in the band of air just over the ground, clamped to the window so a
@@ -178,6 +217,8 @@ export function stepAir() {
     // up somewhere else rather than a wrapped one: dust that climbed out of the
     // picture does not come back down, and grit that has settled has settled
     if (m.y < -MARGIN || m.y > S.H + MARGIN || m.y > floorAt(m.x)) place(m, false);
+
+    m.kind = kindAt(m.x);              // whatever it is drifting over now
   }
 
   rememberWalkers();
@@ -197,12 +238,19 @@ export function drawAirNear() {
 
 function paint(front) {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  for (const b of AIR_BANDS) {
+  // Band by band, and within a band one colour at a time: the fill style is the
+  // expensive thing to change, so it is set nine times a frame rather than once
+  // a mote. Depth is still what the bands are for -- the pass order is by band,
+  // so a near green mote is drawn over a far grey one, not under it.
+  for (let i = 0; i < AIR_BANDS.length; i++) {
+    const b = AIR_BANDS[i];
     if (b.front !== front) continue;
-    ctx.fillStyle = b.tone;
-    for (const m of AIR) {
-      if (m.b !== b) continue;
-      ctx.fillRect(Math.round(m.x), Math.round(m.y), b.size, b.size);
+    for (const kind of AIR_KINDS) {
+      ctx.fillStyle = AIR_TINTS[kind][i];
+      for (const m of AIR) {
+        if (m.b !== b || m.kind !== kind) continue;
+        ctx.fillRect(Math.round(m.x), Math.round(m.y), b.size, b.size);
+      }
     }
   }
   ctx.fillStyle = '#000';
@@ -214,11 +262,13 @@ function paint(front) {
 // under the ground -- which is the one thing that would look plainly wrong.
 export function airReport() {
   let under = 0, front = 0;
+  const kinds = { dust: 0, shard: 0, spore: 0 };
   for (const m of AIR) {
     if (m.y > floorAt(m.x) + 1) under++;
     if (m.b.front) front++;
+    kinds[m.kind]++;
   }
-  return { n: AIR.length, under, front, want: appetite(now()) };
+  return { n: AIR.length, under, front, kinds, want: appetite(now()) };
 }
 
 

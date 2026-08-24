@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:test": "vite --port 5184",
+    "test": "node tools/headless.mjs"
   },
   "devDependencies": {
     "vite": "^7.1.3"
