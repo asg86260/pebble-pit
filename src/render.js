@@ -19,7 +19,7 @@ import { indoors, progress } from './lab.js';
 import { bedX, bedTop } from './farm.js';
 import { fmt } from './board.js';
 import { drawRoster, drawRosterCounts } from './roster.js';
-import { drawHouses, houseReport } from './house.js';
+import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
@@ -30,7 +30,6 @@ export { canvas };
 
 // The house is scenery this file draws; its report goes out through here so that
 // main.js has one import for the whole of the drawing side.
-export { houseReport };
 
 // a shard: a triangle, filled or hollow, the mark that means the quarry
 export function drawTriangle(x, y, r, hollow) {
