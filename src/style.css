@@ -39,10 +39,27 @@ canvas {
 
 .rows .sect {
   margin-top: 6px;
-  opacity: .4;
-  border-bottom: 1px solid #000;
+  /* Dimmed through color rather than opacity: opacity would flatten the badge
+     inside it to the same fade, and the headcount is the one thing on this line
+     worth reading at a glance. */
+  color: rgba(0, 0, 0, .4);
+  border-bottom: 1px solid rgba(0, 0, 0, .4);
 }
 .rows .sect:first-child { margin-top: 0; }
+
+/* The headcount: black rectangle, white numeral, the board's own monospace, so
+   a heading with people under it reads as a badge rather than as "x3". Padding
+   stays tight so a heading that gains one does not grow taller and shove the
+   rows below it. */
+.rows .sect .badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 4px;
+  color: #fff;
+  background: #000;
+  font: inherit;
+  letter-spacing: 0;
+}
 
 .rows button {
   display: grid;

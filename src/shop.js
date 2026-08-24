@@ -84,8 +84,18 @@ function build(el, list, sections) {
 export function refresh(el, list, headcount) {
   for (const row of el.children) {
     if (row.dataset.sect) {
+      // The heading is the only text in the row's own textContent, so overwriting
+      // it here can never leave a stale badge behind; the badge, when there is
+      // one, is appended after as its own element rather than folded into the
+      // words, so the count can be styled apart from a title that stays dim.
       const n = headcount ? headcount(row.dataset.sect) : 0;
-      row.textContent = n ? `${row.dataset.sect}  x${n}` : row.dataset.sect;
+      row.textContent = row.dataset.sect;
+      if (n) {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = n;
+        row.appendChild(badge);
+      }
       continue;
     }
     if (row.dataset.job) {

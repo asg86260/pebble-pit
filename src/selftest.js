@@ -498,6 +498,31 @@ const TESTS = [
     ];
   }],
 
+  ['the headcount rides on the section as a badge', async () => {
+    await hoverBench();
+    window.__crew(3, 2, 2, 0, 0);
+    await sleep(50);
+    const rows = [...shop().children].filter(el => el.dataset.sect);
+    const rock = rows.find(el => el.dataset.sect === 'the rock');
+    const farm = rows.find(el => el.dataset.sect === 'the farm');
+    const rockBadge = rock && rock.querySelector('.badge');
+    const farmBadge = farm && farm.querySelector('.badge');
+    const s = state();
+    return [
+      ok(!!rockBadge, 'a section with people under it carries a badge'),
+      ok(rockBadge && rockBadge.textContent === String(s.miners),
+         'the badge is the bare number, no x and no word', rockBadge && rockBadge.textContent),
+      ok(!!farm && !farmBadge, 'a section with nobody has no badge'),
+      ok(rockBadge && rockBadge.parentElement === rock, 'the badge is a span inside the heading'),
+      ok(rockBadge && rock.firstChild.nodeValue === 'the rock',
+         'the heading keeps its own title as plain text', rock.firstChild.nodeValue),
+      ok(rockBadge && getComputedStyle(rockBadge).backgroundColor === 'rgb(0, 0, 0)' &&
+         getComputedStyle(rockBadge).opacity === '1',
+         'the badge is solid black, not dimmed with the rest of the heading',
+         rockBadge && `${getComputedStyle(rockBadge).backgroundColor} @ ${getComputedStyle(rockBadge).opacity}`)
+    ];
+  }],
+
   ['the rock stands on the ground', async () => {
     const s = state();
     return [
