@@ -10,7 +10,7 @@
 
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
-         SHARD_CELL, someFind } from './config.js';
+         CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY } from './world.js';
 import { mult } from './lab.js';
@@ -159,7 +159,7 @@ export function stepQuarrier(w, now) {
   // climb down the near wall, then take a spot along the floor
   if (w.goal === 'down') {
     const foot = quarryFloor(w.x + WORKER / 2) - WORKER;
-    w.y = Math.min(w.y + QUARRY_WALK * 2, foot);
+    w.y = Math.min(w.y + CLIMB_PACE, foot);
     if (w.y >= foot) { w.y = foot; w.goal = 'work'; }
     return;
   }

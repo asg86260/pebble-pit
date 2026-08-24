@@ -107,6 +107,10 @@ export const S = {
   // reporting is the moment the work is done -- and it is kept until it is
   // read, because it usually happens while you are looking somewhere else.
   labDone: null,
+  // When the lab last had somebody in it with nothing to research. Nothing else
+  // takes a body off the lab, so this is what eventually does: it is a stopwatch
+  // rather than a fact about the game, so it is not worth saving.
+  labIdleAt: 0,
   mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
 
   // --- the crew ---

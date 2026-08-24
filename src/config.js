@@ -440,3 +440,21 @@ export function tune(key, v) {
   }
   return tuned(key);
 }
+
+// --- Track TRAVEL: a body walks to its work ---------------------------------
+
+// Moving somebody between jobs is not sacking one and hiring another: the same
+// body walks over. This is the pace it goes at -- between a laden hauler and an
+// empty one, because it is carrying nothing but it is not in a hurry either.
+export const COMMUTE_PACE = 0.9;
+// Near enough to have arrived. A station is a place rather than a pixel, and a
+// body made to land exactly on one would shuffle on the spot for ever.
+export const COMMUTE_SLOP = P * 2;
+// How fast a body gets down into the cut and back out of it again. Going to work
+// somewhere else starts with getting up to the level of the ground, and it has
+// to be the same number at both ends of that trip or a quarrier climbs out
+// faster than it climbed in.
+export const CLIMB_PACE = QUARRY_WALK * 2;
+// How long a lab with nothing to research keeps somebody standing in it before
+// they let themselves out and go back to carrying dust.
+export const LAB_IDLE_MS = 4000;

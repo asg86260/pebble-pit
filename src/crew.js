@@ -5,7 +5,8 @@
 // quarry and the farm arrive, its own file.
 
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY,
-         DUCK_PACE, IDLE_BEAT, IDLE_STRIDE } from './config.js';
+         DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
+         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, walkY, rockLeft, yardLeft } from './world.js';
@@ -14,9 +15,9 @@ import { spawnChip, spawnSpoil, bell } from './dust.js';
 import { depthShade } from './grid.js';
 import { bankDust } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
-import { stepQuarrier, newQuarrier } from './quarry.js';
-import { stepFarmhand, newFarmhand } from './farm.js';
-import { stepLabber, newLabber } from './lab.js';
+import { stepQuarrier, newQuarrier, quarryFace } from './quarry.js';
+import { stepFarmhand, newFarmhand, bedX } from './farm.js';
+import { stepLabber, newLabber, labDoor } from './lab.js';
 import { now } from './clock.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -79,6 +80,99 @@ function duck(w, zone) {
   return true;
 }
 
+// Where a body hired out of nowhere steps into the yard. There is nowhere for
+// anybody to come from yet, so it comes from the bench; Track HOUSE replaces the
+// body of this with the door of the crew's housing once that lands, and nothing
+// else in here has to know.
+export const hireSpot = () => ({ x: bench.x });
+
+function newMiner() {
+  return {
+    type: 'miner', next: 0, lunge: 0,
+    x: rockLeft() + Math.random() * S.gw * P, y: S.cy,
+    dir: Math.random() < 0.5 ? -1 : 1,
+    ph: Math.random() * Math.PI * 2,        // where in its wobble it starts
+    sp: 0.5 + Math.random() * 0.9,          // how fast it sways
+    wob: 0.05 + Math.random() * 0.10,       // how far it drifts round its seat
+    rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
+  };
+}
+
+function newHauler() {
+  // Its feet are on the ground from the first frame. Every other job's step
+  // function puts a new body down before anything looks at it, but a body put
+  // straight back on to another job is walked from wherever it is standing --
+  // and a placeholder height reads as one that has to climb down out of the sky.
+  const { x } = hireSpot();
+  return {
+    type: 'hauler', x, y: walkY(x + WORKER / 2),
+    carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null
+  };
+}
+
+// The order jobs are filled in, and how a body for one is made from nothing.
+// Carrying comes last so that a spare body goes to a station that is short of
+// one before it goes back to sweeping the yard.
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'hauler'];
+const FACTORY = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
+                  labber: newLabber, hauler: newHauler };
+
+// Where each job is done, for a body on its way to it. Carrying has no station:
+// the dust is wherever it fell, so somebody put on it is already at work.
+function stationX(type) {
+  if (type === 'miner') return S.cx - WORKER / 2;
+  if (type === 'quarrier') return quarryFace();
+  if (type === 'farmhand') return bedX(0);
+  if (type === 'labber') return labDoor() - WORKER / 2;
+  return null;
+}
+
+// Give a body its new job's own fields -- exactly the ones that job's factory
+// hands out -- so from here on nothing can tell it from one made on the spot.
+// Where it is standing is the one thing it keeps: it walked here.
+function settle(w) {
+  const fresh = FACTORY[w.type]();
+  delete fresh.x;                  // where it is standing is where it walked to
+  delete fresh.y;
+  Object.assign(w, fresh);
+  w.walkTo = null;
+  w.walking = false;
+}
+
+// Put a body that has just been stood down onto a job that is short of one,
+// where it stands. Its `type` changes at once rather than on arrival: `want`,
+// `pickBed`, `elbowed` and `seatX` all filter on type, and somebody walking to a
+// job is on that job as far as the books are concerned. What it does not do is
+// any of the work, until it gets there.
+function retask(w, type) {
+  w.type = type;
+  const to = stationX(type);
+  if (to === null) { settle(w); return; }
+  w.walkTo = to;
+  w.walking = true;
+}
+
+// One frame of that walk. Nothing else happens on the way -- it does not mine,
+// carry, tend, research or cut until it is standing where the job is.
+function stepCommute(w, zone) {
+  // The level of the ground first, and only then along it. A quarrier is at work
+  // below the ground line, and setting off from down there would take it up
+  // through the wall of the cut on the diagonal; it climbs the way it came down.
+  // A miner is the same thing the other way up, stood on top of the rock.
+  const top = walkY(w.x + WORKER / 2);
+  if (Math.abs(w.y - top) > 1) {
+    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE, Math.abs(top - w.y));
+    return;
+  }
+
+  if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); return; }
+
+  const d = w.walkTo - w.x;
+  w.x += Math.sign(d) * Math.min(COMMUTE_PACE, Math.abs(d));
+  w.y = walkY(w.x + WORKER / 2);               // the bridge carries a commuter too
+  if (Math.abs(d) < COMMUTE_SLOP) settle(w);
+}
+
 export function syncWorkers() {
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers };
@@ -86,8 +180,9 @@ export function syncWorkers() {
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
   // wherever it came from, and losing a load to a reshuffle would break that.
+  const room = { ...want };                 // want, counted down as bodies are kept
   const keep = [], stood = [];
-  for (const w of S.workers) (want[w.type]-- > 0 ? keep : stood).push(w);
+  for (const w of S.workers) (room[w.type]-- > 0 ? keep : stood).push(w);
   for (const w of stood) {
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);
@@ -95,39 +190,29 @@ export function syncWorkers() {
       S.coreItem = { x: w.x, y: S.groundY - CORE_SIZE, vx: 0, vy: -1, rest: false };
       if (S.coreTaker === w) S.coreTaker = null;
     }
+    // hands empty and nothing claimed, so whatever it does next it starts with
+    // nothing on it
+    w.carry = 0;
+    w.load = [];
+    w.hasCore = false;
+    w.claim = -1;
   }
   S.workers = keep;
 
   // count what is missing first: pushing while re-reading the length only ever
   // creates half of them
   const have = t => S.workers.filter(w => w.type === t).length;
-  const needMiners = S.miners - have('miner');
-  for (let i = 0; i < needMiners; i++) {
-    S.workers.push({
-      type: 'miner', next: 0, lunge: 0,
-      x: rockLeft() + Math.random() * S.gw * P, y: S.cy,
-      dir: Math.random() < 0.5 ? -1 : 1,
-      ph: Math.random() * Math.PI * 2,        // where in its wobble it starts
-      sp: 0.5 + Math.random() * 0.9,          // how fast it sways
-      wob: 0.05 + Math.random() * 0.10,       // how far it drifts round its seat
-      rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
-    });
-  }
-  const needSpelunkers = S.quarriers - have('quarrier');
-  for (let i = 0; i < needSpelunkers; i++) S.workers.push(newQuarrier());
 
-  const needFarmhands = S.farmhands - have('farmhand');
-  for (let i = 0; i < needFarmhands; i++) S.workers.push(newFarmhand());
-
-  const needLabbers = S.labbers - have('labber');
-  for (let i = 0; i < needLabbers; i++) S.workers.push(newLabber());
-
-  const needHaulers = S.haulers - have('hauler');
-  for (let i = 0; i < needHaulers; i++) {
-    S.workers.push({
-      type: 'hauler', x: rockLeft() + Math.random() * (pit.x - rockLeft()), y: 0,
-      carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null
-    });
+  // A body stood down from one job while another is short of one has not been
+  // sacked and replaced -- it is the same person, and it walks over. So the
+  // surplus is spent before anything is made from nothing, and the only bodies
+  // pushed here are the ones the crew has actually grown by.
+  for (const type of TYPES) {
+    for (let short = want[type] - have(type); short > 0; short--) {
+      const spare = stood.shift();
+      if (spare) { retask(spare, type); S.workers.push(spare); }
+      else S.workers.push(FACTORY[type]());
+    }
   }
 
   // number the miners off so they can be spaced evenly round the rock, and
@@ -192,6 +277,9 @@ export function updateWorkers(now, dt) {
   const taken = claims();
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
+    // on its way to a job it has just been put on, and doing none of it yet
+    if (w.walking) { stepCommute(w, zone); continue; }
+
     if (w.type === 'miner') {
       // The rock is off. The crew take five on the bare ground: a hop on the
       // spot, each one a beat behind the last, so it reads as a line of them

@@ -1188,7 +1188,7 @@ const TESTS = [
     const idlingFirst = state();
     const moved = await put('mine', 'more');
     const before = state();
-    run(3);
+    run(14);                                  // long enough to walk to the rock and swing
     const after = state();
     return [
       ok(hired, 'the first worker can be bought with a core'),
@@ -1222,6 +1222,89 @@ const TESTS = [
       ok(!tooMany, 'a body it does not have cannot be put anywhere'),
       ok(capped.miners + capped.haulers === capped.crew,
          'the crew always adds up', `${capped.miners}+${capped.haulers} of ${capped.crew}`)
+    ];
+  }],
+
+  // Moving somebody from one job to another used to delete a body where it stood
+  // and make a new one already at the far end of the yard. It is the same person:
+  // it keeps its place in the crew, walks out of wherever it was working, and
+  // does none of the new job on the way.
+  ['a body walks to its new work instead of appearing at it', async () => {
+    const body = () => {
+      const [t, xy] = state().workerPos[0].split(':');
+      const [x, y] = xy.split(',').map(Number);
+      return { t, x, y };
+    };
+    window.__crew(0, 0, 1);                     // one body, and it goes down the quarry
+    run(10);                                    // down the wall and working the floor
+    const s0 = state();
+    const digging = body();
+
+    window.__assign('quarriers', -1);           // now it is wanted on the rock
+    window.__assign('miners', 1);
+    const off = state();
+
+    // a sixth of a second at a time, so the climb out is not stepped over
+    const trail = [];
+    for (let i = 0; i < 30; i++) { run(1 / 6); trail.push(body()); }
+    const arrived = runUntil(() => state().commuting.length === 0, 200);
+    const home = body();
+    const after = state();
+    window.__crew(0, 0);
+    window.__clearFloor();                      // the shards it knocked off are not ours
+
+    const climbing = trail.filter(p => p.y > s0.groundY - WORKER);
+    const steps = trail.slice(1).map((p, i) => Math.abs(p.x - trail[i].x));
+    return [
+      ok(digging.t === 'q' && digging.y > s0.groundY,
+         'it starts at work, down in the cut', `${digging.x},${digging.y}`),
+      ok(off.workers === 1 && off.crew === 1,
+         'moving it is one body, not one deleted and another made',
+         `${off.workers} bodies, ${off.crew} on the payroll`),
+      ok(off.miners === 1 && off.quarriers === 0,
+         'and it counts at its new job the moment it is given it',
+         `${off.miners} mining, ${off.quarriers} in the quarry`),
+      ok(climbing.length > 0 && climbing.every(p => p.x === digging.x),
+         'it climbs out of the cut before it walks anywhere',
+         `${climbing.length} samples still below the line`),
+      ok(steps.filter(d => d > 0).length > 8 && Math.max(...steps) < WORKER * 3,
+         'then it crosses the yard a step at a time rather than jumping',
+         steps.map(d => Math.round(d)).join(' ')),
+      ok(arrived, 'and it gets there'),
+      ok(Math.abs(home.x - s0.rockX) < s0.rockW,
+         'which is the rock it was sent to',
+         `${home.x}, rock at ${s0.rockX}`),
+      ok(after.miners === 1 && after.workers === 1,
+         'still the one body, and now it is a miner', `${after.workers} bodies`)
+    ];
+  }],
+
+  // A lab with nothing to research is a room of people doing nothing, and there
+  // is no button that takes them off it. So they take themselves off.
+  ['an idle lab lets its people go', async () => {
+    window.__abandon();                         // nothing for them to work on
+    window.__crew(0, 1);
+    window.__lab(true);
+    window.__assign('labbers', 1);
+    const sent = state();
+    const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('l|in')), 200);
+    // LAB_IDLE_MS is four seconds, so two is still waiting and six is well past
+    run(2);
+    const waiting = state();
+    run(4);
+    const gone = state();
+    window.__crew(0, 0);
+    return [
+      ok(sent.labbers === 1, 'a body can be put on the lab', `${sent.labbers}`),
+      ok(inside, 'and it walks over and goes in'),
+      ok(waiting.labbers === 1,
+         'an empty lab does not turn people out the moment they arrive',
+         `${waiting.labbers}`),
+      ok(gone.labbers === 0, 'but it does not keep them standing in it for ever',
+         `${gone.labbers}`),
+      ok(gone.haulers === 1 && gone.crew === 1,
+         'and the one it lets go is back to carrying dust, not off the payroll',
+         `${gone.haulers} carrying of ${gone.crew}`)
     ];
   }],
 
@@ -1373,14 +1456,17 @@ const TESTS = [
     // a frame at a time, not a second: it is only ripe for as long as it takes
     // the farmhand to cut it, and a second-wide step steps right over that
     let ripe = false;
+    // a bed with a spore on it, not merely one left standing ripe by an earlier
+    // check: the tone is what says this one just grew, and the beds an earlier
+    // check left ripe still carry theirs, so they are named and skipped
+    const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
+    const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
     for (let i = 0; i < 3000 && !ripe; i++) {
       run(1 / 60);
-      // a bed with a spore on it, not merely one left standing ripe by an
-      // earlier check: the tone is what says this one just grew
-      ripe = state().bedTone.some(t => t > 0);
+      ripe = fresh(state()) >= 0;
     }
     const showing = state();
-    const i = showing.bedTone.findIndex(t => t > 0);
+    const i = fresh(showing);
     const tone = showing.bedTone[i];
     const spores = showing.finds.filter(f => f === 'spore').length;
     run(0.3);
@@ -1521,6 +1607,7 @@ const TESTS = [
 
     window.__assign('labbers', 1);
     window.__assign('labbers', 1);
+    runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(4);
     const worked = state();
     window.__crew(0, 0);
@@ -1719,6 +1806,7 @@ const TESTS = [
 
     window.__assign('labbers', 1);
     window.__assign('labbers', 1);
+    runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(5);
     const part = state();
     run(40);
