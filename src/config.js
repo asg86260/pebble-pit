@@ -453,12 +453,12 @@ export function tune(key, v) {
 // shacks may not be standing in it when it does.
 export const HOUSE_TO = -420;      // rock centre to the middle of the plot
 export const HOUSE_CUBE = P * 3;   // one body, one shack, the size of the body
-export const HOUSE_COLS = 6;       // and this many abreast before the block goes up
-// How far a shack sits off true, so a row of them is not a row of identical
-// boxes. A whole cell, because everything in this yard stands on the lattice
-// and half a cell puts a hairline down the wall -- enough to read as thrown up
-// by the people living in them, not so much that the block stops being a block.
-export const HOUSE_WONK = P;
+// How wide the settlement may stand, in rooms. Nine of them is 162px inside a
+// plot of 240, which leaves it clear of the bench on one side and the rock's
+// apron on the other at the biggest rock the game allows. It is wide on purpose:
+// the ground is the cheap direction, and a place that spreads before it climbs
+// reads as somewhere people live rather than as a block of flats.
+export const HOUSE_COLS = 9;
 export const HOUSE_LINE = 2;       // walls and roof, drawn at the ground line's weight
 // --- Track TRAVEL: a body walks to its work ---------------------------------
 
