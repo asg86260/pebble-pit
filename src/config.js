@@ -45,14 +45,18 @@ export const SKY = 1998;         // world above the ground line, so any window h
 export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
-export const TO_FARM = -1776;    // rock centre to the near edge of the farm
-export const TO_QUARRY = -1104;  // rock centre to the mouth of the quarry
+export const TO_FARM = -1956;    // rock centre to the near edge of the farm
+export const TO_QUARRY = -1284;  // rock centre to the mouth of the quarry
 // The bench stands just off the rock's left flank, between it and the quarry:
 // the thing you buy at is the first thing out from the rock, and everything the
 // cores open up lies further out again.
-export const TO_BENCH = -432;    // rock centre to the bench
+// The bench stands further off the flank than the rock needs it to. What is in
+// the gap is where the crew live, and a block of shacks wants ground: at the
+// biggest rock there is 240px of it between the bench and the rock's apron,
+// which is forty cells and enough for a village rather than a chimney.
+export const TO_BENCH = -612;    // rock centre to the bench
 export const BENCH_W = P * 12;   // and how wide it stands
-export const TO_LAB = -2004;     // rock centre to the lab, at the far end
+export const TO_LAB = -2184;     // rock centre to the lab, at the far end
 export const TO_LEDGE = 840;     // rock centre to the lip of the pit
 // The rock is the only thing left on this side, so the ground the bench and the
 // lab used to stand on is its spoil's now: the pile runs out towards the lip and
@@ -66,7 +70,7 @@ export const PILE_GAP = 0;       // bare ground kept between a pile and the next
 // The farm's own heap has to clear its fence, not just its last bed, which is
 // why this is more than FARM_GATE rather than measured off the beds.
 export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
-export const GROUND_LEFT = 2700; // ground running away to the left of everything
+export const GROUND_LEFT = 2880; // ground running away to the left of everything
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
@@ -442,16 +446,17 @@ export function tune(key, v) {
 }
 
 // --- Track HOUSE -------------------------------------------------------------
-// Where the crew live: a cube per body, on the strip of bare ground between the
-// bench and the rock. That strip is the narrowest in the yard and it never gets
-// any wider -- the rock grows leftwards until it is P * 14 off the bench, and
-// its apron takes ROCK_CLEAR of that -- so the block is sized to the ten cells
-// left at the biggest rock the game allows, not to the room it has at rock one.
-export const HOUSE_TO = -330;      // rock centre to the middle of the plot
-export const HOUSE_CUBE = P * 2;   // one body, one cube
-export const HOUSE_COLS = 4;       // and this many abreast before the block goes up
-// The line between two cubes, so a full stack is countable instead of being one
-// black rectangle. A hairline, like the ground line, rather than a cell: a cell
-// is what this yard is built of, and a cell of white between every cube read as
-// scaffolding rather than as the joint between two walls.
-export const HOUSE_JOINT = 2;
+// Where the crew live: a shack per body, on the bare ground between the bench
+// and the rock. The bench was moved out to make this strip -- at the biggest
+// rock there are 240px of it, and the block is sized to that rather than to the
+// room it has at rock one, because the rock grows into this ground and the
+// shacks may not be standing in it when it does.
+export const HOUSE_TO = -420;      // rock centre to the middle of the plot
+export const HOUSE_CUBE = P * 3;   // one body, one shack, the size of the body
+export const HOUSE_COLS = 6;       // and this many abreast before the block goes up
+// How far a shack sits off true, so a row of them is not a row of identical
+// boxes. A whole cell, because everything in this yard stands on the lattice
+// and half a cell puts a hairline down the wall -- enough to read as thrown up
+// by the people living in them, not so much that the block stops being a block.
+export const HOUSE_WONK = P;
+export const HOUSE_LINE = 2;       // walls and roof, drawn at the ground line's weight

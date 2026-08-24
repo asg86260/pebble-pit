@@ -573,21 +573,22 @@ const TESTS = [
     const s = state();
     const left = (s.rockX - s.rockW / 2 - s.camX) * s.zoom;
     const right = (s.rockX + s.rockW / 2 - s.camX) * s.zoom;
-    let deskFits = false;
+    let deskFits = false, deskShowsBench = false;
     await asScreen(1440, 900, 1, () => {
       const d = state();
       deskFits = (d.rockX - d.rockW / 2 - d.camX) * d.zoom >= 0 &&
                  (d.pitX - d.camX) * d.zoom < 1440;
+      deskShowsBench = d.benchX >= d.openCamX;
     });
     window.__jump(1);
     return [
       ok(left >= 0, 'the last rock is not cut off on the left', `${Math.round(left)}px in`),
       ok(right < innerWidth, 'and you can see the whole of it',
          `ends at ${Math.round(right)} of ${innerWidth}`),
-      // the bench stands off the rock's far flank now, so the view has to open
-      // wide enough to the left to show it arriving
-      ok(s.benchX >= s.camX, 'the bench is in the opening view',
-         `bench at ${Math.round(s.benchX)}, view starts ${Math.round(s.camX)}`),
+      // The bench and the shacks stand off the rock's far flank, and a window
+      // with the room for them opens wide enough to show them. A narrow one
+      // does not, and must not: the rock wins every time.
+      ok(deskShowsBench, 'a desk-sized window opens on the bench as well'),
       // it no longer has to fit every window, but it has to fit a desk
       ok(deskFits, 'a desk-sized window shows the rock and the pit lip at once')
     ];
