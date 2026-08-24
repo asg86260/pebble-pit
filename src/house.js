@@ -27,6 +27,14 @@ import { rockLeft } from './world.js';
 // the room it has at rock one.
 export const houseCx = () => Math.round((S.cx + HOUSE_TO) / P) * P;
 
+// The far edge of the plot, whether anybody lives on it or not. The quarry's
+// spoil stops here: a pile is allowed to run to the next thing along the ground,
+// and the next thing along is where the crew live even on a day when the crew is
+// nobody. Worked out from a full base, like the block itself, so the ground the
+// shacks will stand on is not somewhere the sand is already sitting.
+export const houseLeft = () =>
+  Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P;
+
 // How many rooms stand in course c: the base, losing one a storey, never fewer
 // than three. A fixed sequence, and it has to be fixed.
 //
@@ -232,8 +240,12 @@ export function houseReport() {
     foot: S.groundY,
     door: doorAt().x,
     holes: holes().map(h => `${h.x},${h.y},${h.h}`),
-    ofBench: left === null ? null : Math.round(left - (bench.x + bench.w)),
+    // the bench stands between the block and the rock now, so the block clears
+    // the bench and the bench clears the apron
+    ofBench: right === null ? null : Math.round(bench.x - right),
     ofApron: right === null ? null : Math.round(rockLeft() - ROCK_CLEAR - right),
+    benchOfApron: Math.round(rockLeft() - ROCK_CLEAR - (bench.x + bench.w)),
+    plotLeft: houseLeft(),
     cells: cs.map(c => `${c.x},${c.y}`)
   };
 }

@@ -8,9 +8,11 @@
 import { S } from './state.js';
 import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
+import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
+const schoolEl = document.getElementById('schoolshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -35,12 +37,19 @@ const built = new WeakMap();
 // row element and makes new ones, which takes the row under the cursor with it
 // -- and the hover on it. A worker tipping a shard into the pit rebuilt the
 // whole board, so the highlight blinked off every time anybody banked anything.
-function build(el, list, sections) {
+function build(el, list, sections, empty) {
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
 
   el.textContent = '';
+  if (!now) {                              // nothing to show: say so rather than nothing
+    const line = document.createElement('div');
+    line.className = 'empty';
+    line.textContent = empty;
+    el.appendChild(line);
+    return;
+  }
   for (const sect of sections) {
     const rows = sect.keys
       .map(k => list.find(u => u.key === k))
@@ -81,6 +90,18 @@ function build(el, list, sections) {
 }
 
 // the numbers on the rows, every frame the board is open
+// A cell is written only when what it says changes.
+//
+// This runs on every row of an open board, on every frame -- fifteen rows, five
+// cells each -- and it used to write all of them every time. `innerHTML` is a
+// parse, so a price that had not moved was parsed sixty times a second, and a
+// text node was replaced for every name on the board. Nothing on a shop row
+// changes more than a few times a minute. The board is careful about this in
+// every other place; this is the one that was not.
+const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; } };
+const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; } };
+const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
+
 export function refresh(el, list, headcount) {
   for (const row of el.children) {
     if (row.dataset.sect) {
@@ -107,9 +128,9 @@ export function refresh(el, list, headcount) {
     if (row.dataset.job) {
       const u = list.find(x => x.key === row.dataset.job);
       if (!u) continue;
-      row.children[1].disabled = u.count() < 1;
-      row.children[2].textContent = u.count();
-      row.children[3].disabled = u.spare() < 1;
+      grey(row.children[1], u.count() < 1);
+      say(row.children[2], String(u.count()));
+      grey(row.children[3], u.spare() < 1);
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
@@ -123,29 +144,32 @@ export function refresh(el, list, headcount) {
     // nothing else on that board can be started until it is finished.
     if (S.research && list === LAB_UPGRADES) {
       const mine = S.research.key === u.key;
-      name.textContent = u.name;
-      from.textContent = mine ? 'working' : '';
-      arrow.textContent = '';
-      to.textContent = '';                 // how far along is a bar over the lab now
-      price.innerHTML = mine ? '' : `${MARK[money]} ${cost}`;
-      row.disabled = true;
+      say(name, u.name);
+      say(from, mine ? 'working' : '');
+      say(arrow, '');
+      say(to, '');                         // how far along is a bar over the lab now
+      sayHTML(price, mine ? '' : `${MARK[money]} ${cost}`);
+      grey(row, true);
       continue;
     }
 
-    name.textContent = u.name;
-    from.textContent = step;
-    arrow.textContent = step ? '→' : '';
-    to.innerHTML = step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '';
-    price.innerHTML = `${MARK[money]} ${cost}`;
-    row.disabled = purse(money) < cost;
+    say(name, u.name);
+    say(from, step);
+    say(arrow, step ? '→' : '');
+    sayHTML(to, step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '');
+    sayHTML(price, `${MARK[money]} ${cost}`);
+    grey(row, purse(money) < cost);
   }
 }
 
 export function buildShop() {
-  build(shopEl, UPGRADES, SECTIONS);
-  build(labEl, LAB_UPGRADES, LAB_SECTIONS);
+  build(shopEl, UPGRADES, SECTIONS, 'nothing to sell');
+  build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
+  // The school runs out on purpose: one trade per job, and once everybody doing
+  // a job has it there is nobody left to send.
+  build(schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach');
 }
 
 
 
-export { UPGRADES, LAB_UPGRADES };
+export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES };

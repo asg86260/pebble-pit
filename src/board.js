@@ -2,17 +2,21 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab } from './state.js';
+import { S, bench, lab, school } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
+import { SCHOOL_UPGRADES } from './school.js';
 import { refresh } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
 const labShopEl = document.getElementById('labshop');
+const schoolShopEl = document.getElementById('schoolshop');
 const panelEl = document.getElementById('panel');
-const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab') };
-const standAt = { bench, lab };
+const purseEl = document.getElementById('purse');
+const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
+                school: document.getElementById('school') };
+const standAt = { bench, lab, school };
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -20,6 +24,7 @@ const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
 
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
 export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
+export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 
 // The board stands on the bench, but it is a real element on a real screen: on a
 // phone the bench can be near an edge, or there can be less room above it than
@@ -42,7 +47,7 @@ export function remeasure() {
 // every frame invalidates the layer the menu is drawn on, sixty times a second,
 // over a canvas that is also repainting -- which is a good way to make a menu
 // flicker for no reason anybody can see in the code.
-let put = '';
+let putX = null, putY = null;
 
 function place(el, at) {
   const w = sized.w || el.offsetWidth, h = sized.h || el.offsetHeight;
@@ -53,8 +58,10 @@ function place(el, at) {
   const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - h - GAP)));
   const y = Math.round(S.H - bottom - h);
 
-  const to = `translate3d(${x}px, ${y}px, 0)`;
-  if (to !== put) { el.style.transform = to; put = to; }
+  if (x === putX && y === putY) return;         // it has not moved: leave the layer alone
+  putX = x;
+  putY = y;
+  el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 }
 
 const GAP = 4;                             // never flush against the edge
@@ -104,6 +111,7 @@ export function showPanel(want) {
   at = want;
   S.boardOpen = want === 'bench';
   S.labBoardOpen = want === 'lab';
+  S.schoolBoardOpen = want === 'school';
 
   if (!want) {                                   // fade out where it stands
     panelEl.classList.remove('open');
@@ -121,6 +129,14 @@ export function showPanel(want) {
   // opening the bench reads every heading on it, the same as it always did
   if (want === 'bench') markSectionsSeen();
   panelEl.hidden = false;
+  // Fill it before measuring it. The rows are written by `refresh`, which runs
+  // in the frame loop -- so a board that was measured the moment it opened was
+  // measured with every row still blank, came out shorter than it would be, and
+  // was seated by that height for as long as it stayed open. It only looked
+  // wrong the first time: the next open measured a board that already had its
+  // words in. Which is why it read as a bug that fixed itself.
+  fill(want);
+  fillPurse();
   remeasure();
 
   if (wasAt) {                                   // walking from one to the other
@@ -159,12 +175,56 @@ const headcount = title =>
   title === 'the quarry' ? S.quarriers :
   title === 'the farm' ? S.farmhands : 0;
 
-export function hud() {
-  tweenCount(now());
-  if (S.boardOpen) refresh(shopEl, UPGRADES, headcount);
+// The numbers on whichever board is open. Pulled out of `hud` so that opening a
+// board can fill it before it is measured, rather than a frame after.
+function fill(which) {
+  if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
   // the lab board being open is what reads its news, whether it was already
   // open when the work finished or you walked over because of the mark
-  if (S.labBoardOpen) { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
+  if (which === 'lab') { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
+  if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, null);
+}
+
+// What you have to spend, beside the board that is asking for it. Every price on
+// these boards is a mark and a number, and the only place you could see what you
+// *had* of that mark was the counter over the pit -- the other end of the yard,
+// in the corner of the window, and as often as not behind the board itself.
+//
+// A currency appears the first time you have seen one, which is the same rule
+// the counter over the pit goes by: nothing in this game names a thing you have
+// not met.
+const PURSE = [
+  ['dust', () => true, () => S.stored],
+  ['core', () => S.seenCore, () => S.cores],
+  ['shard', () => S.seenShard, () => S.shards],
+  ['spore', () => S.seenSpore, () => S.spores]
+];
+
+// Written only when it changes. This runs every frame a board is open, and
+// `innerHTML` is a parse: re-parsing four rows sixty times a second for a number
+// that moves when a worker tips a load in is the same waste the shop rows were
+// careful about.
+let purseWas = null;
+function fillPurse() {
+  let html = '';
+  for (const [mark, seen, count] of PURSE) {
+    if (!seen()) continue;
+    html += `<div class="coin"><i class="${mark}"></i><b>${fmt(count())}</b></div>`;
+  }
+  if (html === purseWas) return;
+  // A row appearing or going makes the panel a different size, and the panel is
+  // seated by the size it was measured at. A digit does not: the count sits in a
+  // slot of its own width so the board cannot twitch as the dust comes in.
+  const resized = purseWas === null || purseWas.length !== html.length;
+  purseWas = html;
+  purseEl.innerHTML = html;
+  if (resized) remeasure();
+}
+
+export function hud() {
+  tweenCount(now());
+  fillPurse();
+  fill(at);
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every

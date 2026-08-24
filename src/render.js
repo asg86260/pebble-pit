@@ -4,13 +4,14 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, PIT_H, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
+import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPORE_CELL,
          CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H, FARM_GATE } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { rockLeft, overRock, bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
 import { coreHome } from './core.js';
+import { pitDepth, pitFull } from './pit.js';
 
 import { AIR } from './air.js';
 import { capacity, benchMark } from './upgrades.js';
@@ -264,18 +265,30 @@ export function drawSmoke() {
 // stopped and the pile is only why.
 export function drawPileMarks() {
   ctx.fillStyle = '#000';
+  // The hole is one of them. A full pit stops the haulers exactly the way a full
+  // pile stops a gang, and a crew that stands down with nothing on screen to say
+  // why reads as a game that has broken rather than as a hole you have to dig.
+  // It stands on the near lip, on the ground the haulers walk to and are not
+  // walking to now -- and to the left of it, because the counter is to the right.
+  if (pitFull()) { const at = pitMarkAt(); warning(at.x, at.y); }
   for (const p of S.piles) {
     if (!S.pileFull[p.key]) continue;
     const at = pileMarkAt(p.key);
     // a warning triangle: hollow, with a bar and a dot inside it. A triangle
     // sits low in its own outline, so the mark hangs below the middle of it.
-    drawTriangle(at.x, at.y, P * 4, true);
-    ctx.fillStyle = '#000';
-    // the mark sits inside the outline rather than on it: a triangle's base is
-    // its lowest edge, and a dot resting on that reads as a smudge
-    ctx.fillRect(at.x - P / 2, at.y - P, P, P * 1.6);
-    ctx.fillRect(at.x - P / 2, at.y + P * 1.4, P, P);
+    warning(at.x, at.y);
   }
+}
+
+// a warning triangle: hollow, with a bar and a dot inside it. A triangle sits
+// low in its own outline, so the mark hangs below the middle of it.
+function warning(x, y) {
+  drawTriangle(x, y, P * 4, true);
+  ctx.fillStyle = '#000';
+  // the mark sits inside the outline rather than on it: a triangle's base is its
+  // lowest edge, and a dot resting on that reads as a smudge
+  ctx.fillRect(x - P / 2, y - P, P, P * 1.6);
+  ctx.fillRect(x - P / 2, y + P * 1.4, P, P);
 }
 
 // Under the station, not over it: the pile is the station's problem and the mark
@@ -298,6 +311,18 @@ export function overPileMark(key, mx, my) {
   return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
 }
 
+// The hole's own mark. Above the ground line rather than below it, because below
+// it is the pile -- and to the left of the lip, because the counter is to the
+// right of it.
+export function pitMarkAt() {
+  return { x: Math.round((pit.x - P * 5) / P) * P, y: S.groundY - P * 7 };
+}
+
+export function overPitMark(mx, my) {
+  const at = pitMarkAt();
+  return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
+}
+
 // The things the sites give up, lying where they came to rest. Each has a body
 // two cells square and its glyph fills it, so what you see is what it is and
 // what it collides as -- which is why they stack now instead of overlapping.
@@ -306,6 +331,34 @@ export function overPileMark(key, mx, my) {
 // The lab: a squat block with a chimney. Flat black shapes, like everything
 // else that stands on this ground.
 
+
+// The school. A long block with a belfry over the door and a row of tall narrow
+// windows -- read against the lab, which is a tall body with one chimney, and
+// against the crew's own place, which is a stack of one-cell rooms. One of them
+// is where something is cooked up out of sight, one is where people sleep, and
+// this is the one people walk into and come out of again. The silhouettes have
+// to say which is which from across the yard, because that is all you can see of
+// any of them.
+//
+// Every edge is a whole cell. It was laid out in fractions of the building's
+// width at first, which put the door and the belfry slot a third of a pixel off
+// the lattice and drew them with a grey fringe -- the same hairline the whole
+// game is arranged to avoid.
+export function drawSchool() {
+  if (!S.schoolOpen) return;
+  const { x, y, w, h } = school;
+  const c = (n) => x + P * n;                             // cell n across the front
+  ctx.fillStyle = '#000';
+  ctx.fillRect(c(9), y, P * 2, P * 3);                    // the belfry
+  ctx.fillRect(x, y + P * 3, w, h - P * 3);               // and the block under it
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(c(9), y + P, P * 2, P);                    // the opening it rings out of
+  // Tall and narrow, and there are a lot of them: a row of standing windows is
+  // the one thing a building can do that says people are in there in numbers.
+  for (const n of [2, 4, 6, 13, 15, 17]) ctx.fillRect(c(n), y + P * 4, P, P * 2);
+  ctx.fillRect(c(9), y + P * 7, P * 2, P * 3);            // the door, standing open
+  ctx.fillStyle = '#000';
+}
 
 export function drawLab() {
   if (!S.labOpen) return;
@@ -513,9 +566,71 @@ export function drawBench() {
 // Drawn here rather than in each branch of `drawWorkers`, because the roster
 // under each station draws the same square beside its count.
 export function drawBody(x, y) {
+  // Filled, not see-through. An outlined square standing on a black rock or in a
+  // grey bank showed the pile through its middle, so a body read as a hole in
+  // whatever was behind it rather than as somebody standing in front of it --
+  // and a gang on the crest of a rock came out as a row of notches in the rock.
+  // The page is white, so a body is white: it is the same paper everything else
+  // in this game is drawn on, and now it covers what it is standing over.
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+  ctx.fillStyle = '#000';
+}
+
+// A body that is not going anywhere, and says so. Both marks are one cell:
+// anything finer than that on an eighteen-pixel square is a smudge, and both of
+// them have to read at a glance from across the yard, because what they are for
+// is telling you at a glance who is nailed down.
+//
+// A breaker wears a hat -- a solid bar across the top of the square, the
+// only filled thing on a body and reads as a helmet rather than as a hair.
+export function drawHat(x, y) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y - P, WORKER, P);
+}
+
+// A carter drags a cart: a box on the ground behind it, hitched by a shaft, and
+// what it is carrying rides *in* the cart rather than over its head. That is the
+// whole of why a cart is worth having, and a carter walking a double load
+// stacked on its own head would be a cart that was decoration.
+//
+// Wider than the body and half its height, on purpose. At three cells square it
+// was the same box as the person pulling it and a carter read as two workers
+// walking in step; four by two is the one proportion in the yard that is not a
+// body, so it reads as a thing being dragged before you have worked out what.
+const CART_W = P * 4, CART_H = P * 2, CART_ABREAST = 4;
+
+function cartBox(x, y, face) {
+  const back = face > 0 ? -1 : 1;                       // behind whichever way it is going
+  return { x: back < 0 ? x - CART_W - P : x + WORKER + P,
+           y: y + WORKER - CART_H, back };
+}
+
+function drawCartBox(x, y) {
+  // white through it too, for the same reason the body is: half a carter solid
+  // and half of it see-through is worse than either
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
+  ctx.fillStyle = '#000';
+}
+
+// The cart, hitched behind a body at (x, y). Exported because the roster draws
+// the same thing beside its count: what a carter looks like is a body *with* a
+// cart, and a cart on its own is a cart nobody is pulling.
+export { drawCart };
+
+function drawCart(x, y, face) {
+  const c = cartBox(x, y, face);
+  drawCartBox(c.x, c.y);
+  ctx.fillStyle = '#000';
+  // the shaft, from the cart to the body it is hitched to
+  ctx.fillRect(c.back < 0 ? c.x + CART_W : x + WORKER, c.y + CART_H / 2 - 1, P + 1, 2);
 }
 
 export function drawWorkers() {
@@ -525,6 +640,7 @@ export function drawWorkers() {
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       drawBody(x, y);
+      if (w.trained) drawHat(x, y);
       // what a quarrier is bringing up rides over its head, the way a load does
       if (w.type === 'quarrier' && w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
       continue;
@@ -532,19 +648,27 @@ export function drawWorkers() {
 
     if (w.type === 'miner') {
       drawBody(Math.round(w.x), Math.round(w.y));
+      if (w.trained) drawHat(Math.round(w.x), Math.round(w.y));
     } else {
       // where it actually is, not where the ground line is: on the bridge those
       // are different, and it was the ground line that won
       const y = Math.round(w.y);
-      drawBody(Math.round(w.x), y);
-      // the load rides overhead, stacked two abreast
-      const left = Math.round(w.x) + (WORKER - P * 2) / 2;
-      // a load is drawn grain by grain as whatever each grain is, so a worker
-      // walking a shard to the pit is visibly walking a shard to the pit
-      for (let i = 0; i < Math.min(w.carry, 24); i++) {
+      const x = Math.round(w.x);
+      const cart = w.trained ? cartBox(x, y, w.face || 1) : null;
+      if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
+      drawBody(x, y);
+      // A load is drawn grain by grain as whatever each grain is, so a worker
+      // walking a shard to the pit is visibly walking a shard to the pit. It
+      // rides overhead, stacked two abreast -- or in the cart, four abreast,
+      // if there is a cart to put it in.
+      const abreast = cart ? CART_ABREAST : 2;
+      const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
+      const top = cart ? cart.y : y;
+      const cap = cart ? 40 : 24;
+      for (let i = 0; i < Math.min(w.carry, cap); i++) {
         drawMark(w.load?.[i] || 1,
-                 left + (i % 2) * P + P / 2,
-                 y - P * (Math.floor(i / 2) + 1) + P / 2);
+                 left + (i % abreast) * P + P / 2,
+                 top - P * (Math.floor(i / abreast) + 1) + P / 2);
       }
       ctx.fillStyle = '#000';
       if (w.hasCore) {
@@ -588,6 +712,7 @@ export function draw() {
   drawFarm();
   drawSky();
   drawLab();
+  drawSchool();
   drawSmoke();
   ctx.fillStyle = '#000';
 
@@ -622,7 +747,7 @@ export function draw() {
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
   drawLabMark();           // and a tick over it if it finished something
-  drawRoster(ctx, drawBody);   // who is working here, under the place they work
+  drawRoster(ctx, drawBody, drawHat, drawCart);   // who is working here, under the place they work
   drawWorkers();
   drawCursor();
   ctx.restore();
@@ -638,6 +763,10 @@ export function draw() {
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 
+  // And then, only under `vite dev` and only if somebody has switched one on, a
+  // filter held in front of the finished frame. `dev.js` installs this; a
+  // production build never sets it, so this is one property read a frame.
+  if (window.__fx) window.__fx(canvas, P * S.zoom * S.dpr);
 }
 
 // push whatever changed into the scratch canvas, then blit it into the world at
@@ -663,8 +792,8 @@ export function drawPitOutline() {
   ctx.strokeStyle = '#000';
   ctx.beginPath();
   ctx.moveTo(pit.x - 1, S.groundY + 1);
-  ctx.lineTo(pit.x - 1, S.groundY + PIT_H + 1);
-  ctx.lineTo(pit.x + pit.w + 1, S.groundY + PIT_H + 1);
+  ctx.lineTo(pit.x - 1, S.groundY + pitDepth() + 1);
+  ctx.lineTo(pit.x + pit.w + 1, S.groundY + pitDepth() + 1);
   ctx.lineTo(pit.x + pit.w + 1, S.groundY + 1);
   ctx.stroke();
 }
@@ -677,8 +806,15 @@ export function drawPit() {
 // Everything in the pile that is not dust: cores, and whatever the sites have
 // given up. The pile shows exactly what you hold, so spending takes them back
 // out of it.
+// A core in the pile is drawn at the size a core is everywhere else in the game:
+// the same ring you picked up off the ground and carried here. It holds one cell
+// like any other grain -- it heaps and settles as one -- but a cell is six pixels
+// and a six-pixel ring in a bed of grey speckle is a grain that happens to be
+// pale. You put it in the hole and it vanished. So the mark is the size of the
+// thing, not the size of its cell, and the dust behind it is covered the way it
+// is behind a core lying in the yard.
 export function drawPitCores() {
-  const pad = MARK_SIZE / 2 + 1;
+  const pad = CORE_SIZE / 2 + 1;
   for (let r = 0; r < pit.rows; r++) {
     for (let c = 0; c < pit.cols; c++) {
       // only cores: everything else in the pile is painted with the dust
@@ -686,7 +822,7 @@ export function drawPitCores() {
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      drawMark(CORE_CELL, cx, cy, MARK_SIZE, true);
+      drawMark(CORE_CELL, cx, cy, CORE_SIZE, true);
     }
   }
   ctx.fillStyle = '#000';

@@ -50,18 +50,57 @@ export const TO_QUARRY = -1284;  // rock centre to the mouth of the quarry
 // The bench stands just off the rock's left flank, between it and the quarry:
 // the thing you buy at is the first thing out from the rock, and everything the
 // cores open up lies further out again.
-// The bench stands further off the flank than the rock needs it to. What is in
-// the gap is where the crew live, and a block of shacks wants ground: at the
-// biggest rock there is 240px of it between the bench and the rock's apron,
-// which is forty cells and enough for a village rather than a chimney.
-export const TO_BENCH = -612;    // rock centre to the bench
+//
+// The bench is the nearer of the two. It used to stand out past the crew's
+// block, with the shacks in the gap between it and the apron -- the same strip
+// of ground, in the other order. Where somebody lives is further from the rock
+// than where they buy a pick: you walk out through the yard to the houses and
+// back in to the bench, rather than past your own front door to get to the shop.
+// The strip is the same width and the two things standing in it have changed
+// places.
+//
+// The bench sits in the middle of what is left: sixty pixels of bare ground to
+// the crew's block on one side and sixty to the rock's apron on the other. It
+// stood hard against the houses with all the slack on the rock's side, which
+// read as the bench having been pushed out of the way rather than stood
+// somewhere. What that costs is rock: the biggest rock is measured off the
+// bench -- it keeps a hand's width clear of it and stops growing there -- so
+// moving the bench out brings the last rock in with it, from 76 cells across to
+// 60. The yard reading right is worth the sixteen cells.
+export const TO_BENCH = -336;    // rock centre to the bench
 export const BENCH_W = P * 12;   // and how wide it stands
 export const TO_LAB = -2184;     // rock centre to the lab, at the far end
-export const TO_LEDGE = 840;     // rock centre to the lip of the pit
+// The school stands on the bare ground between the quarry's spoil and the crew's
+// own front doors, which is the stretch everybody walks twice a shift. Where you
+// go to learn a trade is on the way to work, and it is the last thing on this
+// side that is about people rather than about rock.
+export const TO_SCHOOL = -768;   // rock centre to the middle of the school
+export const SCHOOL_W = P * 20;
+export const SCHOOL_H = P * 10;
+// What the school costs to build, and what a trade costs once it is up. Shards,
+// all of it: the quarry starts giving them up long before the lab is a thing you
+// could afford, and a currency you cannot spend reads as scenery.
+export const SCHOOL_COST = 4;    // shards to build it
+export const TRADE_COST = 2;     // and for the first of any one trade
+export const TRADE_RATE = 1.6;   // each one after that
+// The lip is as close to the rock as the rock's own spoil will allow, and not a
+// cell further out. What has to fit between the apron and the lip is one full
+// pile and a sweep of bare ground: 1400 grains at the angle sand stands at wants
+// a base of 62 cells, and the biggest rock's apron reaches 204px out, so the
+// strip runs to 576 and the lip stands 60 past that.
+//
+// It used to be 840, with the strip 372 wide and the rest of it bare. That gap
+// was ground you dragged dust across by hand -- the first pile in the game is
+// cleared with the cursor, before there is anybody hired to carry anything --
+// and it was the length of the yard for no reason: nothing stands in it, nothing
+// happens in it, and the pile it separates from the hole is the pile going into
+// the hole. Closing it does not make the pit smaller or the pile smaller. It
+// takes out the walk.
+export const TO_LEDGE = 636;     // rock centre to the lip of the pit
 // The rock is the only thing left on this side, so the ground the bench and the
 // lab used to stand on is its spoil's now: the pile runs out towards the lip and
 // stops a sweep short of it, rather than ending in a stretch of bare ground.
-export const ROCK_PILE_TO = 780; // and how far right the rock's own spoil may reach
+export const ROCK_PILE_TO = 576; // and how far right the rock's own spoil may reach
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
 // And bare ground kept between a station and the *start* of its own pile, so
 // the heap stands off the thing that made it instead of burying it. The farm
@@ -92,6 +131,26 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 // stands up against the rock as a sheer wall however tall it gets. 1.5 is the
 // angle the sand finds on its own, so both faces of a heap read the same.
 export let BANK_SLOPE = 1.5;
+// The hole is dug, not given. It starts as a scrape in the ground and every dig
+// bought at the bench takes it wider and deeper, until it is the hole the yard
+// was always drawn around: PIT_W_MAX across and PIT_H down.
+//
+// PIT_H is the *deepest* it will ever be, and that is what the world reserves
+// under the ground line whatever the hole is at today. The floor of the window
+// does not move as you dig -- the picture the game asks for is a fixed thing,
+// and a viewport that grew a little every purchase would be the yard rearranging
+// itself around a shop row.
+export const PIT_W0 = 150;       // the scrape you start with, in world pixels
+export const PIT_D0 = 150;       // and how far down it goes
+export const PIT_DIG_W = 150;    // what one dig takes off the far wall
+export const PIT_DIG_D = 6;      // and off the floor: a row at a time
+export const PIT_DIGS = 23;      // digs until it is the whole hole
+// Depth runs out first, at the twenty-first dig -- there are only twenty-one
+// rows between the scrape and the floor -- so the last few are all sideways.
+// That is the trade the pit has always been under: depth is pinned to the
+// window and room can only be bought along.
+export const PIT_DIG_COST = 30;  // dust for the first dig
+export const PIT_DIG_RATE = 1.32; // and how much steeper each one gets
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 // And this much room above the brim. Once the hole itself is full the pile keeps
 // going, heaping up over the mouth rather than stopping dead at the ground line
@@ -103,11 +162,11 @@ export const PIT_HEAP = 150;
 // in, leaning away down the length of the hole. Without that it fills the near
 // end to the very top and stops dead, which is a wall rather than a pile.
 export const PIT_HEAP_SLOPE = 0.12;   // rows of surplus lost per column along
-export const PIT_W = 3624;       // and this wide
+export const PIT_W_MAX = 3600;   // and this wide, six hundred cells of it
 // What a grain in the pile is drawn at. A grain is always one dust; adding finer
 // sizes here lets the pile settle to them as it fills, which is how the hole
 // could be made to hold a million. For now it stays one size: dust in the pit
-// looks like dust everywhere else, and the hole holds 27,784.
+// looks like dust everywhere else, and the hole fully dug out holds 27,600.
 export const PIT_GRAINS = [P];
 export const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
@@ -446,12 +505,12 @@ export function tune(key, v) {
 }
 
 // --- Track HOUSE -------------------------------------------------------------
-// Where the crew live: a shack per body, on the bare ground between the bench
-// and the rock. The bench was moved out to make this strip -- at the biggest
-// rock there are 240px of it, and the block is sized to that rather than to the
-// room it has at rock one, because the rock grows into this ground and the
-// shacks may not be standing in it when it does.
-export const HOUSE_TO = -420;      // rock centre to the middle of the plot
+// Where the crew live: a shack per body, on the bare ground out past the bench,
+// between it and the quarry. The block is sized to the room it has at the
+// *biggest* rock rather than at rock one, because the rock grows leftwards into
+// this ground as the game goes on and the shacks may not be standing in it when
+// it does. Its far edge is where the quarry's spoil has to stop.
+export const HOUSE_TO = -504;      // rock centre to the middle of the plot
 // How often one window in the settlement opens or closes its curtain. One, and
 // the whole place, not one each.
 //
@@ -487,8 +546,8 @@ export const HOUSE_PUFF_MS = 5200;
 // parked next to people it could not have held.
 export const HOUSE_CUBE = P * 6;
 // How wide the settlement may stand, in rooms. Six at the size a room is now is
-// 216px inside a plot of 240, so it still clears the bench on one side and the
-// rock's apron on the other at the biggest rock the game allows.
+// 216px, and it stands in a strip it shares with the bench: twelve pixels of
+// bare ground to the bench on one side and the quarry's spoil on the other.
 export const HOUSE_COLS = 6;
 // --- Track TRAVEL: a body walks to its work ---------------------------------
 

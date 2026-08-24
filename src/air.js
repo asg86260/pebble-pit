@@ -12,7 +12,7 @@
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND,
          AIR_SITE, AIR_SITE_UP } from './config.js';
-import { PIT_H } from './config.js';
+import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm } from './state.js';
 import { at, count, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
@@ -54,7 +54,7 @@ function floorAt(x) {
   // there is nothing in view to land on
   if (g <= 40) return Infinity;
   const wx = x / S.zoom + S.camX;
-  if (overPitMouth(wx)) return (S.groundY + PIT_H - S.camY) * S.zoom;
+  if (overPitMouth(wx)) return (S.groundY + pitDepth() - S.camY) * S.zoom;
   if (S.quarryOpen && wx > quarry.x && wx < quarry.x + quarry.w)
     return (S.groundY + quarry.h - S.camY) * S.zoom;
   return g;

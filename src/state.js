@@ -68,6 +68,7 @@ export const S = {
   shownStored: 0,         // the counter chases the real number
   tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
   pitStep: 0,             // how many times the pile has settled to a finer grain
+  pitLevel: 0,            // how many times the hole has been dug out
 
   // --- cores ---
   cores: 0,
@@ -77,6 +78,16 @@ export const S = {
   coreTaker: null,        // the worker that has claimed a loose one
 
   // --- what you have bought ---
+  // Bodies that cannot be moved. A job is a count, not a purchase -- except for
+  // these: a body sent to the school comes back knowing one trade and only that
+  // trade, and what the shards bought is the fact that it stays.
+  schoolOpen: false,      // the school is built and the trades can be learnt
+  schoolBoardOpen: false, // and you are standing at it
+  breakers: 0,            // of the miners, this many are nailed to the rock
+  carters: 0,             // of the haulers, to the dust
+  growers: 0,             // of the farmhands, to the beds
+  blasters: 0,            // of the quarriers, to the face
+
   carryLevel: 0,
   speedLevel: 0,
   pickLevel: 0,
@@ -154,6 +165,7 @@ export const S = {
 // and the bench. These are mutated in place and never reassigned, so they are
 // consts rather than fields on S. `p` is the size of one grain in that grid.
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null };
+export const school = { x: 0, y: 0, w: 0, h: 0 };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };

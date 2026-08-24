@@ -35,7 +35,10 @@ export function bankCore(x) {
   S.cores++;
   S.seenCore = true;
   const at = (x ?? pit.x + pit.w / 2) + (Math.random() - 0.5) * P * 10;
-  addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL);
+  // over the ceiling if it has to be: the ceiling is a limit on how high dust
+  // may heap, not on what the bed will hold, and a core the hole refused would
+  // be a core you carried across the yard for nothing
+  addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL, true);
   S.dirty = true;
   buildShop();              // core-priced rows appear the first time one lands
 }

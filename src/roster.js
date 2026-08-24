@@ -14,7 +14,7 @@
 
 import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, pit } from './state.js';
-import { assign, idle } from './upgrades.js';
+import { assign, idle, nailed } from './upgrades.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -51,15 +51,25 @@ export function postAt(p) {
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
-// The three boxes of one roster, left to right, in world units.
+// The boxes of one roster, left to right, in world units -- and under them a
+// second line for the tradesmen, which is drawn only when there are any.
+//
+// It sits under the headcount rather than beside it because it is a *part* of
+// that number, not another number: of the four on the rock, two are breakers.
+// Beside it, the two read as separate crews.
 function boxes(p) {
   const { x, y } = postAt(p);
   const left = x - WIDE / 2;
+  // a cell of air more than the gap elsewhere, because the hat stands a cell
+  // proud of the square it is on and would otherwise touch the badge above it
+  const under = y + WORKER + P * 2;
   return {
     less: { x: left, y: y - BTN / 2, w: BTN, h: BTN },
     badge: { x: left + BTN + GAP, y: y - WORKER / 2, w: WORKER, h: WORKER },
     num: { x: left + BTN + GAP + WORKER + GAP, y, w: NUM, h: BTN },
-    more: { x: left + WIDE - BTN, y: y - BTN / 2, w: BTN, h: BTN }
+    more: { x: left + WIDE - BTN, y: y - BTN / 2, w: BTN, h: BTN },
+    trade: { x: left + BTN + GAP, y: under - WORKER / 2, w: WORKER, h: WORKER },
+    tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN }
   };
 }
 
@@ -78,7 +88,7 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(b.less, x, y)) { if (S[p.job] > 0) assign(p.job, -1); return true; }
+    if (inside(b.less, x, y)) { assign(p.job, -1); return true; }
     if (inside(b.more, x, y)) { if (idle() > 0) assign(p.job, 1); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
   }
@@ -90,7 +100,7 @@ export function rosterHit(x, y) {
 // crisp as everything else. The count is the one thing drawn in screen pixels:
 // it is type, and type scaled by five sixths is type with a fuzzy edge.
 
-export function drawRoster(ctx, drawBody) {
+export function drawRoster(ctx, drawBody, drawHat, drawCart) {
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
@@ -98,8 +108,24 @@ export function drawRoster(ctx, drawBody) {
 
     drawBody(b.badge.x, b.badge.y);
 
+    // And how many of them have the trade, drawn as whatever that trade looks
+    // like out in the yard, so the line under the count and the bodies walking
+    // about are obviously the same fact. Three of the four wear a hat; a carter
+    // drags a cart, and the cart is the thing you see, so the cart is the mark.
+    if (nailed(p.job) > 0) {
+      drawBody(b.trade.x, b.trade.y);
+      // A carter is a body *with* a cart -- a cart on its own is a cart nobody
+      // is pulling. It trails to the left, exactly as it does in the yard, into
+      // the slot the minus button would be in: carrying is the one post that has
+      // no buttons, because you never put a body *on* it, so the room is there.
+      if (p.job === 'haulers') drawCart(b.trade.x, b.trade.y, 1);
+      else drawHat(b.trade.x, b.trade.y);
+    }
+
     if (p.fixed) continue;                       // carrying is read, not set
-    button(ctx, b.less, '-', n > 0);
+    // pale once there is nobody left who *can* be taken off: the ones still
+    // there are nailed to it
+    button(ctx, b.less, '-', n > nailed(p.job));
     button(ctx, b.more, '+', spare > 0);
   }
 }
@@ -139,6 +165,10 @@ export function drawRosterCounts(ctx, screenAt) {
     const b = boxes(p);
     const at = screenAt(b.num.x + b.num.w / 2, b.num.y);
     ctx.fillText(String(S[p.job]), Math.round(at.x), Math.round(at.y));
+    if (nailed(p.job) > 0) {
+      const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
+      ctx.fillText(String(nailed(p.job)), Math.round(t.x), Math.round(t.y));
+    }
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
@@ -148,7 +178,9 @@ export function drawRosterCounts(ctx, screenAt) {
 export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
-    return { key: p.key, job: p.job, n: S[p.job], fixed: !!p.fixed,
+    return { key: p.key, job: p.job, n: S[p.job], nailed: nailed(p.job), fixed: !!p.fixed,
+             trade: nailed(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
+             mark: p.job === 'haulers' ? 'cart' : 'hat',
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
   });

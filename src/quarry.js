@@ -190,7 +190,8 @@ export function stepQuarrier(w, now) {
     if (w.next) tossOut(w.x + WORKER / 2, w.y + WORKER);
     w.lunge = 1;
     w.swingAt = now + QUARRY_SWING;
-    w.next = now + quarryMs() * (0.85 + Math.random() * 0.3);   // never quite in time
+    // a blaster brings one up twice as often: the face comes down in one go
+    w.next = now + quarryMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
   }
 }
 

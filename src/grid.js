@@ -32,15 +32,31 @@ export const depthShade = (v, max) =>
   Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
 
 export const at = (b, c, r) => b.grid[r * b.cols + c];
+
+// A grid may keep a live count of how many of its cells are occupied. Give it an
+// `n` and this maintains it; leave `n` undefined and nothing is counted.
+//
+// It exists because the pit has to ask "is there room in the hole" thousands of
+// times a frame, and walking sixty thousand cells to answer that is not on. It
+// used to ask the *counter* instead -- how much dust you have banked -- which is
+// nearly the same number and was wrong in exactly the way that matters: a core
+// in the pile takes a cell and is not dust, so the hole filled up one grain
+// before the counter said it had, the heap over the mouth never unlocked, and
+// the crew stood at the lip throwing dust at a brim that would not take it.
 export const put = (b, c, r, v) => {
-  b.grid[r * b.cols + c] = v;
+  const i = r * b.cols + c;
+  if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
+  b.grid[i] = v;
   if (b.onPut) b.onPut(c, r);
 };
+
 export const inside = (b, c, r) => c >= 0 && c < b.cols && r >= 0 && r < b.rows;
 export const bottomY = b => b.y + b.rows * b.p;    // world y of the grid floor
 export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
+// after anything that writes the cells wholesale rather than through `put`
+export const recount = b => { b.n = count(b); };
 export const countDust = b => {
   let n = 0;
   for (const v of b.grid) if (isDust(v)) n++;

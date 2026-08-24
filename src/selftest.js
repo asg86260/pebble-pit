@@ -6,6 +6,10 @@
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const state = () => window.__state();
+const fmt = n => n.toLocaleString('en-US');   // the same as the boards write
+// the boards are rebuilt when the game changes; a check that changes it by hand
+// has to ask for the same
+const buildShopFromTest = () => window.__build();
 
 function ok(cond, what, detail = '') {
   if (cond) return { pass: true, what };
@@ -55,6 +59,12 @@ async function hoverBench() {
   const b = benchWorld();
   const [x, y] = onScreen(b.x + 20, b.y - 30);
   point('pointermove', x, y, 0);
+  await sleep(250);
+}
+
+// the cursor standing at no station at all, so the board closes
+async function hoverAway() {
+  point('pointermove', 4, 4, 0);
   await sleep(250);
 }
 
@@ -218,9 +228,12 @@ const TESTS = [
     const s = state();
     // the floor of the hole, which is not the top of the bed: the pile is
     // allowed to heap above the brim, so the bed starts above the ground line
-    const pitFloorFromBottom = innerHeight - onScreen(0, s.groundY + s.pitDepth)[1];
+    // the deepest the hole can ever be, not how far it has been dug: the world
+    // reserves the whole depth under the ground line from the first frame, so
+    // digging never moves the floor of the window
+    const pitFloorFromBottom = innerHeight - onScreen(0, s.groundY + s.pitFullDepth)[1];
     const groundFromBottom = innerHeight - onScreen(0, s.groundY)[1];
-    const expected = (s.pitDepth + 12) * s.zoom;
+    const expected = (s.pitFullDepth + 12) * s.zoom;
     return [
       ok(Math.abs(pitFloorFromBottom - 12 * s.zoom) < 4,
          'pit floor rests on the bottom edge', `${Math.round(pitFloorFromBottom)}px up`),
@@ -229,17 +242,103 @@ const TESTS = [
     ];
   }],
 
-  ['the pit is always the same hole', async () => {
+  // A hole you can throw across has a back to it. The toss off the lip was a
+  // fixed spray, which was fine while the pit ran two windows to the right and
+  // wrong the moment it starts as a scrape: the same throw cleared the far wall
+  // and came down on the ground behind the pit, where nothing can pick it up.
+  ['a toss lands in the hole, however small the hole is', async () => {
+    window.__crew(0, 4);
+    quickCrew();
+    window.__pile(state().rockLeftX + 300, 900);
+    const before = state();
+    run(120);
     const s = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
     return [
-      ok(s.pitHoleRows * s.pitGrain === 276, 'the hole is 276 deep whatever the grain',
-         `${s.pitHoleRows} x ${s.pitGrain}`),
-      ok(s.pitW === 3624, 'and 3624 across', `${s.pitW}`),
+      ok(s.pitW === 150, 'the hole is still the scrape you start with', `${s.pitW}`),
+      ok(s.stored > before.stored, 'and dust is going into it',
+         `${before.stored} -> ${s.stored}`),
+      ok(s.dustPastPit === 0, 'nothing sails over the far wall onto the ground behind',
+         `${s.dustPastPit} grains behind the pit`)
+    ];
+  }],
+
+  // The hole is dug, not given: it starts as a scrape you can fill in a minute
+  // and every dig at the bench takes the far wall out and the floor down. This
+  // check digs it all the way out and leaves it there, which is the state the
+  // capacity checks below it want.
+  // The hole filling up is a fact about the *pile*, not about the counter, and
+  // they are nearly the same number: a core in the pile takes a cell and is not
+  // dust. Reading the counter meant the hole was physically full one grain
+  // before the counter agreed, the heap over the mouth never unlocked, and the
+  // crew stood at the lip throwing dust at a brim with nowhere under it -- for
+  // ever, because nothing about that state could change.
+  ['a core in the pile does not jam the hole', async () => {
+    const was = (({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }) =>
+                 ({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }))(state());
+    window.__crew(3, 3);
+    window.__levels({ minerSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
+    // long enough to fill a scrape twice over, and to finish a rock, so there
+    // is a core banked in there taking a cell
+    run(250);
+    const s = state();
+    const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
+    // put the yard back: an empty hole and a swept floor, or every check after
+    // this one starts in a works that has ground to a halt
+    window.__crew(0, 0);
+    window.__spend(s.stored);
+    window.__clearFloor();
+    window.__levels(was);                    // and a yard that swings at its old pace
+    run(1);
+    return [
+      ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
+         `${s.cores} cores`),
+      ok(s.pitFull, 'the hole reports itself full', `${s.pit} of ${s.pitCapacity}`),
+      ok(s.pit >= s.pitCapacity, 'and it really is: every cell the bed allows is spoken for',
+         `${s.pit} cells, ${s.pitDust} of them dust`),
+      // the heap over the mouth has to have unlocked, or the pile stopped at
+      // the brim of the hole and everything above it was never reachable
+      ok(s.pitDust > (s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain) - s.cores,
+         'the heap over the mouth was unlocked on the way',
+         `${s.pitDust} dust, hole holds ${(s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain)}`),
+      ok(carrying.length === 0 || s.stored === s.pitDust,
+         'and nobody is stood at the lip throwing at a brim that will not take it',
+         `${carrying.length} still laden, ${s.stored} counted`)
+    ];
+  }],
+
+  ['the pit is dug out, not given', async () => {
+    const small = state();
+    window.__tip(1000);                        // more than a scrape will take
+    await sleep(400);
+    const full = state();
+
+    window.__dig();                            // every dig there is
+    await sleep(400);
+    const s = state();
+
+    return [
+      ok(small.pitW === 150 && small.pitDepth === 150,
+         'it starts as a scrape, 150 by 150', `${small.pitW} x ${small.pitDepth}`),
+      ok(small.pitCapacity < 800, 'which holds a couple of minutes of dust',
+         `${small.pitCapacity}`),
+      ok(full.pit === small.pitCapacity && full.stored === full.pitDust,
+         'it fills to the brim of the scrape and takes no more',
+         `${full.pit} cells, ${full.stored} counted`),
+      ok(s.pitDepth === 276, 'dug out it is 276 deep', `${s.pitDepth}`),
+      ok(s.pitW === 3600, 'and 3600 across', `${s.pitW}`),
+      ok(s.pitLevel === 23 && s.pitDigsLeft === 0, 'and there is nothing left to dig',
+         `dig ${s.pitLevel}, ${s.pitDigsLeft} to go`),
+      ok(s.pitDust === full.pitDust && s.pitDust === s.stored,
+         'the pile that was in it is still in it, grain for grain',
+         `${full.pitDust} -> ${s.pitDust}, ${s.stored} counted`),
+      ok(!s.pitFull, 'and there is room in it again', `${s.pitDust} of ${s.pitCapacity}`),
       // the hole itself, plus whatever the heap over the brim is allowed to be
-      ok(s.pitCapacity > (3624 / s.pitGrain) * (276 / s.pitGrain),
+      ok(s.pitCapacity > (3600 / s.pitGrain) * (276 / s.pitGrain),
          'it holds the hole and then some, for the heap over the mouth',
          `${s.pitCapacity} at grain ${s.pitGrain}`),
-      ok(s.pitCapacity < (3624 / s.pitGrain) * (276 / s.pitGrain) * 1.5,
+      ok(s.pitCapacity < (3600 / s.pitGrain) * (276 / s.pitGrain) * 1.5,
          'but the heap is a heap, not another hole', `${s.pitCapacity}`)
     ];
   }],
@@ -258,19 +357,23 @@ const TESTS = [
     ];
   }],
 
-  ['filling the pit past the brim does not break it', async () => {
+  ['filling the pit stops at what the hole holds', async () => {
     const cap = state().pitCapacity;
-    window.__give(cap);                        // well past what the hole can show
+    window.__tip(cap * 2);                     // twice what the hole can take
     await sleep(800);
     const s = state();
     return [
-      // it does not stop at the brim any more -- it heaps over the mouth -- but
-      // it stops at what the bed will hold, and never gets out onto the ground
+      // it does not stop at the brim -- it heaps over the mouth -- but it stops
+      // at what the bed will hold, and never gets out onto the ground
       ok(s.pitDust <= cap, 'the pile stops at what the bed holds',
          `${s.pitDust} of ${cap}`),
-      ok(s.pitDust > (3624 / s.pitGrain) * (276 / s.pitGrain),
+      ok(s.pitDust > (3600 / s.pitGrain) * (276 / s.pitGrain),
          'having heaped up over the mouth on the way', `${s.pitDust}`),
-      ok(s.stored > cap, 'and the counter keeps going', `${s.stored}`),
+      // The pile is the dust. A counter that went on climbing past a pile that
+      // had stopped would be the number and the picture saying different things.
+      ok(s.stored === s.pitDust, 'and the counter stops with it',
+         `${s.stored} counted, ${s.pitDust} in the pile`),
+      ok(s.pitFull, 'the hole reports itself full'),
       ok(s.pitGrain === 6, 'the grain does not change under it', `${s.pitGrain}px`)
     ];
   }],
@@ -284,7 +387,8 @@ const TESTS = [
       ok(raw.length < 200 * 1024, 'the save stays small', `${Math.round(raw.length / 1024)}KB`),
       ok(j.stored === s.stored, 'the hole is saved', `${j?.stored}`),
       ok(typeof j.pit?.heights === 'string', 'the pile is saved as its profile'),
-      ok(j.pitStep === 0, 'and the grain it is drawn at', `${j?.pitStep}`)
+      ok(j.pitStep === 0, 'and the grain it is drawn at', `${j?.pitStep}`),
+      ok(j.pitLevel === s.pitLevel, 'and how far the hole has been dug', `${j?.pitLevel}`)
     ];
   }],
 
@@ -455,11 +559,21 @@ const TESTS = [
     window.__crew(3, 0);
     haveRock();
     const strip = state().piles.find(p => p.key === 'rock');
-    for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
+    // Enough to fill it, whatever the strip is: how wide it stands depends on
+    // how big the rock is, and a fixed twenty a column was exactly the limit at
+    // rock one once the lip came in.
+    for (let pass = 0; pass < 4 && !state().pileFull.rock; pass++) {
+      for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
+      run(1);
+    }
     const full = runUntil(() => state().pileFull.rock, 30);
     const before = state();
+    // Eight seconds, not four. The idle wobble is a slow sine with a phase of
+    // its own, so how many distinct rounded positions a short window catches
+    // depends on where in that sine the window happens to start -- which is a
+    // fact about whatever check ran before this one, not about the crew.
     const poses = new Set();
-    for (let i = 0; i < 240; i++) {
+    for (let i = 0; i < 480; i++) {
       run(1 / 60);
       poses.add(state().workerPos.filter(w => w[0] === 'm').join('|'));
     }
@@ -470,14 +584,152 @@ const TESTS = [
       ok(full, 'the rock\'s pile fills and the crew stand down'),
       ok(after.rock === before.rock, 'nothing more comes off the rock',
          `${before.rock} -> ${after.rock}`),
-      ok(poses.size > 10, 'but they are not stood frozen',
-         `${poses.size} poses across four seconds`)
+      // What this is for is catching *frozen*, which is one pose and no more.
+      // A tight count was measuring the phase of a sine and calling it a fault.
+      ok(poses.size > 4, 'but they are not stood frozen',
+         `${poses.size} poses across eight seconds`)
     ];
   }],
 
+  ['the school is a place you walk to', async () => {
+    window.__crew(2, 2, 2, 2);
+    window.__grant({ shards: 30 });
+    const shut = state();
+    const row = [...shop().querySelectorAll('[data-key]')]
+      .find(r => r.dataset.key === 'unlockschool');
+    row?.click();
+    const open = state();
+    const rows = [...document.getElementById('schoolshop').querySelectorAll('[data-key]')]
+      .map(r => r.dataset.key);
+
+    // standing at it opens its board, the same as the bench and the lab
+    window.__look(open.schoolX - 200);
+    await sleep(60);
+    const [sx, sy] = onScreen(open.schoolX + 60, open.groundY - 20);
+    point('pointermove', sx, sy, 0);
+    await sleep(250);
+    const standing = state().schoolBoardOpen;
+    await hoverAway();
+    window.__look(state().openCamX);             // and leave the view where it was
+    window.__crew(0, 0);
+    return [
+      ok(!shut.schoolOpen && !!row, 'the bench sells it, and it is not there to start with'),
+      ok(open.schoolOpen && open.shards === shut.shards - 4,
+         'shards build it', `${shut.shards} -> ${open.shards}`),
+      ok(open.schoolX > 1956 && open.schoolX + 120 < 2268,
+         'it stands clear of the quarry spoil and of where the crew live',
+         `${open.schoolX}`),
+      ok(rows.join(',') === 'breaker,carter,blaster,grower',
+         'and it sells the four trades', rows.join(',')),
+      ok(standing, 'walking up to it opens its board')
+    ];
+  }],
+
+  ['every trade doubles the work it is for', async () => {
+    // brisk, but not so brisk that either site hits its floor: a station with
+    // nothing left to buy drops its row off the bench, and the board checks
+    // further down expect those headings to be there
+    window.__levels({ quarryPaceLevel: 6, tendLevel: 6 });
+    window.__crew(0, 0, 3, 3);                   // the quarry and the beds
+    window.__school({ blasters: 0, growers: 0 });
+    window.__clearFloor();
+    // what the sites *make*, which is what lands in their own pile. Nobody is
+    // carrying any of it to the hole, and how fast a hauler walks is a
+    // different check.
+    run(90);
+    const plain = { ...state().pileCount };
+
+    window.__school({ blasters: 3, growers: 3 });
+    window.__clearFloor();
+    run(90);
+    const trained = { ...state().pileCount };
+
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(plain.quarry > 0 && plain.farm > 0, 'the quarry and the beds are working at all',
+         `${plain.quarry} up the quarry, ${plain.farm} off the beds`),
+      ok(trained.quarry > plain.quarry, 'a blaster brings up more',
+         `${plain.quarry} -> ${trained.quarry}`),
+      ok(trained.farm > plain.farm, 'and a grower brings a bed on sooner',
+         `${plain.farm} -> ${trained.farm}`)
+    ];
+  }],
+
+  // A job is a count and a body is whichever body happens to be doing it, so
+  // moving somebody costs nothing and nothing is ever really chosen. A trade is
+  // the one exception the game sells: a body that works twice as hard at one
+  // thing and will not do anything else, and the shards bought the will-not as
+  // much as the work.
+  ['a trade is a body that will not budge', async () => {
+    window.__crew(3, 0);
+    window.__school({ breakers: 2 });
+    const s = state();
+    window.__assign('miners', -1);
+    const one = state();
+    window.__assign('miners', -1);
+    const two = state();
+    // the same body count, twice as hard on the rock
+    window.__crew(2, 0); window.__school({ breakers: 0 });
+    const plainBefore = state().rock;
+    run(20);
+    const plain = plainBefore - state().rock;
+    window.__jump(1);
+    window.__crew(2, 0); window.__school({ breakers: 2 });
+    const hewnBefore = state().rock;
+    run(20);
+    const hewn = hewnBefore - state().rock;
+    window.__crew(0, 0);
+    window.__jump(1);
+    return [
+      ok(s.breakers === 2 && s.miners === 3, 'two of the three on the rock have the trade',
+         `${s.breakers} of ${s.miners}`),
+      ok(one.miners === 2, 'the untrained one can still be taken off', `${one.miners}`),
+      ok(two.miners === 2, 'and the breakers cannot', `${two.miners}`),
+      ok(s.roster.find(r => r.job === 'miners').nailed === 2,
+         'the roster knows how many it may not move'),
+      ok(hewn > plain * 1.5, 'a breaker takes twice the bite',
+         `${plain} plain, ${hewn} broken`)
+    ];
+  }],
+
+  ['a carter is a hauler who is not going anywhere else', async () => {
+    window.__crew(0, 4);
+    window.__school({ carters: 2 });
+    const s = state();
+    window.__assign('quarriers', 1);
+    window.__assign('quarriers', 1);
+    window.__assign('quarriers', 1);
+    const after = state();
+    window.__crew(0, 0); window.__school({ carters: 0 });
+    return [
+      ok(s.haulers === 4 && s.carters === 2, 'two of the four carrying are carters',
+         `${s.carters} of ${s.haulers}`),
+      ok(s.idle === 2, 'and the spare hands do not count them', `${s.idle} spare`),
+      ok(after.quarriers === 2, 'so only the spare ones can be sent down the quarry',
+         `${after.quarriers} went`),
+      ok(after.haulers === 2 && after.carters === 2,
+         'and the carters are still on the dust', `${after.carters} of ${after.haulers}`)
+    ];
+  }],
+
+  // The trades are bought at a building of their own, not on the bench. The
+  // bench is the shop; this is a decision about people, and they read
+  // differently for standing in different places.
   ['shop opens at the bench and is not buried', async () => {
+    // The first time the board has been opened since the page loaded, which is
+    // the case that used to be wrong: it was seated by the height it had before
+    // its rows were written, so it hung low until you closed it and opened it
+    // again. Nothing after this check ever sees a board opening for the first
+    // time, so if this is not where it is caught it is not caught at all.
     await hoverBench();
     const b = board();
+    const first = document.getElementById('panel').getBoundingClientRect();
+    await hoverAway();
+    await sleep(220);
+    await hoverBench();
+    const again = document.getElementById('panel').getBoundingClientRect();
+
     const r = b.getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const rows = [...shop().children];
@@ -494,7 +746,11 @@ const TESTS = [
       ok(cells.length > 0 && cells.every(c => c.length === 5), 'rows are five columns',
          JSON.stringify(cells[0])),
       ok(cells.every(c => c[0] && c[4]), 'every row has a name and a price',
-         JSON.stringify(cells))
+         JSON.stringify(cells)),
+      ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
+         'and it opens in the same place the first time as the second',
+         `${Math.round(first.top)}/${Math.round(first.height)} then ` +
+         `${Math.round(again.top)}/${Math.round(again.height)}`)
     ];
   }],
 
@@ -520,6 +776,144 @@ const TESTS = [
          getComputedStyle(rockBadge).opacity === '1',
          'the badge is solid black, not dimmed with the rest of the heading',
          rockBadge && `${getComputedStyle(rockBadge).backgroundColor} @ ${getComputedStyle(rockBadge).opacity}`)
+    ];
+  }],
+
+  // Three boards slide into the same spot and differ only in their rows, so
+  // each one says whose it is. And a board with nothing on it says that too:
+  // the school runs out of trades on purpose, and an empty sheet is a bug you
+  // have to rule out before you can believe it.
+  ['every board says whose it is, even an empty one', async () => {
+    const titles = [...document.querySelectorAll('.page .title')].map(t => t.textContent);
+
+    window.__crew(2, 2);
+    window.__grant({ shards: 40 });
+    window.__school({ breakers: 2, carters: 2 });   // everybody on both jobs
+    buildShopFromTest();
+    const empty = document.getElementById('schoolshop');
+    const emptyText = empty.textContent;
+    const emptyRows = empty.querySelectorAll('[data-key]').length;
+
+    window.__school({ breakers: 0, carters: 0 });
+    buildShopFromTest();
+    const back = document.getElementById('schoolshop').querySelectorAll('[data-key]').length;
+    window.__crew(0, 0);
+    return [
+      ok(titles.join('|') === 'the bench|the lab|the school',
+         'each board carries its own name', titles.join('|')),
+      ok(emptyRows === 0 && emptyText.trim().length > 0,
+         'a board with no rows says so instead of standing there blank', emptyText),
+      ok(back > 0, 'and the rows come back when there is somebody to teach', `${back}`)
+    ];
+  }],
+
+  // Every price on a board is a mark and a number, and what you *had* of that
+  // mark was only ever written over the pit -- the other end of the yard, in the
+  // corner of the window, and as often as not behind the board itself.
+  // This went missing for a while and nobody noticed. The three lines that
+  // opened the bench board, the lab board and the tooltip became one call that
+  // opened a board, and the tooltip went with them -- the words, the element and
+  // the styling all still there, and nothing reaching them. A board opens
+  // because you walked up to a station; a tooltip opens because you went and
+  // looked at a mark. This check is the difference between those two.
+  ['a stopped station says why when you look at it', async () => {
+    const tip = document.getElementById('tip');
+    const hover = async (wx, wy) => {
+      window.__look(wx - 380);
+      await sleep(60);
+      const [x, y] = onScreen(wx, wy);
+      point('pointermove', x, y, 0);
+      await sleep(140);
+      return tip.hidden ? null : tip.textContent;
+    };
+
+    // a full pile at the rock
+    window.__crew(4, 0);
+    window.__clearFloor();
+    const strip = state().piles.find(q => q.key === 'rock');
+    for (let pass = 0; pass < 4 && !state().pileFull.rock; pass++) {
+      for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
+      run(1);
+    }
+    runUntil(() => state().pileFull.rock, 60);
+    const onMark = await hover(state().rockX, state().groundY + P * 7);
+    const away = await hover(state().rockX - 300, state().groundY - P * 20);
+
+    // and a full hole
+    window.__crew(0, 0);
+    window.__clearFloor();
+    window.__tip(state().pitCapacity * 2);
+    run(1);
+    const s = state();
+    const onPit = await hover(s.pitX - P * 5, s.groundY - P * 7);
+
+    window.__spend(state().stored);
+    await hoverAway();
+    window.__look(state().openCamX);
+    return [
+      ok(onMark === 'pile is full', 'the mark over a stopped station says so',
+         String(onMark)),
+      ok(away === null, 'and only where the mark is', String(away)),
+      ok(s.pitFull && onPit === 'the hole is full',
+         'the hole owes the same explanation, and gives it', String(onPit))
+    ];
+  }],
+
+  ['the boards say what you have to spend with', async () => {
+    await hoverBench();
+    const purse = document.getElementById('purse');
+    const marks = () => [...purse.querySelectorAll('.coin i')].map(i => i.className);
+
+    const early = marks();
+    window.__grant({ shards: 5, spores: 2 });
+    await sleep(80);
+    const later = marks();
+    const shown = [...purse.querySelectorAll('.coin b')].map(b => b.textContent);
+    const s = state();
+
+    // beside the board, and on the left of it
+    const box = purse.getBoundingClientRect();
+    const sheet = document.querySelector('.panel .sheet').getBoundingClientRect();
+    await hoverAway();
+    return [
+      ok(!early.includes('spore'), 'a currency you have not seen is not on it',
+         early.join(',')),
+      ok(later.includes('shard') && later.includes('spore'),
+         'and one you have appears', later.join(',')),
+      ok(shown[0] === fmt(s.stored), 'the numbers are what you actually hold',
+         `${shown[0]} vs ${s.stored}`),
+      ok(box.right <= sheet.left + 1, 'it floats off the left of the board',
+         `purse ends ${Math.round(box.right)}, board starts ${Math.round(sheet.left)}`),
+      ok(box.width > 0 && box.height > 0, 'and it is actually on screen',
+         `${Math.round(box.width)}x${Math.round(box.height)}`)
+    ];
+  }],
+
+  ['the roster says how many of them have the trade', async () => {
+    window.__crew(4, 3);
+    window.__school({ breakers: 0, carters: 0 });
+    const none = state().roster.find(r => r.job === 'miners');
+    window.__school({ breakers: 2, carters: 1 });
+    const some = state().roster;
+    const rock = some.find(r => r.job === 'miners');
+    const carry = some.find(r => r.job === 'haulers');
+    window.__crew(0, 0);
+    return [
+      ok(!none.trade, 'no second line until somebody has a trade'),
+      ok(rock.nailed === 2 && !!rock.trade,
+         'then the count of them stands under the headcount', `${rock.nailed}`),
+      ok(rock.trade && rock.trade[1] > none.less[1],
+         'under it, not beside it: they are part of that number, not another one',
+         rock.trade && `${rock.trade[1]} vs ${none.less[1]}`),
+      // carrying has no buttons -- you never put a body *on* it -- but it has
+      // carters, and they are worth as much of a count as anybody
+      ok(carry.nailed === 1 && !!carry.trade,
+         'and the haulers get one too, buttons or no buttons', `${carry.nailed}`),
+      // and it is the cart, not a hat: what you see of a carter in the yard is
+      // the thing it is dragging
+      ok(carry.mark === 'cart' && rock.mark === 'hat',
+         'each station shows the mark its own trade wears',
+         `${rock.mark} on the rock, ${carry.mark} on the dust`)
     ];
   }],
 
@@ -1550,10 +1944,14 @@ const TESTS = [
     quickCrew();
     window.__clearFloor();
     // A bed with a spore on it, not merely one left standing ripe by an earlier
-    // check. A bed nobody is working keeps its tone for ever, so a check that
-    // picked one of those would sit waiting for a farmhand at the other end of
-    // the farm to come and cut it: the ones already ripe are named on the way in
-    // and skipped, and what is left is a bed that ripened while this watched.
+    // check. A bed nobody is working keeps its tone for ever, so the farm is put
+    // back to bare earth first and what ripens after that is this check's own.
+    //
+    // Naming the already-ripe ones and skipping them was not enough: with a
+    // whole farm left standing ripe by an earlier check, the one farmhand has to
+    // cut its way through all seven before a fresh one can appear, and how long
+    // that takes depends on what every check before this one happened to do.
+    window.__beds();
     const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
     const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
     // a frame at a time, not a second: it is only ripe for as long as it takes
@@ -1655,9 +2053,20 @@ const TESTS = [
          `${one.top} -> ${twelve.top}`),
       ok(big.base === big.foot, 'the bottom course stands on the ground line',
          `${big.base} / ${big.foot}`),
+      // The bench stands between the block and the rock: you walk in past your
+      // own front door to get to the shop, not out past the shop to get home.
+      ok(big.right <= state().benchX, 'the block stands outside the bench',
+         `${big.right} / ${state().benchX}`),
+      // and it stands in the middle of the ground it has, rather than hard
+      // against one neighbour with all the slack on the other side
       ok(big.ofBench > 0, 'it stands clear of the bench',
          `${big.ofBench}px`),
-      ok(big.ofApron > 0, 'and clear of the apron at the biggest rock',
+      ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
+         `${big.benchOfApron}px`),
+      ok(big.ofBench === big.benchOfApron,
+         'the bench is centred between the block and the biggest rock',
+         `${big.ofBench}px to the houses, ${big.benchOfApron}px to the apron`),
+      ok(big.ofApron > 0, 'with the block further out again',
          `${big.ofApron}px`),
       ok(onGrid, 'every cube sits on the lattice'),
       // Building is additive. Taking somebody on adds a room; it does not move

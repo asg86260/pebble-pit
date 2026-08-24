@@ -47,6 +47,34 @@ canvas {
 }
 .rows .sect:first-child { margin-top: 0; }
 
+/* Whose board this is. One menu walks along the ground from station to station
+   and shows whichever of them you are standing at, which is a nice thing to
+   watch and a bad thing to read: three boards that slide into the same spot and
+   differ only in their rows are three boards you have to work out. The title
+   says it outright.
+
+   Heavier than a section heading and separated from the rows by a rule of its
+   own: a heading inside the board is a group of rows, and this is the board. */
+.page .title {
+  margin-bottom: 7px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid #000;
+  font: inherit;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #000;
+}
+
+/* A board with nothing on it. It happens at the school, which sells one trade
+   per job and runs out of them: an empty sheet is a bug you have to rule out,
+   and a line saying so is the board still talking to you. */
+.page .empty {
+  padding: 2px 0;
+  color: rgba(0, 0, 0, .45);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
 /* The headcount: black rectangle, white numeral, the board's own monospace, so
    a heading with people under it reads as a badge rather than as "x3". Padding
    stays tight so a heading that gains one does not grow taller and shove the
@@ -184,6 +212,18 @@ canvas {
    bench rather than by hovering, because there is no hovering.
    A phone held sideways is a wide, short window, so short counts as small too. */
 @media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
+  /* No room beside it on a phone, so the purse goes above the board instead and
+     lies along it: four marks in a row is one line, and one line is cheaper than
+     the width of a column the screen has not got. */
+  .panel { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .purse {
+    flex-direction: row;
+    gap: 10px;
+    padding: 4px 8px;
+    transform-origin: 0 100%;
+  }
+  .purse .coin { gap: 4px; }
+  .purse .coin b { min-width: 0; }
   .panel .sheet {
     padding: 8px 9px;
     max-width: calc(100vw - 16px);
@@ -265,12 +305,57 @@ canvas {
 #dev button:hover { color: #fff; background: #000; }
 #dev b { min-width: 3.4em; font-weight: normal; }
 #dev input[type=range] { width: 8em; accent-color: #000; }
+#dev select {
+  font: inherit;
+  text-transform: inherit;
+  color: #000;
+  background: #fff;
+  border: 1px solid #000;
+  padding: 0 2px;
+}
 
 /* The container is a positioner and nothing else: it carries the transform that
    puts the menu where it stands, and slides only while it is walking from one
    station to the other. Everything you can see is the sheet inside it, which is
    what fades. Two elements, so the two transforms never fight. */
 .panel.sliding { transition: transform .15s cubic-bezier(.2, .9, .25, 1); }
+
+/* The purse and the board, side by side, sitting on the same line: the panel is
+   seated by its bottom edge, so bottom-aligning them is what keeps the board
+   where it has always been while the purse grows a row. */
+.panel { display: flex; align-items: flex-end; gap: 8px; }
+
+/* What you have to spend, off the left of the board.
+   Every price on these boards is a mark and a number, and the only place you
+   could check what you *had* of that mark was the counter over the pit -- which
+   is at the other end of the yard from the bench, in the corner of the window,
+   and often behind the board itself. Reading a price meant looking away from
+   it. So the same four marks stand beside the board you are reading, in the
+   same order and the same alphabet.
+   Left, not right: it is read before the price, the way a price is read after a
+   name, and the board's own numbers already run down its right-hand edge. */
+.purse {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  background: #fff;
+  border: 2px solid #000;
+  letter-spacing: .1em;
+  white-space: nowrap;
+  /* it fades with the board it belongs to, on the same beat */
+  opacity: 0;
+  transform: translateY(3px) scale(.985);
+  transform-origin: 100% 100%;
+  transition: opacity .08s linear, transform .1s cubic-bezier(.2, .9, .25, 1);
+}
+.panel.open .purse { opacity: 1; transform: none; }
+.purse:empty { display: none; }
+.purse .coin { display: flex; align-items: center; gap: 6px; }
+/* the number sits in a slot of its own width, so banking a grain does not make
+   the whole board twitch sideways a pixel */
+.purse .coin b { font-weight: normal; min-width: 3.8em; text-align: right; }
+
 
 .panel .sheet {
   box-sizing: border-box;      /* so a max-height is the height, padding and all */

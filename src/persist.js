@@ -5,10 +5,10 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, CORE_CELL, SHADES, CORE_SIZE } from './config.js';
+import { P, CORE_CELL, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { S, floor, pit, bench } from './state.js';
-import { at, put, count, countDust, fillFlat, addGrain, isDust } from './grid.js';
+import { at, put, count, countDust, fillFlat, addGrain, isDust, recount } from './grid.js';
 import { blocked } from './world.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
@@ -128,6 +128,7 @@ export function pitFromSave(sv) {
     const h = Math.min(pit.rows, Math.max(0, heights[c]));
     for (let r = 0; r < h; r++) pit.grid[r * pit.cols + c] = pick();
   }
+  recount(pit);                                  // written cell by cell, not put
   pit.painter.repaint();
   return true;
 }
@@ -157,6 +158,7 @@ export function persist() {
     seenBench: S.seenBench,
     seenSects: S.seenSects,
     pitStep: S.pitStep,
+    pitLevel: S.pitLevel,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
@@ -164,6 +166,11 @@ export function persist() {
     // counted, and a reload pocketing it would be the game taking it back
     crew: S.crew,
     miners: S.miners,
+    schoolOpen: S.schoolOpen,
+    breakers: S.breakers,
+    carters: S.carters,
+    blasters: S.blasters,
+    growers: S.growers,
     haulers: S.haulers,
     minerSpeedLevel: S.minerSpeedLevel,
     minerPickLevel: S.minerPickLevel,
@@ -223,10 +230,16 @@ export function restore() {
     S.seenBench = false;
     S.seenSects = [];
     S.pitStep = 0;
+    S.pitLevel = 0;
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
     S.haulers = 0;
+    S.schoolOpen = false;
+    S.breakers = 0;
+    S.carters = 0;
+    S.blasters = 0;
+    S.growers = 0;
     S.minerSpeedLevel = 0;
     S.minerPickLevel = 0;
     S.haulCarryLevel = 0;
@@ -261,6 +274,13 @@ export function restore() {
   S.seenCore = !!s.seenCore || S.cores > 0;
   S.seenBench = !!s.seenBench;
   S.seenSects = Array.isArray(s.seenSects) ? s.seenSects : [];
+  // How far the hole has been dug decides how big the bed is, so it goes in
+  // before the bed is laid out -- and the saved pile only fits a bed of the
+  // shape it came out of.
+  // A save from before the hole was something you dug has one already: it was
+  // the whole thing from the first frame, and it keeps it.
+  const dug = s.pitLevel ?? (s.pit && s.pit.cols > PIT_W0 / P ? PIT_DIGS : 0);
+  S.pitLevel = Math.max(0, Math.min(PIT_DIGS, dug));
   setPitGrain(s.pitStep || 0);
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
@@ -269,6 +289,12 @@ export function restore() {
       : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
   S.miners = s.miners || 0;
+  S.schoolOpen = !!s.schoolOpen;
+  // rebalance clamps them to what is actually standing there
+  S.breakers = s.breakers || 0;
+  S.carters = s.carters || 0;
+  S.blasters = s.blasters || 0;
+  S.growers = s.growers || 0;
   // A save from when the quarry was a cave. The place changed and the people
   // changed name with it; what they had done is still theirs.
   S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
@@ -328,12 +354,18 @@ export function reset() {
   S.seenCore = false;
   S.seenBench = false;
   S.seenSects = [];
+  S.pitLevel = 0;
   setPitGrain(0);
   S.pickLevel = 0;
   S.coreItem = null;
   S.heldCore = false;
   S.miners = 0;
   S.haulers = 0;
+  S.schoolOpen = false;
+  S.breakers = 0;
+  S.carters = 0;
+  S.blasters = 0;
+  S.growers = 0;
   S.minerSpeedLevel = 0;
   S.minerPickLevel = 0;
   S.haulCarryLevel = 0;
@@ -361,6 +393,7 @@ export function reset() {
   resetRates();
   floor.grid.fill(0);
   pit.grid.fill(0);
+  recount(pit);
   floor.painter.repaint();
   pit.painter.repaint();
   S.boulderNo = 1;

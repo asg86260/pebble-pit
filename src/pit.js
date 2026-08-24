@@ -6,30 +6,105 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { P, PIT_W, PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
+import { P, PIT_W_MAX, PIT_W0, PIT_D0, PIT_DIG_W, PIT_DIG_D, PIT_DIGS,
+         PIT_DIG_COST, PIT_DIG_RATE,
+         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
          findKind, someFind,
          SHADES } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, countDust, isDust, bottomY, settleSome } from './grid.js';
+import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
+
+// --- how big the hole is today ---------------------------------------------
+// The hole is dug out one purchase at a time, from a scrape to the whole thing.
+// Both run to a limit and stop there: depth is pinned to the window, so it fills
+// up first and the last few digs are all sideways.
+export const pitWidth = (lvl = S.pitLevel) =>
+  Math.min(PIT_W_MAX, PIT_W0 + lvl * PIT_DIG_W);
+export const pitDepth = (lvl = S.pitLevel) =>
+  Math.min(PIT_H, PIT_D0 + lvl * PIT_DIG_D);
+export const digsLeft = () => PIT_DIGS - S.pitLevel;
+export const digCost = (lvl = S.pitLevel) =>
+  Math.round(PIT_DIG_COST * Math.pow(PIT_DIG_RATE, lvl));
+
+// Where the bed sits and how many cells it is. The near lip never moves: a dig
+// takes the far wall out and the floor down, so nothing you can already see
+// changes place. Called from the layout, and again on every dig.
+export function shapePit() {
+  pit.w = pitWidth();
+  pit.h = pitDepth() + PIT_HEAP;         // the hole, and room to heap over it
+  pit.cols = pit.w / pit.p;
+  pit.rows = pit.h / pit.p;
+  pit.y = S.groundY - PIT_HEAP;          // the bed starts above the ground line
+}
+
+// A bigger bed with the same pile in it. Columns keep their number, so the pile
+// stays where it was against the near lip; rows do too, so the sand comes down
+// onto the new floor rather than hanging in the air over it. Nothing is lost and
+// nothing is counted twice -- this is a bigger box, not a new one.
+function regridPit() {
+  const want = pit.cols * pit.rows;
+  if (pit.grid && pit.grid.length === want && pit.gridCols === pit.cols) return;
+  const old = pit.grid, oldCols = pit.gridCols || 0, oldRows = pit.gridRows || 0;
+  pit.grid = new Uint8Array(want);
+  pit.gridCols = pit.cols;
+  pit.gridRows = pit.rows;
+  if (old && oldCols) {
+    for (let c = 0; c < Math.min(oldCols, pit.cols); c++)
+      for (let r = 0; r < Math.min(oldRows, pit.rows); r++)
+        pit.grid[r * pit.cols + c] = old[r * oldCols + c];
+  }
+  recount(pit);                          // the cells were copied, not put
+  pit.painter = makePainter(pit);        // the scratch canvas is the grid's size
+  pit.onPut = pit.painter.mark;
+}
+
+// One dig, bought at the bench: the far wall goes out and the floor goes down.
+// The world is not laid out again -- it never depended on how far the hole had
+// got, only on how far it can ever get -- so this is the bed and nothing else.
+export function digPit() {
+  if (S.pitLevel >= PIT_DIGS) return;
+  S.pitLevel++;
+  shapePit();
+  wirePit();                             // regrids, re-measures, repaints
+  topUpPit();                            // and what was over the brim comes back
+  seedPitCores();
+  S.dirty = true;
+}
+
+// The pile shows as much of what you hold as will fit in it, so a bigger hole
+// shows more of it: dust that was counted but had nowhere to be drawn comes back
+// into the picture the moment there is room. Laid in flat and in one shade,
+// because a hole fills up and the shade of any one grain was never a fact --
+// this is the same repack a reload does.
+function topUpPit() {
+  let want = Math.min(S.stored, pitCapacity()) - countDust(pit);
+  for (let r = 0; r < pit.rows && want > 0; r++) {
+    for (let c = 0; c < pit.cols && want > 0; c++) {
+      if (at(pit, c, r) || !roomFor(pit, c, r)) continue;
+      put(pit, c, r, 4);
+      want--;
+    }
+  }
+}
 
 // its painter, made fresh whenever the grid underneath changes shape
 export function setPitGrain(step) {
   S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
   pit.p = PIT_GRAINS[S.pitStep];
-  pit.cols = PIT_W / pit.p;
-  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
-  pit.grid = new Uint8Array(pit.cols * pit.rows);
-  pit.painter = makePainter(pit);
-  pit.onPut = pit.painter.mark;
-  if (pit.ceiling) measurePit();
+  shapePit();
+  pit.grid = null;                       // a new grain is a new pile, not a resize
+  pit.gridCols = 0;
+  regridPit();
+  if (pit.ceiling) wirePit();            // the ceiling and the room are the new shape's
 }
 
 // nothing bars the pile, it just fills; it lies flat rather than heaping; and
 // every change is told to the painter
 export function wirePit() {
+  regridPit();                             // as big as it has been dug out
   pit.blocked = null;                      // nothing bars the pile, it just fills
   pit.repose = false;                      // and inside the hole it lies flat
   // What stands above the brim is a heap in the middle of the hole, and nothing
@@ -40,31 +115,54 @@ export function wirePit() {
   //                            always means the hole underneath it is full;
   //   and it heaps from the -- so it tapers away to nothing at the lip instead
   //   middle                   of standing there as a wall against the ground.
-  pit.holeCap = pit.cols * (PIT_H / pit.p);
-  pit.ceiling = c => S.stored < pit.holeCap ? PIT_H / pit.p : heapCeiling(c);
+  // Whether the heap over the mouth is unlocked yet is a question about the
+  // *pile*, not about the counter. They are nearly the same number and the
+  // difference is the whole bug: a core in the pile takes a cell and is not
+  // dust, so the hole was physically full one grain before the counter agreed,
+  // the heap never unlocked, and the crew stood at the lip throwing dust at a
+  // brim with nowhere under it.
+  pit.holeCap = pit.cols * (pitDepth() / pit.p);
+  pit.ceiling = c => pit.n < pit.holeCap ? pitDepth() / pit.p : heapCeiling(c);
   measurePit();
   if (!pit.painter) pit.painter = makePainter(pit);
   pit.onPut = pit.painter.mark;            // every change is told to the painter
+  pit.painter.repaint();
 }
 
 export function settlePit() {
   settleSome(pit, SETTLE_BUDGET);
 }
 
+// A full hole takes nothing. The pile is the dust -- one grain one dust, always
+// -- so a counter that went on climbing while the pile stood still would be the
+// number and the picture saying different things, which is the one thing this
+// game does not do. When there is no room the dust does not go in and is not
+// counted, and the way to bank another grain is to dig.
+//
+// A find is not dust and is never turned away. There are a handful of them in a
+// whole game, each one is a thing you go and get rather than a grain that
+// happens, and a shard bouncing off a full pit would be a lost afternoon. They
+// go in over the ceiling -- which is a limit on how high dust may heap, not on
+// what the bed will physically hold.
+export const pitFull = () => pit.n >= pitCapacity();
+
 // Something goes in the hole. A grain of dust is worth one dust; a shard, a
 // or a spore is worth one of itself. Either way it is a grain in the pile
-// from here on, and the pile shows exactly what you are holding.
+// from here on, and the pile shows exactly what you are holding. False means
+// the hole would not take it, and whatever was carrying it still has it.
 export function bankDust(x, shade = 1) {
+  const find = !isDust(shade);
+  if (!addGrain(pit, x, null, shade, find)) {
+    refinePit();                           // full: settle finer and carry on
+    if (!addGrain(pit, x, null, shade, find)) return false;
+  }
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left
   } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
   else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
   S.dirty = true;
-  if (!addGrain(pit, x, null, shade)) {
-    refinePit();                           // full: settle finer and carry on
-    addGrain(pit, x, null, shade);
-  }
+  return true;
 }
 
 // How much the bed can actually hold, which is no longer the whole of it: the
@@ -74,18 +172,29 @@ export function bankDust(x, shade = 1) {
 // how high a column may stand once the hole beneath it is full
 function heapCeiling(c) {
   const fromEnd = Math.min(c, pit.cols - 1 - c);
-  return PIT_H / pit.p + Math.min(PIT_HEAP / pit.p, fromEnd * PIT_HEAP_SLOPE);
+  return pitDepth() / pit.p + Math.min(PIT_HEAP / pit.p, fromEnd * PIT_HEAP_SLOPE);
+}
+
+// What the bed would hold at a given dig, without digging it. The board asks
+// this for the next one along, so it can say what the purchase buys.
+export function capacityAt(lvl = S.pitLevel) {
+  const p = pit.p;
+  const cols = pitWidth(lvl) / p;
+  const holeRows = pitDepth(lvl) / p;
+  const rows = holeRows + PIT_HEAP / p;
+  let n = 0;
+  for (let c = 0; c < cols; c++) {
+    // a column holds every row *below* its ceiling, so a ceiling of 71.4 is
+    // seventy-two rows and not seventy-one
+    const fromEnd = Math.min(c, cols - 1 - c);
+    n += Math.min(rows, Math.ceil(holeRows + Math.min(PIT_HEAP / p, fromEnd * PIT_HEAP_SLOPE)));
+  }
+  return n;
 }
 
 export function measurePit() {
-  let n = 0;
-  for (let c = 0; c < pit.cols; c++) {
-    // a column holds every row *below* its ceiling, so a ceiling of 71.4 is
-    // seventy-two rows and not seventy-one
-    n += Math.min(pit.rows, Math.ceil(pit.ceiling ? heapCeiling(c) : pit.rows));
-  }
-  pit.cap = n;
-  return n;
+  pit.cap = capacityAt();
+  return pit.cap;
 }
 
 export const pitCapacity = () => pit.cap || pit.cols * pit.rows;
@@ -101,9 +210,13 @@ export function refinePit() {
   const oldP = pit.p, oldCols = pit.cols, oldRows = pit.rows, oldGrid = pit.grid;
   S.pitStep++;
   pit.p = PIT_GRAINS[S.pitStep];
-  pit.cols = PIT_W / pit.p;
-  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
+  shapePit();
   pit.grid = new Uint8Array(pit.cols * pit.rows);
+  pit.gridCols = pit.cols;
+  pit.gridRows = pit.rows;
+  pit.n = 0;                             // and it is filled a `put` at a time below
+  pit.painter = makePainter(pit);
+  pit.onPut = pit.painter.mark;
 
   // Where each old column lands. The ratio is not always a whole number (three
   // pixels to two is one and a half), so a column's span is taken from the
@@ -180,9 +293,10 @@ export function seedPitCores() {
     for (const v of pit.grid) if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) have++;
     const want = S[count];
     for (let i = have; i < want; i++) {
-      // near the lip, where the dust is and where you can see them: the pit runs
-      // a long way right, and one out in the empty end is one nobody finds
-      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * 700, null,
+      // near the lip, where the dust is and where you can see them: a dug-out pit
+      // runs a long way right, and one out in the empty end is one nobody finds.
+      // A hole that has not been dug that far is spread over what there is.
+      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * Math.min(700, pit.w), null,
                cell === CORE_CELL ? cell : someFind(cell));
     }
     if (have > want) takeCoreCells(have - want, cell);

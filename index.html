@@ -11,13 +11,21 @@
 <!-- One menu, not two. It walks along the ground from the bench to the lab and
      shows whichever of them you are standing at. -->
 <div id="panel" class="panel" hidden>
+  <!-- what you have to spend, floated off the left of whichever board is open -->
+  <div id="purse" class="purse"></div>
   <div class="sheet">
   <div id="board" class="page" hidden>
+    <div class="title">the bench</div>
     <div id="shop" class="rows"></div>
     <button id="reset" type="button">reset progress</button>
   </div>
   <div id="lab" class="page" hidden>
+    <div class="title">the lab</div>
     <div id="labshop" class="rows"></div>
+  </div>
+  <div id="school" class="page" hidden>
+    <div class="title">the school</div>
+    <div id="schoolshop" class="rows"></div>
   </div>
   </div>
 </div>

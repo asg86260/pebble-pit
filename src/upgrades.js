@@ -7,10 +7,10 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR
+  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST
 } from './config.js';
-import { S, quarry, farm, lab } from './state.js';
-import { spend, takeCoreCells } from './pit.js';
+import { S, quarry, farm, lab, school } from './state.js';
+import { spend, takeCoreCells, digPit, digsLeft, digCost, capacityAt, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt } from './world.js';
 import { syncWorkers } from './crew.js';
@@ -75,17 +75,43 @@ export const rateText = lvl => num(mineRate(lvl));
 // Hiring and putting to work are two different things now. You buy a body once
 // — a core for the first, dust for the next — and it carries dust until you put
 // it on something else. A job is a count, not a purchase, so every one of them
-// can be taken back the moment you want the dust moving again.
+// can be taken back the moment you want the dust moving again -- except a body
+// that has been to the school, which is the deliberate exception and the reason
+// the rule is worth stating out loud. See school.js.
 export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers'];
 
-// bodies with nothing else to do. They are the haulers, always
-export const idle = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
+// Bodies with nothing else to do. They are the haulers, always -- minus the
+// carters, who are haulers who cannot be put on anything else. That is the whole
+// of what a specialist is in a game where a job is a count: a body the count of
+// spare hands does not include.
+export const spareHands = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
+export const idle = () => spareHands() - S.carters;
+
+// How many of a job's bodies have a trade and may not be taken off it. The
+// roster reads this to know when its minus button has nothing left to do.
+export const TRADE_OF = { miners: 'breakers', haulers: 'carters',
+                          quarriers: 'blasters', farmhands: 'growers' };
+export const nailed = job => S[TRADE_OF[job]] || 0;
 
 // `haulers` is a fact on S rather than a sum worked out where it is read, so
 // that the crew code can treat it like any other job. This is the one place it
 // is set, and every path that moves a body goes through here.
 export function rebalance() {
-  S.haulers = Math.max(0, idle());
+  // A trade can never be held by more bodies than are doing that job. Nothing
+  // the player can do breaks that -- the roster will not take the last breaker
+  // off the rock -- but a save from another shape of the game, or a dev hook
+  // setting a count outright, can; and a tradesman with nobody under him would
+  // be a body the yard has counted twice.
+  for (const job of JOBS) {
+    const k = TRADE_OF[job];
+    S[k] = Math.max(0, Math.min(S[k], S[job]));
+  }
+  // Carrying is the job nobody is assigned to -- it is what a body does when it
+  // is on nothing -- so a carter is held out of the spare hands instead, which
+  // is the same rule wearing different clothes.
+  const spare = spareHands();
+  S.carters = Math.max(0, Math.min(S.carters, spare));
+  S.haulers = Math.max(0, spare);
 }
 
 export function hire() {
@@ -100,6 +126,7 @@ export function hire() {
 export function assign(job, d) {
   if (d > 0 && idle() < 1) return;
   if (d < 0 && S[job] < 1) return;
+  if (d < 0 && S[job] - 1 < nailed(job)) return;   // that one is not going anywhere
   S[job] += d;
   rebalance();
   syncWorkers();
@@ -251,6 +278,17 @@ export const UPGRADES = [
     buy: () => S.quarryPaceLevel++,
     show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
   },
+  // The school is a building you put up, like the lab, and it is priced in what
+  // the quarry gives so that the quarry's output has somewhere to go the day it
+  // starts arriving.
+  {
+    key: 'unlockschool',
+    name: 'build the school',
+    cost: () => SCHOOL_COST,
+    currency: 'shard',
+    buy: () => { S.schoolOpen = true; lookAt(school.x + school.w / 2); },
+    show: () => S.seenShard && !S.schoolOpen
+  },
   {
     key: 'unlocklab',
     name: 'build the lab',
@@ -258,6 +296,24 @@ export const UPGRADES = [
     currency: 'core',
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
     show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
+  },
+
+  // The hole is the one thing you buy that is not a rate. It starts as a scrape
+  // and every dig takes the far wall out and the floor down, so what it holds is
+  // something you dug rather than something the yard came with. It is priced in
+  // the dust it will hold: paying for room comes out of the room you have.
+  {
+    key: 'dig',
+    name: 'dig the pit',
+    unit: 'px',
+    from: () => pitCapacity(),
+    to: () => capacityAt(S.pitLevel + 1),
+    // called through, not handed over: the pit and the bench import each other,
+    // so a binding read while this list is being built is one that does not
+    // exist yet
+    cost: () => digCost(),
+    buy: () => digPit(),
+    show: () => digsLeft() > 0
   },
 
   FARM,
@@ -281,7 +337,9 @@ export const SECTIONS = [
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'tend'] },
-  { title: 'the lab', keys: ['unlocklab'] }
+  { title: 'the lab', keys: ['unlocklab'] },
+  { title: 'the pit', keys: ['dig'] },
+  { title: 'the school', keys: ['unlockschool'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

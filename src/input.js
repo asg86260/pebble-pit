@@ -10,12 +10,14 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track } from './hands.js';
 import { startle } from './weather.js';
-import { nearBench, nearLab, showPanel, placeBoard, showTip } from './board.js';
-import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
+import { nearBench, nearLab, nearSchool, showPanel, placeBoard, showTip } from './board.js';
+import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
+         overPitMark, pitMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit } from './roster.js';
 import { mineMs } from './upgrades.js';
+import { pitFull } from './pit.js';
 import { now } from './clock.js';
 
 const canvas = document.getElementById('c');
@@ -94,7 +96,12 @@ canvas.addEventListener('pointermove', e => {
   if (e.pointerType !== 'touch') {
     // one menu: whichever station the cursor is standing at, or none
     showPanel(nearLab(S.mouse.x, S.mouse.y) ? 'lab'
+            : nearSchool(S.mouse.x, S.mouse.y) ? 'school'
             : nearBench(S.mouse.x, S.mouse.y) ? 'bench' : null);
+    // and whatever the cursor is asking about, which is not the same question:
+    // a board opens because you walked up to a station, a tooltip opens because
+    // you went and looked at a mark
+    askedAbout(S.mouse.x, S.mouse.y);
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
@@ -115,6 +122,7 @@ export function endDrag(e) {
     const p = pos(e);
     if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench');
     else if (nearLab(p.x, p.y)) showPanel(S.labBoardOpen ? null : 'lab');
+    else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school');
     else showPanel(null);
   }
 
@@ -153,12 +161,24 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
-export // A stopped station says why, in the one place words are cheap: under the
+// A stopped station says why, in the one place words are cheap: under the
 // cursor, and only when the cursor goes looking.
+//
+// This stopped being called for a while. The three lines that opened the bench
+// board, the lab board and this became one `showPanel`, and it went with them --
+// the words, the element and the styling all still there, and nothing reaching
+// them. A board opens because you walked up to a station; a tooltip opens
+// because you went and looked at a mark. Two questions, asked separately.
 function askedAbout(x, y) {
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));
+    return;
+  }
+  // the hole stops the haulers the way a full pile stops a gang, and it owes
+  // the same explanation
+  if (pitFull() && overPitMark(x, y)) {
+    showTip('the hole is full', pitMarkAt());
     return;
   }
   if (S.labDone && overLabMark(x, y)) {

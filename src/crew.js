@@ -11,9 +11,9 @@ import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, walkY, rockLeft, yardLeft } from './world.js';
 import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops, dropZone } from './rock.js';
-import { spawnChip, spawnSpoil, bell } from './dust.js';
+import { spawnChip, spawnSpoil, bell, aim } from './dust.js';
 import { depthShade } from './grid.js';
-import { bankDust } from './pit.js';
+import { bankDust, pitFull } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite } from './upgrades.js';
 import { stepQuarrier, newQuarrier, quarryFace } from './quarry.js';
 import { stepFarmhand, newFarmhand, bedX } from './farm.js';
@@ -68,6 +68,18 @@ export function elbowed(w, x) {
 // side it is nearer -- crossing under a falling rock to reach the far side is
 // not getting out of the way. Returns whether it is still moving, so whatever
 // the worker was doing waits until it is clear.
+// Which side of a coming rock a spot is on: -1 clear to the left, 1 clear to the
+// right, 0 under it. A body already ducked out is never 0.
+const sideOf = (zone, x) => x + WORKER <= zone.from ? -1 : x >= zone.to ? 1 : 0;
+
+// Would getting there mean walking under it? A rock is coming down between here
+// and where this body wants to be, so the answer is to stand still and let it
+// land -- not to set off and be shoved back by the duck every other frame, which
+// is what used to happen: out, in, out, in, all the way down, and a body still
+// half in the footprint when the rock arrived.
+const across = (zone, x, target) =>
+  !!zone && sideOf(zone, x) !== sideOf(zone, target);
+
 function duck(w, zone) {
   if (!zone) return false;
   const mid = w.x + WORKER / 2;
@@ -225,6 +237,27 @@ export function syncWorkers() {
     w.slot = slot++;
     if (!w.next) w.next = now() + minerMs() * (w.slot / Math.max(1, S.miners));
   }
+
+  // Which of them have a trade. Nobody in this yard has a name -- a job is a
+  // count and a body is whichever body happens to be doing it -- so a trade is
+  // not something a person carries around either: it is the first n of the
+  // bodies on that job, worked out here and nowhere else. Move somebody off and
+  // the hat goes to whoever is left, which is what the count model already
+  // means everywhere else.
+  mark('miner', S.breakers);
+  mark('hauler', S.carters);
+  mark('quarrier', S.blasters);
+  mark('farmhand', S.growers);
+}
+
+// `trained` is the one flag: what it means is decided where the work is done, so
+// a new trade is a count and a doubling, not another field on a worker.
+function mark(type, n) {
+  let left = n;
+  for (const w of S.workers) {
+    if (w.type !== type) continue;
+    w.trained = left-- > 0;
+  }
 }
 
 // The nearest column of dust that nobody else has set off for. One column, one
@@ -277,6 +310,20 @@ export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
   const taken = claims();
+  // ...and the ground nobody may be *fetching from*, which is not the same rule
+  // and used to be missing. A hauler ducks out of the way and then walks
+  // straight back in, because what pulled it there was a column of dust it had
+  // claimed and the duck does not know about claims: out, in, out, in, until
+  // the rock lands on it. So the columns under a coming rock are spoken for as
+  // far as everybody is concerned, and the dust there is fetched afterwards.
+  if (zone) {
+    const from = Math.max(0, colOf(floor, zone.from));
+    const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
+    for (let c = from; c <= to; c++) taken.add(c);
+    for (const w of S.workers) {
+      if (w.type === 'hauler' && w.claim >= from && w.claim <= to) w.claim = -1;
+    }
+  }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   for (const w of S.workers) {
     // on its way to a job it has just been put on, and doing none of it yet
@@ -352,7 +399,9 @@ export function updateWorkers(now, dt) {
       w.y = standOn(surf + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4);
 
       if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
-        knockOff(w.x + WORKER / 2, surf + P / 2, minerBite());     // bite what it stands on
+        // twice the bite for a breaker: the shards bought a bigger swing on a
+        // body that is not going anywhere
+        knockOff(w.x + WORKER / 2, surf + P / 2, minerBite() * (w.trained ? 2 : 1));
         w.lunge = 1;
         w.next = now + minerMs() * (0.85 + Math.random() * 0.3);    // never quite in time
       }
@@ -375,6 +424,7 @@ export function updateWorkers(now, dt) {
       S.coreTaker = w;
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
       const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
+      if (across(zone, w.x, target)) continue;      // wait for the rock to land
       const pace = haulSpeed() * HAUL_EMPTY;
       w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P * 2) {
@@ -390,6 +440,18 @@ export function updateWorkers(now, dt) {
     if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
     w.y = walkY(w.x + WORKER / 2);
 
+    // The hole is full. A hauler with nowhere to put dust stands down rather
+    // than walking to the lip and throwing it at a brim, the same as a gang
+    // stops when the pile it is filling has no room left. It keeps whatever it
+    // is already carrying -- a load tipped into a full pit is a load lost -- and
+    // picks the job up the moment a dig makes room. A core is not dust and the
+    // hole always takes one, so somebody carrying one finishes the trip.
+    const noRoom = pitFull() && !w.hasCore;
+    if (noRoom && w.goal !== 'idle') {
+      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+      w.goal = 'idle';
+    }
+
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking
       // the nearest one afresh every frame is what made the crew swarm.
@@ -402,8 +464,10 @@ export function updateWorkers(now, dt) {
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
       const c = w.claim;
       const target = floor.x + c * P;
+      if (across(zone, w.x, target)) continue;      // wait for the rock to land
       // hands free, so it moves; a load is what slows it down
       const pace = haulSpeed() * HAUL_EMPTY;
+      w.face = Math.sign(target - w.x) || w.face || 1;   // a cart is dragged behind
       w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
       // It scoops what is under it, not what its left edge is exactly on. The
       // last two columns before the lip sit further right than a worker is
@@ -420,12 +484,14 @@ export function updateWorkers(now, dt) {
           S.dirty = true;
         }
       }
-      if (w.carry >= haulCap()) {
+      if (w.carry >= haulCap() * (w.trained ? 2 : 1)) {     // a cart holds twice
         if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
         w.goal = 'dump';
       }
     } else if (w.goal === 'dump') {
       const target = pit.x - WORKER;                 // the lip, where they can stand
+      if (across(zone, w.x, target)) continue;      // wait for the rock to land
+      w.face = Math.sign(target - w.x) || w.face || 1;
       w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P) {
         if (w.hasCore) {
@@ -433,12 +499,19 @@ export function updateWorkers(now, dt) {
           w.hasCore = false;
           S.dirty = true;
         }
-        // a proper toss off the lip, so it arcs out over the edge
+        // A proper toss off the lip, so it arcs out over the edge -- and it is
+        // aimed at the hole, the same way spoil is aimed at a pile. It used to
+        // be a fixed spray, which was fine while the pit ran two windows to the
+        // right and never once while it is a scrape: the same throw sailed over
+        // the far wall and came down on the ground behind it.
+        const from = w.x + WORKER / 2, up = S.groundY - WORKER - P;
+        const far = pit.x + Math.max(P, pit.w - P * 2);
         for (let i = 0; i < w.carry; i++) {
-          spawnChip(w.x + WORKER / 2, S.groundY - WORKER - P,
-                    2 + Math.random() * 1.4 + bell() * 0.3,
-                    -(2.4 + Math.random() * 1.6),
-                    w.load?.[i] || 1);
+          // most of it near the lip, where they are standing, tailing away down
+          // the hole -- which is the shape the pile has always had
+          const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+          const v = aim(from, up, land, P);
+          spawnChip(from, up, v.vx, v.vy, w.load?.[i] || 1);
         }
         w.carry = 0;
         w.load = [];
@@ -450,7 +523,7 @@ export function updateWorkers(now, dt) {
       // attention they amble: a spot to stroll to, a stand about when they get
       // there, then another. A yard at rest should read as at rest, not as
       // switched off.
-      if (nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; continue; }
+      if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; continue; }
       if (w.roamTo === null || w.roamTo === undefined) {
         if (now >= (w.restUntil || 0)) {
           const lo = yardLeft(), hi = pit.x - WORKER;
@@ -459,6 +532,8 @@ export function updateWorkers(now, dt) {
         }
       } else {
         const d = w.roamTo - w.x;
+        if (across(zone, w.x, w.roamTo)) { w.roamTo = null; continue; }
+        w.face = Math.sign(d) || w.face || 1;
         w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE, Math.abs(d));
         if (Math.abs(d) < 1) {
           w.roamTo = null;

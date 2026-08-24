@@ -8,11 +8,12 @@
 import {
   P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
   ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase,
-  PIT_H, PIT_HEAP, PIT_W, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
+  PIT_H, PIT_HEAP, PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   SHAKE_RATE, SHAKE_DECAY,
-  TO_FARM, TO_LAB, FARM_BEDS, FARM_GAP, FARM_H, BENCH_W
+  TO_FARM, TO_LAB, TO_SCHOOL, SCHOOL_W, SCHOOL_H, FARM_BEDS, FARM_GAP, FARM_H, BENCH_W
 } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school } from './state.js';
+import { shapePit } from './pit.js';
 
 const canvas = document.getElementById('c');
 
@@ -41,7 +42,8 @@ export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() 
 export function refreshPiles() {
   S.piles = [
     heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
-    heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, bench.x - PILE_GAP),
+    // the school is the next thing along the ground now, not the bench
+    heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, school.x - PILE_GAP),
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
 }
@@ -181,12 +183,11 @@ export function resize(after) {
   S.groundY = SKY;
   S.cx = GROUND_LEFT;
 
+  // The lip is a fixed distance from the rock and never moves. How far the hole
+  // runs from it is how far it has been dug, which is not a thing the layout
+  // decides -- see shapePit.
   pit.x = S.cx + TO_LEDGE;
-  pit.w = PIT_W;
-  pit.h = PIT_H + PIT_HEAP;              // the hole, and room to heap over it
-  pit.cols = PIT_W / pit.p;
-  pit.rows = (PIT_H + PIT_HEAP) / pit.p;
-  pit.y = S.groundY - PIT_HEAP;          // the bed starts above the ground line
+  shapePit();
 
   bench.w = BENCH_W;
   bench.h = P * 7;
@@ -197,6 +198,13 @@ export function resize(after) {
   sky.x = S.cx + TO_SKY;
   sky.y = S.groundY - SKY_UP;
   sky.r = SKY_R;
+
+  // The school stands on the bare ground between the quarry's spoil and the
+  // crew's front doors: where you go to learn a trade is on the way to work.
+  school.w = SCHOOL_W;
+  school.h = SCHOOL_H;
+  school.x = Math.round((S.cx + TO_SCHOOL - SCHOOL_W / 2) / P) * P;
+  school.y = S.groundY - school.h;
 
   lab.w = P * 14;
   lab.h = P * 10;
@@ -216,7 +224,11 @@ export function resize(after) {
   farm.x = S.cx + TO_FARM;
   farm.y = S.groundY;
 
-  S.worldW = pit.x + pit.w + PIT_PAD * P;
+  // The world is the size of the finished works, not of today's. It is laid out
+  // around the hole the pit can ever be, so digging widens the hole and not the
+  // world: the ground past the far wall is the ground that is already there, and
+  // the view does not shift under you because you bought a shop row.
+  S.worldW = pit.x + PIT_W_MAX + PIT_PAD * P;
   S.worldH = S.groundY + PIT_H + FLOOR_MARGIN;
 
   floor.x = 0;

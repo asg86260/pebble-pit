@@ -90,7 +90,8 @@ export function stepFarmhand(w, now, dt) {
   // and stays there: it is a thing that grew, and it should be seen to have
   // grown before anybody takes it away.
   if (S.beds[i] < 1) {
-    S.beds[i] = Math.min(1, S.beds[i] + dt / tendMs());
+    // a grower brings a bed on twice as fast
+    S.beds[i] = Math.min(1, S.beds[i] + dt / tendMs() * (w.trained ? 2 : 1));
     if (S.beds[i] >= 1) {
       S.bedTone[i] = someFind(SPORE_CELL);
       w.cutAt = now + CUT_MS;

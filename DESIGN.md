@@ -26,8 +26,8 @@ Every site stands on one ground line. Progression is linear and physical: the wo
 the **left** as you unlock things, so walking further out *is* the tech tree.
 
 ```
-   farm        cave        rock      [bench] [lab]        pit
-    ◇            △          ▲▲▲                            ▣
+   farm      cave    [lab]  [school] [houses] [bench]  rock      pit
+    ◇          △               ▤        ▥                ▲▲▲      ▣
   ──────────────────────────────────────────────────────────────
 ```
 
@@ -39,9 +39,10 @@ is empty until a site is unlocked there.
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
 | **quarry** — an open cut; crew work its floor where you can see them | shard ◈ | cores |
 | **farm** — something growing on the spoil; crew tend it | spore ◇ | cores |
-| **bench** | spends dust and cores | — |
+| **bench** | spends dust, cores and shards | — |
+| **school** | spends shards on trades: a body that works twice as hard at one thing and will do nothing else | shards |
 | **lab** | spends shard and spore on multipliers, and shows the stats page | cores |
-| **pit** | holds it all | — |
+| **pit** | holds it all, and is dug wider and deeper as you pay for it | you start with a scrape |
 
 The rock is a **hill**: flat on the ground, irregular on top, worked from above by a crew
 standing on it.
@@ -189,10 +190,84 @@ never collects its own spray. To catch, press below the rock and swipe through t
 pixels in flight that pass near the cursor land on it instead of the floor. The rock takes a swing
 anywhere in its footprint, so clicking its general area stays easy.
 
+## The school
+
+**A job is a count, not a purchase.** You buy a body once and put it where you like; every one of
+them can be taken back the moment you want the dust moving again. That makes an assignment free,
+and something that is free is never really chosen.
+
+**A trade is the one exception, and it is what a shard is first good for.** Everything the quarry
+gave up used to sit in the counter doing nothing until the lab was built — three cores and a farm
+away — and a currency you cannot spend reads as scenery. Four shards put the school up; after that
+a shard sends somebody to it, and what comes back works twice as hard at one thing and will do
+nothing else:
+
+| | is | does | cannot |
+|---|---|---|---|
+| **breaker** | a miner | takes twice the bite out of the rock | be taken off the rock |
+| **carter** | a hauler | drags a cart, and carries twice a load in it | be put on anything else |
+| **blaster** | a quarrier | brings one up twice as often | be taken off the face |
+| **grower** | a farmhand | brings a bed on twice as fast | be taken off the beds |
+
+What you paid for is the staying as much as the work. The roster's minus button under a station
+greys out once the only bodies left on it have the trade, and a carter is not counted among the
+spare hands, so there is nobody there to send down the quarry.
+
+**It is a building, not a section on the bench.** The bench is the shop; this is a decision about
+people, and the two read differently for being made in different places — which is also why the
+bench is not eleven headings long. The school stands between the quarry's spoil and the crew's own
+front doors, the stretch everybody walks twice a shift.
+
+Nobody in this yard has a name — a job is a count and a body is whichever body happens to be doing
+it — so a trade is not something a person carries around either. It is **the first n of the bodies
+on that job**, worked out in one place. Move somebody off the rock and the hat goes to whoever is
+left, which is what the count model already means everywhere else.
+
+**The roster counts them.** Under the headcount at each station, a second line: the mark that
+trade wears out in the yard, and how many of them there are. Three of the four show the hatted
+square; the haulers show a **body with a cart behind it** — what a carter is, rather than a cart
+nobody is pulling. It trails left into the slot the minus button would be in, because carrying is
+the one post with no buttons: you never put a body *on* it. Under it rather than beside
+it, because it is a *part* of that number — of the four on the rock, two are breakers — and beside
+it the two would read as separate crews. It appears only when there is one, and the haulers get it
+too, buttons or no buttons.
+
+**They have to be visible.** A tradesman wears a hat: a solid bar across the top of the square, the
+only filled thing on a body. A carter also drags a box behind it, four cells by two — the one
+proportion in the yard that is not a body — and **what it is carrying rides in the cart** rather
+than on its own head, four abreast instead of two. That is the whole of why a cart is worth having,
+and a carter walking a double load stacked overhead would be a cart that was decoration.
+
+## The boards
+
+One menu walks along the ground from station to station and shows whichever of them you are
+standing at. That is a nice thing to watch and was a bad thing to read: three boards that slide
+into the same spot and differ only in their rows are three boards you have to work out. **Each one
+says its own name** at the top, under a rule heavier than the ones between its sections — a heading
+inside a board is a group of rows, and this is the board.
+
+**What you have to spend stands beside what you are spending it on.** Every price on a board is a
+mark and a number, and the only place you could read what you *had* of that mark was the counter
+over the pit — the other end of the yard, in the corner of the window, and as often as not behind
+the board itself. Reading a price meant looking away from it. So the same marks, in the same
+alphabet, float off the **left** of whichever board is open: left because it is read before the
+price, and because the board's own numbers already run down its right-hand edge. A currency appears
+the first time you have seen one, the same rule the counter goes by. On a phone there is no room
+beside it, so it lies along the top instead.
+
+**A board with nothing on it says so.** The school sells one trade per job and runs out of them, and
+an empty sheet is a bug you have to rule out before you can believe it. It says `nobody left to
+teach` instead.
+
 ## The workbench
 
-The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground at the
-left, opposite the pit. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
+The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground just off
+the rock's left flank, the first thing out from it, centred in the ground it has — sixty pixels of
+bare yard to the crew's block on one side and sixty to the rock's apron on the other. Where the
+crew live stands further out again, between the bench and the quarry: you walk out through the yard
+to the houses and back in to the bench, rather than past your own front door to get to the shop.
+The biggest rock is measured off the bench and stops a hand's width clear of it, so where the bench
+stands is also how big the last rock gets. Coming near it opens its board; moving away closes it. It has no click target at all, so the ground it stands on sweeps like any other. Nothing about
 upgrades is on screen while you are mining, which keeps the scene to rock, dust, crew and pit.
 
 **The bench is not there until it is worth something.** A game that cannot afford a single row has
@@ -421,12 +496,52 @@ what it pays. That rule is why the lab sells rates and never yields.
 still holds the machinery that would let the pile settle to a finer grain and hold one. See
 **The pit**.)*
 
+## Filters (dev only)
+
+There is a post-process pass in `shader.js`: the yard is drawn to its 2D canvas as it always was,
+that canvas goes to the GPU as a texture, and one fullscreen fragment shader puts the result on a
+second canvas laid over the top. Nothing about how the game draws changes — it is a filter held in
+front of the window.
+
+**Ten dials, not a list to pick from.** A look is a *mix*: a television is curvature and a shadow
+mask and scanlines and a fringe, and choosing one of those from a menu is not the same as being
+able to have a little of each. So every effect is a function with an amount of its own, they all
+live in one program, and a dial at zero costs a branch that is never taken. Order is not a detail —
+the glass bends the picture before anything is sampled off it, the ink spreads before the paper has
+a texture, and the edge of the page falls off last because it is the light in the room rather than
+anything on the sheet. The dev panel has a slider each and a few presets to start from. It opens on
+`scanlines 0.2, aberration 0.1`: enough that the page is coming off a screen rather than out of a
+printer, not enough to argue with a picture made of whole black pixels.
+
+**None of it ships.** It is loaded from `dev.js`, which `main.js` only reaches for under `vite dev`,
+so a production build never sees the file. The pass hands a whole screen of pixels to the GPU every
+frame, which on a phone would be the most expensive thing in the frame, and nothing in it has
+earned that yet.
+
+**The television dials are in there to be looked at, not because they suit the game.** Bloom,
+chromatic aberration, scanlines and curvature are built for bright things on a dark screen in a
+dark room. This is black shapes on white paper, and the mismatch is structural rather than a matter
+of taste: white cannot get brighter, so bloom has nothing to bloom and only eats the black;
+aberration fringes every edge red and cyan, when the whole pixel discipline here exists to stop
+edges going grey or fringed and colour is reserved for what the sites give up; and scanlines over a
+white page are grey stripes across the picture. In small amounts none of that is fatal, and small
+amounts are what a dial is for.
+
+**The press dials are the same pipeline pointed at what this game actually is** — paper, ink and
+a press. Grain gives the white a tooth. Bleed grows the black by a hair, so shapes read as printed
+rather than plotted. Halftone turns grey into dots the size of the lattice, which is the one effect
+that *agrees* with the game: the shades already mean how deep the rock was, and a halftone says
+that in the unit everything else is built in. Vignette is the edge of a lit page. Plates is
+chromatic aberration's respectable cousin — a colour plate one cell out of register, touching only
+what is already coloured and leaving every grey exactly where it was.
+
 ## Fitting the window
 
 Nothing about the place changes with the window. The pit floor sits on the bottom of the viewport
-and the ground line a fixed height above it, so the ground never moves. The pit is always 3624
-world pixels across and 276 deep, and every site keeps its distance from the rock. A bigger
-window is only more sky above and more ground either side.
+and the ground line a fixed height above it, so the ground never moves. The world is laid out
+around the pit at its **full** size — 3600 world pixels across and 276 deep — whatever the hole has
+actually been dug to, and every site keeps its distance from the rock. A bigger window is only more
+sky above and more ground either side.
 
 **The picture never scales.** `CELL` in `config.js` is the whole of the zoom — the screen pixels a
 cell is drawn at, and therefore the size the game is. Turning it down shows more yard at once
@@ -462,10 +577,46 @@ A tap opens a board at the bench or the lab, because a finger cannot hover.
 
 ## The pit
 
-The pit is **one fixed hole**: 3624 world pixels across and 276 deep, always. It runs about two
-windows to the right, so most of it sits off the edge and you scroll to see along it. There is
-ground past its far wall, so scrolling to the end shows you the edge of the thing rather than
+The pit is **dug, not given**. It starts as a scrape in the ground — 150 world pixels across and
+150 deep, a few hundred grains, full inside the first couple of minutes — and every **dig** bought
+at the bench takes the far wall out 150px and the floor down a row. Twenty-three digs and it is the
+whole hole: 3600 across, 276 deep, running about two windows to the right, so most of it sits off
+the edge and you scroll to see along it.
+
+Depth runs out first, at the twenty-first dig. There are only twenty-one rows between the scrape
+and the deepest the hole can be, because the depth is pinned to the window; the last digs are all
+sideways. That is the same trade the million was always under — room in this hole can only be
+bought along.
+
+**The near lip never moves.** A dig takes out the far wall and the floor, so nothing you can
+already see changes place, and the world is laid out around the finished hole from the first frame:
+the ground past the far wall is ground that is already there, and buying a dig does not shift the
+view or the ground under you. Scrolling to the end shows you the edge of the thing rather than
 running out of world.
+
+**A bigger hole shows more of what you hold.** The pile is capped by the room in the bed, not by
+the counter, so dust that was over the brim — counted but with nowhere to be drawn — comes back into
+the picture the moment there is room for it.
+
+**A stopped station says why.** The bar over a station whose pile has filled is a mark you learn,
+and the first time you meet one it is a mark you have to guess at — so putting the cursor on it
+gives you the words: `pile is full`. The full hole owes the same explanation and gives it, on the
+bar standing on its own lip: `the hole is full`. It is the only writing in the yard, and it is not
+on screen until it is asked for.
+
+**A full hole takes nothing.** The pile *is* the dust, so a counter that went on climbing while the
+pile stood still would be the number and the picture saying different things. Whether the hole is
+full — and whether the heap over the mouth has unlocked — is a question about the **pile**, never
+about the counter. They are nearly the same number, and the difference is a core: a core in the
+pile takes a cell and is not dust, so reading the counter meant the hole was physically full one
+grain before the counter agreed. The heap never unlocked, and the crew stood at the lip throwing
+dust at a brim with nowhere under it, for ever, because nothing about that state could change. The
+pit grid keeps a live count of its own occupied cells instead. When there is no room
+the dust does not go in and is not counted: the haulers stand down and keep hold of what they are
+carrying, a bar stands on the near lip to say so, and anything thrown at the brim comes back out
+onto the rock's own pile. Nothing mined is destroyed by a hole with no room in it. The way to bank
+another grain is to dig. A find is never turned away — there are a handful of them in a whole game
+and each one is a thing you went and got.
 
 **Once the hole is full the pile keeps going**, heaping up over the mouth rather than stopping
 dead at the ground line — but only over the mouth. It is the same bed of sand and the bed is only
@@ -477,8 +628,9 @@ the lip would be a wall against the ground, which is not what a pile does.
 
 **The pile is the dust, not a picture of it.** One grain is one dust, always, drawn the same
 size as dust anywhere else, and paying takes exactly as many grains back out as the counter
-loses. The pile always shows as much of the hole as will fit in it: 27,784 grains, about a
-run's worth of mining. Past that the counter keeps going and the pile sits at the brim.
+loses. The pile always shows as much of the hole as will fit in it: 655 grains in the scrape you
+start with, 37,566 in the hole fully dug out. It stops there, and so does the counter, which is the
+whole of the pressure to dig.
 
 A million does not fit at this grain, and the goal is parked for now. The machinery to get
 there is still in place: `PIT_GRAINS` lists the sizes a grain may be drawn at, and adding
@@ -488,6 +640,11 @@ resolution changes. At one pixel a grain the same hole holds 1,000,224. The arit
 unforgiving: a million grains needs a million pixels of hole, and since the depth is pinned
 to the window it can only be bought sideways — 2px grains would need a pit seven screens wide,
 3px seventeen. That is the trade whenever the goal comes back.
+
+**A core in the pile is drawn at the size a core is**, not at the size of the cell it holds. It is
+one grain as far as the sand is concerned — it heaps and settles like any other — but a cell is six
+pixels, and a six-pixel ring in a bed of grey speckle is a grain that happens to be pale. You put
+it in the hole and it vanished.
 
 Two things keep a big pile cheap, and are worth keeping either way:
 
@@ -504,12 +661,19 @@ cells deep, and a full yard sent the rest rolling in rather than piling up mid-a
 they banked the whole yard for free and left the haulers with nothing to do, which is the one
 thing the ground must never do.
 
+**The lip is as close to the rock as the spoil will allow.** What has to fit between the rock's
+apron and the pit is one full pile and a sweep of bare ground — 1400 grains at the angle sand
+stands at wants a base of 62 cells — and nothing else does. It used to stand a further 200px out,
+which was ground you dragged dust across by hand: the first pile in the game is cleared with the
+cursor, before there is anybody hired to carry anything, and the walk was the length of the yard
+for no reason. Closing it makes neither the pit nor the pile smaller.
+
 **Every station piles to its right**, into a strip of ground that belongs to it. The world reads
 station, pile, station, pile, all the way along — the farm and its crop, the cave and what comes up
 it, the rock and its spoil — and then the bench, the lab and the hole it all ends up in:
 
 ```
-farm | farm pile | cave | cave pile | rock | rock pile | bench  lab | pit
+farm | farm pile | cave | cave pile | lab  houses  bench | rock | rock pile | pit
 ```
 
 Nothing heaps anywhere else. The ground between the strips stays bare, so every pile is legibly
