@@ -205,7 +205,7 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labcave',
-    name: 'quarry pace',
+    name: 'quarry speed',
     from: () => `x${mult('quarry').toFixed(2)}`,
     to: () => `x${(mult('quarry') * STEP).toFixed(2)}`,
     cost: () => Math.round(3 * Math.pow(1.9, S.mult.quarry)),
@@ -215,7 +215,7 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labtend',
-    name: 'bed pace',
+    name: 'bed speed',
     from: () => `x${mult('tend').toFixed(2)}`,
     to: () => `x${(mult('tend') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.tend)),

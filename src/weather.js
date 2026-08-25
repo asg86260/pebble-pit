@@ -156,6 +156,10 @@ export function sendBirds() {
 // yard where nothing would ever fetch it. The rest of the lot break for it too:
 // a flock that carried on in formation after one of them was startled would say
 // the click had not landed.
+// close enough to one to knock it off its line
+export const overBird = (wx, wy) =>
+  BIRDS.some(b => Math.abs(wx - skyX(b)) <= BIRD_REACH && Math.abs(wy - b.y) <= BIRD_REACH);
+
 export function startle(wx, wy) {
   for (let i = 0; i < BIRDS.length; i++) {
     const b = BIRDS[i];

@@ -8,14 +8,14 @@ import { P, MINE_DELAY, WORKER } from './config.js';
 import { S, bench } from './state.js';
 import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
-import { sweep, release, track } from './hands.js';
-import { startle } from './weather.js';
+import { sweep, release, track, overCore } from './hands.js';
+import { startle, overBird } from './weather.js';
 import { nearBench, nearLab, nearSchool, nearCasino, showPanel, placeBoard, showTip } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
          overPitMark, pitMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
-import { rosterHit } from './roster.js';
+import { rosterHit, overRoster } from './roster.js';
 import { mineMs } from './upgrades.js';
 import { pitFull } from './pit.js';
 import { now } from './clock.js';
@@ -103,6 +103,7 @@ canvas.addEventListener('pointermove', e => {
     // a board opens because you walked up to a station, a tooltip opens because
     // you went and looked at a mark
     askedAbout(S.mouse.x, S.mouse.y);
+    setCursor(S.mouse.x, S.mouse.y);
   }
   if (e.buttons === 0 && (S.mining || S.dragging)) { endDrag(e); return; }
   if (S.dragging) sweep(S.mouse.x, S.mouse.y);
@@ -175,19 +176,62 @@ function askedAbout(x, y) {
   for (const p of S.piles) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip('pile is full', pileMarkAt(p.key));
-    return;
+    return true;
   }
   // the hole stops the haulers the way a full pile stops a gang, and it owes
   // the same explanation
   if (pitFull() && overPitMark(x, y)) {
     showTip('the hole is full', pitMarkAt());
-    return;
+    return true;
   }
   if (S.labDone && overLabMark(x, y)) {
     showTip(doneName(), labMarkAt());
-    return;
+    return true;
   }
   showTip(null);
+  return false;
+}
+
+// --- what the cursor says ------------------------------------------------------
+// The yard is one canvas, so nothing drawn in it can carry a cursor of its own
+// the way a button on a page does. Everything in here has to be asked, every
+// time the mouse moves -- which is cheap, and worth it: a game where half the
+// things on screen do something when you click them and none of them say so is a
+// game you have to poke at to find out.
+//
+// Crosshair is the ground state, because the ground state of this game is aiming
+// at a rock. Everything below is something else you can do instead.
+const CURSORS = [
+  // carrying something: the hand is closed
+  [() => S.heldCore || S.dragging, 'grabbing'],
+  // a core lying about is the one thing here you pick up yourself
+  [(x, y) => overCore(x, y), 'grab'],
+  // the counts under a station, and the places with a board on them
+  [(x, y) => overRoster(x, y), 'pointer'],
+  [(x, y) => nearBench(x, y) || nearLab(x, y) || nearSchool(x, y) || nearCasino(x, y), 'pointer'],
+  // a mark that will tell you why something has stopped
+  [(x, y) => overAnyMark(x, y), 'help'],
+  // and a bird, which is a thing to notice rather than a thing to farm
+  [(x, y) => overBird(x, y), 'pointer']
+];
+
+// The same three marks `askedAbout` shows a tooltip for, asked without showing
+// one -- the cursor changes on the way *towards* the mark, and a tooltip that
+// appeared at the same moment would be the yard answering a question nobody had
+// finished asking.
+function overAnyMark(x, y) {
+  for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
+  if (pitFull() && overPitMark(x, y)) return true;
+  return !!(S.labDone && overLabMark(x, y));
+}
+
+let wearing = '';
+function setCursor(x, y) {
+  let want = 'crosshair';
+  for (const [is, name] of CURSORS) if (is(x, y)) { want = name; break; }
+  if (want === wearing) return;                // only when it actually changes
+  wearing = want;
+  canvas.style.cursor = want;
 }
 
 function pan(dx) {

@@ -220,7 +220,10 @@ const FARM = site({
 export const UPGRADES = [
   {
     key: 'carry',
-    name: 'carry',
+    // The same word the crew's row uses, because it is the same thing: how much
+    // a pair of hands lifts in one go. Yours were called "carry" and theirs
+    // "load", which is two names for one idea and a player having to learn both.
+    name: 'strength',
     from: () => capacity(),
     to: () => capacity() + CAP_STEP,
     cost: () => Math.round(8 * Math.pow(1.35, S.carryLevel)),
@@ -256,7 +259,10 @@ export const UPGRADES = [
   // Yours is a tool, and a tool is cut stone: shards.
   {
     key: 'pick',
-    name: 'pick',
+    // And the same again for the tool. What you swing and what a miner swings do
+    // exactly the same job, so they are the same row under two headings rather
+    // than "pick" here and "upgrade pickaxe" over there.
+    name: 'upgrade pickaxe',
     unit: 'px',
     from: () => pickCount(),
     to: () => pickCount() + 1,
@@ -272,7 +278,10 @@ export const UPGRADES = [
   // two currencies a job each instead of one of them doing all the work.
   {
     key: 'minerpick',
-    name: 'miner bite',
+    // What you are buying is the tool, not the number the tool moves. The row
+    // said "miner bite", which is the effect described in the game's own jargon
+    // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
+    name: 'upgrade pickaxe',
     unit: 'px',
     from: () => minerBite(),
     to: () => minerBite() + 1,
@@ -283,7 +292,11 @@ export const UPGRADES = [
   },
   {
     key: 'minerspeed',
-    name: 'miner swing',
+    // Two words do the work of every rate on these boards now: a **swing** is a
+    // pick hitting rock, and **speed** is how often anything else happens. Each
+    // one means one thing, and a row under "the rock" saying "miner" was saying
+    // what the heading already said.
+    name: 'swing',
     unit: 'px/s',
     from: () => num(minerRate()),
     to: () => num(minerRate(S.minerSpeedLevel + 1)),
@@ -293,7 +306,10 @@ export const UPGRADES = [
   },
   {
     key: 'haulcarry',
-    name: 'worker load',
+    // The heading over these rows already says "the crew", so the rows do not
+    // need to say "worker" as well -- and what a body can pick up in one go is
+    // its strength rather than its load, which is the thing it is carrying.
+    name: 'strength',
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel + 1),
     cost: () => Math.round(50 * Math.pow(1.5, S.haulCarryLevel)),
@@ -302,7 +318,7 @@ export const UPGRADES = [
   },
   {
     key: 'haulpace',
-    name: 'worker pace',
+    name: 'speed',
     unit: 'px/s',
     from: () => num(haulSpeed() * 60),
     to: () => num(haulSpeed(S.haulPaceLevel + 1) * 60),
@@ -318,7 +334,11 @@ export const UPGRADES = [
   // down there are carrying up.
   {
     key: 'quarrybench',
-    name: 'take out a bench',
+    // What the row says is what you are doing, not what it leaves behind. "Take
+    // out a bench" is the quarryman's word for it and the shape you can see in
+    // the wall afterwards -- but the thing you are buying is the hole going
+    // further down, and that is what the row should say.
+    name: 'dig deeper',
     from: () => benches(),
     to: () => benches() + 1,
     cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
@@ -331,7 +351,11 @@ export const UPGRADES = [
   // of what it gives up, or opening it is a bill with nothing at the end of it.
   {
     key: 'quarrypace',
-    name: 'quarry lamps',
+    // It was "quarry lamps" -- the fiction being that you work faster when you
+    // can see. A nice thought and a bad row: nothing else on this board is named
+    // after the *reason* it works, and a lamp is not a thing this game ever
+    // draws. It is how often a shard comes off the face, which is speed.
+    name: 'speed',
     unit: 'trips/min',
     from: () => num(quarryRate()),
     to: () => num(quarryRate(S.quarryPaceLevel + 1)),
@@ -376,7 +400,10 @@ export const UPGRADES = [
   // the dust it will hold: paying for room comes out of the room you have.
   {
     key: 'dig',
-    name: 'dig the pit',
+    // Not "dig the pit": the quarry's row is "dig deeper" now and two rows on
+    // one sheet both starting with dig is two rows you have to read twice. A
+    // dig takes the far wall out and the floor down, and it is mostly the wall.
+    name: 'widen the pit',
     unit: 'px',
     from: () => pitCapacity(),
     to: () => capacityAt(S.pitLevel + 1),
@@ -394,7 +421,8 @@ export const UPGRADES = [
   // what the beds already in it have grown, and a bed is a place for one body.
   {
     key: 'farmbed',
-    name: 'break a bed',
+    // Same again: breaking ground is what it takes, a plot is what you get.
+    name: 'new plot',
     from: () => bedCount(),
     to: () => bedCount() + 1,
     cost: () => Math.round(BED_COST * Math.pow(BED_RATE, S.bedLevel)),
@@ -404,7 +432,11 @@ export const UPGRADES = [
   },
   {
     key: 'tend',
-    name: 'tending',
+    // "tending" was the truest word for it -- a farmhand tends a bed and this is
+    // how fast -- and it was the odd one out on a board where every other rate
+    // says speed. One word meaning one thing beats five words each meaning it
+    // slightly better.
+    name: 'speed',
     unit: 'beds/min',
     from: () => num(tendRate()),
     to: () => num(tendRate(S.tendLevel + 1)),

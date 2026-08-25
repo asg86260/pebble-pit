@@ -384,6 +384,26 @@ under `you` while half of what it paid for was out on the rock.
 Opening a site glides the view to it. It is four cores and a row in a menu, and the thing bought
 is off the left of the screen; without that, nothing appears to happen.
 
+## The cursor
+
+**The yard is one canvas**, so nothing drawn in it can carry a cursor of its own the way a button on
+a page does. Everything has to be asked, every time the mouse moves — which is cheap, and worth it:
+half the things on screen do something when you click them, and without this none of them say so.
+
+**Crosshair is the ground state**, because the ground state of this game is aiming at a rock.
+Everything else is something you can do instead:
+
+| | |
+|---|---|
+| **grab** | a loose core — the one thing in this yard you pick up yourself |
+| **grabbing** | while you are carrying it, or sweeping dust |
+| **pointer** | a place with a board on it, the counts under a station, a bird |
+| **help** | a mark that will tell you why something has stopped |
+
+The tooltip and the cursor are asked separately and answer at different moments: the cursor changes
+on the way *towards* a mark, and a tooltip appearing at the same instant would be the yard answering
+a question nobody had finished asking.
+
 ## Catching
 
 Swinging and catching are separate gestures. A press on the rock is a swing and nothing else — it
@@ -558,7 +578,20 @@ a new group is. Opening the board reads every heading on it, and the flag comes 
 The board is grouped by where the work is — you, the crew, the rock, the cave, the farm and the lab — with the headcount beside each heading. Each place that can be worked carries a **job
 row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board
 that spends nothing, and it is the only one you can run backwards. Every row is the same five columns, so the numbers line up down the page and can be
-scanned rather than read: name, current, arrow, next, cost. Costs and units carry the marks the game
+scanned rather than read: name, current, arrow, next, cost.
+
+**A row says what you get, in the fewest words that are still true, and the same word every time.**
+Three rules, and they took a pass of their own to arrive at:
+
+- **The heading has already said where.** A row under *the crew* does not say "worker"; one under
+  *the rock* does not say "miner"; one under *the quarry* does not say "quarry".
+- **Name the thing, not the reason.** The quarry's pace row was "quarry lamps" — the fiction being
+  that you work faster when you can see. Nothing else on the board is named after the reason it
+  works, and a lamp is not a thing this game ever draws.
+- **The same word every time, even across headings.** Two rows called *speed* under two different
+  headings read better than two careful synonyms; the heading is what tells them apart. So there are
+  two words for every rate on these boards: a **swing** is a pick hitting rock, and **speed** is how
+  often anything else happens. One word, one meaning. Costs and units carry the marks the game
 itself draws: a filled square for a grain of dust, a ring for a core. A rate reads `2.2 → 2.7 ■/s`
 rather than naming pixels. Deliberately not an upgrade web.
 

@@ -121,8 +121,33 @@ export function kitStands() {
 
 const inside = (b, x, y) => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h;
 
-// A click on a roster, in world units: true if it was one, so the yard knows
-// not to treat it as a swing at the ground. The buttons are only live when they
+// What a button is to *hit*, as against what it is to look at.
+//
+// The mark is a bar three cells long and a hairline thick, on purpose: a box
+// round it reads as a dialog that has wandered into a yard with no windows,
+// panels or frames anywhere else in it. What that costs is the edge that told
+// you where to aim -- so the target is grown instead, well past the mark and
+// past the slot it sits in, and the cursor turns over exactly this much of it.
+// You aim at the bar and you hit a good deal more than the bar.
+//
+// A cell out to the sides and two up and down: sideways it may not reach the
+// count between the two buttons, which is not a button and must not become one;
+// vertically there is nothing there but bare ground to be generous with.
+const HIT_X = P, HIT_Y = P * 2;
+const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
+                    w: b.w + HIT_X * 2, h: b.h + HIT_Y * 2 });
+
+// Whether the cursor is over a button, without pressing it. The yard is drawn on
+// one canvas, so nothing in it can carry a cursor of its own the way a DOM
+// button does -- somebody has to ask, every time the mouse moves.
+export const overRoster = (x, y) => posts().some(p => {
+  if (p.fixed) return false;
+  const b = boxes(p);
+  return inside(hit(b.less), x, y) || inside(hit(b.more), x, y);
+});
+
+// A click on a roster, in world units: true if it was one, so the yard knows not
+// to treat it as a swing at the ground. The buttons are only live when they
 // would do something -- there is no body to take off an empty post, and none to
 // put on one when every hand is already spoken for.
 export function rosterHit(x, y) {
@@ -132,8 +157,8 @@ export function rosterHit(x, y) {
     // a near miss on either button still counts as that button rather than as a
     // swing at the ground: they are small, and the ground behind them does
     // something else entirely
-    if (inside(b.less, x, y)) { assign(p.job, -1); return true; }
-    if (inside(b.more, x, y)) { assign(p.job, 1); return true; }
+    if (inside(hit(b.less), x, y)) { assign(p.job, -1); return true; }
+    if (inside(hit(b.more), x, y)) { assign(p.job, 1); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
   }
   return false;
@@ -183,8 +208,8 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart) {
 // has no windows, panels or frames anywhere else in it, and two bordered squares
 // under every station read as a dialog that had wandered into the picture. The
 // mark alone is the same thing to click and one less thing to look at. What it
-// loses is the edge that said where to aim, so the hit box stays the size the
-// box was: a cell of slack all round, which the cursor never has to know about.
+// loses is the edge that said where to aim -- and what makes up for that is a
+// target grown well past it, and a cursor that turns over the whole of it.
 //
 // Pale when it would do nothing, rather than hidden -- a control that comes and
 // goes is a control you have to hunt for.
@@ -229,8 +254,9 @@ export function drawRosterCounts(ctx, screenAt) {
 export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
+    const H = hit(b.less);
     return { key: p.key, job: p.job, n: S[p.job], hats: hats(p.job), worn: worn(p.job),
-             spareKit: spareKit(p.job), fixed: !!p.fixed,
+             spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
              room: Math.min(99, roomAt(p.job)),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],

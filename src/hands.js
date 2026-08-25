@@ -54,6 +54,13 @@ export function catchAir(mx, my) {
 }
 
 // pick up floor dust inside the brush, up to what the cursor can carry
+// A core lying about, under the cursor: it can be picked up and carried, which
+// is the one thing in this yard you handle yourself.
+export const overCore = (mx, my) =>
+  !!S.coreItem && !S.heldCore &&
+  Math.abs(S.coreItem.x + CORE_SIZE / 2 - mx) < CORE_SIZE &&
+  Math.abs(S.coreItem.y + CORE_SIZE / 2 - my) < CORE_SIZE;
+
 export function sweep(mx, my) {
   // a loose core on the ground is picked up by hand, no capacity needed
   if (S.coreItem && !S.heldCore &&
