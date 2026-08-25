@@ -14,7 +14,7 @@ import { rockLeft } from './world.js';
 import { bankDust } from './pit.js';
 import { blocked } from './world.js';
 import { now } from './clock.js';
-import { introRunning } from './intro.js';
+import { introTalking } from './intro.js';
 
 // the core sits at the middle of the rock and only comes loose when it is bare
 export function coreHome() {
@@ -57,7 +57,7 @@ export function stepCore() {
   // Nothing rolls in while the opening is running. The yard is deliberately
   // empty for those few seconds -- two squares and bare ground -- and the rule
   // below, that a bare yard gets a rock, is exactly the rule that would fill it.
-  if (introRunning()) return;
+  if (introTalking()) return;
 
   // the moment the last pixel goes, the core is loose and falls from the middle
   if (S.coreBuried && !boulderAlive()) {

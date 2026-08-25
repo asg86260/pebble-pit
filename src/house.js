@@ -52,8 +52,17 @@ const courseWide = c => Math.max(3, HOUSE_COLS - c);
 // is one settlement with rooms in it rather than a stack of separate huts. What
 // moves is the courses -- each one sits a room off the one below when there is
 // slack to do it with, and never hangs out over thin air.
+// The first body gets two rooms, not one: the doorway and a room to live in.
+//
+// A settlement of one used to be a single cube with a door punched in it and no
+// window anywhere, which reads as a shed rather than as somewhere anybody lives
+// -- and the first thing hiring did was give that shed a window, which is a
+// strange thing for hiring to do. Room zero is the way in and has always been
+// the doorway; the rooms after it are the ones with people in them. So there is
+// one window a body from the very first, and building stays what it was: a hire
+// is a room, and room seventeen stands where room seventeen stands.
 export function cubes() {
-  const n = S.crew;
+  const n = S.crew > 0 ? S.crew + 1 : 0;
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
   // The left edge of the ground course, and it never moves: it is worked out
@@ -124,7 +133,8 @@ export function chimneyAt() {
 //
 // Rooms are lit from the bottom up, in the order they were built, because a
 // scatter of lit rooms would read as a pattern somebody chose. Room zero is the
-// doorway and is not a window.
+// doorway and is not a window -- so there is exactly one window a body, and a
+// yard with everybody home is a front with every light on.
 export const homeCount = () => S.workers.filter(w => w.inside).length;
 export const lit = i => i > 0 && i <= homeCount();
 

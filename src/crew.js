@@ -6,7 +6,7 @@
 
 import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY,
          DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
-         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK } from './config.js';
+         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { blocked, standOn, walkY, rockLeft, yardLeft, kitX } from './world.js';
@@ -29,6 +29,7 @@ import { doorAt } from './house.js';
 const MINE_BAND = 3;      // cells below the peak still counted as the top layer
 const ROAM_RANGE = 420;   // how far an idle worker will wander for no reason
 const ROAM_PACE = 0.45;   // and how slowly it goes about it
+const ROAM_ELBOW = WORKER * 1.4;   // how close two of them will stand
 const MINER_WALK = 0.5;   // pixels a frame along the row
 
 
@@ -133,7 +134,14 @@ function newHauler() {
   const { x } = hireSpot();
   return {
     type: 'hauler', x, y: walkY(x + WORKER / 2),
-    carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null
+    carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null,
+    // Its own legs and its own patience, for when it has nowhere to be. Six
+    // bodies strolling at exactly one speed and standing about for exactly one
+    // length of time is a marching band, not a yard at rest -- and it is the
+    // same trick every other job here already uses to stop a gang reading as one
+    // animation played six times.
+    amble: 0.7 + Math.random() * 0.6,
+    linger: 0.6 + Math.random() * 1.3
   };
 }
 
@@ -441,6 +449,62 @@ function unbook(w) {
   w.took = 0;
 }
 
+// --- the yard at rest ---------------------------------------------------------
+// Where a body with nothing to do wanders to.
+//
+// It used to be a number a few hundred pixels either side of where it already
+// was, which is a random walk: no destination, no reason, and six of them doing
+// it at once reads as insects rather than as people. A stroll wants somewhere to
+// go, and this yard has somewhere -- the rock, the lip of the hole, and whoever
+// else is standing about.
+//
+// So a spot is chosen from a handful of real ones, weighted. Most of the time it
+// is still just a few steps, because most of what anybody does when they are
+// waiting is shuffle a few steps; but often enough it is *over to somebody*,
+// which is what turns two bodies standing near each other into the conversation
+// the break code was already able to have and almost never got the chance to.
+function nearIdle(w) {
+  let best = null, near = Infinity;
+  for (const o of S.workers) {
+    if (o === w || o.type !== 'hauler' || o.inside || o.carry || o.walking) continue;
+    if (o.goal !== 'idle') continue;
+    const d = Math.abs(o.x - w.x);
+    if (d < 24 || d > ROAM_RANGE * 1.6 || d >= near) continue;
+    near = d;
+    best = o;
+  }
+  return best;
+}
+
+function strollTo(w) {
+  const spots = [];
+  const add = (weight, x) => { if (x != null) for (let i = 0; i < weight; i++) spots.push(x); }
+
+  // a few steps, and nothing more: most of what waiting looks like
+  add(5, w.x + (Math.random() - 0.5) * ROAM_RANGE);
+  // over to somebody, and stopping beside them rather than on them
+  const mate = nearIdle(w);
+  add(4, mate ? mate.x + Math.sign(w.x - mate.x) * ROAM_ELBOW : null);
+  // and the two things in this yard worth going and looking at
+  add(2, rockLeft() - ROCK_CLEAR - WORKER * 2);
+  add(2, pit.x - WORKER * 3);
+
+  const lo = yardLeft(), hi = pit.x - WORKER;
+  return Math.max(lo, Math.min(hi, spots[Math.floor(Math.random() * spots.length)]));
+}
+
+// Nobody stands inside anybody. Two idlers who end up on the same spot drift
+// apart a little, the way the gang on the rock and the crew down the cut do.
+function elbowIdle(w) {
+  for (const o of S.workers) {
+    if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'idle') continue;
+    const d = o.x - w.x;
+    if (Math.abs(d) >= ROAM_ELBOW) continue;
+    w.x -= Math.sign(d || 1) * 0.25;
+    return;
+  }
+}
+
 // The nearest column of dust that nobody else has set off for. One column, one
 // worker: without that, every worker in the yard works out the same answer and
 // the whole line turns round for a single grain behind them, then turns round
@@ -466,9 +530,14 @@ function nearestDust(x, taken) {
 // clean first -- which, in a yard with a working crew, is never.
 function nearestMark(w, taken) {
   let best = -1, bestD = Infinity;
+  // Nothing beyond the near lip: a body cannot cross the hole, so a find over
+  // there is one it would set off for and stand at the edge of for ever. What
+  // lands past the pit is yours to sweep up, not theirs to fetch -- the same
+  // bound `nearestDust` has always kept.
+  const last = Math.max(0, colOf(floor, pit.x) - 1);
   for (const m of S.floorMarks) {
     const c = colOf(floor, m.x);
-    if (c < 0 || c >= floor.cols || taken.has(c) || !at(floor, c, 0)) continue;
+    if (c < 0 || c > last || taken.has(c) || !at(floor, c, 0)) continue;
     const d = Math.abs(m.x - w.x);
     if (d < bestD) { bestD = d; best = c; }
   }
@@ -636,7 +705,13 @@ export function updateWorkers(now, dt) {
     // room it booked, and turning it round at the lip is the exact thing this is
     // here to stop. A core is not dust and the hole always takes one.
     const noRoom = !w.hasCore && !w.carry && roomOnBoard(w) < 1 && pitFree() < 1;
-    if (noRoom && w.goal !== 'idle') {
+    // Somebody already on their way home is left alone. Telling a body there is
+    // no room is telling it to stand down, and a body walking to the door has
+    // stood down already -- so this used to catch it, put it back on `idle`, and
+    // the idle branch would send it home again on the very next frame. Home,
+    // idle, home, idle, and it never took a step: a yard full of dust, a full
+    // hole, and the whole crew stood stock still between the pile and the lip.
+    if (noRoom && w.goal !== 'idle' && w.goal !== 'home') {
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
       unbook(w);
       w.goal = 'idle';
@@ -766,21 +841,20 @@ export function updateWorkers(now, dt) {
       // walking somewhere is on its way there.
       w.resting = w.roamTo === null || w.roamTo === undefined;
       if (w.roamTo === null || w.roamTo === undefined) {
+        elbowIdle(w);                  // and not stood inside somebody
         // and it stays put while it is having one: a body that wandered off
         // mid-cigarette would be a body that was never really standing there
-        if (!w.brk && now >= (w.restUntil || 0)) {
-          const lo = yardLeft(), hi = pit.x - WORKER;
-          const near = w.x + (Math.random() - 0.5) * ROAM_RANGE;
-          w.roamTo = Math.max(lo, Math.min(hi, near));
-        }
+        if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
       } else {
         const d = w.roamTo - w.x;
         if (across(zone, w.x, w.roamTo)) { w.roamTo = null; continue; }
         w.face = Math.sign(d) || w.face || 1;
-        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE, Math.abs(d));
+        // its own legs, not everybody's
+        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1), Math.abs(d));
         if (Math.abs(d) < 1) {
           w.roamTo = null;
-          w.restUntil = now + 500 + Math.random() * 3000;
+          // and its own patience about standing there afterwards
+          w.restUntil = now + (500 + Math.random() * 3000) * (w.linger || 1);
         }
       }
     }

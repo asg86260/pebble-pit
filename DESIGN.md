@@ -26,9 +26,40 @@ The game used to start with a rock already sitting on the ground and a cursor to
 Nothing said why, and *why* is the one question an incremental never answers: you are clicking
 because clicking is what there is.
 
-So it starts **before** the rock. Two squares are stood on the bare ground talking to each other —
-the same dots two bodies pass back and forth on a break, which is the whole of the vocabulary this
-game has for people getting on — and then a boulder comes down out of the sky on one of them.
+So it starts **before** the rock, and it starts **close**. Two squares are stood on the bare ground
+with the view pulled right in on them — two squares at the far end of a yard are two squares; two
+squares filling the window are two people — talking to each other in the same dots two bodies pass
+back and forth on a break, and every so often one of them says the other thing: a heart. That is
+the whole of the vocabulary this game has for people getting on, and it is enough.
+
+Then a boulder comes down out of the sky on one of them, and **the beat is given the room to land**.
+The one left standing is thrown clear as it falls — they were stood a good deal closer together than
+the rock is wide, so it is already flying while the rock is still in the air; anything else is a
+rock landing on both of them — comes down flat on its back, lies there in the only silence in the
+game, gets up with an exclamation mark over its head, and starts digging. The view pulls back out
+while it does, and by the time it is out you are playing. The whole of it takes about twenty
+seconds and nothing in it is hurried.
+
+**Then it shows you the loop rather than telling you.** The last thing the opening does is play one
+turn of the game through with the real crew: the body goes at the rock, a few pixels come off onto
+the ground, and it carries them the length of the yard and tips them into the hole. Two grains is
+enough — what is being shown is *where dust goes*, not how much of it there is — and the view walks
+with it, because the hole is off the side of any window you can see the rock in. Nothing in it is a
+special case pretending to be the game: it **is** the game, one body put on the rock and taken off
+it at the right moment, and the crew code does the walking, the swinging, the scooping and the
+throw. All the opening does is decide when to change its mind and where to point the camera.
+
+It hands you the yard with that body on carrying rather than on the rock, which is the shape the
+demonstration just taught: you dig, it carries.
+
+**The zoom is the one exception the game makes.** A cell is a cell whatever you are looking at it
+on — that rule holds everywhere else, all game. And it holds *within* the exception too: the zoom
+**steps** rather than slides, down through whole cell sizes, a dozen or so of them between close and
+normal. A cell drawn across a fraction of a device pixel is a cell antialiased against the page, and
+the sand is blitted up from a scratch canvas at one pixel a cell — so a fractional scale resamples
+the entire pile. Sliding the zoom made the rock go soft and swim and the ground read as
+see-through, which is not something you can fix by drawing it differently, only by never asking for
+a size that does not exist.
 
 Everything after that is one body trying to get its mate out. That is what the crew is for, what
 the pit is for, and why the rocks keep coming: **the one underneath is still alive.** Every time
@@ -151,7 +182,7 @@ out past the lab — the longest walk, on purpose, for the place that produces n
 
 **One table, one pot, and putting a chip down is the spin.** You pick how much — ◾ 10, 100, 1,000
 or everything you have — and which of dust, shards or spores it comes out of, and the wheel goes
-round: **six in ten it is doubled, four in ten it is gone.** One gesture, not two: an earlier
+round: **half of it doubles what you put down and half of it takes it.** One gesture, not two: an earlier
 version opened the pot at half the stake and had it climb back over half a minute, which was a
 puzzle rather than a bet — you put something down and then watched a number go up.
 
@@ -160,11 +191,55 @@ If it came off, the pot is sitting there and you decide again:
 | | |
 |---|---|
 | **bank it** | take it and walk out |
-| **spin again** | six in ten it doubles, four in ten it is gone |
+| **spin again** | half it doubles, half it is gone |
 
-Six in ten is generous on any one spin and ruinous kept up, which is the whole of what a casino is:
-every spin is worth taking and taking them all ends at nothing with certainty. **When to stop is
-the game**, and it is the only thing in this yard you can actually lose.
+**Even money, and that is the whole of the house's edge** — which sounds like no edge at all until
+you notice that a fair double-or-nothing taken for ever ends at nothing with certainty. No spin
+here is a bad bet and no run of them is a good one. **When to stop is the game**, it is the only
+decision in it, nothing about the odds will make it for you, and it is the only thing in this yard
+you can actually lose.
+
+**A spin is the one moment in this game you are meant to sit and watch**, so it is given the room to
+be one: the wheel comes off its mark and drags itself down to a stop over two and a half seconds,
+and the last half-turn is the slow one — by then you can read which way it is going to go. The stop
+knocks the view, and harder when it came off.
+
+**The wheel is cut into eight**, half filled and half bare and alternating all the way round,
+which is the odds written on the thing
+itself rather than as a percentage on a row. A pointer stands at the top and does not turn; the
+slice under it when the wheel stops is the answer. The wheel does not free-run and then get told
+what happened — the answer is picked first and the wheel is *aimed* at it, six whole turns and then
+a slice of the right kind under the pointer, so what you are watching is the thing deciding.
+
+**Black and white, not red and green.** Colour in this yard means one thing — what a site gave up —
+and a wheel painted in traffic lights was the first thing here that used it for mood. It does not
+need it: the grammar is already on the page. A filled cell is a thing and white is the absence of
+one, which is exactly what winning and losing a pot are. The wheel is set in a white disc knocked
+out of the block, because black slices on a black building are a wheel you cannot find.
+
+**What is on the table is a real bed of sand.** Not a drawing of a heap sized to look about right —
+one grain, one of whatever was staked, settled by the same code the yard and the hole use, on its
+own bed of ground either side of the building. A thousand on the table is a thousand grains lying
+there and doubling it is visibly twice the sand. It goes down beside the building and walks **left**
+past it as it fills, because that is where the empty ground is; the casino's own footprint is barred
+and `addGrain` already looks outward, so a big enough pot flows round the building on its own.
+
+**Everything is one for one, and nothing is a shortcut.**
+
+| | |
+|---|---|
+| the stake going down | trickles out of the sky, grain by grain, and piles up while the wheel turns |
+| a win | the pot doubles and the extra keeps raining in until the heap *is* the new number |
+| a loss | every grain lifts off the heap and fades out on its way up — it is *leaving*, not blinking off |
+| banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
+
+Nothing is added at one end and nothing arrives that did not set off. The one place this is not
+literally true is a pot bigger than that stretch of ground can hold: the bed takes what it takes and
+the rest stays a number on the board, which is the same rule the hole keeps.
+
+**The board hushes while the wheel is going.** It stands over the building the whole thing happens
+in, so it gets out of the light and comes back when it has landed. It is not closed — nothing has
+been decided, and it is the same board when it returns.
 
 **A settled hand says which way it went** — a tick or a cross in a box standing over the building
 for a few seconds, in the same place the lab's news stands. A wheel that stopped and told you
@@ -175,6 +250,17 @@ what it is by being the shape it is — a chimney, a row of beds, a hole in the 
 says what it is by shouting. CASINO runs down a board on the roof with a chase of lights round the
 border, and the lights are the reason it is there: nothing else in this yard blinks, so from the
 far end of the ground the only thing moving out past the lab is that.
+
+Getting the letters right took several goes, and every one of the faults was the same fault in a
+different place: **a stroke needs air around it or it is not a stroke.** They were four rows deep,
+which is one short of what an S needs; they were three cells thick, which at double size is
+thirty-six pixels of solid ink and reads as a block with a notch in it; the C kept its right-hand
+stem at the top and bottom rows, which is not a C but an O with a bite out of it; the N's diagonal
+was a two-cell staircase floating between the stems and touching neither; and the letters sat one
+cell from the bulbs, which is less air than the letters are thick, so the whole board read as
+texture. Five rows, one-cell strokes, both C corners open, an unbroken corner-to-corner diagonal,
+and two clear cells everywhere. On a window too short to hold the tall version it drops to
+single-cell glyphs rather than running off the top: half a sign is worse than a small one.
 
 **A pot has to have somewhere to land.** Everything ends up in the hole and the hole has a limit, so
 banking is refused while the pit is full — and the pot *stays on the table* until there is room, the
@@ -510,6 +596,27 @@ column is bare. Every worker working out the nearest dust for itself, every fram
 answer for all of them — so a single grain behind the crew turned the whole line round, and turned
 it round again the moment the first of them reached it. Claiming is also what stops six workers
 queueing at one column while the rest of the yard sits there.
+
+**A yard at rest is a yard at rest, not a yard switched off.** A body with nothing to fetch strolls:
+somewhere to go, a stand about when it gets there, then somewhere else. Three things stop that
+reading as insects rather than as people, and all three are the same trick every other job here
+already uses.
+
+**Its own legs.** Each body ambles at its own pace and lingers its own length of time. Six of them
+at exactly one speed, standing about for exactly one interval, is a marching band.
+
+**Somewhere to go.** The spot used to be a number a few hundred pixels either side of where it
+already was, which is a random walk — no destination and no reason. It picks from real places now,
+weighted: mostly just a few steps, because most of what anybody does while waiting is shuffle a few
+steps; often enough *over to somebody*; and sometimes the rock or the lip of the hole, which are the
+two things in this yard worth going and looking at. Going over to somebody is what turns two bodies
+standing near each other into the conversation the break code could always have had and almost never
+got the chance to.
+
+**Nobody stands inside anybody.** Two idlers who end up on the same spot drift apart, the way the
+gang on the rock and the crew down the cut do. Left alone they spread across the whole yard within
+half a minute and settle at a pair or two standing together — which is the shape you want: mostly
+apart, sometimes talking.
 
 A worker walks **quicker with its hands free** than with a load on. The trip out is the part that
 costs nothing, so it is the part that should be quick, and a laden worker reading as heavy is

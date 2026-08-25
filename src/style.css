@@ -373,3 +373,11 @@ canvas {
 }
 .panel.open .sheet { opacity: 1; transform: none; }
 .panel .page[hidden] { display: none; }
+
+/* The wheel is going. The board is stood over the building it is going in, and
+   the whole of what happens next is a thing you watch -- so the board gets out
+   of the light and comes back when it has landed. It is not closed: nothing was
+   decided, and it is the same board when it returns. */
+.panel.hushed .sheet,
+.panel.hushed .purse { opacity: 0; transform: translateY(3px) scale(.985); }
+.panel.hushed { pointer-events: none; }

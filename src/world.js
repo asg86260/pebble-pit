@@ -13,7 +13,7 @@ import {
   TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H, BENCH_W,
   QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN
 } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, table } from './state.js';
 import { shapePit } from './pit.js';
 
 const canvas = document.getElementById('c');
@@ -107,7 +107,12 @@ export function pileAt(x) {
 }
 
 export const yardLeft = () => (S.piles[0] ? S.piles[0].from : 0);
-export const blocked = c => !pileAt(floor.x + c * P);
+// The ground past the far wall of the hole. It is not a station's strip and
+// nothing heaps there on purpose, but a throw that clears the pit has to land
+// somewhere, and the somewhere is the floor -- so dust is allowed to lie there
+// and be fetched back like anything else.
+export const pastPit = x => x >= pit.x + pit.w;
+export const blocked = c => !pileAt(floor.x + c * P) && !pastPit(floor.x + c * P);
 
 // which pile a station's own output belongs in
 export const pileOf = key => S.piles.find(p => p.key === key);
@@ -127,6 +132,16 @@ export const pastApron = x => {
 // Between them there is as much room as the slope allows.
 export const bankCeiling = c => {
   const x = floor.x + c * P;
+  // The ground past the far wall of the hole is the fourth cliff, and the only
+  // one dust is allowed to lie against. A throw that cleared the pit has to come
+  // down somewhere, and letting the ceiling stay nought there was what quietly
+  // sent it back: every column over there was full, so `addGrain` walked outward
+  // looking for one that was not and put the grain down on the near side --
+  // which reads as the throw being snatched back to the left.
+  //
+  // It rises as it gets away from the wall, like every other bank here, so it
+  // cannot stand up against the hole and tip itself in.
+  if (pastPit(x)) return Math.max(0, (x + P - (pit.x + pit.w)) / P) * BANK_SLOPE;
   const p = pileAt(x);
   if (!p) return 0;
   // both ends of a pile are cliffs the sand may not lean on: the station behind
@@ -259,6 +274,14 @@ export function resize(after) {
   casino.x = S.cx + TO_CASINO;
   casino.y = S.groundY - casino.h;
 
+  // And the ground the pot stands on: everything from the left-hand end of the
+  // world to the lab, which is both sides of the casino. A heap goes down beside
+  // the building and walks *left* past it when the right-hand side is full,
+  // because that is where the empty ground is.
+  table.x = 0;
+  table.cols = Math.max(1, Math.floor((lab.x - P * 4) / P));
+  table.y = S.groundY - table.rows * P;
+
   // the quarry is a hole in the ground, so it hangs below the line rather than
   // standing on it
   quarry.w = QUARRY_W;
@@ -311,9 +334,43 @@ export function stepCamera() {
   clampCam();
 }
 
+// The view, pulled in or let back out. Everything in this game is drawn at one
+// fixed size on purpose -- a cell is a cell whatever you are looking at it on --
+// and this is the one exception: the opening starts close on two people, because
+// two squares at the far end of a yard are two squares, and the whole of the
+// first minute is about them being somebody.
+export function setZoom(k) {
+  // Snapped so that a cell is still a whole number of device pixels.
+  //
+  // This is the same rule `resize` keeps and for the same reason: a cell drawn
+  // across a fraction of a device pixel is a cell antialiased against the page,
+  // and the sand grids are blitted up from a scratch canvas at one pixel a cell,
+  // so a fractional scale resamples the *whole pile*. Zooming out smoothly made
+  // the rock go soft and swim, and the ground read as see-through -- which is
+  // not a thing that can be fixed by drawing it differently, only by not asking
+  // for a size that does not exist.
+  //
+  // So the zoom steps rather than slides: down through whole cell sizes, a dozen
+  // or so of them between close and normal, every one of them crisp. Everything
+  // in this game moves a cell at a time; there is no reason the view should be
+  // the exception.
+  const unit = CELL * S.dpr;                    // device pixels a cell takes at 1x
+  const px = Math.max(1, Math.round(unit * k));
+  S.zoom = (CELL / P) * (px / unit);
+  S.viewW = S.W / S.zoom;
+  S.viewH = S.H / S.zoom;
+  clampCam();
+}
+
 export function clampCam() {
   S.camX = Math.max(0, Math.min(S.camX, Math.max(0, S.worldW - S.viewW)));
-  S.camY = S.worldH - S.viewH;
+  // The bottom of the world sits on the bottom of the window, always -- the pit
+  // runs down to it and the yard is read off the ground line above. The one
+  // exception is the opening, which is pulled in close on two people standing on
+  // that line: at twice the size the window covers half as much world, and half
+  // as much world measured up from the pit floor is all pit. So it says where it
+  // wants to be looking and this obeys.
+  S.camY = S.camLockY != null ? S.camLockY : S.worldH - S.viewH;
 }
 
 // Knock the view. Something heavy has hit the ground and the ground is what the

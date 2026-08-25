@@ -2107,7 +2107,9 @@ const TESTS = [
     return [
       ok(empty.cubes === 0, 'nothing stands there until somebody is hired',
          `${empty.cubes} cubes`),
-      ok(one.cubes === 1 && twelve.cubes === 12, 'then it is a cube a body',
+      // a room a body, and the doorway on top of that: the first hire gets a
+      // way in and somewhere to live, not a shed with a door in it
+      ok(one.cubes === 2 && twelve.cubes === 13, 'then it is a room a body and a doorway',
          `${one.cubes} / ${twelve.cubes}`),
       ok(grew, 'and the block goes up as the crew does',
          `${one.top} -> ${twelve.top}`),
@@ -2933,34 +2935,48 @@ const TESTS = [
     const row = k => casino().querySelector(`button[data-key="${k}"]`);
     const rows = () => [...casino().querySelectorAll('button[data-key]')].map(b => b.dataset.key);
 
-    // the chips go all the way up to everything you have
+    // The chips go all the way up to everything you have. Wound back to the
+    // smallest first: the dial is a setting and it keeps whatever an earlier
+    // check left it on.
     const chips = [];
     const dial = () => casino().querySelector('[data-dial="chip"]');
+    for (let i = 0; i < 4; i++) { dial().children[1].click(); buildShopFromTest(); }
     for (let i = 0; i < 4; i++) { chips.push(state().chip); dial().children[3].click(); buildShopFromTest(); }
 
-    // back to the smallest, and put one down: staking *is* the spin
+    // and back down again, to put the smallest one down
     for (let i = 0; i < 4; i++) { dial().children[1].click(); buildShopFromTest(); }
     const held = state().stored;
     const stake = state().stakes.dust;
     row('stakedust').click();
     const down = state();
-    run(2);
+    run(4);        // the wheel takes its time now, and is meant to
     buildShopFromTest();
     const settled = state();
     const potRows = settled.pot ? rows() : [];
 
-    // and keep at it until both ways round have come up
+    // Keep at it until both ways round have come up -- and let the yard go quiet
+    // between hands. Nothing here is instant any more: the stake trickles down
+    // out of the sky, the wheel takes its time, and banking is the whole pot
+    // flying across the works to the hole. A check that reads the counter while
+    // half of it is still in the air is a check reading a number mid-throw.
+    const quiet = () => runUntil(() => state().sparks === 0 && !state().paying &&
+                                       !state().spinning, 30);
     let won = null, lost = null;
     for (let i = 0; i < 40 && !(won && lost); i++) {
-      if (state().pot) { row('bank').click(); run(1); buildShopFromTest(); }
+      if (state().pot) { row('bank').click(); quiet(); buildShopFromTest(); }
+      quiet();
       const b = state().stored;
       row('stakedust').click();
-      run(2);
+      quiet();
       buildShopFromTest();
       const p = state().pot;
       const hand = state().hand;
-      if (p) { row('bank').click(); run(1); buildShopFromTest(); won = { net: state().stored - b, said: hand && hand.won }; }
-      else lost = { net: state().stored - b, said: hand && hand.won === false };
+      if (p) {
+        row('bank').click();
+        quiet();
+        buildShopFromTest();
+        won = { net: state().stored - b, said: hand && hand.won };
+      } else lost = { net: state().stored - b, said: hand && hand.won === false };
     }
     window.__reset();
     await sleep(300);
@@ -2993,12 +3009,27 @@ const TESTS = [
     window.__reset(true);                        // the opening, played out
     await sleep(400);
     const open = state();
-    run(2);
+    run(3);
     const talking = state();
-    run(6);                                      // the rock comes
+
+    // it runs on its own clock, in phases, and it is deliberately unhurried
+    const seen = [open.intro];
+    let flat = null, up = null;
+    for (let i = 0; i < 900 && state().intro; i++) {
+      run(0.1);
+      const s = state();
+      if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
+      if (s.intro === 'down' && !flat) flat = s;
+      // partway through getting up, not the frame it starts: the view eases out
+      // over the whole of it and at the first frame it has not moved yet
+      if (s.intro === 'up') up = s;
+    }
     const after = state();
 
-    // and the one underneath is still there every time a rock is finished
+    // And the one underneath is still there every time a rock is finished. A body
+    // on the rock, so the crew take their five seconds over it: with nobody on
+    // it there is no celebration and the next rock is down before you can look.
+    window.__crew(1, 0);
     window.__next();
     run(1);
     const bare = state();
@@ -3008,15 +3039,181 @@ const TESTS = [
       ok(open.intro === 'chat' && open.pair === 2,
          'it opens on two of them, and no rock', `${open.pair} stood there, rock ${open.rock}`),
       ok(open.rock === 0, 'nothing to mine yet', `${open.rock}`),
+      ok(open.zoom > 1, 'and it opens close on them', `zoom ${open.zoom}`),
       ok(talking.intro === 'chat', 'they are given a moment to be two people'),
-      ok(after.intro === null && after.rock > 0,
-         'then a boulder comes down out of the sky', `${after.rock} of rock`),
-      ok(after.crew === 1 && after.miners === 1,
-         'and the one left standing starts digging -- the first body is not bought',
-         `${after.crew} hired, ${after.miners} on the rock`),
+      ok(seen.join(',') === 'chat,fall,down,up,show',
+         'a rock, a body knocked flat, a body getting up, and the loop shown once',
+         seen.join(',')),
+      ok(flat && flat.rock > 0, 'the boulder comes down out of the sky',
+         flat && `${flat.rock} of rock`),
+      ok(flat && flat.pair === 1, 'on one of them', flat && `${flat.pair} left standing`),
+      ok(up && up.zoom < open.zoom, 'and the view pulls back out as it gets up',
+         up && `${open.zoom} -> ${up.zoom}`),
+      ok(after.intro === null && Math.abs(after.zoom - 0.833) < 0.01,
+         'all the way back out', `${after.zoom}`),
+      ok(after.crew === 1,
+         'and the one left standing is the crew -- the first body is not bought',
+         `${after.crew} hired`),
+      ok(after.stored >= 2,
+         'and it has shown you where dust goes before you are given the yard',
+         `${after.stored} in the hole`),
       ok(after.buried, 'with the other one under it'),
       ok(bare.buriedVisible,
          'and when the rock is gone they are there, alive, until the next one lands')
+    ];
+  }],
+
+  // A spin is the one moment in this game you are meant to sit and watch, so the
+  // board gets out of the light, the wheel takes its time, and what is on the
+  // table is a heap on the ground rather than a number on a row.
+  ['a spin is something to watch', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__grant({ cores: 20 });
+    window.__give(20000);
+    window.__dig(23);
+    window.__lab(true);
+    buildShopFromTest();
+    document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    buildShopFromTest();
+    // stand at it, so there is a board in the way to get out of the way
+    const s0 = state();
+    window.__look(s0.casinoX - 200);
+    run(0.5);
+
+    const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
+    row('stakedust').click();
+    const t0 = state();
+    run(0.6);
+    const early = state();
+    run(1.2);
+    const late = state();
+    run(3);
+    const done = state();
+
+    // and again until it comes off, to see the heap and the shower
+    let win = null;
+    for (let i = 0; i < 30 && !win; i++) {
+      buildShopFromTest();
+      if (state().pot) { row('bank').click(); run(0.5); buildShopFromTest(); }
+      row('stakedust').click();
+      run(4);
+      buildShopFromTest();
+      if (state().pot) win = state();
+    }
+    window.__reset();
+    await sleep(300);
+    return [
+      ok(t0.spinning, 'the wheel is going the moment the chip goes down'),
+      ok(early.wheel !== late.wheel, 'and it is actually turning',
+         `${early.wheel} -> ${late.wheel}`),
+      ok(!done.spinning, 'and it comes to rest on its own'),
+      ok(win && win.pot && win.pot.on > 0 && win.potAt > win.casinoX,
+         'what is on the table is a heap on the ground beside the building',
+         win && `${win.pot.on} at ${win.potAt}, building at ${win.casinoX}`),
+      ok(win && (win.sparks > 0 || win.table > 0),
+         'and it trickles down out of the sky on to it',
+         win && `${win.sparks} in the air, ${win.table} down`),
+      ok(win && win.hand && win.hand.won, 'with a mark to say so')
+    ];
+  }],
+
+  // The pot is a real bed of sand, not a drawing of one: one grain, one of
+  // whatever was staked, settled by the same code the yard and the hole use. A
+  // thousand on the table is a thousand grains lying there.
+  ['the pot is a real pile, grain for grain', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__grant({ cores: 20 });
+    window.__give(30000);
+    window.__dig(23);
+    window.__lab(true);
+    buildShopFromTest();
+    document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    buildShopFromTest();
+    const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
+    const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
+
+    dial().children[3].click(); buildShopFromTest();     // a hundred, so the heap is worth looking at
+    const stake = state().stakes.dust;
+    row('stakedust').click();
+    run(0.5);                                   // the first of it is still falling
+    const arriving = state();
+    run(8);                                     // and all of it has landed by now
+    const settled = state();
+    const on = settled.pot ? settled.pot.on : 0;
+
+    // and it leaves the same way, a grain at a time and fading as it goes
+    if (settled.pot) { row('bank').click(); run(0.4); }
+    const leaving = state();
+    run(4);
+    const gone = state();
+    window.__reset();
+    await sleep(300);
+    return [
+      ok(arriving.table < stake && arriving.table + arriving.sparks > 0,
+         'it arrives a grain at a time rather than appearing',
+         `${arriving.table} of ${stake} down, ${arriving.sparks} still falling`),
+      ok(arriving.sparks > 0, 'trickling out of the sky', `${arriving.sparks} in the air`),
+      ok(settled.table === on, 'and it is the pot, grain for grain',
+         `${settled.table} grains, ${on} on the table`),
+      ok(leaving.sparks > 0 || gone.table === 0,
+         'and when it goes it lifts off rather than blinking out'),
+      ok(gone.table === 0, 'until the ground is bare again', `${gone.table} left`)
+    ];
+  }],
+
+  // Nothing here is a number moving from one counter to another. The pot is sand
+  // at the far end of the yard and the hole is at the other, so banking is the
+  // whole of it going over -- and every grain that leaves the heap is a grain
+  // the hole counts when it lands.
+  ['banking flies the pot to the hole, grain for grain', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__grant({ cores: 20 });
+    window.__give(30000);
+    window.__dig(23);
+    window.__lab(true);
+    buildShopFromTest();
+    document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    buildShopFromTest();
+    const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
+    const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
+    const quiet = () => runUntil(() => state().sparks === 0 && !state().paying &&
+                                       !state().spinning, 30);
+
+    dial().children[3].click(); buildShopFromTest();
+    let win = null;
+    for (let i = 0; i < 30 && !win; i++) {
+      quiet();
+      buildShopFromTest();
+      if (state().pot) { row('bank').click(); quiet(); buildShopFromTest(); }
+      row('stakedust').click();
+      quiet();
+      buildShopFromTest();
+      if (state().pot) win = state();
+    }
+    const held = state().stored;
+    const on = win ? win.pot.on : 0;
+    row('bank').click();
+    run(0.6);
+    const flying = state();
+    quiet();
+    const landed = state();
+    window.__reset();
+    await sleep(300);
+    return [
+      ok(!!win && on > 0, 'there is a pot to take', `${on}`),
+      ok(flying.sparks > 0 && flying.paying !== null,
+         'taking it puts the whole heap in the air',
+         `${flying.sparks} flying, ${flying.paying} still to go`),
+      ok(flying.stored < held + on,
+         'and the counter does not move until it gets there',
+         `${flying.stored} vs ${held + on}`),
+      ok(landed.stored === held + on, 'every grain that set off is counted when it lands',
+         `${held} + ${on} -> ${landed.stored}`),
+      ok(landed.table === 0 && landed.sparks === 0,
+         'and nothing is left behind', `${landed.table} on the ground`)
     ];
   }],
 
@@ -3046,6 +3243,40 @@ const TESTS = [
       ok(back.labbers === 2, 'and starting a piece of research calls them back',
          `${back.labbers} back in`),
       ok(!!back.research, 'with the work actually started', JSON.stringify(back.research))
+    ];
+  }],
+
+  // A full hole tells everybody to stand down, and standing down eventually
+  // means going home. Those two rules fought: the stand-down put a body walking
+  // to the door back on `idle`, the idle branch sent it home again the next
+  // frame, and it never took a step -- the whole crew stock still between the
+  // pile and the lip with a yard full of dust they could not move.
+  ['a crew with nowhere to put anything walks home rather than freezing', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__crew(3, 6);
+    window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
+    run(400);                                    // long enough to fill the scrape
+    const full = state();
+
+    // nobody is left standing about in the middle of the yard
+    const out = () => state().crewDetail.filter(d => d[0] === 'h' && !d.includes('|home|'));
+    const stalled = out();
+
+    // and a dig brings them all straight back out
+    window.__dig(4);
+    run(25);
+    const dug = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(full.pitFull, 'the hole is full', `${full.stored} of ${full.pitCapacity}`),
+      ok(full.floorGrains > 100, 'and the yard is not', `${full.floorGrains} lying about`),
+      ok(full.houses.home === 6, 'so every one of them has gone home',
+         `${full.houses.home} in, ${stalled.length} still out`),
+      ok(dug.houses.home === 0, 'and a dig brings them all back out',
+         `${dug.houses.home} still in`),
+      ok(dug.stored > full.stored, 'carrying again', `${full.stored} -> ${dug.stored}`)
     ];
   }],
 

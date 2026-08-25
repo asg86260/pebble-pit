@@ -12,9 +12,10 @@ import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
 import { S, quarry } from './state.js';
-import { walkY } from './world.js';
+import { walkY, groundAt } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
+import { now } from './clock.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -34,15 +35,19 @@ export const quarryRate = (lvl = S.quarryPaceLevel) => 60000 / quarryMs(lvl);   
 // coming down it; coming out is walking back along the floor to its foot and
 // going up.
 export const LADDER_W = P * 3;         // stile to stile
-// Its head stands a cell proud of the rim and no more: the bridge's deck runs
-// over the mouth four cells up, and a ladder poking through the road is a
-// ladder in the way of the thing that crosses it.
-export const LADDER_OVER = P;
+export const LADDER_OVER = P;          // how far its head stands proud of the top
 
 export function ladder() {
   const c = quarryCut();
   const x = Math.round(c.from / P) * P;
-  return { x, w: LADDER_W, top: S.groundY - LADDER_OVER, foot: quarryFloor(c.from + P) };
+  // It comes up to the *bridge*, not to the ground line. The deck runs over the
+  // mouth four cells above the rim, and the ladder stands in the mouth, so a
+  // ladder that stopped at ground level was a ladder ending in mid-air a body's
+  // height under the road everybody walks in on. `groundAt` already knows where
+  // the walking surface is at a given x -- over the mouth that is the deck --
+  // so asking it is the same as asking where the top of the ladder should be.
+  const top = groundAt(x + LADDER_W / 2) - LADDER_OVER;
+  return { x, w: LADDER_W, top, foot: quarryFloor(c.from + P) };
 }
 
 // where a quarrier stands to get on it, going either way
@@ -53,8 +58,16 @@ export function newQuarrier() {
     type: 'quarrier',
     goal: 'to',                            // to the rim, then down, then work
     next: 0,
-    swingAt: 0,
+    // Not on the same beat as everybody else. Two quarriers used to walk the
+    // face at exactly the same pace, turn at exactly the same wall and start
+    // swinging on the same frame, which read as one animation played twice
+    // rather than as two people working. The miners have had their own rhythms
+    // since the day they were written; these are the same four numbers.
+    swingAt: now() + Math.random() * QUARRY_SWING,
     lunge: 0,
+    ph: Math.random() * Math.PI * 2,       // where in its sway it starts
+    sp: 0.5 + Math.random() * 0.9,         // and how fast it sways
+    pace: 0.7 + Math.random() * 0.6,       // and how briskly it works along the face
     dir: Math.random() < 0.5 ? -1 : 1,
     seat: 0,                               // where along the floor it stands
     x: quarryFace(),
@@ -191,7 +204,11 @@ export function stepQuarrier(w, now) {
   // At the face. It swings like a miner does, and every so often a shard comes
   // off and goes up over the rim. Nobody knocks another one loose while the
   // pile outside is full: there would be nowhere to put it.
-  w.y = quarryFloor(w.x + WORKER / 2) - WORKER;   // the floor is uneven, so they walk it
+  //
+  // It bobs on its feet on its own rhythm, the way a miner does. Standing dead
+  // still between swings is what made a pair of them read as one thing.
+  w.y = quarryFloor(w.x + WORKER / 2) - WORKER   // the floor is uneven, so they walk it
+        + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
   w.lunge *= 0.82;
   // The pile outside is full, so there is nowhere to put another shard and
   // nothing to do but stand about on the floor of the cut. See break.js.
@@ -201,7 +218,7 @@ export function stepQuarrier(w, now) {
   // It works along the face rather than standing on one spot: back and forth
   // between the walls, turning at the ends and before walking into a mate.
   const { lo, hi } = quarryBand();
-  const step = w.x + w.dir * QUARRY_SHUFFLE;
+  const step = w.x + w.dir * QUARRY_SHUFFLE * (w.pace || 1);
   if (step < lo || step > hi || elbowRoom(w, step)) w.dir = -w.dir;
   else w.x = step;
 

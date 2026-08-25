@@ -15,6 +15,7 @@
 import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, pit } from './state.js';
 import { groundAt, kitX } from './world.js';
+import { doorAt } from './house.js';
 import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -44,10 +45,15 @@ export const POSTS = [
     kit: true },
   { key: 'mine', job: 'miners',
     at: () => S.cx, show: () => S.crew > 0, kit: true },
-  // The haulers' own place is the lip they tip over, which is the one bit of
-  // ground they all end up at whatever they are carrying and wherever from.
+  // The haulers stand under the houses. Every other post is written under the
+  // place its work is done, and carrying has no such place -- the dust is
+  // wherever it fell, and the lip is only where the trip ends. What this number
+  // actually counts is the bodies that are not on anything, so it belongs where
+  // the bodies come from. It used to sit out by the lip, which put a count with
+  // no buttons on it in the emptiest corner of the yard, reading as a stray
+  // control rather than as a fact about the crew.
   { key: 'carry', job: 'haulers',
-    at: () => pit.x - P * 12, show: () => S.crew > 0, fixed: true, kit: true }
+    at: () => doorAt().x, show: () => S.crew > 0, fixed: true, kit: true }
 ];
 
 // Where a post's roster stands, in world units. Well below the ground line: the

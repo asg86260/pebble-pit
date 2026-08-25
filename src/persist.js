@@ -355,6 +355,7 @@ export function restore() {
   // to a yard where it already happened.
   S.introDone = !!s.introDone;
   S.intro = null;
+  S.camLockY = null;
   S.pair = [];
   S.buried = s.buried ?? !!s.introDone;
   S.casinoOpen = !!s.casinoOpen;
@@ -363,6 +364,9 @@ export function restore() {
   // left long enough.
   S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
   S.spinUntil = 0;
+  S.sparks = [];
+  S.paying = null;
+  S.paying = null;
   S.chip = Math.max(0, +s.chip || 0);
   S.hand = null;                 // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
@@ -436,6 +440,7 @@ export function reset() {
   S.casinoBoardOpen = false;
   S.pot = null;
   S.spinUntil = 0;
+  S.sparks = [];
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];

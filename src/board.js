@@ -6,7 +6,7 @@ import { S, bench, lab, school, casino } from './state.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
-import { CASINO_UPGRADES } from './casino.js';
+import { CASINO_UPGRADES, spinning } from './casino.js';
 import { refresh } from './shop.js';
 import { now } from './clock.js';
 
@@ -226,7 +226,19 @@ function fillPurse() {
   if (resized) remeasure();
 }
 
+// A spin in progress hushes the board wherever it is standing. It is not closed
+// -- nothing has been decided, and it is the same board when it comes back --
+// it is out of the way of the one thing in this game you are meant to watch.
+let hushed = false;
+function hush() {
+  const want = spinning();
+  if (want === hushed) return;
+  hushed = want;
+  panelEl.classList.toggle('hushed', want);
+}
+
 export function hud() {
+  hush();
   tweenCount(now());
   fillPurse();
   fill(at);

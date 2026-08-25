@@ -75,9 +75,25 @@ export const TO_LAB = -2184;     // rock centre to the lab, at the far end
 // that you read it as two people rather than as a loading screen, short enough
 // that nobody sits through it twice -- and it only ever happens once, on a game
 // that has never been played. See intro.js.
-export const INTRO_CHAT_MS = 5200;
-export const INTRO_BEAT = 780;    // between one of them saying something and the other
-export const INTRO_APART = 26;    // and how far apart they stand, in world pixels
+// It is slow, and it is meant to be. The whole of it is over in twenty seconds
+// and it only ever happens once, and what it is buying is the rest of the game
+// having a reason in it -- so nothing in here is hurried.
+export const INTRO_ZOOM = 2.4;    // how far in the view starts
+export const INTRO_CHAT_MS = 9000;   // two of them, talking, before anything happens
+export const INTRO_HEART_MS = 1900;  // and how often one of them says the other thing
+export const INTRO_DOWN_MS = 2200;   // flat on its back after the rock lands
+export const INTRO_UP_MS = 3400;     // and up, staring at it, while the view pulls out
+export const INTRO_BEAT = 900;    // between one of them saying something and the other
+export const INTRO_APART = 20;    // and how far apart they stand, in world pixels
+export const INTRO_HURL = 4.2;    // how hard the one left standing is thrown back
+// And then it shows you the loop rather than telling you: a few swings at the
+// rock, and the dust that comes off carried the length of the yard and tipped
+// into the hole. Two grains is enough -- what is being shown is where dust goes,
+// not how much of it there is -- and the view goes with it, because the hole is
+// off the side of any window you can see the rock in.
+export const INTRO_SHOW_DUST = 3;   // grains knocked off before it downs tools
+export const INTRO_SHOW_IN = 2;     // and grains it puts in the hole before you take over
+export const INTRO_SHOW_MAX = 45000; // however long that takes, it is over by then
 
 // --- the casino ---------------------------------------------------------------
 // The last thing on the ground, out past the lab. It is the far end of the walk
@@ -94,12 +110,50 @@ export const CASINO_CORES = 6;   // what it costs to have it built
 //
 // So: the chip goes down, the wheel goes round, and it is doubled or it is gone.
 // If it came off, the pot is sitting there and you decide again -- bank it, or
-// put the whole of it back on. Six in ten is generous on any one spin and
-// ruinous kept up, which is the whole of what a casino is: every spin is worth
-// taking and taking them all ends at nothing. When to stop is the game.
-export const CASINO_ODDS = 0.6;
-export const CASINO_SPIN_MS = 1400;  // how long the wheel is spinning on a ride
-export const CASINO_WHEEL = 0.6;     // radians a second it idles round at
+// put the whole of it back on. Even money on any one spin and ruinous kept up,
+// which is the whole of what a casino is: no spin is a bad bet and taking them
+// all ends at nothing. When to stop is the game.
+// A spin is the one moment in this game you are meant to sit and watch, so it
+// is given the room to be watched: the wheel winds up, runs, and drags itself
+// down to a stop, and the board gets out of the light while it does. Under two
+// seconds it read as a flicker and the answer arrived before you had looked up.
+export const CASINO_SPIN_MS = 2600;
+// The wheel is cut into eight, half filled and half bare -- which is the odds
+// written on the thing itself rather than a percentage on a row, and at even
+// money they alternate all the way round, which is what a wheel looks like. The
+// pointer at the top is what it lands on, so a spin is not a number arriving, it
+// is a wheel stopping somewhere you can see. Six turns is enough that nobody can
+// follow a slice round and know the answer early.
+//
+// Black and white, not red and green. Colour in this yard means one thing --
+// what a site gave up -- and a wheel painted in traffic lights was the first
+// thing here that used it for mood. It does not need it: the grammar is already
+// on the page. A filled cell is a thing and white is the absence of one, which
+// is exactly what winning and losing a pot are.
+export const CASINO_SLICES = 8;
+export const CASINO_WIN_SLICES = 4;  // of them, and the rest are bare
+export const CASINO_TURNS = 6;       // whole turns before it comes to rest
+export const CASINO_LOSE = '#fff';   // nothing there
+export const CASINO_KEEP = '#000';   // and something
+// Four slices in eight, and it is written that way rather than as a number: the
+// odds are what the wheel *is*, so the wheel is the definition and this reads
+// off it. A wheel that said one thing and paid another would be the one
+// dishonest object in the yard.
+//
+// Even money, and that is the whole of the house's edge -- which sounds like no
+// edge at all until you notice that a fair double-or-nothing taken for ever ends
+// at nothing with certainty. There is no spin here that is a bad bet and no
+// sequence of them that is a good one. When to stop is the only decision, and
+// nothing about the odds will make it for you.
+export const CASINO_ODDS = CASINO_WIN_SLICES / CASINO_SLICES;
+export const CASINO_KNOCK = 9;       // what the stop does to the view
+export const CASINO_WIN_KNOCK = 16;  // and what it does when it came off
+// Winnings coming down are confetti rather than gravel: they drift, because a
+// shower that arrives in three frames is a flicker and the point of it is to be
+// watched landing on the heap.
+export const SPARK_LIFE = 2.6;       // seconds a chip is in the air
+export const SPARK_GRAV = 0.05;
+export const CASINO_WHEEL = 0.35;    // radians a second it idles round at
 // What goes on the table. Four chips and one of them is everything you have:
 // the size of the bet is most of what a bet feels like, and a stake worked out
 // for you as a share of your holdings is a stake nobody chose. `all` is the one

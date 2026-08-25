@@ -20,6 +20,7 @@ export const S = {
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
   camTo: null,            // somewhere the view is gliding to, or null
+  camLockY: null,         // and a height it is held at, for the opening only
   // A knock the view is still rocking through, and where that has it this
   // frame. It is not part of the camera: the camera is where you are looking
   // and this is the ground moving under it, so it is added at the last moment
@@ -139,7 +140,11 @@ export const S = {
   casinoBoardOpen: false,
   pot: null,              // { cur, stake, n, at } -- what is on the table
   wheel: 0,               // where the wheel has turned to
+  spinAt: 0,              // when the wheel was set going
+  spinFrom: 0, spinTo: 0, // and the mark it is turning from and to
   spinUntil: 0,           // and until when it is being spun in earnest
+  sparks: [],             // grains in the air: arriving, leaving, or on their way to the hole
+  paying: null,           // { cur, left } -- a pot on its way across the yard to the pit
   spinWon: false,         // what it is about to land on, decided when it starts
   chip: 0,                // which of CASINO_CHIPS is on the table
   // The hand that just settled, kept for a few seconds so a wheel you were not
@@ -205,4 +210,8 @@ export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
 export const casino = { x: 0, y: 0, w: 0, h: 0 };
+// The ground the pot piles up on: a real bed of sand, like the yard and the
+// hole, on the ground either side of the casino. A pot is grains, not a drawing
+// of grains -- see casino.js.
+export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0 };
 export const sky = { x: 0, y: 0, r: 0 };   // the thing hanging out past the farm
