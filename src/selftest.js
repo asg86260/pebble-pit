@@ -1329,7 +1329,9 @@ const TESTS = [
   // was doing two jobs, and it sat under `you` while half of it was on the rock.
   ['your pick and a miner bite are bought apart', async () => {
     window.__crew(1, 0);
-    window.__grant({ cores: 12 });
+    // Yours is cut stone and theirs is what they are fed on: no core buys a
+    // rate any more, they open places.
+    window.__grant({ shards: 200, spores: 200 });
     await hoverBench();
     const before = state();
     const gotBite = await buy('minerpick');
@@ -1718,20 +1720,29 @@ const TESTS = [
   // question you can answer again at any time.
   ['a worker put on the rock works it', async () => {
     haveRock();
+    // The first body is not bought -- it is the one left standing when the rock
+    // came down, and a fresh game starts with it on the rock (see intro.js). An
+    // earlier check will have cleared the yard, so it is put back by hand.
+    window.__crew(1, 0);
     await hoverBench();
-    const hired = await buy('firstworker');
-    const idlingFirst = state();
+    const hired = state().crew > 0;
+    // it starts on the rock, because that is what the opening left it doing
+    const start = state();
+    const off = await put('mine', 'less');
+    const carrying = state();
     const moved = await put('mine', 'more');
     const before = state();
     run(14);                                  // long enough to walk to the rock and swing
     const after = state();
     return [
-      ok(hired, 'the first worker can be bought with a core'),
-      ok(idlingFirst.crew === 1, 'it is on the payroll', `${idlingFirst.crew}`),
-      ok(idlingFirst.miners === 0 && idlingFirst.haulers === 1,
-         'and carries dust until it is put on something',
-         `${idlingFirst.miners} mining, ${idlingFirst.haulers} carrying`),
-      ok(moved, 'the rock has a roster under it to put it on'),
+      ok(hired, 'the yard starts with a body, and it is not bought'),
+      ok(start.crew === 1, 'it is on the payroll', `${start.crew}`),
+      ok(start.miners === 1, 'and it is digging, which is why it is here',
+         `${start.miners} mining`),
+      ok(off && carrying.miners === 0 && carrying.haulers === 1,
+         'the roster takes it off, and then it carries dust',
+         `${carrying.miners} mining, ${carrying.haulers} carrying`),
+      ok(moved, 'the rock has a roster under it to put it back on'),
       ok(after.miners === 1 && after.haulers === 0, 'now it is on the rock and not carrying',
          `${after.miners} mining, ${after.haulers} carrying`),
       ok(after.crew === 1, 'and it is the same body, not a second hire', `${after.crew}`),
@@ -1864,7 +1875,8 @@ const TESTS = [
     await bankCore();
     await bankCore();
     await hoverBench();
-    const hired = await buy('firstworker') || state().crew > 0;
+    window.__crew(0, 1);                        // one body, carrying
+    const hired = state().crew > 0;
     quickCrew();
 
     const s = state();
@@ -3277,6 +3289,39 @@ const TESTS = [
       ok(dug.houses.home === 0, 'and a dig brings them all back out',
          `${dug.houses.home} still in`),
       ok(dug.stored > full.stored, 'carrying again', `${full.stored} -> ${dug.stored}`)
+    ];
+  }],
+
+  // A body that has knocked off is stood indoors and is not drawn -- that is
+  // what being home means. Nothing else in the game takes somebody off carrying,
+  // so nothing else ever had to clear it, and a body put on the quarry straight
+  // out of the house went down the cut, worked the face, brought shards up and
+  // was invisible the whole time.
+  ['a body put to work comes out of the house first', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__crew(0, 3);
+    window.__clearFloor();
+    const away = runUntil(() => state().houses.home === 3, 300);
+    const home = state();
+
+    window.__assign('quarriers', 1);
+    window.__assign('quarriers', 1);
+    run(30);
+    const at = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(away && home.houses.home === 3, 'with nothing to carry they are all indoors',
+         `${home.houses.home} in`),
+      ok(at.quarriers === 2, 'two of them are put on the quarry', `${at.quarriers}`),
+      ok(at.houses.home === 0, 'and none of them is still counted as being at home',
+         `${at.houses.home} still in`),
+      ok(at.workerPos.length === 3, 'so all three are out where you can see them',
+         `${at.workerPos.length} drawn of 3`),
+      ok(at.crewDetail.filter(d => d[0] === 'q').length === 2,
+         'and the two of them are down the cut working',
+         JSON.stringify(at.crewDetail))
     ];
   }],
 

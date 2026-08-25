@@ -174,15 +174,13 @@ export function assign(job, d) {
 // is where you are standing when you do it.
 
 // The one thing you hire. Everything else is where you put them.
+//
+// There is no row for the *first* one any more. It used to cost a core, and the
+// opening hands you a body now -- somebody who was already standing there when
+// the rock came down -- so a row selling you the crew you already have is a row
+// that could never fire. A game that has never been played gets its first body
+// from the story; see intro.js.
 const HIRE = [
-  {
-    key: 'firstworker',
-    name: 'first worker',
-    cost: () => 1,
-    currency: 'core',
-    buy: hire,
-    show: () => S.seenCore && S.crew === 0
-  },
   {
     key: 'worker',
     name: 'workers',
@@ -247,28 +245,41 @@ export const UPGRADES = [
     // faster swings only read as an upgrade once the swinging is automatic
     show: () => S.autoMine && mineMs() > MINE_FLOOR
   },
+  // --- what a swing takes ---------------------------------------------------
+  // A core is a rock. There is one of them per rock for ever, and what they are
+  // for is *opening places* -- the cut, the beds, the lab, the table. Selling a
+  // pick for one put a rate on the same shelf as a whole new part of the game,
+  // and every core spent on a bigger bite was a core not spent on somewhere to
+  // send anybody. So the picks are priced in what the ground gives up instead,
+  // which is what the ground is for.
+  //
+  // Yours is a tool, and a tool is cut stone: shards.
   {
     key: 'pick',
     name: 'pick',
     unit: 'px',
     from: () => pickCount(),
     to: () => pickCount() + 1,
-    cost: () => 2 + S.pickLevel,
-    currency: 'core',
+    cost: () => Math.round(4 * Math.pow(1.55, S.pickLevel)),
+    currency: 'shard',
     buy: () => S.pickLevel++,
-    show: () => S.seenCore
+    show: () => S.seenShard
   },
   ...HIRE,
+  // And the crew's is what the crew are fed on. The beds grow the only thing in
+  // this yard anybody eats, so what a body can take out of the rock is bought in
+  // spores -- which also keeps the green from piling up unspent, and gives the
+  // two currencies a job each instead of one of them doing all the work.
   {
     key: 'minerpick',
     name: 'miner bite',
     unit: 'px',
     from: () => minerBite(),
     to: () => minerBite() + 1,
-    cost: () => 3 + S.minerPickLevel,
-    currency: 'core',
+    cost: () => Math.round(5 * Math.pow(1.55, S.minerPickLevel)),
+    currency: 'spore',
     buy: () => S.minerPickLevel++,
-    show: () => S.crew > 0
+    show: () => S.seenSpore && S.crew > 0
   },
   {
     key: 'minerspeed',
@@ -408,7 +419,7 @@ export const UPGRADES = [
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'the crew', keys: ['firstworker', 'worker', 'haulcarry', 'haulpace'] },
+  { title: 'the crew', keys: ['worker', 'haulcarry', 'haulpace'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry', 'quarrybench', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmbed', 'tend'] },

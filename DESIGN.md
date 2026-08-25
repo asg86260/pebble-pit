@@ -318,9 +318,9 @@ decision rather than a free tap.
 | | Mark | Source | Spends on |
 |---|---|---|---|
 | **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
-| **Core** | ring | one per rock finished | places: the quarry, the farm, the lab, and the picks |
-| **Shard** | triangle | a quarrier's trip | the cut's next bench, its lamps, the school and its kit; lab: swing and haul pace |
-| **Spore** | hexagon | a bed cut | the next bed, and tending; lab: quarry and tending pace |
+| **Core** | ring | one per rock finished | **places, and only places**: the quarry, the farm, the lab, the casino |
+| **Shard** | triangle | a quarrier's trip | your pick, the cut's next bench, its lamps, the school and its kit; lab: swing and haul pace |
+| **Spore** | hexagon | a bed cut | the crew's bite, the next bed, and tending; lab: quarry and tending pace |
 
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
 and the pile is the dust rather than a picture of it.
@@ -360,12 +360,21 @@ A core is a rock, so this ladder is really "how many rocks until everything is o
 
 | Unlock | Cost | Opens |
 |---|---|---|
-| first worker | ◯ 1 | the crew: one body, and hiring for dust from then on |
 | open the cave | ◯ 3 | the shaft, to put workers down |
 | break the ground | ◯ 5 | the beds, to put workers at |
+| build the casino | ◯ 6 | the one place that makes nothing |
 | build the lab | ◯ 7 | multipliers and the books |
-| pick | ◯ 2, then 3, 4... | one more pixel a swing, for you |
-| miner bite | ◯ 3, then 4, 5... | one more pixel a swing, for every miner |
+
+**A core opens a place and does nothing else.** They used to sell rates as well — a pick was two
+cores, a miner's bite three — which put a number on the same shelf as a whole new part of the game,
+and every core spent on a bigger bite was a core not spent on somewhere to send anybody. The picks
+are priced in what the ground gives up instead, which is what the ground is for: **yours is a tool
+and a tool is cut stone**, so shards; **the crew's is what the crew are fed on**, so spores. That
+also gives the two currencies a job each rather than one of them doing all the work.
+
+There is no row for the *first worker* either. The opening hands you a body — the one left standing
+when the rock came down — so a row selling you the crew you already have is a row that could never
+fire.
 
 Twenty-five cores opens every place. The two picks compete with all of it for the same cores, which
 is the one real spending decision in the game: pace now, or a new place to put people. Your swing

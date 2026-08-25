@@ -265,6 +265,12 @@ function retask(w, type) {
   w.type = type;
   w.fetching = null;
   w.wanting = null;
+  // Out of the house. A body that had knocked off is stood indoors and is not
+  // drawn -- that is what `inside` is for -- and nothing else in the game clears
+  // it, because nothing else in the game takes somebody off carrying. Put one on
+  // the quarry straight from the house and it went down the cut, worked the
+  // face, brought shards up and was invisible the whole time.
+  w.inside = false;
   const job = JOB_OF[type];
   const legs = [];
   // The hat goes back where it came from first, and it is put down before the

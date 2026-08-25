@@ -353,7 +353,10 @@ export function restore() {
   S.labOpen = !!s.labOpen;
   // The opening happens once, ever. Coming back to a saved game is coming back
   // to a yard where it already happened.
-  S.introDone = !!s.introDone;
+  // A save from before the opening existed, with nobody hired yet, is a game
+  // that has not started -- so it gets the opening. There is no row selling a
+  // first worker any more; the story hands you one.
+  S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -377,6 +380,7 @@ export function restore() {
   resite();                    // the cut is as deep and the plot as wide as it was
   syncWorkers();               // the crew, from the counts
   wearKitOnLoad();             // still wearing what they were wearing
+  if (!S.introDone) startIntro();
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
