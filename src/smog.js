@@ -544,19 +544,43 @@ function onSite(c) {
   return false;
 }
 
+// How much ground a body shovelling claims either side of itself, in columns: a
+// body is three cells wide, so this keeps the next one clear of its elbows.
+const MUCK_ELBOW = 4;
+
 // The nearest loose muck to a place, as a world x, or null if the yard is clear.
 // Somebody has to walk to it: shovelling from wherever you happen to be standing
 // is the sort of thing that makes a crew look like a spreadsheet.
-export function nearestMuck(wx) {
+// `taken` is the set of columns somebody else is already walking to. One patch,
+// one body -- the same rule the dust has, and for the same reason: without it
+// every body in the yard works out the same nearest answer, walks to the same
+// cell, and the crew clears a mess as one lump you cannot count. A yard of muck
+// is the one job the whole crew drops everything for, so it is the job where
+// they bunch up worst.
+//
+// The claim is a column rather than a body, so a patch two cells wide takes two
+// of them and the third goes and finds its own.
+export function nearestMuck(wx, taken) {
   const m = muckCols();
   const home = colAt(wx);
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= m.length || !m[c] || onSite(c)) continue;
+      if (taken && taken.has(c)) continue;
+      // A claim is a stretch, not a cell. Columns are six pixels and a body is
+      // eighteen wide, so reserving the one cell somebody is shovelling puts the
+      // next body one cell over -- close enough that it never has to walk, and
+      // the two of them stand in each other for the whole clear-up. Reserving a
+      // body's width either side is what actually sends the next one elsewhere.
+      if (taken) for (let k = c - MUCK_ELBOW; k <= c + MUCK_ELBOW; k++) taken.add(k);
       return c * P + P / 2;
     }
   }
-  return null;
+  // Everything within reach is spoken for. Rather than standing still it goes
+  // for the nearest anyway: two on one patch is better than one doing nothing,
+  // and it is what happens at the end of a clear-up when there is one cell left.
+  if (!taken) return null;
+  return nearestMuck(wx, null);
 }
 
 // The ladders into the hole: one down each wall, and the dust in the bottom

@@ -408,6 +408,50 @@ const TESTS = [
     ];
   }],
 
+  // A yard under muck is the one job the whole crew drops everything for, and it
+  // has something to shovel wherever you stand -- so a gang that arrived
+  // together each found work on the spot it arrived on, and the mess was cleared
+  // by one lump you could not count the bodies in.
+  ['the crew spread out to shovel rather than clearing it as one lump', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(0, 6);
+    window.__clearFloor();
+    window.__air({ muck: 300 });
+    run(3);
+    const s = state();
+    const xs = s.workerPos.filter(d => d[0] === 'h')
+                          .map(d => +d.split(':')[1].split(',')[0])
+                          .sort((a, b) => a - b);
+    const onJob = s.crewDetail.filter(d => d[0] === 'h' && d.split('|')[1] === 'muck').length;
+    // the closest any two of them stand
+    let tightest = Infinity;
+    for (let i = 1; i < xs.length; i++) tightest = Math.min(tightest, xs[i] - xs[i - 1]);
+
+    // and it settles rather than jittering: two reads a moment apart agree
+    run(0.5);
+    const again = state().workerPos.filter(d => d[0] === 'h')
+                                   .map(d => +d.split(':')[1].split(',')[0])
+                                   .sort((a, b) => a - b);
+    window.__crew(0, 0);
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+    return [
+      ok(onJob >= 5, 'the crew drop what they are doing for a yard under muck',
+         `${onJob} of 6 shovelling`),
+      ok(new Set(xs).size === xs.length, 'and no two of them stand on the same spot',
+         xs.join(',')),
+      // Three cells, which is what a body is. This file has no imports -- it
+      // reads the yard through __state() and nothing else -- so the width is
+      // written out rather than borrowed from config.
+      ok(tightest >= 18, 'each has a body width of ground to work in',
+         `closest pair ${tightest}px apart`),
+      ok(again.every((x, i) => Math.abs(x - xs[i]) < 12),
+         'and the line they make settles rather than shuffling about',
+         `${xs.join(',')} then ${again.join(',')}`)
+    ];
+  }],
+
   // A rock in the air stops anybody who would have to walk under it, and that is
   // right. Standing dead still for the whole ten seconds of it is not: five
   // haulers that were walking in step all stop on the same pixel, and what you

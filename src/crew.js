@@ -956,6 +956,23 @@ function elbowIdle(w) {
   }
 }
 
+// Nobody shovels inside anybody. The same quarter-step the idlers take, for the
+// one job the whole crew drops everything to do at once.
+function elbowMuck(w) {
+  for (const o of S.workers) {
+    if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'muck') continue;
+    const d = o.x - w.x;
+    if (Math.abs(d) >= ROAM_ELBOW) continue;
+    // Two on the very same pixel have no side to push to. The tiebreak is where
+    // each stands in the crew list, so they alternate and actually come apart --
+    // a coin toss they both call the same way leaves them stacked for ever.
+    const tie = S.workers.indexOf(w) % 2 ? 1 : -1;
+    w.x -= Math.sign(d || tie) * 0.35;
+    w.y = walkY(w.x + WORKER / 2);
+    return;
+  }
+}
+
 // The nearest column of dust that nobody else has set off for. One column, one
 // worker: without that, every worker in the yard works out the same answer and
 // the whole line turns round for a single grain behind them, then turns round
@@ -1011,6 +1028,12 @@ export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
   const taken = claims();
+  // And who is going for which patch of muck. Rebuilt each pass rather than kept
+  // on the bodies: a shovelling body is not carrying a claim around the way a
+  // fetching one is -- it walks to a mess, clears it, and looks again -- so the
+  // only thing that has to be true is that two of them starting out on the same
+  // frame do not start out for the same cell.
+  const muckTaken = new Set();
   // ...and the ground nobody may be *fetching from*, which is not the same rule
   // and used to be missing. A hauler ducks out of the way and then walks
   // straight back in, because what pulled it there was a column of dust it had
@@ -1243,7 +1266,7 @@ export function updateWorkers(now, dt) {
     // the trip first. Putting a load down to pick up a shovel is a load on the
     // floor and a trip wasted.
     if (!w.carry && !w.hasCore && yardMuck() > 0) {
-      const to = nearestMuck(w.x + WORKER / 2);
+      const to = nearestMuck(w.x + WORKER / 2, muckTaken);
       if (to != null) {
         if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
         unbook(w);
@@ -1258,6 +1281,11 @@ export function updateWorkers(now, dt) {
         } else {
           sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
           w.lunge = 1;
+          // and not shoulder to shoulder with the next one. A yard under muck
+          // has something to shovel wherever you stand, so a gang that arrived
+          // together would each find work on the spot they arrived on and clear
+          // the whole mess as one lump you cannot count.
+          elbowMuck(w);
         }
         continue;
       }
