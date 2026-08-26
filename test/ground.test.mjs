@@ -335,3 +335,40 @@ group('dust lies where it is dropped, not where a pile is', async () => {
   ];
 });
 
+
+// A dig takes the far wall out from under whatever was lying behind it. The
+// dust stood on the strip past the hole; after the dig that strip is hole, and
+// it hung there in the air over the mouth for the rest of the run -- settling
+// only moves a grain that has somewhere to fall to, and the ground under it was
+// still the bottom row of the floor.
+group('widening the pit drops the dust behind the wall into it', async () => {
+  window.__crew(0, 0);
+  window.__clearFloor();
+  run(0.4);
+  const before = state();
+  const far = before.pitX + before.pitW;
+  // a bank on the ground the next dig is about to take
+  for (let i = 0; i < 300; i++) window.__pile(far + P * 2 + (i % 40) * P, 1);
+  run(2);
+  const piled = window.__dustSpan();
+  const onGround = state().floor;
+  window.__dig(1);
+  const dug = state();
+  run(3);
+  const after = state();
+  const banked = after.pitDust - before.pitDust;
+  const stranded = window.__dustOverPit();       // read the ground before clearing it
+  window.__clearFloor();
+  return [
+    ok(onGround > 100, 'there is a bank behind the far wall to start with',
+       `${onGround} grains, lying ${piled.lo}..${piled.hi}`),
+    ok(dug.pitW > before.pitW, 'and the dig takes the wall out past it',
+       `${before.pitW} -> ${dug.pitW} wide`),
+    ok(stranded === 0, 'nothing is left standing in the air over the mouth',
+       `${stranded} grains out there`),
+    ok(banked > 100, 'what was over it comes down into the hole',
+       `${banked} grains in`),
+    ok(after.floor + banked >= onGround - 20,
+       'and none of it is lost on the way', `${onGround} -> ${after.floor} out, ${banked} in`)
+  ];
+});

@@ -48,7 +48,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     __spend: hooks.spendDust, __pitProfile: hooks.pitProfile, __dig: hooks.dig,
     __tip: hooks.tip, __give: hooks.give, __state: snapshot,
     __skyX: hooks.skyX, __puffFades: hooks.puffFades, __skyFades: hooks.skyFades,
-    __dustSpan: hooks.dustSpan, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
+    __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
     __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
     __muckOverPit: hooks.muckOverPit, __look: hooks.look
   });

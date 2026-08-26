@@ -276,6 +276,19 @@ export const dustSpan = () => {
            hi: hi === null ? null : Math.round(floor.x + hi * P) };
 };
 
+// grains of ground dust lying over the mouth of the hole, which is a number
+// that should always be nought: nothing rests on an opening. A dig widens the
+// mouth under whatever was piled behind the far wall, and this is the check
+// that the ground let go of it.
+export const dustOverPit = () => {
+  let n = 0;
+  for (let c = 0; c < floor.cols; c++) {
+    if (!overPitMouth(floor.x + c * P)) continue;
+    for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+  }
+  return n;
+};
+
 export const skyJoin = () => SKY.map(m => +(m.eased ?? 1).toFixed(2));
 
 export const skyXY = () => SKY.map(m => [Math.round(m.x), Math.round(m.y - S.camY)]);

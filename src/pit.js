@@ -69,6 +69,11 @@ export function digPit() {
   wirePit();                             // regrids, re-measures, repaints
   topUpPit();                            // and what was over the brim comes back
   seedPitCores();
+  // and the ground says what a dig did to it: the far wall has gone out from
+  // under whatever was lying behind it, and that dust has to come down. The
+  // hole does not know what a bank is, so the yard is told and answers for
+  // itself -- see `shedNewMouth` in game.js.
+  if (pit.onDig) pit.onDig();
   S.dirty = true;
 }
 
