@@ -191,6 +191,8 @@ export const S = {
   mining: false,
   paused: false,          // the whole yard held still, on the space bar
   houseBoardOpen: false,  // and the list of who lives here
+  quarryBoardOpen: false,
+  farmBoardOpen: false,
   scrubBoardOpen: false,
 
   // --- the air ----------------------------------------------------------------

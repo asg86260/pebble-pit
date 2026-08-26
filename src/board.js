@@ -2,13 +2,15 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino, scrub } from './state.js';
+import { S, bench, lab, school, casino, scrub, quarry, farm } from './state.js';
 import { crewRows, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, spinning } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
+import { QUARRY_UPGRADES } from './quarry.js';
+import { FARM_UPGRADES } from './farm.js';
 import { refresh, markRowsSeen, buildCrew, tookRows } from './shop.js';
 import { now } from './clock.js';
 
@@ -18,18 +20,41 @@ const schoolShopEl = document.getElementById('schoolshop');
 const casinoShopEl = document.getElementById('casinoshop');
 const crewShopEl = document.getElementById('crewshop');
 const scrubShopEl = document.getElementById('scrubshop');
+const quarryShopEl = document.getElementById('quarryshop');
+const farmShopEl = document.getElementById('farmshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
                 school: document.getElementById('school'), casino: document.getElementById('casino'),
                 house: document.getElementById('house'),
-                scrub: document.getElementById('scrub') };
+                scrub: document.getElementById('scrub'),
+                quarry: document.getElementById('quarryboard'),
+                farm: document.getElementById('farmboard') };
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
-const standAt = { bench, lab, school, casino, scrub, get house() { return houseRect(); } };
-const LISTS = { bench: UPGRADES, lab: LAB_UPGRADES, school: SCHOOL_UPGRADES,
-                casino: CASINO_UPGRADES, scrub: SCRUB_UPGRADES, house: [] };
+// The cut is a hole, so what you stand at is its mouth rather than the whole
+// shaft: a rectangle that reaches to the floor of it would put the board
+// underground, and deeper every time you bought a bench. The plots are flat and
+// need no such care.
+const quarryMouth = { get x() { return quarry.x; }, get y() { return quarry.y; },
+                      get w() { return quarry.w; }, get h() { return 0; } };
+const standAt = { bench, lab, school, casino, scrub, farm,
+                  quarry: quarryMouth,
+                  get house() { return houseRect(); } };
+// Asked for when it is wanted, not gathered at load time. The cut and the plots
+// are drawn by files this one already reads, so the imports come round in a ring
+// -- and a table built while the ring is still closing gets whichever of them
+// had not been reached yet as `undefined`. Reading it inside a function is the
+// same trick airboard.js hands its row out with.
+const listFor = which =>
+  which === 'bench' ? UPGRADES :
+  which === 'lab' ? LAB_UPGRADES :
+  which === 'school' ? SCHOOL_UPGRADES :
+  which === 'casino' ? CASINO_UPGRADES :
+  which === 'scrub' ? SCRUB_UPGRADES :
+  which === 'quarry' ? QUARRY_UPGRADES :
+  which === 'farm' ? FARM_UPGRADES : [];
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -40,6 +65,11 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
+// The two sites you dig rather than build. You stand at the mouth of the cut and
+// on the headland at the plots, and neither is there to walk up to until it has
+// been paid for on the bench.
+export const nearQuarry = (x, y) => S.quarryOpen && near(quarryMouth, x, y);
+export const nearFarm = (x, y) => S.farmOpen && near(farm, x, y);
 // And the house, once anybody lives in it -- with a tight right edge rather than
 // the usual eight cells.
 //
@@ -265,12 +295,14 @@ export function showPanel(want) {
   S.casinoBoardOpen = want === 'casino';
   S.houseBoardOpen = want === 'house';
   S.scrubBoardOpen = want === 'scrub';
+  S.quarryBoardOpen = want === 'quarry';
+  S.farmBoardOpen = want === 'farm';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
     // way in: a dot cleared as the board opened would be cleared in the frame it
     // was drawn -- see `markRowsSeen`.
-    if (wasAt) markRowsSeen(LISTS[wasAt]);
+    if (wasAt) markRowsSeen(listFor(wasAt));
     panelEl.classList.remove('open');
     clearTimeout(closing);
     closing = setTimeout(() => {
@@ -341,6 +373,8 @@ function fill(which) {
   if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, kitCount);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
+  if (which === 'quarry') refresh(quarryShopEl, QUARRY_UPGRADES, null);
+  if (which === 'farm') refresh(farmShopEl, FARM_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') { buildCrew(); refresh(crewShopEl, crewRows(), null); }

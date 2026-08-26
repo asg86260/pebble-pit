@@ -6,12 +6,13 @@
 // different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
+import { BED_COST, BED_RATE, FARM_BEDS_MAX } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
 import { foul, throughBedMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
-import { walkY, bedCount } from './world.js';
+import { walkY, bedCount, resite } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -125,3 +126,42 @@ export function stepFarmhand(w, now, dt) {
   w.bed = pickBed(w);
   w.goal = 'to';
 }
+
+
+// --- what the plots sell -----------------------------------------------------
+// The same move the cut made, for the same reason: you break the next bit of
+// ground standing on the ground you are breaking. The row that opens the farm
+// stays on the bench, because there is nowhere to walk to until it is bought.
+export const FARM_UPGRADES = [
+  {
+    key: 'farmbed',
+    // Breaking ground is what it takes; a plot is what you get.
+    name: 'new plot',
+    from: () => bedCount(),
+    to: () => bedCount() + 1,
+    cost: () => Math.round(BED_COST * Math.pow(BED_RATE, S.bedLevel)),
+    currency: 'spore',
+    buy: () => { S.bedLevel++; resite(); },
+    show: () => S.farmOpen && bedCount() < FARM_BEDS_MAX
+  },
+  {
+    key: 'tend',
+    // "tending" was the truest word for it -- a farmhand tends a bed and this is
+    // how fast -- and it was the odd one out on a board where every other rate
+    // says speed. One word meaning one thing beats five words each meaning it
+    // slightly better.
+    name: 'speed',
+    unit: 'beds/min',
+    pct: true,
+    from: () => tendRate(),
+    to: () => tendRate(S.tendLevel + 1),
+    cost: () => Math.round(4 * Math.pow(1.7, S.tendLevel)),
+    currency: 'spore',
+    buy: () => S.tendLevel++,
+    show: () => S.farmOpen && tendMs() > TEND_FLOOR
+  }
+];
+
+export const FARM_SECTIONS = [
+  { title: 'the plots', keys: ['farmbed', 'tend'] }
+];

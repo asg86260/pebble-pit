@@ -12,6 +12,8 @@ import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
+import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
+import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { crewRows, crewSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -20,6 +22,8 @@ const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
 const scrubEl = document.getElementById('scrubshop');
+const quarryEl = document.getElementById('quarryshop');
+const farmEl = document.getElementById('farmshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -270,6 +274,10 @@ export function buildShop() {
   build(casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table');
   build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
   build(scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit');
+  // The cut and the plots run out: there is only so far down and only so much
+  // ground. A board with nothing left on it says so rather than standing blank.
+  build(quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the cut is as deep as it goes');
+  build(farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken');
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   build(schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach');
@@ -277,4 +285,4 @@ export function buildShop() {
 
 
 
-export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES };
+export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };

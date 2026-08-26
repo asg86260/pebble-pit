@@ -496,6 +496,65 @@ const TESTS = [
   // what you already have -- and kit is the one purchase where that is the whole
   // question: a helmet is worth buying because of how many are already on the
   // rock.
+  // A decision about a place is made at the place. The cut and the plots used to
+  // be sold from the bench, under headings naming a hole and a field on the far
+  // side of the yard: you bought a bench you could not see, priced in a currency
+  // that comes out of ground you were not standing on. The lab and the school
+  // are buildings you walk to for exactly this reason.
+  ['the cut and the plots are bought where they are', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    window.__grant({ cores: 30, shards: 900, spores: 900 });
+    window.__give(500000);
+    buildShopFromTest();
+    shop().querySelector('[data-key="unlockquarry"]')?.click();
+    buildShopFromTest();
+    shop().querySelector('[data-key="unlockfarm"]')?.click();
+    buildShopFromTest();
+    const bench = [...shop().querySelectorAll('[data-key]')].map(b => b.dataset.key);
+
+    // walk to the mouth of the cut
+    const s0 = state();
+    window.__look(s0.quarryX - 200);
+    await sleep(60);
+    const [qx, qy] = onScreen(s0.quarryX + s0.quarryW / 2, s0.groundY - 10);
+    point('pointermove', qx, qy, 0);
+    await sleep(250);
+    const atCut = state();
+    const cutRows = [...document.querySelectorAll('#quarryshop [data-key]')].map(b => b.dataset.key);
+    const deeper = document.querySelector('#quarryshop [data-key="quarrybench"]');
+    const wasBenches = state().benches;
+    deeper?.click();
+    const nowBenches = state().benches;
+
+    // and out to the plots
+    window.__look(s0.farmX - 200);
+    await sleep(60);
+    const [fx, fy] = onScreen(s0.farmX + s0.farmW / 2, s0.groundY - 10);
+    point('pointermove', fx, fy, 0);
+    await sleep(250);
+    const atPlots = state();
+    const plotRows = [...document.querySelectorAll('#farmshop [data-key]')].map(b => b.dataset.key);
+
+    await hoverAway();
+    window.__look(state().openCamX);
+    window.__crew(0, 0);
+    return [
+      ok(!bench.includes('quarrybench') && !bench.includes('quarrypace') &&
+         !bench.includes('farmbed') && !bench.includes('tend'),
+         'the bench sells neither of them any more', bench.join(',')),
+      ok(atCut.quarryBoardOpen, 'standing at the cut opens its own board'),
+      ok(cutRows.join(',') === 'quarrybench,quarrypace',
+         'holding how deep it goes and how fast it works', cutRows.join(',')),
+      ok(nowBenches === wasBenches + 1, 'and the row on it digs the cut deeper',
+         `${wasBenches} -> ${nowBenches}`),
+      ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
+      ok(plotRows.join(',') === 'farmbed,tend',
+         'holding the next plot and how fast a bed comes on', plotRows.join(','))
+    ];
+  }],
+
   ['the training grounds count the kit on each stand', async () => {
     window.__crew(2, 2, 2, 2);
     window.__grant({ shards: 60 });
@@ -558,7 +617,8 @@ const TESTS = [
     window.__crew(0, 0);
     window.__school({ open: false });
     return [
-      ok(titles.join('|') === 'the bench|the lab|the training grounds|the house|the scrubbing house|the casino',
+      ok(titles.join('|') === 'the bench|the lab|the training grounds|the house|' +
+                              'the quarry|the farm|the scrubbing house|the casino',
          'each board carries its own name', titles.join('|')),
       ok(emptyRows === 0 && emptyText.trim().length > 0,
          'a board with no rows says so instead of standing there blank', emptyText),
@@ -1281,10 +1341,13 @@ const TESTS = [
 
     window.__grant({ shards: 40, spores: 40 });
     buildShopFromTest();
-    const rows = [...document.querySelectorAll('#shop button[data-key]')].map(b => b.dataset.key);
+    // Each is on the board at its own site now, not on the bench: see
+    // 'the cut and the plots are bought where they are'.
+    const rows = [...document.querySelectorAll('#quarryshop [data-key], #farmshop [data-key]')]
+      .map(b => b.dataset.key);
     const deep = state().quarryH, wide = state().farmW;
-    document.querySelector('#shop button[data-key="quarrybench"]').click();
-    document.querySelector('#shop button[data-key="farmbed"]').click();
+    document.querySelector('#quarryshop button[data-key="quarrybench"]').click();
+    document.querySelector('#farmshop button[data-key="farmbed"]').click();
     const grown = state();
     window.__assign('quarriers', 1);
     window.__assign('farmhands', 1);
@@ -1298,7 +1361,7 @@ const TESTS = [
          'and no more than that can be sent to either',
          `${packed.quarriers} down, ${packed.farmhands} at the beds`),
       ok(rows.includes('quarrybench') && rows.includes('farmbed'),
-         'both are on the bench the moment the place is open'),
+         'both are on their own board the moment the place is open', rows.join(',')),
       ok(grown.quarryH > deep && grown.farmW > wide,
          'buying one takes the cut deeper and the plot wider',
          `${deep}->${grown.quarryH} deep, ${wide}->${grown.farmW} wide`),

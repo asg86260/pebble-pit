@@ -16,9 +16,7 @@ import { spend, takeCoreCells, digPit, digsLeft, digCost, capacityAt, pitCapacit
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
 import { syncWorkers } from './crew.js';
-import { quarryMs, quarryRate } from './quarry.js';
 import { mult } from './lab.js';
-import { tendMs, tendRate } from './farm.js';
 import { buildShop } from './shop.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
@@ -388,44 +386,8 @@ export const UPGRADES = [
   // taking the board out from under you to show you something you have already
   // seen. Nothing here is a surprise worth interrupting for.
   //
-  // The first thing a shard is worth, and the reason the quarry is worth three
-  // cores: the cut pays for its own next bench. A fresh one is two benches of
-  // standing room, so the third body you want down there has to be given
-  // somewhere to stand -- and what it is bought with is what the two already
-  // down there are carrying up.
-  {
-    key: 'quarrybench',
-    // What the row says is what you are doing, not what it leaves behind. "Take
-    // out a bench" is the quarryman's word for it and the shape you can see in
-    // the wall afterwards -- but the thing you are buying is the hole going
-    // further down, and that is what the row should say.
-    name: 'dig deeper',
-    from: () => benches(),
-    to: () => benches() + 1,
-    cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
-    currency: 'shard',
-    buy: () => { S.benchLevel++; resite(); },
-    show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
-  },
-  // And the pace of it, in the same coin. It was dust, and dust is the one
-  // thing the quarry has nothing to do with: a place ought to be paid for out
-  // of what it gives up, or opening it is a bill with nothing at the end of it.
-  {
-    key: 'quarrypace',
-    // It was "quarry lamps" -- the fiction being that you work faster when you
-    // can see. A nice thought and a bad row: nothing else on this board is named
-    // after the *reason* it works, and a lamp is not a thing this game ever
-    // draws. It is how often a shard comes off the face, which is speed.
-    name: 'speed',
-    unit: 'trips/min',
-    pct: true,
-    from: () => quarryRate(),
-    to: () => quarryRate(S.quarryPaceLevel + 1),
-    cost: () => Math.round(3 * Math.pow(1.7, S.quarryPaceLevel)),
-    currency: 'shard',
-    buy: () => S.quarryPaceLevel++,
-    show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
-  },
+  // The cut's own two rows -- how deep it goes and how fast it works -- are on
+  // a board at the cut now, along with the farm's at the farm. See quarry.js.
   // The school is a building you put up, like the lab, and it is priced in what
   // the quarry gives so that the quarry's output has somewhere to go the day it
   // starts arriving.
@@ -509,37 +471,7 @@ export const UPGRADES = [
     show: () => digsLeft() > 0
   },
 
-  FARM,
-  // The farm makes the same bargain the quarry does, in the shape a farm makes
-  // it. The ground comes with three beds; every one after that is broken with
-  // what the beds already in it have grown, and a bed is a place for one body.
-  {
-    key: 'farmbed',
-    // Same again: breaking ground is what it takes, a plot is what you get.
-    name: 'new plot',
-    from: () => bedCount(),
-    to: () => bedCount() + 1,
-    cost: () => Math.round(BED_COST * Math.pow(BED_RATE, S.bedLevel)),
-    currency: 'spore',
-    buy: () => { S.bedLevel++; resite(); },
-    show: () => S.farmOpen && bedCount() < FARM_BEDS_MAX
-  },
-  {
-    key: 'tend',
-    // "tending" was the truest word for it -- a farmhand tends a bed and this is
-    // how fast -- and it was the odd one out on a board where every other rate
-    // says speed. One word meaning one thing beats five words each meaning it
-    // slightly better.
-    name: 'speed',
-    unit: 'beds/min',
-    pct: true,
-    from: () => tendRate(),
-    to: () => tendRate(S.tendLevel + 1),
-    cost: () => Math.round(4 * Math.pow(1.7, S.tendLevel)),
-    currency: 'spore',
-    buy: () => S.tendLevel++,
-    show: () => S.farmOpen && tendMs() > TEND_FLOOR
-  }
+  FARM
 ];
 
 // The order and the grouping on the board. A section with nothing to show in it
@@ -548,8 +480,8 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
-  { title: 'the quarry', keys: ['unlockquarry', 'quarrybench', 'quarrypace'] },
-  { title: 'the farm', keys: ['unlockfarm', 'farmbed', 'tend'] },
+  { title: 'the quarry', keys: ['unlockquarry'] },
+  { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
   { title: 'the pit', keys: ['dig'] },

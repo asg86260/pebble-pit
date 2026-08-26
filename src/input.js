@@ -10,7 +10,7 @@ import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
-import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, showPanel, placeBoard, showTip,
+import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
          overPitMark, pitMarkAt } from './render.js';
@@ -132,6 +132,8 @@ canvas.addEventListener('pointermove', e => {
                : nearSchool(S.mouse.x, S.mouse.y) ? 'school'
                : nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
                : nearScrub(S.mouse.x, S.mouse.y) ? 'scrub'
+               : nearQuarry(S.mouse.x, S.mouse.y) ? 'quarry'
+               : nearFarm(S.mouse.x, S.mouse.y) ? 'farm'
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house' : null;
     // On its way to the board that is open outranks standing at another station.
@@ -178,6 +180,8 @@ export function endDrag(e) {
     else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school');
     else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino');
     else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub');
+    else if (nearQuarry(p.x, p.y)) showPanel(S.quarryBoardOpen ? null : 'quarry');
+    else if (nearFarm(p.x, p.y)) showPanel(S.farmBoardOpen ? null : 'farm');
     else if (nearHouse(p.x, p.y)) showPanel(S.houseBoardOpen ? null : 'house');
     else showPanel(null);
   }
@@ -278,7 +282,7 @@ const CURSORS = [
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
   [(x, y) => nearBench(x, y) || nearLab(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
-             nearHouse(x, y) || nearScrub(x, y), 'pointer'],
+             nearHouse(x, y) || nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
   // and a bird, which is a thing to notice rather than a thing to farm

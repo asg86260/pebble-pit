@@ -8,13 +8,14 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
+import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
 import { foul, throughCutMuck } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
-import { walkY, groundAt } from './world.js';
+import { walkY, groundAt, benches, resite } from './world.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 import { now } from './clock.js';
@@ -251,3 +252,53 @@ export function stepQuarrier(w, now) {
 
 // nobody is out of sight any more: the whole point of a cut rather than a shaft
 export const underground = () => false;
+
+
+// --- what the cut sells ------------------------------------------------------
+// A decision about a place is made at the place. These two used to sit on the
+// bench under a heading called "the quarry", which is the shop describing a hole
+// on the other side of the yard: you bought a bench you could not see, priced in
+// a currency that comes out of the ground you were not standing on. The lab and
+// the school are buildings you walk to for exactly this reason, and the cut is
+// as much a place as either.
+//
+// The row that *opens* it stays on the bench, because you cannot walk up to a
+// quarry that has not been dug yet.
+export const QUARRY_UPGRADES = [
+  {
+    key: 'quarrybench',
+    // What the row says is what you are doing, not what it leaves behind. "Take
+    // out a bench" is the quarryman's word for it and the shape you can see in
+    // the wall afterwards -- but the thing you are buying is the hole going
+    // further down, and that is what the row should say.
+    name: 'dig deeper',
+    from: () => benches(),
+    to: () => benches() + 1,
+    cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
+    currency: 'shard',
+    buy: () => { S.benchLevel++; resite(); },
+    show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
+  },
+  {
+    key: 'quarrypace',
+    // It was "quarry lamps" -- the fiction being that you work faster when you
+    // can see. A nice thought and a bad row: nothing else on these boards is
+    // named after the *reason* it works, and a lamp is not a thing this game
+    // ever draws. It is how often a shard comes off the face, which is speed.
+    name: 'speed',
+    unit: 'trips/min',
+    pct: true,
+    from: () => quarryRate(),
+    to: () => quarryRate(S.quarryPaceLevel + 1),
+    cost: () => Math.round(3 * Math.pow(1.7, S.quarryPaceLevel)),
+    currency: 'shard',
+    buy: () => S.quarryPaceLevel++,
+    show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
+  }
+];
+
+// One heading. The cut is one place and everything on this board is about the
+// same hole, so a second would be a heading for the sake of having two.
+export const QUARRY_SECTIONS = [
+  { title: 'the cut', keys: ['quarrybench', 'quarrypace'] }
+];
