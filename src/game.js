@@ -182,7 +182,7 @@ export function step() {
       // pile. Nothing that was mined is destroyed by a pit with no room in it,
       // and nothing goes in uncounted.
       if (pitFull() && isDust(ch.s)) {
-        spawnSpoil(ch.x, ch.y, ch.s, 'rock');
+        spawnSpoil(ch.x, ch.y, ch.s);
         S.chips.splice(i, 1);
         continue;
       }
@@ -201,7 +201,7 @@ export function step() {
         // The hole would not take it -- everything counts against the same
         // capacity now, finds included. It is not swallowed: it comes back out
         // on to the ground by the lip and lies there until a dig makes room.
-        if (!bankDust(ch.x, ch.s)) spawnSpoil(pit.x - P * 4, S.groundY - P * 4, ch.s, 'rock');
+        if (!bankDust(ch.x, ch.s)) spawnSpoil(pit.x - P * 4, S.groundY - P * 4, ch.s);
         S.chips.splice(i, 1);
         continue;
       }

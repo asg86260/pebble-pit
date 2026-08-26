@@ -470,6 +470,12 @@ export const findKind = v =>
   v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
 export const someFind = base => base + Math.floor(Math.random() * FIND_TONES);
 export let GRAV = 0.45;
+// What a knocked-loose grain does on its way off. It is a blow, not a delivery:
+// a pop off the face and a little sideways from the hit, and where it comes down
+// is wherever the ground is under it when it gets there.
+export const SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
+export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss
+export const SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining

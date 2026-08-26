@@ -316,9 +316,12 @@ group('the game opens on two squares and a rock lands on one', async () => {
   ];
 });
 
-group('spoil is aimed, and lands clear of the rock', async () => {
+group('spoil falls where it falls', async () => {
   window.__crew(6, 0);
-  run(5);
+  // Long enough to be a sample rather than a handful. Where a grain goes is a
+  // coin toss now instead of a delivery, so five seconds of it is a dozen and a
+  // half grains and which side they fell on swings about.
+  run(12);
   const s = state();
   window.__crew(0, 0);
   const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
@@ -326,18 +329,21 @@ group('spoil is aimed, and lands clear of the rock', async () => {
     ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
     ok(s.dustUnderRock === 0, 'none of it comes to rest on or under the rock',
        `${s.dustUnderRock} grains`),
-    // One pile, on the side the pit is on. Two banks either side meant half
-    // the spoil landed on the far side of the hill from everything else.
-    ok(right > 0 && s.pileCount.rock > 0, "it all goes into the rock's own pile",
-       `${s.pileCount.rock} in the pile, ${right} right of the rock`),
-    ok(s.apronClear, 'the ground right beside the rock stays bare',
-       `${s.apronDust} grains in the apron`),
+    // Spoil used to be *aimed*: every grain picked a spot inside the rock's own
+    // strip and was launched on the one arc that got there, so it all ended up
+    // on the side the pit is on because the game put it there. A knock is a
+    // knock now, and a hill has two sides -- so some of it goes over the back,
+    // and somebody walks round for it. See 'a worker can reach the bank behind
+    // the rock'.
+    ok(right > 0 && s.dustLeftOfRock > 0, 'and a hill has two sides to land on',
+       `${right} right of the rock, ${s.dustLeftOfRock} behind it`),
+    ok(s.floor === right + s.dustLeftOfRock,
+       'with nothing lost between the two of them',
+       `${s.floor} down, ${right} + ${s.dustLeftOfRock}`),
     // The apron is a cliff the sand cannot slump over, so without a ceiling on
     // how high a column may stand near it the bank grows straight up against
-    // the rock as a sheer wall. It has to lean away instead.
+    // the rock as a sheer wall.
     ok(s.heapAtRock <= 3, 'the bank does not stand up as a wall at the rock',
-       `${s.heapAtRock} cells high against the apron`),
-    ok(s.bankCrest > s.heapAtRock, 'it leans away from the rock, high point further out',
-       `${s.heapAtRock} at the apron, ${s.bankCrest} at its crest`)
+       `${s.heapAtRock} cells high against the apron`)
   ];
 });

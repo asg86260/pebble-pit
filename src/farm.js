@@ -61,7 +61,7 @@ function pickBed(w) {
 // one that has been sitting there since it ripened, in the same tone.
 function cut(i, x) {
   const tone = S.bedTone[i] || someFind(SPORE_CELL);
-  spawnSpoil(x, bedTop(i) - P, tone, 'farm');
+  spawnSpoil(x, bedTop(i) - P, tone);
   S.beds[i] = 0;
   S.bedTone[i] = 0;
 }

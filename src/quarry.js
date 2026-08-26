@@ -179,7 +179,7 @@ function seatX(w) {
 // own pile -- by the same throw the rock's spoil uses, aimed the same way, over
 // the rim because the arc knows how to climb.
 function tossOut(x, y) {
-  spawnSpoil(x, y, someFind(SHARD_CELL), 'quarry');
+  spawnSpoil(x, y, someFind(SHARD_CELL));
 }
 
 // one quarrier, one frame
