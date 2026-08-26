@@ -17,8 +17,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S } from './state.js';
-import { pileOf } from './world.js';
-import { spawnChip, aim, bell } from './dust.js';
+import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
@@ -161,11 +160,10 @@ export function sendBirds() {
 }
 
 // A bird is worth a click. It carries nothing -- what it drops is a few grains
-// shaken loose as it bolts, aimed into the rock's own strip of ground the way
-// spoil is, so it lands where the crew already work rather than out in the far
-// yard where nothing would ever fetch it. The rest of the lot break for it too:
-// a flock that carried on in formation after one of them was startled would say
-// the click had not landed.
+// shaken loose as it bolts, and they are not thrown anywhere: they fall from
+// where the bird was and land wherever under it the ground happens to be. The
+// rest of the lot break for it too: a flock that carried on in formation after
+// one of them was startled would say the click had not landed.
 // close enough to one to knock it off its line
 export const overBird = (wx, wy) =>
   BIRDS.some(b => Math.abs(wx - skyX(b)) <= BIRD_REACH && Math.abs(wy - b.y) <= BIRD_REACH);
@@ -175,16 +173,13 @@ export function startle(wx, wy) {
     const b = BIRDS[i];
     if (Math.abs(wx - skyX(b)) > BIRD_REACH || Math.abs(wy - b.y) > BIRD_REACH) continue;
 
-    const p = pileOf('rock');
-    const near = p ? p.from : S.cx;
-    const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
     const from = skyX(b);
     for (let n = 0; n < BIRD_DUST; n++) {
-      const land = near + Math.abs(bell()) * (far - near) * 0.4;
-      const v = aim(from, b.y, Math.min(far, land), P);
+      // no arc and no target: a small sideways nudge so the few of them do not
+      // fall down the one line, and gravity does the rest
       // the two palest shades, and never 0: a cell of 0 is an empty one, and a
       // grain spawned as one lands nowhere and is counted as nothing
-      spawnChip(from, b.y, v.vx, v.vy, 1 + Math.floor(Math.random() * 2), Math.min(far, land));
+      spawnChip(from, b.y, bell() * 0.3, 0, 1 + Math.floor(Math.random() * 2));
     }
 
     BIRDS.splice(i, 1);
