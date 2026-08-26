@@ -433,6 +433,48 @@ const TESTS = [
     ];
   }],
 
+  // The same badge, on the other board, counting the other thing. A row says
+  // what buying it gives you and what it costs, which leaves nowhere to read
+  // what you already have -- and kit is the one purchase where that is the whole
+  // question: a helmet is worth buying because of how many are already on the
+  // rock.
+  ['the training grounds count the kit on each stand', async () => {
+    window.__crew(2, 2, 2, 2);
+    window.__grant({ shards: 60 });
+    window.__school({ open: true, breakers: 3, carters: 1, blasters: 0, growers: 0 });
+    const s = state();
+
+    // standing at it is what fills its board, the same as the bench
+    window.__look(s.schoolX - 200);
+    await sleep(60);
+    const [sx, sy] = onScreen(s.schoolX + 60, s.groundY - 20);
+    point('pointermove', sx, sy, 0);
+    await sleep(250);
+
+    const heads = [...document.getElementById('schoolshop').children]
+      .filter(el => el.dataset.sect);
+    const badge = title => {
+      const h = heads.find(el => el.dataset.sect === title);
+      return h && h.querySelector('.badge');
+    };
+    const rock = badge('the rock'), dust = badge('the dust'), quarry = badge('the quarry');
+
+    await hoverAway();
+    window.__look(state().openCamX);
+    window.__crew(0, 0);
+    window.__school({ open: false, breakers: 0, carters: 0 });
+    return [
+      ok(rock && rock.textContent === '3',
+         'a stand with kit on it says how much', rock && rock.textContent),
+      ok(dust && dust.textContent === '1',
+         'each trade counts its own, not the whole school', dust && dust.textContent),
+      ok(!quarry, 'a trade you own none of carries no badge, the way an empty section does not'),
+      ok(rock && rock.parentElement.firstChild.nodeValue === 'the rock',
+         'and the heading keeps its own title as plain text',
+         rock && rock.parentElement.firstChild.nodeValue)
+    ];
+  }],
+
   // Three boards slide into the same spot and differ only in their rows, so
   // each one says whose it is. And a board with nothing on it says that too:
   // the school runs out of trades on purpose, and an empty sheet is a bug you

@@ -102,3 +102,25 @@ export const SCHOOL_SECTIONS = [
   { title: 'the quarry', keys: ['blaster'] },
   { title: 'the farm', keys: ['grower'] }
 ];
+
+// How much of that kit the station owns, for the badge on the heading.
+//
+// A row on this board says what buying it gives you and what it costs, like
+// every other row in the game -- which leaves nowhere to read what you already
+// have, and kit is the one purchase where that is the whole question. A helmet
+// is worth buying because of how many are already on the rock; a rate upgrade
+// never was.
+//
+// The bench puts a count of bodies on the same headings, and the two do not
+// collide: over there a heading is a place you send people, here it is a place
+// you leave kit, and the board itself says which building you are standing in.
+//
+// Worked off the row under the heading rather than a second table of places. A
+// section here is one trade and a trade already knows what it is counted in, so
+// a fifth trade is a line in `TRADES` and a line in `SCHOOL_SECTIONS` and this
+// keeps working.
+export const kitCount = title => {
+  const sect = SCHOOL_SECTIONS.find(s => s.title === title);
+  const t = sect && TRADES.find(x => x.key === sect.keys[0]);
+  return t ? S[t.count] : 0;
+};

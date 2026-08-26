@@ -6,7 +6,7 @@ import { S, bench, lab, school, casino, scrub } from './state.js';
 import { crewRows, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
-import { SCHOOL_UPGRADES } from './school.js';
+import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, spinning } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { refresh, markRowsSeen, buildCrew, tookRows } from './shop.js';
@@ -336,7 +336,9 @@ function fill(which) {
   // the lab board being open is what reads its news, whether it was already
   // open when the work finished or you walked over because of the mark
   if (which === 'lab') { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
-  if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, null);
+  // and the school's headings count kit rather than bodies: what is on the
+  // stand there is the thing you are deciding about
+  if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, kitCount);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
