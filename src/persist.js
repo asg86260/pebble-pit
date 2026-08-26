@@ -158,6 +158,7 @@ export function persist() {
     seenCore: S.seenCore,
     seenBench: S.seenBench,
     seenSects: S.seenSects,
+    seenRows: S.seenRows,
     pitStep: S.pitStep,
     pitLevel: S.pitLevel,
     pickLevel: S.pickLevel,
@@ -244,6 +245,7 @@ export function restore() {
     S.seenCore = false;
     S.seenBench = false;
     S.seenSects = [];
+    S.seenRows = [];
     S.pitStep = 0;
     S.pitLevel = 0;
     S.pickLevel = 0;
@@ -294,6 +296,7 @@ export function restore() {
   S.seenCore = !!s.seenCore || S.cores > 0;
   S.seenBench = !!s.seenBench;
   S.seenSects = Array.isArray(s.seenSects) ? s.seenSects : [];
+  S.seenRows = Array.isArray(s.seenRows) ? s.seenRows : [];
   // How far the hole has been dug decides how big the bed is, so it goes in
   // before the bed is laid out -- and the saved pile only fits a bed of the
   // shape it came out of.
@@ -409,6 +412,7 @@ export function reset() {
   S.seenCore = false;
   S.seenBench = false;
   S.seenSects = [];
+  S.seenRows = [];
   S.pitLevel = 0;
   setPitGrain(0);
   S.pickLevel = 0;

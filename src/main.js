@@ -20,7 +20,7 @@ import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, count, coun
 import { resize, clampCam, stepCamera, blocked, bankCeiling, overPitMouth,
          rockLeft, yardLeft, pileAt, refreshPiles, bridgeSpan, groundAt,
          stepShake, resite, benches, bedCount } from './world.js';
-import { placeRock, makeBoulder, overBoulder, knockOff, boulderAlive, depthOf, rockSize, stepRock, rockFootY, dropZone } from './rock.js';
+import { placeRock, makeBoulder, overBoulder, topOfRock, knockOff, boulderAlive, depthOf, rockSize, stepRock, rockFootY, dropZone } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, spend, pitCapacity, pitDepth, pitFull, digPit, digsLeft } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
 import { quarryFace, quarryCut, ladder } from './quarry.js';
@@ -118,7 +118,11 @@ function step() {
   if (S.mining) {
     S.nextHit = Math.max(S.nextHit, now - 500);      // don't burst after a background tab
     while (now >= S.nextHit) {
-      if (overBoulder(S.mouse.x, S.mouse.y)) knockOff(S.mouse.x, S.mouse.y);
+      // A held swing takes the top off, at the nearest high point to where the
+      // cursor is -- see `topOfRock`. You aim a click; holding the button is
+      // working, and a rock is worked from the top down.
+      const at = overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
+      if (at) knockOff(at.x, at.y);
       S.nextHit += mineMs();
     }
   }

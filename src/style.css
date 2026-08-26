@@ -71,6 +71,19 @@ canvas {
   color: #000;
 }
 
+/* What a board is for, when the name is not enough on its own. Only one of them
+   has it: "the training grounds" says where you are and not what happens there,
+   and what happens there is the one mechanic in this game that is not obvious
+   from the shape of the building. Black like everything else on the sheet, and
+   smaller than the name, because it is the sentence under the name. */
+.page .note {
+  margin: -4px 0 7px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-size: .82em;
+  color: #000;
+}
+
 /* A board with nothing on it. It happens at the school, which sells one trade
    per job and runs out of them: an empty sheet is a bug you have to rule out,
    and a line saying so is the board still talking to you. */
@@ -112,6 +125,23 @@ canvas {
 }
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
 .rows button:disabled { opacity: .3; cursor: default; }
+
+/* A row you have never had on an open board. The mark is the one the yard
+   already uses for "there is something here": the dot on the bench itself, at
+   the size a line of type can carry. It sits in the margin rather than in the
+   name, so the names stay in one column and the board still scans down. */
+.rows button.new .name::before {
+  content: '';
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2px;
+  border-radius: 50%;
+  background: #000;
+}
+.rows button.new .name { position: relative; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching

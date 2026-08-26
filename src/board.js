@@ -7,7 +7,7 @@ import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
 import { CASINO_UPGRADES, spinning } from './casino.js';
-import { refresh } from './shop.js';
+import { refresh, markRowsSeen } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -19,6 +19,8 @@ const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
                 school: document.getElementById('school'), casino: document.getElementById('casino') };
 const standAt = { bench, lab, school, casino };
+const LISTS = { bench: UPGRADES, lab: LAB_UPGRADES, school: SCHOOL_UPGRADES,
+                casino: CASINO_UPGRADES };
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -169,16 +171,23 @@ const tipEl = document.getElementById('tip');
 let tipFor = null;
 
 export function showTip(text, at) {
+  if (!text) return showTipAt(null);
+  showTipAt(text, (at.x - S.camX) * S.zoom, (at.y - S.camY) * S.zoom + P * 4, true);
+}
+
+// The same words, put where a thing on the *page* is rather than where a thing
+// in the yard is. A row on a board is not at a world position and never will be,
+// and the alternative was a second tooltip that looked the same and was not.
+export function showTipAt(text, sx, sy, centred) {
   if (!text) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
   }
   if (text !== tipFor) { tipEl.textContent = text; tipEl.hidden = false; tipFor = text; }
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
-  const x = (at.x - S.camX) * S.zoom - w / 2;
-  const y = (at.y - S.camY) * S.zoom + P * 4;
+  const x = centred ? sx - w / 2 : sx;
   tipEl.style.left = `${Math.round(Math.max(GAP, Math.min(x, S.W - w - GAP)))}px`;
-  tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(y, S.H - h - GAP)))}px`;
+  tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(sy, S.H - h - GAP)))}px`;
 }
 
 // One menu for both stations. It is a thing standing in the yard rather than two
@@ -203,6 +212,10 @@ export function showPanel(want) {
   S.casinoBoardOpen = want === 'casino';
 
   if (!want) {                                   // fade out where it stands
+    // Whatever was on it has now been seen. On the way out rather than on the
+    // way in: a dot cleared as the board opened would be cleared in the frame it
+    // was drawn -- see `markRowsSeen`.
+    if (wasAt) markRowsSeen(LISTS[wasAt]);
     panelEl.classList.remove('open');
     clearTimeout(closing);
     closing = setTimeout(() => {

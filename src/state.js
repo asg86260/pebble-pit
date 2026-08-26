@@ -195,6 +195,7 @@ export const S = {
   // flag for a whole group of rows you have never seen.
   seenBench: false,       // the bench has been earned and stays from then on
   seenSects: [],          // headings that were on the board last time it was open
+  seenRows: [],           // and the rows themselves, so a new one can say so
   boardOpen: false,       // the workbench board is showing
   resetArmed: 0,          // the reset button wants a second click
 

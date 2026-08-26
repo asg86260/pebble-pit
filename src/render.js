@@ -773,9 +773,10 @@ function drawCoreGlow(cx, cy) {
       const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
       const x = Math.round((cx + Math.cos(a) * r) / P) * P;
       const y = Math.round((cy + Math.sin(a) * r) / P) * P;
-      // nothing below the ground line: what this is meant to read as is heat
-      // coming off the thing, and heat does not go down into the dirt
-      if (y >= S.groundY) continue;
+      // Nothing below the ground line -- what this reads as is heat coming off
+      // the thing, and heat does not go down into the dirt. Unless the thing is
+      // already down there, in which case the ground line is not a lid.
+      if (cy < S.groundY && y >= S.groundY) continue;
       const key = `${x},${y}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -1371,6 +1372,10 @@ export function drawPitCores() {
       const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
       const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
       const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
+      // It does not stop giving off whatever it gives off because you put it
+      // somewhere. A hole with a few of them in it is a hole with a few of them
+      // in it, and the counter is not the only place that should say so.
+      drawCoreGlow(cx, cy);
       drawMark(CORE_CELL, cx, cy, CORE_SIZE, true);
     }
   }

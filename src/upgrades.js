@@ -379,7 +379,7 @@ export const UPGRADES = [
   // starts arriving.
   {
     key: 'unlockschool',
-    name: 'build the school',
+    name: 'build the training grounds',
     cost: () => SCHOOL_COST,
     currency: 'shard',
     buy: () => { S.schoolOpen = true; lookAt(school.x + school.w / 2); },
@@ -468,7 +468,7 @@ export const SECTIONS = [
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
   { title: 'the pit', keys: ['dig'] },
-  { title: 'the school', keys: ['unlockschool'] }
+  { title: 'the training grounds', keys: ['unlockschool'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

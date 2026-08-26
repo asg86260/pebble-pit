@@ -63,6 +63,33 @@ export function placeRock() {
 // number's, and once one is in the air it is simply where that one is landing.
 // It is the rock's footprint plus its apron, so nobody is left standing with a
 // cliff face against their shoulder.
+// Where a held swing lands: the highest rock there is, and the nearest such
+// column to where the cursor happens to be.
+//
+// A single click hits what you clicked -- that is a swing you aimed. Holding the
+// button is not aiming, it is *working*, and a gang works a rock from the top
+// down. Aimed at the cursor it bored a shaft wherever you happened to leave the
+// pointer, which is the one thing the crew are explicitly stopped from doing,
+// and it left the rock in spires with a hole through the middle of it.
+export function topOfRock(fromX) {
+  let peak = S.gh;
+  for (let c = 0; c < S.gw; c++) {
+    if (S.rockTops[c] >= 0 && S.rockTops[c] < peak) peak = S.rockTops[c];
+  }
+  let best = -1, near = Infinity;
+  const from = Math.round((fromX - rockLeft()) / P);
+  for (let c = 0; c < S.gw; c++) {
+    if (S.rockTops[c] < 0 || S.rockTops[c] > peak + TOP_BAND) continue;
+    const d = Math.abs(c - from);
+    if (d >= near) continue;
+    near = d;
+    best = c;
+  }
+  if (best < 0) return null;
+  return { x: rockLeft() + best * P + P / 2, y: rockTopY(best) + P / 2 };
+}
+const TOP_BAND = 2;                // cells below the peak that still count as the top
+
 export function dropZone() {
   if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
   if (boulderAlive()) return null;

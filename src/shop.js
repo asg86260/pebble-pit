@@ -6,6 +6,7 @@
 // three lines.
 
 import { S } from './state.js';
+import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -102,6 +103,19 @@ function build(el, list, sections, empty) {
                     '<span class="arrow"></span><span class="to"></span>' +
                     '<span class="cost"></span>';
       b.addEventListener('click', () => buy(u));
+      // A row that has something to say says it on hover, in the same words in
+      // the same box the yard uses for a mark you went and looked at. It is the
+      // one place a *name* is not enough: a breaker is a word, and what a
+      // breaker does is the reason you would buy one.
+      if (u.note) {
+        const say = () => {
+          const r = b.getBoundingClientRect();
+          showTipAt(u.note(), r.right + 8, r.top - 2);
+        };
+        b.addEventListener('pointerenter', say);
+        b.addEventListener('pointermove', say);
+        b.addEventListener('pointerleave', () => showTipAt(null));
+      }
       el.appendChild(b);
     }
   }
@@ -179,6 +193,10 @@ export function refresh(el, list, headcount) {
       continue;
     }
 
+    // and a dot on anything that has not been on a board you have looked at
+    const fresh = !S.seenRows.includes(u.key);
+    if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
+
     say(name, u.name);
     say(from, step);
     say(arrow, step ? '→' : '');
@@ -189,6 +207,29 @@ export function refresh(el, list, headcount) {
     sayHTML(price, u.price ? u.price() : `${MARK[money]} ${cost}`);
     grey(row, u.price ? !!u.dead?.() : purse(money) < cost);
   }
+}
+
+// --- what is new on it --------------------------------------------------------
+// A row appearing is the game telling you something, and it used to tell you by
+// making the list one longer. Which is fine if you had the old list memorised
+// and invisible otherwise: the board is a dozen rows and they are all the same
+// shape, so a new one among them is a needle.
+//
+// So a row you have never had on a board carries a dot until you have had the
+// board open with it on. Marked when the board *closes*, not when it opens --
+// clearing it on open would clear it in the same frame it was drawn, and you
+// would never once see one.
+export function markRowsSeen(list) {
+  const seen = new Set(S.seenRows);
+  let added = false;
+  for (const u of list) {
+    if (!u.show || !u.show() || seen.has(u.key)) continue;
+    seen.add(u.key);
+    added = true;
+  }
+  if (!added) return;
+  S.seenRows = [...seen];
+  S.dirty = true;
 }
 
 export function buildShop() {

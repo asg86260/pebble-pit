@@ -834,7 +834,7 @@ const TESTS = [
     window.__crew(0, 0);
     window.__school({ open: false });
     return [
-      ok(titles.join('|') === 'the bench|the lab|the school|the casino',
+      ok(titles.join('|') === 'the bench|the lab|the training grounds|the casino',
          'each board carries its own name', titles.join('|')),
       ok(emptyRows === 0 && emptyText.trim().length > 0,
          'a board with no rows says so instead of standing there blank', emptyText),

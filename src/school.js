@@ -38,6 +38,15 @@ export const TRADES = [
     does: 'twice the tending' }
 ];
 
+// where each trade's kit lives, in the words the yard uses for the place
+const WHERE = { miners: 'the rock', haulers: 'the lip', quarriers: 'the cut',
+                farmhands: 'the beds' };
+
+// and whether that place is a place yet. The rock and the lip are there from
+// the first frame; the other two are bought.
+const OPEN = { miners: () => true, haulers: () => true,
+               quarriers: () => S.quarryOpen, farmhands: () => S.farmOpen };
+
 export const tradeCost = t =>
   Math.round(TRADE_COST * Math.pow(TRADE_RATE, S[t.count]));
 
@@ -62,17 +71,32 @@ function train(t) {
 export const SCHOOL_UPGRADES = TRADES.map(t => ({
   key: t.key,
   name: t.name,
+  // What it is for. A row here is one word -- breaker, carter -- and the word is
+  // the name of the kit rather than the thing it does, which is fine on a board
+  // you already know and useless on the first visit.
+  note: () => `${t.name}: ${t.does}, at ${WHERE[t.job]}`,
   unit: null,
   from: () => S[t.count],
   to: () => S[t.count] + 1,
   cost: () => tradeCost(t),
   currency: 'shard',
   buy: () => train(t),
-  show: () => S.schoolOpen
+  // and never before the place it belongs to is open: kit for a farm you have
+  // not broken the ground for is kit for somewhere that does not exist
+  show: () => S.schoolOpen && OPEN[t.job]()
 }));
 
+// One heading per place, and the same four the yard already has. "The ground"
+// held the cut and the beds together, which is two different sites under one
+// word -- and the beds are a good half hour behind the cut, so anybody reading
+// that heading on the day the quarry opens is reading a heading with one row
+// under it and a name that promises two.
+//
+// A heading with nothing showing under it is left out, so the beds turn up as
+// their own line on the day the ground is broken. See `shape` in shop.js.
 export const SCHOOL_SECTIONS = [
   { title: 'the rock', keys: ['breaker'] },
   { title: 'the dust', keys: ['carter'] },
-  { title: 'the ground', keys: ['blaster', 'grower'] }
+  { title: 'the quarry', keys: ['blaster'] },
+  { title: 'the farm', keys: ['grower'] }
 ];
