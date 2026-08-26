@@ -672,6 +672,37 @@ beside it, so it lies along the top instead.
 an empty sheet is a bug you have to rule out before you can believe it. It says `nobody left to
 teach` instead.
 
+**A row says what it gives you, never what you have.** Every purchase used to read as a
+before-and-after: `1 -> 1.5` and a unit, five columns, an arrow in the middle. That is two numbers
+and a piece of punctuation to say one thing, and it hands the player the subtraction. Worse, both
+numbers are the game's own bookkeeping. *1.5 dust a second* is a figure that means nothing until
+you have watched it for a minute, and by then you have bought the row anyway — so the board was
+spending its widest columns on arithmetic nobody was doing.
+
+So a row is three columns: **what it is, what buying it changes, what it costs.** The middle one is
+the only new idea, and it has exactly two shapes:
+
+- **Something you can count goes up by a whole number.** `+1` bench, `+1` pair of hands, `+1`
+  grain of reach. If the thing being counted has a mark in the yard's alphabet, the mark comes
+  after it: `+1 ▪`.
+- **Everything else is a rate, and a rate is a share of itself.** `+25% ▪/s`. Half again as fast is
+  `+50%` at every level and never needs the units explaining — which is the whole reason to prefer
+  it, because the underlying figure is a floor-clamped exponential and no player was ever going to
+  reconstruct that from two samples of it.
+
+This is the same move the sky made when the pollution readout stopped being a number and became a
+mark you go and look at. The number was never the thing; the **direction** was. A board you can
+scan down a column of pluses on tells you what the yard is for faster than a board of decimals.
+
+Two details fall out of it. A rate stepping onto its floor can gain a real amount and still round
+to nothing, and a row that says `+0%` reads as broken — so one per cent is the smallest claim a
+purchase is allowed to make. And a count is a count: the rate formatter puts a decimal on anything
+under ten, and `+1.0 benches` is a whole number pretending to be a measurement.
+
+The rows stay declarative about it. Each one still knows its current value and its next value —
+that is the one place the maths for that upgrade lives — and the difference between them is taken
+in a single function that every board shares. Adding an upgrade is still adding an object.
+
 ## The workbench
 
 The shop is a thing in the world, not a panel bolted to the corner: a bench on the ground just off
@@ -702,8 +733,9 @@ a new group is. Opening the board reads every heading on it, and the flag comes 
 
 The board is grouped by where the work is — you, the crew, the rock, the cave, the farm and the lab — with the headcount beside each heading. Each place that can be worked carries a **job
 row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board
-that spends nothing, and it is the only one you can run backwards. Every row is the same five columns, so the numbers line up down the page and can be
-scanned rather than read: name, current, arrow, next, cost.
+that spends nothing, and it is the only one you can run backwards. Every row is the same three
+columns, so the page lines up and can be scanned rather than read: name, gain, cost. See **The
+boards** for why the gain is a plus and never a before-and-after.
 
 **A row says what you get, in the fewest words that are still true, and the same word every time.**
 Three rules, and they took a pass of their own to arrive at:
@@ -717,8 +749,9 @@ Three rules, and they took a pass of their own to arrive at:
   headings read better than two careful synonyms; the heading is what tells them apart. So there are
   two words for every rate on these boards: a **swing** is a pick hitting rock, and **speed** is how
   often anything else happens. One word, one meaning. Costs and units carry the marks the game
-itself draws: a filled square for a grain of dust, a ring for a core. A rate reads `2.2 → 2.7 ■/s`
-rather than naming pixels. Deliberately not an upgrade web.
+itself draws: a filled square for a grain of dust, a ring for a core. A rate upgrade reads
+`+25% ■/s` rather than naming pixels or quoting the figure it is moving. Deliberately not an
+upgrade web.
 
 ## Workers
 

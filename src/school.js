@@ -76,6 +76,8 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   // you already know and useless on the first visit.
   note: () => `${t.name}: ${t.does}, at ${WHERE[t.job]}`,
   unit: null,
+  // One more of that hat on the stand. What it is worth is in the note; what the
+  // row says is what it does to the count.
   from: () => S[t.count],
   to: () => S[t.count] + 1,
   cost: () => tradeCost(t),

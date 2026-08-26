@@ -391,10 +391,16 @@ const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      ok(cells.length > 0 && cells.every(c => c.length === 5), 'rows are five columns',
+      ok(cells.length > 0 && cells.every(c => c.length === 3), 'rows are three columns',
          JSON.stringify(cells[0])),
-      ok(cells.every(c => c[0] && c[4]), 'every row has a name and a price',
+      ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
          JSON.stringify(cells)),
+      // No row states a value the game is keeping. What it says in the middle is
+      // what buying it changes -- a whole number of something, or a share of
+      // what that thing was already doing -- so every one that says anything at
+      // all starts with a plus and there is never an arrow.
+      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1])), 'a row says a gain, not a before and after',
+         JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
          'and it opens in the same place the first time as the second',
          `${Math.round(first.top)}/${Math.round(first.height)} then ` +

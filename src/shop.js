@@ -7,7 +7,7 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, purse, buy, gainText } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -121,8 +121,10 @@ function build(el, list, sections, empty) {
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.key = u.key;
-      b.innerHTML = '<span class="name"></span><span class="from"></span>' +
-                    '<span class="arrow"></span><span class="to"></span>' +
+      // Three cells, not five. A row is a name, what buying it gives you, and
+      // what it costs -- there is no before-and-after any more, so there is no
+      // arrow between them and nothing to line the two halves up against.
+      b.innerHTML = '<span class="name"></span><span class="gain"></span>' +
                     '<span class="cost"></span>';
       b.addEventListener('click', () => buy(u));
       // A row that has something to say says it on hover, in the same words in
@@ -199,17 +201,14 @@ export function refresh(el, list, headcount) {
     if (!u) continue;
     const cost = u.cost();
     const money = u.currency || 'dust';
-    const [name, from, arrow, to, price] = row.children;
-    const step = u.from ? `${u.from()}` : '';
+    const [name, gain, price] = row.children;
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.
     if (S.research && list === LAB_UPGRADES) {
       const mine = S.research.key === u.key;
       say(name, u.name);
-      say(from, mine ? 'working' : '');
-      say(arrow, '');
-      say(to, '');                         // how far along is a bar over the lab now
+      sayHTML(gain, mine ? 'working' : '');   // how far along is a bar over the lab now
       sayHTML(price, mine ? '' : `${MARK[money]} ${cost}`);
       grey(row, true);
       continue;
@@ -220,9 +219,7 @@ export function refresh(el, list, headcount) {
     if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
 
     say(name, u.name);
-    say(from, step);
-    say(arrow, step ? '→' : '');
-    sayHTML(to, step ? `${u.to()}${u.unit ? ' ' + UNITS[u.unit] : ''}` : '');
+    sayHTML(gain, gainText(u));
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's two decisions are the only ones: neither costs anything, and
     // the number either of them is about is the one on the table.
