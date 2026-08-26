@@ -408,6 +408,53 @@ const TESTS = [
     ];
   }],
 
+  // Something moving through still air moves the air. The dust is the one thing
+  // in this yard the pointer goes through without touching anything, and a field
+  // that takes no notice of a hand through it is a picture of dust.
+  ['the cursor leaves a draught in the dust', async () => {
+    window.__reset();
+    await settle();
+    run(3);
+    const quiet = state();
+
+    // Put the hand down first and let the air forget it. Whatever ran before this
+    // left the pointer somewhere, so the move *to* the starting corner is itself
+    // a sweep across the window -- and measuring "nothing is blowing about" in
+    // the frame after it reads the last check's draught, not this one's.
+    point('pointermove', 200, 200, 0);
+    run(3);
+    const still = state();
+    for (let i = 1; i <= 12; i++) point('pointermove', 200 + i * 16, 200, 0);
+    const stirred = state();
+    const was = stirred.airPos;
+    run(2 / 60);
+    const after = state();
+    const shifted = after.airPos.filter((p, i) => p !== was[i]).length;
+
+    // and the pointer left where it is: standing still stirs nothing
+    run(3);
+    const settledAir = state();
+    point('pointermove', 392, 200, 0);
+    point('pointermove', 392, 200, 0);
+    const parked = state();
+
+    return [
+      ok(quiet.air > 0, 'there is dust in the air to begin with', `${quiet.air} motes`),
+      ok(still.airStirred === 0, 'and none of it is being blown about',
+         `${still.airStirred} carrying a draught`),
+      ok(stirred.airStirred > 0, 'a hand drawn through it takes some of it along',
+         `${stirred.airStirred} of ${stirred.air}`),
+      ok(stirred.airStirred < stirred.air,
+         'and not the whole field: it is a wake, not a wind', `${stirred.airStirred} of ${stirred.air}`),
+      ok(shifted > 0, 'the motes it caught actually move', `${shifted} moved`),
+      ok(settledAir.airStirred === 0, 'the air settles again once the hand has gone by',
+         `${settledAir.airStirred} still drifting`),
+      ok(parked.airStirred === 0,
+         'and a pointer parked in it stirs nothing at all, however long it sits there',
+         `${parked.airStirred} drifting`)
+    ];
+  }],
+
   // A yard under muck is the one job the whole crew drops everything for, and it
   // has something to shovel wherever you stand -- so a gang that arrived
   // together each found work on the spot it arrived on, and the mess was cleared

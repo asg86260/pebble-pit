@@ -785,6 +785,14 @@ export const AIR_SITE = 0.35;     // share of new motes that come off an open si
 export const AIR_SITE_UP = P * 10;  // and how high above the ground line they are born
 export const AIR_WOBBLE = 0.16;   // how far a mote swims either side of its drift
 export const AIR_GUST = 0.34;     // and the wind the whole field leans on
+// What a hand going through the air does to it. The field already leans on a
+// wind that never quite settles; this is a local one, made by the cursor, that
+// dies away behind it. Standing still does nothing -- it is the movement that
+// stirs, so a pointer parked in the middle of the yard leaves the air alone.
+export let AIR_STIR = 0.42;       // how hard a fast cursor drags a mote along
+export const AIR_STIR_R = 120;    // how far the wake reaches, in screen pixels
+export const AIR_STIR_CAP = 9;    // the fastest the draught will carry one
+export const AIR_STIR_EASE = 2.2; // and how quickly it dies, share a second
 export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
 export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
 export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches
@@ -801,6 +809,7 @@ export const TUNABLE = [
   { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true },
   { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
+  { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
@@ -821,6 +830,7 @@ export function tuned(key) {
     case 'CELL': return CELL;
     case 'BANK_SLOPE': return BANK_SLOPE;
     case 'HAZE_CA': return HAZE_CA;
+    case 'AIR_STIR': return AIR_STIR;
     case 'GRAV': return GRAV;
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
@@ -840,6 +850,7 @@ export function tune(key, v) {
     case 'CELL': CELL = v; break;
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
     case 'HAZE_CA': HAZE_CA = v; break;
+    case 'AIR_STIR': AIR_STIR = v; break;
     case 'GRAV': GRAV = v; break;
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;

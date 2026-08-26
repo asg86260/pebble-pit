@@ -11,7 +11,7 @@
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND,
-         AIR_SITE, AIR_SITE_UP } from './config.js';
+         AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE } from './config.js';
 import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm } from './state.js';
 import { at, count, surfaceY } from './grid.js';
@@ -204,9 +204,23 @@ export function stepAir() {
   if (AIR.length < want) AIR.push(born(false));
   else if (AIR.length > want + 8) AIR.splice(Math.floor(Math.random() * AIR.length), 1);
 
+  const keep = Math.max(0, 1 - AIR_STIR_EASE / 60);
   for (const m of AIR) {
     m.x += wind * m.b.pace + Math.cos(t / m.swim + m.phase) * AIR_WOBBLE * m.b.pace - dx * m.b.take;
     m.y += m.vy - dy * m.b.take;
+
+    // and whatever draught the cursor left behind it, dying away. A real wind
+    // for a moment rather than a shove: the mote keeps moving after the pointer
+    // has gone by, and slows, which is what air does once something has been
+    // through it.
+    if (m.sx || m.sy) {
+      m.x += m.sx;
+      m.y += m.sy;
+      m.sx *= keep;
+      m.sy *= keep;
+      if (Math.abs(m.sx) < 0.02) m.sx = 0;
+      if (Math.abs(m.sy) < 0.02) m.sy = 0;
+    }
 
     // off the sides it comes back on the other one, which keeps the field even
     // however long the camera pans one way
@@ -222,6 +236,45 @@ export function stepAir() {
   }
 
   rememberWalkers();
+}
+
+// --- the draught off the cursor ------------------------------------------------
+// Something moving through still air moves the air. The dust is the one thing in
+// this yard the pointer passes through without touching anything, and a field
+// that takes no notice of a hand going through it is a picture of dust rather
+// than dust.
+//
+// A mote is dragged the way the cursor is *going*, not away from where it is: a
+// wake, not a repulsion. It is given a little speed of its own that then dies
+// away, so the air keeps moving after the pointer has gone by and slows -- which
+// is the difference between stirring a room and pushing a wall through it.
+//
+// Screen pixels, because that is what a mote is in. These are weather rather
+// than scenery: they have no place in the yard, so the cursor has to be asked
+// for its place on the *glass*, and dragging the view along -- which moves the
+// pointer over the world without moving it over the screen -- rightly stirs
+// nothing.
+//
+// The near band takes the most of it, the far band almost none, on the same
+// share they take of the camera: what is close to you is what your hand is in.
+export function stirAir(sx, sy, dx, dy) {
+  const speed = Math.hypot(dx, dy);
+  if (speed < 0.5 || !AIR.length) return 0;
+  // A flick across the window is not a hundred times the draught of a slow drag.
+  const push = Math.min(speed, 45) * AIR_STIR;
+  const ux = dx / speed, uy = dy / speed;
+  let moved = 0;
+  for (const m of AIR) {
+    const d = Math.hypot(m.x - sx, m.y - sy);
+    if (d > AIR_STIR_R) continue;
+    // hardest right under the cursor, nothing at all at the edge of its reach
+    const fall = 1 - d / AIR_STIR_R;
+    const k = push * fall * fall * m.b.take;
+    m.sx = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sx || 0) + ux * k));
+    m.sy = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sy || 0) + uy * k));
+    moved++;
+  }
+  return moved;
 }
 
 // Behind the world. Drawn in screen pixels, which is the point of the whole

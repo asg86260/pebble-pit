@@ -10,6 +10,7 @@ import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
+import { stirAir } from './air.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
@@ -46,6 +47,11 @@ function startPan() {
   S.dragging = false;                      // the load stays on the cursor, unthrown
   panning = middle();
 }
+
+// Where the pointer was on the glass last time it moved, for the draught it
+// leaves in the dust. Kept here rather than on S: it is a fact about the mouse
+// between two events, not about the yard, and nothing saves or reads it.
+let lastSx = null, lastSy = null;
 
 export function pos(e) {
   const r = canvas.getBoundingClientRect();
@@ -115,6 +121,15 @@ canvas.addEventListener('pointermove', e => {
     panning = now;
     return;
   }
+
+  // The air notices a hand going through it. Measured on the glass rather than in
+  // the yard, because that is where a mote lives: dragging the view along slides
+  // the pointer across the world without moving it across the window, and it
+  // should stir nothing.
+  const r = canvas.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (lastSx != null) stirAir(sx, sy, sx - lastSx, sy - lastSy);
+  lastSx = sx; lastSy = sy;
 
   S.mouse = pos(e);
   track(S.mouse.x, S.mouse.y);
