@@ -427,6 +427,12 @@ function jig(w, now) {
     w.move = MOVES[Math.floor(Math.random() * MOVES.length)];
     w.moveTil = 0;
     w.jigDir = Math.random() < 0.5 ? -1 : 1;
+    // Where in the beat this body is. The gang on the rock are dealt a slot
+    // each and used to take it from that, which is fine until somebody who has
+    // never been on the rock joins in: a hauler has no slot, and an undefined
+    // one turned the whole hop into NaN and parked the body off the top of the
+    // world. Anybody can dance now, so the offset belongs to the dance.
+    w.jigPh = Math.random() * 2;
   }
   // a new move every couple of beats, and never the one it is already doing
   if (now >= w.moveTil) {
@@ -441,7 +447,7 @@ function jig(w, now) {
   }
   if (w.say && now >= w.say.until) w.say = null;
 
-  const beat = now / 1000 * DANCE_BEAT + w.slot * 0.5;
+  const beat = now / 1000 * DANCE_BEAT + (w.slot != null ? w.slot * 0.5 : w.jigPh);
   const swing = Math.abs(Math.sin(beat * Math.PI));
 
   if (w.move === 'hop') {
@@ -473,6 +479,37 @@ function stopJig(w) {
   w.jigAt = null;
   w.move = null;
   w.moveTil = 0;
+  w.jigPh = 0;
+}
+
+// --- held up by a rock --------------------------------------------------------
+// A rock in the air stops anybody who would have to walk under it to get on with
+// the job, and that part is right: the alternative is being shoved back by the
+// duck every other frame all the way down.
+//
+// What was wrong was what they did instead. They stood exactly still for the
+// whole fall -- ten seconds of it -- and because a stopped hauler holds the spot
+// it stopped on, five of them that had been walking in step stood on the same
+// pixel. One body twitching, not a crew waiting.
+//
+// The gang on the ground are already celebrating the rock that just came off.
+// Anybody the next one has stopped joins in: the yard has nothing to do for a
+// couple of seconds and may as well look like it is enjoying them.
+//
+// Clamped out of the footprint on the way through. The dance wanders -- that is
+// the whole point of it -- and under a rock that is coming down is the one place
+// it must not wander to.
+function heldUp(w, zone, now) {
+  w.resting = false;                   // waiting on a rock is not a break
+  w.foot = walkY(w.x + WORKER / 2);
+  jig(w, now);
+  if (!zone) return;
+  if (w.x + WORKER > zone.from && w.x < zone.to) {
+    const mid = w.x + WORKER / 2;
+    w.x = mid < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
+    w.jigAt = w.x;                     // and it dances from where it was put
+    w.y = walkY(w.x + WORKER / 2);
+  }
 }
 
 // --- the kit walk -------------------------------------------------------------
@@ -1107,6 +1144,11 @@ export function updateWorkers(now, dt) {
     // It keeps its claim and picks the job up again on the far side.
     if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); continue; }
 
+    // The rock has landed and this one was dancing while it came down. Put the
+    // dance away before it walks off, or it carries the hop and the shout on to
+    // the next thing it does -- the same tidy-up the gang on the rock do.
+    if (w.jigAt != null && S.rockFall <= 0) { stopJig(w); w.say = null; }
+
     // fetch a loose core if there is one, else scoop dust, then tip it all
     // over the ledge
     if ((w.goal === 'seek' || w.goal === 'idle') &&
@@ -1115,7 +1157,8 @@ export function updateWorkers(now, dt) {
       S.coreTaker = w;
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
       const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-      if (across(zone, w.x, target)) continue;      // wait for the rock to land
+      // held up, and dancing rather than standing there: see heldUp
+      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
       const pace = haulSpeed() * HAUL_EMPTY;
       w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P * 2) {
@@ -1218,7 +1261,8 @@ export function updateWorkers(now, dt) {
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
       const c = w.claim;
       const target = floor.x + c * P;
-      if (across(zone, w.x, target)) continue;      // wait for the rock to land
+      // held up, and dancing rather than standing there: see heldUp
+      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
       // hands free, so it moves; a load is what slows it down
       const pace = haulSpeed() * HAUL_EMPTY;
       w.face = Math.sign(target - w.x) || w.face || 1;   // a cart is dragged behind
@@ -1256,7 +1300,8 @@ export function updateWorkers(now, dt) {
       }
     } else if (w.goal === 'dump') {
       const target = pit.x - WORKER;                 // the lip, where they can stand
-      if (across(zone, w.x, target)) continue;      // wait for the rock to land
+      // held up, and dancing rather than standing there: see heldUp
+      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
       w.face = Math.sign(target - w.x) || w.face || 1;
       w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P) {
@@ -1300,7 +1345,7 @@ export function updateWorkers(now, dt) {
       unbook(w);
       if (w.inside) continue;                    // in out of it, and nothing to watch
       const door = hireSpot().x;
-      if (across(zone, w.x, door)) continue;     // wait for the rock to land
+      if (across(zone, w.x, door)) { heldUp(w, zone, now); continue; }
       w.face = Math.sign(door - w.x) || w.face || 1;
       w.x += Math.sign(door - w.x) * Math.min(HOME_WALK, Math.abs(door - w.x));
       w.y = walkY(w.x + WORKER / 2);
@@ -1330,7 +1375,7 @@ export function updateWorkers(now, dt) {
         if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
       } else {
         const d = w.roamTo - w.x;
-        if (across(zone, w.x, w.roamTo)) { w.roamTo = null; continue; }
+        if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); continue; }
         w.face = Math.sign(d) || w.face || 1;
         // its own legs, not everybody's
         w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1), Math.abs(d));

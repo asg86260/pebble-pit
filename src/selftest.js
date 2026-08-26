@@ -408,6 +408,64 @@ const TESTS = [
     ];
   }],
 
+  // A rock in the air stops anybody who would have to walk under it, and that is
+  // right. Standing dead still for the whole ten seconds of it is not: five
+  // haulers that were walking in step all stop on the same pixel, and what you
+  // see is one body twitching rather than a crew waiting for a rock to land.
+  ['a rock in the air is danced through, not stood through', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 5);
+    window.__clearFloor();
+    const p = state().piles.find(q => q.key === 'rock');
+    for (let x = p.from + 8; x < p.to - 8; x += 8) window.__pile(x, 30);
+    window.__next();                             // the rock is off; the next one comes
+    // A frame at a time. `runUntil` moves a whole second at a go, and the fall
+    // is over inside one -- so the coarse loop steps straight across it and
+    // reports a yard that was never held up at all.
+    let falling = false;
+    for (let i = 0; i < 3600 && !falling; i++) { run(1 / 60); falling = state().rockFall > 0; }
+
+    // Sampled right through the fall rather than off the front of it. The dance
+    // spreads them by walking -- a whole cell at a twentieth of a step, because
+    // a body that jumped to its mark would be teleporting -- so the first few
+    // frames of it look exactly like the standing about it replaced.
+    // On an odd number of frames, and not a round one. The hop is a sine on the
+    // clock: sampled every twenty frames it is read at the same point of the
+    // beat every time, and a body hopping steadily reads as a body standing
+    // still.
+    const shots = [];
+    for (let i = 0; i < 14; i++) { run(7 / 60); shots.push(state()); }
+    const hauls = s => s.workerPos.filter(d => d[0] === 'h');
+    const xs = s => hauls(s).map(d => d.split(':')[1].split(',')[0]);
+    const ys = s => hauls(s).map(d => d.split(':')[1].split(',')[1]);
+    const spread = shots.map(s => new Set(xs(s)).size);
+    const finite = shots.every(s => ys(s).every(y => Number.isFinite(+y)));
+    const hopped = new Set(shots.flatMap(s => ys(s))).size > 1;
+    const zone = shots[0].dropZone;
+    const clear = !zone || shots.every(s => xs(s).every(x => +x + 18 <= zone[0] || +x >= zone[1]));
+
+    // and it is put away again on the far side
+    for (let i = 0; i < 3600 && state().rockFall > 0; i++) run(1 / 60);
+    run(1);
+    const after = state();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    return [
+      ok(falling, 'a rock comes down to be held up by'),
+      ok(finite, 'a body that has never been on the rock can still dance',
+         ys(shots[0]).join(' ')),
+      ok(Math.max(...spread) > 1, 'they do not all wait it out on the same pixel',
+         spread.join('/')),
+      ok(hopped, 'and they are hopping rather than standing', [...new Set(shots.flatMap(ys))].join(' ')),
+      ok(clear, 'without any of them wandering under the rock',
+         `${xs(shots[0]).join(' ')} against ${JSON.stringify(zone)}`),
+      ok(new Set(hauls(after).map(d => d.split(',')[1])).size === 1,
+         'and once the rock is down they are all back on their feet',
+         hauls(after).join(' '))
+    ];
+  }],
+
   ['the headcount rides on the section as a badge', async () => {
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
