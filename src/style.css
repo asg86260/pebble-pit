@@ -110,7 +110,7 @@ canvas {
 
 .rows button {
   display: grid;
-  grid-template-columns: 11.2em 2.8em 1.2em 6.4em 4.6em;
+  grid-template-columns: 11.2em 7.2em 4.6em;
   align-items: baseline;
   gap: 0 6px;
   font: inherit;
@@ -182,13 +182,12 @@ canvas {
   clip-path: polygon(0% 50%, 25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%);
 }
 
-.rows button .from, .rows button .to { opacity: .75; }
-.rows button .from { text-align: right; }
-.rows button .arrow { text-align: center; opacity: .4; }
+/* What the row gives you. It sits left in its own column rather than right
+   against the price, because every one of them starts with a plus and a column
+   of pluses is a column you can run your eye down. */
+.rows button .gain { opacity: .75; }
 .rows button .cost { text-align: right; opacity: .7; }
-.rows button:hover:not(:disabled) .from,
-.rows button:hover:not(:disabled) .to,
-.rows button:hover:not(:disabled) .arrow,
+.rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
 /* A job row: a count of bodies between a less and a more. It spends nothing, so
@@ -260,12 +259,8 @@ canvas {
    ran straight out of the sheet. The whole row is given to it instead, with the
    reading against the right edge like every other number on these boards. */
 #scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
-#scrubshop button[data-key="airrate"] .from,
-#scrubshop button[data-key="airrate"] .arrow,
-#scrubshop button[data-key="airrate"] .to { display: none; }
-#crewshop button .from,
-#crewshop button .arrow,
-#crewshop button .to { display: none; }
+#scrubshop button[data-key="airrate"] .gain { display: none; }
+#crewshop button .gain { display: none; }
 #crewshop button .cost { text-align: right; }
 
 #tip {
@@ -327,7 +322,7 @@ canvas {
   }
   .rows { gap: 1px; }
   .rows button {
-    grid-template-columns: 9.4em 2.4em 1em 5.4em 3.8em;
+    grid-template-columns: 9.4em 6.2em 3.8em;
     gap: 0 4px;
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
@@ -339,11 +334,11 @@ canvas {
   #reset { padding: 6px 8px; }
 }
 
-/* the lab's rows say longer things than the bench's, and its values are
-   multipliers rather than counts, so it gets its own column widths */
-#lab .rows button { grid-template-columns: 10.5em 3.6em 1.2em 4.2em 4.4em; }
+/* the lab's rows say longer things than the bench's, and what they give is a
+   bare percentage with no mark after it, so it gets its own column widths */
+#lab .rows button { grid-template-columns: 10.5em 5.4em 4.4em; }
 @media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
-  #lab .rows button { grid-template-columns: 8.6em 3.2em 1em 3.6em 3.6em; }
+  #lab .rows button { grid-template-columns: 8.6em 4.6em 3.6em; }
 }
 
 /* the lab's stats page: a plain list of rates, under its rows */

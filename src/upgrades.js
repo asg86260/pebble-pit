@@ -71,7 +71,43 @@ export const UNITS = {
 };
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
-export const rateText = lvl => num(mineRate(lvl));
+
+// --- what a row says it gives you -------------------------------------------
+// No row on any board states a number the game is keeping. It used to: every
+// purchase read `1 -> 1.5` and a unit, which is two numbers and an arrow to say
+// one thing, and it asked the player to hold both halves in their head and do
+// the subtraction. Worse, it put the game's own bookkeeping on the shelf --
+// 1.5 dust a second is a figure that means nothing until you have watched it
+// for a minute, and by then you have bought the row anyway.
+//
+// So a row says what buying it *changes*, and nothing else. The same move the
+// sky made when the pollution readout became a mark you look at: the number was
+// never the thing, the direction was.
+//
+// Two shapes, and only two. Something you can count -- a pair of hands, a bench,
+// a pixel of reach -- goes up by a whole number and says so. Everything else is
+// a rate, and a rate is a proportion of itself: half again as fast is +50%
+// whatever it was doing before, which is the one form that stays true at every
+// level and never needs a unit explained.
+//
+// `from` and `to` are still the current value and the value after: the row is
+// the only place that knows how its own maths works, and the difference is
+// taken here rather than written out by hand thirteen times.
+export const gainText = u => {
+  if (!u.from) return '';
+  const a = Number(u.from()), b = Number(u.to());
+  if (!isFinite(a) || !isFinite(b)) return '';
+  const mark = u.unit ? ' ' + UNITS[u.unit] : '';
+  // A count is a count: one more bench, one more pair of hands, one more pixel
+  // of reach. `num` is for rates and puts a decimal on everything under ten,
+  // and "+1.0 benches" is a number pretending to be a measurement.
+  if (!u.pct) { const d = b - a; return `+${Number.isInteger(d) ? d : num(d)}${mark}`; }
+  // A rate stepping onto its floor can gain a real amount and round to nothing.
+  // A row that says +0% is a row that reads as broken, so the smallest thing a
+  // purchase is ever allowed to claim is one per cent.
+  const up = a > 0 ? Math.round((b / a - 1) * 100) : 0;
+  return `+${b > a ? Math.max(1, up) : up}%${mark}`;
+};
 
 
 // Hiring and putting to work are two different things now. You buy a body once
@@ -226,6 +262,7 @@ export const UPGRADES = [
     // a pair of hands lifts in one go. Yours were called "carry" and theirs
     // "load", which is two names for one idea and a player having to learn both.
     name: 'strength',
+    unit: 'px',
     from: () => capacity(),
     to: () => capacity() + CAP_STEP,
     cost: () => Math.round(8 * Math.pow(1.35, S.carryLevel)),
@@ -243,8 +280,9 @@ export const UPGRADES = [
     key: 'speed',
     name: 'swing',
     unit: 'px/s',
-    from: () => rateText(S.speedLevel),
-    to: () => rateText(S.speedLevel + 1),
+    pct: true,
+    from: () => mineRate(S.speedLevel),
+    to: () => mineRate(S.speedLevel + 1),
     cost: () => Math.round(20 * Math.pow(1.9, S.speedLevel)),
     buy: () => S.speedLevel++,
     // faster swings only read as an upgrade once the swinging is automatic
@@ -300,8 +338,9 @@ export const UPGRADES = [
     // what the heading already said.
     name: 'swing',
     unit: 'px/s',
-    from: () => num(minerRate()),
-    to: () => num(minerRate(S.minerSpeedLevel + 1)),
+    pct: true,
+    from: () => minerRate(),
+    to: () => minerRate(S.minerSpeedLevel + 1),
     cost: () => Math.round(70 * Math.pow(1.8, S.minerSpeedLevel)),
     buy: () => S.minerSpeedLevel++,
     show: () => S.crew > 0 && minerMs() > MINER_FLOOR
@@ -312,6 +351,7 @@ export const UPGRADES = [
     // need to say "worker" as well -- and what a body can pick up in one go is
     // its strength rather than its load, which is the thing it is carrying.
     name: 'strength',
+    unit: 'px',
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel + 1),
     cost: () => Math.round(50 * Math.pow(1.5, S.haulCarryLevel)),
@@ -322,8 +362,9 @@ export const UPGRADES = [
     key: 'haulpace',
     name: 'speed',
     unit: 'px/s',
-    from: () => num(haulSpeed() * 60),
-    to: () => num(haulSpeed(S.haulPaceLevel + 1) * 60),
+    pct: true,
+    from: () => haulSpeed() * 60,
+    to: () => haulSpeed(S.haulPaceLevel + 1) * 60,
     cost: () => Math.round(60 * Math.pow(1.7, S.haulPaceLevel)),
     buy: () => S.haulPaceLevel++,
     show: () => S.crew > 0
@@ -369,8 +410,9 @@ export const UPGRADES = [
     // draws. It is how often a shard comes off the face, which is speed.
     name: 'speed',
     unit: 'trips/min',
-    from: () => num(quarryRate()),
-    to: () => num(quarryRate(S.quarryPaceLevel + 1)),
+    pct: true,
+    from: () => quarryRate(),
+    to: () => quarryRate(S.quarryPaceLevel + 1),
     cost: () => Math.round(3 * Math.pow(1.7, S.quarryPaceLevel)),
     currency: 'shard',
     buy: () => S.quarryPaceLevel++,
@@ -482,8 +524,9 @@ export const UPGRADES = [
     // slightly better.
     name: 'speed',
     unit: 'beds/min',
-    from: () => num(tendRate()),
-    to: () => num(tendRate(S.tendLevel + 1)),
+    pct: true,
+    from: () => tendRate(),
+    to: () => tendRate(S.tendLevel + 1),
     cost: () => Math.round(4 * Math.pow(1.7, S.tendLevel)),
     currency: 'spore',
     buy: () => S.tendLevel++,
