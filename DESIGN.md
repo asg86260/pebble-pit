@@ -384,6 +384,24 @@ under `you` while half of what it paid for was out on the rock.
 Opening a site glides the view to it. It is four cores and a row in a menu, and the thing bought
 is off the left of the screen; without that, nothing appears to happen.
 
+**The board does not shut on the way to it.** It opens because the cursor is standing at a station
+and it stands *above* that station, so reaching it means crossing a strip of bare canvas that is
+neither — aim for a row in the far bottom corner of the sheet and the diagonal takes you out of the
+station's patch of ground before it takes you into the board.
+
+So while it is open, **the whole wedge between the station and the board counts as being on it**.
+Move anywhere inside that wedge and you are on your way there; step outside it and you have gone
+somewhere else. A wedge rather than a box round the pair: a box would hold the menu open while the
+cursor was well off to one side, which is a menu that will not go away.
+
+The shape is worked out rather than assumed. It would be easy to say the board stands above the
+station and take its two bottom corners — true on a roomy window, false on a short one where a tall
+sheet is clamped against the top and the station is somewhere behind it. So it is the convex hull of
+the board and the station, whichever way round they happen to lie. And if the station has been
+scrolled off the side of the window there is no wedge at all: the board is clamped inside the window
+and the station is not, so the shape between them would stretch across the whole screen. No station
+in sight, no journey to protect.
+
 ## The cursor
 
 **The yard is one canvas**, so nothing drawn in it can carry a cursor of its own the way a button on

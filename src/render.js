@@ -738,15 +738,70 @@ export function drawCircle(cxp, cyp, r) {
   ctx.fillStyle = '#000';
 }
 
+// --- what a core gives off ----------------------------------------------------
+// The one thing in this game with anything in it.
+//
+// Everything else in the yard is what it looks like: dust is dust, a shard is a
+// blue chip, a rock is a lot of rock. A core is a rock's worth of *something*
+// and the game has never said so -- it was a ring, drawn once, sitting there.
+//
+// So it gives something off: rings of cells walking outward and fading, each
+// one a different colour and all of them cycling, which is as close to heat
+// coming off a thing as a grid this coarse gets. Cells, not a gradient -- the
+// glow is made of the same squares the rest of the world is, so it belongs to
+// the picture rather than sitting on top of it -- and faint, because the whole
+// of it should read as the air over the thing rather than as the thing.
+const WAVES = 3;                   // rings in the air at once
+const WAVE_MS = 2400;              // how long one takes to walk out and go
+const WAVE_REACH = P * 6;          // and how far it gets
+const WAVE_ALPHA = 0.62;
+
+function drawCoreGlow(cx, cy) {
+  const t = now();
+  for (let i = 0; i < WAVES; i++) {
+    const k = ((t / WAVE_MS) + i / WAVES) % 1;
+    const r = CORE_SIZE / 2 + k * WAVE_REACH;
+    // out and gone: it thins as it widens, the way anything spreading does
+    ctx.globalAlpha = WAVE_ALPHA * (1 - k) * (1 - k);
+    ctx.fillStyle = `hsl(${Math.round(t / 12 + i * 140) % 360} 85% 58%)`;
+    // one cell per cell of arc, and never the same cell twice: a ring drawn at
+    // an even angle doubles up on the diagonals, and a cell painted twice at
+    // half alpha is a cell at full alpha
+    const n = Math.max(8, Math.round((Math.PI * 2 * r) / P));
+    const seen = new Set();
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
+      const x = Math.round((cx + Math.cos(a) * r) / P) * P;
+      const y = Math.round((cy + Math.sin(a) * r) / P) * P;
+      // nothing below the ground line: what this is meant to read as is heat
+      // coming off the thing, and heat does not go down into the dirt
+      if (y >= S.groundY) continue;
+      const key = `${x},${y}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
 export function drawCoreAt(x, y) {
+  drawCoreGlow(x + CORE_SIZE / 2, y + CORE_SIZE / 2);
   // radius allows for the 2px stroke, so the circle stays inside its box and
   // never paints over the ground line it is resting on
   drawCircle(x + CORE_SIZE / 2, y + CORE_SIZE / 2, CORE_SIZE / 2 - 2);
 }
 
-// buried in the rock: drawn first so the boulder covers it until you dig it out
+// Buried in the rock: drawn first so the boulder covers it until you dig it out.
+//
+// Which is only true once the boulder is *there*. A rock still coming down out
+// of the sky is drawn up in the sky, so for the second and a half of the fall it
+// covers nothing at all and the core sat on the bare ground in plain view,
+// waiting to be landed on. Nothing is buried until there is something on top
+// of it.
 export function drawCoreBehind() {
-  if (S.heldCore || S.coreItem || !boulderAlive()) return;
+  if (S.heldCore || S.coreItem || !boulderAlive() || S.rockFall > 0) return;
   const h = coreHome();
   drawCoreAt(h.x, h.y);
 }
@@ -1010,6 +1065,16 @@ function drawSay(w) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
   ctx.fillStyle = '#000';
+
+  // the same heart the opening uses: a body saying it and a body in the opening
+  // saying it are the same thing said, so they are the same shape
+  if (w.say.mark === 'heart') {
+    for (let r = 0; r < HEART.length; r++)
+      for (let c = 0; c < 5; c++)
+        if (HEART[r][c] === '1')
+          ctx.fillRect(Math.round(x - P * 2.5 + c * P), top - P * 3 + r * P, P, P);
+    return;
+  }
 
   if (w.say.mark === 'dots') {
     const n = w.say.n || 2;

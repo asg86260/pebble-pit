@@ -195,6 +195,7 @@ export function persist() {
     bedLevel: S.bedLevel,
     labOpen: S.labOpen,
     introDone: S.introDone,
+    reunionDone: S.reunionDone,
     buried: S.buried,
     casinoOpen: S.casinoOpen,
     pot: S.pot && { ...S.pot },
@@ -357,6 +358,8 @@ export function restore() {
   // that has not started -- so it gets the opening. There is no row selling a
   // first worker any more; the story hands you one.
   S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
+  // and a save from before the second act existed has plainly had its first rock
+  S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -458,6 +461,7 @@ export function reset() {
   pit.painter.repaint();
   S.boulderNo = 1;
   S.introDone = false;
+  S.reunionDone = false;
   S.buried = false;
   makeBoulder();
   S.boulder = S.boulder.map(row => row.map(() => 0));

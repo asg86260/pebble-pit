@@ -30,6 +30,31 @@ const MINE_BAND = 3;      // cells below the peak still counted as the top layer
 const ROAM_RANGE = 420;   // how far an idle worker will wander for no reason
 const ROAM_PACE = 0.45;   // and how slowly it goes about it
 const ROAM_ELBOW = WORKER * 1.4;   // how close two of them will stand
+// How fast a body on the rock gets from one height to another.
+//
+// It used to be told where it was standing every frame -- the top of whatever
+// column it was over, exactly, no matter how far that was from where it had been
+// the frame before. So a miner ambling along the crest snapped up and down the
+// steps like a cursor, and a gang that took a row out from under itself dropped
+// six cells in one frame. A rock is a thing you climb.
+//
+// The pace is a floor and a fraction: near enough and it steps down a cell at a
+// time, a long way off and it moves briskly, so it can always keep up with a
+// crest coming apart underneath it and never looks detached from the rock.
+const CLIMB_MIN = 1.1;             // pixels a frame at the least
+const CLIMB_SHARE = 0.14;          // and this much of whatever is left
+
+// One frame of a body getting from the height it is at to the height it should
+// be at, and the height it reaches. Every branch that puts a miner on the rock
+// goes through this -- working it and stood down over a full pile are the same
+// body on the same crest, and only one of them easing was a body that snapped
+// the moment the yard filled up.
+function climbTo(w, foot) {
+  if (w.foot == null) w.foot = foot;
+  const d = foot - w.foot;
+  w.foot += Math.sign(d) * Math.min(Math.abs(d), Math.max(CLIMB_MIN, Math.abs(d) * CLIMB_SHARE));
+  return w.foot;
+}
 const MINER_WALK = 0.5;   // pixels a frame along the row
 
 
@@ -600,10 +625,15 @@ export function updateWorkers(now, dt) {
         // what they were standing on. So the first thing they do when the job
         // is off is walk out of its footprint -- and they celebrate from
         // there, rather than being stood under a rock coming out of the sky.
-        if (duck(w, zone)) { w.y = standOn(S.groundY); continue; }
+        // Everything that puts a miner somewhere other than on the rock has to
+        // say so, or the climb picks up again from wherever it was standing
+        // before -- a body that danced on the bare ground and then went back to
+        // work would jump the whole height of the rock in one frame.
+        if (duck(w, zone)) { w.y = w.foot = standOn(S.groundY); continue; }
         const beat = now / 1000 * DANCE_BEAT + w.slot * 0.5;
         const hop = Math.abs(Math.sin(beat * Math.PI));
-        w.y = standOn(S.groundY) - Math.round(hop * 2) * P;
+        w.foot = standOn(S.groundY);
+        w.y = w.foot - Math.round(hop * 2) * P;
         w.x += Math.sin(beat * Math.PI * 0.5) * 0.4;
         continue;
       }
@@ -627,7 +657,7 @@ export function updateWorkers(now, dt) {
         const idle = now / 1000 * IDLE_BEAT + w.ph;
         w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
         const surf = rockTopY(colAtX(w.x + WORKER / 2));
-        w.y = standOn(surf) - (Math.sin(idle) > 0.9 ? P : 0);
+        w.y = climbTo(w, standOn(surf)) - (Math.sin(idle) > 0.9 ? P : 0);
         w.lunge *= 0.82;
         w.next = now + minerMs();
         continue;
@@ -655,8 +685,10 @@ export function updateWorkers(now, dt) {
       const col = colAtX(w.x + WORKER / 2);
       const surf = rockTopY(col);
       w.lunge *= 0.82;
-      // it bobs on its feet, and drops into the swing
-      w.y = standOn(surf + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4);
+      // Where it is standing, climbed to rather than assigned. The bob and the
+      // swing go on top of the foot, not into it: they are what the body is
+      // doing, and easing them would damp them into nothing.
+      w.y = climbTo(w, standOn(surf)) + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
 
       if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
         // twice the bite for a breaker: the shards bought a bigger swing on a

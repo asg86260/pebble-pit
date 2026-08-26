@@ -10,7 +10,8 @@ import { clampCam } from './world.js';
 import { overBoulder, knockOff } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
-import { nearBench, nearLab, nearSchool, nearCasino, showPanel, placeBoard, showTip } from './board.js';
+import { nearBench, nearLab, nearSchool, nearCasino, showPanel, placeBoard, showTip,
+         inSafeZone } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
          overPitMark, pitMarkAt } from './render.js';
 import { doneName } from './lab.js';
@@ -94,11 +95,14 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
-    // one menu: whichever station the cursor is standing at, or none
-    showPanel(nearLab(S.mouse.x, S.mouse.y) ? 'lab'
-            : nearSchool(S.mouse.x, S.mouse.y) ? 'school'
-            : nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
-            : nearBench(S.mouse.x, S.mouse.y) ? 'bench' : null);
+    // One menu: whichever station the cursor is standing at, or none -- unless
+    // it is on its way to the one already open, in which case it is still on it.
+    // See `inSafeZone`.
+    const want = nearLab(S.mouse.x, S.mouse.y) ? 'lab'
+               : nearSchool(S.mouse.x, S.mouse.y) ? 'school'
+               : nearCasino(S.mouse.x, S.mouse.y) ? 'casino'
+               : nearBench(S.mouse.x, S.mouse.y) ? 'bench' : null;
+    if (want || !inSafeZone(e.clientX, e.clientY)) showPanel(want);
     // and whatever the cursor is asking about, which is not the same question:
     // a board opens because you walked up to a station, a tooltip opens because
     // you went and looked at a mark
@@ -247,8 +251,12 @@ canvas.addEventListener('wheel', e => {
   pan((Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) * 0.8);
 }, { passive: false });
 
-// the cursor leaving the menu itself closes it, whichever station it is at
-document.getElementById('panel').addEventListener('pointerleave', () => showPanel(null));
+// The cursor leaving the menu closes it -- unless it has left it towards the
+// station it belongs to, which is the same wedge in the other direction: coming
+// back down off the sheet is not walking away from it.
+document.getElementById('panel').addEventListener('pointerleave', e => {
+  if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
+});
 addEventListener('keydown', e => {
   // ctrl+R is the browser reloading, not the player asking for a new game
   if (e.ctrlKey || e.metaKey || e.altKey) return;

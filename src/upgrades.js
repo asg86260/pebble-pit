@@ -327,6 +327,16 @@ export const UPGRADES = [
     show: () => S.crew > 0
   },
   CAVE,
+  // Growing a place you already have does not move the view.
+  //
+  // Opening one does, and should: four cores and a row in a menu, and the thing
+  // bought is off the left of the screen -- without the glide, nothing appears
+  // to happen. A bench or a bed is not that. You are standing at the bench with
+  // the board open, buying the next one and the one after that, and the view
+  // walking off to the far end of the yard between each of them is the game
+  // taking the board out from under you to show you something you have already
+  // seen. Nothing here is a surprise worth interrupting for.
+  //
   // The first thing a shard is worth, and the reason the quarry is worth three
   // cores: the cut pays for its own next bench. A fresh one is two benches of
   // standing room, so the third body you want down there has to be given
@@ -343,7 +353,7 @@ export const UPGRADES = [
     to: () => benches() + 1,
     cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
     currency: 'shard',
-    buy: () => { S.benchLevel++; resite(); lookAt(quarry.x + quarry.w / 2); },
+    buy: () => { S.benchLevel++; resite(); },
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },
   // And the pace of it, in the same coin. It was dust, and dust is the one
@@ -427,7 +437,7 @@ export const UPGRADES = [
     to: () => bedCount() + 1,
     cost: () => Math.round(BED_COST * Math.pow(BED_RATE, S.bedLevel)),
     currency: 'spore',
-    buy: () => { S.bedLevel++; resite(); lookAt(farm.x + farm.w / 2); },
+    buy: () => { S.bedLevel++; resite(); },
     show: () => S.farmOpen && bedCount() < FARM_BEDS_MAX
   },
   {

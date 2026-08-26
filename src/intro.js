@@ -26,10 +26,11 @@
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
-         INTRO_SHOW_DUST, INTRO_SHOW_IN, INTRO_SHOW_MAX } from './config.js';
+         INTRO_SHOW_DUST, INTRO_SHOW_IN, INTRO_SHOW_MAX,
+         MEET_IN_MS, MEET_MS, PART_MS } from './config.js';
 import { S } from './state.js';
 import { now } from './clock.js';
-import { makeBoulder } from './rock.js';
+import { makeBoulder, boulderAlive } from './rock.js';
 import { walkY, setZoom, clampCam } from './world.js';
 import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -40,7 +41,9 @@ import { syncWorkers } from './crew.js';
 const pairX = i => Math.round((S.cx + (i ? INTRO_APART : -INTRO_APART) - WORKER / 2) / P) * P;
 
 export const introRunning = () => !!S.intro;
-export const introTalking = () => S.intro === 'chat';
+// The phases that own the yard: nothing rolls in on its own while one of these
+// is running, because the rock arriving is a thing the scene does itself.
+export const introHolds = () => S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part';
 
 // A fresh game, and nothing has happened yet.
 export function startIntro() {
@@ -68,6 +71,9 @@ export function skipIntro() {
 // --- one frame of it ----------------------------------------------------------
 
 export function stepIntro(t) {
+  // The ground under the rock is only somewhere to get out of once something is
+  // actually coming down on it -- see `dropZone`.
+  S.sceneHolds = introHolds() && !S.rockFall;
   if (!S.intro) return;
   hold(t);
   for (const b of S.pair) if (b.say && t >= b.say.until) b.say = null;
@@ -77,6 +83,85 @@ export function stepIntro(t) {
   if (S.intro === 'down') return down(t);
   if (S.intro === 'up') return up(t);
   if (S.intro === 'show') return show(t);
+  if (S.intro === 'meet') return meet(t);
+  if (S.intro === 'part') return part(t);
+}
+
+// --- the second act -----------------------------------------------------------
+// The first rock comes off and, for a moment, you did it: the one underneath is
+// out on the bare ground, the one who has been digging is stood over it, and
+// whoever else you have hired is hopping about round the pair of them. Then the
+// next rock comes down and it was all for nothing, which is the game.
+//
+// Once. After the first rock and never again -- a beat you are shown twice is a
+// beat, a beat you are shown every time is a loading screen. What it buys is the
+// shape of the whole thing in one go, early enough to matter.
+export function maybeReunion(t) {
+  if (S.intro || S.reunionDone || !S.introDone) return;
+  if (S.boulderNo !== 1 || boulderAlive()) return;
+  if (S.coreBuried) return;                    // the core comes out first: it is yours
+  S.intro = 'meet';
+  S.introAt = t;
+  S.introSaid = 0;
+  S.introHeart = 0;
+
+  // and whoever has been digging goes over. It is not scripted people: it is one
+  // of the crew, sent on the same walk the roster sends anybody on, and it stops
+  // beside the one it dug out rather than on top of them. Everybody else stays
+  // where they are and hops, which is the dance they already do when a rock is
+  // finished -- so the yard celebrates with its own legs.
+  const at = buriedAt();
+  let who = null, near = Infinity;
+  for (const w of S.workers) {
+    if (w.inside || w.walking) continue;
+    const d = Math.abs(w.x - at.x);
+    if (d < near) { near = d; who = w; }
+  }
+  if (who) {
+    who.walkTo = at.x + (who.x > at.x ? WORKER * 1.7 : -WORKER * 1.7);
+    who.leg = 'back';                          // it never left its job
+    who.walking = true;
+    who.met = true;
+  }
+  S.dirty = true;
+}
+
+// Together, and the yard celebrating it. Nothing here is scripted people: the
+// crew do their own five-second dance -- the one they already do when a rock is
+// finished -- and the two of them are the buried square, which is drawn anyway,
+// and whoever is nearest to it.
+function meet(t) {
+  S.danceUntil = t + 400;                      // held on, a frame at a time
+  if (t >= (S.introSaid || 0)) {
+    S.introSaid = t + INTRO_BEAT * 1.4;
+    S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
+    // and the same back, from whoever walked over
+    const who = S.workers.find(w => w.met);
+    if (who && !who.walking) who.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
+  }
+  if (t - S.introAt < MEET_MS) return;
+
+  // and the sky opens again
+  S.intro = 'part';
+  S.introAt = t;
+  S.buriedSay = null;
+  for (const w of S.workers) { w.met = false; w.say = null; }
+  S.danceUntil = 0;
+  S.boulderNo++;                               // the next one, and bigger, like any other
+  makeBoulder(true);
+  S.dirty = true;
+}
+
+// It lands on them again, the crew scatter out from under it the way they always
+// do, and the view lets go. From here on nothing ever stops for a rock.
+function part(t) {
+  if (t - S.introAt < PART_MS) return;
+  S.intro = null;
+  S.reunionDone = true;
+  S.camLockY = null;
+  setZoom(1);
+  S.danceUntil = 0;
+  S.dirty = true;
 }
 
 const ease = k => 1 - Math.pow(1 - k, 3);
@@ -90,7 +175,13 @@ function hold(t) {
   // walking with whoever is doing the showing. See `show`.
   if (S.intro === 'show') return;
 
-  const out = S.intro === 'up' ? ease(Math.min(1, (t - S.introAt) / INTRO_UP_MS)) : 0;
+  // How far out the view is, nought being right in on them. The opening pulls
+  // out at the end of it; the second act pulls back *in* and then out again.
+  const k0 = (t - S.introAt);
+  const out = S.intro === 'up' ? ease(Math.min(1, k0 / INTRO_UP_MS))
+            : S.intro === 'meet' ? 1 - ease(Math.min(1, k0 / MEET_IN_MS))
+            : S.intro === 'part' ? ease(Math.min(1, k0 / PART_MS))
+            : 0;
   const k = INTRO_ZOOM + (1 - INTRO_ZOOM) * out;
 
   // The ground line sits low in the frame with the two of them standing on it,

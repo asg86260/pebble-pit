@@ -53,6 +53,12 @@ export const S = {
   // crew, a pit and a rock that keeps coming. See intro.js.
   intro: null,            // 'chat' while the two of them are talking, then never again
   introDone: false,
+  reunionDone: false,     // and the one beat after the first rock, also once only
+  // A scene owns the yard: no rock rolls in on its own and the ground under the
+  // rock is not a place to be got out of, because nothing is coming until the
+  // scene drops it. A fact rather than a call into intro.js, so that rock.js and
+  // core.js can ask without either of them having to know that scenes exist.
+  sceneHolds: false,
   introAt: 0,
   introSaid: 0,
   pair: [],               // the two of them, before the rock

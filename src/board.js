@@ -69,6 +69,91 @@ function place(el, at) {
 
 const GAP = 4;                             // never flush against the edge
 
+// --- the way over to it -------------------------------------------------------
+// The board opens because the cursor is standing at a station, and it stands
+// *above* that station -- so getting to it means crossing a strip of bare canvas
+// that is neither. Aim for a row in the far bottom corner of the sheet and the
+// diagonal takes you out of the station's patch of ground before it takes you
+// into the board, and the thing you were reaching for shuts in your face.
+//
+// The fix is the one every menu that has ever had a submenu uses: while it is
+// open, the whole wedge between the station and the near edge of the board
+// counts as being on it. Move anywhere inside that wedge and you are on your way
+// there; step outside it and you have gone somewhere else.
+//
+// A wedge rather than a box round the pair: a box would hold the board open
+// while the cursor was well off to one side, which is a menu that will not go
+// away. The wedge is exactly the ground you would cross heading for it, and no
+// more -- step out of it sideways and it shuts as it always did.
+const SAFE_SLACK = 12;             // and a little grace either side of that
+
+// where the board actually is on screen, from the numbers `place` already keeps
+const panelRect = () => putX === null ? null
+  : { x: putX, y: putY, w: sized.w || panelEl.offsetWidth, h: sized.h || panelEl.offsetHeight };
+
+// and where the station it belongs to is: the ground under the middle of it
+function apexAt(which) {
+  const r = standAt[which];
+  if (!r) return null;
+  return { x: (r.x + r.w / 2 - S.camX) * S.zoom, y: (r.y + r.h - S.camY) * S.zoom };
+}
+
+const side = (a, b, px, py) => (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+
+// The wedge is worked out rather than assumed. It would be easy to say the board
+// stands above the station and take its two bottom corners -- and that is true
+// on a roomy window and false on a short one, where a tall sheet is clamped
+// against the top and the station is somewhere behind it. So: the shape is the
+// board *and* the station and everything between them, which is the convex hull
+// of the rectangle and the point, whichever way round they happen to lie. Five
+// points is not a computation worth being clever about.
+function hullOf(pts) {
+  const ps = pts.slice().sort((u, v) => u.x - v.x || u.y - v.y);
+  const half = list => {
+    const h = [];
+    for (const p of list) {
+      while (h.length >= 2 && side(h[h.length - 2], h[h.length - 1], p.x, p.y) <= 0) h.pop();
+      h.push(p);
+    }
+    return h;
+  };
+  const lower = half(ps), upper = half(ps.slice().reverse());
+  return lower.slice(0, -1).concat(upper.slice(0, -1));
+}
+
+const inHull = (h, px, py) => {
+  let neg = false, pos = false;
+  for (let i = 0; i < h.length; i++) {
+    const d = side(h[i], h[(i + 1) % h.length], px, py);
+    if (d < 0) neg = true;
+    if (d > 0) pos = true;
+  }
+  return !(neg && pos);
+};
+
+// is (px, py) on the board, or on the way to it from the station it belongs to?
+export function inSafeZone(px, py) {
+  if (!at) return false;
+  const r = panelRect();
+  const a = apexAt(at);
+  if (!r || !a) return false;
+  // A station scrolled off the side of the window is not somewhere you are
+  // walking from. The board is clamped inside the window and the station is not,
+  // so the wedge between them would stretch across the whole screen and hold the
+  // menu open over half the yard. No station in sight, no journey to protect.
+  if (a.x < -SAFE_SLACK || a.x > S.W + SAFE_SLACK ||
+      a.y < -SAFE_SLACK || a.y > S.H + SAFE_SLACK) {
+    return px >= r.x - SAFE_SLACK && px <= r.x + r.w + SAFE_SLACK &&
+           py >= r.y - SAFE_SLACK && py <= r.y + r.h + SAFE_SLACK;
+  }
+  const g = SAFE_SLACK;
+  return inHull(hullOf([
+    a,
+    { x: r.x - g, y: r.y - g }, { x: r.x + r.w + g, y: r.y - g },
+    { x: r.x - g, y: r.y + r.h + g }, { x: r.x + r.w + g, y: r.y + r.h + g }
+  ]), px, py);
+}
+
 export function placeBoard() {
   if (at) place(panelEl, standAt[at]);
 }

@@ -14,11 +14,20 @@ import { rockLeft } from './world.js';
 import { bankDust } from './pit.js';
 import { blocked } from './world.js';
 import { now } from './clock.js';
-import { introTalking } from './intro.js';
+import { introHolds } from './intro.js';
 
-// the core sits at the middle of the rock and only comes loose when it is bare
+// The core sits at the *foot* of the rock and only comes loose when it is bare.
+//
+// It used to sit four tenths of the way up, which is a fine place for it in a
+// whole rock and the wrong place in a worn one: the gang take the rock down from
+// the top, so the last of it is a low mound -- and a core pinned to a fraction
+// of the rock's full height ends up hanging in the air above what is left of it,
+// which is the one thing in this yard that is not standing on something.
+//
+// At the foot it is under the rock the whole way down and comes out of the last
+// of it, which is also the better reveal: you dig until the ground shows.
 export function coreHome() {
-  return { x: S.cx - CORE_SIZE / 2, y: S.groundY + ROCK_SINK - S.gh * P * 0.42 - CORE_SIZE / 2 };
+  return { x: S.cx - CORE_SIZE / 2, y: S.groundY + ROCK_SINK - CORE_SIZE };
 }
 
 export function dropCore() {
@@ -54,10 +63,12 @@ export function pileTop(col) {
 }
 
 export function stepCore() {
-  // Nothing rolls in while the opening is running. The yard is deliberately
-  // empty for those few seconds -- two squares and bare ground -- and the rule
-  // below, that a bare yard gets a rock, is exactly the rule that would fill it.
-  if (introTalking()) return;
+  // Nothing rolls in while a scene owns the yard. The opening is deliberately
+  // empty for those few seconds -- two squares and bare ground -- and the second
+  // act puts the rock down itself, at the moment it means something. The rule
+  // below, that a bare yard gets a rock, is exactly the rule that would spoil
+  // both.
+  if (introHolds()) return;
 
   // the moment the last pixel goes, the core is loose and falls from the middle
   if (S.coreBuried && !boulderAlive()) {

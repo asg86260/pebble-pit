@@ -66,6 +66,11 @@ export function placeRock() {
 export function dropZone() {
   if (S.rockFall > 0) return { from: rockEdge(-1), to: rockEdge(1) };
   if (boulderAlive()) return null;
+  // and nothing is coming while a scene has the yard: the bare ground where the
+  // rock will be is somewhere to stand, for as long as the scene wants it. A
+  // crew ducking out of a footprint nothing is going to land in is a crew
+  // backing away from the one thing the scene is about.
+  if (S.sceneHolds) return null;
   const was = S.boulderNo;
   S.boulderNo = was + 1;
   const size = rockSize();

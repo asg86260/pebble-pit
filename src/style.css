@@ -39,10 +39,16 @@ canvas {
 
 .rows .sect {
   margin-top: 6px;
-  /* Dimmed through color rather than opacity: opacity would flatten the badge
-     inside it to the same fade, and the headcount is the one thing on this line
-     worth reading at a glance. */
-  color: rgba(0, 0, 0, .4);
+  /* Black, like everything else on the sheet. It was dimmed for a while, on the
+     grounds that a heading is scaffolding and the rows are the content -- but a
+     heading is how you find the row you came for, and this board is the only
+     place in the game where anything is drawn in grey on purpose. The rule under
+     it is what separates it from the rows; it does not need to be faint as well.
+
+     Dimmed through colour rather than opacity, when it was dimmed: opacity would
+     have flattened the badge inside it to the same fade, and the headcount is
+     the one thing on this line worth reading at a glance. */
+  color: #000;
   border-bottom: 1px solid rgba(0, 0, 0, .4);
 }
 .rows .sect:first-child { margin-top: 0; }

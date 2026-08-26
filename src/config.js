@@ -94,6 +94,14 @@ export const INTRO_HURL = 4.2;    // how hard the one left standing is thrown ba
 export const INTRO_SHOW_DUST = 3;   // grains knocked off before it downs tools
 export const INTRO_SHOW_IN = 2;     // and grains it puts in the hole before you take over
 export const INTRO_SHOW_MAX = 45000; // however long that takes, it is over by then
+// --- and the second act -------------------------------------------------------
+// The first rock comes off and they are together for a moment. It happens once,
+// after the first one and never again: a beat you are shown twice is a beat, a
+// beat you are shown every time is a loading screen. What it buys is the shape
+// of the whole game in one go -- you got them out, and it did not last.
+export const MEET_IN_MS = 1200;   // pulling back in on the two of them
+export const MEET_MS = 5200;      // and how long they have
+export const PART_MS = 2600;      // the rock again, and the view letting go
 
 // --- the casino ---------------------------------------------------------------
 // The last thing on the ground, out past the lab. It is the far end of the walk

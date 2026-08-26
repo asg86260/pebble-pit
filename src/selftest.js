@@ -1586,10 +1586,14 @@ const TESTS = [
   }],
 
   ['a tap opens the board, because there is no hovering', async () => {
-    // start from closed, whatever an earlier check left behind
+    // Start from closed, whatever an earlier check left behind. The far corner
+    // of the window rather than the near one: a board holds itself open over the
+    // whole wedge between it and its station now, and the top-left of the screen
+    // is somewhere that wedge can reach.
     const away = state();
     canvas().dispatchEvent(new PointerEvent('pointermove', {
-      clientX: 4, clientY: 4, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
+      clientX: away.W - 4, clientY: away.H - 4,
+      pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
     await sleep(150);
     const startedClosed = board().hidden;
 
@@ -3331,6 +3335,164 @@ const TESTS = [
       ok(at.crewDetail.filter(d => d[0] === 'q').length === 2,
          'and the two of them are down the cut working',
          JSON.stringify(at.crewDetail))
+    ];
+  }],
+
+  // The first rock comes off and, for a moment, you did it. Then the next one
+  // lands. Once, after the first rock and never again -- a beat you are shown
+  // twice is a beat, a beat you are shown every time is a loading screen.
+  ['the first rock is worth a moment, and only the first', async () => {
+    window.__reset(true);                        // the opening, played out
+    await sleep(400);
+    runUntil(() => !state().intro, 200);
+    window.__crew(3, 1);
+    const before = state();
+
+    window.__next();                             // and the first rock is finished
+    const seen = [];
+    let met = null;
+    for (let i = 0; i < 600 && !state().reunionDone; i++) {
+      run(0.1);
+      const s = state();
+      if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
+      if (s.intro === 'meet' && s.zoom > 1.9) met = s;
+    }
+    const after = state();
+
+    // and the next one is just a rock
+    window.__next();
+    let again = false;
+    for (let i = 0; i < 200; i++) { run(0.1); if (state().intro) again = true; }
+    const later = state();
+    window.__reset();
+    await sleep(300);
+    return [
+      ok(!before.reunionDone, 'it has not happened yet when the opening ends'),
+      ok(seen.join(',') === 'meet,part',
+         'the first rock brings them together, and then parts them', seen.join(',')),
+      ok(met && met.zoom > 1.9, 'the view comes back in for it',
+         met && `zoom ${met.zoom}`),
+      ok(met && met.buriedVisible, 'with the one who was under it out on the ground'),
+      ok(after.reunionDone && Math.abs(after.zoom - 0.833) < 0.01,
+         'then it lets go', `${after.zoom}`),
+      ok(after.boulderNo === before.boulderNo + 1 && after.rock > 0,
+         'and the next rock is down and is the next rock',
+         `${before.boulderNo} -> ${after.boulderNo}`),
+      ok(!again, 'and no rock after the first one ever stops the game again'),
+      ok(later.boulderNo === after.boulderNo + 1,
+         'they just keep coming', `${after.boulderNo} -> ${later.boulderNo}`)
+    ];
+  }],
+
+  // A grain that has cleared the whole hole lands on the ground beyond it -- a
+  // throw that went too far, and somebody has to go and get it. A grain already
+  // down inside the hole is a different thing entirely: the back of the hole is
+  // a wall, and it used to be let through and deposited on the surface outside,
+  // which is a grain climbing out of a hole.
+  ['the back of the hole is a wall to anything already in it', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__crew(0, 0);
+    window.__clearFloor();
+    const s = state();
+
+    for (let i = 0; i < 5; i++) window.__toss('shard', s.pitX + s.pitW + 60 + i * 12);
+    run(3);
+    const over = state();
+
+    window.__clearFloor();
+    window.__spend(state().stored);
+    window.__toss('shard', s.pitX + s.pitW - 12, s.groundY + 30);
+    run(3);
+    const inside = state();
+    window.__clearFloor();
+    return [
+      ok(over.dustPastPit === 5 && over.shards === 0,
+         'a throw that clears the hole lies on the ground beyond it',
+         `${over.dustPastPit} past, ${over.shards} banked`),
+      ok(inside.dustPastPit === 0 && inside.shards === 1,
+         'and one already down the hole stays down it',
+         `${inside.dustPastPit} past, ${inside.shards} banked`)
+    ];
+  }],
+
+  // A core sits at the foot of the rock, not partway up it. Pinned to a fraction
+  // of the rock's full height it ended up hanging in the air over a worn one --
+  // the gang take the rock down from the top, so the last of it is a low mound.
+  ['the core sits at the foot of the rock', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__crew(0, 0);
+    window.__clearFloor();
+    window.__jump(1);
+    run(1);
+    const s = state();
+    const foot = s.rockFoot;
+    const home = s.coreHome;
+
+    // and it comes out of the last of the rock rather than out of the air
+    window.__next();
+    runUntil(() => state().coreItem && state().coreItem.rest, 60);
+    const loose = state();
+    window.__clearFloor();
+    return [
+      ok(home && Math.abs(home.y + 18 - foot) <= 2,
+         'it stands on the foot of the rock itself',
+         `core bottom ${home && home.y + 18}, rock foot ${foot}`),
+      ok(home && Math.abs(home.x + 9 - s.rockX) <= 3,
+         'in the middle of it', `${home && home.x + 9} vs ${s.rockX}`),
+      ok(!!loose.coreItem, 'and it drops out when the last of the rock goes')
+    ];
+  }],
+
+  // The board opens because the cursor is at a station and it stands above that
+  // station, so getting to it means crossing bare canvas that is neither. Aim
+  // for a row in the far corner of the sheet and the diagonal used to take you
+  // out of the station's patch of ground before it took you into the board.
+  ['the board does not shut on the way to it', async () => {
+    window.__reset();
+    await sleep(400);
+    window.__crew(2, 2);
+    window.__give(400);
+    run(2);
+    const panel = document.getElementById('panel');
+    // looking at the bench, which is where you are when you walk up to it: the
+    // board is clamped inside the window and the station is not, so a station
+    // scrolled off the side is a different geometry entirely
+    window.__look(state().benchX - 200);
+    run(0.2);
+    const s = state();
+    const move = (cx, cy) => { point('pointermove', cx, cy, 0); return state().boardOpen; };
+
+    const bx = (s.benchX + 20 - s.camX) * s.zoom, by = (s.groundY - 30 - s.camY) * s.zoom;
+    const opened = move(bx, by);
+    const r = panel.getBoundingClientRect();
+
+    // the whole diagonal from the station to the far bottom corner of the sheet
+    const far = { x: r.x + r.width - 6, y: r.y + r.height - 6 };
+    let heldOn = true;
+    for (let i = 1; i <= 12; i++) {
+      const k = i / 12;
+      if (!move(bx + (far.x - bx) * k, by + (far.y - by) * k)) heldOn = false;
+    }
+    const corner = state().boardOpen;
+
+    // and it still shuts when you actually walk away
+    move(bx, by);
+    const aside = move(r.x + r.width + 400, by);
+    move(bx, by);
+    const below = move(bx, by + 200);
+    move(s.W - 4, 4);                           // and out of the way for the next check
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(opened, 'standing at the bench opens it'),
+      ok(heldOn, 'and every step of the way to its far corner keeps it open'),
+      ok(corner, 'including the corner itself'),
+      ok(!aside, 'well off to one side still shuts it',
+         `panel ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)} ` +
+         `bench ${Math.round(bx)},${Math.round(by)} probe ${Math.round(r.x + r.width + 400)}`),
+      ok(!below, 'and so does walking off below it')
     ];
   }],
 
