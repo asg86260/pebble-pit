@@ -260,6 +260,16 @@ canvas {
    reading against the right edge like every other number on these boards. */
 #scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
+
+/* A row that is a reading rather than a purchase. It sits on a board of things
+   you press, so the only way to say it is not one of them is to take away
+   everything that says it is: no pointer, and no black under the cursor. It is
+   still a button in the markup -- the row shape and the hover note both hang off
+   that -- and it has no click on it. */
+.rows button.stat { cursor: default; }
+.rows button.stat:hover:not(:disabled) { color: #000; background: none; }
+.rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
+.rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
 #crewshop button .gain { display: none; }
 #crewshop button .cost { text-align: right; }
 

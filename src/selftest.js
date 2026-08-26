@@ -1800,6 +1800,50 @@ const TESTS = [
     ];
   }],
 
+  // The one row in the game that is a reading rather than a purchase. It sits on
+  // a board of things you press, so the only way to say it is not one of them is
+  // to give up everything that says it is.
+  ['the pollution reading is not a button', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(4, 4);
+    window.__grant({ cores: 9, spores: 40 });
+    window.__lab(true);
+    window.__air({ haze: state().smog.at + 1 });
+    runUntil(() => state().smog.rains > 0, 30);
+    run(20);
+    window.__research('labair');
+    buildShopFromTest();
+    shop().querySelector('[data-key="unlockscrub"]').click();
+    buildShopFromTest();
+
+    const row = document.getElementById('scrubshop').querySelector('[data-key="airrate"]');
+    // Read either side of the click with no clock in between: the sky fills on
+    // its own, so a run() here would show the yard working and prove nothing.
+    const before = state().smog.haze;
+    row?.click();                                // nothing is hung on it to fire
+    const after = state().smog.haze;
+    const buy = document.getElementById('scrubshop')
+                        .querySelector('[data-key]:not([data-key="airrate"])');
+
+    window.__crew(0, 0);
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+    return [
+      ok(!!row, 'the sky has a row on the house board'),
+      ok(row && row.classList.contains('stat'),
+         'and it is marked as a reading rather than a purchase'),
+      ok(row && getComputedStyle(row).cursor === 'default',
+         'the cursor does not change over it', row && getComputedStyle(row).cursor),
+      ok(row && !row.disabled,
+         'it is not dimmed either: a reading is live, it is just not for pressing'),
+      ok(after === before, 'and pressing it does nothing at all', `${before} -> ${after}`),
+      ok(!buy || getComputedStyle(buy).cursor === 'pointer',
+         'while a real row on the same board still offers itself',
+         buy && getComputedStyle(buy).cursor)
+    ];
+  }],
+
   // Space stops the clock. Not a flag every system checks -- the clock simply
   // does not advance, so nothing in the yard can tell the difference.
   ['space holds the whole yard still', async () => {

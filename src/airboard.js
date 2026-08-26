@@ -66,6 +66,12 @@ const ROWS = [{
   name: 'pollution',
   note: trendWord,
   price: arrows,
+  // Nothing happens if you press it, so it does not offer to be pressed. Every
+  // other row on every board is a thing you buy and looks like one -- the cursor
+  // changes, the row goes black under it -- and this one is a reading. A line
+  // that lights up under the pointer and then does nothing is the board telling
+  // you it is a button and then telling you it is not.
+  read: true,
   dead: () => false,
   cost: () => 0,
   buy: () => {},

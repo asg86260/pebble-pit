@@ -126,7 +126,12 @@ function build(el, list, sections, empty) {
       // arrow between them and nothing to line the two halves up against.
       b.innerHTML = '<span class="name"></span><span class="gain"></span>' +
                     '<span class="cost"></span>';
-      b.addEventListener('click', () => buy(u));
+      // A readout is not a purchase. It keeps the shape of a row so the board
+      // still lines up, and gives up everything that says "press me": the class
+      // takes the cursor and the hover off in the stylesheet, and there is no
+      // click to hang on it in the first place.
+      if (u.read) b.classList.add('stat');
+      else b.addEventListener('click', () => buy(u));
       // A row that has something to say says it on hover, in the same words in
       // the same box the yard uses for a mark you went and looked at. It is the
       // one place a *name* is not enough: a breaker is a word, and what a
