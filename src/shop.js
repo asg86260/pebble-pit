@@ -11,11 +11,15 @@ import { UPGRADES, SECTIONS, UNITS, MARK, purse, buy } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
+import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
+import { crewRows, crewSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
 const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
+const crewEl = document.getElementById('crewshop');
+const scrubEl = document.getElementById('scrubshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -34,6 +38,13 @@ function shape(list, sections) {
 
 const built = new WeakMap();
 
+// Set when the set of rows changed, read once by the board after it has filled
+// them in. A flag rather than a call back into the board: this happens on a
+// purchase or a hire, and what has to happen next is a measurement of a board
+// with its words in, which is the frame loop's business and not this file's.
+let rebuilt = false;
+export const tookRows = () => { const was = rebuilt; rebuilt = false; return was; };
+
 // One row per available upgrade, under a heading for whatever it belongs to.
 //
 // It is rebuilt only when the set of rows changes. Rebuilding throws away every
@@ -44,6 +55,17 @@ function build(el, list, sections, empty) {
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
+
+  // A row going or arriving makes the sheet a different height, and the sheet is
+  // seated by the height it was last measured at -- so buying the last upgrade
+  // in a section left the board hanging where the taller version of it had
+  // stood, with a gap under it and its foot off the bench.
+  //
+  // Said rather than done. The rows built below are empty until `refresh` puts
+  // the words in, and a board measured between the two comes out shorter than
+  // it will be -- the same trap opening one used to fall into. So the board is
+  // told the set changed and measures itself after it has filled the rows in.
+  rebuilt = true;
 
   el.textContent = '';
   if (!now) {                              // nothing to show: say so rather than nothing
@@ -232,11 +254,20 @@ export function markRowsSeen(list) {
   S.dirty = true;
 }
 
+// The crew board, rebuilt from the people who are actually here. Its own call
+// because the list is people rather than upgrades: it changes length whenever
+// anybody is hired, and `build` is already careful about only touching the DOM
+// when the set of rows changes.
+export function buildCrew() {
+  build(crewEl, crewRows(), crewSections(), 'nobody lives here yet');
+}
+
 export function buildShop() {
   build(shopEl, UPGRADES, SECTIONS, 'nothing to sell');
   // The table is empty between hands, and says so rather than standing blank.
   build(casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table');
   build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
+  build(scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit');
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   build(schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach');

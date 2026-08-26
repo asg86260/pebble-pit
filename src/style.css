@@ -213,6 +213,61 @@ canvas {
 
 /* The tooltip: the only words in the yard, and only when asked for. It reads
    like the boards do, because it is the same voice. */
+/* The one overlay in the game. Everything else is either drawn on the ground or
+   hangs off a building; this is neither, because the thing it is about is the
+   whole window. Same ink, same type, same border as the boards -- it is a sheet
+   like the others, just put in the middle. */
+.held {
+  position: fixed;
+  z-index: 12;                 /* over the boards: nothing else is clickable */
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 26px;
+  background: #fff;
+  border: 1px solid #000;
+  font: 12px ui-monospace, "Courier New", monospace;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #000;
+}
+.held[hidden] { display: none; }
+.held .word { font-size: 17px; letter-spacing: .3em; }
+
+.held button {
+  font: inherit;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #000;
+  background: none;
+  border: 1px solid #000;
+  padding: 4px 14px;
+  cursor: pointer;
+}
+.held button:hover { color: #fff; background: #000; }
+
+/* The crew board is the one list of rows that is not a shop. There is no price,
+   no before and no after -- a name and where that body is standing, and the
+   where is a phrase rather than a number, so it gets the room the five-column
+   shop row would never give it. */
+#crewshop button { grid-template-columns: 8.5em 1fr; }
+
+/* The sky's row says a signed rate where a price would go, and a rate is wider
+   than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
+   ran straight out of the sheet. The whole row is given to it instead, with the
+   reading against the right edge like every other number on these boards. */
+#scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
+#scrubshop button[data-key="airrate"] .from,
+#scrubshop button[data-key="airrate"] .arrow,
+#scrubshop button[data-key="airrate"] .to { display: none; }
+#crewshop button .from,
+#crewshop button .arrow,
+#crewshop button .to { display: none; }
+#crewshop button .cost { text-align: right; }
+
 #tip {
   position: fixed;
   z-index: 3;
@@ -224,7 +279,8 @@ canvas {
   text-transform: uppercase;
   color: #000;
   pointer-events: none;
-  white-space: nowrap;
+  white-space: pre;
+  line-height: 1.5;
 }
 
 #reset {

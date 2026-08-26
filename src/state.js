@@ -20,6 +20,7 @@ export const S = {
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
   camTo: null,            // somewhere the view is gliding to, or null
+  follow: null,           // somebody the view is keeping up with, or null
   camLockY: null,         // and a height it is held at, for the opening only
   // A knock the view is still rocking through, and where that has it this
   // frame. It is not part of the camera: the camera is where you are looking
@@ -188,6 +189,26 @@ export const S = {
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
   mining: false,
+  paused: false,          // the whole yard held still, on the space bar
+  houseBoardOpen: false,  // and the list of who lives here
+  scrubBoardOpen: false,
+
+  // --- the air ----------------------------------------------------------------
+  haze: 0,                // motes in the sky, waiting to come back down
+  raining: false,         // and whether it is coming back down right now
+  rains: 0,               // how many times they have
+  scrubOpen: false,       // the house is built
+  scrubbers: 0,           // and this many bodies are in it
+  recycler: false,        // which keep what they catch rather than binning it
+  scrubBank: 0,           // part of a grain, on its way to being a whole one
+  pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
+  recycled: 0,            // and how many whole ones it has given back
+  seenAir: false,         // the lab has been told to watch the sky
+
+  // What came down and has not been cleared, one depth per column of the world.
+  // The layer is the whole record: what is buried, what is in the way and what
+  // there is to shift are all read off it.
+  muck: [],
   dragging: false,
   nextHit: 0,
   // The bench is not there until there is something on it worth buying, and it
@@ -217,6 +238,9 @@ export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
 export const casino = { x: 0, y: 0, w: 0, h: 0 };
+// The scrubbing house: the one building whose job is to undo something the rest
+// of the yard is doing.
+export const scrub = { x: 0, y: 0, w: 0, h: 0 };
 // The ground the pot piles up on: a real bed of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.

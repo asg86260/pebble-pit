@@ -2,25 +2,34 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino } from './state.js';
+import { S, bench, lab, school, casino, scrub } from './state.js';
+import { crewRows, crewSections, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
 import { CASINO_UPGRADES, spinning } from './casino.js';
-import { refresh, markRowsSeen } from './shop.js';
+import { SCRUB_UPGRADES } from './scrubhouse.js';
+import { refresh, markRowsSeen, buildCrew, tookRows } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
 const labShopEl = document.getElementById('labshop');
 const schoolShopEl = document.getElementById('schoolshop');
 const casinoShopEl = document.getElementById('casinoshop');
+const crewShopEl = document.getElementById('crewshop');
+const scrubShopEl = document.getElementById('scrubshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
-                school: document.getElementById('school'), casino: document.getElementById('casino') };
-const standAt = { bench, lab, school, casino };
+                school: document.getElementById('school'), casino: document.getElementById('casino'),
+                house: document.getElementById('house'),
+                scrub: document.getElementById('scrub') };
+// The house is the only stand that is not a fixed rectangle: it grows a room per
+// body, so where you have to be standing to read the list of who lives there
+// depends on how many of them there are.
+const standAt = { bench, lab, school, casino, scrub, get house() { return houseRect(); } };
 const LISTS = { bench: UPGRADES, lab: LAB_UPGRADES, school: SCHOOL_UPGRADES,
-                casino: CASINO_UPGRADES };
+                casino: CASINO_UPGRADES, scrub: SCRUB_UPGRADES, house: [] };
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -30,6 +39,31 @@ export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
 export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
+export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
+// And the house, once anybody lives in it -- with a tight right edge rather than
+// the usual eight cells.
+//
+// Every other station is a small thing with bare ground either side of it, so it
+// can afford to claim eight cells all round. The house is a wall of rooms, and
+// the gap between its right side and the bench is eight cells exactly: padded
+// like the rest it claimed the whole of that gap, including the ground the
+// cursor crosses on its way down to the corner of the bench's own board. Two
+// cells is still comfortably more than nothing, and it leaves the strip between
+// the two of them belonging to neither -- which is what the safe wedge needs.
+const HOUSE_PAD_IN = P * 2;
+export const nearHouse = (x, y) => {
+  if (S.crew < 1) return false;
+  const r = houseRect();
+  // A band at the door rather than the whole face of the block. The block is the
+  // one thing here that grows: by twenty rooms it is taller than the rock, and a
+  // region drawn round the whole of it reaches up into the air the boards hang
+  // in -- so walking down to the far corner of the bench's board crossed the
+  // roof of the house and the house took the menu. You stand at a door to go in
+  // somewhere. That is all this needs to be.
+  const top = Math.max(r.y, S.groundY - P * 10);
+  return x > r.x - P * 8 && x < r.x + r.w + HOUSE_PAD_IN &&
+         y > top && y < S.groundY + P * 4;
+};
 
 // The board stands on the bench, but it is a real element on a real screen: on a
 // phone the bench can be near an edge, or there can be less room above it than
@@ -45,6 +79,13 @@ export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 // work for nothing.
 let sized = { w: 0, h: 0 };
 export function remeasure() {
+  // A board nobody is looking at measures nothing: a hidden element is zero by
+  // zero, and taking that as the size would seat the next open board off the
+  // bottom corner of the window. Rows are rebuilt whether or not the panel is
+  // up -- buying a core-priced row grows the lab's list while you are standing
+  // at the bench -- so this has to be able to say no. Opening measures it
+  // again, which is where a board that was rebuilt out of sight gets its size.
+  if (panelEl.hidden) return;
   sized = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
 }
 
@@ -164,6 +205,12 @@ export function placeBoard() {
 // at where they would go without going through the whole opening dance
 window.__placeBoard = () => place(panelEl, standAt[at] || bench);
 
+// dev: the size the board is seated by against the size it actually is. They
+// have to agree, or the sheet is standing where a board of some other height
+// would stand -- which is what buying a row out from under it used to do.
+window.__boardFit = () => ({ w: sized.w, h: sized.h,
+                             realW: panelEl.offsetWidth, realH: panelEl.offsetHeight });
+
 // The one bit of writing in the yard. Everything else here is a mark you learn,
 // but a station that has stopped needs to say why in words the first time, and a
 // tooltip is the only place words are cheap: it is not on screen until asked for.
@@ -210,6 +257,8 @@ export function showPanel(want) {
   S.labBoardOpen = want === 'lab';
   S.schoolBoardOpen = want === 'school';
   S.casinoBoardOpen = want === 'casino';
+  S.houseBoardOpen = want === 'house';
+  S.scrubBoardOpen = want === 'scrub';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
@@ -286,6 +335,10 @@ function fill(which) {
   if (which === 'lab') { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
   if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, null);
   if (which === 'casino') refresh(casinoShopEl, CASINO_UPGRADES, null);
+  if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
+  // rebuilt as well as refreshed: the crew is a list that changes length, and
+  // the other boards are lists that do not
+  if (which === 'house') { buildCrew(); refresh(crewShopEl, crewRows(), null); }
 }
 
 // What you have to spend, beside the board that is asking for it. Every price on
@@ -340,6 +393,10 @@ export function hud() {
   tweenCount(now());
   fillPurse();
   fill(at);
+  // A row bought out of the list, or a body hired into it, leaves the sheet a
+  // different height than the one it is seated by. The rows are filled in by
+  // `fill` just above, so by here there is a whole board to measure.
+  if (tookRows()) remeasure();
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every

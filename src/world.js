@@ -10,10 +10,10 @@ import {
   ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase,
   PIT_H, PIT_HEAP, PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
   SHAKE_RATE, SHAKE_DECAY,
-  TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H, BENCH_W,
-  QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN
+  TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H, BENCH_W,
+  QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE,
 } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, table } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
 import { shapePit } from './pit.js';
 
 const canvas = document.getElementById('c');
@@ -67,6 +67,18 @@ export function resite() {
 // Out to the *left* of the station, which is the way the yard runs -- and clear
 // of the work itself: the rock's is in the bare apron, the lip's is back from
 // the edge, and the two holes have theirs on the ground beside the mouth.
+// Whether a point on the ground belongs to a given station. It is the same
+// reach the boards use to decide you are standing at one: what you can walk up
+// to and open is what you can be put down on and carry on working at.
+export function atStation(job, x) {
+  if (job === 'labbers') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
+  if (job === 'scrubbers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
+  if (job === 'farmhands') return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
+  if (job === 'quarriers') return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
+  if (job === 'miners') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
+  return true;                     // carrying is done wherever the dust is
+}
+
 export const kitX = job =>
   job === 'miners' ? rockLeft() - P * 4 :
   // well back from the lip: the full-hole warning stands five cells short of
@@ -106,13 +118,59 @@ export function pileAt(x) {
   return null;
 }
 
-export const yardLeft = () => (S.piles[0] ? S.piles[0].from : 0);
+// The left-hand end of the ground the crew work on. It was the first pile,
+// because until the scrubbing house went up the first pile was the leftmost
+// thing in the yard and everything beyond it was ground nobody could reach.
+//
+// The house broke that. It stands at the quiet end of the walk, a long way left
+// of the farm's heap, and it is a place the crew go: bodies walk out there to
+// man it, and its chute drops real grains on the ground beside it. Left at the
+// pile, every one of those grains came down on a barred column -- so `addGrain`
+// walked outward looking for one that was not and put it in the farm's heap, a
+// hundred cells away. The spout paid out, the counter went up, and nothing ever
+// appeared under the spout: dust that looked like it worked and never arrived.
+export const yardLeft = () =>
+  Math.min(S.piles[0] ? S.piles[0].from : 0,
+           // the ground under the chute's reach, which is what it pays on to
+           S.scrubOpen ? scrub.x - P * SCRUB_CHUTE : Infinity);
 // The ground past the far wall of the hole. It is not a station's strip and
 // nothing heaps there on purpose, but a throw that clears the pit has to land
 // somewhere, and the somewhere is the floor -- so dust is allowed to lie there
 // and be fetched back like anything else.
 export const pastPit = x => x >= pit.x + pit.w;
-export const blocked = c => !pileAt(floor.x + c * P) && !pastPit(floor.x + c * P);
+// Where a grain may not come to rest, and it is one place: under the rock.
+//
+// It used to be everywhere that was not a station's strip or the ground past the
+// hole, which made the piles the only places dust could exist. Drop a grain on the
+// bare ground between two stations and `addGrain` found the column full, walked
+// outward looking for one that was not, and put it in the nearest heap -- so
+// anything you let go of in the open snapped into a pile a hundred cells away.
+//
+// A pile is where the crew *put* dust, not where dust is allowed to be. Loose
+// grains lie where they land, and what keeps the yard from turning into one flat
+// beach is the ceiling below, which lets a strip heap up and lets bare ground
+// hold no more than a scatter.
+//
+// Three places stay shut, and they are the three that are not ground.
+//
+// Under the rock, because a rock comes down there and a grain lying on that
+// spot is a grain about to be underneath one. Over the mouth of the cut and over
+// the mouth of the hole, because neither of those is somewhere to stand a grain:
+// they are openings, and dust lying across an opening is dust lying on nothing.
+// Dust that reaches the hole goes *in* it, which is the whole point of the hole.
+export const blocked = c => {
+  const x = floor.x + c * P;
+  // And the ground off the left-hand end of the yard, which is shut for a
+  // different reason: it is not an opening, it is simply somewhere nobody can
+  // walk. The crew are held between the first pile and the lip, so a grain that
+  // settled out there would sit in plain sight for the rest of the run with
+  // nothing able to reach it.
+  if (x + P <= yardLeft()) return true;
+  if (pastApron(x) < 0) return true;
+  if (S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w) return true;
+  if (overPitMouth(x)) return true;
+  return false;
+};
 
 // which pile a station's own output belongs in
 export const pileOf = key => S.piles.find(p => p.key === key);
@@ -143,7 +201,12 @@ export const bankCeiling = c => {
   // cannot stand up against the hole and tip itself in.
   if (pastPit(x)) return Math.max(0, (x + P - (pit.x + pit.w)) / P) * BANK_SLOPE;
   const p = pileAt(x);
-  if (!p) return 0;
+  // Bare ground takes a scatter and no more. It is not a station's strip and
+  // nothing heaps here on purpose, but a grain dropped here has to be able to
+  // stay: nought means "full", and full means `addGrain` goes looking for
+  // somewhere else and the grain you dropped ends up in a pile you were not
+  // pointing at.
+  if (!p) return LOOSE_DEEP;
   // both ends of a pile are cliffs the sand may not lean on: the station behind
   // it and the bare ground in front of it. So it rises only as it gets away from
   // them, which is what stops it standing up as a wall against either.
@@ -267,6 +330,15 @@ export function resize(after) {
   lab.x = S.cx + TO_LAB;
   lab.y = S.groundY - lab.h;
 
+  // Past the lab, at the quiet end of the walk. What it does is about the sky
+  // over the whole yard rather than about any one site, so it does not belong
+  // among the places that dig -- and the walk out to it is the last of the
+  // walks, which is what the cores have bought all the way along.
+  scrub.w = SCRUB_W;
+  scrub.h = SCRUB_H;
+  scrub.x = Math.round((S.cx + TO_SCRUB) / P) * P;
+  scrub.y = S.groundY - scrub.h;
+
   // The last thing on the ground. Everything the cores open lies further out
   // than the last, and the one place that makes nothing is the longest walk.
   casino.w = CASINO_W;
@@ -278,8 +350,13 @@ export function resize(after) {
   // world to the lab, which is both sides of the casino. A heap goes down beside
   // the building and walks *left* past it when the right-hand side is full,
   // because that is where the empty ground is.
+  // The pot's ground runs from the left-hand end of the world to the lab, and
+  // stops short of the scrubbing house once that is standing: a heap is allowed
+  // to walk left past the casino, and a heap walking into somebody's wall is a
+  // heap drawn through a building.
   table.x = 0;
-  table.cols = Math.max(1, Math.floor((lab.x - P * 4) / P));
+  const potTo = S.scrubOpen ? Math.min(lab.x, scrub.x) : lab.x;
+  table.cols = Math.max(1, Math.floor((potTo - P * 4) / P));
   table.y = S.groundY - table.rows * P;
 
   // the quarry is a hole in the ground, so it hangs below the line rather than
@@ -325,8 +402,40 @@ export function lookAt(x) {
   S.camTo = x - S.viewW / 2;
 }
 
+// Keeping up with somebody, rather than with where they were standing when you
+// asked. A body walks: by the time a glide reaches the spot they were on, they
+// are somewhere else, and a view that arrives at an empty piece of ground is
+// worse than one that never moved -- the arrow over their head is off the side
+// of the screen and you are looking at sand. So the spot is re-asked every
+// frame for as long as the arrow is up, and the glide chases it.
+//
+// The same glide, so the ordinary case is unchanged: the view slides over,
+// catches up, and then simply keeps pace a few pixels behind whoever it is
+// watching. It lets go when the arrow does, and the player can take the view
+// back at any point by scrolling it themselves.
+export function follow(w) {
+  S.follow = w;
+  if (w) lookAt(w.x + WORKER / 2);
+}
+
+export const unfollow = () => { S.follow = null; };
+
+// The one it is watching, while it is still worth watching. The arrow's own
+// clock is the whole of the answer -- there is no second timer to keep in step
+// with it, and nothing to clear when the pointing runs out.
+export const following = t => (S.follow && S.follow.pointed > t ? S.follow : null);
+
+// Where the view opens. The rock comes first -- it is the thing you are here to
+// hit -- and the bench and the shacks beside it come too when the window is wide
+// enough to hold them. On a phone that is not true, and a view opened on the
+// bench would put the rock off the right-hand edge of a game about a rock.
+export const openingCamX = () => Math.max(bench.x - P * 10, S.cx - S.viewW * 0.4);
+
 // one frame of that glide
-export function stepCamera() {
+export function stepCamera(t) {
+  const w = following(t);
+  if (w) lookAt(w.x + WORKER / 2);
+  else if (S.follow) S.follow = null;
   if (S.camTo === null) return;
   const d = S.camTo - S.camX;
   if (Math.abs(d) < 1) { S.camX = S.camTo; S.camTo = null; }

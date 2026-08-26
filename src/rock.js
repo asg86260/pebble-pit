@@ -9,6 +9,7 @@ import {
   ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS,
   ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
+import { foul, throughRockMuck } from './smog.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -298,6 +299,12 @@ export function knockOff(mx, my, want = pickCount()) {
   const c = pickCell(mx, my);
   if (!c) return;
 
+  // Whatever came down in the last rain is on top of the rock, and a swing goes
+  // into that first. It is not lost work -- it is the shift the rain cost you,
+  // and it is being paid here rather than out of the counter.
+  want = throughRockMuck(want);
+  if (want < 1) { S.dirty = true; return; }
+
   const reach = Math.ceil(Math.sqrt(want)) + 1;
   const near = [];
   for (let dy = -reach; dy <= reach; dy++) {
@@ -316,6 +323,8 @@ export function knockOff(mx, my, want = pickCount()) {
     const { px, py } = cellPos(cell.x, cell.y);
     spawnSpoil(px, py, shade);
   }
+  // and it goes up from where it came off, not from a counter somewhere
+  foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py);
   S.dirty = true;
   refreshRockTops();
 }

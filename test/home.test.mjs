@@ -1,0 +1,233 @@
+// What the crew do when there is nothing to do: stand down, take a break, walk
+// home, and turn a light on behind a window.
+
+import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+
+// Nothing here makes, spends or moves anything: it is the yard at rest, and
+// the one rule that matters is that a break only ever happens to a body that
+// had stopped anyway.
+group('a stopped crew takes a break, a working one does not', async () => {
+    run(0.4);
+  // A gang stood down over a full yard rather than idle haulers.
+  //
+  // Both are stopped and both are entitled to a break, but a hauler with
+  // nothing to fetch knocks off and goes home after a minute or so, and a
+  // break turn only comes round every twenty-odd seconds and then lands one
+  // time in three. So they get two chances each and the yard empties, and a
+  // check watching for something rare in a window that keeps closing fails on
+  // the timing rather than on the behaviour. A gang standing over a full pile
+  // never goes home -- and it is where you actually see this in play.
+  window.__crew(6, 0);
+  window.__clearFloor();
+  const rockX0 = state().rockX;
+  for (let i = 0; i < 40; i++) window.__pile(rockX0 + 120 + i * 6, 60);
+  run(3);
+  const seen = [];
+  let resting = 0, cig = 0;
+  for (let i = 0; i < 60; i++) {
+    run(2);
+    const s = state();
+    resting = Math.max(resting, s.resting);
+    cig = Math.max(cig, s.cigSmoke);
+    for (const b of s.breaks) if (!seen.includes(b.kind)) seen.push(b.kind);
+  }
+  const idle = { resting, breaks: seen, cig };
+  // and now clear the yard, so the gang has a rock to get back to
+  window.__clearFloor();
+  run(6);
+  const busy = state();
+  window.__crew(0, 0);
+  window.__clearFloor();
+  return [
+    ok(idle.resting > 0, 'a gang with nowhere to put anything is stood about',
+       `${idle.resting} of 6`),
+    ok(idle.breaks.length > 0, 'and somebody, now and then, gets up to something',
+       idle.breaks.join(',')),
+    ok(idle.breaks.every(k => ['smoke', 'sing', 'curse', 'talk'].includes(k)),
+       'smoking, singing, swearing or talking, and nothing else',
+       idle.breaks.join(',')),
+    ok(!idle.breaks.includes('smoke') || idle.cig > 0,
+       'and a cigarette puts smoke in the air', `${idle.cig} puffs`),
+    ok(busy.breaks.length === 0,
+       'and the moment there is room again, nobody is having one',
+       JSON.stringify(busy.breaks))
+  ];
+});
+
+// A yard with nothing in it to carry is a yard nobody needs to be stood in.
+// The one thing that has to be true is that letting them go is never a
+// decision you regret: they are all back the moment there is dust.
+group('a body with no work goes home, and the lights say who is in', async () => {
+    run(0.4);
+  window.__crew(0, 4);
+  window.__clearFloor();
+  const dark = state();
+  run(200);                                    // long enough for all four to knock off
+  const in_ = state();
+  const rockX = state().rockX;
+  for (let i = 0; i < 8; i++) window.__pile(rockX + 60 + i * 30, 60);
+  run(4);
+  const out = state();
+  run(40);
+  const done = state();
+  window.__crew(0, 0);
+  window.__clearFloor();
+  return [
+    ok(dark.houses.home === 0 && dark.houses.lights === 0,
+       'a yard just started has nobody in and no window lit',
+       `${dark.houses.home} in, ${dark.houses.lights} lit`),
+    ok(in_.houses.home === 4, 'with nothing to carry they all knock off',
+       `${in_.houses.home} of 4`),
+    ok(in_.houses.lights > 0 && in_.houses.lights <= in_.houses.home,
+       'and the windows light up behind them -- never more than are in',
+       `${in_.houses.lights} lit for ${in_.houses.home}`),
+    ok(in_.workerPos.length === 4 && in_.houseSmoke >= 0,
+       'they are still on the books, just out of sight', `${in_.workerPos.length} hired`),
+    ok(out.houses.home === 0 && out.houses.lights === 0,
+       'dust on the ground brings every one of them straight back out',
+       `${out.houses.home} still in`),
+    ok(done.stored > 0, 'and it gets carried', `${done.stored} banked`)
+  ];
+});
+
+// A body that has knocked off is stood indoors and is not drawn -- that is
+// what being home means. Nothing else in the game takes somebody off carrying,
+// so nothing else ever had to clear it, and a body put on the quarry straight
+// out of the house went down the cut, worked the face, brought shards up and
+// was invisible the whole time.
+group('a body put to work comes out of the house first', async () => {
+    run(0.4);
+  window.__crew(0, 3);
+  window.__clearFloor();
+  const away = runUntil(() => state().houses.home === 3, 300);
+  const home = state();
+
+  window.__assign('quarriers', 1);
+  window.__assign('quarriers', 1);
+  run(30);
+  const at = state();
+  window.__crew(0, 0);
+  window.__clearFloor();
+  return [
+    ok(away && home.houses.home === 3, 'with nothing to carry they are all indoors',
+       `${home.houses.home} in`),
+    ok(at.quarriers === 2, 'two of them are put on the quarry', `${at.quarriers}`),
+    ok(at.houses.home === 0, 'and none of them is still counted as being at home',
+       `${at.houses.home} still in`),
+    ok(at.workerPos.length === 3, 'so all three are out where you can see them',
+       `${at.workerPos.length} drawn of 3`),
+    ok(at.crewDetail.filter(d => d[0] === 'q').length === 2,
+       'and the two of them are down the cut working',
+       JSON.stringify(at.crewDetail))
+  ];
+});
+
+// A full hole tells everybody to stand down, and standing down eventually
+// means going home. Those two rules fought: the stand-down put a body walking
+// to the door back on `idle`, the idle branch sent it home again the next
+// frame, and it never took a step -- the whole crew stock still between the
+// pile and the lip with a yard full of dust they could not move.
+group('a crew with nowhere to put anything walks home rather than freezing', async () => {
+    run(0.4);
+  window.__crew(3, 6);
+  window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
+  // Not `runUntil(pitFull)`: filling the scrape is the setup, and what this
+  // is about is the walk home that follows it. Six bodies crossing the yard is
+  // most of the time here, and cutting the run to the moment the hole filled
+  // left them all still walking.
+  run(400);                                    // long enough to fill it, and to react
+  const full = state();
+
+  // nobody is left standing about in the middle of the yard
+  const out = () => state().crewDetail.filter(d => d[0] === 'h' && !d.includes('|home|'));
+  const stalled = out();
+
+  // and a dig brings them all straight back out
+  window.__dig(4);
+  run(25);
+  const dug = state();
+  window.__crew(0, 0);
+  window.__clearFloor();
+  return [
+    ok(full.pitFull, 'the hole is full', `${full.stored} of ${full.pitCapacity}`),
+    ok(full.floorGrains > 100, 'and the yard is not', `${full.floorGrains} lying about`),
+    ok(full.houses.home === 6, 'so every one of them has gone home',
+       `${full.houses.home} in, ${stalled.length} still out`),
+    ok(dug.houses.home === 0, 'and a dig brings them all back out',
+       `${dug.houses.home} still in`),
+    ok(dug.stored > full.stored, 'carrying again', `${full.stored} -> ${dug.stored}`)
+  ];
+});
+
+// The crew live in a block of cubes between the bench and the rock, one cube
+// a body. It is the narrowest strip of ground in the yard and the rock grows
+// into it, so the two things worth checking are that it is not there before
+// anybody is hired and that it never touches either neighbour -- at the
+// biggest rock the game allows, which is where the strip is at its narrowest.
+group('the crew have somewhere to live', async () => {
+  window.__crew(0, 0, 0, 0, 0);
+  const empty = state().houses;
+  window.__crew(1, 0, 0, 0, 0);
+  const one = state().houses;
+  window.__crew(6, 6, 0, 0, 0);
+  const twelve = state().houses;
+  const grew = twelve.top < one.top;              // up the screen is a smaller y
+  window.__jump(30);
+  const big = state().houses;
+  const onGrid = big.cells.every(c => c.split(',').every(v => +v % P === 0));
+
+  // every room, at every crew size it has ever stood at
+  const seen = {}, moved = [];
+  for (let n = 1; n <= 26; n++) {
+    window.__crew(n, 0, 0, 0, 0);
+    const h = state().houses;
+    // Rooms and the holes cut in them, each list keyed on its own count: a
+    // window that jumps when the room next door is built is the same fault as
+    // a room that moves, and it is the one that survived the first go at this.
+    for (const [what, list] of [['room', h.cells], ['hole', h.holes]]) {
+      list.forEach((c, k) => {
+        const key = `${what} ${k}`;
+        if (seen[key] && seen[key] !== c) moved.push(`${n}: ${key} was ${seen[key]}, now ${c}`);
+        seen[key] = c;
+      });
+    }
+  }
+  const settled = moved.length === 0;
+  window.__crew(0, 0, 0, 0, 0);
+  window.__jump(1);
+  return [
+    ok(empty.cubes === 0, 'nothing stands there until somebody is hired',
+       `${empty.cubes} cubes`),
+    // a room a body, and the doorway on top of that: the first hire gets a
+    // way in and somewhere to live, not a shed with a door in it
+    ok(one.cubes === 2 && twelve.cubes === 13, 'then it is a room a body and a doorway',
+       `${one.cubes} / ${twelve.cubes}`),
+    ok(grew, 'and the block goes up as the crew does',
+       `${one.top} -> ${twelve.top}`),
+    ok(big.base === big.foot, 'the bottom course stands on the ground line',
+       `${big.base} / ${big.foot}`),
+    // The bench stands between the block and the rock: you walk in past your
+    // own front door to get to the shop, not out past the shop to get home.
+    ok(big.right <= state().benchX, 'the block stands outside the bench',
+       `${big.right} / ${state().benchX}`),
+    // and it stands in the middle of the ground it has, rather than hard
+    // against one neighbour with all the slack on the other side
+    ok(big.ofBench > 0, 'it stands clear of the bench',
+       `${big.ofBench}px`),
+    ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
+       `${big.benchOfApron}px`),
+    ok(big.ofBench === big.benchOfApron,
+       'the bench is centred between the block and the biggest rock',
+       `${big.ofBench}px to the houses, ${big.benchOfApron}px to the apron`),
+    ok(big.ofApron > 0, 'with the block further out again',
+       `${big.ofApron}px`),
+    ok(onGrid, 'every cube sits on the lattice'),
+    // Building is additive. Taking somebody on adds a room; it does not move
+    // the rooms that were already standing, and it did once -- the base was
+    // worked out from the size of the crew, so every hire rebuilt the place
+    // and the one thing you should have been able to watch happen was the one
+    // thing you could not.
+    ok(settled, 'and a hire adds a room without moving the ones already there',
+       settled ? '1 through 26' : moved.slice(0, 3).join('; '))
+  ];
+});

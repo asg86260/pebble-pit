@@ -28,11 +28,26 @@
     <div class="note">upgrade workers to specialists</div>
     <div id="schoolshop" class="rows"></div>
   </div>
+  <div id="house" class="page" hidden>
+    <div class="title">the house</div>
+    <div id="crewshop" class="rows"></div>
+  </div>
+  <div id="scrub" class="page" hidden>
+    <div class="title">the scrubbing house</div>
+    <div id="scrubshop" class="rows"></div>
+  </div>
   <div id="casino" class="page" hidden>
     <div class="title">the casino</div>
     <div id="casinoshop" class="rows"></div>
   </div>
   </div>
+</div>
+
+<!-- Held. In the middle of the window, because a game that has stopped should
+     say so where you are already looking, not in a corner you have to find. -->
+<div id="held" class="held" hidden>
+  <div class="word">paused</div>
+  <button id="resume" type="button">resume</button>
 </div>
 
 <div id="tip" hidden></div>

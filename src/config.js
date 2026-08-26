@@ -107,7 +107,99 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // The last thing on the ground, out past the lab. It is the far end of the walk
 // on purpose: it is the one place in the yard that makes nothing, and a place
 // that makes nothing should be a place you went to.
-export const TO_CASINO = -2556;
+// --- the air, and what it costs -----------------------------------------------
+// Every grain taken out of the ground puts a mote of it into the sky. The sky
+// holds them, they gather, and past a point the sky gives them back -- all at
+// once, all over the yard, as muck. It is the only thing in this game that makes
+// the works worse, and it is caused by the one thing you do most.
+// Motes into the sky per grain taken out. It was a third of this, which read fine
+// in a check that winds the number up by hand and was hopeless in play: a working
+// crew took twenty minutes to dirty the sky enough for the yard to offer them a
+// scrubbing house and an hour and a half to see a single rain. A cost nobody
+// meets is not a cost. It scales with the crew, which is the right way round --
+// a bigger works fouls faster, so the sky is a thing that gets worse as you grow
+// rather than a timer running underneath you.
+export const SMOG_PER_DUST = 0.18;
+export const QUARRY_FOUL = 5;        // a shard out of the cut is a hole full of it
+export const FARM_FOUL = 3;          // and turning a plot over lifts some too
+export const SMOG_RAIN_AT = 900;     // and this many of them up there brings it down
+export const SMOG_CAP = 1400;        // never more than this in the sky at once
+// The sky is motes, not banks: there is nothing here that says how many clouds
+// there are or what shape they are, because nobody draws one. What is up there is
+// however the motes have arranged themselves.
+export const SMOG_PER_MOTE = 1.2;    // haze each mote in the sky stands for
+export const SMOG_TOP = 2;           // cells below the top of the window the band starts
+export const SMOG_BAND = 13;         // and how deep it is: room to bunch up in
+// How the haze spreads: not by anything travelling, but by the stretch of sky a
+// mote is placed within opening out under it as it ages. A few pixels a second
+// each, which is slow enough that you never catch one moving.
+export const SMOG_SPREAD_MIN = 90;   // the stretch a mote lands within
+export const SMOG_SPREAD_RATE = 22;  // pixels a second that stretch opens by
+export const SMOG_SPREAD_MAX = 9000; // and as wide as it ever gets: the whole yard
+export const SMOG_SINK = 5;          // seconds to settle from the band's underside to its height
+export const SMOG_WANDER = 9;       // how far a mote strays from its place in the band
+export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
+
+// How much of the sky each falling grain takes with it. The rain has no clock:
+// it runs until the banks overhead are used up, so they thin out as it comes
+// down instead of being switched off at the end of a timer.
+export const RAIN_TAKES = 0.85;
+export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
+export const PUFF_MAX = 260;         // puffs in the air at once, before it is a fog
+// Grains a second across the whole yard. Enough that a rain lays a layer over
+// everything rather than freckling it: a shower you have to go looking for is
+// not a thing that happened to your works.
+export const RAIN_PER_S = 110;
+export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
+export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
+
+// What a spare pair of hands shifts, in cells a second. Clearing is not free and
+// it is not slow: it is the shift the rain cost you.
+export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands shifts
+
+// The scrubbing house: a place with nobody in it does nothing at all.
+// The front of the scrubbing house, in cells. These live here rather than in the
+// drawing because the drawing is not the only thing that depends on them: the
+// recycler's grain is released from the cell under the chute's lip, and a chute
+// drawn off one number while the grain leaves from another is a spout that misses
+// its own spout the first time either is touched.
+export const SCRUB_DOOR = 3;         // courses of foot the way in is tall, and cells wide
+export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from the wall
+export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
+
+export const SCRUB_CORES = 4;        // what opens it
+export const SCRUB_PULL = 5.5;       // motes a second, per body in it
+export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
+                                     // top of the house and down the middle of it
+export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
+export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
+export const RECYCLE_PER = 3;        // motes caught per grain of dust it gives back
+
+export const TO_SCRUB = -2436;       // past the lab, at the quiet end of the walk
+// Nineteen cells across and nineteen down, which is the hood and the tower
+// together: the tower is the eleven cells the hood has flared down to, and the
+// four either side of it at the top are wall with sky behind them. Odd across on
+// purpose -- the taper closes to one cell dead on the middle column, and on an
+// even front it would close to two beside the middle or one off it, and there
+// would be no middle column for the shaft and the door to stand on either.
+//
+// The nineteen down is the front read off in order and nothing else: five courses
+// of hood, the course the throat closes in, a solid course under it, eight of
+// shaft for the bellows, a solid course under that, and three of foot for the
+// door to stand in. Change any of those in render.js and this has to move with
+// it -- which is why they are all named there, where the shape is.
+export const SCRUB_W = P * 19;
+export const SCRUB_H = P * 19;
+// The bellows on its front: how many folds it has, and how fast they go. One
+// bellows whoever is in there -- it is a machine running or a machine stopped,
+// not a tally -- but it beats faster with every body up to four, which is the cap
+// the lab's chimney smokes on. Nothing caps this roster the way a bench caps the
+// cut, so one fold to a body would read right up to four and lie from five on,
+// and the roster written under the building already carries the number.
+export const SCRUB_FOLDS = 3;
+export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
+
+export const TO_CASINO = -2760;
 export const CASINO_W = P * 18;
 export const CASINO_H = P * 12;
 export const CASINO_CORES = 6;   // what it costs to have it built
@@ -232,6 +324,11 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 // Without it the apron is a cliff the sand cannot slump over, and the bank
 // stands up against the rock as a sheer wall however tall it gets. 1.5 is the
 // angle the sand finds on its own, so both faces of a heap read the same.
+// How deep dust may lie on ground that is nobody's pile. Enough that anything you
+// put down stays put and settles like sand; not enough that the bare yard becomes
+// somewhere to store it.
+export const LOOSE_DEEP = 3;
+
 export let BANK_SLOPE = 1.5;
 // The hole is dug, not given. It starts as a scrape in the ground and every dig
 // bought at the bench takes it wider and deeper, until it is the hole the yard
@@ -395,6 +492,11 @@ export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the la
 // window so short that the top edge is nearer than this.
 export const ROCK_DROP = 620;    // world pixels above its place that a new rock starts
 export const ROCK_DROP_CLEAR = 72;  // and how far above the top edge it waits, out of sight
+// How long a body stays pointed at after you pick its name off the house board.
+// Long enough to find it on a screen with a dozen of them moving, short enough
+// that it is gone before you have stopped looking for it.
+export const POINT_MS = 3200;
+
 export const DROP_GRAV = 0.7;    // a boulder comes down heavier than a chip does
 export const JOLT_GRAINS = 30;   // grains the landing shakes off the banks
 // And the view is knocked about by it. A rock coming down out of the sky used
@@ -519,7 +621,31 @@ export const SMOKE_RISE = 0.4;    // and how fast it goes up
 // parallax the dust already does close up, and they are deliberately faint: a
 // cloud is two greys well lighter than the lightest rock shade, because the six
 // shades mean depth of rock and nothing in the sky is allowed to borrow them.
+// The pale drifting clouds, back on.
+//
+// They went off when the smog arrived, on the grounds that two kinds of cloud in
+// one sky is one kind too many. What settled that argument was the smog turning
+// into what it is now: a thin even haze along the very top of the window. That
+// leaves the whole middle of the sky empty, and an empty sky with nothing
+// crossing it is the still picture the clouds were put in to break up in the
+// first place. They keep clear of the haze -- see `band` in `weather.js` -- so
+// the two are layered rather than mixed: your smoke overhead, the weather below
+// it, and neither one pretending to be the other.
+export const CLOUDS_ON = true;
 export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in view
+// The muck the rain leaves. A third earth colour beside the quarry's cold blue
+// and the farm's green -- and deliberately the drab one: both of those are
+// saturated because they are worth something, and this is worth nothing. It reads
+// as spoil rather than as a resource you have not learned about yet.
+//
+// It was grey for a while, on the rule that the yard has no colour outside the
+// resource marks. That rule was already not true -- there is blue in the cut and
+// green on the beds -- and grey cost more than it saved: a pile of dust here is a
+// block of grey cells, so grey muck lying on a pile read as more of the pile,
+// which is the one thing it must never read as.
+export const MUCK_TONE = '#7a6047';
+export const MUCK_SKIN = '#57402c';     // and the top course, so the layer has a lid
+
 export const CLOUD_TONE = '#efefef';
 export const CLOUD_UNDER = '#e3e3e3';   // the bottom bar, so a cloud has an underside
 export const CLOUD_DRIFT = 0.05;  // world pixels a frame, before its depth is taken off

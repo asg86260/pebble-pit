@@ -20,10 +20,15 @@ let wall = performance.now();
 
 export const now = () => t;
 
-// a real frame: however much the wall moved
-export function tick() {
+// A real frame: however much the wall moved, unless the game is being held.
+//
+// The wall is read either way. A pause that stopped reading it would come back
+// having missed however long you were away and add the lot in one go, which is
+// every timer in the yard firing at once -- the same thing a long tab-out would
+// do if `dt` were not clamped.
+export function tick(held) {
   const r = performance.now();
-  t += Math.max(0, r - wall);
+  if (!held) t += Math.max(0, r - wall);
   wall = r;
 }
 

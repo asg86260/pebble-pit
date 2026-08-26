@@ -8,6 +8,8 @@
 
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
+import { foul, throughBedMuck } from './smog.js';
+import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
 import { walkY, bedCount } from './world.js';
 import { mult } from './lab.js';
@@ -113,7 +115,12 @@ export function stepFarmhand(w, now, dt) {
   // then it is taken off, from exactly where it grew
   if (!w.cutAt) w.cutAt = now + CUT_MS;         // walked up to one already ripe
   if (now < w.cutAt) return;
+  // a smothered plot is dug out before it is picked: the muck is on top of the
+  // crop, not beside it
+  if (throughBedMuck(1) < 1) { w.cutAt = now + CUT_MS; return; }
   cut(i, bedX(i));
+  w.farmed = (w.farmed || 0) + 1;
+  foul(FARM_FOUL, bedX(i), S.groundY - P * 2);
   w.cutAt = 0;
   w.bed = pickBed(w);
   w.goal = 'to';

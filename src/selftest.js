@@ -1,11 +1,57 @@
-// A self-test you can run in the browser: open the game and call __test() in the
-// console. It drives the game through the same dev hooks the console has, and
-// checks the things that have broken before.
+// The checks that need a page.
 //
-// It resets the save first, so run it on a game you do not mind losing.
+// Run it in the browser -- open the game and call `__test()` in the console --
+// or headless with `npm run test:browser`. It resets the save first, so run it
+// on a game you do not mind losing.
+//
+// This used to be the whole suite: five hundred and eighty checks, most of them
+// about the yard rather than about the page, all of them going through a browser
+// to find out. The ones about the yard live in `test/*.test.mjs` now and run in
+// node against `step` directly -- see tools/node/yard.mjs. What is left here is
+// what a browser is actually for: a pointer being dragged across a canvas, a
+// board seating itself against the edge of a window, a cursor changing shape, a
+// cell landing on a whole device pixel.
+//
+// Every group starts from a new game (see `runTests`), so any one of them can be
+// run on its own with `__test('some words from the name')`, and the suite can be
+// split across as many browsers as you like.
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const state = () => window.__state();
+// Real wall time, and the only thing in the suite that costs any. It is not
+// waste: `run()` drives the game, but dust in flight, the counter tween, the
+// board sliding and the save's debounce are all hung off real frames, and a
+// check that reads them early reads them mid-animation. Capping these was tried
+// and cost ten checks. What is worth cutting is simulated frames, below.
+let SLEPT = 0, SLEEPS = 0, STEPPED = 0, FRAMES = 0, RUNS = 0;
+const sleep = ms => { SLEPT += ms; SLEEPS++; return new Promise(r => setTimeout(r, ms)); };
+
+// A frame of the page, rather than a stretch of the wall clock.
+//
+// Waiting for the browser is not the same as waiting for the game. The game's
+// own clock is turned by hand here -- see `run` -- but the page has its own
+// business: a board seats itself in the frame loop, and a style written this
+// moment is not laid out until the next frame. Two frames is all any of that
+// takes, and two frames is about thirty milliseconds rather than the quarter of
+// a second a check used to sleep for on the off-chance.
+// A frame, or a fiftieth of a second, whichever comes first. The frame is what
+// is actually wanted; the timer is there because a headless browser stops
+// painting when it decides nobody is looking, and a check waiting on a frame
+// that will never come is a suite that hangs three minutes in with no output.
+const raf = () => new Promise(r => {
+  let done = false;
+  const go = () => { if (!done) { done = true; r(); } };
+  requestAnimationFrame(go);
+  setTimeout(go, 50);
+});
+
+// The yard and the page, both brought up to date. The seconds are game seconds
+// and cost nothing; the frames are real and cost two of them.
+async function settle(seconds = 0.4) {
+  if (seconds > 0) run(seconds);
+  await raf();
+  await raf();
+}
+let STATED = 0, STATES = 0;
+const state = () => { const t = performance.now(); const v = window.__state(); STATED += performance.now() - t; STATES++; return v; };
 const fmt = n => n.toLocaleString('en-US');   // the same as the boards write
 // the boards are rebuilt when the game changes; a check that changes it by hand
 // has to ask for the same
@@ -23,9 +69,9 @@ const board = () => document.getElementById('board');
 const panel = () => document.getElementById('panel');
 const shop = () => document.getElementById('shop');
 
-const point = (type, x, y, buttons = 1) =>
+const point = (type, x, y, buttons = 1, button = 0) =>
   canvas().dispatchEvent(new PointerEvent(type, {
-    clientX: x, clientY: y, pointerId: 1, isPrimary: true,
+    clientX: x, clientY: y, pointerId: 1, isPrimary: true, button,
     buttons: type === 'pointerup' ? 0 : buttons, bubbles: true
   }));
 
@@ -77,14 +123,19 @@ async function hoverAway() {
 // game in a few milliseconds, and the same twenty seconds every time it is run.
 // A check that sleeps and hopes passes on a fast machine and fails on a slow
 // one; a check that turns the handle a fixed number of times does not.
-const run = (seconds) => window.__fast(seconds);
+const run = (seconds) => {
+  const t = performance.now();
+  const f = window.__fast(seconds);
+  STEPPED += performance.now() - t; FRAMES += f; RUNS++;
+  return f;
+};
 
 // Run until something is true, a second of game at a time, up to a limit. The
 // limit is in game seconds, not real ones, so it is a fact about the game
 // rather than about the machine.
 function runUntil(done, limit = 60) {
   for (let i = 0; i < limit; i++) {
-    window.__fast(1);
+    run(1);
     if (done()) return true;
   }
   return false;
@@ -105,26 +156,25 @@ function haveRock() {
 
 async function bankCore() {
   window.__next();                             // the last of the rock goes
-  for (let i = 0; i < 60 && !state().coreItem?.rest; i++) await sleep(100);
+  // Turned by hand rather than waited out. The core rolls clear on the game's
+  // own clock, and the game's clock is ours here: six seconds of it costs a few
+  // milliseconds, where sitting through six seconds costs six seconds.
+  runUntil(() => state().coreItem?.rest, 10);
   const k = state().coreItem;
   if (!k) return false;
 
   const [kx, ky] = onScreen(k.x + 9, k.y + 9);
   point('pointerdown', kx, ky);
-  await sleep(60);
+  run(0.1);
   const s = state();
   const [tx, ty] = onScreen(s.pitX + s.pitW * 0.2, s.groundY - 120);
   for (let i = 1; i <= 8; i++) {
     point('pointermove', kx + (tx - kx) * i / 8, ky + (ty - ky) * i / 8);
-    await sleep(16);
+    run(1 / 60);
   }
-  await sleep(200);
+  run(0.2);
   point('pointerup', tx, ty);
-  for (let i = 0; i < 40; i++) {
-    await sleep(100);
-    if (!state().coreItem && !state().heldCore) { haveRock(); return true; }
-  }
-  return false;
+  return runUntil(() => !state().coreItem && !state().heldCore, 20) && (haveRock(), true);
 }
 
 // A roster: click the less or the more under the station itself. The game
@@ -242,253 +292,6 @@ const TESTS = [
     ];
   }],
 
-  // A hole you can throw across has a back to it. The toss off the lip was a
-  // fixed spray, which was fine while the pit ran two windows to the right and
-  // wrong the moment it starts as a scrape: the same throw cleared the far wall
-  // and came down on the ground behind the pit, where nothing can pick it up.
-  ['a toss lands in the hole, however small the hole is', async () => {
-    window.__crew(0, 4);
-    quickCrew();
-    window.__pile(state().rockLeftX + 300, 900);
-    const before = state();
-    run(120);
-    const s = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(s.pitW === 150, 'the hole is still the scrape you start with', `${s.pitW}`),
-      ok(s.stored > before.stored, 'and dust is going into it',
-         `${before.stored} -> ${s.stored}`),
-      ok(s.dustPastPit === 0, 'nothing sails over the far wall onto the ground behind',
-         `${s.dustPastPit} grains behind the pit`)
-    ];
-  }],
-
-  // The hole is dug, not given: it starts as a scrape you can fill in a minute
-  // and every dig at the bench takes the far wall out and the floor down. This
-  // check digs it all the way out and leaves it there, which is the state the
-  // capacity checks below it want.
-  // The hole filling up is a fact about the *pile*, not about the counter, and
-  // they are nearly the same number: a core in the pile takes a cell and is not
-  // dust. Reading the counter meant the hole was physically full one grain
-  // before the counter agreed, the heap over the mouth never unlocked, and the
-  // crew stood at the lip throwing dust at a brim with nowhere under it -- for
-  // ever, because nothing about that state could change.
-  ['a core in the pile does not jam the hole', async () => {
-    const was = (({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }) =>
-                 ({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }))(state());
-    // The core goes in first, while there is still room for it. Everything is
-    // counted against the one capacity now -- a find is a grain like any other --
-    // so a core arriving at a hole that is already full is a core that waits on
-    // the ground, and what this check is about is a core *in* the pile. Whatever
-    // an earlier check left in the hole is emptied out first, or there may be no
-    // room for it even at the start.
-    window.__spend(state().stored);
-    window.__clearFloor();
-    await bankCore();
-    // Enough hands to keep the yard clear: the rock's pile stops the gang when
-    // it fills, and this check needs the hole actually filled inside its run.
-    window.__crew(3, 6);
-    window.__levels({ minerSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
-    run(250);
-    const s = state();
-    const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
-    // put the yard back: an empty hole and a swept floor, or every check after
-    // this one starts in a works that has ground to a halt
-    window.__crew(0, 0);
-    window.__spend(s.stored);
-    window.__clearFloor();
-    window.__levels(was);                    // and a yard that swings at its old pace
-    run(1);
-    return [
-      ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
-         `${s.cores} cores`),
-      ok(s.pitFull, 'the hole reports itself full', `${s.pit} of ${s.pitCapacity}`),
-      ok(s.pit >= s.pitCapacity, 'and it really is: every cell the bed allows is spoken for',
-         `${s.pit} cells, ${s.pitDust} of them dust`),
-      // the heap over the mouth has to have unlocked, or the pile stopped at
-      // the brim of the hole and everything above it was never reachable
-      ok(s.pitDust > (s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain) - s.cores,
-         'the heap over the mouth was unlocked on the way',
-         `${s.pitDust} dust, hole holds ${(s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain)}`),
-      ok(carrying.length === 0 || s.stored === s.pitDust,
-         'and nobody is stood at the lip throwing at a brim that will not take it',
-         `${carrying.length} still laden, ${s.stored} counted`)
-    ];
-  }],
-
-  ['the pit is dug out, not given', async () => {
-    const small = state();
-    window.__tip(1000);                        // more than a scrape will take
-    await sleep(400);
-    const full = state();
-
-    window.__dig();                            // every dig there is
-    await sleep(400);
-    const s = state();
-
-    return [
-      ok(small.pitW === 150 && small.pitDepth === 150,
-         'it starts as a scrape, 150 by 150', `${small.pitW} x ${small.pitDepth}`),
-      ok(small.pitCapacity < 800, 'which holds a couple of minutes of dust',
-         `${small.pitCapacity}`),
-      ok(full.pit === small.pitCapacity && full.stored === full.pitDust,
-         'it fills to the brim of the scrape and takes no more',
-         `${full.pit} cells, ${full.stored} counted`),
-      ok(s.pitDepth === 276, 'dug out it is 276 deep', `${s.pitDepth}`),
-      ok(s.pitW === 3600, 'and 3600 across', `${s.pitW}`),
-      ok(s.pitLevel === 23 && s.pitDigsLeft === 0, 'and there is nothing left to dig',
-         `dig ${s.pitLevel}, ${s.pitDigsLeft} to go`),
-      ok(s.pitDust === full.pitDust && s.pitDust === s.stored,
-         'the pile that was in it is still in it, grain for grain',
-         `${full.pitDust} -> ${s.pitDust}, ${s.stored} counted`),
-      ok(!s.pitFull, 'and there is room in it again', `${s.pitDust} of ${s.pitCapacity}`),
-      // the hole itself, plus whatever the heap over the brim is allowed to be
-      ok(s.pitCapacity > (3600 / s.pitGrain) * (276 / s.pitGrain),
-         'it holds the hole and then some, for the heap over the mouth',
-         `${s.pitCapacity} at grain ${s.pitGrain}`),
-      ok(s.pitCapacity < (3600 / s.pitGrain) * (276 / s.pitGrain) * 1.5,
-         'but the heap is a heap, not another hole', `${s.pitCapacity}`)
-    ];
-  }],
-
-  ['dust in the pit is one grain each', async () => {
-    const cap = state().pitCapacity;
-    window.__give(Math.floor(cap * 0.6));
-    await sleep(600);
-    const s = state();
-    return [
-      ok(s.pitGrain === 6, 'a grain in the pile is the same size as dust anywhere else',
-         `${s.pitGrain}px`),
-      ok(s.stored === s.pitDust, 'every dust counted is a grain in the pile',
-         `${s.stored} counted, ${s.pitDust} in the pit`),
-      ok(cap > 20000, 'the hole holds a whole run of mining', `${cap}`)
-    ];
-  }],
-
-  ['filling the pit stops at what the hole holds', async () => {
-    const cap = state().pitCapacity;
-    window.__tip(cap * 2);                     // twice what the hole can take
-    await sleep(800);
-    const s = state();
-    return [
-      // it does not stop at the brim -- it heaps over the mouth -- but it stops
-      // at what the bed will hold, and never gets out onto the ground
-      ok(s.pitDust <= cap, 'the pile stops at what the bed holds',
-         `${s.pitDust} of ${cap}`),
-      ok(s.pitDust > (3600 / s.pitGrain) * (276 / s.pitGrain),
-         'having heaped up over the mouth on the way', `${s.pitDust}`),
-      // The pile is the dust. A counter that went on climbing past a pile that
-      // had stopped would be the number and the picture saying different things.
-      ok(s.stored === s.pitDust, 'and the counter stops with it',
-         `${s.stored} counted, ${s.pitDust} in the pile`),
-      ok(s.pitFull, 'the hole reports itself full'),
-      ok(s.pitGrain === 6, 'the grain does not change under it', `${s.pitGrain}px`)
-    ];
-  }],
-
-  ['a full pit still saves and reloads', async () => {
-    await sleep(1200);
-    const raw = localStorage.getItem('boulder-clicker/v4');
-    const s = state();
-    const j = JSON.parse(raw || 'null');
-    return [
-      ok(raw.length < 200 * 1024, 'the save stays small', `${Math.round(raw.length / 1024)}KB`),
-      ok(j.stored === s.stored, 'the hole is saved', `${j?.stored}`),
-      ok(typeof j.pit?.heights === 'string', 'the pile is saved as its profile'),
-      ok(j.pitStep === 0, 'and the grain it is drawn at', `${j?.pitStep}`),
-      ok(j.pitLevel === s.pitLevel, 'and how far the hole has been dug', `${j?.pitLevel}`)
-    ];
-  }],
-
-  ['spending a full pit takes it back out', async () => {
-    const before = state();
-    window.__spend(Math.floor(before.stored / 2));
-    await sleep(600);
-    const after = state();
-    return [
-      ok(after.stored === before.stored - Math.floor(before.stored / 2), 'the counter comes down',
-         `${before.stored} -> ${after.stored}`),
-      ok(after.pitDust === Math.min(after.stored, after.pitCapacity),
-         'and the pile matches what will fit',
-         `${after.pitDust} in the pit, ${after.stored} counted, ${after.pitCapacity} room`),
-      ok(after.paid > 0, 'dust is seen leaving')
-    ];
-  }],
-
-  // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
-  // about on the bare ground, and only then does the next one come down.
-  ['a finished rock is worth a moment', async () => {
-    window.__crew(3, 0);
-    haveRock();
-    window.__next();                          // the last of it goes
-    run(0.5);
-    const partying = state();
-    // watched across the dance rather than at two moments in it: they hop about
-    // three times a second, and two samples can easily catch the same height
-    const heights = new Set();
-    for (let i = 0; i < 60; i++) {
-      run(1 / 60);
-      heights.add(state().workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]).join());
-    }
-    const stillPartying = state();
-    let sky = 0;
-    for (let i = 0; i < 400 && !sky; i++) {    // catch it on its way down
-      run(1 / 60);
-      if (state().rockFall > 0) sky = state().rockFall;
-    }
-    const landed = haveRock();
-    const after = state();
-    window.__crew(0, 0);
-    return [
-      ok(partying.dancing, 'the crew are dancing the moment the rock is off'),
-      ok(stillPartying.rock === 0, 'and the next rock has not turned up yet',
-         `${stillPartying.rock} of rock`),
-      ok(heights.size > 1, 'they are off the ground doing it',
-         `${heights.size} different heights across a second of it`),
-      ok(sky > 0, 'the next rock comes down out of the sky', `caught it ${sky}px up`),
-      ok(landed && after.rockFoot === after.groundY, 'and lands on the ground line',
-         `foot ${after.rockFoot}, ground ${after.groundY}`),
-      ok(after.apronClear, 'clearing the ground it needs as it lands',
-         `${after.apronDust} grains in the apron`)
-    ];
-  }],
-
-  // A rock is a heavy thing coming out of the sky, and until it knocked the view
-  // about it landed in silence. The shake has to die away on its own, and it has
-  // to keep the picture on whole device pixels while it does it.
-  ['the landing knocks the yard about', async () => {
-    window.__crew(2, 0);
-    haveRock();
-    window.__next();
-    let peak = 0, atLanding = null, quietOnTheWayDown = true;
-    for (let i = 0; i < 900 && atLanding === null; i++) {
-      run(1 / 60);
-      const s = state();
-      if (s.rockFall > 0 && s.shake > 0) quietOnTheWayDown = false;
-      peak = Math.max(peak, s.shake);
-      if (s.rock > 0 && !s.rockFall && peak > 0) atLanding = s;
-    }
-    // and then watch it ring: the offsets are read after the landing, because
-    // the frame it lands on is the frame the shake is set, not spent
-    const moved = new Set();
-    for (let i = 0; i < 60; i++) { run(1 / 60); moved.add(state().shakeOff.join()); }
-    const still = runUntil(() => state().shake === 0, 5);
-    const rest = state();
-    window.__crew(0, 0);
-    return [
-      ok(peak > 0, 'the landing throws the view', `${peak} world pixels of it`),
-      ok(atLanding !== null && quietOnTheWayDown,
-         'and it is the landing that does it, not the fall'),
-      ok(moved.size > 2, 'it rocks rather than jumping once',
-         `${moved.size} different offsets`),
-      ok(still && rest.shake === 0, 'and it settles back on its own',
-         `${rest.shake} left`),
-      ok(rest.shakeOff[0] === 0 && rest.shakeOff[1] === 0,
-         'leaving the view exactly where it was', rest.shakeOff.join())
-    ];
-  }],
-
   // A rock that starts halfway up the sky appears out of nothing in the middle of
   // the window and falls the second half of the way. It has to come in over the
   // top edge, which means the drop is measured against the window: a tall one has
@@ -531,75 +334,6 @@ const TESTS = [
     ];
   }],
 
-  // The next rock lands on the ground the crew were standing on, so they get out
-  // of its footprint before it arrives rather than being buried by it.
-  ['the crew get out from under the next rock', async () => {
-    window.__crew(4, 3);
-    quickCrew();
-    haveRock();
-    window.__next();
-    const inZone = s => !s.dropZone ? [] : s.workerPos.filter(w => {
-      const x = +w.split(':')[1].split(',')[0];
-      return x + WORKER > s.dropZone[0] && x < s.dropZone[1];
-    });
-    let told = false, late = 0, landed = null;
-    for (let i = 0; i < 900 && landed === null; i++) {
-      run(1 / 60);
-      const s = state();
-      if (s.dropZone) told = true;
-      // the last of the fall is when it matters: by then the ground is spoken for
-      if (s.rockFall > 0 && s.rockFall < 200 && inZone(s).length) late++;
-      if (s.rock > 0 && !s.rockFall && told) landed = s;
-    }
-    const under = landed ? inZone({ ...landed, dropZone: landed.dropZone }) : ['no rock'];
-    window.__crew(0, 0);
-    return [
-      ok(told, 'they are told where it is coming down before it is there'),
-      ok(landed !== null, 'and it comes down'),
-      ok(late === 0, 'nobody is still in the way as it drops',
-         `${late} frames with somebody in it`),
-      ok(under.length === 0, 'and nobody is under it when it lands', under.join(' '))
-    ];
-  }],
-
-  // A crew that has been stood down is still a crew standing there. Frozen
-  // squares read as a bug; shifting about reads as waiting.
-  ['a stood-down crew shifts about', async () => {
-    window.__crew(3, 0);
-    haveRock();
-    const strip = state().piles.find(p => p.key === 'rock');
-    // Enough to fill it, whatever the strip is: how wide it stands depends on
-    // how big the rock is, and a fixed twenty a column was exactly the limit at
-    // rock one once the lip came in.
-    for (let pass = 0; pass < 4 && !state().pileFull.rock; pass++) {
-      for (let x = strip.from + P; x < strip.to - P; x += P) window.__pile(x, 20);
-      run(1);
-    }
-    const full = runUntil(() => state().pileFull.rock, 30);
-    const before = state();
-    // Eight seconds, not four. The idle wobble is a slow sine with a phase of
-    // its own, so how many distinct rounded positions a short window catches
-    // depends on where in that sine the window happens to start -- which is a
-    // fact about whatever check ran before this one, not about the crew.
-    const poses = new Set();
-    for (let i = 0; i < 480; i++) {
-      run(1 / 60);
-      poses.add(state().workerPos.filter(w => w[0] === 'm').join('|'));
-    }
-    const after = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(full, 'the rock\'s pile fills and the crew stand down'),
-      ok(after.rock === before.rock, 'nothing more comes off the rock',
-         `${before.rock} -> ${after.rock}`),
-      // What this is for is catching *frozen*, which is one pose and no more.
-      // A tight count was measuring the phase of a sine and calling it a fault.
-      ok(poses.size > 4, 'but they are not stood frozen',
-         `${poses.size} poses across eight seconds`)
-    ];
-  }],
-
   ['the school is a place you walk to', async () => {
     window.__crew(2, 2, 2, 2);
     window.__grant({ shards: 30 });
@@ -631,115 +365,6 @@ const TESTS = [
       ok(rows.join(',') === 'breaker,carter,blaster,grower',
          'and it sells the four trades', rows.join(',')),
       ok(standing, 'walking up to it opens its board')
-    ];
-  }],
-
-  ['every trade doubles the work it is for', async () => {
-    // brisk, but not so brisk that either site hits its floor: a station with
-    // nothing left to buy drops its row off the bench, and the board checks
-    // further down expect those headings to be there
-    window.__levels({ quarryPaceLevel: 6, tendLevel: 6 });
-    window.__crew(0, 0, 3, 3);                   // the quarry and the beds
-    window.__school({ blasters: 0, growers: 0 });
-    window.__clearFloor();
-    // what the sites *make*, which is what lands in their own pile. Nobody is
-    // carrying any of it to the hole, and how fast a hauler walks is a
-    // different check.
-    run(90);
-    const plain = { ...state().pileCount };
-
-    window.__school({ blasters: 3, growers: 3 });
-    window.__clearFloor();
-    run(90);
-    const trained = { ...state().pileCount };
-
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(plain.quarry > 0 && plain.farm > 0, 'the quarry and the beds are working at all',
-         `${plain.quarry} up the quarry, ${plain.farm} off the beds`),
-      ok(trained.quarry > plain.quarry, 'a blaster brings up more',
-         `${plain.quarry} -> ${trained.quarry}`),
-      ok(trained.farm > plain.farm, 'and a grower brings a bed on sooner',
-         `${plain.farm} -> ${trained.farm}`)
-    ];
-  }],
-
-  // A job is a count and a body is whichever body happens to be doing it, and
-  // what the school sells is not a person at all: it is a hat, and the hat
-  // belongs to the station. Take everybody off the rock and the helmets stay on
-  // it; send somebody back and they pick one up. Nobody is ever nailed down.
-  ['a trade is a hat the station keeps', async () => {
-    window.__crew(3, 0);
-    window.__school({ breakers: 2 });
-    const s = state();
-    window.__assign('miners', -1);
-    const one = state();
-    window.__assign('miners', -1);
-    window.__assign('miners', -1);
-    run(15);                                   // long enough to walk the hat back
-    const bare = state();
-    window.__assign('miners', 1);
-    run(15);                                   // and long enough to walk over and get it
-    const two = state();
-    // The same body count, twice as hard on the rock -- both halves off a fresh
-    // rock and a swept yard, or the pair are not being compared on the same job.
-    window.__crew(2, 0); window.__school({ breakers: 0 });
-    run(15);                                   // any helmet still on a head goes back
-    window.__jump(1);
-    window.__clearFloor();
-    const plainBefore = state().rock;
-    run(20);
-    const plain = plainBefore - state().rock;
-    window.__jump(1);
-    window.__crew(2, 0); window.__school({ breakers: 2 });
-    run(15);                                   // helmets fetched before the clock starts
-    window.__jump(1);                          // on the same rock the plain pair had
-    window.__clearFloor();
-    const hewnBefore = state().rock;
-    run(20);
-    const hewn = hewnBefore - state().rock;
-    window.__crew(0, 0);
-    window.__jump(1);
-    return [
-      ok(s.breakers === 2 && s.miners === 3, 'the rock has two helmets and three bodies',
-         `${s.breakers} of ${s.miners}`),
-      ok(one.miners === 2, 'anybody on it can be taken off', `${one.miners}`),
-      ok(bare.miners === 0 && bare.breakers === 2,
-         'and the last of them too -- the helmets stay on the rock',
-         `${bare.breakers} left with ${bare.miners} there`),
-      ok(bare.roster.find(r => r.job === 'miners').spareKit === 2,
-         'lying there with nobody wearing them'),
-      ok(two.trained.includes('m'),
-         'so the next body sent over picks one up', two.trained || 'nobody'),
-      ok(hewn > plain * 1.5, 'a breaker takes twice the bite',
-         `${plain} plain, ${hewn} broken`)
-    ];
-  }],
-
-  // The carts are the lip's kit, the same as the helmets are the rock's. This is
-  // the case that was worst under the old rule: thirteen carts bought early were
-  // thirteen bodies that could never work a bed again.
-  ['a cart belongs to the lip, not to the carter', async () => {
-    window.__crew(0, 4);
-    window.__school({ carters: 2 });
-    const s = state();
-    window.__assign('miners', 1);
-    window.__assign('miners', 1);
-    window.__assign('miners', 1);
-    run(20);                     // the carts are walked back to the lip and put down
-    const after = state();
-    window.__crew(0, 0); window.__school({ carters: 0 });
-    return [
-      ok(s.haulers === 4 && s.carters === 2, 'the lip has two carts and four bodies',
-         `${s.carters} of ${s.haulers}`),
-      ok(s.idle === 4, 'and every one of them is a spare hand', `${s.idle} spare`),
-      ok(after.miners === 3, 'so all of them can be sent to the rock',
-         `${after.miners} went`),
-      ok(after.haulers === 1 && after.carters === 2,
-         'and the carts stay at the lip', `${after.carters} carts, ${after.haulers} there`),
-      ok(after.roster.find(r => r.job === 'haulers').worn === 1,
-         'with the one body left pulling one of them')
     ];
   }],
 
@@ -834,7 +459,7 @@ const TESTS = [
     window.__crew(0, 0);
     window.__school({ open: false });
     return [
-      ok(titles.join('|') === 'the bench|the lab|the training grounds|the casino',
+      ok(titles.join('|') === 'the bench|the lab|the training grounds|the house|the scrubbing house|the casino',
          'each board carries its own name', titles.join('|')),
       ok(emptyRows === 0 && emptyText.trim().length > 0,
          'a board with no rows says so instead of standing there blank', emptyText),
@@ -931,78 +556,6 @@ const TESTS = [
     ];
   }],
 
-  ['the roster says how many of them have the trade', async () => {
-    window.__crew(4, 3);
-    window.__school({ breakers: 0, carters: 0 });
-    const none = state().roster.find(r => r.job === 'miners');
-    window.__school({ breakers: 2, carters: 1 });
-    const some = state().roster;
-    const rock = some.find(r => r.job === 'miners');
-    const carry = some.find(r => r.job === 'haulers');
-    window.__crew(0, 0);
-    return [
-      ok(!none.trade, 'no second line until somebody has a trade'),
-      ok(rock.hats === 2 && !!rock.trade,
-         'then the count of them stands under the headcount', `${rock.hats}`),
-      ok(rock.trade && rock.trade[1] > none.less[1],
-         'under it, not beside it: they are part of that number, not another one',
-         rock.trade && `${rock.trade[1]} vs ${none.less[1]}`),
-      // carrying has no buttons -- you never put a body *on* it -- but it has
-      // carters, and they are worth as much of a count as anybody
-      ok(carry.hats === 1 && !!carry.trade,
-         'and the haulers get one too, buttons or no buttons', `${carry.hats}`),
-      // and it is the cart, not a hat: what you see of a carter in the yard is
-      // the thing it is dragging
-      ok(carry.mark === 'cart' && rock.mark === 'helmet',
-         'each station shows the mark its own trade wears',
-         `${rock.mark} on the rock, ${carry.mark} on the dust`)
-    ];
-  }],
-
-  ['the rock stands on the ground', async () => {
-    const s = state();
-    return [
-      ok(Math.abs(s.rockFoot - s.groundY) <= 18,
-         'its foot is at the ground line', `${s.rockFoot - s.groundY} below`),
-      ok(s.rockW > s.rockH, 'it is a hill, wider than it is tall', `${s.rockW}x${s.rockH}`),
-      ok(s.benchX + s.benchW < s.rockX - s.rockW / 2, 'it stands clear of the bench',
-         `bench ends ${Math.round(s.benchX + s.benchW)}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
-      ok(s.benchX < s.rockX && s.rockX < s.pitX, 'the rock is between the bench and the pit'),
-      // the whole working area has to sit in a window at once, at the biggest
-      // rock: the bench, the rock and the lip of the pit are one screenful
-      ok(s.pitX - s.benchX < 1600, 'bench through pit lip is one screenful',
-         `${Math.round(s.pitX - s.benchX)} across`),
-      ok((s.rockX - s.rockW / 2) - (s.benchX + s.benchW) > 60, 'the rock never grows into the bench',
-         `${Math.round((s.rockX - s.rockW / 2) - (s.benchX + s.benchW))} clear`),
-      ok(s.pitX - (s.rockX + s.rockW / 2) > 300, 'there is ground to sweep between rock and lip',
-         `${Math.round(s.pitX - (s.rockX + s.rockW / 2))}`)
-    ];
-  }],
-
-  // The rock is the only thing drawn a cell at a time, so it is the only thing
-  // that seams: two rects sharing an edge on a fraction of a device pixel are
-  // each antialiased against the page, and the seam between them comes out grey.
-  // The layout picks a whole number of device pixels per cell, and this checks
-  // the other half of it -- that the rock's own edges land on that same ladder,
-  // at every cell size a window can ask for.
-  ['the rock lands on whole device pixels', async () => {
-    const s = state();
-    const off = v => Math.abs(v - Math.round(v));
-    const sizes = [1, 2, 3, 4, 5, 6];                 // device pixels a cell may be
-    const rows = sizes.filter(cell => off(s.rockFoot * (cell / 6)) > 1e-9);
-    const cols = sizes.filter(cell => off(s.rockLeftX * (cell / 6)) > 1e-9);
-    return [
-      ok(off(s.cellDevicePx) < 1e-9, 'a cell is a whole number of device pixels',
-         `${s.cellDevicePx}`),
-      ok(rows.length === 0, 'the rock stands on the device grid at every cell size',
-         `seams at ${rows.join(', ')}px a cell`),
-      ok(cols.length === 0, 'and its left edge does too',
-         `seams at ${cols.join(', ')}px a cell`),
-      ok((s.rockW / 6) % 2 === 0, 'the rock is an even number of cells across',
-         `${s.rockW / 6} cells`)
-    ];
-  }],
-
   ['the opening view is looking at the rock', async () => {
     window.__jump(12);
     await sleep(300);
@@ -1030,175 +583,25 @@ const TESTS = [
     ];
   }],
 
-  ['the crew stand on the rock and work it down', async () => {
-    window.__crew(5, 0);
-    // Five bodies hired at the shacks, and they walk to the rock from there like
-    // anybody else. What this check is about is where they stand once they are
-    // on it, so it waits for the walk rather than measuring people mid-yard.
-    runUntil(() => state().commuting.length === 0, 200);
-    await sleep(300);
-    const s = state();
-    const miners = s.workerPos.filter(p => p[0] === 'm')
-                              .map(p => p.split(':')[1].split(',').map(Number));
-    const foot = s.rockFoot;
-    window.__crew(0, 0);                    // put them back on the shelf
-    return [
-      ok(miners.length === 5, 'five miners are out', `${miners.length}`),
-      ok(miners.every(([, y]) => y <= foot), 'nobody is below the ground',
-         JSON.stringify(miners)),
-      ok(miners.every(([x]) => x > s.rockX - s.rockW / 2 - 24 && x < s.rockX + s.rockW / 2 + 24),
-         'they are all on the rock, not orbiting it', JSON.stringify(miners)),
-      // Most of them level, rather than all of them. The rule is that the gang
-      // works a layer and nobody bores a shaft -- and the gang takes the layer
-      // down *around* each other, so at any instant one of them can be off it
-      // and climbing back, which is the behaviour rather than a fault. A check
-      // that demanded every last one be level was really checking that it had
-      // not caught anybody mid-climb, and it failed on the timing.
-      ok((() => {
-        const ys = miners.map(([, y]) => y).sort((a, b) => a - b);
-        const mid = ys[Math.floor(ys.length / 2)];
-        return ys.filter(y => Math.abs(y - mid) <= 6 * 6).length >= ys.length - 1;
-      })(), 'they stand level with each other, because they work a layer',
-         JSON.stringify(miners.map(([, y]) => y))),
-      ok(new Set(miners.map(([x]) => Math.round(x / 18))).size > 1,
-         'and spread out along it rather than stacking up',
-         JSON.stringify(miners.map(([x]) => Math.round(x))))
-    ];
-  }],
-
-  // The last columns of ground sit further right than a worker is allowed to
-  // stand, so one that had to be standing on a column to scoop it stood at the
-  // lip for ever with the dust a hand's width away.
-  // Two ways the yard used to bank dust with nobody carrying it: a heap that
-  // reached the lip tipped itself in four cells at a time, and once the ground
-  // was full the rest rolled straight into the pit. Both put the haulers out of
-  // a job, which is the one thing the ground must never do.
-  ['the ground never banks dust by itself', async () => {
-    window.__crew(3, 0);
-    window.__clearFloor();
-    run(1);
-    const s = state();
-    const before = state().pitDust;
-    // heap it at the ledge, far more than the old four-deep topple needed
-    for (let i = 0; i < 40; i++) window.__pile(s.pitX - 30, 200);
-    run(2);
-    const heaped = state();
-
-    // now fill the rock's strip and watch the crew stop rather than the dust roll in
-    const strip = () => state().piles.find(q => q.key === 'rock');
-    for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
-      const p = strip();
-      window.__pile(p.from + Math.random() * (p.to - p.from), 80);
-      run(0.2);
-    }
-    const full = state();
-    const rockThen = full.rock;
-    run(4);
-    const stalled = state();
-    window.__clearFloor();
-    run(2);
-    const freed = state();
-    const rockFreed = freed.rock;
-    run(4);
-    const working = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      // a handful is what was already in the air when the ground ran out; in play
-      // the crew stop before it can, so nothing is ever homeless
-      ok(heaped.pitDust - before <= 20, 'a heap at the ledge does not topple in on its own',
-         `${before} -> ${heaped.pitDust} in the pit`),
-      ok(full.yardFull, "the rock's pile fills up", `${full.pileCount.rock} grains`),
-      ok(stalled.pitDust - before <= 20, 'and nothing rolls in but what was already flying',
-         `${stalled.pitDust - before} grains in`),
-      ok(stalled.rock === rockThen, 'the crew down tools instead',
-         `${rockThen} -> ${stalled.rock} of rock`),
-      ok(full.dustAtQuarry === 0, 'and none of it is heaped over the mouth of the quarry',
-         `${full.dustAtQuarry} grains out there`),
-      ok(!freed.yardFull, 'clearing the ground puts them back to work'),
-      ok(working.rock < rockFreed, 'and the rock starts coming off again',
-         `${rockFreed} -> ${working.rock}`)
-    ];
-  }],
-
-  // Over the hole is in the hole. One landing on top of the ones already in
-  // there rests above the ground line, and while the count asked it to be below
-  // the line it lay over the mouth uncounted -- where a worker could see it,
-  // walk to the lip, and stand there for ever reaching for something the lip
-  // would not let it reach. Two workers stuck like that is a yard that has
-  // quietly stopped, and it took half the suite runs with it.
-  // Over the hole is in the hole. A chip that crosses the mouth is banked
-  // whatever it is, so nothing can come to rest lying over the lip where a
-  // worker could see it, walk to the ledge, and reach for it for ever.
-  ['nothing is left lying over the mouth of the pit', async () => {
-    window.__crew(0, 0);
-    window.__clearFloor();
-    run(0.5);
-    const before = state().shards;
-    for (let i = 0; i < 12; i++) window.__toss('shard', state().pitX + 12);
-    run(4);
-    const after = state();
-    const nearLip = after.findAll
-      .map(t => +t.split(',')[0])
-      .filter(x => x > after.pitX - 60);
-    return [
-      ok(after.shards === before + 12, 'every one of them is counted',
-         `${before} -> ${after.shards}`),
-      ok(nearLip.length === 0, 'none is left lying over the mouth',
-         JSON.stringify(nearLip))
-    ];
-  }],
-
-  ['clearing a handful puts the crew back to work', async () => {
-    window.__crew(4, 0);
-    window.__clearFloor();
-    run(0.5);
-    // fill it to just under, then let the crew tip it over themselves, so the
-    // pile stops where mining stops it rather than where a test dumped it
-    const strip = () => state().piles.find(q => q.key === 'rock');
-    // just under whatever the limit is, read off the game rather than written
-    // down here: the limit is a number that gets tuned, and a check holding its
-    // own copy of it is a check that fails the day somebody halves it.
-    const nearly = state().pileLimit.rock - 70;
-    for (let i = 0; i < 300 && state().pileCount.rock < nearly; i++) {
-      const q = strip();
-      window.__pile(q.from + Math.random() * (q.to - q.from) * 0.8, 20);
-      run(0.1);
-    }
-    const stopped = runUntil(() => state().pileFull.rock, 60);
-    const full = state();
-    const rockThen = full.rock;
-    run(2);
-    const stalled = state();
-
-    const took = window.__take('rock', 6);
-    run(0.5);
-    const freed = state();
-    const rockFreed = freed.rock;
-    run(2);
-    const working = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(stopped, 'the pile fills and the crew stop', `${full.pileCount.rock} grains`),
-      ok(stalled.rock === rockThen, 'and stay stopped', `${rockThen} -> ${stalled.rock}`),
-      ok(took === 6, 'six grains come off the pile', `${took}`),
-      ok(!freed.pileFull.rock, 'which is enough to make room',
-         `${freed.pileCount.rock} grains`),
-      ok(working.rock < rockFreed, 'and they are swinging again',
-         `${rockFreed} -> ${working.rock}`)
-    ];
-  }],
-
   // A shard is a grain of dust as far as the ground and the hand are concerned:
   // it is swept up with everything else, rides the cursor, and is thrown the
   // same way. It costs carrying room, because it is one grain of your load.
   ['a shard is swept up and thrown like anything else', async () => {
     window.__crew(0, 0);
     window.__clearFloor();
+    // A hole worth throwing at. A scrape is 150 across and a thrown grain
+    // carries most of a window: aiming one into a fresh pit is a check about
+    // marksmanship, and this one is about what the grain counts as when it
+    // lands.
+    window.__dig();
     run(0.5);
     const s0 = state();
-    const p = s0.piles.find(q => q.key === 'quarry');
+    // The strip in front of the rock, because the throw has to be watched as
+    // well as the sweep: a shard dropped at the far end of the yard is a shard
+    // and the lip of the pit in two different windows, and the release point
+    // would be off the side of the screen -- which is a throw nobody could make
+    // and not what this check is about.
+    const p = s0.piles.find(q => q.key === 'rock');
     window.__toss('shard', p.from + 60);
     run(3);
     const lying = state();
@@ -1227,113 +630,6 @@ const TESTS = [
     ];
   }],
 
-  // They are dust with a different mark on them, so they heap the way dust
-  // heaps: the same grid, the same repose, the same ceiling. There is no second
-  // implementation of any of it to drift out of step.
-  // The first colour in the game. Everything the ground makes is a grey, because
-  // grey is how deep the rock was; the things the sites give up never came off
-  // the rock, so they are the one thing a colour can mean something about. Each
-  // grain carries its own tone, so a heap of them speckles like a heap of dust.
-  ['what the sites give up comes in colours, and in tones', async () => {
-    window.__crew(0, 0);
-    window.__clearFloor();
-    run(0.5);
-    const p = state().piles.find(q => q.key === 'quarry');
-    for (let i = 0; i < 24; i++) { window.__toss('shard', p.from + 40); run(0.25); }
-    run(8);
-    const cells = state().findCells.filter(c => c.x > p.from - 40 && c.x < p.to + 40);
-    const tones = new Set(cells.map(c => c.v));
-    return [
-      ok(cells.length === 24, 'all of them are there', `${cells.length}`),
-      ok(cells.every(c => c.kind === 'shard'), 'and every one is a shard',
-         JSON.stringify([...new Set(cells.map(c => c.kind))])),
-      ok(tones.size > 1, 'they are not all the same tone', `${tones.size} tones`),
-      ok(tones.size <= 4, 'and no more tones than the kind has', `${tones.size}`)
-    ];
-  }],
-
-  ['a heap of finds heaps, rather than stacking', async () => {
-    window.__crew(0, 0);
-    window.__clearFloor();
-    run(0.5);
-    const p = state().piles.find(q => q.key === 'quarry');
-    for (let i = 0; i < 30; i++) { window.__toss('shard', p.from + 30); run(0.3); }
-    run(10);
-    const at = state().findAll.map(t => t.split(',').map(Number))
-                              .filter(a => a[0] > p.from - 40 && a[0] < p.to + 40);
-    const xs = at.map(a => a[0]);
-    const tops = {};
-    for (const [x, h] of at) tops[x] = Math.max(tops[x] || 0, h);
-    const near = Math.min(...xs);
-    const peak = (+Object.keys(tops).reduce((a, b) => tops[b] > tops[a] ? b : a) - near) / 6;
-    const tall = Math.max(...at.map(a => a[1]));
-    return [
-      ok(at.length === 30, 'all thirty are lying there', `${at.length}`),
-      ok(Math.max(...xs) - Math.min(...xs) >= 36, 'they spread out along the ground',
-         `${Math.max(...xs) - Math.min(...xs)}px across`),
-      ok(tall <= 30 * 6 / 3, 'rather than going up in a column',
-         `${tall / 6} cells at the peak`),
-      ok(at.every(a => a[0] % 6 === 0 && a[1] % 6 === 0),
-         'every one of them sits in a cell, like a grain of dust',
-         JSON.stringify(at.slice(0, 4))),
-      ok(new Set(at.map(a => a.join(','))).size === at.length,
-         'and no two are in the same cell'),
-      ok(peak > 0, 'the heap leans away from the station rather than standing on it',
-         `tallest column is ${peak} cells out from the near end`)
-    ];
-  }],
-
-  ['a worker can reach dust at the far end of a pile', async () => {
-    window.__crew(0, 0);                        // lay it down before anyone can take it
-    window.__clearFloor();
-    run(0.5);
-    const s = state();
-    const rock = s.piles.find(p => p.key === 'rock');
-    window.__pile(rock.to - 12, 3);             // the last column of the strip
-    run(0.5);
-    const before = state();
-    window.__crew(0, 1);
-    quickCrew();
-    const cleared = runUntil(() => state().stored > before.stored, 30);
-    window.__crew(0, 0);
-    return [
-      ok(before.floor > 0, 'dust is lying at the far end to start with',
-         `${before.floor} grains`),
-      ok(cleared, 'a worker gets to it rather than stopping short',
-         `${before.floor} still there`)
-    ];
-  }],
-
-  // Every worker used to work out the same answer to "where is the nearest
-  // dust", so a single grain behind the crew turned the whole line round, and
-  // turned it round again the moment the first of them picked it up.
-  ['workers do not all go for the same grain', async () => {
-    window.__crew(0, 3);
-    window.__clearFloor();
-    run(0.5);
-    const s = state();
-    for (const at of [0.30, 0.45, 0.60]) window.__pile(s.pitX * at, 90);
-    // Watched over a stretch rather than glanced at: a claim only lasts until
-    // the column is bare, and a fast crew can clear three small heaps between
-    // one look and the next.
-    let claims = [], best = 0;
-    for (let i = 0; i < 30; i++) {
-      run(0.1);
-      const now = state().claims.filter(c => c >= 0);
-      const spread = new Set(now).size;
-      if (spread > best) { best = spread; claims = now; }
-    }
-    const busy = state();
-    window.__crew(0, 0);
-    return [
-      ok(claims.length >= 2, 'the workers are spread over the piles', JSON.stringify(busy.claims)),
-      ok(new Set(claims).size === claims.length, 'no two set off for the same column',
-         JSON.stringify(claims)),
-      ok(busy.pace.empty > busy.pace.laden, 'and a worker moves quicker with its hands free',
-         `${busy.pace.empty} empty, ${busy.pace.laden} laden`)
-    ];
-  }],
-
   // Your pick and a miner's are two different tools. One row that bought both
   // was doing two jobs, and it sat under `you` while half of it was on the rock.
   ['your pick and a miner bite are bought apart', async () => {
@@ -1358,173 +654,6 @@ const TESTS = [
          `${mid.pickLevel} -> ${after.pickLevel}`),
       ok(after.minerPickLevel === mid.minerPickLevel, 'and not theirs',
          `${mid.minerPickLevel} -> ${after.minerPickLevel}`)
-    ];
-  }],
-
-  // Every station piles to its right, into a strip of ground of its own, and the
-  // strip has a size. A pile that fills stops the station behind it -- that is
-  // the whole of the choice the job rows ask, made visible in the yard.
-  ['each station piles to its right, and stops when its pile is full', async () => {
-    window.__crew(2, 0);
-    window.__clearFloor();
-    run(1);
-    const s = state();
-    const order = s.piles.map(p => p.key).join(' ');
-    // fill the rock's strip by hand rather than waiting eight minutes for it
-    for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
-      const p = state().piles.find(q => q.key === 'rock');
-      window.__pile(p.from + Math.random() * (p.to - p.from), 60);
-      run(0.2);
-    }
-    const full = state();
-    const rockThen = full.rock;
-    run(4);
-    const stalled = state();
-    window.__clearFloor();
-    run(2);
-    const freed = state();
-    const rockFreed = freed.rock;
-    run(4);
-    const working = state();
-    window.__crew(0, 0);
-    return [
-      ok(order === 'farm quarry rock', 'the strips run farm, quarry, rock, left to right', order),
-      ok(s.piles.every((p, i) => i === 0 || p.from >= s.piles[i - 1].to),
-         'and none of them runs into the next', JSON.stringify(s.piles)),
-      ok(full.pileFull.rock, "the rock's pile fills", `${full.pileCount.rock} grains`),
-      ok(stalled.rock === rockThen, 'and the crew stop working while it is',
-         `${rockThen} -> ${stalled.rock} of rock`),
-      ok(full.pileMarks.includes('rock'), 'the station says so, under it',
-         JSON.stringify(full.pileMarks)),
-      ok(!freed.yardFull, 'clearing it puts them back to work'),
-      ok(!freed.pileMarks.includes('rock'), 'and the mark comes down with it'),
-      ok(working.rock < rockFreed, 'and the rock starts coming off again',
-         `${rockFreed} -> ${working.rock}`)
-    ];
-  }],
-
-  ['a worker can reach the bank behind the rock', async () => {
-    // no miners, so nothing new lands while we watch, and only one heap on the
-    // ground: the one on the far side of the hill
-    window.__crew(0, 1);
-    quickCrew();                               // so it walks at a fair clip
-    window.__clearFloor();                     // so the only dust is the heap we make
-    await sleep(300);
-    const s = state();
-    const behind = s.piles.find(p => p.key === 'quarry').to - 60;
-    window.__pile(behind, 10);
-    await sleep(400);
-    const before = state();
-
-    let reached = s.rockX;
-    for (let i = 0; i < 150; i++) {
-      await sleep(100);
-      for (const p of state().workerPos) {
-        if (p[0] !== 'h') continue;
-        reached = Math.min(reached, +p.split(':')[1].split(',')[0]);
-      }
-      if (state().dustLeftOfRock < before.dustLeftOfRock) break;
-    }
-    const after = state();
-    window.__crew(0, 0);                    // leave the payroll as we found it
-    return [
-      ok(before.dustLeftOfRock > 0, 'dust is heaped behind the hill to start with',
-         `${before.dustLeftOfRock}`),
-      ok(reached <= s.rockX - s.rockW / 2 + WORKER, 'a worker walks past the hill to get to it',
-         `got to ${Math.round(reached)}, hill starts ${Math.round(s.rockX - s.rockW / 2)}`),
-      ok(after.dustLeftOfRock < before.dustLeftOfRock, 'and starts clearing it',
-         `${before.dustLeftOfRock} -> ${after.dustLeftOfRock}`)
-    ];
-  }],
-
-  ['spoil is aimed, and lands clear of the rock', async () => {
-    window.__crew(6, 0);
-    run(5);
-    const s = state();
-    window.__crew(0, 0);
-    const right = s.floor - s.dustLeftOfRock - s.dustUnderRock;
-    return [
-      ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
-      ok(s.dustUnderRock === 0, 'none of it comes to rest on or under the rock',
-         `${s.dustUnderRock} grains`),
-      // One pile, on the side the pit is on. Two banks either side meant half
-      // the spoil landed on the far side of the hill from everything else.
-      ok(right > 0 && s.pileCount.rock > 0, "it all goes into the rock's own pile",
-         `${s.pileCount.rock} in the pile, ${right} right of the rock`),
-      ok(s.apronClear, 'the ground right beside the rock stays bare',
-         `${s.apronDust} grains in the apron`),
-      // The apron is a cliff the sand cannot slump over, so without a ceiling on
-      // how high a column may stand near it the bank grows straight up against
-      // the rock as a sheer wall. It has to lean away instead.
-      ok(s.heapAtRock <= 3, 'the bank does not stand up as a wall at the rock',
-         `${s.heapAtRock} cells high against the apron`),
-      ok(s.bankCrest > s.heapAtRock, 'it leans away from the rock, high point further out',
-         `${s.heapAtRock} at the apron, ${s.bankCrest} at its crest`)
-    ];
-  }],
-
-  // A pile you cannot read is a number you have to go and look up. Spread along
-  // seventy cells, a site's output lies two deep whether there is a quarter of
-  // it or the lot, and only the warning triangle says which. Its strip is now
-  // only as wide as its limit needs, so what it makes stands up: a quarter is a
-  // nub against the station, and the limit is a crest across the middle of it.
-  ['a full pile is a heap you can read', async () => {
-    window.__grant({ cores: 8 });
-    window.__crew(0, 0, 4, 0);                 // quarriers, and nobody to carry it off
-    quickCrew();
-    window.__clearFloor();
-    run(1);
-
-    const strip = () => state().piles.find(p => p.key === 'quarry');
-    // how high every column of the pile stands, in cells, left to right. The
-    // pile is all shards, so where the marks are is where the pile is.
-    const profile = () => {
-      const p = strip();
-      const tops = new Array(Math.round((p.to - p.from) / P)).fill(0);
-      for (const t of state().findAll) {
-        const [x, y] = t.split(',').map(Number);
-        if (x < p.from || x >= p.to) continue;
-        const c = Math.round((x - p.from) / P);
-        tops[c] = Math.max(tops[c], y / P + 1);
-      }
-      return tops;
-    };
-    const tall = tops => Math.max(...tops);
-    const wide = tops => tops.filter(h => h > 0).length;
-
-    const part = runUntil(() => state().pileCount.quarry >= 45, 120) && profile();
-    const filled = runUntil(() => state().pileFull.quarry, 300);
-    run(2);                                    // and whatever was still in the air
-    const full = state();
-    const crest = profile();
-    const cells = crest.length;
-    const peak = crest.indexOf(tall(crest));
-    window.__crew(0, 0, 0, 0);
-    window.__clearFloor();
-
-    return [
-      ok(cells <= 30, 'a site heaps into a strip narrow enough to stand up in',
-         `${cells} cells across`),
-      ok(part && tall(part) >= wide(part) / 3,
-         'a quarter of a pile is already a mound rather than a scatter',
-         part && `${tall(part)} cells high over ${wide(part)} across`),
-      ok(filled, 'and it fills to its limit', `${full.pileCount.quarry} grains`),
-      ok(full.pileCount.quarry >= 180,
-         'which is the same count it has always been full at',
-         `${full.pileCount.quarry} grains`),
-      ok(full.pileMarks.includes('quarry'), 'the station says so, under it',
-         JSON.stringify(full.pileMarks)),
-      ok(tall(crest) > tall(part) * 1.5, 'the heap grew upward as it filled, not only along',
-         `${part && tall(part)} cells at a quarter, ${tall(crest)} full`),
-      // A full pile is a triangle standing on the whole strip: its high point is
-      // in the middle of it, not against either end, which is what says at a
-      // glance that there is no more room rather than merely a lot lying there.
-      ok(tall(crest) >= cells / 2,
-         'a full one stands at its crest', `${tall(crest)} cells over ${cells}`),
-      ok(peak > cells / 4 && peak < cells * 3 / 4,
-         'and the crest is in the middle of the strip', `column ${peak} of ${cells}`),
-      ok(crest.every((h, c) => h <= (Math.min(c + 1, cells - 1 - c) * 1.5) + 1),
-         'with nothing standing up as a wall at either end', JSON.stringify(crest))
     ];
   }],
 
@@ -1653,11 +782,15 @@ const TESTS = [
   }],
 
   ['mining leaves dust on the ground', async () => {
+    haveRock();                                // something to swing at
     const before = state().floor;
     const b = boulderWorld();
     const [x, y] = onScreen(b.x, b.y);
-    for (let i = 0; i < 12; i++) { point('pointerdown', x, y); point('pointerup', x, y); await sleep(20); }
-    await sleep(2500);
+    for (let i = 0; i < 12; i++) { point('pointerdown', x, y); point('pointerup', x, y); run(0.05); }
+    // Long enough for the last chip off the last swing to land. Turned by hand,
+    // so it is however long the arc takes and not however long the check felt
+    // like sitting there.
+    runUntil(() => state().chips === 0, 20);
     const after = state();
     return [
       ok(after.floor > before, 'dust lands on the floor', `${before} -> ${after.floor}`),
@@ -1784,469 +917,6 @@ const TESTS = [
     ];
   }],
 
-  // Moving somebody from one job to another used to delete a body where it stood
-  // and make a new one already at the far end of the yard. It is the same person:
-  // it keeps its place in the crew, walks out of wherever it was working, and
-  // does none of the new job on the way.
-  ['a body walks to its new work instead of appearing at it', async () => {
-    const body = () => {
-      const [t, xy] = state().workerPos[0].split(':');
-      const [x, y] = xy.split(',').map(Number);
-      return { t, x, y };
-    };
-    // No kit anywhere: a body sent on an errand for a lamp is a body doing
-    // something else, and what this check is watching is the commute itself.
-    window.__school({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
-    window.__crew(0, 0, 1);                     // one body, and it goes down the quarry
-    run(10);                                    // down the wall and working the floor
-    const s0 = state();
-    const digging = body();
-
-    window.__assign('quarriers', -1);           // now it is wanted on the rock
-    window.__assign('miners', 1);
-    const off = state();
-
-    // a sixth of a second at a time, so the climb out is not stepped over
-    const trail = [];
-    for (let i = 0; i < 30; i++) { run(1 / 6); trail.push(body()); }
-    const arrived = runUntil(() => state().commuting.length === 0, 200);
-    const home = body();
-    const after = state();
-    window.__crew(0, 0);
-    window.__clearFloor();                      // the shards it knocked off are not ours
-
-    // Below the ground line it either walks the floor to the foot of the ladder
-    // or goes up the ladder; it never rises anywhere else. Rising through the
-    // wall wherever it happened to be standing was the old behaviour, and the
-    // ladder is there so that it is not.
-    const climbing = trail.filter(p => p.y > s0.groundY - WORKER);
-    const rose = trail.slice(1).filter((p, i) => p.y < trail[i].y - 1 && p.y > s0.groundY - WORKER);
-    const steps = trail.slice(1).map((p, i) => Math.abs(p.x - trail[i].x));
-    return [
-      ok(digging.t === 'q' && digging.y > s0.groundY,
-         'it starts at work, down in the cut', `${digging.x},${digging.y}`),
-      ok(off.workers === 1 && off.crew === 1,
-         'moving it is one body, not one deleted and another made',
-         `${off.workers} bodies, ${off.crew} on the payroll`),
-      ok(off.miners === 1 && off.quarriers === 0,
-         'and it counts at its new job the moment it is given it',
-         `${off.miners} mining, ${off.quarriers} in the quarry`),
-      ok(climbing.length > 0 && rose.length > 0 &&
-         rose.every(p => Math.abs(p.x - s0.quarryFaceX) < WORKER),
-         'it comes out of the cut up the ladder, and nowhere else',
-         `${rose.length} rising samples, ladder at ${s0.quarryFaceX}`),
-      // Bounded by the crew's own legs rather than by a number written here: a
-      // commute is walked at whatever a body walks at with its hands free, so a
-      // yard that has bought the pace upgrade covers more ground per sample and
-      // is not thereby jumping.
-      ok(steps.filter(d => d > 0).length > 8 && Math.max(...steps) < s0.pace.empty * 14,
-         'then it crosses the yard a step at a time rather than jumping',
-         `${steps.map(d => Math.round(d)).join(' ')} at ${s0.pace.empty}/frame`),
-      ok(arrived, 'and it gets there'),
-      ok(Math.abs(home.x - s0.rockX) < s0.rockW,
-         'which is the rock it was sent to',
-         `${home.x}, rock at ${s0.rockX}`),
-      ok(after.miners === 1 && after.workers === 1,
-         'still the one body, and now it is a miner', `${after.workers} bodies`)
-    ];
-  }],
-
-  // A lab with nothing to research is a room of people doing nothing, and there
-  // is no button that takes them off it. So they take themselves off.
-  ['an idle lab lets its people go', async () => {
-    window.__abandon();                         // nothing for them to work on
-    window.__crew(0, 1);
-    window.__lab(true);
-    window.__assign('labbers', 1);
-    const sent = state();
-    const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('l|in')), 200);
-    // LAB_IDLE_MS is twenty seconds: the grace to get some work started before
-    // the people you sent over give up on you
-    run(10);                                     // half way: still standing there
-    const waiting = state();
-    run(15);                                     // and well past it
-    const gone = state();
-    window.__crew(0, 0);
-    return [
-      ok(sent.labbers === 1, 'a body can be put on the lab', `${sent.labbers}`),
-      ok(inside, 'and it walks over and goes in'),
-      ok(waiting.labbers === 1,
-         'an empty lab does not turn people out the moment they arrive',
-         `${waiting.labbers}`),
-      ok(gone.labbers === 0, 'but it does not keep them standing in it for ever',
-         `${gone.labbers}`),
-      ok(gone.haulers === 1 && gone.crew === 1,
-         'and the one it lets go is back to carrying dust, not off the payroll',
-         `${gone.haulers} carrying of ${gone.crew}`)
-    ];
-  }],
-
-  ['a hired worker carries dust to the pit', async () => {
-    window.__give(4000);
-    await sleep(200);
-    await hoverBench();
-    await bankCore();
-    await bankCore();
-    await hoverBench();
-    window.__crew(0, 1);                        // one body, carrying
-    const hired = state().crew > 0;
-    quickCrew();
-
-    const s = state();
-    window.__pile(s.pitX - 260, 150);           // within a round trip of the lip
-    await sleep(400);
-    const before = state();
-
-    // watch it work: it should reach the lip carrying something
-    let reachedLip = false;
-    for (let i = 0; i < 200; i++) {
-      await sleep(100);
-      const w = state().workerPos.find(p => p[0] === 'h');
-      if (w) {
-        const wx = +w.split(':')[1].split(',')[0];
-        if (Math.abs(wx - (state().pitX - WORKER)) < 24) reachedLip = true;
-      }
-      if (reachedLip && state().stored > before.stored) break;
-    }
-    const after = state();
-    return [
-      ok(hired, 'there is a worker to carry it'),
-      ok(after.haulers >= 1, 'a worker is on the payroll'),
-      ok(reachedLip, 'the worker walks its load to the lip'),
-      ok(after.stored > before.stored, 'and dust arrives in the hole',
-         `${before.stored} -> ${after.stored}`)
-    ];
-  }],
-
-  // A shard is brought up and set down. Nothing counts it there: somebody has to
-  // walk over and pick it up, the same as everything else in this yard.
-  ['the quarry gives up shards, and somebody fetches them', async () => {
-    window.__crew(0, 0, 3);                  // three quarriers, quarry open
-    quickCrew();
-    window.__clearFloor();
-    const start = state();
-    // Nobody is out of sight any more: they climb down and work the floor of the
-    // cut where you can watch them, which is the whole point of a cut.
-    let onTheFloor = false;
-    const lay = runUntil(() => {
-      const s = state();
-      onTheFloor = onTheFloor || s.workerPos.some(p =>
-        p[0] === 'q' && +p.split(',')[1] > s.groundY);
-      return s.finds.includes('shard');
-    }, 40);
-    const waiting = state();
-
-    window.__crew(0, 2, 3);                  // now put somebody on carrying
-    window.__place('hauler', waiting.quarryX);
-    quickCrew();
-    const got = runUntil(() => state().shards > start.shards, 60);
-    const after = state();
-    window.__crew(0, 0, 0);
-    return [
-      ok(after.quarryOpen, 'the quarry is open'),
-      ok(onTheFloor, 'a quarrier climbs down and works its floor'),
-      ok(lay, 'and leaves a shard lying in the dust by the mouth',
-         JSON.stringify(waiting.finds)),
-      ok(waiting.shards === start.shards, 'which is not counted where it lies',
-         `${start.shards} -> ${waiting.shards}`),
-      ok(got, 'a worker walks over for it and that is what counts it',
-         `${start.shards} -> ${after.shards}`),
-      ok(after.seenShard, 'which is worth showing on the counter')
-    ];
-  }],
-
-  // A worked cut, not a box. Both walls come down in benches and the floor they
-  // leave is uneven -- and the floor is not just drawing: the crew stand on it,
-  // so a quarrier's feet have to be on the stretch of floor it is over.
-  ['the quarry is a worked cut, benched and uneven', async () => {
-    window.__crew(0, 0, 3);
-    quickCrew();
-    run(6);
-    const s = state();
-    const c = s.quarryCut;
-    const q = s.workerPos.filter(p => p[0] === 'q').map(p => +p.split(',')[1]);
-    const feet = new Set(q);
-    return [
-      ok(c.deep - s.groundY > 100 && s.quarryW > 120,
-         'it is a cut somebody has been down for a while, not a step down',
-         `${s.quarryW} wide, ${c.deep - s.groundY} deep`),
-      ok(c.rims === 2 && c.corners > 12, 'it is a stepped outline, not four corners',
-         `${c.corners} corners, ${c.rims} at the rim`),
-      ok(new Set(c.steps).size > 1 && Math.max(...c.steps) > 0,
-         'and the floor it leaves is uneven', c.steps.join(' ')),
-      ok(c.from > s.quarryX && c.to < s.quarryX + s.quarryW,
-         'the walls eat in, so the floor is narrower than the mouth',
-         `${c.from}..${c.to} in ${s.quarryX}..${s.quarryX + s.quarryW}`),
-      ok(q.length === 3 && feet.size > 1, 'and the crew stand on it, not on one line',
-         q.join(' '))
-    ];
-  }],
-
-  ['the quarry is a hole in the ground, left of the rock', async () => {
-    const s = state();
-    return [
-      ok(s.quarryX + s.quarryW < s.rockX - s.rockW / 2, 'it is out past the rock',
-         `quarry ends ${s.quarryX + s.quarryW}, rock starts ${Math.round(s.rockX - s.rockW / 2)}`),
-      ok(s.quarryW > 0 && s.quarryW < 200, 'and it is a mouth, not a canyon', `${s.quarryW}`)
-    ];
-  }],
-
-  ['the farm grows spores when it is tended', async () => {
-    window.__crew(0, 0, 0, 2);               // two farmhands, farm open
-    quickCrew();
-    window.__clearFloor();
-    const start = state();
-    let grew = false;
-    const lay = runUntil(() => {
-      grew = grew || state().beds.some(b => b > 0.1);
-      return state().finds.includes('spore');
-    }, 40);
-    const waiting = state();
-
-    window.__crew(0, 2, 0, 2);               // somebody to go and get it
-    window.__place('hauler', waiting.farmX);
-    quickCrew();
-    const got = runUntil(() => state().spores > start.spores, 90);
-    const after = state();
-    return [
-      ok(after.farmOpen, 'the farm is open'),
-      ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
-      ok(grew, 'a bed comes on while it is tended'),
-      ok(lay, 'and is cut for a spore that lies beside it',
-         JSON.stringify(waiting.finds)),
-      ok(got, 'a worker fetches it, and that is what counts it',
-         `${start.spores} -> ${after.spores}`),
-      ok(after.seenSpore, 'which is worth showing on the counter')
-    ];
-  }],
-
-  // A spore is a thing that grew, and it should be seen to have grown. It forms
-  // at the tip of the stalk the moment the bed is ripe and sits there until the
-  // farmhand takes it off -- from exactly where it grew, in the tone it grew in.
-  ['a ripe bed shows its spore before it is cut', async () => {
-    window.__school({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
-    window.__crew(0, 0, 0, 1);
-    quickCrew();
-    window.__clearFloor();
-    // A bed with a spore on it, not merely one left standing ripe by an earlier
-    // check. A bed nobody is working keeps its tone for ever, so the farm is put
-    // back to bare earth first and what ripens after that is this check's own.
-    //
-    // Naming the already-ripe ones and skipping them was not enough: with a
-    // whole farm left standing ripe by an earlier check, the one farmhand has to
-    // cut its way through all seven before a fresh one can appear, and how long
-    // that takes depends on what every check before this one happened to do.
-    window.__beds();
-    const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
-    const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
-    // a frame at a time, not a second: it is only ripe for as long as it takes
-    // the farmhand to cut it, and a second-wide step steps right over that
-    let ripe = false;
-    for (let i = 0; i < 3000 && !ripe; i++) {
-      run(1 / 60);
-      ripe = fresh(state()) >= 0;
-    }
-    const showing = state();
-    const i = fresh(showing);
-    const tone = showing.bedTone[i];
-    const spores = showing.finds.filter(f => f === 'spore').length;
-    run(0.3);
-    const stillThere = state();
-    // wait for it rather than guessing how long the cut and the throw take
-    const landed = runUntil(
-      () => state().finds.filter(f => f === 'spore').length > spores, 20);
-    const after = state();
-    window.__crew(0, 0, 0, 0);
-    return [
-      ok(ripe, 'a bed comes ripe'),
-      ok(tone > 0, 'and a spore forms on it', `tone ${tone}`),
-      ok(stillThere.beds[i] >= 1, 'which stays there to be looked at',
-         `${stillThere.beds[i]}`),
-      ok(after.beds[i] < 1, 'until the farmhand takes it off', `${after.beds[i]}`),
-      ok(landed, 'and then it is lying in the farm pile',
-         `${spores} -> ${after.finds.filter(f => f === 'spore').length}`)
-    ];
-  }],
-
-  ['nothing grows in an untended farm', async () => {
-    window.__crew(0, 0, 0, 0);               // everybody off the farm
-    await sleep(200);
-    const before = state();
-    await sleep(1500);
-    const after = state();
-    return [
-      ok(after.spores === before.spores, 'the crop does not come on by itself',
-         `${before.spores} -> ${after.spores}`)
-    ];
-  }],
-
-  ['the sites are laid out left of the rock, in order', async () => {
-    const s = state();
-    return [
-      ok(s.farmX + s.farmW < s.quarryX, 'the farm is out past the quarry',
-         `farm ends ${Math.round(s.farmX + s.farmW)}, quarry at ${s.quarryX}`),
-      ok(s.labX < s.farmX, 'and the lab out past the farm, at the far end',
-         `lab at ${Math.round(s.labX)}, farm at ${Math.round(s.farmX)}`),
-      ok(s.quarryX + s.quarryW < s.benchX, 'the quarry stands past the bench'),
-      ok(s.benchX + s.benchW < s.rockX && s.rockX < s.pitX,
-         'and the bench off the rock, between it and the quarry')
-    ];
-  }],
-
-  // The crew live in a block of cubes between the bench and the rock, one cube
-  // a body. It is the narrowest strip of ground in the yard and the rock grows
-  // into it, so the two things worth checking are that it is not there before
-  // anybody is hired and that it never touches either neighbour -- at the
-  // biggest rock the game allows, which is where the strip is at its narrowest.
-  ['the crew have somewhere to live', async () => {
-    window.__crew(0, 0, 0, 0, 0);
-    const empty = state().houses;
-    window.__crew(1, 0, 0, 0, 0);
-    const one = state().houses;
-    window.__crew(6, 6, 0, 0, 0);
-    const twelve = state().houses;
-    const grew = twelve.top < one.top;              // up the screen is a smaller y
-    window.__jump(30);
-    const big = state().houses;
-    const onGrid = big.cells.every(c => c.split(',').every(v => +v % P === 0));
-
-    // every room, at every crew size it has ever stood at
-    const seen = {}, moved = [];
-    for (let n = 1; n <= 26; n++) {
-      window.__crew(n, 0, 0, 0, 0);
-      const h = state().houses;
-      // Rooms and the holes cut in them, each list keyed on its own count: a
-      // window that jumps when the room next door is built is the same fault as
-      // a room that moves, and it is the one that survived the first go at this.
-      for (const [what, list] of [['room', h.cells], ['hole', h.holes]]) {
-        list.forEach((c, k) => {
-          const key = `${what} ${k}`;
-          if (seen[key] && seen[key] !== c) moved.push(`${n}: ${key} was ${seen[key]}, now ${c}`);
-          seen[key] = c;
-        });
-      }
-    }
-    const settled = moved.length === 0;
-    window.__crew(0, 0, 0, 0, 0);
-    window.__jump(1);
-    return [
-      ok(empty.cubes === 0, 'nothing stands there until somebody is hired',
-         `${empty.cubes} cubes`),
-      // a room a body, and the doorway on top of that: the first hire gets a
-      // way in and somewhere to live, not a shed with a door in it
-      ok(one.cubes === 2 && twelve.cubes === 13, 'then it is a room a body and a doorway',
-         `${one.cubes} / ${twelve.cubes}`),
-      ok(grew, 'and the block goes up as the crew does',
-         `${one.top} -> ${twelve.top}`),
-      ok(big.base === big.foot, 'the bottom course stands on the ground line',
-         `${big.base} / ${big.foot}`),
-      // The bench stands between the block and the rock: you walk in past your
-      // own front door to get to the shop, not out past the shop to get home.
-      ok(big.right <= state().benchX, 'the block stands outside the bench',
-         `${big.right} / ${state().benchX}`),
-      // and it stands in the middle of the ground it has, rather than hard
-      // against one neighbour with all the slack on the other side
-      ok(big.ofBench > 0, 'it stands clear of the bench',
-         `${big.ofBench}px`),
-      ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
-         `${big.benchOfApron}px`),
-      ok(big.ofBench === big.benchOfApron,
-         'the bench is centred between the block and the biggest rock',
-         `${big.ofBench}px to the houses, ${big.benchOfApron}px to the apron`),
-      ok(big.ofApron > 0, 'with the block further out again',
-         `${big.ofApron}px`),
-      ok(onGrid, 'every cube sits on the lattice'),
-      // Building is additive. Taking somebody on adds a room; it does not move
-      // the rooms that were already standing, and it did once -- the base was
-      // worked out from the size of the crew, so every hire rebuilt the place
-      // and the one thing you should have been able to watch happen was the one
-      // thing you could not.
-      ok(settled, 'and a hire adds a room without moving the ones already there',
-         settled ? '1 through 26' : moved.slice(0, 3).join('; '))
-    ];
-  }],
-
-  // Nothing in the lab is bought outright any more. Paying starts a piece of
-  // research; what finishes it is bodies standing in the lab, and an empty lab
-  // makes no progress at all however much you have paid.
-  // Benched rather than deleted: everything it needs is still here, and the dev
-  // panel can put it back in the sky to be looked at. It is not in the game.
-  // The crew go inside the lab, so there is nothing to watch. The chimney is the
-  // whole of the signal, and it says the one thing worth saying: that somebody
-  // is in there working. Paid-for research with an empty lab does not smoke.
-  // The crew crossed the mouth in mid-air: the ground line stops at one rim and
-  // picks up at the other, and everyone walked the gap. The bridge is what makes
-  // that honest, so it is not scenery -- groundAt() has to put the crew on it,
-  // and it has to reach solid ground either side of a mouth that moves with the
-  // rock.
-  ['there is a bridge over the quarry', async () => {
-    window.__crew(0, 2, 1);
-    run(1);
-    const s = state();
-    const { x0, d0, d1, x1, top } = s.bridge;
-    const mouth = [s.quarryX, s.quarryX + s.quarryW];
-    const p = s.deckWalk;                        // sampled across and past both ends
-    const angle = Math.atan((s.groundY - top) / (d0 - x0)) * 180 / Math.PI;
-
-    return [
-      ok(d0 <= mouth[0] && d1 >= mouth[1], 'the flat deck covers the whole mouth',
-         `${d0}..${d1} over ${mouth[0]}..${mouth[1]}`),
-      ok(x0 - 0 < d0 && x1 > d1 && d0 - x0 === x1 - d1,
-         'with a ramp of the same run either side', `${d0 - x0} / ${x1 - d1}`),
-      ok(Math.abs(angle - 20) < 0.1, 'and they rise at twenty degrees',
-         `${angle.toFixed(2)} deg`),
-      ok([x0, d0, d1, x1].every(v => v % 6 === 0), 'every corner sits on the lattice',
-         `${x0} ${d0} ${d1} ${x1}`),
-      ok(p[0] === s.groundY && p[p.length - 1] === s.groundY,
-         'off either end you are back on the ground', `${p[0]} / ${p[p.length - 1]}`),
-      ok(p[1] > p[2] && p[2] > p[3], 'walking on it climbs', p.join(' ')),
-      ok(p[3] === top && p[4] === top && p[5] === top, 'levels off over the hole',
-         p.slice(3, 6).join(' ')),
-      ok(p[6] < p[7] && p[7] < p[8], 'and comes back down the other side',
-         p.slice(6).join(' ')),
-      ok(p.every(v => v <= s.groundY), 'and never dips below the ground doing it',
-         p.join(' '))
-    ];
-  }],
-
-  // Scenery would have been cheaper. This is the check that it is not scenery:
-  // somebody fetching from the far pile has to actually ride over the mouth
-  // rather than walk across the gap on nothing, the way they used to.
-  ['the crew walk the bridge rather than the air', async () => {
-    window.__crew(0, 3, 1);
-    quickCrew();
-    const s0 = state();
-    const { x0, x1 } = s0.bridge;
-
-    // something worth fetching on the far side of the hole, so a hauler has a
-    // reason to cross at all
-    const farm = s0.piles.find(p => p.key === 'farm');
-    window.__pile(Math.round((farm.from + farm.to) / 2), 40);
-
-    let seen = 0, high = null;
-    for (let i = 0; i < 80; i++) {
-      window.__fast(0.2);                       // finer than a second: a crossing is short
-      for (const w of state().workerPos) {
-        const [t, xy] = w.split(':');
-        const [x, y] = xy.split(',').map(Number);
-        if (t === 'q' || x < x0 || x > x1) continue;
-        seen++;
-        if (high === null || y < high) high = y;
-      }
-    }
-    window.__crew(0, 0);
-
-    return [
-      ok(seen > 0, 'somebody crosses the mouth at all', `${seen} samples over it`),
-      ok(high !== null && high < s0.groundY - 18,
-         'and the bridge carries them above the ground line doing it',
-         `highest top edge ${high}, ground line ${s0.groundY}`),
-      ok(high !== null && high <= s0.bridge.top - 18 + 1,
-         'right up onto the deck, not just the foot of a ramp',
-         `${high} vs deck ${s0.bridge.top - 18}`)
-    ];
-  }],
-
   ['the lab smokes while it is being worked', async () => {
     window.__grant({ shards: 20, cores: 9 });
     window.__lab(true);
@@ -2275,113 +945,6 @@ const TESTS = [
       ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 2,
          'and they are inside it, not standing about in front',
          JSON.stringify(worked.crewDetail.filter(d => d[0] === 'l')))
-    ];
-  }],
-
-  // Clouds and birds are the only things in the game that are purely scenery, so
-  // the one thing they must never do is get in the way: they stay in the strip of
-  // sky above the height a rock can reach, and they stay in the view when it is
-  // scrolled, which is what the parallax is for -- a fixed sky would slide off the
-  // side of the world and leave an empty one behind.
-  ['the sky has clouds in it, and birds now and then', async () => {
-    const before = state().sky;
-    run(2);
-    window.__look(0);
-    run(2);
-    const near = state().sky;
-    window.__look(1e6);                          // the far end of the world
-    run(2);
-    const far = state().sky;
-    window.__birds();
-    const flock = state().sky;
-    run(4);
-    const later = state().sky;
-
-    const above = s => s.cloudY.every(y => y <= s.low) && s.cloudY.every(y => y >= s.top);
-    const inView = s => s.cloudAcross.filter(x => x > -200 && x < state().viewW).length;
-
-    return [
-      ok(before.clouds === near.clouds && near.clouds === far.clouds,
-         'the same few clouds are kept wherever you are looking',
-         `${before.clouds} / ${near.clouds} / ${far.clouds}`),
-      ok(above(near) && above(far), 'they keep to the sky above the rock',
-         `${near.low} floor, lowest ${Math.max(...near.cloudY)}`),
-      ok(inView(near) >= 2 && inView(far) >= 2, 'and there are some in view at either end',
-         `${inView(near)} / ${inView(far)}`),
-      ok(far.fars.every(f => f > 0 && f < 1), 'each one sits at its own distance',
-         far.fars.join(' ')),
-      ok(near.drifts, 'and they drift'),
-      ok(flock.birds >= 2 && flock.birds <= 4, 'birds come in twos and threes',
-         `${flock.birds}`),
-      ok(flock.birdY.every(y => y <= flock.low + 20), 'flying no lower than the clouds do',
-         flock.birdY.join(' ')),
-      ok(later.birds >= flock.birds &&
-         flock.birdAcross.every((x, i) => x !== later.birdAcross[i]),
-         'and every one of them is crossing', flock.birdAcross.join(' ') + ' -> ' + later.birdAcross.join(' '))
-    ];
-  }],
-
-  ['the air thickens with what is lying about, and keeps out of the ground', async () => {
-    // The air is the only thing in the background of this game, so it is the
-    // only thing that says the view is moving. What it must not do is drift
-    // about inside solid ground, and what it must do is answer the yard.
-    window.__clearFloor();
-    run(4);
-    const bare = state();
-
-    window.__pile(bare.rockX + 300, 2400);       // a heap where the spoil goes
-    run(20);                                     // the air comes on a mote at a time
-    const heaped = state();
-
-    window.__clearFloor();
-    run(20);
-    const swept = state();
-
-    return [
-      ok(bare.air > 0, 'a bare yard still has dust hanging in it', `${bare.air}`),
-      // what the yard asks for, not what the screen is carrying: a stocked pit
-      // asks for more than the cap allows, and by then the count says nothing
-      ok(heaped.airWant > bare.airWant, 'a heap in the yard puts more of it up',
-         `${bare.airWant} bare, ${heaped.airWant} heaped`),
-      ok(swept.airWant < heaped.airWant, 'and carrying the heap away thins it again',
-         `${heaped.airWant} heaped, ${swept.airWant} swept`),
-      ok(heaped.airFront > 0, 'some of it passes in front of the yard, not behind it',
-         `${heaped.airFront} of ${heaped.air}`),
-      ok(bare.airUnder === 0 && heaped.airUnder === 0 && swept.airUnder === 0,
-         'and none of it is under the ground',
-         `${bare.airUnder}/${heaped.airUnder}/${swept.airUnder}`)
-    ];
-  }],
-
-  // A mote is the colour of what kicked it up, which is the only thing in the
-  // game that says what the far end of the yard is from across the world: blue
-  // air over the quarry, green over the beds, grey everywhere else.
-  ['the air over a site is the colour of what comes out of it', async () => {
-    window.__reset();
-    run(4);
-    const yard = state();                        // nothing open: a grey yard
-
-    window.__grant({ cores: 8 });
-    window.__crew(0, 0, 2, 0);                   // opens the quarry, and works it
-    window.__look(state().quarryX - 100);
-    run(20);
-    const atQuarry = state();
-
-    window.__crew(0, 0, 0, 2);                   // and the beds
-    window.__look(state().farmX - 100);
-    run(20);
-    const atFarm = state();
-
-    return [
-      ok(yard.airKinds.shard === 0 && yard.airKinds.spore === 0,
-         'a yard with nothing open gives off nothing but dust',
-         JSON.stringify(yard.airKinds)),
-      ok(atQuarry.airKinds.shard > 0, 'the air over the quarry comes up blue',
-         `${atQuarry.airKinds.shard} of ${atQuarry.air}`),
-      ok(atFarm.airKinds.spore > 0, 'and the air over the beds comes off green',
-         `${atFarm.airKinds.spore} of ${atFarm.air}`),
-      ok(atFarm.airKinds.dust > 0, 'the yard itself is still grey',
-         `${atFarm.airKinds.dust} of ${atFarm.air}`)
     ];
   }],
 
@@ -2420,14 +983,6 @@ const TESTS = [
          `${settled.pileCount.rock} of ${settled.floor - clear} inside ${strip.from}..${strip.to}`),
       ok(settled.stored === bank, 'and none of it is banked for free',
          `${bank} -> ${settled.stored}`)
-    ];
-  }],
-
-  ['the thing in the sky is benched', async () => {
-    const s = state();
-    return [
-      ok(!s.skyShown, 'it is not in the sky'),
-      ok(typeof s.skyShown === 'boolean', 'but the switch for it still exists')
     ];
   }],
 
@@ -2575,45 +1130,12 @@ const TESTS = [
     return checks;
   }],
 
-  ['rocks stop growing, because they never stop coming', async () => {
-    window.__jump(40);
-    await sleep(200);
-    const forty = state();
-    window.__jump(400);
-    await sleep(200);
-    const far = state();
-    window.__jump(1);
-    await sleep(200);
-    return [
-      ok(far.rockW === forty.rockW && far.rockH === forty.rockH,
-         'rock four hundred is no bigger than rock forty',
-         `${forty.rockW}x${forty.rockH} vs ${far.rockW}x${far.rockH}`),
-      ok(far.rockH < 520, 'and still fits under the sky', `${far.rockH}`),
-      ok(far.rockW < 900 - 108, 'and never reaches the bench', `${far.rockW}`)
-    ];
-  }],
-
-  ['the books report what was made, not what is left', async () => {
-    window.__crew(6, 3);
-    window.__give(8000, 4);
-    await sleep(2500);
-    const before = state().rates.banked;
-    window.__spend(6000);                    // a big purchase
-    await sleep(2500);
-    const after = state().rates.banked;
-    return [
-      ok(before > 0, 'production reads while dust is coming in', `${before}/min`),
-      ok(after >= 0, 'and buying something does not read as negative production',
-         `${after}/min`)
-    ];
-  }],
-
   ['the places are revealed one at a time', async () => {
     const rows = () => [...shop().querySelectorAll('button')].map(b => b.dataset.key);
     const has = k => rows().includes(k);
 
     window.__reset();
-    await sleep(400);
+    await settle();
     const fresh = rows();
 
     window.__grant({ cores: 4 });
@@ -2644,36 +1166,13 @@ const TESTS = [
     ];
   }],
 
-  ['the save keeps what matters', async () => {
-    const s = state();
-    await sleep(1200);                       // let it write
-    const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4') || 'null');
-    return [
-      ok(!!raw, 'a save exists'),
-      ok(Math.abs(raw.stored - s.stored) <= 20, 'the hole is saved',
-         `${raw?.stored} vs ${s.stored}`),
-      ok(raw.cores === s.cores, 'cores are saved'),
-      ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
-      ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
-      ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),
-      ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
-      ok(Array.isArray(raw.beds), 'and how far along every bed is'),
-      ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
-      ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
-      ok(raw.labbers === s.labbers, 'who is in the lab', `${raw?.labbers} vs ${s.labbers}`),
-      ok(!raw.research === !s.research, 'and whatever it is working on'),
-      ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
-         'the rock is saved cell by cell')
-    ];
-  }],
-
   // A site is bought with cores and then paid for by itself. What the quarry
   // gives up takes the cut down another bench, and what the beds give up breaks
   // another bed -- and a bench and a bed are each a place for one body, so the
   // thing the site's own currency buys first is room for somebody to work it.
   ['the quarry and the farm grow on what they give up', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__levels({ benchLevel: 0, bedLevel: 0 });
     S_open();
     window.__crew(0, 10);
@@ -2712,240 +1211,12 @@ const TESTS = [
     ];
   }],
 
-  // Nothing here makes, spends or moves anything: it is the yard at rest, and
-  // the one rule that matters is that a break only ever happens to a body that
-  // had stopped anyway.
-  ['a stopped crew takes a break, a working one does not', async () => {
-    window.__reset();
-    await sleep(400);
-    // A crowd rather than a handful, and watched over a while rather than at one
-    // instant: a break is rare on purpose -- most turns come to nothing, and the
-    // yard empties as they knock off -- so a check that looks once, or looks at
-    // four bodies, fails on the timing rather than on the behaviour.
-    window.__crew(0, 8);
-    window.__clearFloor();
-    const seen = [];
-    let resting = 0, cig = 0;
-    for (let i = 0; i < 60; i++) {
-      run(2);
-      const s = state();
-      resting = Math.max(resting, s.resting);
-      cig = Math.max(cig, s.cigSmoke);
-      for (const b of s.breaks) if (!seen.includes(b.kind)) seen.push(b.kind);
-    }
-    const idle = { resting, breaks: seen, cig };
-    // and now give all four of them something to do -- spread out, because one
-    // column is one worker's and the other three would rightly still be idle
-    const rockX = state().rockX;
-    for (let i = 0; i < 8; i++) window.__pile(rockX + 60 + i * 30, 60);
-    run(6);
-    const busy = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(idle.resting > 0, 'a hauler with nothing to fetch is stood about',
-         `${idle.resting} of 8`),
-      ok(idle.breaks.length > 0, 'and somebody, now and then, gets up to something',
-         idle.breaks.join(',')),
-      ok(idle.breaks.every(k => ['smoke', 'sing', 'curse', 'talk'].includes(k)),
-         'smoking, singing, swearing or talking, and nothing else',
-         idle.breaks.join(',')),
-      ok(!idle.breaks.includes('smoke') || idle.cig > 0,
-         'and a cigarette puts smoke in the air', `${idle.cig} puffs`),
-      ok(busy.breaks.length === 0,
-         'and the moment there is dust to fetch, nobody is having one',
-         JSON.stringify(busy.breaks))
-    ];
-  }],
-
-  // A yard with nothing in it to carry is a yard nobody needs to be stood in.
-  // The one thing that has to be true is that letting them go is never a
-  // decision you regret: they are all back the moment there is dust.
-  ['a body with no work goes home, and the lights say who is in', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(0, 4);
-    window.__clearFloor();
-    const dark = state();
-    run(200);
-    const in_ = state();
-    const rockX = state().rockX;
-    for (let i = 0; i < 8; i++) window.__pile(rockX + 60 + i * 30, 60);
-    run(4);
-    const out = state();
-    run(40);
-    const done = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(dark.houses.home === 0 && dark.houses.lights === 0,
-         'a yard just started has nobody in and no window lit',
-         `${dark.houses.home} in, ${dark.houses.lights} lit`),
-      ok(in_.houses.home === 4, 'with nothing to carry they all knock off',
-         `${in_.houses.home} of 4`),
-      ok(in_.houses.lights > 0 && in_.houses.lights <= in_.houses.home,
-         'and the windows light up behind them -- never more than are in',
-         `${in_.houses.lights} lit for ${in_.houses.home}`),
-      ok(in_.workerPos.length === 4 && in_.houseSmoke >= 0,
-         'they are still on the books, just out of sight', `${in_.workerPos.length} hired`),
-      ok(out.houses.home === 0 && out.houses.lights === 0,
-         'dust on the ground brings every one of them straight back out',
-         `${out.houses.home} still in`),
-      ok(done.stored > 0, 'and it gets carried', `${done.stored} banked`)
-    ];
-  }],
-
-  // A hat is a thing lying at a station until somebody walks over and picks it
-  // up, and it goes back the same way. Nothing about it is instant, which is the
-  // whole of what makes it read as kit rather than as a stat.
-  ['a hat is walked to, put on, and walked back', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(2, 1);
-    window.__clearFloor();
-    window.__school({ breakers: 2 });
-    const bought = state();
-    run(20);
-    const on = state();
-
-    // and off the rock again: the helmet has to come back before the body does
-    window.__assign('miners', -1);
-    run(20);
-    const back = state();
-    window.__crew(0, 0);
-    window.__school({ breakers: 0 });
-    run(20);
-    window.__clearFloor();
-    const rock = r => r.roster.find(x => x.job === 'miners');
-    return [
-      ok(bought.trained === '', 'buying one puts nobody in a helmet',
-         `"${bought.trained}"`),
-      ok(rock(bought).spareKit === 2, 'both of them are left waiting at the rock',
-         `${rock(bought).spareKit} waiting`),
-      ok(on.trained === 'mm', 'the bodies walk over, pick them up and wear them',
-         `"${on.trained}"`),
-      ok(rock(on).spareKit === 0 && rock(on).hats === 2,
-         'and the stand is empty while they are worn',
-         `${rock(on).spareKit} of ${rock(on).hats} waiting`),
-      ok(back.trained === 'm', 'one taken off the rock is one helmet fewer worn',
-         `"${back.trained}"`),
-      ok(rock(back).spareKit === 1 && rock(back).hats === 2,
-         'and it is back on the stand, not gone with the body',
-         `${rock(back).spareKit} of ${rock(back).hats} waiting`)
-    ];
-  }],
-
-  // Room in the hole is a resource like a column of dust is a resource, and it
-  // is claimed the same way: at the moment you decide, held until you spend it.
-  // Without it every body in the yard filled its hands and walked to the lip to
-  // find out, and eight workers stood at the brim holding a load each with
-  // nowhere to put any of it and no way to put it back.
-  ['a hauler books room in the hole before it fetches', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(0, 8);
-    window.__levels({ haulCarryLevel: 4 });
-    window.__give(200000);                       // fill the scrape to the brim
-    run(20);
-    const rockX = state().rockX;
-    window.__pile(rockX + 200, 600);             // and a heap nobody can shift
-    run(30);
-    const full = state();
-
-    // now make room for six, and watch six leave the ground
-    window.__spend(6);
-    const before = state().stored;
-    run(20);
-    const some = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(full.pitFull, 'the hole is full', `${full.stored} in it`),
-      ok(full.floorGrains > 500, 'and there is plenty on the ground',
-         `${full.floorGrains} lying about`),
-      ok(full.carried === 0,
-         'so nobody is holding dust with nowhere to put it',
-         `${full.carried} grains in hands`),
-      ok(full.booked === 0, 'and nobody has room booked', `${full.booked} booked`),
-      ok(some.stored - before <= 6,
-         'room for six takes six off the ground, not eight loads',
-         `${some.stored - before} banked`),
-      // a booking is the whole trip, and what is in hand is part of it -- so
-      // the one number that must never exceed the room is the booking
-      ok(some.booked <= 6 && some.carried <= some.booked,
-         'and never more is spoken for than the hole will take',
-         `${some.carried} carried of ${some.booked} booked`)
-    ];
-  }],
-
-  // A find used to go in over the ceiling on the grounds that it is a thing you
-  // went and got. A hole that holds everything except the four things it does
-  // not hold is a hole with a rule you cannot see.
-  ['a find is counted against the hole like everything else', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(0, 6);
-    window.__give(200000);                       // the scrape, full
-    run(20);
-    const rockX = state().rockX;
-    window.__toss('shard', rockX + 200);
-    window.__toss('shard', rockX + 240);
-    run(25);
-    const full = state();
-
-    window.__spend(3);                           // room for three
-    run(25);
-    const room = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(full.pitFull, 'the hole is full', `${full.stored} in it`),
-      ok(full.shards === 0 && full.finds.length === 2,
-         'a shard on the ground with a full hole behind it stays on the ground',
-         `${full.shards} banked, ${full.finds.length} lying about`),
-      ok(full.carried === 0,
-         'and nobody sets off for one they have nowhere to put',
-         `${full.carried} in hands`),
-      ok(room.shards === 2 && room.finds.length === 0,
-         'make room and they are fetched and banked like anything else',
-         `${room.shards} banked, ${room.finds.length} left`)
-    ];
-  }],
-
-  // Same rule, and the case where getting it wrong costs the most: a core is one
-  // a rock, for ever, and one the hole swallowed would be a rock done twice.
-  ['a core waits on the ground rather than being lost to a full hole', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(2, 2);
-    window.__give(200000);
-    run(20);
-    window.__next();                             // the last of the rock goes
-    run(20);
-    const full = state();
-
-    window.__spend(20);
-    run(40);
-    const room = state();
-    window.__crew(0, 0);
-    window.__clearFloor();
-    return [
-      ok(full.pitFull && full.cores === 0, 'a full hole banks no core',
-         `${full.cores} cores`),
-      ok(!!full.coreItem, 'and the core is still out there, in plain sight',
-         JSON.stringify(full.coreItem)),
-      ok(room.cores === 1 && !room.coreItem,
-         'dig, and it goes in like anything else',
-         `${room.cores} cores, ${room.coreItem ? 'one still loose' : 'none loose'}`)
-    ];
-  }],
-
   // The one place in the yard that makes nothing. Everywhere else a thing you
   // buy does something for ever after; this takes what you have and hands some
   // of it back, and the whole of it is a decision you keep making.
   ['the casino takes a stake and pays a pot', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__grant({ cores: 20 });
     window.__give(20000);
     window.__dig(23);                            // room for the winnings
@@ -3026,74 +1297,12 @@ const TESTS = [
     ];
   }],
 
-  // The game used to start with a rock already sitting there and a cursor to hit
-  // it with, and nothing said why. It starts before the rock now: two squares on
-  // the bare ground, and then one of them is under it. Everything after that is
-  // the other one digging.
-  ['the game opens on two squares and a rock lands on one', async () => {
-    window.__reset(true);                        // the opening, played out
-    await sleep(400);
-    const open = state();
-    run(3);
-    const talking = state();
-
-    // it runs on its own clock, in phases, and it is deliberately unhurried
-    const seen = [open.intro];
-    let flat = null, up = null;
-    for (let i = 0; i < 900 && state().intro; i++) {
-      run(0.1);
-      const s = state();
-      if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
-      if (s.intro === 'down' && !flat) flat = s;
-      // partway through getting up, not the frame it starts: the view eases out
-      // over the whole of it and at the first frame it has not moved yet
-      if (s.intro === 'up') up = s;
-    }
-    const after = state();
-
-    // And the one underneath is still there every time a rock is finished. A body
-    // on the rock, so the crew take their five seconds over it: with nobody on
-    // it there is no celebration and the next rock is down before you can look.
-    window.__crew(1, 0);
-    window.__next();
-    run(1);
-    const bare = state();
-    window.__reset();
-    await sleep(300);
-    return [
-      ok(open.intro === 'chat' && open.pair === 2,
-         'it opens on two of them, and no rock', `${open.pair} stood there, rock ${open.rock}`),
-      ok(open.rock === 0, 'nothing to mine yet', `${open.rock}`),
-      ok(open.zoom > 1, 'and it opens close on them', `zoom ${open.zoom}`),
-      ok(talking.intro === 'chat', 'they are given a moment to be two people'),
-      ok(seen.join(',') === 'chat,fall,down,up,show',
-         'a rock, a body knocked flat, a body getting up, and the loop shown once',
-         seen.join(',')),
-      ok(flat && flat.rock > 0, 'the boulder comes down out of the sky',
-         flat && `${flat.rock} of rock`),
-      ok(flat && flat.pair === 1, 'on one of them', flat && `${flat.pair} left standing`),
-      ok(up && up.zoom < open.zoom, 'and the view pulls back out as it gets up',
-         up && `${open.zoom} -> ${up.zoom}`),
-      ok(after.intro === null && Math.abs(after.zoom - 0.833) < 0.01,
-         'all the way back out', `${after.zoom}`),
-      ok(after.crew === 1,
-         'and the one left standing is the crew -- the first body is not bought',
-         `${after.crew} hired`),
-      ok(after.stored >= 2,
-         'and it has shown you where dust goes before you are given the yard',
-         `${after.stored} in the hole`),
-      ok(after.buried, 'with the other one under it'),
-      ok(bare.buriedVisible,
-         'and when the rock is gone they are there, alive, until the next one lands')
-    ];
-  }],
-
   // A spin is the one moment in this game you are meant to sit and watch, so the
   // board gets out of the light, the wheel takes its time, and what is on the
   // table is a heap on the ground rather than a number on a row.
   ['a spin is something to watch', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__grant({ cores: 20 });
     window.__give(20000);
     window.__dig(23);
@@ -3148,7 +1357,7 @@ const TESTS = [
   // thousand on the table is a thousand grains lying there.
   ['the pot is a real pile, grain for grain', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__grant({ cores: 20 });
     window.__give(30000);
     window.__dig(23);
@@ -3194,7 +1403,7 @@ const TESTS = [
   // the hole counts when it lands.
   ['banking flies the pot to the hole, grain for grain', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__grant({ cores: 20 });
     window.__give(30000);
     window.__dig(23);
@@ -3247,7 +1456,7 @@ const TESTS = [
   // happen is a chore rather than a decision.
   ['starting research calls back whoever the lab let out', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__lab(true);
     window.__crew(0, 3, 0, 0, 2);                // two of the five in the lab
     window.__grant({ shards: 50 });
@@ -3271,177 +1480,316 @@ const TESTS = [
     ];
   }],
 
-  // A full hole tells everybody to stand down, and standing down eventually
-  // means going home. Those two rules fought: the stand-down put a body walking
-  // to the door back on `idle`, the idle branch sent it home again the next
-  // frame, and it never took a step -- the whole crew stock still between the
-  // pile and the lip with a yard full of dust they could not move.
-  ['a crew with nowhere to put anything walks home rather than freezing', async () => {
+  // Picking somebody up moves them and does nothing else. It is the right
+  // button because the left one is the whole game -- swinging, sweeping,
+  // catching -- and a body is eighteen pixels walking about on top of the dust
+  // you are trying to sweep.
+  ['a body can be picked up, and walks back to work', async () => {
     window.__reset();
-    await sleep(400);
-    window.__crew(3, 6);
-    window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
-    run(400);                                    // long enough to fill the scrape
-    const full = state();
-
-    // nobody is left standing about in the middle of the yard
-    const out = () => state().crewDetail.filter(d => d[0] === 'h' && !d.includes('|home|'));
-    const stalled = out();
-
-    // and a dig brings them all straight back out
-    window.__dig(4);
-    run(25);
-    const dug = state();
-    window.__crew(0, 0);
+    await settle();
+    window.__crew(2, 2);
     window.__clearFloor();
-    return [
-      ok(full.pitFull, 'the hole is full', `${full.stored} of ${full.pitCapacity}`),
-      ok(full.floorGrains > 100, 'and the yard is not', `${full.floorGrains} lying about`),
-      ok(full.houses.home === 6, 'so every one of them has gone home',
-         `${full.houses.home} in, ${stalled.length} still out`),
-      ok(dug.houses.home === 0, 'and a dig brings them all back out',
-         `${dug.houses.home} still in`),
-      ok(dug.stored > full.stored, 'carrying again', `${full.stored} -> ${dug.stored}`)
-    ];
-  }],
-
-  // A body that has knocked off is stood indoors and is not drawn -- that is
-  // what being home means. Nothing else in the game takes somebody off carrying,
-  // so nothing else ever had to clear it, and a body put on the quarry straight
-  // out of the house went down the cut, worked the face, brought shards up and
-  // was invisible the whole time.
-  ['a body put to work comes out of the house first', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(0, 3);
-    window.__clearFloor();
-    const away = runUntil(() => state().houses.home === 3, 300);
-    const home = state();
-
-    window.__assign('quarriers', 1);
-    window.__assign('quarriers', 1);
     run(30);
-    const at = state();
+    const s = state();
+    const m = state().workerPos.find(p => p[0] === 'm').split(':')[1].split(',').map(Number);
+    const scr = (wx, wy) => [(wx - state().camX) * s.zoom, (wy - state().camY) * s.zoom];
+
+    // hovering one says who it is
+    point('pointermove', ...scr(m[0] + 9, m[1] + 9), 0);
+    const tipEl = document.getElementById('tip');
+    const said = tipEl.hidden ? '' : tipEl.textContent;
+
+    // the right button picks it up
+    point('pointerdown', ...scr(m[0] + 9, m[1] + 9), 2, 2);
+    const up = state();
+    const away = [s.rockX - 700, s.groundY - 200];
+    point('pointermove', ...scr(...away), 2, -1);
+    const carried = state();
+    const heldCard = document.getElementById('tip');
+    const heldSaid = heldCard.hidden ? '' : heldCard.textContent;
+    point('pointerup', ...scr(...away), 0, 2);
+    run(0.2);
+    const put = state();
+    run(20);
+    const home = state();
     window.__crew(0, 0);
-    window.__clearFloor();
     return [
-      ok(away && home.houses.home === 3, 'with nothing to carry they are all indoors',
-         `${home.houses.home} in`),
-      ok(at.quarriers === 2, 'two of them are put on the quarry', `${at.quarriers}`),
-      ok(at.houses.home === 0, 'and none of them is still counted as being at home',
-         `${at.houses.home} still in`),
-      ok(at.workerPos.length === 3, 'so all three are out where you can see them',
-         `${at.workerPos.length} drawn of 3`),
-      ok(at.crewDetail.filter(d => d[0] === 'q').length === 2,
-         'and the two of them are down the cut working',
-         JSON.stringify(at.crewDetail))
+      ok(said.split(String.fromCharCode(10)).length === 7 && said.includes('mining the rock'),
+         'hovering one says who it is and what it does, a row at a time',
+         JSON.stringify(said)),
+      ok(/^mined {5}/m.test(said) && /^quarried {2}/m.test(said) && /^stored {4}/m.test(said),
+         'one line per site, all lined up in a column', JSON.stringify(said)),
+      ok(!/^carrying/m.test(said), 'and a miner is not asked what it is carrying',
+         JSON.stringify(said)),
+      ok(!!up.lifted, 'the right button picks it up', `${up.lifted}`),
+      ok(heldSaid.startsWith(up.lifted), 'and it keeps saying who it is while you hold it',
+         JSON.stringify(heldSaid.slice(0, 40))),
+      ok(up.rock === s.rock, 'and does not swing at what it was standing on'),
+      // whichever miner is on the cursor, not whichever is first in the list:
+      // there are two of them and the order they are stored in is not a fact
+      // about which one you picked up
+      ok(carried.workerPos.some(p => p[0] === 'm' &&
+           Math.abs(+p.split(':')[1].split(',')[0] - away[0]) < 30),
+         'it goes where the cursor goes',
+         `${carried.workerPos.filter(p => p[0] === 'm')} want ${Math.round(away[0])}`),
+      ok(put.falling === 1, 'let go, it falls rather than being lowered', `${put.falling}`),
+      ok(!put.lifted && put.miners === s.miners,
+         'putting it down leaves everybody on the job they were on',
+         `${s.miners} -> ${put.miners}`),
+      ok(Math.abs(+home.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[0] - s.rockX) < s.rockW,
+         'and it walks back to what it was doing',
+         home.workerPos.find(p => p[0] === 'm'))
     ];
   }],
 
-  // The first rock comes off and, for a moment, you did it. Then the next one
-  // lands. Once, after the first rock and never again -- a beat you are shown
-  // twice is a beat, a beat you are shown every time is a loading screen.
-  ['the first rock is worth a moment, and only the first', async () => {
-    window.__reset(true);                        // the opening, played out
-    await sleep(400);
-    runUntil(() => !state().intro, 200);
-    window.__crew(3, 1);
-    const before = state();
+  // Put down where it already works, there is nothing to walk to, so it should
+  // not walk: the commute that gets a body home from the far end of the yard is
+  // exactly the wrong thing when you have just set it on its own rock.
+  ['a body dropped on its own station gets straight back to it', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(1, 0);
+    window.__clearFloor();
+    run(30);
+    const s = state();
+    const scr = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
+    const m = s.workerPos.find(p => p[0] === 'm').split(':')[1].split(',').map(Number);
+    point('pointerdown', ...scr(m[0] + 9, m[1] + 9), 2, 2);
+    // straight up in the air over the rock, then let go
+    const over = [s.rockX + s.rockW / 2, s.groundY - 260];
+    point('pointermove', ...scr(...over), 2, -1);
+    point('pointerup', ...scr(...over), 0, 2);
+    const let_go = state();
+    run(0.35);
+    const air = state();
+    run(4);
+    const down = state();
+    const near = +down.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[1];
+    window.__crew(0, 0);
+    return [
+      ok(let_go.falling === 1, 'let go over its own rock, it is in the air', `${let_go.falling}`),
+      ok(+air.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[1] > over[1],
+         'and it is coming down', air.workerPos.find(p => p[0] === 'm')),
+      ok(down.falling === 0 && near < s.groundY + 40, 'it lands', `${down.falling}, ${near}`),
+      ok(down.miners === s.miners, 'still a miner', `${s.miners} -> ${down.miners}`)
+    ];
+  }],
 
-    window.__next();                             // and the first rock is finished
-    const seen = [];
-    let met = null;
-    for (let i = 0; i < 600 && !state().reunionDone; i++) {
-      run(0.1);
-      const s = state();
-      if (s.intro && !seen.includes(s.intro)) seen.push(s.intro);
-      if (s.intro === 'meet' && s.zoom > 1.9) met = s;
+  // A body put down on the rock should be standing on the rock, not standing on
+  // the ground under it and then appearing on top a frame later.
+  ['a body dropped on the rock lands on the rock and climbs from there', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(1, 1);
+    window.__give(400);
+    // wait for the hauler to actually have something in its hands, so the drop
+    // below is a drop of a loaded body rather than an empty one
+    const laden = () => state().crewDetail.find(d => d[0] === 'h' && !/\|c0\|/.test(d));
+    runUntil(() => laden(), 40);
+    const s = state();
+    const carriedBefore = +(laden() || '').split('|')[3].slice(1) || 0;
+    const scr = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
+    // the hauler, so its card is the one that says what it is carrying
+    const h = s.workerPos.find(p => p[0] === 'h').split(':')[1].split(',').map(Number);
+    point('pointermove', ...scr(h[0] + 9, h[1] + 9), 0);
+    const tipEl = document.getElementById('tip');
+    const hauled = tipEl.hidden ? '' : tipEl.textContent;
+
+    // Two drops from the same height: one over bare ground, one over the middle
+    // of the rock. What the ground one lands at is what "fell to the ground"
+    // means here, so the rock one can be measured against it rather than against
+    // a number picked out of the air.
+    const sky = s.groundY - 400;
+    const dropAt = (tag, wx) => {
+      const w = state().workerPos.find(p => p[0] === tag).split(':')[1].split(',').map(Number);
+      point('pointerdown', ...scr(w[0] + 9, w[1] + 9), 2, 2);
+      point('pointermove', ...scr(wx, sky), 2, -1);
+      point('pointerup', ...scr(wx, sky), 0, 2);
+      for (let i = 0; i < 80; i++) {
+        run(0.1);
+        if (!state().falling)
+          return +state().workerPos.find(p => p[0] === tag).split(':')[1].split(',')[1];
+      }
+      return null;
+    };
+    const ground = dropAt('h', s.rockX - 500);
+    const carriedAfter = +(state().crewDetail.find(d => d[0] === 'h') || '|||c0').split('|')[3].slice(1);
+    const landed = dropAt('m', s.rockX + s.rockW / 2);
+    window.__crew(0, 0);
+    return [
+      ok(/^carrying {2}(nothing|[■▲⬢◯] \d)/m.test(hauled),
+         'a body whose job is carrying says what it has, kind by kind',
+         JSON.stringify(hauled)),
+      // a body that fell to the ground stands exactly at `standOn(groundY)`; on
+      // the rock it stands higher, however low the rock has been worked
+      ok(carriedBefore > 0 && carriedAfter === carriedBefore,
+         'and picking one up and putting it down does not empty its hands',
+         `${carriedBefore} -> ${carriedAfter}`),
+      ok(landed != null && landed < ground - 1,
+         'and one dropped over the rock stops on the rock, not on the ground under it',
+         `${landed} vs ${ground} on the ground`)
+    ];
+  }],
+
+  // The house is the one board that sells nothing. Standing at it lists who
+  // lives there, where each of them is right now, and what each has done.
+  ['the house lists who lives there', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    run(60);
+    const s = state();
+    const h = s.houses;
+    const mid = (h.left + h.right) / 2;
+    window.__look(mid - 600);
+    await sleep(120);
+    const [hx, hy] = onScreen(mid, h.top + 20);
+    point('pointermove', hx, hy, 0);
+    await sleep(120);
+    const open = state();
+    const row = document.querySelector('#crewshop button');
+    if (row) {
+      const r = row.getBoundingClientRect();
+      row.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
     }
+    const tipEl = document.getElementById('tip');
+    const said = tipEl.hidden ? '' : tipEl.textContent;
+    const names = state().crewNames.split(' ').map(w => w.split('|')[0]);
+
+    // clicking a name says which one it is, for a few seconds and no longer
+    row?.click();
+    const picked = state();
+    // A body walks. The view is asked where it is now rather than where it was
+    // standing when the row was clicked, so a couple of seconds of yard later
+    // the two of them are still together.
+    run(2);
+    const kept = state();
+    run(5);
+    const gone = state();
+    window.__crew(0, 0);
+    return [
+      ok(open.houseBoardOpen, 'standing at the house opens it', `${open.houseBoardOpen}`),
+      ok(open.crewRows.length === 4, 'one row per body', `${open.crewRows.length} rows`),
+      ok(open.crewRows.every(r => names.some(n => r.startsWith(n))),
+         'and every row is somebody by name', JSON.stringify(open.crewRows)),
+      ok(open.crewRows.some(r => r.includes('on the rock')) &&
+         open.crewRows.some(r => r.includes('at the pit')),
+         'saying where that body is standing, not what its job is called',
+         JSON.stringify(open.crewRows)),
+      ok(/^mined {5}/m.test(said) && said.split(String.fromCharCode(10)).length >= 6,
+         'and hovering one gives that body its whole card', JSON.stringify(said)),
+      ok(picked.pointed.length === 1 && open.crewRows[0].startsWith(picked.pointed[0]),
+         'and clicking one puts an arrow over that body, so you can find it',
+         JSON.stringify(picked.pointed)),
+      ok(gone.pointed.length === 0, 'which goes away on its own a few seconds later',
+         JSON.stringify(gone.pointed)),
+      ok(kept.follows === picked.pointed[0] && Math.abs(kept.followOff) < 120,
+         'and the view walks with them while the arrow is up, rather than to where they were',
+         `${kept.follows} ${kept.followOff}px off centre`),
+      ok(gone.follows === null, 'and lets go of them when the arrow does',
+         `${gone.follows}`),
+      ok(open.crewRows.every(r => !r.includes('undefined')),
+         'and no row has a body the board cannot place',
+         JSON.stringify(open.crewRows))
+    ];
+  }],
+
+  // A board is seated by the height it was measured at, and buying something
+  // takes its row off the board -- so the height it was measured at is no
+  // longer the height it is. It has to measure itself again, or the sheet
+  // stands where a board of some other size would have stood.
+  ['a board that gains or loses a row is seated by its new size', async () => {
+    window.__reset();
+    await settle();
+    await hoverBench();
+    window.__give(400);
+    run(0.5);
+    await sleep(80);
+    const rows = shop().querySelectorAll('[data-key]').length;
+    const row = shop().querySelector('[data-key="auto"]');
+    row?.click();
+    run(0.5);
+    await sleep(80);
+    const fit = window.__boardFit();
+    const r = panel().getBoundingClientRect();
+    const left = shop().querySelectorAll('[data-key]').length;
+    return [
+      ok(!!row && left !== rows, 'buying a row changes what is on the board',
+         `${rows} -> ${left} rows`),
+      ok(Math.abs(fit.h - fit.realH) < 2 && Math.abs(fit.w - fit.realW) < 2,
+         'and the board is seated by the size it is now, not the size it was',
+         `seated ${fit.w}x${fit.h}, really ${fit.realW}x${fit.realH}`),
+      ok(r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth,
+         'so it is still inside the window', JSON.stringify(r))
+    ];
+  }],
+
+  // The problem, then the diagnosis, then the cure. The rain has to have come
+  // down once, and the lab has to have been told to watch the sky, before the
+  // yard will sell you anything to do about it.
+  ['the scrubbing house is offered after the rain and the readout', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(4, 4);
+    window.__grant({ cores: 9, spores: 40 });
+    window.__lab(true);
+    const has = () => { buildShopFromTest(); return !!shop().querySelector('[data-key="unlockscrub"]'); };
+
+    run(2);
+    const clean = has();
+
+    // it has rained, and nobody has looked into why
+    window.__air({ haze: state().smog.at + 1 });
+    runUntil(() => state().smog.rains > 0, 30);
+    run(20);
+    const rained = has();
+
+    // and now the lab is told to watch it
+    window.__research('labair');
+    const both = has();
+    const air = state().smog;
+    window.__crew(0, 0);
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+    return [
+      ok(!clean, 'a yard that has never been rained on is offered nothing', `${clean}`),
+      ok(!rained, 'and a yard that has been rained on but never looked into it, nothing either',
+         `${air.rains} rains, row ${rained}`),
+      ok(both, 'the readout is what opens it', `${both}`),
+      ok(air.rains > 0, 'and it took a real rain to get there', `${air.rains}`)
+    ];
+  }],
+
+  // Space stops the clock. Not a flag every system checks -- the clock simply
+  // does not advance, so nothing in the yard can tell the difference.
+  ['space holds the whole yard still', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    run(20);
+    const before = state();
+    dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', bubbles: true }));
+    const held = state();
+    // read now, not at the end: by then the test has pressed resume
+    const sheetUp = !document.getElementById('held').hidden;
+    run(30);
+    const still = state();
+    document.getElementById('resume').click();
+    const sheetGone = document.getElementById('held').hidden;
+    run(20);
     const after = state();
-
-    // and the next one is just a rock
-    window.__next();
-    let again = false;
-    for (let i = 0; i < 200; i++) { run(0.1); if (state().intro) again = true; }
-    const later = state();
-    window.__reset();
-    await sleep(300);
-    return [
-      ok(!before.reunionDone, 'it has not happened yet when the opening ends'),
-      ok(seen.join(',') === 'meet,part',
-         'the first rock brings them together, and then parts them', seen.join(',')),
-      ok(met && met.zoom > 1.9, 'the view comes back in for it',
-         met && `zoom ${met.zoom}`),
-      ok(met && met.buriedVisible, 'with the one who was under it out on the ground'),
-      ok(after.reunionDone && Math.abs(after.zoom - 0.833) < 0.01,
-         'then it lets go', `${after.zoom}`),
-      ok(after.boulderNo === before.boulderNo + 1 && after.rock > 0,
-         'and the next rock is down and is the next rock',
-         `${before.boulderNo} -> ${after.boulderNo}`),
-      ok(!again, 'and no rock after the first one ever stops the game again'),
-      ok(later.boulderNo === after.boulderNo + 1,
-         'they just keep coming', `${after.boulderNo} -> ${later.boulderNo}`)
-    ];
-  }],
-
-  // A grain that has cleared the whole hole lands on the ground beyond it -- a
-  // throw that went too far, and somebody has to go and get it. A grain already
-  // down inside the hole is a different thing entirely: the back of the hole is
-  // a wall, and it used to be let through and deposited on the surface outside,
-  // which is a grain climbing out of a hole.
-  ['the back of the hole is a wall to anything already in it', async () => {
-    window.__reset();
-    await sleep(400);
     window.__crew(0, 0);
-    window.__clearFloor();
-    const s = state();
-
-    for (let i = 0; i < 5; i++) window.__toss('shard', s.pitX + s.pitW + 60 + i * 12);
-    run(3);
-    const over = state();
-
-    window.__clearFloor();
-    window.__spend(state().stored);
-    window.__toss('shard', s.pitX + s.pitW - 12, s.groundY + 30);
-    run(3);
-    const inside = state();
-    window.__clearFloor();
     return [
-      ok(over.dustPastPit === 5 && over.shards === 0,
-         'a throw that clears the hole lies on the ground beyond it',
-         `${over.dustPastPit} past, ${over.shards} banked`),
-      ok(inside.dustPastPit === 0 && inside.shards === 1,
-         'and one already down the hole stays down it',
-         `${inside.dustPastPit} past, ${inside.shards} banked`)
-    ];
-  }],
-
-  // A core sits at the foot of the rock, not partway up it. Pinned to a fraction
-  // of the rock's full height it ended up hanging in the air over a worn one --
-  // the gang take the rock down from the top, so the last of it is a low mound.
-  ['the core sits at the foot of the rock', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(0, 0);
-    window.__clearFloor();
-    window.__jump(1);
-    run(1);
-    const s = state();
-    const foot = s.rockFoot;
-    const home = s.coreHome;
-
-    // and it comes out of the last of the rock rather than out of the air
-    window.__next();
-    runUntil(() => state().coreItem && state().coreItem.rest, 60);
-    const loose = state();
-    window.__clearFloor();
-    return [
-      ok(home && Math.abs(home.y + 18 - foot) <= 2,
-         'it stands on the foot of the rock itself',
-         `core bottom ${home && home.y + 18}, rock foot ${foot}`),
-      ok(home && Math.abs(home.x + 9 - s.rockX) <= 3,
-         'in the middle of it', `${home && home.x + 9} vs ${s.rockX}`),
-      ok(!!loose.coreItem, 'and it drops out when the last of the rock goes')
+      ok(held.paused && sheetUp,
+         'space holds it, and says so in the middle of the window',
+         `${held.paused}, ${sheetUp}`),
+      ok(still.workerPos.join() === held.workerPos.join(),
+         'and nobody moves a pixel while it is held'),
+      ok(!after.paused && sheetGone, 'and the resume button lets it go again',
+         `${after.paused}, ${sheetGone}`),
+      ok(after.workerPos.join() !== still.workerPos.join(),
+         'and everybody carries on from exactly where they stopped')
     ];
   }],
 
@@ -3451,7 +1799,7 @@ const TESTS = [
   // out of the station's patch of ground before it took you into the board.
   ['the board does not shut on the way to it', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__crew(2, 2);
     window.__give(400);
     run(2);
@@ -3501,7 +1849,7 @@ const TESTS = [
   // you click them, and without this none of them say so.
   ['the cursor says what a thing will do', async () => {
     window.__reset();
-    await sleep(400);
+    await settle();
     window.__crew(2, 2);
     window.__give(400);
     run(2);
@@ -3513,7 +1861,9 @@ const TESTS = [
     };
     const s0 = state();
     const r = s0.roster.find(x => x.job === 'miners');
-    const sky = at(s0.rockX, s0.groundY - 400);
+    // Below the ground line and well clear of everything: the sky is where the
+    // birds are, and a bird under the cursor is a thing you can click.
+    const sky = at(s0.rockX - 900, s0.groundY + 300);
     const rock = at(s0.rockX, s0.rockY);
     const bench = at(s0.benchX + 20, s0.groundY - 30);
     const minus = at(r.less[0], r.less[1]);
@@ -3553,37 +1903,6 @@ const TESTS = [
     ];
   }],
 
-  // Bodies are not saved -- the crew is a set of counts and the people are built
-  // from them -- so who was wearing what has to be worked out again on the way
-  // back in. It was not, and everybody walked back into the yard bare-headed
-  // with the stands piled high: a shift of errands to redo for nothing.
-  ['a hat is still on after a reload', async () => {
-    window.__reset();
-    await sleep(400);
-    window.__crew(2, 1);
-    window.__clearFloor();
-    window.__school({ breakers: 2, carters: 1 });
-    run(25);
-    const before = state();
-    window.__reload();
-    const after = state();
-    window.__crew(0, 0);
-    window.__school({ breakers: 0, carters: 0 });
-    run(20);
-    window.__clearFloor();
-    const at = (s, job) => s.roster.find(r => r.job === job);
-    return [
-      ok(before.trained === 'hmm', 'the yard is kitted before the reload',
-         `"${before.trained}"`),
-      ok(after.trained === 'hmm', 'and every one of them still has it after',
-         `"${after.trained}"`),
-      ok(at(after, 'miners').worn === 2 && at(after, 'miners').spareKit === 0,
-         'the rock counts two helmets worn and none waiting',
-         `${at(after, 'miners').worn} worn, ${at(after, 'miners').spareKit} waiting`),
-      ok(at(after, 'haulers').worn === 1, 'and the cart is still being pulled',
-         `${at(after, 'haulers').worn} worn`)
-    ];
-  }]
 ];
 
 // the quarry and the beds, opened without paying for them
@@ -3596,7 +1915,22 @@ function S_open() {
 // `__test('quarry')` runs only the groups whose name says quarry. The whole suite is
 // two minutes; one group is seconds, which is the difference between checking a
 // change and putting off checking it.
-export async function runTests(filter = '') {
+// `__test()` runs the lot. `__test('casino')` runs one corner of it. `__test('',
+// {i, n})` runs every nth group starting at i, which is how `tools/test.mjs`
+// splits the suite across as many browsers as the machine has room for.
+// Every group starts from a new game.
+//
+// It did not use to. The suite was one long narrative -- the opening first, and
+// a dozen groups afterwards leaning on the yard a neighbour had left behind --
+// which meant a group could only be run where it sat, a failure could belong to
+// any of the groups above it, and the whole thing could not be split across more
+// than a handful of browsers without breaking.
+//
+// A reset is half a second of game and costs nothing, and with it every group is
+// a check you can run on its own. `{ solo: false }` is kept for one purpose: to
+// watch what the suite used to do.
+export async function runTests(filter = '', shard = null, opts = {}) {
+  const solo = opts.solo !== false;
   const errs = [];
   const onErr = e => errs.push(String(e.message || e));
   addEventListener('error', onErr);
@@ -3606,9 +1940,21 @@ export async function runTests(filter = '') {
 
   const results = [];
   const timing = [];
-  const wanted = TESTS.filter(([name]) => !filter || name.toLowerCase().includes(filter.toLowerCase()));
+  // Cut into blocks, in file order, rather than dealt out round-robin.
+  //
+  // Round-robin balances the slow groups better and was tried first. It also
+  // shuffles the order, and the order is not decoration here: the opening runs
+  // first because it is the only group that can watch the game open, and a dozen
+  // others lean on the yard a neighbour left behind. Dealt out, sixteen checks
+  // failed that pass in sequence. A block keeps everybody next to the group they
+  // were written next to.
+  const all = TESTS.filter(([name]) =>
+    !filter || name.toLowerCase().includes(filter.toLowerCase()));
+  const per = shard ? Math.ceil(all.length / shard.n) : all.length;
+  const wanted = shard ? all.slice(shard.i * per, (shard.i + 1) * per) : all;
   for (const [name, fn] of wanted) {
     let checks;
+    if (solo) { window.__reset(); await settle(0.5); }
     const t0 = performance.now();
     try {
       checks = await fn();
@@ -3631,6 +1977,9 @@ export async function runTests(filter = '') {
     passed: results.length - failed.length,
     total: results.length,
     seconds: Math.round(timing.reduce((n, t) => n + t[1], 0) / 1000),
+    cost: { sleptMs: Math.round(SLEPT), sleeps: SLEEPS,
+            steppedMs: Math.round(STEPPED), frames: FRAMES, runs: RUNS,
+            statedMs: Math.round(STATED), states: STATES },
     slowest: timing.slice(0, 8).map(([n, ms]) => `${(ms / 1000).toFixed(1)}s ${n}`),
     failures: failed.map(f => `${f.group}: ${f.what}${f.detail ? ` — ${f.detail}` : ''}`),
     errors: errs

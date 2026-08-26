@@ -12,7 +12,8 @@
 // ground when the view scrolls. That is the only depth in the game that is not
 // a shade.
 
-import { P, ROCK_SKY, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
+import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
+         SMOG_TOP, SMOG_BAND,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S } from './state.js';
@@ -30,9 +31,17 @@ let nextBirds = 0;
 // and above the height the rock is allowed to reach, so nothing up here ever
 // crosses the works. A short window leaves a thin band; that is fine, it just
 // means fewer things fit in it.
+// Under the smog and above the rock. The haze lies along the very top of the
+// window, so the clouds start below it: they are weather that has nothing to do
+// with the works, and a pale cloud drawn through your own smoke would tie the two
+// together in the one place the game wants them kept apart.
 function band() {
-  const top = S.camY + P * 2;
-  const low = Math.max(top + P * 4, S.groundY - ROCK_SKY - P * 2);
+  const top = S.camY + (SMOG_TOP + SMOG_BAND + 2) * P;
+  // And deep enough to be a band. Pushing the top down under the haze squeezed
+  // what was left against the rock's reserved sky, and four cells of headroom is
+  // not somewhere clouds can sit at different heights. They are drawn behind the
+  // ground line, so a low one goes behind the works rather than across it.
+  const low = Math.max(top + P * 12, S.groundY - ROCK_SKY - P * 2);
   return { top, low };
 }
 
@@ -69,6 +78,7 @@ export function seedWeather() {
   nextBirds = 0;
   // start with a sky already full, rather than one that fills up while it is
   // being looked at
+  if (!CLOUDS_ON) return;
   for (let i = 0; i < CLOUDS_WANTED; i++) {
     const c = makeCloud(0);
     c.x = S.camX * c.far + (i + Math.random()) * (S.viewW / CLOUDS_WANTED) - c.w * P;
@@ -79,7 +89,7 @@ export function seedWeather() {
 export function stepWeather(now) {
   const wide = S.viewW + P * 40;               // the strip a cloud wraps around
 
-  while (CLOUDS.length < CLOUDS_WANTED) {
+  while (CLOUDS_ON && CLOUDS.length < CLOUDS_WANTED) {
     const c = makeCloud(0);
     c.x = S.camX * c.far - c.w * P - P * 4;    // in off the left, going right
     CLOUDS.push(c);

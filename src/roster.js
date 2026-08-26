@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, pit } from './state.js';
+import { S, quarry, farm, lab, scrub, pit } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
@@ -28,6 +28,8 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 // Each station and the job it stands for, in yard order, left to right, so the
 // roster reads the way the world does.
 export const POSTS = [
+  { key: 'scrubjob', job: 'scrubbers',
+    at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
   { key: 'labjob', job: 'labbers',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   { key: 'farmjob', job: 'farmhands',

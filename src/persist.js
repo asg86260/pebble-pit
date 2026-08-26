@@ -7,13 +7,15 @@
 
 import { P, CORE_CELL, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
+import { seedSmog } from './smog.js';
+import { showPanel } from './board.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, count, countDust, fillFlat, addGrain, isDust, recount } from './grid.js';
 import { blocked, resite } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
 import { setPitGrain, seedPitCores, wirePit } from './pit.js';
-import { syncWorkers, wearKitOnLoad } from './crew.js';
+import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
@@ -167,6 +169,10 @@ export function persist() {
     // what the sites have given up and nobody has carried in yet: it was never
     // counted, and a reload pocketing it would be the game taking it back
     crew: S.crew,
+    // The crew itself, not just how many of them there are. A body has a name
+    // and a record now, and rebuilding the yard from four counts would hand you
+    // back four strangers standing where your crew was.
+    who: S.workers.map(keepOf),
     miners: S.miners,
     schoolOpen: S.schoolOpen,
     breakers: S.breakers,
@@ -199,6 +205,14 @@ export function persist() {
     reunionDone: S.reunionDone,
     buried: S.buried,
     casinoOpen: S.casinoOpen,
+    scrubOpen: S.scrubOpen,
+    scrubbers: S.scrubbers,
+    recycler: S.recycler,
+    seenAir: S.seenAir,
+    haze: Math.round(S.haze),
+    rains: S.rains,
+    recycled: S.recycled,
+    muck: S.muck || [],
     pot: S.pot && { ...S.pot },
     chip: S.chip,
     mult: { ...S.mult },
@@ -368,6 +382,20 @@ export function restore() {
   S.pair = [];
   S.buried = s.buried ?? !!s.introDone;
   S.casinoOpen = !!s.casinoOpen;
+  S.scrubOpen = !!s.scrubOpen;
+  S.scrubbers = s.scrubbers || 0;
+  S.recycler = !!s.recycler;
+  S.seenAir = !!s.seenAir;
+  S.haze = s.haze || 0;
+  S.rains = s.rains || 0;
+  S.recycled = s.recycled || 0;
+  S.scrubBank = 0;
+  // The rain itself is not saved. It is nine seconds long and it is weather:
+  // coming back to a shower that started before you closed the tab is a shower
+  // with no beginning. What it left behind is saved, because that is the part
+  // that is somebody's job.
+  S.raining = false;
+  S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.
@@ -384,8 +412,9 @@ export function restore() {
   // a ripe bed keeps the spore that grew on it, tone and all
   if (Array.isArray(s.bedTone)) S.bedTone = s.bedTone.map(v => +v || 0);
   resite();                    // the cut is as deep and the plot as wide as it was
-  syncWorkers();               // the crew, from the counts
-  wearKitOnLoad();             // still wearing what they were wearing
+  restoreCrew(s.who);          // the same people, where they were, with what they have done
+  syncWorkers();               // and anybody the counts say is missing
+  if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
   if (!S.introDone) startIntro();
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
@@ -393,8 +422,23 @@ export function restore() {
   S.coreBuried = boulderAlive() || !(s.coreLoose || S.heldCore);
 }
 
+// The crew, put back. Each body is made by its own factory -- so it has every
+// field its job expects, whatever has changed since the save was written -- and
+// then handed back the things that are *it* rather than its job.
+function restoreCrew(who) {
+  S.workers = [];
+  if (!Array.isArray(who)) return;
+  for (const k of who) {
+    const make = FACTORY[k.type];
+    if (!make) continue;
+    S.workers.push(wearRecord(Object.assign(make(), newRecord()), k));
+  }
+}
+
 export function reset() {
   clear();
+  S.paused = false;                // a new game is not a held one
+  showPanel(null);                 // nor one with the last game's board still up
   // the curtains are somebody's, and there is nobody here now
   S.shutters = [];
   S.shutterAt = 0;
@@ -448,6 +492,17 @@ export function reset() {
   S.labOpen = false;
   S.labBoardOpen = false;
   S.casinoOpen = false;
+  S.scrubOpen = false;
+  S.scrubbers = 0;
+  S.recycler = false;
+  S.seenAir = false;
+  S.haze = 0;
+  S.raining = false;
+  S.rains = 0;
+  S.recycled = 0;
+  S.scrubBank = 0;
+  S.muck = [];
+  seedSmog();
   S.casinoBoardOpen = false;
   S.pot = null;
   S.spinUntil = 0;

@@ -275,6 +275,92 @@ says whether anything is happening.
 
 ## Crew
 
+**Everybody is somebody.** A body used to be a slot: the crew was four counts, people were made out
+of them when people were needed, and coming back to a saved game handed you a fresh set standing
+where your crew had been. That was deliberate for a long time — *a job is a count and a body is
+whichever body happens to be doing it* — and it is what lets a hat belong to a station rather than
+to a head.
+
+It is not right any more. The game **opens on two squares who are somebody**, and a crew of
+interchangeable slots underneath that story is the yard disagreeing with its own first minute. So a
+body has a name, an age, and a record of what it has shifted: rock taken, finds brought up, grains
+tipped into the hole, and where it has spent its time. The crew is saved as *people* rather than as
+four numbers.
+
+**None of it does anything.** There is no number on that card that feeds a rate, and there never
+will be: the moment one does, the crew stop being people and become a spreadsheet with faces. It is
+there so that the four on the rock are four people rather than the number four. Hover one and it
+says who it is.
+
+**And you can pick one up.** The right button, held: lift a body, carry it, drop it somewhere. It
+does not put them on a job and it does not take them off one — whoever you drop walks back to
+whatever they were doing, from wherever you left them. Dropping one down the far end of the yard is
+a body with a long walk ahead of it, which is the entire joke and the entire point.
+
+**Let go of, they fall.** Not lowered on a wire: the same gravity the chips and the boulder use,
+accelerating, landing on whatever is under them — which over the rock means *on* the rock, at the
+height of the layer they came down over, not on the ground beneath it. And if they land on their own station they are simply
+back at work that instant — no walk, because there is nowhere to walk to. Putting a miner back on
+the rock should feel like putting a miner back on the rock.
+
+While one is held its card stays up, so you can read who you are holding and what is in their
+hands. The rows are padded to a column so the whole thing reads as a table rather than a paragraph:
+
+| | |
+|---|---|
+| age | how long on the payroll |
+| favorite | what it would say it does — the job it has spent the most time on |
+| mined | pixels taken off the rock |
+| quarried | shards brought up out of the cut |
+| farmed | spores taken off the beds |
+| stored | grains put in the hole |
+| carrying | what is in its hands right now, kind by kind — only on the ones whose job is carrying |
+
+Three counters, not one "found", because the three sites are three different jobs and a body that
+has done all of them should be able to show you which one it is good at. `carrying` uses the same
+marks as the counter, so the card and the counter say the same thing the same way — and it is
+left off a miner or a farmhand entirely, because their hands are empty between swings and a row
+that says "nothing" every time you read it is a row that trains you to stop reading.
+
+A load is not one thing. A hauler that swept the yard is carrying dust and whatever the sites
+turned up in it, so the row counts each kind separately and names it by its own mark: `■ 12  ▲ 2`.
+Rolling that to one number lost the shard in the middle of the load, which is the one thing on
+that row worth spotting.
+
+## The house board
+
+The house is the one board that sells nothing. Stand at it and it lists everybody who lives there,
+one row each: their name, and where that body is standing **right now** — on the rock, at the pit,
+in the quarry, at the farm plots, in the lab, at home, on a break, on the way, in your hand.
+Hovering a row gives that body its whole card; clicking one takes the view to them, because the
+thing you want after reading a name off a list is to go and look at them — **and puts an arrow over
+their head for a few seconds**, because the view on its own is not an answer. A dozen bodies of the
+same size doing the same thing, and the one you asked for somewhere among them: the arrow is what
+makes that a name you can find. It bobs, so it reads as put there rather than drawn on, and it goes
+away on its own before you have stopped looking for it.
+
+Standing on a place beats what you are doing on it: a miner between swings, one stood about on a
+break, one you have just put down — all of them are *on the rock*, because that is the answer to
+"where is it". Carrying is the exception, since a hauler is at home everywhere; for that one the
+doing is the only thing that says anything.
+
+The right button because the left one is the whole game — swinging, sweeping, catching — and a body
+is eighteen pixels walking about on top of the dust you are trying to sweep. Anything competing for
+a left-press competes with the thing you do most; a press-and-hold is no better, because they walk.
+
+**Space holds the yard.** The clock stops advancing — nothing is saved and nothing is skipped, so
+it comes back exactly where it was left — and a small sheet appears in the middle of the window
+saying **paused**, with a **resume** button under it.
+
+The middle, rather than a corner: the thing it is about is the whole window, so it says so where
+you are already looking. It is the only overlay in the game; everything else is either drawn on
+the ground or hangs off a building. Same ink, same type, same border as the boards, because it is
+a sheet like the others — just put somewhere else.
+
+Held, the canvas answers to nothing at all: no swinging, no sweeping, no picking anybody up. A
+paused game you can still mine is not paused. The button is there because space is not discoverable
+and somebody who came back to a stopped screen needs a way out of it that is visible.
+
 **There is one kind of body.** You hire a worker, and where it works is a separate question you
 can answer again whenever you like. A worker with no job carries dust to the pit, so hauling is
 not a job you hire into "+D+" it is what the ones you have not put anywhere are already doing.
@@ -487,10 +573,8 @@ people, and the two read differently for being made in different places — whic
 bench is not eleven headings long. The school stands between the quarry's spoil and the crew's own
 front doors, the stretch everybody walks twice a shift.
 
-Nobody in this yard has a name — a job is a count and a body is whichever body happens to be doing
-it — so a trade is not something a person carries around either. It is **the first n of the bodies
-on that job**, worked out in one place. Move somebody off the rock and the hat goes to whoever is
-left, which is what the count model already means everywhere else.
+A trade is not something a person carries around — it is **the first n of the bodies on that job**,
+worked out in one place. Move somebody off the rock and the hat goes to whoever is left.
 
 ## Knocking off
 
@@ -696,6 +780,11 @@ Boulder *n* is **n sheets thick** (capped at six) and a little wider than the la
 a longer dig. You are mining into the rock, not around it: a hit takes one sheet off the front at
 that spot, and a cell holds how much rock is still stacked there.
 
+**Your own swing lands on top too.** A click takes the crest off at the nearest high point to
+where you aimed, not the cell under the cursor, and a held swing does the same. You are aiming at
+the rock, not at a pixel of it — and a rock is worked from the top down whether the crew are doing
+it or you are.
+
 The rock is a **hill**, not a disc: a heightfield with a rough crest, sitting flat on the ground
 with its foot a couple of cells under the ground line so it reads as planted rather than laid.
 It is thickest at its base and through the middle, thinning towards the skyline, so the crest
@@ -707,6 +796,11 @@ next row is exposed underneath. It turns at the ends of the layer and before wal
 and one that finds itself off the layer — because the gang took the row down around it — climbs
 back to it. Drillers work the flanks instead, parked at the foot eating a notch sideways in.
 Nobody orbits anything.
+
+The climb runs from wherever the body actually is, not from wherever it is going. That one detail
+is the whole thing: seeded the other way, a miner who walked to the foot of the rock is on top of
+it the frame it arrives, and a miner dropped from your hand is on top of it before it has landed.
+Put on the rock, sent to the rock, or fallen onto the rock, it goes up the same way.
 
 Spoil is **aimed**, not scattered, and it all goes **one way**: to the right, into the strip of
 ground that belongs to the rock, launched on the one arc that gets there. The pop is sized to the
@@ -815,9 +909,286 @@ it needs is still in the code and the dev panel has a switch that puts it back s
 at. If it returns it will need a reason to be there — a place people go, or something worth walking
 out for.)*
 
-*(An earlier version of this list said "a third currency". There are five now
-— dust, cores, shards, spores — and each has exactly one job, which is the rule
-that actually matters. The lab is the only place a multiplier lives.)*
+*(An earlier version of this list also said "a third currency". The rule was never the count — it
+is that each one has exactly one job, and that the lab is the only place a multiplier lives. Red,
+below, is a resource with a job: it buys a colour. That is why it is allowed.)*
+
+## The paint store (long term, not built)
+
+Written down so it does not get lost. Three parts, in order of how much they change:
+
+**A third resource, red.** And the farm's green becomes **yellow**, so the three
+ground resources are the three primaries: blue, yellow, red. Where red comes from is
+open — a third site, or something the quarry starts turning up deep enough down.
+
+**A paint store.** A place on the lot with three buckets standing in front of it, one
+full of each. It is the first building whose output is not a number.
+
+**Painting a body.** You pick a worker up (the crew already lift, and already keep
+their own records) and bring them to the store. The first thought was dipping: walk
+them into a tank and they come out that colour, dip again for a mix. The better one,
+and the one to build, is a mixing board: a small UI where you spend blue, yellow and
+red against each other until the swatch is the colour you want, confirm it, and *that*
+is what goes into the tank the body is dipped in. The cost of a recolour is exactly
+the amounts of each resource that went into the mix — a deep orange costs a lot of
+red and some yellow, and a pale anything is cheap, because it is mostly nothing.
+
+Why it is worth doing: this yard has no cosmetics at all, and no reason to care about
+one body over another beyond the records it keeps. A crew you have painted is a crew
+you can tell apart at a glance, which is the same thing the names started. It also
+gives the coloured resources a sink that is not a multiplier, which is the one shape
+of spending the lab does not already cover.
+
+Open: whether paint survives a body leaving the yard, and whether it should tint the
+hat as well or only the body.
+
+## The air
+
+Every grain taken out of the ground puts a mote of it into the sky — off the rock, up out of the
+cut, off a plot being turned. Nothing carries them away. They gather, the band over the yard
+thickens, and past a point the sky gives the lot back at once.
+
+This is the only thing in the game that makes the works **worse**, and it is caused by the one
+thing you do most. That is the point of it: the yard should not be a machine that only ever goes up.
+
+Everything about it happens in cells you can watch, and the chain is unbroken from the swing to the
+sky.
+
+**A swing puts up a puff.** Every hit on the rock, every load out of the cut, every plot turned
+sends a cell of grey off *the place it happened*, climbing, wandering, thinning as it goes, until it
+reaches the band and is part of what is up there. That is the whole connection between what the crew
+do and what is overhead. Without it the sky is weather and the yard is a factory and the one has
+nothing to do with the other — a number going up in a file is not something you can see.
+
+**The sky is the motes.** There is no cloud sprite anywhere and no cloud shape. What is up there is
+the dust you put there: every mote climbed off a swing, arrived, and stayed, and the sky looks like
+whatever those motes have done. That is the only honest version — everything else in this yard is
+grains you can count, and a painted cloud over the top would be the one thing in the game that was a
+picture of something rather than the thing itself. It is also the only version with no shelves and
+no right angles in it, because nobody drew any.
+
+**They find each other.** A mote leans towards wherever there are already motes, so the sky gathers
+into banks that were never placed — they are only where the motes ended up. Two details make that
+work:
+
+- The pull reads a **smoothed density over a span**, not the bin either side. At a handful of motes
+  per bin the difference between two neighbours is a coin flip; a mote following that changes its
+  mind every few frames and random-walks itself *apart*. Over a wide span it is following the shape
+  of the sky instead of the luck of two bins.
+- A patch that is **full spills outward**. Attraction alone is winner-take-all — the biggest clump
+  pulls hardest, so it grows fastest, so it pulls harder, and the whole sky ends up in a few knots
+  with nothing between them. Somewhere being full is what stops that, and what settles out is a sky
+  of many middling patches.
+
+Measured over half a minute at half a sky: the fullest patch goes from **2.4× to 11× the even
+spread**, and the number of places with anything in them falls from **164 to 33**.
+
+They keep to a band at the **top of the window**, because smog gathers over your head rather than at
+eye level with the rock, and the band follows the window so what is up there stays up there.
+
+### The rain
+
+It comes down as **individual cells**, falling under gravity out of the clouds, the same way every
+other grain in this game falls — not a curtain drawn over the window.
+
+**The rain has no clock, and what falls is the sky itself.** A mote drops out of the band, comes down
+under gravity and lands as muck — the same mote you watched climb off a swing a minute ago. The
+banks overhead thin as it goes because there is visibly less of them left up there, and the rain
+stops when there is nothing left to fall. Not a timer expiring and a flag flipping. Nothing in this
+yard pops in or out; that goes for the thing that made the mess as much as for anything else.
+
+The house works the same way: a staffed one takes motes **out of the sky nearest to it**, one at a
+time, and they stream to its intake. One of them was a swing on the rock a minute ago and is about
+to be a grain of dust on the ground beside the house. Four lists — climbing, up there, coming down,
+being pulled in — and one kind of thing on four errands. Nothing is ever a new effect standing in
+for a thing happening. It lays a **full layer over
+the whole map**, an inch or two deep everywhere, because a shower you have to go looking for is not
+a thing that happened to your works.
+
+What it leaves is kept as **one depth per column of the world**, stacked on whatever that column
+has — the ground, the floor of the cut, or the rock itself. The layer *is* the record: what is
+buried, what is in the way, and what there is to shift are all read off it, so there is no number
+anywhere that can disagree with the picture. Each column's top cell is drawn a shade darker, so two
+deep reads as two rather than as one taller one.
+
+It lands as **muck** — grey, and worth exactly nothing. Where it lands is the whole cost:
+
+| | |
+|---|---|
+| on the rock | the working face is buried; a swing goes into the muck before it goes into the stone |
+| in the cut | the floor silts up; a dig brings muck up before it brings a shard up |
+| over the plots | the crop is smothered; a plot is dug out before it is picked |
+| over the yard | mess, which the crew drop everything to shift |
+
+**Clearing up comes first.** A body with empty hands walks to the nearest muck and shovels it,
+ahead of any dust waiting to be fetched. It was the other way round at first — muck was what you did
+when you had nothing else on — and that meant it never got done: there is always dust to fetch, so
+the yard stayed under an inch of muck while the crew walked over it carrying grains. The dust is not
+going anywhere and the mess is in everybody's way. The one exception is hands already full: you
+finish the trip you are on, because putting a load down to pick up a shovel is a load on the floor
+and a trip wasted.
+
+**You lose the shift, not the dust.** Nothing is taken out of the counter and nothing is added to
+it: the crew spend their time putting the yard back exactly the way it was. Muck is never carried
+to the hole, never banked, and never counted — it is shifted to the edge and it is gone. That is
+what stops the punishment from being a reward with extra steps, which is what a mapful of free
+sweepable dust would have been.
+
+**Two things tell it apart, doing two different jobs.**
+
+**The colour says it is a different substance.** A drab earth brown, beside the cut's cold blue and
+the beds' green — and deliberately the dull one, because those two are saturated for being worth
+something and this is worth nothing. It reads as spoil rather than as a resource you have not met
+yet.
+
+It was grey for a while, on a rule that turned out not to be true: that the yard has no colour
+outside the resource marks. There is blue in the cut, green on the beds, tone in the clouds and the
+birds and the curtains. And grey cost more than the rule saved — a pile of dust here is a block of
+grey cells, so grey muck lying on a pile read as more of the pile, which is the one thing it must
+never read as.
+
+It is drawn solid, with the top course a shade darker so the layer has a skin and a depth of two
+reads as two. It was holed for a while — every other cell left out, so it read as loose — and two
+things saying one thing is one of them too many: the brown already says this is not the pile it is
+lying on, and the gaps only made a straightforward layer fussy.
+
+**In the hole it lies on the dust.** Muck lies on top of whatever it fell on, everywhere, and the
+pit is not an exception because the top of it happens to be lower than the ground. It used to land
+on the ground line, which over an open pit is thin air — a grey lid across the mouth with the hole
+visible underneath. It is *on* the pile and not *in* it: nothing about it counts against what the
+hole holds.
+
+**And the crew go down after it — and out the other side.** There is a ladder in each wall of the
+pit, the way the quarry has one in its near corner. A body walks to the head of it, climbs down hand over hand, walks the
+top of the pile to the patch it came for — the surface is not level, so it walks the shape of it the
+way a quarrier walks the floor of the cut — shovels, and climbs back out the way it came in.
+
+It was reached from the lip first, arm out over the mouth, on the grounds that the lip is where a
+hauler already stands to tip a load in. It worked and it read as a fudge: somebody shovelling a
+thing eight cells away and two deep without going near it. Every other hole in this yard is one you
+go down.
+
+**Two ladders, because the hole has two sides and there is ground beyond it.** With one the pit was
+a dead end: muck past the far wall was somewhere the crew could see and never reach, because the lip
+clamp pins them this side of the mouth. With one in each wall the pit stops being a wall and becomes
+a way through — down one side, across the top of the pile, up the other.
+
+And a body out there with nothing left to do **comes home on its own**. The crossing only ever ran
+while there was muck to chase, so the last one to finish on the far side stood on ground the clamp
+would not let it leave, for good. Nothing to go for means going home, and home is always the near
+side, because that is where the yard is.
+
+Two rules bend for a body on that ladder, and both of them have to. The **lip clamp** — the line
+that stops everybody walking into the hole — lets it past, because the hole is where dust goes and
+not where a body with a load in its hands walks, and this one has neither. That clamp has two sides
+now: written as one wall it dragged a body that had climbed out the far ladder straight back across
+the mouth, which is the clamp undoing the only reason anybody went down there. And the **rock dodge**
+does not apply, because a body inside the pit is not standing anywhere a rock can land. That second
+one was found the hard way: with the dodge running first, the climb pushed the body two pixels down
+the ladder and the dodge lifted it two back onto the ground line, and the pair of them held it at
+the top of the ladder for ever, taking turns. Down the hole is checked before anything else now — a
+body on a ladder can only go up or down, so nothing else has an opinion worth hearing.
+
+The building is a **hood over a rack of pumps**: four courses of black wall flaring open at the
+haze, stepping a cell out a course so the thing is widest where it meets the air and narrowest
+where it stands, and the taper closing the whole way — eleven cells of sky, nine, seven, five, then
+three and one cut white out of the tower's head. Everything else on this ground is the other way
+up: the settlement steps back as it rises, the lab's chimney is a fifth of the body under it, the
+casino is the same block all the way to the roof. A shape that opens upward is a shape that takes
+from up there, and there is only one of them. The first version was a body and a chimney, which is
+exactly what the lab is; the second was a wide hole with something turning in it, which is the
+casino a few dozen cells along the same walk; the third cut the mouth as a notch that narrowed
+twice and stopped, which is a bevelled roof. **The mouth is mass, and it closes whether anybody is
+in there or not** — what a building is cannot depend on whether it is working.
+
+What it is *doing* is the pumps: four slots down the front of the tower with a plunger riding in
+each, **one plunger to a body**, up to four. A pump at rest sits at the bottom of its stroke, where
+a hand pump stands when nobody is on it, so an idle house is four plain slots and a working one has
+blocks hanging in the air partway up them — and nothing else in this yard hangs in the air except
+the marks. It is a count rather than a speed on purpose: a filter bed running courses at 1.6 a
+second against 3.1 is a pattern nobody can read a number off, and four pumps against one is a
+number you can say out loud from the far end of the ground. It is the same arithmetic as one lit
+window a body in the settlement. The stroke is stepped in the sim, not in the draw loop, so an
+empty house adds nothing and the next body picks the pumps up where the last one left them.
+
+The house stands **past the lab**, at the quiet end of the walk: what it does is about the sky over
+the whole yard rather than about any one site, so it does not belong among the places that dig — and
+the walk out to it is the last of the walks, which is what the cores have been buying all along. It
+carries its own roster under it like every other station.
+
+**The problem, then the diagnosis, then the cure.** The scrubbing house is not offered until two
+things have happened, in that order:
+
+1. **It has rained at least once.** Until it has come down, the haze overhead is something you have
+   noticed and not something that has cost you anything — and a cure sold before the disease is a
+   cure for a number.
+2. **The lab has been told to watch the sky.** That research is the one piece in the lab that is not
+   a multiplier: it reads how fast the yard fouls, how fast a house would clean, and how long you
+   have. Making it the key to the building means you buy the house knowing what it has to keep up
+   with, and it means the answer to a bad sky is a walk to the lab first — which is what the lab
+   is for.
+
+Neither is a threshold quietly passing somewhere. It was a share of the way to a downpour once, and
+at a quarter that was twenty minutes of honest work: a quarter of an hour watching the sky dirty
+with nothing on any board about it, which reads as the game not having noticed.
+
+**It has to happen inside a sitting.** The first rain is about twenty minutes into a working crew,
+and it comes sooner the bigger the crew — a bigger works fouls faster, so the sky is a thing that
+gets worse as you *grow* rather than a timer running underneath you. Fouling was a third of that
+rate for a while, which put the first rain an hour and a half out: a cost nobody meets is not a
+cost.
+
+### The scrubbing house
+
+The answer is a building with somebody in it. An empty one is a shed — visibly, with nothing moving
+in its slots — and it does nothing at all. Put a body in it and it starts pulling the clouds apart:
+a thread of cells runs out of the nearest cloud and down the funnel in its top, which is the only
+building in the yard that takes something in above the ground, and a plunger starts working in the
+first of the four slots. More bodies pull harder, and each of them is another pump running.
+
+So the cost of clean air is **bodies not on the rock**, and that is a decision you can take back
+whenever you like — the same bargain every other station makes. An upgrade that quietly cleaned the
+sky would have been a number you buy once and never think about again.
+
+Then the **recycler** replaces the filters, and what the same crew catch comes back as dust. Same
+building, same bodies, and the tax has become a wage. It shows as a **chute at the foot** — a mouth
+cut through the bottom of the near wall and a tongue of two cells out under it — because it belongs
+at the end of the process rather than at the start of it, and because a post standing out of a roof
+is the lab's flue and the settlement's chimney, and in this yard that means something going *out*
+into the sky. This one means the opposite. It pays in *real grains* — they drop off the end of the
+tongue and land on the ground beside the house, and the crew sweep them like anything else lying
+about. Not a number going up: every grain in this game is a grain somebody has to carry.
+
+### Watching it
+
+**One number, on the scrubbing house's board: the pollution rate.** What the yard puts into the sky
+less what the house takes out, a minute. Positive and the sky is filling, negative and it is
+emptying, and that is the whole of it.
+
+It was four numbers for a while — how much is up there against the threshold, the two rates apart,
+and a countdown to the next rain. Each was true and only one was a decision. How much is up there is
+not something you can act on: you cannot spend it, move it or hold it. A countdown is worse than
+useless, because it invites you to wait until the number is small instead of dealing with the thing
+making it. And the two rates on separate rows made you do a subtraction the game can do for you —
+the answer to that subtraction is the only question anybody actually has, which is whether they are
+winning.
+
+It lives on the scrubbing house alone, not on the lab as well. The one thing you do about this
+number is put bodies in that house, and a reading you can act on belongs where you act on it.
+
+**The fouling rate is counted at the source**, not worked back out of the total. Inferred, it was
+the change in the haze plus what the house had taken out, floored at nought so a downpour did not
+read as the yard un-mining a rock. Every part of that is defensible and the whole is wrong the
+moment the house starts winning: the haze falls, the floor clamps the difference to nought, and what
+is left is exactly the scrubbing rate — so fouling always read *equal* to scrubbing, the two
+cancelled, and the one number this board exists to show sat at nought however many bodies you moved.
+Counted where it is made there is nothing to infer and nothing to correct for.
+
+
+
+The lab sells one piece of research that is not a multiplier: **watch the sky**. It turns the
+reading on. Playing the house against the rock without it is playing blind, so it is the piece that
+turns a guess into a decision — and it is the key to the scrubbing house itself.
 
 ## The counter
 
@@ -856,6 +1227,21 @@ what it pays. That rule is why the lab sells rates and never yields.
 *(There was a target of a million dust. It is parked, not cancelled: `PIT_GRAINS` in config.js
 still holds the machinery that would let the pile settle to a finer grain and hold one. See
 **The pit**.)*
+
+## The suite
+
+`node tools/headless.mjs` runs the lot; `node tools/headless.mjs --only casino` runs just the
+groups whose name contains that, which is how you check one corner without paying for the whole
+thing. The result names the eight slowest groups, so the next thing worth cutting is always in
+the output of the last run.
+
+Two costs, and only one of them is waste. **Simulated frames** are cheap each and enormous in bulk:
+a `run(400)` is twenty-four thousand of them, and most of those are spent after whatever the check
+is about has already happened. Those become `runUntil(...)` — run until the hole is full, until the
+crew have knocked off — and stop there. **Real sleeps** look like the obvious waste and are not:
+dust in flight, the counter tween, the board sliding and the save's debounce all hang off real
+frames, and a check that reads them early reads them mid-animation. Capping every sleep at 60ms was
+tried; it cost ten checks and saved less than the frame cuts did.
 
 ## Filters (dev only)
 

@@ -7,7 +7,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "dev:test": "vite --port 5184",
-    "test": "node tools/headless.mjs"
+    "test": "node --test test/*.test.mjs",
+    "test:watch": "node --test --watch test/*.test.mjs",
+    "test:browser": "node tools/headless.mjs",
+    "test:browser:par": "node tools/test.mjs",
+    "test:browser:serial": "node tools/headless.mjs --serial",
+    "test:all": "node --test test/*.test.mjs && node tools/headless.mjs"
   },
   "devDependencies": {
     "vite": "^7.1.3"

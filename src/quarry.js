@@ -11,6 +11,8 @@
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
+import { foul, throughCutMuck } from './smog.js';
+import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY, groundAt } from './world.js';
 import { mult } from './lab.js';
@@ -231,7 +233,15 @@ export function stepQuarrier(w, now) {
   }
 
   if (now >= w.next) {
-    if (w.next) tossOut(w.x + WORKER / 2, w.y + WORKER);
+    if (w.next) {
+      // silt first: the cut fills from the top and has to come out before
+      // anything under it does
+      if (throughCutMuck(1) > 0) {
+        tossOut(w.x + WORKER / 2, w.y + WORKER);
+        w.quarried = (w.quarried || 0) + 1;
+        foul(QUARRY_FOUL, w.x + WORKER / 2, w.y);
+      }
+    }
     w.lunge = 1;
     w.swingAt = now + QUARRY_SWING;
     // a blaster brings one up twice as often: the face comes down in one go

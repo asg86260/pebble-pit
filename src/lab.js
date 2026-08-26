@@ -28,6 +28,10 @@ export const mult = k =>
   Math.pow(STEP, S.mult[k] || 0);
 
 // what a piece of research asks of the crew, in worker-seconds
+// Anything without a field of its own -- the readout is the only one -- is a
+// plain piece of work at the base effort. Without this it asked for `S.mult`
+// under `undefined`, which is NaN worker-seconds: a piece of research that could
+// never be finished and never even properly started.
 export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, S.mult[FIELD[key]] || 0));
 
 const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
@@ -79,15 +83,26 @@ function letIdleGo() {
 
 // One frame of it. Nothing happens without bodies in the lab -- that is the
 // whole of the mechanic, and why the row says nothing is moving when it is not.
+// What a finished piece of research does. Its own function because there are two
+// ways to get here -- the crew working it through, and a check that wants the
+// thing it unlocks without the worker-seconds -- and a rule about what a piece of
+// research *is* should not have two copies that can disagree.
+export function finish(key) {
+  // the one piece that is not a multiplier finishes by turning a readout on
+  if (key === 'labair') S.seenAir = true;
+  else S.mult[FIELD[key]]++;
+  S.research = null;
+  S.dirty = true;
+}
+
 export function stepLab(dt) {
   letIdleGo();
   const on = inLab();
   if (!S.research || !on) return;
   S.research.done += on * LAB_EFFORT * (dt / 1000);
   if (S.research.done < workFor(S.research.key)) return;
-  const key = S.research.key;
-  S.mult[FIELD[key]]++;
-  S.research = null;
+  const key = S.research.key;      // read before `finish` clears the slot
+  finish(key);
   S.labDone = key;                 // a mark over the lab until somebody looks
   cough();                         // and one last plume off the chimney
   S.dirty = true;
@@ -213,9 +228,27 @@ export const LAB_UPGRADES = [
     buy: () => begin('labcave'),
     show: () => true
   },
+  // Not a multiplier: a pair of eyes. Everything else the lab sells makes a
+  // number bigger; this makes a number *visible*. The sky fills whether you can
+  // read it or not, and playing the scrubbing house against the rock without
+  // knowing either rate is playing it blind -- so the readout is the piece of
+  // research that turns a guess into a decision.
+  {
+    key: 'labair',
+    name: 'watch the sky',
+    // What it tells you, and not what it leads to. A row that names the building
+    // it unlocks is the game handing you the end of the thread: the point of this
+    // one is that you buy it because the sky is filling and you want to know how
+    // fast, and what that knowledge is worth is a thing to find out.
+    note: () => 'tells you whether the sky is filling or emptying',
+    cost: () => 9,
+    currency: 'spore',
+    buy: () => begin('labair'),
+    show: () => !S.seenAir
+  },
   {
     key: 'labtend',
-    name: 'bed speed',
+    name: 'plot speed',
     from: () => `x${mult('tend').toFixed(2)}`,
     to: () => `x${(mult('tend') * STEP).toFixed(2)}`,
     cost: () => Math.round(4 * Math.pow(1.9, S.mult.tend)),
@@ -223,13 +256,13 @@ export const LAB_UPGRADES = [
     buy: () => begin('labtend'),
     show: () => true
   }
-
 ];
 
 export const LAB_SECTIONS = [
   { title: 'the crew', keys: ['labcrew'] },
   { title: 'the work', keys: ['labswing', 'labhaul'] },
-  { title: 'the ground', keys: ['labcave', 'labtend'] }
+  { title: 'the ground', keys: ['labcave', 'labtend'] },
+  { title: 'the air', keys: ['labair'] }
 ];
 
 // --- the books --------------------------------------------------------------

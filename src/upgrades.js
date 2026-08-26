@@ -10,7 +10,8 @@ import {
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, CASINO_CORES,
   QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE
 } from './config.js';
-import { S, quarry, farm, lab, school, casino } from './state.js';
+import { scrubCost } from './scrubhouse.js';
+import { S, quarry, farm, lab, school, casino, scrub } from './state.js';
 import { spend, takeCoreCells, digPit, digsLeft, digCost, capacityAt, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
@@ -79,7 +80,7 @@ export const rateText = lvl => num(mineRate(lvl));
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -104,7 +105,8 @@ export const TRADE_OF = { miners: 'breakers', haulers: 'carters',
 // now rather than off a number, because a hat is a thing somebody walked over
 // and picked up: see crew.js.
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', labber: 'labbers' };
+                        farmhand: 'farmhands', labber: 'labbers',
+                        scrubber: 'scrubbers' };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
@@ -385,6 +387,38 @@ export const UPGRADES = [
     buy: () => { S.schoolOpen = true; lookAt(school.x + school.w / 2); },
     show: () => S.seenShard && !S.schoolOpen
   },
+  // The one building that undoes something instead of making something. It is
+  // offered the first time the sky is visibly dirty rather than on a schedule:
+  // the haze is the advertisement, and a row selling you a cure for a thing you
+  // have not noticed yet is a row that means nothing.
+  {
+    key: 'unlockscrub',
+    name: 'build the scrubbing house',
+    note: () => 'somebody in it pulls the haze back out of the sky, before it falls again',
+    cost: () => scrubCost(),
+    currency: 'core',
+    buy: () => { S.scrubOpen = true; lookAt(scrub.x + scrub.w / 2); },
+    // Offered after the first rain, and after the lab has been told to watch the
+    // sky. Two things have to have happened, in that order, and neither of them
+    // is a threshold quietly passing somewhere.
+    //
+    // The rain is the problem arriving. Until it has come down once, the haze
+    // overhead is a thing you have noticed and not a thing that has cost you
+    // anything, and a cure sold before the disease is a cure for a number.
+    //
+    // The readout is you going and looking into it. It is the one piece of
+    // research in the lab that is not a multiplier: it tells you how fast the yard
+    // fouls, how fast a house would clean, and how long you have. Making it the
+    // key to the building means you buy the house knowing what it has to keep up
+    // with -- and it means the answer to a bad sky is a walk to the lab first,
+    // which is what the lab is for.
+    //
+    // It was a share of the way to a downpour before, which is a threshold nobody
+    // can see passing, and at a quarter it was twenty minutes of honest work: a
+    // quarter of an hour watching the sky dirty with nothing on any board about
+    // it, which reads as the game not having noticed.
+    show: () => !S.scrubOpen && S.rains > 0 && S.seenAir
+  },
   // The last thing on the ground, and the only one that makes nothing. It is
   // the far end of the walk on purpose, and it is the last core you spend.
   {
@@ -468,7 +502,8 @@ export const SECTIONS = [
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
   { title: 'the pit', keys: ['dig'] },
-  { title: 'the training grounds', keys: ['unlockschool'] }
+  { title: 'the training grounds', keys: ['unlockschool'] },
+  { title: 'the scrubbing house', keys: ['unlockscrub'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built
