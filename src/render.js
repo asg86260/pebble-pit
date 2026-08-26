@@ -19,6 +19,7 @@ import { underground, quarryCut, ladder } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
+import { HAZE_CA } from './config.js';
 import { SKY, DROPS, CAUGHT, PUFFS, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
@@ -489,15 +490,45 @@ export function drawMuck() {
 // they overlap and the sky goes dark; where they have not it stays thin. Nobody
 // draws an outline, so there are no shelves and no right angles in it -- there is
 // nothing in this to have an edge.
+// It is also the one thing here you are looking *through*. Everything else in
+// this yard is an object with an edge; the sky is a field, and a field of flat
+// black rectangles reads as paint on the glass rather than as air in front of
+// it. So it comes apart into colour the way a lens makes it: nothing at the
+// middle of the window, a hair of red one side and cyan the other by the time
+// you reach the edges.
+//
+// Only the motes that are actually off-centre pay for it. A fringe under half a
+// pixel is a fringe nobody can see, and the sky is the most expensive thing on
+// this canvas already -- so the middle of the screen draws one rectangle a mote
+// exactly as it always did, and only the edges draw three.
+const CA_FLOOR = 0.5;              // separation not worth drawing
+const CA_INK = 0.55;               // how solid a fringe is against the mote itself
+const CA_WARM = '#c02a2a';         // the red edge
+const CA_COOL = '#1f9ad0';         // and the cyan one
+
 export function drawSmog() {
   if (!SKY.length) return;
-  ctx.fillStyle = '#000';
+  const mid = S.camX + S.viewW / 2;
+  const half = Math.max(1, S.viewW / 2);
   for (const m of SKY) {
     if (!onScreen(m.x)) continue;
-    ctx.globalAlpha = HAZE_INK * (m.fade == null ? 1 : m.fade);
-    ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
+    const ink = HAZE_INK * (m.fade == null ? 1 : m.fade);
+    const x = Math.round(m.x), y = Math.round(m.y);
+    // how far out of the middle of the window this one is, as -1..1
+    const off = Math.max(-1, Math.min(1, (m.x - mid) / half)) * HAZE_CA;
+    if (Math.abs(off) >= CA_FLOOR) {
+      ctx.globalAlpha = ink * CA_INK;
+      ctx.fillStyle = CA_WARM;
+      ctx.fillRect(Math.round(m.x - off), y, P, P);
+      ctx.fillStyle = CA_COOL;
+      ctx.fillRect(Math.round(m.x + off), y, P, P);
+    }
+    ctx.globalAlpha = ink;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, y, P, P);
   }
   ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
 }
 
 // What a swing just put up: a cell off the work, climbing, thinning as it goes.

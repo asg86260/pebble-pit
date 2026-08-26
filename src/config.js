@@ -473,6 +473,13 @@ export let GRAV = 0.45;
 // What a knocked-loose grain does on its way off. It is a blow, not a delivery:
 // a pop off the face and a little sideways from the hit, and where it comes down
 // is wherever the ground is under it when it gets there.
+// How far the haze comes apart into colour at the edge of the view. A lens does
+// this and a flat black rectangle does not, which is the point: the sky is the
+// one thing in this yard drawn as a field rather than as objects, and a hair of
+// red one side and cyan the other is enough to say it is being looked *through*.
+// Nothing at the middle of the window, most at the edges, like the glass it is
+// pretending to be.
+export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
 export const SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
 export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss
 export const SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
@@ -794,6 +801,7 @@ export const TUNABLE = [
   { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true },
   { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
+  { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
@@ -812,6 +820,7 @@ export function tuned(key) {
   switch (key) {
     case 'CELL': return CELL;
     case 'BANK_SLOPE': return BANK_SLOPE;
+    case 'HAZE_CA': return HAZE_CA;
     case 'GRAV': return GRAV;
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
@@ -830,6 +839,7 @@ export function tune(key, v) {
   switch (key) {
     case 'CELL': CELL = v; break;
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
+    case 'HAZE_CA': HAZE_CA = v; break;
     case 'GRAV': GRAV = v; break;
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;
