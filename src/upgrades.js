@@ -218,20 +218,29 @@ export function assign(job, d) {
 // the rock came down -- so a row selling you the crew you already have is a row
 // that could never fire. A game that has never been played gets its first body
 // from the story; see intro.js.
-const HIRE = [
-  {
-    key: 'worker',
-    name: 'workers',
-    from: () => S.crew,
-    to: () => S.crew + 1,
-    // One pool pays for every job now, so the curve is gentler than the four
-    // it replaced: 1.7 a body was steep because it was steep four times over,
-    // and the same eight bodies came to about 1,500 dust between them.
-    cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))),
-    buy: hire,
-    show: () => S.crew > 0
-  }
-];
+// The one thing you hire, and it is bought where the crew live rather than at
+// the bench. A hire has always *been* a room -- the settlement is drawn straight
+// off the headcount, so taking somebody on is what builds the next one -- and a
+// row on the bench selling "workers" was the shop describing that from the far
+// end of the yard. Standing at the houses and putting another one up is the same
+// purchase with the fiction the game was already drawing.
+//
+// There is no row for the *first* one. It used to cost a core, and the opening
+// hands you a body now -- somebody who was already standing there when the rock
+// came down -- so a row selling you the crew you already have is a row that
+// could never fire. See intro.js.
+export const HOUSE_ROW = {
+  key: 'house',
+  name: 'another house',
+  from: () => S.crew,
+  to: () => S.crew + 1,
+  // One pool pays for every job now, so the curve is gentler than the four
+  // it replaced: 1.7 a body was steep because it was steep four times over,
+  // and the same eight bodies came to about 1,500 dust between them.
+  cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))),
+  buy: hire,
+  show: () => S.crew > 0
+};
 
 // A site is a place, bought once with cores. It comes with nobody in it: who
 // works it is the same question as who works the rock.
@@ -311,7 +320,6 @@ export const UPGRADES = [
     buy: () => S.pickLevel++,
     show: () => S.seenShard
   },
-  ...HIRE,
   // And the crew's is what the crew are fed on. The beds grow the only thing in
   // this yard anybody eats, so what a body can take out of the rock is bought in
   // spores -- which also keeps the green from piling up unspent, and gives the
@@ -538,7 +546,7 @@ export const UPGRADES = [
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'the crew', keys: ['worker', 'haulcarry', 'haulpace'] },
+  { title: 'the crew', keys: ['haulcarry', 'haulpace'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry', 'quarrybench', 'quarrypace'] },
   { title: 'the farm', keys: ['unlockfarm', 'farmbed', 'tend'] },

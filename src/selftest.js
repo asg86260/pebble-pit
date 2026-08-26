@@ -1728,6 +1728,53 @@ const TESTS = [
     ];
   }],
 
+  // A hire has always *been* a room -- the settlement is drawn straight off the
+  // headcount -- so the bench selling "workers" from the far end of the yard was
+  // the shop describing something the houses were already doing. You put the
+  // next one up where it goes up.
+  ['another house is bought where the houses are', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    window.__give(100000);
+    run(20);
+    buildShopFromTest();
+    const onBench = !!shop().querySelector('[data-key="worker"]') ||
+                    !!shop().querySelector('[data-key="house"]');
+
+    const s = state();
+    const h = s.houses;
+    const mid = (h.left + h.right) / 2;
+    window.__look(mid - 600);
+    await sleep(120);
+    const [hx, hy] = onScreen(mid, h.top + 20);
+    point('pointermove', hx, hy, 0);
+    await sleep(160);
+
+    const before = state();
+    const row = document.querySelector('#crewshop button[data-key="house"]');
+    row?.click();
+    await sleep(60);
+    run(1);
+    const after = state();
+    window.__crew(0, 0);
+    return [
+      ok(!onBench, 'the bench does not sell people any more'),
+      ok(!!row, 'the house board does'),
+      ok(before.houseRow && /^another house/.test(before.houseRow),
+         'and the row is a house rather than a headcount', before.houseRow),
+      ok(before.houseRow && before.houseRow.includes('+1'),
+         'saying what it gives you, like every other row', before.houseRow),
+      ok(after.crew === before.crew + 1, 'buying one takes somebody on',
+         `${before.crew} -> ${after.crew}`),
+      ok(after.stored < before.stored, 'and it is paid for in dust',
+         `${before.stored} -> ${after.stored}`),
+      ok(after.houses.cubes > before.houses.cubes,
+         'and the block has another room standing in it',
+         `${before.houses.cubes} -> ${after.houses.cubes}`)
+    ];
+  }],
+
   // The house is the one board that sells nothing. Standing at it lists who
   // lives there, where each of them is right now, and what each has done.
   ['the house lists who lives there', async () => {
@@ -1744,7 +1791,8 @@ const TESTS = [
     point('pointermove', hx, hy, 0);
     await sleep(120);
     const open = state();
-    const row = document.querySelector('#crewshop button');
+    // the first *person*: the board's other row is the one thing it sells
+    const row = document.querySelector('#crewshop button[data-key^="who"]');
     if (row) {
       const r = row.getBoundingClientRect();
       row.dispatchEvent(new PointerEvent('pointerenter',

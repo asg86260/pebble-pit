@@ -499,10 +499,29 @@ function stopJig(w) {
 // Clamped out of the footprint on the way through. The dance wanders -- that is
 // the whole point of it -- and under a rock that is coming down is the one place
 // it must not wander to.
+// Nobody dances inside anybody. The dance walks -- that is how it spreads a gang
+// out -- but only one of its three moves goes anywhere, so a body that draws two
+// hops in a row stays exactly where it stopped, and five that stopped on the same
+// pixel stay stacked for as long as the rock takes to come down.
+//
+// So they elbow apart as well, the same quarter-step the idlers already use. Two
+// on the very same pixel have no side to push to, so each takes the way it is
+// already facing in the dance, which is its own coin toss.
+function elbowJig(w) {
+  for (const o of S.workers) {
+    if (o === w || o.jigAt == null) continue;
+    const d = o.x - w.x;
+    if (Math.abs(d) >= ROAM_ELBOW) continue;
+    w.x -= Math.sign(d || w.jigDir || 1) * 0.5;
+    return;
+  }
+}
+
 function heldUp(w, zone, now) {
   w.resting = false;                   // waiting on a rock is not a break
   w.foot = walkY(w.x + WORKER / 2);
   jig(w, now);
+  elbowJig(w);
   if (!zone) return;
   if (w.x + WORKER > zone.from && w.x < zone.to) {
     const mid = w.x + WORKER / 2;

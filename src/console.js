@@ -40,5 +40,9 @@ Object.assign(window, {
 window.__state = () => ({
   ...snapshot(),
   hushed: document.getElementById('panel').classList.contains('hushed'),
-  crewRows: [...document.querySelectorAll('#crewshop [data-key]')].map(r => r.textContent)
+  // The people, and not the one row on that board that sells something. The
+  // name means the crew, and a purchase sitting in this list would read as a
+  // body called "another house".
+  crewRows: [...document.querySelectorAll('#crewshop [data-key^="who"]')].map(r => r.textContent),
+  houseRow: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="house"]'))
 });

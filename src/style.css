@@ -252,7 +252,11 @@ canvas {
    no before and no after -- a name and where that body is standing, and the
    where is a phrase rather than a number, so it gets the room the five-column
    shop row would never give it. */
-#crewshop button { grid-template-columns: 8.5em 1fr; }
+/* The house board carries one purchase among a list of people. A person's row
+   has no gain to state -- it says where that body is where a price would go --
+   so the middle column is narrow and simply comes out empty on all but the one
+   row that is buying something. */
+#crewshop button { grid-template-columns: 8.5em 2.6em 1fr; }
 
 /* The sky's row says a signed rate where a price would go, and a rate is wider
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
@@ -270,7 +274,6 @@ canvas {
 .rows button.stat:hover:not(:disabled) { color: #000; background: none; }
 .rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
 .rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
-#crewshop button .gain { display: none; }
 #crewshop button .cost { text-align: right; }
 
 #tip {

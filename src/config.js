@@ -314,7 +314,14 @@ export const LAB_FLUE = 4;       // courses of it standing against the sky, abov
 // all of it: the quarry starts giving them up long before the lab is a thing you
 // could afford, and a currency you cannot spend reads as scenery.
 export const SCHOOL_COST = 4;    // shards to build it
-export const TRADE_COST = 2;     // and for the first of any one trade
+// And what a trade costs once it is up. A helmet was two shards, which is about
+// four minutes of one body in the cut: cheap enough that kitting the whole yard
+// out was something you did on the way past rather than something you saved for.
+// A trade doubles what a body does at the thing it does, for good and for free
+// from then on, and nothing else in the game gives that much away -- so it is
+// priced like the decision it is. A thousand is a quarry running for a long
+// while, which is what makes the first one worth choosing between the four.
+export const TRADE_COST = 1000;  // and for the first of any one trade
 export const TRADE_RATE = 1.6;   // each one after that
 // The lip is as close to the rock as the rock's own spoil will allow, and not a
 // cell further out. What has to fit between the apron and the lip is one full

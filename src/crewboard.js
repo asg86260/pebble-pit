@@ -15,7 +15,7 @@ import { S } from './state.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
-import { JOB_OF as JOBS_AT } from './upgrades.js';
+import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { indoors } from './lab.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
@@ -153,7 +153,18 @@ function point(w) {
 // where that body is, which is the one number on this board that moves. Clicking
 // it takes the view to them -- a list of names is a list of names, and the thing
 // you actually want after reading one is to go and look at them.
+
+// The one thing this board sells. It is the only purchase in the game that is
+// made where the thing bought appears: the settlement is drawn straight off the
+// headcount, so putting another house up and taking somebody on are one act, and
+// standing at the houses to do it is the game showing you what your dust bought.
 export function crewRows() {
+  return [HOUSE_ROW, ...people()];
+}
+
+// The people are their own list, so the buy row above can be added without this
+// having to know about it.
+function people() {
   return S.workers.map((w, i) => ({
     key: `who${i}`,
     name: w.name || 'somebody',
@@ -168,6 +179,12 @@ export function crewRows() {
   }));
 }
 
-// No headings: this is one list of people, and cutting it up by job would put
-// the same body under a different word every time it was moved.
-export const crewSections = () => [{ title: 'the crew', keys: S.workers.map((_, i) => `who${i}`) }];
+// Two headings: what you can put up, and who is already living in it. The people
+// are not cut up by job -- that would put the same body under a different word
+// every time it was moved -- but a purchase is not a person, and a row you can
+// spend dust on sitting unlabelled among a list of names is a row you press by
+// accident.
+export const crewSections = () => [
+  { title: 'the block', keys: [HOUSE_ROW.key] },
+  { title: 'the crew', keys: S.workers.map((_, i) => `who${i}`) }
+];
