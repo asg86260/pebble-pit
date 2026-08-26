@@ -9,7 +9,7 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
-        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
+        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
 import { shapePit } from './pit.js';
@@ -318,8 +318,8 @@ export function resize(after) {
   school.x = Math.round((S.cx + TO_SCHOOL - SCHOOL_W / 2) / P) * P;
   school.y = S.groundY - school.h;
 
-  lab.w = P * 14;
-  lab.h = P * 10;
+  lab.w = LAB_W;
+  lab.h = LAB_H;
   lab.x = S.cx + TO_LAB;
   lab.y = S.groundY - lab.h;
 

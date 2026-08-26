@@ -17,7 +17,7 @@
 // is worked out from a room's number rather than from anything random.
 
 import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
-         HOUSE_CURTAIN, HOUSE_PUFF_MS } from './config.js';
+         HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H } from './config.js';
 import { S, bench } from './state.js';
 import { rockLeft } from './world.js';
 
@@ -103,10 +103,13 @@ export function doorAt() {
 export function holes() {
   const C = HOUSE_CUBE;
   return cubes().map(r => r.i === 0
-    // A doorway four cells across, which is wider than the body that walks out
-    // of it. A door somebody plainly could not fit through is the fastest way to
-    // make a building read as a model of a building.
-    ? { x: r.x + P, y: r.y + C - P * 4, w: P * 4, h: P * 4, door: true, i: r.i }
+    // A doorway wider than the body that walks out of it. A door somebody plainly
+    // could not fit through is the fastest way to make a building read as a model
+    // of a building. This one was the yard's only honest door for a long while
+    // and the rest have been brought to it: DOOR_W by DOOR_H is what it always
+    // was, named in config.js now so the school, the lab, the casino and the
+    // scrubbing house are the same way in.
+    ? { x: r.x + P, y: r.y + C - P * DOOR_H, w: P * DOOR_W, h: P * DOOR_H, door: true, i: r.i }
     : { x: r.x + P * 2, y: r.y + P * 2, w: P * 2, h: P * 2, i: r.i });
 }
 

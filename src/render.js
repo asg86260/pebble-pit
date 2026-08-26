@@ -18,7 +18,7 @@ import { benchMark } from './upgrades.js';
 import { underground, quarryCut, ladder } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
-import { SCRUB_DOOR, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
+import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
 import { SKY, DROPS, CAUGHT, PUFFS, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
@@ -351,7 +351,7 @@ export function overPitMark(mx, my) {
 
 
 // The lab: a squat block with a chimney. Flat black shapes, like everything
-// else that stands on this ground.
+// else that stands on this ground. (Its own note is over drawLab.)
 
 
 // The school. A long block with a belfry over the door and a row of tall narrow
@@ -378,18 +378,62 @@ export function drawSchool() {
   // Tall and narrow, and there are a lot of them: a row of standing windows is
   // the one thing a building can do that says people are in there in numbers.
   for (const n of [2, 4, 6, 13, 15, 17]) ctx.fillRect(c(n), y + P * 4, P, P * 2);
-  ctx.fillRect(c(9), y + P * 7, P * 2, P * 3);            // the door, standing open
+  // The way in, standing open. Two cells by three before, which was the smallest
+  // door in the yard on the widest building in it -- a twenty-cell front with a
+  // slot in it, and a body three cells across walking up to a hole three cells
+  // tall. It is DOOR_W by DOOR_H now like every other way in, and it is centred
+  // on the same column the belfry is, so the one thing standing out of the roof
+  // and the one thing cut into the wall are on one axis.
+  ctx.fillRect(c(10 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
   ctx.fillStyle = '#000';
 }
 
+// The lab: a tall body with one chimney, read against the school's long block and
+// against the stack of one-cell rooms the crew live in.
+//
+// It was the one building in the yard with no way in. Everything else on the
+// ground has a door because somebody walks into it, and a wall a labber
+// evaporates against is the thing the scrubbing house's door was added to stop --
+// so it had the same fault, and nobody had said so out loud.
+//
+// And it was laid out in fractions of its own width and height: 0.35 of ten
+// courses is three and a half, so the body's roof, the foot of the chimney and
+// the window all sat half a cell off the lattice and drew with the grey fringe
+// the rest of the game is arranged to avoid. It is whole cells now, the same way
+// the school was fixed, and the two numbers it is built on are in config.js with
+// every other building's. Sixteen across and twelve down: LAB_FLUE courses of
+// chimney standing against the sky, and eight of body under it. Nothing here is
+// a fraction of anything, and nothing is a literal either -- read the front off
+// the cells it is actually made of, so a lab a course taller draws right.
 export function drawLab() {
   if (!S.labOpen) return;
   const { x, y, w, h } = lab;
+  const across = Math.round(w / P);
+  const c = (n) => x + P * n;                              // cell n across the front
+  const r = (n) => y + P * n;                              // and cell n down it
   ctx.fillStyle = '#000';
-  ctx.fillRect(x, y + h * 0.35, w, h * 0.65);              // the body
-  ctx.fillRect(x + w * 0.18, y, w * 0.2, h * 0.35);        // a chimney
+  ctx.fillRect(x, r(LAB_FLUE), w, h - P * LAB_FLUE);       // the body
+  ctx.fillRect(c(2), y, P * 3, P * LAB_FLUE);              // a chimney
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + w * 0.55, y + h * 0.55, P * 3, P * 3);  // a window
+  // The window goes off to one side, because the middle of the front belongs to
+  // the door now: a window over a doorway is a fanlight, which is a detail this
+  // yard is too coarse to draw, and a window beside one is a room with somebody
+  // in it. A clear cell off the jamb of the door and two off the far corner,
+  // because a hole on a building's edge is a bite taken out of the silhouette
+  // rather than a light in a wall.
+  //
+  // Two cells square, which is the window in a room of the crew's house. It was
+  // three, and three cells of white in a wall beside a four-course door is two
+  // holes rather than a wall with things in it. A window is a shared measure
+  // here the same way a door is: one size for a room with somebody in it, and
+  // the school's tall narrow lights, which come in a row and say a crowd.
+  ctx.fillRect(c(across - 4), r(LAB_FLUE + 1), P * 2, P * 2);   // a window
+  // and the way in, DOOR_W by DOOR_H like every other way in, dead in the middle
+  // of the front and standing on the ground. lab.js walks a labber to the middle
+  // of it (labDoor), so the hole in the wall and the place a body disappears at
+  // are one thing rather than two numbers that used to differ by a tenth of the
+  // front -- which put every labber through the window.
+  ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
   ctx.fillStyle = '#000';
 }
 
@@ -505,7 +549,7 @@ export function drawRain() {
 // the haze, each one stepping a cell out from the one below it, so the building
 // is widest where it meets the air and narrowest where it stands. Every other
 // thing on this ground is the other way up. The settlement steps back as it
-// rises, the lab's chimney is a fifth of the body under it, the school's belfry
+// rises, the lab's chimney is under half the body under it, the school's belfry
 // a tenth of its front, the casino a block that is the same block all the way to
 // the roof. A shape that opens upward is a shape that takes from up there, and
 // there is only one of them.
@@ -599,7 +643,7 @@ const HOOD_WALL = 4;     // and cells of black through each of its two walls
 const BAY = 8;           // courses of shaft the bellows hangs in
 const LEAF = 5;          // and cells across every leaf of it, in a shaft LEAF + 2 wide
 // see config.js: the mechanic reads these two as well, so they live there
-const DOOR = SCRUB_DOOR, CHUTE = SCRUB_CHUTE;
+const CHUTE = SCRUB_CHUTE;
 
 export function drawScrub() {
   if (!S.scrubOpen) return;
@@ -676,7 +720,7 @@ export function drawScrub() {
   //
   // Everything on the front is worked out from the middle column, which an odd
   // front has and an even one does not. The shaft is LEAF + 2 wide about it, the
-  // door is DOOR wide about it, and the throat closes on to it, so the building
+  // door is DOOR_W wide beside it, and the throat closes on to it, so the building
   // has one axis and everything that goes into it goes in on that axis: the sky
   // at the top, the crew at the bottom, the works between the two.
   const mid = (across - 1) / 2;
@@ -724,13 +768,22 @@ export function drawScrub() {
   // was nowhere on the front for a body to go, so a scrubber crossed the ground
   // and evaporated against the most solid column of it.
   //
-  // Three cells wide and not two, because scrubDoor() walks the body to the
-  // middle of the middle column, and a two-cell door centred on a column is a
-  // door with half a cell of wall standing in it. Three courses of foot under the
-  // works were already there, doing nothing but standing the shaft off the
-  // ground, which is exactly the height a doorway wants.
+  // DOOR_W by DOOR_H, which is the way in at the school, the lab, the casino and
+  // the crew's own rooms as well: what a door is measured against is a body, and
+  // a body is the same body wherever it is walking. See config.js.
+  //
+  // This is the one front in the yard an even door cannot centre on. Everything
+  // here is worked out from the middle column, and a four-cell door about a
+  // single column lands half a cell to one side of it -- three world units, at
+  // the foot, under a tower whose axis has not moved. The alternative was an odd
+  // door everywhere, which would have thrown the school, the lab and the house
+  // off the lattice instead to keep this one on it.
+  //
+  // Four courses of foot under the works, which config.js is holding the extra
+  // course for: the door stands on the ground and stops one course short of the
+  // shaft, so there is still a solid course between the way in and the works.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(c(mid - (DOOR - 1) / 2), r(down - DOOR), P * DOOR, P * DOOR);
+  ctx.fillRect(c(mid - DOOR_W / 2 + 1), r(down - DOOR_H), P * DOOR_W, P * DOOR_H);
   ctx.fillStyle = '#000';
 
   // The recycler, drawn at the end of the process rather than at the start of it:
@@ -952,19 +1005,22 @@ export function drawCasino() {
   ctx.fillStyle = '#000';
   ctx.fillRect(x, y, w, h);                                // the block
 
-  // The wheel: eight slices, half filled and half bare, alternating all the way
-  // round -- which is the odds written on the thing itself. Black and white, like the rest of the yard -- a filled cell
-  // is a thing and white is the absence of one, which is exactly what winning and
-  // losing a pot are, so it needs no colour to say it.
+  // The wheel: eight slices, half bare and half filled, alternating all the way
+  // round -- which is the odds written on the thing itself. Black and white, like
+  // the rest of the yard: white is the way through and black is the wall, the
+  // same as every doorway on this ground, so it needs no colour to say it. See
+  // CASINO_KEEP in config.js -- the two used to be the other way about.
   // Set low enough in the block that the pointer above it clears the roof: the
   // sign stands up out of the middle of that roof, and a pointer at the top of
   // the wheel was drawn straight into the bottom of the sign board.
   const cx = x + w / 2, cy = y + h * 0.62, r = Math.min(w, h) * 0.38;
   const step = (Math.PI * 2) / CASINO_SLICES;
 
-  // A white disc knocked out of the block first. The slices are black now, and
-  // black slices on a black building are a wheel you cannot find: what makes it
-  // read as a wheel is the white it is set in.
+  // A white disc knocked out of the block first, a cell proud of the rim. Half
+  // the slices are black and half are white, and neither reads on a black
+  // building without it: the black ones would vanish into the wall and the white
+  // ones would have no edge to stop at. What makes it read as a wheel is the
+  // white it is set in, and the rim drawn round the lot.
   ctx.fillStyle = '#fff';
   ctx.beginPath();
   ctx.arc(cx, cy, r + P, 0, Math.PI * 2);
@@ -1017,9 +1073,14 @@ export function drawCasino() {
   ctx.stroke();
   ctx.fillStyle = '#000';
 
-  // a door, because somebody goes in
+  // A door, because somebody goes in. Off to one side rather than under the
+  // wheel: the wheel is what this building is, and a hole cut under it would
+  // read as part of the works. Two clear cells of wall hold it off the corner.
+  //
+  // It is DOOR_W by DOOR_H like every other way in -- three by five before, which
+  // was the tallest door in the yard and the only one taller than it was wide.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + w - P * 5, y + h - P * 5, P * 3, P * 5);
+  ctx.fillRect(x + w - P * (DOOR_W + 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
   ctx.fillStyle = '#000';
 
   drawSign();

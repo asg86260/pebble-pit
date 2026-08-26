@@ -85,6 +85,26 @@ the **left** as you unlock things, so walking further out *is* the tech tree.
 You start with the **rock**, the **bench** and the **pit** and nothing else. Ground to the left
 is empty until a site is unlocked there.
 
+**One doorway, and every building has it.** Four cells across and four courses tall, the same in
+the school, the lab, the casino, the scrubbing house and each room of the crew's own house. A door
+is the one part of a building measured against a person rather than against the building, so it is
+the one part with no business changing from one to the next — it is what tells you how big the rest
+of it is. A body is three cells square and stands on the bottom three courses, so three of anything
+is exactly a body and no more; the fourth cell each way is the daylight either side and the room
+over the head that makes a hole a way in rather than a slot somebody was squeezed through.
+
+They were all different once — two by three at the school, three by three at the scrubbing house,
+three by five at the casino, four by four at the house, and nothing at all on the lab, where every
+labber walked up to a blank wall and evaporated against it. The school's was the worst of them: the
+smallest door in the yard on the widest building in it. Windows go the same way — two cells square
+for a room with somebody in it, and the school's tall narrow lights, which come in a row and say a
+crowd rather than a person.
+
+Sizes are a family rather than a rule: the school is the long low one at twenty cells by ten, the
+lab the tall one at sixteen by twelve, the casino the broad one at twenty-six by twelve, the
+scrubbing house a tower at nineteen by twenty, and the crew's place a stack of six-cell rooms. What
+they share is the door, the window, and the cell they are all drawn on.
+
 | Site | Gives | Unlocked by |
 |---|---|---|
 | **rock** — a craggy outcrop sitting on the ground | dust ■, and a core ◯ when it is finished | you start here |
@@ -204,7 +224,7 @@ be one: the wheel comes off its mark and drags itself down to a stop over two an
 and the last half-turn is the slow one — by then you can read which way it is going to go. The stop
 knocks the view, and harder when it came off.
 
-**The wheel is cut into eight**, half filled and half bare and alternating all the way round,
+**The wheel is cut into eight**, half bare and half filled and alternating all the way round,
 which is the odds written on the thing
 itself rather than as a percentage on a row. A pointer stands at the top and does not turn; the
 slice under it when the wheel stops is the answer. The wheel does not free-run and then get told
@@ -213,9 +233,12 @@ a slice of the right kind under the pointer, so what you are watching is the thi
 
 **Black and white, not red and green.** Colour in this yard means one thing — what a site gave up —
 and a wheel painted in traffic lights was the first thing here that used it for mood. It does not
-need it: the grammar is already on the page. A filled cell is a thing and white is the absence of
-one, which is exactly what winning and losing a pot are. The wheel is set in a white disc knocked
-out of the block, because black slices on a black building are a wheel you cannot find.
+need it: the grammar is already on the page. **White keeps and black takes**, which is how the rest
+of the ground reads: every hole a thing comes out of here is white — the doorway in all six
+buildings, the mouth of the quarry, the throat of the scrubbing house — and black is mass with
+nothing behind it. A white slice under the pointer is a way through and the pot comes back; a black
+one is wall. The wheel is set in a white disc knocked out of the block, because neither half of it
+reads against a black building on its own.
 
 **What is on the table is a real bed of sand.** Not a drawing of a heap sized to look about right —
 one grain, one of whatever was staked, settled by the same code the yard and the hole use, on its
@@ -1093,7 +1116,7 @@ The building is a **hood over a rack of pumps**: four courses of black wall flar
 haze, stepping a cell out a course so the thing is widest where it meets the air and narrowest
 where it stands, and the taper closing the whole way — eleven cells of sky, nine, seven, five, then
 three and one cut white out of the tower's head. Everything else on this ground is the other way
-up: the settlement steps back as it rises, the lab's chimney is a fifth of the body under it, the
+up: the settlement steps back as it rises, the lab's chimney is under half the body under it, the
 casino is the same block all the way to the roof. A shape that opens upward is a shape that takes
 from up there, and there is only one of them. The first version was a body and a chimney, which is
 exactly what the lab is; the second was a wide hole with something turning in it, which is the

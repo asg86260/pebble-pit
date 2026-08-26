@@ -158,7 +158,9 @@ export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands sh
 // recycler's grain is released from the cell under the chute's lip, and a chute
 // drawn off one number while the grain leaves from another is a spout that misses
 // its own spout the first time either is touched.
-export const SCRUB_DOOR = 3;         // courses of foot the way in is tall, and cells wide
+// The way in is DOOR_W by DOOR_H like every other way in -- see there. It is
+// named here only because the courses of foot under the works have to be deep
+// enough to hold it.
 export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from the wall
 export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
 
@@ -178,13 +180,21 @@ export const TO_SCRUB = -2436;       // past the lab, at the quiet end of the wa
 // even front it would close to two beside the middle or one off it, and there
 // would be no middle column for the shaft and the door to stand on either.
 //
-// The nineteen down is the front read off in order and nothing else: five courses
+// The twenty down is the front read off in order and nothing else: five courses
 // of hood, the course the throat closes in, a solid course under it, eight of
-// shaft for the bellows, a solid course under that, and three of foot for the
+// shaft for the bellows, a solid course under that, and four of foot for the
 // door to stand in. Change any of those in render.js and this has to move with
 // it -- which is why they are all named there, where the shape is.
+//
+// It was nineteen while the door was three courses. The door is DOOR_H now like
+// every other door, and the extra course had to come from somewhere: taken out of
+// the foot, the way in would have opened straight into the floor of the bellows'
+// shaft, and a hole opening into a hole is one tall opening rather than a mouth
+// over a works. So the building is a course taller instead. It grows upward --
+// scrub.y is the ground less the height -- and the chute and the outlet are both
+// measured off the foot, so neither of them moves.
 export const SCRUB_W = P * 19;
-export const SCRUB_H = P * 19;
+export const SCRUB_H = P * 20;
 // The bellows on its front: how many folds it has, and how fast they go. One
 // bellows whoever is in there -- it is a machine running or a machine stopped,
 // not a tally -- but it beats faster with every body up to four, which is the cap
@@ -195,7 +205,22 @@ export const SCRUB_FOLDS = 3;
 export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
 
 export const TO_CASINO = -2760;
-export const CASINO_W = P * 18;
+// Twenty-six across, and it was eighteen. The wheel is set by the height rather
+// than the width -- it is as big as the block is short, and widening the block
+// does not grow it -- so at eighteen the doorway at the far end of the front was
+// cut straight through the rim, and a way in that runs into the works is the
+// fault the scrubbing house's chute was moved off the door to avoid.
+//
+// Twenty-six is what the front actually has to hold, added up rather than tried:
+// half a wheel and the white disc it is set in is thirteen cells from the middle
+// of the block, then a clear cell, then the four of DOOR_W, then two of wall to
+// the corner. Anything less and the two touch -- twenty-four looks like it works
+// and does not, because the disc stands a cell proud of the rim all the way
+// round and that cell is easy to leave out of the sum.
+//
+// It makes this the widest thing on the ground, ahead of the school's twenty,
+// which suits the one building here that produces nothing.
+export const CASINO_W = P * 26;
 export const CASINO_H = P * 12;
 export const CASINO_CORES = 6;   // what it costs to have it built
 // Putting a stake down *is* the spin. There was a version where the pot opened
@@ -213,7 +238,7 @@ export const CASINO_CORES = 6;   // what it costs to have it built
 // down to a stop, and the board gets out of the light while it does. Under two
 // seconds it read as a flicker and the answer arrived before you had looked up.
 export const CASINO_SPIN_MS = 2600;
-// The wheel is cut into eight, half filled and half bare -- which is the odds
+// The wheel is cut into eight, half bare and half filled -- which is the odds
 // written on the thing itself rather than a percentage on a row, and at even
 // money they alternate all the way round, which is what a wheel looks like. The
 // pointer at the top is what it lands on, so a spin is not a number arriving, it
@@ -223,13 +248,21 @@ export const CASINO_SPIN_MS = 2600;
 // Black and white, not red and green. Colour in this yard means one thing --
 // what a site gave up -- and a wheel painted in traffic lights was the first
 // thing here that used it for mood. It does not need it: the grammar is already
-// on the page. A filled cell is a thing and white is the absence of one, which
-// is exactly what winning and losing a pot are.
+// on the page.
+//
+// White keeps and black takes, which is the way round the rest of the yard reads.
+// Every hole a thing comes out of here is white -- the doorways in all six
+// buildings, the mouth of the quarry, the throat of the scrubbing house -- and
+// black is the mass that has nothing behind it. So a white slice under the
+// pointer is an opening and the pot comes back through it, and a black one is
+// solid wall. It was the other way about, on the argument that a filled cell is
+// a thing and white is the absence of one; that reading is fine on its own and
+// it was the only place in the game where black was the good news.
 export const CASINO_SLICES = 8;
-export const CASINO_WIN_SLICES = 4;  // of them, and the rest are bare
+export const CASINO_WIN_SLICES = 4;  // of them, and the rest are filled
 export const CASINO_TURNS = 6;       // whole turns before it comes to rest
-export const CASINO_LOSE = '#fff';   // nothing there
-export const CASINO_KEEP = '#000';   // and something
+export const CASINO_LOSE = '#000';   // wall, and the pot stops there
+export const CASINO_KEEP = '#fff';   // a way through, and it comes back
 // Four slices in eight, and it is written that way rather than as a number: the
 // odds are what the wheel *is*, so the wheel is the definition and this reads
 // off it. A wheel that said one thing and paid another would be the one
@@ -266,6 +299,17 @@ export const CASINO_SAY_MS = 4000;
 export const TO_SCHOOL = -768;   // rock centre to the middle of the school
 export const SCHOOL_W = P * 20;
 export const SCHOOL_H = P * 10;
+// The lab, which had no numbers of its own: it was two literals in world.js and
+// a handful of fractions of them in the drawing. Sixteen across and twelve down
+// now, and it was fourteen by ten -- the smallest thing on the ground by both
+// measures, standing between a twenty-cell school and an eighteen-cell casino
+// and reading as a shed beside them. It keeps the casino's height, which is what
+// makes the two of them the same building at different jobs, and stays under the
+// school's width, because the school is the long low one and the lab is the tall
+// one. Even across, so the way in centres on the lattice.
+export const LAB_W = P * 16;
+export const LAB_H = P * 12;
+export const LAB_FLUE = 4;       // courses of it standing against the sky, above the body
 // What the school costs to build, and what a trade costs once it is up. Shards,
 // all of it: the quarry starts giving them up long before the lab is a thing you
 // could afford, and a currency you cannot spend reads as scenery.
@@ -427,6 +471,32 @@ export const MINE_FLOOR = 75;    // fastest the pick will ever swing (13.3 px/s)
 export const CAP_BASE = 1;       // pixels you can carry at level 0
 export const CAP_STEP = 1;       // extra capacity per upgrade
 export const WORKER = P * 3;     // worker square size
+
+// One doorway, for every building in the yard that has one.
+//
+// They were all different: two cells by three at the school, three by three at
+// the scrubbing house, three by five at the casino, four by four at the crew's
+// own rooms, and nothing at all on the lab. Six buildings, five answers, and the
+// school's was small enough that a body walking into it looked like a body
+// walking into a wall. A door is the one part of a building that is measured
+// against a person rather than against the building, so it is the one part that
+// has no business changing from building to building: it is what tells you how
+// big the rest of it is.
+//
+// Four wide and four tall, and both numbers are the body. A body is three cells
+// square and stands on the bottom three courses, so three of anything is exactly
+// a body and no more -- a door a body fills to the edges reads as a slot it was
+// squeezed through. One cell of clearance each way is a way in: a cell of daylight
+// either side, and a cell over the head, which is also where a hat goes.
+//
+// Even on purpose. Every front here is an even number of cells across except the
+// scrubbing house's, so an even door centres on the lattice at the school, at the
+// lab and in a room of the crew's house, and lands half a cell off the scrubbing
+// house's middle column -- which is one building out of five, at its foot, three
+// world units, under a tower whose own axis is unmoved. An odd door would have
+// put three of the five off instead.
+export const DOOR_W = 4;         // cells across a way in, everywhere in the yard
+export const DOOR_H = 4;         // and courses tall
 export let MINER_BASE = 1100;  // a hired miner starts slower than your own pick
 export const MINER_FLOOR = 260;  // fastest a miner can swing
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to

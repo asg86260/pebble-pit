@@ -111,10 +111,16 @@ export function stepLab(dt) {
 // The chimney stops the moment the work is done, which is a signal made of
 // nothing happening. So finishing gets a puff of its own: a plume already
 // strung out up the sky, so it reads as the last of it rather than the start.
+// Where the smoke leaves from: the middle of the flue render.js draws, which
+// stands on cells two, three and four of the front. It was 0.28 of the width --
+// right by luck at fourteen cells across, and wrong the moment the lab was
+// sixteen, because the flue is a place on the building and not a share of it.
+const FLUE_MID = P * 3.5;
+
 const DONE_PUFFS = 8;
 function cough() {
   for (let i = 0; i < DONE_PUFFS; i++) S.smoke.push({
-    x: lab.x + lab.w * 0.28 + (Math.random() - 0.5) * P * 2,
+    x: lab.x + FLUE_MID + (Math.random() - 0.5) * P * 2,
     y: lab.y - i * P,
     drift: (Math.random() - 0.5) * 0.35,
     t: i * SMOKE_LIFE / (DONE_PUFFS * 1.6)
@@ -143,8 +149,14 @@ export function newLabber() {
   };
 }
 
-// the door, and who is through it
-export const labDoor = () => lab.x + lab.w * 0.62;
+// The door, and who is through it. It is the middle of the front, because that is
+// where render.js cuts the way in -- the same DOOR_W by DOOR_H doorway the school,
+// the casino, the scrubbing house and the crew's own rooms have. It used to be
+// 0.62 of the way across, which was a share of the front and not a place: the
+// lab had no door drawn on it at all then, so the number could not be wrong, and
+// the moment one was cut it was, by a fifth of the building. Every labber walked
+// up to the wall beside it and vanished.
+export const labDoor = () => lab.x + lab.w / 2;
 export const indoors = w => w.type === 'labber' && w.goal === 'in';
 
 // How many are actually in there working. It is not `S.labbers`: that counts
@@ -159,7 +171,7 @@ export function stepSmoke(now, dt) {
   const on = inLab();
   if (S.research && on && now >= S.smokeAt) {
     S.smoke.push({
-      x: lab.x + lab.w * 0.28 + (Math.random() - 0.5) * P,
+      x: lab.x + FLUE_MID + (Math.random() - 0.5) * P,
       y: lab.y,
       drift: (Math.random() - 0.5) * 0.25,
       t: 0
