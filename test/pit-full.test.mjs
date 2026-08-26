@@ -65,15 +65,16 @@ group('a find is counted against the hole like everything else', async () => {
     run(0.4);
   window.__crew(0, 6);
   window.__give(200000);                       // the scrape, full
-  run(20);
+  runUntil(() => state().pitFull, 60);
   const rockX = state().rockX;
   window.__toss('shard', rockX + 200);
   window.__toss('shard', rockX + 240);
-  run(25);
+  runUntil(() => state().finds.length === 2 && state().chips === 0, 30);
+  run(5);                                      // long enough for somebody to set off, if anybody were going to
   const full = state();
 
   window.__spend(3);                           // room for three
-  run(25);
+  runUntil(() => state().shards === 2, 60);
   const room = state();
   window.__crew(0, 0);
   window.__clearFloor();
@@ -97,13 +98,14 @@ group('a core waits on the ground rather than being lost to a full hole', async 
     run(0.4);
   window.__crew(2, 2);
   window.__give(200000);
-  run(20);
+  runUntil(() => state().pitFull, 60);
   window.__next();                             // the last of the rock goes
-  run(20);
+  runUntil(() => state().coreItem?.rest, 40);
+  run(5);                                      // and a moment for it to be banked, if a full hole would take it
   const full = state();
 
   window.__spend(20);
-  run(40);
+  runUntil(() => state().cores === 1, 60);
   const room = state();
   window.__crew(0, 0);
   window.__clearFloor();
@@ -128,16 +130,20 @@ group('a hauler books room in the hole before it fetches', async () => {
   window.__crew(0, 8);
   window.__levels({ haulCarryLevel: 4 });
   window.__give(200000);                       // fill the scrape to the brim
-  run(20);
+  runUntil(() => state().pitFull, 60);
   const rockX = state().rockX;
   window.__pile(rockX + 200, 600);             // and a heap nobody can shift
-  run(30);
+  // Until the yard has settled into having nowhere to put anything: nobody
+  // holding dust, nobody with room booked. Run on past that and the frames are
+  // spent watching a yard that has already stopped.
+  runUntil(() => state().carried === 0 && state().booked === 0, 60);
   const full = state();
 
   // now make room for six, and watch six leave the ground
   window.__spend(6);
   const before = state().stored;
-  run(20);
+  runUntil(() => state().stored - before >= 6, 60);
+  run(5);                                      // and a moment for a seventh to arrive, if one is coming
   const some = state();
   window.__crew(0, 0);
   window.__clearFloor();

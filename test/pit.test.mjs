@@ -16,7 +16,9 @@ group('a toss lands in the hole, however small the hole is', async () => {
   quickCrew();
   window.__pile(state().rockLeftX + 300, 900);
   const before = state();
-  run(120);
+  // Until the scrape has taken all it is going to. Two minutes of yard was
+  // enough to be sure, and most of it was spent after the hole was full.
+  runUntil(() => state().pitFull, 120);
   const s = state();
   window.__crew(0, 0);
   window.__clearFloor();

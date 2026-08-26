@@ -377,7 +377,10 @@ group('the recycler pays out on the ground under its own chute', async () => {
   const paid = state();
   const span = window.__dustSpan();
   window.__air({ haze: 0 });
-  run(200);                            // the walk to the hole and back is a long one
+  // Until some of it has been carried in, which is the whole of what is being
+  // watched. The walk to the hole and back is a long one, and how long it is
+  // has checks of its own.
+  runUntil(() => state().stored > 0, 200);
   const swept = state();
   window.__crew(0, 0);
   window.__air({ open: false, recycler: false, scrubbers: 0, haze: 0, muck: 0 });
