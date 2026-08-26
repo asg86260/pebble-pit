@@ -87,7 +87,6 @@ export const S = {
   shownStored: 0,         // the counter chases the real number
   tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
   pitStep: 0,             // how many times the pile has settled to a finer grain
-  pitLevel: 0,            // how many times the hole has been dug out
 
   // --- cores ---
   cores: 0,

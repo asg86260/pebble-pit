@@ -12,7 +12,7 @@ import {
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { S, quarry, farm, lab, school, casino, scrub } from './state.js';
-import { spend, takeCoreCells, digPit, digsLeft, digCost, capacityAt, pitCapacity } from './pit.js';
+import { spend, takeCoreCells, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
 import { syncWorkers } from './crew.js';
@@ -450,26 +450,9 @@ export const UPGRADES = [
     show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
   },
 
-  // The hole is the one thing you buy that is not a rate. It starts as a scrape
-  // and every dig takes the far wall out and the floor down, so what it holds is
-  // something you dug rather than something the yard came with. It is priced in
-  // the dust it will hold: paying for room comes out of the room you have.
-  {
-    key: 'dig',
-    // Not "dig the pit": the quarry's row is "dig deeper" now and two rows on
-    // one sheet both starting with dig is two rows you have to read twice. A
-    // dig takes the far wall out and the floor down, and it is mostly the wall.
-    name: 'widen the pit',
-    unit: 'px',
-    from: () => pitCapacity(),
-    to: () => capacityAt(S.pitLevel + 1),
-    // called through, not handed over: the pit and the bench import each other,
-    // so a binding read while this list is being built is one that does not
-    // exist yet
-    cost: () => digCost(),
-    buy: () => digPit(),
-    show: () => digsLeft() > 0
-  },
+  // The hole is not something you buy any more. It is the whole pit from the
+  // first frame -- see pit.js: what you could hold used to be what you had dug,
+  // which made a hole in the ground the ceiling on every other price in the game.
 
   FARM
 ];
@@ -484,7 +467,6 @@ export const SECTIONS = [
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
-  { title: 'the pit', keys: ['dig'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }
 ];

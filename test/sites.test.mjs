@@ -232,8 +232,12 @@ group('muck in the hole lies on the dust and is climbed down to', async () => {
   window.__clearFloor();
   window.__air({ haze: 0, muck: 0 });
 
-  // only over the mouth, so the crew cannot be busy with anything nearer
-  window.__muckSet(c => (window.__overPit(c) ? 3 : 0));
+  // Only over the mouth, so the crew cannot be busy with anything nearer -- and
+  // only the near end of it. The hole is the full six hundred columns from the
+  // first frame now, and mucking the whole mouth is twenty minutes of shovelling
+  // for a check about whether anybody climbs down at all.
+  const lip = window.__state().pitX;
+  window.__muckSet(c => (window.__overPit(c) && c * 6 < lip + 240 ? 3 : 0));
   const start = window.__muckOverPit();
   const wasAt = state().workerPos.filter(p => p[0] === 'h').join();
 

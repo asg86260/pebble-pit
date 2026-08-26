@@ -371,26 +371,19 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 export const LOOSE_DEEP = 3;
 
 export let BANK_SLOPE = 1.5;
-// The hole is dug, not given. It starts as a scrape in the ground and every dig
-// bought at the bench takes it wider and deeper, until it is the hole the yard
-// was always drawn around: PIT_W_MAX across and PIT_H down.
+// The hole is given, not dug. It is PIT_W_MAX across and PIT_H down from the
+// first frame -- the hole the yard has always been drawn around.
 //
-// PIT_H is the *deepest* it will ever be, and that is what the world reserves
-// under the ground line whatever the hole is at today. The floor of the window
-// does not move as you dig -- the picture the game asks for is a fixed thing,
-// and a viewport that grew a little every purchase would be the yard rearranging
-// itself around a shop row.
-export const PIT_W0 = 150;       // the scrape you start with, in world pixels
-export const PIT_D0 = 150;       // and how far down it goes
-export const PIT_DIG_W = 150;    // what one dig takes off the far wall
-export const PIT_DIG_D = 6;      // and off the floor: a row at a time
-export const PIT_DIGS = 23;      // digs until it is the whole hole
-// Depth runs out first, at the twenty-first dig -- there are only twenty-one
-// rows between the scrape and the floor -- so the last few are all sideways.
-// That is the trade the pit has always been under: depth is pinned to the
-// window and room can only be bought along.
-export const PIT_DIG_COST = 30;  // dust for the first dig
-export const PIT_DIG_RATE = 1.32; // and how much steeper each one gets
+// It used to be bought a dig at a time, from a scrape to the whole thing, and
+// that made a hole in the ground the ceiling on everything else in the game:
+// what you could hold was what you had dug, so every price was really a
+// statement about how much pit you had bought first, and a row you could not
+// afford was as often a row you had nowhere to put. The pit is scenery with a
+// number in it. Making it the gate on the things the game is actually about was
+// the tail wagging the dog.
+//
+// PIT_H is what the world reserves under the ground line, and the floor of the
+// window sits on it.
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 // And this much room above the brim. Once the hole itself is full the pile keeps
 // going, heaping up over the mouth rather than stopping dead at the ground line

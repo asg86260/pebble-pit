@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog } from './smog.js';
 import { showPanel } from './board.js';
@@ -162,7 +162,6 @@ export function persist() {
     seenSects: S.seenSects,
     seenRows: S.seenRows,
     pitStep: S.pitStep,
-    pitLevel: S.pitLevel,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
@@ -261,7 +260,6 @@ export function restore() {
     S.seenSects = [];
     S.seenRows = [];
     S.pitStep = 0;
-    S.pitLevel = 0;
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
@@ -316,8 +314,8 @@ export function restore() {
   // shape it came out of.
   // A save from before the hole was something you dug has one already: it was
   // the whole thing from the first frame, and it keeps it.
-  const dug = s.pitLevel ?? (s.pit && s.pit.cols > PIT_W0 / P ? PIT_DIGS : 0);
-  S.pitLevel = Math.max(0, Math.min(PIT_DIGS, dug));
+  // Nothing to restore: the hole is the whole hole from the first frame, and a
+  // save from when it was dug out a purchase at a time simply arrives in one.
   setPitGrain(s.pitStep || 0);
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
@@ -457,7 +455,6 @@ export function reset() {
   S.seenBench = false;
   S.seenSects = [];
   S.seenRows = [];
-  S.pitLevel = 0;
   setPitGrain(0);
   S.pickLevel = 0;
   S.coreItem = null;

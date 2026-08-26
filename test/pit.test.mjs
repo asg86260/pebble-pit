@@ -11,20 +11,24 @@ import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORK
 // fixed spray, which was fine while the pit ran two windows to the right and
 // wrong the moment it starts as a scrape: the same throw cleared the far wall
 // and came down on the ground behind the pit, where nothing can pick it up.
-group('a toss lands in the hole, however small the hole is', async () => {
+// What this is really about is the throw: a hauler stands at the near lip and
+// tips, and none of it may sail over the far wall onto the ground behind. It
+// used to say "however small the hole is", back when the hole started as a
+// scrape and the far wall was close enough to clear.
+group('a toss lands in the hole, not on the ground behind it', async () => {
   window.__crew(0, 4);
   quickCrew();
+  // A swept floor to start on: what this counts is dust lying past the far wall,
+  // and a grain an earlier check left out there reads as a throw that sailed.
+  window.__clearFloor();
   window.__pile(state().rockLeftX + 300, 900);
   const before = state();
-  // Until the scrape has taken all it is going to. Two minutes of yard was
-  // enough to be sure, and most of it was spent after the hole was full.
-  runUntil(() => state().pitFull, 120);
+  runUntil(() => state().stored > before.stored + 200, 120);
   const s = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(s.pitW === 150, 'the hole is still the scrape you start with', `${s.pitW}`),
-    ok(s.stored > before.stored, 'and dust is going into it',
+    ok(s.stored > before.stored, 'dust is going into it',
        `${before.stored} -> ${s.stored}`),
     ok(s.dustPastPit === 0, 'nothing sails over the far wall onto the ground behind',
        `${s.dustPastPit} grains behind the pit`)
@@ -57,9 +61,12 @@ group('a core in the pile does not jam the hole', async () => {
   // it fills, and this check needs the hole actually filled inside its run.
   window.__crew(3, 6);
   window.__levels({ minerSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
-  // until the hole is full, not for a fixed quarter of an hour of game: what
-  // this is about starts the moment there is no more room
-  runUntil(() => state().pitFull, 250);
+  // Filled by hand. The hole is the whole hole from the first frame, so mining
+  // it full is an hour of yard -- and what this is about starts the moment
+  // there is no more room, not on the way there. The crew above are still here
+  // to keep working against a full hole once it is.
+  window.__give(999999);
+  runUntil(() => state().pitFull, 60);
   run(10);                                     // and a moment to stand down in
   const s = state();
   const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
@@ -87,32 +94,22 @@ group('a core in the pile does not jam the hole', async () => {
   ];
 });
 
-group('the pit is dug out, not given', async () => {
-  const small = state();
-  window.__tip(1000);                        // more than a scrape will take
-  run(0.4);
-  const full = state();
-
-  window.__dig();                            // every dig there is
+group('the pit is the whole hole from the first frame', async () => {
+  const s0 = state();
+  // The hole used to be bought a dig at a time, from a scrape to the full pit,
+  // which made a hole in the ground the ceiling on every price in the game: what
+  // you could hold was what you had dug. It is given now.
+  window.__tip(1000);
   run(0.4);
   const s = state();
-
   return [
-    ok(small.pitW === 150 && small.pitDepth === 150,
-       'it starts as a scrape, 150 by 150', `${small.pitW} x ${small.pitDepth}`),
-    ok(small.pitCapacity < 800, 'which holds a couple of minutes of dust',
-       `${small.pitCapacity}`),
-    ok(full.pit === small.pitCapacity && full.stored === full.pitDust,
-       'it fills to the brim of the scrape and takes no more',
-       `${full.pit} cells, ${full.stored} counted`),
-    ok(s.pitDepth === 276, 'dug out it is 276 deep', `${s.pitDepth}`),
-    ok(s.pitW === 3600, 'and 3600 across', `${s.pitW}`),
-    ok(s.pitLevel === 23 && s.pitDigsLeft === 0, 'and there is nothing left to dig',
-       `dig ${s.pitLevel}, ${s.pitDigsLeft} to go`),
-    ok(s.pitDust === full.pitDust && s.pitDust === s.stored,
-       'the pile that was in it is still in it, grain for grain',
-       `${full.pitDust} -> ${s.pitDust}, ${s.stored} counted`),
-    ok(!s.pitFull, 'and there is room in it again', `${s.pitDust} of ${s.pitCapacity}`),
+    ok(s0.pitW === 3600, 'it is the full width from the start', `${s0.pitW}`),
+    ok(s0.pitDepth === 276, 'and the full depth', `${s0.pitDepth}`),
+    ok(s0.pitCapacity > 30000, 'so it holds a run of the yard, not a couple of minutes',
+       `${s0.pitCapacity}`),
+    ok(!s.pitFull && s.pitDust === s.stored,
+       'a thousand tipped in is a thousand in the pile, with room to spare',
+       `${s.pitDust} of ${s.pitCapacity}`),
     // the hole itself, plus whatever the heap over the brim is allowed to be
     ok(s.pitCapacity > (3600 / s.pitGrain) * (276 / s.pitGrain),
        'it holds the hole and then some, for the heap over the mouth',
@@ -123,7 +120,6 @@ group('the pit is dug out, not given', async () => {
 });
 
 group('dust in the pit is one grain each', async () => {
-  window.__dig();                            // the hole this is about is the dug one
   const cap = state().pitCapacity;
   window.__give(Math.floor(cap * 0.6));
   run(0.6);

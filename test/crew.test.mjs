@@ -280,10 +280,14 @@ group('the crew go through the hole to get at the far side', async () => {
   window.__air({ haze: 0, muck: 0 });
   const far = state().pitX + state().pitW;
 
-  // a patch out past the far wall, and nothing anywhere else
+  // A patch out past the far wall, and nothing anywhere else. The strip beyond
+  // the hole is only the padding the world keeps there -- about eighteen cells
+  // -- and the hole is the full width from the first frame now, so the patch has
+  // to fit in that rather than reach four hundred pixels into ground that is not
+  // there.
   const laid = window.__muckSet(c => {
     const x = c * 6 + 3;
-    return x > far + 60 && x < far + 400 ? 2 : 0;
+    return x > far ? 2 : 0;
   });
   let beyond = 0, deepest = 0, gone = false;
   for (let i = 0; i < 400 && !gone; i++) {
@@ -314,10 +318,13 @@ group('the crew go through the hole to get at the far side', async () => {
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });
   return [
-    ok(laid > 50, 'a patch of muck out past the far wall', `${laid} cells`),
+    // Eighteen cells is the whole of it: the world keeps that much ground past
+    // the far wall and no more, and the hole is the full width from the first
+    // frame. It used to be a scrape with hundreds of pixels of yard behind it.
+    ok(laid > 10, 'a patch of muck out past the far wall', `${laid} cells`),
     ok(deepest > 40, 'and the crew go down into the hole to get to it',
        `${deepest}px below the ground line`),
-    ok(beyond > 100, 'and up the far wall and out onto ground they cannot otherwise stand on',
+    ok(beyond > 40, 'and up the far wall and out onto ground they cannot otherwise stand on',
        `${beyond}px past the far wall`),
     ok(gone, 'and shift the lot', `${Math.round(state().smog.muck.all)} left`),
     ok(back, 'and come back through the same way when the near side needs them'),

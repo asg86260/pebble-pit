@@ -6,7 +6,7 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { PIT_W_MAX, PIT_W0, PIT_D0, PIT_DIG_W, PIT_DIG_D, PIT_DIGS, PIT_DIG_COST, PIT_DIG_RATE,
+import { PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
@@ -15,17 +15,20 @@ import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
 
-// --- how big the hole is today ---------------------------------------------
-// The hole is dug out one purchase at a time, from a scrape to the whole thing.
-// Both run to a limit and stop there: depth is pinned to the window, so it fills
-// up first and the last few digs are all sideways.
-export const pitWidth = (lvl = S.pitLevel) =>
-  Math.min(PIT_W_MAX, PIT_W0 + lvl * PIT_DIG_W);
-export const pitDepth = (lvl = S.pitLevel) =>
-  Math.min(PIT_H, PIT_D0 + lvl * PIT_DIG_D);
-export const digsLeft = () => PIT_DIGS - S.pitLevel;
-export const digCost = (lvl = S.pitLevel) =>
-  Math.round(PIT_DIG_COST * Math.pow(PIT_DIG_RATE, lvl));
+// --- how big the hole is -----------------------------------------------------
+// One hole, the whole thing, from the first frame.
+//
+// It used to be dug out a purchase at a time, from a scrape to the full pit --
+// twenty-three of them. Which made the hole the ceiling on everything else: what
+// you could hold was what you had dug, so every price in the game was really a
+// statement about how much pit you had bought first, and a row you could not
+// afford was as often a row you had nowhere to put as one you had not earned.
+//
+// The hole is scenery with a number in it. It is not the thing the game is
+// about, and making it the gate on the things the game *is* about was the tail
+// wagging the dog.
+export const pitWidth = () => PIT_W_MAX;
+export const pitDepth = () => PIT_H;
 
 // Where the bed sits and how many cells it is. The near lip never moves: a dig
 // takes the far wall out and the floor down, so nothing you can already see
@@ -62,37 +65,6 @@ function regridPit() {
 // One dig, bought at the bench: the far wall goes out and the floor goes down.
 // The world is not laid out again -- it never depended on how far the hole had
 // got, only on how far it can ever get -- so this is the bed and nothing else.
-export function digPit() {
-  if (S.pitLevel >= PIT_DIGS) return;
-  S.pitLevel++;
-  shapePit();
-  wirePit();                             // regrids, re-measures, repaints
-  topUpPit();                            // and what was over the brim comes back
-  seedPitCores();
-  // and the ground says what a dig did to it: the far wall has gone out from
-  // under whatever was lying behind it, and that dust has to come down. The
-  // hole does not know what a bank is, so the yard is told and answers for
-  // itself -- see `shedNewMouth` in game.js.
-  if (pit.onDig) pit.onDig();
-  S.dirty = true;
-}
-
-// The pile shows as much of what you hold as will fit in it, so a bigger hole
-// shows more of it: dust that was counted but had nowhere to be drawn comes back
-// into the picture the moment there is room. Laid in flat and in one shade,
-// because a hole fills up and the shade of any one grain was never a fact --
-// this is the same repack a reload does.
-function topUpPit() {
-  let want = Math.min(S.stored, pitCapacity()) - countDust(pit);
-  for (let r = 0; r < pit.rows && want > 0; r++) {
-    for (let c = 0; c < pit.cols && want > 0; c++) {
-      if (at(pit, c, r) || !roomFor(pit, c, r)) continue;
-      put(pit, c, r, 4);
-      want--;
-    }
-  }
-}
-
 // its painter, made fresh whenever the grid underneath changes shape
 export function setPitGrain(step) {
   S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
@@ -185,10 +157,10 @@ function heapCeiling(c) {
 
 // What the bed would hold at a given dig, without digging it. The board asks
 // this for the next one along, so it can say what the purchase buys.
-export function capacityAt(lvl = S.pitLevel) {
+export function capacityAt() {
   const p = pit.p;
-  const cols = pitWidth(lvl) / p;
-  const holeRows = pitDepth(lvl) / p;
+  const cols = pitWidth() / p;
+  const holeRows = pitDepth() / p;
   const rows = holeRows + PIT_HEAP / p;
   let n = 0;
   for (let c = 0; c < cols; c++) {

@@ -16,7 +16,7 @@ import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
 import { blocked, resite, clampCam } from './world.js';
 import { makeBoulder, rockSize, depthOf } from './rock.js';
-import { bankDust, spend as spendFromPit, digPit, digsLeft, pitFull } from './pit.js';
+import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, PUFFS, pitTop as muckTopAt } from './smog.js';
 import { overPitMouth } from './world.js';
@@ -235,18 +235,37 @@ export const pitProfile = (n = 20) => {
 
 // bank at the lip, the way a worker tips it in
 // dev: dig the hole out, so a check does not have to buy it a row at a time
-export const dig = (n = 99) => { for (let i = 0; i < n && digsLeft() > 0; i++) digPit(); };
+// The hole is the whole hole from the first frame, so there is nothing to dig.
+// Kept as a no-op because the panel and a check or two still say the word.
+export const dig = () => {};
 
 export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * 40, shade); };
 
 // dev: hand over dust, and dig the room to hold it. The hole turns dust away
 // when it is full, which is the game working -- but a check that wants two
 // thousand dust to spend on something else should not have to buy a pit first.
+//
+// It used to give up the first time a grain would not go in, and a grain is
+// offered to a column picked at random -- so one full column ended the whole
+// handout with the hole half empty, and a check asking for two thousand got a
+// few hundred and then failed somewhere else entirely. A refusal now means fill
+// along instead of throwing at random; only a hole that is genuinely full stops
+// it. The column it reached is kept between grains, because starting the walk
+// over for every one of them is six hundred tries a grain once the hole is
+// nearly full.
 export const give = (n, shade = 4) => {
+  let got = 0, col = 0;
   for (let i = 0; i < n; i++) {
-    if (pitFull()) digPit();
-    if (!bankDust(pit.x + Math.random() * pit.w, shade)) break;
+    if (bankDust(pit.x + Math.random() * pit.w, shade)) { got++; continue; }
+    let placed = false, tried = 0;
+    while (!placed && tried++ < pit.cols) {
+      placed = bankDust(pit.x + col * pit.p, shade);
+      col = (col + 1) % pit.cols;
+    }
+    if (!placed) break;                      // genuinely full: that is the hole working
+    got++;
   }
+  return got;
 };
 
 // --- the sky, the layer of muck, and where dust is lying ---------------------

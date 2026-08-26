@@ -52,41 +52,6 @@ export function wireGround() {
   // whole yard for free and put the haulers out of work, which is the one thing
   // the ground must never do. `grid.js` still has the hooks; nothing uses them.
   //   floor.spillsInto = overPitMouth; floor.spillsAt = 4; floor.spill = ...
-  pit.onDig = shedNewMouth;                // and what a dig does to the ground
-}
-
-// A dig takes the far wall out from under whatever was lying behind it. Those
-// grains were resting on the strip past the hole; the strip is hole now, and
-// dust lying across an opening is dust lying on nothing -- it hung there in the
-// air over the new mouth for the rest of the run, because settling only moves a
-// grain that has somewhere to fall to and the ground it stood on was still the
-// bottom row of the floor.
-//
-// So the dig hands them back to the air. They fall from where they lay and the
-// same landing rules that catch every other chip take it from there: into the
-// hole, which is what the hole is for, or back out by the lip if there is no
-// room in it.
-//
-// The columns behind the new wall are swept for the same reason one step out.
-// A bank may only rise as it gets away from the hole, and the wall has just
-// moved towards it -- so whatever now stands above that line is over a slope it
-// could never have been piled on, and it goes back in the air with the rest.
-export function shedNewMouth() {
-  if (!floor.grid) return;
-  for (let c = Math.max(0, colOf(floor, pit.x)); c < floor.cols; c++) {
-    const x = floor.x + c * P;
-    const mouth = overPitMouth(x);
-    for (let r = floor.rows - 1; r >= 0; r--) {
-      const v = at(floor, c, r);
-      if (!v) continue;
-      // top down, so the first grain that is standing legally means every one
-      // under it is too, and the column is done
-      if (!mouth && roomFor(floor, c, r)) break;
-      put(floor, c, r, 0);
-      spawnChip(x, bottomY(floor) - (r + 1) * P, 0, 0, v);
-    }
-  }
-  S.dirty = true;
 }
 
 // Laying out the world moves things; this is what each site does about it. The

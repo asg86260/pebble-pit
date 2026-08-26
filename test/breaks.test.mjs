@@ -64,11 +64,12 @@ group('a crew with nowhere to put anything walks home rather than freezing', asy
     run(0.4);
   window.__crew(3, 6);
   window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
-  // Two waits, not one. Filling the scrape is the setup and the walk home is
-  // the check, so stopping at the moment the hole filled left six bodies still
-  // crossing the yard -- and running a flat four hundred seconds instead spent
-  // twenty thousand frames watching a yard that had already gone quiet.
-  runUntil(() => state().pitFull, 300);
+  // The hole is the whole hole from the first frame now, so filling it by
+  // mining is an hour of yard. It is handed over instead: what this check is
+  // about is what the crew do once there is nowhere to put anything, not how
+  // long it takes to get there.
+  window.__give(999999);
+  runUntil(() => state().pitFull, 30);
   runUntil(() => state().houses.home === 6, 120);
   const full = state();
 
@@ -76,9 +77,15 @@ group('a crew with nowhere to put anything walks home rather than freezing', asy
   const out = () => state().crewDetail.filter(d => d[0] === 'h' && !d.includes('|home|'));
   const stalled = out();
 
-  // and a dig brings them all straight back out
-  window.__dig(4);
-  runUntil(() => state().houses.home === 0 && state().stored > full.stored, 60);
+  // and room in the hole brings them all straight back out. It used to be a dig
+  // that made the room; the hole does not grow any more, so it is dust going out
+  // of it instead -- which is the same fact from the crew's side.
+  window.__spend(4000);
+  // Measured from *after* the room was made, not from the full hole: making the
+  // room is itself dust going out, so the old comparison was asking the crew to
+  // carry back everything that was spent before it counted as carrying at all.
+  const freed = state();
+  runUntil(() => state().houses.home === 0 && state().stored > freed.stored, 60);
   const dug = state();
   window.__crew(0, 0);
   window.__clearFloor();
@@ -87,8 +94,8 @@ group('a crew with nowhere to put anything walks home rather than freezing', asy
     ok(full.floorGrains > 100, 'and the yard is not', `${full.floorGrains} lying about`),
     ok(full.houses.home === 6, 'so every one of them has gone home',
        `${full.houses.home} in, ${stalled.length} still out`),
-    ok(dug.houses.home === 0, 'and a dig brings them all back out',
+    ok(dug.houses.home === 0, 'and room in it brings them all back out',
        `${dug.houses.home} still in`),
-    ok(dug.stored > full.stored, 'carrying again', `${full.stored} -> ${dug.stored}`)
+    ok(dug.stored > freed.stored, 'carrying again', `${freed.stored} -> ${dug.stored}`)
   ];
 });
