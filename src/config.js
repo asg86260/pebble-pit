@@ -321,7 +321,7 @@ export const SCHOOL_COST = 4;    // shards to build it
 // from then on, and nothing else in the game gives that much away -- so it is
 // priced like the decision it is. A thousand is a quarry running for a long
 // while, which is what makes the first one worth choosing between the four.
-export const TRADE_COST = 1000;  // and for the first of any one trade
+export let TRADE_COST = 1000;  // and for the first of any one trade
 export const TRADE_RATE = 1.6;   // each one after that
 // The lip is as close to the rock as the rock's own spoil will allow, and not a
 // cell further out. What has to fit between the apron and the lip is one full
@@ -473,9 +473,9 @@ export let GRAV = 0.45;
 // Nothing at the middle of the window, most at the edges, like the glass it is
 // pretending to be.
 export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
-export const SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
+export let SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
 export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss
-export const SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
+export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
 export const BRUSH = 3;          // sweep radius, in cells
 export const CORE_SIZE = P * 3;  // a core is a square this big
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
@@ -804,6 +804,9 @@ export const TUNABLE = [
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
+  { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1 },
+  { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1 },
+  { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2 },
   { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
@@ -823,6 +826,9 @@ export function tuned(key) {
     case 'CELL': return CELL;
     case 'BANK_SLOPE': return BANK_SLOPE;
     case 'HAZE_CA': return HAZE_CA;
+    case 'SPOIL_POP': return SPOIL_POP;
+    case 'SPOIL_SIDE': return SPOIL_SIDE;
+    case 'TRADE_COST': return TRADE_COST;
     case 'AIR_STIR': return AIR_STIR;
     case 'GRAV': return GRAV;
     case 'MINE_BASE': return MINE_BASE;
@@ -843,6 +849,9 @@ export function tune(key, v) {
     case 'CELL': CELL = v; break;
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
     case 'HAZE_CA': HAZE_CA = v; break;
+    case 'SPOIL_POP': SPOIL_POP = v; break;
+    case 'SPOIL_SIDE': SPOIL_SIDE = v; break;
+    case 'TRADE_COST': TRADE_COST = v; break;
     case 'AIR_STIR': AIR_STIR = v; break;
     case 'GRAV': GRAV = v; break;
     case 'MINE_BASE': MINE_BASE = v; break;

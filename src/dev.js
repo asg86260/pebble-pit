@@ -67,16 +67,41 @@ for (const k of crew) {
 
 line('give', box => {
   button(box, 'dust', () => window.__give(1000));
+  // The hole holds about thirty-seven thousand now, and a building is priced
+  // against that rather than against a scrape -- so there is a button that fills
+  // it rather than only one that tops it up.
+  button(box, 'fill', () => window.__give(999999));
   button(box, 'core', () => window.__grant({ cores: 5 }));
   button(box, 'shard', () => window.__grant({ shards: 5 }));
   button(box, 'spore', () => window.__grant({ spores: 5 }));
 });
 
+// Every building, not the three that happened to be here first. The cut and the
+// beds carry their own boards now, and the school, the house and the table are
+// all places you walk to -- so all of them open from one line.
 line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
   button(box, 'farm', () => { S.farmOpen = !S.farmOpen; S.seenCore = true; });
   button(box, 'lab', () => window.__lab(!S.labOpen));
+  button(box, 'school', () => window.__school({ open: !S.schoolOpen }));
+});
+
+line('open too', box => {
+  button(box, 'scrub', () => { S.scrubOpen = !S.scrubOpen; S.seenAir = true; });
+  button(box, 'casino', () => { S.casinoOpen = !S.casinoOpen; });
+  button(box, 'kit', () => window.__school({ open: true, breakers: 3, carters: 3,
+                                             blasters: 3, growers: 3 }));
   button(box, 'sky', () => { S.skyShown = !S.skyShown; });
+});
+
+// The mess, and the crew who have to shovel it. A yard under muck is the one
+// job everybody drops everything for, and it is worth being able to make one
+// without waiting for the sky to rain.
+line('muck', box => {
+  button(box, 'a little', () => window.__air({ muck: 60 }));
+  button(box, 'a lot', () => window.__air({ muck: 400 }));
+  button(box, 'haze', () => window.__air({ haze: 700 }));
+  button(box, 'clear', () => window.__air({ haze: 0, muck: 0 }));
 });
 
 line('boulder', box => {
