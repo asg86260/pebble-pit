@@ -63,7 +63,6 @@ function ok(cond, what, detail = '') {
 }
 
 const P = 6;                                   // a cell, for the piles
-const WORKER = 18;                             // a worker square, for tolerances
 const canvas = () => document.getElementById('c');
 const board = () => document.getElementById('board');
 const panel = () => document.getElementById('panel');
@@ -139,12 +138,6 @@ function runUntil(done, limit = 60) {
     if (done()) return true;
   }
   return false;
-}
-
-// Checks that are about *what* a worker does should not sit through *how long*
-// it takes. There are checks of their own for pace and for the length of a walk.
-function quickCrew() {
-  window.__levels({ haulPaceLevel: 20, haulCarryLevel: 4, quarryPaceLevel: 10, tendLevel: 10 });
 }
 
 function haveRock() {

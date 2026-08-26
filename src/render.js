@@ -4,26 +4,25 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, FIND_TONES, CORE_CELL, SHARD_CELL, SPORE_CELL,
-         CORE_SIZE, WORKER, ROCK_SINK, TARGET, FARM_H, FARM_GATE, SPARK_LIFE,
-         CASINO_SLICES, CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS } from './config.js';
+import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL,
+        SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, SPARK_LIFE, CASINO_SLICES,
+        CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { rockLeft, overRock, bridgeSpan } from './world.js';
-import { boulderAlive, depthOf, cellPos, rockTopY } from './rock.js';
+import { bridgeSpan } from './world.js';
+import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
 import { pitDepth, pitFull } from './pit.js';
 
-import { AIR } from './air.js';
-import { capacity, benchMark } from './upgrades.js';
+import { benchMark } from './upgrades.js';
 import { underground, quarryCut, ladder } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { SCRUB_DOOR, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
 import { SKY, DROPS, CAUGHT, PUFFS, muckCols, muckFloor } from './smog.js';
-import { spinning, pot, potAt, potShade, sliceKeeps } from './casino.js';
+import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
-import { bedX, bedTop } from './farm.js';
+import { bedX } from './farm.js';
 import { fmt } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
 import { atHome } from './crew.js';
@@ -857,7 +856,7 @@ const WORD = 'CASINO';
 // this game never does.
 // (`window.__signScale = 2` forces the big one on a window too short for it,
 // which is the only way to look at it without owning a taller screen.)
-const scale = () => window.__signScale ||
+const scale = () => (import.meta.env.DEV && window.__signScale) ||
   ((signH(2) + CASINO_H / P) * P <= S.groundY - S.camY ? 2 : 1);
 // The gap and the margin are two cells, not one. A stroke is two world cells
 // thick at full size, so one cell of air between a letter and the bulb beside it
@@ -1737,7 +1736,7 @@ export function draw() {
   // And then, only under `vite dev` and only if somebody has switched one on, a
   // filter held in front of the finished frame. `dev.js` installs this; a
   // production build never sets it, so this is one property read a frame.
-  if (window.__fx) window.__fx(canvas, P * S.zoom * S.dpr);
+  if (import.meta.env.DEV && window.__fx) window.__fx(canvas, P * S.zoom * S.dpr);
 }
 
 // push whatever changed into the scratch canvas, then blit it into the world at

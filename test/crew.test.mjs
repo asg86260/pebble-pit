@@ -4,7 +4,7 @@
 // Node checks: the yard is run rather than watched, so a walk the length of the
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, cutFloorAt, P, WORKER } from './helpers.mjs';
 
 // A crew that has been stood down is still a crew standing there. Frozen
 // squares read as a bug; shifting about reads as waiting.
@@ -122,6 +122,12 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // ladder is there so that it is not.
   const climbing = trail.filter(p => p.y > s0.groundY - WORKER);
   const rose = trail.slice(1).filter((p, i) => p.y < trail[i].y - 1 && p.y > s0.groundY - WORKER);
+  // A body walking the cut floor towards the ladder rises too: the floor is
+  // benched, so a bench it steps up is a sample that went up without being at
+  // the ladder. That is the floor carrying it, not the body climbing the wall --
+  // so a rise counts if the body is standing on the cut's floor where it
+  // happens to be, and is a fault if it is somewhere in the air.
+  const onFloor = p => Math.abs(p.y - (cutFloorAt(p.x + WORKER / 2) - WORKER)) <= 3;
   const steps = trail.slice(1).map((p, i) => Math.abs(p.x - trail[i].x));
   return [
     ok(digging.t === 'q' && digging.y > s0.groundY,
@@ -133,7 +139,7 @@ group('a body walks to its new work instead of appearing at it', async () => {
        'and it counts at its new job the moment it is given it',
        `${off.miners} mining, ${off.quarriers} in the quarry`),
     ok(climbing.length > 0 && rose.length > 0 &&
-       rose.every(p => Math.abs(p.x - s0.quarryFaceX) < WORKER),
+       rose.every(p => Math.abs(p.x - s0.quarryFaceX) < WORKER || onFloor(p)),
        'it comes out of the cut up the ladder, and nowhere else',
        `${rose.length} rising samples, ladder at ${s0.quarryFaceX}`),
     // Bounded by the crew's own legs rather than by a number written here: a

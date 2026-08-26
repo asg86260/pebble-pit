@@ -6,14 +6,11 @@
 // things stand.
 
 import './style.css';
-import './selftest.js';        // adds __test() to the console
 
-import { S, school } from './state.js';
+import { S } from './state.js';
 // The game itself. This file is the shell around it: a window, a canvas, a
 // mouse and a frame loop -- see game.js.
 import { step, settleIntoWorld } from './game.js';
-import * as hooks from './hooks.js';
-import { snapshot } from './report.js';
 import { at } from './grid.js';
 import { openingCamX, resize, clampCam } from './world.js';
 import { syncWorkers } from './crew.js';
@@ -21,10 +18,8 @@ import { draw } from './render.js';
 import { hud, remeasure } from './board.js';
 import { buildShop } from './shop.js';
 import { persist, restore } from './persist.js';
-import { assign } from './upgrades.js';
 import './input.js';           // the mouse, the wheel and the keyboard
 import { tick } from './clock.js';
-import { pitTop } from './smog.js';
 
 // The window changed size: lay the world out again, and measure the board that
 // is standing in it. The layout is the game's; the measuring is the page's, and
@@ -43,35 +38,6 @@ function frame() {
   requestAnimationFrame(frame);
 }
 
-
-// The dev handles, hung where the checks and the dev panel look for them. The
-// hooks themselves live in hooks.js, because the node checks import them
-// directly and there is no window there to hang anything on.
-Object.assign(window, {
-  __clearFloor: hooks.clearFloor, __pile: hooks.pile, __jump: hooks.jump,
-  __preview: hooks.preview, __next: hooks.next, __drop: hooks.drop,
-  __birds: hooks.birds, __crew: hooks.crew, __school: hooks.school,
-  __assign: hooks.assign, __build: hooks.rebuildBoards, __beds: hooks.beds,
-  __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
-  __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,
-  __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,
-  __lab: hooks.openLab, __research: hooks.finishResearch, __grant: hooks.grant,
-  __spend: hooks.spendDust, __pitProfile: hooks.pitProfile, __dig: hooks.dig,
-  __tip: hooks.tip, __give: hooks.give,
-  __skyX: hooks.skyX, __puffFades: hooks.puffFades, __skyFades: hooks.skyFades,
-  __dustSpan: hooks.dustSpan, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
-  __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
-  __muckOverPit: hooks.muckOverPit, __look: hooks.look
-});
-
-// What the checks read. The yard's own account of itself comes from report.js,
-// which both suites share; the two lines added here are facts about the page
-// rather than about the game, and there is no page in the other suite.
-window.__state = () => ({
-  ...snapshot(),
-  hushed: document.getElementById('panel').classList.contains('hushed'),
-  crewRows: [...document.querySelectorAll('#crewshop [data-key]')].map(r => r.textContent)
-});
 
 // Boot, in this order and no other: the world is laid out first, because
 // everything below stands in it -- the ground's own bed of sand is allocated
@@ -96,9 +62,13 @@ document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);
 
-// The dev panel, and only when this is being run with `bun run dev`. The
-// condition is a constant at build time, so a build drops the import and the
-// file with it -- there is no way for any of it to reach a player.
-if (import.meta.env.DEV) import('./dev.js');
+// The dev panel and the console handles, and only when this is being run with
+// `bun run dev`. The condition is a constant at build time, so a build drops
+// both imports and everything under them -- the handles, the checks, the whole
+// of the suite -- and there is no way for any of it to reach a player.
+if (import.meta.env.DEV) {
+  import('./dev.js');
+  import('./console.js');
+}
 
 requestAnimationFrame(frame);

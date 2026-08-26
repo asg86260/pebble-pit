@@ -3,7 +3,7 @@
 
 import { P } from './config.js';
 import { S, bench, lab, school, casino, scrub } from './state.js';
-import { crewRows, crewSections, houseRect } from './crewboard.js';
+import { crewRows, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
@@ -201,15 +201,21 @@ export function placeBoard() {
   if (at) place(panelEl, standAt[at]);
 }
 
-// dev: seat both boards wherever they belong, open or not, so a check can look
-// at where they would go without going through the whole opening dance
-window.__placeBoard = () => place(panelEl, standAt[at] || bench);
+// Two readings for the checks. They are plain exports rather than `window.__`
+// handles because this file is loaded by the node checks as well, where
+// `import.meta.env` is a vite word that means nothing -- console.js hangs them
+// on `window` behind the dev gate, and a build drops them, because with
+// console.js gone nothing imports either one.
 
-// dev: the size the board is seated by against the size it actually is. They
-// have to agree, or the sheet is standing where a board of some other height
-// would stand -- which is what buying a row out from under it used to do.
-window.__boardFit = () => ({ w: sized.w, h: sized.h,
-                             realW: panelEl.offsetWidth, realH: panelEl.offsetHeight });
+// seat both boards wherever they belong, open or not, so a check can look at
+// where they would go without going through the whole opening dance
+export const seatBoard = () => place(panelEl, standAt[at] || bench);
+
+// the size the board is seated by against the size it actually is. They have to
+// agree, or the sheet is standing where a board of some other height would
+// stand -- which is what buying a row out from under it used to do.
+export const boardFit = () => ({ w: sized.w, h: sized.h,
+                                 realW: panelEl.offsetWidth, realH: panelEl.offsetHeight });
 
 // The one bit of writing in the yard. Everything else here is a mark you learn,
 // but a station that has stopped needs to say why in words the first time, and a
@@ -299,9 +305,6 @@ export function showPanel(want) {
   requestAnimationFrame(() => panelEl.classList.add('open'));
 }
 
-// what the rest of the game still asks for, in the words it already used
-export const showBoard = open => showPanel(open ? 'bench' : at === 'bench' ? null : at);
-export const showLab = open => showPanel(open ? 'lab' : at === 'lab' ? null : at);
 
 export const fmt = n => n.toLocaleString('en-US');
 

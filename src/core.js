@@ -8,11 +8,9 @@ import { aim } from './dust.js';
 import { buildShop } from './shop.js';
 import { GRAV } from './config.js';
 import { floor } from './state.js';
-import { at, colOf, bottomY, surfaceY } from './grid.js';
+import { at, colOf, surfaceY } from './grid.js';
 import { boulderAlive, makeBoulder } from './rock.js';
 import { rockLeft } from './world.js';
-import { bankDust } from './pit.js';
-import { blocked } from './world.js';
 import { now } from './clock.js';
 import { introHolds } from './intro.js';
 

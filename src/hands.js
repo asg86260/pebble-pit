@@ -3,12 +3,10 @@
 // Sweeping lifts dust off the ground onto the cursor, a flick throws it, and
 // anything still in the air can be caught on the way past.
 
-import { P, BRUSH, GRAV, CORE_SIZE, MINE_DELAY } from './config.js';
-import { S, floor, pit } from './state.js';
+import { P, BRUSH, CORE_SIZE } from './config.js';
+import { S, floor } from './state.js';
 import { at, put, inside, colOf, bottomY } from './grid.js';
-import { blocked, overPitMouth } from './world.js';
 import { spawnChip } from './dust.js';
-import { bankDust } from './pit.js';
 import { capacity } from './upgrades.js';
 import { now } from './clock.js';
 

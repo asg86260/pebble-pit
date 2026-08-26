@@ -6,11 +6,9 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { P, PIT_W_MAX, PIT_W0, PIT_D0, PIT_DIG_W, PIT_DIG_D, PIT_DIGS,
-         PIT_DIG_COST, PIT_DIG_RATE,
-         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
-         findKind, someFind,
-         SHADES } from './config.js';
+import { PIT_W_MAX, PIT_W0, PIT_D0, PIT_DIG_W, PIT_DIG_D, PIT_DIGS, PIT_DIG_COST, PIT_DIG_RATE,
+        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
+        findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
 import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
@@ -258,7 +256,6 @@ export function refinePit() {
 // right thing again -- which is a straight subtraction while there is room, and
 // nothing at all while the pit is over the brim and the pile is already short.
 export function spend(cost) {
-  if (window.__spends) window.__spends.push(cost);   // dev: what took dust out
   S.stored -= cost;
   let left = countDust(pit) - Math.min(S.stored, pitCapacity());
   for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {

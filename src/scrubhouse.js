@@ -10,8 +10,7 @@
 // it are bodies not on the rock. That is the cost, and it is a decision you can
 // take back whenever you like -- the same bargain every other station makes.
 
-import { P, WORKER, FARM_WALK, SCRUB_CORES, RECYCLE_SHARDS,
-         SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
+import { WORKER, FARM_WALK, SCRUB_CORES, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
 import { idle, assign } from './upgrades.js';

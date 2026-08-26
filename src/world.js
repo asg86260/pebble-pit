@@ -5,14 +5,12 @@
 // are placed by their distance from the rock, so adding one is a distance in
 // config.js and a line in `layout` below.
 
-import {
-  P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT, ROCK_SKY, ROCK_CLEAR, BANK_SLOPE,
-  ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase,
-  PIT_H, PIT_HEAP, PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H,
-  SHAKE_RATE, SHAKE_DECAY,
-  TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB, SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H, BENCH_W,
-  QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE,
-} from './config.js';
+import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
+        ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
+        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
+        SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
+        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
 import { shapePit } from './pit.js';
 
@@ -27,11 +25,6 @@ export const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
 // the canvas draws as a hairline down every seam. Snapped, so a rock loaded from
 // an older save stands square too. Everything about the rock measures from here.
 export const rockLeft = () => Math.round((S.cx - (S.gw / 2) * P) / P) * P;
-export const overRock = x => x + P > rockLeft() && x < rockLeft() + S.gw * P;
-export const rockColAt = x => Math.max(0, Math.min(S.gw - 1, Math.floor((x - rockLeft()) / P)));
-// the rock keeps a clear apron around its foot, so the banks stand off it rather
-// than heaping up its flanks and blurring where the rock ends
-export const overApron = x => x + P > rockLeft() - ROCK_CLEAR && x < rockLeft() + S.gw * P + ROCK_CLEAR;
 // Every station piles to its right, into a strip of ground that belongs to it,
 // and each strip stops short of the next station along. Nothing may heap
 // anywhere else, so the ground between them stays bare and every pile is

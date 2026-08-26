@@ -18,7 +18,6 @@ export const TARGET = 1000000;   // dust in the hole: the whole point
 // rock stands in, the ground, and the whole depth of the pit. A shorter window
 // loses sky off the top, which is the part with nothing in it, and eventually
 // the top of the rock. It does not rearrange and it does not shrink.
-export const MIN_H = 840;
 export const SKY = 1998;         // world above the ground line, so any window has sky
 // Every world coordinate below is a whole number of cells away from the last,
 // SKY included. That is not tidiness: a cell is a whole number of device
@@ -140,10 +139,6 @@ export const SMOG_SINK = 5;          // seconds to settle from the band's unders
 export const SMOG_WANDER = 9;       // how far a mote strays from its place in the band
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
-// How much of the sky each falling grain takes with it. The rain has no clock:
-// it runs until the banks overhead are used up, so they thin out as it comes
-// down instead of being switched off at the end of a timer.
-export const RAIN_TAKES = 0.85;
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
 export const PUFF_MAX = 260;         // puffs in the air at once, before it is a fog
 // Grains a second across the whole yard. Enough that a rain lays a layer over
@@ -310,11 +305,6 @@ export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
 export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
-// Room either side of the works, so it is not flush against the window. It is
-// part of the width the layout insists on showing at once, so it is also part
-// of how far the picture is scaled down on a narrow window -- widening the
-// world without taking it back scales the whole yard, counter and all.
-export const SIDE_PAD = 160;
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
 export const ROCK_W_MAX = 92;
@@ -450,10 +440,6 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // physically full -- a chip is never told there is nowhere to put it, and a rock
 // is more than one pile's worth, so a body on the rock is only worth having if
 // somebody is carrying. The sites deal in ones, so theirs are counted in ones.
-// What one find counts for against a pile's limit. The sites deal in ones and
-// the rock deals in thousands, so a shard lying in the quarry's pile has to be
-// worth more than the grain of dust it is sitting next to.
-export const FIND_WEIGHT = 1;
 // A site's strip is 420px, which is 35 bodies across and holds about 300 of them
 // heaped. Twelve was a guess and it was a bad one: a station that stops after
 // twelve is a station that is stopped nearly all the time. These are the same
@@ -532,7 +518,6 @@ export const BREAK_ODDS = 0.35;   // and how often a turn comes to anything
 export const BREAK_LIFE = 6000;   // roughly how long one lasts
 export const BREAK_BEAT = 900;    // between a puff, a note or a word
 export const BREAK_NEAR = 96;     // world pixels: how far a conversation carries
-export const SAY_LIFE = 900;      // how long a mark stands over a head
 
 // --- the quarry ---------------------------------------------------------------
 // A mouth in the ground away to the left. Crew walk in, are gone a while, and

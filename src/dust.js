@@ -3,11 +3,9 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, CORE_SIZE } from './config.js';
+import { P, GRAV } from './config.js';
 import { S, floor, pit } from './state.js';
-import { at, put, addGrain, surfaceY, colOf } from './grid.js';
-import { blocked, overPitMouth, rockEdge, pileOf } from './world.js';
-import { bankDust } from './pit.js';
+import { rockEdge, pileOf } from './world.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => Math.random() + Math.random() + Math.random() - 1.5;

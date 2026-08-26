@@ -5,16 +5,16 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, CORE_CELL, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
+import { P, SHADES, CORE_SIZE, PIT_DIGS, PIT_W0, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog } from './smog.js';
 import { showPanel } from './board.js';
-import { S, floor, pit, bench } from './state.js';
-import { at, put, count, countDust, fillFlat, addGrain, isDust, recount } from './grid.js';
-import { blocked, resite } from './world.js';
+import { S, floor, pit } from './state.js';
+import { at, put, count, fillFlat, isDust, recount } from './grid.js';
+import { resite } from './world.js';
 import { startIntro } from './intro.js';
-import { gridToString, gridFromString, makeBoulder, boulderAlive, refreshRockTops } from './rock.js';
-import { setPitGrain, seedPitCores, wirePit } from './pit.js';
+import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
+import { setPitGrain, seedPitCores } from './pit.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';

@@ -4,17 +4,15 @@
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // quarry and the farm arrive, its own file.
 
-import { P, WORKER, CORE_SIZE, CORE_CELL, HAUL_MS, DANCE_BEAT, HAUL_EMPTY,
-         DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
-         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR,
-         GRAV, MUCK_SWEEP } from './config.js';
+import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
+        COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
+        MUCK_SWEEP } from './config.js';
 import { S, floor, pit, bench } from './state.js';
-import { at, put, colOf, bottomY } from './grid.js';
-import { blocked, standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
-import { boulderAlive, knockOff, rockTopY, cellPos, depthOf, refreshRockTops, dropZone } from './rock.js';
-import { spawnChip, spawnSpoil, bell, aim } from './dust.js';
-import { depthShade } from './grid.js';
-import { bankDust, pitFull, pitRoom } from './pit.js';
+import { at, put, colOf } from './grid.js';
+import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
+import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
+import { spawnChip, bell, aim } from './dust.js';
+import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF } from './upgrades.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, bedX } from './farm.js';

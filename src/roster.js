@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, scrub, pit } from './state.js';
+import { S, quarry, farm, lab, scrub } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';

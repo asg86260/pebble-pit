@@ -18,7 +18,7 @@ import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
 import { workerAt, lift, lifted, drop } from './crew.js';
-import { mineMs } from './upgrades.js';
+import './upgrades.js';
 import { card } from './crewboard.js';
 import { pitFull } from './pit.js';
 import { now } from './clock.js';

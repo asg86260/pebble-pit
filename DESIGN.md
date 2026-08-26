@@ -1230,18 +1230,37 @@ still holds the machinery that would let the pile settle to a finer grain and ho
 
 ## The suite
 
-`node tools/headless.mjs` runs the lot; `node tools/headless.mjs --only casino` runs just the
-groups whose name contains that, which is how you check one corner without paying for the whole
-thing. The result names the eight slowest groups, so the next thing worth cutting is always in
-the output of the last run.
+Two suites, and which one a check belongs to is decided by one question: does it need a page?
+
+**`npm test`** is the yard. It runs in node with no browser at all — `game.js` is one frame of the
+game with nothing in it that draws or listens, `tools/node` gives it eighty lines of stub browser,
+and `test/*.test.mjs` drive it through the same handles the console has. One file per feature, a
+fresh yard per file, and node runs the files side by side: three hundred and seventy checks in
+twenty seconds. `npm run test:watch` reruns the ones you are working on as you type.
+
+**`npm run test:browser`** is the page: a pointer dragged across the canvas, a board seating itself
+against the edge of a window, a cursor changing shape, a cell landing on a whole device pixel. Two
+hundred and twenty-odd checks in forty-five seconds, driven through Chrome's debugging protocol by
+`tools/headless.mjs` — `--only casino` runs one corner of it. Both results name the eight slowest
+groups, so the next thing worth cutting is always in the output of the last run.
+
+Every group starts from a new game. It did not use to: the browser suite was one long narrative,
+and a dozen groups only passed because of the yard the group above them had left behind — which
+meant a group could not be run on its own, a failure could belong to any of the groups above it,
+and the whole thing could not be split. A reset is half a second of game and buys all three back.
 
 Two costs, and only one of them is waste. **Simulated frames** are cheap each and enormous in bulk:
 a `run(400)` is twenty-four thousand of them, and most of those are spent after whatever the check
 is about has already happened. Those become `runUntil(...)` — run until the hole is full, until the
-crew have knocked off — and stop there. **Real sleeps** look like the obvious waste and are not:
-dust in flight, the counter tween, the board sliding and the save's debounce all hang off real
-frames, and a check that reads them early reads them mid-animation. Capping every sleep at 60ms was
-tried; it cost ten checks and saved less than the frame cuts did.
+crew have knocked off — and stop there. **Real sleeps** are the waste, and the node suite has none
+of them: it turns the game's own clock instead, so a body walking the length of the yard costs a
+few milliseconds rather than the half minute it takes to happen. What is left of them is in the
+browser suite, where dust in flight, the counter tween, the board sliding and the save's debounce
+all hang off real frames, and a check that reads them early reads them mid-animation.
+
+None of it ships. The handles, the reports they read and the browser suite itself are all behind
+`import.meta.env.DEV` in `console.js`, the same gate the dev panel is behind, so a build drops the
+lot: it was a third of what a player was being asked to download.
 
 ## Filters (dev only)
 

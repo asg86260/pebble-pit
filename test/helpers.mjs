@@ -9,7 +9,7 @@
 // from `src/selftest.js` reads the same as it did there, which is the point:
 // what moved is where it runs, not what it says.
 
-import { test, beforeEach } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newYard } from '../tools/node/yard.mjs';
 
@@ -18,7 +18,6 @@ export const yard = await newYard();
 export const state = () => yard.state();
 export const run = seconds => yard.fast(seconds);
 export const runUntil = (done, limit = 60) => yard.until(done, limit);
-export const sleep = () => { throw new Error('nothing here waits on the wall: turn the clock with run()'); };
 
 // A check: what it is called, and what to say when it is not true. The same
 // shape the browser suite uses, so a group carries its words across unchanged.
@@ -72,6 +71,13 @@ export function bankCore() {
   haveRock();                                  // and the next rock comes down
   return done;
 }
+
+// Where the ground is at some x -- and, down in the quarry, where the cut's own
+// benched floor is. They are two different answers: `groundAt` is the surface a
+// body walks along up top, and the cut is a hole in that surface.
+const { quarryFloor } = await import('../src/quarry.js');
+export const groundAt = x => yard.world.groundAt(x);
+export const cutFloorAt = x => quarryFloor(x);
 
 export const P = 6;               // a cell, for the piles
 export const WORKER = 18;         // a worker square, for tolerances
