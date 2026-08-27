@@ -491,6 +491,38 @@ export const throughRockMuck = n => clearRange(rockCols(), n);
 export const throughCutMuck = n => clearRange(cutCols(), n);
 export const throughBedMuck = n => clearRange(bedCols(), n);
 
+// Muck put down rather than rained down. The crew make their own now -- see
+// `relieve` in crew.js -- and it is the same stuff the sky drops, so the same
+// shovelling clears it and no new kind of mess had to be invented.
+//
+// It refuses the columns a shovel cannot reach. `onSite` holds the rock, the cut
+// and the beds out of the sweep, so muck left standing on one of those would lie
+// there for the rest of the run: a body about to go on a site holds on until it
+// is somewhere the crew can clean up after it.
+// The nearest ground to a place that a shovel can actually reach, or null if
+// there is none near. A body standing on the rock is standing on ground that is
+// held out of the sweep, so what it leaves goes on the bare yard a step away
+// rather than on the rock -- it steps aside, the way anybody would.
+export function cleanSpotNear(wx, reach = 90) {
+  const m = muckCols();
+  const home = colAt(wx);
+  for (let d = 0; d <= reach; d++) {
+    for (const c of (d ? [home - d, home + d] : [home])) {
+      if (c < 0 || c >= m.length || onSite(c)) continue;
+      return c * P + P / 2;
+    }
+  }
+  return null;
+}
+
+export function dropMuckAt(wx, n) {
+  const at = cleanSpotNear(wx);
+  if (at == null) return false;
+  muckCols()[colAt(at)] += n;
+  S.dirty = true;
+  return true;
+}
+
 // The rest of it, shifted from wherever the body doing the shifting is standing,
 // so a gang spread along the yard clears the yard rather than all of them
 // working the same column.

@@ -6,7 +6,7 @@
 
 import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
-        MUCK_SWEEP } from './config.js';
+        MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -20,7 +20,7 @@ import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { now } from './clock.js';
 import { sweepMuckAt, yardMuck, nearestMuck, pitLadder, pitTop,
-         pitSide, pastPit, muckPastPit, NEAR, FAR } from './smog.js';
+         pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -402,6 +402,49 @@ function downTheHole(w, to, dt) {
   w.farSide = w.side === FAR;
   // and it steps off the ladder onto the ground on that side
   w.x = w.farSide ? pit.x + pit.w : pit.x - WORKER;
+}
+
+// --- nature -------------------------------------------------------------------
+// A body works all day, and now and then it has to stop.
+//
+// It puts down whatever it was doing, says so over its head, stands there for a
+// couple of seconds, and gets back to it -- and what it leaves behind is the
+// same muck the sky rains down, so the crew have to shovel it exactly like any
+// other mess. The yard makes its own work. A bigger crew is more hands and a
+// bigger mess, which is a nicer shape for a number to have than "more hands".
+//
+// Nowhere it cannot be cleaned up. The rock, the cut and the beds are held out
+// of the shovelling -- see `onSite` in smog.js -- so a body standing on one of
+// them holds on and goes when it is next somewhere the crew can reach. That is
+// also why nothing is dropped by a body that is inside the lab or down a hole:
+// it is not standing on the yard at all.
+//
+// Every body keeps its own clock, set the first time it is looked at, so they do
+// not all go at once on the same tick.
+function relieve(w, now) {
+  if (!w.looAt) {                          // its own hour, from the moment it exists
+    w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
+    return false;
+  }
+
+  if (w.looUntil) {                        // mid-way through: it is not doing anything else
+    if (now < w.looUntil) { w.lunge = 0; return true; }
+    dropMuckAt(w.x + WORKER / 2, LOO_MUCK);
+    w.looUntil = 0;
+    w.say = null;
+    w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
+    return true;                           // one last frame of standing, then back to it
+  }
+
+  if (now < w.looAt) return false;
+  if (w.inside || w.inPit || w.carry || w.hasCore) return false;   // finish what you are holding
+  // Nowhere within reach that anybody could clean: hold on. A body down a hole
+  // or shut in a building is the case this catches.
+  if (cleanSpotNear(w.x + WORKER / 2) == null) return false;
+  w.looUntil = now + LOO_MS;
+  w.say = { mark: 'loo', until: w.looUntil };
+  w.resting = false;                       // stopped, but this is not a break
+  return true;
 }
 
 // --- the dance ----------------------------------------------------------------
@@ -1056,6 +1099,9 @@ export function updateWorkers(now, dt) {
     if (w.falling) { fall(w); continue; }
     // on its way to a job it has just been put on, and doing none of it yet
     if (w.walking) { stepCommute(w, zone); continue; }
+
+    // and now and then a body has to stop, whatever it was doing
+    if (relieve(w, now)) continue;
 
     if (w.type === 'miner') {
       // The rock is off. The crew take five on the bare ground. It runs until the next

@@ -455,6 +455,41 @@ const TESTS = [
     ];
   }],
 
+  // The yard makes its own work. A body stops now and then, says so, leaves the
+  // same muck the sky rains down, and gets back to it -- so a bigger crew is
+  // more hands and a bigger mess, and the shovelling has something to do that
+  // did not come out of the weather.
+  ['a body stops now and then, and the crew clear up after it', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(4, 0);                       // miners only: nobody to shovel it yet
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+
+    let said = 0, mucked = 0;
+    for (let i = 0; i < 700 && (said < 2 || mucked < 2); i++) {
+      run(0.25);
+      const s = state();
+      if (s.saying > 0) said++;
+      if (s.smog.muck.yard > 0) mucked++;
+    }
+    const left = state().smog.muck.yard;
+
+    // and now somebody whose job it is to shift it
+    window.__crew(1, 4);
+    const cleared = runUntil(() => state().smog.muck.yard === 0, 90);
+    window.__crew(0, 0);
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+    return [
+      ok(said > 0, 'a body says what it is about to do', `${said} frames saying it`),
+      ok(mucked > 0, 'and leaves something behind', `${mucked} frames with muck in the yard`),
+      ok(left > 0, 'which stays there while nobody is shovelling', `${Math.round(left)}`),
+      ok(cleared, 'and the crew clear it like any other mess',
+         `${Math.round(state().smog.muck.yard)} left`)
+    ];
+  }],
+
   // A yard under muck is the one job the whole crew drops everything for, and it
   // has something to shovel wherever you stand -- so a gang that arrived
   // together each found work on the spot it arrived on, and the mess was cleared

@@ -473,6 +473,17 @@ export let GRAV = 0.45;
 // Nothing at the middle of the window, most at the edges, like the glass it is
 // pretending to be.
 export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
+// --- nature ------------------------------------------------------------------
+// A body works all day and now and then it has to stop. It puts down what it is
+// doing, says so, goes, and gets back to work -- and what it leaves is the same
+// muck the sky rains down, so the crew have to shovel it like any other mess.
+// The yard makes its own work, which is the joke and also the point: a bigger
+// crew is more hands and a bigger mess.
+export let LOO_EVERY = 95000;    // how often a body is about due, on average
+export const LOO_SPREAD = 0.7;   // and how much that wanders, either side
+export const LOO_MS = 1700;      // how long it takes
+export const LOO_MUCK = 55;      // and how much is left behind
+
 export let SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
 export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss
 export let SPOIL_SIDE = 1.3;   // how far sideways the blow throws it
@@ -804,6 +815,7 @@ export const TUNABLE = [
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
+  { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
   { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1 },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1 },
   { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2 },
@@ -826,6 +838,7 @@ export function tuned(key) {
     case 'CELL': return CELL;
     case 'BANK_SLOPE': return BANK_SLOPE;
     case 'HAZE_CA': return HAZE_CA;
+    case 'LOO_EVERY': return LOO_EVERY;
     case 'SPOIL_POP': return SPOIL_POP;
     case 'SPOIL_SIDE': return SPOIL_SIDE;
     case 'TRADE_COST': return TRADE_COST;
@@ -849,6 +862,7 @@ export function tune(key, v) {
     case 'CELL': CELL = v; break;
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
     case 'HAZE_CA': HAZE_CA = v; break;
+    case 'LOO_EVERY': LOO_EVERY = v; break;
     case 'SPOIL_POP': SPOIL_POP = v; break;
     case 'SPOIL_SIDE': SPOIL_SIDE = v; break;
     case 'TRADE_COST': TRADE_COST = v; break;

@@ -1561,6 +1561,17 @@ function drawSay(w) {
     return;
   }
 
+  // A little heap, in the colour of the stuff it is about to become. Nothing
+  // else in this yard is drawn in brown, so it needs no explaining -- and it is
+  // the same shape the muck makes on the ground a second later.
+  if (w.say.mark === 'loo') {
+    ctx.fillStyle = MUCK_TONE;
+    ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);
+    ctx.fillRect(Math.round(x - P * 0.5), top - P * 2, P, P);
+    ctx.fillStyle = '#000';
+    return;
+  }
+
   if (w.say.mark === 'note') {
     // a head and a stem: the smallest thing that is unmistakably a note
     ctx.fillRect(Math.round(x - P), top - P, P, P);
