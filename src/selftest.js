@@ -367,9 +367,14 @@ const TESTS = [
       ok(!shut.schoolOpen && !!row, 'the bench sells it, and it is not there to start with'),
       ok(open.schoolOpen && open.shards === shut.shards - 4,
          'shards build it', `${shut.shards} -> ${open.shards}`),
-      ok(open.schoolX > 1956 && open.schoolX + 120 < 2268,
+      // Against the two things it is actually between, not against the pixels
+      // they happened to sit at: the town is laid out as offsets back from the
+      // rock, so widening the ground on the left moves every one of these at
+      // once and a check written in world coordinates fails for no reason.
+      ok(open.schoolX > open.quarryX + open.quarryW &&
+         open.schoolX + 120 < (open.houses.left ?? open.benchX),
          'it stands clear of the quarry spoil and of where the crew live',
-         `${open.schoolX}`),
+         `${open.quarryX + open.quarryW} < ${open.schoolX}..${open.schoolX + 120} < ${open.houses.left ?? open.benchX}`),
       ok(rows.join(',') === 'breaker,carter,blaster,grower',
          'and it sells the four trades', rows.join(',')),
       ok(standing, 'walking up to it opens its board')

@@ -23,7 +23,7 @@
 
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
          SMOG_BAND, SMOG_WANDER, SMOG_SINK, SMOG_DRIFT,
-         SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, MUCK_MAX,
+         SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
@@ -531,7 +531,7 @@ function stepDrops() {
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
     const rest = muckFloor(c) - m[c] * P;
     if (d.y < rest - P) continue;
-    if (m[c] < MUCK_MAX) m[c]++;
+    if (Math.random() < RAIN_MARK && m[c] < MUCK_MAX) m[c]++;
     DROPS.splice(i, 1);
     S.dirty = true;
   }

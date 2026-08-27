@@ -118,7 +118,16 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // meets is not a cost. It scales with the crew, which is the right way round --
 // a bigger works fouls faster, so the sky is a thing that gets worse as you grow
 // rather than a timer running underneath you.
-export const SMOG_PER_DUST = 0.18;
+// This and the four constants marked "the same 3.56" below move together. Rain
+// used to break at 900; moving it to 3200 on its own did not make the sky
+// thicker, it only moved the finish line -- the yard fouled at the old rate, so
+// the band sat at a dozen specks and rain was an hour and a half away. Thicker
+// means more up there in the same time, so everything measured against the sky
+// scaled by the same 3200/900: what a swing puts up, what the house pulls down,
+// what comes out of its back, and how fast a rain empties it. The cycle keeps
+// the length it was tuned to and the sky it fills is three and a half times the
+// sky. Change one of the five and you are changing the balance, not the density.
+export const SMOG_PER_DUST = 0.64;
 export const QUARRY_FOUL = 5;        // a shard out of the cut is a hole full of it
 export const FARM_FOUL = 3;          // and turning a plot over lifts some too
 // The sky has to get properly filthy before it comes down. It used to break at
@@ -150,8 +159,14 @@ export const PUFF_MAX = 260;         // puffs in the air at once, before it is a
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
-export const RAIN_PER_S = 110;
+export const RAIN_PER_S = 390;      // the same 3.56: a fuller sky takes longer to fall
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
+// The share of what lands that leaves a mark. The sky holds three and a half
+// times the motes it used to for the same work done in the yard -- see
+// SMOG_PER_DUST -- so a mote carries that much less dirt, and a rain lays the
+// layer it always laid rather than burying the works under three of them. The
+// whole sky still falls; not every speck of it is filth.
+export const RAIN_MARK = 0.28;
 export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
@@ -170,7 +185,7 @@ export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands sh
 export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from the wall
 export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
 
-export const SCRUB_PULL = 5.5;       // motes a second, per body in it
+export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the same 3.56
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
 // How far either side of the fan a climbing puff is close enough to be taken.
@@ -179,11 +194,11 @@ export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, 
 export const SCRUB_CATCH = 260;
 // What the house puts out of the back before the recycler is fitted: the filters
 // have to be emptied somewhere, and the crew shovel it like any other mess.
-export const SCRUB_PER_MUCK = 10;   // motes caught per load out of the back
+export const SCRUB_PER_MUCK = 36;   // motes caught per load out of the back -- the same 3.56
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
-export const RECYCLE_PER = 3;        // motes caught per grain of dust it gives back
+export const RECYCLE_PER = 11;      // motes caught per grain of dust it gives back -- the same 3.56
 
 export const TO_SCRUB = -2436;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower
@@ -236,7 +251,10 @@ export const TO_OUTHOUSE = -690;
 export const OUTHOUSE_W = P * 7;
 export const OUTHOUSE_H = P * 10;
 
-export const TO_TOWER = -2856;
+// Far enough past the casino to read as its own place rather than the next unit
+// along: the gaps between the buildings out here run about a hundred and fifty,
+// and this one was eighteen.
+export const TO_TOWER = -3006;
 export const TOWER_W = P * 13;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // Twenty-six across, and it was eighteen. The wheel is set by the height rather
@@ -423,7 +441,12 @@ export const PILE_GAP = 0;       // bare ground kept between a pile and the next
 // The farm's own heap has to clear its fence, not just its last bed, which is
 // why this is more than FARM_GATE rather than measured off the beds.
 export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
-export const GROUND_LEFT = 2880; // ground running away to the left of everything
+// Ground running away to the left of everything. This is what the town has to
+// spread into: every building out that way is placed as an offset back from the
+// rock, so the last one along was standing four cells from the end of the world
+// with the casino almost against its wall. Widened so the far end of the walk
+// has somewhere to be.
+export const GROUND_LEFT = 3360;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
