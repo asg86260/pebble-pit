@@ -546,14 +546,51 @@ function pull(secs) {
 // goes because there is less and less of them left up there.
 const RAIN_FLOOR = 4;
 
+// What falls has to have got there first. This picked out of the whole sky, a
+// mote at a time, which during a downpour included the ones that had arrived
+// that instant -- so a puff you had just watched climb for four seconds off a
+// swing reached the band and was pulled straight back down as a raindrop. It
+// reads as pollution turning into rain on contact, which is not what either of
+// them is: the sky is the thing coming down, and a speck that has not joined
+// the sky yet is not part of it.
+//
+// A mote is settled once it has eased into the band -- the same `SMOG_SINK` the
+// sinking-in uses. Only settled ones can be picked, unless there is nothing
+// settled left at all, in which case the rain takes what there is rather than
+// stalling with a sky still overhead.
+const settled = m => m.age >= SMOG_SINK;
+
 function pour(secs) {
   let n = RAIN_PER_S * secs;
-  while (n > 0 && SKY.length) {
+  if (!SKY.length) { S.raining = false; return; }
+
+  // Which ones may fall, as places in the sky rather than as motes: a settled
+  // sky is thousands of specks and this runs every frame of a downpour, so a
+  // pick has to cost nothing. Taken by swapping the chosen one out of the back
+  // of the list, which is a pick without a search.
+  const pick = [];
+  for (let i = 0; i < SKY.length; i++) if (settled(SKY[i])) pick.push(i);
+  if (!pick.length) for (let i = 0; i < SKY.length; i++) pick.push(i);
+
+  const gone = new Set();
+  while (n > 0 && pick.length) {
     if (n < 1 && Math.random() > n) break;
     n -= 1;
-    const m = SKY.splice(Math.floor(Math.random() * SKY.length), 1)[0];
+    const at = Math.floor(Math.random() * pick.length);
+    const i = pick[at];
+    pick[at] = pick[pick.length - 1];
+    pick.pop();
+    gone.add(i);
+    const m = SKY[i];
     S.haze = Math.max(0, S.haze - SMOG_PER_MOTE);
     DROPS.push({ x: m.x, y: m.y, vy: 0.2 + Math.random() * 0.4 });
+  }
+
+  // and out of the sky in one pass, keeping the order of what is left
+  if (gone.size) {
+    let w = 0;
+    for (let i = 0; i < SKY.length; i++) if (!gone.has(i)) SKY[w++] = SKY[i];
+    SKY.length = w;
   }
   if (S.haze <= RAIN_FLOOR || !SKY.length) S.raining = false;
 }

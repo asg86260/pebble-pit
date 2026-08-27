@@ -141,7 +141,22 @@ export const SMOG_CAP = 4200;        // never more than this in the sky at once
 // The sky is motes, not banks: there is nothing here that says how many clouds
 // there are or what shape they are, because nobody draws one. What is up there is
 // however the motes have arranged themselves.
-export const SMOG_PER_MOTE = 1.2;    // haze each mote in the sky stands for
+// Haze each mote in the sky stands for -- so this is really how *many* specks a
+// dirty sky is made of, and that is what decides whether you can see one.
+//
+// The band is spread evenly over the whole world on purpose (see SMOG_SPREAD_MAX
+// and the check that it lies as a haze over everything, not in knots), and the
+// window shows an eighth of the world. At 1.2 a full sky was two and a half
+// thousand motes, three hundred of them on screen, filling a band of two and a
+// half thousand cells about a tenth of the way up at a tenth of an ink -- which
+// is nothing, and at the haze an hour of ordinary work actually reaches it was
+// six specks. The sky was invisible at every level anybody plays at.
+//
+// Two and a half times the specks for the same dirt. Everything that counts
+// motes rather than haze scales with it -- what the house's filters fill with,
+// what the recycler hands back, how fast a rain empties the sky, and how much
+// dirt one drop carries down -- all marked "per mote" below.
+export const SMOG_PER_MOTE = 0.48;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
 export const SMOG_BAND = 13;         // and how deep it is: room to bunch up in
 // How the haze spreads: not by anything travelling, but by the stretch of sky a
@@ -171,14 +186,14 @@ export const PUFF_MAX = 260;         // puffs in the air at once, before it is a
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
-export const RAIN_PER_S = 390;      // the same 3.56: a fuller sky takes longer to fall
+export const RAIN_PER_S = 975;      // per mote: a sky of more specks takes more of them a second
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
 // The share of what lands that leaves a mark. The sky holds three and a half
 // times the motes it used to for the same work done in the yard -- see
 // SMOG_PER_DUST -- so a mote carries that much less dirt, and a rain lays the
 // layer it always laid rather than burying the works under three of them. The
 // whole sky still falls; not every speck of it is filth.
-export const RAIN_MARK = 0.28;
+export const RAIN_MARK = 0.112;
 export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
@@ -206,11 +221,11 @@ export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, 
 export const SCRUB_CATCH = 260;
 // What the house puts out of the back before the recycler is fitted: the filters
 // have to be emptied somewhere, and the crew shovel it like any other mess.
-export const SCRUB_PER_MUCK = 36;   // motes caught per load out of the back -- the same 3.56
+export const SCRUB_PER_MUCK = 90;   // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
-export const RECYCLE_PER = 11;      // motes caught per grain of dust it gives back -- the same 3.56
+export const RECYCLE_PER = 28;      // motes caught per grain of dust it gives back -- per mote
 
 export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower

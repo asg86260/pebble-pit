@@ -563,7 +563,13 @@ export function drawSmog() {
 // mote that changes into something else on the way up, and the whole point of
 // these is that the thing in the sky and the thing off the swing are one thing.
 // Subtle enough to be air, solid enough to follow with your eye.
-const HAZE_INK = 0.13;
+// Raised with the count. A haze reads as haze when a lot of faint specks
+// overlap; the fix for an invisible band is mostly more of them, but a tenth of
+// an ink is under what a screen can honestly show against this paper, so the
+// speck itself comes up a little too. Not far -- past about a quarter these
+// stop being air and start being confetti, which is the fault this number was
+// held down to avoid in the first place.
+const HAZE_INK = 0.2;
 
 // Only what is on the screen. The sky runs the whole width of the world and the
 // window shows a fifth of it, so four motes in five are being composited into a

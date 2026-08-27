@@ -525,3 +525,46 @@ group('the recycler pays out on the ground under its own chute', async () => {
        `${swept.stored} banked`)
   ];
 });
+
+// A sky you cannot see is not a sky. This has gone invisible twice: once when
+// the threshold for rain was moved without moving what feeds the sky, and once
+// because the band is spread evenly over the whole world on purpose and the
+// window only ever shows an eighth of it -- so the count that matters is not
+// how many motes exist, it is how many are in front of you.
+//
+// Measured as a share of the band actually on screen, because that is the thing
+// being looked at. Both numbers below are well under what it runs at, so this
+// fails when the sky goes thin rather than when it wobbles.
+group('a dirty sky can be seen from where you stand', async () => {
+  window.__crew(0, 0);
+  const at = state().smog.at;
+
+  // cells of band inside the window: how wide the view is, thirteen deep
+  const bandCells = () => Math.round(state().viewW / P) * 13;
+  const inWindow = () => {
+    const s = state();
+    return window.__skyXY().filter(([x]) => x > s.camX && x < s.camX + s.viewW).length;
+  };
+  const coverAt = haze => {
+    window.__air({ haze });
+    run(1);
+    return inWindow() / bandCells();
+  };
+
+  const tenth = coverAt(Math.round(at / 10));
+  const half = coverAt(Math.round(at / 2));
+  const full = coverAt(at - 1);
+  window.__air({ haze: 0 });
+
+  return [
+    ok(tenth > 0.01,
+       'a sky a tenth of the way to rain has something in it to see',
+       `${(tenth * 100).toFixed(1)}% of the band in the window`),
+    ok(half > 0.08,
+       'half a sky covers enough of the band to read as haze',
+       `${(half * 100).toFixed(1)}%`),
+    ok(full > half && half > tenth,
+       'and it thickens the whole way up rather than topping out early',
+       `${(tenth * 100).toFixed(1)}% -> ${(half * 100).toFixed(1)}% -> ${(full * 100).toFixed(1)}%`)
+  ];
+});
