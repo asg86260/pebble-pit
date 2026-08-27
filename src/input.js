@@ -18,7 +18,7 @@ import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
-import { workerAt, lift, lifted, drop } from './crew.js';
+import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
 import { pitFull } from './pit.js';
@@ -131,6 +131,7 @@ canvas.addEventListener('pointermove', e => {
   if (lastSx != null) stirAir(sx, sy, sx - lastSx, sy - lastSy);
   lastSx = sx; lastSy = sy;
 
+  const wasWx = S.mouse ? S.mouse.x : null;
   S.mouse = pos(e);
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
@@ -166,6 +167,9 @@ canvas.addEventListener('pointermove', e => {
   // somebody on the cursor goes where the cursor goes
   const up = lifted();
   if (up) {
+    // waggled back and forth rather than carried: counted while it is in your
+    // hand and spent when you let go. See `shakeHeld`.
+    if (wasWx != null) shakeHeld(up, S.mouse.x - wasWx);
     up.x = S.mouse.x - WORKER / 2;
     up.y = S.mouse.y - WORKER / 2;
     if (!(e.buttons & 2)) drop(up);            // the button let go somewhere else

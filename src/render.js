@@ -1564,6 +1564,19 @@ function drawSay(w) {
   // A little heap, in the colour of the stuff it is about to become. Nothing
   // else in this yard is drawn in brown, so it needs no explaining -- and it is
   // the same shape the muck makes on the ground a second later.
+  // Stars. Two cells going round the head rather than a fixed pair, so a body
+  // seeing them is plainly still spinning -- which is the whole of what being
+  // shaken about earns you.
+  if (w.say.mark === 'dizzy') {
+    const t = now() / 160;
+    for (const off of [0, Math.PI]) {
+      const a = t + off;
+      ctx.fillRect(Math.round(x + Math.cos(a) * P * 2.2) - P / 2,
+                   Math.round(top - P * 1.4 + Math.sin(a) * P), P - 1, P - 1);
+    }
+    return;
+  }
+
   if (w.say.mark === 'loo') {
     ctx.fillStyle = MUCK_TONE;
     ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);

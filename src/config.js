@@ -473,6 +473,24 @@ export let GRAV = 0.45;
 // Nothing at the middle of the window, most at the edges, like the glass it is
 // pretending to be.
 export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
+// --- throwing somebody --------------------------------------------------------
+// A body let go of used to drop straight down, however you were moving when you
+// let go: the one thing in the yard that fell out of the air with no regard for
+// the hand that had hold of it. It is thrown now, off the same flick the dust
+// is thrown with.
+//
+// Gentler than dust, because a person is heavier than a grain and because a
+// body flung the length of the yard is a body with a very long walk back.
+export let HURL = 0.55;        // share of the cursor's flick a body takes
+export const HURL_MAX = 9;       // and the fastest it will ever leave your hand
+export const HURL_DRAG = 0.995;  // air against it on the way
+
+// Shaking one about. Back and forth over a short window is a shake rather than a
+// throw, and what it earns is a moment of not knowing which way is up.
+export const SHAKE_TURNS = 4;      // changes of direction that count as a shaking
+export const SHAKE_WINDOW = 700;   // inside this long, in ms
+export const DIZZY_MS = 1400;      // and how long the stars last afterwards
+
 // --- nature ------------------------------------------------------------------
 // A body works all day and now and then it has to stop. It puts down what it is
 // doing, says so, goes, and gets back to work -- and what it leaves is the same
@@ -816,6 +834,7 @@ export const TUNABLE = [
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
+  { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05 },
   { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1 },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1 },
   { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2 },
@@ -838,6 +857,7 @@ export function tuned(key) {
     case 'CELL': return CELL;
     case 'BANK_SLOPE': return BANK_SLOPE;
     case 'HAZE_CA': return HAZE_CA;
+    case 'HURL': return HURL;
     case 'LOO_EVERY': return LOO_EVERY;
     case 'SPOIL_POP': return SPOIL_POP;
     case 'SPOIL_SIDE': return SPOIL_SIDE;
@@ -862,6 +882,7 @@ export function tune(key, v) {
     case 'CELL': CELL = v; break;
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
     case 'HAZE_CA': HAZE_CA = v; break;
+    case 'HURL': HURL = v; break;
     case 'LOO_EVERY': LOO_EVERY = v; break;
     case 'SPOIL_POP': SPOIL_POP = v; break;
     case 'SPOIL_SIDE': SPOIL_SIDE = v; break;

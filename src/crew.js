@@ -6,10 +6,12 @@
 
 import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
-        MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK } from './config.js';
+        MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
+        HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS } from './config.js';
 import { S, floor, pit, bench } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
+import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
@@ -438,11 +440,12 @@ function relieve(w, now) {
 
   if (now < w.looAt) return false;
   if (w.inside || w.inPit || w.carry || w.hasCore) return false;   // finish what you are holding
-  // A body that has knocked off for the day is going home, and home is where it
-  // will go. Without this the yard can never settle: the last body walking in
-  // stops on the way, leaves something, and the ones already indoors come back
-  // out to shovel it -- for ever.
-  if (w.goal === 'home') return false;
+  // Only while it is working. A body winding down -- nothing to carry, on its
+  // way home, or standing about between strolls -- is a body whose day is over,
+  // and one that stopped on the way in would leave something for the ones
+  // already indoors to come back out and shovel, which is a yard that can never
+  // settle. It is also what was asked for: they go while they are working.
+  if (w.goal === 'home' || w.goal === 'idle' || w.brk) return false;
   // Nowhere within reach that anybody could clean: hold on. A body down a hole
   // or shut in a building is the case this catches.
   if (cleanSpotNear(w.x + WORKER / 2) == null) return false;
@@ -872,12 +875,48 @@ export function lift(w) {
 // already at work; if it came down anywhere else it walks back. A body dropped
 // down the far end of the yard is a body with a walk ahead of it, which is the
 // entire joke and the entire point.
+// Thrown, not lowered. A body leaves your hand with whatever you were doing with
+// your hand -- the same flick the dust is thrown with, off the same trail of
+// cursor samples, so a hand that had stopped moving before it let go drops the
+// body where it stands and a hand still travelling sends it.
+//
+// A share of the flick rather than all of it, and capped: a person is heavier
+// than a grain, and a body flung the length of the yard is a body with a very
+// long walk back. It is a toy, and a toy that punishes you for playing with it
+// is not one.
 export function drop(w) {
   if (!w) return;
+  const v = throwVel();
   w.lifted = false;
   w.falling = true;
-  w.vy = 0;
+  w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
+  w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  // Shaken about rather than thrown: it lands not knowing which way is up. The
+  // count is taken while it is in your hand -- see `shakeHeld` -- and spent
+  // here, so one shaking is one dizzy spell however long you keep hold of it.
+  if (w.shook >= SHAKE_TURNS) w.dizzyFor = DIZZY_MS;
+  w.shook = 0;
+  w.turnedAt = 0;
+  w.lastDir = 0;
   S.dirty = true;
+}
+
+// --- shaking somebody ---------------------------------------------------------
+// Waggling a held body back and forth is a different act from throwing it, and
+// the difference is direction changes rather than speed: a throw goes one way,
+// a shaking goes both. So the changes are counted, and they lapse -- four of
+// them inside three-quarters of a second is a shaking, four spread over a minute
+// of carrying somebody about is just carrying somebody about.
+export function shakeHeld(w, dx) {
+  if (!w || Math.abs(dx) < 1) return;
+  const dir = Math.sign(dx);
+  const t = now();
+  if (t - (w.turnedAt || 0) > SHAKE_WINDOW) w.shook = 0;   // lapsed: start again
+  if (w.lastDir && dir !== w.lastDir) {
+    w.shook = (w.shook || 0) + 1;
+    w.turnedAt = t;
+  }
+  w.lastDir = dir;
 }
 
 // Where a dropped body comes to rest: the rock if it is over the rock, the
@@ -893,14 +932,35 @@ function landing(w) {
 
 // one frame of that fall, and what happens when it stops
 function fall(w) {
+  // It travels while it falls now, and the ground it is going to land on is
+  // whatever is under it *there* -- so the foot is read after the step, not
+  // before it, or a body thrown onto the rock would stop in the air where the
+  // rock was not.
+  if (w.vx) {
+    w.x += w.vx;
+    w.vx *= HURL_DRAG;
+    // The yard has ends. A body thrown at one bumps off it rather than sailing
+    // out of the world and walking back in from nowhere.
+    const lo = yardLeft(), hi = pit.x + pit.w - WORKER;
+    if (w.x < lo) { w.x = lo; w.vx = -w.vx * 0.4; }
+    if (w.x > hi) { w.x = hi; w.vx = -w.vx * 0.4; }
+    if (Math.abs(w.vx) < 0.05) w.vx = 0;
+  }
   const foot = landing(w);
   w.vy += GRAV;
   w.y += w.vy;
   if (w.y < foot) return;
   w.y = foot;
   w.vy = 0;
+  w.vx = 0;
   w.falling = false;
   w.foot = null;                   // it climbs to wherever it is standing now
+  // and if it was shaken on the way up, it stands there seeing stars first
+  if (w.dizzyFor) {
+    w.dizzyUntil = now() + w.dizzyFor;
+    w.say = { mark: 'dizzy', until: w.dizzyUntil };
+    w.dizzyFor = 0;
+  }
   // Straight back to it if this is where it works, and a walk if it is not.
   if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
   else retask(w, w.type);

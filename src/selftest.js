@@ -455,6 +455,85 @@ const TESTS = [
     ];
   }],
 
+  // A body let go of used to drop straight down however you were moving when you
+  // let go -- the one thing in the yard that fell out of the air with no regard
+  // for the hand that had hold of it. It is thrown now, off the same flick the
+  // dust is thrown with, and waggling one about earns it a moment of not
+  // knowing which way is up.
+  ['a body is thrown rather than dropped, and shaking one makes it dizzy', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    run(2);
+
+    const grab = () => {
+      const s = state();
+      const [wx, wy] = s.workerPos[0].split(':')[1].split(',').map(Number);
+      const [sx, sy] = onScreen(wx, wy);
+      point('pointerdown', sx, sy, 2, 2);
+      return { wx, sx, sy };
+    };
+    const at = () => state().workerPos[0].split(':')[1].split(',').map(Number);
+    // Where it came to rest, not where it had walked to afterwards: a body picks
+    // its job back up the moment it lands, so a fixed run() after the throw
+    // measures the walk as well as the flight.
+    const landed = () => {
+      for (let i = 0; i < 240 && state().falling > 0; i++) run(1 / 60);
+      return at();
+    };
+
+    // Thrown sideways from up in the air. Held at head height it has no time to
+    // travel before it lands, which measures the drop rather than the throw --
+    // so it goes up first, stands still long enough for the climb to go stale,
+    // and is then flicked across.
+    const a = grab();
+    await sleep(20);
+    for (let i = 1; i <= 5; i++) { point('pointermove', a.sx, a.sy - i * 40, 2); await sleep(16); }
+    await sleep(180);                            // the climb is not the throw
+    for (let i = 1; i <= 6; i++) { point('pointermove', a.sx + i * 20, a.sy - 200, 2); await sleep(16); }
+    point('pointerup', a.sx + 140, a.sy - 200, 0);
+    const thrown = at();
+    const landedAt = landed();
+    const carried = Math.abs(landedAt[0] - thrown[0]);
+
+    // and dropped from a standstill: it goes where it was let go of
+    run(3);
+    const b = grab();
+    await sleep(20);
+    for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 2); await sleep(16); }
+    await sleep(180);                            // stood still before letting go
+    point('pointerup', b.sx, b.sy - 200, 0);
+    const still = at();
+    const stillLanded = landed();
+    const dropped = Math.abs(stillLanded[0] - still[0]);
+
+    // shaken about: it lands seeing stars
+    run(3);
+    const c = grab();
+    await sleep(20);
+    for (let i = 0; i < 8; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); await sleep(30); }
+    point('pointerup', c.sx, c.sy, 0);
+    run(0.6);
+    const dizzy = state();
+    run(3);
+    const over = state();
+
+    window.__crew(0, 0);
+    return [
+      // Measured against each other rather than against a number. How far a
+      // throw carries depends on how long the body is in the air, which depends
+      // on where it was standing when it was picked up -- so what is actually
+      // being claimed is that the flick does something the standstill does not.
+      ok(carried > dropped + 15, 'a body flicked out of your hand travels while it falls',
+         `${carried}px thrown against ${dropped}px let go of`),
+      ok(dropped < 10, 'and one let go of from a standstill comes straight down',
+         `${dropped}px across`),
+      ok(dizzy.saying > 0, 'shaking one about leaves it seeing stars',
+         `${dizzy.saying} saying something`),
+      ok(over.saying === 0, 'and it comes round', `${over.saying} still at it`)
+    ];
+  }],
+
   // The yard makes its own work. A body stops now and then, says so, leaves the
   // same muck the sky rains down, and gets back to it -- so a bigger crew is
   // more hands and a bigger mess, and the shovelling has something to do that
@@ -1886,10 +1965,17 @@ const TESTS = [
     // means here, so the rock one can be measured against it rather than against
     // a number picked out of the air.
     const sky = s.groundY - 400;
-    const dropAt = (tag, wx) => {
+    // Carried to a spot and *put down* there, which since bodies became throwable
+    // means coming to a stop before letting go: a hand still travelling throws,
+    // and this check is about where a body lands, not about how far it can be
+    // flung. Two moves to the same place, a beat apart, is a hand at rest.
+    const dropAt = async (tag, wx) => {
       const w = state().workerPos.find(p => p[0] === tag).split(':')[1].split(',').map(Number);
       point('pointerdown', ...scr(w[0] + 9, w[1] + 9), 2, 2);
       point('pointermove', ...scr(wx, sky), 2, -1);
+      await sleep(180);
+      point('pointermove', ...scr(wx, sky), 2, -1);
+      await sleep(180);
       point('pointerup', ...scr(wx, sky), 0, 2);
       for (let i = 0; i < 80; i++) {
         run(0.1);
@@ -1898,9 +1984,9 @@ const TESTS = [
       }
       return null;
     };
-    const ground = dropAt('h', s.rockX - 500);
+    const ground = await dropAt('h', s.rockX - 500);
     const carriedAfter = +(state().crewDetail.find(d => d[0] === 'h') || '|||c0').split('|')[3].slice(1);
-    const landed = dropAt('m', s.rockX + s.rockW / 2);
+    const landed = await dropAt('m', s.rockX + s.rockW / 2);
     window.__crew(0, 0);
     return [
       ok(/^carrying {2}(nothing|[■▲⬢◯] \d)/m.test(hauled),
