@@ -324,7 +324,7 @@ export function knockOff(mx, my, want = pickCount()) {
     spawnSpoil(px, py, shade);
   }
   // and it goes up from where it came off, not from a counter somewhere
-  foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py);
+  foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py, 'dust');
   S.dirty = true;
   refreshRockTops();
 }

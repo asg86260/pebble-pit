@@ -552,6 +552,10 @@ const TESTS = [
 
     // and at the bottom the seam comes out in one go
     const paid = runUntil(() => state().pileCount.quarry > 0, 180);
+    // The handful goes up a stone at a time, so the first one landing is the
+    // start of the seam rather than the whole of it. Wait for the throwing to
+    // finish and the last of them to come down.
+    run(4);
     const seam = state();
     const climbing = runUntil(() => state().crewDetail.some(d => d[0] === 'q' && d.includes('|up|')), 30)
                   || seam.cutDug >= 1;

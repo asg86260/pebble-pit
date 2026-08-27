@@ -18,7 +18,7 @@ import { benchMark } from './upgrades.js';
 import { underground, quarryCut, ladder, dirtTopY } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
-import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
+import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, CAUGHT, PUFFS, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
@@ -541,7 +541,9 @@ export function drawSmog() {
       ctx.fillRect(Math.round(m.x + off), y, P, P);
     }
     ctx.globalAlpha = ink;
-    ctx.fillStyle = '#000';
+    // the colour of whatever put it up there, not a flat black: a dirty sky
+    // says which part of the works is dirtying it
+    ctx.fillStyle = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
     ctx.fillRect(x, y, P, P);
   }
   ctx.globalAlpha = 1;
@@ -568,13 +570,16 @@ const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 
 export function drawPuffs() {
   if (!PUFFS.length) return;
-  ctx.fillStyle = '#000';
   for (const p of PUFFS) {
     if (!onScreen(p.x)) continue;
     ctx.globalAlpha = HAZE_INK * (p.fade == null ? 1 : p.fade);
+    // A climbing puff and the mote it becomes are one thing, so they are the
+    // one colour: whatever sent it up.
+    ctx.fillStyle = SMOG_TINTS[p.kind] || SMOG_TINTS.dust;
     ctx.fillRect(Math.round(p.x), Math.round(p.y), P, P);
   }
   ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
 }
 
 export function drawRain() {
@@ -582,10 +587,15 @@ export function drawRain() {
   ctx.fillStyle = MUCK_GREY;
   for (const d of DROPS)
     if (onScreen(d.x)) ctx.fillRect(Math.round(d.x), Math.round(d.y), P, P);
-  // and the thread being pulled the other way, into the house
-  ctx.fillStyle = '#000';
-  ctx.globalAlpha = 0.5;
-  for (const k of CAUGHT) ctx.fillRect(Math.round(k.x), Math.round(k.y), P, P);
+  // And the thread being pulled the other way, into the house. It is the same
+  // smoke it was a second ago, so it is drawn as the same smoke: its own colour
+  // at its own weight. It used to go black at half ink the moment the suction
+  // took it, which read as the house *dirtying* what it was cleaning up.
+  ctx.globalAlpha = HAZE_INK;
+  for (const k of CAUGHT) {
+    ctx.fillStyle = SMOG_TINTS[k.kind] || SMOG_TINTS.dust;
+    ctx.fillRect(Math.round(k.x), Math.round(k.y), P, P);
+  }
   ctx.globalAlpha = 1;
 }
 

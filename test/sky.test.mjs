@@ -359,6 +359,48 @@ group('the air over a site is the colour of what comes out of it', async () => {
 //
 // Checked with nobody on the rock, so every grain on the floor is one this
 // chute gave back and the span is the chute's own.
+// A house that made a bad sky simply vanish was a building you bought once and
+// then forgot: the only cost of running it was the body standing in it, and the
+// recycler on top of that was a strict bonus, which is why the upgrade read as
+// optional. The filters have to be emptied somewhere.
+group('the scrubbing house empties its filters out the back, until the recycler', async () => {
+  const run1 = () => {
+    window.__reset();
+    window.__crew(0, 0);
+    window.__clearFloor();
+    // under the rain line, or the weather makes the muck instead of the house
+    window.__air({ haze: 300, open: true, scrubbers: 2, muck: 0 });
+    run(10);
+    return state();
+  };
+  const plain = run1();
+
+  window.__reset();
+  window.__crew(0, 0);
+  window.__clearFloor();
+  window.__air({ haze: 300, open: true, scrubbers: 2, recycler: true, muck: 0 });
+  run(10);
+  const fitted = state();
+
+  window.__crew(0, 0);
+  window.__air({ haze: 0, muck: 0 });
+  window.__clearFloor();
+  return [
+    ok(plain.smog.haze < 300, 'the house pulls the sky down either way',
+       `300 -> ${Math.round(plain.smog.haze)}`),
+    ok(plain.smog.rains === 0 && fitted.smog.rains === 0,
+       'and no rain muddied the reading', `${plain.smog.rains}/${fitted.smog.rains} rains`),
+    ok(plain.smog.muck.yard > 0, 'and leaves what it caught out the back as muck',
+       `${Math.round(plain.smog.muck.yard)} to shovel`),
+    ok(plain.floor === 0, 'with nothing worth carrying in it', `${plain.floor} grains`),
+    ok(fitted.smog.muck.yard === 0, 'the recycler is what stops the mess',
+       `${Math.round(fitted.smog.muck.yard)} to shovel`),
+    ok(fitted.smog.recycled > 0 && fitted.floor > 0,
+       'and turns the same catch into dust worth fetching',
+       `${fitted.smog.recycled} recycled, ${fitted.floor} on the ground`)
+  ];
+});
+
 group('the recycler pays out on the ground under its own chute', async () => {
     run(0.4);
   window.__crew(0, 3);                 // two go in the house, one is left to fetch

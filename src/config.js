@@ -168,6 +168,14 @@ export const SCRUB_CORES = 4;        // what opens it
 export const SCRUB_PULL = 5.5;       // motes a second, per body in it
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
+// How far either side of the fan a climbing puff is close enough to be taken.
+// Generous, because a plume goes up in a column and the house wants the whole of
+// it, not the one mote that happened to line up with the throat.
+export const SCRUB_CATCH = 260;
+// What the house puts out of the back before the recycler is fitted: the filters
+// have to be emptied somewhere, and the crew shovel it like any other mess.
+export const SCRUB_PER_MUCK = 14;   // motes caught per load out of the back
+export const SCRUB_MUCK = 40;       // and how much a load is
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
 export const RECYCLE_PER = 3;        // motes caught per grain of dust it gives back
@@ -804,6 +812,20 @@ export const AIR_BANDS = [
 // as three sizes of speck. The colours are the pale end of the same two hues the
 // shards and spores are drawn in, so the air over a site and the stuff that
 // comes out of it are plainly the same material.
+// And the same three for the sky. What a station puts into the air is the colour
+// of what it is digging up, exactly as the dust hanging over it is -- so a dirty
+// sky says *which part of the works* is dirtying it, and the answer is a glance
+// rather than a readout.
+//
+// Darker and duller than the motes, because these are drawn at a tenth of the
+// ink and against the light: the same hues, pushed down until they read as smoke
+// with a cast in it rather than as coloured confetti.
+export const SMOG_TINTS = {
+  dust:  '#2b2b2b',
+  shard: '#26386b',
+  spore: '#27523a'
+};
+
 export const AIR_KINDS = ['dust', 'shard', 'spore'];
 export const AIR_TINTS = {
   dust:  ['#dedede', '#c2c2c2', '#a6a6a6'],

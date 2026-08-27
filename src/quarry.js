@@ -281,7 +281,7 @@ export function stepQuarrier(w, now) {
     if (now < (w.tossAt || 0)) return;
     tossOut(w.x + WORKER / 2, w.y + WORKER);
     w.quarried = (w.quarried || 0) + 1;
-    foul(QUARRY_FOUL, w.x + WORKER / 2, w.y);
+    foul(QUARRY_FOUL, w.x + WORKER / 2, w.y, 'shard');
     S.cutOwed--;
     w.tossAt = now + CUT_TOSS_MS;
     w.lunge = 1;

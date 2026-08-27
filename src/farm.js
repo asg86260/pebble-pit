@@ -121,7 +121,7 @@ export function stepFarmhand(w, now, dt) {
   if (throughBedMuck(1) < 1) { w.cutAt = now + CUT_MS; return; }
   cut(i, bedX(i));
   w.farmed = (w.farmed || 0) + 1;
-  foul(FARM_FOUL, bedX(i), S.groundY - P * 2);
+  foul(FARM_FOUL, bedX(i), S.groundY - P * 2, 'spore');
   w.cutAt = 0;
   w.bed = pickBed(w);
   w.goal = 'to';

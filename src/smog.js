@@ -25,7 +25,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_WANDER, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
-         SCRUB_ARM } from './config.js';
+         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
 import { spawnChip } from './dust.js';
@@ -116,7 +116,8 @@ export function foul(grains, x, y) {
 // A mote is a place in the band, a phase to wander on, and -- for its first few
 // seconds -- where it came in. It arrives at the spot the puff got to and eases
 // out to its place among the others, which is what joining a haze looks like.
-const skyMote = (x, y) => ({
+const skyMote = (x, y, kind = 'dust') => ({
+  kind,
   slot: slots++,
   bob: Math.random() * Math.PI * 2,
   roam: 0,
@@ -193,7 +194,7 @@ function stepPuffs(secs) {
     // rest. Nothing hands over to anything, and nothing has to be faded between
     // two positions, because there are not two things.
     p.done = true;
-    SKY.push(skyMote(p.x, p.y));
+    SKY.push(skyMote(p.x, p.y, p.kind));
   }
 }
 
@@ -335,7 +336,25 @@ function pull(secs) {
     const m = SKY.splice(best, 1)[0];
     // where it left the sky, and how far along it is. It is drawn along a curve
     // rather than eased at, so both ends of the journey have to be kept.
-    CAUGHT.push({ x: m.x, y: m.y, x0: m.x, y0: m.y, t: 0 });
+    CAUGHT.push({ x: m.x, y: m.y, x0: m.x, y0: m.y, t: 0, kind: m.kind });
+  }
+
+  // And the smoke still on its way up. A house that could only take what had
+  // already settled was a house that had to wait for the sky to get dirty before
+  // it was allowed to do anything about it -- so a plume climbing right past the
+  // fan went by untouched. It takes what comes near it, at whatever height.
+  //
+  // Off the same allowance as the settled haze: this is the same fan doing the
+  // same work, not a second one. The haze is docked for it too, because a puff
+  // that never lands is haze that was counted the moment it was made.
+  for (let i = PUFFS.length - 1; i >= 0 && take > -1; i--) {
+    const p = PUFFS[i];
+    if (p.done) continue;
+    if (Math.abs(p.x - to.x) > SCRUB_CATCH) continue;
+    take -= 1;
+    PUFFS.splice(i, 1);
+    S.haze = Math.max(0, S.haze - SMOG_PER_MOTE);
+    CAUGHT.push({ x: p.x, y: p.y, x0: p.x, y0: p.y, t: 0, kind: p.kind });
   }
 
   // The way in is over and then down the middle. A mote used to close on the
@@ -362,7 +381,24 @@ function pull(secs) {
     k.y = k.y0 * (1 - e * e) + to.y * e * e;
     if (k.t < 1) continue;
     CAUGHT.splice(i, 1);
-    if (!S.recycler) continue;
+    // What the house takes out of the sky has to go somewhere. Without the
+    // recycler it comes out of the back as muck on the ground, and the crew have
+    // to shovel it: a house that made a bad sky simply vanish was a building you
+    // bought once and then forgot, and the only cost of running it was the body
+    // standing in it.
+    //
+    // That is also what the recycler is *for*. It was a strict bonus on top of a
+    // machine that already did its whole job, so the upgrade read as optional;
+    // now it is the thing that turns a pile of muck out the back into dust worth
+    // carrying, which is a reason to save for it.
+    if (!S.recycler) {
+      S.scrubMuck = (S.scrubMuck || 0) + 1;
+      while (S.scrubMuck >= SCRUB_PER_MUCK) {
+        S.scrubMuck -= SCRUB_PER_MUCK;
+        dropMuckAt(outlet().x, SCRUB_MUCK);
+      }
+      continue;
+    }
     S.scrubBank += 1 / RECYCLE_PER;
     // Whole grains only, and real ones: dust in this game is a grain on the
     // ground that somebody has to carry, not a number going up.
