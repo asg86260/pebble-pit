@@ -22,12 +22,17 @@
 // dust on the ground.
 
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
-         SMOG_BAND, SMOG_WANDER, SMOG_SINK, SMOG_DRIFT,
+         SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
+// The same wind the dust leans on, off the same clock. Smoke and dust hanging
+// over the same yard at the same moment being blown two different ways was the
+// plainest of the old faults: whichever one you happened to be watching, the
+// other was arguing with it.
+import { windAt, give } from './wind.js';
 import { spawnChip } from './dust.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { rockLeft, overPitMouth } from './world.js';
@@ -112,7 +117,11 @@ export function foul(grains, x, y, kind = 'dust') {
     x: x + (Math.random() - 0.5) * P * 2,
     y,
     vy: -(0.55 + Math.random() * 0.5),
-    sway: Math.random() * Math.PI * 2,
+    // its share of the wind on the way up, a sixth either way. It was a sway
+    // before -- its own sine on its own phase -- so a column of puffs off one
+    // swing wove through itself on the way up like a shoal rather than being
+    // carried off the way the day is going.
+    give: give(Math.random(), SMOG_GIVE),
     fade: 1,
     // What put it up. Carried to the top of the climb and handed to the mote,
     // which is the whole of how a dirty sky says which part of the works is
@@ -128,15 +137,19 @@ export function foul(grains, x, y, kind = 'dust') {
   });
 }
 
-// A mote is a slot in the band and a phase to wander on. It has no position of
-// its own: where it is is where its slot is, this frame.
-// A mote is a place in the band, a phase to wander on, and -- for its first few
+// A mote is a slot in the band and a share of the wind. It has no position of
+// its own: where it is is where its slot is, this frame, leaned on by whatever
+// the wind is doing at that instant.
+// A mote is a place in the band, a share of the wind, and -- for its first few
 // seconds -- where it came in. It arrives at the spot the puff got to and eases
 // out to its place among the others, which is what joining a haze looks like.
 const skyMote = (x, y, kind = 'dust') => ({
   kind,
   slot: slots++,
-  bob: Math.random() * Math.PI * 2,
+  // its share of the wind, a sixth either way. This was a phase to bob on, and
+  // a band of motes each bobbing on its own was a haze that shimmered where it
+  // stood -- movement everywhere and no direction anywhere.
+  give: give(Math.random(), SMOG_GIVE),
   roam: 0,
   // How long it has been up there. The stretch of sky it is placed within opens
   // out with this, which is what dispersal is here -- see `spreadAt`.
@@ -154,6 +167,7 @@ const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 
 function stepPuffs(secs) {
   const low = bandLow();
+  const w = windAt(now());          // one wind, asked once, for the whole plume
   for (let i = PUFFS.length - 1; i >= 0; i--) {
     const p = PUFFS[i];
     // Slowing into the band and thinning where it stands.
@@ -180,7 +194,8 @@ function stepPuffs(secs) {
     }
     const rose = -p.vy * secs * 60;             // what it climbed this frame
     p.y -= rose;
-    p.x += Math.sin(now() / 700 + p.sway) * secs * 20;
+    // carried by the yard's wind, its own share of it, for as long as it is up
+    p.x += w * PUFF_LEAN_WIND * p.give * secs;
     // and a tenth of that sideways, the way it is leaning. Taken off the climb
     // itself rather than off the clock, so the drift is always the same share of
     // the height however fast the puff got up there -- a plume that leans and
@@ -334,18 +349,36 @@ function homeOf(m, span) {
   return { x, y: top + s.v * deep };
 }
 
-// One frame of the sky. Every mote is put where its slot says, plus a wander --
-// and the wander is a circle, not a walk. A random walk accumulates: leave it
-// running and the motes end up wherever the walk took them, which is the clumping
-// this was written to be rid of. Going round in a small ellipse on its own phase,
-// a mote is always moving and never anywhere but home.
+// One frame of the sky. Every mote is put where its slot says, carried along by
+// the wind and lifted a little by it -- the same wind, the same instant, for all
+// of them, give or take a sixth.
+//
+// It was a wander before: a small ellipse on each mote's own phase. The argument
+// for the ellipse was sound as far as it went -- a random walk accumulates and
+// ends up wherever it wandered, which is the clumping the slots exist to be rid
+// of, so whatever a mote does has to be something it comes back from -- but it
+// went nowhere near far enough. A field of specks each going round its own
+// little circle is a field with no direction in it at all, and the sky over this
+// yard shimmered where it stood while the dust below it was plainly being blown
+// about.
+//
+// The creep is what carries them now, and it is shared, so it moves the whole
+// band as one piece rather than moving the motes apart: a translation cannot
+// clump, whatever it accumulates. It runs backwards on the return gust, which is
+// what keeps it from being a journey.
 function place(secs) {
   const span = Math.max(P, S.worldW || 0);
-  const t = now() / 1000;
+  const w = windAt(now());
   for (const m of SKY) {
     m.age += secs;
     if (m.fade < 1) m.fade = Math.min(1, m.fade + secs / (PUFF_FADE / 1000));
-    m.roam += (secs * SMOG_DRIFT * 60) / span;
+    // The bodily creep along the sky, which is the one thing up here that adds
+    // up rather than easing back. It used to be a fixed rate: the whole haze
+    // slid slowly to the right for the entire run, whatever the wind was doing,
+    // which meant the sky's largest movement was the one movement in the yard
+    // that took no notice of the weather. It is the wind's now, sign and all --
+    // so a bank stalls in a lull and comes back on the return gust.
+    m.roam += (secs * SMOG_DRIFT * 60 * w * m.give) / span;
 
     const home = homeOf(m, span);
     // Down into the band over a few seconds. This one is a settle rather than a
@@ -366,8 +399,12 @@ function place(secs) {
       if (Math.abs(m.py) < 0.05) m.py = 0;
     }
 
-    m.x = (home.x + m.roam * span) % span + Math.sin(t * 0.5 + m.bob) * SMOG_WANDER + (m.px || 0);
-    m.y = y + Math.cos(t * 0.37 + m.bob) * SMOG_WANDER * 0.5 + (m.py || 0);
+    // Sideways is the drift above -- carried, not offset. What the wind does
+    // here is lift: a gust getting under a bank of haze raises it a few pixels
+    // and it settles back as the gust dies. Off the same number as everything
+    // else in the air, so the band never rises on a wind the dust is not in.
+    m.x = (home.x + m.roam * span) % span + (m.px || 0);
+    m.y = y - Math.abs(w) * m.give * SMOG_LIFT + (m.py || 0);
     if (m.x > span) m.x -= span;
     if (m.x < 0) m.x += span;
   }
@@ -929,7 +966,11 @@ export function smogReport() {
   // off this, so a check can see whether a dirty sky knows what dirtied it
   const kinds = {};
   for (const m of SKY) kinds[m.kind || 'none'] = (kinds[m.kind || 'none'] || 0) + 1;
-  return { sky: SKY.length, skyKinds: kinds, puffs: PUFFS.length, drops: DROPS.length, trend: airTrend(),
+  return { sky: SKY.length, skyKinds: kinds,
+           // where the first few of them are, finely enough that a check can see
+           // the band lean: the wind moves a settled mote a pixel or two over a
+           // second, which whole pixels would swallow
+           skyX: SKY.slice(0, 40).map(m => +m.x.toFixed(2)), puffs: PUFFS.length, drops: DROPS.length, trend: airTrend(),
            caught: CAUGHT.length, clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
