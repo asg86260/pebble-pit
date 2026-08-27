@@ -203,6 +203,8 @@ export const S = {
   houseBoardOpen: false,  // and the list of who lives here
   quarryBoardOpen: false,
   farmBoardOpen: false,
+  towerOpen: false,       // the tower is up
+  towerBoardOpen: false,
   scrubBoardOpen: false,
 
   // --- the air ----------------------------------------------------------------
@@ -253,6 +255,8 @@ export const casino = { x: 0, y: 0, w: 0, h: 0 };
 // The scrubbing house: the one building whose job is to undo something the rest
 // of the yard is doing.
 export const scrub = { x: 0, y: 0, w: 0, h: 0 };
+// The tower: the far end of the walk, and the only thing a core buys.
+export const tower = { x: 0, y: 0, w: 0, h: 0 };
 // The ground the pot piles up on: a real bed of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.

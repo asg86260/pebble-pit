@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, SPARK_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -702,6 +702,35 @@ const BAY = 8;           // courses of shaft the bellows hangs in
 const LEAF = 5;          // and cells across every leaf of it, in a shaft LEAF + 2 wide
 // see config.js: the mechanic reads these two as well, so they live there
 const CHUTE = SCRUB_CHUTE;
+
+// The tower. The one building in this yard that goes up rather than along: a
+// narrow shaft, a band of stone every few courses so it reads as built rather
+// than extruded, and a lit window near the top that is the only light in the
+// yard nobody walks to. Everything else out here is a shed or a hole.
+export function drawTower() {
+  if (!S.towerOpen) return;
+  const { x, y, w, h } = tower;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+
+  // courses, every fourth cell, stopping short of the head
+  ctx.fillStyle = '#000';
+  for (let r = y + P * 5; r < y + h - P * 2; r += P * 5) ctx.fillRect(x + 1, r, w - 2, 1);
+
+  // the head: a wider band, the way a tower carries its top
+  ctx.fillRect(x - P, y - P, w + P * 2, P);
+  ctx.strokeRect(x - P + 1, y - P + 1, w + P * 2 - 2, P - 2);
+
+  // and the window, lit, high up
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + w / 2 - P, y + P * 3, P * 2, P * 3);
+  ctx.fillStyle = '#e8890c';
+  ctx.fillRect(x + w / 2 - P + 1, y + P * 3 + 1, P * 2 - 2, P * 3 - 2);
+  ctx.fillStyle = '#000';
+}
 
 export function drawScrub() {
   if (!S.scrubOpen) return;
@@ -1804,6 +1833,7 @@ export function draw() {
   drawLab();
   drawCasino();
   drawScrub();
+  drawTower();
   drawPotPile();    // what is on the table, as a heap on the ground
   drawSparks();     // and whatever the last spin threw out of it
   drawSchool();

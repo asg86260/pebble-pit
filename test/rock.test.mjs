@@ -234,7 +234,7 @@ group('the core sits at the foot of the rock', async () => {
     run(0.4);
   window.__crew(0, 0);
   window.__clearFloor();
-  window.__jump(1);
+  window.__jump(5);                            // the first rock with a core in it
   run(1);
   const s = state();
   const foot = s.rockFoot;

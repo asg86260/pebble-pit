@@ -1,6 +1,6 @@
 // The core buried in each rock: how it comes loose, and how it is banked.
 
-import { P, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS } from './config.js';
+import { P, CORE_SIZE, CORE_CELL, ROCK_SINK, DANCE_MS, CORE_FROM } from './config.js';
 import { S, pit } from './state.js';
 import { addGrain } from './grid.js';
 import { rockEdge } from './world.js';
@@ -68,9 +68,16 @@ export function stepCore() {
   // both.
   if (introHolds()) return;
 
-  // the moment the last pixel goes, the core is loose and falls from the middle
+  // The moment the last pixel goes the rock is done with. If there was a core in
+  // it, it is loose now and falls from the middle; if there was not -- the first
+  // four have none -- the flag comes down anyway, because what it really says is
+  // "this rock still has something to give up", and this one has not. Deciding
+  // it when the rock is *built* instead skipped this whole branch on a coreless
+  // rock: no dance, and the next one came down the same frame on a crew that had
+  // not been told to move.
   if (S.coreBuried && !boulderAlive()) {
-    dropCore();
+    if (S.boulderNo >= CORE_FROM) dropCore();
+    else S.coreBuried = false;
     // No dancers, no dance: on a game with nobody hired yet this would be five
     // seconds of standing about, and that is most of the early game.
     S.danceUntil = S.miners > 0 ? now() + DANCE_MS : 0;

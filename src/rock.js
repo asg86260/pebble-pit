@@ -195,6 +195,9 @@ export function makeBoulder(fromSky = false) {
     crest.push(Math.max(1, Math.min(S.gh, Math.round(f * S.gh))));
   }
 
+  // Every rock holds until it is finished with. The flag says "this one still
+  // has something to give up", not "there is a core in here" -- whether what it
+  // gives up is a core is decided when the last pixel goes, in core.js.
   S.coreBuried = true;
   S.boulder = [];
   for (let y = 0; y < S.gh; y++) {

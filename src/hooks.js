@@ -24,7 +24,8 @@ import { dropCore } from './core.js';
 import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
-import { buildShop } from './shop.js';
+import { buildShop, refresh } from './shop.js';
+import { UPGRADES } from './upgrades.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -101,6 +102,15 @@ export const assign = (job, d = 1) => { assignJob(job, d); };
 
 // dev: rebuild the boards, for a check that changed the game behind their back
 export const rebuildBoards = () => { buildShop(); };
+
+// dev: and fill the rows in. Building a board makes the row elements; the words
+// and the prices in them are written by the frame loop while the board is open,
+// so a check that wants to read a price off a row it never walked up to has to
+// ask for them.
+export const fillBoard = () => {
+  buildShop();
+  refresh(document.getElementById('shop'), UPGRADES, null);
+};
 
 // dev: put every bed back to bare earth. A bed nobody is working keeps its crop
 // for ever, so a check that wants to watch one come ripe has to start from a

@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino, scrub, quarry, farm } from './state.js';
+import { S, bench, lab, school, casino, scrub, quarry, farm, tower } from './state.js';
 import { crewRows, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
@@ -11,6 +11,7 @@ import { CASINO_UPGRADES, spinning } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
+import { TOWER_UPGRADES } from './tower.js';
 import { refresh, markRowsSeen, buildCrew, tookRows } from './shop.js';
 import { now } from './clock.js';
 
@@ -22,6 +23,7 @@ const crewShopEl = document.getElementById('crewshop');
 const scrubShopEl = document.getElementById('scrubshop');
 const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
+const towerShopEl = document.getElementById('towershop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
@@ -29,7 +31,8 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
                 house: document.getElementById('house'),
                 scrub: document.getElementById('scrub'),
                 quarry: document.getElementById('quarryboard'),
-                farm: document.getElementById('farmboard') };
+                farm: document.getElementById('farmboard'),
+                tower: document.getElementById('towerboard') };
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
@@ -39,7 +42,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // need no such care.
 const quarryMouth = { get x() { return quarry.x; }, get y() { return quarry.y; },
                       get w() { return quarry.w; }, get h() { return 0; } };
-const standAt = { bench, lab, school, casino, scrub, farm,
+const standAt = { bench, lab, school, casino, scrub, farm, tower,
                   quarry: quarryMouth,
                   get house() { return houseRect(); } };
 // Asked for when it is wanted, not gathered at load time. The cut and the plots
@@ -54,7 +57,8 @@ const listFor = which =>
   which === 'casino' ? CASINO_UPGRADES :
   which === 'scrub' ? SCRUB_UPGRADES :
   which === 'quarry' ? QUARRY_UPGRADES :
-  which === 'farm' ? FARM_UPGRADES : [];
+  which === 'farm' ? FARM_UPGRADES :
+  which === 'tower' ? TOWER_UPGRADES : [];
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
@@ -70,6 +74,7 @@ export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
 // been paid for on the bench.
 export const nearQuarry = (x, y) => S.quarryOpen && near(quarryMouth, x, y);
 export const nearFarm = (x, y) => S.farmOpen && near(farm, x, y);
+export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
 // And the house, once anybody lives in it -- with a tight right edge rather than
 // the usual eight cells.
 //
@@ -297,6 +302,7 @@ export function showPanel(want) {
   S.scrubBoardOpen = want === 'scrub';
   S.quarryBoardOpen = want === 'quarry';
   S.farmBoardOpen = want === 'farm';
+  S.towerBoardOpen = want === 'tower';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
@@ -375,6 +381,7 @@ function fill(which) {
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
   if (which === 'quarry') refresh(quarryShopEl, QUARRY_UPGRADES, null);
   if (which === 'farm') refresh(farmShopEl, FARM_UPGRADES, null);
+  if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') { buildCrew(); refresh(crewShopEl, crewRows(), null); }

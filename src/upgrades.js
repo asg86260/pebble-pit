@@ -7,11 +7,13 @@
 
 import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, CASINO_CORES,
-  QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE
+  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
+  QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
+  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, UNLOCK_SHOW,
+  TOWER_CORES, TOWER_DUST, TOWER_SHARDS, TOWER_SPORES
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
-import { S, quarry, farm, lab, school, casino, scrub } from './state.js';
+import { S, quarry, farm, lab, school, casino, scrub, tower } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
@@ -242,22 +244,31 @@ export const HOUSE_ROW = {
 
 // A site is a place, bought once with cores. It comes with nobody in it: who
 // works it is the same question as who works the rock.
-const site = ({ key, name, cores, open, at, show }) => ({
-  key, name, cost: () => cores, currency: 'core',
+// A site is a place, bought once. It used to be bought with cores -- one whole
+// rock each -- which made the opening four rocks of watching a number climb with
+// nothing to do about it but swing, and spent the rarest thing in the game on
+// doors. Dust buys the yard now.
+const site = ({ key, name, dust, open, at, show }) => ({
+  key, name, cost: () => dust,
   buy: () => { S[open] = true; lookAt(at()); },
   show
 });
 
+// A door is shown once you are within reach of affording it. Nothing here is
+// revealed by a counter passing a mark nobody can see -- and a price you have no
+// idea is coming is a price you cannot save for.
+const nearly = n => S.stored >= n * UNLOCK_SHOW;
+
 const CAVE = site({
-  key: 'unlockquarry', name: 'open the quarry', cores: 3, open: 'quarryOpen',
+  key: 'unlockquarry', name: 'open the quarry', dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,               // show them what they just bought
-  show: () => S.seenCore && !S.quarryOpen
+  show: () => !S.quarryOpen && nearly(QUARRY_DUST)
 });
 // One place at a time. Banking a single core used to reveal every site in the
 // game at once, which spoils the whole chain: each one is a surprise that the
 // last one earns.
 const FARM = site({
-  key: 'unlockfarm', name: 'break the ground', cores: 5, open: 'farmOpen',
+  key: 'unlockfarm', name: 'break the ground', dust: FARM_DUST, open: 'farmOpen',
   at: () => farm.x + farm.w / 2,
   show: () => S.quarryOpen && !S.farmOpen
 });
@@ -408,7 +419,6 @@ export const UPGRADES = [
     name: 'build the scrubbing house',
     note: () => 'somebody in it pulls the haze back out of the sky, before it falls again',
     cost: () => scrubCost(),
-    currency: 'core',
     buy: () => { S.scrubOpen = true; lookAt(scrub.x + scrub.w / 2); },
     // Offered after the first rain, and after the lab has been told to watch the
     // sky. Two things have to have happened, in that order, and neither of them
@@ -433,21 +443,37 @@ export const UPGRADES = [
   },
   // The last thing on the ground, and the only one that makes nothing. It is
   // the far end of the walk on purpose, and it is the last core you spend.
+  // The one thing a core buys, and the only row in the game with a bill rather
+  // than a price. A core out of the rock, the dust the yard makes, the stone the
+  // cut gives up and the crop off the beds: everything the operation does, on
+  // one row. You cannot buy it by being good at one thing.
+  {
+    key: 'unlocktower',
+    name: 'raise the tower',
+    note: () => 'what a core is for',
+    bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST],
+                 ['shard', TOWER_SHARDS], ['spore', TOWER_SPORES]],
+    cost: () => TOWER_DUST,                      // for anything that asks in one coin
+    buy: () => { S.towerOpen = true; lookAt(tower.x + tower.w / 2); },
+    // Not offered until a core exists to spend. Before that it is a row asking
+    // for a thing the game has not shown you yet.
+    show: () => !S.towerOpen && S.seenCore
+  },
   {
     key: 'unlockcasino',
     name: 'build the casino',
-    cost: () => CASINO_CORES,
-    currency: 'core',
+    cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
     show: () => S.labOpen && !S.casinoOpen
   },
   {
     key: 'unlocklab',
     name: 'build the lab',
-    cost: () => 7,
-    currency: 'core',
+    cost: () => LAB_DUST,
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
-    show: () => S.seenCore && !S.labOpen && (S.seenShard || S.seenSpore)
+    // Still behind the cut or the beds: the lab multiplies what a place does, so
+    // it means nothing until there is a second place for it to be about.
+    show: () => !S.labOpen && (S.seenShard || S.seenSpore)
   },
 
   // The hole is not something you buy any more. It is the whole pit from the
@@ -467,6 +493,7 @@ export const SECTIONS = [
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
+  { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }
 ];
@@ -484,7 +511,7 @@ export const openSections = () =>
 
 // something on the board you could buy this second
 export const canAfford = () =>
-  UPGRADES.some(u => !u.job && u.show() && purse(u.currency || 'dust') >= u.cost());
+  UPGRADES.some(u => !u.job && u.show() && canPay(u));
 
 // a whole heading you have not seen yet -- worth more of a nudge than one more
 // row under a heading you have already read
@@ -505,22 +532,36 @@ export function markSectionsSeen() {
 // Buying is the same shape whatever the row and whatever it is priced in: check
 // you can afford it, take the price out of wherever that currency is kept, then
 // let the row do its one thing.
+// Take one currency out of wherever it is kept. Dust is lifted back out of the
+// pile; everything else is one grain in that pile, so paying lifts that many of
+// them out of it -- the pile always shows exactly what you are holding.
+function take(money, n) {
+  if (!n) return;
+  if (money === 'dust') spend(n);
+  else if (money === 'core') { S.cores -= n; takeCoreCells(n, CORE_CELL); }
+  else if (money === 'shard') { S.shards -= n; takeCoreCells(n, SHARD_CELL); }
+  else if (money === 'spore') { S.spores -= n; takeCoreCells(n, SPORE_CELL); }
+}
+
+// What a row costs, as a currency and an amount each. Almost every row in the
+// game is priced in one thing and says so with `cost` and `currency`; the tower
+// is priced in all four at once and says so with `bill`. One shape here means
+// the affording, the paying and the drawing all read a price the same way
+// whichever kind it is.
+export const billOf = u => u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
+
+export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
+
 export function buy(u) {
   if (u.job || u.dial) return;                   // a job row moves bodies and a dial sets a number
   // A row with a payout on it instead of a price is not a purchase: nothing is
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.
   if (u.price) { if (u.show() && !u.dead?.()) { u.buy(); S.dirty = true; buildShop(); } return; }
-  const cost = u.cost();
-  const money = u.currency || 'dust';
-  if (!u.show() || purse(money) < cost) return;
-
-  if (money === 'dust') spend(cost);              // lifted back out of the pile
-  // everything but dust is one grain in the pile, so paying lifts that many of
-  // them back out of it -- the pile always shows exactly what you are holding
-  else if (money === 'core') { S.cores -= cost; takeCoreCells(cost, CORE_CELL); }
-  else if (money === 'shard') { S.shards -= cost; takeCoreCells(cost, SHARD_CELL); }
-  else if (money === 'spore') { S.spores -= cost; takeCoreCells(cost, SPORE_CELL); }
+  if (!u.show() || !canPay(u)) return;
+  // Nothing is taken until all of it can be: a bill you can half afford would
+  // leave you with less of everything and none of the thing.
+  for (const [money, n] of billOf(u)) take(money, n);
 
   u.buy();
   S.dirty = true;

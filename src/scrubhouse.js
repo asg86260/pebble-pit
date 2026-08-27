@@ -10,7 +10,7 @@
 // it are bodies not on the rock. That is the cost, and it is a decision you can
 // take back whenever you like -- the same bargain every other station makes.
 
-import { WORKER, FARM_WALK, SCRUB_CORES, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
+import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
 import { idle, assign } from './upgrades.js';
@@ -117,4 +117,6 @@ export const SCRUB_SECTIONS = [
 ];
 
 // what it costs to put the place up at all
-export const scrubCost = () => SCRUB_CORES;
+// Dust, like every other building. It was cores back when a core was what a
+// building cost; a core buys the one thing nothing else can.
+export const scrubCost = () => SCRUB_DUST;

@@ -56,6 +56,9 @@ const fmt = n => n.toLocaleString('en-US');   // the same as the boards write
 // the boards are rebuilt when the game changes; a check that changes it by hand
 // has to ask for the same
 const buildShopFromTest = () => window.__build();
+// and with the words and prices written into them, for a check reading a row it
+// never walked up to
+const refreshShopFromTest = () => window.__fill();
 
 function ok(cond, what, detail = '') {
   if (cond) return { pass: true, what };
@@ -148,6 +151,15 @@ function haveRock() {
 }
 
 async function bankCore() {
+  // Not every rock has one: the first four are rock and nothing else, so a check
+  // that wants a core works the rock that has the first of them. See CORE_FROM.
+  //
+  // And it puts the yard back on the rock it found afterwards. Rock five is a
+  // good deal bigger than rock one, and a check that quietly left the yard on it
+  // hands every check after it a different-sized boulder to reason about.
+  const wasRock = state().boulderNo;
+  const jumped = wasRock < 5;
+  if (jumped) window.__jump(5);
   window.__next();                             // the last of the rock goes
   // Turned by hand rather than waited out. The core rolls clear on the game's
   // own clock, and the game's clock is ours here: six seconds of it costs a few
@@ -167,7 +179,10 @@ async function bankCore() {
   }
   run(0.2);
   point('pointerup', tx, ty);
-  return runUntil(() => !state().coreItem && !state().heldCore, 20) && (haveRock(), true);
+  const done = runUntil(() => !state().coreItem && !state().heldCore, 20);
+  if (jumped) window.__jump(wasRock);          // and the yard back on the rock it was on
+  haveRock();
+  return done;
 }
 
 // A roster: click the less or the more under the station itself. The game
@@ -534,6 +549,63 @@ const TESTS = [
     ];
   }],
 
+  // Every building used to cost cores, and a core is one whole rock -- so the
+  // opening was four rocks of watching a number climb with nothing to do about
+  // it but swing, and the rarest thing in the game went on doors. Dust buys the
+  // yard now, and a core buys the one thing nothing else can.
+  ['a core buys the tower and nothing else', async () => {
+    window.__reset();
+    await settle();
+    // Four rocks of yard first: the first core is in the fifth.
+    const early = [];
+    for (let n = 1; n <= 4; n++) {
+      window.__jump(n);
+      window.__next();
+      runUntil(() => state().rock > 0 && !state().rockFall, 30);
+      early.push(state().coreItem ? 'core' : '-');
+    }
+    const beforeFive = state().cores;
+    window.__jump(5);
+    window.__next();
+    const gotOne = runUntil(() => !!state().coreItem, 30);
+
+    // and the yard is bought in dust
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 3, shards: 2000, spores: 2000 });
+    buildShopFromTest();
+    // The price cells are written by the board's own refresh, not by building the
+    // rows, so they are empty until something fills them in.
+    refreshShopFromTest();
+    const row = k => shop().querySelector(`[data-key="${k}"]`);
+    const quarry = row('unlockquarry');
+    const dustPrice = quarry && [...quarry.querySelectorAll('.cost i')].map(i => i.className);
+
+    // the tower takes all four at once, and takes them together
+    const cores0 = state().cores;
+    const tower = row('unlocktower');
+    const marks = tower && [...tower.querySelectorAll('.cost i')].map(i => i.className);
+    tower?.click();
+    const built = state();
+
+    window.__crew(0, 0);
+    return [
+      ok(early.every(k => k === '-'), 'the first four rocks give up nothing',
+         early.join(',')),
+      ok(gotOne, 'and the fifth has a core in it'),
+      ok(!!quarry && dustPrice.join() === 'dust',
+         'the cut is bought with dust, not with a rock', String(dustPrice)),
+      ok(!!tower, 'and the tower is on the bench once a core exists'),
+      ok(marks && marks.join() === 'core,dust,shard,spore',
+         'priced in all four at once', String(marks)),
+      ok(built.towerOpen, 'buying it puts it up'),
+      ok(built.cores === cores0 - 1 && built.shards === 1000 && built.spores === 1000,
+         'and takes a bit of everything the yard makes',
+         `${cores0}->${built.cores} cores, ${built.shards} shards, ${built.spores} spores`)
+    ];
+  }],
+
   // Shards used to trickle: a quarrier swung, and every so often one came off the
   // face, for ever, at a steady rate -- which makes blue a tap rather than a
   // find. A cut is full of dirt now. Somebody works down through it, and at the
@@ -868,7 +940,7 @@ const TESTS = [
     window.__school({ open: false });
     return [
       ok(titles.join('|') === 'the bench|the lab|the training grounds|the house|' +
-                              'the quarry|the farm|the scrubbing house|the casino',
+                              'the tower|the quarry|the farm|the scrubbing house|the casino',
          'each board carries its own name', titles.join('|')),
       ok(emptyRows === 0 && emptyText.trim().length > 0,
          'a board with no rows says so instead of standing there blank', emptyText),
@@ -1545,9 +1617,13 @@ const TESTS = [
     await settle();
     const fresh = rows();
 
-    window.__grant({ cores: 4 });
+    // Dust opens the places now, not cores -- a core buys the tower and nothing
+    // else. A door shows once you are within half its price of affording it, so
+    // what reveals the cut is having most of what it costs.
+    window.__give(400);
+    window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
-    const withCore = { quarry: has('unlockquarry'), farm: has('unlockfarm'),
+    const withDust = { quarry: has('unlockquarry'), farm: has('unlockfarm'),
                        lab: has('unlocklab') };
 
     window.__crew(1, 1, 1);                  // the quarry open
@@ -1565,9 +1641,9 @@ const TESTS = [
     return [
       ok(!fresh.includes('pick') && !fresh.includes('unlockquarry'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withCore.quarry && !withCore.farm && !withCore.lab,
-         'the first core offers the quarry, and only the quarry',
-         JSON.stringify(withCore)),
+      ok(withDust.quarry && !withDust.farm && !withDust.lab,
+         'a pile of dust offers the quarry, and only the quarry',
+         JSON.stringify(withDust)),
       ok(withCave.farm && !withCave.lab, 'opening the quarry offers the farm'),
       ok(withShard.lab, 'a shard in hand offers the lab')
     ];
@@ -2377,7 +2453,9 @@ const TESTS = [
     const bench = at(s0.benchX + 20, s0.groundY - 30);
     const minus = at(r.less[0], r.less[1]);
 
-    // a loose core is the one thing in this yard you pick up yourself
+    // A loose core is the one thing in this yard you pick up yourself -- and it
+    // takes a rock that has one in it, which the first four do not.
+    window.__jump(5);
     window.__next();
     run(3);
     const k = state().coreItem;

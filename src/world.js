@@ -10,8 +10,8 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
-        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table } from './state.js';
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H } from './config.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower } from './state.js';
 import { shapePit } from './pit.js';
 
 const canvas = document.getElementById('c');
@@ -338,6 +338,14 @@ export function resize(after) {
   casino.h = CASINO_H;
   casino.x = S.cx + TO_CASINO;
   casino.y = S.groundY - casino.h;
+
+  // The far end of everything. It is tall rather than wide, because it is the one
+  // building that goes up rather than along: everything else in this yard is a
+  // shed or a hole, and the thing a core buys should not look like either.
+  tower.w = TOWER_W;
+  tower.h = TOWER_H;
+  tower.x = Math.round((S.cx + TO_TOWER) / P) * P;
+  tower.y = S.groundY - tower.h;
 
   // And the ground the pot stands on: everything from the left-hand end of the
   // world to the lab, which is both sides of the casino. A heap goes down beside

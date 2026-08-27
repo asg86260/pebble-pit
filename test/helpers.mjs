@@ -62,12 +62,23 @@ export function openSites() {
 // the core is let go over the mouth and the game does the rest -- the same fall,
 // the same landing, the same `bankCore` in core.js.
 export function bankCore() {
+  // Not every rock has one. The first four are rock and nothing else -- see
+  // CORE_FROM in config.js -- so a check that wants a core works the rock that
+  // has the first of them rather than whichever one it happens to be on.
+  // and it puts the yard back on the rock it found afterwards: rock five is a
+  // good deal bigger than rock one, and leaving the yard on it hands every check
+  // after this one a different-sized boulder to reason about
+  const wasRock = state().boulderNo;
+  const jumped = wasRock < 5;
+  if (jumped) window.__jump(5);
+  const restore = () => { if (jumped) window.__jump(wasRock); };
   window.__next();                             // the last of the rock goes
   runUntil(() => state().coreItem?.rest || state().cores > 0, 20);
-  if (state().cores > 0) return true;
-  if (!state().coreItem) return false;
+  if (state().cores > 0) { restore(); return true; }
+  if (!state().coreItem) { restore(); return false; }
   yard.S.coreItem = { x: yard.pit.x + 40, y: yard.S.groundY - 240, vx: 0, vy: 0, rest: false };
   const done = runUntil(() => !state().coreItem, 20);
+  restore();
   haveRock();                                  // and the next rock comes down
   return done;
 }

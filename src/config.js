@@ -164,7 +164,6 @@ export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands sh
 export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from the wall
 export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
 
-export const SCRUB_CORES = 4;        // what opens it
 export const SCRUB_PULL = 5.5;       // motes a second, per body in it
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
@@ -213,6 +212,17 @@ export const SCRUB_FOLDS = 3;
 export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
 
 export const TO_CASINO = -2760;
+// Past the casino: the far end of the walk, and the last thing on the ground.
+// Everything else out here was bought with what the yard digs; this one is
+// bought with the thing the yard cannot make.
+//
+// It sits in the margin the world already keeps at its left-hand end, rather
+// than pushing the whole yard right to make room. The rock is 2,880 from the
+// left edge and the casino is the last building before it, so what is left is a
+// narrow strip -- which suits the one building that is narrow and tall.
+export const TO_TOWER = -2856;
+export const TOWER_W = P * 13;
+export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // Twenty-six across, and it was eighteen. The wheel is set by the height rather
 // than the width -- it is as big as the block is short, and widening the block
 // does not grow it -- so at eighteen the doorway at the far end of the front was
@@ -230,7 +240,40 @@ export const TO_CASINO = -2760;
 // which suits the one building here that produces nothing.
 export const CASINO_W = P * 26;
 export const CASINO_H = P * 12;
-export const CASINO_CORES = 6;   // what it costs to have it built
+// --- what the yard is bought with ---------------------------------------------
+// Every building used to cost cores, and a core is one whole rock. So the
+// opening was four rocks of watching a number climb to three with nothing to do
+// about it but swing, and the rarest thing in the game was spent on doors.
+//
+// Dust buys the yard now: it is the thing you are making, it arrives constantly,
+// and an expensive door is one you can see yourself walking towards. A core buys
+// the one thing you cannot get any other way -- see the tower.
+export const QUARRY_DUST = 600;    // the cut, and the first real bill
+export const FARM_DUST = 1800;     // the beds
+export const SCRUB_DUST = 3500;    // the scrubbing house
+export const LAB_DUST = 5000;      // the lab
+export const CASINO_DUST = 15000;  // and the table, which makes nothing
+// A row shows once you are within this much of affording it. Nothing here is
+// revealed by a counter passing a mark nobody can see, and a price you have no
+// idea is coming is a price you cannot save for.
+export const UNLOCK_SHOW = 0.5;
+
+// The rock the first core is in. There is no reason for one to turn up in the
+// first thing you break, before there is anywhere for it to go: four rocks of
+// the yard being a yard, and then something comes out of one that never has
+// before.
+export const CORE_FROM = 5;
+
+// --- the tower ----------------------------------------------------------------
+// What a core is for. The only thing in the game bought with one, and the only
+// thing bought with all four at once: a core out of the rock, the dust the yard
+// makes, the stone the cut gives up and the crop off the beds. Everything the
+// operation does, on one row.
+export const TOWER_CORES = 1;
+export const TOWER_DUST = 5000;
+export const TOWER_SHARDS = 1000;
+export const TOWER_SPORES = 1000;
+
 // Putting a stake down *is* the spin. There was a version where the pot opened
 // at half and climbed back to the stake over half a minute, and it was a puzzle
 // rather than a bet: you put something down and then watched a number go up,

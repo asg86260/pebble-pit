@@ -265,6 +265,13 @@ canvas {
 #scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
+/* The one row in the game with a bill rather than a price: four currencies at
+   once. The cost column is sized for one mark and a number, so the tower gets
+   the rest of the row instead -- it is the only thing it is buying, and it is
+   the last row on the board. */
+#shop button[data-key="unlocktower"] { grid-template-columns: 9em 1fr; }
+#shop button[data-key="unlocktower"] .gain { display: none; }
+
 /* A row that is a reading rather than a purchase. It sits on a board of things
    you press, so the only way to say it is not one of them is to take away
    everything that says it is: no pointer, and no black under the cursor. It is

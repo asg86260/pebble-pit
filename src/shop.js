@@ -7,13 +7,14 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, purse, buy, gainText } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay } from './upgrades.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
+import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { crewRows, crewSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -24,6 +25,7 @@ const crewEl = document.getElementById('crewshop');
 const scrubEl = document.getElementById('scrubshop');
 const quarryEl = document.getElementById('quarryshop');
 const farmEl = document.getElementById('farmshop');
+const towerEl = document.getElementById('towershop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -208,8 +210,10 @@ export function refresh(el, list, headcount) {
     }
     const u = list.find(x => x.key === row.dataset.key);
     if (!u) continue;
-    const cost = u.cost();
-    const money = u.currency || 'dust';
+    // What it costs, as a mark and a number for each currency in the bill. All
+    // but one row in the game is priced in a single thing; the tower is priced
+    // in all four, and reading every price the same way is what lets it be.
+    const bill = billOf(u).map(([money, n]) => `${MARK[money]} ${n}`).join(' ');
     const [name, gain, price] = row.children;
 
     // A piece of research under way says so in place of its numbers, and
@@ -218,7 +222,7 @@ export function refresh(el, list, headcount) {
       const mine = S.research.key === u.key;
       say(name, u.name);
       sayHTML(gain, mine ? 'working' : '');   // how far along is a bar over the lab now
-      sayHTML(price, mine ? '' : `${MARK[money]} ${cost}`);
+      sayHTML(price, mine ? '' : bill);
       grey(row, true);
       continue;
     }
@@ -232,8 +236,8 @@ export function refresh(el, list, headcount) {
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's two decisions are the only ones: neither costs anything, and
     // the number either of them is about is the one on the table.
-    sayHTML(price, u.price ? u.price() : `${MARK[money]} ${cost}`);
-    grey(row, u.price ? !!u.dead?.() : purse(money) < cost);
+    sayHTML(price, u.price ? u.price() : bill);
+    grey(row, u.price ? !!u.dead?.() : !canPay(u));
   }
 }
 
@@ -278,6 +282,7 @@ export function buildShop() {
   // ground. A board with nothing left on it says so rather than standing blank.
   build(quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the cut is as deep as it goes');
   build(farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken');
+  build(towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet');
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   build(schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach');

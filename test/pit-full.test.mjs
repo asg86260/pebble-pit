@@ -99,6 +99,8 @@ group('a core waits on the ground rather than being lost to a full hole', async 
   window.__crew(2, 2);
   window.__give(200000);
   runUntil(() => state().pitFull, 60);
+  // onto a rock that actually has a core in it: the first four have none
+  window.__jump(5);
   window.__next();                             // the last of the rock goes
   runUntil(() => state().coreItem?.rest, 40);
   run(5);                                      // and a moment for it to be banked, if a full hole would take it
