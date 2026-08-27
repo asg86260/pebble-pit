@@ -90,11 +90,25 @@ export const kitX = job =>
 
 export function refreshPiles() {
   S.piles = [
+    // The ground under the recycler's spout. It is a station's strip like any
+    // other -- what the house makes lands on it, heaps on it, and stops the
+    // house when there is no room left -- and it is only there once the house
+    // is, because until then nothing pays out on it.
+    // It runs *away* from the building rather than out of it: the spout is on
+    // the left wall, so the ground it pays on to is the ground to its left, and
+    // a strip laid the usual way round would have put the heap inside the house.
+    ...(S.scrubOpen ? [scrubHeap()] : []),
     heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
     // the school is the next thing along the ground now, not the bench
     heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, school.x - PILE_GAP),
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
+}
+
+// The ground under the recycler's spout, running left from the wall.
+function scrubHeap() {
+  const to = Math.round((scrub.x - P) / P) * P;
+  return { key: 'scrub', from: to - heapBase('scrub') * P, to };
 }
 
 // A site's strip is cut down to the width its limit actually needs, so what it

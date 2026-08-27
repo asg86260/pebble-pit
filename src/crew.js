@@ -373,7 +373,7 @@ function downTheHole(w, to, dt) {
       w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
       w.dir = Math.sign(d);
     } else {
-      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
+      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
       w.lunge = 1;
     }
     w.y = pitStand(w.x) - WORKER;
@@ -1297,7 +1297,7 @@ export function updateWorkers(now, dt) {
       w.y = walkY(w.x + WORKER / 2);
     } else {
       w.y = walkY(w.x + WORKER / 2);
-      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
+      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
       w.lunge = 1;
       // and not shoulder to shoulder with the next one. A yard under muck
       // has something to shovel wherever you stand, so a gang that arrived

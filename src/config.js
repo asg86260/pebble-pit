@@ -236,6 +236,21 @@ export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from 
 export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
 
 export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the same 3.56
+// The draught the house makes while it is manned. It is not a hand picking
+// specks out of the band any more: the fan pulls on the whole sky, hardest near
+// the mouth and fainter the further out you are, so the haze leans towards the
+// house from one end of the world to the other, and what streams in comes off
+// the part of it that has been dragged nearest.
+//
+// It bends where a mote is *placed* rather than pushing it about. The fan runs
+// for minutes at a time and a force that accumulated would empty the band into
+// the wall; a lean is a thing the sky holds while the fan is on and lets go of
+// when it stops. Falls off with distance, so a bank twice as far away leans half
+// as far.
+export const SCRUB_DRAG = 2600;
+// and how many it can have in the air at once, so the stream reads as a stream
+// rather than as the whole band arriving in a lump
+export const SCRUB_STREAM = 90;
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
 // How far either side of the fan a climbing puff is close enough to be taken.
@@ -801,7 +816,17 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // sooner and the ground beside the rock reads as a working bank rather than as
 // a second hill. It costs nothing: the limit is when the miners *wait*, not how
 // much dust the game will ever give you.
-export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180 };
+// The scrubbing house is in here now, and it is the reason the recycler stopped
+// spraying the yard. Its spout paid on to bare ground, and bare ground takes a
+// scatter and no more -- so every grain it made walked outward looking for a
+// column with room and ended up somewhere down the walk. Dust the house makes
+// heaps under the house, like everything else in this yard, and when the heap is
+// full the house stops until somebody carries it away.
+export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140 };
+// And what the back of it may leave lying before it stops, with no recycler on:
+// cells of muck over the ground the spout reaches. It is the same rule wearing
+// the other coat -- a house nobody clears up after fills its own yard and jams.
+export const SCRUB_CLOG = 26;
 // There is no hysteresis on a full pile, and it turns out there should not be.
 // Any at all is a chore: at 0.95 you had to clear seventy grains before anybody
 // picked up a pick again, and a sweep of the brush lifts a handful. A station
@@ -1188,7 +1213,8 @@ export const TUNABLE = [
   { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1 },
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
   { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
-  { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 }
+  { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 },
+  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4 }
 ];
 
 export function tuned(key) {

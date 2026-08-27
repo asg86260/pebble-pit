@@ -16,7 +16,7 @@ import { scrubCost } from './scrubhouse.js';
 import { S, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
-import { lookAt, resite, benches, bedCount } from './world.js';
+import { refreshPiles, lookAt, resite, benches, bedCount } from './world.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
@@ -434,7 +434,9 @@ export const UPGRADES = [
     name: 'build the scrubbing house',
     note: () => 'somebody in it pulls the haze back out of the sky, before it falls again',
     cost: () => scrubCost(),
-    buy: () => { S.scrubOpen = true; lookAt(scrub.x + scrub.w / 2); },
+    // and the ground under its spout becomes a station's strip the moment it is
+    // up: what the house makes has to have somewhere of its own to heap.
+    buy: () => { S.scrubOpen = true; refreshPiles(); lookAt(scrub.x + scrub.w / 2); },
     // Offered after the first rain, and after the lab has been told to watch the
     // sky. Two things have to have happened, in that order, and neither of them
     // is a threshold quietly passing somewhere.

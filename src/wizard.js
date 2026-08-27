@@ -59,20 +59,27 @@ function ringSpot(w, now) {
            y: sky.y + Math.sin(a) * orbitR() };
 }
 
-// Somewhere on the ring nobody else is on: the middle of the widest gap. They
-// all turn at the same rate, so a gap in the places they were given is a gap for
-// as long as they are up there.
-function freeAngle() {
-  const taken = S.workers.filter(o => o.type === 'wizard' && o.orb0 != null)
-                         .map(o => ((o.orb0 % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2))
-                         .sort((a, b) => a - b);
-  if (!taken.length) return Math.random() * Math.PI * 2;
-  let best = taken[0] + Math.PI, gap = -1;
-  for (let i = 0; i < taken.length; i++) {
-    const next = i + 1 < taken.length ? taken[i + 1] : taken[0] + Math.PI * 2;
-    if (next - taken[i] > gap) { gap = next - taken[i]; best = (taken[i] + next) / 2; }
+// How far apart they keep on the ring, in radians. Bodies arrive at the bottom
+// of it -- they come up off the ground under the star -- so without this they
+// would ride round in a heap of three.
+const APART = Math.PI / 3;
+
+// They do not *choose* a place: they arrive where they arrive, at the foot of
+// the ring, and then push apart. Each turn they lean away from whoever is
+// nearest until there is a body's room between them, which is the same thing
+// the gangs on the ground do with their elbows -- and it happens where you can
+// watch it rather than being decided before anybody sets off.
+function spaceOut(w, secs) {
+  let push = 0;
+  for (const o of S.workers) {
+    if (o === w || o.type !== 'wizard' || o.orb0 == null || !o.aloft) continue;
+    let d = (o.orb0 - w.orb0) % (Math.PI * 2);
+    if (d > Math.PI) d -= Math.PI * 2;
+    if (d < -Math.PI) d += Math.PI * 2;
+    if (Math.abs(d) >= APART) continue;
+    push -= Math.sign(d || 1) * (APART - Math.abs(d));
   }
-  return best;
+  w.orb0 += push * secs;
 }
 
 // A body coming down. Used when the sky has nothing left in it, and when the
@@ -121,7 +128,6 @@ export function stepWizard(w, now) {
   // Round it goes, whatever else it is doing. The turn is the job -- a wizard
   // parked in the sky is a hat on a stick -- and it carries on while the body is
   // still climbing up to the ring, so it arrives already moving with the rest.
-  if (w.orb0 == null) w.orb0 = freeAngle() - now / 1000 * WIZ_SPIN;
 
   // What it is working on. A cell is kept until it is gone, so the body is not
   // re-deciding every frame and drifting between two of them.
@@ -134,18 +140,39 @@ export function stepWizard(w, now) {
           || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
     w.next = now + WIZ_MS;
   }
+  // Out to the ring the short way: straight away from the middle of the star,
+  // from wherever the body happens to be. Never across it -- a wizard given a
+  // place on the far side and sent to it in a straight line flew through the
+  // star to get there, which is a body inside the thing it is working, four
+  // hundred feet up, on fire.
+  const mx = w.x + WORKER / 2, my = w.y + WORKER / 2;
+  const out = Math.hypot(mx - sky.x, my - sky.y) || 1;
+  if (Math.abs(out - orbitR()) > WIZ_RISE) {
+    const want = orbitR() / out;
+    const tx = sky.x + (mx - sky.x) * want - WORKER / 2;
+    const ty = sky.y + (my - sky.y) * want - WORKER / 2;
+    const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy) || 1;
+    w.x += (dx / d) * Math.min(WIZ_RISE, d);
+    w.y += (dy / d) * Math.min(WIZ_RISE, d);
+    if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
+    w.next = Math.max(w.next, now + WIZ_MS / 2);   // no throwing while travelling
+    // and it takes its place on the ring from where it got there, so there is
+    // nothing to travel round to
+    w.orb0 = Math.atan2(my - sky.y, mx - sky.x) - now / 1000 * WIZ_SPIN;
+    return;
+  }
+  if (w.orb0 == null) w.orb0 = Math.atan2(my - sky.y, mx - sky.x) - now / 1000 * WIZ_SPIN;
+  spaceOut(w, 1 / 60);
+
   const to = ringSpot(w, now);
   const tx = to.x - WORKER / 2, ty = to.y - WORKER / 2;
   const dx = tx - w.x, dy = ty - w.y;
   const d = Math.hypot(dx, dy);
-
-  // Up to the ring, at the pace it floats. Both directions at once, so it curves
-  // in and joins the turn rather than going up and then sideways.
   if (d > WIZ_RISE) {
-    w.x += (dx / d) * WIZ_RISE;
-    w.y += (dy / d) * WIZ_RISE;
+    // along the ring to its own place on it, never through the middle
+    w.x += (dx / d) * Math.min(WIZ_RISE, d);
+    w.y += (dy / d) * Math.min(WIZ_RISE, d);
     if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
-    w.next = Math.max(w.next, now + WIZ_MS / 2);   // no throwing while travelling
     return;
   }
 

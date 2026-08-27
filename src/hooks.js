@@ -199,7 +199,7 @@ export const setAir = (o = {}) => {
   // than left for the crew to make -- see `fillSky`. In play nothing appears in
   // the band that did not go up there.
   if (o.haze != null) { S.haze = o.haze; fillSky(); }
-  if (o.open != null) S.scrubOpen = !!o.open;
+  if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);

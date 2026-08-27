@@ -25,7 +25,8 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
-         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
+         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
+         SCRUB_DRAG, SCRUB_STREAM, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
@@ -78,7 +79,31 @@ export const raining = () => !!S.raining;
 // nothing comes out of the sky until they arrive -- the same rule the lab runs
 // on. A station that started working the moment you clicked the button would be
 // a station whose walk was decoration.
-export const scrubbing = () => S.scrubOpen && inScrub() > 0;
+// A house with somebody in it, and somewhere to put what it takes out.
+//
+// It used to run whatever was lying about it, which is the one station in the
+// yard with no such rule: the rock stops when its spoil is up to the limit, the
+// cut stops, the beds stop, and this poured -- dust out of the spout with the
+// recycler on, muck out of the back without it -- for as long as there was a
+// body inside. What that looks like is a machine with no cost, and what it
+// actually did was spray the walk: bare ground takes a scatter and no more, so
+// every grain past the scatter went looking for a column with room somewhere
+// else in the yard.
+//
+// Now it has its own strip, like every other station, and it clogs.
+export const clogged = () => !!S.pileFull.scrub || outletMuck() >= SCRUB_CLOG;
+export const scrubbing = () => S.scrubOpen && inScrub() > 0 && !clogged();
+
+// Muck lying on the ground the spout reaches, which is what the back of the
+// house leaves when there is no recycler on it.
+export function outletMuck() {
+  if (!S.scrubOpen) return 0;
+  const m = muckCols();
+  const from = colAt(scrub.x - P * (SCRUB_CHUTE + 2)), to = colAt(scrub.x + scrub.w);
+  let n = 0;
+  for (let c = from; c <= to; c++) n += m[c] || 0;
+  return n;
+}
 export const scrubRate = () => (S.scrubOpen ? inScrub() * SCRUB_PULL : 0);
 // Where the thread ends, and where the dust comes back out. Both are places on
 // the building rather than numbers near it: the head of the throat, which is the
@@ -252,6 +277,7 @@ const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 function stepPuffs(secs) {
   const low = bandLow();
   const w = windAt(now());          // one wind, asked once, for the whole plume
+  const drag = scrubbing() ? { ...intake(), power: scrubRate() / SCRUB_PULL } : null;
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
     if (!p.up) continue;            // arrived: the band has it, see `place`
@@ -288,6 +314,17 @@ function stepPuffs(secs) {
     // It slows on the way up, but it always gets there: a puff that ran out of
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
+    // And the house pulls on it while it climbs, the same as it pulls on the
+    // band: a plume rising past the door leans into the mouth. It is the same
+    // field and the same numbers -- these are the same objects, so there is no
+    // second rule about smoke.
+    if (drag) {
+      const dx = drag.x - p.x, dy = drag.y - p.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const k = Math.min(d, SCRUB_DRAG * drag.power * secs / d);
+      p.x += (dx / d) * k;
+      p.y += (dy / d) * k;
+    }
     if (p.y > low) continue;
     // Arrived, and the wind up there has it.
     //
@@ -460,6 +497,8 @@ function homeOf(m, span) {
 function place(secs) {
   const span = Math.max(P, S.worldW || 0);
   const w = windAt(now());
+  // the draught, asked once for the whole band
+  const sag = scrubbing() ? { ...intake(), power: scrubRate() / SCRUB_PULL } : null;
   for (const m of SKY) {
     if (m.up) continue;             // still climbing: `stepPuffs` has it
     m.age += secs;
@@ -497,6 +536,20 @@ function place(secs) {
     // else in the air, so the band never rises on a wind the dust is not in.
     m.x = (home.x + m.roam * span) % span + (m.px || 0);
     m.y = y - Math.abs(w) * m.give * SMOG_LIFT + (m.py || 0);
+
+    // And the draught off the house, which bends where a mote is placed rather
+    // than pushing it about: the fan is on for minutes at a time and a force
+    // that accumulated would empty the band into the wall. Hardest at the mouth
+    // and falling off with distance, so the sky sags towards the house from one
+    // end of the world to the other -- a lean you can see from the far side of
+    // the yard, and the reason what streams in comes off the nearest part of it.
+    if (sag) {
+      const dx = sag.x - m.x, dy = sag.y - m.y;
+      const d = Math.hypot(dx, dy) || 1;
+      const k = Math.min(d * 0.6, SCRUB_DRAG * sag.power / d);
+      m.x += (dx / d) * k;
+      m.y += (dy / d) * k;
+    }
     if (m.x > span) m.x -= span;
     if (m.x < 0) m.x += span;
   }
@@ -554,21 +607,43 @@ export function skyFromSave() {
 export const cloudR = () => Math.round(Math.min(1, S.haze / SMOG_RAIN_AT) * 42);
 
 // --- the house --------------------------------------------------------------------
-// Motes leave the sky for the intake. The same motes: one of them was a swing on
-// the rock a minute ago and is about to be a grain of dust on the ground beside
-// the house. Nothing here is a new effect standing in for a thing happening.
+// The house does not pick specks out of the sky. It makes a draught.
+//
+// It used to reach out and take the nearest settled mote, whole, and put it on a
+// curve to the mouth -- a hand plucking, one a frame, from a band that otherwise
+// took no notice of the building at all. What a fan does is pull on everything
+// in front of it, hardest close up and less the further out you are, so that is
+// what this is: every mote in the world leans towards the mouth while there is
+// somebody inside, from the plume climbing past the door to the far end of the
+// band over the pit. You can see the whole sky sag towards the house.
+//
+// The lean and the swallowing are two things. Leaning is a bend in where the
+// band puts a mote, so a bank drifts over the house rather than a speck being
+// yanked out of it; swallowing is the house taking motes at the pace it is
+// rated for, off the part of the sky the lean has brought nearest, and those
+// are the ones you watch stream down the throat.
+//
+// The climbing ones are pulled by exactly the same field. They are the same
+// objects now -- see SKY -- so a plume rising past the house bends into it
+// without a word of code about plumes.
 function pull(secs) {
   const to = intake();
   let take = scrubRate() * secs / SMOG_PER_MOTE;
-  while (take > 0 && SKY.length) {
+
+  // What the house actually swallows, at the pace it is rated for. The draught
+  // is what you watch; this is what it is worth, and the two are kept apart on
+  // purpose -- a rate that came out of the geometry would be a rate nobody could
+  // tune and a house whose worth depended on where the wind had left the sky.
+  //
+  // The nearest go first, and near is measured to the mouth rather than along
+  // the ground: the stream comes off whichever part of the sky is closest to
+  // the throat, which is the part the draught has already dragged down.
+  while (take > 0 && SKY.length && CAUGHT.length < SCRUB_STREAM) {
     if (take < 1 && Math.random() > take) break;
     take -= 1;
-    // the nearest one, sampled rather than searched: the sky is drawn down
-    // towards the house rather than thinning out evenly everywhere at once
     let best = -1, near = Infinity;
     for (let i = 0; i < SKY.length; i += 3) {
-      if (SKY[i].up) continue;                 // the climbing ones are caught below
-      const d = Math.abs(SKY[i].x - to.x);
+      const d = Math.hypot(SKY[i].x - to.x, SKY[i].y - to.y);
       if (d < near) { near = d; best = i; }
     }
     if (best < 0) break;
@@ -576,23 +651,6 @@ function pull(secs) {
     // where it left the sky, and how far along it is. It is drawn along a curve
     // rather than eased at, so both ends of the journey have to be kept.
     CAUGHT.push({ x: m.x, y: m.y, x0: m.x, y0: m.y, t: 0, kind: m.kind });
-  }
-
-  // And the smoke still on its way up. A house that could only take what had
-  // already settled was a house that had to wait for the sky to get dirty before
-  // it was allowed to do anything about it -- so a plume climbing right past the
-  // fan went by untouched. It takes what comes near it, at whatever height.
-  //
-  // Off the same allowance as the settled haze: this is the same fan doing the
-  // same work, not a second one. Nothing is docked from the number here, because
-  // the number is the motes and this took one out of the sky.
-  for (let i = SKY.length - 1; i >= 0 && take > -1; i--) {
-    const p = SKY[i];
-    if (!p.up) continue;
-    if (Math.abs(p.x - to.x) > SCRUB_CATCH) continue;
-    take -= 1;
-    SKY.splice(i, 1);
-    CAUGHT.push({ x: p.x, y: p.y, x0: p.x, y0: p.y, t: 0, kind: p.kind });
   }
 
   // The way in is over and then down the middle. A mote used to close on the
@@ -890,21 +948,44 @@ export function dropMuckAt(wx, n) {
 // rest of the run. A body cannot *stand* on a site, which is a different rule
 // and is kept where it belongs, in `cleanSpotNear`: it stands on the ground
 // beside the thing and works across it.
-export function sweepMuckAt(wx, n) {
+// Whole cells, and that is the point of `hand`.
+//
+// Effort arrives a sixtieth of a second at a time -- three and a half cells a
+// second is a twentieth of a cell a frame -- and taking that fraction off the
+// column drew a layer sinking smoothly into the ground. Nothing else in this
+// yard moves like that: the rock comes off a cell at a time, the pile fills a
+// grain at a time, and a shovel takes a shovelful. So the fraction is kept in
+// the hand doing the shovelling until it is worth a whole cell, and then a whole
+// cell goes.
+//
+// The carry is capped at one. Without that, a body walking a long way to a patch
+// arrives with several seconds of effort saved up and takes a trench out of it
+// on the first frame.
+export function sweepMuckAt(wx, n, hand) {
   const m = muckCols();
   const home = colAt(wx);
-  let left = n;
-  for (let d = 0; d < 60 && left > 0; d++) {
+  const hold = hand || loose;
+  hold.owed = Math.min(1, (hold.owed || 0) + n);
+  let cells = Math.floor(hold.owed);
+  if (cells < 1) return 0;
+  let took = 0;
+  for (let d = 0; d < 60 && cells > 0; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !m[c]) continue;
-      const took = Math.min(m[c], left);
-      m[c] -= took;
-      left -= took;
+      if (c < 0 || c >= m.length || !m[c] || cells < 1) continue;
+      const take = Math.min(m[c], cells);
+      m[c] -= take;
+      cells -= take;
+      took += take;
       S.dirty = true;
     }
   }
-  return n - left;
+  hold.owed -= took;
+  return took;
 }
+
+// for a sweep nobody owns -- a hook, a check -- so the fraction has somewhere to
+// live either way
+const loose = { owed: 0 };
 
 // --- the frame's answers, worked out once -------------------------------------
 // Is there a mess, and where is the nearest of it. Every body in the crew asks

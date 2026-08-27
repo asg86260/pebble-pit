@@ -225,7 +225,12 @@ group('muck is shifted, not banked', async () => {
   // fixed fourteen seconds -- otherwise what follows measures the weather still
   // falling rather than the crew shifting it.
   runUntil(() => state().smog.raining, 30);
-  runUntil(() => !state().smog.raining, 180);
+  // Out, and then *down*: the shower ends when the sky it is made of is empty,
+  // and at that moment there are still a couple of thousand drops in the air
+  // with a second of falling left in them. Read at the moment it stopped
+  // raining, the layer this measures is most of a shower short of the one the
+  // crew actually have to shift.
+  runUntil(() => !state().smog.raining && state().smog.drops === 0, 180);
   const wet = state();
   run(90);
   const after = state();
@@ -493,6 +498,53 @@ group('the scrubbing house empties its filters out the back, until the recycler'
     ok(fitted.smog.recycled > 0 && fitted.floor > 0,
        'and turns the same catch into dust worth fetching',
        `${fitted.smog.recycled} recycled, ${fitted.floor} on the ground`)
+  ];
+});
+
+// A station that makes something has somewhere to put it and stops when that
+// place is full. The house was the one exception: it poured for as long as there
+// was a body inside it, dust out of the spout with the recycler on and muck out
+// of the back without it, and the yard could do nothing about either.
+//
+// What that looked like was dust everywhere. Bare ground takes a scatter and no
+// more, so every grain past the scatter went looking for a column with room and
+// ended up somewhere down the walk -- a spout that sprayed the yard instead of
+// making a heap under itself.
+group('the house heaps what it makes, and clogs when there is no room', async () => {
+  window.__crew(0, 0);
+  window.__clearFloor();
+  window.__tune('PILE_LIMIT.scrub', 40);      // a small strip, so this is seconds
+  window.__air({ haze: 0, muck: 0, open: true, scrubbers: 2, recycler: true });
+  window.__air({ haze: 3000 });
+  run(20);
+  const on = state();
+
+  // it keeps going until its own strip is full, and then it stops
+  const filled = runUntil(() => state().pileFull.scrub, 400);
+  const stuck = state();
+  window.__air({ haze: 3000 });               // plenty overhead to be pulling on
+  const was = state().smog.haze;
+  run(20);
+  const held = state();
+
+  // and clearing the heap puts it back to work
+  window.__clearFloor();
+  run(8);
+  const freed = state();
+
+  window.__air({ haze: 0, muck: 0, open: false, scrubbers: 0 });
+  window.__tune('PILE_LIMIT.scrub', 140);
+  window.__clearFloor();
+  return [
+    ok(on.pileCount.scrub > 0, 'what the spout makes lands on its own strip',
+       `${on.pileCount.scrub} grains under the chute`),
+    ok(filled, 'which fills up', `${stuck.pileCount.scrub} grains`),
+    ok(Math.abs(held.smog.haze - was) < 20,
+       'and a full one stops the house rather than pouring on',
+       `${Math.round(was)} -> ${Math.round(held.smog.haze)} haze`),
+    ok(!freed.pileFull.scrub && freed.smog.haze < held.smog.haze,
+       'and carrying it away starts it again',
+       `${Math.round(held.smog.haze)} -> ${Math.round(freed.smog.haze)}`)
   ];
 });
 

@@ -595,6 +595,11 @@ export function drawMuck() {
   if (!m.length) return;
   const from = Math.max(0, Math.floor(S.camX / P) - 2);
   const to = Math.min(m.length - 1, Math.ceil((S.camX + S.viewW) / P) + 2);
+  // Gathered up and drawn in two fills: after a heavy shower the layer runs the
+  // whole width of the world, and a column at a time was two calls into the
+  // canvas for every one of thirteen hundred columns. Same picture, same order
+  // -- the body first, its skin over the top -- for a fraction of the work.
+  const body = [], skin = [];
   for (let c = from; c <= to; c++) {
     const n = m[c];
     if (!n) continue;
@@ -615,12 +620,20 @@ export function drawMuck() {
     // other cell left out, so the layer read as loose -- and two things saying one
     // thing is one of them too many: the brown already says this is not the pile
     // it is lying on, and the gaps only made a straightforward layer fussy.
-    ctx.fillStyle = MUCK_GREY;
-    ctx.fillRect(c * P, foot - n * P, P, n * P);
+    body.push(c * P, foot - n * P, n * P);
     // and the top course solid and darker, so the layer has a skin on it and a
     // depth of two reads as two rather than as one taller one
+    skin.push(c * P, foot - n * P);
+  }
+  if (body.length) {
+    ctx.fillStyle = MUCK_GREY;
+    ctx.beginPath();
+    for (let i = 0; i < body.length; i += 3) ctx.rect(body[i], body[i + 1], P, body[i + 2]);
+    ctx.fill();
     ctx.fillStyle = MUCK_EDGE;
-    ctx.fillRect(c * P, foot - n * P, P, P);
+    ctx.beginPath();
+    for (let i = 0; i < skin.length; i += 2) ctx.rect(skin[i], skin[i + 1], P, P);
+    ctx.fill();
   }
   ctx.fillStyle = '#000';
 }
@@ -646,29 +659,54 @@ const CA_INK = 0.55;               // how solid a fringe is against the mote its
 const CA_WARM = '#c02a2a';         // the red edge
 const CA_COOL = '#1f9ad0';         // and the cyan one
 
+// Drawn as a handful of paths rather than as thousands of rectangles.
+//
+// A full sky is six or seven thousand specks and a fat window shows a couple of
+// thousand of them at once, each of them one `fillRect` and two more for its
+// fringe -- eight thousand calls into the canvas, sixty times a second, for a
+// field of identical squares. Every one of those calls costs the same setup
+// whatever it draws, and that setup was most of what a shower cost: the yard
+// visibly slowed while it rained, which is the one moment the yard is supposed
+// to be at its busiest.
+//
+// The specks are the same size, the same weight and one of four colours, so they
+// go into one path per colour and one fill each. Nothing about the picture
+// changes -- the same squares land in the same places -- and there are a dozen
+// calls where there were thousands.
 export function drawSmog() {
   if (!SKY.length) return;
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
+
+  // one path a tint, and two for the fringes
+  const runs = new Map();
+  const warm = [], cool = [];
   for (const m of SKY) {
     if (!onScreen(m.x)) continue;
-    const ink = HAZE_INK * (m.fade == null ? 1 : m.fade);
     const x = Math.round(m.x), y = Math.round(m.y);
-    // how far out of the middle of the window this one is, as -1..1
     const off = Math.max(-1, Math.min(1, (m.x - mid) / half)) * HAZE_CA;
     if (Math.abs(off) >= CA_FLOOR) {
-      ctx.globalAlpha = ink * CA_INK;
-      ctx.fillStyle = CA_WARM;
-      ctx.fillRect(Math.round(m.x - off), y, P, P);
-      ctx.fillStyle = CA_COOL;
-      ctx.fillRect(Math.round(m.x + off), y, P, P);
+      warm.push(Math.round(m.x - off), y);
+      cool.push(Math.round(m.x + off), y);
     }
-    ctx.globalAlpha = ink;
-    // the colour of whatever put it up there, not a flat black: a dirty sky
-    // says which part of the works is dirtying it
-    ctx.fillStyle = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
-    ctx.fillRect(x, y, P, P);
+    const tint = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
+    let run = runs.get(tint);
+    if (!run) runs.set(tint, run = []);
+    run.push(x, y);
   }
+
+  const spill = (pts, colour, ink) => {
+    if (!pts.length) return;
+    ctx.globalAlpha = ink;
+    ctx.fillStyle = colour;
+    ctx.beginPath();
+    for (let i = 0; i < pts.length; i += 2) ctx.rect(pts[i], pts[i + 1], P, P);
+    ctx.fill();
+  };
+  spill(warm, CA_WARM, HAZE_INK * CA_INK);
+  spill(cool, CA_COOL, HAZE_INK * CA_INK);
+  for (const [tint, pts] of runs) spill(pts, tint, HAZE_INK);
+
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
@@ -704,9 +742,14 @@ export function drawPuffs() {}
 
 export function drawRain() {
   if (!DROPS.length && !CAUGHT.length) return;
+  // One path for the whole shower: four thousand drops is four thousand calls
+  // into the canvas otherwise, and they are all the same square in the same
+  // colour. See `drawSmog` -- the same trick, for the same reason.
   ctx.fillStyle = MUCK_GREY;
+  ctx.beginPath();
   for (const d of DROPS)
-    if (onScreen(d.x)) ctx.fillRect(Math.round(d.x), Math.round(d.y), P, P);
+    if (onScreen(d.x)) ctx.rect(Math.round(d.x), Math.round(d.y), P, P);
+  ctx.fill();
   // And the thread being pulled the other way, into the house. It is the same
   // smoke it was a second ago, so it is drawn as the same smoke: its own colour
   // at its own weight. It used to go black at half ink the moment the suction
