@@ -24,7 +24,7 @@ import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, CAUGHT, muckCols, muckFloor } from './smog.js';
+import { SKY, DROPS, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { bedX } from './farm.js';
@@ -463,15 +463,27 @@ function drawFlash() {
   const since = now() - (S.flashAt || 0);
   if (!S.flashAt || since > SUMMON_FLASH) return;
   const k = since / SUMMON_FLASH;
-  const r = sky.r + k * sky.r * 3;
   const tones = FIND_COLOR[SPARK_CELL];
-  ctx.globalAlpha = 1 - k;
-  ctx.fillStyle = tones[0];
-  const n = 48;
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    ctx.fillRect(Math.round((sky.x + Math.cos(a) * r) / P) * P,
-                 Math.round((sky.y + Math.sin(a) * r) / P) * P, P, P);
+
+  // Two rings rather than one: the star's own fire going out fast and hard, and
+  // the last of the magic that made it following it out, slower and wider. One
+  // ring read as a hoop; two reads as a thing letting go.
+  const rings = [
+    { r: sky.r + k * sky.r * 3.4, ink: 1 - k, colour: tones[0], step: 1 },
+    { r: sky.r + Math.max(0, k - 0.15) * sky.r * 5, ink: Math.max(0, 0.8 - k), colour: MAGIC_TONES[1], step: 2 }
+  ];
+  for (const ring of rings) {
+    if (ring.r <= sky.r || ring.ink <= 0) continue;
+    ctx.globalAlpha = ring.ink;
+    ctx.fillStyle = ring.colour;
+    const n = Math.max(12, Math.round((Math.PI * 2 * ring.r) / (P * ring.step)));
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      ctx.rect(Math.round((sky.x + Math.cos(a) * ring.r) / P) * P,
+               Math.round((sky.y + Math.sin(a) * ring.r) / P) * P, P, P);
+    }
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
@@ -861,7 +873,7 @@ const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 export function drawPuffs() {}
 
 export function drawRain() {
-  if (!DROPS.length && !CAUGHT.length) return;
+  if (!DROPS.length) return;
   // One path for the whole shower: four thousand drops is four thousand calls
   // into the canvas otherwise, and they are all the same square in the same
   // colour. See `drawSmog` -- the same trick, for the same reason.
@@ -870,16 +882,10 @@ export function drawRain() {
   for (const d of DROPS)
     if (onScreen(d.x)) ctx.rect(Math.round(d.x), Math.round(d.y), P, P);
   ctx.fill();
-  // And the thread being pulled the other way, into the house. It is the same
-  // smoke it was a second ago, so it is drawn as the same smoke: its own colour
-  // at its own weight. It used to go black at half ink the moment the suction
-  // took it, which read as the house *dirtying* what it was cleaning up.
-  ctx.globalAlpha = HAZE_INK;
-  for (const k of CAUGHT) {
-    ctx.fillStyle = SMOG_TINTS[k.kind] || SMOG_TINTS.dust;
-    ctx.fillRect(Math.round(k.x), Math.round(k.y), P, P);
-  }
-  ctx.globalAlpha = 1;
+  // Nothing is drawn going the other way any more. What the house takes is the
+  // sky itself, dragged in by the draught and drawn by `drawSmog` all the way to
+  // the mouth -- there is no separate thread of specks on an errand, because
+  // there is no errand.
 }
 
 // The scrubbing house: a hood open to the sky, and a bellows breathing under it.
@@ -2069,11 +2075,13 @@ function drawKitCounts(screenAt) {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
   for (const k of stands) {
-    // Clear of whatever is standing on the slab. Every other mark here is a bar
-    // a cell or two tall and three cells of headroom was plenty; the wizard's
-    // cone is three courses on its own, and the count was sitting in the tip of
-    // it. The number goes above the tallest thing the stand can hold.
-    const at = screenAt(k.x - P + STAND_W / 2, k.y - STAND_H - P * 3 - HAT_TALL[k.mark]);
+    // A clear two cells over whatever is standing on the slab, whatever that is.
+    // Three cells of headroom was plenty while every mark was a bar a cell or
+    // two tall; the wizard's cone is three courses on its own and the number sat
+    // in the tip of it. Measured off the mark rather than fixed, so the gap over
+    // a helmet and the gap over a cone are the same gap.
+    const at = screenAt(k.x - P + STAND_W / 2,
+                        k.y - STAND_H - HAT_TALL[k.mark] - P * 2);
     ctx.fillText(String(k.n), Math.round(at.x), Math.round(at.y));
   }
   ctx.textAlign = 'left';

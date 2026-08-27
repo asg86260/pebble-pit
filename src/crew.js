@@ -20,9 +20,9 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
-import { stepWizard, newWizard, underMeteor } from './wizard.js';
+import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now } from './clock.js';
-import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot,
+import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
          rockMuck, cutMuck, bedMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
@@ -748,13 +748,13 @@ function errand(w, job, what) {
 function retask(w, type) {
   // Off the sky and down. A wizard is the one body here that can be stood down
   // while it is four hundred pixels up, and whatever it is put on next reads its
-  // height as the ground it is standing on -- so it falls, the way anything does
-  // when what was holding it up stops.
-  if (w.aloft && type !== 'wizard') {
-    w.falling = true;
-    w.vy = 0;
-    w.aloft = false;
-  }
+  // height as the ground it is standing on -- so it has to come down before it
+  // does anything else.
+  //
+  // It floats rather than falls. Gravity put it on the ground in a quarter of a
+  // second, which for a body that took the best part of a minute to go up reads
+  // as the hat being switched off. It comes down the way it went up.
+  if (w.aloft && type !== 'wizard') w.floating = true;
   w.type = type;
   w.fetching = null;
   w.wanting = null;
@@ -1299,14 +1299,20 @@ export function updateWorkers(now, dt) {
       w.foot = standOn(S.groundY);
     }
     const d = to - WORKER / 2 - w.x;
+    // Where its feet go while it is doing this: the ground, or the face of the
+    // rock if that is what it is standing on. Climbed to rather than assigned,
+    // so a body going up the hill goes up it rather than appearing at the top --
+    // the same climb the gang working the rock make.
+    const foot = () => (onRock(w.x + WORKER / 2) && boulderAlive()
+      ? climbTo(w, landing(w)) : walkY(w.x + WORKER / 2));
     // walk to it, then shovel: it is somewhere you go, not something that
     // happens wherever you are standing
     if (Math.abs(d) > P * 2) {
       w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
       w.dir = Math.sign(d);
-      w.y = walkY(w.x + WORKER / 2);
+      w.y = foot();
     } else {
-      w.y = walkY(w.x + WORKER / 2);
+      w.y = foot();
       sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
       w.lunge = 1;
       // and not shoulder to shoulder with the next one. A yard under muck
@@ -1341,6 +1347,9 @@ export function updateWorkers(now, dt) {
     // in the air, on the cursor: not doing anything, and nothing being done to it
     if (w.lifted) continue;
     if (w.falling) { fall(w); continue; }
+    // and a body drifting down out of the sky, which is a body doing nothing
+    // else until its feet are down -- see `floatDown`
+    if (w.floating) { if (!floatDown(w)) continue; }
     // on its way to a job it has just been put on, and doing none of it yet
     if (w.walking) { stepCommute(w, zone); continue; }
 

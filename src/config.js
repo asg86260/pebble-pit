@@ -247,10 +247,21 @@ export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the sa
 // the wall; a lean is a thing the sky holds while the fan is on and lets go of
 // when it stops. Falls off with distance, so a bank twice as far away leans half
 // as far.
-export const SCRUB_DRAG = 2600;
+// Pixels a second, per body inside, that the draught moves a speck -- and it is
+// nearly the same wherever the speck is. A pull that fell off with distance left
+// the far end of the band creeping a pixel a second while the near end tore in;
+// what a fan in a still room actually does is move all the air, and that is what
+// the sky should read as: everything sliding one way at once.
+//
+// It quickens close to the mouth, where the last of a journey is a thing being
+// swallowed rather than carried.
+export const SCRUB_DRAG = 34;
+export const SCRUB_NEAR = 160;       // and within this much of the mouth it doubles
 // and how many it can have in the air at once, so the stream reads as a stream
 // rather than as the whole band arriving in a lump
-export const SCRUB_STREAM = 90;
+// Where the draught stops being a pull and becomes a swallow: a speck this near
+// the mouth is in it.
+export const SCRUB_GRIP = 22;
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
 // How far either side of the fan a climbing puff is close enough to be taken.
@@ -1169,13 +1180,19 @@ export const AIR_STIR_R = 78;     // how far the wake reaches, in screen pixels
 export const AIR_STIR_CAP = 1.1;  // the fastest the draught will carry one
 export const AIR_STIR_EASE = 3.0; // and how quickly it dies, share a second
 
-// The same hand through the smoke. Fainter again: a mote of haze is a lungful of
-// the yard's own filth hanging in the air, and it should shift like something
-// that weighs nothing rather than something you can sweep.
-export const SMOKE_STIR = 0.022;   // how hard the cursor moves smoke
-export const SMOKE_STIR_R = 130;   // how far it reaches, in world pixels
-export const SMOKE_STIR_CAP = 12;  // and the furthest a mote is ever pushed
-export const SMOKE_STIR_EASE = 1.5;
+// The same hand through the smoke, and fainter again: a mote of haze weighs
+// nothing and hangs a long way off, so what a cursor going past does to it is
+// stir it, not sweep it.
+//
+// It was doing far too much. A hand crossing the band opened a hole in it you
+// could steer -- a bank of weather being pushed about like a pile of sand -- and
+// what the draught is meant to say is only that the air is *there*: a stir you
+// notice at the edge of your eye and cannot use for anything. A third of the
+// push, half the reach, and a quarter of the furthest it will ever move one.
+export const SMOKE_STIR = 0.007;   // how hard the cursor moves smoke
+export const SMOKE_STIR_R = 70;    // how far it reaches, in world pixels
+export const SMOKE_STIR_CAP = 3;   // and the furthest a mote is ever pushed
+export const SMOKE_STIR_EASE = 2.4;   // and how quickly it eases back
 
 // How far a puff drifts sideways for every pixel it climbs. A tenth: enough that
 // a plume leans and opens a little instead of going up as one straight cylinder,

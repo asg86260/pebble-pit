@@ -243,10 +243,20 @@ export function summon(hands, secs) {
   S.summon = summonAt() + (hands * secs * 1000) / SUMMON_MS;
   S.dirty = true;
   if (S.summon < 1) return;
-  // and there it is. The flash is a fact about the moment rather than a state:
+  // And there it is. The flash is a fact about the moment rather than a state:
   // the sky keeps it for a breath and then it is just a star.
+  //
+  // What goes off with it is the light they poured in coming back out: a ring of
+  // it thrown clear in every direction, so the moment a star arrives is the one
+  // moment up there with any noise in it. Everything else the sky does is slow.
   S.summon = 0;
   S.flashAt = now();
+  const out = 44;
+  for (let i = 0; i < out; i++) {
+    const a = (i / out) * Math.PI * 2 + Math.random() * 0.1;
+    const v = 2.2 + Math.random() * 2.4;
+    sparkle(sky.x, sky.y, Math.cos(a) * v, Math.sin(a) * v, 700 + Math.random() * 400);
+  }
   makeMeteor();
 }
 

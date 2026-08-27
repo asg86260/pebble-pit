@@ -330,6 +330,32 @@ group('an empty sky with nobody in it stays empty', async () => {
   ];
 });
 
+// A hat on the tower's bench has been paid for. Closing the tab on one used to
+// lose the dust, the stone and the crop with it: the brew was deliberately not
+// saved, on the same reasoning that a shower halfway down is not saved -- and a
+// shower is weather, while this is a purchase.
+group('a hat on the go survives a reload', async () => {
+  window.__meteor();
+  const secs = window.__brew();
+  run(secs / 3);
+  const before = state();
+  const at = yard.brewAt();
+  window.__reload();
+  const after = state();
+  const back = yard.brewAt();
+
+  // and it still finishes
+  const landed = runUntil(() => state().wizardHats > 0, secs * 2);
+  window.__crew(0, 0);
+  return [
+    ok(before.brewing && at > 0.2, 'a hat part way along', `${at.toFixed(2)}`),
+    ok(after.brewing, 'is still on the go after a reload'),
+    ok(Math.abs(back - at) < 0.1, 'and as far along as it was',
+       `${at.toFixed(2)} -> ${back.toFixed(2)}`),
+    ok(landed, 'and it lands', `${state().wizardHats} hats`)
+  ];
+});
+
 group('a wizard taken off the sky comes down', async () => {
   window.__meteor();
   window.__wizardHat(1);

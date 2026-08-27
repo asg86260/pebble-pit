@@ -221,6 +221,11 @@ export function persist() {
     sparks: S.sparks,
     seenSpark: S.seenSpark,
     wizardHats: S.wizardHats,
+    // What the tower still owes you. The rain and the weather in flight are not
+    // saved, because a shower with no beginning is not a shower -- but a hat on
+    // the bench has been *paid for*, and closing the tab on one used to lose the
+    // dust, the stone and the crop with it.
+    brewLeft: Math.max(0, S.brewAt - clockNow()),
     wizards: S.wizards,
     scrubbers: S.scrubbers,
     recycler: S.recycler,
@@ -406,7 +411,7 @@ export function restore() {
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizardHats = s.wizardHats || 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
-  S.brewAt = 0;
+  S.brewAt = s.brewLeft > 0 ? clockNow() + s.brewLeft : 0;
   if (S.meteorOpen) {
     makeMeteor();
     // and the cells as they were left, if the save is of this shape of sky

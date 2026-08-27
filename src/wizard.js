@@ -100,6 +100,22 @@ function trail(w, now) {
           WIZ_TRAIL_LIFE);
 }
 
+// A body taken off the sky, on its way down. It comes down the way it went up --
+// under its own hat, a pixel and a bit at a time -- rather than dropping under
+// gravity: a wizard is not a thing that falls when you stop paying it, and four
+// hundred pixels of gravity is over in a quarter of a second.
+//
+// Nothing else about the body happens while it is coming down: it is `true`
+// until its feet are on the ground, and the crew loop holds everything else off
+// until then. See `retask`.
+export function floatDown(w) {
+  const foot = walkY(w.x + WORKER / 2);
+  w.aloft = w.y < foot;
+  if (w.y >= foot) { w.y = foot; w.floating = false; w.aloft = false; return true; }
+  w.y = Math.min(foot, w.y + WIZ_RISE * 1.6);
+  return false;
+}
+
 // A body coming down. Used when the sky has nothing left in it, and when the
 // hat comes off -- a wizard stood down mid-air lands before it does anything
 // else, because there is no job in this game you do from up there.

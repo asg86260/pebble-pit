@@ -184,6 +184,21 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart) {
     const n = S[p.job];
 
     drawBody(b.badge.x, b.badge.y);
+    // The sky is the one post where the hat *is* the job: there is no such thing
+    // as a wizard without one, so the body at the top of its roster wears it and
+    // the plain square underneath -- a body that could not be up there at all --
+    // is not drawn. Everywhere else a hat is a doubling on top of a body that
+    // works fine bare-headed, and the two lines are two different facts.
+    if (p.job === 'wizards') {
+      drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
+      // and the hats the tower has made, as a hat on its own: what is waiting on
+      // the stand for the next body sent up.
+      if (hats(p.job) > 0) drawHat(b.trade.x, b.trade.y + P * 2, KIT_MARK[p.job], true);
+      if (p.fixed) continue;
+      button(ctx, b.less, '-', n > 0);
+      button(ctx, b.more, '+', spare > 0 && roomAt(p.job) > 0);
+      continue;
+    }
 
     // And how many of them have the trade, drawn as whatever that trade looks
     // like out in the yard, so the line under the count and the bodies walking
@@ -249,6 +264,9 @@ export function drawRosterCounts(ctx, screenAt) {
     // What the station owns, not what is being worn: a rock with four helmets
     // and one body on it still has four helmets, and the point of the number is
     // that it tells you what is waiting there for the next body you send.
+    //
+    // The sky's second line is its hats and nothing else -- there is no body
+    // drawn under it, because there is no wizard without one. See `drawRoster`.
     if (hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
