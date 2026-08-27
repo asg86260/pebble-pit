@@ -402,16 +402,25 @@ export function dugShare() {
 // the shallow ones stop early while the middle keeps going.
 export function nextCut(x) {
   const cells = cutCells();
-  const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
-  let best = -1, bestDepth = Infinity, bestAway = Infinity;
+
+  // The shallowest ground first: a cut is worked *down* in layers, the whole
+  // floor coming off a course at a time, and the hole opens out as it deepens.
+  let shallow = Infinity;
   for (let c = 0; c < cells.length; c++) {
     if (cells[c] >= cutTarget(c)) continue;
-    const away = Math.abs(c - home);
-    if (cells[c] < bestDepth || (cells[c] === bestDepth && away < bestAway)) {
-      best = c; bestDepth = cells[c]; bestAway = away;
-    }
+    shallow = Math.min(shallow, cells[c]);
   }
-  return best;
+  if (shallow === Infinity) return -1;
+
+  // Then anywhere in that layer, at random. Taking the nearest of them put the
+  // whole gang on one spot working along in a queue -- which is one body doing
+  // the digging and the rest walking after it. Scattered across the course,
+  // three bodies are three bodies working a face.
+  const open = [];
+  for (let c = 0; c < cells.length; c++) {
+    if (cells[c] === shallow && cells[c] < cutTarget(c)) open.push(c);
+  }
+  return open[Math.floor(Math.random() * open.length)];
 }
 
 // and the ground fills back in behind them

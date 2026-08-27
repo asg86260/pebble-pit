@@ -92,8 +92,11 @@ export function drawQuarry() {
     const d = cells[c];
     if (!d) continue;
     const cx = x + c * P;
-    ctx.fillRect(cx, y - E, P, E);                       // the lip
-    ctx.fillRect(cx, y + d * P - E, P, E);               // and the floor of it
+    // No line along the lip. The ground already ends there -- the ground line
+    // runs across the whole yard and stops at the hole, which is the edge -- so
+    // drawing another one on top of it boxed the cut in and made it read as a
+    // thing sitting in the ground rather than a hole in it.
+    ctx.fillRect(cx, y + d * P - E, P, E);               // the floor of it
     const left = c > 0 ? cells[c - 1] : 0;
     const right = c < cells.length - 1 ? cells[c + 1] : 0;
     if (left < d) ctx.fillRect(cx, y + left * P, E, (d - left) * P);
@@ -710,25 +713,70 @@ const CHUTE = SCRUB_CHUTE;
 export function drawTower() {
   if (!S.towerOpen) return;
   const { x, y, w, h } = tower;
+  // Everything here is whole cells off the tower's own corner, so the shape can
+  // be read as a drawing rather than as arithmetic.
+  const cell = (cx, cy, cw = 1, ch = 1) =>
+    ctx.fillRect(Math.round(x + cx * P), Math.round(y + cy * P), cw * P, ch * P);
+
+  const WIDE = Math.round(w / P);              // 13 cells across
+  const TALL = Math.round(h / P);              // and 34 down
+  const SHAFT = 8;                             // the main shaft, on the left
+  const TURRET_X = SHAFT, TURRET_W = WIDE - SHAFT;
+  const SPIRE = 6;                             // rows of pointed roof on the main
+  const TUR_ROOF = 3;                          // and on the little one
+  const TUR_TOP = 13;                          // how far down the turret starts
+
+  // --- the two shafts, white with a black edge, like every other building here
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y, w, h);
+  ctx.fillRect(x, y + SPIRE * P, SHAFT * P, (TALL - SPIRE) * P);
+  ctx.fillRect(x + TURRET_X * P, y + (TUR_TOP + TUR_ROOF) * P,
+               TURRET_W * P, (TALL - TUR_TOP - TUR_ROOF) * P);
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+  ctx.strokeRect(x + 1, y + SPIRE * P + 1, SHAFT * P - 2, (TALL - SPIRE) * P - 2);
+  ctx.strokeRect(x + TURRET_X * P + 1, y + (TUR_TOP + TUR_ROOF) * P + 1,
+                 TURRET_W * P - 2, (TALL - TUR_TOP - TUR_ROOF) * P - 2);
 
-  // courses, every fourth cell, stopping short of the head
   ctx.fillStyle = '#000';
-  for (let r = y + P * 5; r < y + h - P * 2; r += P * 5) ctx.fillRect(x + 1, r, w - 2, 1);
 
-  // the head: a wider band, the way a tower carries its top
-  ctx.fillRect(x - P, y - P, w + P * 2, P);
-  ctx.strokeRect(x - P + 1, y - P + 1, w + P * 2 - 2, P - 2);
+  // --- the roofs. Solid, and stepped to a point: a cone drawn in cells is a
+  // stack of rows narrowing by one a side, and it is the one roof in this yard
+  // that is not flat. Everything else the crew put up is a shed.
+  const spire = (cx, cw, cy, rows) => {
+    const mid = cx + cw / 2;
+    for (let r = 0; r < rows; r++) {
+      const half = (r + 1) * (cw / 2) / rows;
+      const from = Math.round(mid - half), to = Math.round(mid + half);
+      cell(from, cy + r, Math.max(1, to - from));
+    }
+  };
+  spire(0, SHAFT, 0, SPIRE);
+  spire(TURRET_X, TURRET_W, TUR_TOP, TUR_ROOF);
 
-  // and the window, lit, high up
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x + w / 2 - P, y + P * 3, P * 2, P * 3);
-  ctx.fillStyle = '#e8890c';
-  ctx.fillRect(x + w / 2 - P + 1, y + P * 3 + 1, P * 2 - 2, P * 3 - 2);
+  // A finial over each: the flick of the hat that says somebody lives here on
+  // purpose rather than that this is a chimney.
+  cell(SHAFT / 2 - 0.5, -2);
+  cell(SHAFT / 2 - 1.5, -3, 3);
+  cell(TURRET_X + TURRET_W / 2 - 0.5, TUR_TOP - 1);
+
+  // --- the windows, lit: two up the main shaft and one in the turret, in the
+  // same warm cell the houses use, so it reads as somewhere somebody is awake.
+  const lit = (cx, cy, cw, ch) => {
+    ctx.fillStyle = '#000';
+    cell(cx, cy, cw, ch);
+    ctx.fillStyle = '#e8890c';
+    ctx.fillRect(Math.round(x + cx * P) + 1, Math.round(y + cy * P) + 1,
+                 cw * P - 2, ch * P - 2);
+    ctx.fillStyle = '#000';
+  };
+  lit(3, SPIRE + 3, 2, 3);
+  lit(3, SPIRE + 12, 2, 3);
+  lit(TURRET_X + 1, TUR_TOP + TUR_ROOF + 3, 2, 2);
+
+  // and a door at the foot of the main shaft
+  cell(3, TALL - 4, 2, 4);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + 3 * P + 1, y + (TALL - 4) * P + 1, 2 * P - 2, 4 * P - 1);
   ctx.fillStyle = '#000';
 }
 
