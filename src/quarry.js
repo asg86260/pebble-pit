@@ -300,6 +300,12 @@ export function stepQuarrier(w, now) {
   const c = nextCut(w.x + WORKER / 2);
   if (c < 0) return;
   cutCells()[c]++;
+  // Digging raises dust, not only the seam at the bottom. The cut used to foul
+  // the air once per shard, which was the same event as producing one; now that
+  // production is a lump at the end, fouling only on the payout meant a cut
+  // could be worked for half a minute without the sky noticing -- and the blue
+  // in the sky over the quarry never appeared at all between seams.
+  foul(1, w.x + WORKER / 2, w.y, 'shard');
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);

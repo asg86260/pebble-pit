@@ -1442,9 +1442,24 @@ const TESTS = [
     run(1);
     const clear = state().floor;
     const bank = state().stored;
+    // Look at the yard before calling them in. Birds are seeded across whatever
+    // is on screen, and a check that had left the view at the hole got a flock
+    // over the mouth of it -- whose dust falls in and is banked, which is the
+    // hole working and not the bird.
+    window.__look(state().rockLeftX - 700);
+    run(0.2);
     window.__birds();
     const s = state();
-    const bird = s.sky.birdWorld[0];
+    // One over ordinary ground. A bird startled over the mouth of the hole drops
+    // its dust straight into it, which is banked rather than left lying -- that
+    // is the hole working, not the bird failing, but it is not what this check
+    // is about, and which bird is where is a fresh coin toss every run.
+    // Clear of the hole, clear of the rock's bare apron and clear of the mouth of
+    // the cut -- the three strips the ground refuses, where a grain is banked
+    // instead of left lying. That is those working, not the bird failing, but it
+    // is not what this check is about.
+    const clearOf = b => b.x < s.rockLeftX - 120 && b.x > s.pitX - s.pitW;
+    const bird = s.sky.birdWorld.find(clearOf) || s.sky.birdWorld[0];
     const [x, y] = onScreen(bird.x, bird.y);
     point('pointerdown', x, y);
     point('pointerup', x, y, 0);

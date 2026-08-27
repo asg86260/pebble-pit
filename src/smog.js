@@ -25,7 +25,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_WANDER, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
-         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK } from './config.js';
+         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_SPREAD } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
 import { spawnChip } from './dust.js';
@@ -89,7 +89,13 @@ const outlet = () => ({ x: scrub.x - P, y: scrub.y + scrub.h - P * SCRUB_ARM });
 // Something was taken out of the ground, at a place. The number is bookkeeping;
 // the puff is the point. Without one, the connection between what the crew do and
 // what is overhead is a line in a design document and nothing you could see.
-export function foul(grains, x, y) {
+// `kind` is which part of the works this came out of -- 'dust' off the rock,
+// 'shard' out of the cut, 'spore' off the beds. It is carried all the way up and
+// kept on the mote, because unlike the dust hanging over a place, smoke drifts:
+// by the time a mote has settled and spread it is nowhere near what made it, so
+// asking what is under it now would give the wrong answer. Where it came from is
+// a fact about the mote, so the mote holds it.
+export function foul(grains, x, y, kind = 'dust') {
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   S.haze = Math.min(SMOG_CAP, S.haze + add);
@@ -107,6 +113,16 @@ export function foul(grains, x, y) {
     vy: -(0.55 + Math.random() * 0.5),
     sway: Math.random() * Math.PI * 2,
     fade: 1,
+    // What put it up. Carried to the top of the climb and handed to the mote,
+    // which is the whole of how a dirty sky says which part of the works is
+    // dirtying it. It was being dropped here, so every mote in the sky came out
+    // as the default grey however it was made.
+    kind,
+    // Where it started and which way it leans. A plume widens with height --
+    // every puff leaning on the same shared sway sent the lot up as one straight
+    // cylinder, which reads as a pipe rather than as smoke.
+    y0: y,
+    lean: (Math.random() - 0.5) * 2,
     done: false
   });
 }
@@ -163,6 +179,17 @@ function stepPuffs(secs) {
     }
     p.y += p.vy * secs * 60;
     p.x += Math.sin(now() / 700 + p.sway) * secs * 20;
+    // and out as it goes up: how far it has climbed decides how far it has
+    // drifted from the column it left, so the plume is a cone
+    const climbed = Math.max(0, (p.y0 == null ? p.y : p.y0) - p.y);
+    p.x += p.lean * PLUME_SPREAD * (climbed / 100) * secs * 60;
+    // whatever the cursor left in it, dying away
+    if (p.sx || p.sy) {
+      p.x += p.sx || 0;
+      p.y += p.sy || 0;
+      p.sx = (p.sx || 0) * 0.94;
+      p.sy = (p.sy || 0) * 0.94;
+    }
     // It slows on the way up, but it always gets there: a puff that ran out of
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
@@ -196,6 +223,44 @@ function stepPuffs(secs) {
     p.done = true;
     SKY.push(skyMote(p.x, p.y, p.kind));
   }
+}
+
+// --- the draught, in the smoke -------------------------------------------------
+// The same hand that moves the dust moves this. A haze that took no notice of a
+// pointer going through it was the one field in the yard you could put your hand
+// into and have nothing happen -- and it is the field most obviously *air*.
+//
+// Both halves of it. What is still climbing gets a shove it carries; what has
+// settled gets a displacement that eases back, because a settled mote is placed
+// where its slot says every frame and the only way to move one is to bend where
+// that is. Fainter than the dust, which is already faint: this weighs nothing.
+export function stirSmoke(wx, wy, dx, dy) {
+  const speed = Math.hypot(dx, dy);
+  if (speed < 0.5) return 0;
+  const push = Math.min(speed, 40) * SMOKE_STIR;
+  const ux = dx / speed, uy = dy / speed;
+  const cap = v => Math.max(-SMOKE_STIR_CAP, Math.min(SMOKE_STIR_CAP, v));
+  let moved = 0;
+
+  for (const p of PUFFS) {
+    if (p.done) continue;
+    const d = Math.hypot(p.x - wx, p.y - wy);
+    if (d > SMOKE_STIR_R) continue;
+    const k = push * (1 - d / SMOKE_STIR_R) ** 2;
+    p.sx = cap((p.sx || 0) + ux * k);
+    p.sy = cap((p.sy || 0) + uy * k);
+    moved++;
+  }
+
+  for (const m of SKY) {
+    const d = Math.hypot(m.x - wx, m.y - wy);
+    if (d > SMOKE_STIR_R) continue;
+    const k = push * (1 - d / SMOKE_STIR_R) ** 2;
+    m.px = cap((m.px || 0) + ux * k);
+    m.py = cap((m.py || 0) + uy * k);
+    moved++;
+  }
+  return moved;
 }
 
 // --- how the sky is arranged -------------------------------------------------
@@ -289,8 +354,17 @@ function place(secs) {
     const e = k * k * (3 - 2 * k);
     const y = m.fromY + (home.y - m.fromY) * e;
 
-    m.x = (home.x + m.roam * span) % span + Math.sin(t * 0.5 + m.bob) * SMOG_WANDER;
-    m.y = y + Math.cos(t * 0.37 + m.bob) * SMOG_WANDER * 0.5;
+    // and whatever the cursor bent it out of place by, easing back to nought
+    if (m.px || m.py) {
+      const keep = Math.max(0, 1 - SMOKE_STIR_EASE * secs);
+      m.px *= keep;
+      m.py *= keep;
+      if (Math.abs(m.px) < 0.05) m.px = 0;
+      if (Math.abs(m.py) < 0.05) m.py = 0;
+    }
+
+    m.x = (home.x + m.roam * span) % span + Math.sin(t * 0.5 + m.bob) * SMOG_WANDER + (m.px || 0);
+    m.y = y + Math.cos(t * 0.37 + m.bob) * SMOG_WANDER * 0.5 + (m.py || 0);
     if (m.x > span) m.x -= span;
     if (m.x < 0) m.x += span;
   }
@@ -822,7 +896,11 @@ export function clumpiness() {
 export const skyBins = () => strips().filter(Boolean).length;
 
 export function smogReport() {
-  return { sky: SKY.length, puffs: PUFFS.length, drops: DROPS.length, trend: airTrend(),
+  // what the sky is made of, by where it came from: the tint is drawn straight
+  // off this, so a check can see whether a dirty sky knows what dirtied it
+  const kinds = {};
+  for (const m of SKY) kinds[m.kind || 'none'] = (kinds[m.kind || 'none'] || 0) + 1;
+  return { sky: SKY.length, skyKinds: kinds, puffs: PUFFS.length, drops: DROPS.length, trend: airTrend(),
            caught: CAUGHT.length, clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,

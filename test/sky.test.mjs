@@ -363,6 +363,29 @@ group('the air over a site is the colour of what comes out of it', async () => {
 // then forgot: the only cost of running it was the body standing in it, and the
 // recycler on top of that was a strict bonus, which is why the upgrade read as
 // optional. The filters have to be emptied somewhere.
+// The dust hanging over a place is the colour of what is under it. Smoke drifts,
+// so it cannot be asked that -- by the time a mote has settled it is nowhere
+// near what made it. It carries where it came from instead, and a dirty sky says
+// which part of the works is dirtying it.
+group('the sky says which part of the works dirtied it', async () => {
+  window.__reset();
+  window.__crew(2, 0, 2, 2);
+  window.__air({ haze: 0, muck: 0 });
+  run(25);
+  const s = state();
+  const k = s.smog.skyKinds || {};
+  window.__crew(0, 0);
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(s.smog.sky > 0, 'there is a sky to read', `${s.smog.sky} motes`),
+    ok(!k.none, 'every mote knows what put it up', JSON.stringify(k)),
+    ok(k.dust > 0, 'the rock sends up its own', `${k.dust || 0}`),
+    ok(k.shard > 0, 'and so does the cut -- while it is being dug, not only when it pays',
+       `${k.shard || 0}`),
+    ok(Object.keys(k).length > 1, 'so a dirty sky is not one flat colour', JSON.stringify(k))
+  ];
+});
+
 group('the scrubbing house empties its filters out the back, until the recycler', async () => {
   const run1 = () => {
     window.__reset();

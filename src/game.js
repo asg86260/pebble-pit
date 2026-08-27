@@ -137,6 +137,17 @@ export function step() {
       ch.vx = -Math.abs(ch.vx) * 0.3;
     }
 
+    // The far wall of the hole is a wall at every height, not only below the
+    // ground line. Everything is thrown at the pit from the near lip, so a grain
+    // that gets past the far wall is a throw that sailed -- and it used to be
+    // stopped only once it was already down inside the mouth, which let the odd
+    // one over the top and out onto the strip of ground behind, where it lies
+    // for the rest of the run with nobody able to reach it.
+    if (ch.vx > 0 && ch.x + P > pit.x + pit.w && ch.x < S.worldW - P) {
+      ch.x = pit.x + pit.w - P;
+      ch.vx = 0;
+    }
+
     // down the shaft: the pit collects whatever falls through its mouth
     // `>=`, to match what the ground asks a line below. With `>` a chip that
     // came down exactly on the ground line over the mouth failed the pit's

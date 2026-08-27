@@ -871,10 +871,14 @@ export const AIR_BANDS = [
 // Darker and duller than the motes, because these are drawn at a tenth of the
 // ink and against the light: the same hues, pushed down until they read as smoke
 // with a cast in it rather than as coloured confetti.
+// More saturated than they look like they should be. These are laid down at a
+// tenth of an ink, and alpha flattens a hue towards the paper it is on: a navy
+// that reads as navy on its own reads as grey at 0.13, which is exactly the
+// nothing this was added to avoid.
 export const SMOG_TINTS = {
   dust:  '#2b2b2b',
-  shard: '#26386b',
-  spore: '#27523a'
+  shard: '#1436b8',
+  spore: '#12703a'
 };
 
 export const AIR_KINDS = ['dust', 'shard', 'spore'];
@@ -897,10 +901,26 @@ export const AIR_GUST = 0.34;     // and the wind the whole field leans on
 // wind that never quite settles; this is a local one, made by the cursor, that
 // dies away behind it. Standing still does nothing -- it is the movement that
 // stirs, so a pointer parked in the middle of the yard leaves the air alone.
-export let AIR_STIR = 0.42;       // how hard a fast cursor drags a mote along
-export const AIR_STIR_R = 120;    // how far the wake reaches, in screen pixels
-export const AIR_STIR_CAP = 9;    // the fastest the draught will carry one
-export const AIR_STIR_EASE = 2.2; // and how quickly it dies, share a second
+// Barely there on purpose. It was strong enough that the dust visibly obeyed the
+// pointer, which makes it a toy you are playing rather than air you are moving
+// through: what is wanted is the suspicion that the room noticed you.
+export let AIR_STIR = 0.10;       // how hard a fast cursor drags a mote along
+export const AIR_STIR_R = 95;     // how far the wake reaches, in screen pixels
+export const AIR_STIR_CAP = 2.4;  // the fastest the draught will carry one
+export const AIR_STIR_EASE = 3.0; // and how quickly it dies, share a second
+
+// The same hand through the smoke. Fainter again: a mote of haze is a lungful of
+// the yard's own filth hanging in the air, and it should shift like something
+// that weighs nothing rather than something you can sweep.
+export const SMOKE_STIR = 0.055;   // how hard the cursor moves smoke
+export const SMOKE_STIR_R = 130;   // how far it reaches, in world pixels
+export const SMOKE_STIR_CAP = 26;  // and the furthest a mote is ever pushed
+export const SMOKE_STIR_EASE = 1.5;
+
+// How much a plume opens out as it climbs. Smoke off a swing goes up in a column
+// and widens with height, the way smoke does; every puff leaning on the same
+// shared sway sent the lot up in one straight cylinder, which reads as a pipe.
+export const PLUME_SPREAD = 0.5;
 export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
 export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
 export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches

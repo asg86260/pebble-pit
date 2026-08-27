@@ -11,6 +11,7 @@ import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
+import { stirSmoke } from './smog.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearTower, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
@@ -52,6 +53,8 @@ function startPan() {
 // leaves in the dust. Kept here rather than on S: it is a fact about the mouse
 // between two events, not about the yard, and nothing saves or reads it.
 let lastSx = null, lastSy = null;
+// and the same for the yard's own coordinates, for the smoke
+let lastWx = null, lastWy = null;
 
 export function pos(e) {
   const r = canvas.getBoundingClientRect();
@@ -130,6 +133,12 @@ canvas.addEventListener('pointermove', e => {
   const sx = e.clientX - r.left, sy = e.clientY - r.top;
   if (lastSx != null) stirAir(sx, sy, sx - lastSx, sy - lastSy);
   lastSx = sx; lastSy = sy;
+
+  // and the smoke, which lives in the yard rather than on the glass -- so it is
+  // stirred in world pixels, off how far the pointer moved across the *yard*
+  const wm = pos(e);
+  if (lastWx != null) stirSmoke(wm.x, wm.y, wm.x - lastWx, wm.y - lastWy);
+  lastWx = wm.x; lastWy = wm.y;
 
   const wasWx = S.mouse ? S.mouse.x : null;
   S.mouse = pos(e);
