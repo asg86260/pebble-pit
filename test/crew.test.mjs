@@ -99,7 +99,18 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // where a body starts from is not what this check is about, and a fixed ten
   // seconds was only ever long enough because of where the check above it had
   // left somebody standing.
-  runUntil(() => state().underground > 0, 60);
+  // Down the hole, in feet terms. The cut is what has been taken out of the
+  // ground now rather than a shape the yard came with, so a body sent to a
+  // quarry nobody has worked yet is stood on the ground line -- there is nothing
+  // to climb out of, and a check about climbing out has nothing to watch.
+  //
+  // `underground` used to be quarriers whose goal was 'in', which stopped being
+  // a goal a long time ago: the wait always fell through and only passed
+  // because the old cut was a fixed hole a body was instantly at the bottom of.
+  // Properly down the hole, measured on the body itself rather than on a count:
+  // a climb of one cell is over inside a single sample, and what this group is
+  // about is the route out. Four cells is a climb you can watch.
+  runUntil(() => { const b = body(); return b.t === 'q' && b.y > state().groundY + P * 4; }, 180);
   const s0 = state();
   const digging = body();
 

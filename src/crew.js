@@ -714,7 +714,14 @@ function stepCommute(w, zone) {
   // floor to the foot of the ladder and goes up it: rising through the wall
   // wherever it happened to be standing was the same not-a-thing-that-happens
   // as sinking into the ground, and the ladder is there to be used both ways.
-  if (w.y > S.groundY) {
+  //
+  // Measured at the feet, not the top of the head. A body is three cells tall,
+  // and a cut that has only just been started is shallower than that -- so a
+  // quarrier standing in a hole up to its shoulders read as being *above* ground
+  // and climbed straight out through the dirt. It never showed while the cut was
+  // a fixed hole a body could only ever be right at the bottom of; it showed the
+  // moment the hole started at nothing and got deeper.
+  if (w.y + WORKER > S.groundY) {
     const foot = quarryFace();
     if (Math.abs(w.x - foot) > 1) {
       w.y = quarryFloor(w.x + WORKER / 2) - WORKER;

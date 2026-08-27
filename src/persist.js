@@ -205,6 +205,7 @@ export function persist() {
     buried: S.buried,
     casinoOpen: S.casinoOpen,
     scrubOpen: S.scrubOpen,
+    towerOpen: S.towerOpen,
     scrubbers: S.scrubbers,
     recycler: S.recycler,
     seenAir: S.seenAir,
@@ -381,6 +382,7 @@ export function restore() {
   S.buried = s.buried ?? !!s.introDone;
   S.casinoOpen = !!s.casinoOpen;
   S.scrubOpen = !!s.scrubOpen;
+  S.towerOpen = !!s.towerOpen;
   S.scrubbers = s.scrubbers || 0;
   S.recycler = !!s.recycler;
   S.seenAir = !!s.seenAir;
@@ -490,6 +492,7 @@ export function reset() {
   S.labBoardOpen = false;
   S.casinoOpen = false;
   S.scrubOpen = false;
+  S.towerOpen = false;
   S.scrubbers = 0;
   S.recycler = false;
   S.seenAir = false;
