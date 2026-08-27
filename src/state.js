@@ -205,7 +205,8 @@ export const S = {
   mouse: { x: 0, y: 0 },
   mining: false,
   paused: false,          // the whole yard held still, on the space bar
-  houseBoardOpen: false,  // and the list of who lives here
+  houseBoardOpen: false,  // and the block, with what you can put up on it
+  crewListOpen: false,    // whose submenu of names is out beside it
   quarryBoardOpen: false,
   farmBoardOpen: false,
   outhouseOpen: false,    // there is somewhere to go

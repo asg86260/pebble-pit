@@ -3,7 +3,7 @@
 
 import { P } from './config.js';
 import { S, bench, lab, school, casino, scrub, quarry, farm, tower } from './state.js';
-import { crewRows, houseRect } from './crewboard.js';
+import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
@@ -12,7 +12,7 @@ import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { TOWER_UPGRADES } from './tower.js';
-import { refresh, markRowsSeen, buildCrew, tookRows } from './shop.js';
+import { refresh, markRowsSeen, buildCrew, buildCrewList, tookRows } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -20,6 +20,8 @@ const labShopEl = document.getElementById('labshop');
 const schoolShopEl = document.getElementById('schoolshop');
 const casinoShopEl = document.getElementById('casinoshop');
 const crewShopEl = document.getElementById('crewshop');
+const crewListEl = document.getElementById('crewlist');
+const crewListRowsEl = document.getElementById('crewlistrows');
 const scrubShopEl = document.getElementById('scrubshop');
 const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
@@ -163,6 +165,13 @@ const GAP = 4;                             // never flush against the edge
 // while the cursor was well off to one side, which is a menu that will not go
 // away. The wedge is exactly the ground you would cross heading for it, and no
 // more -- step out of it sideways and it shuts as it always did.
+//
+// And the submenu is covered by the same wedge without a word being said about
+// it here. The board's rectangle below is the whole panel, and the house's list
+// of people opens as a second sheet *inside* that panel -- so the moment it is
+// out, the rectangle is wider by the width of it and the wedge reaches the far
+// corner of the list, the gap between the two sheets included. Hovering the
+// names, and walking across to them, is being on the board.
 const SAFE_SLACK = 12;             // and a little grace either side of that
 
 // where the board actually is on screen, from the numbers `place` already keeps
@@ -295,8 +304,42 @@ let closing = 0;
 // and the seating are the ones the board already has.
 export const closeBoard = () => showPanel(null);
 
+// --- the sheet that opens off the house board ---------------------------------
+// The one submenu in the game. It stands beside the board it belongs to, inside
+// the same panel, which is the whole trick: the panel is what carries the
+// transform that seats the menu on the ground, it is what the wedge below is
+// measured from, and it is what the cursor has to leave for anything to close.
+// So a second sheet put inside it walks with the board, fades with the board,
+// and is already part of every answer to "is the pointer still on the menu" --
+// there is no second rule anywhere for the submenu, because to everything that
+// asks, the submenu *is* the menu.
+//
+// The alternative was a floating element of its own, positioned against the
+// board's rectangle every frame. That is two things pretending to be one: it
+// would need its own hover handling to stop the board closing under it, its own
+// copy of the seating, and it would have got them subtly wrong on the day a
+// short window clamped the board and not it.
+export function showCrewList(on) {
+  // Only ever out beside the house. Asked for while any other board is up -- or
+  // none -- the answer is no rather than a sheet of names hanging off the lab.
+  const want = !!on && at === 'house';
+  if (want === S.crewListOpen) return;
+  S.crewListOpen = want;
+  crewListEl.hidden = !want;
+  // Filled before it is measured, for the reason opening a board is: an empty
+  // sheet measures narrower than it will be, and the panel is seated by the
+  // size it was last measured at.
+  if (want) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
+  remeasure();
+  placeBoard();
+}
+
 export function showPanel(want) {
   if (want === at) return;
+  // Walking off to another station, or off to nothing, takes the submenu with
+  // it. Done before `at` moves, so the list is put away while it still belongs
+  // to the board it is standing beside.
+  if (want !== 'house') showCrewList(false);
   const wasAt = at;
   at = want;
   S.boardOpen = want === 'bench';
@@ -389,7 +432,16 @@ function fill(which) {
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
-  if (which === 'house') { buildCrew(); refresh(crewShopEl, crewRows(), null); }
+  if (which === 'house') {
+    buildCrew();
+    refresh(crewShopEl, crewRows(), null);
+    // And the people beside it, while they are out. Where a body is standing is
+    // the one thing on either of these sheets that moves on its own, so the list
+    // is written every frame the same as any other open board -- a name whose
+    // "at the pit" went stale the moment you opened it would be the board
+    // telling you where somebody used to be.
+    if (S.crewListOpen) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
+  }
 }
 
 // What you have to spend, beside the board that is asking for it. Every price on

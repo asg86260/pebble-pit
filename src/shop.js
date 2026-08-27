@@ -16,13 +16,14 @@ import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
-import { crewRows, crewSections } from './crewboard.js';
+import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
 const labEl = document.getElementById('labshop');
 const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
+const crewListEl = document.getElementById('crewlistrows');
 const scrubEl = document.getElementById('scrubshop');
 const quarryEl = document.getElementById('quarryshop');
 const farmEl = document.getElementById('farmshop');
@@ -160,6 +161,13 @@ function build(el, list, sections, empty) {
       // the same box the yard uses for a mark you went and looked at. It is the
       // one place a *name* is not enough: a breaker is a word, and what a
       // breaker does is the reason you would buy one.
+      // A row that leads somewhere rather than doing something. What is behind
+      // it opens on the way in, not on the press: every other menu in this game
+      // comes out because you walked up to the thing it belongs to, and a
+      // submenu you had to click for would be the one place that asked twice.
+      // The press is still wired up -- see the row itself -- because a finger
+      // cannot hover, and the two together are how it works on both.
+      if (u.over) b.addEventListener('pointerenter', () => u.over());
       if (u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();
@@ -288,6 +296,13 @@ export function markRowsSeen(list) {
 // when the set of rows changes.
 export function buildCrew() {
   build(crewEl, crewRows(), crewSections(), 'nobody lives here yet');
+}
+
+// And the sheet of names that opens off it. The same call for the same reason:
+// it is a list of people rather than of upgrades, and it grows a row every time
+// another house goes up.
+export function buildCrewList() {
+  build(crewListEl, crewList(), crewListSections(), 'nobody lives here yet');
 }
 
 export function buildShop() {

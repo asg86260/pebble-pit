@@ -110,6 +110,36 @@ async function hoverBench() {
   await sleep(250);
 }
 
+// Standing at the block, with the view brought over first so that it is on the
+// screen to stand at. Where you have to stand is asked of the game rather than
+// written down here: the house is the one station that grows a room per body.
+async function hoverHouse() {
+  const h = state().houses;
+  const mid = (h.left + h.right) / 2;
+  window.__look(mid - 600);
+  await sleep(120);
+  const [hx, hy] = onScreen(mid, h.top + 20);
+  point('pointermove', hx, hy, 0);
+  await sleep(120);
+  return { x: hx, y: hy };
+}
+
+// And the last step of the way to the people: the crew is a submenu now, so the
+// board is the block and the row that leads to the names, and the names come out
+// beside it when the cursor reaches that row. Two frames, because opening it
+// measures and re-seats the panel and a rectangle read before that is the one
+// the board had without it.
+async function openCrewList() {
+  const door = document.querySelector('#crewshop button[data-key="crewlist"]');
+  if (!door) return null;
+  const r = door.getBoundingClientRect();
+  door.dispatchEvent(new PointerEvent('pointerenter',
+    { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
+  await raf();
+  await raf();
+  return door;
+}
+
 // the cursor standing at no station at all, so the board closes
 async function hoverAway() {
   point('pointermove', 4, 4, 0);
@@ -2209,17 +2239,11 @@ const TESTS = [
     await settle();
     window.__crew(2, 2);
     run(60);
-    const s = state();
-    const h = s.houses;
-    const mid = (h.left + h.right) / 2;
-    window.__look(mid - 600);
-    await sleep(120);
-    const [hx, hy] = onScreen(mid, h.top + 20);
-    point('pointermove', hx, hy, 0);
-    await sleep(120);
+    await hoverHouse();
+    await openCrewList();
     const open = state();
-    // the first *person*: the board's other row is the one thing it sells
-    const row = document.querySelector('#crewshop button[data-key^="who"]');
+    // the first person on the sheet that opened: the board itself is the block
+    const row = document.querySelector('#crewlist button[data-key^="who"]');
     if (row) {
       const r = row.getBoundingClientRect();
       row.dispatchEvent(new PointerEvent('pointerenter',
@@ -2264,6 +2288,90 @@ const TESTS = [
       ok(open.crewRows.every(r => !r.includes('undefined')),
          'and no row has a body the board cannot place',
          JSON.stringify(open.crewRows))
+    ];
+  }],
+
+  // The names used to be poured out under the buy row, which is a board at four
+  // bodies and a column taller than the window at twenty. They are a submenu
+  // now -- and a submenu is only worth having if you can get to it: the board it
+  // hangs off must not shut while the cursor is crossing to it, and neither of
+  // them may shut while the cursor is on it.
+  ['the crew is a submenu of the house board', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    run(60);
+    await hoverHouse();
+    const shut = state();
+    const inlineNames = document.querySelectorAll('#crewshop [data-key^="who"]').length;
+    const sheet = document.querySelector('#panel .sheet:not(.flyout)');
+    const list = document.getElementById('crewlist');
+
+    await openCrewList();
+    const open = state();
+    const listOut = !list.hidden;
+    const listed = list.getBoundingClientRect();
+    const board = sheet.getBoundingClientRect();
+
+    // The whole of the list, and the strip of nothing between it and the board
+    // it came out of. These go to the canvas, which is where the game decides
+    // whether the cursor has walked off: over the real page the panel is in the
+    // way and the canvas never hears about any of it, so this is the harder
+    // question of the two and the only one worth asking.
+    const probes = [
+      [listed.left + listed.width / 2, listed.top + listed.height / 2],
+      [listed.right - 4, listed.bottom - 4],
+      [listed.right - 4, listed.top + 4],
+      [(board.right + listed.left) / 2, listed.bottom - 6]
+    ];
+    let stayed = true;
+    for (const [x, y] of probes) {
+      point('pointermove', x, y, 0);
+      const s = state();
+      if (!s.houseBoardOpen || !s.crewListOpen) stayed = false;
+    }
+    const onIt = state();
+
+    // and it still goes away when you actually walk off. Straight up off the top
+    // of it, which is out of the wedge in the one direction that cannot be
+    // mistaken for anything else: the ground is below, the sky is not a station,
+    // and the whole of the menu is between the cursor and where it came from.
+    point('pointermove', listed.left + listed.width / 2,
+          Math.min(listed.top, board.top) - 160, 0);
+    await sleep(60);
+    const left = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(shut.houseBoardOpen && !shut.crewListOpen,
+         'standing at the house opens the board with the list still folded away',
+         `${shut.houseBoardOpen}, ${shut.crewListOpen}`),
+      ok(inlineNames === 0 && shut.crewRows.length === 0,
+         'so no names are sitting on the board itself', `${inlineNames} of them`),
+      ok(!!shut.houseRow && /^another house/.test(shut.houseRow),
+         'what is on it is the house you can put up', shut.houseRow),
+      ok(!!shut.crewDoor && shut.crewDoor.includes('who lives here') &&
+         shut.crewDoor.includes('4'),
+         'and a row that leads to the people, saying how many there are',
+         shut.crewDoor),
+      ok(open.crewListOpen && listOut,
+         'reaching that row brings the people out beside it',
+         `${open.crewListOpen}, ${listOut}`),
+      ok(open.crewRows.length === 4,
+         'one row per body, on the sheet that opened', `${open.crewRows.length} rows`),
+      ok(open.crewRows.some(r => r.includes('on the rock')),
+         'still saying where each of them is', JSON.stringify(open.crewRows)),
+      ok(document.getElementById('panel').contains(list) && listed.width > 0,
+         'the list is part of the menu rather than a second thing beside it',
+         `${Math.round(listed.width)}x${Math.round(listed.height)}`),
+      ok(stayed, 'hovering it closes neither the board nor the list',
+         `board ${Math.round(board.right)}, list ${Math.round(listed.left)}`),
+      ok(onIt.houseBoardOpen && onIt.crewListOpen,
+         'and both are still up at the far corner of it',
+         `${onIt.houseBoardOpen}, ${onIt.crewListOpen}`),
+      ok(!left.houseBoardOpen && !left.crewListOpen,
+         'while walking away takes the two of them together',
+         `${left.houseBoardOpen}, ${left.crewListOpen}`)
     ];
   }],
 
