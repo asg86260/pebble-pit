@@ -17,6 +17,7 @@ import { HOUSE_COLS, HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
 import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
+import { showCrewList } from './board.js';
 import { indoors } from './lab.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
 import { now } from './clock.js';
@@ -158,9 +159,45 @@ function point(w) {
 // made where the thing bought appears: the settlement is drawn straight off the
 // headcount, so putting another house up and taking somebody on are one act, and
 // standing at the houses to do it is the game showing you what your dust bought.
+//
+// Two rows, and only two: what you can put up, and the way through to who is
+// already in it. The board used to be the buy row with the whole crew poured out
+// underneath it, which is fine at four bodies and nonsense at twenty -- a column
+// of names taller than the window, standing on the ground the house is standing
+// on, with the one row you can actually press hiding at the top of it. The names
+// are a list you go and read; the block is a thing you buy.
 export function crewRows() {
-  return [HOUSE_ROW, ...people()];
+  return [HOUSE_ROW, CREW_ROW];
 }
+
+// The door through to them. It is priced like the rows below it are -- where the
+// cost would go it says how many there are, which is the number you would have
+// counted off the list anyway, and now do not have to.
+const CREW_ROW = {
+  key: 'crewlist',
+  name: 'who lives here',
+  // Hovering it is what opens the list, because hovering is what opens
+  // everything else in this game: you walk up to a station and its board comes
+  // out. The press is here for a finger, which cannot hover -- and it shuts the
+  // list again, because a finger has no way to walk away from one either.
+  over: () => showCrewList(true),
+  buy: () => showCrewList(!S.crewListOpen),
+  price: () => String(S.crew),
+  dead: () => false,
+  show: () => true,
+  from: null,
+  unit: null,
+  cost: () => 0
+};
+
+// The people, as the rows of the sheet that opens off that. Their own list and
+// their own heading, so neither this nor the board it hangs off has to know what
+// is on the other one.
+export const crewList = () => people();
+
+export const crewListSections = () => [
+  { title: 'the crew', keys: S.workers.map((_, i) => `who${i}`) }
+];
 
 // The people are their own list, so the buy row above can be added without this
 // having to know about it.
@@ -182,9 +219,12 @@ function people() {
 // Two headings: what you can put up, and who is already living in it. The people
 // are not cut up by job -- that would put the same body under a different word
 // every time it was moved -- but a purchase is not a person, and a row you can
-// spend dust on sitting unlabelled among a list of names is a row you press by
-// accident.
+// spend dust on sitting unlabelled next to one is a row you press by accident.
+//
+// The second heading is still here now that the names have moved off this board:
+// the sheet that opens off it wears the same word at the top, which is how a
+// submenu says which heading it came out of.
 export const crewSections = () => [
   { title: 'the block', keys: [HOUSE_ROW.key] },
-  { title: 'the crew', keys: S.workers.map((_, i) => `who${i}`) }
+  { title: 'the crew', keys: [CREW_ROW.key] }
 ];

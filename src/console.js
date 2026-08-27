@@ -40,9 +40,16 @@ Object.assign(window, {
 window.__state = () => ({
   ...snapshot(),
   hushed: document.getElementById('panel').classList.contains('hushed'),
-  // The people, and not the one row on that board that sells something. The
-  // name means the crew, and a purchase sitting in this list would read as a
-  // body called "another house".
-  crewRows: [...document.querySelectorAll('#crewshop [data-key^="who"]')].map(r => r.textContent),
-  houseRow: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="house"]'))
+  // The people, off the sheet they now live on -- the house board itself is the
+  // block and the door through to them, and a check reading the crew wants the
+  // crew. Read out of the DOM rather than off the game so that a list which
+  // never made it onto the page reads as no list at all.
+  // Off the sheet only while the sheet is out: the rows are built once and kept,
+  // so a folded-away list still has every name in it, and a check asking what
+  // the crew list says would have been told about a list nobody can see.
+  crewRows: [...document.querySelectorAll('#crewlist:not([hidden]) [data-key^="who"]')]
+              .map(r => r.textContent),
+  // and the two rows on the board itself: what you can put up, and the way in
+  houseRow: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="house"]')),
+  crewDoor: (r => r && r.textContent)(document.querySelector('#crewshop [data-key="crewlist"]'))
 });

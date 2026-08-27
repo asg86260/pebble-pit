@@ -281,7 +281,41 @@ canvas {
 .rows button.stat:hover:not(:disabled) { color: #000; background: none; }
 .rows button.stat:hover:not(:disabled) .gain { opacity: .75; }
 .rows button.stat:hover:not(:disabled) .cost { opacity: .7; }
-#crewshop button .cost { text-align: right; }
+#crewshop button .cost, #crewlist button .cost { text-align: right; }
+
+/* --- the house board's submenu ------------------------------------------------
+   The people used to be the bottom half of the house board: the row that puts
+   another house up, and then a name for every body in the settlement. At four
+   bodies that is a board. At twenty it is a column of names taller than the
+   window, standing on the block it is describing, with the one row you can
+   actually press hiding at the top of it. So the names come out beside the board
+   when you ask for them, and the board stays the size of what you can do.
+
+   To the right, and bottom-aligned like everything else in the panel: the purse
+   already owns the left, and a list that opened downwards would have to grow
+   through the ground the board is standing on. Bottom-aligned means a list of
+   twenty grows upwards, so the board itself never moves when it comes out. */
+.panel .flyout { transform-origin: 0 100%; }
+/* `.sheet` is `display: flex`, which outranks the browser's own rule for
+   [hidden] -- so without this the list is out from the moment the page loads. */
+.panel .sheet[hidden] { display: none; }
+/* A settlement can get long. The names scroll inside the sheet rather than
+   pushing the panel taller than the window, which is the one thing that would
+   move the board out from under the cursor that opened this. */
+#crewlist { max-height: 46vh; overflow-y: auto; }
+/* Two columns rather than three. Nothing on this sheet has a price, so the
+   middle column -- what a purchase gives you -- is closed up, and where the body
+   is takes whatever room the longest answer needs: "at the scrubbing house" in
+   the shop's 4.6em price column is a phrase running off the edge of the sheet. */
+#crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
+
+/* The row that leads to it says so. Every other name on a board is a thing you
+   press and something happens; this one is a door, and the mark is the one every
+   menu in the world puts on a submenu. It rides inside the name so it goes black
+   with the words when the row is under the cursor, rather than sitting out in
+   the price column pretending to be a number. */
+#crewshop button[data-key="crewlist"] .name::after { content: ' \203A'; opacity: .5; }
+#crewshop button[data-key="crewlist"]:hover .name::after { opacity: 1; }
 
 #tip {
   position: fixed;
@@ -352,6 +386,12 @@ canvas {
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
   #reset { padding: 6px 8px; }
+  /* The panel stacks on a phone, so the submenu lands under the board it came
+     out of rather than beside it -- which is still a submenu, and is the only
+     way round that fits. Between the two of them they have one screen to share,
+     so the names get a shorter run of it before they start scrolling. */
+  #crewlist { max-height: 30vh; }
+  #crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
 }
 
 /* the lab's rows say longer things than the bench's, and what they give is a
