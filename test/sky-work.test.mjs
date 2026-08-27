@@ -208,6 +208,54 @@ group('a hat is worked on, and the tower says how far along it is', async () => 
   ];
 });
 
+// The mining is thrown, not swung. A wizard rides a ring round the star and puts
+// a bolt across the gap; the cell comes off where the bolt lands. So there is
+// always something in the air while they are working, and no wizard is ever
+// standing in the thing it is taking apart.
+group('the wizards circle the star and throw at it', async () => {
+  window.__meteor();
+  window.__wizardHat(3);
+  window.__crew(0, 2, 0, 0, 0, 3);
+  runUntil(() => state().aloft === 3, 90);
+
+  const mid = { x: state().meteorX, y: state().meteorY };
+  const outOf = p => {
+    const [x, y] = p.split(':')[1].split(',').map(Number);
+    return Math.hypot(x + WORKER / 2 - mid.x, y + WORKER / 2 - mid.y);
+  };
+  // ...and once they have all got there. The climb up to the ring is a body a
+  // long way from the star on purpose, and it is not what this is about.
+  runUntil(() => state().workerPos.filter(q => q[0] === 'w').every(p => outOf(p) < 140), 90);
+
+  let sawBolt = false, angles = new Set(), inside = 0, far = 0;
+  const start = state().meteor;
+  for (let i = 0; i < 400; i++) {
+    run(0.25);
+    const s = state();
+    if (s.bolts > 0) sawBolt = true;
+    for (const p of s.workerPos.filter(q => q[0] === 'w')) {
+      const [x, y] = p.split(':')[1].split(',').map(Number);
+      const d = outOf(p);
+      if (d < 40) inside++;                       // in the star itself
+      if (d > 140) far++;                         // or nowhere near it
+      angles.add(Math.round(Math.atan2(y - mid.y, x - mid.x) * 4 / Math.PI));
+    }
+    if (s.meteor < start - 20) break;
+  }
+  const s = state();
+  window.__crew(0, 0);
+  return [
+    ok(sawBolt, 'there is magic in the air while they work'),
+    ok(s.meteor < start, 'and the star comes apart where it lands',
+       `${start} -> ${s.meteor} cells`),
+    ok(inside === 0, 'no wizard is ever inside the thing it is working',
+       `${inside} samples within the rind`),
+    ok(far === 0, 'and none of them wanders off it', `${far} samples out past the ring`),
+    ok(angles.size >= 5, 'they ride round it rather than hanging at one spot',
+       `${angles.size} eighths of the circle seen`)
+  ];
+});
+
 group('a wizard taken off the sky comes down', async () => {
   window.__meteor();
   window.__wizardHat(1);

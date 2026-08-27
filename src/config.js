@@ -395,10 +395,32 @@ export const WIZ_SHARDS = 40;
 export const WIZ_SPORES = 40;
 export const WIZ_RATE = 1.7;         // and each one after the first
 export const WIZ_BREW_MS = 120000;   // how long the tower is at it
-// What a wizard does once it is up there: a cell off the meteor, this often.
+// What a wizard does once it is up there: a bolt at the star, this often.
 export const WIZ_MS = 1100;
+// It does not touch the thing. A body hanging against the rind with its arms in
+// it was a miner on a rock four hundred feet up; what it does instead is circle
+// the star at a distance and throw magic at it, which is the one thing in this
+// yard that is allowed to happen at range -- it is the whole of what the hat is
+// for.
+export const WIZ_SPIN = 0.42;        // radians a second it goes round
+export const BOLT_PACE = 3.2;        // pixels a frame a bolt travels
+// And how far out the ring is, past the rind: far enough that the star is a
+// thing they are working on rather than a thing they are standing in.
+export const WIZ_ORBIT = 34;
 export const WIZ_RISE = 1.4;         // pixels a frame it floats, up or down
 export const WIZ_BOB = 2.2;          // and how far it drifts as it hangs there
+
+// --- what the star looks like ---------------------------------------------------
+// It is a star, not a stone. The crust is black and dead and the core under it is
+// fire, so a corona stands off it from the first moment and the thing gets
+// visibly hotter as the crust is taken off: the rays redden as the fire is
+// uncovered, which is the same fact the counter is about to be told.
+export const RAY_N = 16;             // rays around it
+export const RAY_MIN = 2;            // cells long at their shortest
+export const RAY_MAX = 5;            // and at their longest
+export const RAY_BEAT = 1.7;         // seconds for one breath of the corona
+export const CORE_FLICK = 260;       // ms a core cell holds a tone before it shifts
+
 // How near the meteor a wizard works from: it hangs off the rind rather than
 // inside it, so what it is taking apart is not behind it.
 export const WIZ_STANDOFF = 16;

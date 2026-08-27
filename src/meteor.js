@@ -14,13 +14,53 @@
 // another one drifts in -- so the job is a thing that comes round rather than a
 // tap that never stops.
 
-import { P, METEOR_CORE, METEOR_GRAINS, METEOR_AGAIN, SPARK_CELL, someFind } from './config.js';
+import { P, METEOR_CORE, METEOR_GRAINS, METEOR_AGAIN, SPARK_CELL, someFind,
+         BOLT_PACE, WIZ_ORBIT } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 
 // what a cell of it is
 export const RIND = 1, CORE = 2;
+
+// Magic on its way to the star. A wizard does not touch the thing it is working
+// -- it circles at a distance and throws, and this is what it threw: a speck of
+// its own light crossing the gap, and the cell comes off where the speck lands
+// rather than where the hand was.
+//
+// The cell is taken on arrival and not on release, which is the whole reason
+// this is an object and not an animation played over a thing that has already
+// happened. A bolt whose cell has gone in the meantime -- somebody else's landed
+// first -- simply arrives at nothing.
+export const BOLTS = [];
+
+// the ring the wizards fly, and the bolts leave from
+export const orbitR = () => sky.r + WIZ_ORBIT;
+
+export function fire(fromX, fromY, cell) {
+  if (!cell) return;
+  BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY,
+               c: cell.c, r: cell.r, tone: someFind(SPARK_CELL) });
+}
+
+function stepBolts() {
+  for (let i = BOLTS.length - 1; i >= 0; i--) {
+    const b = BOLTS[i];
+    const tx = cellX(b.c) + sky.p / 2, ty = cellY(b.r) + sky.p / 2;
+    const dx = tx - b.x, dy = ty - b.y;
+    const d = Math.hypot(dx, dy);
+    if (d > BOLT_PACE) {
+      b.px = b.x;                       // where it was, for the tail behind it
+      b.py = b.y;
+      b.x += (dx / d) * BOLT_PACE;
+      b.y += (dy / d) * BOLT_PACE;
+      S.dirty = true;
+      continue;
+    }
+    takeCell(b.c, b.r);
+    BOLTS.splice(i, 1);
+  }
+}
 
 const at = (c, r) => sky.cells[r * sky.cols + c];
 const put = (c, r, v) => {
@@ -139,8 +179,12 @@ export function hoverSpot(cell, off) {
 }
 
 export function stepMeteor(t) {
-  if (!S.meteorOpen) return;
+  if (!S.meteorOpen) { BOLTS.length = 0; return; }
   if (!sky.cells) { makeMeteor(); return; }
+  stepBolts();
+  // A corona that breathes is a thing that has to be drawn every frame, and this
+  // canvas only draws when something says it should.
+  if (sky.n > 0) S.dirty = true;
   // the next one drifts in, once the sky has been empty long enough
   if (sky.n === 0 && S.meteorAt && t >= S.meteorAt) {
     makeMeteor();

@@ -964,7 +964,15 @@ object that does that raises a question the game cannot answer. What it needed w
 there — a place people go, or something worth walking out for — and it has one now. The tower
 calls it down for cores; a wizard, which is a hat the tower makes over a couple of minutes, is the
 one body that can leave the ground; and what comes off it is dust from the rind and **red** from
-the core. It runs out, and another arrives. See `meteor.js` and `wizard.js`.)*
+the core. It runs out, and another arrives. See `meteor.js` and `wizard.js`.
+
+It is drawn as a little sun rather than as a stone: the crust is the deepest of
+the reds, the fire under it shimmers between the brighter two, and a corona of
+whole cells breathes round the whole thing and reddens as the crust is stripped.
+A black body with a red middle read as an eclipse -- a thing in front of a sun
+rather than a sun -- which is the wrong picture for the one object in this game
+that is not on the ground. And the wizards do not touch it: they ride a ring at a
+distance and throw, and the cell comes off where the bolt lands.)*
 
 *(An earlier version of this list also said "a third currency". The rule was never the count — it
 is that each one has exactly one job, and that the lab is the only place a multiplier lives. Red,

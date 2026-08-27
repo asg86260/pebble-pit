@@ -176,7 +176,8 @@ do not mind losing.
 
 Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,cores})
 __crew(miners,workers,quarriers,farmhands,labbers,wizards) __levels({...})
-__lab() __meteor() __wizardHat(n) __jump(n) __next() __drop() __pile(x,n)
+__lab() __meteor() __wizardHat(n) __brew() __board(name) __jump(n) __next()
+__drop() __pile(x,n)
 __clearFloor()`.
 
 **Balance by measuring, and measure a plausible game.** `__levels()` and

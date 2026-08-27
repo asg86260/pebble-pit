@@ -11,14 +11,17 @@
 // You watch it climb. It is slow on purpose: the sky is a long way off, and a
 // body that got there instantly would be a body that teleported with a hat on.
 //
-// What it does up there is what a miner does on the rock -- one cell off at a
-// time, from the outside in -- and what comes off falls the whole way back down
-// to the yard, where the haulers deal with it like anything else lying about.
+// What it does up there is not what a miner does on the rock. It rides a ring
+// round the star at a distance and throws bolts at it, and the cell comes off
+// where the bolt lands -- which is the one thing in this yard that is allowed to
+// happen at range, and the whole of what the hat is for. What comes off falls
+// the four hundred pixels back down to the yard, where the haulers deal with it
+// like anything else lying about.
 
-import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_STANDOFF } from './config.js';
+import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN } from './config.js';
 import { S, sky } from './state.js';
 import { walkY } from './world.js';
-import { meteorAlive, nextCell, takeCell, hoverSpot } from './meteor.js';
+import { meteorAlive, nextCell, fire, orbitR } from './meteor.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -32,6 +35,7 @@ export function newWizard() {
   return {
     type: 'wizard', x, spot: x, y: walkY(x + WORKER / 2),
     aloft: false,           // whether its feet are off the ground
+    orb0: null,             // its place on the ring round the star, once it has one
     cell: null,             // the cell of the meteor it is working on
     next: 0,                // when its next pass at that cell comes due
     goal: 'to',
@@ -40,11 +44,35 @@ export function newWizard() {
   };
 }
 
-// Where a wizard is trying to be. Off the rind of the meteor beside whatever it
-// is working on; or, with nothing to work on, back down on the ground.
-function want(w) {
-  if (!w.trained || !meteorAlive() || !w.cell) return null;
-  return hoverSpot(w.cell, WIZ_STANDOFF + WORKER / 2);
+// Where a wizard is trying to be: its place on the ring, this instant. They
+// circle the star rather than hanging off the cell they are working, because
+// what they do to it is thrown rather than swung -- see `fire` in meteor.js --
+// and a body that has to be *at* the thing it is working is a body with a pick.
+//
+// Each keeps its own angle and they are dealt out a whole turn apart when a body
+// arrives, so a gang reads as a ring going round rather than as a knot.
+const angleOf = (w, now) => w.orb0 + now / 1000 * WIZ_SPIN;
+
+function ringSpot(w, now) {
+  const a = angleOf(w, now);
+  return { x: sky.x + Math.cos(a) * orbitR(),
+           y: sky.y + Math.sin(a) * orbitR() };
+}
+
+// Somewhere on the ring nobody else is on: the middle of the widest gap. They
+// all turn at the same rate, so a gap in the places they were given is a gap for
+// as long as they are up there.
+function freeAngle() {
+  const taken = S.workers.filter(o => o.type === 'wizard' && o.orb0 != null)
+                         .map(o => ((o.orb0 % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2))
+                         .sort((a, b) => a - b);
+  if (!taken.length) return Math.random() * Math.PI * 2;
+  let best = taken[0] + Math.PI, gap = -1;
+  for (let i = 0; i < taken.length; i++) {
+    const next = i + 1 < taken.length ? taken[i + 1] : taken[0] + Math.PI * 2;
+    if (next - taken[i] > gap) { gap = next - taken[i]; best = (taken[i] + next) / 2; }
+  }
+  return best;
 }
 
 // A body coming down. Used when the sky has nothing left in it, and when the
@@ -90,6 +118,11 @@ export function stepWizard(w, now) {
     w.aloft = true;
   }
 
+  // Round it goes, whatever else it is doing. The turn is the job -- a wizard
+  // parked in the sky is a hat on a stick -- and it carries on while the body is
+  // still climbing up to the ring, so it arrives already moving with the rest.
+  if (w.orb0 == null) w.orb0 = freeAngle() - now / 1000 * WIZ_SPIN;
+
   // What it is working on. A cell is kept until it is gone, so the body is not
   // re-deciding every frame and drifting between two of them.
   if (!w.cell || !cellLeft(w.cell)) {
@@ -101,31 +134,32 @@ export function stepWizard(w, now) {
           || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
     w.next = now + WIZ_MS;
   }
-  const to = want(w);
-  if (!to) { descend(w); return; }
-
-  // Up, or across, at the pace it floats. Both at once, so it arcs round the
-  // meteor rather than going up and then sideways.
+  const to = ringSpot(w, now);
   const tx = to.x - WORKER / 2, ty = to.y - WORKER / 2;
   const dx = tx - w.x, dy = ty - w.y;
   const d = Math.hypot(dx, dy);
+
+  // Up to the ring, at the pace it floats. Both directions at once, so it curves
+  // in and joins the turn rather than going up and then sideways.
   if (d > WIZ_RISE) {
     w.x += (dx / d) * WIZ_RISE;
     w.y += (dy / d) * WIZ_RISE;
     if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
-    w.next = Math.max(w.next, now + WIZ_MS / 2);   // no working while travelling
+    w.next = Math.max(w.next, now + WIZ_MS / 2);   // no throwing while travelling
     return;
   }
 
-  // There. It hangs, drifting a little, and takes a cell off every so often.
+  // On it. It rides its place round the star, drifting a little, and throws
+  // every so often at whatever it has picked.
   w.x = tx;
   w.y = ty + Math.sin(now / 1000 * w.sp + w.ph) * WIZ_BOB;
+  w.dir = Math.cos(angleOf(w, now)) > 0 ? -1 : 1;  // facing what it is circling
   w.lunge = (w.lunge || 0) * 0.82;
-  if (now >= w.next) {
-    takeCell(w.cell.c, w.cell.r);
+  if (now >= w.next && w.cell) {
+    fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell);
     w.mined = (w.mined || 0) + 1;
     w.lunge = 1;
-    w.cell = null;
+    w.cell = null;                 // the bolt has it now; pick the next one
     w.next = now + WIZ_MS;
   }
 }
