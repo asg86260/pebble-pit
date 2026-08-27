@@ -143,7 +143,8 @@ export const S = {
   // has made, `wizards` is how many bodies are up there wearing one -- except
   // that this is the one job nobody can do bare-headed.
   meteorOpen: false,      // the tower has called one down at least once
-  meteorAt: 0,            // when the next one drifts in, once the last was worked out
+  summon: 0,              // how far along the ring is with making the next one, 0..1
+  flashAt: 0,             // when the last one went off, for the breath the sky keeps it
   sparks: 0,              // the red out of the core, banked
   seenSpark: false,       // and whether one has ever come down
   wizardHats: 0,          // hats the tower has finished

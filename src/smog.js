@@ -546,9 +546,17 @@ function place(secs) {
     if (sag) {
       const dx = sag.x - m.x, dy = sag.y - m.y;
       const d = Math.hypot(dx, dy) || 1;
-      const k = Math.min(d * 0.6, SCRUB_DRAG * sag.power / d);
+      // A third of the way, and no further. It is a lean, not a collapse: pulled
+      // most of the way in, the band came down *past* the mouth and everything
+      // caught after that rose into the hood from underneath -- smoke going down
+      // a chimney the wrong way round. The sky bends towards the house; it does
+      // not fall into it.
+      const k = Math.min(d * 0.33, SCRUB_DRAG * sag.power / d);
       m.x += (dx / d) * k;
       m.y += (dy / d) * k;
+      // and never below the mouth it is leaning towards, whatever the arithmetic
+      // says: everything the house takes has to be above the thing taking it.
+      if (m.y > sag.y - P * 3) m.y = sag.y - P * 3;
     }
     if (m.x > span) m.x -= span;
     if (m.x < 0) m.x += span;
@@ -674,7 +682,13 @@ function pull(secs) {
     // where the fan is.
     const e = Math.min(1, k.t) ** 2, u = 1 - e;
     k.x = k.x0 * u * u + to.x * (1 - u * u);
-    k.y = k.y0 * (1 - e * e) + to.y * e * e;
+    // Down the last of it, always. The height it drops from is its own or a few
+    // cells over the hood, whichever is higher -- so a mote taken from below the
+    // mouth climbs over the building first and comes down the shaft, rather than
+    // sliding sideways and rising into it from underneath. Everything goes in
+    // through the top, because the top is the only way in.
+    const over = Math.min(k.y0, to.y - P * 6);
+    k.y = over * (1 - e * e) + to.y * e * e;
     if (k.t < 1) continue;
     CAUGHT.splice(i, 1);
     // What the house takes out of the sky has to go somewhere. Without the

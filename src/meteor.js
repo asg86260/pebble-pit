@@ -14,7 +14,7 @@
 // another one drifts in -- so the job is a thing that comes round rather than a
 // tap that never stops.
 
-import { P, METEOR_CORE, METEOR_GRAINS, METEOR_AGAIN, SPARK_CELL, someFind,
+import { P, METEOR_CORE, METEOR_GRAINS, SUMMON_MS, SPARK_CELL, someFind,
          BOLT_PACE, WIZ_ORBIT } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
@@ -154,10 +154,9 @@ export function takeCell(c, r) {
     for (let i = 0; i < METEOR_GRAINS; i++)
       spawnChip(x, y, bell() * 0.5, 0.2 + Math.random() * 0.3, 1 + Math.floor(Math.random() * 3));
   }
-  // Worked out, and the sky is empty for a while. The next one is not another
-  // purchase -- the tower called this one down and the sky goes on doing what
-  // the tower taught it to do.
-  if (sky.n === 0) S.meteorAt = now() + METEOR_AGAIN;
+  // Worked out. What comes next is not a timer and not another purchase: the
+  // wizards make it. See `summon`.
+  if (sky.n === 0) S.summon = 0;
   S.dirty = true;
   return kind;
 }
@@ -178,16 +177,44 @@ export function hoverSpot(cell, off) {
            y: cellY(cell.r) + sky.p / 2 + (dy / d) * off };
 }
 
+// --- calling one down -------------------------------------------------------------
+// An empty sky is a job, not a wait.
+//
+// It used to fill itself back up on a clock: the last cell came off, ninety
+// seconds went by, and another one was there. Nobody did that and nothing showed
+// it happening -- the sky simply had a rock in it again next time you looked,
+// which for the one part of this game that is pure magic is the least magic
+// thing it could have done.
+//
+// So the wizards make it. They hang in their ring round the empty spot and pour
+// light into the middle of it, and what is in the middle grows. One body takes
+// `SUMMON_MS`; two take half of it, because it is the same work shared. Nobody
+// up there and nothing happens at all: the charge holds where it is until
+// somebody is put back in the air.
+export const summoning = () => S.meteorOpen && sky.n === 0;
+export const summonAt = () => Math.max(0, Math.min(1, S.summon || 0));
+
+// where the new one is being made, which is where the last one was
+export const summonSpot = () => ({ x: sky.x, y: sky.y });
+
+export function summon(hands, secs) {
+  if (!summoning() || hands <= 0) return;
+  S.summon = summonAt() + (hands * secs * 1000) / SUMMON_MS;
+  S.dirty = true;
+  if (S.summon < 1) return;
+  // and there it is. The flash is a fact about the moment rather than a state:
+  // the sky keeps it for a breath and then it is just a star.
+  S.summon = 0;
+  S.flashAt = now();
+  makeMeteor();
+}
+
 export function stepMeteor(t) {
   if (!S.meteorOpen) { BOLTS.length = 0; return; }
   if (!sky.cells) { makeMeteor(); return; }
   stepBolts();
   // A corona that breathes is a thing that has to be drawn every frame, and this
-  // canvas only draws when something says it should.
-  if (sky.n > 0) S.dirty = true;
-  // the next one drifts in, once the sky has been empty long enough
-  if (sky.n === 0 && S.meteorAt && t >= S.meteorAt) {
-    makeMeteor();
-    S.meteorAt = 0;
-  }
+  // canvas only draws when something says it should. So is a summoning, and so
+  // is the flash it goes out on.
+  if (sky.n > 0 || summoning() || t - (S.flashAt || 0) < 1000) S.dirty = true;
 }

@@ -964,7 +964,11 @@ object that does that raises a question the game cannot answer. What it needed w
 there — a place people go, or something worth walking out for — and it has one now. The tower
 calls it down for cores; a wizard, which is a hat the tower makes over a couple of minutes, is the
 one body that can leave the ground; and what comes off it is dust from the rind and **red** from
-the core. It runs out, and another arrives. See `meteor.js` and `wizard.js`.
+the core. It runs out, and the wizards make the next one: they hold their ring
+round the empty spot and pour into the middle of it until a star is there, which
+takes about three quarters of a minute for one body and half of that for two. An
+empty sky is a job rather than a wait, and a yard with nobody in the air stays
+empty until somebody is put back in it. See `meteor.js` and `wizard.js`.
 
 It is drawn as a little sun rather than as a stone: the crust is the deepest of
 the reds, the fire under it shimmers between the brighter two, and a corona of

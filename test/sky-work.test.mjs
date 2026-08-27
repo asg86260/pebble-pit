@@ -256,6 +256,79 @@ group('the wizards circle the star and throw at it', async () => {
   ];
 });
 
+// The sky does not refill itself. It used to: ninety seconds after the last cell
+// came off, another star was there, made by nobody, watched by nobody. What
+// happens now is the wizards make it -- they hold their ring round the empty
+// spot and pour into the middle of it -- so an empty sky is a job rather than a
+// wait, and how fast it is done is how many of them are up there.
+group('the wizards summon the next star, and more of them do it quicker', async () => {
+  window.__meteor();
+  window.__wizardHat(2);
+  window.__crew(0, 2, 0, 0, 0, 2);
+  runUntil(() => state().aloft === 2, 120);
+
+  // strip the star: what is left is an empty sky and two bodies in it
+  const emptied = runUntil(() => state().meteor === 0, 900);
+  const bare = state();
+
+  // both of them on it...
+  const from2 = state().summon;
+  run(8);
+  const two = state().summon - from2;
+
+  // ...and then one, taken off the job with the same button the player uses, so
+  // the only thing that changed is how many pairs of hands are up there
+  window.__assign('wizards', -1);
+  runUntil(() => state().aloft === 1, 60);
+  const from1 = state().summon;
+  run(8);
+  const one = state().summon - from1;
+
+  // and it lands
+  window.__assign('wizards', 1);
+  const made = runUntil(() => state().meteor > 0, 300);
+  const after = state();
+
+  window.__crew(0, 0);
+  return [
+    ok(emptied && bare.meteor === 0, 'the star is worked out', `${bare.meteor} cells`),
+    ok(one > 0, 'and the bodies left up there start making the next one',
+       `${one.toFixed(3)} in eight seconds, one body`),
+    ok(two > one * 1.5,
+       'two of them make it better than half again as fast as one',
+       `${one.toFixed(3)} a body -> ${two.toFixed(3)} for two`),
+    ok(made && after.meteor > 60, 'and there is a star at the end of it',
+       `${after.meteor} cells`),
+    ok(after.summon === 0, 'with the charge spent', `${after.summon}`)
+  ];
+});
+
+// Nobody up there, nothing made. The charge is not a clock: it holds where it
+// was left until somebody is put back in the air.
+group('an empty sky with nobody in it stays empty', async () => {
+  window.__meteor();
+  window.__wizardHat(1);
+  window.__crew(0, 1, 0, 0, 0, 1);
+  runUntil(() => state().meteor === 0, 900);
+  run(6);
+  const some = state().summon;
+
+  window.__crew(0, 2);                       // everybody down and carrying
+  runUntil(() => state().aloft === 0, 60);
+  const was = state().summon;
+  run(40);
+  const still = state();
+  window.__crew(0, 0);
+  return [
+    ok(some > 0, 'a body up there gets it started', `${some.toFixed(2)}`),
+    ok(still.meteor === 0, 'and with nobody up there no star arrives',
+       `${still.meteor} cells`),
+    ok(Math.abs(still.summon - was) < 0.02,
+       'the charge holds where it was left rather than ticking on',
+       `${was.toFixed(3)} -> ${still.summon.toFixed(3)}`)
+  ];
+});
+
 group('a wizard taken off the sky comes down', async () => {
   window.__meteor();
   window.__wizardHat(1);

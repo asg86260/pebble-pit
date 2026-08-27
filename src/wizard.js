@@ -18,10 +18,12 @@
 // the four hundred pixels back down to the yard, where the haulers deal with it
 // like anything else lying about.
 
-import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN } from './config.js';
+import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
+         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, SPARK_CELL, someFind } from './config.js';
 import { S, sky } from './state.js';
 import { walkY } from './world.js';
-import { meteorAlive, nextCell, fire, orbitR } from './meteor.js';
+import { meteorAlive, nextCell, fire, orbitR, summoning, summon } from './meteor.js';
+import { now as clockNow } from './clock.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -82,6 +84,37 @@ function spaceOut(w, secs) {
   w.orb0 += push * secs;
 }
 
+// What comes off a body that is flying: a speck of its own light every so often,
+// drifting down behind it and going out. It is the only thing in this yard that
+// says a body is being carried rather than standing on something -- everybody
+// else is on the ground, and the ground says it for them.
+export const TRAIL = [];
+
+function trail(w, now) {
+  if (now < (w.trailAt || 0)) return;
+  w.trailAt = now + WIZ_TRAIL_MS * (0.7 + Math.random() * 0.6);
+  TRAIL.push({
+    x: w.x + WORKER / 2 + (Math.random() - 0.5) * P * 2,
+    y: w.y + WORKER - P / 2,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: 0.15 + Math.random() * 0.25,      // it sinks: it is falling out of the spell
+    born: now,
+    tone: someFind(SPARK_CELL)
+  });
+}
+
+export function stepTrail(dt) {
+  const t = clockNow();
+  for (let i = TRAIL.length - 1; i >= 0; i--) {
+    const k = TRAIL[i];
+    if (t - k.born > WIZ_TRAIL_LIFE) { TRAIL.splice(i, 1); continue; }
+    k.x += k.vx * (dt / 16);
+    k.y += k.vy * (dt / 16);
+    k.vy *= 0.985;                        // it slows as it goes out rather than falling away
+  }
+  if (TRAIL.length) S.dirty = true;
+}
+
 // A body coming down. Used when the sky has nothing left in it, and when the
 // hat comes off -- a wizard stood down mid-air lands before it does anything
 // else, because there is no job in this game you do from up there.
@@ -95,10 +128,12 @@ function descend(w) {
 }
 
 export function stepWizard(w, now) {
+  if (w.aloft) trail(w, now);
+
   // No hat, no flying. The hat is the job -- see the tower -- so a body put on
   // this before the tower has finished one stands under the meteor and waits for
   // it, which is exactly what `stepKit` is already walking it to the tower for.
-  if (!w.trained || !meteorAlive()) {
+  if (!w.trained || (!meteorAlive() && !summoning())) {
     if (!descend(w)) return;
     // and it waits under the sky rather than wandering off: this is its station,
     // the same as the face of the cut is a quarrier's
@@ -130,8 +165,10 @@ export function stepWizard(w, now) {
   // still climbing up to the ring, so it arrives already moving with the rest.
 
   // What it is working on. A cell is kept until it is gone, so the body is not
-  // re-deciding every frame and drifting between two of them.
-  if (!w.cell || !cellLeft(w.cell)) {
+  // re-deciding every frame and drifting between two of them. With nothing up
+  // there to work, there is nothing to pick: it is here to pour instead.
+  if (!meteorAlive()) w.cell = null;
+  else if (!w.cell || !cellLeft(w.cell)) {
     // Elbows first, and the bare cells if that leaves nothing: at the end of a
     // meteor there are a handful of cells and everybody's elbows are over all of
     // them, and two of them working shoulder to shoulder on the last of it is
@@ -176,12 +213,31 @@ export function stepWizard(w, now) {
     return;
   }
 
-  // On it. It rides its place round the star, drifting a little, and throws
-  // every so often at whatever it has picked.
-  w.x = tx;
-  w.y = ty + Math.sin(now / 1000 * w.sp + w.ph) * WIZ_BOB;
-  w.dir = Math.cos(angleOf(w, now)) > 0 ? -1 : 1;  // facing what it is circling
+  // On it, and *placed* rather than steered.
+  //
+  // Its position is its angle: the angle turns smoothly, so the body does. It
+  // used to chase a mark that was itself going round -- stepping towards it,
+  // snapping on to it when it caught up, and bobbing a couple of pixels a frame
+  // on top of that -- and the three of them together read as a body shaking in
+  // the sky rather than one orbiting. What is left of the bob is a slow breath
+  // in and out along the radius, which is a thing floating rather than a thing
+  // vibrating.
+  const a = angleOf(w, now);
+  const r = orbitR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
+  w.x = sky.x + Math.cos(a) * r - WORKER / 2;
+  w.y = sky.y + Math.sin(a) * r - WORKER / 2;
+  w.dir = Math.cos(a) > 0 ? -1 : 1;                // facing what it is circling
   w.lunge = (w.lunge || 0) * 0.82;
+
+  // Nothing there to work: they are making one. Everybody in the ring pours
+  // into the middle for as long as they are up here -- see `summon` -- and the
+  // channel is drawn off the same fact.
+  if (!meteorAlive()) {
+    w.channel = true;
+    return;
+  }
+  w.channel = false;
+
   if (now >= w.next && w.cell) {
     fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell);
     w.mined = (w.mined || 0) + 1;
@@ -189,6 +245,15 @@ export function stepWizard(w, now) {
     w.cell = null;                 // the bolt has it now; pick the next one
     w.next = now + WIZ_MS;
   }
+}
+
+// Everybody in the ring, pouring. Called once a frame rather than once a body:
+// what it makes is one thing being made by all of them, and a share each would
+// be a different mechanic with the same name.
+export function stepSummon(dt) {
+  if (!summoning()) return;
+  const hands = S.workers.filter(w => w.type === 'wizard' && w.aloft && w.channel).length;
+  summon(hands, dt / 1000);
 }
 
 // whether the cell a body is working on is still there to work on

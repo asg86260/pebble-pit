@@ -396,10 +396,9 @@ export const METEOR_CORE = 0.44;
 // haulers fetch them like anything else lying about the yard: the sky is a
 // place work comes from now, not a second bank.
 export const METEOR_GRAINS = 3;
-// And how long the sky is empty before the next one drifts in. It is not a
-// respawn on a timer you watch -- it is long enough that the wizards have
-// nothing to do for a while, which is what makes the next one worth seeing.
-export const METEOR_AGAIN = 90000;
+// The sky no longer refills itself on a clock. What comes next is summoned --
+// see SUMMON_MS -- so an empty sky is a job rather than a wait, and a yard with
+// nobody in the air stays empty until somebody is put back in it.
 
 // A wizard is a hat, like every other trade in this yard -- it is just the one
 // hat nobody can do the job without. The tower makes them one at a time and
@@ -421,7 +420,18 @@ export const WIZ_SPIN = 0.42;        // radians a second it goes round
 export const BOLT_PACE = 3.2;        // pixels a frame a bolt travels
 // And how far out the ring is, past the rind: far enough that the star is a
 // thing they are working on rather than a thing they are standing in.
-export const WIZ_ORBIT = 34;
+export const WIZ_ORBIT = 62;
+// The trail a flying body leaves under it: magic coming off the hat, a speck at
+// a time, drifting down and going out. It is the only thing in this game that
+// says a body is being *carried* rather than standing on something.
+export const WIZ_TRAIL_MS = 70;      // one speck this often, per body
+export const WIZ_TRAIL_LIFE = 900;   // and this long before it is gone
+// Calling one down. Once the tower has taught the sky the trick, it is the
+// wizards who do it: they hang in a ring round the empty spot and pour light
+// into the middle of it until there is something there. One body takes about
+// this long; two take half of it, because it is the same work shared.
+export const SUMMON_MS = 42000;
+export const SUMMON_FLASH = 900;     // and how long the sky keeps the flash
 export const WIZ_RISE = 1.4;         // pixels a frame it floats, up or down
 export const WIZ_BOB = 2.2;          // and how far it drifts as it hangs there
 

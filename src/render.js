@@ -7,14 +7,15 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK } from './config.js';
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, WIZ_TRAIL_LIFE, SUMMON_FLASH } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
-import { cellX, cellY, BOLTS, CORE as METEOR_CORE_CELL } from './meteor.js';
+import { cellX, cellY, BOLTS, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
+import { TRAIL } from './wizard.js';
 import { pitDepth, pitFull } from './pit.js';
 
 import { benchMark } from './upgrades.js';
@@ -304,6 +305,10 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
 // those four tones changing places every quarter second.
 export function drawSky() {
   if (!S.skyShown && !S.meteorOpen) return;
+  drawTrail();
+  // Being made. The ring is pouring into the middle of an empty sky, so what is
+  // there is whatever they have poured so far -- see `drawSummon`.
+  if (S.meteorOpen && (!sky.cells || !sky.n)) { drawSummon(); return; }
   // Nothing called down yet: the plain circle, the far end of the world.
   if (!sky.cells || !sky.n) {
     if (!S.skyShown) return;
@@ -314,6 +319,7 @@ export function drawSky() {
     skyRing();
     return;
   }
+  drawFlash();
 
   // How much of it is fire, which is what the corona is drawn from.
   let core = 0, all = 0;
@@ -373,6 +379,108 @@ function drawCorona(hot) {
       ctx.fillStyle = tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2];
       ctx.fillRect(x, y, P, P);
     }
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
+// A star being made.
+//
+// Every body in the ring pours into the middle of the empty spot, and what is
+// there grows as they pour: a knot of fire that starts as one cell and opens out
+// into the disc the star will be. The beams are drawn from each of them, cell by
+// cell along the line, brightening and thickening as the thing takes -- and the
+// last of it goes off as a flash, because a star arriving quietly would be the
+// one moment in this game that deserves a noise and does not make one.
+//
+// Nothing here is a sprite or a gradient. Beams are runs of whole cells, the
+// knot is the same red the core is drawn in, and the flash is a ring of cells
+// going out.
+function drawSummon() {
+  const at = summonAt();
+  const mid = { x: sky.x, y: sky.y };
+  const tones = FIND_COLOR[SPARK_CELL];
+  const t = now() / 1000;
+
+  drawFlash();
+  if (at <= 0 && !S.workers.some(w => w.channel)) return;
+
+  // the beams, one from each body that is pouring
+  for (const w of S.workers) {
+    if (!w.channel || !w.aloft) continue;
+    const fx = w.x + WORKER / 2, fy = w.y + WORKER / 2;
+    const dx = mid.x - fx, dy = mid.y - fy;
+    const len = Math.hypot(dx, dy) || 1;
+    const step = P * 1.5;
+    for (let d = P * 2; d < len - P * 2; d += step) {
+      // a run of cells rather than a line, and it crawls: the specks travel in
+      // along the beam, so the beam is plainly *going* somewhere
+      const k = (d / len + t * 0.9) % 1;
+      const x = Math.round((fx + dx * (d / len)) / P) * P;
+      const y = Math.round((fy + dy * (d / len)) / P) * P;
+      ctx.globalAlpha = (0.25 + at * 0.6) * (0.45 + 0.55 * Math.abs(Math.sin(k * Math.PI)));
+      ctx.fillStyle = tones[Math.floor(k * 3) % 3];
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // And the knot in the middle, opening out as it takes: whole cells at full
+  // weight, with the outermost course of them left half-solid so the edge of it
+  // boils rather than being a drawn circle. It was an alpha falling off with the
+  // radius, which is an airbrushed glow -- the one thing in this game that is
+  // not made of cells you could count.
+  const r = Math.max(P, at * sky.r);
+  const flick = Math.floor(now() / 90);
+  for (let y = -r; y <= r; y += P) {
+    for (let x = -r; x <= r; x += P) {
+      const d = Math.hypot(x, y);
+      if (d > r) continue;
+      const edge = d > r - P * 1.5;
+      // the rim boils: a cell on it is there or not, on its own clock, so the
+      // shape frays where it is still being made
+      if (edge && ((Math.round(x / P) * 5 + Math.round(y / P) * 3 + flick) % 3)) continue;
+      ctx.fillStyle = tones[(Math.round(x / P) * 7 + Math.round(y / P) * 13 + flick) % tones.length];
+      ctx.fillRect(Math.round((mid.x + x) / P) * P, Math.round((mid.y + y) / P) * P, P, P);
+    }
+  }
+  ctx.fillStyle = '#000';
+}
+
+// The moment it takes: a ring of cells going out from where it arrived, and
+// gone within the second. It is drawn over a star that now exists, which is the
+// point -- the flash is the arrival, not a thing standing in for it.
+function drawFlash() {
+  const since = now() - (S.flashAt || 0);
+  if (!S.flashAt || since > SUMMON_FLASH) return;
+  const k = since / SUMMON_FLASH;
+  const r = sky.r + k * sky.r * 3;
+  const tones = FIND_COLOR[SPARK_CELL];
+  ctx.globalAlpha = 1 - k;
+  ctx.fillStyle = tones[0];
+  const n = 48;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    ctx.fillRect(Math.round((sky.x + Math.cos(a) * r) / P) * P,
+                 Math.round((sky.y + Math.sin(a) * r) / P) * P, P, P);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
+// What comes off a flying body: its own light, sinking and going out. Drawn
+// before the star and the bodies, so it is behind them -- it is what they left
+// behind, not something in front of them.
+function drawTrail() {
+  if (!TRAIL.length) return;
+  const tones = FIND_COLOR[SPARK_CELL];
+  const t = now();
+  for (const k of TRAIL) {
+    const life = 1 - (t - k.born) / WIZ_TRAIL_LIFE;
+    if (life <= 0) continue;
+    ctx.globalAlpha = Math.max(0, life) * 0.7;
+    ctx.fillStyle = tones[k.tone - SPARK_CELL] || tones[0];
+    ctx.fillRect(Math.round(k.x / P) * P, Math.round(k.y / P) * P, P, P);
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';

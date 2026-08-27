@@ -217,7 +217,7 @@ export function persist() {
     // rain goes by, so the tower starts it again and you have not paid twice.
     meteorOpen: S.meteorOpen,
     meteorCells: sky.cells ? Array.from(sky.cells) : null,
-    meteorAt: Math.max(0, S.meteorAt - clockNow()),
+    summon: +(S.summon || 0).toFixed(3),
     sparks: S.sparks,
     seenSpark: S.seenSpark,
     wizardHats: S.wizardHats,
@@ -414,7 +414,7 @@ export function restore() {
       sky.cells.set(s.meteorCells);
       sky.n = sky.cells.reduce((n, v) => n + (v ? 1 : 0), 0);
     }
-    S.meteorAt = s.meteorAt ? clockNow() + s.meteorAt : 0;
+    S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
   S.scrubbers = s.scrubbers || 0;
   S.recycler = !!s.recycler;
@@ -541,7 +541,8 @@ export function reset() {
   S.outhouseOpen = false;
   S.magicLoo = false;
   S.meteorOpen = false;
-  S.meteorAt = 0;
+  S.summon = 0;
+  S.flashAt = 0;
   S.sparks = 0;
   S.seenSpark = false;
   S.wizardHats = 0;
