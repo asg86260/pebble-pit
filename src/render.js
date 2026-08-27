@@ -817,7 +817,9 @@ export function drawSmog() {
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
 
-  // one path a tint, and two for the fringes
+  // One path a tint *and a weight*: every speck carries its own ink -- see
+  // `skyMote` -- and specks of the same colour and weight go down together, so a
+  // band of six thousand is still a dozen fills rather than six thousand.
   const runs = new Map();
   const warm = [], cool = [];
   for (const m of SKY) {
@@ -829,9 +831,12 @@ export function drawSmog() {
       cool.push(Math.round(m.x + off), y);
     }
     const tint = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
-    let run = runs.get(tint);
-    if (!run) runs.set(tint, run = []);
-    run.push(x, y);
+    // to the nearest twentieth, so the weights fall into a handful of buckets
+    const step = Math.round((m.ink ?? 1) * 20) / 20;
+    const key = tint + '|' + step;
+    let run = runs.get(key);
+    if (!run) runs.set(key, run = { tint, ink: step, at: [] });
+    run.at.push(x, y);
   }
 
   const spill = (pts, colour, ink) => {
@@ -844,7 +849,7 @@ export function drawSmog() {
   };
   spill(warm, CA_WARM, HAZE_INK * CA_INK);
   spill(cool, CA_COOL, HAZE_INK * CA_INK);
-  for (const [tint, pts] of runs) spill(pts, tint, HAZE_INK);
+  for (const run of runs.values()) spill(run.at, run.tint, HAZE_INK * run.ink);
 
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';

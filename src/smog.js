@@ -235,6 +235,12 @@ const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; };
 const skyMote = (x, y, kind = 'dust') => ({
   kind,
   up: false,                            // arrived: this one is in the band
+  // What this one weighs, to look at: a fifth either side of the haze's own ink,
+  // fixed when it is made and never changed. A band of specks all drawn at
+  // exactly one weight is a screen of identical dots -- it reads as noise laid
+  // over the sky rather than as smoke of different ages and thicknesses hanging
+  // in it. The variation is small on purpose: it is texture, not confetti.
+  ink: 0.8 + Math.random() * 0.4,
   slot: slots++,
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
@@ -513,7 +519,14 @@ function place(secs) {
     // the mote and added here, because a settled mote has no position of its
     // own -- it is placed where its slot says, every frame -- so being pulled
     // across the sky is a growing offset from that place. See `pull`.
-    if (m.sx || m.sy) { m.x += m.sx; m.y += m.sy; }
+    // Either one on its own is enough to matter, and either one may be missing:
+    // the draught pulls sideways along the band without touching the height, so
+    // a mote being dragged has an `sx` and no `sy` at all. Adding an undefined
+    // to a coordinate makes it NaN, and a NaN coordinate is not merely a speck
+    // in the wrong place -- `pull` measures distance with `hypot(...) || 1`, so
+    // a NaN distance reads as one pixel and the whole sky is swallowed in a
+    // single frame the moment somebody steps into the house.
+    if (m.sx || m.sy) { m.x += m.sx || 0; m.y += m.sy || 0; }
     if (m.x > span) m.x -= span;
     if (m.x < 0) m.x += span;
   }
@@ -628,28 +641,67 @@ function pull(secs) {
 
   for (let i = SKY.length - 1; i >= 0; i--) {
     const m = SKY[i];
-    const dx = to.x - m.x, dy = to.y - m.y;
-    const d = Math.hypot(dx, dy) || 1;
 
-    // In. Everything that reaches the mouth is taken, whatever it was doing on
-    // the way -- there is no separate errand and nothing is picked out.
+    // Nothing is taken on the way up. A house that reached into the plumes was a
+    // house catching smoke a foot off the swing that made it -- and the sky over
+    // the yard is what it is for. A speck joins the band, and *then* it is the
+    // house's business.
+    if (m.up) continue;
+
+    // Every speck is aimed at its own cell of the mouth rather than at one
+    // pixel of it. All of them steering for the same number arrived in single
+    // file: a one-cell thread hanging from the band to the roof, which is a
+    // pipe, not a draught. Spread over the width of the throat -- off the slot,
+    // so a mote keeps the same lane for its whole journey in.
+    const aim = to.x + ((m.slot % 5) - 2) * P;
+    const dx = aim - m.x, dy = to.y - m.y;
+    const d = Math.hypot(dx, dy);
+    // A speck whose place cannot be worked out is left alone rather than treated
+    // as being in the mouth. `|| 1` used to stand here and it turned exactly that
+    // case into a pixel away.
+    if (!Number.isFinite(d)) continue;
+
+    // In. Whatever reaches the mouth is taken -- there is no separate errand and
+    // nothing is picked out.
     if (d < SCRUB_GRIP) { SKY.splice(i, 1); swallow(); continue; }
 
-    // The draught: a step towards the mouth, this frame, for every speck in the
-    // world -- the same step wherever it is, quickening as it comes near. What a
-    // fan in a still room does is move all of the air, so the sky reads as one
-    // thing sliding rather than as specks being picked off the near edge.
+    // The draught, and it runs *along the band* until it is over the house.
     //
-    // And it is *kept*, not eased back: a fan does not put anything down again.
-    // On the offset rather than on the position, because a settled mote does not
-    // have a position of its own -- it is placed where its slot says every frame
-    // (see `place`), and the only way to move one is to bend where that is. A
-    // climbing mote is moved outright, because it is moving anyway.
-    const near = d < SCRUB_NEAR ? 2 - d / SCRUB_NEAR : 1;
-    const step = Math.min(d, SCRUB_DRAG * power * near * secs);
-    if (m.up) { m.x += (dx / d) * step; m.y += (dy / d) * step; continue; }
-    m.sx = (m.sx || 0) + (dx / d) * step;
-    m.sy = (m.sy || 0) + (dy / d) * step;
+    // Straight at the mouth from wherever it was, the whole sky slid down into
+    // one long diagonal river running the length of the yard at chimney height:
+    // the band stopped being a band, and the pollution took a low road through
+    // the middle of the town to get to the fan. Smoke over a works does not do
+    // that. It drifts along up there and goes down the throat when it is over
+    // the throat.
+    //
+    // So the pull is sideways while it is still out over the yard, and turns
+    // down only once the speck is near enough the house to be coming in. The
+    // band keeps its shape and thins towards the house, which is what a fan
+    // pulling on a still sky actually looks like.
+    const step = SCRUB_DRAG * power * secs;
+    const over = Math.abs(dx);
+    if (over > SCRUB_NEAR) {
+      // Sideways, and only sideways. A speck keeps the height it settled at, so
+      // the band keeps its depth as it slides: a sinking term as well pressed
+      // the whole sky down on to the underside of the band and what was left was
+      // a wire running the width of the world.
+      m.sx = (m.sx || 0) + Math.sign(dx) * Math.min(step, over);
+      continue;
+    }
+    // Over the house: down the last of it, on a curve. The drop is weighted by
+    // how nearly overhead the speck is -- nothing at the edge of the near zone,
+    // all of it directly over the mouth -- so a speck comes along the band,
+    // tips, and falls down the throat rather than cutting the corner on a
+    // straight diagonal. The pull quickens as it closes, the way the last of
+    // anything being sucked in does.
+    // and the turn is eased rather than cornered: the sideways part fades out as
+    // the down part comes in, over a zone wide enough to be a bend you can see.
+    // Squared, so the first of the descent is gentle and the last of it is a
+    // drop -- a right angle at the top of the throat read as a pipe.
+    const in_ = 1 - over / SCRUB_NEAR;
+    const quick = 1 + in_;
+    m.sx = (m.sx || 0) + Math.sign(dx) * Math.min(step * quick * (1 - in_ * 0.5), over);
+    m.sy = (m.sy || 0) + Math.sign(dy) * Math.min(step * quick * in_ * in_ * 2.4, Math.abs(dy));
   }
 }
 

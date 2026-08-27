@@ -255,7 +255,7 @@ export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the sa
 // It quickens close to the mouth, where the last of a journey is a thing being
 // swallowed rather than carried.
 export const SCRUB_DRAG = 34;
-export const SCRUB_NEAR = 160;       // and within this much of the mouth it doubles
+export const SCRUB_NEAR = 300;      // and within this much of the mouth it turns down and quickens
 // and how many it can have in the air at once, so the stream reads as a stream
 // rather than as the whole band arriving in a lump
 // Where the draught stops being a pull and becomes a swallow: a speck this near
