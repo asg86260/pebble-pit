@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES,
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -24,7 +24,7 @@ import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, muckCols, muckFloor } from './smog.js';
+import { SKY, DROPS, DRAUGHT, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { bedX } from './farm.js';
@@ -368,8 +368,8 @@ function drawCorona(hot) {
     const long = RAY_MIN + Math.round(swing * (RAY_MAX - RAY_MIN));
     for (let k = 0; k < long; k++) {
       const d = sky.r + P * (1 + k);
-      const x = Math.round((sky.x + Math.cos(a) * d) / P) * P;
-      const y = Math.round((sky.y + Math.sin(a) * d) / P) * P;
+      const x = Math.round((sky.x + Math.cos(a) * d - P / 2) / P) * P;
+      const y = Math.round((sky.y + Math.sin(a) * d - P / 2) / P) * P;
       // The tip is thinner than the root: the further out a cell is, the paler
       // it is drawn, which is a corona thinning into the sky rather than a
       // starburst cut out of paper.
@@ -480,8 +480,7 @@ function drawFlash() {
     ctx.beginPath();
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2;
-      ctx.rect(Math.round((sky.x + Math.cos(a) * ring.r) / P) * P,
-               Math.round((sky.y + Math.sin(a) * ring.r) / P) * P, P, P);
+      cell(sky.x + Math.cos(a) * ring.r, sky.y + Math.sin(a) * ring.r);
     }
     ctx.fill();
   }
@@ -508,6 +507,14 @@ function drawTrail() {
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
+}
+
+// A cell of a ring, put down *centred* on the point it is drawn at rather than
+// hanging off it by its top-left corner. Half a cell down and half a cell right
+// is not much on its own and is exactly enough to make a ring read as slipped
+// off whatever it is supposed to be coming out of.
+function cell(x, y) {
+  ctx.rect(Math.round((x - P / 2) / P) * P, Math.round((y - P / 2) / P) * P, P, P);
 }
 
 // The magic on its way to the star: a speck of the wizard's own light, drawn as
@@ -872,6 +879,24 @@ const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 // there is nothing left for it to do.
 export function drawPuffs() {}
 
+// The air going into the house: faint specks falling in from all round the hood
+// while there is somebody inside it. They are not the haze -- they are worth
+// nothing and counted nowhere -- and they are drawn thin enough to say so: what
+// they are for is a fan over a clean sky still plainly pulling.
+export function drawDraught() {
+  if (!DRAUGHT.length) return;
+  ctx.fillStyle = SMOG_TINTS.dust;
+  ctx.beginPath();
+  for (const k of DRAUGHT) {
+    if (!onScreen(k.x)) continue;
+    ctx.rect(Math.round(k.x / P) * P, Math.round(k.y / P) * P, P, P);
+  }
+  ctx.globalAlpha = HAZE_INK * DRAUGHT_INK;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
 export function drawRain() {
   if (!DROPS.length) return;
   // One path for the whole shower: four thousand drops is four thousand calls
@@ -1063,16 +1088,18 @@ export function drawOuthouseUse() {
   if (!S.outhouseOpen) return;
   const busy = S.workers.filter(w => w.inLoo).length;
   if (!busy) return;
-  const mid = Math.round((outhouse.x + outhouse.w / 2) / P) * P;
-  const top = outhouse.y - P * 3;
-  // centred as a row, so two of them sit either side of the ridge rather than
-  // the first one moving when the second arrives
-  const from = mid - ((busy - 1) * P * 4) / 2;
+  // The middle of the shed, and not the middle of the shed rounded to the
+  // lattice: a seven-cell front has its centre *on* the middle column, and
+  // rounding that to a cell edge put the mark half a body off the ridge.
+  const mid = outhouse.x + outhouse.w / 2;
+  // Stacked, not spread. Two of them side by side sat off over the eaves and
+  // read as marks about the yard rather than about the shed; going up says
+  // "another one" without the first one moving.
+  ctx.fillStyle = MUCK_TONE;
   for (let i = 0; i < busy; i++) {
-    const x = Math.round((from + i * P * 4) / P) * P;
-    ctx.fillStyle = MUCK_TONE;
-    ctx.fillRect(x - P * 1.5, top, P * 3, P);
-    ctx.fillRect(x - P * 0.5, top - P, P, P);
+    const top = outhouse.y - P * 3 - i * P * 3;
+    ctx.fillRect(mid - P * 1.5, top, P * 3, P);
+    ctx.fillRect(mid - P * 0.5, top - P, P, P);
   }
   ctx.fillStyle = '#000';
 }
@@ -1149,7 +1176,10 @@ export function drawTower() {
 // way light would.
 export function drawTowerWaves() {
   if (!S.towerOpen || !brewing()) return;
-  const from = { x: Math.round((tower.x + P * 4) / P) * P, y: tower.y };
+  // On the vane, which is the top of the thing and the only part of it that is
+  // not stone: rings coming off the middle of the spire's *base* were rings
+  // coming off the roof, a couple of cells low and reading as slightly slipped.
+  const from = { x: tower.x + P * 4, y: tower.y - P * 2 };
   for (let i = 0; i < TOWER_WAVE_N; i++) {
     const k = ((now() / TOWER_WAVE_MS) + i / TOWER_WAVE_N) % 1;
     const rad = k * TOWER_WAVE_R;
@@ -1165,8 +1195,7 @@ export function drawTowerWaves() {
     ctx.beginPath();
     for (let j = 0; j < n; j++) {
       const a = (j / n) * Math.PI * 2;
-      ctx.rect(Math.round((from.x + Math.cos(a) * rad) / P) * P,
-               Math.round((from.y + Math.sin(a) * rad) / P) * P, P, P);
+      cell(from.x + Math.cos(a) * rad, from.y + Math.sin(a) * rad);
     }
     ctx.fill();
   }
@@ -2394,6 +2423,7 @@ export function draw() {
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
+  drawDraught();           // the air going into the scrubbing house
   drawOuthouseUse();       // and who is in the outhouse, over its roof
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower

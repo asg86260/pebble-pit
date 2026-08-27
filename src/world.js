@@ -98,11 +98,23 @@ export function refreshPiles() {
     // the left wall, so the ground it pays on to is the ground to its left, and
     // a strip laid the usual way round would have put the heap inside the house.
     ...(S.scrubOpen ? [scrubHeap()] : []),
+    // The ground under the star, for what the wizards knock off it. Four hundred
+    // pixels up is still a station, and what a station makes has to have
+    // somewhere of its own to land.
+    ...(S.meteorOpen ? [skyHeap()] : []),
     heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
     // the school is the next thing along the ground now, not the bench
     heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, school.x - PILE_GAP),
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ];
+}
+
+// The ground under the star, centred on it: sparks fall straight down, so the
+// strip is under where they fall rather than off to one side of it.
+function skyHeap() {
+  const half = (heapBase('sky') / 2) * P;
+  const mid = Math.round(sky.x / P) * P;
+  return { key: 'sky', from: mid - half, to: mid + half };
 }
 
 // The ground under the recycler's spout, running left from the wall.

@@ -24,9 +24,10 @@
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
-         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
+         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
+         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP,
+         DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
@@ -152,12 +153,9 @@ export function foul(grains, x, y, kind = 'dust') {
   // filthy sky over an empty one and started another. That is the rain that
   // never stops and the haze that never comes back, and neither of them is
   // weather: they are two accounts of one thing disagreeing.
-  if (x == null) {
-    // Nowhere to climb from -- a place off the yard. It still counts, so it
-    // arrives in the band rather than being lost.
-    for (let i = 0, n = whole(add / SMOG_PER_MOTE); i < n; i++) join(bandTop(), kind);
-    return;
-  }
+  // Everything that goes up climbs from where it was made. Nothing is put
+  // straight into the band -- see below.
+  if (x == null) return;
   // One puff stands for one mote's worth of sky, so what goes up is what this
   // was worth: the whole ones, and the fraction left over as a chance at one
   // more. Every hit throwing exactly one puff would put ten times as many in
@@ -177,21 +175,17 @@ export function foul(grains, x, y, kind = 'dust') {
   // shower. What is overhead and what the readout says have to be the same
   // thing, or the weather is driven by a number nobody can see.
   const puffs = whole(add / SMOG_PER_MOTE);
-  // Counted once for the whole hit rather than once a speck: this runs on every
-  // swing, and a sky of six thousand motes counted per speck per swing is a walk
-  // over the whole band a few hundred times a second.
-  let up = climbing();
   for (let i = 0; i < puffs; i++) {
     // A full sky takes no more. This is the one place a mote is turned away, and
     // it is turned away *with* its dirt: the number cannot go up if the speck
     // did not.
     if (SKY.length >= MOTE_CAP) break;
-    // And when the plume is already a fog, the next one joins the band instead
-    // of climbing through it. It is not dropped -- dropping it is what put the
-    // number wrong -- it simply does not have a climb to watch, because there
-    // are three hundred specks in the way of watching it.
-    if (up > PUFF_MAX) { join(bandTop(), kind); continue; }
-    up++;
+    // And there is no cap on the climb. There was one -- past a few hundred
+    // specks on their way up, the next was put straight into the band instead --
+    // and what that looked like was pollution appearing in the sky out of
+    // nothing, a hundred cells from anything that could have made it, and being
+    // dragged off to the house before you had worked out where it came from.
+    // A thick plume is what a busy yard looks like; it is not a thing to hide.
     SKY.push({
       up: true,
       x: x + (Math.random() - 0.5) * P * 2,
@@ -221,15 +215,6 @@ export function foul(grains, x, y, kind = 'dust') {
 // over as a chance at one more. Over a run this is exact, and it is the only way
 // to spend a fraction of a speck when a speck is the smallest thing there is.
 const whole = n => Math.floor(n) + (Math.random() < n - Math.floor(n) ? 1 : 0);
-
-// A mote that arrives without a climb: from off the yard, or from a plume too
-// thick to see another one through. Settled from the first frame.
-function join(y, kind) {
-  if (SKY.length >= MOTE_CAP) return;
-  const m = skyMote(Math.random() * Math.max(P, S.worldW || 0), y, kind);
-  m.fade = 1;
-  SKY.push(m);
-}
 
 // What the sky holds at its filthiest, in motes rather than in dirt. Everything
 // else in this file counts specks now, so the ceiling does too.
@@ -604,6 +589,39 @@ export const cloudR = () => Math.round(Math.min(1, S.haze / SMOG_RAIN_AT) * 42);
 // The climbing ones are pulled by exactly the same field. They are the same
 // objects now -- see SKY -- so a plume rising past the house bends into it
 // without a word of code about plumes.
+// The air itself, drawn in. Nothing in this list is worth anything or counted
+// anywhere -- it is the one thing in this game that is a picture of something
+// rather than the thing itself, and it earns that by being the only way a fan
+// over a clean sky can say it is running.
+export const DRAUGHT = [];
+
+function breathe(secs) {
+  const to = intake();
+  const power = scrubRate() / SCRUB_PULL;
+  let n = DRAUGHT_PER_S * power * secs;
+  while (n > 0) {
+    if (n < 1 && Math.random() > n) break;
+    n -= 1;
+    // in from anywhere round the hood, though mostly from above it: what a fan
+    // facing the sky pulls on is the sky
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.4;
+    const d = DRAUGHT_FROM * (0.5 + Math.random() * 0.5);
+    DRAUGHT.push({ x: to.x + Math.cos(a) * d, y: to.y + Math.sin(a) * d, t: 0 });
+  }
+  for (let i = DRAUGHT.length - 1; i >= 0; i--) {
+    const k = DRAUGHT[i];
+    const dx = to.x - k.x, dy = to.y - k.y;
+    const d = Math.hypot(dx, dy) || 1;
+    // it gathers pace as it goes, the way the haze does, and is gone at the mouth
+    const step = DRAUGHT_PACE * secs * (1 + (1 - Math.min(1, d / DRAUGHT_FROM)));
+    if (d < P * 2) { DRAUGHT.splice(i, 1); continue; }
+    k.x += (dx / d) * step;
+    k.y += (dy / d) * step;
+    k.t = 1 - d / DRAUGHT_FROM;
+  }
+  if (DRAUGHT.length) S.dirty = true;
+}
+
 function pull(secs) {
   const to = intake();
   const power = scrubRate() / SCRUB_PULL;      // bodies inside
@@ -1130,8 +1148,8 @@ export function stepSmog(dt) {
   // The draught, or the sky letting go of it again. The house takes motes; it
   // used to take motes *and* dock the number by what the fan was worth, which is
   // the same dirt subtracted twice.
-  if (scrubbing()) pull(secs);
-  else unpull(secs);
+  if (scrubbing()) { pull(secs); breathe(secs); }
+  else { unpull(secs); DRAUGHT.length = 0; }
   // The number is worked out from the sky before anything asks whether it should
   // be raining, because the answer to that question has to be about what is
   // actually overhead.

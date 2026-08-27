@@ -1168,11 +1168,20 @@ function elbowIdle(w) {
 
 // Nobody shovels inside anybody. The same quarter-step the idlers take, for the
 // one job the whole crew drops everything to do at once.
+// Only when two of them are genuinely standing in each other.
+//
+// It used to push at anything within a body and a half, every frame, while the
+// body it was pushing was walking back towards the patch it had claimed -- so a
+// shovelling gang slid back and forth on the spot for the whole clear-up, each
+// body shoved out and walking in again sixty times a second. The claims already
+// keep them four columns apart (see `nearestMuck`); this is only for the end of
+// a clear-up, when the last patch is claimed by somebody and a second body comes
+// for it anyway.
 function elbowMuck(w) {
   for (const o of S.workers) {
     if (o === w || o.inside || o.goal !== 'muck' || o.inPit) continue;
     const d = o.x - w.x;
-    if (Math.abs(d) >= ROAM_ELBOW) continue;
+    if (Math.abs(d) >= WORKER * 0.8) continue;
     // Two on the very same pixel have no side to push to. The tiebreak is where
     // each stands in the crew list, so they alternate and actually come apart --
     // a coin toss they both call the same way leaves them stacked for ever.
@@ -1312,6 +1321,10 @@ export function updateWorkers(now, dt) {
       w.dir = Math.sign(d);
       w.y = foot();
     } else {
+      // Arrived: it stands still and shovels. It used to keep walking the last
+      // two cells in towards the exact column it had claimed while the elbow
+      // pushed it back out again -- a body sliding on the spot for as long as
+      // there was muck in front of it.
       w.y = foot();
       sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
       w.lunge = 1;

@@ -184,11 +184,10 @@ export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
-// Climbing specks at once, before the plume is a fog. Past this the next mote
-// joins the band instead of climbing through it -- it is not thrown away, which
-// is what used to happen and what put the readout and the sky out of step with
-// each other for the whole of a run.
-export const PUFF_MAX = 260;
+// (There is no cap on how many specks may be climbing at once. There was, and
+// past it the next mote was put straight into the band -- which read as
+// pollution appearing out of nothing in the middle of the sky. A thick plume is
+// what a busy yard looks like.)
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
@@ -262,6 +261,20 @@ export const SCRUB_NEAR = 160;       // and within this much of the mouth it dou
 // Where the draught stops being a pull and becomes a swallow: a speck this near
 // the mouth is in it.
 export const SCRUB_GRIP = 22;
+// The draught you can see even when there is nothing in the air to be pulled.
+//
+// A fan with a clean sky over it was a building doing nothing: the suction is
+// only visible when there is filth to drag, and a machine you cannot tell is
+// running is a machine you stop believing in. So it moves the air as well, and
+// the air is drawn -- a few faint specks a second falling in from all round the
+// hood, which are not pollution, are worth nothing, and are counted nowhere.
+//
+// Very faint on purpose. What this says is "this thing is pulling", and it has
+// to say it without ever being mistaken for the haze it is pulling.
+export const DRAUGHT_PER_S = 18;     // specks a second, per body inside
+export const DRAUGHT_FROM = 190;     // how far out they come in from
+export const DRAUGHT_PACE = 96;      // and pixels a second they close at
+export const DRAUGHT_INK = 0.55;     // against the haze's own weight
 export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, over the
                                      // top of the house and down the middle of it
 // How far either side of the fan a climbing puff is close enough to be taken.
@@ -446,6 +459,11 @@ export const WIZ_TRAIL_LIFE = 900;   // and this long before it is gone
 // this long; two take half of it, because it is the same work shared.
 export const SUMMON_MS = 42000;
 export const SUMMON_FLASH = 900;     // and how long the sky keeps the flash
+// And what the arrival does to the view. Less than a rock landing -- that is a
+// hundred tons hitting the ground twenty feet away and this is a star lighting
+// four hundred feet up -- but the one thing in the sky that should be felt on
+// the ground as well as seen.
+export const SUMMON_SHAKE = 9;
 // What the tower does while it is making a hat: rings of light going out from
 // the spire, one after another, in the wizards' own purple. Three of them in the
 // air at once at this spacing reads as a thing pulsing rather than a thing that
@@ -860,7 +878,13 @@ export const MINER_FLOOR = 260;  // fastest a miner can swing
 // column with room and ended up somewhere down the walk. Dust the house makes
 // heaps under the house, like everything else in this yard, and when the heap is
 // full the house stops until somebody carries it away.
-export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140 };
+// The sky is in here too. What the wizards knock off the star falls four hundred
+// pixels and lands under it, and until it had a strip of its own it landed on
+// bare ground -- which takes a scatter and no more, so a star's worth of sparks
+// spread themselves along the walk a grain at a time instead of heaping where
+// they fell. It is a station like any other: it piles, and when the pile is full
+// the wizards stop until somebody has carried it away.
+export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260 };
 // And what the back of it may leave lying before it stops, with no recycler on:
 // cells of muck over the ground the spout reaches. It is the same rule wearing
 // the other coat -- a house nobody clears up after fills its own yard and jams.
@@ -1258,7 +1282,8 @@ export const TUNABLE = [
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
   { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
   { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 },
-  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4 }
+  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4 },
+  { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4 }
 ];
 
 export function tuned(key) {

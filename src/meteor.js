@@ -14,11 +14,12 @@
 // another one drifts in -- so the job is a thing that comes round rather than a
 // tap that never stops.
 
-import { P, METEOR_CORE, METEOR_SPARKS, METEOR_CORE_SPARKS, SUMMON_MS, SPARK_CELL, someFind,
+import { P, METEOR_CORE, METEOR_SPARKS, METEOR_CORE_SPARKS, SUMMON_MS, SUMMON_SHAKE, SPARK_CELL, someFind,
          BOLT_PACE, WIZ_ORBIT } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
 import { spawnChip, bell } from './dust.js';
+import { shakeView } from './world.js';
 
 // what a cell of it is
 export const RIND = 1, CORE = 2;
@@ -257,6 +258,7 @@ export function summon(hands, secs) {
     const v = 2.2 + Math.random() * 2.4;
     sparkle(sky.x, sky.y, Math.cos(a) * v, Math.sin(a) * v, 700 + Math.random() * 400);
   }
+  shakeView(SUMMON_SHAKE);                  // and the ground feels it
   makeMeteor();
 }
 

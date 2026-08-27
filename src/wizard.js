@@ -239,6 +239,14 @@ export function stepWizard(w, now) {
   }
   w.channel = false;
 
+  // A full pile stops the station, and the sky is a station. What comes off the
+  // star lands on the ground under it, and once that ground is heaped as high as
+  // it will go there is nowhere for the next cell to land: the ring holds where
+  // it is until somebody has carried some away. It is the same rule the rock and
+  // the cut and the beds have, and it is the reason the star's sparks are worth
+  // fetching rather than worth ignoring.
+  if (S.pileFull.sky) { w.lunge = 0; return; }
+
   if (now >= w.next && w.cell) {
     fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell);
     w.mined = (w.mined || 0) + 1;
