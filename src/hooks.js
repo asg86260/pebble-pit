@@ -212,6 +212,12 @@ export const newGame = (intro = false) => { resetGame(); if (!intro) skipIntro()
 // dev: come back to the game the way a page refresh does -- write what is here,
 // then read it back into an empty yard. Nothing else in the checks can tell the
 // difference between a reload and this.
+// A page that has just been opened: the weather in flight is gone, because the
+// module holding it came back empty, while the save on disk is untouched. The
+// node yard keeps one module alive for a whole file, so without this a check
+// about restoring the sky passes on motes that were simply never cleared.
+export const coldSky = () => { SKY.length = 0; PUFFS.length = 0; };
+
 export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 
 export const openLab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };

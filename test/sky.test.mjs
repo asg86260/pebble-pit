@@ -568,3 +568,35 @@ group('a dirty sky can be seen from where you stand', async () => {
        `${(tenth * 100).toFixed(1)}% -> ${(half * 100).toFixed(1)}% -> ${(full * 100).toFixed(1)}%`)
   ];
 });
+
+// A sky is worth having only if it is still there when you come back. The haze
+// was written down and read back all along; the motes it stands for were not,
+// and nothing filled them in -- so a reload showed a full readout over an empty
+// band, and the two agreed again only after the crew had spent an hour putting
+// the sky back up a speck at a time.
+group('the sky and the mess are still there after a reload', async () => {
+  window.__crew(0, 0);
+  window.__air({ haze: Math.round(state().smog.at / 2) });
+  window.__muckSet(c => (c % 5 === 0 ? 3 : 0));
+  run(1);
+  const was = state().smog;
+
+  // as a page that has just been opened: the motes in memory are gone and only
+  // the save is left, which is the case that was broken
+  window.__coldSky();
+  window.__reload();
+  run(1);
+  const now = state().smog;
+  window.__air({ haze: 0, muck: 0 });
+
+  return [
+    ok(Math.abs(now.haze - was.haze) <= 2, 'the haze comes back at the level it was left',
+       `${Math.round(was.haze)} -> ${Math.round(now.haze)}`),
+    ok(was.sky > 100 && Math.abs(now.sky - was.sky) <= was.sky * 0.05,
+       'and as the sky itself, not as a number over an empty band',
+       `${was.sky} motes -> ${now.sky}`),
+    ok(now.muck.cols === was.muck.cols && Math.abs(now.muck.all - was.muck.all) <= 3,
+       'and the mess on the ground is where it was left',
+       `${was.muck.all} over ${was.muck.cols} columns -> ${now.muck.all} over ${now.muck.cols}`)
+  ];
+});

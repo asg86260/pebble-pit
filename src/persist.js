@@ -7,7 +7,7 @@
 
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
-import { seedSmog } from './smog.js';
+import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit } from './state.js';
 import { at, put, count, fillFlat, isDust, recount } from './grid.js';
@@ -400,6 +400,17 @@ export function restore() {
   // that is somebody's job.
   S.raining = false;
   S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
+  // And the sky itself, not only the number for it. The haze was being written
+  // down and read back while the motes it stands for were not: `settleCount`
+  // only ever takes motes away in play -- one arrives by climbing off a swing,
+  // which is the whole point of them -- so a reload came back to a full
+  // readout over an empty band, and the two only agreed again after the crew
+  // had spent an hour putting the sky back up a speck at a time.
+  //
+  // This is exactly the case `skyFromSave` is for: a sky being restored rather
+  // than made. Safe here because the world is laid out before the save is read
+  // (see the boot order in main.js), so there is a width to spread it across.
+  skyFromSave();
   // A pot left on the table is still on it. It comes back ripe -- the clock it
   // was climbing on is wall time, and a hand you left an hour ago is a hand you
   // left long enough.

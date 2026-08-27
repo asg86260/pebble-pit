@@ -440,6 +440,22 @@ function settleCount(gain = false) {
 // rather than climbed into, because there is nobody to have made it.
 export const fillSky = () => settleCount(true);
 
+// A save coming back. The weather in flight is not saved and does not survive --
+// a puff halfway up and a drop halfway down both belong to a moment that is
+// over -- so what a reload rebuilds is the band itself, out of the haze that
+// was written down.
+//
+// It clears before it fills on purpose: whatever is in these arrays belongs to
+// the game that was running a moment ago, and a restore that inherited it would
+// be reading the save over the top of the last game rather than in place of it.
+export function skyFromSave() {
+  SKY.length = 0;
+  PUFFS.length = 0;
+  DROPS.length = 0;
+  CAUGHT.length = 0;
+  fillSky();
+}
+
 // how thick the sky is, 0..1 scaled, for anything that wants to know without counting
 export const cloudR = () => Math.round(Math.min(1, S.haze / SMOG_RAIN_AT) * 42);
 
