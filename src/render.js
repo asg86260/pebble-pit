@@ -597,13 +597,31 @@ function warning(x, y) {
 // belongs with the thing that has stopped, and there is nothing else down there
 // to read it against. It sits below the ground line, in the space the pit's
 // depth already keeps clear on screen.
+// Every strip in `S.piles` gets one of these, so every station has to have an
+// answer here. It used to name two keys and send everything else to the farm --
+// which was fine while there were three piles, and became wrong the moment the
+// scrubbing house and the star got strips of their own: both of them stopped
+// with their warning hanging over the farm, three thousand pixels from the thing
+// that had stopped. A station added tomorrow gets the middle of its own heap
+// without anybody remembering to come back here.
 export function pileMarkAt(key) {
+  const box = key === 'quarry' ? quarry
+            : key === 'farm' ? farm
+            : key === 'scrub' ? scrub
+            : null;
+  const strip = S.piles.find(p => p.key === key);
   const x = key === 'rock' ? S.cx
-          : key === 'quarry' ? quarry.x + quarry.w / 2
+          : key === 'sky' ? sky.x
+          : box ? box.x + box.w / 2
+          : strip ? (strip.from + strip.to) / 2
           : farm.x + farm.w / 2;
   // clear of the station itself: the quarry hangs below the ground line, so a
-  // mark under the ground would be a mark down the shaft
-  const y = key === 'quarry' ? quarry.y + quarry.h + P * 5 : S.groundY + P * 7;
+  // mark under the ground would be a mark down the shaft, and the star is four
+  // hundred pixels up with no ground under it at all -- its mark hangs beneath
+  // the star, where the wizards are, rather than on the floor of the yard.
+  const y = key === 'quarry' ? quarry.y + quarry.h + P * 5
+          : key === 'sky' ? sky.y + sky.r + P * 9
+          : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -830,7 +848,10 @@ export function drawSmog() {
       warm.push(Math.round(m.x - off), y);
       cool.push(Math.round(m.x + off), y);
     }
-    const tint = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
+    // its kind's palette, and its own tone out of that palette. Both are fixed
+    // on the mote, so a speck does not shimmer between colours frame to frame.
+    const shades = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
+    const tint = shades[(m.tone ?? 0) % shades.length];
     // to the nearest twentieth, so the weights fall into a handful of buckets
     const step = Math.round((m.ink ?? 1) * 20) / 20;
     const key = tint + '|' + step;
@@ -890,7 +911,7 @@ export function drawPuffs() {}
 // they are for is a fan over a clean sky still plainly pulling.
 export function drawDraught() {
   if (!DRAUGHT.length) return;
-  ctx.fillStyle = SMOG_TINTS.dust;
+  ctx.fillStyle = SMOG_TINTS.dust[0];
   ctx.beginPath();
   for (const k of DRAUGHT) {
     if (!onScreen(k.x)) continue;

@@ -286,7 +286,7 @@ export const SCRUB_CATCH = 260;
 export const SCRUB_PER_MUCK = 90;   // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
-export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
+export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one
 export const RECYCLE_PER = 28;      // motes caught per grain of dust it gives back -- per mote
 
 export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
@@ -1165,10 +1165,19 @@ export const AIR_BANDS = [
 // tenth of an ink, and alpha flattens a hue towards the paper it is on: a navy
 // that reads as navy on its own reads as grey at 0.13, which is exactly the
 // nothing this was added to avoid.
+// Four of each, and a speck keeps the one it was born with for its whole life.
+// One flat colour a kind meant a band of six thousand specks was three colours
+// of paint laid perfectly evenly, which reads as a printed tone rather than as
+// air: what makes a haze look like haze is that no two bits of it are quite the
+// same. The spread stays inside the hue -- these are four dusts, not four
+// colours -- so a bank still reads as one thing from across the yard.
+//
+// The air over the yard has had exactly this since it was written (see
+// AIR_TINTS below); the sky was the one place still painting flat.
 export const SMOG_TINTS = {
-  dust:  '#2b2b2b',
-  shard: '#1436b8',
-  spore: '#12703a'
+  dust:  ['#2b2b2b', '#3a3733', '#232830', '#332b2b'],
+  shard: ['#1436b8', '#2444c4', '#0f2c9c', '#2a3fa8'],
+  spore: ['#12703a', '#1c8046', '#0d6032', '#237a48']
 };
 
 export const AIR_KINDS = ['dust', 'shard', 'spore'];

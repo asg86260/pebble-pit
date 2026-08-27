@@ -171,6 +171,13 @@ export const capOf = job =>
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
   job === 'labbers' ? 1 :
+  // One body in the scrubbing house too, and for the same reason: it is a shed
+  // with a fan in it. A second body was a second pair of hands on a machine
+  // that runs itself once somebody is standing in it -- the draught it makes is
+  // the same draught -- so the extra bodies read as a way to buy a faster sky
+  // rather than as a place to be. What makes the sky come down quicker is the
+  // recycler and the machine, not a queue inside the shed.
+  job === 'scrubbers' ? 1 :
   // One body per hat, and the tower makes them one at a time. This is the only
   // station in the yard whose floor plan is a thing you buy rather than a thing
   // you build: there is as much room in the sky as there are people who can get
@@ -189,7 +196,7 @@ export function rebalance() {
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a bed that is not there.
-  for (const job of ['quarriers', 'farmhands', 'labbers', 'wizards'])
+  for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'wizards'])
     S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // Carrying is the job nobody is assigned to: it is what a body does when it is

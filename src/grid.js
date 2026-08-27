@@ -31,6 +31,17 @@ export const isDust = v => v > 0 && v <= SHADES.length;
 export const depthShade = (v, max) =>
   Math.max(1, Math.min(SHADES.length, Math.ceil(SHADES.length * v / Math.max(1, max))));
 
+// A shade near a given one, for anything that makes dust without a reason to
+// pick a particular darkness. Spoil off the rock has a reason -- it comes out
+// the shade of the depth it was cut from, see `depthShade` -- but a machine
+// handing back what it caught has none, and paying out on one fixed tone gave
+// a heap that was a flat block of a single grey where every other pile in the
+// yard is mottled. Clamped, so a centre near either end of the range simply
+// leans that way instead of running off it.
+export const shadeNear = (centre, spread = 1) =>
+  Math.max(1, Math.min(SHADES.length,
+                       Math.round(centre + (Math.random() * 2 - 1) * spread)));
+
 export const at = (b, c, r) => b.grid[r * b.cols + c];
 
 // A grid may keep a live count of how many of its cells are occupied. Give it an

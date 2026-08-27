@@ -271,7 +271,9 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   // walks over, which from the middle of the yard to the quiet end of it is a
   // good twenty seconds, and nothing comes out of the sky until it is through
   // the door. Waiting a fixed six was waiting for the walk to be decoration.
-  window.__air({ scrubbers: 2, haze: 500 });
+  // One body: the house is a shed with a fan in it and holds exactly one, the
+  // way the lab does -- see `capOf`.
+  window.__air({ scrubbers: 1, haze: 500 });
   runUntil(() => state().smog.scrubbing > 0, 40);
   run(6);
   const on = state().smog;
@@ -286,7 +288,7 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   return [
     ok(shut.haze >= 500 && shut.scrubbing === 0,
        'an empty house does nothing at all', `${shut.haze}, ${shut.scrubbing}/min`),
-    ok(on.scrubbers === 2 && on.scrubbing > 0 && on.haze < 500,
+    ok(on.scrubbers === 1 && on.scrubbing > 0 && on.haze < 500,
        'bodies in it start pulling the sky down',
        `${on.scrubbers} in, ${on.scrubbing}/min, haze ${on.haze}`),
     ok(on.caught > 0, 'and you can see it: motes bend out of the drift towards it',
@@ -469,8 +471,10 @@ group('the scrubbing house empties its filters out the back, until the recycler'
     window.__crew(0, 0);
     window.__clearFloor();
     // under the rain line, or the weather makes the muck instead of the house
-    window.__air({ haze: 300, open: true, scrubbers: 2, muck: 0 });
-    run(10);
+    window.__air({ haze: 300, open: true, scrubbers: 1, muck: 0 });
+    // long enough for one body to walk out there and fill a filter: the house
+    // holds one now, so the catch that used to take ten seconds takes twenty.
+    run(20);
     return state();
   };
   const plain = run1();
@@ -478,8 +482,8 @@ group('the scrubbing house empties its filters out the back, until the recycler'
   window.__reset();
   window.__crew(0, 0);
   window.__clearFloor();
-  window.__air({ haze: 300, open: true, scrubbers: 2, recycler: true, muck: 0 });
-  run(10);
+  window.__air({ haze: 300, open: true, scrubbers: 1, recycler: true, muck: 0 });
+  run(20);
   const fitted = state();
 
   window.__crew(0, 0);

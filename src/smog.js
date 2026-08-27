@@ -38,7 +38,7 @@ import { windAt, give } from './wind.js';
 import { spawnChip } from './dust.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { rockLeft, overPitMouth } from './world.js';
-import { surfaceY, colOf } from './grid.js';
+import { surfaceY, colOf, shadeNear } from './grid.js';
 import { pitDepth } from './pit.js';
 import { dugTopY } from './quarry.js';
 // Counted here rather than imported from `scrubhouse.js`, which is the same sum
@@ -241,6 +241,10 @@ const skyMote = (x, y, kind = 'dust') => ({
   // over the sky rather than as smoke of different ages and thicknesses hanging
   // in it. The variation is small on purpose: it is texture, not confetti.
   ink: 0.8 + Math.random() * 0.4,
+  // and which of its kind's shades it is, fixed the same way. Weight alone was
+  // one colour at a dozen strengths, which is a wash; a kind is a small family
+  // of tones now -- see SMOG_TINTS -- and a speck is one of them for life.
+  tone: Math.floor(Math.random() * 4),
   slot: slots++,
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
@@ -732,21 +736,47 @@ function swallow() {
     const out = outlet();
     // and it drops out of the spout rather than being thrown out of it: the arm
     // points down, so the grain goes down
-    spawnChip(out.x, out.y, (Math.random() - 0.5) * 0.5, 0.15, RECYCLE_TONE);
+    // and no two grains quite the same shade. It paid out on RECYCLE_TONE flat,
+    // so the heap under the spout was a block of one grey sitting next to the
+    // rock's spoil, which is mottled because it comes from different depths.
+    // Nothing about a machine handing back what it caught says every grain is
+    // identical -- see `shadeNear`.
+    spawnChip(out.x, out.y, (Math.random() - 0.5) * 0.5, 0.15, shadeNear(RECYCLE_TONE));
   }
 }
 
-// And the sky letting go again once the fan stops: the offsets it was dragged by
-// ease off, so a band that was pulled out of shape settles back into the shape
-// the slots give it rather than staying bunched over a building doing nothing.
-function unpull(secs) {
-  const keep = Math.max(0, 1 - secs * 0.35);
+// And the sky letting go the moment the fan stops.
+//
+// The offsets used to ease back to nought, which slid every speck home along the
+// line it had been dragged in on: a body steps out of the house and the whole
+// stream over the roof flies back out across the yard, at the speed it came in
+// and in the wrong direction. Nothing in the air does that. What smoke does when
+// the draught under it stops is stay where it is and drift back up into the rest
+// of the smoke.
+//
+// So the pull is not undone, it is *kept*: the sideways part is folded into the
+// mote's own creep along the sky, which is the number that says where it is, and
+// the height is handed to the settle the band already has -- the same easing a
+// mote uses when it first arrives, from wherever it is now up to its place. See
+// `place`. A speck released over the house is a speck that was there, and it
+// floats up from there.
+function unpull() {
+  const span = Math.max(P, S.worldW || 0);
   for (const m of SKY) {
     if (!m.sx && !m.sy) continue;
-    m.sx *= keep;
-    m.sy *= keep;
-    if (Math.abs(m.sx) < 0.2) m.sx = 0;
-    if (Math.abs(m.sy) < 0.2) m.sy = 0;
+    // where it stands now, said in the terms the band uses. A mote's place is
+    // `fromX`, plus its creep along the sky, plus its slot's share of a stretch
+    // that opens with age -- so backing all three out of where it actually is
+    // leaves a starting point that puts it back on the same pixel. It spreads
+    // out again from there, which is the stream over the roof loosening into
+    // band as it rises rather than snapping into place.
+    const s0 = slotAt(m.slot);
+    const back = m.roam * span + (s0.u - 0.5) * spreadAt(0);
+    m.fromX = ((((m.x - back) % span) + span) % span);
+    m.fromY = m.y;
+    m.age = 0;
+    m.sx = 0;
+    m.sy = 0;
   }
 }
 
@@ -1201,7 +1231,7 @@ export function stepSmog(dt) {
   // used to take motes *and* dock the number by what the fan was worth, which is
   // the same dirt subtracted twice.
   if (scrubbing()) { pull(secs); breathe(secs); }
-  else { unpull(secs); DRAUGHT.length = 0; }
+  else { unpull(); DRAUGHT.length = 0; }
   // The number is worked out from the sky before anything asks whether it should
   // be raining, because the answer to that question has to be about what is
   // actually overhead.
