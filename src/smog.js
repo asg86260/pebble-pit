@@ -24,7 +24,7 @@
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
-         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE,
+         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
          SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
@@ -188,6 +188,9 @@ export function foul(grains, x, y, kind = 'dust') {
     // A thick plume is what a busy yard looks like; it is not a thing to hide.
     SKY.push({
       up: true,
+      // the same look a mote in the band has, because it is going to be one --
+      // see `look`
+      ...look(kind),
       x: x + (Math.random() - 0.5) * P * 2,
       y,
       vy: -(0.55 + Math.random() * 0.5),
@@ -229,22 +232,40 @@ const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; };
 // A mote is a slot in the band and a share of the wind. It has no position of
 // its own: where it is is where its slot is, this frame, leaned on by whatever
 // the wind is doing at that instant.
+// What a speck looks like, decided once and kept for life.
+//
+// Both ends of a speck's life are built here: the puff that leaves a swing (see
+// `foul`) and the mote that is placed in the band (`skyMote`). That is the point
+// of it being one function. The look used to be set in `skyMote` alone, and
+// `skyMote` is only reached when a sky is *restored* -- a save coming back or
+// the dev panel winding the haze up. Everything that gets into the sky the way
+// the game actually puts it there climbs, and a climbing puff is built by hand
+// in `foul` and then handed its band fields by `settleHere`, neither of which
+// knew about any of this. So the variation was real in a loaded sky and absent
+// in a played one, which is the one place it matters.
+//
+// A speck also has to keep it across that hand-off. It went up looking like
+// this and it stays looking like this -- the whole argument for `settleHere`
+// not touching a mote's position or weight is that the thing off the swing and
+// the thing in the band are one thing, and its colour is no different.
+const look = (kind = 'dust') => ({
+  // What this one weighs, to look at: a fifth either side of the haze's own ink.
+  // A band of specks all drawn at exactly one weight is a screen of identical
+  // dots -- it reads as noise laid over the sky rather than as smoke of
+  // different ages and thicknesses hanging in it. Texture, not confetti.
+  ink: 0.8 + Math.random() * 0.4,
+  // and which of its kind's shades it is. See SMOG_TINTS: a kind is a small
+  // family of tones, not one flat colour.
+  tone: Math.floor(Math.random() * (SMOG_TINTS[kind] || SMOG_TINTS.dust).length)
+});
+
 // A mote is a place in the band, a share of the wind, and -- for its first few
 // seconds -- where it came in. It arrives at the spot the puff got to and eases
 // out to its place among the others, which is what joining a haze looks like.
 const skyMote = (x, y, kind = 'dust') => ({
   kind,
   up: false,                            // arrived: this one is in the band
-  // What this one weighs, to look at: a fifth either side of the haze's own ink,
-  // fixed when it is made and never changed. A band of specks all drawn at
-  // exactly one weight is a screen of identical dots -- it reads as noise laid
-  // over the sky rather than as smoke of different ages and thicknesses hanging
-  // in it. The variation is small on purpose: it is texture, not confetti.
-  ink: 0.8 + Math.random() * 0.4,
-  // and which of its kind's shades it is, fixed the same way. Weight alone was
-  // one colour at a dozen strengths, which is a wash; a kind is a small family
-  // of tones now -- see SMOG_TINTS -- and a speck is one of them for life.
-  tone: Math.floor(Math.random() * 4),
+  ...look(kind),
   slot: slots++,
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
@@ -343,6 +364,11 @@ function stepPuffs(secs) {
 // the haze.
 function settleHere(m) {
   m.up = false;
+  // Its look is not among the fields set here, and that is deliberate: `foul`
+  // gave it one when it left the swing and it keeps it. A speck that changed
+  // colour or weight on arriving would be a speck you watched climb and then
+  // saw replaced by another one.
+  
   m.slot = slots++;
   m.roam = 0;
   m.age = 0;

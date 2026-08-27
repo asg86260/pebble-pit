@@ -1187,7 +1187,13 @@ function elbowMuck(w) {
     // a coin toss they both call the same way leaves them stacked for ever.
     const tie = S.workers.indexOf(w) % 2 ? 1 : -1;
     w.x -= Math.sign(d || tie) * 0.35;
-    w.y = walkY(w.x + WORKER / 2);
+    // Sideways, and nothing else. It used to plant the feet on the ground line
+    // after the nudge, which is right for the yard and wrong on the hill: a
+    // miner shovelling the crest was dropped the height of the rock on every
+    // frame it stood too close to somebody, and lifted back up on every frame it
+    // did not -- the body flickering between the top of the rock and the ground
+    // for as long as the two of them were shoulder to shoulder. Height belongs
+    // to whoever is doing the job; the elbow only says where along the ground.
     return;
   }
 }
@@ -1297,23 +1303,40 @@ export function updateWorkers(now, dt) {
     // and worked the yard invisible and still counted as being at home.
     w.inside = false;
     w.goal = 'muck';
-    // Off the rock, and down. A miner's height is climbed to rather than set,
-    // and everything that puts one somewhere other than on the rock has to say
-    // so -- otherwise it goes back to work from wherever the shovelling left
-    // it and jumps the height of the hill in a frame.
+    // Off the rock, and down -- but climbed down, not dropped down.
+    //
+    // This used to put the body's feet on the ground line the moment the job
+    // came up, on the reasoning that a miner going shovelling is a miner off the
+    // rock. It is, eventually; it is not off it in the frame it decides to go.
+    // A body standing on the crest with muck to clear fell ninety pixels in one
+    // frame -- the height of the hill, from the top of it to the yard, between
+    // one frame and the next -- and then walked to the mess. Which is the one
+    // thing this file exists to not do.
+    //
+    // Nothing needs setting. `foot()` below already asks where the body is: on
+    // the rock's footprint it climbs to the rock's surface, off it, it walks the
+    // ground -- and `climbTo` eases from wherever the feet actually are, in
+    // either direction. A miner leaving the crest walks down it the way it
+    // walked up.
     if (w.type === 'miner') {
       if (w.jigAt != null) { stopJig(w); w.say = null; }
       w.resting = false;
       w.idleAt = null;
-      w.foot = standOn(S.groundY);
     }
     const d = to - WORKER / 2 - w.x;
     // Where its feet go while it is doing this: the ground, or the face of the
     // rock if that is what it is standing on. Climbed to rather than assigned,
     // so a body going up the hill goes up it rather than appearing at the top --
     // the same climb the gang working the rock make.
-    const foot = () => (onRock(w.x + WORKER / 2) && boulderAlive()
-      ? climbTo(w, landing(w)) : walkY(w.x + WORKER / 2));
+    // Always eased, whichever side of the rock's edge the body is standing on.
+    // Only the rock branch used to climb and the ground branch set the height
+    // outright, so a body shovelling at the foot of the hill -- where a pixel of
+    // sway puts its middle on and off the footprint from one frame to the next --
+    // flicked between the crest and the yard as the two branches took turns. The
+    // question the edge answers is *where it is going*, not how fast it gets
+    // there.
+    const foot = () => climbTo(w, onRock(w.x + WORKER / 2) && boulderAlive()
+      ? landing(w) : walkY(w.x + WORKER / 2));
     // walk to it, then shovel: it is somewhere you go, not something that
     // happens wherever you are standing
     if (Math.abs(d) > P * 2) {
