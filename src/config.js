@@ -44,8 +44,8 @@ export const SKY = 1998;         // world above the ground line, so any window h
 export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
-export const TO_FARM = -1956;    // rock centre to the near edge of the farm
-export const TO_QUARRY = -1284;  // rock centre to the mouth of the quarry
+export const TO_FARM = -2106;    // rock centre to the near edge of the farm
+export const TO_QUARRY = -1434;  // rock centre to the mouth of the quarry
 // The bench stands just off the rock's left flank, between it and the quarry:
 // the thing you buy at is the first thing out from the rock, and everything the
 // cores open up lies further out again.
@@ -68,7 +68,7 @@ export const TO_QUARRY = -1284;  // rock centre to the mouth of the quarry
 // 60. The yard reading right is worth the sixteen cells.
 export const TO_BENCH = -336;    // rock centre to the bench
 export const BENCH_W = P * 12;   // and how wide it stands
-export const TO_LAB = -2184;     // rock centre to the lab, at the far end
+export const TO_LAB = -2334;     // rock centre to the lab, at the far end
 // --- the opening --------------------------------------------------------------
 // Two squares stood on the bare ground talking, and then a rock. Long enough
 // that you read it as two people rather than as a loading screen, short enough
@@ -200,7 +200,7 @@ export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
 export const RECYCLE_PER = 11;      // motes caught per grain of dust it gives back -- the same 3.56
 
-export const TO_SCRUB = -2436;       // past the lab, at the quiet end of the walk
+export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower
 // together: the tower is the eleven cells the hood has flared down to, and the
 // four either side of it at the top are wall with sky behind them. Odd across on
@@ -232,7 +232,7 @@ export const SCRUB_H = P * 20;
 export const SCRUB_FOLDS = 3;
 export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
 
-export const TO_CASINO = -2760;
+export const TO_CASINO = -2910;
 // Past the casino: the far end of the walk, and the last thing on the ground.
 // Everything else out here was bought with what the yard digs; this one is
 // bought with the thing the yard cannot make.
@@ -247,14 +247,17 @@ export const TO_CASINO = -2760;
 //
 // Two cells by three and a bit: the smallest thing anybody builds in this yard,
 // because that is how big it needs to be.
-export const TO_OUTHOUSE = -690;
+// Centred in that strip, with about a hundred pixels of bare ground either
+// side. It was wedged into ninety-six between the two of them, eighteen clear
+// on one side, which read as a thing squeezed in after the fact -- which it was.
+export const TO_OUTHOUSE = -756;
 export const OUTHOUSE_W = P * 7;
 export const OUTHOUSE_H = P * 10;
 
 // Far enough past the casino to read as its own place rather than the next unit
 // along: the gaps between the buildings out here run about a hundred and fifty,
 // and this one was eighteen.
-export const TO_TOWER = -3006;
+export const TO_TOWER = -3156;
 export const TOWER_W = P * 13;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // Twenty-six across, and it was eighteen. The wheel is set by the height rather
@@ -388,7 +391,12 @@ export const CASINO_SAY_MS = 4000;
 // own front doors, which is the stretch everybody walks twice a shift. Where you
 // go to learn a trade is on the way to work, and it is the last thing on this
 // side that is about people rather than about rock.
-export const TO_SCHOOL = -768;   // rock centre to the middle of the school
+// Pushed further out to open the strip the outhouse stands in. The block of
+// rooms cannot come the other way to make that room -- it is sixty pixels off
+// the bench and the bench is sixty off the apron, and the bench sits centred
+// between them on purpose -- so the ground between the school and the front
+// doors is the only ground there is to give.
+export const TO_SCHOOL = -918;   // rock centre to the middle of the school
 export const SCHOOL_W = P * 20;
 export const SCHOOL_H = P * 10;
 // The lab, which had no numbers of its own: it was two literals in world.js and
@@ -446,7 +454,7 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 // rock, so the last one along was standing four cells from the end of the world
 // with the casino almost against its wall. Widened so the far end of the walk
 // has somewhere to be.
-export const GROUND_LEFT = 3360;
+export const GROUND_LEFT = 3510;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
