@@ -1188,6 +1188,75 @@ export function updateWorkers(now, dt) {
   // fetching one is -- it walks to a mess, clears it, and looks again -- so the
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
+  // Going and shovelling, as one thing a body can be told to do, because two
+  // different kinds of body have to be able to do it.
+  //
+  // This used to live inline in the shared part of the loop, below the miners'
+  // own branch -- and that branch ends in `continue`, so a miner never reached
+  // it. That was invisible while the rock was worth swinging at. It stops being
+  // invisible the moment the rock's pile fills up, which is what happens when
+  // the hole is full and the haulers cannot clear it: the miners stand down,
+  // "free to take five", and take five under a yard of muck with nothing else
+  // in the world to do. Idle bodies and a mess is the one combination this
+  // whole idea was written to rule out.
+  //
+  // Returns true if the body is on muck duty and has had its turn this frame.
+  function takeMuck(w) {
+    if (w.carry || w.hasCore || yardMuck() <= 0) return false;
+    // One body, one column, held until that column is clear -- the same
+    // booking a hauler makes on a column of dust.
+    //
+    // The set below is rebuilt every pass, so on its own it only stopped two
+    // bodies choosing the same column *in the same frame*: every one of them
+    // then re-chose the nearest the very next frame, and the whole crew walked
+    // to the same spot anyway. A claim has to be kept to be a claim.
+    if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+    if (w.muckAt == null) {
+      const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
+      w.muckAt = pick == null ? null : Math.floor(pick / P);
+    } else {
+      muckTaken.add(w.muckAt);
+    }
+    const to = w.muckAt == null ? null : w.muckAt * P + P / 2;
+    if (to == null) return false;
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+    unbook(w);
+    // Out of the house first. A mess is the one thing that calls a body back
+    // off its own doorstep, and this runs before the going-home branch --
+    // so a body indoors used to pick up a shovel without ever coming out,
+    // and worked the yard invisible and still counted as being at home.
+    w.inside = false;
+    w.goal = 'muck';
+    // Off the rock, and down. A miner's height is climbed to rather than set,
+    // and everything that puts one somewhere other than on the rock has to say
+    // so -- otherwise it goes back to work from wherever the shovelling left
+    // it and jumps the height of the hill in a frame.
+    if (w.type === 'miner') {
+      if (w.jigAt != null) { stopJig(w); w.say = null; }
+      w.resting = false;
+      w.idleAt = null;
+      w.foot = standOn(S.groundY);
+    }
+    const d = to - WORKER / 2 - w.x;
+    // walk to it, then shovel: it is somewhere you go, not something that
+    // happens wherever you are standing
+    if (Math.abs(d) > P * 2) {
+      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.dir = Math.sign(d);
+      w.y = walkY(w.x + WORKER / 2);
+    } else {
+      w.y = walkY(w.x + WORKER / 2);
+      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
+      w.lunge = 1;
+      // and not shoulder to shoulder with the next one. A yard under muck
+      // has something to shovel wherever you stand, so a gang that arrived
+      // together would each find work on the spot they arrived on and clear
+      // the whole mess as one lump you cannot count.
+      elbowMuck(w);
+    }
+    return true;
+  }
+
   const muckTaken = new Set();
   // and the columns already spoken for by bodies that are on their way to them
   for (const w of S.workers) if (w.muckAt != null) muckTaken.add(w.muckAt);
@@ -1252,6 +1321,10 @@ export function updateWorkers(now, dt) {
       // been carried away: dust with nowhere to go used to roll into the pit,
       // which banks it for nothing and leaves the haulers with no job.
       if (S.pileFull.rock) {
+        // Nothing to swing at and a mess in the yard: go and clear it. Only
+        // when the rock is off -- a miner with rock left to break is doing its
+        // own job, and the shovel is what there is to do *instead* of standing.
+        if (takeMuck(w)) continue;
         w.resting = true;                      // stopped, and free to take five
         // Standing down is not being switched off. It shifts its weight where
         // it stands: a slow pace of about a cell either side of the spot it
@@ -1308,6 +1381,24 @@ export function updateWorkers(now, dt) {
       continue;
     }
 
+    // A station whose pile is full has nothing for the body standing at it, and
+    // a yard under muck has plenty. The bodies at the sites were the one part of
+    // the crew this never reached: their branches end in `continue`, above the
+    // shovelling, so a stopped quarry and a stopped farm meant people standing
+    // still in a yard nobody was clearing.
+    //
+    // Only from the surface. A quarrier at the bottom of the cut walks to the
+    // ladder and climbs it first -- see `stepQuarrier` -- and arrives here on
+    // the ground like anybody else.
+    const stopped = (w.type === 'quarrier' && S.pileFull.quarry) ||
+                    (w.type === 'farmhand' && S.pileFull.farm);
+    if (stopped && w.y + WORKER <= S.groundY + 1 && takeMuck(w)) continue;
+    // and back to the station when the mess is gone or the pile has been
+    // cleared: `to` is the walk to it, for both of them, so nobody is put back.
+    if (w.goal === 'muck' && (w.type === 'quarrier' || w.type === 'farmhand')) {
+      w.goal = 'to';
+      w.muckAt = null;
+    }
     if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }
@@ -1425,50 +1516,7 @@ export function updateWorkers(now, dt) {
     // Hands full is the one exception: a body already carrying a load finishes
     // the trip first. Putting a load down to pick up a shovel is a load on the
     // floor and a trip wasted.
-    if (!w.carry && !w.hasCore && yardMuck() > 0) {
-      // One body, one column, held until that column is clear -- the same
-      // booking a hauler makes on a column of dust.
-      //
-      // The set below is rebuilt every pass, so on its own it only stopped two
-      // bodies choosing the same column *in the same frame*: every one of them
-      // then re-chose the nearest the very next frame, and the whole crew walked
-      // to the same spot anyway. A claim has to be kept to be a claim.
-      if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-      if (w.muckAt == null) {
-        const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
-        w.muckAt = pick == null ? null : Math.floor(pick / P);
-      } else {
-        muckTaken.add(w.muckAt);
-      }
-      const to = w.muckAt == null ? null : w.muckAt * P + P / 2;
-      if (to != null) {
-        if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-        unbook(w);
-        // Out of the house first. A mess is the one thing that calls a body back
-        // off its own doorstep, and this branch runs before the going-home one --
-        // so a body indoors used to pick up a shovel without ever coming out,
-        // and worked the yard invisible and still counted as being at home.
-        w.inside = false;
-        w.goal = 'muck';
-        const d = to - WORKER / 2 - w.x;
-        // walk to it, then shovel: it is somewhere you go, not something that
-        // happens wherever you are standing
-        if (Math.abs(d) > P * 2) {
-          w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
-          w.dir = Math.sign(d);
-          w.y = walkY(w.x + WORKER / 2);
-        } else {
-          sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
-          w.lunge = 1;
-          // and not shoulder to shoulder with the next one. A yard under muck
-          // has something to shovel wherever you stand, so a gang that arrived
-          // together would each find work on the spot they arrived on and clear
-          // the whole mess as one lump you cannot count.
-          elbowMuck(w);
-        }
-        continue;
-      }
-    }
+    if (takeMuck(w)) continue;
     if (w.goal === 'muck') { w.goal = 'idle'; w.muckAt = null; }   // the yard is clear
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking

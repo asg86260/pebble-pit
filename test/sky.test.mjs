@@ -600,3 +600,36 @@ group('the sky and the mess are still there after a reload', async () => {
        `${was.muck.all} over ${was.muck.cols} columns -> ${now.muck.all} over ${now.muck.cols}`)
   ];
 });
+
+// The number and the specks are the same thing, and have to stay the same
+// thing. `foul` puts haze up and sends a puff to stand for it, and for a long
+// time a hit was always worth less than one mote, so a single weighted coin was
+// the whole of the accounting. Once the sky was made of two and a half times
+// the specks a hit started being worth several -- a cut shard is worth nearly
+// seven -- and one puff was still all that went up, so the haze climbed away
+// from the band underneath it.
+//
+// That gap is what makes a sky rain twice over: a rain empties a band that was
+// always short, the number is still over the line when it runs out, and the
+// next frame reads a filthy sky over an empty one and starts another shower.
+group('what the readout says is what is overhead', async () => {
+  window.__crew(3, 3);
+  haveRock();
+  run(20);
+  const early = state().smog;
+  run(240);
+  const later = state().smog;
+  window.__crew(0, 0);
+  window.__air({ haze: 0 });
+
+  return [
+    ok(later.haze > 200, 'the yard has had time to make a sky worth checking',
+       `${Math.round(later.haze)} haze`),
+    ok(Math.abs(later.owed) < later.haze * 0.1,
+       'the haze is the motes that are up there, not a number beside them',
+       `${Math.round(later.haze)} haze, ${later.sky} up and ${later.puffs} climbing, ${later.owed} unaccounted for`),
+    ok(Math.abs(later.owed) <= Math.abs(early.owed) + later.haze * 0.05,
+       'and the two do not drift apart the longer it runs',
+       `${early.owed} after twenty seconds -> ${later.owed} after four minutes`)
+  ];
+});

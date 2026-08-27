@@ -12,7 +12,7 @@ import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, CUT_TOS
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
-import { foul, throughCutMuck } from './smog.js';
+import { foul, throughCutMuck, yardMuck } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
@@ -255,7 +255,28 @@ export function stepQuarrier(w, now) {
   w.lunge *= 0.82;
 
   // Nowhere to put a seam, so nothing to do but stand on the dirt. See break.js.
-  if (S.pileFull.quarry) { w.resting = true; w.next = now + cellMs(); return; }
+  //
+  // Unless there is a mess up top, in which case there is plenty to do and no
+  // reason to stand in a hole doing none of it. It walks along its own floor to
+  // the foot of the ladder and climbs out the way it always climbs out; the
+  // crew loop takes it from there and hands it a shovel. Nobody is lifted out.
+  if (S.pileFull.quarry) {
+    if (yardMuck() > 0) {
+      const d = rim - w.x;
+      if (Math.abs(d) > 1) {
+        w.face = Math.sign(d) || w.face || 1;
+        w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 1.5 : 1), Math.abs(d));
+      } else {
+        w.x = rim;
+        w.cell = null;
+        w.goal = 'up';
+      }
+      w.resting = false;
+      w.next = now + cellMs();
+      return;
+    }
+    w.resting = true; w.next = now + cellMs(); return;
+  }
   w.resting = false;
 
   // and it swings on its own rhythm, which is nothing to do with how the digging

@@ -106,35 +106,53 @@ export function foul(grains, x, y, kind = 'dust') {
   const add = grains * SMOG_PER_DUST;
   S.haze = Math.min(SMOG_CAP, S.haze + add);
   made += add;                     // counted where it is made -- see `sampleAir`
-  if (x == null || PUFFS.length > PUFF_MAX) return;
-  // One puff stands for one mote's worth of sky, so a swing sends one up about
-  // as often as a swing is worth one. Every hit throwing a puff would put ten
-  // times as many in the air as ever end up staying, and the ones over the
-  // difference would have to be quietly dropped on arrival -- which is the sort
-  // of thing you can see even when you cannot say what you are seeing.
-  if (Math.random() > add / SMOG_PER_MOTE) return;
-  PUFFS.push({
-    x: x + (Math.random() - 0.5) * P * 2,
-    y,
-    vy: -(0.55 + Math.random() * 0.5),
-    // its share of the wind on the way up, a sixth either way. It was a sway
-    // before -- its own sine on its own phase -- so a column of puffs off one
-    // swing wove through itself on the way up like a shoal rather than being
-    // carried off the way the day is going.
-    give: give(Math.random(), SMOG_GIVE),
-    fade: 1,
-    // What put it up. Carried to the top of the climb and handed to the mote,
-    // which is the whole of how a dirty sky says which part of the works is
-    // dirtying it. It was being dropped here, so every mote in the sky came out
-    // as the default grey however it was made.
-    kind,
-    // Where it started and which way it leans. A plume widens with height --
-    // every puff leaning on the same shared sway sent the lot up as one straight
-    // cylinder, which reads as a pipe rather than as smoke.
-    y0: y,
-    lean: (Math.random() - 0.5) * 2,
-    done: false
-  });
+  if (x == null) return;
+  // One puff stands for one mote's worth of sky, so what goes up is what this
+  // was worth: the whole ones, and the fraction left over as a chance at one
+  // more. Every hit throwing exactly one puff would put ten times as many in
+  // the air as ever end up staying.
+  //
+  // It *was* one puff at most -- a coin weighted by what the hit was worth --
+  // which is right only while a hit is worth less than a mote, and every hit
+  // was, until the sky was made of two and a half times the specks and a swing
+  // started being worth more than one of them. A cut shard is worth nearly
+  // seven. The haze went up by all seven and one speck was sent to stand for
+  // them, so the number climbed away from the sky it was supposed to be
+  // counting: eight hundred of haze over a band holding six hundred of it.
+  //
+  // That gap is why the sky rains and rains again. Rain empties the band, the
+  // band is short, so it runs out while the number is still over the line --
+  // and the next frame reads a filthy sky over an empty one and starts another
+  // shower. What is overhead and what the readout says have to be the same
+  // thing, or the weather is driven by a number nobody can see.
+  let n = add / SMOG_PER_MOTE;
+  let puffs = Math.floor(n);
+  if (Math.random() < n - puffs) puffs++;
+  for (let i = 0; i < puffs; i++) {
+    if (PUFFS.length > PUFF_MAX) break;
+    PUFFS.push({
+      x: x + (Math.random() - 0.5) * P * 2,
+      y,
+      vy: -(0.55 + Math.random() * 0.5),
+      // its share of the wind on the way up, a sixth either way. It was a sway
+      // before -- its own sine on its own phase -- so a column of puffs off one
+      // swing wove through itself on the way up like a shoal rather than being
+      // carried off the way the day is going.
+      give: give(Math.random(), SMOG_GIVE),
+      fade: 1,
+      // What put it up. Carried to the top of the climb and handed to the mote,
+      // which is the whole of how a dirty sky says which part of the works is
+      // dirtying it. It was being dropped here, so every mote in the sky came out
+      // as the default grey however it was made.
+      kind,
+      // Where it started and which way it leans. A plume widens with height --
+      // every puff leaning on the same shared sway sent the lot up as one straight
+      // cylinder, which reads as a pipe rather than as smoke.
+      y0: y,
+      lean: (Math.random() - 0.5) * 2,
+      done: false
+    });
+  }
 }
 
 // A mote is a slot in the band and a share of the wind. It has no position of
@@ -1020,6 +1038,13 @@ export function smogReport() {
   const kinds = {};
   for (const m of SKY) kinds[m.kind || 'none'] = (kinds[m.kind || 'none'] || 0) + 1;
   return { sky: SKY.length, skyKinds: kinds,
+           // Haze the sky cannot account for: the number, less what is actually
+           // overhead and what is still on its way up. It belongs at nothing.
+           // A number drifting above the specks it stands for is a band thinner
+           // than the readout claims and, once the gap is wide enough, a sky
+           // that rains itself empty while the number is still over the line
+           // and starts another shower on the very next frame.
+           owed: +(S.haze - (SKY.length + PUFFS.length) * SMOG_PER_MOTE).toFixed(1),
            // where the first few of them are, finely enough that a check can see
            // the band lean: the wind moves a settled mote a pixel or two over a
            // second, which whole pixels would swallow
