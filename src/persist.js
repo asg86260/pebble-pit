@@ -399,6 +399,7 @@ export function restore() {
   // with no beginning. What it left behind is saved, because that is the part
   // that is somebody's job.
   S.raining = false;
+  S.rainFor = 0;
   S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
   // And the sky itself, not only the number for it. The haze was being written
   // down and read back while the motes it stands for were not: `settleCount`
@@ -515,6 +516,7 @@ export function reset() {
   S.seenAir = false;
   S.haze = 0;
   S.raining = false;
+  S.rainFor = 0;
   S.rains = 0;
   S.recycled = 0;
   S.scrubBank = 0;

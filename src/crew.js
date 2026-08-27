@@ -21,7 +21,8 @@ import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { now } from './clock.js';
-import { sweepMuckAt, yardMuck, nearestMuck, muckAtCol, pitLadder, pitTop,
+import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot,
+         rockMuck, cutMuck, bedMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
 
@@ -350,7 +351,7 @@ function downTheHole(w, to, dt) {
   if (w.inPit === 'down') {
     const lad = pitLadder(w.side || NEAR);
     w.x = lad.x - WORKER / 2;
-    const foot = pitTop(w.x + WORKER / 2) - WORKER;
+    const foot = pitStand(w.x) - WORKER;
     w.y = Math.min(w.y + CLIMB_PACE, foot);
     if (w.y >= foot) w.inPit = want === (w.side || NEAR) && !pastPit(to) ? 'dig' : 'cross';
     return;
@@ -369,7 +370,7 @@ function downTheHole(w, to, dt) {
       sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000));
       w.lunge = 1;
     }
-    w.y = pitTop(w.x + WORKER / 2) - WORKER;
+    w.y = pitStand(w.x) - WORKER;
     return;
   }
 
@@ -382,7 +383,7 @@ function downTheHole(w, to, dt) {
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
       w.dir = Math.sign(d);
-      w.y = pitTop(w.x + WORKER / 2) - WORKER;
+      w.y = pitStand(w.x) - WORKER;
       return;
     }
     w.x = lad.x - WORKER / 2;
@@ -1115,7 +1116,7 @@ function elbowIdle(w) {
 // one job the whole crew drops everything to do at once.
 function elbowMuck(w) {
   for (const o of S.workers) {
-    if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'muck') continue;
+    if (o === w || o.inside || o.goal !== 'muck' || o.inPit) continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
     // Two on the very same pixel have no side to push to. The tiebreak is where
@@ -1202,7 +1203,7 @@ export function updateWorkers(now, dt) {
   //
   // Returns true if the body is on muck duty and has had its turn this frame.
   function takeMuck(w) {
-    if (w.carry || w.hasCore || yardMuck() <= 0) return false;
+    if (w.carry || w.hasCore || muckLeft() <= 0) return false;
     // One body, one column, held until that column is clear -- the same
     // booking a hauler makes on a column of dust.
     //
@@ -1217,7 +1218,13 @@ export function updateWorkers(now, dt) {
     } else {
       muckTaken.add(w.muckAt);
     }
-    const to = w.muckAt == null ? null : w.muckAt * P + P / 2;
+    // The patch, and the ground to work it from. They are the same place out on
+    // the yard and they are not on the rock, the cut or the beds: a body cannot
+    // stand on a site, so it walks to the edge of it and reaches across. The
+    // claim is still the muck's own column, so it is held until that column is
+    // clear rather than until the ground beside it is.
+    const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
+    const to = patch == null ? null : workSpot(patch);
     if (to == null) return false;
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
     unbook(w);
@@ -1313,6 +1320,25 @@ export function updateWorkers(now, dt) {
       // walks back up the hill still shouting about the last one.
       if (w.jigAt != null) { stopJig(w); w.say = null; }
 
+      // And a mess on the rock comes before the rock. It used to come before
+      // nothing but standing about: a miner picked up a shovel only when its
+      // pile was full and there was no swing left to take, and the layer on the
+      // rock was not something a shovel could touch at all -- it was worked off
+      // a swing at a time by whoever happened to be mining. Nobody mining meant
+      // nobody clearing, for the rest of the run: a full pile, a crew with
+      // nobody on the rock, or the gap between one rock and the next all left
+      // the face under muck for good.
+      //
+      // Its own site and not the whole yard. Muck lying on the thing it is
+      // stood on is in its way and it clears it; muck out on the yard is the
+      // haulers' job, and a gang that downed tools for every patch anywhere
+      // would stop mining altogether for the minute and a half a full rain
+      // takes to shift.
+      if (rockMuck() > 0 && takeMuck(w)) continue;
+      // and back up the hill when the face is clear. A miner carries no goal of
+      // its own, so the shovel's is put down with the shovel.
+      if (w.goal === 'muck') { w.goal = null; w.muckAt = null; }
+
       // The crew climb the hill and work it from the top down. Each one keeps a
       // stretch of the crest to itself, stands on whatever rock is left there and
       // sinks with it as the rock goes; when its stretch is bare it ambles along
@@ -1321,9 +1347,9 @@ export function updateWorkers(now, dt) {
       // been carried away: dust with nowhere to go used to roll into the pit,
       // which banks it for nothing and leaves the haulers with no job.
       if (S.pileFull.rock) {
-        // Nothing to swing at and a mess in the yard: go and clear it. Only
-        // when the rock is off -- a miner with rock left to break is doing its
-        // own job, and the shovel is what there is to do *instead* of standing.
+        // Nothing to swing at and a mess anywhere in the yard: go and clear it.
+        // Standing about under muck is the one combination this whole idea was
+        // written to rule out.
         if (takeMuck(w)) continue;
         w.resting = true;                      // stopped, and free to take five
         // Standing down is not being switched off. It shifts its weight where
@@ -1381,18 +1407,24 @@ export function updateWorkers(now, dt) {
       continue;
     }
 
-    // A station whose pile is full has nothing for the body standing at it, and
-    // a yard under muck has plenty. The bodies at the sites were the one part of
-    // the crew this never reached: their branches end in `continue`, above the
-    // shovelling, so a stopped quarry and a stopped farm meant people standing
-    // still in a yard nobody was clearing.
+    // A mess on its own site comes before the station, the same as it does for
+    // the gang on the rock: what is lying on the cut or on the beds is in the
+    // way of the body working it. This used to run only when their own pile was
+    // full -- their branches end in `continue`, above the shovelling -- so a
+    // working quarry and a working farm meant two bodies walking over the muck
+    // all day, and the layer on the cut and the beds could only be dug and
+    // tended through, a cell at a time, by whoever happened to be there.
+    //
+    // The rest of the yard they leave to the haulers -- unless their own pile is
+    // full, in which case there is nothing else for them to be doing.
     //
     // Only from the surface. A quarrier at the bottom of the cut walks to the
     // ladder and climbs it first -- see `stepQuarrier` -- and arrives here on
     // the ground like anybody else.
-    const stopped = (w.type === 'quarrier' && S.pileFull.quarry) ||
-                    (w.type === 'farmhand' && S.pileFull.farm);
-    if (stopped && w.y + WORKER <= S.groundY + 1 && takeMuck(w)) continue;
+    const upTop = w.y + WORKER <= S.groundY + 1;
+    const mine = w.type === 'quarrier' ? cutMuck() > 0 || S.pileFull.quarry
+               : w.type === 'farmhand' ? bedMuck() > 0 || S.pileFull.farm : false;
+    if (mine && upTop && takeMuck(w)) continue;
     // and back to the station when the mess is gone or the pile has been
     // cleared: `to` is the walk to it, for both of them, so nobody is put back.
     if (w.goal === 'muck' && (w.type === 'quarrier' || w.type === 'farmhand')) {
@@ -1413,8 +1445,23 @@ export function updateWorkers(now, dt) {
     // back on the ground line every other frame: the climb pushed it two pixels
     // down the ladder, the dodge lifted it two back, and the pair of them held it
     // at the top of the ladder for ever, taking turns.
-    const inHole = w.inPit || (!w.carry && !w.hasCore && yardMuck() > 0)
-      ? nearestMuck(w.x + WORKER / 2) : null;
+    // Which patch this one is going for -- the same claim `takeMuck` makes, made
+    // here so that the trip down the hole is made against it too. It used to ask
+    // for the nearest muck outright, claims and all ignored, so every hauler in
+    // the yard worked out the same patch in the bottom of the hole, went down
+    // for it together and stood in one another on the one column until it was
+    // gone. One patch, one body, in the hole as much as out of it.
+    if (!w.carry && !w.hasCore) {
+      if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+      if (w.muckAt == null && muckLeft() > 0) {
+        const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
+        w.muckAt = pick == null ? null : Math.floor(pick / P);
+      } else if (w.muckAt != null) {
+        muckTaken.add(w.muckAt);
+      }
+    }
+    const inHole = w.inPit || (!w.carry && !w.hasCore && muckLeft() > 0)
+      ? (w.muckAt == null ? null : w.muckAt * P + P / 2) : null;
     // in the hole, over the hole, or on the other side of it: all one errand
     const wrongSide = inHole != null && pastPit(inHole) !== !!w.farSide;
 

@@ -218,6 +218,7 @@ export const S = {
   // --- the air ----------------------------------------------------------------
   haze: 0,                // motes in the sky, waiting to come back down
   raining: false,         // and whether it is coming back down right now
+  rainFor: 0,             // seconds into this shower, which is how hard it is coming down
   rains: 0,               // how many times they have
   scrubOpen: false,       // the house is built
   scrubbers: 0,           // and this many bodies are in it

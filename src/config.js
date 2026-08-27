@@ -187,6 +187,17 @@ export const PUFF_MAX = 260;         // puffs in the air at once, before it is a
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
 export const RAIN_PER_S = 975;      // per mote: a sky of more specks takes more of them a second
+// How long a shower takes to come on, in seconds. A sky over the line used to
+// open at full rate on the first frame: a clear yard, and then sixteen hundred
+// drops in the air a quarter of a second later, which reads as a bucket tipped
+// over rather than as weather. It comes on the way rain comes on -- a few spots,
+// then more of them, then the whole of it -- and the rate is squared across the
+// ramp so the first second is a scatter you notice rather than a downpour.
+//
+// It is the front of the shower and not the whole of it: a shower runs until the
+// sky it is made of is empty, so a bigger sky still rains for longer, and this
+// only sets how long it takes to get going.
+export const RAIN_RAMP = 3;
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
 // The share of what lands that leaves a mark. The sky holds three and a half
 // times the motes it used to for the same work done in the yard -- see

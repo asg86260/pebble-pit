@@ -23,7 +23,7 @@
 
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
-         SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
+         SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
@@ -595,8 +595,21 @@ const RAIN_FLOOR = 4;
 const settled = m => m.age >= SMOG_SINK;
 
 function pour(secs) {
-  let n = RAIN_PER_S * secs;
   if (!SKY.length) { S.raining = false; return; }
+
+  // How far into the shower this is. Rain comes on: a spot or two, then more of
+  // them, then the whole sky. It used to open at the full rate on the very first
+  // frame -- nothing overhead, and a quarter of a second later sixteen hundred
+  // drops in the air -- which is not weather arriving, it is a bucket being
+  // tipped over. The rate is squared across the ramp, so the first second is a
+  // scatter and the shower is properly on by the end of it.
+  //
+  // Nothing is lost to the slow start. What falls is the sky itself, and the sky
+  // is still up there: a shower runs until it is empty either way, so the ramp
+  // makes the front of it gentler rather than the whole of it smaller.
+  S.rainFor = (S.rainFor || 0) + secs;
+  const on = Math.min(1, S.rainFor / RAIN_RAMP);
+  let n = RAIN_PER_S * secs * on * on;
 
   // Which ones may fall, as places in the sky rather than as motes: a settled
   // sky is thousands of specks and this runs every frame of a downpour, so a
@@ -696,8 +709,14 @@ export function muckFloor(c) {
   // the top of everything, because the layer is painted after the world is.
   if (S.quarryOpen && wx > quarry.x && wx < quarry.x + quarry.w)
     return dugTopY(wx);
-  // Over the hole it lands on whatever is *in* the hole, which is the dust. It
-  // used to land on the ground line, which over an open pit is thin air: a grey
+  // Over the hole it lands on the top of the pile, flush with it. `surfaceY` is
+  // where the *next* grain down that column would come to rest, which is one
+  // cell above the dust that is already there -- so a layer laid on that line
+  // hung a cell over the pile with daylight under it. What muck lies on is the
+  // top of the pile, and the top of the pile is one cell below where the next
+  // grain would land.
+  //
+  // It used to land on the ground line, which over an open pit is thin air: a grey
   // lid sitting across the mouth with the hole visible underneath it. Muck lies
   // on top of what it fell on, everywhere, and the pit is not an exception just
   // because the top of it is lower than the ground.
@@ -705,10 +724,7 @@ export function muckFloor(c) {
   // On the dust and not in it. Nothing about this counts against what the hole
   // holds -- muck is worth nothing and takes nothing -- it is a layer over the
   // top of the pile, in the way, like the layer over everything else.
-  if (overPitMouth(wx)) {
-    const col = colOf(pit, wx);
-    if (col >= 0 && col < pit.cols) return surfaceY(pit, col);
-  }
+  if (overPitMouth(wx)) return pitTop(wx);
   return S.groundY;
 }
 
@@ -755,6 +771,13 @@ export function cleanSpotNear(wx, reach = 90) {
   return null;
 }
 
+// Where a body goes to *stand* to work a patch. Out on the yard that is the
+// patch itself; on the rock, the cut or the beds it is the nearest ground
+// beside it. A shovel reaches on to a site, a pair of boots does not -- so the
+// body steps up to the edge of the thing and works across it, the same way it
+// steps aside to leave anything of its own on ground somebody can clean.
+export const workSpot = wx => (onSite(colAt(wx)) ? (cleanSpotNear(wx) ?? wx) : wx);
+
 // Capped like everything else the sky drops. A column holds MUCK_MAX and no
 // more, whoever put it there -- without that a body could bury a column deeper
 // than a downpour ever would, and the crew would still be shovelling it long
@@ -772,13 +795,22 @@ export function dropMuckAt(wx, n) {
 // The rest of it, shifted from wherever the body doing the shifting is standing,
 // so a gang spread along the yard clears the yard rather than all of them
 // working the same column.
+//
+// A shovel reaches on to a site, and it always should have. `onSite` was in this
+// loop, so muck that came down on the rock, the cut or the beds was not
+// something anybody could clear: it was worked off by mining through it, and a
+// rock nobody was swinging at -- a full pile, a crew with no miners on it, the
+// gap between one rock and the next -- kept whatever the sky left on it for the
+// rest of the run. A body cannot *stand* on a site, which is a different rule
+// and is kept where it belongs, in `cleanSpotNear`: it stands on the ground
+// beside the thing and works across it.
 export function sweepMuckAt(wx, n) {
   const m = muckCols();
   const home = colAt(wx);
   let left = n;
   for (let d = 0; d < 60 && left > 0; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !m[c] || onSite(c)) continue;
+      if (c < 0 || c >= m.length || !m[c]) continue;
       const took = Math.min(m[c], left);
       m[c] -= took;
       left -= took;
@@ -842,7 +874,7 @@ const MUCK_ELBOW = 4;
 // column it names is clear, so this is what tells a body it is done with it.
 export function muckAtCol(c) {
   const m = muckCols();
-  return c >= 0 && c < m.length && !onSite(c) ? m[c] : 0;
+  return c >= 0 && c < m.length ? m[c] : 0;
 }
 
 export function nearestMuck(wx, taken) {
@@ -850,7 +882,7 @@ export function nearestMuck(wx, taken) {
   const home = colAt(wx);
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !m[c] || onSite(c)) continue;
+      if (c < 0 || c >= m.length || !m[c]) continue;
       if (taken && taken.has(c)) continue;
       // A claim is a stretch, not a cell. Columns are six pixels and a body is
       // eighteen wide, so reserving the one cell somebody is shovelling puts the
@@ -904,12 +936,34 @@ export function muckPastPit() {
   return false;
 }
 
-// the top of whatever is in the hole at a place: the dust, or the floor when it
+// The top of whatever is in the hole at a place: the dust, or the floor when it
 // is empty. What a body in the pit stands on, and what the muck lies on.
+//
+// `surfaceY` answers a different question -- where the *next* grain down this
+// column would come to rest -- and that is one cell above the dust already
+// there. Read as a surface it put everything a cell too high: the layer hung
+// over the pile with daylight under it, and the crew walked the hole a cell off
+// the ground the way they walk the yard a cell off the ground, which is to say
+// not at all. One cell down is the top of the pile itself.
 export function pitTop(wx) {
   const c = colOf(pit, wx);
   if (c < 0 || c >= pit.cols) return S.groundY + pitDepth();
-  return surfaceY(pit, c);
+  return surfaceY(pit, c) + pit.p;
+}
+
+// What a body standing in the hole stands on: the highest the pile gets under
+// any part of it, not whatever its middle happens to be over.
+//
+// A body is three cells wide and the pile is not level -- it heaps under the lip
+// and runs away downhill, and while it is being filled it is whatever shape the
+// tipping left. Standing on the middle column put the uphill half of the body
+// inside the pile: it read as walking through the heap rather than over it. It
+// is the same rule a core rests by -- see `supportY` in core.js -- and the same
+// rule anything wide standing on something uneven has to follow.
+export function pitStand(leftX, width = WORKER) {
+  let top = Infinity;
+  for (let x = leftX; x < leftX + width; x += pit.p) top = Math.min(top, pitTop(x));
+  return Math.min(top, pitTop(leftX + width - 1));
 }
 
 export const muckLeft = () => allLeft;
@@ -933,7 +987,9 @@ export function stepSmog(dt) {
   // fall, stops again in the same breath because there is nothing to pour, and
   // starts over once the motes arrive. One shower, counted twice.
   settleCount();
-  if (S.haze >= SMOG_RAIN_AT && !raining()) { S.raining = true; S.rains++; }
+  // A shower starts over from the first spot every time -- the ramp is a fact
+  // about this one, not a clock that carries on between them.
+  if (S.haze >= SMOG_RAIN_AT && !raining()) { S.raining = true; S.rains++; S.rainFor = 0; }
   if (raining()) pour(secs);
   place(secs);
   stepDrops();
