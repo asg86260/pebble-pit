@@ -668,6 +668,19 @@ export const QUARRY_FLOOR_JAG = [0, 1, 2, 1, 0, 2, 1, 0];  // and cells of relie
 export const QUARRY_SWING = 620;
 export const QUARRY_SHUFFLE = 0.35;   // and how fast it works along the face
 export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
+// --- what the cut is for ------------------------------------------------------
+// Shards used to trickle: a quarrier swung, and every so often one came off the
+// face and went over the rim, for ever, at a steady rate. Which made blue a tap
+// rather than a find -- and a tap is a number going up, not a thing you went and
+// got.
+//
+// A cut is full of dirt. Somebody works down through it, and at the bottom there
+// is a seam: a handful of stone all at once, thrown up over the rim, and then the
+// climb out and the hole falls in again behind them. Deeper cut, bigger seam.
+// The blue arrives in lumps you can watch coming.
+export let CUT_DIG_MS = 34000;   // to get from the surface to the seam, at pace 0
+export const CUT_SEAM = 2;         // shards in the seam, per bench of depth
+export const CUT_TOSS_MS = 320;    // and how fast they go up over the rim
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 
@@ -841,6 +854,7 @@ export const TUNABLE = [
   { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
+  { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000 },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
@@ -867,6 +881,7 @@ export function tuned(key) {
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
     case 'HAUL_BASE': return HAUL_BASE;
+    case 'CUT_DIG_MS': return CUT_DIG_MS;
     case 'QUARRY_BASE': return QUARRY_BASE;
     case 'TEND_BASE': return TEND_BASE;
     case 'CUT_MS': return CUT_MS;
@@ -892,6 +907,7 @@ export function tune(key, v) {
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;
     case 'HAUL_BASE': HAUL_BASE = v; break;
+    case 'CUT_DIG_MS': CUT_DIG_MS = v; break;
     case 'QUARRY_BASE': QUARRY_BASE = v; break;
     case 'TEND_BASE': TEND_BASE = v; break;
     case 'CUT_MS': CUT_MS = v; break;

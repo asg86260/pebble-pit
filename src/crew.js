@@ -1381,6 +1381,11 @@ export function updateWorkers(now, dt) {
       if (to != null) {
         if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
         unbook(w);
+        // Out of the house first. A mess is the one thing that calls a body back
+        // off its own doorstep, and this branch runs before the going-home one --
+        // so a body indoors used to pick up a shovel without ever coming out,
+        // and worked the yard invisible and still counted as being at home.
+        w.inside = false;
         w.goal = 'muck';
         const d = to - WORKER / 2 - w.x;
         // walk to it, then shovel: it is somewhere you go, not something that

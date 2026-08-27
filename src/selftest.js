@@ -534,6 +534,47 @@ const TESTS = [
     ];
   }],
 
+  // Shards used to trickle: a quarrier swung, and every so often one came off the
+  // face, for ever, at a steady rate -- which makes blue a tap rather than a
+  // find. A cut is full of dirt now. Somebody works down through it, and at the
+  // bottom there is a seam: a handful all at once, thrown up over the rim, then
+  // the climb out and the hole falls in behind them.
+  ['the cut is dug out to a seam, and falls in behind them', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(0, 0, 2);
+    run(2);
+    const fresh = state();
+
+    // it goes down, and nothing comes up on the way
+    runUntil(() => state().cutDug > 0.5, 120);
+    const halfway = state();
+
+    // and at the bottom the seam comes out in one go
+    const paid = runUntil(() => state().pileCount.quarry > 0, 180);
+    const seam = state();
+    const climbing = runUntil(() => state().crewDetail.some(d => d[0] === 'q' && d.includes('|up|')), 30)
+                  || seam.cutDug >= 1;
+
+    // then the hole fills back in and they start again
+    const again = runUntil(() => state().cutDug < 0.5 && state().pileCount.quarry > 0, 120);
+    const round2 = runUntil(() => state().pileCount.quarry > seam.pileCount.quarry, 240);
+    window.__crew(0, 0);
+    return [
+      ok(fresh.cutDug < 0.2, 'a fresh cut is full to the ground line', `${fresh.cutDug}`),
+      ok(halfway.pileCount.quarry === 0,
+         'and nothing comes up while they are still digging through it',
+         `${halfway.pileCount.quarry} on the pile at ${halfway.cutDug} down`),
+      ok(paid && seam.pileCount.quarry > 1,
+         'the seam at the bottom pays a handful at once, not one at a time',
+         `${seam.pileCount.quarry} up in one go`),
+      ok(seam.seam >= 2, 'and what it is worth is the depth of the cut', `${seam.seam} a seam`),
+      ok(climbing, 'they climb out with it'),
+      ok(again, 'the cut falls in behind them', `${state().cutDug} deep again`),
+      ok(round2, 'and they dig it again')
+    ];
+  }],
+
   // The yard makes its own work. A body stops now and then, says so, leaves the
   // same muck the sky rains down, and gets back to it -- so a bigger crew is
   // more hands and a bigger mess, and the shovelling has something to do that

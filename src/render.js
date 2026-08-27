@@ -15,7 +15,7 @@ import { coreHome } from './core.js';
 import { pitDepth, pitFull } from './pit.js';
 
 import { benchMark } from './upgrades.js';
-import { underground, quarryCut, ladder } from './quarry.js';
+import { underground, quarryCut, ladder, dirtTopY } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN } from './config.js';
@@ -76,12 +76,29 @@ export function drawQuarry() {
   ctx.fillRect(x, y - E, w, h + E);
 
   const pts = quarryCut().outline;
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = E;
-  ctx.lineJoin = 'miter';
   ctx.beginPath();
   ctx.moveTo(pts[0][0], pts[0][1]);
   for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+
+  // The dirt still in it. A cut is full to the ground line and is emptied a dig
+  // at a time, so what is drawn here is the part nobody has got through yet --
+  // the same brown the muck is, because it is the same stuff, and clipped to the
+  // cut so it stops at the walls rather than at a rectangle.
+  const top = dirtTopY();
+  if (top > y + 1) {
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = MUCK_TONE;
+    ctx.fillRect(x, y, w, top - y);
+    // a skin on it, so a face being worked reads as a face rather than a fill
+    ctx.fillStyle = MUCK_SKIN;
+    ctx.fillRect(x, top - P, w, P);
+    ctx.restore();
+  }
+
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = E;
+  ctx.lineJoin = 'miter';
   ctx.stroke();
   drawLadder();
   ctx.fillStyle = '#000';

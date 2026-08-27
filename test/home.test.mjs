@@ -52,7 +52,12 @@ group('a body put to work comes out of the house first', async () => {
 
   window.__assign('quarriers', 1);
   window.__assign('quarriers', 1);
-  run(30);
+  // Long enough for the cut to pay. Shards come out in a seam at the bottom of a
+  // dig now rather than trickling off the face, so the first of them is most of
+  // a minute in -- and until there is one on the ground the hauler still at home
+  // has nothing to be called out for.
+  runUntil(() => state().pileCount.quarry > 0, 180);
+  runUntil(() => state().houses.home === 0, 60);
   const at = state();
   window.__crew(0, 0);
   window.__clearFloor();

@@ -8,16 +8,16 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, CUT_TOSS_MS } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
 import { foul, throughCutMuck } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
-import { walkY, groundAt, benches, resite } from './world.js';
+import { walkY, groundAt, benches, resite, pileOf } from './world.js';
 import { mult } from './lab.js';
-import { spawnSpoil } from './dust.js';
+import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
 
 // how long a trip takes, at this pace
@@ -178,80 +178,159 @@ function seatX(w) {
 // A shard knocked off the face is thrown out of the cut and into the quarry's
 // own pile -- by the same throw the rock's spoil uses, aimed the same way, over
 // the rim because the arc knows how to climb.
+// Up and out over the rim. This one is aimed, and should be: it is a body at the
+// bottom of a hole throwing stone up onto the ground above it, which is a person
+// deciding where something goes -- the same as a hauler tipping a load into the
+// pit. What the rock does is the opposite: nobody throws spoil off a boulder, it
+// simply comes off, so that falls where it falls.
+//
+// Without the arc it does not get out at all. A knocked-loose grain has a pop
+// sized for a face at head height, and the floor of a worked cut is a good
+// forty cells under the rim -- so the whole seam landed back on the floor it
+// came out of and the cut filled up with its own shards.
 function tossOut(x, y) {
-  spawnSpoil(x, y, someFind(SHARD_CELL));
+  const p = pileOf('quarry');
+  const near = p ? p.from : quarry.x + quarry.w + P * 4;
+  const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 20;
+  const land = Math.min(far, near + Math.abs(bell()) * (far - near) * 0.5);
+  const v = aim(x, y, land, P);
+  spawnChip(x, y, v.vx, v.vy, someFind(SHARD_CELL), land);
 }
 
 // one quarrier, one frame
 export function stepQuarrier(w, now) {
   const rim = quarryFace();
 
-  // walk along the ground to the head of the ladder
+  // Walk along the ground to the head of the ladder -- and wait there if the dig
+  // is spent, because there is nothing down an emptied hole to go down for.
   if (w.goal === 'to') {
     w.y = walkY(w.x + WORKER / 2);
     const d = rim - w.x;
     w.x += Math.sign(d) * Math.min(QUARRY_WALK, Math.abs(d));
-    if (Math.abs(d) < 1) { w.x = rim; w.goal = 'down'; w.seat = seatX(w); }
+    if (Math.abs(d) >= 1) return;
+    w.x = rim;
+    if (S.cutSpent) return;                      // stood at the rim until it fills
+    w.goal = 'down';
+    w.seat = seatX(w);
     return;
   }
 
-  // down the ladder, hand over hand, and off it at the bottom
+  // Down the ladder, hand over hand, and off it on top of whatever dirt is left.
+  // A fresh cut is full to the ground line, so on the first dig that is barely a
+  // climb at all; by the time the seam is showing it is the whole way down.
   if (w.goal === 'down') {
     w.x = rim;                                   // it holds on: nothing drifts
-    const foot = ladder().foot - WORKER;
+    const foot = Math.min(ladder().foot, dirtTopY()) - WORKER;
     w.y = Math.min(w.y + CLIMB_PACE, foot);
-    if (w.y >= foot) { w.y = foot; w.goal = 'work'; }
+    if (w.y >= foot) { w.y = foot; w.goal = 'work'; w.dugAt = now; }
     return;
   }
 
-  // At the face. It swings like a miner does, and every so often a shard comes
-  // off and goes up over the rim. Nobody knocks another one loose while the
-  // pile outside is full: there would be nowhere to put it.
+  // Down through the dirt, and out at the bottom with what is under it.
   //
-  // It bobs on its feet on its own rhythm, the way a miner does. Standing dead
-  // still between swings is what made a pair of them read as one thing.
-  w.y = quarryFloor(w.x + WORKER / 2) - WORKER   // the floor is uneven, so they walk it
-        + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
+  // It stands on the surface of what is left, so the digging is the body itself
+  // going down -- there is no bar and no number, the hole simply gets emptier
+  // under its feet. At the bottom it turns and throws the seam up over the rim
+  // one stone at a time, climbs out, and the cut falls in behind it.
+  if (w.goal === 'up') {                         // out, with the seam gone up before it
+    w.x = quarryFace();
+    const top = walkY(w.x + WORKER / 2);
+    w.y = Math.max(w.y - CLIMB_PACE, top);
+    if (w.y > top) return;
+    w.y = top;
+    w.goal = 'to';
+    // The last one out is what fills the hole back in. Doing it the moment the
+    // seam was emptied dropped the dirt back under the feet of everybody still
+    // down there, and they rode it up like a lift.
+    if (!S.workers.some(o => o.type === 'quarrier' && o !== w && o.y > S.groundY)) {
+      S.cutDug = 0;
+      S.cutSpent = false;
+      S.dirty = true;
+    }
+    return;
+  }
+
+  w.y = dirtTopY() - WORKER + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
   w.lunge *= 0.82;
-  // The pile outside is full, so there is nowhere to put another shard and
-  // nothing to do but stand about on the floor of the cut. See break.js.
-  if (S.pileFull.quarry) { w.resting = true; w.next = now + quarryMs(); return; }
+
+  // Nowhere to put a seam, so nothing to do but stand on the dirt. See break.js.
+  if (S.pileFull.quarry) { w.resting = true; w.next = now + digMs(); return; }
   w.resting = false;
 
-  // It works along the face rather than standing on one spot: back and forth
-  // between the walls, turning at the ends and before walking into a mate.
+  // works along the face rather than standing on one spot
   const { lo, hi } = quarryBand();
   const step = w.x + w.dir * QUARRY_SHUFFLE * (w.pace || 1);
   if (step < lo || step > hi || elbowRoom(w, step)) w.dir = -w.dir;
   else w.x = step;
 
-  // and it swings on its own rhythm, which is nothing to do with how often the
-  // face gives anything up: a quarry should look busy whether or not it is
-  // being productive, the same as the crew on the rock do.
+  // and it swings on its own rhythm, which is nothing to do with how the digging
+  // is going: a cut should look worked whether or not it is about to pay.
   if (now >= w.swingAt) {
     w.lunge = 1;
     w.swingAt = now + QUARRY_SWING * (0.7 + Math.random() * 0.6);
   }
 
-  if (now >= w.next) {
-    if (w.next) {
-      // silt first: the cut fills from the top and has to come out before
-      // anything under it does
-      if (throughCutMuck(1) > 0) {
-        tossOut(w.x + WORKER / 2, w.y + WORKER);
-        w.quarried = (w.quarried || 0) + 1;
-        foul(QUARRY_FOUL, w.x + WORKER / 2, w.y);
-      }
-    }
+  // At the seam: the handful goes up over the rim, a stone at a time, so it
+  // reads as somebody unloading rather than a number arriving.
+  //
+  // The seam is the hole's, not the finder's. Three bodies at the bottom share
+  // one handful out between them -- they got there faster, which is what more
+  // hands buys, and a gang that each walked off with a full seam would make
+  // headcount pay twice for the same hole.
+  if (S.cutOwed > 0) {
+    if (now < (w.tossAt || 0)) return;
+    tossOut(w.x + WORKER / 2, w.y + WORKER);
+    w.quarried = (w.quarried || 0) + 1;
+    foul(QUARRY_FOUL, w.x + WORKER / 2, w.y);
+    S.cutOwed--;
+    w.tossAt = now + CUT_TOSS_MS;
     w.lunge = 1;
-    w.swingAt = now + QUARRY_SWING;
-    // a blaster brings one up twice as often: the face comes down in one go
-    w.next = now + quarryMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
+    if (S.cutOwed <= 0) S.cutSpent = true;       // that is the lot: everybody out
+    S.dirty = true;
+    return;
+  }
+
+  // Seam emptied and the hole dug out: up the ladder. The cut falls in behind
+  // the last one out rather than under the feet of the ones still climbing --
+  // see the 'up' leg, which is where the ground comes back.
+  if (dugShare() >= 1) { w.goal = 'up'; return; }
+
+  // Digging. Silt first: rain fills the cut from the top, and it has to come
+  // out before the dirt under it does.
+  if (throughCutMuck(1) <= 0) return;
+  // Capped at a frame's worth. A body that went off to do something else and
+  // came back would otherwise cash in every second it was away as digging.
+  const since = Math.min(120, now - (w.dugAt || now));
+  S.cutDug = Math.min(1, dugShare() + since / digMs() * (w.trained ? 2 : 1));
+  w.dugAt = now;
+  S.dirty = true;
+  if (dugShare() >= 1 && S.cutOwed <= 0) {
+    S.cutOwed = seamShards();
+    w.tossAt = 0;
   }
 }
 
 // nobody is out of sight any more: the whole point of a cut rather than a shaft
 export const underground = () => false;
+
+// --- the dig ------------------------------------------------------------------
+// How far down this dig has got, and where the dirt that is left comes up to.
+// At nought the cut is full to the ground line; at one it is empty to the floor
+// and the seam is showing.
+export const dugShare = () => Math.min(1, Math.max(0, S.cutDug || 0));
+
+export function dirtTopY() {
+  const c = quarryCut();
+  return S.groundY + (c.deep - S.groundY) * dugShare();
+}
+
+// What the seam is worth: a handful per bench, so taking the cut deeper is worth
+// something at the bottom rather than only being further to climb.
+export const seamShards = () => Math.max(1, Math.round(benches() * CUT_SEAM));
+
+// How long one dig takes, at this pace. The same upgrade that used to make
+// shards come off faster makes the digging faster.
+export const digMs = () => Math.max(600, CUT_DIG_MS * Math.pow(0.82, S.quarryPaceLevel) / mult('quarry'));
 
 
 // --- what the cut sells ------------------------------------------------------

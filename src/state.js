@@ -182,6 +182,17 @@ export const S = {
   miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   quarriers: 0, quarryPaceLevel: 0,
+  // How far down the current dig has got, 0 at the surface and 1 at the seam.
+  // The cut fills back in behind them, so this runs round and round.
+  cutDug: 0,
+  // What the seam still owes, once somebody has broken through to it. It belongs
+  // to the hole rather than to the body that reached it, so a gang at the bottom
+  // shares one handful out between them rather than each being handed its own.
+  cutOwed: 0,
+  // This dig is finished with: the seam is out and everybody is on their way up.
+  // Nobody goes back down until the last one is out and the cut has fallen in,
+  // or the first body back down finds an empty hole and turns straight round.
+  cutSpent: false,
   labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 
