@@ -43,7 +43,7 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // coming out of the tower door with its hat on has a few steps to take rather
 // than the length of the yard. It used to hang over the middle of the works,
 // which put it above the quarry for no reason anybody could have told you.
-export const TO_SKY = -3300;
+export const TO_SKY = -3468;
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
 export const TO_FARM = -2106;    // rock centre to the near edge of the farm
@@ -321,7 +321,17 @@ export const SCRUB_H = P * 20;
 export const SCRUB_FOLDS = 3;
 export const SCRUB_PUMP = 3.2;       // folds a second, at one body in the house
 
-export const TO_CASINO = -2910;
+// The scrubbing house wants more elbow room on this side than the standard gap
+// gives it. Every building along the walk sits about a hundred and seventy from
+// its neighbour, which is right for two plain sheds -- but the hood flares out
+// as it goes up, the muck comes out of the back on this side, and the sky bends
+// down through exactly this stretch on its way into the mouth. Three things in
+// one gap read as the two buildings touching. So this one is doubled, and the
+// room is found by widening the world's left end rather than by shuffling
+// anything on the other side up against the lab: GROUND_LEFT and everything out
+// past the casino move by the same amount, so the far end of the walk keeps the
+// margin it had and only this gap changes.
+export const TO_CASINO = -3078;
 // Past the casino: the far end of the walk, and the last thing on the ground.
 // Everything else out here was bought with what the yard digs; this one is
 // bought with the thing the yard cannot make.
@@ -346,7 +356,7 @@ export const OUTHOUSE_H = P * 10;
 // Far enough past the casino to read as its own place rather than the next unit
 // along: the gaps between the buildings out here run about a hundred and fifty,
 // and this one was eighteen.
-export const TO_TOWER = -3156;
+export const TO_TOWER = -3324;
 export const TOWER_W = P * 13;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // Twenty-six across, and it was eighteen. The wheel is set by the height rather
@@ -638,7 +648,7 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 // rock, so the last one along was standing four cells from the end of the world
 // with the casino almost against its wall. Widened so the far end of the walk
 // has somewhere to be.
-export const GROUND_LEFT = 3510;
+export const GROUND_LEFT = 3678;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
