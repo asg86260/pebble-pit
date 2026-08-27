@@ -178,8 +178,13 @@ group('a mess comes before the dust', async () => {
   window.__air({ haze: state().smog.at + 1 });
   let peak = 0;
   for (let i = 0; i < 60; i++) { run(0.25); peak = Math.max(peak, state().smog.muck.yard); }
+  // Let it stop raining first. The sky has to get properly filthy before it
+  // comes down now, so what comes down is a proper downpour -- and measuring
+  // whether the crew are gaining on it while it is still falling measures the
+  // weather rather than the crew.
+  runUntil(() => !state().smog.raining, 120);
   const wet = state();
-  run(30);
+  run(60);
   const later = state();
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });
@@ -206,9 +211,13 @@ group('muck is shifted, not banked', async () => {
   // over the brim rather than just under it: with nobody on the rock there is
   // nothing putting the last mote up there
   window.__air({ haze: before.smog.at + 1 });
-  run(14);
+  // A thicker sky is a longer downpour, so it is watched out rather than given a
+  // fixed fourteen seconds -- otherwise what follows measures the weather still
+  // falling rather than the crew shifting it.
+  runUntil(() => state().smog.raining, 30);
+  runUntil(() => !state().smog.raining, 180);
   const wet = state();
-  run(40);
+  run(90);
   const after = state();
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });

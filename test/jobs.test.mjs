@@ -11,24 +11,32 @@ group('every trade doubles the work it is for', async () => {
   window.__crew(0, 0, 3, 3);                   // the quarry and the beds
   window.__school({ blasters: 0, growers: 0 });
   window.__clearFloor();
-  // what the sites *make*, which is what lands in their own pile. Nobody is
-  // carrying any of it to the hole, and how fast a hauler walks is a
-  // different check.
+  // What the sites *do* in a fixed stretch of yard. The beds are measured by
+  // what lands in their pile; the cut is measured by how far down it gets,
+  // because a cut pays in a seam at the bottom of a whole dig now and a
+  // ninety-second window of one is a window with nothing in it either way.
+  // How far it got is the work; the seam is only where the work is handed over.
+  // Cells out of the ground, counted outright: the share dug runs round and
+  // round as the hole is emptied and falls in, so a window that happens to cross
+  // a payout reads as negative work.
+  const dug = () => state().cutTotal;
+  const p0 = dug();
   run(90);
-  const plain = { ...state().pileCount };
+  const plain = { ...state().pileCount, dug: dug() - p0 };
 
   window.__school({ blasters: 3, growers: 3 });
   window.__clearFloor();
+  const t0 = dug();
   run(90);
-  const trained = { ...state().pileCount };
+  const trained = { ...state().pileCount, dug: dug() - t0 };
 
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(plain.quarry > 0 && plain.farm > 0, 'the quarry and the beds are working at all',
-       `${plain.quarry} up the quarry, ${plain.farm} off the beds`),
-    ok(trained.quarry > plain.quarry, 'a blaster brings up more',
-       `${plain.quarry} -> ${trained.quarry}`),
+    ok(plain.dug > 0 && plain.farm > 0, 'the quarry and the beds are working at all',
+       `${plain.dug} cells out, ${plain.farm} off the beds`),
+    ok(trained.dug > plain.dug, 'a blaster gets further down in the same time',
+       `${plain.dug} -> ${trained.dug} cells`),
     ok(trained.farm > plain.farm, 'and a grower brings a bed on sooner',
        `${plain.farm} -> ${trained.farm}`)
   ];

@@ -121,8 +121,14 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 export const SMOG_PER_DUST = 0.18;
 export const QUARRY_FOUL = 5;        // a shard out of the cut is a hole full of it
 export const FARM_FOUL = 3;          // and turning a plot over lifts some too
-export const SMOG_RAIN_AT = 900;     // and this many of them up there brings it down
-export const SMOG_CAP = 1400;        // never more than this in the sky at once
+// The sky has to get properly filthy before it comes down. It used to break at
+// nine hundred, which a working yard reaches before the haze is thick enough to
+// look like anything -- so the rain arrived while the sky was still a scatter of
+// specks, and the thing it was supposed to be a consequence of was never on
+// screen long enough to be read as a cause. It is a long way up now: the sky
+// darkens, keeps darkening, and *then* it rains.
+export const SMOG_RAIN_AT = 3200;    // and this many of them up there brings it down
+export const SMOG_CAP = 4200;        // never more than this in the sky at once
 // The sky is motes, not banks: there is nothing here that says how many clouds
 // there are or what shape they are, because nobody draws one. What is up there is
 // however the motes have arranged themselves.
@@ -746,11 +752,17 @@ export const CUT_TOSS_MS = 320;    // and how fast they go up over the rim
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // And how fast it steps between the cells of its own face, which is a different
-// thing: crossing the yard is a journey and moving along a course you are
-// working is a couple of paces. A body walks to every cell it digs now, so this
-// is most of what a dig costs -- at the walking pace it was four times the
-// swinging.
-export const CUT_STEP = 3.2;
+// thing: crossing the yard is a journey and shifting along a course you are
+// working is a shuffle. Slower than walking, because that is what it is -- a
+// body with a pick moving a pace and a half to the next bit of ground.
+//
+// It was three times a walking pace once, and double that for a blaster, which
+// made the fastest thing in the yard a man in a hole. That number came from
+// wanting a dig to take a certain time, which is no reason for anything in the
+// world to move at a speed: a dig takes as long as digging takes. What makes it
+// affordable is that a body picks a cell from the few nearest it, so the walks
+// are a pace or two and a slow pace costs almost nothing.
+export let CUT_STEP = 0.6;
 
 // --- the farm ---------------------------------------------------------------
 // Beds out past the quarry. Nothing grows in them on its own: a farmhand stands
@@ -913,17 +925,17 @@ export const AIR_GUST = 0.34;     // and the wind the whole field leans on
 // Barely there on purpose. It was strong enough that the dust visibly obeyed the
 // pointer, which makes it a toy you are playing rather than air you are moving
 // through: what is wanted is the suspicion that the room noticed you.
-export let AIR_STIR = 0.10;       // how hard a fast cursor drags a mote along
-export const AIR_STIR_R = 95;     // how far the wake reaches, in screen pixels
-export const AIR_STIR_CAP = 2.4;  // the fastest the draught will carry one
+export let AIR_STIR = 0.04;       // how hard a fast cursor drags a mote along
+export const AIR_STIR_R = 78;     // how far the wake reaches, in screen pixels
+export const AIR_STIR_CAP = 1.1;  // the fastest the draught will carry one
 export const AIR_STIR_EASE = 3.0; // and how quickly it dies, share a second
 
 // The same hand through the smoke. Fainter again: a mote of haze is a lungful of
 // the yard's own filth hanging in the air, and it should shift like something
 // that weighs nothing rather than something you can sweep.
-export const SMOKE_STIR = 0.055;   // how hard the cursor moves smoke
+export const SMOKE_STIR = 0.022;   // how hard the cursor moves smoke
 export const SMOKE_STIR_R = 130;   // how far it reaches, in world pixels
-export const SMOKE_STIR_CAP = 26;  // and the furthest a mote is ever pushed
+export const SMOKE_STIR_CAP = 12;  // and the furthest a mote is ever pushed
 export const SMOKE_STIR_EASE = 1.5;
 
 // How much a plume opens out as it climbs. Smoke off a swing goes up in a column
@@ -957,6 +969,7 @@ export const TUNABLE = [
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
   { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000 },
+  { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05 },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
   { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
@@ -983,6 +996,7 @@ export function tuned(key) {
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
     case 'HAUL_BASE': return HAUL_BASE;
+    case 'CUT_STEP': return CUT_STEP;
     case 'CUT_DIG_MS': return CUT_DIG_MS;
     case 'QUARRY_BASE': return QUARRY_BASE;
     case 'TEND_BASE': return TEND_BASE;
@@ -1009,6 +1023,7 @@ export function tune(key, v) {
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;
     case 'HAUL_BASE': HAUL_BASE = v; break;
+    case 'CUT_STEP': CUT_STEP = v; break;
     case 'CUT_DIG_MS': CUT_DIG_MS = v; break;
     case 'QUARRY_BASE': QUARRY_BASE = v; break;
     case 'TEND_BASE': TEND_BASE = v; break;

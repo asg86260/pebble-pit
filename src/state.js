@@ -190,6 +190,10 @@ export const S = {
   // to the hole rather than to the body that reached it, so a gang at the bottom
   // shares one handful out between them rather than each being handed its own.
   cutOwed: 0,
+  // Cells taken out of the cut, ever. The share dug runs round and round as the
+  // hole is emptied and falls in, so it cannot say how much work was done over a
+  // stretch that happens to cross a payout; this only ever goes up.
+  cutTotal: 0,
   // This dig is finished with: the seam is out and everybody is on their way up.
   // Nobody goes back down until the last one is out and the cut has fallen in,
   // or the first body back down finds an empty hole and turns straight round.

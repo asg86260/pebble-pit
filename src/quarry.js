@@ -307,11 +307,11 @@ export function stepQuarrier(w, now) {
   const d = to - w.x;
   if (Math.abs(d) > 1) {
     w.face = Math.sign(d) || w.face || 1;
-    // A blaster is quicker on the face as well as quicker with the pick. Halving
-    // only the swing stopped doubling anything the moment a body had to walk to
-    // every cell: the walking is most of a dig now, so a trade that left it
-    // alone was a trade that did nothing.
-    w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 2 : 1), Math.abs(d));
+    // A blaster is a little quicker on its feet as well as quicker with the pick.
+    // Halving only the swing stopped doubling anything the moment a body had to
+    // walk to every cell -- but a trade is a man who knows the work, not a man
+    // who runs, so it is a shade over a shuffle rather than a sprint.
+    w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 1.5 : 1), Math.abs(d));
     return;                                    // on its way: it is not digging yet
   }
   w.x = to;
@@ -319,6 +319,7 @@ export function stepQuarrier(w, now) {
 
   const c = w.cell;
   cells[c]++;
+  S.cutTotal = (S.cutTotal || 0) + 1;
   w.cell = null;                               // done with that one: it picks another
   // Digging raises dust, not only the seam at the bottom. The cut used to foul
   // the air once per shard, which was the same event as producing one; now that

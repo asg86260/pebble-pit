@@ -110,7 +110,10 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // Properly down the hole, measured on the body itself rather than on a count:
   // a climb of one cell is over inside a single sample, and what this group is
   // about is the route out. Four cells is a climb you can watch.
-  runUntil(() => { const b = body(); return b.t === 'q' && b.y > state().groundY + P * 4; }, 180);
+  // A generous budget: a body shuffles along the face it is working at less than
+  // a walking pace, which is what it should look like, and getting a course of
+  // ground off takes as long as it takes.
+  runUntil(() => { const b = body(); return b.t === 'q' && b.y > state().groundY + P * 4; }, 600);
   const s0 = state();
   const digging = body();
 

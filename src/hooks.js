@@ -18,7 +18,7 @@ import { blocked, resite, clampCam } from './world.js';
 import { makeBoulder, rockSize, depthOf } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
-import { SKY, PUFFS, pitTop as muckTopAt } from './smog.js';
+import { SKY, PUFFS, pitTop as muckTopAt , fillSky } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { finish } from './lab.js';
@@ -155,7 +155,10 @@ export const fast = (seconds = 1) => {
 };
 
 export const setAir = (o = {}) => {
-  if (o.haze != null) S.haze = o.haze;
+  // A sky wound up from here was never climbed into, so it is filled in rather
+  // than left for the crew to make -- see `fillSky`. In play nothing appears in
+  // the band that did not go up there.
+  if (o.haze != null) { S.haze = o.haze; fillSky(); }
   if (o.open != null) S.scrubOpen = !!o.open;
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }

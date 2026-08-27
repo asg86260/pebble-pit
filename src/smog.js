@@ -33,6 +33,7 @@ import { rockTopY, boulderAlive } from './rock.js';
 import { rockLeft, overPitMouth } from './world.js';
 import { surfaceY, colOf } from './grid.js';
 import { pitDepth } from './pit.js';
+import { dugTopY } from './quarry.js';
 // Counted here rather than imported from `scrubhouse.js`, which is the same sum
 // that file exports for everybody else. It is one line, and importing it made a
 // ring -- the boards read the sky, the scrubbing house is a board, and the sky
@@ -370,22 +371,35 @@ function place(secs) {
   }
 }
 
-// What the sky owes the number, either way. Losing motes happens in play -- they
-// are rained out or pulled into the house. Gaining them only ever happens from a
-// save, because in play they arrive by climbing, which is the whole point.
-function settleCount() {
+// What the sky owes the number. Losing motes happens in play -- they are rained
+// out or pulled into the house -- and that is done here.
+//
+// Gaining them is not. In play a mote arrives by climbing off a swing, which is
+// the whole point of the thing: the connection between what the crew do and what
+// is overhead is a speck you can watch go up. This used to top the sky up out of
+// nothing whenever the count fell more than thirty behind, every frame, which is
+// motes appearing in the middle of the band at full weight -- and the busier the
+// yard, the more of them, because the number always ran ahead of the climbing.
+//
+// So `gain` is only true where a sky is being restored rather than made: a save
+// coming back, or the dev panel winding the haze up. Nothing pops in while you
+// are watching; the count simply lags, and the climbing catches it up.
+function settleCount(gain = false) {
   const want = motesWanted();
   while (SKY.length > want) SKY.splice(Math.floor(Math.random() * SKY.length), 1);
-  if (want - SKY.length > 30) {
-    const span = Math.max(P, S.worldW || 0);
-    while (SKY.length < want) {
-      const m = skyMote(Math.random() * span, bandTop());
-      m.age = SMOG_SPREAD_MAX / SMOG_SPREAD_RATE;   // loaded, not arrived: long since spread
-      m.fade = 1;
-      SKY.push(m);
-    }
+  if (!gain) return;
+  const span = Math.max(P, S.worldW || 0);
+  while (SKY.length < want) {
+    const m = skyMote(Math.random() * span, bandTop());
+    m.age = SMOG_SPREAD_MAX / SMOG_SPREAD_RATE;   // loaded, not arrived: long since spread
+    m.fade = 1;
+    SKY.push(m);
   }
 }
+
+// A sky handed to us from outside -- a save, or the dev panel -- is filled in
+// rather than climbed into, because there is nobody to have made it.
+export const fillSky = () => settleCount(true);
 
 // how thick the sky is, 0..1 scaled, for anything that wants to know without counting
 export const cloudR = () => Math.round(Math.min(1, S.haze / SMOG_RAIN_AT) * 42);
@@ -564,8 +578,14 @@ export function muckFloor(c) {
     const col = Math.round((wx - rockLeft()) / P);
     if (S.rockTops[col] >= 0) return rockTopY(col);
   }
+  // Over the cut it lands on the cut's floor -- which is wherever that column has
+  // actually been dug to, not the depth the hole will eventually reach. It was
+  // the full depth, a fixed line a long way under the ground, so muck over the
+  // quarry was drawn hanging at the bottom of a hole that had not been dug yet:
+  // as the crew shifted it you watched it slide down through the ground, over
+  // the top of everything, because the layer is painted after the world is.
   if (S.quarryOpen && wx > quarry.x && wx < quarry.x + quarry.w)
-    return S.groundY + quarry.h;
+    return dugTopY(wx);
   // Over the hole it lands on whatever is *in* the hole, which is the dust. It
   // used to land on the ground line, which over an open pit is thin air: a grey
   // lid sitting across the mouth with the hole visible underneath it. Muck lies

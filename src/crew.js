@@ -1550,6 +1550,16 @@ export function updateWorkers(now, dt) {
       unbook(w);                  // idle hands hold no room
       if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; continue; }
 
+      // A rock has just come off, or the next one is on its way down, and this
+      // body has nothing to do about either. It joins in rather than ambling
+      // about with its hands in its pockets: the gang on the ground are already
+      // celebrating, and a yard where half of it is dancing and the other half
+      // is strolling reads as half the yard not having noticed.
+      //
+      // Everything the dance needs is here -- it spreads out from where it
+      // stands, and it elbows clear of anybody it is standing in.
+      if (now < S.danceUntil || S.rockFall > 0) { heldUp(w, zone, now); continue; }
+
       // A yard with nothing in it to carry is a yard nobody needs to be stood
       // in. After a good while of it -- staggered, so they trickle off rather
       // than clocking out together -- a body goes home. It is not a rate and it
