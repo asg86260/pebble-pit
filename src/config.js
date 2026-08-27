@@ -173,8 +173,8 @@ export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, 
 export const SCRUB_CATCH = 260;
 // What the house puts out of the back before the recycler is fitted: the filters
 // have to be emptied somewhere, and the crew shovel it like any other mess.
-export const SCRUB_PER_MUCK = 14;   // motes caught per load out of the back
-export const SCRUB_MUCK = 40;       // and how much a load is
+export const SCRUB_PER_MUCK = 10;   // motes caught per load out of the back
+export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back as: ordinary dust
 export const RECYCLE_PER = 3;        // motes caught per grain of dust it gives back
@@ -548,10 +548,18 @@ export const DIZZY_MS = 1400;      // and how long the stars last afterwards
 // muck the sky rains down, so the crew have to shovel it like any other mess.
 // The yard makes its own work, which is the joke and also the point: a bigger
 // crew is more hands and a bigger mess.
-export let LOO_EVERY = 95000;    // how often a body is about due, on average
-export const LOO_SPREAD = 0.7;   // and how much that wanders, either side
+// Rare, and properly scattered. Every ten minutes or so per body, give or take
+// half of that -- often enough that you see it happen and remember the yard is
+// staffed by people, rare enough that it is never the thing you are dealing
+// with. A whole crew is still one of them every couple of minutes between them,
+// which is plenty.
+export let LOO_EVERY = 600000;   // how often a body is about due, on average
+export const LOO_SPREAD = 0.55;  // and how much that wanders, either side
 export const LOO_MS = 1700;      // how long it takes
-export const LOO_MUCK = 55;      // and how much is left behind
+// Muck is a depth in cells and never stacks past MUCK_MAX, which is six. This
+// was fifty-five -- nine times deeper than the sky can rain -- so one body
+// leaving one behind buried a column and took the whole crew a minute to shift.
+export const LOO_MUCK = 2;       // and how much is left behind
 
 export let SPOIL_POP = 3.2;    // how hard a grain comes off, before the scatter
 export const SPOIL_SPIN = 0.5;   // and how much of that is a coin toss

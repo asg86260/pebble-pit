@@ -20,7 +20,7 @@ Object.assign(window, {
   __clearFloor: hooks.clearFloor, __pile: hooks.pile, __jump: hooks.jump,
   __preview: hooks.preview, __next: hooks.next, __drop: hooks.drop,
   __birds: hooks.birds, __crew: hooks.crew, __school: hooks.school,
-  __assign: hooks.assign, __build: hooks.rebuildBoards, __fill: hooks.fillBoard, __beds: hooks.beds,
+  __assign: hooks.assign, __build: hooks.rebuildBoards, __fill: hooks.fillBoard, __tune: hooks.tuneOne, __beds: hooks.beds,
   __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
   __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,
   __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,

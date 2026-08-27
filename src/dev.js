@@ -89,6 +89,7 @@ line('open', box => {
 line('open too', box => {
   button(box, 'scrub', () => { S.scrubOpen = !S.scrubOpen; S.seenAir = true; });
   button(box, 'casino', () => { S.casinoOpen = !S.casinoOpen; });
+  button(box, 'tower', () => { S.towerOpen = !S.towerOpen; S.seenCore = true; });
   button(box, 'kit', () => window.__school({ open: true, breakers: 3, carters: 3,
                                              blasters: 3, growers: 3 }));
   button(box, 'sky', () => { S.skyShown = !S.skyShown; });
@@ -98,8 +99,11 @@ line('open too', box => {
 // job everybody drops everything for, and it is worth being able to make one
 // without waiting for the sky to rain.
 line('muck', box => {
-  button(box, 'a little', () => window.__air({ muck: 60 }));
-  button(box, 'a lot', () => window.__air({ muck: 400 }));
+  // A depth in cells, laid across every column -- and a column never holds more
+  // than six. Sixty was ten times what the worst downpour can leave, which is
+  // why "a little" buried the yard.
+  button(box, 'a little', () => window.__air({ muck: 1 }));
+  button(box, 'a lot', () => window.__air({ muck: 4 }));
   button(box, 'haze', () => window.__air({ haze: 700 }));
   button(box, 'clear', () => window.__air({ haze: 0, muck: 0 }));
 });

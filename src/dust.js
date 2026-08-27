@@ -3,7 +3,8 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV, SPOIL_POP, SPOIL_SPIN, SPOIL_SIDE } from './config.js';
+import { P, GRAV } from './config.js';
+import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
@@ -15,26 +16,33 @@ export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
   S.chips.push({ x, y, vx, vy, s: shade, land });
 }
 
-// Rock knocked loose is knocked loose, and that is the whole of it.
+// A miner tosses its spoil onto the heap. It is a person throwing, the same as a
+// quarrier putting a seam up over the rim or a hauler tipping a load into the
+// hole -- somebody with a shovel and somewhere to put what is on it.
 //
-// It used to be *aimed*. Every grain picked a spot inside the strip of ground
-// that belongs to whatever it came off, and was launched on the one arc that
-// got there -- so the pile was not somewhere dust happened to end up, it was a
-// destination the game chose for each grain before it had left the face. Which
-// is a delivery service run by the rock, and it is why the yard tidied itself:
-// nothing ever landed anywhere awkward, because nothing was ever allowed to.
+// This was aimed once, then not, and now is again, and the difference matters.
+// What was wrong before was that *the rock* posted its spoil: every grain picked
+// a spot before it had left the face, so the heap was a destination rather than
+// somewhere dust ended up, and nothing ever landed anywhere awkward because
+// nothing was allowed to. What was wrong with letting it simply fall is that a
+// rock has two sides and only one of them is the yard: half the spoil came off
+// the back of the hill, where the crew, the bench and the hole are not, and lay
+// there in a layer nobody had a reason to walk to.
 //
-// Now a grain gets a pop off the face and a little sideways from the blow, and
-// where it comes down is wherever the ground is under it when it gets there. The
-// heaps that build up are heaps that built up.
-//
-// Nothing is lost to it. The ground already refuses the three places that are
-// not ground -- under the rock, over the mouth of the cut, over the mouth of the
-// hole -- and a grain that comes down on one of those is banked rather than
-// stranded. See `blocked` in world.js.
-export function spawnSpoil(px, py, shade) {
-  const pop = SPOIL_POP * (1 + bell() * SPOIL_SPIN);
-  spawnChip(px, py, bell() * SPOIL_SIDE, -Math.max(0.5, pop), shade);
+// So the miner throws, and where it throws is the heap that belongs to the rock.
+// The arc is the same one everything else in this yard is thrown on.
+// `key` is whose heap it is going on. A farmhand tosses a spore onto the farm's
+// heap, not across the yard onto the rock's -- each place has its own strip of
+// ground and throws onto it.
+export function spawnSpoil(px, py, shade, key = 'rock') {
+  const p = pileOf(key);
+  const near = p ? p.from : rockEdge(1);
+  const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
+  // most of it near the rock end of the heap, tailing away out along it, which
+  // is the shape a heap somebody is throwing onto actually takes
+  const land = Math.min(far, near + P * 2 + Math.abs(bell()) * (far - near) * 0.45);
+  const v = aim(px, py, land, P);
+  spawnChip(px, py, v.vx, v.vy, shade, land);
 }
 
 // The one arc from here to there: the pop is sized to the distance, and the

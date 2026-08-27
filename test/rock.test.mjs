@@ -316,11 +316,8 @@ group('the game opens on two squares and a rock lands on one', async () => {
   ];
 });
 
-group('spoil falls where it falls', async () => {
+group('a miner tosses its spoil onto the heap', async () => {
   window.__crew(6, 0);
-  // Long enough to be a sample rather than a handful. Where a grain goes is a
-  // coin toss now instead of a delivery, so five seconds of it is a dozen and a
-  // half grains and which side they fell on swings about.
   run(12);
   const s = state();
   window.__crew(0, 0);
@@ -329,17 +326,14 @@ group('spoil falls where it falls', async () => {
     ok(s.floor > 0, 'dust piles on the ground', `${s.floor}`),
     ok(s.dustUnderRock === 0, 'none of it comes to rest on or under the rock',
        `${s.dustUnderRock} grains`),
-    // Spoil used to be *aimed*: every grain picked a spot inside the rock's own
-    // strip and was launched on the one arc that got there, so it all ended up
-    // on the side the pit is on because the game put it there. A knock is a
-    // knock now, and a hill has two sides -- so some of it goes over the back,
-    // and somebody walks round for it. See 'a worker can reach the bank behind
-    // the rock'.
-    ok(right > 0 && s.dustLeftOfRock > 0, 'and a hill has two sides to land on',
-       `${right} right of the rock, ${s.dustLeftOfRock} behind it`),
-    ok(s.floor === right + s.dustLeftOfRock,
-       'with nothing lost between the two of them',
-       `${s.floor} down, ${right} + ${s.dustLeftOfRock}`),
+    // A rock has two sides and only one of them is the yard. Letting spoil
+    // simply fall put half of it on the back of the hill, where the crew, the
+    // bench and the hole are not, and it lay there in a layer nobody had a
+    // reason to walk to. A miner throws it onto the heap instead.
+    ok(s.dustLeftOfRock === 0, 'and none on the back of the hill',
+       `${s.dustLeftOfRock} behind it`),
+    ok(right === s.floor, 'it all goes onto the heap the rock pours into',
+       `${right} of ${s.floor} right of the rock`),
     // The apron is a cliff the sand cannot slump over, so without a ceiling on
     // how high a column may stand near it the bank grows straight up against
     // the rock as a sheer wall.

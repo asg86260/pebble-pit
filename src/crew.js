@@ -424,8 +424,14 @@ function downTheHole(w, to, dt) {
 // Every body keeps its own clock, set the first time it is looked at, so they do
 // not all go at once on the same tick.
 function relieve(w, now) {
-  if (!w.looAt) {                          // its own hour, from the moment it exists
-    w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
+  // Its own hour -- and it starts somewhere *inside* the cycle rather than a
+  // whole one away. Seeding everybody a full interval out is what made a crew
+  // hired together go together: they were all handed the same clock at the same
+  // moment, so they all came due at the same moment, for ever. Starting each one
+  // at a random point of its first cycle breaks them apart on the first pass and
+  // the wander keeps them apart after that.
+  if (!w.looAt) {
+    w.looAt = now + LOO_EVERY * Math.random();
     return false;
   }
 

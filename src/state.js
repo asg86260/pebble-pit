@@ -182,9 +182,10 @@ export const S = {
   miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   quarriers: 0, quarryPaceLevel: 0,
-  // How far down the current dig has got, 0 at the surface and 1 at the seam.
-  // The cut fills back in behind them, so this runs round and round.
-  cutDug: 0,
+  // How many cells deep each column of the cut has been dug. Nought everywhere is
+  // bare ground with no hole in it: the cut is what has been taken out, not a
+  // shape the yard was drawn with. See quarry.js.
+  cutCells: null,
   // What the seam still owes, once somebody has broken through to it. It belongs
   // to the hole rather than to the body that reached it, so a gang at the bottom
   // shares one handful out between them rather than each being handed its own.

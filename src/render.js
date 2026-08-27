@@ -15,7 +15,7 @@ import { coreHome } from './core.js';
 import { pitDepth, pitFull } from './pit.js';
 
 import { benchMark } from './upgrades.js';
-import { underground, quarryCut, ladder, dirtTopY } from './quarry.js';
+import { underground, quarryCut, ladder, cutCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
@@ -72,34 +72,34 @@ export function drawQuarry() {
   // down in benches and the uneven floor between them -- as a single stroked
   // path. It is one line, so nothing doubles up where the parts meet, which is
   // what three separate filled bars used to do along each rim.
+  // What has been taken out, and nothing else. The cut is not outlined in
+  // advance: there is no hole until somebody has dug one, so what is drawn is
+  // the ground that is gone -- column by column, down to whatever depth that
+  // column has been worked to. The benched walls and the uneven floor appear as
+  // they are reached rather than being promised from the first frame.
+  const cells = cutCells();
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y - E, w, h + E);
-
-  const pts = quarryCut().outline;
-  ctx.beginPath();
-  ctx.moveTo(pts[0][0], pts[0][1]);
-  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
-
-  // The dirt still in it. A cut is full to the ground line and is emptied a dig
-  // at a time, so what is drawn here is the part nobody has got through yet --
-  // the same brown the muck is, because it is the same stuff, and clipped to the
-  // cut so it stops at the walls rather than at a rectangle.
-  const top = dirtTopY();
-  if (top > y + 1) {
-    ctx.save();
-    ctx.clip();
-    ctx.fillStyle = MUCK_TONE;
-    ctx.fillRect(x, y, w, top - y);
-    // a skin on it, so a face being worked reads as a face rather than a fill
-    ctx.fillStyle = MUCK_SKIN;
-    ctx.fillRect(x, top - P, w, P);
-    ctx.restore();
+  for (let c = 0; c < cells.length; c++) {
+    if (!cells[c]) continue;
+    ctx.fillRect(x + c * P, y, P, cells[c] * P);
   }
 
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = E;
-  ctx.lineJoin = 'miter';
-  ctx.stroke();
+  // and a line round the edge of it, drawn off the same columns: the lip where
+  // the ground breaks, and the step down wherever one column is deeper than the
+  // one beside it.
+  ctx.fillStyle = '#000';
+  for (let c = 0; c < cells.length; c++) {
+    const d = cells[c];
+    if (!d) continue;
+    const cx = x + c * P;
+    ctx.fillRect(cx, y - E, P, E);                       // the lip
+    ctx.fillRect(cx, y + d * P - E, P, E);               // and the floor of it
+    const left = c > 0 ? cells[c - 1] : 0;
+    const right = c < cells.length - 1 ? cells[c + 1] : 0;
+    if (left < d) ctx.fillRect(cx, y + left * P, E, (d - left) * P);
+    if (right < d) ctx.fillRect(cx + P - E, y + right * P, E, (d - right) * P);
+  }
+
   drawLadder();
   ctx.fillStyle = '#000';
 }

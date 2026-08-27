@@ -661,6 +661,9 @@ const TESTS = [
     window.__crew(4, 0);                       // miners only: nobody to shovel it yet
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
+    // Wound in for the check. A body is due about every ten minutes now, which
+    // is right for playing and useless for watching one happen.
+    window.__tune('LOO_EVERY', 6000);
 
     let said = 0, mucked = 0;
     for (let i = 0; i < 700 && (said < 2 || mucked < 2); i++) {
@@ -677,6 +680,7 @@ const TESTS = [
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
+    window.__tune('LOO_EVERY', 600000);        // and put it back
     return [
       ok(said > 0, 'a body says what it is about to do', `${said} frames saying it`),
       ok(mucked > 0, 'and leaves something behind', `${mucked} frames with muck in the yard`),

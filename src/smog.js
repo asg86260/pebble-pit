@@ -551,10 +551,16 @@ export function cleanSpotNear(wx, reach = 90) {
   return null;
 }
 
+// Capped like everything else the sky drops. A column holds MUCK_MAX and no
+// more, whoever put it there -- without that a body could bury a column deeper
+// than a downpour ever would, and the crew would still be shovelling it long
+// after the weather had been dealt with.
 export function dropMuckAt(wx, n) {
   const at = cleanSpotNear(wx);
   if (at == null) return false;
-  muckCols()[colAt(at)] += n;
+  const m = muckCols();
+  const c = colAt(at);
+  m[c] = Math.min(MUCK_MAX, m[c] + n);
   S.dirty = true;
   return true;
 }

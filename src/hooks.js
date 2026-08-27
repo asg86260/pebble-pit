@@ -11,7 +11,7 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
-import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
+import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_BEDS0 , tune } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
 import { blocked, resite, clampCam } from './world.js';
@@ -248,6 +248,12 @@ export const pitProfile = (n = 20) => {
 // The hole is the whole hole from the first frame, so there is nothing to dig.
 // Kept as a no-op because the panel and a check or two still say the word.
 export const dig = () => {};
+
+// dev: turn one of the numbers the panel turns, from a check. Nature is every
+// ten minutes a body now, which is right for playing and useless for a check
+// that has to watch one happen -- so a check can wind it in rather than sitting
+// through it.
+export const tuneOne = (key, v) => tune(key, v);
 
 export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * 40, shade); };
 
