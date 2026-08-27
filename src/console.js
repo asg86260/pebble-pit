@@ -13,7 +13,7 @@
 import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
-import { seatBoard, boardFit } from './board.js';
+import { seatBoard, boardFit, showPanel } from './board.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -31,8 +31,12 @@ Object.assign(window, {
   __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
   __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
   __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
+  __brew: hooks.brewWizard,
   __muckOverPit: hooks.muckOverPit, __look: hooks.look,
-  __placeBoard: seatBoard, __boardFit: boardFit
+  __placeBoard: seatBoard, __boardFit: boardFit,
+  // dev: open a board without walking to the building and tapping it, for a
+  // check or a look at how a sheet lays out
+  __board: showPanel
 });
 
 // What the checks read. The yard's own account of itself comes from report.js,

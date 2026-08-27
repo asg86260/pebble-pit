@@ -22,6 +22,8 @@ import { SKY, pitTop as muckTopAt , fillSky } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
+import { WIZ_BREW_MS } from './config.js';
+import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
@@ -106,6 +108,15 @@ export const openMeteor = () => {
   makeMeteor();
   buildShop();
   S.dirty = true;
+};
+
+// dev: put a hat on the go, so the bar and the lit windows can be looked at
+// without waiting two minutes for one.
+export const brewWizard = () => {
+  openMeteor();
+  S.brewAt = clockNow() + WIZ_BREW_MS;
+  S.dirty = true;
+  return Math.round(WIZ_BREW_MS / 1000);
 };
 
 export const wizardHat = (n = 1) => {

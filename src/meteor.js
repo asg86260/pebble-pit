@@ -30,11 +30,18 @@ const put = (c, r, v) => {
   sky.cells[i] = v;
 };
 
-// Where a cell of it is in the world. The disc is laid out from its own top-left
-// corner, on the lattice like everything else, so a cell is a whole cell wherever
-// the meteor happens to hang.
-export const cellX = c => sky.x - sky.cols * sky.p / 2 + c * sky.p;
-export const cellY = r => sky.y - sky.rows * sky.p / 2 + r * sky.p;
+// Where a cell of it is in the world, on the lattice like everything else here.
+//
+// Snapped, and that is the whole of why the meteor read as a grid of squares
+// rather than as a rock. The disc is an odd number of cells across, so laying it
+// out from its own middle put its left edge half a cell off the lattice -- and
+// half a cell is a fraction of a device pixel, which draws every cell against
+// its neighbour with a hairline of grey between them. Every other thing in this
+// yard made of cells is anchored on a whole one; this one was not.
+const originX = () => Math.round((sky.x - sky.cols * sky.p / 2) / P) * P;
+const originY = () => Math.round((sky.y - sky.rows * sky.p / 2) / P) * P;
+export const cellX = c => originX() + c * sky.p;
+export const cellY = r => originY() + r * sky.p;
 
 export const meteorAlive = () => S.meteorOpen && sky.n > 0;
 

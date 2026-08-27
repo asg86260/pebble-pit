@@ -12,6 +12,7 @@ import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
+import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
@@ -844,7 +845,59 @@ export function drawTower() {
   // and the way in, the same door every other building has
   ctx.fillRect(c(SHAFT / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
 
+  // The windows go on while there is a hat on the go. Every other building in
+  // this yard says it is working by something moving on it -- the lab's chimney,
+  // the house's fans -- and the tower had nothing: a purchase you wait two
+  // minutes for and no sign anywhere that anything was happening.
+  //
+  // A window at a time, up the shaft, on the beat the spell is keeping. Black
+  // over the white opening, so what you see is the light going out and coming
+  // back rather than a lamp drawn on top of the wall.
+  if (brewing()) {
+    const lit = Math.floor(now() / 420) % 3;
+    ctx.fillStyle = '#000';
+    [SPIRE + 3, SPIRE + 9, SPIRE + 15].forEach((n, i) => {
+      if (i !== lit) return;
+      ctx.fillRect(c(3), r(n), P * 2, P * 3);
+    });
+  }
+
   ctx.fillStyle = '#000';
+}
+
+// How far along the hat is, over the tower: the same bar the lab gets, in the
+// same place over the building doing the work, filling a cell at a time.
+//
+// The board says the same thing in words, and that is not enough on its own: a
+// number you have to walk across the yard and open a menu to see is a number you
+// check once and forget is running. This is the two minutes made visible from
+// wherever you happen to be standing.
+export function drawTowerBar() {
+  if (!S.towerOpen || !brewing()) return;
+  const at = towerBarAt();
+  const w = P * 14, h = P * 3;
+  const x = at.x - w / 2, y = at.y - h / 2;
+
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y, w, h);
+  ctx.lineWidth = Math.max(1, P / 3);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(x, y, w, h);
+
+  ctx.fillStyle = '#000';
+  const room = w - P * 2;
+  const done = Math.round(room * brewAt() / P) * P;
+  if (done > 0) ctx.fillRect(x + P, y + P, done, h - P * 2);
+
+  // and the hat it is making, over the bar, so the bar is about something
+  drawHat(at.x - WORKER / 2, y - P * 2, 'point', true);
+}
+
+// Clear of the weather vane over the point, which is three cells up from the
+// roof: a bar drawn through it would be two marks in one place.
+export function towerBarAt() {
+  return { x: Math.round((tower.x + tower.w / 2) / P) * P,
+           y: Math.round((tower.y - P * 8) / P) * P };
 }
 
 export function drawScrub() {
@@ -2017,6 +2070,7 @@ export function draw() {
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
+  drawTowerBar();          // and how far along the tower's hat is, over the tower
   drawLabMark();           // and a tick over it if it finished something
   drawCasinoMark();        // and which way the last hand at the table went
   drawKitStands();                                // and the kit put out ready at each of them

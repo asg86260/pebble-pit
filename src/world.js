@@ -128,7 +128,12 @@ export function pileAt(x) {
 export const yardLeft = () =>
   Math.min(S.piles[0] ? S.piles[0].from : 0,
            // the ground under the chute's reach, which is what it pays on to
-           S.scrubOpen ? scrub.x - P * SCRUB_CHUTE : Infinity);
+           S.scrubOpen ? scrub.x - P * SCRUB_CHUTE : Infinity,
+           // and the ground under the meteor, which is the same case again: the
+           // rind of it comes down as real dust on real ground, out past the
+           // tower, and a barred column there would send every grain of it to
+           // the farm's heap without anybody carrying it.
+           S.meteorOpen ? sky.x - sky.r - P * 2 : Infinity);
 // The ground past the far wall of the hole. It is not a station's strip and
 // nothing heaps there on purpose, but a throw that clears the pit has to land
 // somewhere, and the somewhere is the floor -- so dust is allowed to lie there

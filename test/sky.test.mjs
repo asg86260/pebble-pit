@@ -673,7 +673,11 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   const rains = state().smog.rains;
 
   // and now the yard goes on working, which is what used to set it off again
-  run(60);
+  // Until the sky starts filling again, not for a fixed minute. A shower leaves
+  // a few thousand cells of muck on the works and the crew drop everything for
+  // it -- so the swinging that makes the next sky does not start again until the
+  // shovelling is done, and how long that takes is a fact about how much fell.
+  runUntil(() => state().smog.haze > (dry ? dry.haze : 0) + 5, 300);
   const after = state().smog;
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });

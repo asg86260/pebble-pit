@@ -178,6 +178,36 @@ group('the sky holds one body per hat, and they do not stand in each other', asy
   ];
 });
 
+// The tower takes its time over a hat, and says so while it does. What is
+// checked here is the waiting itself: the row is bought once, nothing arrives on
+// the spot, the progress runs from nought to one, and a hat lands at the end of
+// it. The bar over the tower and the windows lighting up the shaft are drawn
+// off exactly these two numbers -- see `drawTowerBar`.
+group('a hat is worked on, and the tower says how far along it is', async () => {
+  window.__meteor();
+  const bare = state();
+  const secs = window.__brew();
+  const started = state();
+  run(secs / 4);
+  const quarter = yard.brewAt();
+  run(secs / 2);
+  const most = yard.brewAt();
+  const landed = runUntil(() => state().wizardHats > bare.wizardHats, secs * 2);
+  const after = state();
+  return [
+    ok(bare.wizardHats === 0 && !bare.brewing, 'nothing on the go to begin with'),
+    ok(started.brewing && started.wizardHats === 0,
+       'buying one starts the tower rather than handing you a hat',
+       `${started.wizardHats} hats, brewing ${started.brewing}`),
+    ok(quarter > 0.15 && quarter < 0.4, 'and it is a quarter of the way through a quarter in',
+       `${quarter.toFixed(2)}`),
+    ok(most > quarter && most < 1, 'and further along later', `${quarter.toFixed(2)} -> ${most.toFixed(2)}`),
+    ok(landed && after.wizardHats === 1 && !after.brewing,
+       'and at the end of it there is a hat on the stand',
+       `${after.wizardHats} hats, brewing ${after.brewing}`)
+  ];
+});
+
 group('a wizard taken off the sky comes down', async () => {
   window.__meteor();
   window.__wizardHat(1);

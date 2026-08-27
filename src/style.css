@@ -272,6 +272,17 @@ canvas {
 #shop button[data-key="unlocktower"] { grid-template-columns: 9em 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
+/* The tower's rows are bills too, and longer ones: three currencies for a hat
+   and two for a meteor, against a cost column sized for one mark and a number.
+   They ran off the right-hand edge of the sheet.
+
+   The whole row goes to the price, the same as the row that buys the tower
+   itself. Nothing is lost by it: what these rows buy is said in the note under
+   the name, and a gain column on a row that buys a *thing* rather than a rate
+   had nothing to put in it anyway. */
+#towershop button { grid-template-columns: 11.2em 1fr; }
+#towershop button .gain { display: none; }
+
 /* A row that is a reading rather than a purchase. It sits on a board of things
    you press, so the only way to say it is not one of them is to take away
    everything that says it is: no pointer, and no black under the cursor. It is

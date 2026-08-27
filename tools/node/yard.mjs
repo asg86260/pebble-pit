@@ -18,6 +18,7 @@ installDom();
 
 const game = await import('../../src/game.js');
 const smog = await import('../../src/smog.js');
+const tower = await import('../../src/tower.js');
 const hooks = await import('../../src/hooks.js');
 const { S, floor, pit, bench, quarry, farm, lab, school, casino, scrub, table } =
   await import('../../src/state.js');
@@ -53,6 +54,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
     __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
     __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
+    __brew: hooks.brewWizard,
     __muckOverPit: hooks.muckOverPit, __look: hooks.look
   });
 
@@ -82,6 +84,9 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     // The motes themselves, for a check that has to watch one speck rather than
     // a count of them: what climbs and what settles are one list and one object,
     // and the only way to check that is to hold on to one.
-    smogSky: () => smog.SKY
+    smogSky: () => smog.SKY,
+    // how far along the hat on the tower's bench is, which is what the bar over
+    // the tower is drawn from
+    brewAt: () => tower.brewAt()
   };
 }

@@ -37,7 +37,13 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // thing that hangs over the yard doing nothing raises a question the game
 // cannot answer. What it needed was somebody to go and work it, and that is
 // what the tower is for. See meteor.js.
-export const TO_SKY = -1740;     // rock centre to the thing in the sky
+// Rock centre to the thing in the sky. Out past the tower, at the far end of the
+// walk: the tower is what calls it down and what makes the body that can reach
+// it, so the two of them belong within sight of each other -- and a wizard
+// coming out of the tower door with its hat on has a few steps to take rather
+// than the length of the yard. It used to hang over the middle of the works,
+// which put it above the quarry for no reason anybody could have told you.
+export const TO_SKY = -3300;
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
 export const TO_FARM = -2106;    // rock centre to the near edge of the farm
@@ -199,12 +205,18 @@ export const RAIN_PER_S = 975;      // per mote: a sky of more specks takes more
 // only sets how long it takes to get going.
 export const RAIN_RAMP = 3;
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
-// The share of what lands that leaves a mark. The sky holds three and a half
-// times the motes it used to for the same work done in the yard -- see
-// SMOG_PER_DUST -- so a mote carries that much less dirt, and a rain lays the
-// layer it always laid rather than burying the works under three of them. The
-// whole sky still falls; not every speck of it is filth.
-export const RAIN_MARK = 0.112;
+// The share of what lands that leaves a mark. The whole sky falls either way --
+// every mote is a drop you can watch come down -- and this is how much of it is
+// filth rather than water.
+//
+// Half. It was a ninth, back when the sky was a tenth of the specks it holds
+// now and the number was picked to keep the layer the same depth it had always
+// been; the effect of that was a full shower laying about seven hundred and
+// fifty cells over thirteen hundred columns, which is a smear you walk through
+// rather than weather that costs you anything. At a half a full sky lays a few
+// thousand, the crew are on shovels for several minutes after one, and a rain
+// is the thing it was always meant to be: the bill for a dirty sky.
+export const RAIN_MARK = 0.5;
 export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and

@@ -67,7 +67,7 @@ export const TOWER_UPGRADES = [
   // has called one down, the next one comes on its own.
   {
     key: 'callmeteor',
-    name: 'call down a meteor',
+    name: 'call a meteor',
     note: () => 'something in the sky worth going up for',
     bill: () => [['core', METEOR_CORES], ['dust', METEOR_DUST]],
     cost: () => METEOR_DUST,
