@@ -1005,26 +1005,68 @@ export function drawOuthouse() {
   const r = n => y + P * n;
   const WIDE = Math.round(w / P);              // 7 across
   const TALL = Math.round(h / P);              // 10 down
-  const ROOF = 3;
+  const MID = (WIDE - 1) / 2;                  // the middle column: 3 of 0..6
+  const ROOF = 4;
 
+  // A pitched roof, built out of odd courses about the middle column: three,
+  // five, seven and then nine, the last of them overhanging a cell each side the
+  // way eaves do.
+  //
+  // Every one of those is odd and centred on a whole column, which is the whole
+  // fix: it was a share of the width rounded per course, and 7/2 is 3.5 -- so
+  // both edges of a course rounded the same way and the roof came out a cell
+  // wider on the right than on the left. A symmetrical thing has to be built
+  // out of symmetrical numbers, not rounded into symmetry afterwards.
   ctx.fillStyle = '#000';
-  // a pitched roof, one row wider than the shed so it overhangs like a roof
   for (let i = 0; i < ROOF; i++) {
-    const half = ((i + 1) / ROOF) * (WIDE / 2 + 0.5);
-    const from = Math.round(WIDE / 2 - half), to = Math.round(WIDE / 2 + half);
-    ctx.fillRect(c(from), r(i), P * Math.max(1, to - from), P);
+    const half = i + 1;                        // 1, 2, 3, 4 -> 3, 5, 7, 9 wide
+    ctx.fillRect(c(MID - half), r(i), P * (half * 2 + 1), P);
   }
   ctx.fillRect(x, r(ROOF), w, h - P * ROOF);
 
-  // the door, and the moon over it
+  // The way in: three cells wide on a seven-cell front, so it stands on whole
+  // columns with two of wall either side of it. It was two cells wide starting
+  // at a *half* column -- the one door in the yard drawn off the lattice, with
+  // the grey fringe down both jambs that comes with it.
+  const DOOR = 3;
   ctx.fillStyle = '#fff';
-  ctx.fillRect(c(WIDE / 2 - 1), r(TALL - 5), P * 2, P * 5);
+  ctx.fillRect(c(MID - (DOOR - 1) / 2), r(TALL - 5), P * DOOR, P * 5);
+
+  // and the moon over it, three by three about the same column: a crescent, or
+  // a full one once the tower has seen to it. That is the only sign the magic is
+  // working -- what it does is make a thing not happen, and there is no way to
+  // draw an absence except by marking the place it would have been.
+  const my = r(ROOF + 1);
   if (S.magicLoo) {
-    // full: the tower has been at it
-    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 1), P * 2, P * 2);
+    ctx.fillRect(c(MID), my, P, P);
+    ctx.fillRect(c(MID - 1), my + P, P * 3, P);
+    ctx.fillRect(c(MID), my + P * 2, P, P);
   } else {
-    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 1), P * 2, P);
-    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 2), P, P);
+    ctx.fillRect(c(MID), my, P * 2, P);
+    ctx.fillRect(c(MID - 1), my + P, P, P);
+    ctx.fillRect(c(MID), my + P * 2, P * 2, P);
+  }
+  ctx.fillStyle = '#000';
+}
+
+// Who is in there, said over the roof: one mark a body, in a row. The outhouse
+// is the one building whose whole point is that somebody is inside it and you
+// cannot see them -- a shed with the door shut and nothing to say about it is a
+// shed nobody would ever look at twice.
+export function drawOuthouseUse() {
+  if (!S.outhouseOpen) return;
+  const busy = S.workers.filter(w => w.inLoo).length;
+  if (!busy) return;
+  const mid = Math.round((outhouse.x + outhouse.w / 2) / P) * P;
+  const top = outhouse.y - P * 3;
+  // centred as a row, so two of them sit either side of the ridge rather than
+  // the first one moving when the second arrives
+  const from = mid - ((busy - 1) * P * 4) / 2;
+  for (let i = 0; i < busy; i++) {
+    const x = Math.round((from + i * P * 4) / P) * P;
+    ctx.fillStyle = MUCK_TONE;
+    ctx.fillRect(x - P * 1.5, top, P * 3, P);
+    ctx.fillRect(x - P * 0.5, top - P, P, P);
   }
   ctx.fillStyle = '#000';
 }
@@ -1925,12 +1967,17 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   }
   if (kind === 'point') {
     // The wizard's, and the only hat here that goes up rather than across: a
-    // brim a cell proud each side, and a cone stepped off it a cell at a time.
-    // Three courses is as tall as an eighteen-pixel body will take without the
-    // hat reading as the thing wearing the body.
+    // brim a cell proud each side, and a cone stepped off it -- five cells, then
+    // three, then one, which is the only symmetrical taper a three-cell body
+    // will carry.
+    //
+    // The middle course used to be two cells wide, sat off-centre, and the tip
+    // was drawn at a *negative* width and so never drawn at all: a lopsided stub
+    // rather than a hat. It is the one piece of headgear in the yard with a
+    // shape of its own and it was the one drawn wrong.
     ctx.fillRect(x - (tight ? 0 : P), y - P, WORKER + (tight ? 0 : P * 2), P);
-    ctx.fillRect(x + P, y - P * 2, WORKER - P * 2, P);
-    ctx.fillRect(x + P * 2, y - P * 3, WORKER - P * 4, P);
+    ctx.fillRect(x, y - P * 2, WORKER, P);
+    ctx.fillRect(x + P, y - P * 3, P, P);
     return;
   }
   ctx.fillRect(x, y - P, WORKER, P);
@@ -1996,6 +2043,9 @@ function drawCart(x, y, face) {
 // somebody dropped, and this is gear put out ready.
 const STAND_W = P * 5, STAND_H = P * 3;
 
+// How far above the slab each mark reaches, so the count can stand clear of it.
+const HAT_TALL = { helmet: P, lamp: P * 2, brim: P * 2, point: P * 3, cart: 0 };
+
 export function drawKitStands() {
   ctx.fillStyle = '#000';
   for (const k of kitStands()) {
@@ -2019,7 +2069,11 @@ function drawKitCounts(screenAt) {
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
   for (const k of stands) {
-    const at = screenAt(k.x - P + STAND_W / 2, k.y - STAND_H - P * 3);
+    // Clear of whatever is standing on the slab. Every other mark here is a bar
+    // a cell or two tall and three cells of headroom was plenty; the wizard's
+    // cone is three courses on its own, and the count was sitting in the tip of
+    // it. The number goes above the tallest thing the stand can hold.
+    const at = screenAt(k.x - P + STAND_W / 2, k.y - STAND_H - P * 3 - HAT_TALL[k.mark]);
     ctx.fillText(String(k.n), Math.round(at.x), Math.round(at.y));
   }
   ctx.textAlign = 'left';
@@ -2190,7 +2244,8 @@ export function drawIntro() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;   // out of sight: in the lab, down the cut, or home
+    // out of sight: in the lab, down the cut, in the outhouse, or home
+    if (underground(w) || indoors(w) || inHouse(w) || atHome(w) || w.inLoo) continue;
 
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
@@ -2331,6 +2386,7 @@ export function draw() {
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
+  drawOuthouseUse();       // and who is in the outhouse, over its roof
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower
   drawLabMark();           // and a tick over it if it finished something

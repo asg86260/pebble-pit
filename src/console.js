@@ -31,6 +31,7 @@ Object.assign(window, {
   __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
   __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
   __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
+  __loo: hooks.openLoo,
   __brew: hooks.brewWizard,
   __muckOverPit: hooks.muckOverPit, __look: hooks.look,
   __placeBoard: seatBoard, __boardFit: boardFit,

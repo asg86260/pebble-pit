@@ -262,6 +262,9 @@ export const reload = () => { S.dirty = true; persist(); restore(); buildShop();
 
 export const openLab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
 
+// dev: the shed, without paying for it -- for a look at what the crew do with it
+export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
+
 // a piece of research finished, without the worker-seconds: a check about what a
 // finished piece unlocks is not a check about how long it takes
 export const finishResearch = key => {

@@ -459,14 +459,23 @@ function relieve(w, now) {
       w.lunge = 0;
       return true;
     }
-    w.looTo = null;                        // arrived: get on with it
+    // Arrived, and *in* it. A body that stood outside the door for a minute with
+    // a mark over its head was a body queueing at a shed it never used -- the
+    // whole of what the outhouse is for is that the crew go inside it, and what
+    // says so from across the yard is the marks over the roof rather than a
+    // figure standing in the road. See `drawOuthouseUse`.
+    w.looTo = null;
+    w.inLoo = true;
+    w.x = outhouse.x + outhouse.w / 2 - WORKER / 2;
+    w.y = walkY(w.x + WORKER / 2);
+    w.say = null;
     w.looUntil = now + LOO_MS;
-    w.say = { mark: 'loo', until: w.looUntil };
     return true;
   }
 
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
     if (now < w.looUntil) { w.lunge = 0; return true; }
+    w.inLoo = false;                       // out again, at the door it went in by
     // What it leaves. The outhouse gathers it into one place rather than getting
     // rid of it -- a shed with a hole under it is not a drain -- and that is the
     // whole of what it buys you: one patch to shovel instead of a yard of them.
@@ -499,6 +508,7 @@ function relieve(w, now) {
   // Nowhere within reach that anybody could clean: hold on. A body down a hole
   // or shut in a building is the case this catches.
   if (cleanSpotNear(w.x + WORKER / 2) == null) return false;
+  // No shed to go to, so it goes where it stands, and says so over its own head.
   w.looUntil = now + LOO_MS;
   w.say = { mark: 'loo', until: w.looUntil };
   w.resting = false;                       // stopped, but this is not a break
