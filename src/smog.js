@@ -46,12 +46,21 @@ import { dugTopY } from './quarry.js';
 // happened to be reached first came up with its exports still empty.
 const inScrub = () => S.workers.filter(w => w.type === 'scrubber' && w.goal === 'in').length;
 
-// Motes that have made it up and are staying. This is the haze -- not a number
+// Every mote in the air, climbing or arrived. This is the haze -- not a number
 // with a picture of a cloud beside it, the actual things.
+//
+// One list, because there is one substance. A speck off a swing and a speck in
+// the band used to be two kinds of thing in two arrays, with the first deleted
+// and the second created at the top of the climb -- and however carefully that
+// handover was written, it was a handover: the puff went out and the mote came
+// up over the best part of a second, so what you actually watched was one cell
+// blinking out and another blinking in beside it. The climb and the band are two
+// things the *same* mote does, so it is one object from the swing to the rain,
+// and `up` says which of them it is doing.
 export const SKY = [];
 
-// On their way up, off a swing. A puff becomes a sky mote when it arrives.
-export const PUFFS = [];
+// The ones still on their way up, for anything that wants to ask.
+export const climbing = () => { let n = 0; for (const m of SKY) if (m.up) n++; return n; };
 
 // On their way down, as muck. A sky mote becomes one of these when it rains.
 export const DROPS = [];
@@ -104,9 +113,26 @@ const outlet = () => ({ x: scrub.x - P, y: scrub.y + scrub.h - P * SCRUB_ARM });
 export function foul(grains, x, y, kind = 'dust') {
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
-  S.haze = Math.min(SMOG_CAP, S.haze + add);
   made += add;                     // counted where it is made -- see `sampleAir`
-  if (x == null) return;
+  // Nothing is added to the number here, and that is the whole of the fix for a
+  // sky that rained twice. The haze *is* the motes -- see `reckon` -- so what
+  // this does is put motes up, and the number follows them by arithmetic rather
+  // than by being kept alongside and hoped to agree.
+  //
+  // It never did agree. The haze went up by what the hit was worth and the
+  // specks that were supposed to carry it were dropped whenever there were
+  // already a few hundred climbing, so on a busy yard the number ran away from
+  // the band underneath it. Then a shower emptied a band that was always short,
+  // stopped with the number still over the line, and the next frame read a
+  // filthy sky over an empty one and started another. That is the rain that
+  // never stops and the haze that never comes back, and neither of them is
+  // weather: they are two accounts of one thing disagreeing.
+  if (x == null) {
+    // Nowhere to climb from -- a place off the yard. It still counts, so it
+    // arrives in the band rather than being lost.
+    for (let i = 0, n = whole(add / SMOG_PER_MOTE); i < n; i++) join(bandTop(), kind);
+    return;
+  }
   // One puff stands for one mote's worth of sky, so what goes up is what this
   // was worth: the whole ones, and the fraction left over as a chance at one
   // more. Every hit throwing exactly one puff would put ten times as many in
@@ -125,12 +151,24 @@ export function foul(grains, x, y, kind = 'dust') {
   // and the next frame reads a filthy sky over an empty one and starts another
   // shower. What is overhead and what the readout says have to be the same
   // thing, or the weather is driven by a number nobody can see.
-  let n = add / SMOG_PER_MOTE;
-  let puffs = Math.floor(n);
-  if (Math.random() < n - puffs) puffs++;
+  const puffs = whole(add / SMOG_PER_MOTE);
+  // Counted once for the whole hit rather than once a speck: this runs on every
+  // swing, and a sky of six thousand motes counted per speck per swing is a walk
+  // over the whole band a few hundred times a second.
+  let up = climbing();
   for (let i = 0; i < puffs; i++) {
-    if (PUFFS.length > PUFF_MAX) break;
-    PUFFS.push({
+    // A full sky takes no more. This is the one place a mote is turned away, and
+    // it is turned away *with* its dirt: the number cannot go up if the speck
+    // did not.
+    if (SKY.length >= MOTE_CAP) break;
+    // And when the plume is already a fog, the next one joins the band instead
+    // of climbing through it. It is not dropped -- dropping it is what put the
+    // number wrong -- it simply does not have a climb to watch, because there
+    // are three hundred specks in the way of watching it.
+    if (up > PUFF_MAX) { join(bandTop(), kind); continue; }
+    up++;
+    SKY.push({
+      up: true,
       x: x + (Math.random() - 0.5) * P * 2,
       y,
       vy: -(0.55 + Math.random() * 0.5),
@@ -149,11 +187,34 @@ export function foul(grains, x, y, kind = 'dust') {
       // every puff leaning on the same shared sway sent the lot up as one straight
       // cylinder, which reads as a pipe rather than as smoke.
       y0: y,
-      lean: (Math.random() - 0.5) * 2,
-      done: false
+      lean: (Math.random() - 0.5) * 2
     });
   }
 }
+
+// Whole things out of a fractional amount: the whole ones, and the fraction left
+// over as a chance at one more. Over a run this is exact, and it is the only way
+// to spend a fraction of a speck when a speck is the smallest thing there is.
+const whole = n => Math.floor(n) + (Math.random() < n - Math.floor(n) ? 1 : 0);
+
+// A mote that arrives without a climb: from off the yard, or from a plume too
+// thick to see another one through. Settled from the first frame.
+function join(y, kind) {
+  if (SKY.length >= MOTE_CAP) return;
+  const m = skyMote(Math.random() * Math.max(P, S.worldW || 0), y, kind);
+  m.fade = 1;
+  SKY.push(m);
+}
+
+// What the sky holds at its filthiest, in motes rather than in dirt. Everything
+// else in this file counts specks now, so the ceiling does too.
+const MOTE_CAP = Math.round(SMOG_CAP / SMOG_PER_MOTE);
+
+// The number over the pit, worked out from the sky rather than kept beside it.
+// One line, called once a frame, and it is the whole of the accounting: there is
+// no second place where haze is added or taken, so there is nothing for the two
+// of them to disagree about.
+const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; };
 
 // A mote is a slot in the band and a share of the wind. It has no position of
 // its own: where it is is where its slot is, this frame, leaned on by whatever
@@ -163,6 +224,7 @@ export function foul(grains, x, y, kind = 'dust') {
 // out to its place among the others, which is what joining a haze looks like.
 const skyMote = (x, y, kind = 'dust') => ({
   kind,
+  up: false,                            // arrived: this one is in the band
   slot: slots++,
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
@@ -174,7 +236,11 @@ const skyMote = (x, y, kind = 'dust') => ({
   age: 0,
   fromX: x,
   fromY: y,
-  fade: 0,
+  // Solid from the first frame. It used to come up from nothing over the best
+  // part of a second, which is right for a thing that was not there before and
+  // wrong for every mote that got here by climbing: what you had been following
+  // went out and faded back in beside itself.
+  fade: 1,
   x: x,
   y: y
 });
@@ -186,8 +252,9 @@ const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 function stepPuffs(secs) {
   const low = bandLow();
   const w = windAt(now());          // one wind, asked once, for the whole plume
-  for (let i = PUFFS.length - 1; i >= 0; i--) {
-    const p = PUFFS[i];
+  for (let i = SKY.length - 1; i >= 0; i--) {
+    const p = SKY[i];
+    if (!p.up) continue;            // arrived: the band has it, see `place`
     // Slowing into the band and thinning where it stands.
     //
     // It reached the air the haze lives in. It does not stop dead, it does not
@@ -202,14 +269,6 @@ function stepPuffs(secs) {
     // the band already does it: what a mote does when it gets there is settle, and
     // being carried along the sky is the next hour of its life, not the next
     // half second of it.
-    if (p.done) {
-      // Only ever one frame of this: `done` is set at the moment the mote takes
-      // over, and the puff is gone the next time round. There is no fade because
-      // there is nothing to fade -- the thing you were watching did not stop, it
-      // carried on as the mote.
-      PUFFS.splice(i, 1);
-      continue;
-    }
     const rose = -p.vy * secs * 60;             // what it climbed this frame
     p.y -= rose;
     // carried by the yard's wind, its own share of it, for as long as it is up
@@ -247,18 +306,31 @@ function stepPuffs(secs) {
     // What you watch is unchanged. The puff comes off the swing, at the swing,
     // and climbs. Where it ends up once it is a thousand feet over the works is
     // wherever the air up there has taken it.
-    // The mote it becomes is up there from this moment -- the count is the count --
-    // and the puff itself stays on for a breath, thinning, so what you watched
-    // climb goes out like something dispersing rather than like something being
-    // switched off.
-    // The mote it becomes starts exactly here, at the top of the climb, and eases
-    // out into the band from there. One thing the whole way: a speck comes off a
-    // swing, rises, slows as it reaches the haze, and drifts out into it among the
-    // rest. Nothing hands over to anything, and nothing has to be faded between
-    // two positions, because there are not two things.
-    p.done = true;
-    SKY.push(skyMote(p.x, p.y, p.kind));
+    //
+    // And it is the same speck. Nothing is spliced out and nothing is pushed in:
+    // the object you have been watching climb is given the fields a settled mote
+    // has and carries on, from exactly the pixel it had got to. There is no
+    // handover to hide, because there is nothing to hand over to.
+    settleHere(p);
   }
+}
+
+// A climbing mote becomes a band mote, in place. Its position is not touched --
+// the band eases it from here to its slot over the next few seconds, which is
+// what settling looks like -- and neither is what it is made of or how solid it
+// is drawn: it went up at the weight of the haze and it stays at the weight of
+// the haze.
+function settleHere(m) {
+  m.up = false;
+  m.slot = slots++;
+  m.roam = 0;
+  m.age = 0;
+  m.fromX = m.x;
+  m.fromY = m.y;
+  m.fade = 1;                     // it never went out, so it has nothing to come back from
+  m.vy = 0;
+  delete m.lean;
+  delete m.y0;
 }
 
 // --- the draught, in the smoke -------------------------------------------------
@@ -278,17 +350,18 @@ export function stirSmoke(wx, wy, dx, dy) {
   const cap = v => Math.max(-SMOKE_STIR_CAP, Math.min(SMOKE_STIR_CAP, v));
   let moved = 0;
 
-  for (const p of PUFFS) {
-    if (p.done) continue;
-    const d = Math.hypot(p.x - wx, p.y - wy);
+  for (const m of SKY) {
+    if (!m.up) continue;
+    const d = Math.hypot(m.x - wx, m.y - wy);
     if (d > SMOKE_STIR_R) continue;
     const k = push * (1 - d / SMOKE_STIR_R) ** 2;
-    p.sx = cap((p.sx || 0) + ux * k);
-    p.sy = cap((p.sy || 0) + uy * k);
+    m.sx = cap((m.sx || 0) + ux * k);
+    m.sy = cap((m.sy || 0) + uy * k);
     moved++;
   }
 
   for (const m of SKY) {
+    if (m.up) continue;
     const d = Math.hypot(m.x - wx, m.y - wy);
     if (d > SMOKE_STIR_R) continue;
     const k = push * (1 - d / SMOKE_STIR_R) ** 2;
@@ -388,6 +461,7 @@ function place(secs) {
   const span = Math.max(P, S.worldW || 0);
   const w = windAt(now());
   for (const m of SKY) {
+    if (m.up) continue;             // still climbing: `stepPuffs` has it
     m.age += secs;
     if (m.fade < 1) m.fade = Math.min(1, m.fade + secs / (PUFF_FADE / 1000));
     // The bodily creep along the sky, which is the one thing up here that adds
@@ -438,25 +512,28 @@ function place(secs) {
 // motes appearing in the middle of the band at full weight -- and the busier the
 // yard, the more of them, because the number always ran ahead of the climbing.
 //
-// So `gain` is only true where a sky is being restored rather than made: a save
-// coming back, or the dev panel winding the haze up. Nothing pops in while you
-// are watching; the count simply lags, and the climbing catches it up.
-function settleCount(gain = false) {
-  const want = motesWanted();
-  while (SKY.length > want) SKY.splice(Math.floor(Math.random() * SKY.length), 1);
-  if (!gain) return;
+// So this is only ever called where a sky is being restored rather than made: a
+// save coming back, or the dev panel winding the haze up. Nothing pops in while
+// you are watching.
+//
+// It no longer takes any away either. It used to trim the band down to whatever
+// the number said, every frame, which is the same fault from the other end:
+// specks going out in the middle of the sky because a figure kept somewhere else
+// had moved. The number is worked out from the motes now -- see `reckon` -- so
+// there is nothing to trim to.
+function fillTo(want) {
   const span = Math.max(P, S.worldW || 0);
+  while (SKY.length > want) SKY.splice(Math.floor(Math.random() * SKY.length), 1);
   while (SKY.length < want) {
     const m = skyMote(Math.random() * span, bandTop());
     m.age = SMOG_SPREAD_MAX / SMOG_SPREAD_RATE;   // loaded, not arrived: long since spread
-    m.fade = 1;
     SKY.push(m);
   }
 }
 
 // A sky handed to us from outside -- a save, or the dev panel -- is filled in
 // rather than climbed into, because there is nobody to have made it.
-export const fillSky = () => settleCount(true);
+export const fillSky = () => { fillTo(motesWanted()); reckon(); };
 
 // A save coming back. The weather in flight is not saved and does not survive --
 // a puff halfway up and a drop halfway down both belong to a moment that is
@@ -468,7 +545,6 @@ export const fillSky = () => settleCount(true);
 // be reading the save over the top of the last game rather than in place of it.
 export function skyFromSave() {
   SKY.length = 0;
-  PUFFS.length = 0;
   DROPS.length = 0;
   CAUGHT.length = 0;
   fillSky();
@@ -489,11 +565,13 @@ function pull(secs) {
     take -= 1;
     // the nearest one, sampled rather than searched: the sky is drawn down
     // towards the house rather than thinning out evenly everywhere at once
-    let best = 0, near = Infinity;
+    let best = -1, near = Infinity;
     for (let i = 0; i < SKY.length; i += 3) {
+      if (SKY[i].up) continue;                 // the climbing ones are caught below
       const d = Math.abs(SKY[i].x - to.x);
       if (d < near) { near = d; best = i; }
     }
+    if (best < 0) break;
     const m = SKY.splice(best, 1)[0];
     // where it left the sky, and how far along it is. It is drawn along a curve
     // rather than eased at, so both ends of the journey have to be kept.
@@ -506,15 +584,14 @@ function pull(secs) {
   // fan went by untouched. It takes what comes near it, at whatever height.
   //
   // Off the same allowance as the settled haze: this is the same fan doing the
-  // same work, not a second one. The haze is docked for it too, because a puff
-  // that never lands is haze that was counted the moment it was made.
-  for (let i = PUFFS.length - 1; i >= 0 && take > -1; i--) {
-    const p = PUFFS[i];
-    if (p.done) continue;
+  // same work, not a second one. Nothing is docked from the number here, because
+  // the number is the motes and this took one out of the sky.
+  for (let i = SKY.length - 1; i >= 0 && take > -1; i--) {
+    const p = SKY[i];
+    if (!p.up) continue;
     if (Math.abs(p.x - to.x) > SCRUB_CATCH) continue;
     take -= 1;
-    PUFFS.splice(i, 1);
-    S.haze = Math.max(0, S.haze - SMOG_PER_MOTE);
+    SKY.splice(i, 1);
     CAUGHT.push({ x: p.x, y: p.y, x0: p.x, y0: p.y, t: 0, kind: p.kind });
   }
 
@@ -592,7 +669,7 @@ const RAIN_FLOOR = 4;
 // sinking-in uses. Only settled ones can be picked, unless there is nothing
 // settled left at all, in which case the rain takes what there is rather than
 // stalling with a sky still overhead.
-const settled = m => m.age >= SMOG_SINK;
+const settled = m => !m.up && m.age >= SMOG_SINK;
 
 function pour(secs) {
   if (!SKY.length) { S.raining = false; return; }
@@ -617,7 +694,10 @@ function pour(secs) {
   // of the list, which is a pick without a search.
   const pick = [];
   for (let i = 0; i < SKY.length; i++) if (settled(SKY[i])) pick.push(i);
-  if (!pick.length) for (let i = 0; i < SKY.length; i++) pick.push(i);
+  // Nothing settled left, and what is left is still climbing. A shower does not
+  // reach down the plume and pull specks back out of it -- it is over, and what
+  // is on its way up belongs to the next one.
+  if (!pick.length) { S.raining = false; return; }
 
   const gone = new Set();
   while (n > 0 && pick.length) {
@@ -629,7 +709,6 @@ function pour(secs) {
     pick.pop();
     gone.add(i);
     const m = SKY[i];
-    S.haze = Math.max(0, S.haze - SMOG_PER_MOTE);
     DROPS.push({ x: m.x, y: m.y, vy: 0.2 + Math.random() * 0.4 });
   }
 
@@ -639,7 +718,14 @@ function pour(secs) {
     for (let i = 0; i < SKY.length; i++) if (!gone.has(i)) SKY[w++] = SKY[i];
     SKY.length = w;
   }
-  if (S.haze <= RAIN_FLOOR || !SKY.length) S.raining = false;
+  // The shower is over when the sky it was made of is gone. There is no second
+  // condition on the number any more, and there is no room for one: the number
+  // is the specks, so an empty band *is* a clean readout. It used to be able to
+  // stop with a filthy figure still standing over an empty sky, and the next
+  // frame would start another shower with nothing to pour -- on and off, every
+  // frame, for ever, which is what a haze that never comes back looks like from
+  // the outside.
+  if (!SKY.some(settled)) S.raining = false;
 }
 
 function stepDrops() {
@@ -976,17 +1062,16 @@ export function stepSmog(dt) {
   refresh();                        // what the crew will ask about, asked once
   stepPuffs(secs);
   if (scrubbing()) {
+    // The house takes motes. It used to take motes *and* dock the number by what
+    // the fan was worth, which is the same dirt subtracted twice.
     pull(secs);
-    S.haze = Math.max(0, S.haze - scrubRate() * secs);
   } else if (CAUGHT.length) {
     CAUGHT.length = 0;
   }
-  // The sky is squared with the number *before* anything asks whether it should
-  // be raining. The other way round, a sky wound up from outside -- a save, the
-  // dev panel -- starts raining on a frame where there are no motes up there to
-  // fall, stops again in the same breath because there is nothing to pour, and
-  // starts over once the motes arrive. One shower, counted twice.
-  settleCount();
+  // The number is worked out from the sky before anything asks whether it should
+  // be raining, because the answer to that question has to be about what is
+  // actually overhead.
+  reckon();
   // A shower starts over from the first spot every time -- the ramp is a fact
   // about this one, not a clock that carries on between them.
   if (S.haze >= SMOG_RAIN_AT && !raining()) { S.raining = true; S.rains++; S.rainFor = 0; }
@@ -1075,7 +1160,10 @@ function strips() {
   const span = Math.max(P, S.worldW || 0);
   const n = Math.max(2, Math.ceil(span / STRIP));
   const out = new Array(n).fill(0);
-  for (const m of SKY) out[((Math.floor(m.x / STRIP) % n) + n) % n]++;
+  // The band, and not the plumes on their way into it: what this measures is
+  // how evenly the sky has spread, and a column of specks climbing off the rock
+  // is a clump that has not had its chance to spread yet.
+  for (const m of SKY) if (!m.up) out[((Math.floor(m.x / STRIP) % n) + n) % n]++;
   return out;
 }
 
@@ -1100,11 +1188,16 @@ export function smogReport() {
            // than the readout claims and, once the gap is wide enough, a sky
            // that rains itself empty while the number is still over the line
            // and starts another shower on the very next frame.
-           owed: +(S.haze - (SKY.length + PUFFS.length) * SMOG_PER_MOTE).toFixed(1),
+           // Haze the sky cannot account for. It is nought by construction now
+           // -- the number is worked out from the specks -- and it is still
+           // reported, because it is the one reading that would catch this
+           // coming apart again.
+           owed: +(S.haze - SKY.length * SMOG_PER_MOTE).toFixed(1),
            // where the first few of them are, finely enough that a check can see
            // the band lean: the wind moves a settled mote a pixel or two over a
            // second, which whole pixels would swallow
-           skyX: SKY.slice(0, 40).map(m => +m.x.toFixed(2)), puffs: PUFFS.length, drops: DROPS.length, trend: airTrend(),
+           skyX: SKY.filter(m => !m.up).slice(0, 40).map(m => +m.x.toFixed(2)),
+           puffs: climbing(), drops: DROPS.length, trend: airTrend(),
            caught: CAUGHT.length, clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
@@ -1124,7 +1217,6 @@ export function seedSmog() {
   siteAt = null;
   yardLeft = allLeft = 0;
   SKY.length = 0;
-  PUFFS.length = 0;
   DROPS.length = 0;
   CAUGHT.length = 0;
   S.muck = [];

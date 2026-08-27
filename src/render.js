@@ -21,7 +21,7 @@ import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, CAUGHT, PUFFS, muckCols, muckFloor } from './smog.js';
+import { SKY, DROPS, CAUGHT, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { bedX } from './farm.js';
@@ -618,19 +618,10 @@ const HAZE_INK = 0.2;
 // between a yard that runs and one that does not.
 const onScreen = x => x > S.camX - P && x < S.camX + S.viewW + P;
 
-export function drawPuffs() {
-  if (!PUFFS.length) return;
-  for (const p of PUFFS) {
-    if (!onScreen(p.x)) continue;
-    ctx.globalAlpha = HAZE_INK * (p.fade == null ? 1 : p.fade);
-    // A climbing puff and the mote it becomes are one thing, so they are the
-    // one colour: whatever sent it up.
-    ctx.fillStyle = SMOG_TINTS[p.kind] || SMOG_TINTS.dust;
-    ctx.fillRect(Math.round(p.x), Math.round(p.y), P, P);
-  }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#000';
-}
+// A climbing mote and a settled one are drawn by `drawSmog`, in the same pass,
+// because they are the same thing. This is kept as the name the shell calls, and
+// there is nothing left for it to do.
+export function drawPuffs() {}
 
 export function drawRain() {
   if (!DROPS.length && !CAUGHT.length) return;

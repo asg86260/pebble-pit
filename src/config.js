@@ -178,7 +178,11 @@ export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
-export const PUFF_MAX = 260;         // puffs in the air at once, before it is a fog
+// Climbing specks at once, before the plume is a fog. Past this the next mote
+// joins the band instead of climbing through it -- it is not thrown away, which
+// is what used to happen and what put the readout and the sky out of step with
+// each other for the whole of a run.
+export const PUFF_MAX = 260;
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.

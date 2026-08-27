@@ -17,6 +17,7 @@ import { installDom } from './dom.mjs';
 installDom();
 
 const game = await import('../../src/game.js');
+const smog = await import('../../src/smog.js');
 const hooks = await import('../../src/hooks.js');
 const { S, floor, pit, bench, quarry, farm, lab, school, casino, scrub, table } =
   await import('../../src/state.js');
@@ -77,6 +78,10 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     until,
     grains: b => grid.count(b), dust: b => grid.countDust(b),
     // where everybody is, in the shorthand the checks read: a body a line
-    who: () => S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`)
+    who: () => S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
+    // The motes themselves, for a check that has to watch one speck rather than
+    // a count of them: what climbs and what settles are one list and one object,
+    // and the only way to check that is to hold on to one.
+    smogSky: () => smog.SKY
   };
 }

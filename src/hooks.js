@@ -18,7 +18,7 @@ import { blocked, resite, clampCam } from './world.js';
 import { makeBoulder, rockSize, depthOf } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
-import { SKY, PUFFS, pitTop as muckTopAt , fillSky } from './smog.js';
+import { SKY, pitTop as muckTopAt , fillSky } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -245,7 +245,7 @@ export const newGame = (intro = false) => { resetGame(); if (!intro) skipIntro()
 // module holding it came back empty, while the save on disk is untouched. The
 // node yard keeps one module alive for a whole file, so without this a check
 // about restoring the sky passes on motes that were simply never cleared.
-export const coldSky = () => { SKY.length = 0; PUFFS.length = 0; };
+export const coldSky = () => { SKY.length = 0; };
 
 export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 
@@ -329,7 +329,10 @@ export const give = (n, shade = 4) => {
 // a check should not have to do two hours of honest mining
 export const skyX = () => SKY.map(m => m.x);
 
-export const puffFades = () => PUFFS.map(p => ({ d: !!p.done, f: +(p.fade ?? 1).toFixed(2) }));
+// What the climbing half of the sky is drawn at. There is no fading between a
+// puff and a mote any more -- they are one object -- so this is a check that it
+// stays that way: every speck in the air, climbing or not, is at full weight.
+export const puffFades = () => SKY.filter(m => m.up).map(m => ({ d: false, f: +(m.fade ?? 1).toFixed(2) }));
 
 export const skyFades = () => SKY.map(m => +(m.fade ?? 1).toFixed(2));
 

@@ -520,7 +520,13 @@ const MOVES = ['hop', 'step', 'spin'];
 const JIG_SPREAD = P * 9;          // how far off its mark a body will wander
 const JIG_STEP = P;                // and it goes in whole cells, like everything else
 
-function jig(w, now) {
+// `zone` is the ground the next rock is coming down on, when there is one. The
+// dance has to know about it, because the dance travels: a body stepping across
+// its patch will walk into the drop zone, the dodge will push it straight back
+// out, and the two of them will hold it against that line at sixty steps a
+// second. That is not a body dancing near a falling rock, it is a body
+// vibrating -- and it is the one thing anybody watching a celebration notices.
+function jig(w, now, zone) {
   // a mark to dance around, taken once, so the gang spread out instead of
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
@@ -563,7 +569,13 @@ function jig(w, now) {
     // a body on its mark is not.
     const off = w.x - w.jigAt;
     if (Math.abs(off) > JIG_SPREAD) w.jigDir = -Math.sign(off);
-    w.x += w.jigDir * JIG_STEP * 0.06;
+    // And the ground under a coming rock is not part of anybody's patch. It is
+    // a wall to the dance exactly as the edge of the patch is: the body turns
+    // and paces the other way, rather than being walked into a place the dodge
+    // then has to drag it out of.
+    const next = w.x + w.jigDir * JIG_STEP * 0.06;
+    if (zone && next + WORKER > zone.from && next < zone.to) w.jigDir = -w.jigDir;
+    else w.x = next;
     w.dir = w.jigDir;
     w.y = w.foot - Math.round(swing) * P;        // and a small bob under it
     return;
@@ -621,7 +633,7 @@ function elbowJig(w) {
 function heldUp(w, zone, now) {
   w.resting = false;                   // waiting on a rock is not a break
   w.foot = walkY(w.x + WORKER / 2);
-  jig(w, now);
+  jig(w, now, zone);
   elbowJig(w);
   if (!zone) return;
   if (w.x + WORKER > zone.from && w.x < zone.to) {
@@ -1341,9 +1353,16 @@ export function updateWorkers(now, dt) {
         // say so, or the climb picks up again from wherever it was standing
         // before -- a body that danced on the bare ground and then went back to
         // work would jump the whole height of the rock in one frame.
-        if (duck(w, zone)) { w.y = w.foot = standOn(S.groundY); continue; }
+        // Out of the way first -- and its mark comes with it, so the dance it
+        // goes back to is on the ground it has been moved to rather than the
+        // ground it was moved off.
+        if (duck(w, zone)) {
+          w.y = w.foot = standOn(S.groundY);
+          if (w.jigAt != null) w.jigAt = w.x;
+          continue;
+        }
         w.foot = standOn(S.groundY);
-        jig(w, now);
+        jig(w, now, zone);
         continue;
       }
 

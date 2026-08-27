@@ -93,7 +93,12 @@ export function stepWizard(w, now) {
   // What it is working on. A cell is kept until it is gone, so the body is not
   // re-deciding every frame and drifting between two of them.
   if (!w.cell || !cellLeft(w.cell)) {
-    w.cell = nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w));
+    // Elbows first, and the bare cells if that leaves nothing: at the end of a
+    // meteor there are a handful of cells and everybody's elbows are over all of
+    // them, and two of them working shoulder to shoulder on the last of it is
+    // better than one of them floating back down to the ground for it.
+    w.cell = nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, true))
+          || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
     w.next = now + WIZ_MS;
   }
   const to = want(w);
@@ -130,10 +135,29 @@ function cellLeft(cell) {
   return sky.cells && !!sky.cells[cell.r * sky.cols + cell.c];
 }
 
-// the cells the rest of them are already on, so nobody picks one twice
-function spokenFor(w) {
+// The cells the rest of them are already on -- and their elbows with them.
+//
+// A claim is a stretch, not a cell, for the same reason a claim on the muck is:
+// a cell is six pixels and a body is eighteen, so booking only the one cell
+// somebody is working puts the next body one cell over, which is close enough
+// that the two of them hang inside each other for the whole meteor. It is the
+// same rule and the same number as `MUCK_ELBOW` on the ground.
+const ELBOW = 3;
+
+function spokenFor(w, elbows) {
   const out = new Set();
-  for (const o of S.workers)
-    if (o !== w && o.type === 'wizard' && o.cell) out.add(o.cell.r * sky.cols + o.cell.c);
+  for (const o of S.workers) {
+    if (o === w || o.type !== 'wizard' || !o.cell) continue;
+    if (!elbows) { out.add(o.cell.r * sky.cols + o.cell.c); continue; }
+    for (let dr = -ELBOW; dr <= ELBOW; dr++) {
+      const r = o.cell.r + dr;
+      if (r < 0 || r >= sky.rows) continue;
+      for (let dc = -ELBOW; dc <= ELBOW; dc++) {
+        const c = o.cell.c + dc;
+        if (c < 0 || c >= sky.cols) continue;
+        out.add(r * sky.cols + c);
+      }
+    }
+  }
   return out;
 }

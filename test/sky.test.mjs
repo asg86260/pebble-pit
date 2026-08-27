@@ -123,7 +123,17 @@ group('the sky fills up, and gives it back', async () => {
   const shrank = seenR.length > 4 && seenR.every((v, i) => i === 0 || v <= seenR[i - 1]);
 
   const rockWas = state().rock;
-  run(30);
+  // Until the face is clear, rather than for a fixed half minute and a hope.
+  // What is being checked is that the gang deal with what the sky dropped on
+  // the rock and then get back to it -- not that they manage it inside any
+  // particular thirty seconds, which is a fact about how much fell and how far
+  // away everybody happened to be standing.
+  // Generously: the spread on how long a face takes is wide -- five seconds to
+  // seventy, depending on how deep the patch is and where everybody was standing
+  // when it landed -- and a limit inside that spread is a check that fails on
+  // the weather rather than on the code.
+  runUntil(() => state().smog.muck.rock === 0, 150);
+  run(10);                                    // and long enough to be swinging again
   const dried = state();
   // and the yard goes back the way it was found: a sky left full and a gang
   // left standing are both things the next group would notice
@@ -625,11 +635,96 @@ group('what the readout says is what is overhead', async () => {
   return [
     ok(later.haze > 200, 'the yard has had time to make a sky worth checking',
        `${Math.round(later.haze)} haze`),
-    ok(Math.abs(later.owed) < later.haze * 0.1,
+    // Nought, not "nearly nought". The number is worked out from the specks now
+    // rather than kept beside them, so there is no room for a gap at all -- and
+    // a tolerance here would be a tolerance on a thing that cannot happen.
+    ok(later.owed === 0,
        'the haze is the motes that are up there, not a number beside them',
        `${Math.round(later.haze)} haze, ${later.sky} up and ${later.puffs} climbing, ${later.owed} unaccounted for`),
-    ok(Math.abs(later.owed) <= Math.abs(early.owed) + later.haze * 0.05,
+    ok(early.owed === 0 && later.owed === 0,
        'and the two do not drift apart the longer it runs',
        `${early.owed} after twenty seconds -> ${later.owed} after four minutes`)
+  ];
+});
+
+// A shower ends when the sky it is made of is gone, and the sky and the number
+// are the same thing -- so a shower cannot end over a filthy readout, and the
+// next mote off a swing cannot start another one.
+//
+// This is what "the haze never comes back" looked like from the outside: the
+// number stood over the line with an empty band under it, so every frame
+// started a shower, found nothing to pour, and stopped again. On, off, on, off,
+// and the readout never moved.
+group('a shower ends clean, and the next sky is made from nothing', async () => {
+  window.__crew(3, 3);
+  haveRock();
+  window.__air({ haze: state().smog.at + 30 });     // a sky over the line
+  const wet = runUntil(() => state().smog.raining, 10);
+
+  // watched all the way through, because what went wrong before went wrong
+  // between two frames: a shower that stops and starts is a shower nobody sees
+  let flips = 0, was = true, dry = null;
+  for (let i = 0; i < 200 && dry == null; i++) {
+    run(0.25);
+    const s = state().smog;
+    if (s.raining !== was) { flips++; was = s.raining; }
+    if (!s.raining) dry = s;
+  }
+  const rains = state().smog.rains;
+
+  // and now the yard goes on working, which is what used to set it off again
+  run(60);
+  const after = state().smog;
+  window.__crew(0, 0);
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(wet, 'a sky over the line comes down'),
+    ok(dry && dry.haze < 40,
+       'and when it stops there is next to nothing left overhead',
+       `${dry && Math.round(dry.haze)} haze, ${dry && dry.sky} motes`),
+    ok(flips === 1, 'it stops once rather than flickering off and on',
+       `${flips} changes of state`),
+    ok(after.rains === rains,
+       'and the work that follows makes a sky rather than another shower',
+       `${rains} rains -> ${after.rains}`),
+    ok(after.haze > (dry ? dry.haze : 0),
+       'the haze comes back, which is the whole of what it was not doing',
+       `${dry && Math.round(dry.haze)} -> ${Math.round(after.haze)}`)
+  ];
+});
+
+// One speck, from the swing to the band. It used to be two: a puff that was
+// deleted at the top of the climb and a mote created in its place, coming up
+// from nothing over the best part of a second -- so what you watched was one
+// cell going out and another coming in beside it.
+group('a speck off a swing is the speck in the band', async () => {
+  window.__crew(2, 0);
+  haveRock();
+  run(3);
+  const climbing = () => yard.smogSky().filter(m => m.up);
+  const rose = runUntil(() => climbing().length > 0, 30);
+  const mote = climbing()[0];
+  const startY = mote && mote.y;
+  // followed until it arrives, watching the one object rather than the counts
+  let solid = true, jumped = 0, lastY = startY;
+  for (let i = 0; i < 600 && mote && mote.up; i++) {
+    run(1 / 30);
+    if ((mote.fade ?? 1) < 1) solid = false;
+    if (Math.abs(mote.y - lastY) > 40) jumped++;
+    lastY = mote.y;
+  }
+  const stillThere = mote && yard.smogSky().includes(mote);
+  window.__crew(0, 0);
+  window.__air({ haze: 0 });
+  return [
+    ok(rose && !!mote, 'a swing puts a speck in the air'),
+    ok(stillThere && mote && !mote.up,
+       'and the thing that arrives in the band is that same speck',
+       `${stillThere ? 'still the same object' : 'a different one'}`),
+    ok(solid, 'at full weight the whole way: it never goes out and comes back'),
+    ok(jumped === 0, 'and it never jumps: every pixel of the climb is travelled',
+       `${jumped} jumps over 40px`),
+    ok(mote && startY > mote.y, 'and it ends up above where it started',
+       `${Math.round(startY)} -> ${Math.round(mote ? mote.y : 0)}`)
   ];
 });
