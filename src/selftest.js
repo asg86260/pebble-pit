@@ -625,12 +625,21 @@ const TESTS = [
     // and at the bottom the seam comes out in one go
     const paid = runUntil(() => state().pileCount.quarry > 0, 180);
     // The handful goes up a stone at a time, so the first one landing is the
-    // start of the seam rather than the whole of it. Wait for the throwing to
-    // finish and the last of them to come down.
-    run(4);
+    // start of the seam rather than the whole of it. Watch the rest of it come
+    // out a frame at a time -- and the climb with it, because the ladder is a
+    // couple of seconds and a whole-second step goes straight over it.
+    // Watched for the thing that lasts rather than the frame it happens on:
+    // being *out* of the hole. A body on the ladder is on it for a second or two
+    // and which frame you look on is luck, but a cut that has paid and been left
+    // is a cut with nobody in it -- and that is the state the ground coming back
+    // actually waits on. See the 'up' leg in quarry.js.
+    let emptied = false;
+    for (let i = 0; i < 900; i++) {
+      run(1 / 60);
+      emptied = emptied || state().underground === 0;
+    }
     const seam = state();
-    const climbing = runUntil(() => state().crewDetail.some(d => d[0] === 'q' && d.includes('|up|')), 30)
-                  || seam.cutDug >= 1;
+
 
     // then the hole fills back in and they start again
     const again = runUntil(() => state().cutDug < 0.5 && state().pileCount.quarry > 0, 120);
@@ -645,7 +654,7 @@ const TESTS = [
          'the seam at the bottom pays a handful at once, not one at a time',
          `${seam.pileCount.quarry} up in one go`),
       ok(seam.seam >= 2, 'and what it is worth is the depth of the cut', `${seam.seam} a seam`),
-      ok(climbing, 'they climb out with it'),
+      ok(emptied, 'and they get out of it: the cut is left empty behind them'),
       ok(again, 'the cut falls in behind them', `${state().cutDug} deep again`),
       ok(round2, 'and they dig it again')
     ];

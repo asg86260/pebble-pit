@@ -18,7 +18,11 @@ group('the quarry gives up shards, and somebody fetches them', async () => {
     onTheFloor = onTheFloor || s.workerPos.some(p =>
       p[0] === 'q' && +p.split(',')[1] > s.groundY);
     return s.finds.includes('shard');
-  }, 40);
+    // A cut is dug out to a seam now rather than shedding a shard every few
+    // swings, so the first blue of a run is a whole dig away -- about a minute
+    // of three bodies working down through the ground. That is the point of it:
+    // blue arrives in a handful you waited for.
+  }, 180);
   const waiting = state();
 
   window.__crew(0, 2, 3);                  // now put somebody on carrying

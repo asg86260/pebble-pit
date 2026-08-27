@@ -710,73 +710,63 @@ const CHUTE = SCRUB_CHUTE;
 // narrow shaft, a band of stone every few courses so it reads as built rather
 // than extruded, and a lit window near the top that is the only light in the
 // yard nobody walks to. Everything else out here is a shed or a hole.
+// The tower. Everything the crew put up is a shed or a hole; this is neither, so
+// it is the one thing here with a roof that comes to a point -- and a smaller one
+// beside it doing the same, because two pointed roofs at different heights is
+// what a tower reads as and one is just a spike.
+//
+// Drawn the way every other building here is drawn: a solid black silhouette
+// with the openings cut white out of it. It is the shape that carries a building
+// in this game, not the outline -- the school is a black block with a belfry, the
+// scrubbing house is a black block with a chute, and a tower is a black shaft
+// with a hat on.
 export function drawTower() {
   if (!S.towerOpen) return;
   const { x, y, w, h } = tower;
-  // Everything here is whole cells off the tower's own corner, so the shape can
-  // be read as a drawing rather than as arithmetic.
-  const cell = (cx, cy, cw = 1, ch = 1) =>
-    ctx.fillRect(Math.round(x + cx * P), Math.round(y + cy * P), cw * P, ch * P);
-
-  const WIDE = Math.round(w / P);              // 13 cells across
-  const TALL = Math.round(h / P);              // and 34 down
+  const c = n => x + P * n;                    // cell n across the front
+  const r = n => y + P * n;                    // and n down from the top
+  const WIDE = Math.round(w / P);              // 13 across
+  const TALL = Math.round(h / P);              // 34 down
   const SHAFT = 8;                             // the main shaft, on the left
-  const TURRET_X = SHAFT, TURRET_W = WIDE - SHAFT;
-  const SPIRE = 6;                             // rows of pointed roof on the main
-  const TUR_ROOF = 3;                          // and on the little one
-  const TUR_TOP = 13;                          // how far down the turret starts
+  const TUR = WIDE - SHAFT;                    // and the little one beside it
+  const SPIRE = 7;                             // rows of roof on the main
+  const TUR_ROOF = 4;                          // on the turret
+  const TUR_TOP = 14;                          // how far down the turret starts
 
-  // --- the two shafts, white with a black edge, like every other building here
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y + SPIRE * P, SHAFT * P, (TALL - SPIRE) * P);
-  ctx.fillRect(x + TURRET_X * P, y + (TUR_TOP + TUR_ROOF) * P,
-               TURRET_W * P, (TALL - TUR_TOP - TUR_ROOF) * P);
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x + 1, y + SPIRE * P + 1, SHAFT * P - 2, (TALL - SPIRE) * P - 2);
-  ctx.strokeRect(x + TURRET_X * P + 1, y + (TUR_TOP + TUR_ROOF) * P + 1,
-                 TURRET_W * P - 2, (TALL - TUR_TOP - TUR_ROOF) * P - 2);
-
-  ctx.fillStyle = '#000';
-
-  // --- the roofs. Solid, and stepped to a point: a cone drawn in cells is a
-  // stack of rows narrowing by one a side, and it is the one roof in this yard
-  // that is not flat. Everything else the crew put up is a shed.
-  const spire = (cx, cw, cy, rows) => {
+  // A roof that comes to a point, drawn the only way a point can be drawn in
+  // cells: a stack of rows each a little wider than the last.
+  const spire = (cx, cw, top, rows) => {
     const mid = cx + cw / 2;
-    for (let r = 0; r < rows; r++) {
-      const half = (r + 1) * (cw / 2) / rows;
+    for (let i = 0; i < rows; i++) {
+      const half = ((i + 1) / rows) * (cw / 2);
       const from = Math.round(mid - half), to = Math.round(mid + half);
-      cell(from, cy + r, Math.max(1, to - from));
+      ctx.fillRect(c(from), r(top + i), P * Math.max(1, to - from), P);
     }
   };
-  spire(0, SHAFT, 0, SPIRE);
-  spire(TURRET_X, TURRET_W, TUR_TOP, TUR_ROOF);
 
-  // A finial over each: the flick of the hat that says somebody lives here on
-  // purpose rather than that this is a chimney.
-  cell(SHAFT / 2 - 0.5, -2);
-  cell(SHAFT / 2 - 1.5, -3, 3);
-  cell(TURRET_X + TURRET_W / 2 - 0.5, TUR_TOP - 1);
+  ctx.fillStyle = '#000';
+  spire(0, SHAFT, 0, SPIRE);                             // the hat
+  ctx.fillRect(x, r(SPIRE), P * SHAFT, P * (TALL - SPIRE));   // the shaft
+  spire(SHAFT, TUR, TUR_TOP, TUR_ROOF);                  // the little hat
+  ctx.fillRect(c(SHAFT), r(TUR_TOP + TUR_ROOF), P * TUR, P * (TALL - TUR_TOP - TUR_ROOF));
 
-  // --- the windows, lit: two up the main shaft and one in the turret, in the
-  // same warm cell the houses use, so it reads as somewhere somebody is awake.
-  const lit = (cx, cy, cw, ch) => {
-    ctx.fillStyle = '#000';
-    cell(cx, cy, cw, ch);
-    ctx.fillStyle = '#e8890c';
-    ctx.fillRect(Math.round(x + cx * P) + 1, Math.round(y + cy * P) + 1,
-                 cw * P - 2, ch * P - 2);
-    ctx.fillStyle = '#000';
-  };
-  lit(3, SPIRE + 3, 2, 3);
-  lit(3, SPIRE + 12, 2, 3);
-  lit(TURRET_X + 1, TUR_TOP + TUR_ROOF + 3, 2, 2);
+  // A weather vane over the point: one cell up, and one across it. The flick of
+  // the hat that says somebody lives here on purpose.
+  ctx.fillRect(c(SHAFT / 2) - P / 2, r(-2), P, P * 2);
+  ctx.fillRect(c(SHAFT / 2) - P * 1.5, r(-3), P * 3, P);
 
-  // and a door at the foot of the main shaft
-  cell(3, TALL - 4, 2, 4);
+  // The openings, cut white out of it. Tall and narrow like the school's, and
+  // stacked up the shaft rather than in a row: a tower is read by how far up its
+  // windows go.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + 3 * P + 1, y + (TALL - 4) * P + 1, 2 * P - 2, 4 * P - 1);
+  for (const n of [SPIRE + 3, SPIRE + 9, SPIRE + 15])
+    ctx.fillRect(c(3), r(n), P * 2, P * 3);
+  ctx.fillRect(c(SHAFT + 1), r(TUR_TOP + TUR_ROOF + 3), P * 2, P * 2);
+  // a slit in the spire, the way the school's belfry rings out of one
+  ctx.fillRect(c(SHAFT / 2) - P / 2, r(SPIRE - 3), P, P * 2);
+  // and the way in, the same door every other building has
+  ctx.fillRect(c(SHAFT / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+
   ctx.fillStyle = '#000';
 }
 

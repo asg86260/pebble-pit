@@ -248,8 +248,7 @@ group('a worker can reach the bank behind the rock', async () => {
 // nub against the station, and the limit is a crest across the middle of it.
 group('a full pile is a heap you can read', async () => {
   window.__grant({ cores: 8 });
-  window.__crew(0, 0, 4, 0);                 // quarriers, and nobody to carry it off
-  quickCrew();
+  window.__crew(0, 0, 0, 0);                 // nobody: the pile is thrown, not mined
   window.__clearFloor();
   run(1);
 
@@ -270,8 +269,28 @@ group('a full pile is a heap you can read', async () => {
   const tall = tops => Math.max(...tops);
   const wide = tops => tops.filter(h => h > 0).length;
 
-  const part = runUntil(() => state().pileCount.quarry >= 45, 120) && profile();
-  const filled = runUntil(() => state().pileFull.quarry, 300);
+  // The pile is thrown in rather than dug up. What this group is about is the
+  // *shape* a full heap takes -- a triangle standing on its strip, crest in the
+  // middle, no wall at either end -- and none of that is about where the shards
+  // came from. A cut pays a handful at the bottom of a dig now, so mining a
+  // hundred and eighty of them is the better part of an hour of yard for a check
+  // about geometry.
+  const heap = () => {
+    const p = strip();
+    // weighted towards the near end, the way a body at the rim actually throws:
+    // most of it lands close and it tails away along the strip, which is what
+    // makes a heap a mound rather than a carpet
+    for (let i = 0; i < 20; i++) {
+      const bell = Math.random() + Math.random() + Math.random() - 1.5;
+      const at = p.from + Math.min(1, Math.abs(bell)) * (p.to - p.from) * 0.5;
+      window.__toss('shard', at);
+    }
+    run(0.8);
+  };
+  while (state().pileCount.quarry < 45) heap();
+  const part = profile();
+  for (let i = 0; i < 60 && !state().pileFull.quarry; i++) heap();
+  const filled = state().pileFull.quarry;
   run(2);                                    // and whatever was still in the air
   const full = state();
   const crest = profile();

@@ -21,7 +21,7 @@ import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { now } from './clock.js';
-import { sweepMuckAt, yardMuck, nearestMuck, pitLadder, pitTop,
+import { sweepMuckAt, yardMuck, nearestMuck, muckAtCol, pitLadder, pitTop,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
 
@@ -1155,6 +1155,8 @@ export function updateWorkers(now, dt) {
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
   const muckTaken = new Set();
+  // and the columns already spoken for by bodies that are on their way to them
+  for (const w of S.workers) if (w.muckAt != null) muckTaken.add(w.muckAt);
   // ...and the ground nobody may be *fetching from*, which is not the same rule
   // and used to be missing. A hauler ducks out of the way and then walks
   // straight back in, because what pulled it there was a column of dust it had
@@ -1390,7 +1392,21 @@ export function updateWorkers(now, dt) {
     // the trip first. Putting a load down to pick up a shovel is a load on the
     // floor and a trip wasted.
     if (!w.carry && !w.hasCore && yardMuck() > 0) {
-      const to = nearestMuck(w.x + WORKER / 2, muckTaken);
+      // One body, one column, held until that column is clear -- the same
+      // booking a hauler makes on a column of dust.
+      //
+      // The set below is rebuilt every pass, so on its own it only stopped two
+      // bodies choosing the same column *in the same frame*: every one of them
+      // then re-chose the nearest the very next frame, and the whole crew walked
+      // to the same spot anyway. A claim has to be kept to be a claim.
+      if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+      if (w.muckAt == null) {
+        const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
+        w.muckAt = pick == null ? null : Math.floor(pick / P);
+      } else {
+        muckTaken.add(w.muckAt);
+      }
+      const to = w.muckAt == null ? null : w.muckAt * P + P / 2;
       if (to != null) {
         if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
         unbook(w);
@@ -1419,7 +1435,7 @@ export function updateWorkers(now, dt) {
         continue;
       }
     }
-    if (w.goal === 'muck') w.goal = 'idle';      // the yard is clear: back to it
+    if (w.goal === 'muck') { w.goal = 'idle'; w.muckAt = null; }   // the yard is clear
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking
       // the nearest one afresh every frame is what made the crew swarm.

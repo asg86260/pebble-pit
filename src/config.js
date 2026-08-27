@@ -737,11 +737,20 @@ export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // is a seam: a handful of stone all at once, thrown up over the rim, and then the
 // climb out and the hole falls in again behind them. Deeper cut, bigger seam.
 // The blue arrives in lumps you can watch coming.
-export let CUT_DIG_MS = 34000;   // to get from the surface to the seam, at pace 0
+// The swinging in one dig, at pace nought. What a dig actually takes is this
+// plus the walking between cells, which is real and is meant to be: a cut is
+// worked by people crossing it, not by a number filling.
+export let CUT_DIG_MS = 16000;   // to get from the surface to the seam, at pace 0
 export const CUT_SEAM = 2;         // shards in the seam, per bench of depth
 export const CUT_TOSS_MS = 320;    // and how fast they go up over the rim
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
+// And how fast it steps between the cells of its own face, which is a different
+// thing: crossing the yard is a journey and moving along a course you are
+// working is a couple of paces. A body walks to every cell it digs now, so this
+// is most of what a dig costs -- at the walking pace it was four times the
+// swinging.
+export const CUT_STEP = 3.2;
 
 // --- the farm ---------------------------------------------------------------
 // Beds out past the quarry. Nothing grows in them on its own: a farmhand stands

@@ -9,7 +9,7 @@
 // cores is shown until one is banked.
 
 import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, CUT_TOSS_MS } from './config.js';
-import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, QUARRY_SWING, QUARRY_SHUFFLE,
+import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
 import { foul, throughCutMuck } from './smog.js';
@@ -238,6 +238,7 @@ export function stepQuarrier(w, now) {
     if (w.y > top) return;
     w.y = top;
     w.goal = 'to';
+    w.cell = null;                             // it is not digging anything now
     // The last one out is what fills the hole back in. Doing it the moment the
     // seam was emptied dropped the dirt back under the feet of everybody still
     // down there, and they rode it up like a lift.
@@ -293,13 +294,32 @@ export function stepQuarrier(w, now) {
   if (throughCutMuck(1) <= 0) return;
   if (now < w.next) return;
 
-  // One cell, off the column it is standing on -- and it works that column down
-  // to the mark before moving along, so a face is worked rather than pecked at.
-  // This is the rock's own rule: a swing takes a cell, and what a swing looks
-  // like is a cell going.
-  const c = nextCut(w.x + WORKER / 2);
-  if (c < 0) return;
-  cutCells()[c]++;
+  // A cell is somewhere you go, not something that happens wherever you are
+  // standing. It picks one, walks to it, and digs when it gets there -- which is
+  // the same rule the muck follows, and the same rule everything in this yard
+  // follows: nobody is ever put where they are needed.
+  const cells = cutCells();
+  if (w.cell == null || w.cell < 0 || cells[w.cell] >= cutTarget(w.cell))
+    w.cell = nextCut(w.x + WORKER / 2, w);
+  if (w.cell == null || w.cell < 0) return;
+
+  const to = quarry.x + w.cell * P + P / 2 - WORKER / 2;
+  const d = to - w.x;
+  if (Math.abs(d) > 1) {
+    w.face = Math.sign(d) || w.face || 1;
+    // A blaster is quicker on the face as well as quicker with the pick. Halving
+    // only the swing stopped doubling anything the moment a body had to walk to
+    // every cell: the walking is most of a dig now, so a trade that left it
+    // alone was a trade that did nothing.
+    w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 2 : 1), Math.abs(d));
+    return;                                    // on its way: it is not digging yet
+  }
+  w.x = to;
+  if (now < w.next) return;
+
+  const c = w.cell;
+  cells[c]++;
+  w.cell = null;                               // done with that one: it picks another
   // Digging raises dust, not only the seam at the bottom. The cut used to foul
   // the air once per shard, which was the same event as producing one; now that
   // production is a lump at the end, fouling only on the payout meant a cut
@@ -309,8 +329,6 @@ export function stepQuarrier(w, now) {
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
-  // and it stands over what it is taking off, rather than digging at arm's reach
-  w.x = quarry.x + c * P + P / 2 - WORKER / 2;
   S.dirty = true;
 
   if (cutDone() && S.cutOwed <= 0) {
@@ -363,6 +381,11 @@ export function cutTarget(c) {
   return Math.round((g.deep - S.groundY) / P);
 }
 
+// How many of the open cells nearest a body it will choose between. Enough that
+// a gang scatters rather than queues, few enough that nobody crosses the face
+// for a cell that takes a moment to dig.
+const NEAR_CELLS = 5;
+
 export const dugAt = c => (cutCells()[c] || 0);
 export const colOfX = x => Math.floor((x - quarry.x) / P);
 
@@ -400,27 +423,42 @@ export function dugShare() {
 // A column that has reached its mark is done: that is where the benched walls
 // and the uneven floor come from, since the marks differ across the width and
 // the shallow ones stop early while the middle keeps going.
-export function nextCut(x) {
+export function nextCut(x, self = null) {
   const cells = cutCells();
+
+  // Nobody else's cell. A body walks to the one it has picked, so two of them
+  // picking the same one is two bodies walking to the same spot and one of them
+  // arriving to find the work done.
+  const taken = new Set();
+  for (const o of S.workers)
+    if (o !== self && o.type === 'quarrier' && o.cell != null && o.cell >= 0) taken.add(o.cell);
 
   // The shallowest ground first: a cut is worked *down* in layers, the whole
   // floor coming off a course at a time, and the hole opens out as it deepens.
   let shallow = Infinity;
   for (let c = 0; c < cells.length; c++) {
-    if (cells[c] >= cutTarget(c)) continue;
+    if (cells[c] >= cutTarget(c) || taken.has(c)) continue;
     shallow = Math.min(shallow, cells[c]);
   }
   if (shallow === Infinity) return -1;
 
-  // Then anywhere in that layer, at random. Taking the nearest of them put the
-  // whole gang on one spot working along in a queue -- which is one body doing
-  // the digging and the rest walking after it. Scattered across the course,
-  // three bodies are three bodies working a face.
+  // Then one of the nearest few of that layer, picked at random between them.
+  //
+  // Both halves matter. Always the *nearest* puts the whole gang on one spot
+  // working along in a queue -- one body digging and the rest walking after it.
+  // Anywhere in the layer is worse: a body walks to each cell now, and a cell
+  // takes a tenth of a second to dig against two seconds to cross the face for,
+  // so picking at random across the whole width is a gang that spends its shift
+  // walking. A handful of candidates is scatter you can see, on walks that cost
+  // about what the digging does.
   const open = [];
   for (let c = 0; c < cells.length; c++) {
-    if (cells[c] === shallow && cells[c] < cutTarget(c)) open.push(c);
+    if (cells[c] === shallow && cells[c] < cutTarget(c) && !taken.has(c)) open.push(c);
   }
-  return open[Math.floor(Math.random() * open.length)];
+  if (!open.length) return -1;
+  const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
+  open.sort((a, b) => Math.abs(a - home) - Math.abs(b - home));
+  return open[Math.floor(Math.random() * Math.min(NEAR_CELLS, open.length))];
 }
 
 // and the ground fills back in behind them

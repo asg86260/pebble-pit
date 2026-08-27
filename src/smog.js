@@ -708,6 +708,13 @@ const MUCK_ELBOW = 4;
 //
 // The claim is a column rather than a body, so a patch two cells wide takes two
 // of them and the third goes and finds its own.
+// Is there still anything to shift in this column? A claim is held until the
+// column it names is clear, so this is what tells a body it is done with it.
+export function muckAtCol(c) {
+  const m = muckCols();
+  return c >= 0 && c < m.length && !onSite(c) ? m[c] : 0;
+}
+
 export function nearestMuck(wx, taken) {
   const m = muckCols();
   const home = colAt(wx);
