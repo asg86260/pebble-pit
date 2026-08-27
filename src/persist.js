@@ -9,7 +9,9 @@ import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
-import { S, floor, pit } from './state.js';
+import { S, floor, pit, sky } from './state.js';
+import { makeMeteor } from './meteor.js';
+import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount } from './grid.js';
 import { resite } from './world.js';
 import { startIntro } from './intro.js';
@@ -208,6 +210,18 @@ export function persist() {
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
     magicLoo: S.magicLoo,
+    // The sky. What is left of the meteor is saved cell by cell -- it is a rock
+    // half taken apart, and coming back to a whole one would be a shift's work
+    // handed back. The hat on the go is not: a spell in the middle of being cast
+    // when you closed the tab is a spell with no beginning, the same rule the
+    // rain goes by, so the tower starts it again and you have not paid twice.
+    meteorOpen: S.meteorOpen,
+    meteorCells: sky.cells ? Array.from(sky.cells) : null,
+    meteorAt: Math.max(0, S.meteorAt - clockNow()),
+    sparks: S.sparks,
+    seenSpark: S.seenSpark,
+    wizardHats: S.wizardHats,
+    wizards: S.wizards,
     scrubbers: S.scrubbers,
     recycler: S.recycler,
     seenAir: S.seenAir,
@@ -387,6 +401,21 @@ export function restore() {
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
   S.magicLoo = !!s.magicLoo;
+  S.meteorOpen = !!s.meteorOpen;
+  S.sparks = s.sparks || 0;
+  S.seenSpark = !!s.seenSpark || S.sparks > 0;
+  S.wizardHats = s.wizardHats || 0;
+  S.wizards = Math.min(s.wizards || 0, S.wizardHats);
+  S.brewAt = 0;
+  if (S.meteorOpen) {
+    makeMeteor();
+    // and the cells as they were left, if the save is of this shape of sky
+    if (Array.isArray(s.meteorCells) && s.meteorCells.length === sky.cells.length) {
+      sky.cells.set(s.meteorCells);
+      sky.n = sky.cells.reduce((n, v) => n + (v ? 1 : 0), 0);
+    }
+    S.meteorAt = s.meteorAt ? clockNow() + s.meteorAt : 0;
+  }
   S.scrubbers = s.scrubbers || 0;
   S.recycler = !!s.recycler;
   S.seenAir = !!s.seenAir;
@@ -417,7 +446,7 @@ export function restore() {
   // left long enough.
   S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
   S.spinUntil = 0;
-  S.sparks = [];
+  S.tableAir = [];
   S.paying = null;
   S.paying = null;
   S.chip = Math.max(0, +s.chip || 0);
@@ -511,6 +540,15 @@ export function reset() {
   S.towerOpen = false;
   S.outhouseOpen = false;
   S.magicLoo = false;
+  S.meteorOpen = false;
+  S.meteorAt = 0;
+  S.sparks = 0;
+  S.seenSpark = false;
+  S.wizardHats = 0;
+  S.wizards = 0;
+  S.brewAt = 0;
+  sky.cells = null;
+  sky.n = 0;
   S.scrubbers = 0;
   S.recycler = false;
   S.seenAir = false;
@@ -525,7 +563,7 @@ export function reset() {
   S.casinoBoardOpen = false;
   S.pot = null;
   S.spinUntil = 0;
-  S.sparks = [];
+  S.tableAir = [];
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
   S.beds = [];

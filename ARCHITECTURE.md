@@ -165,7 +165,7 @@ all runs, and every one of those failures was the same real bug wearing a
 different hat. `__test()` reports its slowest
 groups; when one of them grows, it is almost always a check sitting through
 something the game does slowly on purpose — a walk the length of the world, a
-bed ripening, forty-two seconds between sparks. `__place(type, x)` stands a body
+bed ripening, a wizard floating the length of the sky. `__place(type, x)` stands a body
 where it is needed and `__levels({...})` buys the pace, which is how those get
 back under a few seconds without testing anything less.
 
@@ -174,9 +174,10 @@ layout on seven screen sizes, mining, the crew, every site, the pit, spending,
 touch, saving and both boards. It resets the save first, so run it on a game you
 do not mind losing.
 
-Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,sparks,cores})
-__crew(miners,workers,quarriers,farmhands) __levels({...}) __lab() __meteor()
-__jump(n) __next() __drop() __pile(x,n) __clearFloor()`.
+Dev hooks: `__state() __give(n) __spend(n) __grant({shards,spores,cores})
+__crew(miners,workers,quarriers,farmhands,labbers,wizards) __levels({...})
+__lab() __meteor() __wizardHat(n) __jump(n) __next() __drop() __pile(x,n)
+__clearFloor()`.
 
 **Balance by measuring, and measure a plausible game.** `__levels()` and
 `__crew()` exist for that. A measurement taken on a fresh save reads as ten to

@@ -1,11 +1,51 @@
 // The tower: the far end of the walk, and the only thing a core buys.
 //
 // What it sells is not a rate. Everything else in this yard makes a number go up
-// faster; the tower makes a thing stop happening. There is no upgrade path here
-// and no second tier -- one row, and what it buys is a chore you no longer have.
+// faster; the tower makes a thing stop happening, or makes a thing possible that
+// was not. Three rows: a chore you no longer have, a rock called down out of the
+// sky, and the hat that lets somebody go and work it.
+//
+// The hat is the one purchase in the game you wait for. Everything else is
+// instant because everything else is a thing the crew already knew how to do and
+// you were only paying for it; this is the tower actually making something, and
+// a spell that lands the moment you can afford it is a shop row rather than a
+// spell.
 
 import { S } from './state.js';
-import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES } from './config.js';
+import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES, METEOR_CORES, METEOR_DUST,
+         WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS } from './config.js';
+import { now } from './clock.js';
+import { makeMeteor } from './meteor.js';
+import { rebalance } from './upgrades.js';
+import { syncWorkers } from './crew.js';
+
+// what the next hat costs, in each of the three things the yard makes
+export const wizCost = () => {
+  const up = Math.pow(WIZ_RATE, S.wizardHats);
+  return { dust: Math.round(WIZ_DUST * up),
+           shards: Math.round(WIZ_SHARDS * up),
+           spores: Math.round(WIZ_SPORES * up) };
+};
+
+// how far through the hat on the go it is, 0..1, for the row to say
+export const brewing = () => S.brewAt > 0;
+export const brewLeft = () => Math.max(0, S.brewAt - now());
+export const brewAt = () => brewing() ? 1 - brewLeft() / WIZ_BREW_MS : 0;
+
+// A minute and a half is a long time to look at a number of milliseconds.
+const mins = ms => {
+  const s = Math.ceil(ms / 1000);
+  return s >= 60 ? `${Math.round(s / 60)} min` : `${s}s`;
+};
+
+export function stepTower() {
+  if (!brewing() || now() < S.brewAt) return;
+  S.brewAt = 0;
+  S.wizardHats++;
+  rebalance();
+  syncWorkers();
+  S.dirty = true;
+}
 
 export const TOWER_UPGRADES = [
   {
@@ -21,9 +61,42 @@ export const TOWER_UPGRADES = [
     // Nothing to enchant until there is one, which is the joke: the tower's
     // first piece of magic is plumbing.
     show: () => S.outhouseOpen && !S.magicLoo
+  },
+  // The second thing a core is for. It is bought once and it opens the sky for
+  // good: what it pays for is not this meteor but the habit -- once the tower
+  // has called one down, the next one comes on its own.
+  {
+    key: 'callmeteor',
+    name: 'call down a meteor',
+    note: () => 'something in the sky worth going up for',
+    bill: () => [['core', METEOR_CORES], ['dust', METEOR_DUST]],
+    cost: () => METEOR_DUST,
+    buy: () => { S.meteorOpen = true; S.skyShown = true; makeMeteor(); },
+    show: () => !S.meteorOpen
+  },
+  // And the hat. Dust, stone and crop -- everything the ground makes, for the
+  // one body that will not be standing on it.
+  {
+    key: 'wizard',
+    name: 'raise a wizard',
+    note: () => brewing()
+      ? `at it: ${mins(brewLeft())} to go`
+      : `a hat nobody can work the sky without, in ${mins(WIZ_BREW_MS)}`,
+    bill: () => { const c = wizCost();
+                  return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
+    cost: () => wizCost().dust,
+    // Paying starts it. What you get for the money is the tower's time, and it
+    // takes as long as it takes.
+    // One at a time. A tower with three hats on the go is a shop with a queue in
+    // it, and the waiting is the whole of what makes this row a spell -- so a
+    // second buy while one is on the go does nothing, and the row stays up
+    // saying how long is left rather than vanishing until it is done.
+    buy: () => { if (!brewing()) S.brewAt = now() + WIZ_BREW_MS; },
+    dead: () => brewing(),
+    show: () => S.meteorOpen
   }
 ];
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: ['magicloo'] }
+  { title: 'the tower', keys: ['magicloo', 'callmeteor', 'wizard'] }
 ];

@@ -32,15 +32,11 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // ends up in: the pit; the rock's own spoil; the rock; the bench you buy at,
 // stood just off its flank; then the quarry and what comes up it, the farm and
 // its beds' crop, and the lab at the far end.
-// The thing in the sky is **benched**: it is not in the game. It sheds nothing
-// and cannot be clicked, because the sparks it used to give are gone, and a
-// thing that hangs there doing nothing is a thing that raises a question the
-// game has no answer to.
-//
-// It is kept rather than deleted, the way the million is: everything it needs is
-// still here, and the dev panel has a switch that puts it back in the sky so it
-// can be looked at. If it ever comes back for real it will need a reason to be
-// there -- a place people go, or something worth walking out for.
+// The thing in the sky is the meteor, and it has its reason to be there now: it
+// was benched for want of one -- it shed sparks nobody had a use for, and a
+// thing that hangs over the yard doing nothing raises a question the game
+// cannot answer. What it needed was somebody to go and work it, and that is
+// what the tower is for. See meteor.js.
 export const TO_SKY = -1740;     // rock centre to the thing in the sky
 export const SKY_UP = 460;       // and how far above the ground line it hangs
 export const SKY_R = 46;
@@ -351,6 +347,46 @@ export const CORE_FROM = 5;
 export const MAGIC_LOO_DUST = 4000;
 export const MAGIC_LOO_SPORES = 400;
 
+// --- the meteor, and the wizards who work it ------------------------------------
+// The second thing a core buys, and the only one that buys a *place*: the tower
+// calls the meteor down out of the far sky and it hangs there over the yard,
+// grey rind and a red middle, until somebody who can reach it goes and works it.
+//
+// Cores, because a core is the one thing the rock gives up that nothing else
+// does, and calling a rock out of the sky should cost the rarest thing on the
+// ground.
+export const METEOR_CORES = 3;
+export const METEOR_DUST = 6000;
+// How much of the meteor is core, as a share of the radius. The rind is dust and
+// the middle is the red -- so it is a dig you can see the end of: the grey
+// shrinks, and one day there is red showing through it.
+export const METEOR_CORE = 0.44;
+// Grains of dust one cell of the rind is worth. They fall, they land, and the
+// haulers fetch them like anything else lying about the yard: the sky is a
+// place work comes from now, not a second bank.
+export const METEOR_GRAINS = 3;
+// And how long the sky is empty before the next one drifts in. It is not a
+// respawn on a timer you watch -- it is long enough that the wizards have
+// nothing to do for a while, which is what makes the next one worth seeing.
+export const METEOR_AGAIN = 90000;
+
+// A wizard is a hat, like every other trade in this yard -- it is just the one
+// hat nobody can do the job without. The tower makes them one at a time and
+// takes its time over it: dust, stone and crop go in, and a while later there is
+// a hat on the stand.
+export const WIZ_DUST = 4000;
+export const WIZ_SHARDS = 40;
+export const WIZ_SPORES = 40;
+export const WIZ_RATE = 1.7;         // and each one after the first
+export const WIZ_BREW_MS = 120000;   // how long the tower is at it
+// What a wizard does once it is up there: a cell off the meteor, this often.
+export const WIZ_MS = 1100;
+export const WIZ_RISE = 1.4;         // pixels a frame it floats, up or down
+export const WIZ_BOB = 2.2;          // and how far it drifts as it hangs there
+// How near the meteor a wizard works from: it hangs off the rind rather than
+// inside it, so what it is taking apart is not behind it.
+export const WIZ_STANDOFF = 16;
+
 export const TOWER_CORES = 1;
 export const TOWER_DUST = 5000;
 export const TOWER_SHARDS = 1000;
@@ -412,8 +448,10 @@ export const CASINO_WIN_KNOCK = 16;  // and what it does when it came off
 // Winnings coming down are confetti rather than gravel: they drift, because a
 // shower that arrives in three frames is a flicker and the point of it is to be
 // watched landing on the heap.
-export const SPARK_LIFE = 2.6;       // seconds a chip is in the air
-export const SPARK_GRAV = 0.05;
+// (`SPARK_` once, before the sky took the word back: these are the table's own
+// grains in the air, and nothing to do with what comes off the meteor.)
+export const TABLE_LIFE = 2.6;       // seconds a chip is in the air
+export const TABLE_GRAV = 0.05;
 export const CASINO_WHEEL = 0.35;    // radians a second it idles round at
 // What goes on the table. Four chips and one of them is everything you have:
 // the size of the bet is most of what a bet feels like, and a stake worked out
@@ -459,7 +497,13 @@ export const SCHOOL_COST = 4;    // shards to build it
 // from then on, and nothing else in the game gives that much away -- so it is
 // priced like the decision it is. A thousand is a quarry running for a long
 // while, which is what makes the first one worth choosing between the four.
-export let TRADE_COST = 1000;  // and for the first of any one trade
+// A thousand was priced against a cut that gave up shards far faster than this
+// one does. Two bodies in the quarry bank about two shards a minute, so a
+// thousand is seven hours of it -- a price nobody was ever going to pay, which
+// makes the school scenery and the shard a currency you cannot spend all over
+// again. Twenty is about ten minutes of a working cut for the first, and the
+// rate below still doubles-and-a-bit it every time.
+export let TRADE_COST = 20;    // and for the first of any one trade
 export const TRADE_RATE = 1.6;   // each one after that
 // The lip is as close to the rock as the rock's own spoil will allow, and not a
 // cell further out. What has to fit between the apron and the lip is one full
@@ -586,7 +630,8 @@ export const CORE_CELL = SHADES.length + 1;   // a core sitting in a pile, among
 export const FIND_TONES = 4;
 export const SHARD_CELL = CORE_CELL + 1;                  // and the three after it
 export const SPORE_CELL = SHARD_CELL + FIND_TONES;
-export const FIND_TOP = SPORE_CELL + FIND_TONES - 1;
+export const SPARK_CELL = SPORE_CELL + FIND_TONES;
+export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
 
 // The first colour in the game, and the reason it goes here first: everything
 // the *ground* makes is a grey, because grey is how deep the rock was. The
@@ -598,7 +643,10 @@ export const FIND_TOP = SPORE_CELL + FIND_TONES - 1;
 // Flat and strong, not pastel: this is a game of flat shapes on white paper.
 export const FIND_COLOR = {
   [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
-  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a']    // the farm: green, it grew
+  [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
+  // The meteor's core: red, and the only red in the game. The cut is cold and
+  // the beds are alive; this came out of the sky and is still hot.
+  [SPARK_CELL]: ['#e8503a', '#d93a25', '#c62d1c', '#9c2214']
 };
 
 // which kind a cell belongs to, and one of that kind with a tone of its own

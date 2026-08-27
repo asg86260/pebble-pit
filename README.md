@@ -18,7 +18,7 @@ Black-and-white pixel clicker. Vite + vanilla JS, canvas.
 - **The pile in the pit is the dust, not a picture of it.** One grain is one dust, drawn the same size as dust anywhere else, and the pile always shows as much of the hole as will fit in it. Past the brim the counter keeps going and the pile stays put. If the ground bed ever fills, extra dust rolls into the pit.
 - **The air over a place is the colour of what comes out of it**: grey over the yard, the shard's blue over the quarry, the spore's green over the beds -- so the far end of the world says what is out there before you can make out anything standing in it.
 - **A piece of research shows as a bar over the lab**, not as a number in a menu: it fills a cell at a time, and it does not move at all while the lab is empty.
-- **Four more places open up, out to the left.** The **cave** is a shaft; spelunkers go down it and come back with shards △. The **farm** is a row of beds that only grow while a farmhand is standing at one, and are cut for spores ◇. The **lab** spends both on multipliers — pace, never yield, because a pixel is always worth one dust — and keeps the books: dust, shards and spores a minute. The **meteor** hangs in the sky and sheds sparks ✚, which buy pace on everything at once. Each is unlocked with cores, and the view glides over to show you what you bought.
+- **Four more places open up, out to the left.** The **cave** is a shaft; spelunkers go down it and come back with shards △. The **farm** is a row of beds that only grow while a farmhand is standing at one, and are cut for spores ◇. The **lab** spends both on multipliers — pace, never yield, because a pixel is always worth one dust — and keeps the books: dust, shards and spores a minute. The **meteor** hangs in the sky once the tower calls one down: its grey rind falls as dust and its core is the game's only red, banked as sparks ✚. Nobody on the ground can reach it — a wizard is a hat the tower spends dust, stone and crop making, and it is the one body here whose feet leave the ground. Each is unlocked with cores, and the view glides over to show you what you bought.
 - **Rocks never stop coming.** Each is a little bigger than the last until they plateau, and each holds one core. There is no ending and nothing is ever taken away to make you start again.
 - Everything saves to localStorage — boulder damage, ground dust, pit contents, upgrades, crew. Reset with the button under the shop (click twice to confirm). The `r` key does it
 outright, with nothing to confirm, so it is a dev-build shortcut only.
@@ -81,5 +81,5 @@ Dev hooks in the console: `__state()` dumps the game state, `__give(n)` adds n d
 releases a core, `__jump(n)` swaps in rock n, `__pile(x, n)` heaps dust on the ground,
 `__crew(miners, workers, spelunkers, farmhands)` hires a crew outright, `__next()` finishes the
 rock, `__grant({shards, spores, sparks, cores})` and `__levels({...})` set up a plausible game,
-`__lab()` and `__meteor()` open those,
+`__lab()` and `__meteor()` open those, `__wizardHat(n)` puts hats on the tower's stand,
 `__spend(n)` takes n dust back out of the pit, `__reset()` starts a new game.

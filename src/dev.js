@@ -90,6 +90,8 @@ line('open too', box => {
   button(box, 'scrub', () => { S.scrubOpen = !S.scrubOpen; S.seenAir = true; });
   button(box, 'casino', () => { S.casinoOpen = !S.casinoOpen; });
   button(box, 'tower', () => { S.towerOpen = !S.towerOpen; S.seenCore = true; });
+  button(box, 'meteor', () => window.__meteor());
+  button(box, 'wizard hat', () => window.__wizardHat(1));
   button(box, 'kit', () => window.__school({ open: true, breakers: 3, carters: 3,
                                              blasters: 3, growers: 3 }));
   button(box, 'sky', () => { S.skyShown = !S.skyShown; });

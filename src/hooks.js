@@ -21,6 +21,7 @@ import { spawnChip } from './dust.js';
 import { SKY, PUFFS, pitTop as muckTopAt , fillSky } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
+import { makeMeteor } from './meteor.js';
 import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
@@ -64,9 +65,13 @@ export const drop = () => { dropCore(); S.dirty = true; };
 // the leavings of the last one.
 export const birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(); return BIRDS.length; };
 
-export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straight off, for looking at things
-  S.crew = m + h + sp + f + lb;
+export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire straight off, for looking at things
+  S.crew = m + h + sp + f + lb + wz;
   S.miners = m; S.quarriers = sp; S.farmhands = f; S.labbers = lb;
+  // The sky holds one body per hat, so a hook asked for wizards is given the
+  // hats to put them in -- the same way it is given benches for quarriers.
+  S.wizardHats = Math.max(S.wizardHats, wz);
+  S.wizards = wz;
   // Every job this hook does not take an argument for goes to nought. It says
   // what the whole crew is doing, so a count it leaves standing is a count from
   // whatever ran before it -- and bodies quietly disappear into a station the
@@ -76,6 +81,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straigh
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
+  if (wz > 0) openMeteor();
   // The cut and the plot only hold so many, so a hook asked for four down the
   // quarry gets a quarry with four benches in it rather than two of the four
   // sent back to carrying dust.
@@ -87,6 +93,29 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0) => {   // hire straigh
   if (f > 0) S.farmOpen = true;
   if (S.crew) S.seenCore = true;
   syncWorkers(); buildShop(); S.dirty = true;
+};
+
+// dev: the tower's own two, without paying for either. `openMeteor` is what the
+// row does -- the sky is opened and something is put in it -- and `wizardHat`
+// is the tower finishing one this instant rather than in two minutes.
+export const openMeteor = () => {
+  S.towerOpen = true;
+  S.meteorOpen = true;
+  S.skyShown = true;
+  S.seenCore = true;
+  makeMeteor();
+  buildShop();
+  S.dirty = true;
+};
+
+export const wizardHat = (n = 1) => {
+  openMeteor();
+  S.wizardHats = Math.max(0, S.wizardHats + n);
+  S.brewAt = 0;
+  rebalance();
+  syncWorkers();
+  buildShop();
+  S.dirty = true;
 };
 
 // dev: build the school and hand out trades without paying for them

@@ -25,6 +25,8 @@ import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
 import { stepCore } from './core.js';
+import { stepMeteor } from './meteor.js';
+import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords } from './crew.js';
@@ -108,6 +110,8 @@ export function step() {
   stepBuried(now);                            // and whoever is under the rock, when they can be seen
   stepHouse(now);                             // and the crew's own hearth, now and then
   stepCore();
+  stepMeteor(now);                            // and the sky, which has a rock in it now
+  stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
   stepSmog(dt);                               // and the sky, which is filling up
   sampleAir(now);

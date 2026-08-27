@@ -30,6 +30,7 @@ Object.assign(window, {
   __skyX: hooks.skyX, __puffFades: hooks.puffFades, __skyFades: hooks.skyFades,
   __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
   __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet,
+  __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
   __muckOverPit: hooks.muckOverPit, __look: hooks.look,
   __placeBoard: seatBoard, __boardFit: boardFit
 });

@@ -959,11 +959,12 @@ taken away to make you start again.
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
 player to come back tomorrow. No score, no summary screen, no percentage-of-a-percentage.
 
-*(The thing in the sky is **benched**, not deleted. It used to shed sparks; the sparks are gone,
-and an object that hangs there doing nothing raises a question the game has no answer to. Everything
-it needs is still in the code and the dev panel has a switch that puts it back so it can be looked
-at. If it returns it will need a reason to be there — a place people go, or something worth walking
-out for.)*
+*(The thing in the sky was benched for exactly one reason: it hung there doing nothing, and an
+object that does that raises a question the game cannot answer. What it needed was a reason to be
+there — a place people go, or something worth walking out for — and it has one now. The tower
+calls it down for cores; a wizard, which is a hat the tower makes over a couple of minutes, is the
+one body that can leave the ground; and what comes off it is dust from the rind and **red** from
+the core. It runs out, and another arrives. See `meteor.js` and `wizard.js`.)*
 
 *(An earlier version of this list also said "a third currency". The rule was never the count — it
 is that each one has exactly one job, and that the lab is the only place a multiplier lives. Red,
@@ -975,7 +976,9 @@ Written down so it does not get lost. Three parts, in order of how much they cha
 
 **A third resource, red.** And the farm's green becomes **yellow**, so the three
 ground resources are the three primaries: blue, yellow, red. Where red comes from is
-open — a third site, or something the quarry starts turning up deep enough down.
+settled: the core of the meteor, fetched down out of the sky by a wizard and banked in
+the hole like everything else — see `meteor.js`. It exists and it is counted; what it
+has no job yet is spending, and this is the job it was always meant for.
 
 **A paint store.** A place on the lot with three buckets standing in front of it, one
 full of each. It is the first building whose output is not a number.

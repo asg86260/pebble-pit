@@ -456,7 +456,8 @@ const PURSE = [
   ['dust', () => true, () => S.stored],
   ['core', () => S.seenCore, () => S.cores],
   ['shard', () => S.seenShard, () => S.shards],
-  ['spore', () => S.seenSpore, () => S.spores]
+  ['spore', () => S.seenSpore, () => S.spores],
+  ['spark', () => S.seenSpark, () => S.sparks]
 ];
 
 // Written only when it changes. This runs every frame a board is open, and

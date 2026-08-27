@@ -30,7 +30,7 @@
 
 import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_TURNS,
          CASINO_WHEEL, CASINO_KNOCK,
-         CASINO_WIN_KNOCK, SPARK_LIFE, SPARK_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
+         CASINO_WIN_KNOCK, TABLE_LIFE, TABLE_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
          P, SHADES, SHARD_CELL, SPORE_CELL, someFind } from './config.js';
 import { S, pit, casino, table } from './state.js';
 import { makePainter } from './painter.js';
@@ -135,7 +135,7 @@ function payOutStep(dt) {
       }
     }
     p.left--;
-    S.sparks.push({
+    S.tableAir.push({
       x, y, s: v, t: 0,
       // Not a ballistic lob: the hole is three thousand pixels away and the arc
       // that gets there under gravity is one that leaves the sky. This is a
@@ -268,7 +268,7 @@ const IN_AIR = 24000;
 // Grains already on their way down count as arrived for the purpose of deciding
 // how many more to send. Without that the trickle keeps issuing sand for sand
 // that is already in the air, and the heap ends up a handful over the pot.
-const airborne = () => S.sparks.reduce((n, k) => n + (k.lands ? 1 : 0), 0);
+const airborne = () => S.tableAir.reduce((n, k) => n + (k.lands ? 1 : 0), 0);
 
 function trickleIn(dt, cur) {
   const want = tableWant();
@@ -278,8 +278,8 @@ function trickleIn(dt, cur) {
   const at = potAt();
   while (n-- > 0) {
     const shade = find ? someFind(find) : 1 + Math.floor(Math.random() * SHADES.length);
-    if (S.sparks.length < IN_AIR) {
-      S.sparks.push({
+    if (S.tableAir.length < IN_AIR) {
+      S.tableAir.push({
         x: at.x + (Math.random() - 0.5) * P * 20,
         // Out of the sky, but out of the sky a little way up rather than out of
         // the top of the bed: the grid stands eighty cells tall, and a grain
@@ -313,7 +313,7 @@ function drainOut(dt) {
     if (r < 0) break;
     const v = at(table, c, r);
     put(table, c, r, 0);
-    if (S.sparks.length < IN_AIR) S.sparks.push({
+    if (S.tableAir.length < IN_AIR) S.tableAir.push({
       x: table.x + c * P,
       y: bottomY(table) - (r + 1) * P,
       vx: (Math.random() - 0.5) * 0.35,
@@ -355,9 +355,9 @@ export const potShade = cur =>
 // One frame of the grains in the air: they rise, they fall, they land in the
 // bed or they fade out.
 export function stepSparks(dt) {
-  for (let i = S.sparks.length - 1; i >= 0; i--) {
-    const k = S.sparks[i];
-    if (!k.up) k.vy += SPARK_GRAV;
+  for (let i = S.tableAir.length - 1; i >= 0; i--) {
+    const k = S.tableAir[i];
+    if (!k.up) k.vy += TABLE_GRAV;
     k.x += k.vx;
     k.y += k.vy;
     k.t += dt / 1000;
@@ -373,7 +373,7 @@ export function stepSparks(dt) {
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
         bankDust(a.x1, k.s);
-        S.sparks.splice(i, 1);
+        S.tableAir.splice(i, 1);
       }
       continue;
     }
@@ -387,13 +387,13 @@ export function stepSparks(dt) {
         // the ground would not take it: that is as much as this bit of yard
         // holds, and the rest of the pot stays a number on the board
         if (!addGrain(table, k.x, table.blocked, k.s)) table.capped = table.n;
-        S.sparks.splice(i, 1);
+        S.tableAir.splice(i, 1);
       }
       continue;
     }
     // A rising one goes until its time is up, because what it is doing is
     // leaving; a plain falling one is scenery and stops at the ground.
-    if (k.t > SPARK_LIFE || (!k.up && k.y >= S.groundY - P)) S.sparks.splice(i, 1);
+    if (k.t > TABLE_LIFE || (!k.up && k.y >= S.groundY - P)) S.tableAir.splice(i, 1);
   }
 }
 

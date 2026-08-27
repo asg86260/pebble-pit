@@ -4,14 +4,15 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL,
-        SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, SPARK_LIFE, CASINO_SLICES,
+import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPARK_CELL,
+        SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
+import { cellX, cellY, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
 import { benchMark } from './upgrades.js';
@@ -263,6 +264,21 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
     ctx.lineTo(x - h / 2, y + k);
     ctx.closePath();
     ctx.fill();
+  } else if (kind === SPARK_CELL) {
+    // A spark: four points, longer than they are wide. The cut is a triangle and
+    // the beds are a hexagon -- both of them things with sides -- so this one is
+    // a thing with no sides at all, which is what it looked like coming down.
+    ctx.beginPath();
+    ctx.moveTo(x, y - h);
+    ctx.lineTo(x + h / 3, y - h / 3);
+    ctx.lineTo(x + h, y);
+    ctx.lineTo(x + h / 3, y + h / 3);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x - h / 3, y + h / 3);
+    ctx.lineTo(x - h, y);
+    ctx.lineTo(x - h / 3, y - h / 3);
+    ctx.closePath();
+    ctx.fill();
   } else {
     const t = size / 3;
     ctx.fillRect(x - t / 2, y - h, t, size);
@@ -271,15 +287,40 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
   ctx.fillStyle = '#000';
 }
 
-// The thing in the sky: a plain black circle a long way out past the farm, with
-// a ring around it. It does nothing at all -- it is the far end of the world,
-// and something to have walked towards.
+// The thing in the sky: the meteor, out past the farm, drawn cell by cell like
+// everything else that is made of cells. A black rind with a red middle, and it
+// gets smaller and rounder-edged as it is taken apart -- the same picture the
+// rock in the yard gives you, four hundred pixels up.
+//
+// The ring stays. It is what makes a black disc read as a thing hanging in the
+// air rather than a hole in the paper, and it goes on standing where the whole
+// of it was even once there is very little left inside it: that is the reading,
+// how much of it is gone.
 export function drawSky() {
-  if (!S.skyShown) return;                 // benched: see the note in config.js
+  if (!S.skyShown && !S.meteorOpen) return;
+  // Nothing called down yet: the plain circle, the far end of the world.
+  if (!sky.cells || !sky.n) {
+    if (!S.skyShown) return;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(sky.x, sky.y, sky.r, 0, Math.PI * 2);
+    ctx.fill();
+    skyRing();
+    return;
+  }
+  for (let r = 0; r < sky.rows; r++) {
+    for (let c = 0; c < sky.cols; c++) {
+      const v = sky.cells[r * sky.cols + c];
+      if (!v) continue;
+      ctx.fillStyle = v === METEOR_CORE_CELL ? FIND_COLOR[SPARK_CELL][1] : '#000';
+      ctx.fillRect(cellX(c), cellY(r), sky.p, sky.p);
+    }
+  }
   ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(sky.x, sky.y, sky.r, 0, Math.PI * 2);
-  ctx.fill();
+  skyRing();
+}
+
+function skyRing() {
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 2;
   ctx.beginPath();
@@ -1156,12 +1197,12 @@ export function drawPotPile() {
 }
 
 export function drawSparks() {
-  for (const k of S.sparks) {
+  for (const k of S.tableAir) {
     const find = findKind(k.s);
     // A grain on its way out of the game fades as it goes. Everything else in
     // this yard either is somewhere or is not; this is the one thing that is
     // *leaving*, and it should look like it rather than blinking off.
-    if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / SPARK_LIFE);
+    if (k.fade) ctx.globalAlpha = Math.max(0, 1 - k.t / TABLE_LIFE);
     ctx.fillStyle = find ? FIND_COLOR[find][k.s - find] : SHADES[Math.min(SHADES.length, k.s) - 1];
     ctx.fillRect(Math.round(k.x), Math.round(k.y), P, P);
     ctx.globalAlpha = 1;
@@ -1496,6 +1537,7 @@ export function drawCount() {
   line(S.seenCore, CORE_CELL, String(S.cores));
   line(S.seenShard, SHARD_CELL, fmt(S.shards));
   line(S.seenSpore, SPORE_CELL, fmt(S.spores));
+  line(S.seenSpark, SPARK_CELL, fmt(S.sparks));
 }
 
 // The bench is not in the yard until there is something on it worth buying, and
@@ -1574,6 +1616,16 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
     const over = tight ? P : P * 2;
     ctx.fillRect(x - over, y - P, WORKER + over * 2, P);
     ctx.fillRect(x + P * 2, y - P * 2, WORKER - P * 4, P);
+    return;
+  }
+  if (kind === 'point') {
+    // The wizard's, and the only hat here that goes up rather than across: a
+    // brim a cell proud each side, and a cone stepped off it a cell at a time.
+    // Three courses is as tall as an eighteen-pixel body will take without the
+    // hat reading as the thing wearing the body.
+    ctx.fillRect(x - (tight ? 0 : P), y - P, WORKER + (tight ? 0 : P * 2), P);
+    ctx.fillRect(x + P, y - P * 2, WORKER - P * 2, P);
+    ctx.fillRect(x + P * 2, y - P * 3, WORKER - P * 4, P);
     return;
   }
   ctx.fillRect(x, y - P, WORKER, P);
@@ -1841,6 +1893,17 @@ export function drawWorkers() {
       if (wearing(w) && wearing(w) !== 'cart') drawHat(x, y, wearing(w));
       // what a quarrier is bringing up rides over its head, the way a load does
       if (w.type === 'quarrier' && w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
+      continue;
+    }
+
+    // A wizard, wherever it has got to: on the ground walking out to the tower,
+    // or four hundred pixels up with its hat on. Nothing else about it is drawn
+    // differently -- it is a body, and the whole trick of it is that it is a
+    // body somewhere a body cannot be.
+    if (w.type === 'wizard') {
+      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * -P);
+      drawBody(x, y);
+      if (wearing(w)) drawHat(x, y, wearing(w));
       continue;
     }
 

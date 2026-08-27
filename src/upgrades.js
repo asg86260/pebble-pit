@@ -15,7 +15,7 @@ import {
 import { scrubCost } from './scrubhouse.js';
 import { S, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
+import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -52,7 +52,8 @@ export const MARK = {
   dust: '<i class="dust"></i>',
   core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
-  spore: '<i class="spore"></i>'
+  spore: '<i class="spore"></i>',
+  spark: '<i class="spark"></i>'
 };
 
 // what you have of one
@@ -60,6 +61,7 @@ export const purse = money =>
   money === 'core' ? S.cores :
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
+  money === 'spark' ? S.sparks :
   S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
@@ -116,7 +118,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -136,13 +138,16 @@ export const idle = () => spareHands();
 // behind; move somebody back and they are wearing one before they get there.
 // Nothing is ever wasted and nothing is ever locked.
 export const TRADE_OF = { miners: 'breakers', haulers: 'carters',
-                          quarriers: 'blasters', farmhands: 'growers' };
+                          quarriers: 'blasters', farmhands: 'growers',
+                          // and the tower's, which is not a doubling but a
+                          // licence: no hat, no flying. See wizard.js.
+                          wizards: 'wizardHats' };
 // What job a body is doing, from what it is. A trade is counted off the bodies
 // now rather than off a number, because a hat is a thing somebody walked over
 // and picked up: see crew.js.
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers' };
+                        scrubber: 'scrubbers', wizard: 'wizards' };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
@@ -165,7 +170,12 @@ export const capOf = job =>
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
-  job === 'labbers' ? 1 : Infinity;
+  job === 'labbers' ? 1 :
+  // One body per hat, and the tower makes them one at a time. This is the only
+  // station in the yard whose floor plan is a thing you buy rather than a thing
+  // you build: there is as much room in the sky as there are people who can get
+  // to it.
+  job === 'wizards' ? S.wizardHats : Infinity;
 export const roomAt = job => capOf(job) - S[job];
 
 // `haulers` is a fact on S rather than a sum worked out where it is read, so
@@ -179,7 +189,7 @@ export function rebalance() {
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a bed that is not there.
-  for (const job of ['quarriers', 'farmhands', 'labbers'])
+  for (const job of ['quarriers', 'farmhands', 'labbers', 'wizards'])
     S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // Carrying is the job nobody is assigned to: it is what a body does when it is
@@ -560,6 +570,11 @@ function take(money, n) {
   else if (money === 'core') { S.cores -= n; takeCoreCells(n, CORE_CELL); }
   else if (money === 'shard') { S.shards -= n; takeCoreCells(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; takeCoreCells(n, SPORE_CELL); }
+  // Nothing is priced in sparks yet. It is here so that the day something is,
+  // paying for it takes the red grains out of the pile like every other coin --
+  // a currency the pile does not know about would be the one number in this
+  // game that is not a thing you can see lying in the hole.
+  else if (money === 'spark') { S.sparks -= n; takeCoreCells(n, SPARK_CELL); }
 }
 
 // What a row costs, as a currency and an amount each. Almost every row in the
@@ -577,7 +592,10 @@ export function buy(u) {
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.
   if (u.price) { if (u.show() && !u.dead?.()) { u.buy(); S.dirty = true; buildShop(); } return; }
-  if (!u.show() || !canPay(u)) return;
+  // A row that is greyed out for a reason of its own -- the tower already has a
+  // hat on the go -- takes nothing and does nothing. Without this the money went
+  // and the row shrugged.
+  if (!u.show() || u.dead?.() || !canPay(u)) return;
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) take(money, n);

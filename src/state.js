@@ -135,7 +135,20 @@ export const S = {
   shutters: [],         // rooms with the curtain across, by room number
   shutterAt: 0,         // when the next one of them changes its mind
   shutterN: 0,          // how many have, which is what picks the next
-  skyShown: false,        // the thing in the sky is benched; the dev panel can put it back
+  skyShown: false,        // the thing in the sky, drawn even before the tower calls one down
+
+  // --- the meteor and the wizards ---
+  // The sky is a place work comes from once the tower has called something down
+  // into it. A wizard is a hat like any other -- `wizardHats` is what the tower
+  // has made, `wizards` is how many bodies are up there wearing one -- except
+  // that this is the one job nobody can do bare-headed.
+  meteorOpen: false,      // the tower has called one down at least once
+  meteorAt: 0,            // when the next one drifts in, once the last was worked out
+  sparks: 0,              // the red out of the core, banked
+  seenSpark: false,       // and whether one has ever come down
+  wizardHats: 0,          // hats the tower has finished
+  wizards: 0,             // bodies up there wearing one
+  brewAt: 0,              // when the hat on the go is done, or 0 for nothing on the go
   labOpen: false,
 
   // --- the casino ---
@@ -149,7 +162,7 @@ export const S = {
   spinAt: 0,              // when the wheel was set going
   spinFrom: 0, spinTo: 0, // and the mark it is turning from and to
   spinUntil: 0,           // and until when it is being spun in earnest
-  sparks: [],             // grains in the air: arriving, leaving, or on their way to the hole
+  tableAir: [],           // the table's grains in the air: arriving, leaving, or on their way to the hole
   paying: null,           // { cur, left } -- a pot on its way across the yard to the pit
   spinWon: false,         // what it is about to land on, decided when it starts
   chip: 0,                // which of CASINO_CHIPS is on the table
@@ -272,4 +285,7 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0 };
-export const sky = { x: 0, y: 0, r: 0 };   // the thing hanging out past the farm
+// The meteor: the one thing in this game that is not on the ground. `cells` is a
+// disc of them -- rind and core -- and `n` is how many are left in it, which is
+// what says whether there is still a meteor there at all. See meteor.js.
+export const sky = { x: 0, y: 0, r: 0, cols: 0, rows: 0, p: P, cells: null, n: 0 };

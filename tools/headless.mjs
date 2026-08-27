@@ -61,8 +61,17 @@ const alive = async () => { try { await fetch(`http://127.0.0.1:${PORT}/json/ver
 
 let own = null;
 if (!await alive()) {
+  // `WINDOW=1600,1000` for a shot you want to see the sky in: this game wants
+  // eight hundred and thirty of height before the sky, the ground and the whole
+  // depth of the pit all fit, and the shell's default is 800 by 600.
+  //
+  // It is not the default, and that is a measurement rather than a preference: a
+  // window that size is two and a half times the pixels, which takes the frame
+  // rate from sixty to twenty-six on this machine -- and the suite has checks in
+  // it that count on frames arriving at the usual rate.
+  const win = process.env.WINDOW ? [`--window-size=${process.env.WINDOW}`] : [];
   own = spawn(exe, [`--remote-debugging-port=${PORT}`, '--no-first-run',
-                    `--user-data-dir=${PROFILE}`], { stdio: 'ignore' });
+                    ...win, `--user-data-dir=${PROFILE}`], { stdio: 'ignore' });
   for (let i = 0; i < 40 && !await alive(); i++) await new Promise(r => setTimeout(r, 250));
 }
 

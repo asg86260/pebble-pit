@@ -7,7 +7,7 @@
 // settle to them as it fills, keeping every grain and only losing resolution.
 
 import { PIT_W_MAX,
-        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL,
+        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
 import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome } from './grid.js';
@@ -141,6 +141,10 @@ export function bankDust(x, shade = 1) {
     S.banked++;                              // the books count what came in, not what is left
   } else if (findKind(shade) === SHARD_CELL) { S.shards++; S.seenShard = true; buildShop(); }
   else if (findKind(shade) === SPORE_CELL) { S.spores++; S.seenSpore = true; buildShop(); }
+  // The red out of the meteor's core. It came down out of the sky, was fetched
+  // off the ground like anything else, and is counted where everything else is
+  // counted: in the hole.
+  else if (findKind(shade) === SPARK_CELL) { S.sparks++; S.seenSpark = true; buildShop(); }
   S.dirty = true;
   return true;
 }

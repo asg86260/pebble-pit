@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, scrub } from './state.js';
+import { S, quarry, farm, lab, scrub, sky } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
@@ -45,6 +45,12 @@ export const POSTS = [
     // roster can go, so it goes in the sky above it.
     above: () => P * 13,
     kit: true },
+  // The sky. Its roster stands on the ground under the meteor -- the work is a
+  // long way over it, but the buttons belong where the body walks to, and a
+  // count hanging in the air beside the thing it is about would be the one
+  // roster in the yard nobody could stand next to.
+  { key: 'skyjob', job: 'wizards',
+    at: () => sky.x, show: () => S.meteorOpen, kit: true },
   { key: 'mine', job: 'miners',
     at: () => S.cx, show: () => S.crew > 0, kit: true },
   // The haulers stand under the houses. Every other post is written under the
@@ -107,7 +113,7 @@ export const posts = () => POSTS.filter(p => p.show());
 // at the cut are different things standing there rather than the same grey lump
 // in two places.
 export const KIT_MARK = { miners: 'helmet', quarriers: 'lamp', farmhands: 'brim',
-                          haulers: 'cart' };
+                          haulers: 'cart', wizards: 'point' };
 
 export function kitStands() {
   const out = [];

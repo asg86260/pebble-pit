@@ -83,7 +83,10 @@ export const kitX = job =>
   // clear of the first bed and of whoever is stooping over it: a farmhand
   // stands a body's width off its bed, which is where a stand four cells out
   // would be standing too
-  job === 'farmhands' ? farm.x - P * 18 : null;
+  job === 'farmhands' ? farm.x - P * 18 :
+  // The wizards' stand is at the foot of the tower, because the tower is what
+  // makes them: a hat on a stand outside the door of the place it was made in.
+  job === 'wizards' ? tower.x - P * 8 : null;
 
 export function refreshPiles() {
   S.piles = [

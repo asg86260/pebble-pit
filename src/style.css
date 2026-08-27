@@ -146,7 +146,7 @@ canvas {
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
    pile up. */
-.dust, .core, .shard, .spore {
+.dust, .core, .shard, .spore, .spark {
   display: inline-block;
   vertical-align: baseline;
 }
@@ -164,14 +164,14 @@ canvas {
   border-right: 4.5px solid transparent;
   border-bottom: 8px solid #2f5fd0;    /* the quarry */
 }
-/* a spark: the mark that means the meteor */
+/* a spark: the mark that means the meteor's core, and the only red in the game */
 .spark {
   display: inline-block;
   position: relative;
   width: 7px; height: 7px;
   background:
-    linear-gradient(#e8890c, #e8890c) center/2px 7px no-repeat,   /* the sky */
-    linear-gradient(#e8890c, #e8890c) center/7px 2px no-repeat;
+    linear-gradient(#d93a25, #d93a25) center/2px 7px no-repeat,   /* the sky */
+    linear-gradient(#d93a25, #d93a25) center/7px 2px no-repeat;
 }
 /* a spore: the mark that means the farm. A hexagon, the same shape the game
    draws out in the yard -- the board and the world use one alphabet. */

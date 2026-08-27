@@ -20,6 +20,7 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
+import { stepWizard, newWizard, underMeteor } from './wizard.js';
 import { now } from './clock.js';
 import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot,
          rockMuck, cutMuck, bedMuck,
@@ -259,9 +260,10 @@ export function mainlyAt(w) {
 // The order jobs are filled in, and how a body for one is made from nothing.
 // Carrying comes last so that a spare body goes to a station that is short of
 // one before it goes back to sweeping the yard.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'hauler'];
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'wizard', 'hauler'];
 export const FACTORY = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-                  labber: newLabber, scrubber: newScrubber, hauler: newHauler };
+                  labber: newLabber, scrubber: newScrubber, wizard: newWizard,
+                  hauler: newHauler };
 
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
@@ -271,6 +273,10 @@ function stationX(type) {
   if (type === 'farmhand') return bedX(0);
   if (type === 'labber') return labDoor() - WORKER / 2;
   if (type === 'scrubber') return scrubDoor() - WORKER / 2;
+  // A wizard's station is the ground under the meteor. The work is four hundred
+  // pixels above that, but the walk is to here: the going up is the job, not the
+  // commute.
+  if (type === 'wizard') return underMeteor();
   return null;
 }
 
@@ -473,7 +479,10 @@ function relieve(w, now) {
   }
 
   if (now < w.looAt) return false;
-  if (w.inside || w.inPit || w.carry || w.hasCore) return false;   // finish what you are holding
+  // finish what you are holding -- and there is nowhere to go from the sky. A
+  // wizard aloft is not somewhere a walk can start: it comes down when it has
+  // nothing to do, and it can go then.
+  if (w.inside || w.inPit || w.aloft || w.carry || w.hasCore) return false;
   // Only while it is working. A body winding down -- nothing to carry, on its
   // way home, or standing about between strolls -- is a body whose day is over,
   // and one that stopped on the way in would leave something for the ones
@@ -657,13 +666,22 @@ function arrive(w) {
 // to go and get it: hands empty, not walking anywhere, not indoors. One at a
 // time per station, so buying four helmets is four trips rather than the whole
 // gang filing down the hill at once.
-const KIT_JOBS = ['miners', 'haulers', 'quarriers', 'farmhands'];
+// The wizards are in here too, and theirs is the one hat the job cannot be done
+// without: a body sent to the sky with nothing on its head walks to the tower,
+// picks up what the tower has made, and only then goes up. Everywhere else the
+// hat is a doubling; here it is the whole trade.
+const KIT_JOBS = ['miners', 'haulers', 'quarriers', 'farmhands', 'wizards'];
 
 // somebody on that job who could go on an errand right now: hands empty, not
 // already walking, and not indoors
+// ...and not one that is off the ground. A wizard aloft is the one body here a
+// walk cannot be handed to: `stepCommute` puts a body on the ground line for the
+// length of the walk, which for that one is a four-hundred-pixel drop mid-frame.
+// It comes down on its own when it has nothing to do -- see wizard.js -- and
+// that is when it can be sent for a hat.
 const freeAt = (job, hatted) => S.workers.find(o =>
   JOB_OF[o.type] === job && !!o.trained === hatted && !o.walking &&
-  !o.inside && !o.carry && !o.hasCore);
+  !o.inside && !o.aloft && !o.carry && !o.hasCore);
 
 // Kit already spoken for by somebody on their way to it. Without this, two
 // bodies put on the rock in the same breath both set off for the last helmet
@@ -706,6 +724,15 @@ function errand(w, job, what) {
 // job is on that job as far as the books are concerned. What it does not do is
 // any of the work, until it gets there.
 function retask(w, type) {
+  // Off the sky and down. A wizard is the one body here that can be stood down
+  // while it is four hundred pixels up, and whatever it is put on next reads its
+  // height as the ground it is standing on -- so it falls, the way anything does
+  // when what was holding it up stops.
+  if (w.aloft && type !== 'wizard') {
+    w.falling = true;
+    w.vy = 0;
+    w.aloft = false;
+  }
   w.type = type;
   w.fetching = null;
   w.wanting = null;
@@ -793,7 +820,7 @@ export function syncWorkers() {
   // ever walking to it.
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers,
-                 scrubber: S.scrubbers };
+                 scrubber: S.scrubbers, wizard: S.wizards };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
@@ -903,6 +930,11 @@ export function lift(w) {
   if (!w) return false;
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
+  // Picked out of the sky. Whatever it was hanging off is no longer its
+  // business, and it is not aloft any more either -- it is in your hand, and
+  // what happens when you let go is what happens to anything you let go of.
+  w.aloft = false;
+  w.cell = null;
   // whatever it was in the middle of, it is not any more: a body in the air has
   // claimed nothing and booked nothing
   if (w.claim >= 0) w.claim = -1;
@@ -1435,6 +1467,11 @@ export function updateWorkers(now, dt) {
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }
     if (w.type === 'scrubber') { stepScrubber(w); continue; }
+    // The one job that is not on the ground. Nothing else in the loop applies to
+    // a body in the sky -- there is no rock to dodge up there, no lip to stop at
+    // and no muck to shovel -- so it is taken out of the yard's rules entirely,
+    // the same way a body down the hole is.
+    if (w.type === 'wizard') { stepWizard(w, now); continue; }
 
     // Down the hole, and nothing else applies.
     //

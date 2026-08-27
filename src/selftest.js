@@ -1886,7 +1886,7 @@ const TESTS = [
     // out of the sky, the wheel takes its time, and banking is the whole pot
     // flying across the works to the hole. A check that reads the counter while
     // half of it is still in the air is a check reading a number mid-throw.
-    const quiet = () => runUntil(() => state().sparks === 0 && !state().paying &&
+    const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
                                        !state().spinning, 30);
     let won = null, lost = null;
     for (let i = 0; i < 40 && !(won && lost); i++) {
@@ -1976,9 +1976,9 @@ const TESTS = [
       ok(win && win.pot && win.pot.on > 0 && win.potAt > win.casinoX,
          'what is on the table is a heap on the ground beside the building',
          win && `${win.pot.on} at ${win.potAt}, building at ${win.casinoX}`),
-      ok(win && (win.sparks > 0 || win.table > 0),
+      ok(win && (win.tableAir > 0 || win.table > 0),
          'and it trickles down out of the sky on to it',
-         win && `${win.sparks} in the air, ${win.table} down`),
+         win && `${win.tableAir} in the air, ${win.table} down`),
       ok(win && win.hand && win.hand.won, 'with a mark to say so')
     ];
   }],
@@ -2016,13 +2016,13 @@ const TESTS = [
     window.__reset();
     await sleep(300);
     return [
-      ok(arriving.table < stake && arriving.table + arriving.sparks > 0,
+      ok(arriving.table < stake && arriving.table + arriving.tableAir > 0,
          'it arrives a grain at a time rather than appearing',
-         `${arriving.table} of ${stake} down, ${arriving.sparks} still falling`),
-      ok(arriving.sparks > 0, 'trickling out of the sky', `${arriving.sparks} in the air`),
+         `${arriving.table} of ${stake} down, ${arriving.tableAir} still falling`),
+      ok(arriving.tableAir > 0, 'trickling out of the sky', `${arriving.tableAir} in the air`),
       ok(settled.table === on, 'and it is the pot, grain for grain',
          `${settled.table} grains, ${on} on the table`),
-      ok(leaving.sparks > 0 || gone.table === 0,
+      ok(leaving.tableAir > 0 || gone.table === 0,
          'and when it goes it lifts off rather than blinking out'),
       ok(gone.table === 0, 'until the ground is bare again', `${gone.table} left`)
     ];
@@ -2044,7 +2044,7 @@ const TESTS = [
     buildShopFromTest();
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
-    const quiet = () => runUntil(() => state().sparks === 0 && !state().paying &&
+    const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
                                        !state().spinning, 30);
 
     dial().children[3].click(); buildShopFromTest();
@@ -2069,15 +2069,15 @@ const TESTS = [
     await sleep(300);
     return [
       ok(!!win && on > 0, 'there is a pot to take', `${on}`),
-      ok(flying.sparks > 0 && flying.paying !== null,
+      ok(flying.tableAir > 0 && flying.paying !== null,
          'taking it puts the whole heap in the air',
-         `${flying.sparks} flying, ${flying.paying} still to go`),
+         `${flying.tableAir} flying, ${flying.paying} still to go`),
       ok(flying.stored < held + on,
          'and the counter does not move until it gets there',
          `${flying.stored} vs ${held + on}`),
       ok(landed.stored === held + on, 'every grain that set off is counted when it lands',
          `${held} + ${on} -> ${landed.stored}`),
-      ok(landed.table === 0 && landed.sparks === 0,
+      ok(landed.table === 0 && landed.tableAir === 0,
          'and nothing is left behind', `${landed.table} on the ground`)
     ];
   }],
