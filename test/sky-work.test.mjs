@@ -108,39 +108,40 @@ group('a wizard walks and climbs, and never simply appears at the sky', async ()
   ];
 });
 
-group('the rind is dust and the core is sparks', async () => {
+// The whole star is worth sparks -- crust and fire alike -- and the fire is
+// worth more of them. The crust paid dust for a while, which had grey grains
+// coming out of a red star: the picture arguing with itself.
+group('the whole star pays sparks, and the core pays most', async () => {
   window.__meteor();
   window.__wizardHat(2);
   window.__clearFloor();
   window.__crew(0, 3, 0, 0, 0, 2);
   const started = state();
 
-  // through the rind first: nothing red comes down while there is grey on it
+  // the crust first, which is what they can reach
   const rindGone = runUntil(() => state().meteorRind === 0, 400);
   const grey = state();
-  const dropped = grey.floor;
+  const crustSparks = grey.sparks;
+  const dust = grey.stored - started.stored;
 
-  // and then the core, which is the only thing in the game that is red
+  // and then the fire under it
   const cleared = runUntil(() => state().meteor === 0, 300);
-  const banked = runUntil(() => state().sparks > 0, 200);
+  runUntil(() => state().sparks > crustSparks, 200);
+  run(60);                                   // long enough to fetch what fell
   const s = state();
 
-  // and the sky fills again on its own, without another purchase
-  const again = runUntil(() => state().meteor > 0, 200);
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(rindGone, 'the rind comes off first', `${grey.meteorRind} left`),
-    ok(dropped > 100, 'and what comes off it lands in the yard as dust',
-       `${dropped} grains on the floor`),
-    ok(started.sparks === 0 && grey.sparks === 0,
-       'with nothing red banked while there was still grey up there',
-       `${grey.sparks} sparks`),
-    ok(cleared, 'then the core goes too', `${s.meteor} cells left`),
-    ok(banked && s.sparks > 0 && s.seenSpark,
+    ok(rindGone, 'the crust comes off first', `${grey.meteorRind} left`),
+    ok(crustSparks > 0 && grey.seenSpark,
+       'and it pays sparks, not dust', `${crustSparks} sparks off the crust`),
+    ok(dust < 30, 'with next to no dust out of the sky at all',
+       `${dust} dust while the crust came off`),
+    ok(cleared, 'then the fire goes too', `${s.meteor} cells left`),
+    ok(s.sparks > crustSparks,
        'and the red is fetched off the ground and banked like anything else',
-       `${s.sparks} sparks`),
-    ok(again, 'and another one drifts in afterwards', `${state().meteor} cells`)
+       `${crustSparks} -> ${s.sparks} sparks`)
   ];
 });
 

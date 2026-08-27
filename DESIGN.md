@@ -973,6 +973,15 @@ empty until somebody is put back in it. See `meteor.js` and `wizard.js`.
 It is drawn as a little sun rather than as a stone: the crust is the deepest of
 the reds, the fire under it shimmers between the brighter two, and a corona of
 whole cells breathes round the whole thing and reddens as the crust is stripped.
+All of it is worth sparks -- the crust one a cell and the fire three -- because a
+star shedding grey dust was the picture arguing with itself.
+
+There is one other colour up there, and it is the rule that keeps the sky
+legible: what the wizards *emit* is purple and everything the star is or gives is
+red. The bolts, the specks trailing off a flying body, the beams of a summoning
+-- purple. The crust, the fire, the corona, the sparks banked in the hole -- red.
+The tower pours rings of the same purple off its spire while it is making a hat,
+which is the one thing on the ground that is magic and says so.
 A black body with a red middle read as an eclipse -- a thing in front of a sun
 rather than a sun -- which is the wrong picture for the one object in this game
 that is not on the ground. And the wizards do not touch it: they ride a ring at a

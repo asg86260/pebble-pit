@@ -14,7 +14,7 @@
 // another one drifts in -- so the job is a thing that comes round rather than a
 // tap that never stops.
 
-import { P, METEOR_CORE, METEOR_GRAINS, SUMMON_MS, SPARK_CELL, someFind,
+import { P, METEOR_CORE, METEOR_SPARKS, METEOR_CORE_SPARKS, SUMMON_MS, SPARK_CELL, someFind,
          BOLT_PACE, WIZ_ORBIT } from './config.js';
 import { S, sky } from './state.js';
 import { now } from './clock.js';
@@ -34,13 +34,44 @@ export const RIND = 1, CORE = 2;
 // first -- simply arrives at nothing.
 export const BOLTS = [];
 
+// The wizards' own light, wherever it is: trailing off a body that is flying,
+// strung out behind a bolt, or thrown off the star where one lands. One list and
+// one kind of speck, because it is all the same substance -- see MAGIC_TONES.
+export const SPARKLE = [];
+
+export function sparkle(x, y, vx, vy, life) {
+  if (SPARKLE.length > 500) return;          // a fog of it is not a spell
+  SPARKLE.push({ x, y, vx, vy, born: now(), life, tone: Math.floor(Math.random() * 4) });
+}
+
+export function stepSparkle(dt) {
+  const t = now();
+  for (let i = SPARKLE.length - 1; i >= 0; i--) {
+    const k = SPARKLE[i];
+    if (t - k.born > k.life) { SPARKLE.splice(i, 1); continue; }
+    k.x += k.vx * (dt / 16);
+    k.y += k.vy * (dt / 16);
+    k.vx *= 0.96;
+    k.vy = k.vy * 0.96 + 0.012;              // it slows, and then it sinks
+  }
+  if (SPARKLE.length) S.dirty = true;
+}
+
 // the ring the wizards fly, and the bolts leave from
 export const orbitR = () => sky.r + WIZ_ORBIT;
 
 export function fire(fromX, fromY, cell) {
   if (!cell) return;
-  BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY,
-               c: cell.c, r: cell.r, tone: someFind(SPARK_CELL) });
+  BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY, c: cell.c, r: cell.r });
+  // and the throw itself: a handful of specks off the hand it left, thrown the
+  // way it went. A bolt that simply existed one frame and was gone the next had
+  // nothing to say about where it came from.
+  const dx = cellX(cell.c) - fromX, dy = cellY(cell.r) - fromY;
+  const d = Math.hypot(dx, dy) || 1;
+  for (let i = 0; i < 6; i++)
+    sparkle(fromX, fromY,
+            (dx / d) * (0.6 + Math.random() * 0.8) + (Math.random() - 0.5) * 0.6,
+            (dy / d) * (0.6 + Math.random() * 0.8) + (Math.random() - 0.5) * 0.6, 320);
 }
 
 function stepBolts() {
@@ -54,6 +85,11 @@ function stepBolts() {
       b.py = b.y;
       b.x += (dx / d) * BOLT_PACE;
       b.y += (dy / d) * BOLT_PACE;
+      // and it sheds as it goes, so what crosses the gap is a thing burning
+      // rather than a square sliding
+      sparkle(b.x, b.y, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, 340);
+      if (Math.random() < 0.5)
+        sparkle(b.x, b.y, (Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1, 220);
       S.dirty = true;
       continue;
     }
@@ -139,21 +175,26 @@ export function nextCell(fromX, fromY, taken) {
 // One cell off, and what it was made of comes down.
 //
 // Nothing is banked up here. Everything this game counts is a grain that got to
-// the hole, and a meteor that paid straight into the counter would be the one
+// the hole, and a star that paid straight into the counter would be the one
 // place in the yard where work turned into a number without anybody carrying
-// anything. So the rind falls as dust and the core falls as sparks, and both
-// of them land on the ground for the haulers to find.
+// anything. So what comes off it falls the whole four hundred pixels and lands
+// on the ground for the haulers to find, like everything else.
+//
+// Sparks the whole way down, crust and core alike. The crust used to pay dust,
+// on the reasoning that a rind is rock -- and grey grains coming out of a red
+// star was the picture arguing with itself. The core is worth three of them,
+// which is what makes the digging down worth doing.
 export function takeCell(c, r) {
   if (!sky.cells || !at(c, r)) return null;
   const kind = at(c, r);
   put(c, r, 0);
   const x = cellX(c), y = cellY(r);
-  if (kind === CORE) {
-    spawnChip(x, y, bell() * 0.3, 0.2, someFind(SPARK_CELL));
-  } else {
-    for (let i = 0; i < METEOR_GRAINS; i++)
-      spawnChip(x, y, bell() * 0.5, 0.2 + Math.random() * 0.3, 1 + Math.floor(Math.random() * 3));
-  }
+  const n = kind === CORE ? METEOR_CORE_SPARKS : METEOR_SPARKS;
+  for (let i = 0; i < n; i++)
+    spawnChip(x, y, bell() * 0.4, 0.2 + Math.random() * 0.2, someFind(SPARK_CELL));
+  // and a burst of the magic that did it, thrown back off the face
+  for (let i = 0; i < 5; i++)
+    sparkle(x + P / 2, y + P / 2, (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 1.6, 380);
   // Worked out. What comes next is not a timer and not another purchase: the
   // wizards make it. See `summon`.
   if (sky.n === 0) S.summon = 0;

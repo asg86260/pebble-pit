@@ -25,8 +25,8 @@ import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
 import { stepCore } from './core.js';
-import { stepMeteor } from './meteor.js';
-import { stepSummon, stepTrail } from './wizard.js';
+import { stepMeteor, stepSparkle } from './meteor.js';
+import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
 import { makePainter } from './painter.js';
@@ -113,7 +113,7 @@ export function step() {
   stepCore();
   stepMeteor(now);                            // and the sky, which has a rock in it now
   stepSummon(dt);                             // and whatever the ring is pouring into it
-  stepTrail(dt);                              // and what comes off them while they fly
+  stepSparkle(dt);                            // and the magic they leave in the air
   stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
   stepSmog(dt);                               // and the sky, which is filling up

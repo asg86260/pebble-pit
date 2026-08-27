@@ -19,11 +19,10 @@
 // like anything else lying about.
 
 import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
-         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, SPARK_CELL, someFind } from './config.js';
+         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE } from './config.js';
 import { S, sky } from './state.js';
 import { walkY } from './world.js';
-import { meteorAlive, nextCell, fire, orbitR, summoning, summon } from './meteor.js';
-import { now as clockNow } from './clock.js';
+import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -88,31 +87,17 @@ function spaceOut(w, secs) {
 // drifting down behind it and going out. It is the only thing in this yard that
 // says a body is being carried rather than standing on something -- everybody
 // else is on the ground, and the ground says it for them.
-export const TRAIL = [];
-
+//
+// The same specks the bolts leave and throw off the star -- see `sparkle` in
+// meteor.js. One substance, one list: what a wizard trails and what its magic
+// scatters are the same magic.
 function trail(w, now) {
   if (now < (w.trailAt || 0)) return;
   w.trailAt = now + WIZ_TRAIL_MS * (0.7 + Math.random() * 0.6);
-  TRAIL.push({
-    x: w.x + WORKER / 2 + (Math.random() - 0.5) * P * 2,
-    y: w.y + WORKER - P / 2,
-    vx: (Math.random() - 0.5) * 0.3,
-    vy: 0.15 + Math.random() * 0.25,      // it sinks: it is falling out of the spell
-    born: now,
-    tone: someFind(SPARK_CELL)
-  });
-}
-
-export function stepTrail(dt) {
-  const t = clockNow();
-  for (let i = TRAIL.length - 1; i >= 0; i--) {
-    const k = TRAIL[i];
-    if (t - k.born > WIZ_TRAIL_LIFE) { TRAIL.splice(i, 1); continue; }
-    k.x += k.vx * (dt / 16);
-    k.y += k.vy * (dt / 16);
-    k.vy *= 0.985;                        // it slows as it goes out rather than falling away
-  }
-  if (TRAIL.length) S.dirty = true;
+  sparkle(w.x + WORKER / 2 + (Math.random() - 0.5) * P * 2, w.y + WORKER - P / 2,
+          (Math.random() - 0.5) * 0.3,
+          0.15 + Math.random() * 0.25,      // it sinks: it is falling out of the spell
+          WIZ_TRAIL_LIFE);
 }
 
 // A body coming down. Used when the sky has nothing left in it, and when the

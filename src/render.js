@@ -7,15 +7,15 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, WIZ_TRAIL_LIFE, SUMMON_FLASH } from './config.js';
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES,
+        TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
-import { cellX, cellY, BOLTS, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
-import { TRAIL } from './wizard.js';
+import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
 import { benchMark } from './upgrades.js';
@@ -405,42 +405,51 @@ function drawSummon() {
   drawFlash();
   if (at <= 0 && !S.workers.some(w => w.channel)) return;
 
-  // the beams, one from each body that is pouring
+  // The beams: one steady line of cells from each body that is pouring, and a
+  // bead of light running down it. Every cell used to flicker on its own clock,
+  // which is not a beam -- it is a shower of confetti in the rough shape of one.
+  // A quiet line says where the magic is going; the bead says it is going.
   for (const w of S.workers) {
     if (!w.channel || !w.aloft) continue;
     const fx = w.x + WORKER / 2, fy = w.y + WORKER / 2;
     const dx = mid.x - fx, dy = mid.y - fy;
     const len = Math.hypot(dx, dy) || 1;
-    const step = P * 1.5;
-    for (let d = P * 2; d < len - P * 2; d += step) {
-      // a run of cells rather than a line, and it crawls: the specks travel in
-      // along the beam, so the beam is plainly *going* somewhere
-      const k = (d / len + t * 0.9) % 1;
-      const x = Math.round((fx + dx * (d / len)) / P) * P;
-      const y = Math.round((fy + dy * (d / len)) / P) * P;
-      ctx.globalAlpha = (0.25 + at * 0.6) * (0.45 + 0.55 * Math.abs(Math.sin(k * Math.PI)));
-      ctx.fillStyle = tones[Math.floor(k * 3) % 3];
-      ctx.fillRect(x, y, P, P);
+    const from = P * 2, to = len - P * 2;
+
+    ctx.globalAlpha = 0.2 + at * 0.35;
+    ctx.fillStyle = MAGIC_TONES[2];
+    ctx.beginPath();
+    for (let d = from; d < to; d += P) {
+      ctx.rect(Math.round((fx + dx * (d / len)) / P) * P,
+               Math.round((fy + dy * (d / len)) / P) * P, P, P);
+    }
+    ctx.fill();
+
+    // and the bead: two cells, running inward, on this body's own phase so a
+    // ring of them is not one flash repeated
+    ctx.globalAlpha = 0.55 + at * 0.45;
+    ctx.fillStyle = MAGIC_TONES[0];
+    const k = (t * 0.55 + (w.ph || 0) / (Math.PI * 2)) % 1;
+    for (const off of [0, P]) {
+      const d = from + (to - from) * k + off;
+      if (d < from || d > to) continue;
+      ctx.fillRect(Math.round((fx + dx * (d / len)) / P) * P,
+                   Math.round((fy + dy * (d / len)) / P) * P, P, P);
     }
   }
   ctx.globalAlpha = 1;
 
-  // And the knot in the middle, opening out as it takes: whole cells at full
-  // weight, with the outermost course of them left half-solid so the edge of it
-  // boils rather than being a drawn circle. It was an alpha falling off with the
-  // radius, which is an airbrushed glow -- the one thing in this game that is
-  // not made of cells you could count.
+  // And the knot in the middle: a solid disc of the star's own fire, opening out
+  // as it takes. Its edge is an edge -- it was fraying cell by cell on its own
+  // clock, which read as a thing coming apart rather than a thing being made --
+  // and what moves is the shimmer inside it and the size of it, which are the
+  // same shimmer and the same shape the finished star will have.
   const r = Math.max(P, at * sky.r);
-  const flick = Math.floor(now() / 90);
+  const flick = Math.floor(now() / CORE_FLICK);
   for (let y = -r; y <= r; y += P) {
     for (let x = -r; x <= r; x += P) {
-      const d = Math.hypot(x, y);
-      if (d > r) continue;
-      const edge = d > r - P * 1.5;
-      // the rim boils: a cell on it is there or not, on its own clock, so the
-      // shape frays where it is still being made
-      if (edge && ((Math.round(x / P) * 5 + Math.round(y / P) * 3 + flick) % 3)) continue;
-      ctx.fillStyle = tones[(Math.round(x / P) * 7 + Math.round(y / P) * 13 + flick) % tones.length];
+      if (Math.hypot(x, y) > r) continue;
+      ctx.fillStyle = tones[(Math.round(x / P) * 7 + Math.round(y / P) * 13 + flick) % 2];
       ctx.fillRect(Math.round((mid.x + x) / P) * P, Math.round((mid.y + y) / P) * P, P, P);
     }
   }
@@ -472,14 +481,17 @@ function drawFlash() {
 // before the star and the bodies, so it is behind them -- it is what they left
 // behind, not something in front of them.
 function drawTrail() {
-  if (!TRAIL.length) return;
-  const tones = FIND_COLOR[SPARK_CELL];
+  if (!SPARKLE.length) return;
   const t = now();
-  for (const k of TRAIL) {
-    const life = 1 - (t - k.born) / WIZ_TRAIL_LIFE;
+  for (const k of SPARKLE) {
+    const life = 1 - (t - k.born) / k.life;
     if (life <= 0) continue;
-    ctx.globalAlpha = Math.max(0, life) * 0.7;
-    ctx.fillStyle = tones[k.tone - SPARK_CELL] || tones[0];
+    // It goes out as it ages, and it goes *down* the tones as it goes: a speck
+    // ends deeper and fainter than it started, which is a thing burning out
+    // rather than a thing being turned off.
+    ctx.globalAlpha = Math.max(0, life) * 0.8;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
+                                         k.tone + Math.floor((1 - life) * 2))];
     ctx.fillRect(Math.round(k.x / P) * P, Math.round(k.y / P) * P, P, P);
   }
   ctx.globalAlpha = 1;
@@ -489,15 +501,15 @@ function drawTrail() {
 // The magic on its way to the star: a speck of the wizard's own light, drawn as
 // what it is about to knock loose.
 function drawBolts() {
-  const tones = FIND_COLOR[SPARK_CELL];
   for (const b of BOLTS) {
     // the cell behind it, fainter: two cells is enough to say which way a thing
-    // is going, and a longer tail on a six pixel cell is a streak
+    // is going, and a longer tail on a six pixel cell is a streak. The specks it
+    // has shed are drawn with the rest of the magic -- see `drawTrail`.
     ctx.globalAlpha = 0.45;
-    ctx.fillStyle = tones[2];
+    ctx.fillStyle = MAGIC_TONES[2];
     ctx.fillRect(Math.round(b.px / P) * P, Math.round(b.py / P) * P, P, P);
     ctx.globalAlpha = 1;
-    ctx.fillStyle = tones[b.tone - SPARK_CELL] || tones[0];
+    ctx.fillStyle = MAGIC_TONES[0];
     ctx.fillRect(Math.round(b.x / P) * P, Math.round(b.y / P) * P, P, P);
   }
   ctx.globalAlpha = 1;
@@ -1074,23 +1086,43 @@ export function drawTower() {
   // and the way in, the same door every other building has
   ctx.fillRect(c(SHAFT / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
 
-  // The windows go on while there is a hat on the go. Every other building in
-  // this yard says it is working by something moving on it -- the lab's chimney,
-  // the house's fans -- and the tower had nothing: a purchase you wait two
-  // minutes for and no sign anywhere that anything was happening.
-  //
-  // A window at a time, up the shaft, on the beat the spell is keeping. Black
-  // over the white opening, so what you see is the light going out and coming
-  // back rather than a lamp drawn on top of the wall.
-  if (brewing()) {
-    const lit = Math.floor(now() / 420) % 3;
-    ctx.fillStyle = '#000';
-    [SPIRE + 3, SPIRE + 9, SPIRE + 15].forEach((n, i) => {
-      if (i !== lit) return;
-      ctx.fillRect(c(3), r(n), P * 2, P * 3);
-    });
-  }
+  ctx.fillStyle = '#000';
+}
 
+// What the tower does while it is making a hat: rings of light going out from
+// the point of it, one after another, in the wizards' own purple.
+//
+// It was the windows blinking out one at a time up the shaft, which is a lamp
+// being switched rather than a spell being cast -- and a building that says it
+// is working by *stopping* saying something is a building arguing with itself.
+// This is the same shape the star's corona is: cells on a ring, going out.
+//
+// Drawn after the tower rather than on it, so the rings pass over the stone the
+// way light would.
+export function drawTowerWaves() {
+  if (!S.towerOpen || !brewing()) return;
+  const from = { x: Math.round((tower.x + P * 4) / P) * P, y: tower.y };
+  for (let i = 0; i < TOWER_WAVE_N; i++) {
+    const k = ((now() / TOWER_WAVE_MS) + i / TOWER_WAVE_N) % 1;
+    const rad = k * TOWER_WAVE_R;
+    if (rad < P) continue;
+    // fainter as it goes out, and deeper down the purples with it: a ring that
+    // held its colour all the way would read as a hoop rather than as something
+    // spending itself on the air
+    ctx.globalAlpha = (1 - k) * 0.85;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
+    // a cell every cell round the circumference, so it is a ring rather than a
+    // dotted line pretending to be one
+    const n = Math.max(10, Math.round((Math.PI * 2 * rad) / P));
+    ctx.beginPath();
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * Math.PI * 2;
+      ctx.rect(Math.round((from.x + Math.cos(a) * rad) / P) * P,
+               Math.round((from.y + Math.sin(a) * rad) / P) * P, P, P);
+    }
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -2299,6 +2331,7 @@ export function draw() {
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
+  drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower
   drawLabMark();           // and a tick over it if it finished something
   drawCasinoMark();        // and which way the last hand at the table went

@@ -392,10 +392,13 @@ export const METEOR_DUST = 6000;
 // the middle is the red -- so it is a dig you can see the end of: the grey
 // shrinks, and one day there is red showing through it.
 export const METEOR_CORE = 0.44;
-// Grains of dust one cell of the rind is worth. They fall, they land, and the
-// haulers fetch them like anything else lying about the yard: the sky is a
-// place work comes from now, not a second bank.
-export const METEOR_GRAINS = 3;
+// Sparks a cell of it is worth: the crust, and then the fire under it. The crust
+// paid dust for a while, on the reasoning that a rind is rock -- but it is a
+// star, the whole of it is hot, and grey grains coming out of a red thing was
+// the picture arguing with itself. Everything it sheds is the red now, and the
+// core is worth more of it because the core is what you dug down for.
+export const METEOR_SPARKS = 1;
+export const METEOR_CORE_SPARKS = 3;
 // The sky no longer refills itself on a clock. What comes next is summoned --
 // see SUMMON_MS -- so an empty sky is a job rather than a wait, and a yard with
 // nobody in the air stays empty until somebody is put back in it.
@@ -417,14 +420,14 @@ export const WIZ_MS = 1100;
 // yard that is allowed to happen at range -- it is the whole of what the hat is
 // for.
 export const WIZ_SPIN = 0.42;        // radians a second it goes round
-export const BOLT_PACE = 3.2;        // pixels a frame a bolt travels
+export const BOLT_PACE = 2.4;        // pixels a frame a bolt travels
 // And how far out the ring is, past the rind: far enough that the star is a
 // thing they are working on rather than a thing they are standing in.
 export const WIZ_ORBIT = 62;
 // The trail a flying body leaves under it: magic coming off the hat, a speck at
 // a time, drifting down and going out. It is the only thing in this game that
 // says a body is being *carried* rather than standing on something.
-export const WIZ_TRAIL_MS = 70;      // one speck this often, per body
+export const WIZ_TRAIL_MS = 55;      // one speck this often, per body
 export const WIZ_TRAIL_LIFE = 900;   // and this long before it is gone
 // Calling one down. Once the tower has taught the sky the trick, it is the
 // wizards who do it: they hang in a ring round the empty spot and pour light
@@ -432,6 +435,13 @@ export const WIZ_TRAIL_LIFE = 900;   // and this long before it is gone
 // this long; two take half of it, because it is the same work shared.
 export const SUMMON_MS = 42000;
 export const SUMMON_FLASH = 900;     // and how long the sky keeps the flash
+// What the tower does while it is making a hat: rings of light going out from
+// the spire, one after another, in the wizards' own purple. Three of them in the
+// air at once at this spacing reads as a thing pulsing rather than a thing that
+// blinked once.
+export const TOWER_WAVE_MS = 2200;   // seconds a ring takes to go out
+export const TOWER_WAVE_N = 3;       // and how many are on their way at once
+export const TOWER_WAVE_R = 96;      // how far one gets before it is spent
 export const WIZ_RISE = 1.4;         // pixels a frame it floats, up or down
 export const WIZ_BOB = 2.2;          // and how far it drifts as it hangs there
 
@@ -704,6 +714,13 @@ export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
 // however neatly it stacks, so a heap of them is half air by geometry.
 //
 // Flat and strong, not pastel: this is a game of flat shapes on white paper.
+// What the wizards throw, and what comes off them while they fly. Purple, and
+// the only purple in the game: everything else in the sky is the star -- its
+// crust, its fire, the sparks it sheds -- and that is red. So the rule reads at
+// a glance and never has to be explained. Red is the stuff; purple is the magic
+// moving it.
+export const MAGIC_TONES = ['#9b5de5', '#8244d8', '#6a2fbe', '#4e2090'];
+
 export const FIND_COLOR = {
   [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
   [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
