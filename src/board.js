@@ -290,6 +290,11 @@ let at = null;
 let slide = 0;
 let closing = 0;
 
+// Shut whatever is open. Called when a press on a row has done its work: see
+// shop.js. It goes through the same path a walk away goes through, so the fade
+// and the seating are the ones the board already has.
+export const closeBoard = () => showPanel(null);
+
 export function showPanel(want) {
   if (want === at) return;
   const wasAt = at;

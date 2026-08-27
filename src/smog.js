@@ -25,7 +25,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_WANDER, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE, RAIN_PER_S, RAIN_GRAV, MUCK_MAX,
          SCRUB_PULL, SCRUB_REACH, RECYCLE_PER, RECYCLE_TONE, PUFF_MAX, PUFF_FADE,
-         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_SPREAD } from './config.js';
+         SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK , SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now } from './clock.js';
 import { spawnChip } from './dust.js';
@@ -178,12 +178,14 @@ function stepPuffs(secs) {
       PUFFS.splice(i, 1);
       continue;
     }
-    p.y += p.vy * secs * 60;
+    const rose = -p.vy * secs * 60;             // what it climbed this frame
+    p.y -= rose;
     p.x += Math.sin(now() / 700 + p.sway) * secs * 20;
-    // and out as it goes up: how far it has climbed decides how far it has
-    // drifted from the column it left, so the plume is a cone
-    const climbed = Math.max(0, (p.y0 == null ? p.y : p.y0) - p.y);
-    p.x += p.lean * PLUME_SPREAD * (climbed / 100) * secs * 60;
+    // and a tenth of that sideways, the way it is leaning. Taken off the climb
+    // itself rather than off the clock, so the drift is always the same share of
+    // the height however fast the puff got up there -- a plume that leans and
+    // opens a little, not one that fans across the sky.
+    p.x += p.lean * PLUME_LEAN * rose;
     // whatever the cursor left in it, dying away
     if (p.sx || p.sy) {
       p.x += p.sx || 0;

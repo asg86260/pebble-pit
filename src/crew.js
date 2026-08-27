@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
 import { throwVel } from './hands.js';
@@ -434,10 +434,37 @@ function relieve(w, now) {
     w.looAt = now + LOO_EVERY * Math.random();
     return false;
   }
+  // Nobody waits longer than the interval itself. A body is handed its hour when
+  // it is first looked at, so turning the interval down on the dev panel would
+  // otherwise do nothing at all until every body already standing there had
+  // waited out the old one -- which for a ten-minute default is most of a
+  // session of watching nothing happen and concluding the knob is broken.
+  if (w.looAt > now + LOO_EVERY) w.looAt = now + LOO_EVERY * Math.random();
+
+  // On its way there. A body walks to the outhouse like it walks to everything
+  // else -- it is a shed on the far side of the yard, not a state you enter.
+  if (w.looTo != null) {
+    const d = w.looTo - w.x;
+    if (Math.abs(d) > WORKER) {
+      w.face = Math.sign(d) || w.face || 1;
+      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.y = walkY(w.x + WORKER / 2);
+      w.lunge = 0;
+      return true;
+    }
+    w.looTo = null;                        // arrived: get on with it
+    w.looUntil = now + LOO_MS;
+    w.say = { mark: 'loo', until: w.looUntil };
+    return true;
+  }
 
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
     if (now < w.looUntil) { w.lunge = 0; return true; }
-    dropMuckAt(w.x + WORKER / 2, LOO_MUCK);
+    // What it leaves. The outhouse gathers it into one place rather than getting
+    // rid of it -- a shed with a hole under it is not a drain -- and that is the
+    // whole of what it buys you: one patch to shovel instead of a yard of them.
+    // Once the tower has seen to it there is nothing to shovel at all.
+    if (!S.magicLoo) dropMuckAt(w.x + WORKER / 2, LOO_MUCK);
     w.looUntil = 0;
     w.say = null;
     w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
@@ -452,6 +479,13 @@ function relieve(w, now) {
   // already indoors to come back out and shovel, which is a yard that can never
   // settle. It is also what was asked for: they go while they are working.
   if (w.goal === 'home' || w.goal === 'idle' || w.brk) return false;
+  // There is somewhere to go: it walks there. Nothing is dropped on the way and
+  // nothing where it was standing.
+  if (S.outhouseOpen) {
+    w.looTo = outhouse.x + outhouse.w / 2 - WORKER / 2;
+    w.resting = false;
+    return true;
+  }
   // Nowhere within reach that anybody could clean: hold on. A body down a hole
   // or shut in a building is the case this catches.
   if (cleanSpotNear(w.x + WORKER / 2) == null) return false;

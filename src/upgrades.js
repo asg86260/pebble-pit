@@ -9,11 +9,11 @@ import {
   CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
   QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
-  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, UNLOCK_SHOW,
+  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST, TOWER_SHARDS, TOWER_SPORES
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
-import { S, quarry, farm, lab, school, casino, scrub, tower } from './state.js';
+import { S, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL } from './config.js';
 import { lookAt, resite, benches, bedCount } from './world.js';
@@ -161,7 +161,11 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job));
 // holds who it holds.
 export const capOf = job =>
   job === 'quarriers' ? benches() :
-  job === 'farmhands' ? bedCount() : Infinity;
+  job === 'farmhands' ? bedCount() :
+  // One body in the lab. It is a room with a bench in it, not a floor plan, and
+  // research is one thing being looked into at a time -- a second body standing
+  // in there was a second pair of hands on a job that has no second pair.
+  job === 'labbers' ? 1 : Infinity;
 export const roomAt = job => capOf(job) - S[job];
 
 // `haulers` is a fact on S rather than a sum worked out where it is read, so
@@ -175,7 +179,8 @@ export function rebalance() {
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a bed that is not there.
-  for (const job of ['quarriers', 'farmhands']) S[job] = Math.min(S[job], capOf(job));
+  for (const job of ['quarriers', 'farmhands', 'labbers'])
+    S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // Carrying is the job nobody is assigned to: it is what a body does when it is
   // on nothing, so the haulers are whatever is left over. The carts are the
@@ -443,6 +448,19 @@ export const UPGRADES = [
   },
   // The last thing on the ground, and the only one that makes nothing. It is
   // the far end of the walk on purpose, and it is the last core you spend.
+  // Somewhere to go. What it does is not remove the mess -- a shed with a hole
+  // under it is not a drain -- it *gathers* it: the crew stop leaving one wherever
+  // they were working and leave it all in one place instead, which is one patch
+  // to shovel rather than a yard of them. The tower deals with the rest, later.
+  {
+    key: 'unlockouthouse',
+    name: 'build the outhouse',
+    note: () => 'the crew go here instead of wherever they are standing',
+    cost: () => OUTHOUSE_DUST,
+    buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },
+    // Offered once you have seen why you want one.
+    show: () => !S.outhouseOpen && S.crew > 1 && nearly(OUTHOUSE_DUST)
+  },
   // The one thing a core buys, and the only row in the game with a bill rather
   // than a price. A core out of the rock, the dust the yard makes, the stone the
   // cut gives up and the crop off the beds: everything the operation does, on
@@ -493,6 +511,7 @@ export const SECTIONS = [
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
+  { title: 'the outhouse', keys: ['unlockouthouse'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }

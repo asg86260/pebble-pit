@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, SPARK_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, cellPos } from './rock.js';
@@ -710,6 +710,45 @@ const CHUTE = SCRUB_CHUTE;
 // narrow shaft, a band of stone every few courses so it reads as built rather
 // than extruded, and a lit window near the top that is the only light in the
 // yard nobody walks to. Everything else out here is a shed or a hole.
+// The outhouse. The smallest thing anybody builds here, and the only one whose
+// whole job is somewhere to be for a minute: a black shed with a pitched roof, a
+// door cut white out of it, and the moon over the door that every outhouse ever
+// drawn has had.
+//
+// The moon goes solid once the tower has seen to it. That is the only sign the
+// magic is working -- what it does is make a thing not happen, and there is no
+// way to draw an absence except by marking the place it would have been.
+export function drawOuthouse() {
+  if (!S.outhouseOpen) return;
+  const { x, y, w, h } = outhouse;
+  const c = n => x + P * n;
+  const r = n => y + P * n;
+  const WIDE = Math.round(w / P);              // 7 across
+  const TALL = Math.round(h / P);              // 10 down
+  const ROOF = 3;
+
+  ctx.fillStyle = '#000';
+  // a pitched roof, one row wider than the shed so it overhangs like a roof
+  for (let i = 0; i < ROOF; i++) {
+    const half = ((i + 1) / ROOF) * (WIDE / 2 + 0.5);
+    const from = Math.round(WIDE / 2 - half), to = Math.round(WIDE / 2 + half);
+    ctx.fillRect(c(from), r(i), P * Math.max(1, to - from), P);
+  }
+  ctx.fillRect(x, r(ROOF), w, h - P * ROOF);
+
+  // the door, and the moon over it
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(c(WIDE / 2 - 1), r(TALL - 5), P * 2, P * 5);
+  if (S.magicLoo) {
+    // full: the tower has been at it
+    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 1), P * 2, P * 2);
+  } else {
+    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 1), P * 2, P);
+    ctx.fillRect(c(WIDE / 2 - 1), r(ROOF + 2), P, P);
+  }
+  ctx.fillStyle = '#000';
+}
+
 // The tower. Everything the crew put up is a shed or a hole; this is neither, so
 // it is the one thing here with a roof that comes to a point -- and a smaller one
 // beside it doing the same, because two pointed roofs at different heights is
@@ -1872,6 +1911,7 @@ export function draw() {
   drawCasino();
   drawScrub();
   drawTower();
+  drawOuthouse();
   drawPotPile();    // what is on the table, as a heap on the ground
   drawSparks();     // and whatever the last spin threw out of it
   drawSchool();

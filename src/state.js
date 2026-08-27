@@ -208,6 +208,8 @@ export const S = {
   houseBoardOpen: false,  // and the list of who lives here
   quarryBoardOpen: false,
   farmBoardOpen: false,
+  outhouseOpen: false,    // there is somewhere to go
+  magicLoo: false,        // and the tower has seen to what is in it
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,
@@ -262,6 +264,8 @@ export const casino = { x: 0, y: 0, w: 0, h: 0 };
 export const scrub = { x: 0, y: 0, w: 0, h: 0 };
 // The tower: the far end of the walk, and the only thing a core buys.
 export const tower = { x: 0, y: 0, w: 0, h: 0 };
+// The outhouse, out among the rooms the crew live in.
+export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // The ground the pot piles up on: a real bed of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.

@@ -8,6 +8,7 @@
 import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay } from './upgrades.js';
+import { closeBoard } from './board.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -41,6 +42,12 @@ function shape(list, sections) {
   }
   return out.join(',');
 }
+
+// Did that press do anything? A row is gone or greyed after a purchase, and the
+// simplest honest test is whether the thing it sells is now had -- but rows do
+// not all have such a thing, so it is asked the other way round: a row that can
+// no longer be pressed is a row that just fired.
+const bought = u => !u.show() || !canPay(u);
 
 const built = new WeakMap();
 
@@ -137,7 +144,18 @@ function build(el, list, sections, empty) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (u.read) b.classList.add('stat');
-      else b.addEventListener('click', () => buy(u));
+      // Buying is the end of what you came to the board for, so the board goes.
+      // It used to stay open under the cursor with the row you just bought now
+      // greyed or gone, which reads as the press not having landed -- and the
+      // sheet then sits over the thing you just paid for.
+      //
+      // Only when something actually happened: a press on a row you cannot
+      // afford leaves the board where it is, because you are still deciding.
+      else b.addEventListener('click', () => {
+        const before = S.dirty;
+        buy(u);
+        if (bought(u)) closeBoard();
+      });
       // A row that has something to say says it on hover, in the same words in
       // the same box the yard uses for a mark you went and looked at. It is the
       // one place a *name* is not enough: a breaker is a word, and what a

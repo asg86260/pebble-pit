@@ -226,6 +226,16 @@ export const TO_CASINO = -2760;
 // than pushing the whole yard right to make room. The rock is 2,880 from the
 // left edge and the casino is the last building before it, so what is left is a
 // narrow strip -- which suits the one building that is narrow and tall.
+// The outhouse: a shed on the bare ground between the training grounds and the
+// rooms the crew live in. It goes where the crew *are* rather than out at the
+// quiet end with the lab and the table -- somewhere you would put one.
+//
+// Two cells by three and a bit: the smallest thing anybody builds in this yard,
+// because that is how big it needs to be.
+export const TO_OUTHOUSE = -690;
+export const OUTHOUSE_W = P * 7;
+export const OUTHOUSE_H = P * 10;
+
 export const TO_TOWER = -2856;
 export const TOWER_W = P * 13;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
@@ -259,6 +269,7 @@ export const FARM_DUST = 1800;     // the beds
 export const SCRUB_DUST = 3500;    // the scrubbing house
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
+export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
 // A row shows once you are within this much of affording it. Nothing here is
 // revealed by a counter passing a mark nobody can see, and a price you have no
 // idea is coming is a price you cannot save for.
@@ -275,6 +286,12 @@ export const CORE_FROM = 5;
 // thing bought with all four at once: a core out of the rock, the dust the yard
 // makes, the stone the cut gives up and the crop off the beds. Everything the
 // operation does, on one row.
+// And what the tower does once it is up. Priced in the crop rather than in
+// stone: it is the beds that grow the only thing anybody here eats, and this is
+// a spell about what happens afterwards.
+export const MAGIC_LOO_DUST = 4000;
+export const MAGIC_LOO_SPORES = 400;
+
 export const TOWER_CORES = 1;
 export const TOWER_DUST = 5000;
 export const TOWER_SHARDS = 1000;
@@ -938,10 +955,12 @@ export const SMOKE_STIR_R = 130;   // how far it reaches, in world pixels
 export const SMOKE_STIR_CAP = 12;  // and the furthest a mote is ever pushed
 export const SMOKE_STIR_EASE = 1.5;
 
-// How much a plume opens out as it climbs. Smoke off a swing goes up in a column
-// and widens with height, the way smoke does; every puff leaning on the same
-// shared sway sent the lot up in one straight cylinder, which reads as a pipe.
-export const PLUME_SPREAD = 0.5;
+// How far a puff drifts sideways for every pixel it climbs. A tenth: enough that
+// a plume leans and opens a little instead of going up as one straight cylinder,
+// not so much that it fans out across the sky. It is a share of the climb rather
+// than a speed, so a puff ends up about a tenth of its own height off the column
+// it left, however fast it got there.
+export const PLUME_LEAN = 0.1;
 export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
 export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
 export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches

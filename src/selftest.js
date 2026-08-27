@@ -1436,8 +1436,11 @@ const TESTS = [
          `${paidButEmpty.smoke}`),
       ok(worked.smoke > 0, 'it smokes once somebody is in there on it',
          `${worked.smoke} puffs`),
-      ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 2,
-         'and they are inside it, not standing about in front',
+      // One body. The lab is a room with a bench in it and research is one thing
+      // being looked into at a time, so a second pair of hands has nothing to be
+      // a second pair of hands on.
+      ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 1,
+         'and it is inside it, not standing about in front',
          JSON.stringify(worked.crewDetail.filter(d => d[0] === 'l')))
     ];
   }],
@@ -1540,8 +1543,8 @@ const TESTS = [
       ok(empty.research && empty.research.at === 0,
          'an empty lab gets no work done at all',
          `${empty.research && empty.research.at}`),
-      ok(part.labbers === 2 && part.research && part.research.at > 0.15,
-         'two bodies in it and it moves', `${part.research && part.research.at}`),
+      ok(part.labbers === 1 && part.research && part.research.at > 0.1,
+         'somebody in it and it moves', `${part.research && part.research.at}`),
       ok(!after.research && after.mult.swing === before.mult.swing + 1,
          'and finishing it is what raises the multiplier',
          `${before.mult.swing} -> ${after.mult.swing}`),
@@ -1595,7 +1598,7 @@ const TESTS = [
     away();
     await sleep(160);
     return [
-      ok(staffed.labbers === 2, 'the lab board puts bodies in the lab itself',
+      ok(staffed.labbers === 1, 'the lab board puts somebody in the lab itself',
          `${staffed.labbers}`),
       ok(!!started.research && started.labDone === null,
          'and starting a piece leaves nothing to report yet',
@@ -1985,10 +1988,10 @@ const TESTS = [
     window.__abandon();
     window.__crew(0, 0);
     return [
-      ok(staffed.labbers === 2, 'two are put in the lab', `${staffed.labbers}`),
-      ok(empty.labbers < 2, 'with nothing to work on they let themselves out',
+      ok(staffed.labbers === 1, 'one is put in the lab', `${staffed.labbers}`),
+      ok(empty.labbers < 1, 'with nothing to work on it lets itself out',
          `${empty.labbers} left in`),
-      ok(back.labbers === 2, 'and starting a piece of research calls them back',
+      ok(back.labbers === 1, 'and starting a piece of research calls it back',
          `${back.labbers} back in`),
       ok(!!back.research, 'with the work actually started', JSON.stringify(back.research))
     ];

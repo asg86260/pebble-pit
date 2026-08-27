@@ -1,7 +1,7 @@
 // The air: what fills it, what comes back down, and what the scrubbing house
 // does about it.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
 
 group('the air thickens with what is lying about, and keeps out of the ground', async () => {
   // The air is the only thing in the background of this game, so it is the
@@ -392,6 +392,59 @@ group('the sky says which part of the works dirtied it', async () => {
     ok(k.shard > 0, 'and so does the cut -- while it is being dug, not only when it pays',
        `${k.shard || 0}`),
     ok(Object.keys(k).length > 1, 'so a dirty sky is not one flat colour', JSON.stringify(k))
+  ];
+});
+
+// The crew make their own mess, and there are three answers to it. Nothing: they
+// go where they are working and it lands all over the yard. A shed: they walk to
+// it and it lands in one place, which is one patch to shovel rather than a yard
+// of them -- the shed does not make anything disappear, it gathers it. And the
+// tower, which does make it disappear, and is the only thing in the game that
+// makes a chore stop existing rather than go faster.
+group('the outhouse gathers what the crew leave, and the tower does away with it', async () => {
+  const spread = () => {
+    const m = state().smog.muck;
+    return { all: Math.round(m.all), cols: m.cols };
+  };
+  const fresh = () => {
+    window.__reset();
+    window.__tune('LOO_EVERY', 5000);         // wound in: it is ten minutes a body
+    // Miners only. A spare pair of hands shovels a mess the moment it appears, so
+    // a yard with anybody idle in it reads as nought left either way -- which is
+    // the crew working, not the shed. What is being weighed here is where it
+    // lands, so nobody is allowed to tidy up behind them.
+    window.__crew(3, 0);
+    window.__air({ haze: 0, muck: 0 });
+    window.__clearFloor();
+  };
+
+  fresh();
+  run(90);
+  const wild = spread();
+
+  fresh();
+  yard.S.outhouseOpen = true;
+  run(90);
+  const gathered = spread();
+
+  fresh();
+  yard.S.outhouseOpen = true;
+  yard.S.magicLoo = true;
+  run(90);
+  const magicked = spread();
+
+  window.__crew(0, 0);
+  window.__air({ haze: 0, muck: 0 });
+  window.__tune('LOO_EVERY', 600000);
+  return [
+    ok(wild.all > 0, 'with nowhere to go they leave it where they were working',
+       `${wild.all} over ${wild.cols} columns`),
+    ok(gathered.all > 0, 'a shed does not make it go away',
+       `${gathered.all} still to shovel`),
+    ok(gathered.cols <= wild.cols, 'it gathers it into one place instead',
+       `${wild.cols} columns without it, ${gathered.cols} with`),
+    ok(magicked.all === 0, 'and the tower is what actually does away with it',
+       `${magicked.all} left`)
   ];
 });
 

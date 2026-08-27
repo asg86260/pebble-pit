@@ -1,18 +1,29 @@
 // The tower: the far end of the walk, and the only thing a core buys.
 //
-// It is up, and it is empty. What goes on inside it is not written yet -- the
-// price was decided before the purpose, which is the right way round for a
-// building you have to earn: a core, the dust the yard makes, the stone the cut
-// gives up and the crop off the beds, all four at once, so nobody buys it by
-// being good at one thing.
-//
-// Until there is something to sell in it, the board says so rather than standing
-// blank -- the same rule every other board in the game follows. A room with
-// nothing in it that admits as much reads as a room waiting to be filled; one
-// that renders empty reads as a bug.
+// What it sells is not a rate. Everything else in this yard makes a number go up
+// faster; the tower makes a thing stop happening. There is no upgrade path here
+// and no second tier -- one row, and what it buys is a chore you no longer have.
 
-export const TOWER_UPGRADES = [];
+import { S } from './state.js';
+import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES } from './config.js';
+
+export const TOWER_UPGRADES = [
+  {
+    key: 'magicloo',
+    name: 'enchant the outhouse',
+    // What it does, in the words of the thing it undoes. A row that said
+    // "removes waste" would be a row about a system; this is about the shovel
+    // you put down.
+    note: () => 'and nobody has to shovel it ever again',
+    bill: () => [['dust', MAGIC_LOO_DUST], ['spore', MAGIC_LOO_SPORES]],
+    cost: () => MAGIC_LOO_DUST,
+    buy: () => { S.magicLoo = true; },
+    // Nothing to enchant until there is one, which is the joke: the tower's
+    // first piece of magic is plumbing.
+    show: () => S.outhouseOpen && !S.magicLoo
+  }
+];
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: [] }
+  { title: 'the tower', keys: ['magicloo'] }
 ];
