@@ -438,6 +438,11 @@ function relieve(w, now) {
 
   if (now < w.looAt) return false;
   if (w.inside || w.inPit || w.carry || w.hasCore) return false;   // finish what you are holding
+  // A body that has knocked off for the day is going home, and home is where it
+  // will go. Without this the yard can never settle: the last body walking in
+  // stops on the way, leaves something, and the ones already indoors come back
+  // out to shovel it -- for ever.
+  if (w.goal === 'home') return false;
   // Nowhere within reach that anybody could clean: hold on. A body down a hole
   // or shut in a building is the case this catches.
   if (cleanSpotNear(w.x + WORKER / 2) == null) return false;
