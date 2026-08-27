@@ -10,7 +10,7 @@
 // born -- off the top of a real pile -- and after that they belong to the air.
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
-         AIR_GRIT, AIR_WOBBLE, AIR_GUST, AIR_GUST_MS, AIR_LOW, AIR_LOW_BAND,
+         AIR_GRIT, AIR_LEAN, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
          AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE } from './config.js';
 import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm } from './state.js';
@@ -18,6 +18,7 @@ import { at, count, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now } from './clock.js';
+import { windAt, give } from './wind.js';
 
 export const AIR = [];
 
@@ -170,16 +171,13 @@ function born(anywhere) {
     b,
     grit,                                        // heavier: it sinks instead of climbing
     vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + Math.random() * 0.8),
-    phase: Math.random() * Math.PI * 2,          // so they do not all swim together
-    swim: 700 + Math.random() * 900
+    // How much of the wind this one takes, fixed for its life. A fifth either
+    // way, and less again if it is grit, which is heavy. It used to be a phase
+    // and a period -- its own cosine, its own beat -- and that is what made the
+    // field look shaken rather than blown: a mote leaning the opposite way to
+    // the one beside it says there is no wind, whatever else is going on.
+    lean: give(Math.random(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
   }, anywhere);
-}
-
-// The wind: two slow swings pulling against each other, so it leans one way for
-// a while and then the other and never repeats on a beat you could count.
-function windAt(t) {
-  return AIR_GUST * (Math.sin(t / AIR_GUST_MS) * 0.7
-                   + Math.sin(t / (AIR_GUST_MS * 0.37) + 1.3) * 0.3);
 }
 
 // How many motes the yard is asking for, before the cap. A well-stocked pit
@@ -190,7 +188,7 @@ const appetite = t => AIR_FLOOR + Math.round(dustAbout(t) / AIR_PER_DUST);
 export function stepAir() {
   const t = now();
   const want = Math.min(AIR_CAP, appetite(t));
-  const wind = windAt(t);
+  const wind = windAt(t) * AIR_LEAN;      // the yard's wind, in the pixels dust travels in
 
   // how far the field has to slide to stay put: the camera moved, and each band
   // takes its own share of that
@@ -206,7 +204,13 @@ export function stepAir() {
 
   const keep = Math.max(0, 1 - AIR_STIR_EASE / 60);
   for (const m of AIR) {
-    m.x += wind * m.b.pace + Math.cos(t / m.swim + m.phase) * AIR_WOBBLE * m.b.pace - dx * m.b.take;
+    // The one wind, times what this band takes of it, times this mote's share.
+    // The band is the depth: a far band leans less than a near one on the same
+    // gust, which is the parallax the bands are there for and is the reason the
+    // shared wind is scaled per band rather than each band being given a wind of
+    // its own -- two winds would have had the far dust drifting one way while
+    // the near dust went the other, and depth would have read as disagreement.
+    m.x += wind * m.b.pace * m.lean - dx * m.b.take;
     m.y += m.vy - dy * m.b.take;
 
     // and whatever draught the cursor left behind it, dying away. A real wind

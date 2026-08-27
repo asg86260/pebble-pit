@@ -470,6 +470,80 @@ const TESTS = [
     ];
   }],
 
+  // One wind over the yard, and everything hanging in it leaning on that one
+  // wind. The dust used to swim on a cosine of its own, on its own phase and its
+  // own period, and the haze to bob on a sine of its own -- so two specks a
+  // hand's breadth apart went opposite ways in the same frame. That is movement
+  // everywhere and weather nowhere, and it is the whole reason the air read as
+  // noise. What is asked here is not that the motes move, which they always did,
+  // but that they agree.
+  //
+  // The haze is loaded rather than climbed into so that nothing in it is still
+  // dispersing: a young mote's stretch of sky is opening under it a couple of
+  // pixels a second, outward in both directions at once, and that is deliberate
+  // -- see `spreadAt` -- but it is not the wind and would drown it here.
+  ['the dust and the smoke lean on one wind', async () => {
+    window.__reset();
+    window.__air({ haze: 700 });
+    await settle();
+    run(3);
+
+    // Which way a field went between two readings, and how much of it agreed.
+    // Motes that did not move at all are left out, and so are ones that jumped
+    // further than the wind could have taken them: a mote that landed and was
+    // born again across the window, or one that wrapped round the end of the
+    // world, is not a mote that disagreed about the weather.
+    const tally = (from, to, wrap) => {
+      let right = 0, left = 0;
+      for (let i = 0; i < Math.min(from.length, to.length); i++) {
+        const d = to[i] - from[i];
+        if (!d || Math.abs(d) > wrap) continue;
+        if (d > 0) right++; else left++;
+      }
+      const n = right + left;
+      return { n, most: Math.max(right, left), way: right >= left ? 1 : -1,
+               share: n ? Math.max(right, left) / n : 0 };
+    };
+
+    // Sampled at moments spread across a few seconds rather than once. The wind
+    // eases through nought and back -- it is meant to, that is the lull -- so
+    // there are instants where next to nothing is moving and there is nothing to
+    // agree about. The claim is that when it is blowing, it is blowing one way.
+    let dust = { n: 0, share: 0 }, smoke = { n: 0, share: 0 };
+    let bothWays = 0, together = 0;
+    const winds = [];
+    for (let i = 0; i < 8; i++) {
+      const was = state();
+      run(10 / 60);
+      const is = state();
+      winds.push(is.wind);
+      const a = tally(was.airX, is.airX, 40);
+      const s = tally(was.smog.skyX, is.smog.skyX, 60);
+      if (a.n > dust.n) dust = a;
+      if (s.n > smoke.n) smoke = s;
+      if (a.n >= 20 && s.n >= 10) { bothWays++; if (a.way === s.way) together++; }
+      run(1.3);                        // and on to a different part of the gust
+    }
+
+    return [
+      ok(dust.n >= 20, 'there is dust in the air and it is moving',
+         `${dust.n} of ${state().airX.length} sampled motes shifted`),
+      ok(dust.share > 0.95, 'and near enough all of it leans the same way at once',
+         `${dust.most} of ${dust.n} agreed`),
+      ok(smoke.n >= 10, 'there is smoke up there too', `${smoke.n} settled motes shifted`),
+      ok(smoke.share > 0.95, 'and it leans together as well',
+         `${smoke.most} of ${smoke.n} agreed`),
+      ok(bothWays > 0 && together === bothWays,
+         'and the smoke leans the way the dust does: one wind, not two',
+         `${together} of ${bothWays} readings agreed`),
+      // A wind with no lull in it is a fan. Over eight seconds of a nine-second
+      // swing it has to have got somewhere it was not.
+      ok(Math.max(...winds) - Math.min(...winds) > 0.1,
+         'and the wind itself gusts rather than blowing at one steady rate',
+         `${Math.min(...winds).toFixed(2)} to ${Math.max(...winds).toFixed(2)}`)
+    ];
+  }],
+
   // A body let go of used to drop straight down however you were moving when you
   // let go -- the one thing in the yard that fell out of the air with no regard
   // for the hand that had hold of it. It is thrown now, off the same flick the

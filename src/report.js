@@ -33,6 +33,7 @@ import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
 import { smogReport } from './smog.js';
 import { now as clockNow } from './clock.js';
+import { windAt } from './wind.js';
 import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, benchMark, idle } from './upgrades.js';
 
 // Dust that got past the hole. Everything thrown at the pit is thrown from the
@@ -96,6 +97,13 @@ export const snapshot = () => ({ houses: houseReport(), paid: S.paid.length, dpr
   airStirred: AIR.filter(m => m.sx || m.sy).length,
   airStirTop: +Math.max(0, ...AIR.map(m => Math.hypot(m.sx || 0, m.sy || 0))).toFixed(2),
   airPos: AIR.slice(0, 60).map(m => `${Math.round(m.x)},${Math.round(m.y)}`),
+  // Which way the yard is leaning this instant, and where the motes are to a
+  // tenth of a pixel. There is one wind over the yard -- see `wind.js` -- and a check on
+  // that has to be able to see a far-band mote move: at a third of the near
+  // band's pace that is a tenth of a pixel in a frame, and rounded to whole
+  // pixels, as `airPos` is, most of the field reads as standing perfectly still.
+  wind: +windAt(clockNow()).toFixed(3),
+  airX: AIR.slice(0, 80).map(m => +m.x.toFixed(2)),
   airUnder: airReport().under, airFront: airReport().front, airKinds: airReport().kinds, airWant: airReport().want, sky: skyReport(), camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: pitDepth() / pit.p, pitDepth: pitDepth(), pitFullDepth: PIT_H, pitGrain: pit.p, pitStep: S.pitStep, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), pitFull: pitFull(), dustPastPit: dustPastPit(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, intro: S.intro, introDone: S.introDone, reunionDone: S.reunionDone, pair: S.pair.length, buried: S.buried, buriedVisible: buriedVisible(), casinoOpen: S.casinoOpen, casinoBoardOpen: S.casinoBoardOpen, pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() }, spinning: spinning(), sparks: S.sparks.length, hand: S.hand && { won: S.hand.won, n: S.hand.n }, potAt: Math.round(potAt().x), table: table.n, paying: S.paying && S.paying.left, chip: chipName(), stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') }, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.filter(p => !p.house && !p.cig).length, cigSmoke: S.smoke.filter(p => p.cig).length, houseSmoke: S.smoke.filter(p => p.house).length, shutters: [...S.shutters].sort((a, b) => a - b), research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, labDone: S.labDone, boardOpen: S.boardOpen, labBoardOpen: S.labBoardOpen, schoolBoardOpen: S.schoolBoardOpen, houseBoardOpen: S.houseBoardOpen, scrubBoardOpen: S.scrubBoardOpen, quarryBoardOpen: S.quarryBoardOpen, farmBoardOpen: S.farmBoardOpen, towerBoardOpen: S.towerBoardOpen, towerOpen: S.towerOpen, towerX: Math.round(tower.x), outhouseOpen: S.outhouseOpen, outhouseX: Math.round(outhouse.x), magicLoo: S.magicLoo, smog: smogReport(), smogBand: (SMOG_TOP + SMOG_BAND) * P, scrubX: Math.round(scrub.x), pointed: S.workers.filter(w => w.pointed > clockNow()).map(w => w.name), follows: S.follow ? S.follow.name : null, followOff: S.follow ? Math.round(S.camX + S.viewW / 2 - (S.follow.x + WORKER / 2)) : null, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), casinoX: Math.round(casino.x), wheel: +S.wheel.toFixed(2), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
                                     [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
   // reported by the cell they are in, not the middle of the mark drawn on it

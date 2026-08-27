@@ -142,7 +142,19 @@ export const SMOG_SPREAD_MIN = 90;   // the stretch a mote lands within
 export const SMOG_SPREAD_RATE = 22;  // pixels a second that stretch opens by
 export const SMOG_SPREAD_MAX = 9000; // and as wide as it ever gets: the whole yard
 export const SMOG_SINK = 5;          // seconds to settle from the band's underside to its height
-export const SMOG_WANDER = 9;       // how far a mote strays from its place in the band
+// How far a gust lifts the band as it goes through it. This was a wander -- a
+// sine on each mote's own phase, so the haze shimmered in place like television
+// snow -- and it is a lean now: the whole band rises a little on a wind from one
+// side and settles again as it drops, together.
+//
+// Height only. Sideways is the drift below, and it is the drift because it has
+// to be a speed rather than an offset: a sideways offset that grows with the
+// wind runs *backwards* whenever a gust is dying, and the yard was caught with
+// its smoke going left while its dust went right in the same frame -- which is
+// exactly the two-winds fault all of this exists to be rid of.
+export const SMOG_LIFT = 4;          // world pixels the band rises on a full wind
+export const SMOG_GIVE = 0.15;       // how far one mote may differ from the next, either way
+export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is carried
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
@@ -933,8 +945,23 @@ export const AIR_SINK = 0.06;     // and the heavier grit that goes the other wa
 export const AIR_GRIT = 0.16;     // the share of the air that is that grit
 export const AIR_SITE = 0.35;     // share of new motes that come off an open site in view
 export const AIR_SITE_UP = P * 10;  // and how high above the ground line they are born
-export const AIR_WOBBLE = 0.16;   // how far a mote swims either side of its drift
-export const AIR_GUST = 0.34;     // and the wind the whole field leans on
+// What the dust makes of the wind. `AIR_LEAN` is the whole of a mote's sideways
+// travel now: there used to be a wobble on top of it, a cosine on each mote's
+// own phase and its own period, and that wobble was the reason the air read as
+// static rather than as weather. Half a dozen specks in the same square inch
+// each going a different way is noise however slow you make it. What is left is
+// one wind and a mote's share of it -- see `wind.js`.
+export const AIR_LEAN = 0.34;     // screen pixels a mote is carried in a frame, at full wind and pace 1
+// And how far a mote is allowed to differ from the mote beside it. Small on
+// purpose: a fifth either way is enough that the field does not move like a
+// sheet of card, and not enough that any two of them ever plainly disagree.
+export const AIR_GIVE = 0.18;
+// Grit is the heavy half of the air -- it sinks instead of climbing -- so it
+// takes less of the wind than the fine stuff floating past it. Without this the
+// only difference between a grain of grit and a speck of dust was which way it
+// went up and down, and a wind that carries both equally is a wind blowing
+// through a field with no weight in it.
+export const AIR_GRIT_LEAN = 0.65;
 // What a hand going through the air does to it. The field already leans on a
 // wind that never quite settles; this is a local one, made by the cursor, that
 // dies away behind it. Standing still does nothing -- it is the movement that
@@ -961,9 +988,29 @@ export const SMOKE_STIR_EASE = 1.5;
 // than a speed, so a puff ends up about a tenth of its own height off the column
 // it left, however fast it got there.
 export const PLUME_LEAN = 0.1;
-export const AIR_GUST_MS = 9000;  // the slower of the two swings the wind is made of
 export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
 export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches
+
+// --- the wind ------------------------------------------------------------------
+// One wind over the whole yard, worked out in `wind.js` and leaned on by the
+// dust, the settled haze and the smoke still climbing. It used to be three
+// separate things -- a gust in the dust, a wander in the haze, a sway in the
+// puffs -- each on its own periods and, worse, each mote on its own phase, so
+// two specks a hand's breadth apart went opposite ways at the same instant.
+// That is not a windy day, it is static.
+//
+// The number here is a share rather than a distance: 1 is the wind the yard was
+// tuned for, and every field turns it into its own pixels. So the knob on the
+// panel is "how windy is it", one lever over the lot, rather than three that
+// have to be kept in step by hand.
+export let WIND = 1;
+export const WIND_MS = 9000;      // the slower of the swings the wind is made of
+// How deep the lulls are. A sum of sines at unrelated periods never repeats,
+// which is most of what was wanted, but it is always about as strong as it ever
+// gets -- it swaps direction rather than dropping. A slow envelope over the top
+// takes it down to a third and back, so a gust arrives out of quiet air and
+// dies away again, which is the part you actually recognise as weather.
+export const WIND_LULL = 0.45;
 
 // --- turning the knobs ------------------------------------------------------
 // A handful of these are `let` rather than `const` so a dev panel can move them
@@ -978,6 +1025,7 @@ export const TUNABLE = [
   { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
+  { key: 'WIND', label: 'the wind', min: 0, max: 3, step: 0.05 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05 },
@@ -1011,6 +1059,7 @@ export function tuned(key) {
     case 'SPOIL_SIDE': return SPOIL_SIDE;
     case 'TRADE_COST': return TRADE_COST;
     case 'AIR_STIR': return AIR_STIR;
+    case 'WIND': return WIND;
     case 'GRAV': return GRAV;
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
@@ -1038,6 +1087,7 @@ export function tune(key, v) {
     case 'SPOIL_SIDE': SPOIL_SIDE = v; break;
     case 'TRADE_COST': TRADE_COST = v; break;
     case 'AIR_STIR': AIR_STIR = v; break;
+    case 'WIND': WIND = v; break;
     case 'GRAV': GRAV = v; break;
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;
