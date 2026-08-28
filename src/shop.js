@@ -67,6 +67,9 @@ export const tookRows = () => { const was = rebuilt; rebuilt = false; return was
 // -- and the hover on it. A worker tipping a shard into the pit rebuilt the
 // whole board, so the highlight blinked off every time anybody banked anything.
 function build(el, list, sections, empty) {
+  // whether these rows are the submenu itself rather than a board -- see the
+  // note further down about what a row hover means
+  const inSubmenu = el === crewListEl;
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
@@ -172,10 +175,16 @@ function build(el, list, sections, empty) {
       // submenu you had to click for would be the one place that asked twice.
       // The press is still wired up -- see the row itself -- because a finger
       // cannot hover, and the two together are how it works on both.
-      // Every row answers the question, including the ones with nothing behind
-      // them: hovering a row that leads nowhere puts away whatever the last row
-      // led to. See `closeSubmenu`.
-      b.addEventListener('pointerenter', () => (u.over ? u.over() : closeSubmenu()));
+      // Every row on a *board* answers the question of which row you are
+      // reading, including the ones with nothing behind them: hovering a row
+      // that leads nowhere puts away whatever the last row led to.
+      //
+      // Rows inside the submenu are not asking that question -- they are the
+      // answer to it. This same builder makes them, so without the exception
+      // every name in the crew list carried an instruction to close the crew
+      // list, and hovering a body to read it shut the sheet it was written on.
+      if (u.over) b.addEventListener('pointerenter', () => u.over());
+      else if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
       if (u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();

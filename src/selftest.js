@@ -2630,6 +2630,43 @@ const TESTS = [
   // corner. Every one of those is a frame spent a little outside the panel, and
   // the board used to shut on it and take the list with it, which made the
   // submenu impossible to reach.
+  // Reading a name does not put the names away.
+  //
+  // Hovering a row on a *board* closes whatever submenu the last row opened --
+  // one row at a time is the row you are reading. The rows inside the submenu
+  // are made by the same builder, and without an exception every name in the
+  // crew list carried an instruction to close the crew list: hovering a body to
+  // read it shut the sheet the body was written on. Which made the list
+  // unusable, since reading it is the only thing it is for.
+  ['hovering a name does not close the list it is on', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(30);
+    await hoverHouse();
+    await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    let stayed = true;
+    for (const b of rows.slice(0, 4)) {
+      const r = b.getBoundingClientRect();
+      b.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.left + 8, clientY: r.top + 4, bubbles: true }));
+      await sleep(40);
+      if (!state().crewListOpen) stayed = false;
+    }
+    const at = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length >= 4, 'there are names on the sheet', `${rows.length}`),
+      ok(stayed, 'and hovering one leaves the sheet up'),
+      ok(at.crewListOpen && at.houseBoardOpen,
+         'and the board underneath it too', `${at.crewListOpen}, ${at.houseBoardOpen}`)
+    ];
+  }],
+
   ['you can get to the names without a ruler', async () => {
     window.__reset();
     await settle();
