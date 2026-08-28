@@ -49,6 +49,17 @@ const ROAM_ELBOW = WORKER * 1.4;   // how close two of them will stand
 // crest coming apart underneath it and never looks detached from the rock.
 const CLIMB_MIN = 1.1;             // pixels a frame at the least
 const CLIMB_SHARE = 0.14;          // and this much of whatever is left
+// and however far it walked, times this. A body walking on to the hill goes up
+// the side it meets, which means its feet have to rise as fast as it is moving
+// along: at a fixed pace the walk outruns the climb, and what that looks like is
+// a body crossing the footprint at ground level and rising somewhere near the
+// middle -- measured, twenty-three pixels inside the rock at fifty-six per cent
+// of the way across it. Running to the centre and then going to the top.
+//
+// One and six tenths carries any slope up to about sixty degrees, which is the
+// flank of a hill. What is steeper than that is the last cell or two under the
+// crest, and easing up those is right: that part is a climb rather than a walk.
+const CLIMB_SLOPE = 1.6;
 
 // One frame of a body getting from the height it is at to the height it should
 // be at, and the height it reaches. Every branch that puts a miner on the rock
@@ -61,17 +72,36 @@ function climbTo(w, foot) {
   // which is the one thing climbing was put in to stop.
   if (w.foot == null) w.foot = w.y;
   const d = foot - w.foot;
+  // How far it walked since the last time its feet were asked about, which is
+  // what lets a walk up a slope keep its feet on the slope. See CLIMB_SLOPE.
+  const along = Math.abs(w.x - (w.footAt ?? w.x));
+  w.footAt = w.x;
   // Per frame, times how long this frame was: at sixty that is one and the pace
   // is exactly what it always was. See `frames` in clock.js. The share of what
   // is left is a proportion rather than a distance, so it is raised to the
   // power instead of multiplied -- a fourteenth of the way there twice is not
   // twice a fourteenth of the way there.
   const f = frames();
-  const chunk = Math.max(CLIMB_MIN * f, Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
+  const chunk = Math.max(CLIMB_MIN * f, along * CLIMB_SLOPE,
+                         Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
   w.foot += Math.sign(d) * Math.min(Math.abs(d), chunk);
   return w.foot;
 }
 const MINER_WALK = 0.5;   // pixels a frame along the row
+
+// Where a body's feet go when it is walking: on whatever is under it.
+//
+// This used to be `walkY` everywhere -- the ground line and the bridge, which do
+// not know the rock is there. So anybody crossing the hill's footprint walked
+// *through* the hill: measured, a hundred and twenty pixels inside it, buried to
+// well over its own height, and it surfaced only on arriving at the far side or
+// at work. What that looks like is a body running to the middle of the rock and
+// then rising out of it, which is exactly what it was doing.
+//
+// `landing` already knows the answer -- the rock's surface where there is rock,
+// the ground where there is not -- and `climbTo` walks the feet up to it at the
+// pace of the walk, so a body goes up the side of the hill it meets.
+const stand = w => climbTo(w, landing(w));
 
 
 export function findPeak() {
@@ -347,7 +377,7 @@ function downTheHole(w, to, dt) {
     const from = w.farSide ? FAR : NEAR;
     const lad = pitLadder(from);
     const d = lad.x - WORKER / 2 - w.x;
-    w.y = walkY(w.x + WORKER / 2);
+    w.y = stand(w);
     w.dir = Math.sign(d) || 1;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
@@ -462,7 +492,7 @@ function relieve(w, now) {
     if (Math.abs(d) > WORKER) {
       w.face = Math.sign(d) || w.face || 1;
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.y = walkY(w.x + WORKER / 2);
+      w.y = stand(w);
       w.lunge = 0;
       return true;
     }
@@ -474,7 +504,7 @@ function relieve(w, now) {
     w.looTo = null;
     w.inLoo = true;
     w.x = outhouse.x + outhouse.w / 2 - WORKER / 2;
-    w.y = walkY(w.x + WORKER / 2);
+    w.y = stand(w);
     w.say = null;
     w.looUntil = now + LOO_MS;
     return true;
@@ -657,7 +687,7 @@ function heldUp(w, zone, now) {
     const mid = w.x + WORKER / 2;
     w.x = mid < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
     w.jigAt = w.x;                     // and it dances from where it was put
-    w.y = walkY(w.x + WORKER / 2);
+    w.y = stand(w);
   }
 }
 
@@ -826,18 +856,42 @@ function stepCommute(w, zone) {
   // below the ground line, and setting off from down there would take it up
   // through the wall of the cut on the diagonal; it climbs the way it came down.
   // A miner is the same thing the other way up, stood on top of the rock.
-  const top = walkY(w.x + WORKER / 2);
+  //
+  // The level of *what is underfoot*, though, not the ground line. This asked
+  // for `walkY`, which knows the ground and the bridge and nothing about the
+  // rock -- so a body on the hill was dragged down to the ground every frame,
+  // and this branch `return`s, so it never reached the walking below. A hundred
+  // and twenty pixels inside the hill, which is a body buried past its own
+  // height, surfacing only when it arrived at the far side. That is what running
+  // to the middle of the rock and then rising out of it was.
+  //
+  // For a quarrier down the cut `landing` is the ground line anyway -- there is
+  // no rock over a hole -- so the reason this block exists is untouched.
+  const top = landing(w);
   if (Math.abs(w.y - top) > 1) {
     w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE * frames(), Math.abs(top - w.y));
     return;
   }
 
-  if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); return; }
+  if (duck(w, zone)) { w.y = stand(w); return; }
 
   const d = w.walkTo - w.x;
   w.face = Math.sign(d) || w.face || 1;        // a cart is dragged behind
   w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-  w.y = walkY(w.x + WORKER / 2);               // the bridge carries a commuter too
+  // Over the ground, or over whatever is standing on it.
+  //
+  // `walkY` is the ground line and the bridge -- it does not know about the
+  // rock. So a body walking to the rock walked *through* it: across the whole
+  // footprint at ground level, buried to the shoulders in the middle of the
+  // hill, and only when it arrived and started work did its feet find the
+  // surface and haul it up. Which is exactly what running to the centre and then
+  // going to the top looks like, because that is what it was.
+  //
+  // Measured before: twenty-three pixels inside the rock at the halfway mark.
+  // `landing` already knows the answer -- the rock's surface where a body is, or
+  // the ground where there is no rock -- and `climbTo` walks the feet up it at
+  // the pace of the walk. Which is a body going up the side it met.
+  w.y = climbTo(w, landing(w));
   if (Math.abs(d) < COMMUTE_SLOP) arrive(w);
 }
 
@@ -1606,7 +1660,7 @@ export function updateWorkers(now, dt) {
 
     // hauler: a rock coming down beats anything it was carrying or fetching.
     // It keeps its claim and picks the job up again on the far side.
-    if (duck(w, zone)) { w.y = walkY(w.x + WORKER / 2); continue; }
+    if (duck(w, zone)) { w.y = stand(w); continue; }
 
     // The rock has landed and this one was dancing while it came down. Put the
     // dance away before it walks off, or it carries the hop and the shout on to
@@ -1649,7 +1703,7 @@ export function updateWorkers(now, dt) {
       if (w.farSide) { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
       else if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
     }
-    w.y = walkY(w.x + WORKER / 2);
+    w.y = stand(w);
 
     // Nothing to go for and nothing owing. A hauler with no room booked and none
     // to book stands down rather than walking to the lip and throwing at a brim,
@@ -1793,7 +1847,7 @@ export function updateWorkers(now, dt) {
       if (across(zone, w.x, door)) { heldUp(w, zone, now); continue; }
       w.face = Math.sign(door - w.x) || w.face || 1;
       w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
-      w.y = walkY(w.x + WORKER / 2);
+      w.y = stand(w);
       if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
     } else {
       // Nothing to fetch and nothing to carry. Rather than standing to
