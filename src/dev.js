@@ -11,6 +11,7 @@
 // closed and remembers which you chose.
 
 import { S } from './state.js';
+import { SKY } from './smog.js';
 import { TUNABLE, tune, tuned } from './config.js';
 import { relayout } from './main.js';
 import { DIALS, DEFAULTS, PRESETS, setAmount, setAll, amounts, present } from './shader.js';
@@ -217,7 +218,40 @@ line('', box => {
   button(box, 'reset the game', () => window.__reset());
 });
 
+// What the yard is actually running at, on the machine it is actually running
+// on. This exists because the question cannot be answered anywhere else: the
+// headless shell the checks run in has no graphics card, so every frame it
+// draws is rasterised by the processor and the number it reports is a floor
+// rather than a measurement. Sixty here and twenty-six there is the same game.
+//
+// A rolling second of real frames, plus the two numbers that explain it: how
+// many device pixels the page is painting, and how many specks are in the sky.
+// Frame rate in this game tracks the first of those almost exactly -- it is
+// filling pixels, not thinking -- so a slow window is nearly always a big one.
+const meter = { at: performance.now(), n: 0, fps: 0 };
+function frameSeen() {
+  meter.n++;
+  const now = performance.now();
+  if (now - meter.at >= 500) {
+    meter.fps = Math.round((meter.n * 1000) / (now - meter.at));
+    meter.n = 0;
+    meter.at = now;
+  }
+  requestAnimationFrame(frameSeen);
+}
+requestAnimationFrame(frameSeen);
+
+line('running at', box => {
+  const out = document.createElement('span');
+  out.dataset.fps = '1';
+  box.appendChild(out);
+});
+
 function refresh() {
+  for (const n of el.querySelectorAll('[data-fps]')) {
+    const px = Math.round(innerWidth * S.dpr) * Math.round(innerHeight * S.dpr);
+    n.textContent = `${meter.fps} fps  ${(px / 1e6).toFixed(1)}M px  ${SKY.length} in the sky`;
+  }
   for (const n of el.querySelectorAll('[data-crew]')) n.textContent = S[n.dataset.crew];
   for (const n of el.querySelectorAll('[data-rock]')) n.textContent = S.boulderNo;
 }

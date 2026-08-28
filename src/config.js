@@ -1359,6 +1359,16 @@ export const WIND_LULL = 0.45;
 // panel builds itself out of TUNABLE rather than knowing any of them by name.
 export const TUNABLE = [
   { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true },
+  // The one dial that is about the frame rate rather than the game, and it is
+  // here because the frame rate is a pixel count: this yard fills pixels, it
+  // does not think -- measured, its own work is under a twentieth of a frame and
+  // the picture costs the rest, scaling exactly with the size of the window.
+  //
+  // What it caps is the *backing store*, so it only does anything on a screen
+  // that reports more than one device pixel to the css pixel. On a plain
+  // monitor the ratio is already one and turning this down changes nothing;
+  // on a laptop at two, halving the budget is halving the work.
+  { key: 'DEVICE_PIXELS', label: 'pixels a frame', min: 1e6, max: 12e6, step: 5e5, layout: true },
   { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },

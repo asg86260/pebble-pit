@@ -46,7 +46,12 @@ const VERT = `
 attribute vec2 p;
 varying vec2 uv;
 void main() {
-  uv = p * 0.5 + 0.5;
+  // Flipped here rather than on the way in. A canvas has its origin at the top
+  // and a texture has it at the bottom, and the usual answer -- asking WebGL to
+  // flip the image while it uploads it -- makes the driver walk the whole
+  // picture a row at a time on the way past, every frame. Turning the one
+  // coordinate over costs nothing at all.
+  uv = vec2(p.x, -p.y) * 0.5 + 0.5;
   gl_Position = vec4(p, 0.0, 1.0);
 }`;
 
@@ -197,6 +202,7 @@ export const PRESETS = {
 let prog = null;
 let quad = null;
 let texture = null;
+let texW = 0, texH = 0;      // what the texture on the card is currently sized for
 const amount = {};
 for (const d of DIALS) amount[d.key] = DEFAULTS[d.key] || 0;
 
@@ -279,8 +285,18 @@ export function present(src, cellPx) {
   }
 
   gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, src);
+  // Filled rather than made, once the size is settled. `texImage2D` every frame
+  // is a fresh allocation of the whole picture's worth of texture memory sixty
+  // times a second, with the old one left for the driver to reclaim;
+  // `texSubImage2D` writes into the one that is already there. The two look
+  // identical and one of them is the frame's largest single piece of work.
+  if (texW !== src.width || texH !== src.height) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, src);
+    texW = src.width;
+    texH = src.height;
+  } else {
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGB, gl.UNSIGNED_BYTE, src);
+  }
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.useProgram(rec.p);
