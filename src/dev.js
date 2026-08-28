@@ -247,6 +247,29 @@ line('running at', box => {
   box.appendChild(out);
 });
 
+// What is doing the drawing. Asked once, because it cannot change while the page
+// is open, and shown here because it is the first thing worth knowing when the
+// frame rate is wrong: this game is fill-rate bound, so a browser quietly
+// rendering it on the processor -- hardware acceleration switched off, a driver
+// on a blocklist, a remote desktop -- is slow at any size, and nothing in the
+// yard is the reason. Measured on a card, every scene the dev panel can build
+// runs at over a hundred and fifty frames a second at three million pixels.
+line('drawn by', box => {
+  const out = document.createElement('span');
+  let name = 'no webgl at all';
+  try {
+    const gl = document.createElement('canvas').getContext('webgl');
+    const info = gl && gl.getExtension('WEBGL_debug_renderer_info');
+    if (info) name = String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL));
+    else if (gl) name = String(gl.getParameter(gl.RENDERER));
+  } catch { name = 'no webgl at all'; }
+  // The names to worry about. SwiftShader and llvmpipe are Chrome drawing the
+  // page with the processor because it has decided it cannot use the card.
+  const soft = /swiftshader|llvmpipe|software|basic render/i.test(name);
+  out.textContent = soft ? `${name}  -- ON THE PROCESSOR, not the card` : name;
+  box.appendChild(out);
+});
+
 function refresh() {
   for (const n of el.querySelectorAll('[data-fps]')) {
     const px = Math.round(innerWidth * S.dpr) * Math.round(innerHeight * S.dpr);
