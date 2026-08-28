@@ -254,46 +254,12 @@ export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the sa
 //
 // It quickens close to the mouth, where the last of a journey is a thing being
 // swallowed rather than carried.
-export const SCRUB_DRAG = 34;        // the pace of the draught itself, in pixels a second per body
-// How quickly a speck takes up the draught's pace, per second. This is what
-// makes the stream a rope rather than a ruled line: at a blend rather than an
-// assignment, a mote coming into the field leans, lags, and is still being
-// stirred by the air while it comes -- and a mote leaving it keeps what it had.
-// A plain acceleration was tried first and could not do the job at all: it has
-// to out-pull the slot's spring at every distance, and a fan rated at twenty
-// specks a second managed ten with the band torn out of shape to get them.
-export const SCRUB_GRAB = 2.6;
+export const SCRUB_DRAG = 34;
 export const SCRUB_NEAR = 300;      // and within this much of the mouth it turns down and quickens
 // and how many it can have in the air at once, so the stream reads as a stream
 // rather than as the whole band arriving in a lump
 // Where the draught stops being a pull and becomes a swallow: a speck this near
 // the mouth is in it.
-// How far a slot lets go of a speck the fan has hold of. All the way, and it has
-// to be: a spring pulls harder the further it is stretched, so a mote being
-// carried across the yard was fighting a rubber band that got stronger with
-// every pixel of progress. Half-releasing it made the fan weaker the further out
-// it reached, which is the opposite of what the readout promises and left a
-// house rated at twenty specks a second taking one.
-//
-// It is safe to let go completely *because* the draught is a velocity rather
-// than a push (see SCRUB_GRAB): a released mote travels at the pace of the air
-// around it instead of accelerating for as long as it is held. When the pull
-// fades, the slot takes hold again from wherever the mote has got to -- see
-// `place`, which re-seeds the mote's stretch rather than hauling it back.
-export const SCRUB_LOOSE = 1;
-// How far the draught reaches. A fan is not a thing that acts on the whole sky
-// equally, and the code that let it do so was worse than unrealistic: because a
-// speck in the draught is let go by its slot, a fan with no range let go of
-// *every mote in the world*, and the band -- with nothing holding it up any
-// more -- sank through the ground line and kept going. Within this the pull is
-// full and the slot lets go; outside it the pull tails off and the band is a
-// band. What drains the far end of the sky is the band's own drift bringing it
-// along, which is the picture anyway: the smoke comes to the house.
-export const SCRUB_FIELD = 1500;
-// and how fast it slides the band along from beyond that reach, in pixels a
-// second per body. Tuned so a house with one body in it sustains the pace its
-// own readout promises: the fan can only eat what the band brings it.
-export const SCRUB_SLIDE = 70;
 export const SCRUB_GRIP = 22;
 // The draught you can see even when there is nothing in the air to be pulled.
 //
@@ -1220,53 +1186,29 @@ export const AIR_BANDS = [
 //
 // The air over the yard has had exactly this since it was written (see
 // AIR_TINTS below); the sky was the one place still painting flat.
-// --- how the sky moves ------------------------------------------------------
-// The band used to be a lattice. Every settled mote held a numbered slot and was
-// put exactly where that slot said, every frame, and the sky was even because it
-// was constructed even rather than because anything up there was behaving. Three
-// force-based versions came before that one and all of them clumped, which is
-// why it was built that way -- but what it bought was a haze with no fluid in
-// it: the band was neat, the plume was neat, the stream into the house was a
-// drawn line, and a climbing speck changed from one kind of thing into another
-// at the moment it arrived.
+// --- the band's own movement --------------------------------------------------
+// A sky made of slots is even because it is built even, and it costs nothing:
+// every mote is put where its slot says and nothing is simulated. What it is
+// not is alive -- a perfectly even lattice, held still, reads as printed tone.
 //
-// So the slot stays and stops being an address. It is a spring now, soft and
-// slow, which keeps the even coverage the lattice was for -- a mote is always
-// being drawn back towards its share of the sky -- while never actually putting
-// anything anywhere. Everything else is a force on the same velocity: the climb,
-// the wind, the cursor, the fan. Nothing in the sky is positioned any more.
-export const SKY_SPRING = 0.6;    // how hard a slot pulls its mote home, per second
-export const SKY_DRAG = 1.5;      // and the air's own thickness, damping all of it
-// How quickly a speck takes up the wind's own pace. The whole yard leans on one
-// wind -- the dust on the ground, the plumes, the band -- and that agreement is
-// checked. Reaching the band only through its slots was not enough to keep it:
-// the stirring is stronger than the spring, so the smoke wandered while the
-// dust leaned.
-export const SKY_WIND = 2.2;
-// and the pace it carries a speck at, in pixels a second at a full gust. This
-// is deliberately faster than the band's own creep along the sky (SMOG_DRIFT,
-// which is about four pixels a second): the creep is the whole sheet moving
-// house by house over minutes, and this is the air a speck is actually sitting
-// in. Below the stirring's own speed the smoke does not lean at all -- the
-// eddies simply outvote the wind, and the check that the whole yard agrees
-// about the weather fails on a technicality that is also true to look at.
-// The slot's spring is what keeps this from becoming a journey: a speck leans
-// downwind until the spring balances it, forty pixels or so, and comes back on
-// the return gust.
-export const SKY_WIND_PACE = 30;
-
-// The fluid part: one slowly turning pattern over the whole sky that every mote
-// reads off its own position. Shared and smooth, so neighbours move *together* --
-// which is the whole difference between smoke and static. A per-mote wander is
-// what the old note above means by shimmer: movement everywhere and no direction
-// anywhere. This is the opposite by construction.
+// A fluid was tried and reverted. It looked right and it was measured at over a
+// millisecond a frame on five thousand specks -- eight trig calls per mote per
+// frame -- which on a machine that is not fill-rate bound is the frame.
 //
-// It is the curl of a scalar field rather than the field itself, which is what
-// makes it swirl instead of pushing everything one way: a curl has no sources
-// and no sinks, so it stirs the band without pumping motes into a corner.
-export const FLOW_SCALE = 0.0016;  // how big the eddies are, in world pixels
-export const FLOW_PACE = 0.11;     // and how fast the pattern itself turns over
-export const FLOW_PUSH = 46;       // what it is worth as a push
+// So the band stirs in *lanes*. A dozen offsets are worked out once a frame, and
+// each mote reads the one its slot lands on. That is a dozen sines a frame
+// rather than forty thousand, and it cannot clump for exactly the reason the
+// creep cannot: a lane is a translation, and a translation moves specks without
+// moving them apart. What it buys is the band sliding over itself -- near lanes
+// and far lanes out of step -- instead of hanging there as one sheet.
+export const SWAY_LANES = 12;        // how many pieces the band drifts in
+export const SWAY_X = 16;            // pixels either way, sideways
+export const SWAY_Y = 8;             // and up and down, which is the smaller motion
+// How fast a lane goes through its swing, in radians a second: about fifteen
+// seconds end to end. Slower than this and the arithmetic is right while the
+// picture is still a photograph -- at a hundred-second swing the band moves a
+// pixel a second, which is a thing you can measure and not a thing you can see.
+export const SWAY_PACE = 0.42;
 
 export const SMOG_TINTS = {
   dust:  ['#2b2b2b', '#3a3733', '#232830', '#332b2b'],
