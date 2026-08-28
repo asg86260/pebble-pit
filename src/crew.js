@@ -84,7 +84,14 @@ function climbTo(w, foot) {
   const f = frames();
   const chunk = Math.max(CLIMB_MIN * f, along * CLIMB_SLOPE,
                          Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
-  w.foot += Math.sign(d) * Math.min(Math.abs(d), chunk);
+  // and never more than a cell in a frame. The rock's surface is made of whole
+  // cells, so what is under a body's feet does not slope -- it *steps*, six
+  // pixels at a time, and at a corner two or three of those arrive together. A
+  // foot that took all of it at once was a body jumping up the hill rather than
+  // walking up it. A cell a frame is three hundred and sixty pixels a second,
+  // which is faster than anything in this yard moves and still smooth.
+  const step = Math.min(chunk, P * f);
+  w.foot += Math.sign(d) * Math.min(Math.abs(d), step);
   return w.foot;
 }
 const MINER_WALK = 0.5;   // pixels a frame along the row
@@ -852,26 +859,23 @@ function stepCommute(w, zone) {
     w.x = foot;
   }
 
-  // The level of the ground first, and only then along it. A quarrier is at work
-  // below the ground line, and setting off from down there would take it up
-  // through the wall of the cut on the diagonal; it climbs the way it came down.
-  // A miner is the same thing the other way up, stood on top of the rock.
+  // There used to be a block here that got the body to the right height *before*
+  // letting it walk at all: "the level of the ground first, and only then along
+  // it". Its reason was the cut -- a quarrier setting off from the bottom of a
+  // hole would otherwise rise through the wall on the diagonal -- and that reason
+  // is served above, where a body below the ground line walks to the foot of the
+  // ladder and goes up it.
   //
-  // The level of *what is underfoot*, though, not the ground line. This asked
-  // for `walkY`, which knows the ground and the bridge and nothing about the
-  // rock -- so a body on the hill was dragged down to the ground every frame,
-  // and this branch `return`s, so it never reached the walking below. A hundred
-  // and twenty pixels inside the hill, which is a body buried past its own
-  // height, surfacing only when it arrived at the far side. That is what running
-  // to the middle of the rock and then rising out of it was.
+  // What was left of it was a body standing on the rock, and there it did harm
+  // twice over. It moved `w.y` directly, so `w.foot` -- which is what the walk
+  // below climbs with -- was left saying something else, and the two disagreed
+  // every frame. And it `return`ed, so while the feet were catching up the body
+  // did not move along at all: rise, step, rise, step. Which is a body that
+  // cannot climb a slope smoothly.
   //
-  // For a quarrier down the cut `landing` is the ground line anyway -- there is
-  // no rock over a hole -- so the reason this block exists is untouched.
-  const top = landing(w);
-  if (Math.abs(w.y - top) > 1) {
-    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE * frames(), Math.abs(top - w.y));
-    return;
-  }
+  // A walk does both at once now. `stand` raises the feet by as much as the body
+  // moved along and a half again (see CLIMB_SLOPE), which is enough for any
+  // flank, and the two are one movement rather than two taking turns.
 
   if (duck(w, zone)) { w.y = stand(w); return; }
 
