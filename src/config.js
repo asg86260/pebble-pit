@@ -31,7 +31,7 @@ export const SKY = 1998;         // world above the ground line, so any window h
 // strip has a size. So the world reads right to left from the hole everything
 // ends up in: the pit; the rock's own spoil; the rock; the bench you buy at,
 // stood just off its flank; then the quarry and what comes up it, the farm and
-// its beds' crop, and the lab at the far end.
+// its plots' crop, and the lab at the far end.
 // The thing in the sky is the meteor, and it has its reason to be there now: it
 // was benched for want of one -- it shed sparks nobody had a use for, and a
 // thing that hangs over the yard doing nothing raises a question the game
@@ -141,7 +141,7 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // the machinery to be the dirty thing, which is the shape the whole system was
 // written for -- see "the air" in DESIGN.md.
 export let SMOG_PER_DUST = 0.16;
-export const QUARRY_FOUL = 2;        // a shard out of the cut is a hole full of it
+export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // The sky has to get properly filthy before it comes down. It used to break at
 // nine hundred, which a working yard reaches before the haze is thick enough to
@@ -403,11 +403,11 @@ export const CASINO_H = P * 12;
 // Dust buys the yard now: it is the thing you are making, it arrives constantly,
 // and an expensive door is one you can see yourself walking towards. A core buys
 // the one thing you cannot get any other way -- see the tower.
-// The beds come before the cut. Food makes bodies and stone makes tools, and a
+// The plots come before the quarry. Food makes bodies and stone makes tools, and a
 // body has to exist before its tool means anything -- so green is strength and
 // blue is gear, in that order.
-export const FARM_DUST = 600;      // the beds, and the first real bill
-export const QUARRY_DUST = 1800;   // the cut
+export const FARM_DUST = 600;      // the plots, and the first real bill
+export const QUARRY_DUST = 1800;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
@@ -426,7 +426,7 @@ export const CORE_FROM = 5;
 // --- the tower ----------------------------------------------------------------
 // What a core is for. The only thing in the game bought with one, and the only
 // thing bought with all four at once: a core out of the rock, the dust the yard
-// makes, the stone the cut gives up and the crop off the beds. Everything the
+// makes, the stone the quarry gives up and the crop off the plots. Everything the
 // operation does, on one row.
 // --- the meteor, and the wizards who work it ------------------------------------
 // The second thing a core buys, and the only one that buys a *place*: the tower
@@ -624,7 +624,7 @@ export const LAB_FLUE = 4;       // courses of it standing against the sky, abov
 // could afford, and a currency you cannot spend reads as scenery.
 export const SCHOOL_COST = 4;    // shards to build it
 // And what a trade costs once it is up. A helmet was two shards, which is about
-// four minutes of one body in the cut: cheap enough that kitting the whole yard
+// four minutes of one body in the quarry: cheap enough that kitting the whole yard
 // out was something you did on the way past rather than something you saved for.
 // A trade doubles what a body does at the thing it does, for good and for free
 // from then on, and nothing else in the game gives that much away -- so it is
@@ -659,10 +659,10 @@ export const ROCK_PILE_TO = 576; // and how far right the rock's own spoil may r
 export const PILE_GAP = 0;       // bare ground kept between a pile and the next station
 // And bare ground kept between a station and the *start* of its own pile, so
 // the heap stands off the thing that made it instead of burying it. The farm
-// clears its last bed; the quarry clears the far ramp of the bridge, which
+// clears its last plot; the quarry clears the far ramp of the bridge, which
 // comes down well past the mouth. The rock has ROCK_CLEAR for the same job.
-// The farm's own heap has to clear its fence, not just its last bed, which is
-// why this is more than FARM_GATE rather than measured off the beds.
+// The farm's own heap has to clear its fence, not just its last plot, which is
+// why this is more than FARM_GATE rather than measured off the plots.
 export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 // Ground running away to the left of everything. This is what the town has to
 // spread into: every building out that way is placed as an offset back from the
@@ -707,7 +707,7 @@ export let BANK_SLOPE = 1.5;
 export const PIT_H = 276;        // the pit is one fixed hole, in world pixels: this deep
 // And this much room above the brim. Once the hole itself is full the pile keeps
 // going, heaping up over the mouth rather than stopping dead at the ground line
-// -- but only over the mouth: it is the same bed of sand, which is only as wide
+// -- but only over the mouth: it is the same plot of sand, which is only as wide
 // as the hole, so it can rise but it can never get out onto the ground.
 export const PIT_HEAP = 150;
 // And how the surplus lies. Inside the hole the pile is level, because a hole
@@ -750,7 +750,7 @@ export const MAX_DEPTH = 6;      // sheets of rock a boulder can be thick
 // never came off the rock.
 export const SHADES = ['#8a8a8a', '#757575', '#5f5f5f', '#464646', '#2c2c2c', '#111111'];
 // Cells above the shades are not dust. They heap and are carried exactly like
-// it -- a shard on the ground is a grain in the same bed, and a worker scooping
+// it -- a shard on the ground is a grain in the same plot, and a worker scooping
 // a column picks it up without knowing what it is -- but they are counted as
 // themselves when they land in the pit, and the pile draws them as their mark.
 // How big a thing that is not dust is drawn, in world pixels. It occupies one
@@ -796,8 +796,8 @@ export const MAGIC_TONES = ['#9b5de5', '#8244d8', '#6a2fbe', '#4e2090'];
 export const FIND_COLOR = {
   [SHARD_CELL]: ['#5b83e0', '#3f68d4', '#2f5fd0', '#2748a4'],   // the quarry: a cold blue
   [SPORE_CELL]: ['#57c074', '#3aa957', '#2e9e4b', '#227b3a'],   // the farm: green, it grew
-  // The meteor's core: red, and the only red in the game. The cut is cold and
-  // the beds are alive; this came out of the sky and is still hot.
+  // The meteor's core: red, and the only red in the game. The quarry is cold and
+  // the plots are alive; this came out of the sky and is still hot.
   [SPARK_CELL]: ['#e8503a', '#d93a25', '#c62d1c', '#9c2214']
 };
 
@@ -1025,13 +1025,13 @@ export const QUARRY_W = 156;       // the mouth, in world pixels
 export const QUARRY_H = 126;      // and how deep the first cut goes
 // How many bodies a cut holds, and how it comes to hold more.
 //
-// A fresh cut is two benches of standing room and no more, so the third body
+// A fresh quarry is two benches of standing room and no more, so the third body
 // you want down there is a thing you have to buy rather than a slider you drag.
 // What buys it is a shard -- the quarry paying for its own next bench is the
 // whole reason to open the quarry at all, and it is a place growing rather than
 // a number going up: every bench taken out is another step down the wall you
 // can see from the rim.
-export const QUARRY_BENCH0 = 2;    // bodies a fresh cut has room for
+export const QUARRY_BENCH0 = 2;    // bodies a fresh quarry has room for
 export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 export const BENCH_COST = 3;       // shards for the first of them
@@ -1054,7 +1054,7 @@ export const QUARRY_FLOOR_JAG = [0, 1, 2, 1, 0, 2, 1, 0];  // and cells of relie
 export const QUARRY_SWING = 620;
 export const QUARRY_SHUFFLE = 0.35;   // and how fast it works along the face
 export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
-// --- what the cut is for ------------------------------------------------------
+// --- what the quarry is for ------------------------------------------------------
 // Shards used to trickle: a quarrier swung, and every so often one came off the
 // face and went over the rim, for ever, at a steady rate. Which made blue a tap
 // rather than a find -- and a tap is a number going up, not a thing you went and
@@ -1086,41 +1086,41 @@ export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 export let CUT_STEP = 0.6;
 
 // --- the farm ---------------------------------------------------------------
-// Beds out past the quarry. Nothing grows in them on its own: a farmhand stands
-// at a bed and tends it, and it grows while tended. So the crop is the crew's
+// Plots out past the quarry. Nothing grows in them on its own: a farmhand stands
+// at a plot and tends it, and it grows while tended. So the crop is the crew's
 // attention, which is the same trade the quarry asks for in a different shape.
-// The beds are broken one at a time, and a bed is a place for one body: the
+// The plots are broken one at a time, and a plot is a place for one body: the
 // same bargain the quarry makes, in the shape the farm makes it. One comes with
 // the ground; the rest are broken with what the ground gives up.
 //
 // One rather than three, because breaking the ground should buy you a plot and
-// not a farm: three beds standing there on the day you pay for it is most of the
+// not a farm: three plots standing there on the day you pay for it is most of the
 // place handed over, and the row that breaks the next one is then an upgrade to
 // something that already works rather than the way the place gets built.
-export const FARM_BEDS0 = 1;     // beds the ground comes with
-export const FARM_BEDS_MAX = 7;  // and the whole plot, once it is all broken
-export const BED_COST = 2;       // spores for the first bed after it
-export const BED_RATE = 1.7;     // and how much steeper each one gets
-export const FARM_GAP = 42;      // world pixels between one bed and the next
+export const FARM_PLOTS0 = 1;     // plots the ground comes with
+export const FARM_PLOTS_MAX = 7;  // and the whole plot, once it is all broken
+export const PLOT_COST = 2;       // spores for the first plot after it
+export const PLOT_RATE = 1.7;     // and how much steeper each one gets
+export const FARM_GAP = 42;      // world pixels between one plot and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
-// Bare ground kept between the end bed and the post that brackets it. A fence
+// Bare ground kept between the end plot and the post that brackets it. A fence
 // standing right against the crop reads as a crop growing through a fence: the
 // plot wants a margin, the way a picture wants one.
 export const FARM_GATE = P * 6;
-export let TEND_BASE = 9000;   // to bring one bed on at tending 0
+export let TEND_BASE = 9000;   // to bring one plot on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
-// A ripe bed is not cut the instant it ripens. The spore forms at the tip of
+// A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
-// How often a farmhand stoops over the bed it is working. Like the quarry, this
+// How often a farmhand stoops over the plot it is working. Like the quarry, this
 // is nothing to do with how fast the crop comes on: a farm should look tended
 // whether or not anything is ripening this second.
 // --- the lab ----------------------------------------------------------------
 // Research is not bought, it is *worked*. Paying for it starts it; what finishes
 // it is bodies standing in the lab, and nothing else -- an empty lab makes no
 // progress at all, however much you have paid. So the lab competes for the crew
-// with the rock, the quarry and the beds, which is the only real question this
+// with the rock, the quarry and the plots, which is the only real question this
 // game asks.
 export const LAB_EFFORT = 1;      // a worker does one second of work a second
 export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
@@ -1155,8 +1155,8 @@ export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in vi
 // as spoil rather than as a resource you have not learned about yet.
 //
 // It was grey for a while, on the rule that the yard has no colour outside the
-// resource marks. That rule was already not true -- there is blue in the cut and
-// green on the beds -- and grey cost more than it saved: a pile of dust here is a
+// resource marks. That rule was already not true -- there is blue in the quarry and
+// green on the plots -- and grey cost more than it saved: a pile of dust here is a
 // block of grey cells, so grey muck lying on a pile read as more of the pile,
 // which is the one thing it must never read as.
 export const MUCK_TONE = '#7a6047';
@@ -1201,7 +1201,7 @@ export const AIR_BANDS = [
   { take: 0.90, size: 3, pace: 1.00, share: 0.20, front: true }
 ];
 // A mote is the colour of whatever kicked it up. The yard's own dust is grey,
-// what hangs over the quarry is the shard's blue and what comes off the beds is
+// what hangs over the quarry is the shard's blue and what comes off the plots is
 // the spore's green -- so the far end of the yard reads as its own place from
 // across the world, before you can make out anything standing in it.
 //
@@ -1553,7 +1553,7 @@ export const COMMUTE_PACE = 2.4;
 // Near enough to have arrived. A station is a place rather than a pixel, and a
 // body made to land exactly on one would shuffle on the spot for ever.
 export const COMMUTE_SLOP = P * 2;
-// How fast a body gets down into the cut and back out of it again. Going to work
+// How fast a body gets down into the quarry and back out of it again. Going to work
 // somewhere else starts with getting up to the level of the ground, and it has
 // to be the same number at both ends of that trip or a quarrier climbs out
 // faster than it climbed in.
@@ -1585,9 +1585,10 @@ export const LAB_IDLE_MS = 20000;
 // out to the lip of the pit, and a bank is what it should look like.
 export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SLOPE));
 // --- Track PRESS ------------------------------------------------------------
-// The filter over the finished frame, and the only part of it that ships. See
-// press.js for what each one is and why these three can be drawn in 2D while the
-// other seven need a shader nobody should be asked to pay for.
+// The filter over the finished frame. See press.js for what each one is, and why
+// these three are drawn in 2D rather than through a shader -- the pass that used
+// to do this cost twenty milliseconds a frame on a large window, and none of it
+// was the shading.
 //
 // A hair of fringe, a whisper of scanline, and enough falloff at the edges to
 // put the page in a room rather than on a light box. The point of all three is
@@ -1595,4 +1596,4 @@ export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SL
 // none of them may argue with a picture made of whole black pixels -- so every
 // one of these numbers is small on purpose, and the look is the mix rather than
 // any one of them.
-export const PRESS_MIX = { aberration: 0.1, scanlines: 0.2, vignette: 0.3 };
+export const PRESS_MIX = { aberration: 0, scanlines: 0.2, vignette: 0.3 };

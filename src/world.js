@@ -9,7 +9,7 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
-        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
+        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
@@ -37,19 +37,19 @@ export const rockLeft = () => Math.round((S.cx - (S.gw / 2) * P) / P) * P;
 // --- how big the two growing sites are ---------------------------------------
 // The quarry and the farm are the only places in the yard that get bigger for
 // what they themselves give up. Both grow the same way: one more bench, one
-// more bed, one more body that has somewhere to stand. Everything that has to
+// more plot, one more body that has somewhere to stand. Everything that has to
 // know how big they are asks here, so a purchase changes one number and the
 // world, the roster and the shop all follow it.
 export const benches = () => Math.min(QUARRY_BENCH_MAX, QUARRY_BENCH0 + S.benchLevel);
 export const quarryDepth = () => QUARRY_H + S.benchLevel * QUARRY_DEEPEN;
-export const bedCount = () => Math.min(FARM_BEDS_MAX, FARM_BEDS0 + S.bedLevel);
+export const plotCount = () => Math.min(FARM_PLOTS_MAX, FARM_PLOTS0 + S.plotLevel);
 
 // A site that has just grown. It is not a relayout: nothing else in the yard
 // moves, and the pile strips are the one thing beside the site itself that has
 // to be told, because a wider farm is a shorter run of ground to heap on.
 export function resite() {
   quarry.h = quarryDepth();
-  farm.w = (bedCount() - 1) * FARM_GAP;
+  farm.w = (plotCount() - 1) * FARM_GAP;
   refreshPiles();
 }
 
@@ -81,8 +81,8 @@ export const kitX = job =>
   // clear of the bridge: the ramp up to the deck starts right at the mouth, and
   // a trestle standing on a slope is a trestle about to fall over
   job === 'quarriers' ? quarry.x - BRIDGE_RUN - P * 5 :
-  // clear of the first bed and of whoever is stooping over it: a farmhand
-  // stands a body's width off its bed, which is where a stand four cells out
+  // clear of the first plot and of whoever is stooping over it: a farmhand
+  // stands a body's width off its plot, which is where a stand four cells out
   // would be standing too
   job === 'farmhands' ? farm.x - P * 18 :
   // The wizards' stand is at the foot of the tower, because the tower is what
@@ -203,7 +203,7 @@ export const pastPit = x => x >= pit.x + pit.w;
 // Three places stay shut, and they are the three that are not ground.
 //
 // Under the rock, because a rock comes down there and a grain lying on that
-// spot is a grain about to be underneath one. Over the mouth of the cut and over
+// spot is a grain about to be underneath one. Over the mouth of the quarry and over
 // the mouth of the hole, because neither of those is somewhere to stand a grain:
 // they are openings, and dust lying across an opening is dust lying on nothing.
 // Dust that reaches the hole goes *in* it, which is the whole point of the hole.
@@ -429,13 +429,13 @@ export function resize(after) {
   quarry.x = S.cx + TO_QUARRY;
   quarry.y = S.groundY;
 
-  // the beds stand on the ground, out past the quarry
+  // the plots stand on the ground, out past the quarry
   farm.h = FARM_H;
   farm.x = S.cx + TO_FARM;
   farm.y = S.groundY;
 
-  // and the two things about them that are not fixed: how deep the cut has been
-  // taken and how many beds have been broken
+  // and the two things about them that are not fixed: how deep the quarry has been
+  // taken and how many plots have been broken
   resite();
 
   // The world is the size of the finished works, not of today's. It is laid out

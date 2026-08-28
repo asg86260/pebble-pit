@@ -1,11 +1,13 @@
 // Three looks laid over the finished frame, in 2D, cheaply enough to ship.
 //
-// These used to live in shader.js with the other seven, and shader.js does not
-// ship: the pass hands the whole picture to a WebGL context every frame, and the
-// picture lives in a Canvas2D context, so the browser has to pull a screen of
-// pixels off the card and push it back up again with a hard synchronisation in
-// the middle. Measured on a large window that was twenty milliseconds a frame --
-// thirty frames a second on a card that draws the yard itself in two.
+// These used to be three dials on a WebGL post-process pass, along with seven
+// others, and that pass is gone. It handed the whole picture to a WebGL context
+// every frame while the picture lived in a Canvas2D context, so the browser had
+// to pull a screen of pixels off the card and push it back up again with a hard
+// synchronisation in the middle. Measured on a large window that was twenty
+// milliseconds a frame -- thirty frames a second on a card that draws the yard
+// itself in two, and it was on by default, so every frame rate anybody read off
+// the dev panel was the filter's number rather than the game's.
 //
 // The shader was never the cost. A three-tap fullscreen fragment program is
 // nothing; the trip between the two contexts was everything. So the answer is
@@ -13,10 +15,11 @@
 // that can be said in 2D, and said here they are a handful of blits on the
 // canvas the game is already drawing into.
 //
-// The other seven stay where they are, dev-only. Curvature, bloom, bleed,
-// halftone, plates and the phosphor mask all need to look at neighbouring
-// pixels or bend the sampling grid, and 2D has no way to say that without
-// reading the frame back itself, which is the thing this file exists to avoid.
+// The other seven went with it. Curvature, bloom, bleed, halftone, plates and
+// the phosphor mask all need to look at neighbouring pixels or bend the sampling
+// grid, and 2D has no way to say that without reading the frame back itself,
+// which is the thing this file exists to avoid. These three are the ones worth
+// keeping and the ones that can be kept honestly.
 //
 // What each one is, and why it can be said here:
 //
@@ -37,25 +40,16 @@
 
 import { PRESS_MIX } from './config.js';
 
-// The three, and the amounts they are set to. `shader.js` forwards the dev
-// panel's dials of the same name in here, so a slider still moves the look; with
-// no dev panel these stay at whatever config says the game ships at.
-export const PRESS_KEYS = ['aberration', 'scanlines', 'vignette'];
+// The three, at the amounts the game ships at. There is no dial: a look you can
+// move at runtime is a look nobody has decided on, and these were decided. The
+// numbers live in config.js with every other number.
+const amount = {
+  aberration: PRESS_MIX.aberration || 0,
+  scanlines: PRESS_MIX.scanlines || 0,
+  vignette: PRESS_MIX.vignette || 0
+};
 
-const amount = {};
-for (const k of PRESS_KEYS) amount[k] = PRESS_MIX[k] || 0;
-
-export const pressAmounts = () => ({ ...amount });
-export const pressOn = () => PRESS_KEYS.some(k => amount[k] > 0);
-export const isPressKey = k => PRESS_KEYS.includes(k);
-
-export function setPressAmount(key, v) {
-  if (key in amount) amount[key] = v;
-}
-
-export function setPressAll(mix) {
-  for (const k of PRESS_KEYS) amount[k] = mix[k] || 0;
-}
+const anyOn = () => amount.aberration > 0 || amount.scanlines > 0 || amount.vignette > 0;
 
 // The scratch canvases the fringe needs, kept rather than made: two of them, and
 // only ever allocated if somebody actually turns the fringe on.
@@ -67,13 +61,29 @@ function buf(i, w, h) {
   return c;
 }
 
-// One colour channel of the frame, on its own. `multiply` by a pure primary
-// keeps that channel and zeroes the other two, which is what a channel is.
-function channel(i, src, w, h, tone) {
+// One colour channel of the frame, on its own, moved by `d` device pixels across
+// the whole width. `multiply` by a pure primary keeps that channel and zeroes the
+// other two, which is what a channel is.
+//
+// A positive `d` draws the frame into a slightly smaller rectangle, which is the
+// channel sampled outward from the middle; a negative one draws it into a
+// slightly larger rectangle and is sampled inward. The frame goes down flat
+// first whenever it is being shrunk, so the ring of border the smaller
+// rectangle does not reach keeps its own colour rather than losing it. That
+// ring is the whole reason for the extra blit: without it the red channel is
+// missing all the way round the window and the frame wears a cyan rim.
+function channel(i, src, w, h, tone, d) {
   const c = buf(i, w, h);
   const cx = c.getContext('2d');
   cx.globalCompositeOperation = 'copy';        // replace, rather than pile up frames
-  cx.drawImage(src, 0, 0);
+  cx.drawImage(src, 0, 0);                     // and this is the edge, clamped
+  if (d > 0) {
+    cx.globalCompositeOperation = 'source-over';
+    cx.drawImage(src, 0, 0, w, h, d / 2, d / 2, w - d, h - d);
+  } else if (d < 0) {
+    cx.globalCompositeOperation = 'copy';
+    cx.drawImage(src, 0, 0, w, h, d / 2, d / 2, w - d, h - d);
+  }
   cx.globalCompositeOperation = 'multiply';
   cx.fillStyle = tone;
   cx.fillRect(0, 0, w, h);
@@ -90,8 +100,8 @@ function aberration(src, ctx, w, h, cell, a) {
   const sp = a * 2.4 * cell;                   // the whole spread, corner to corner
   if (sp < 0.25) return;                       // under a quarter pixel is not a fringe
 
-  const red = channel(0, src, w, h, '#f00');
-  const blue = channel(1, src, w, h, '#00f');
+  const red = channel(0, src, w, h, '#f00', sp);     // sampled outward
+  const blue = channel(1, src, w, h, '#00f', -sp);   // and inward
 
   // Green stays exactly where it is: it is the channel the eye reads detail in,
   // and moving all three would be a blur rather than a fringe.
@@ -99,16 +109,12 @@ function aberration(src, ctx, w, h, cell, a) {
   ctx.fillStyle = '#0f0';
   ctx.fillRect(0, 0, w, h);
 
-  // and the other two go back on either side of it
+  // and the other two go back on either side of it, square on: the moving was
+  // done when each channel was lifted off, so these are straight blits.
   ctx.globalCompositeOperation = 'lighter';
-  ctx.drawImage(red, -sp / 2, -sp / 2, w + sp, h + sp, 0, 0, w, h);
-  ctx.drawImage(blue, sp / 2, sp / 2, w - sp, h - sp, 0, 0, w, h);
+  ctx.drawImage(red, 0, 0);
+  ctx.drawImage(blue, 0, 0);
   ctx.globalCompositeOperation = 'source-over';
-  // The red pass sources from just outside the frame, where there are no pixels,
-  // so the outermost half-pixel of the border loses its red. The shader clamped
-  // to the edge instead. At the amounts this is used at that is a sliver under a
-  // pixel wide at the very rim of the window, and buying it back costs another
-  // fullscreen blit, which is the whole budget this file is trying to keep.
 }
 
 // Every other row of the tube is darker. Black at an alpha over the top is the
@@ -161,7 +167,7 @@ function vignette(ctx, w, h, a) {
 // is measured in it so that the look holds together at any zoom, exactly as it
 // did when this was a uniform on the shader.
 export function press(src, ctx, cell) {
-  if (!pressOn()) return;
+  if (!anyOn()) return;
   const w = src.width, h = src.height;
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);          // device pixels: these are all screen effects

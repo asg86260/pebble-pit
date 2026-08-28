@@ -117,7 +117,7 @@ async function hoverBench() {
 async function hoverStation(which, look = true) {
   const r = state().stands[which];
   if (!r) return null;
-  // The cut is a hole: its middle is thin air and its rect hangs below the
+  // The quarry is a hole: its middle is thin air and its rect hangs below the
   // ground line, so you stand at the near lip of it. Everywhere else the middle
   // of the thing is the thing.
   const wx = which === 'quarry' ? r.x + P * 2 : r.x + r.w / 2;
@@ -322,8 +322,8 @@ const TESTS = [
 
   ['ground is pinned to the bottom', async () => {
     const s = state();
-    // the floor of the hole, which is not the top of the bed: the pile is
-    // allowed to heap above the brim, so the bed starts above the ground line
+    // the floor of the hole, which is not the top of the plot: the pile is
+    // allowed to heap above the brim, so the plot starts above the ground line
     // the deepest the hole can ever be, not how far it has been dug: the world
     // reserves the whole depth under the ground line from the first frame, so
     // digging never moves the floor of the window
@@ -656,12 +656,12 @@ const TESTS = [
     ];
   }],
 
-  // The cut is the hole, and a bridge crosses it: a ramp up, a deck straight
+  // The quarry is the hole, and a bridge crosses it: a ramp up, a deck straight
   // over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
-  // the mouth meant aiming at the deck, so walking a hauler over the cut opened
-  // the cut's board on the way past. What you point at is the ground that is
+  // the mouth meant aiming at the deck, so walking a hauler over the quarry opened
+  // the quarry's board on the way past. What you point at is the ground that is
   // missing.
-  ['the cut is opened by its hole, not by the bridge over it', async () => {
+  ['the quarry is opened by its hole, not by the bridge over it', async () => {
     window.__reset();
     await settle();
     window.__give(999999);
@@ -680,7 +680,7 @@ const TESTS = [
     };
     const deck = await at(q.x + q.w / 2, g - 30);     // straight over the mouth
     const ramp = await at(q.x - 40, g - 14);          // on the way up to it
-    const hole = await at(q.x + q.w / 2, g + 40);     // and down in the cut itself
+    const hole = await at(q.x + q.w / 2, g + 40);     // and down in the quarry itself
     await hoverAway();
     window.__crew(0, 0);
     return [
@@ -1320,7 +1320,7 @@ const TESTS = [
   // find. A cut is full of dirt now. Somebody works down through it, and at the
   // bottom there is a seam: a handful all at once, thrown up over the rim, then
   // the climb out and the hole falls in behind them.
-  ['the cut is dug out to a seam, and falls in behind them', async () => {
+  ['the quarry is dug out to a seam, and falls in behind them', async () => {
     window.__reset();
     await settle();
     window.__crew(0, 0, 2);
@@ -1328,7 +1328,7 @@ const TESTS = [
     const fresh = state();
 
     // it goes down, and nothing comes up on the way
-    runUntil(() => state().cutDug > 0.5, 120);
+    runUntil(() => state().quarryDug > 0.5, 120);
     const halfway = state();
 
     // and at the bottom the seam comes out in one go
@@ -1351,20 +1351,20 @@ const TESTS = [
 
 
     // then the hole fills back in and they start again
-    const again = runUntil(() => state().cutDug < 0.5 && state().pileCount.quarry > 0, 120);
+    const again = runUntil(() => state().quarryDug < 0.5 && state().pileCount.quarry > 0, 120);
     const round2 = runUntil(() => state().pileCount.quarry > seam.pileCount.quarry, 240);
     window.__crew(0, 0);
     return [
-      ok(fresh.cutDug < 0.2, 'a fresh cut is full to the ground line', `${fresh.cutDug}`),
+      ok(fresh.quarryDug < 0.2, 'a fresh quarry is full to the ground line', `${fresh.quarryDug}`),
       ok(halfway.pileCount.quarry === 0,
          'and nothing comes up while they are still digging through it',
-         `${halfway.pileCount.quarry} on the pile at ${halfway.cutDug} down`),
+         `${halfway.pileCount.quarry} on the pile at ${halfway.quarryDug} down`),
       ok(paid && seam.pileCount.quarry > 1,
          'the seam at the bottom pays a handful at once, not one at a time',
          `${seam.pileCount.quarry} up in one go`),
-      ok(seam.seam >= 2, 'and what it is worth is the depth of the cut', `${seam.seam} a seam`),
-      ok(emptied, 'and they get out of it: the cut is left empty behind them'),
-      ok(again, 'the cut falls in behind them', `${state().cutDug} deep again`),
+      ok(seam.seam >= 2, 'and what it is worth is the depth of the quarry', `${seam.seam} a seam`),
+      ok(emptied, 'and they get out of it: the quarry is left empty behind them'),
+      ok(again, 'the quarry falls in behind them', `${state().quarryDug} deep again`),
       ok(round2, 'and they dig it again')
     ];
   }],
@@ -1529,10 +1529,10 @@ const TESTS = [
   ['the headcount rides on the section as a badge', async () => {
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
-    // Enough dust that the beds are on offer, so that there is a farm heading to
+    // Enough dust that the plots are on offer, so that there is a farm heading to
     // look at: a section is only there while it has a row under it, and the one
     // farm row a fresh yard has is the door.
-    window.__give(600);                      // the price of the beds
+    window.__give(600);                      // the price of the plots
     window.__build();
     await sleep(50);
     const rows = [...shop().children].filter(el => el.dataset.sect);
@@ -1561,12 +1561,12 @@ const TESTS = [
   // what you already have -- and kit is the one purchase where that is the whole
   // question: a helmet is worth buying because of how many are already on the
   // rock.
-  // A decision about a place is made at the place. The cut and the plots used to
+  // A decision about a place is made at the place. The quarry and the plots used to
   // be sold from the bench, under headings naming a hole and a field on the far
   // side of the yard: you bought a bench you could not see, priced in a currency
   // that comes out of ground you were not standing on. The lab and the school
   // are buildings you walk to for exactly this reason.
-  ['the cut and the plots are bought where they are', async () => {
+  ['the quarry and the plots are bought where they are', async () => {
     window.__reset();
     await settle();
     window.__crew(2, 2);
@@ -1579,11 +1579,11 @@ const TESTS = [
     buildShopFromTest();
     const bench = [...shop().querySelectorAll('[data-key]')].map(b => b.dataset.key);
 
-    // walk to the mouth of the cut
+    // walk to the mouth of the quarry
     const s0 = state();
     await hoverStation('quarry');
-    const atCut = state();
-    const cutRows = [...document.querySelectorAll('#quarryshop [data-key]')].map(b => b.dataset.key);
+    const atQuarry = state();
+    const quarryRows = [...document.querySelectorAll('#quarryshop [data-key]')].map(b => b.dataset.key);
     const deeper = document.querySelector('#quarryshop [data-key="quarrybench"]');
     const wasBenches = state().benches;
     deeper?.click();
@@ -1599,16 +1599,16 @@ const TESTS = [
     window.__crew(0, 0);
     return [
       ok(!bench.includes('quarrybench') && !bench.includes('quarrypace') &&
-         !bench.includes('farmbed') && !bench.includes('tend'),
+         !bench.includes('farmplot') && !bench.includes('tend'),
          'the bench sells neither of them any more', bench.join(',')),
-      ok(atCut.quarryBoardOpen, 'standing at the cut opens its own board'),
-      ok(cutRows.join(',') === 'quarrybench,quarrypace',
-         'holding how deep it goes and how fast it works', cutRows.join(',')),
-      ok(nowBenches === wasBenches + 1, 'and the row on it digs the cut deeper',
+      ok(atQuarry.quarryBoardOpen, 'standing at the quarry opens its own board'),
+      ok(quarryRows.join(',') === 'quarrybench,quarrypace',
+         'holding how deep it goes and how fast it works', quarryRows.join(',')),
+      ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      ok(plotRows.join(',') === 'farmbed,tend',
-         'holding the next plot and how fast a bed comes on', plotRows.join(','))
+      ok(plotRows.join(',') === 'farmplot,tend',
+         'holding the next plot and how fast a plot comes on', plotRows.join(','))
     ];
   }],
 
@@ -2222,7 +2222,7 @@ const TESTS = [
     // is the hole working, not the bird failing, but it is not what this check
     // is about, and which bird is where is a fresh coin toss every run.
     // Clear of the hole, clear of the rock's bare apron and clear of the mouth of
-    // the cut -- the three strips the ground refuses, where a grain is banked
+    // the quarry -- the three strips the ground refuses, where a grain is banked
     // instead of left lying. That is those working, not the bird failing, but it
     // is not what this check is about.
     const clearOf = b => b.x < s.rockLeftX - 120 && b.x > s.pitX - s.pitW;
@@ -2407,16 +2407,16 @@ const TESTS = [
 
     // Dust opens the places now, not cores -- a core buys the tower and nothing
     // else. A door shows once you are within half its price of affording it, so
-    // what reveals the cut is having most of what it costs.
+    // what reveals the quarry is having most of what it costs.
     window.__give(400);
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
     const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
                        lab: has('unlocklab') };
 
-    window.__crew(1, 1, 0, 1);               // the beds broken
+    window.__crew(1, 1, 0, 1);               // the plots broken
     await sleep(150);
-    const withBeds = { quarry: has('unlockquarry'), lab: has('unlocklab') };
+    const withPlots = { quarry: has('unlockquarry'), lab: has('unlocklab') };
 
     window.__grant({ shards: 3 });
     await sleep(150);
@@ -2430,21 +2430,21 @@ const TESTS = [
       ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
       ok(withDust.farm && !withDust.quarry && !withDust.lab,
-         'a pile of dust offers the beds, and only the beds',
+         'a pile of dust offers the plots, and only the plots',
          JSON.stringify(withDust)),
-      ok(withBeds.quarry && !withBeds.lab, 'breaking the ground offers the cut'),
+      ok(withPlots.quarry && !withPlots.lab, 'breaking the ground offers the quarry'),
       ok(withShard.lab, 'a shard in hand offers the lab')
     ];
   }],
 
   // A site is bought with cores and then paid for by itself. What the quarry
-  // gives up takes the cut down another bench, and what the beds give up breaks
-  // another bed -- and a bench and a bed are each a place for one body, so the
+  // gives up takes the quarry down another bench, and what the plots give up breaks
+  // another plot -- and a bench and a plot are each a place for one body, so the
   // thing the site's own currency buys first is room for somebody to work it.
   ['the quarry and the farm grow on what they give up', async () => {
     window.__reset();
     await settle();
-    window.__levels({ benchLevel: 0, bedLevel: 0 });
+    window.__levels({ benchLevel: 0, plotLevel: 0 });
     S_open();
     window.__crew(0, 10);
     const start = state();
@@ -2456,32 +2456,32 @@ const TESTS = [
     window.__grant({ shards: 40, spores: 40 });
     buildShopFromTest();
     // Each is on the board at its own site now, not on the bench: see
-    // 'the cut and the plots are bought where they are'.
+    // 'the quarry and the plots are bought where they are'.
     const rows = [...document.querySelectorAll('#quarryshop [data-key], #farmshop [data-key]')]
       .map(b => b.dataset.key);
     const deep = state().quarryH, wide = state().farmW;
     document.querySelector('#quarryshop button[data-key="quarrybench"]').click();
-    document.querySelector('#farmshop button[data-key="farmbed"]').click();
+    document.querySelector('#farmshop button[data-key="farmplot"]').click();
     const grown = state();
     window.__assign('quarriers', 1);
     window.__assign('farmhands', 1);
     const after = state();
     window.__crew(0, 0);
     return [
-      ok(start.benches === 2 && start.bedCount === 1,
-         'a fresh cut holds two and the ground comes with one bed',
-         `${start.benches} benches, ${start.bedCount} beds`),
+      ok(start.benches === 2 && start.plotCount === 1,
+         'a fresh quarry holds two and the ground comes with one plot',
+         `${start.benches} benches, ${start.plotCount} plots`),
       ok(packed.quarriers === 2 && packed.farmhands === 1,
          'and no more than that can be sent to either',
-         `${packed.quarriers} down, ${packed.farmhands} at the beds`),
-      ok(rows.includes('quarrybench') && rows.includes('farmbed'),
+         `${packed.quarriers} down, ${packed.farmhands} at the plots`),
+      ok(rows.includes('quarrybench') && rows.includes('farmplot'),
          'both are on their own board the moment the place is open', rows.join(',')),
       ok(grown.quarryH > deep && grown.farmW > wide,
-         'buying one takes the cut deeper and the plot wider',
+         'buying one takes the quarry deeper and the plot wider',
          `${deep}->${grown.quarryH} deep, ${wide}->${grown.farmW} wide`),
       ok(after.quarriers === 3 && after.farmhands === 2,
          'and there is room for one more body at each',
-         `${after.quarriers} down, ${after.farmhands} at the beds`)
+         `${after.quarriers} down, ${after.farmhands} at the plots`)
     ];
   }],
 
@@ -2626,7 +2626,7 @@ const TESTS = [
     ];
   }],
 
-  // The pot is a real bed of sand, not a drawing of one: one grain, one of
+  // The pot is a real plot of sand, not a drawing of one: one grain, one of
   // whatever was staked, settled by the same code the yard and the hole use. A
   // thousand on the table is a thousand grains lying there.
   ['the pot is a real pile, grain for grain', async () => {
@@ -3703,11 +3703,11 @@ const TESTS = [
 
 ];
 
-// the quarry and the beds, opened without paying for them
+// the quarry and the plots, opened without paying for them
 function S_open() {
   window.__crew(0, 0, 1, 1);      // opens both places
   window.__crew(0, 0);
-  window.__levels({ benchLevel: 0, bedLevel: 0 });
+  window.__levels({ benchLevel: 0, plotLevel: 0 });
 }
 
 // `__test('quarry')` runs only the groups whose name says quarry. The whole suite is

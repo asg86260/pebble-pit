@@ -40,7 +40,7 @@ function frame() {
 
 
 // Boot, in this order and no other: the world is laid out first, because
-// everything below stands in it -- the ground's own bed of sand is allocated
+// everything below stands in it -- the ground's own plot of sand is allocated
 // here, and a frame that runs before it has nothing to fall through. Then the
 // save, then the shop rows it decides, then anybody the counts say is missing.
 relayout();

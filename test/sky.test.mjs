@@ -350,7 +350,7 @@ group('the sky has clouds under the haze, and birds now and then', async () => {
 
 // A mote is the colour of what kicked it up, which is the only thing in the
 // game that says what the far end of the yard is from across the world: blue
-// air over the quarry, green over the beds, grey everywhere else.
+// air over the quarry, green over the plots, grey everywhere else.
 group('the air over a site is the colour of what comes out of it', async () => {
     run(4);
   const yard = state();                        // nothing open: a grey yard
@@ -361,7 +361,7 @@ group('the air over a site is the colour of what comes out of it', async () => {
   run(20);
   const atQuarry = state();
 
-  window.__crew(0, 0, 0, 2);                   // and the beds
+  window.__crew(0, 0, 0, 2);                   // and the plots
   window.__look(state().farmX - 100);
   run(20);
   const atFarm = state();
@@ -372,7 +372,7 @@ group('the air over a site is the colour of what comes out of it', async () => {
        JSON.stringify(yard.airKinds)),
     ok(atQuarry.airKinds.shard > 0, 'the air over the quarry comes up blue',
        `${atQuarry.airKinds.shard} of ${atQuarry.air}`),
-    ok(atFarm.airKinds.spore > 0, 'and the air over the beds comes off green',
+    ok(atFarm.airKinds.spore > 0, 'and the air over the plots comes off green',
        `${atFarm.airKinds.spore} of ${atFarm.air}`),
     ok(atFarm.airKinds.dust > 0, 'the yard itself is still grey',
        `${atFarm.airKinds.dust} of ${atFarm.air}`)
@@ -415,7 +415,7 @@ group('the sky says which part of the works dirtied it', async () => {
     ok(s.smog.sky > 0, 'there is a sky to read', `${s.smog.sky} motes`),
     ok(!k.none, 'every mote knows what put it up', JSON.stringify(k)),
     ok(k.dust > 0, 'the rock sends up its own', `${k.dust || 0}`),
-    ok(k.shard > 0, 'and so does the cut -- while it is being dug, not only when it pays',
+    ok(k.shard > 0, 'and so does the quarry -- while it is being dug, not only when it pays',
        `${k.shard || 0}`),
     ok(Object.keys(k).length > 1, 'so a dirty sky is not one flat colour', JSON.stringify(k))
   ];

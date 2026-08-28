@@ -105,7 +105,7 @@ export const S = {
   schoolBoardOpen: false, // and you are standing at it
   breakers: 0,            // of the miners, this many are nailed to the rock
   carters: 0,             // of the haulers, to the dust
-  growers: 0,             // of the farmhands, to the beds
+  growers: 0,             // of the farmhands, to the plots
   blasters: 0,            // of the quarriers, to the face
 
   carryLevel: 0,
@@ -117,15 +117,15 @@ export const S = {
   shards: 0,
   seenShard: false,       // nothing about shards is shown until one is brought up
   quarryOpen: false,        // the quarry has been opened
-  benchLevel: 0,          // benches taken out of the cut past the two it starts with
+  benchLevel: 0,          // benches taken out of the quarry past the two it starts with
 
   // --- the farm, and what grows in it ---
   spores: 0,
   seenSpore: false,
   farmOpen: false,
-  bedLevel: 0,            // beds broken past the three the ground comes with
-  beds: [],               // how far along each bed is, 0..1
-  bedTone: [],            // and the spore standing ripe on it, if there is one
+  plotLevel: 0,            // plots broken past the three the ground comes with
+  plots: [],               // how far along each plot is, 0..1
+  plotTone: [],            // and the spore standing ripe on it, if there is one
 
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
@@ -198,22 +198,22 @@ export const S = {
   miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   quarriers: 0, quarryPaceLevel: 0,
-  // How many cells deep each column of the cut has been dug. Nought everywhere is
-  // bare ground with no hole in it: the cut is what has been taken out, not a
+  // How many cells deep each column of the quarry has been dug. Nought everywhere is
+  // bare ground with no hole in it: the quarry is what has been taken out, not a
   // shape the yard was drawn with. See quarry.js.
-  cutCells: null,
+  quarryCells: null,
   // What the seam still owes, once somebody has broken through to it. It belongs
   // to the hole rather than to the body that reached it, so a gang at the bottom
   // shares one handful out between them rather than each being handed its own.
-  cutOwed: 0,
-  // Cells taken out of the cut, ever. The share dug runs round and round as the
+  quarryOwed: 0,
+  // Cells taken out of the quarry, ever. The share dug runs round and round as the
   // hole is emptied and falls in, so it cannot say how much work was done over a
   // stretch that happens to cross a payout; this only ever goes up.
-  cutTotal: 0,
+  quarryTotal: 0,
   // This dig is finished with: the seam is out and everybody is on their way up.
-  // Nobody goes back down until the last one is out and the cut has fallen in,
+  // Nobody goes back down until the last one is out and the quarry has fallen in,
   // or the first body back down finds an empty hole and turns straight round.
-  cutSpent: false,
+  quarrySpent: false,
   labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 
@@ -239,7 +239,7 @@ export const S = {
   scrubbers: 0,           // and this many bodies are in it
   janitors: 0,            // and how many are shovelling up after everybody
   seenMess: false,        // and whether the yard has ever been left in a state
-  // The crew's second tier, which the cut pays for: a harness to carry with and
+  // The crew's second tier, which the quarry pays for: a harness to carry with and
   // boots to walk in. Their own counts rather than more rungs on the first two
   // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
   harnessLevel: 0,
@@ -291,7 +291,7 @@ export const scrub = { x: 0, y: 0, w: 0, h: 0 };
 export const tower = { x: 0, y: 0, w: 0, h: 0 };
 // The outhouse, out among the rooms the crew live in.
 export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
-// The ground the pot piles up on: a real bed of sand, like the yard and the
+// The ground the pot piles up on: a real plot of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.
 export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0 };

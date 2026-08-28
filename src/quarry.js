@@ -12,7 +12,7 @@ import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, CUT_TOS
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
-import { foul, throughCutMuck, yardMuck } from './smog.js';
+import { foul, throughQuarryMuck, yardMuck } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
@@ -27,13 +27,13 @@ export const quarryMs = (lvl = S.quarryPaceLevel) =>
 export const quarryRate = (lvl = S.quarryPaceLevel) => 60000 / quarryMs(lvl);   // trips a minute
 
 // --- the ladder ---------------------------------------------------------------
-// Bodies used to sink into the cut and rise out of it wherever they happened to
+// Bodies used to sink into the quarry and rise out of it wherever they happened to
 // be standing, straight down through the air in the middle of the mouth. That
 // is the one thing in this yard that was plainly not a thing that could happen:
 // everything else walks, climbs a wall or goes through a door.
 //
 // So there is a ladder, in the near corner where the wall's toe is -- one place,
-// worked out from the cut, so the rungs you can see and the line a body climbs
+// worked out from the quarry, so the rungs you can see and the line a body climbs
 // are the same line by construction. Going in is walking to the head of it and
 // coming down it; coming out is walking back along the floor to its foot and
 // going up.
@@ -41,7 +41,7 @@ export const LADDER_W = P * 3;         // stile to stile
 export const LADDER_OVER = P;          // how far its head stands proud of the top
 
 export function ladder() {
-  const c = quarryCut();
+  const c = quarryShape();
   const x = Math.round(c.from / P) * P;
   // It comes up to the *bridge*, not to the ground line. The deck runs over the
   // mouth four cells above the rim, and the ladder stands in the mouth, so a
@@ -79,18 +79,18 @@ export function newQuarrier() {
   };
 }
 
-// The shape of the cut: both walls stepping down in benches, and the uneven
+// The shape of the quarry: both walls stepping down in benches, and the uneven
 // floor between them. It is worked out from the mouth once and kept, because
 // nothing about it moves unless the world is laid out again -- and because
 // `quarryFloor` is asked where the ground is once per quarrier per frame.
 //
 // The benches are scenery, but the floor is not: the crew stand on it, so the
 // same numbers that draw it are the ones that put their feet down.
-let cut = null, cutKey = '';
+let shape = null, shapeKey = '';
 
-export function quarryCut() {
+export function quarryShape() {
   const key = `${quarry.x}|${quarry.w}|${quarry.h}|${S.groundY}`;
-  if (cut && cutKey === key) return cut;
+  if (shape && shapeKey === key) return shape;
 
   const snap = v => Math.round(v / P) * P;
   const deep = snap(S.groundY + quarry.h);
@@ -142,22 +142,22 @@ export function quarryCut() {
   for (const f of floor) { add([f.from, f.y]); add([f.to, f.y]); }
   far.reverse().forEach(add);
 
-  cutKey = key;
-  return (cut = { outline, floor, from, to, deep });
+  shapeKey = key;
+  return (shape = { outline, floor, from, to, deep });
 }
 
-// Where the ground is inside the cut: the bottom of whatever has been dug out of
+// Where the ground is inside the quarry: the bottom of whatever has been dug out of
 // that column. It used to be the floor of a hole that existed whether or not
 // anybody had dug it -- there is no hole now until somebody digs one, so the
 // ground underfoot is exactly what has been taken away.
 export function quarryFloor(x = null) {
-  if (x === null) return quarryCut().deep;     // the deepest it will ever go
+  if (x === null) return quarryShape().deep;     // the deepest it will ever go
   return dugTopY(x);
 }
 
 // the stretch of floor a quarrier may work: between the toes of the two walls
 export const quarryBand = () => {
-  const c = quarryCut();
+  const c = quarryShape();
   return { lo: c.from, hi: Math.max(c.from, c.to - WORKER) };
 };
 
@@ -174,7 +174,7 @@ function seatX(w) {
   return lo + ((i + 0.5) / n) * (hi - lo);
 }
 
-// A shard knocked off the face is thrown out of the cut and into the quarry's
+// A shard knocked off the face is thrown out of the quarry and into the quarry's
 // own pile -- by the same throw the rock's spoil uses, aimed the same way, over
 // the rim because the arc knows how to climb.
 // Up and out over the rim. This one is aimed, and should be: it is a body at the
@@ -186,7 +186,7 @@ function seatX(w) {
 // Without the arc it does not get out at all. A knocked-loose grain has a pop
 // sized for a face at head height, and the floor of a worked cut is a good
 // forty cells under the rim -- so the whole seam landed back on the floor it
-// came out of and the cut filled up with its own shards.
+// came out of and the quarry filled up with its own shards.
 function tossOut(x, y) {
   const p = pileOf('quarry');
   const near = p ? p.from : quarry.x + quarry.w + P * 4;
@@ -208,14 +208,14 @@ export function stepQuarrier(w, now) {
     w.x += Math.sign(d) * Math.min(QUARRY_WALK, Math.abs(d));
     if (Math.abs(d) >= 1) return;
     w.x = rim;
-    if (S.cutSpent) return;                      // stood at the rim until it fills
+    if (S.quarrySpent) return;                      // stood at the rim until it fills
     w.goal = 'down';
     w.seat = seatX(w);
     return;
   }
 
   // Down the ladder, hand over hand, and off it on top of whatever dirt is left.
-  // A fresh cut is full to the ground line, so on the first dig that is barely a
+  // A fresh quarry is full to the ground line, so on the first dig that is barely a
   // climb at all; by the time the seam is showing it is the whole way down.
   if (w.goal === 'down') {
     w.x = rim;                                   // it holds on: nothing drifts
@@ -230,7 +230,7 @@ export function stepQuarrier(w, now) {
   // It stands on the surface of what is left, so the digging is the body itself
   // going down -- there is no bar and no number, the hole simply gets emptier
   // under its feet. At the bottom it turns and throws the seam up over the rim
-  // one stone at a time, climbs out, and the cut falls in behind it.
+  // one stone at a time, climbs out, and the quarry falls in behind it.
   if (w.goal === 'up') {                         // out, with the seam gone up before it
     w.x = quarryFace();
     const top = walkY(w.x + WORKER / 2);
@@ -243,8 +243,8 @@ export function stepQuarrier(w, now) {
     // seam was emptied dropped the dirt back under the feet of everybody still
     // down there, and they rode it up like a lift.
     if (!S.workers.some(o => o.type === 'quarrier' && o !== w && o.y > S.groundY)) {
-      fillCut();
-      S.cutSpent = false;
+      fillQuarry();
+      S.quarrySpent = false;
     }
     return;
   }
@@ -293,35 +293,35 @@ export function stepQuarrier(w, now) {
   // one handful out between them -- they got there faster, which is what more
   // hands buys, and a gang that each walked off with a full seam would make
   // headcount pay twice for the same hole.
-  if (S.cutOwed > 0) {
+  if (S.quarryOwed > 0) {
     if (now < (w.tossAt || 0)) return;
     tossOut(w.x + WORKER / 2, w.y + WORKER);
     w.quarried = (w.quarried || 0) + 1;
     foul(QUARRY_FOUL, w.x + WORKER / 2, w.y, 'shard');
-    S.cutOwed--;
+    S.quarryOwed--;
     w.tossAt = now + CUT_TOSS_MS;
     w.lunge = 1;
-    if (S.cutOwed <= 0) S.cutSpent = true;       // that is the lot: everybody out
+    if (S.quarryOwed <= 0) S.quarrySpent = true;       // that is the lot: everybody out
     S.dirty = true;
     return;
   }
 
   // Seam emptied and the hole dug out: up the ladder. The ground comes back in
   // behind the last one out -- see the 'up' leg.
-  if (cutDone()) { w.goal = 'up'; return; }
+  if (quarryDone()) { w.goal = 'up'; return; }
 
-  // Digging. Silt first: rain fills the cut from the top, and it has to come out
+  // Digging. Silt first: rain fills the quarry from the top, and it has to come out
   // before the ground under it does.
-  if (throughCutMuck(1) <= 0) return;
+  if (throughQuarryMuck(1) <= 0) return;
   if (now < w.next) return;
 
   // A cell is somewhere you go, not something that happens wherever you are
   // standing. It picks one, walks to it, and digs when it gets there -- which is
   // the same rule the muck follows, and the same rule everything in this yard
   // follows: nobody is ever put where they are needed.
-  const cells = cutCells();
-  if (w.cell == null || w.cell < 0 || cells[w.cell] >= cutTarget(w.cell))
-    w.cell = nextCut(w.x + WORKER / 2, w);
+  const cells = quarryCells();
+  if (w.cell == null || w.cell < 0 || cells[w.cell] >= quarryTarget(w.cell))
+    w.cell = nextQuarryCell(w.x + WORKER / 2, w);
   if (w.cell == null || w.cell < 0) return;
 
   const to = quarry.x + w.cell * P + P / 2 - WORKER / 2;
@@ -340,9 +340,9 @@ export function stepQuarrier(w, now) {
 
   const c = w.cell;
   cells[c]++;
-  S.cutTotal = (S.cutTotal || 0) + 1;
+  S.quarryTotal = (S.quarryTotal || 0) + 1;
   w.cell = null;                               // done with that one: it picks another
-  // Digging raises dust, not only the seam at the bottom. The cut used to foul
+  // Digging raises dust, not only the seam at the bottom. The quarry used to foul
   // the air once per shard, which was the same event as producing one; now that
   // production is a lump at the end, fouling only on the payout meant a cut
   // could be worked for half a minute without the sky noticing -- and the blue
@@ -353,8 +353,8 @@ export function stepQuarrier(w, now) {
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
   S.dirty = true;
 
-  if (cutDone() && S.cutOwed <= 0) {
-    S.cutOwed = seamShards();
+  if (quarryDone() && S.quarryOwed <= 0) {
+    S.quarryOwed = seamShards();
     w.tossAt = 0;
   }
 }
@@ -363,32 +363,32 @@ export function stepQuarrier(w, now) {
 export const underground = () => false;
 
 // --- the dig ------------------------------------------------------------------
-// The cut is what has been taken out of the ground, not a shape drawn round a
+// The quarry is what has been taken out of the ground, not a shape drawn round a
 // hole. Nothing is outlined in advance: the walls, the benches and the uneven
 // floor are all *revealed* by digging down to them, one cell at a time, the same
 // way the rock is taken apart.
 //
 // One number per column: how many cells deep it has been dug. Nought everywhere
-// is bare ground with no cut in it at all. `cutTarget` says how deep each column
+// is bare ground with no cut in it at all. `quarryTarget` says how deep each column
 // eventually goes -- that is where the benched walls and the jagged floor come
-// from, and it is the same profile the cut has always had; the difference is
+// from, and it is the same profile the quarry has always had; the difference is
 // that you now arrive at it rather than being shown it.
-export function cutCells() {
+export function quarryCells() {
   const want = Math.max(0, Math.round(quarry.w / P));
-  if (!S.cutCells || S.cutCells.length !== want) {
-    const was = S.cutCells || [];
-    S.cutCells = new Array(want).fill(0);
-    for (let i = 0; i < Math.min(was.length, want); i++) S.cutCells[i] = was[i] || 0;
+  if (!S.quarryCells || S.quarryCells.length !== want) {
+    const was = S.quarryCells || [];
+    S.quarryCells = new Array(want).fill(0);
+    for (let i = 0; i < Math.min(was.length, want); i++) S.quarryCells[i] = was[i] || 0;
   }
-  return S.cutCells;
+  return S.quarryCells;
 }
 
-// how deep column c goes when the cut is finished, in cells
-export function cutTarget(c) {
-  const cells = cutCells();
+// how deep column c goes when the quarry is finished, in cells
+export function quarryTarget(c) {
+  const cells = quarryCells();
   if (c < 0 || c >= cells.length) return 0;
   const x = quarry.x + c * P + P / 2;
-  const g = quarryCut();
+  const g = quarryShape();
   if (x <= g.from || x >= g.to) {
     // the walls: the benched steps either side, read off the outline itself
     let deepest = 0;
@@ -408,29 +408,29 @@ export function cutTarget(c) {
 // for a cell that takes a moment to dig.
 const NEAR_CELLS = 5;
 
-export const dugAt = c => (cutCells()[c] || 0);
+export const dugAt = c => (quarryCells()[c] || 0);
 export const colOfX = x => Math.floor((x - quarry.x) / P);
 
 // how far down the ground has been taken at x -- which is where a body stands
 export function dugTopY(x) {
   const c = colOfX(x);
-  const cells = cutCells();
+  const cells = quarryCells();
   if (c < 0 || c >= cells.length) return S.groundY;
   return S.groundY + cells[c] * P;
 }
 
-// The cut is finished when every column is down to its mark.
-export function cutDone() {
-  const cells = cutCells();
-  for (let c = 0; c < cells.length; c++) if (cells[c] < cutTarget(c)) return false;
+// The quarry is finished when every column is down to its mark.
+export function quarryDone() {
+  const cells = quarryCells();
+  for (let c = 0; c < cells.length; c++) if (cells[c] < quarryTarget(c)) return false;
   return cells.length > 0;
 }
 
 // how much of it is out, for a readout
 export function dugShare() {
-  const cells = cutCells();
+  const cells = quarryCells();
   let have = 0, want = 0;
-  for (let c = 0; c < cells.length; c++) { have += cells[c]; want += cutTarget(c); }
+  for (let c = 0; c < cells.length; c++) { have += cells[c]; want += quarryTarget(c); }
   return want ? have / want : 0;
 }
 
@@ -445,8 +445,8 @@ export function dugShare() {
 // A column that has reached its mark is done: that is where the benched walls
 // and the uneven floor come from, since the marks differ across the width and
 // the shallow ones stop early while the middle keeps going.
-export function nextCut(x, self = null) {
-  const cells = cutCells();
+export function nextQuarryCell(x, self = null) {
+  const cells = quarryCells();
 
   // Nobody else's cell. A body walks to the one it has picked, so two of them
   // picking the same one is two bodies walking to the same spot and one of them
@@ -459,7 +459,7 @@ export function nextCut(x, self = null) {
   // floor coming off a course at a time, and the hole opens out as it deepens.
   let shallow = Infinity;
   for (let c = 0; c < cells.length; c++) {
-    if (cells[c] >= cutTarget(c) || taken.has(c)) continue;
+    if (cells[c] >= quarryTarget(c) || taken.has(c)) continue;
     shallow = Math.min(shallow, cells[c]);
   }
   if (shallow === Infinity) return -1;
@@ -475,7 +475,7 @@ export function nextCut(x, self = null) {
   // about what the digging does.
   const open = [];
   for (let c = 0; c < cells.length; c++) {
-    if (cells[c] === shallow && cells[c] < cutTarget(c) && !taken.has(c)) open.push(c);
+    if (cells[c] === shallow && cells[c] < quarryTarget(c) && !taken.has(c)) open.push(c);
   }
   if (!open.length) return -1;
   const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
@@ -484,35 +484,35 @@ export function nextCut(x, self = null) {
 }
 
 // and the ground fills back in behind them
-export function fillCut() {
-  const cells = cutCells();
+export function fillQuarry() {
+  const cells = quarryCells();
   for (let c = 0; c < cells.length; c++) cells[c] = 0;
   S.dirty = true;
 }
 
-// What the seam is worth: a handful per bench, so taking the cut deeper is worth
+// What the seam is worth: a handful per bench, so taking the quarry deeper is worth
 // something at the bottom rather than only being further to climb.
 export const seamShards = () => Math.max(1, Math.round(benches() * CUT_SEAM));
 
 // How long one cell takes. The whole dig is CUT_DIG_MS at pace nought, spread
-// over however many cells the cut is -- so taking the cut deeper makes the dig
+// over however many cells the quarry is -- so taking the quarry deeper makes the dig
 // longer, which is the trade for a bigger seam, and the pace upgrade shortens
 // the swing rather than the hole.
 export function cellMs() {
-  const cells = cutCells();
+  const cells = quarryCells();
   let want = 0;
-  for (let c = 0; c < cells.length; c++) want += cutTarget(c);
+  for (let c = 0; c < cells.length; c++) want += quarryTarget(c);
   const per = CUT_DIG_MS / Math.max(1, want);
   return Math.max(60, per * Math.pow(0.82, S.quarryPaceLevel) / mult('quarry'));
 }
 
 
-// --- what the cut sells ------------------------------------------------------
+// --- what the quarry sells ------------------------------------------------------
 // A decision about a place is made at the place. These two used to sit on the
 // bench under a heading called "the quarry", which is the shop describing a hole
 // on the other side of the yard: you bought a bench you could not see, priced in
 // a currency that comes out of the ground you were not standing on. The lab and
-// the school are buildings you walk to for exactly this reason, and the cut is
+// the school are buildings you walk to for exactly this reason, and the quarry is
 // as much a place as either.
 //
 // The row that *opens* it stays on the bench, because you cannot walk up to a
@@ -550,8 +550,8 @@ export const QUARRY_UPGRADES = [
   }
 ];
 
-// One heading. The cut is one place and everything on this board is about the
+// One heading. The quarry is one place and everything on this board is about the
 // same hole, so a second would be a heading for the sake of having two.
 export const QUARRY_SECTIONS = [
-  { title: 'the cut', keys: ['quarrybench', 'quarrypace'] }
+  { title: 'the quarry', keys: ['quarrybench', 'quarrypace'] }
 ];

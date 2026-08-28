@@ -1,8 +1,8 @@
 // Who is working where, written under the place they work.
 //
 // The crew used to be moved about from rows on the bench, which put the whole
-// workforce in one list a walk away from any of it: to see that the beds were
-// standing empty you had to remember what the number beside "at the beds" was
+// workforce in one list a walk away from any of it: to see that the plots were
+// standing empty you had to remember what the number beside "at the plots" was
 // last time you opened the board. So the count lives under its station now. A
 // glance along the yard says where everybody is, and the two buttons that move
 // them are in the same place as the thing they move them to.
@@ -43,7 +43,7 @@ export const POSTS = [
     // the quarry is a hole: a roster under the ground line there would be a
     // roster down the shaft, so it stands clear of the floor of it
     // The quarry is a hole, so its roster used to stand below the floor of it --
-    // which walked off the bottom of the world as soon as the cut was taken
+    // which walked off the bottom of the world as soon as the quarry was taken
     // down a bench or two, taking the counter with it. It stands *over* the
     // mouth instead: the one station whose own ground is not somewhere a
     // roster can go, so it goes in the sky above it.
@@ -113,8 +113,8 @@ export const posts = () => POSTS.filter(p => p.show());
 // glance -- had to be got by counting them. One of the thing, and a figure, is
 // how every other count in this yard is written.
 //
-// What each trade wears is its own shape, so the stand at the beds and the stand
-// at the cut are different things standing there rather than the same grey lump
+// What each trade wears is its own shape, so the stand at the plots and the stand
+// at the quarry are different things standing there rather than the same grey lump
 // in two places.
 export const KIT_MARK = { miners: 'helmet', quarriers: 'lamp', farmhands: 'brim',
                           haulers: 'cart', wizards: 'point' };
@@ -226,7 +226,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart) {
     button(ctx, b.less, '-', n > 0);
     // and pale on the other side either when there is nobody spare to send or
     // when the place has nowhere left to put one: a cut holds one body a bench
-    // and a plot one a bed, so the way to send a fourth body down the quarry is
+    // and a plot one a plot, so the way to send a fourth body down the quarry is
     // to go and buy it a bench.
     button(ctx, b.more, '+', spare > 0 && roomAt(p.job) > 0);
   }

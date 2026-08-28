@@ -40,7 +40,7 @@ export const TRADES = [
 
 // where each trade's kit lives, in the words the yard uses for the place
 const WHERE = { miners: 'the rock', haulers: 'the pit', quarriers: 'the quarry',
-                farmhands: 'the farm plots' };
+                farmhands: 'the farm' };
 
 // and whether that place is a place yet. The rock and the lip are there from
 // the first frame; the other two are bought.
@@ -54,7 +54,7 @@ export const tradeCost = t =>
 // the kit, and it stays at the station. Whoever is standing there picks it up,
 // and whoever is sent there next picks up whatever the last one put down.
 //
-// There is no ceiling on it. There used to be one -- a hat a bench, a hat a bed,
+// There is no ceiling on it. There used to be one -- a hat a bench, a hat a plot,
 // and never more of either than there were bodies in the yard -- from back when
 // a hat was a body that had been upgraded, and buying one more than you had
 // people for was buying nothing. Kit is not a person: a helmet on the stand is a
@@ -89,12 +89,12 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
 }));
 
 // One heading per place, and the same four the yard already has. "The ground"
-// held the cut and the beds together, which is two different sites under one
-// word -- and the beds are a good half hour behind the cut, so anybody reading
+// held the quarry and the plots together, which is two different sites under one
+// word -- and the plots are a good half hour behind the quarry, so anybody reading
 // that heading on the day the quarry opens is reading a heading with one row
 // under it and a name that promises two.
 //
-// A heading with nothing showing under it is left out, so the beds turn up as
+// A heading with nothing showing under it is left out, so the plots turn up as
 // their own line on the day the ground is broken. See `shape` in shop.js.
 export const SCHOOL_SECTIONS = [
   { title: 'the rock', keys: ['breaker'] },

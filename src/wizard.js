@@ -138,7 +138,7 @@ export function stepWizard(w, now) {
   if (!w.trained || (!meteorAlive() && !summoning())) {
     if (!descend(w)) return;
     // and it waits under the sky rather than wandering off: this is its station,
-    // the same as the face of the cut is a quarrier's
+    // the same as the face of the quarry is a quarrier's
     const d = (w.spot ?? underMeteor()) - w.x;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.1, Math.abs(d));
@@ -244,7 +244,7 @@ export function stepWizard(w, now) {
   // star lands on the ground under it, and once that ground is heaped as high as
   // it will go there is nowhere for the next cell to land: the ring holds where
   // it is until somebody has carried some away. It is the same rule the rock and
-  // the cut and the beds have, and it is the reason the star's sparks are worth
+  // the quarry and the plots have, and it is the reason the star's sparks are worth
   // fetching rather than worth ignoring.
   if (S.pileFull.sky) { w.lunge = 0; return; }
 

@@ -41,7 +41,7 @@ group('a body with no work goes home, and the lights say who is in', async () =>
 // A body that has knocked off is stood indoors and is not drawn -- that is
 // what being home means. Nothing else in the game takes somebody off carrying,
 // so nothing else ever had to clear it, and a body put on the quarry straight
-// out of the house went down the cut, worked the face, brought shards up and
+// out of the house went down the quarry, worked the face, brought shards up and
 // was invisible the whole time.
 group('a body put to work comes out of the house first', async () => {
     run(0.4);
@@ -52,7 +52,7 @@ group('a body put to work comes out of the house first', async () => {
 
   window.__assign('quarriers', 1);
   window.__assign('quarriers', 1);
-  // Long enough for the cut to pay. Shards come out in a seam at the bottom of a
+  // Long enough for the quarry to pay. Shards come out in a seam at the bottom of a
   // dig now rather than trickling off the face, so the first of them is most of
   // a minute in -- and until there is one on the ground the hauler still at home
   // has nothing to be called out for.
@@ -70,7 +70,7 @@ group('a body put to work comes out of the house first', async () => {
     ok(at.workerPos.length === 3, 'so all three are out where you can see them',
        `${at.workerPos.length} drawn of 3`),
     ok(at.crewDetail.filter(d => d[0] === 'q').length === 2,
-       'and the two of them are down the cut working',
+       'and the two of them are down the quarry working',
        JSON.stringify(at.crewDetail))
   ];
 });

@@ -81,7 +81,7 @@ group('a core in the pile does not jam the hole', async () => {
     ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
        `${s.cores} cores`),
     ok(s.pitFull, 'the hole reports itself full', `${s.pit} of ${s.pitCapacity}`),
-    ok(s.pit >= s.pitCapacity, 'and it really is: every cell the bed allows is spoken for',
+    ok(s.pit >= s.pitCapacity, 'and it really is: every cell the plot allows is spoken for',
        `${s.pit} cells, ${s.pitDust} of them dust`),
     // the heap over the mouth has to have unlocked, or the pile stopped at
     // the brim of the hole and everything above it was never reachable

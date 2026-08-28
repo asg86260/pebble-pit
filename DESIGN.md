@@ -132,7 +132,7 @@ that paints the dust, which is the only thing that tiles: a triangle fills half 
 neatly it stacks, so a heap of triangles is half air by geometry. The **shapes are kept for the
 counter and the shop**, where there is room and white paper behind them, so the shape and the
 colour are learned together. The cave is a shaft that narrows
-as it goes down, the farm is a row of raised beds with a stalk out of each tended one, the lab is a
+as it goes down, the farm is a row of raised plots with a stalk out of each tended one, the lab is a
 block with a chimney. If a shape needs shading to read, it is the wrong shape.
 
 ## A site pays for itself
@@ -145,10 +145,10 @@ the two that grow, and they grow on what they themselves give up — which is th
 
 | | Comes with | Grows to | Costs | Looks like |
 |---|---|---|---|---|
-| the cut | 2 benches | 5 | ◈ 3, then 5, 9… | the hole goes down another bench |
-| the plot | 3 beds | 7 | ◇ 2, then 3, 6… | another bed appears in the row |
+| the quarry | 2 benches | 5 | ◈ 3, then 5, 9… | the hole goes down another bench |
+| the plot | 3 plots | 7 | ◇ 2, then 3, 6… | another plot appears in the row |
 
-A cut holds one body a bench and a plot one a bed, and there is nowhere else down there to put
+A cut holds one body a bench and a plot one a plot, and there is nowhere else down there to put
 anybody — so the plus button under either station goes pale with hands still spare, and the way to
 send a fourth body down the quarry is to go and buy it a bench. That is the one place in the game
 where a headcount is *bought* rather than moved, and it is bought in the coin the station itself
@@ -185,7 +185,7 @@ that before anything can happen is a chore rather than a decision. Only the ones
 if they are still spare: a body you have since put on the rock stays on the rock.
 
 So the lab is a **station like any other** — it takes a job row and it competes for the crew with
-the rock, the quarry and the beds. That is the one question this game asks: who is doing what. A
+the rock, the quarry and the plots. That is the one question this game asks: who is doing what. A
 multiplier you can simply buy is a number; a multiplier that costs you four bodies off the rock for
 a minute is a decision.
 
@@ -240,9 +240,9 @@ nothing behind it. A white slice under the pointer is a way through and the pot 
 one is wall. The wheel is set in a white disc knocked out of the block, because neither half of it
 reads against a black building on its own.
 
-**What is on the table is a real bed of sand.** Not a drawing of a heap sized to look about right —
+**What is on the table is a real plot of sand.** Not a drawing of a heap sized to look about right —
 one grain, one of whatever was staked, settled by the same code the yard and the hole use, on its
-own bed of ground either side of the building. A thousand on the table is a thousand grains lying
+own plot of ground either side of the building. A thousand on the table is a thousand grains lying
 there and doubling it is visibly twice the sand. It goes down beside the building and walks **left**
 past it as it fills, because that is where the empty ground is; the casino's own footprint is barred
 and `addGrain` already looks outward, so a big enough pot flows round the building on its own.
@@ -257,7 +257,7 @@ and `addGrain` already looks outward, so a big enough pot flows round the buildi
 | banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
 
 Nothing is added at one end and nothing arrives that did not set off. The one place this is not
-literally true is a pot bigger than that stretch of ground can hold: the bed takes what it takes and
+literally true is a pot bigger than that stretch of ground can hold: the plot takes what it takes and
 the rest stays a number on the board, which is the same rule the hole keeps.
 
 **The board hushes while the wheel is going.** It stands over the building the whole thing happens
@@ -269,7 +269,7 @@ for a few seconds, in the same place the lab's news stands. A wheel that stopped
 nothing is a wheel you had to have been watching, and you are usually somewhere else in the yard.
 
 **It has a sign, and the sign is the one piece of writing in the yard.** Every other building says
-what it is by being the shape it is — a chimney, a row of beds, a hole in the ground — and a casino
+what it is by being the shape it is — a chimney, a row of plots, a hole in the ground — and a casino
 says what it is by shouting. CASINO runs down a board on the roof with a chase of lights round the
 border, and the lights are the reason it is there: nothing else in this yard blinks, so from the
 far end of the ground the only thing moving out past the lab is that.
@@ -334,8 +334,8 @@ hands. The rows are padded to a column so the whole thing reads as a table rathe
 | age | how long on the payroll |
 | favorite | what it would say it does — the job it has spent the most time on |
 | mined | pixels taken off the rock |
-| quarried | shards brought up out of the cut |
-| farmed | spores taken off the beds |
+| quarried | shards brought up out of the quarry |
+| farmed | spores taken off the plots |
 | stored | grains put in the hole |
 | carrying | what is in its hands right now, kind by kind — only on the ones whose job is carrying |
 
@@ -392,7 +392,7 @@ not a job you hire into "+D+" it is what the ones you have not put anywhere are 
 |---|---|---|
 | first worker | ◯ 1 | the one body you buy with a core |
 | workers | ■ 60, then 81, 109... | every body after that |
-| on the rock / down the cave / at the beds | free, both ways | where they work |
+| on the rock / down the cave / at the plots | free, both ways | where they work |
 
 Moving somebody is walked, not popped — and walked at **the crew's own pace**, hands free, with a
 floor under it so an unupgraded crew is no slower at it than it ever was. A pace upgrade that did
@@ -408,7 +408,7 @@ decision you cannot take back is one you make by reading a wiki rather than by w
 One pool also means one price curve. It is gentler than the four it replaced "+D+" 1.35 a body rather
 than 1.7 "+D+" because it is no longer four separate ladders climbed in parallel.
 
-**There is a ladder.** Bodies used to sink into the cut and rise out of it wherever they happened to
+**There is a ladder.** Bodies used to sink into the quarry and rise out of it wherever they happened to
 be standing, straight down through the air in the middle of the mouth — the one thing in this yard
 that was plainly not a thing that could happen, when everything else walks, climbs a wall or goes
 through a door. So a ladder stands in the near corner where the wall's toe is, head a cell proud of
@@ -417,7 +417,7 @@ coming out is walking back along the floor to its foot and going up. One place, 
 cut, so the rungs you can see and the line a body climbs are the same line by construction.
 
 The cave and the farm ask for the same thing in different shapes. A spelunker spends its time
-**away** — down the shaft, off the surface entirely. A farmhand spends its time **standing at a bed** — stooping over
+**away** — down the shaft, off the surface entirely. A farmhand spends its time **standing at a plot** — stooping over
 it on its own rhythm and shifting its weight between times, because a farm should look tended
 whether or not anything is ripening this second. Either way the body is not carrying dust, which is what makes assigning one a
 decision rather than a free tap.
@@ -428,8 +428,8 @@ decision rather than a free tap.
 |---|---|---|---|
 | **Dust** | filled square | one per rock pixel, always | numbers: carry, speed, hires, worker stats |
 | **Core** | ring | one per rock finished | **places, and only places**: the quarry, the farm, the lab, the casino |
-| **Shard** | triangle | a quarrier's trip | your pick, the cut's next bench, its lamps, the school and its kit; lab: swing and haul pace |
-| **Spore** | hexagon | a bed cut | the crew's bite, the next bed, and tending; lab: quarry and tending pace |
+| **Shard** | triangle | a quarrier's trip | your pick, the quarry's next bench, its lamps, the school and its kit; lab: swing and haul pace |
+| **Spore** | hexagon | a plot cut | the crew's bite, the next plot, and tending; lab: quarry and tending pace |
 
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
 and the pile is the dust rather than a picture of it.
@@ -470,7 +470,7 @@ A core is a rock, so this ladder is really "how many rocks until everything is o
 | Unlock | Cost | Opens |
 |---|---|---|
 | open the cave | ◯ 3 | the shaft, to put workers down |
-| break the ground | ◯ 5 | the beds, to put workers at |
+| break the ground | ◯ 5 | the plots, to put workers at |
 | build the casino | ◯ 6 | the one place that makes nothing |
 | build the lab | ◯ 7 | multipliers and the books |
 
@@ -552,8 +552,8 @@ picks it up:
 |---|---|---|
 | **breaker** | a helmet on the rock | takes twice the bite out of the rock |
 | **carter** | a cart at the lip | carries twice a load, in the cart |
-| **blaster** | a helmet in the cut | brings one up twice as often |
-| **grower** | a hat at the beds | brings a bed on twice as fast |
+| **blaster** | a helmet in the quarry | brings one up twice as often |
+| **grower** | a hat at the plots | brings a plot on twice as fast |
 
 **Nothing about it is instant.** A hat bought is a hat *put out at the station*, on a stand with the
 count over it — one of the thing and a figure, the way every other count in this yard is written,
@@ -572,11 +572,11 @@ for the whole walk back they were drawn dragging a cart they had never picked up
 **Each trade's is its own shape**, and all of them are one bar across the top of the square with one
 cell of difference — which is as much difference as an eighteen-pixel body will carry. A **helmet**
 is a bare bar: on the rock, what is on your head is for the rock. A **lamp** is that bar with a cell
-standing proud of it: the cut is the one place in the yard with no daylight in it. A **brim** hangs a
-cell over each side with a crown on top: out in the beds all day, and the only hat here that is
+standing proud of it: the quarry is the one place in the yard with no daylight in it. A **brim** hangs a
+cell over each side with a crown on top: out in the plots all day, and the only hat here that is
 about the sun. A carter wears none — what you see of a carter is the cart.
 
-**There is no ceiling on it.** There used to be — a hat a bench, a hat a bed, never more of either
+**There is no ceiling on it.** There used to be — a hat a bench, a hat a plot, never more of either
 than there were bodies in the yard — from back when a hat *was* a body that had been upgraded, and
 buying one more than you had people for was buying nothing. Kit is not a person: a helmet on the
 stand is a helmet the next hire puts on the moment you take them on, and stocking the rock before
@@ -584,7 +584,7 @@ you have staffed it is a sensible thing to do with a pile of shards. The price i
 
 **Nobody is ever nailed down.** It was a body that got upgraded once and would then do nothing else
 for the rest of the run — a decision you make in your first ten minutes and live with: thirteen
-carts bought early were thirteen bodies that could never work a bed. Now the hat stays where the
+carts bought early were thirteen bodies that could never work a plot. Now the hat stays where the
 work is. Take everybody off the rock and the helmets stay lying on it; send somebody back and they
 are wearing one before they arrive. A station may own more kit than it has people, and the spare
 lies on the ground there — visibly, as the thing itself put down — waiting for the next body you
@@ -781,10 +781,10 @@ crossbar and what hangs below it a stem, which is a dagger, or with a stouter st
 **A station is walked up to by being a station.** Boards came out of signposts for a while — one
 target and one size at every one of them, since the stations are not alike — and it was worse: a yard
 of eight posts, each carrying a small white panel, in a game whose buildings are black masses with
-small white windows cut out of them. What you point at is the thing itself. The cut is the exception
+small white windows cut out of them. What you point at is the thing itself. The quarry is the exception
 and always will be: it is a hole, and a bridge crosses it — a ramp up, a deck straight over the
 mouth, a ramp down — so pointing at the mouth meant pointing at the deck, and walking a hauler over
-the cut opened the cut's board on the way past. What you point at there is the ground that is
+the quarry opened the quarry's board on the way past. What you point at there is the ground that is
 missing.
 
 **A press on the yard puts an open board away.** A board opens by being walked up to and closes by
@@ -875,7 +875,7 @@ standing near each other into the conversation the break code could always have 
 got the chance to.
 
 **Nobody stands inside anybody.** Two idlers who end up on the same spot drift apart, the way the
-gang on the rock and the crew down the cut do. Left alone they spread across the whole yard within
+gang on the rock and the crew down the quarry do. Left alone they spread across the whole yard within
 half a minute and settle at a pair or two standing together — which is the shape you want: mostly
 apart, sometimes talking.
 
@@ -1101,25 +1101,25 @@ telling you where to go next, and it is the only nudge it needs to give.
 | tier | currency | comes from | what it buys |
 |---|---|---|---|
 | 1 | dust | the rock | your strength, hold to mine, your swing, and the crew's first strength and speed |
-| 2 | spores | **the beds** | strength past what feeding a body by hand can do |
-| 3 | shards | **the cut** | gear: the pickaxes, the carts |
+| 2 | spores | **the plots** | strength past what feeding a body by hand can do |
+| 3 | shards | **the quarry** | gear: the pickaxes, the carts |
 | 4 | cores | a rock | buildings, and nothing else |
 | 5 | hearts | **a star** | the machines: faster, and dirtier with it |
 | 6 | sparks | a star | the last two rungs of every ladder |
 
 **The first round is dust, all of it.** The crew's strength and speed are the
 first things anybody buys after their own hands, and they come long before the
-cut or the beds -- so pricing them in stone or crop asks for a currency the game
+cut or the plots -- so pricing them in stone or crop asks for a currency the game
 has not shown you yet, on two of the first rows you will ever read. A tier's
 currency gates the tier; it does not gate the way in.
 
-**The beds come before the cut.** *(built)* Food makes bodies and stone makes
+**The plots come before the quarry.** *(built)* Food makes bodies and stone makes
 tools, and a body has to exist before its tool means anything -- so green is
 strength and blue is gear, in that order. It is also the way round that fixes the
 pile: spores currently buy one row in the whole game and sit there.
 
-The prices went with the order: six hundred for the beds, eighteen hundred for
-the cut, and the cut is offered once the ground is broken. The yard itself did
+The prices went with the order: six hundred for the plots, eighteen hundred for
+the quarry, and the quarry is offered once the ground is broken. The yard itself did
 not move -- the farm still stands out past the quarry, because where a place *is*
 and when it is *sold* are two different questions and only the second one is
 about pacing.
@@ -1142,7 +1142,7 @@ The one thing this changes about the rest of the game: **the yard is clean while
 it is worked by hand, and it dirties in two deliberate steps, each of which you
 buy.**
 
-**The cut brings the first machines.** Opening the quarry is the moment this
+**The quarry brings the first machines.** Opening the quarry is the moment this
 stops being a place with shovels in it: it comes with rudimentary machinery --
 a jaw on the face, a hoist on the deck -- which is faster than a body and makes a
 little smoke. Not much. Enough that the band over the yard starts to be a thing
@@ -1176,7 +1176,7 @@ most stops mattering. Every rung above tier 1 is priced in its own currency
 higher tiers a floor under their price.
 
 **The rock gets a machine, and the machine needs somebody standing at it.** The
-cut, the beds and the rock all take one. What a machine is here is not "the
+cut, the plots and the rock all take one. What a machine is here is not "the
 thing that replaces you" -- it is a station: a body goes and works it, the way a
 body works the scrubbing house, and it is faster than the same body swinging by
 hand and it smokes. So the rock still comes apart under your own cursor, and the
@@ -1248,7 +1248,7 @@ thing you do most. That is the point of it: the yard should not be a machine tha
 Everything about it happens in cells you can watch, and the chain is unbroken from the swing to the
 sky.
 
-**A swing puts up a puff.** Every hit on the rock, every load out of the cut, every plot turned
+**A swing puts up a puff.** Every hit on the rock, every load out of the quarry, every plot turned
 sends a cell of grey off *the place it happened*, climbing, wandering, thinning as it goes, until it
 reaches the band and is part of what is up there. That is the whole connection between what the crew
 do and what is overhead. Without it the sky is weather and the yard is a factory and the one has
@@ -1300,7 +1300,7 @@ the whole map**, an inch or two deep everywhere, because a shower you have to go
 a thing that happened to your works.
 
 What it leaves is kept as **one depth per column of the world**, stacked on whatever that column
-has — the ground, the floor of the cut, or the rock itself. The layer *is* the record: what is
+has — the ground, the floor of the quarry, or the rock itself. The layer *is* the record: what is
 buried, what is in the way, and what there is to shift are all read off it, so there is no number
 anywhere that can disagree with the picture. Each column's top cell is drawn a shade darker, so two
 deep reads as two rather than as one taller one.
@@ -1310,7 +1310,7 @@ It lands as **muck** — grey, and worth exactly nothing. Where it lands is the 
 | | |
 |---|---|
 | on the rock | the working face is buried; a swing goes into the muck before it goes into the stone |
-| in the cut | the floor silts up; a dig brings muck up before it brings a shard up |
+| in the quarry | the floor silts up; a dig brings muck up before it brings a shard up |
 | over the plots | the crop is smothered; a plot is dug out before it is picked |
 | over the yard | mess, which the crew drop everything to shift |
 
@@ -1330,13 +1330,13 @@ sweepable dust would have been.
 
 **Two things tell it apart, doing two different jobs.**
 
-**The colour says it is a different substance.** A drab earth brown, beside the cut's cold blue and
-the beds' green — and deliberately the dull one, because those two are saturated for being worth
+**The colour says it is a different substance.** A drab earth brown, beside the quarry's cold blue and
+the plots' green — and deliberately the dull one, because those two are saturated for being worth
 something and this is worth nothing. It reads as spoil rather than as a resource you have not met
 yet.
 
 It was grey for a while, on a rule that turned out not to be true: that the yard has no colour
-outside the resource marks. There is blue in the cut, green on the beds, tone in the clouds and the
+outside the resource marks. There is blue in the quarry, green on the plots, tone in the clouds and the
 birds and the curtains. And grey cost more than the rule saved — a pile of dust here is a block of
 grey cells, so grey muck lying on a pile read as more of the pile, which is the one thing it must
 never read as.
@@ -1355,7 +1355,7 @@ hole holds.
 **And the crew go down after it — and out the other side.** There is a ladder in each wall of the
 pit, the way the quarry has one in its near corner. A body walks to the head of it, climbs down hand over hand, walks the
 top of the pile to the patch it came for — the surface is not level, so it walks the shape of it the
-way a quarrier walks the floor of the cut — shovels, and climbs back out the way it came in.
+way a quarrier walks the floor of the quarry — shovels, and climbs back out the way it came in.
 
 It was reached from the lip first, arm out over the mouth, on the grounds that the lip is where a
 hauler already stands to tip a load in. It worked and it read as a fudge: somebody shovelling a
@@ -1399,7 +1399,7 @@ What it is *doing* is the pumps: four slots down the front of the tower with a p
 each, **one plunger to a body**, up to four. A pump at rest sits at the bottom of its stroke, where
 a hand pump stands when nobody is on it, so an idle house is four plain slots and a working one has
 blocks hanging in the air partway up them — and nothing else in this yard hangs in the air except
-the marks. It is a count rather than a speed on purpose: a filter bed running courses at 1.6 a
+the marks. It is a count rather than a speed on purpose: a filter plot running courses at 1.6 a
 second against 3.1 is a pattern nobody can read a number off, and four pumps against one is a
 number you can say out loud from the far end of the ground. It is the same arithmetic as one lit
 window a body in the settlement. The stroke is stepped in the sim, not in the draw loop, so an
@@ -1556,44 +1556,46 @@ None of it ships. The handles, the reports they read and the browser suite itsel
 `import.meta.env.DEV` in `console.js`, the same gate the dev panel is behind, so a build drops the
 lot: it was a third of what a player was being asked to download.
 
-## Filters (dev only)
+## The filter
 
-There is a post-process pass in `shader.js`: the yard is drawn to its 2D canvas as it always was,
-that canvas goes to the GPU as a texture, and one fullscreen fragment shader puts the result on a
-second canvas laid over the top. Nothing about how the game draws changes — it is a filter held in
-front of the window.
+Three looks are laid over the finished frame in `press.js`: a hair of **chromatic aberration**, a
+whisper of **scanlines**, and enough **vignette** that the page is in a room rather than on a light
+box. Enough that the yard reads as coming off a screen rather than out of a printer, and not enough
+to argue with a picture made of whole black pixels. The amounts are in `config.js` as `PRESS_MIX`,
+they ship as they stand, and there is no dial: a look you can move at runtime is a look nobody has
+decided on, and these are decided.
 
-**Ten dials, not a list to pick from.** A look is a *mix*: a television is curvature and a shadow
-mask and scanlines and a fringe, and choosing one of those from a menu is not the same as being
-able to have a little of each. So every effect is a function with an amount of its own, they all
-live in one program, and a dial at zero costs a branch that is never taken. Order is not a detail —
-the glass bends the picture before anything is sampled off it, the ink spreads before the paper has
-a texture, and the edge of the page falls off last because it is the light in the room rather than
-anything on the sheet. The dev panel has a slider each and a few presets to start from. It opens on
-`scanlines 0.2, aberration 0.1`: enough that the page is coming off a screen rather than out of a
-printer, not enough to argue with a picture made of whole black pixels.
+**It is drawn in 2D, on the canvas the game is already drawing into, and that is the whole point.**
+There used to be ten of these on a WebGL post-process pass — the frame handed to a second context
+as a texture, one fullscreen fragment shader, the result on a canvas laid over the top. The shader
+was never the cost. A three-tap fullscreen program is nothing on any card made this decade; the
+*trip between the two contexts* was everything, because the picture lives in a Canvas2D context and
+crossing to WebGL means the browser pulls a screen of pixels off the card and pushes it back up
+again with a hard synchronisation in the middle. On a large window that was twenty milliseconds a
+frame — thirty frames a second on a card that draws the yard itself in two — and it was on by
+default, so every frame rate anybody ever read off the dev panel was the filter's number rather
+than the game's.
 
-**None of it ships.** It is loaded from `dev.js`, which `main.js` only reaches for under `vite dev`,
-so a production build never sees the file. The pass hands a whole screen of pixels to the GPU every
-frame, which on a phone would be the most expensive thing in the frame, and nothing in it has
-earned that yet.
+So the answer was not a cheaper shader. It was not leaving the context. These three are the ones
+that can be said in 2D:
 
-**The television dials are in there to be looked at, not because they suit the game.** Bloom,
-chromatic aberration, scanlines and curvature are built for bright things on a dark screen in a
-dark room. This is black shapes on white paper, and the mismatch is structural rather than a matter
-of taste: white cannot get brighter, so bloom has nothing to bloom and only eats the black;
-aberration fringes every edge red and cyan, when the whole pixel discipline here exists to stop
-edges going grey or fringed and colour is reserved for what the sites give up; and scanlines over a
-white page are grey stripes across the picture. In small amounts none of that is fatal, and small
-amounts are what a dial is for.
+- **aberration** — the three colours arrive at slightly different places, further out from the
+  middle. An offset proportional to the distance from the centre *is* a scale about the centre, so
+  this is not a per-pixel sample at all: it is the red channel drawn a hair large and the blue a
+  hair small, which `drawImage` does for free.
+- **scanlines** — every other row of device pixels is darker. A two-pixel pattern, made once.
+- **vignette** — the edge of a lit page falls away. One radial gradient, made once per size.
 
-**The press dials are the same pipeline pointed at what this game actually is** — paper, ink and
-a press. Grain gives the white a tooth. Bleed grows the black by a hair, so shapes read as printed
-rather than plotted. Halftone turns grey into dots the size of the lattice, which is the one effect
-that *agrees* with the game: the shades already mean how deep the rock was, and a halftone says
-that in the unit everything else is built in. Vignette is the edge of a lit page. Plates is
-chromatic aberration's respectable cousin — a colour plate one cell out of register, touching only
-what is already coloured and leaving every grey exactly where it was.
+Applied in that order, which is the order they were in on the shader: the glass fringes what is on
+it before the tube's own lines cross it, and the light in the room falls off last of all because it
+is the room rather than anything on the sheet.
+
+**The other seven went with the pass.** Curvature, bloom, bleed, halftone, plates and the phosphor
+mask all need to look at neighbouring pixels or bend the sampling grid, and 2D has no way to say
+that without reading the frame back itself, which is the thing this file exists to avoid. Most of
+them were built for bright things on a dark screen in a dark room anyway, and this is black shapes
+on white paper: white cannot get brighter, so bloom has nothing to bloom and only eats the black.
+The three that stayed are the three that earn their place.
 
 ## Fitting the window
 
@@ -1654,7 +1656,7 @@ the ground past the far wall is ground that is already there, and buying a dig d
 view or the ground under you. Scrolling to the end shows you the edge of the thing rather than
 running out of world.
 
-**A bigger hole shows more of what you hold.** The pile is capped by the room in the bed, not by
+**A bigger hole shows more of what you hold.** The pile is capped by the room in the plot, not by
 the counter, so dust that was over the brim — counted but with nowhere to be drawn — comes back into
 the picture the moment there is room for it.
 
@@ -1679,7 +1681,7 @@ another grain is to dig. A find is never turned away — there are a handful of 
 and each one is a thing you went and got.
 
 **Once the hole is full the pile keeps going**, heaping up over the mouth rather than stopping
-dead at the ground line — but only over the mouth. It is the same bed of sand and the bed is only
+dead at the ground line — but only over the mouth. It is the same plot of sand and the plot is only
 as wide as the hole, so the pile can rise but it can never get out onto the ground. Inside the hole
 it lies level, because a hole fills up. And nothing goes over the brim while there is still room
 down there, so a pile standing above the ground line always means the hole underneath it is full.
@@ -1703,7 +1705,7 @@ to the window it can only be bought sideways — 2px grains would need a pit sev
 
 **A core in the pile is drawn at the size a core is**, not at the size of the cell it holds. It is
 one grain as far as the sand is concerned — it heaps and settles like any other — but a cell is six
-pixels, and a six-pixel ring in a bed of grey speckle is a grain that happens to be pale. You put
+pixels, and a six-pixel ring in a plot of grey speckle is a grain that happens to be pale. You put
 it in the hole and it vanished.
 
 Two things keep a big pile cheap, and are worth keeping either way:
@@ -1743,7 +1745,7 @@ of a strip are **cliffs the sand may not lean on** — the station behind it, th
 wider rock is a narrower strip beside it, which is its own quiet pressure.
 
 **A full pile stops the station behind it.** The miners stand where they are, nobody goes down the
-cave for another shard, and the beds stop coming on. A **warning triangle under the station** says
+cave for another shard, and the plots stop coming on. A **warning triangle under the station** says
 so — the one mark in the game that means nothing is happening — and hovering it says *pile is full*
 in words. It is the only writing in the yard, and it is only there when asked for. They start again once a carrier has taken a
 quarter of it away, so a single grain being fetched cannot make them stutter.

@@ -42,7 +42,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     __clearFloor: hooks.clearFloor, __pile: hooks.pile, __jump: hooks.jump,
     __preview: hooks.preview, __next: hooks.next, __drop: hooks.drop,
     __birds: hooks.birds, __crew: hooks.crew, __school: hooks.school,
-    __assign: hooks.assign, __build: hooks.rebuildBoards, __beds: hooks.beds,
+    __assign: hooks.assign, __build: hooks.rebuildBoards, __plots: hooks.plots,
     __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
     __tune: hooks.tuneOne, __fill: hooks.fillBoard, __coldSky: hooks.coldSky,
     __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,

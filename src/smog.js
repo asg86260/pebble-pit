@@ -85,7 +85,7 @@ export const raining = () => !!S.raining;
 //
 // It used to run whatever was lying about it, which is the one station in the
 // yard with no such rule: the rock stops when its spoil is up to the limit, the
-// cut stops, the beds stop, and this poured -- dust out of the spout with the
+// cut stops, the plots stop, and this poured -- dust out of the spout with the
 // recycler on, muck out of the back without it -- for as long as there was a
 // body inside. What that looks like is a machine with no cost, and what it
 // actually did was spray the walk: bare ground takes a scatter and no more, so
@@ -132,7 +132,7 @@ const outlet = () => ({ x: scrub.x - P, y: scrub.y + scrub.h - P * SCRUB_ARM });
 // the puff is the point. Without one, the connection between what the crew do and
 // what is overhead is a line in a design document and nothing you could see.
 // `kind` is which part of the works this came out of -- 'dust' off the rock,
-// 'shard' out of the cut, 'spore' off the beds. It is carried all the way up and
+// 'shard' out of the quarry, 'spore' off the plots. It is carried all the way up and
 // kept on the mote, because unlike the dust hanging over a place, smoke drifts:
 // by the time a mote has settled and spread it is nowhere near what made it, so
 // asking what is under it now would give the wrong answer. Where it came from is
@@ -977,8 +977,8 @@ const inRange = (c, from, to) => c >= colAt(from) && c <= colAt(to);
 
 const rockCols = () => boulderAlive()
   ? { from: rockLeft(), to: rockLeft() + S.gw * P } : null;
-const cutCols = () => S.quarryOpen ? { from: quarry.x, to: quarry.x + quarry.w } : null;
-const bedCols = () => S.farmOpen ? { from: farm.x, to: farm.x + farm.w } : null;
+const quarryCols = () => S.quarryOpen ? { from: quarry.x, to: quarry.x + quarry.w } : null;
+const plotCols = () => S.farmOpen ? { from: farm.x, to: farm.x + farm.w } : null;
 
 function depthOver(range) {
   if (!range) return 0;
@@ -989,11 +989,11 @@ function depthOver(range) {
 }
 
 export const rockMuck = () => depthOver(rockCols());
-export const cutMuck = () => depthOver(cutCols());
-export const bedMuck = () => depthOver(bedCols());
+export const quarryMuck = () => depthOver(quarryCols());
+export const plotMuck = () => depthOver(plotCols());
 
 // Where the muck in a column sits: on the rock if the rock is there, on the floor
-// of the cut if that is, on the ground otherwise. It lies on top of what it
+// of the quarry if that is, on the ground otherwise. It lies on top of what it
 // landed on -- it does not sink into it and it does not float over it.
 export function muckFloor(c) {
   const wx = c * P + P / 2;
@@ -1002,7 +1002,7 @@ export function muckFloor(c) {
     const col = Math.round((wx - rockLeft()) / P);
     if (S.rockTops[col] >= 0) return rockTopY(col);
   }
-  // Over the cut it lands on the cut's floor -- which is wherever that column has
+  // Over the quarry it lands on the quarry's floor -- which is wherever that column has
   // actually been dug to, not the depth the hole will eventually reach. It was
   // the full depth, a fixed line a long way under the ground, so muck over the
   // quarry was drawn hanging at the bottom of a hole that had not been dug yet:
@@ -1045,15 +1045,15 @@ function clearRange(range, effort) {
 }
 
 export const throughRockMuck = n => clearRange(rockCols(), n);
-export const throughCutMuck = n => clearRange(cutCols(), n);
-export const throughBedMuck = n => clearRange(bedCols(), n);
+export const throughQuarryMuck = n => clearRange(quarryCols(), n);
+export const throughPlotMuck = n => clearRange(plotCols(), n);
 
 // Muck put down rather than rained down. The crew make their own now -- see
 // `relieve` in crew.js -- and it is the same stuff the sky drops, so the same
 // shovelling clears it and no new kind of mess had to be invented.
 //
-// It refuses the columns a shovel cannot reach. `onSite` holds the rock, the cut
-// and the beds out of the sweep, so muck left standing on one of those would lie
+// It refuses the columns a shovel cannot reach. `onSite` holds the rock, the quarry
+// and the plots out of the sweep, so muck left standing on one of those would lie
 // there for the rest of the run: a body about to go on a site holds on until it
 // is somewhere the crew can clean up after it.
 // The nearest ground to a place that a shovel can actually reach, or null if
@@ -1073,7 +1073,7 @@ export function cleanSpotNear(wx, reach = 90) {
 }
 
 // Where a body goes to *stand* to work a patch. Out on the yard that is the
-// patch itself; on the rock, the cut or the beds it is the nearest ground
+// patch itself; on the rock, the quarry or the plots it is the nearest ground
 // beside it. A shovel reaches on to a site, a pair of boots does not -- so the
 // body steps up to the edge of the thing and works across it, the same way it
 // steps aside to leave anything of its own on ground somebody can clean.
@@ -1082,8 +1082,8 @@ export function cleanSpotNear(wx, reach = 90) {
 // shovels where the muck is, the way a miner works where the rock is -- reaching
 // across from the apron was a body cleaning a roof from a ladder it never moved.
 //
-// The cut and the beds stay worked from the edge. There is nowhere to stand on
-// either of them: one is a hole with benches in it and the other is a bed you
+// The quarry and the plots stay worked from the edge. There is nowhere to stand on
+// either of them: one is a hole with benches in it and the other is a plot you
 // would be treading on.
 export const onRock = wx => {
   const r = rockCols();
@@ -1112,7 +1112,7 @@ export function dropMuckAt(wx, n, kind = 'muck') {
 // working the same column.
 //
 // A shovel reaches on to a site, and it always should have. `onSite` was in this
-// loop, so muck that came down on the rock, the cut or the beds was not
+// loop, so muck that came down on the rock, the quarry or the plots was not
 // something anybody could clear: it was worked off by mining through it, and a
 // rock nobody was swinging at -- a full pile, a crew with no miners on it, the
 // gap between one rock and the next -- kept whatever the sky left on it for the
@@ -1181,7 +1181,7 @@ let yardLeft = 0;
 let allLeft = 0;
 
 function refresh() {
-  siteAt = [rockCols(), cutCols(), bedCols()].filter(Boolean);
+  siteAt = [rockCols(), quarryCols(), plotCols()].filter(Boolean);
   const m = muckCols(), poo = poopCols();
   let all = 0, yard = 0;
   poopTotal = 0;
@@ -1330,7 +1330,7 @@ export const poopLeft = () => poopTotal;
 // decides whether it is worth walking over there
 export const muckFor = w => (w && w.type === 'janitor' ? allLeft : allLeft - poopTotal);
 export const yardMuck = () => yardLeft;
-export const buried = () => rockMuck() > 0 || cutMuck() > 0 || bedMuck() > 0;
+export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0;
 
 // --- one frame ---------------------------------------------------------------------
 export function stepSmog(dt) {
@@ -1490,7 +1490,7 @@ export function smogReport() {
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
            scrubbers: S.scrubbers, scrubOpen: S.scrubOpen, recycler: S.recycler,
-           muck: { rock: rockMuck(), cut: cutMuck(), bed: bedMuck(),
+           muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },
            poop: poopTotal,

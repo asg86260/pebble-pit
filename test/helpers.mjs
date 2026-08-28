@@ -49,11 +49,11 @@ export const haveRock = () => runUntil(() => {
   return s.rock > 0 && !s.rockFall && !s.dancing;
 }, 30);
 
-// the quarry and the beds, opened without paying for them
+// the quarry and the plots, opened without paying for them
 export function openSites() {
   window.__crew(0, 0, 1, 1);      // opens both places
   window.__crew(0, 0);
-  window.__levels({ benchLevel: 0, bedLevel: 0 });
+  window.__levels({ benchLevel: 0, plotLevel: 0 });
 }
 
 // A core out of the rock and into the hole. The browser suite does this with the
@@ -83,12 +83,12 @@ export function bankCore() {
   return done;
 }
 
-// Where the ground is at some x -- and, down in the quarry, where the cut's own
+// Where the ground is at some x -- and, down in the quarry, where the quarry's own
 // benched floor is. They are two different answers: `groundAt` is the surface a
-// body walks along up top, and the cut is a hole in that surface.
+// body walks along up top, and the quarry is a hole in that surface.
 const { quarryFloor } = await import('../src/quarry.js');
 export const groundAt = x => yard.world.groundAt(x);
-export const cutFloorAt = x => quarryFloor(x);
+export const quarryFloorAt = x => quarryFloor(x);
 
 export const P = 6;               // a cell, for the piles
 export const WORKER = 18;         // a worker square, for tolerances

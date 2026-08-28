@@ -30,7 +30,7 @@ import { buildShop } from './shop.js';
 export const pitWidth = () => PIT_W_MAX;
 export const pitDepth = () => PIT_H;
 
-// Where the bed sits and how many cells it is. The near lip never moves: a dig
+// Where the plot sits and how many cells it is. The near lip never moves: a dig
 // takes the far wall out and the floor down, so nothing you can already see
 // changes place. Called from the layout, and again on every dig.
 export function shapePit() {
@@ -38,10 +38,10 @@ export function shapePit() {
   pit.h = pitDepth() + PIT_HEAP;         // the hole, and room to heap over it
   pit.cols = pit.w / pit.p;
   pit.rows = pit.h / pit.p;
-  pit.y = S.groundY - PIT_HEAP;          // the bed starts above the ground line
+  pit.y = S.groundY - PIT_HEAP;          // the plot starts above the ground line
 }
 
-// A bigger bed with the same pile in it. Columns keep their number, so the pile
+// A bigger plot with the same pile in it. Columns keep their number, so the pile
 // stays where it was against the near lip; rows do too, so the sand comes down
 // onto the new floor rather than hanging in the air over it. Nothing is lost and
 // nothing is counted twice -- this is a bigger box, not a new one.
@@ -64,7 +64,7 @@ function regridPit() {
 
 // One dig, bought at the bench: the far wall goes out and the floor goes down.
 // The world is not laid out again -- it never depended on how far the hole had
-// got, only on how far it can ever get -- so this is the bed and nothing else.
+// got, only on how far it can ever get -- so this is the plot and nothing else.
 // its painter, made fresh whenever the grid underneath changes shape
 export function setPitGrain(step) {
   S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
@@ -149,9 +149,9 @@ export function bankDust(x, shade = 1) {
   return true;
 }
 
-// How much the bed can actually hold, which is no longer the whole of it: the
+// How much the plot can actually hold, which is no longer the whole of it: the
 // hole fills to the brim everywhere, and above the brim only as much as the
-// heap is allowed to lean. Counted once when the bed changes shape rather than
+// heap is allowed to lean. Counted once when the plot changes shape rather than
 // every time somebody pays for something.
 // how high a column may stand once the hole beneath it is full
 function heapCeiling(c) {
@@ -159,7 +159,7 @@ function heapCeiling(c) {
   return pitDepth() / pit.p + Math.min(PIT_HEAP / pit.p, fromEnd * PIT_HEAP_SLOPE);
 }
 
-// What the bed would hold at a given dig, without digging it. The board asks
+// What the plot would hold at a given dig, without digging it. The board asks
 // this for the next one along, so it can say what the purchase buys.
 export function capacityAt() {
   const p = pit.p;

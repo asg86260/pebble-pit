@@ -1,5 +1,5 @@
-// The places out to the left of the rock: the cut, the beds, the bridge over
-// the cut, and where each of them stands.
+// The places out to the left of the rock: the quarry, the plots, the bridge over
+// the quarry, and where each of them stands.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
 
@@ -52,7 +52,7 @@ group('the quarry is a worked cut, benched and uneven', async () => {
   quickCrew();
   run(6);
   const s = state();
-  const c = s.quarryCut;
+  const c = s.quarryShape;
   const q = s.workerPos.filter(p => p[0] === 'q').map(p => +p.split(',')[1]);
   const feet = new Set(q);
   return [
@@ -87,7 +87,7 @@ group('the farm grows spores when it is tended', async () => {
   const start = state();
   let grew = false;
   const lay = runUntil(() => {
-    grew = grew || state().beds.some(b => b > 0.1);
+    grew = grew || state().plots.some(b => b > 0.1);
     return state().finds.includes('spore');
   }, 40);
   const waiting = state();
@@ -99,8 +99,8 @@ group('the farm grows spores when it is tended', async () => {
   const after = state();
   return [
     ok(after.farmOpen, 'the farm is open'),
-    ok(after.beds.length > 0, 'it has beds', `${after.beds.length}`),
-    ok(grew, 'a bed comes on while it is tended'),
+    ok(after.plots.length > 0, 'it has plots', `${after.plots.length}`),
+    ok(grew, 'a plot comes on while it is tended'),
     ok(lay, 'and is cut for a spore that lies beside it',
        JSON.stringify(waiting.finds)),
     ok(got, 'a worker fetches it, and that is what counts it',
@@ -110,24 +110,24 @@ group('the farm grows spores when it is tended', async () => {
 });
 
 // A spore is a thing that grew, and it should be seen to have grown. It forms
-// at the tip of the stalk the moment the bed is ripe and sits there until the
+// at the tip of the stalk the moment the plot is ripe and sits there until the
 // farmhand takes it off -- from exactly where it grew, in the tone it grew in.
-group('a ripe bed shows its spore before it is cut', async () => {
+group('a ripe plot shows its spore before it is cut', async () => {
   window.__school({ breakers: 0, carters: 0, blasters: 0, growers: 0 });
   window.__crew(0, 0, 0, 1);
   quickCrew();
   window.__clearFloor();
-  // A bed with a spore on it, not merely one left standing ripe by an earlier
-  // check. A bed nobody is working keeps its tone for ever, so the farm is put
+  // A plot with a spore on it, not merely one left standing ripe by an earlier
+  // check. A plot nobody is working keeps its tone for ever, so the farm is put
   // back to bare earth first and what ripens after that is this check's own.
   //
   // Naming the already-ripe ones and skipping them was not enough: with a
   // whole farm left standing ripe by an earlier check, the one farmhand has to
   // cut its way through all seven before a fresh one can appear, and how long
   // that takes depends on what every check before this one happened to do.
-  window.__beds();
-  const already = new Set(state().bedTone.flatMap((t, n) => t > 0 ? [n] : []));
-  const fresh = s => s.bedTone.findIndex((t, n) => t > 0 && !already.has(n));
+  window.__plots();
+  const already = new Set(state().plotTone.flatMap((t, n) => t > 0 ? [n] : []));
+  const fresh = s => s.plotTone.findIndex((t, n) => t > 0 && !already.has(n));
   // a frame at a time, not a second: it is only ripe for as long as it takes
   // the farmhand to cut it, and a second-wide step steps right over that
   let ripe = false;
@@ -137,21 +137,21 @@ group('a ripe bed shows its spore before it is cut', async () => {
   }
   const showing = state();
   const i = fresh(showing);
-  const tone = showing.bedTone[i];
+  const tone = showing.plotTone[i];
   const spores = showing.finds.filter(f => f === 'spore').length;
   run(0.3);
   const stillThere = state();
-  // wait for it rather than guessing how long the cut and the throw take
+  // wait for it rather than guessing how long the quarry and the throw take
   const landed = runUntil(
     () => state().finds.filter(f => f === 'spore').length > spores, 20);
   const after = state();
   window.__crew(0, 0, 0, 0);
   return [
-    ok(ripe, 'a bed comes ripe'),
+    ok(ripe, 'a plot comes ripe'),
     ok(tone > 0, 'and a spore forms on it', `tone ${tone}`),
-    ok(stillThere.beds[i] >= 1, 'which stays there to be looked at',
-       `${stillThere.beds[i]}`),
-    ok(after.beds[i] < 1, 'until the farmhand takes it off', `${after.beds[i]}`),
+    ok(stillThere.plots[i] >= 1, 'which stays there to be looked at',
+       `${stillThere.plots[i]}`),
+    ok(after.plots[i] < 1, 'until the farmhand takes it off', `${after.plots[i]}`),
     ok(landed, 'and then it is lying in the farm pile',
        `${spores} -> ${after.finds.filter(f => f === 'spore').length}`)
   ];

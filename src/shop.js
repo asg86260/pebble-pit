@@ -403,9 +403,9 @@ export function buildShop() {
   build(casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table');
   build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
   build(scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit');
-  // The cut and the plots run out: there is only so far down and only so much
+  // The quarry and the plots run out: there is only so far down and only so much
   // ground. A board with nothing left on it says so rather than standing blank.
-  build(quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the cut is as deep as it goes');
+  build(quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the quarry is as deep as it goes');
   build(farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken');
   build(towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet');
   // The school runs out on purpose: one trade per job, and once everybody doing

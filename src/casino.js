@@ -202,7 +202,7 @@ function wheelAt(dt) {
 // --- the pot, standing on the ground ------------------------------------------
 // What is on the table is a heap beside the building, and it is **the pot**: one
 // grain, one of whatever was staked. Not a drawing of a heap sized to look about
-// right -- a real bed of sand, settled by the same code the yard and the hole
+// right -- a real plot of sand, settled by the same code the yard and the hole
 // use, so a thousand on the table is a thousand grains lying there and doubling
 // it is visibly twice the sand.
 //
@@ -211,7 +211,7 @@ function wheelAt(dt) {
 // nearest column that will take one, and the casino's own footprint is barred,
 // so a big enough pot flows round the building on its own.
 //
-// The bed holds what the ground holds and no more, which is the same rule the
+// The plot holds what the ground holds and no more, which is the same rule the
 // hole keeps -- a pile shows what you have, up to the brim.
 export const potAt = () => ({
   x: Math.round((casino.x + casino.w + P * 6) / P) * P,
@@ -241,22 +241,22 @@ export function wireTable() {
 }
 
 // How much sand should be lying there: the pot, or as much of it as the ground
-// will hold. The bed is wide but it is not endless, and a pot bigger than the
+// will hold. The plot is wide but it is not endless, and a pot bigger than the
 // far end of the yard can take is the one place here that is not one for one --
 // so it is found out rather than guessed. The first grain the ground refuses
-// sets the mark, and clearing the bed forgets it again.
+// sets the mark, and clearing the plot forgets it again.
 export const tableWant = () => Math.min(pot(), table.capped ?? Infinity);
 
 // --- the trickle --------------------------------------------------------------
 // Sand does not arrive all at once. It comes down out of the sky and piles up,
-// and the pile growing is the thing worth watching -- so the bed is walked
+// and the pile growing is the thing worth watching -- so the plot is walked
 // towards what the pot says rather than set to it.
 //
 // The rate is worked out from how far there is to go, so ten grains trickle and
 // twenty thousand pour, and either is issued over about a second and a half.
 //
 // **Every grain is seen.** There was a cap on how many could be in the air at
-// once, with the rest put straight into the bed, and it was a lie of exactly the
+// once, with the rest put straight into the plot, and it was a lie of exactly the
 // kind this game does not tell: the pile is the pot, so the pile arriving has to
 // be the pot arriving. What is left is a backstop far above anything a real hand
 // reaches, so a pot the size of the whole hole cannot make the frame into a
@@ -282,7 +282,7 @@ function trickleIn(dt, cur) {
       S.tableAir.push({
         x: at.x + (Math.random() - 0.5) * P * 20,
         // Out of the sky, but out of the sky a little way up rather than out of
-        // the top of the bed: the grid stands eighty cells tall, and a grain
+        // the top of the plot: the grid stands eighty cells tall, and a grain
         // starting up there spends two seconds falling before it is anything to
         // look at. This is high enough to read as coming down and near enough
         // that the heap grows while you are watching it.
@@ -353,7 +353,7 @@ export const potShade = cur =>
   cur === 'shard' ? SHARD_CELL : cur === 'spore' ? SPORE_CELL : 0;
 
 // One frame of the grains in the air: they rise, they fall, they land in the
-// bed or they fade out.
+// plot or they fade out.
 export function stepSparks(dt) {
   const f = frames();
   for (let i = S.tableAir.length - 1; i >= 0; i--) {
@@ -380,7 +380,7 @@ export function stepSparks(dt) {
     }
 
     // A grain coming down out of the sky is one of the pot arriving: it stops
-    // being a thing in the air and becomes a grain in the bed, which is what
+    // being a thing in the air and becomes a grain in the plot, which is what
     // makes the heap grow as you watch rather than appear.
     if (k.lands) {
       const c = Math.max(0, Math.min(table.cols - 1, Math.round((k.x - table.x) / P)));
@@ -414,7 +414,7 @@ export function stepCasino(dt) {
     else S.pot = null;
     // the stop is felt as well as seen -- and a win is felt harder
     shakeView(S.spinWon ? CASINO_WIN_KNOCK : CASINO_KNOCK);
-    // What happens to the sand is the bed's business now: it walks itself towards
+    // What happens to the sand is the plot's business now: it walks itself towards
     // whatever the pot says, raining in or lifting off. See `stepTable`.
     // and it says which way it went, for a few seconds, over the building --
     // a wheel that stopped and told you nothing is a wheel you had to have been

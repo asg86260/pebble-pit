@@ -7,7 +7,7 @@
 // Nothing here is bought outright. Paying starts a piece of research; what
 // finishes it is somebody standing in the lab doing the work, and an empty lab
 // makes no progress at all however much you have paid. So the lab competes for
-// the crew with the rock, the quarry and the beds, which is the one real
+// the crew with the rock, the quarry and the plots, which is the one real
 // question this game asks: who is doing what. Everything it sells is a rate: a pixel of rock is
 // still worth exactly one dust wherever it came from, which is a rule the game
 // keeps, so growth has to come from doing the same work sooner.

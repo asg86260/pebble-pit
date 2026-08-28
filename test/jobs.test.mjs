@@ -8,18 +8,18 @@ group('every trade doubles the work it is for', async () => {
   // nothing left to buy drops its row off the bench, and the board checks
   // further down expect those headings to be there
   window.__levels({ quarryPaceLevel: 6, tendLevel: 6 });
-  window.__crew(0, 0, 3, 3);                   // the quarry and the beds
+  window.__crew(0, 0, 3, 3);                   // the quarry and the plots
   window.__school({ blasters: 0, growers: 0 });
   window.__clearFloor();
-  // What the sites *do* in a fixed stretch of yard. The beds are measured by
-  // what lands in their pile; the cut is measured by how far down it gets,
+  // What the sites *do* in a fixed stretch of yard. The plots are measured by
+  // what lands in their pile; the quarry is measured by how far down it gets,
   // because a cut pays in a seam at the bottom of a whole dig now and a
   // ninety-second window of one is a window with nothing in it either way.
   // How far it got is the work; the seam is only where the work is handed over.
   // Cells out of the ground, counted outright: the share dug runs round and
   // round as the hole is emptied and falls in, so a window that happens to cross
   // a payout reads as negative work.
-  const dug = () => state().cutTotal;
+  const dug = () => state().quarryTotal;
   const p0 = dug();
   run(90);
   const plain = { ...state().pileCount, dug: dug() - p0 };
@@ -33,11 +33,11 @@ group('every trade doubles the work it is for', async () => {
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(plain.dug > 0 && plain.farm > 0, 'the quarry and the beds are working at all',
-       `${plain.dug} cells out, ${plain.farm} off the beds`),
+    ok(plain.dug > 0 && plain.farm > 0, 'the quarry and the plots are working at all',
+       `${plain.dug} cells out, ${plain.farm} off the plots`),
     ok(trained.dug > plain.dug, 'a blaster gets further down in the same time',
        `${plain.dug} -> ${trained.dug} cells`),
-    ok(trained.farm > plain.farm, 'and a grower brings a bed on sooner',
+    ok(trained.farm > plain.farm, 'and a grower brings a plot on sooner',
        `${plain.farm} -> ${trained.farm}`)
   ];
 });
@@ -96,7 +96,7 @@ group('a trade is a hat the station keeps', async () => {
 
 // The carts are the lip's kit, the same as the helmets are the rock's. This is
 // the case that was worst under the old rule: thirteen carts bought early were
-// thirteen bodies that could never work a bed again.
+// thirteen bodies that could never work a plot again.
 group('a cart belongs to the lip, not to the carter', async () => {
   window.__crew(0, 4);
   window.__school({ carters: 2 });
@@ -244,7 +244,7 @@ group('the save keeps what matters', async () => {
     ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
     ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),
     ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
-    ok(Array.isArray(raw.beds), 'and how far along every bed is'),
+    ok(Array.isArray(raw.plots), 'and how far along every plot is'),
     ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
     ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
     ok(raw.labbers === s.labbers, 'who is in the lab', `${raw?.labbers} vs ${s.labbers}`),

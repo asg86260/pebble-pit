@@ -103,7 +103,7 @@ function offAPile() {
 }
 
 // What the air is made of over a given place on the screen. The yard is dust;
-// the quarry and the beds give off their own, and a little past their edges
+// the quarry and the plots give off their own, and a little past their edges
 // too, because a hole in the ground does not stop breathing at its rim. A site
 // that is not open yet is bare ground and gives off nothing but dust.
 //
@@ -123,9 +123,9 @@ function kindAt(sx) {
 }
 
 // A site gives off its own air whether or not anybody is standing in it: the
-// quarry breathes out of the ground, the beds off the crop. Without this the
+// quarry breathes out of the ground, the plots off the crop. Without this the
 // only coloured motes are the ones a walker happens to kick up, and a farmhand
-// stood at a bed is not walking, so the beds gave off nothing at all.
+// stood at a plot is not walking, so the plots gave off nothing at all.
 function offASite() {
   const open = [];
   if (S.quarryOpen) open.push(quarry);

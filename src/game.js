@@ -17,7 +17,7 @@
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT } from './config.js';
 import { S, floor, pit, bench } from './state.js';
-import { plantBeds } from './farm.js';
+import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
 import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, pileAt, layPiles } from './world.js';
@@ -42,7 +42,7 @@ import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir } from './smog.js';
 import { stepScrub } from './scrubhouse.js';
 // The ground is the ground because of these: the grid module knows none of it.
-// A new bed of sand somewhere else is another few lines like this, not another
+// A new plot of sand somewhere else is another few lines like this, not another
 // copy of the sand rules.
 export function wireGround() {
   if (!floor.painter) floor.painter = makePainter(floor);
@@ -75,13 +75,13 @@ export function step() {
   // stays from then on: a bench that came and went would be worse than one that
   // sat there empty.
   if (!S.seenBench && canAfford()) { S.seenBench = true; S.dirty = true; }
-  // The beds are dug when the ground is broken, not when the first farmhand
+  // The plots are dug when the ground is broken, not when the first farmhand
   // walks up to them: a plot you have paid for that shows nothing but fence
   // posts reads as a purchase that did not happen. Asked every frame rather
   // than hooked onto the sale, so a save, the dev panel and the sale itself all
   // arrive at the same plot; it is two length checks and it does nothing once
-  // the beds are there.
-  if (S.farmOpen) plantBeds();
+  // the plots are there.
+  if (S.farmOpen) plantPlots();
   // And the ground each station heaps on, for the same reason: a save, the dev
   // panel and the door itself all arrive at the same strips. It does nothing at
   // all unless the set of open places has actually changed. See `layPiles`.

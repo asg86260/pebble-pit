@@ -18,7 +18,7 @@ import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
-import { underground, quarryCut, ladder, cutCells } from './quarry.js';
+import { underground, quarryShape, ladder, quarryCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
@@ -26,7 +26,7 @@ import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
-import { bedX } from './farm.js';
+import { plotX } from './farm.js';
 import { fmt, STATIONS, stationFoot, hasOffer } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
 import { atHome } from './crew.js';
@@ -76,12 +76,12 @@ export function drawQuarry() {
   // down in benches and the uneven floor between them -- as a single stroked
   // path. It is one line, so nothing doubles up where the parts meet, which is
   // what three separate filled bars used to do along each rim.
-  // What has been taken out, and nothing else. The cut is not outlined in
+  // What has been taken out, and nothing else. The quarry is not outlined in
   // advance: there is no hole until somebody has dug one, so what is drawn is
   // the ground that is gone -- column by column, down to whatever depth that
   // column has been worked to. The benched walls and the uneven floor appear as
   // they are reached rather than being promised from the first frame.
-  const cells = cutCells();
+  const cells = quarryCells();
   ctx.fillStyle = '#fff';
   for (let c = 0; c < cells.length; c++) {
     if (!cells[c]) continue;
@@ -98,7 +98,7 @@ export function drawQuarry() {
     const cx = x + c * P;
     // No line along the lip. The ground already ends there -- the ground line
     // runs across the whole yard and stops at the hole, which is the edge -- so
-    // drawing another one on top of it boxed the cut in and made it read as a
+    // drawing another one on top of it boxed the quarry in and made it read as a
     // thing sitting in the ground rather than a hole in it.
     ctx.fillRect(cx, y + d * P - E, P, E);               // the floor of it
     const left = c > 0 ? cells[c - 1] : 0;
@@ -139,10 +139,10 @@ export function drawDiamond(x, y, r) {
   ctx.fill();
 }
 
-// The beds: a stalk per bed, as tall as the bed is far along, with a spore on
-// top once it is ripe. A bare bed is a notch in the ground, so an untended farm
+// The plots: a stalk per plot, as tall as the plot is far along, with a spore on
+// top once it is ripe. A bare plot is a notch in the ground, so an untended farm
 // still reads as a farm.
-// A bridge over the cut: a ramp up, a deck, a ramp down. Three lines, which is
+// A bridge over the quarry: a ramp up, a deck, a ramp down. Three lines, which is
 // the whole of it -- the planked deck with a handrail and newels that stood here
 // before was a lot of furniture for a thing you cross in a second and a half.
 // The crew walk it, so it also has to be where groundAt() says it is.
@@ -166,7 +166,7 @@ export function drawFarm() {
   // The farm needs a silhouette or it is just texture on the ground line: a post
   // at either end of the row, with a stub of rail running off it, so the plot
   // reads as somewhere fenced and kept even when nothing is growing. Kept low
-  // and thin -- it is there to bracket the beds, not to be the thing you look at.
+  // and thin -- it is there to bracket the plots, not to be the thing you look at.
   const postH = P * 6;
   ctx.fillStyle = '#000';
   for (const px of [farm.x - FARM_GATE, farm.x + farm.w + FARM_GATE - P]) {
@@ -174,11 +174,11 @@ export function drawFarm() {
     ctx.fillRect(px + (px < farm.x ? P : -P * 2), S.groundY - postH + P * 2, P * 2, P);
   }
 
-  // A bed is three cells across and two deep, with the earth turned over in it.
+  // A plot is three cells across and two deep, with the earth turned over in it.
   // Small, but a shape rather than a scratch, and it has something in it even
   // when nobody has been by to tend it.
-  for (let i = 0; i < S.beds.length; i++) {
-    const x = Math.round(bedX(i) / P) * P;
+  for (let i = 0; i < S.plots.length; i++) {
+    const x = Math.round(plotX(i) / P) * P;
     const soil = S.groundY - P * 2;
 
     ctx.fillStyle = '#000';
@@ -188,7 +188,7 @@ export function drawFarm() {
     ctx.fillRect(x + P, soil, P, P);
     ctx.fillStyle = '#000';
 
-    const grown = S.beds[i];
+    const grown = S.plots[i];
     if (grown <= 0.02) { ctx.fillRect(x, soil - P, P, P); continue; }
 
     const top = soil - Math.round(FARM_H * grown / P) * P;
@@ -197,7 +197,7 @@ export function drawFarm() {
     if (tall > P * 3) ctx.fillRect(x - P, top + P * 2, P, P);   // a leaf either side
     if (tall > P * 5) ctx.fillRect(x + P, top + P * 4, P, P);
 
-    if (grown >= 1) drawMark(S.bedTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
+    if (grown >= 1) drawMark(S.plotTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
   }
 }
 
@@ -268,8 +268,8 @@ export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
     ctx.closePath();
     ctx.fill();
   } else if (kind === SPARK_CELL) {
-    // A spark: four points, longer than they are wide. The cut is a triangle and
-    // the beds are a hexagon -- both of them things with sides -- so this one is
+    // A spark: four points, longer than they are wide. The quarry is a triangle and
+    // the plots are a hexagon -- both of them things with sides -- so this one is
     // a thing with no sides at all, which is what it looked like coming down.
     ctx.beginPath();
     ctx.moveTo(x, y - h);
@@ -736,7 +736,7 @@ export function drawLab() {
 }
 
 // What the rain left, drawn where it landed: one column of the world at a time,
-// stacked on whatever that column has -- the ground, the floor of the cut, or
+// stacked on whatever that column has -- the ground, the floor of the quarry, or
 // the rock itself. The layer is the record. There is no number anywhere saying
 // how buried a thing is that could disagree with the picture.
 //
@@ -777,7 +777,7 @@ export function drawMuck() {
     // Two things tell it apart, doing two different jobs.
     //
     // The colour says it is a different substance: a drab earth brown, beside the
-    // cut's blue and the beds' green and duller than either, because those are
+    // cut's blue and the plots' green and duller than either, because those are
     // saturated for being worth something and this is worth nothing.
     //
     // Solid, and the colour does the whole job. It was holed for a while -- every
@@ -1033,7 +1033,7 @@ export function drawRain() {
 // One bellows for any number of bodies, and it beats faster with each of them up
 // to four, which is the cap the lab's chimney smokes on. One leaf to a body
 // reads beautifully up to four and then lies: nothing caps this roster the way a
-// bench caps the cut or a bed caps the plot, and a fifth body pulls another five
+// bench caps the quarry or a plot caps the plot, and a fifth body pulls another five
 // and a half motes a second out of the sky off a front that has not changed by a
 // cell. The count is written under the building on its roster. What the building
 // says is how hard it is being worked, which a rate can say honestly at any
@@ -1468,7 +1468,7 @@ export function drawScrub() {
 // --- the sign -----------------------------------------------------------------
 // The one place in this yard with writing on it, and it has earned it: every
 // other building says what it is by being the shape it is -- a chimney, a row of
-// beds, a hole in the ground -- and a casino says what it is by shouting. A sign
+// plots, a hole in the ground -- and a casino says what it is by shouting. A sign
 // is what the building *is* rather than a label somebody stuck on it.
 //
 // Letters are five cells square, stacked down a board narrower than the block it
@@ -1588,7 +1588,7 @@ function ringCells(w, h) {
 // come down anywhere, they are worth nothing, and they are gone in a second and
 // a half. Drawn last of the building's parts so they pass in front of the wheel
 // that threw them.
-// The pot is a real bed of sand now -- see casino.js -- so it is blitted like
+// The pot is a real plot of sand now -- see casino.js -- so it is blitted like
 // the yard and the hole rather than drawn a triangle at a time.
 export function drawPotPile() {
   if (!S.casinoOpen || !table.grid || !table.n) return;
@@ -1988,7 +1988,7 @@ export function drawBench() {
 // its own -- a lamp on a quarrier's head, a low notch on a stooping farmhand, a
 // hollow centre on a miner -- and every one of them was a thing to learn before
 // the yard could be read. Where somebody is standing already says what they are
-// doing: the one on the rock is mining it, the one at a bed is tending it. So
+// doing: the one on the rock is mining it, the one at a plot is tending it. So
 // the marks went, and what is left is a body.
 //
 // Drawn here rather than in each branch of `drawWorkers`, because the roster
@@ -2020,10 +2020,10 @@ export function drawBody(x, y) {
 //
 //   helmet  a bare bar. The rock, where the thing on your head is for the rock
 //           landing on it and nothing else.
-//   lamp    a bar with a cell standing proud of the middle of it. The cut is
+//   lamp    a bar with a cell standing proud of the middle of it. The quarry is
 //           the one place in the yard with no daylight in it.
 //   brim    a bar hanging a cell over each side, with a crown on top. Out in the
-//           beds all day, and the only hat here that is about the sun.
+//           plots all day, and the only hat here that is about the sun.
 //
 // A carter wears no hat at all: what you see of a carter is the cart.
 // `tight` pulls the sun hat's brim in by a cell each side. It is for the roster,
@@ -2374,7 +2374,7 @@ export function drawIntro() {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    // out of sight: in the lab, down the cut, in the outhouse, or home
+    // out of sight: in the lab, down the quarry, in the outhouse, or home
     if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
@@ -2553,11 +2553,6 @@ export function draw() {
   // trip out through a second graphics context -- so unlike the dev pass below,
   // this one ships. See press.js.
   press(canvas, ctx, P * S.zoom * S.dpr);
-
-  // And then, only under `vite dev` and only if somebody has switched one on, a
-  // filter held in front of the finished frame. `dev.js` installs this; a
-  // production build never sets it, so this is one property read a frame.
-  if (import.meta.env.DEV && window.__fx) window.__fx(canvas, P * S.zoom * S.dpr);
 }
 
 // push whatever changed into the scratch canvas, then blit it into the world at
@@ -2600,7 +2595,7 @@ export function drawPit() {
 // A core in the pile is drawn at the size a core is everywhere else in the game:
 // the same ring you picked up off the ground and carried here. It holds one cell
 // like any other grain -- it heaps and settles as one -- but a cell is six pixels
-// and a six-pixel ring in a bed of grey speckle is a grain that happens to be
+// and a six-pixel ring in a plot of grey speckle is a grain that happens to be
 // pale. You put it in the hole and it vanished. So the mark is the size of the
 // thing, not the size of its cell, and the dust behind it is covered the way it
 // is behind a core lying in the yard.

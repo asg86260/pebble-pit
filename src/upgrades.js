@@ -8,7 +8,7 @@
 import {
   CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
-  QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
+  QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST
 } from './config.js';
@@ -17,7 +17,7 @@ import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
-import { refreshPiles, lookAt, resite, benches, bedCount } from './world.js';
+import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -75,7 +75,7 @@ export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(1, minerGap(lvl) / 
 export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
-// stone out of the cut, because gear is what stone is for.
+// stone out of the quarry, because gear is what stone is for.
 export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lvl + gear * 2;
 export const haulSpeed = (lvl = S.haulPaceLevel, gear = S.bootsLevel) =>
   HAUL_BASE * (1 + 0.3 * lvl + 0.45 * gear) * mult('haul');
@@ -117,7 +117,7 @@ export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
   'trips/min': '<i class="shard"></i>/min',
-  'beds/min': '<i class="spore"></i>/min'
+  'plots/min': '<i class="spore"></i>/min'
 };
 
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
@@ -189,7 +189,7 @@ export const idle = () => spareHands();
 // station, not to the head that happens to be under it. Buying one used to
 // upgrade a body and nail it to the post for good, which is a decision you make
 // once and then live with for the rest of the run: thirteen carters is thirteen
-// bodies that cannot go and work a bed.
+// bodies that cannot go and work a plot.
 //
 // So the kit stays where the work is. Whoever is standing at the rock picks up
 // whatever helmets are lying on it, and a helmet nobody is wearing lies there
@@ -215,17 +215,17 @@ export const worn = job => S.workers.filter(w => JOB_OF[w.type] === job && w.tra
 export const spareKit = job => Math.max(0, hats(job) - worn(job));
 
 // How many bodies a station has room for. Two of them have a floor plan: a cut
-// holds one body per bench and a plot holds one per bed, and there is nowhere
+// holds one body per bench and a plot holds one per plot, and there is nowhere
 // else down there to put anybody. That is what makes the quarry and the farm
 // worth what they give up the moment they open -- a shard buys the third body
-// somewhere to stand, and a spore buys the fourth a bed -- and it is why the
+// somewhere to stand, and a spore buys the fourth a plot -- and it is why the
 // plus button under either of them goes pale with hands still spare.
 //
 // The rock and the lab have no such plan: a rock is as long as it is and a room
 // holds who it holds.
 export const capOf = job =>
   job === 'quarriers' ? benches() :
-  job === 'farmhands' ? bedCount() :
+  job === 'farmhands' ? plotCount() :
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
@@ -262,7 +262,7 @@ export function rebalance() {
   // A station cannot hold more bodies than it has places to stand. Nothing the
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
-  // other at a bed that is not there.
+  // other at a plot that is not there.
   for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'])
     S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
@@ -300,7 +300,7 @@ export function assign(job, d) {
 
 // Where a body works is not on the bench any more: every station carries its own
 // count and its own two buttons, under the place the work happens. The bench
-// sells things, and moving somebody from the beds to the rock was never a
+// sells things, and moving somebody from the plots to the rock was never a
 // purchase. `roster.js` is where that lives now; the lab keeps a row of its own,
 // because starting a piece of research and staffing it are one job and the lab
 // is where you are standing when you do it.
@@ -362,7 +362,7 @@ const FARM = site({
 // game at once, which spoils the whole chain: each one is a surprise that the
 // last one earns.
 //
-// And the beds earn the cut, rather than the other way round: a crop feeds a
+// And the plots earn the quarry, rather than the other way round: a crop feeds a
 // body and a body swings a pick, so the place that makes bodies stronger opens
 // before the place that gives them better tools.
 const CAVE = site({
@@ -410,7 +410,7 @@ export const UPGRADES = [
   },
   // --- what a swing takes ---------------------------------------------------
   // A core is a rock. There is one of them per rock for ever, and what they are
-  // for is *opening places* -- the cut, the beds, the lab, the table. Selling a
+  // for is *opening places* -- the quarry, the plots, the lab, the table. Selling a
   // pick for one put a rate on the same shelf as a whole new part of the game,
   // and every core spent on a bigger bite was a core not spent on somewhere to
   // send anybody. So the picks are priced in what the ground gives up instead,
@@ -435,7 +435,7 @@ export const UPGRADES = [
     buy: () => S.pickLevel++,
     show: () => S.seenShard
   },
-  // And the crew's is what the crew are fed on. The beds grow the only thing in
+  // And the crew's is what the crew are fed on. The plots grow the only thing in
   // this yard anybody eats, so what a body can take out of the rock is bought in
   // spores -- which also keeps the green from piling up unspent, and gives the
   // two currencies a job each instead of one of them doing all the work.
@@ -481,18 +481,18 @@ export const UPGRADES = [
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel + 1),
     // Dust and nothing else. The crew's first two ladders are the first thing
-    // anybody buys after their own hands, and they come long before the cut or
-    // the beds -- so pricing them in stone or crop was asking for a currency the
+    // anybody buys after their own hands, and they come long before the quarry or
+    // the plots -- so pricing them in stone or crop was asking for a currency the
     // game has not shown you yet, on the two rows most likely to be the first
     // you ever read. The first round is dust. See "The ladder" in DESIGN.md.
     cost: () => rungCost(50, S.haulCarryLevel),
     buy: () => S.haulCarryLevel++,
     show: () => S.crew > 0
   },
-  // --- and the second round, which the cut pays for -------------------------
+  // --- and the second round, which the quarry pays for -------------------------
   // A finite ladder means running out, and running out is the game telling you
   // to go and open the next place. These are what is on the other side of that:
-  // the same two things about a pair of hands, bought again in the stone the cut
+  // the same two things about a pair of hands, bought again in the stone the quarry
   // gives up. They are not more rungs on the ladders above -- those are finished
   // and say so -- they are gear, which is what blue is for.
   {
@@ -539,14 +539,14 @@ export const UPGRADES = [
   //
   // Opening one does, and should: four cores and a row in a menu, and the thing
   // bought is off the left of the screen -- without the glide, nothing appears
-  // to happen. A bench or a bed is not that. You are standing at the bench with
+  // to happen. A bench or a plot is not that. You are standing at the bench with
   // the board open, buying the next one and the one after that, and the view
   // walking off to the far end of the yard between each of them is the game
   // taking the board out from under you to show you something you have already
   // seen. Nothing here is a surprise worth interrupting for.
   //
-  // The cut's own two rows -- how deep it goes and how fast it works -- are on
-  // a board at the cut now, along with the farm's at the farm. See quarry.js.
+  // The quarry's own two rows -- how deep it goes and how fast it works -- are on
+  // a board at the quarry now, along with the farm's at the farm. See quarry.js.
   // The school is a building you put up, like the lab, and it is priced in what
   // the quarry gives so that the quarry's output has somewhere to go the day it
   // starts arriving.
@@ -618,7 +618,7 @@ export const UPGRADES = [
   },
   // The one thing a core buys, and the only row in the game with a bill rather
   // than a price. A core out of the rock, the dust the yard makes, the stone the
-  // cut gives up and the crop off the beds: everything the operation does, on
+  // cut gives up and the crop off the plots: everything the operation does, on
   // one row. You cannot buy it by being good at one thing.
   {
     key: 'unlocktower',
@@ -652,7 +652,7 @@ export const UPGRADES = [
     name: 'build the lab',
     cost: () => LAB_DUST,
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
-    // Still behind the cut or the beds: the lab multiplies what a place does, so
+    // Still behind the quarry or the plots: the lab multiplies what a place does, so
     // it means nothing until there is a second place for it to be about.
     show: () => !S.labOpen && (S.seenShard || S.seenSpore)
   },

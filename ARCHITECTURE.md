@@ -26,7 +26,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
 | `rock.js` | making a rock, standing it, hitting it, what comes off | yes |
 | `quarry.js` | the open cut, and the crew working its floor | yes |
-| `farm.js` | the beds, and farmhands tending them | yes |
+| `farm.js` | the plots, and farmhands tending them | yes |
 | `lab.js` | the research, who works it, and the multipliers it pays out | yes |
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
@@ -62,7 +62,7 @@ its count goes in `JOBS` and on `S`. Add a `type` branch in `updateWorkers` and 
 shape in `drawWorkers`. `S.haulers` is never assigned anywhere but `rebalance()`
 — it is whatever is left over once every job has taken its share.
 
-**A new bed of sand** — a farm bed, say. `grid.js` takes any object of
+**A new plot of sand** — a farm plot, say. `grid.js` takes any object of
 the shape documented at the top of it, with optional hooks:
 
 ```
@@ -104,7 +104,7 @@ Sites are placed by their distance from the rock, so adding one moves nothing
 else. Unlocking one should `lookAt()` it: it is several cores and a row in a
 menu, and the thing bought is off the left of the screen.
 
-**Anything that piles up is a cell in a bed.** Dust, shards, spores, sparks and
+**Anything that piles up is a cell in a plot.** Dust, shards, spores, sparks and
 cores are all values in the same grids, told apart by `isDust` and by the mark
 drawn on them. Do not give a new one a physics of its own: it was tried, and the
 rules the two systems did not share — the ceiling, the lattice, the angle of
@@ -165,7 +165,7 @@ all runs, and every one of those failures was the same real bug wearing a
 different hat. `__test()` reports its slowest
 groups; when one of them grows, it is almost always a check sitting through
 something the game does slowly on purpose — a walk the length of the world, a
-bed ripening, a wizard floating the length of the sky. `__place(type, x)` stands a body
+plot ripening, a wizard floating the length of the sky. `__place(type, x)` stands a body
 where it is needed and `__levels({...})` buys the pace, which is how those get
 back under a few seconds without testing anything less.
 

@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_BEDS0 } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0 } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
@@ -202,7 +202,7 @@ export function persist() {
     labDone: S.labDone,
     labLeft: S.labLeft,
     tendLevel: S.tendLevel,
-    bedLevel: S.bedLevel,
+    plotLevel: S.plotLevel,
     labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
@@ -244,8 +244,8 @@ export function persist() {
     pot: S.pot && { ...S.pot },
     chip: S.chip,
     mult: { ...S.mult },
-    beds: S.beds.map(b => Math.round(b * 100)),
-    bedTone: [...S.bedTone],
+    plots: S.plots.map(b => Math.round(b * 100)),
+    plotTone: [...S.plotTone],
     boulder: gridToString(),
     gw: S.gw,
     gh: S.gh,
@@ -318,14 +318,14 @@ export function restore() {
     S.labDone = null;
     S.labLeft = 0;
     S.tendLevel = 0;
-    S.bedLevel = 0;
+    S.plotLevel = 0;
     S.labOpen = false;
     S.casinoOpen = false;
     S.pot = null;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
-    S.beds = [];
-  S.bedTone = [];
-    S.bedTone = [];
+    S.plots = [];
+  S.plotTone = [];
+    S.plotTone = [];
     return;
   }
   S.stored = s.stored;
@@ -339,8 +339,8 @@ export function restore() {
   S.seenBench = !!s.seenBench;
   S.seenSects = Array.isArray(s.seenSects) ? s.seenSects : [];
   S.seenRows = Array.isArray(s.seenRows) ? s.seenRows : [];
-  // How far the hole has been dug decides how big the bed is, so it goes in
-  // before the bed is laid out -- and the saved pile only fits a bed of the
+  // How far the hole has been dug decides how big the plot is, so it goes in
+  // before the plot is laid out -- and the saved pile only fits a plot of the
   // shape it came out of.
   // A save from before the hole was something you dug has one already: it was
   // the whole thing from the first frame, and it keeps it.
@@ -372,9 +372,9 @@ export function restore() {
   // How far the two growing sites have been grown. A save from before either of
   // them grew has everybody it had standing in a place that now has room for
   // two, so the places are grandfathered up to the crew that is already in
-  // them: the game does not take a body off a bed it used to have.
+  // them: the game does not take a body off a plot it used to have.
   S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
-  S.bedLevel = Math.max(+s.bedLevel || 0, (s.farmhands || 0) - FARM_BEDS0);
+  S.plotLevel = Math.max(+s.plotLevel || 0, (s.farmhands || 0) - FARM_PLOTS0);
   S.farmhands = s.farmhands || 0;
   S.labbers = s.labbers || 0;
   // a piece of research keeps whatever the crew already put into it
@@ -476,10 +476,10 @@ export function restore() {
   S.hand = null;                 // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
-  if (Array.isArray(s.beds)) S.beds = s.beds.map(b => (+b || 0) / 100);
-  // a ripe bed keeps the spore that grew on it, tone and all
-  if (Array.isArray(s.bedTone)) S.bedTone = s.bedTone.map(v => +v || 0);
-  resite();                    // the cut is as deep and the plot as wide as it was
+  if (Array.isArray(s.plots)) S.plots = s.plots.map(b => (+b || 0) / 100);
+  // a ripe plot keeps the spore that grew on it, tone and all
+  if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
+  resite();                    // the quarry is as deep and the plot as wide as it was
   restoreCrew(s.who);          // the same people, where they were, with what they have done
   syncWorkers();               // and anybody the counts say is missing
   if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
@@ -560,7 +560,7 @@ export function reset() {
   S.labDone = null;
   S.labLeft = 0;
   S.tendLevel = 0;
-  S.bedLevel = 0;
+  S.plotLevel = 0;
   S.labOpen = false;
   S.labBoardOpen = false;
   S.casinoOpen = false;
@@ -600,8 +600,8 @@ export function reset() {
   S.tableAir = [];
   S.falling = [];
   for (const k of Object.keys(S.mult)) S.mult[k] = 0;
-  S.beds = [];
-  S.bedTone = [];
+  S.plots = [];
+  S.plotTone = [];
   syncWorkers();
   resetRates();
   floor.grid.fill(0);

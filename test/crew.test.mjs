@@ -4,7 +4,7 @@
 // Node checks: the yard is run rather than watched, so a walk the length of the
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, cutFloorAt, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFloorAt, P, WORKER } from './helpers.mjs';
 
 // A crew that has been stood down is still a crew standing there. Frozen
 // squares read as a bug; shifting about reads as waiting.
@@ -99,7 +99,7 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // where a body starts from is not what this check is about, and a fixed ten
   // seconds was only ever long enough because of where the check above it had
   // left somebody standing.
-  // Down the hole, in feet terms. The cut is what has been taken out of the
+  // Down the hole, in feet terms. The quarry is what has been taken out of the
   // ground now rather than a shape the yard came with, so a body sent to a
   // quarry nobody has worked yet is stood on the ground line -- there is nothing
   // to climb out of, and a check about climbing out has nothing to watch.
@@ -136,16 +136,16 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // ladder is there so that it is not.
   const climbing = trail.filter(p => p.y > s0.groundY - WORKER);
   const rose = trail.slice(1).filter((p, i) => p.y < trail[i].y - 1 && p.y > s0.groundY - WORKER);
-  // A body walking the cut floor towards the ladder rises too: the floor is
+  // A body walking the quarry floor towards the ladder rises too: the floor is
   // benched, so a bench it steps up is a sample that went up without being at
   // the ladder. That is the floor carrying it, not the body climbing the wall --
-  // so a rise counts if the body is standing on the cut's floor where it
+  // so a rise counts if the body is standing on the quarry's floor where it
   // happens to be, and is a fault if it is somewhere in the air.
-  const onFloor = p => Math.abs(p.y - (cutFloorAt(p.x + WORKER / 2) - WORKER)) <= 3;
+  const onFloor = p => Math.abs(p.y - (quarryFloorAt(p.x + WORKER / 2) - WORKER)) <= 3;
   const steps = trail.slice(1).map((p, i) => Math.abs(p.x - trail[i].x));
   return [
     ok(digging.t === 'q' && digging.y > s0.groundY,
-       'it starts at work, down in the cut', `${digging.x},${digging.y}`),
+       'it starts at work, down in the quarry', `${digging.x},${digging.y}`),
     ok(off.workers === 1 && off.crew === 1,
        'moving it is one body, not one deleted and another made',
        `${off.workers} bodies, ${off.crew} on the payroll`),
@@ -154,7 +154,7 @@ group('a body walks to its new work instead of appearing at it', async () => {
        `${off.miners} mining, ${off.quarriers} in the quarry`),
     ok(climbing.length > 0 && rose.length > 0 &&
        rose.every(p => Math.abs(p.x - s0.quarryFaceX) < WORKER || onFloor(p)),
-       'it comes out of the cut up the ladder, and nowhere else',
+       'it comes out of the quarry up the ladder, and nowhere else',
        `${rose.length} rising samples, ladder at ${s0.quarryFaceX}`),
     // Bounded by the crew's own legs rather than by a number written here: a
     // commute is walked at whatever a body walks at with its hands free, so a
@@ -446,11 +446,11 @@ group('clearing a handful puts the crew back to work', async () => {
 group('a laden body banks what it has rather than crossing the yard', async () => {
   window.__reset();
   openSites();
-  window.__crew(2, 4, 0, 2);                  // two on the beds: green, at the far end
+  window.__crew(2, 4, 0, 2);                  // two on the plots: green, at the far end
   window.__levels({ haulCarryLevel: 5 });     // hands big enough to be part-full
   const s0 = state();
   for (let x = s0.pitX - 900; x < s0.pitX - 60; x += P * 8) window.__pile(x, 6);
-  run(20);                                    // let the beds come in
+  run(20);                                    // let the plots come in
 
   const cap = state().haulCap;
   const banked0 = state().pit;
@@ -505,7 +505,7 @@ group('a laden body banks what it has rather than crossing the yard', async () =
 group('a heap that is backing up is cleared before the finds are collected', async () => {
   window.__reset();
   openSites();
-  window.__crew(4, 4, 0, 2);                  // and two on the beds, paying green
+  window.__crew(4, 4, 0, 2);                  // and two on the plots, paying green
   window.__levels({ haulCarryLevel: 5, pickLevel: 6, minerPickLevel: 6 });
   run(30);                                    // long enough to be a going concern
 

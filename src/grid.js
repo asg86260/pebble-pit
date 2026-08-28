@@ -1,7 +1,7 @@
 // The falling-sand grid, and nothing else.
 //
 // A grid is any object of the shape below. Nothing in here knows what a rock or
-// a pit or a worker is, so a new one -- a quarry floor, a farm bed -- is a new
+// a pit or a worker is, so a new one -- a quarry floor, a farm plot -- is a new
 // object, not new code.
 //
 //   { x, y, cols, rows, p, grid }        where and how big, and the cells
@@ -19,7 +19,7 @@ import { SHADES } from './config.js';
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 
 // A cell holds a shade of dust, or something that is not dust at all: a core,
-// a shard or a spore. They live in the same beds and move the same way;
+// a shard or a spore. They live in the same plots and move the same way;
 // what they are not is worth one dust.
 export const isDust = v => v > 0 && v <= SHADES.length;
 

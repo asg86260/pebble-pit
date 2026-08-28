@@ -18,13 +18,13 @@ import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF } from './upgrades.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
-import { stepFarmhand, newFarmhand, bedX } from './farm.js';
+import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
-         rockMuck, cutMuck, bedMuck,
+         rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
 
@@ -199,7 +199,7 @@ function duck(w, zone) {
 export const hireSpot = () => doorAt();
 
 // A body that has knocked off and gone in. It is the same idea as a labber
-// through the door or a quarrier down the cut: out of sight, still counted, and
+// through the door or a quarrier down the quarry: out of sight, still counted, and
 // still on the same job the moment it comes back out.
 export const atHome = w => !!w.inside;
 export const homeCount = () => S.workers.filter(atHome).length;
@@ -272,8 +272,8 @@ export const newRecord = () => ({
   name: newName(),
   lived: 0,                        // milliseconds on the payroll
   mined: 0,                        // pixels off the rock
-  quarried: 0,                     // shards brought up out of the cut
-  farmed: 0,                       // spores taken off the beds
+  quarried: 0,                     // shards brought up out of the quarry
+  farmed: 0,                       // spores taken off the plots
   stored: 0,                       // grains put in the hole
   at: {}                           // and time spent on each job
 });
@@ -333,7 +333,7 @@ function newJanitor() {
 function stationX(type) {
   if (type === 'miner') return S.cx - WORKER / 2;
   if (type === 'quarrier') return quarryFace();
-  if (type === 'farmhand') return bedX(0);
+  if (type === 'farmhand') return plotX(0);
   if (type === 'labber') return labDoor() - WORKER / 2;
   if (type === 'scrubber') return scrubDoor() - WORKER / 2;
   if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
@@ -429,7 +429,7 @@ function downTheHole(w, to, dt) {
 
   // Along the top of the pile to the patch, and shovel it. The surface is not
   // level -- a pile heaps under the lip and runs away downhill -- so it walks the
-  // shape of it the way a quarrier walks the floor of the cut.
+  // shape of it the way a quarrier walks the floor of the quarry.
   if (w.inPit === 'dig') {
     if (to == null || !overPitMouth(to)) { w.inPit = 'cross'; return; }
     const d = to - WORKER / 2 - w.x;
@@ -486,7 +486,7 @@ function downTheHole(w, to, dt) {
 // other mess. The yard makes its own work. A bigger crew is more hands and a
 // bigger mess, which is a nicer shape for a number to have than "more hands".
 //
-// Nowhere it cannot be cleaned up. The rock, the cut and the beds are held out
+// Nowhere it cannot be cleaned up. The rock, the quarry and the plots are held out
 // of the shovelling -- see `onSite` in smog.js -- so a body standing on one of
 // them holds on and goes when it is next somewhere the crew can reach. That is
 // also why nothing is dropped by a body that is inside the lab or down a hole:
@@ -778,7 +778,7 @@ function errand(w, job, what) {
 
 // Put a body that has just been stood down onto a job that is short of one,
 // where it stands. Its `type` changes at once rather than on arrival: `want`,
-// `pickBed`, `elbowed` and `seatX` all filter on type, and somebody walking to a
+// `pickPlot`, `elbowed` and `seatX` all filter on type, and somebody walking to a
 // job is on that job as far as the books are concerned. What it does not do is
 // any of the work, until it gets there.
 function retask(w, type) {
@@ -797,7 +797,7 @@ function retask(w, type) {
   // Out of the house. A body that had knocked off is stood indoors and is not
   // drawn -- that is what `inside` is for -- and nothing else in the game clears
   // it, because nothing else in the game takes somebody off carrying. Put one on
-  // the quarry straight from the house and it went down the cut, worked the
+  // the quarry straight from the house and it went down the quarry, worked the
   // face, brought shards up and was invisible the whole time.
   w.inside = false;
   const job = JOB_OF[type];
@@ -830,7 +830,7 @@ function retask(w, type) {
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
 
 function stepCommute(w, zone) {
-  // Out of the hole by the way it came in. A body down the cut walks along the
+  // Out of the hole by the way it came in. A body down the quarry walks along the
   // floor to the foot of the ladder and goes up it: rising through the wall
   // wherever it happened to be standing was the same not-a-thing-that-happens
   // as sinking into the ground, and the ladder is there to be used both ways.
@@ -838,7 +838,7 @@ function stepCommute(w, zone) {
   // Measured at the feet, not the top of the head. A body is three cells tall,
   // and a cut that has only just been started is shallower than that -- so a
   // quarrier standing in a hole up to its shoulders read as being *above* ground
-  // and climbed straight out through the dirt. It never showed while the cut was
+  // and climbed straight out through the dirt. It never showed while the quarry was
   // a fixed hole a body could only ever be right at the bottom of; it showed the
   // moment the hole started at nothing and got deeper.
   if (w.y + WORKER > S.groundY) {
@@ -853,7 +853,7 @@ function stepCommute(w, zone) {
 
   // There used to be a block here that got the body to the right height *before*
   // letting it walk at all: "the level of the ground first, and only then along
-  // it". Its reason was the cut -- a quarrier setting off from the bottom of a
+  // it". Its reason was the quarry -- a quarrier setting off from the bottom of a
   // hole would otherwise rise through the wall on the diagonal -- and that reason
   // is served above, where a body below the ground line walks to the foot of the
   // ladder and goes up it.
@@ -872,7 +872,7 @@ function stepCommute(w, zone) {
   // Except below the ground line, where the old rule still holds and has to:
   // a body at the foot of the ladder goes *up the ladder* before it goes
   // anywhere, or it sets off across the yard on a diagonal through the wall of
-  // the cut. Standing still while it climbs is right here -- that is what a
+  // the quarry. Standing still while it climbs is right here -- that is what a
   // ladder is -- and it is only ever a second of it.
   if (w.y + WORKER > S.groundY + 1) {
     const top = walkY(w.x + WORKER / 2);
@@ -1230,7 +1230,7 @@ function strollTo(w) {
 }
 
 // Nobody stands inside anybody. Two idlers who end up on the same spot drift
-// apart a little, the way the gang on the rock and the crew down the cut do.
+// apart a little, the way the gang on the rock and the crew down the quarry do.
 function elbowIdle(w) {
   for (const o of S.workers) {
     if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'idle') continue;
@@ -1284,7 +1284,7 @@ function nearestDust(x, taken) {
     for (const c of [from - d, from + d]) {
       // Anything in a column is worth fetching, barred or not: a barred column
       // normally holds nothing, and when it does hold something -- a shard set
-      // down at the beds -- somebody should still go out and get it.
+      // down at the plots -- somebody should still go out and get it.
       if (c < 0 || c > last || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
@@ -1294,7 +1294,7 @@ function nearestDust(x, taken) {
 
 // Something that is not dust is worth crossing the yard for: it is one grain and
 // it is worth a whole shard. Workers take the nearest column of anything, so
-// without this a shard out at the beds waits for the whole yard to be swept
+// without this a shard out at the plots waits for the whole yard to be swept
 // clean first -- which, in a yard with a working crew, is never.
 function nearestMark(w, taken) {
   let best = -1, bestD = Infinity;
@@ -1318,7 +1318,7 @@ const roomLeft = w => load(w) - (w.carry || 0);
 // Whether anything on the ground is backing up.
 //
 // A pile that fills stops the station behind it: the rock stops coming apart,
-// the cut stops being cut. A find lying on the ground stops nothing at all -- it
+// the quarry stops being cut. A find lying on the ground stops nothing at all -- it
 // is worth money and it is in nobody's way. So while a heap is near its limit
 // the dust is the urgent thing and the find can wait, which is the other way
 // round from the rest of the time.
@@ -1387,7 +1387,7 @@ export function updateWorkers(now, dt) {
       muckTaken.add(w.muckAt);
     }
     // The patch, and the ground to work it from. They are the same place out on
-    // the yard and they are not on the rock, the cut or the beds: a body cannot
+    // the yard and they are not on the rock, the quarry or the plots: a body cannot
     // stand on a site, so it walks to the edge of it and reaches across. The
     // claim is still the muck's own column, so it is held until that column is
     // clear rather than until the ground beside it is.
@@ -1613,22 +1613,22 @@ export function updateWorkers(now, dt) {
     }
 
     // A mess on its own site comes before the station, the same as it does for
-    // the gang on the rock: what is lying on the cut or on the beds is in the
+    // the gang on the rock: what is lying on the quarry or on the plots is in the
     // way of the body working it. This used to run only when their own pile was
     // full -- their branches end in `continue`, above the shovelling -- so a
     // working quarry and a working farm meant two bodies walking over the muck
-    // all day, and the layer on the cut and the beds could only be dug and
+    // all day, and the layer on the quarry and the plots could only be dug and
     // tended through, a cell at a time, by whoever happened to be there.
     //
     // The rest of the yard they leave to the haulers -- unless their own pile is
     // full, in which case there is nothing else for them to be doing.
     //
-    // Only from the surface. A quarrier at the bottom of the cut walks to the
+    // Only from the surface. A quarrier at the bottom of the quarry walks to the
     // ladder and climbs it first -- see `stepQuarrier` -- and arrives here on
     // the ground like anybody else.
     const upTop = w.y + WORKER <= S.groundY + 1;
-    const mine = w.type === 'quarrier' ? cutMuck() > 0 || S.pileFull.quarry
-               : w.type === 'farmhand' ? bedMuck() > 0 || S.pileFull.farm : false;
+    const mine = w.type === 'quarrier' ? quarryMuck() > 0 || S.pileFull.quarry
+               : w.type === 'farmhand' ? plotMuck() > 0 || S.pileFull.farm : false;
     if (mine && upTop && takeMuck(w)) continue;
     // and back to the station when the mess is gone or the pile has been
     // cleared: `to` is the walk to it, for both of them, so nobody is put back.

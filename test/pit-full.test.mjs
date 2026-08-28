@@ -16,8 +16,8 @@ group('filling the pit stops at what the hole holds', async () => {
   const s = state();
   return [
     // it does not stop at the brim -- it heaps over the mouth -- but it stops
-    // at what the bed will hold, and never gets out onto the ground
-    ok(s.pitDust <= cap, 'the pile stops at what the bed holds',
+    // at what the plot will hold, and never gets out onto the ground
+    ok(s.pitDust <= cap, 'the pile stops at what the plot holds',
        `${s.pitDust} of ${cap}`),
     ok(s.pitDust > (3600 / s.pitGrain) * (276 / s.pitGrain),
        'having heaped up over the mouth on the way', `${s.pitDust}`),

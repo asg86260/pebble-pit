@@ -14,7 +14,6 @@ import { S } from './state.js';
 import { SKY } from './smog.js';
 import { TUNABLE, tune, tuned } from './config.js';
 import { relayout } from './main.js';
-import { DIALS, DEFAULTS, PRESETS, setAmount, setAll, amounts, present } from './shader.js';
 
 const KEY = 'boulder-clicker/dev-open';
 const el = document.createElement('div');
@@ -77,8 +76,8 @@ line('give', box => {
   button(box, 'spore', () => window.__grant({ spores: 5 }));
 });
 
-// Every building, not the three that happened to be here first. The cut and the
-// beds carry their own boards now, and the school, the house and the table are
+// Every building, not the three that happened to be here first. The quarry and the
+// plots carry their own boards now, and the school, the house and the table are
 // all places you walk to -- so all of them open from one line.
 line('open', box => {
   button(box, 'quarry', () => { S.quarryOpen = !S.quarryOpen; S.seenCore = true; });
@@ -145,73 +144,6 @@ for (const t of TUNABLE) {
     box.appendChild(slider);
     box.appendChild(shown);
   });
-}
-
-// A filter over the finished frame. One dial per effect rather than a list to
-// pick from, because a look is a *mix*: a television is curvature and a mask and
-// scanlines and a fringe, and choosing one of those is not the same as having a
-// little of each.
-//
-// The tube dials are here to be looked at rather than because they suit the
-// game -- they are built for bright things on a dark screen, and this is black
-// on a white page. In small amounts that is not fatal, and small amounts are
-// what a dial is for. The press dials are the same pipeline pointed at what this
-// game actually is.
-//
-// None of it ships. The pass hands a whole screen of pixels to the GPU every
-// frame; on a phone that would be the most expensive thing in the frame, and
-// nothing here has earned that yet.
-const FX_KEY = 'boulder-clicker/dev-fx';
-window.__fx = present;                       // render.js calls this if it is set
-
-const fxSliders = {};
-
-function fxSave() {
-  localStorage.setItem(FX_KEY, JSON.stringify(amounts()));
-}
-
-// put a whole mix on the dials at once
-function fxLoad(mix) {
-  setAll(mix);
-  for (const [k, el] of Object.entries(fxSliders)) {
-    el.slider.value = mix[k] || 0;
-    el.shown.textContent = (+(mix[k] || 0)).toFixed(2);
-  }
-  fxSave();
-  S.dirty = true;
-}
-
-line('filter', box => {
-  for (const name of Object.keys(PRESETS)) {
-    button(box, name, () => fxLoad(PRESETS[name]));
-  }
-});
-
-for (const d of DIALS) {
-  line(`  ${d.key}`, box => {
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = 0;
-    slider.max = d.max;
-    slider.step = 0.05;
-    const shown = document.createElement('b');
-    slider.addEventListener('input', () => {
-      setAmount(d.key, +slider.value);
-      shown.textContent = (+slider.value).toFixed(2);
-      fxSave();
-      S.dirty = true;
-    });
-    box.appendChild(slider);
-    box.appendChild(shown);
-    fxSliders[d.key] = { slider, shown };
-  });
-}
-
-// whatever was on the dials last time, or the mix the file starts at
-{
-  let was = null;
-  try { was = JSON.parse(localStorage.getItem(FX_KEY)); } catch { was = null; }
-  fxLoad(was && typeof was === 'object' ? was : DEFAULTS);
 }
 
 line('', box => {

@@ -11,7 +11,7 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
-import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_BEDS0 , tune } from './config.js';
+import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
 import { blocked, resite, clampCam } from './world.js';
@@ -89,11 +89,11 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   S.janitors = 0;
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   if (wz > 0) openMeteor();
-  // The cut and the plot only hold so many, so a hook asked for four down the
+  // The quarry and the plot only hold so many, so a hook asked for four down the
   // quarry gets a quarry with four benches in it rather than two of the four
   // sent back to carrying dust.
   S.benchLevel = Math.max(S.benchLevel, sp - QUARRY_BENCH0);
-  S.bedLevel = Math.max(S.bedLevel, f - FARM_BEDS0);
+  S.plotLevel = Math.max(S.plotLevel, f - FARM_PLOTS0);
   resite();
   rebalance();                                      // and the rest carry dust
   if (sp > 0) S.quarryOpen = true;
@@ -157,19 +157,19 @@ export const fillBoard = () => {
   refresh(document.getElementById('shop'), UPGRADES, null);
 };
 
-// dev: put every bed back to bare earth. A bed nobody is working keeps its crop
+// dev: put every plot back to bare earth. A plot nobody is working keeps its crop
 // for ever, so a check that wants to watch one come ripe has to start from a
 // farm that is not already standing full of somebody else's.
-export const beds = () => {
-  S.beds = S.beds.map(() => 0);
-  S.bedTone = S.bedTone.map(() => 0);
+export const plots = () => {
+  S.plots = S.plots.map(() => 0);
+  S.plotTone = S.plotTone.map(() => 0);
   S.dirty = true;
 };
 
 export const levels = (o = {}) => {             // set upgrade levels, for weighing balance
   for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'minerSpeedLevel',
                    'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
-                   'quarryPaceLevel', 'tendLevel', 'benchLevel', 'bedLevel']) {
+                   'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();

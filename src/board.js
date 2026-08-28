@@ -38,7 +38,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
-// The cut is a hole, so what you stand at is its mouth rather than the whole
+// The quarry is a hole, so what you stand at is its mouth rather than the whole
 // shaft: a rectangle that reaches to the floor of it would put the board
 // underground, and deeper every time you bought a bench. The plots are flat and
 // need no such care.
@@ -49,7 +49,7 @@ const anchor = which => standAt[which];
 const standAt = { bench, lab, school, casino, scrub, farm, tower,
                   quarry: quarryMouth,
                   get house() { return houseRect(); } };
-// Asked for when it is wanted, not gathered at load time. The cut and the plots
+// Asked for when it is wanted, not gathered at load time. The quarry and the plots
 // are drawn by files this one already reads, so the imports come round in a ring
 // -- and a table built while the ring is still closing gets whichever of them
 // had not been reached yet as `undefined`. Reading it inside a function is the
@@ -83,7 +83,7 @@ const standing = which =>
   which === 'tower' ? S.towerOpen :
   which === 'house' ? S.crew > 0 : false;
 
-// Where a station's mark goes: the middle of it, on the ground. The cut is the
+// Where a station's mark goes: the middle of it, on the ground. The quarry is the
 // exception in the one way it always is -- it is a hole, so the middle of it is
 // thin air and the mark would hang over nothing. Its mark stands at the near
 // lip, which is the end you walk up to.
@@ -134,12 +134,12 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-// The cut is the hole, and only the hole.
+// The quarry is the hole, and only the hole.
 //
 // A bridge crosses it -- a ramp up, a deck straight over the mouth, a ramp down
 // -- and the crew walk every foot of that. Aiming at the mouth meant aiming at
 // the deck, which is a thing you cross on the way to somewhere else: walking a
-// hauler over the cut opened the cut's board every time. So what you point at is
+// hauler over the quarry opened the quarry's board every time. So what you point at is
 // the ground that is missing. Below the line and between the walls, padded a
 // cell sideways and no further, because a cell further either way is the ramp.
 const hole = () => ({ x: quarry.x, y: S.groundY, w: quarry.w, h: quarry.h });
@@ -251,7 +251,7 @@ function place(el, at) {
   // A board is seated just above the station it belongs to, and then held inside
   // the window -- and a board taller than the room above its station is pushed
   // back down by that second rule. The quarry feels it first because it is the
-  // one station whose stand-point is the ground line itself (the cut is a hole,
+  // one station whose stand-point is the ground line itself (the quarry is a hole,
   // so what you stand at is its mouth), so its board starts lowest and is the
   // first to land on the counters. The counters are how you put somebody on the
   // job the board is about, so covering them with it is the worst thing it could
