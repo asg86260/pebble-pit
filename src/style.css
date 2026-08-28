@@ -25,7 +25,12 @@ canvas {
 /* the boards that open at the workbench and at the lab */
 .panel {
   position: fixed;
-  left: 0; top: 0;
+  /* Pinned to the bottom-left of the window and moved from there, so the number
+     the transform carries is how far *up* the board's bottom edge stands. A
+     board that grows a row grows upwards and the edge it stands on stays where
+     it is -- see `place`, and the note there about walking between two stations
+     close together. */
+  left: 0; top: auto; bottom: 0;
   z-index: 10;                 /* the canvas is fixed too, and comes after it */
   /* Kept on a layer of its own and left alone there. The canvas underneath
      repaints every frame; a menu that keeps having its layer rebuilt over the

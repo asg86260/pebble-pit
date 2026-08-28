@@ -1445,14 +1445,17 @@ const TESTS = [
         window.__placeBoard();
         await sleep(60);
         // the window is not really this size, so read what placeBoard wrote
-        // rather than where the browser drew it
-        // it is placed with a transform now, so that is where its corner is
+        // rather than where the browser drew it.
+        //
+        // The board is pinned to the foot of the window and moved from there, so
+        // what the transform carries is how far its bottom edge stands *above*
+        // that foot -- see `place`. It used to be the top corner, which is the
+        // one number about a board that changes the instant its contents do.
         const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform) || [0, 0, 0];
-        const left = +m[1], top = +m[2];
+        const left = +m[1], bottom = -(+m[2]);
         // the board's own size comes from CSS, which follows the real window and
         // not the pretend one, so only require it to be tucked in where it fits
         const bw = el.offsetWidth, bh = el.offsetHeight;
-        const bottom = h - top - bh;
         const room = bw <= w && bh <= h;
         checks.push(ok(left >= 0 && bottom >= 0 &&
                        (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),
@@ -1820,10 +1823,11 @@ const TESTS = [
         window.__placeBoard();
         await sleep(60);
         // it is placed with a transform, so that is where its corner is
+        // the transform carries how far the board's bottom edge stands above the
+        // foot of the window, not where its top corner is -- see `place`
         const m = /translate3d\(([-\d.]+)px, ([-\d.]+)px/.exec(el.style.transform) || [0, 0, 0];
-        const left = +m[1], top = +m[2];
+        const left = +m[1], bottom = -(+m[2]);
         const bw = el.offsetWidth, bh = el.offsetHeight;
-        const bottom = h - top - bh;
         const room = bw <= w && bh <= h;
         checks.push(ok(left >= 0 && bottom >= 0 &&
                        (!room || (left + bw <= w + 1 && bottom + bh <= h + 1)),

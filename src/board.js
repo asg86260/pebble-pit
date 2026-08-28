@@ -151,15 +151,32 @@ function place(el, at) {
   // land on.
   const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
-  const highest = S.H - h - GAP;
+  // The top clamp takes the board at its tallest. `sized` is what the sheet
+  // measured when it was filled, and `offsetHeight` is what the browser is
+  // actually laying out right now -- and they part company whenever the window
+  // being reasoned about is not the window on the screen. Clamping on the
+  // smaller of the two lets the taller reality poke out of the top.
+  const highest = S.H - Math.max(h, el.offsetHeight) - GAP;
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
-  const y = Math.round(S.H - bottom - h);
 
-  if (x === putX && y === putY) return;         // it has not moved: leave the layer alone
+  // Moved by its *bottom* edge, not its top.
+  //
+  // A board is seated on the bottom edge -- that is what keeps it standing on
+  // its station while the purse beside it grows a row. But it was being moved by
+  // the top-left corner, with the top worked out from the height, and the height
+  // is the one thing about a board that changes the instant you arrive: the
+  // contents are swapped in one frame and the glide across takes a third of a
+  // second. So a walk from the bench to the house -- two stations close enough
+  // that the box barely travels -- put a taller sheet at the old top corner and
+  // hung its bottom through the bench for the whole of the slide.
+  //
+  // Off the bottom, a taller board grows *upwards* into the empty sky, which is
+  // where a menu has room, and the edge it stands on never moves at all.
+  if (x === putX && bottom === putY) return;    // it has not moved: leave the layer alone
   putX = x;
-  putY = y;
-  el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  putY = bottom;
+  el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
 }
 
 const GAP = 4;                             // never flush against the edge
@@ -189,9 +206,15 @@ const GAP = 4;                             // never flush against the edge
 // names, and walking across to them, is being on the board.
 const SAFE_SLACK = 12;             // and a little grace either side of that
 
-// where the board actually is on screen, from the numbers `place` already keeps
-const panelRect = () => putX === null ? null
-  : { x: putX, y: putY, w: sized.w || panelEl.offsetWidth, h: sized.h || panelEl.offsetHeight };
+// Where the board actually is on screen, from the numbers `place` already keeps.
+// `putY` is how far its bottom edge stands above the foot of the window -- that
+// is what the board is seated by, see `place` -- and everything that reads this
+// wants the top corner, so it is turned back here rather than in four places.
+const panelRect = () => {
+  if (putX === null) return null;
+  const h = sized.h || panelEl.offsetHeight;
+  return { x: putX, y: S.H - putY - h, w: sized.w || panelEl.offsetWidth, h };
+};
 
 // and where the station it belongs to is: the ground under the middle of it
 function apexAt(which) {
