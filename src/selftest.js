@@ -519,9 +519,13 @@ const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      ok(cells.length > 0 && cells.every(c => c.length === 3), 'rows are three columns',
+      // name, rung, gain, price. The rung came out of the name and into a column
+      // of its own so the ladders line up under each other.
+      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are four columns',
          JSON.stringify(cells[0])),
-      ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
+      // name, rung, gain, price -- so the two that must never be empty are the
+      // first and the last
+      ok(cells.every(c => c[0] && c[3]), 'every row has a name and a price',
          JSON.stringify(cells)),
       // What a row says in the middle is either where a count is going -- "4 -> 5"
       // -- or what share a rate gains, "+30%".
@@ -534,7 +538,7 @@ const TESTS = [
       // the row read the same either way. The number you have is the one thing
       // the board could not tell you and the yard could not either -- it is on
       // your cursor, not on a counter.
-      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1]) || /^[\d,.]+ → /.test(c[1])),
+      ok(cells.every(c => !c[2] || /^\+\d/.test(c[2]) || /^[\d,.]+ → /.test(c[2])),
          'a count says where it is going, a rate says what it gains',
          JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
@@ -2604,6 +2608,55 @@ const TESTS = [
       ok(!!other, 'there is another row on the board to read'),
       ok(!after, 'and reading another row folds it away', `${after}`),
       ok(again, 'and going back to the door brings it out again', `${again}`)
+    ];
+  }],
+
+  // The submenu is on the screen whatever the window is doing.
+  //
+  // It is a flex sibling of the board, so the default answer to a panel wider
+  // than the glass is to squash both of them -- and a crew list compressed to a
+  // sliver behind the board reads as a submenu that failed to open. It moves
+  // now: right of the board by preference, left when the right has run out, and
+  // on a line of its own when neither side will take it.
+  ['the submenu finds room however narrow the window is', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(3, 2);
+    run(60);
+    await hoverHouse();
+    await openCrewList();
+    await sleep(80);
+    const panel = document.getElementById('panel');
+    const list = document.getElementById('crewlist');
+    const wide = list.getBoundingClientRect().width;
+
+    // What is checked here is the *decision*, not the layout.
+    //
+    // `asScreen` tells the game the window is a different size; it cannot tell
+    // the browser, so the real CSS goes on laying the panel out for the window
+    // that is actually there. A check that measured rectangles under a pretend
+    // window would pass whatever the stylesheet said -- which it did, happily,
+    // with the shrinking that caused the bug still in place. So this asks which
+    // side the game decided on, which is the part that is ours.
+    const seatIn = async (w, h) => {
+      let out = '';
+      await asScreen(w, h, 1, async () => {
+        window.__placeBoard();
+        await sleep(40);
+        out = panel.classList.contains('stack') ? 'stacked'
+            : panel.classList.contains('flip') ? 'flipped' : 'beside';
+      });
+      return out;
+    };
+    const roomy = await seatIn(1800, 900);
+    const tight = await seatIn(520, 800);
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(wide > 60, 'the list opens with something on it', `${Math.round(wide)}px`),
+      ok(roomy === 'beside', 'and stands beside the board when there is room',
+         roomy),
+      ok(tight === 'stacked', 'and on a line of its own when there is not', tight)
     ];
   }],
 

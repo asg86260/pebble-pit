@@ -115,9 +115,12 @@ canvas {
 
 .rows button {
   display: grid;
-  /* the name column carries the rung now -- "upgrade pickaxe 3/5" -- and the
-     price column has to hold two currencies stacked */
-  grid-template-columns: 13.8em 7.2em 4.6em;
+  /* Four things on a line: what it is, how far up it you are, what the next one
+     changes, and what it costs. The rung had been jammed on to the end of the
+     name, which made the longest name longer still and read as part of it. Its
+     own narrow column instead -- so the ladders line up under each other and can
+     be read down the board rather than picked out of the words. */
+  grid-template-columns: 11.2em 2.6em 7em 4.6em;
   align-items: baseline;
   gap: 0 6px;
   font: inherit;
@@ -194,6 +197,13 @@ canvas {
    of pluses is a column you can run your eye down. */
 .rows button .gain { opacity: .75; }
 .rows button .cost { text-align: right; opacity: .7; }
+/* Where a ladder has got to. Quieter than the name and quieter than the price:
+   it is the answer to "how much of this is left", which is a thing you glance at
+   rather than read. */
+/* `max-content` on the column, so on a board where nothing is a ladder it takes
+   no room at all rather than leaving a stripe of white down the middle. */
+.rows button .rung { text-align: right; opacity: .45; font-size: .92em; }
+.rows button:hover:not(:disabled) .rung { opacity: .8; }
 .rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
@@ -267,19 +277,19 @@ canvas {
    row that is buying something. */
 /* The house board carries longer names than it was cut for -- "who lives here",
    and a count that now says where it is going rather than just "+1". */
-#crewshop button { grid-template-columns: 11.2em 4.4em 1fr; }
+#crewshop button { grid-template-columns: 11.2em max-content 4.4em 1fr; }
 
 /* The sky's row says a signed rate where a price would go, and a rate is wider
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
    ran straight out of the sheet. The whole row is given to it instead, with the
    reading against the right edge like every other number on these boards. */
-#scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
+#scrubshop button[data-key="airrate"] { grid-template-columns: 9em max-content 0 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
 /* Rows with a bill rather than a price. The cost column is sized for one mark
    and a number, so these get the rest of the row instead -- what they buy is a
    thing rather than a rate, so the gain column had nothing to put in it. */
-#shop button[data-key="unlocktower"] { grid-template-columns: 9em 1fr; }
+#shop button[data-key="unlocktower"] { grid-template-columns: 9em max-content 0 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
 /* A bill of three or four, two to a line.
@@ -314,7 +324,7 @@ canvas {
 /* Wide enough for the longest name on it. "enchant the outhouse" is twenty
    letters at this tracking and the column was cut for a dozen, so the price
    started before the name had finished and the two sat on top of each other. */
-#towershop button { grid-template-columns: 15.4em 1fr; }
+#towershop button { grid-template-columns: 15.4em max-content 0 1fr; }
 #towershop button .gain { display: none; }
 
 /* A row that is a reading rather than a purchase. It sits on a board of things
@@ -352,7 +362,7 @@ canvas {
    middle column -- what a purchase gives you -- is closed up, and where the body
    is takes whatever room the longest answer needs: "at the scrubbing house" in
    the shop's 4.6em price column is a phrase running off the edge of the sheet. */
-#crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
+#crewlist .rows button { grid-template-columns: 9.4em max-content 0 auto; }
 
 /* The row that leads to it says so. Every other name on a board is a thing you
    press and something happens; this one is a door, and the mark is the one every
@@ -441,7 +451,7 @@ canvas {
      way round that fits. Between the two of them they have one screen to share,
      so the names get a shorter run of it before they start scrolling. */
   #crewlist { max-height: 30vh; }
-  #crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
+  #crewlist .rows button { grid-template-columns: 9.4em max-content 0 auto; }
 }
 
 /* the lab's rows say longer things than the bench's, and what they give is a
@@ -521,6 +531,22 @@ canvas {
    seated by its bottom edge, so bottom-aligning them is what keeps the board
    where it has always been while the purse grows a row. */
 .panel { display: flex; align-items: flex-end; gap: 8px; }
+/* Nothing in the panel gives up its width.
+   These are flex items, so their natural answer to a panel wider than the window
+   is to squash -- and what that looked like was the crew list compressed to a
+   sliver behind the board, which reads as the submenu having failed to open at
+   all. A menu is not a thing that gets narrower when the window does; it is a
+   thing that goes somewhere else. See `seatFlyout`. */
+.panel > * { flex-shrink: 0; }
+
+/* Where the submenu goes when there is no room on the right of the board. The
+   list is the last child, so `order` is what moves it to the other side, and
+   the panel wraps upward when neither side has room -- upward because the panel
+   is seated on its bottom edge, so a second line grows into the sky rather than
+   down through the station it belongs to. */
+.panel.flip #crewlist { order: -1; }
+.panel.stack { flex-wrap: wrap-reverse; justify-content: flex-start; }
+.panel.stack #crewlist { order: -1; }
 
 /* What you have to spend, off the left of the board.
    Every price on these boards is a mark and a number, and the only place you

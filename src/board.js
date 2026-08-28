@@ -132,6 +132,40 @@ export function remeasure() {
 // flicker for no reason anybody can see in the code.
 let putX = null, putY = null;
 
+// Which side of the board the submenu stands on, and whether it stands beside it
+// at all.
+//
+// The list is a flex sibling of the board, so by default it sits to the right of
+// it and the two of them together are the panel. On a narrow window that panel
+// is wider than the glass, and what a flex row does about that is *squash its
+// children* -- which looked like the list rendering behind the board, or not
+// opening. A menu is not a thing that gets narrower when the window does.
+//
+// So nothing shrinks (see the CSS), and the list is put wherever there is room
+// for it: on the right by preference, on the left if the right-hand side would
+// run off the glass and the left would not, and on a line of its own if neither
+// will take it. Worked out from the widths the two sheets actually are, before
+// the panel is placed, because where the panel *can* stand depends on how wide
+// it has decided to be.
+function seatFlyout(el, at) {
+  if (crewListEl.hidden) {
+    el.classList.remove('flip', 'stack');
+    return;
+  }
+  const board = el.querySelector('.sheet:not(.flyout)');
+  const purse = el.querySelector('.purse');
+  const listW = crewListEl.offsetWidth;
+  const restW = (board ? board.offsetWidth : 0) + (purse ? purse.offsetWidth : 0) + 16;
+  const want = (at.x - S.camX) * S.zoom;
+
+  // where the board itself would like to stand, ignoring the list
+  const room = S.W - GAP * 2;
+  el.classList.toggle('stack', listW + restW > room);
+  // and on the left when the right-hand side has run out of window
+  el.classList.toggle('flip',
+    listW + restW <= room && want + restW + listW > S.W - GAP && want - listW > GAP);
+}
+
 function place(el, at) {
   const w = sized.w || el.offsetWidth, h = sized.h || el.offsetHeight;
   const want = (at.x - S.camX) * S.zoom;
@@ -280,7 +314,12 @@ export function inSafeZone(px, py) {
 }
 
 export function placeBoard() {
-  if (at) place(panelEl, standAt[at]);
+  if (!at) return;
+  // the side the submenu stands on is a question about the window, so it is
+  // asked again whenever the board is seated -- which includes the window
+  // changing shape underneath it
+  seatFlyout(panelEl, standAt[at]);
+  place(panelEl, standAt[at]);
 }
 
 // Two readings for the checks. They are plain exports rather than `window.__`
@@ -391,7 +430,7 @@ export function showCrewList(on) {
   // size it was last measured at.
   if (want) { buildCrewList(); refresh(crewListRowsEl, crewList(), null); }
   remeasure();
-  placeBoard();
+  placeBoard();       // which seats the list on whichever side has room for it
 }
 
 // `now` is for a close that was *asked for* rather than wandered out of: a tap
@@ -464,6 +503,7 @@ function settle(want) {
   // words in. Which is why it read as a bug that fixed itself.
   fill(want);
   fillPurse();
+  seatFlyout(panelEl, standAt[want]);
   remeasure();
 
   // Walking from one station to another slides. Arriving at one after the last
