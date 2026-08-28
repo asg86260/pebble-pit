@@ -445,11 +445,19 @@ const TESTS = [
          JSON.stringify(cells[0])),
       ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
          JSON.stringify(cells)),
-      // No row states a value the game is keeping. What it says in the middle is
-      // what buying it changes -- a whole number of something, or a share of
-      // what that thing was already doing -- so every one that says anything at
-      // all starts with a plus and there is never an arrow.
-      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1])), 'a row says a gain, not a before and after',
+      // What a row says in the middle is either where a count is going -- "4 -> 5"
+      // -- or what share a rate gains, "+30%".
+      //
+      // It used to be the gain and only the gain, on the rule that no row states
+      // a value the game is keeping. That is right for a rate, which is already
+      // a comparison, and wrong for a count: "+1" tells you what the row does and
+      // nothing about whether it is worth having, because going from one to two
+      // doubles what you can carry and going from eleven to twelve does not, and
+      // the row read the same either way. The number you have is the one thing
+      // the board could not tell you and the yard could not either -- it is on
+      // your cursor, not on a counter.
+      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1]) || /^[\d,.]+ → /.test(c[1])),
+         'a count says where it is going, a rate says what it gains',
          JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
          'and it opens in the same place the first time as the second',
@@ -2396,8 +2404,10 @@ const TESTS = [
       ok(!!row, 'the house board does'),
       ok(before.houseRow && /^another house/.test(before.houseRow),
          'and the row is a house rather than a headcount', before.houseRow),
-      ok(before.houseRow && before.houseRow.includes('+1'),
-         'saying what it gives you, like every other row', before.houseRow),
+      // a count, so it says where the count is going -- see the note on the
+      // bench's rows about why "+1" was not enough
+      ok(before.houseRow && /\d → \d/.test(before.houseRow),
+         'saying where it takes you, like every other count', before.houseRow),
       ok(after.crew === before.crew + 1, 'buying one takes somebody on',
          `${before.crew} -> ${after.crew}`),
       ok(after.stored < before.stored, 'and it is paid for in dust',

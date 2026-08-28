@@ -12,10 +12,9 @@
 // spell.
 
 import { S } from './state.js';
-import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES, METEOR_CORES, METEOR_DUST,
+import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES,
          WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS } from './config.js';
 import { now } from './clock.js';
-import { makeMeteor } from './meteor.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 
@@ -62,18 +61,12 @@ export const TOWER_UPGRADES = [
     // first piece of magic is plumbing.
     show: () => S.outhouseOpen && !S.magicLoo
   },
-  // The second thing a core is for. It is bought once and it opens the sky for
-  // good: what it pays for is not this meteor but the habit -- once the tower
-  // has called one down, the next one comes on its own.
-  {
-    key: 'callmeteor',
-    name: 'call a meteor',
-    note: () => 'something in the sky worth going up for',
-    bill: () => [['core', METEOR_CORES], ['dust', METEOR_DUST]],
-    cost: () => METEOR_DUST,
-    buy: () => { S.meteorOpen = true; S.skyShown = true; makeMeteor(); },
-    show: () => !S.meteorOpen
-  },
+  // A meteor is not bought any more: raising the tower calls the first one down
+  // -- see `unlocktower` in upgrades.js. It was a row that asked for a second
+  // core to do the one thing the tower is *for*, on a board that then had
+  // nothing else on it until you had paid: you built the thing that reaches the
+  // sky and were told the sky cost extra. And after that first one the wizards
+  // summon their own, so the row was a toll on the way in and nothing else.
   // And the hat. Dust, stone and crop -- everything the ground makes, for the
   // one body that will not be standing on it.
   {
@@ -98,5 +91,5 @@ export const TOWER_UPGRADES = [
 ];
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: ['magicloo', 'callmeteor', 'wizard'] }
+  { title: 'the tower', keys: ['magicloo', 'wizard'] }
 ];

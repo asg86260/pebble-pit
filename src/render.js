@@ -1201,19 +1201,31 @@ export function drawTower() {
 // Drawn after the tower rather than on it, so the rings pass over the stone the
 // way light would.
 export function drawTowerWaves() {
-  if (!S.towerOpen || !brewing()) return;
+  if (!S.towerOpen) return;
+  // Always something coming off it, and more of it while it is working.
+  //
+  // A tower that was blank until you bought a hat was a building that did
+  // nothing for most of the game -- and this is the one building in the yard
+  // that is *magic*, standing among sheds that are honestly made of planks. It
+  // should be plainly doing something at rest. So the rings never stop: they go
+  // out slower, thinner and shorter when the bench is idle, and the fast bright
+  // ones are what the brewing looks like on top of that.
+  const work = brewing();
+  const pace = work ? TOWER_WAVE_MS : TOWER_WAVE_MS * 2.6;
+  const reach = work ? TOWER_WAVE_R : TOWER_WAVE_R * 0.55;
+  const ink = work ? 0.85 : 0.3;
   // On the vane, which is the top of the thing and the only part of it that is
   // not stone: rings coming off the middle of the spire's *base* were rings
   // coming off the roof, a couple of cells low and reading as slightly slipped.
   const from = { x: tower.x + P * 4, y: tower.y - P * 2 };
   for (let i = 0; i < TOWER_WAVE_N; i++) {
-    const k = ((now() / TOWER_WAVE_MS) + i / TOWER_WAVE_N) % 1;
-    const rad = k * TOWER_WAVE_R;
+    const k = ((now() / pace) + i / TOWER_WAVE_N) % 1;
+    const rad = k * reach;
     if (rad < P) continue;
     // fainter as it goes out, and deeper down the purples with it: a ring that
     // held its colour all the way would read as a hoop rather than as something
     // spending itself on the air
-    ctx.globalAlpha = (1 - k) * 0.85;
+    ctx.globalAlpha = (1 - k) * ink;
     ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
     // a cell every cell round the circumference, so it is a ring rather than a
     // dotted line pretending to be one

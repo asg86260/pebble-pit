@@ -17,6 +17,7 @@ import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } fro
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, bedCount } from './world.js';
+import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
@@ -100,10 +101,21 @@ export const gainText = u => {
   const a = Number(u.from()), b = Number(u.to());
   if (!isFinite(a) || !isFinite(b)) return '';
   const mark = u.unit ? ' ' + UNITS[u.unit] : '';
-  // A count is a count: one more bench, one more pair of hands, one more pixel
-  // of reach. `num` is for rates and puts a decimal on everything under ten,
-  // and "+1.0 benches" is a number pretending to be a measurement.
-  if (!u.pct) { const d = b - a; return `+${Number.isInteger(d) ? d : num(d)}${mark}`; }
+  // A count says what it is now and what it would be. "+1" tells you what the
+  // row does and nothing about whether it is worth it: going from one to two is
+  // doubling what you can carry, and going from eleven to twelve is not, and the
+  // row read identically either way. The number you have is the one thing the
+  // board could not tell you and the yard could not either -- it is on your
+  // cursor, not on a counter.
+  //
+  // Counts only. A rate is already a comparison -- it says what share it adds --
+  // and "2.4/s -> 3.1/s" in a column this wide is two numbers where one will do.
+  // `num` is for rates and puts a decimal on everything under ten, so "+1.0
+  // benches" is a number pretending to be a measurement.
+  if (!u.pct) {
+    const say = v => (Number.isInteger(v) ? v : num(v));
+    return `${say(a)} → ${say(b)}${mark}`;
+  }
   // A rate stepping onto its floor can gain a real amount and round to nothing.
   // A row that says +0% is a row that reads as broken, so the smallest thing a
   // purchase is ever allowed to claim is one per cent.
@@ -490,7 +502,18 @@ export const UPGRADES = [
     note: () => 'what a core is for',
     bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
-    buy: () => { S.towerOpen = true; lookAt(tower.x + tower.w / 2); },
+    // Raising it calls the first one down. The sky is what the tower is for, and
+    // charging separately for it -- a second core, on a board that had nothing
+    // else to offer until you paid -- meant building the thing that reaches the
+    // sky and then being told the sky was extra. After this first one the
+    // wizards summon their own.
+    buy: () => {
+      S.towerOpen = true;
+      S.meteorOpen = true;
+      S.skyShown = true;
+      makeMeteor();
+      lookAt(tower.x + tower.w / 2);
+    },
     // Not offered until a core exists to spend. Before that it is a row asking
     // for a thing the game has not shown you yet.
     show: () => !S.towerOpen && S.seenCore
