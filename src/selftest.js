@@ -2712,6 +2712,39 @@ const TESTS = [
     ];
   }],
 
+  // A rung is not the end of the visit. You buy speed, and the board is still
+  // there with strength under your hand -- what closes it is a row that opens a
+  // place, because the view is already on its way there.
+  ['buying a rung leaves the board up, opening a place takes it away', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    window.__give(200000);
+    run(20);
+    await hoverBench();
+    const press = async key => {
+      const b = document.querySelector(`#shop button[data-key="${key}"]`);
+      if (!b) return null;
+      b.click();
+      await sleep(200);
+      return state().boardOpen;
+    };
+    const rungs = [];
+    for (const key of ['carry', 'auto', 'speed', 'haulpace']) {
+      const up = await press(key);
+      if (up !== null) rungs.push([key, up]);
+    }
+    const door = await press('unlockquarry');
+    await hoverAway();
+    window.__reset();
+    return [
+      ok(rungs.length >= 3, 'there were rungs to buy', rungs.map(r => r[0]).join(', ')),
+      ok(rungs.every(r => r[1]), 'and the board is still up after every one',
+         rungs.filter(r => !r[1]).map(r => r[0]).join(', ') || 'all of them'),
+      ok(door === false, 'while opening the quarry puts it away', `${door}`)
+    ];
+  }],
+
   ['hovering a name does not close the list it is on', async () => {
     window.__reset();
     await settle();

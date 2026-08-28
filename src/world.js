@@ -443,7 +443,15 @@ export function resize(after) {
 // because the thing they bought is off the left of the screen.
 export function lookAt(x) {
   S.camTo = x - S.viewW / 2;
+  sent = true;
 }
+
+// Whether the view was sent somewhere since anybody last asked. A purchase that
+// opens a place sends the view to the place; a rung on a ladder does not, and
+// that is the whole difference between the two as far as the board is
+// concerned -- so this is read once, right after a press, rather than kept.
+let sent = false;
+export const tookLook = () => { const was = sent; sent = false; return was; };
 
 // Keeping up with somebody, rather than with where they were standing when you
 // asked. A body walks: by the time a glide reaches the spot they were on, they

@@ -10,6 +10,7 @@ import { RUNGS } from './config.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, rungOf, maxed } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
+import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -49,8 +50,6 @@ function shape(list, sections) {
 // simplest honest test is whether the thing it sells is now had -- but rows do
 // not all have such a thing, so it is asked the other way round: a row that can
 // no longer be pressed is a row that just fired.
-const bought = u => !u.show() || !canPay(u);
-
 const built = new WeakMap();
 
 // Set when the set of rows changed, read once by the board after it has filled
@@ -157,17 +156,19 @@ function build(el, list, sections, empty) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (u.read) b.classList.add('stat');
-      // Buying is the end of what you came to the board for, so the board goes.
-      // It used to stay open under the cursor with the row you just bought now
-      // greyed or gone, which reads as the press not having landed -- and the
-      // sheet then sits over the thing you just paid for.
+      // A rung leaves the board where it is. You are on a ladder and the next
+      // rung is right there, and a sheet that shuts itself after every press
+      // makes buying three of something a chore of re-opening.
       //
-      // Only when something actually happened: a press on a row you cannot
-      // afford leaves the board where it is, because you are still deciding.
+      // A row that opens a *place* is the exception, and it closes the board
+      // for the same reason it exists: the view is on its way to the thing you
+      // just paid for, and the sheet would be sitting over it. Those rows are
+      // exactly the ones that send the view, so that is what we ask -- rather
+      // than a list of keys here that the next new site would fall off of.
       else b.addEventListener('click', () => {
-        const before = S.dirty;
+        tookLook();                            // anything the yard sent earlier
         buy(u);
-        if (bought(u)) closeBoard();
+        if (tookLook()) closeBoard();
       });
       // A row that has something to say says it on hover, in the same words in
       // the same box the yard uses for a mark you went and looked at. It is the
