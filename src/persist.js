@@ -500,7 +500,7 @@ export function reset() {
   // brand new yard came with the star's red already spent on it.
   S.pitFine = 0;
   S.paused = false;                // a new game is not a held one
-  showPanel(null);                 // nor one with the last game's board still up
+  showPanel(null, true);           // nor one with the last game's board still up
   // the curtains are somebody's, and there is nobody here now
   S.shutters = [];
   S.shutterAt = 0;

@@ -2499,7 +2499,10 @@ const TESTS = [
     // and the whole of the menu is between the cursor and where it came from.
     point('pointermove', listed.left + listed.width / 2,
           Math.min(listed.top, board.top) - 160, 0);
-    await sleep(60);
+    // long enough for the board to give up on the station it was standing at:
+    // leaving one lingers for a moment so that arriving at the next is a move
+    // rather than a close and an open. See LINGER in board.js.
+    await sleep(240);
     const left = state();
     await hoverAway();
     window.__crew(0, 0);
@@ -2710,11 +2713,21 @@ const TESTS = [
     }
     const corner = state().boardOpen;
 
-    // and it still shuts when you actually walk away
+    // and it still shuts when you actually walk away -- after a moment. The board
+    // holds its place briefly when the pointer leaves a station (see LINGER in
+    // board.js), so that crossing the bare ground to the next station along is
+    // one movement rather than a close and an open. Walking off is the same
+    // gesture with nowhere at the end of it, so the answer arrives a tenth of a
+    // second later than it used to.
+    const leave = async (cx, cy) => {
+      point('pointermove', cx, cy, 0);
+      await sleep(220);
+      return state().boardOpen;
+    };
     move(bx, by);
-    const aside = move(r.x + r.width + 400, by);
+    const aside = await leave(r.x + r.width + 400, by);
     move(bx, by);
-    const below = move(bx, by + 200);
+    const below = await leave(bx, by + 200);
     move(s.W - 4, 4);                           // and out of the way for the next check
     await hoverAway();
     window.__crew(0, 0);

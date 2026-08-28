@@ -231,16 +231,16 @@ export function endDrag(e) {
     // one board at a time: two of them open at once on a phone screen would
     // simply sit on top of each other
     const p = pos(e);
-    if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench');
-    else if (nearLab(p.x, p.y)) showPanel(S.labBoardOpen ? null : 'lab');
-    else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school');
-    else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino');
-    else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub');
-    else if (nearQuarry(p.x, p.y)) showPanel(S.quarryBoardOpen ? null : 'quarry');
-    else if (nearFarm(p.x, p.y)) showPanel(S.farmBoardOpen ? null : 'farm');
-    else if (nearTower(p.x, p.y)) showPanel(S.towerBoardOpen ? null : 'tower');
-    else if (nearHouse(p.x, p.y)) showPanel(S.houseBoardOpen ? null : 'house');
-    else showPanel(null);
+    if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
+    else if (nearLab(p.x, p.y)) showPanel(S.labBoardOpen ? null : 'lab', true);
+    else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school', true);
+    else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino', true);
+    else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub', true);
+    else if (nearQuarry(p.x, p.y)) showPanel(S.quarryBoardOpen ? null : 'quarry', true);
+    else if (nearFarm(p.x, p.y)) showPanel(S.farmBoardOpen ? null : 'farm', true);
+    else if (nearTower(p.x, p.y)) showPanel(S.towerBoardOpen ? null : 'tower', true);
+    else if (nearHouse(p.x, p.y)) showPanel(S.houseBoardOpen ? null : 'house', true);
+    else showPanel(null, true);
   }
 
   S.mining = false;

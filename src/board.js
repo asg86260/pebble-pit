@@ -298,11 +298,25 @@ export function showTipAt(text, sx, sy, centred) {
 let at = null;
 let slide = 0;
 let closing = 0;
+// The pointer has left a station but the board has not been given up on yet.
+//
+// Two stations with bare ground between them is the ordinary case -- there are
+// nine of them along one yard -- and crossing that ground used to take the board
+// off you and give it back: the sheet faded out where it stood, the box jumped
+// to the new station without a transition (the slide only runs when the board
+// knows where it came *from*, and by then it had forgotten), and the new sheet
+// faded in. Three separate animations to walk two paces.
+//
+// So leaving is not decided in the frame it happens. The board holds its place
+// for a moment; arrive somewhere else inside that moment and it is a move, which
+// slides, and walking back to where you were is not even that.
+let leaving = 0;
+const LINGER = 130;                    // and how long the moment is
 
 // Shut whatever is open. Called when a press on a row has done its work: see
 // shop.js. It goes through the same path a walk away goes through, so the fade
 // and the seating are the ones the board already has.
-export const closeBoard = () => showPanel(null);
+export const closeBoard = () => showPanel(null, true);
 
 // --- the sheet that opens off the house board ---------------------------------
 // The one submenu in the game. It stands beside the board it belongs to, inside
@@ -334,7 +348,31 @@ export function showCrewList(on) {
   placeBoard();
 }
 
-export function showPanel(want) {
+// `now` is for a close that was *asked for* rather than wandered out of: a tap
+// on bare ground, a new game, the wheel starting. Those are answers, and an
+// answer that takes a tenth of a second to arrive reads as a control that did
+// not take. Only the pointer drifting off a station gets the benefit of LINGER.
+export function showPanel(want, now = false) {
+  // Back where it was, before it had gone anywhere: nothing happened.
+  if (want === at) { clearTimeout(leaving); leaving = 0; return; }
+
+  // Off to bare ground. Hold the board where it is for a moment -- see LINGER --
+  // rather than closing on the spot, so that walking to the next station along
+  // is one movement instead of a close and an open.
+  if (!want && !now) {
+    if (leaving) return;
+    leaving = setTimeout(() => { leaving = 0; settle(null); }, LINGER);
+    return;
+  }
+  clearTimeout(leaving);
+  leaving = 0;
+  settle(want);
+}
+
+// What actually moves the board, once it is settled where it is going: the same
+// thing `showPanel` always did, with the question of whether it is really
+// leaving answered above it.
+function settle(want) {
   if (want === at) return;
   // Walking off to another station, or off to nothing, takes the submenu with
   // it. Done before `at` moves, so the list is put away while it still belongs
@@ -382,7 +420,12 @@ export function showPanel(want) {
   fillPurse();
   remeasure();
 
-  if (wasAt) {                                   // walking from one to the other
+  // Walking from one station to another -- or arriving at one while the board
+  // from the last is still on its way out, which is the same walk taken slowly.
+  // What decides it is whether there is a board on the screen to slide: a box
+  // that is still standing there and then jumps is the jank; a box that is gone
+  // has nowhere to slide from.
+  if (wasAt || !panelEl.hidden) {
     panelEl.classList.add('sliding');
     clearTimeout(slide);
     slide = setTimeout(() => panelEl.classList.remove('sliding'), 240);
