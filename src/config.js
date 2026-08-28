@@ -866,6 +866,13 @@ export let MINE_BASE = 460;    // gap between held hits at speed level 0
 export const MINE_FLOOR = 75;    // fastest the pick will ever swing (13.3 px/s)
 export const CAP_BASE = 1;       // pixels you can carry at level 0
 export const CAP_STEP = 1;       // extra capacity per upgrade
+// How many rungs there are on every ladder in the game.
+//
+// One number, because "how far along is this" should be one question with one
+// answer wherever it is asked: five on the strength, five on the swing, five on
+// the pickaxe. What changes between them is what a rung costs and what it is
+// bought with, which is the tier -- see "The ladder" in DESIGN.md.
+export const RUNGS = 5;
 export const WORKER = P * 3;     // worker square size
 
 // One doorway, for every building in the yard that has one.

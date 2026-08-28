@@ -88,6 +88,7 @@ export const S = {
   tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
   pitStep: 0,             // how many times the pile has settled to a finer grain
   pitFine: 0,             // and how many of those settlings have been paid for
+  hideDone: false,        // whether finished ladders are folded off the boards
 
   // --- cores ---
   cores: 0,

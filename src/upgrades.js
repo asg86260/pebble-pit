@@ -6,7 +6,7 @@
 // on the board.
 
 import {
-  CAP_BASE, CAP_STEP, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
+  CAP_BASE, CAP_STEP, RUNGS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
   QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
@@ -25,14 +25,48 @@ import { buildShop } from './shop.js';
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
 // swings -- the next kind of worker gets its speed for a line.
-const swing = (base, floor, per) => lvl => Math.max(floor, Math.round(base * Math.pow(per, lvl)));
+// A rate ladder, from what it starts at down to the fastest it will ever go, in
+// a fixed number of rungs -- so the last rung *is* the floor.
+//
+// It used to be a fraction a level for ever: multiply by 0.8 and clamp at the
+// floor. Which meant the row reached the floor at some level nobody had written
+// down, and then vanished off the board -- a cap the game had and would not
+// admit to. Spread across the rungs instead, the last one lands exactly on the
+// floor and the row says "5 of 5" and stays there.
+//
+// Eased rather than even: the first rungs are worth more than the last, which is
+// how a rate reads -- going from a swing a second to two is a different feeling
+// from going from nine to ten, and paying the same for both is what makes a
+// long tail of upgrades feel like nothing is happening.
+const swing = (base, floor, rungs) => lvl => {
+  const k = Math.max(0, Math.min(1, lvl / rungs));
+  return Math.round(base + (floor - base) * (1 - Math.pow(1 - k, 1.6)));
+};
 const perSecond = ms => lvl => 1000 / ms(lvl);
 
 export const capacity = () => CAP_BASE + S.carryLevel * CAP_STEP;
 
-const mineGap = swing(MINE_BASE, MINE_FLOOR, 0.8);
-const minerGap = swing(MINER_BASE, MINER_FLOOR, 0.82);
-const scoopGap = swing(HAUL_MS, 30, 0.85);
+// What one rung costs, from what the first one costs.
+//
+// Half again a rung, so the top of a ladder is about six times the bottom of it.
+// The old prices doubled and worse -- 1.9 a level on the swing -- which is the
+// arithmetic of a row meant to be bought for ever: the exponent, not the game,
+// decides when you stop. A ladder with an end does not need the price to be the
+// wall, because the end is the wall, so a rung can stay affordable enough to be
+// worth reading all the way up.
+export const rungCost = (first, lvl) => Math.round(first * Math.pow(1.6, lvl));
+
+// Where a row is on its ladder, and whether it is at the top of it. A row with
+// no `rung` is not a ladder at all -- a building, a one-off, a job -- and is
+// never finished.
+export const rungOf = u => (u.rung ? u.rung() : 0);
+export const maxed = u => !!u.rung && rungOf(u) >= RUNGS;
+
+// Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
+// is this" is one question with one answer wherever it is asked.
+const mineGap = swing(MINE_BASE, MINE_FLOOR, RUNGS);
+const minerGap = swing(MINER_BASE, MINER_FLOOR, RUNGS);
+const scoopGap = swing(HAUL_MS, 30, RUNGS);
 
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
 export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
@@ -315,9 +349,10 @@ export const UPGRADES = [
     // "load", which is two names for one idea and a player having to learn both.
     name: 'strength',
     unit: 'px',
+    rung: () => S.carryLevel,
     from: () => capacity(),
     to: () => capacity() + CAP_STEP,
-    cost: () => Math.round(8 * Math.pow(1.35, S.carryLevel)),
+    cost: () => rungCost(8, S.carryLevel),
     buy: () => S.carryLevel++,
     show: () => true
   },
@@ -333,12 +368,15 @@ export const UPGRADES = [
     name: 'swing',
     unit: 'px/s',
     pct: true,
+    rung: () => S.speedLevel,
     from: () => mineRate(S.speedLevel),
     to: () => mineRate(S.speedLevel + 1),
-    cost: () => Math.round(20 * Math.pow(1.9, S.speedLevel)),
+    cost: () => rungCost(20, S.speedLevel),
     buy: () => S.speedLevel++,
-    // faster swings only read as an upgrade once the swinging is automatic
-    show: () => S.autoMine && mineMs() > MINE_FLOOR
+    // faster swings only read as an upgrade once the swinging is automatic. It
+    // stays on the board once it is finished, saying so -- it used to vanish the
+    // moment it reached the floor, which is a cap the game would not admit to.
+    show: () => S.autoMine
   },
   // --- what a swing takes ---------------------------------------------------
   // A core is a rock. There is one of them per rock for ever, and what they are
@@ -356,10 +394,14 @@ export const UPGRADES = [
     // than "pick" here and "upgrade pickaxe" over there.
     name: 'upgrade pickaxe',
     unit: 'px',
+    rung: () => S.pickLevel,
     from: () => pickCount(),
     to: () => pickCount() + 1,
-    cost: () => Math.round(4 * Math.pow(1.55, S.pickLevel)),
-    currency: 'shard',
+    // Its own tier's coin, and dust with it. The rock never stops giving dust,
+    // so every rung above the first tier is priced in both -- see "The ladder"
+    // in DESIGN.md. Digging stays worth doing for the whole run.
+    bill: () => [['shard', rungCost(4, S.pickLevel)], ['dust', rungCost(240, S.pickLevel)]],
+    cost: () => rungCost(240, S.pickLevel),
     buy: () => S.pickLevel++,
     show: () => S.seenShard
   },
@@ -374,10 +416,11 @@ export const UPGRADES = [
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
     name: 'upgrade pickaxe',
     unit: 'px',
+    rung: () => S.minerPickLevel,
     from: () => minerBite(),
     to: () => minerBite() + 1,
-    cost: () => Math.round(5 * Math.pow(1.55, S.minerPickLevel)),
-    currency: 'spore',
+    bill: () => [['spore', rungCost(5, S.minerPickLevel)], ['dust', rungCost(300, S.minerPickLevel)]],
+    cost: () => rungCost(300, S.minerPickLevel),
     buy: () => S.minerPickLevel++,
     show: () => S.seenSpore && S.crew > 0
   },
@@ -390,11 +433,12 @@ export const UPGRADES = [
     name: 'swing',
     unit: 'px/s',
     pct: true,
+    rung: () => S.minerSpeedLevel,
     from: () => minerRate(),
     to: () => minerRate(S.minerSpeedLevel + 1),
-    cost: () => Math.round(70 * Math.pow(1.8, S.minerSpeedLevel)),
+    cost: () => rungCost(70, S.minerSpeedLevel),
     buy: () => S.minerSpeedLevel++,
-    show: () => S.crew > 0 && minerMs() > MINER_FLOOR
+    show: () => S.crew > 0
   },
   {
     key: 'haulcarry',
@@ -403,9 +447,11 @@ export const UPGRADES = [
     // its strength rather than its load, which is the thing it is carrying.
     name: 'strength',
     unit: 'px',
+    rung: () => S.haulCarryLevel,
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel + 1),
-    cost: () => Math.round(50 * Math.pow(1.5, S.haulCarryLevel)),
+    bill: () => [['spore', rungCost(6, S.haulCarryLevel)], ['dust', rungCost(50, S.haulCarryLevel)]],
+    cost: () => rungCost(50, S.haulCarryLevel),
     buy: () => S.haulCarryLevel++,
     show: () => S.crew > 0
   },
@@ -414,9 +460,11 @@ export const UPGRADES = [
     name: 'speed',
     unit: 'px/s',
     pct: true,
+    rung: () => S.haulPaceLevel,
     from: () => haulSpeed() * 60,
     to: () => haulSpeed(S.haulPaceLevel + 1) * 60,
-    cost: () => Math.round(60 * Math.pow(1.7, S.haulPaceLevel)),
+    bill: () => [['shard', rungCost(5, S.haulPaceLevel)], ['dust', rungCost(60, S.haulPaceLevel)]],
+    cost: () => rungCost(60, S.haulPaceLevel),
     buy: () => S.haulPaceLevel++,
     show: () => S.crew > 0
   },
@@ -642,7 +690,7 @@ export function buy(u) {
   // A row that is greyed out for a reason of its own -- the tower already has a
   // hat on the go -- takes nothing and does nothing. Without this the money went
   // and the row shrugged.
-  if (!u.show() || u.dead?.() || !canPay(u)) return;
+  if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return;
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) take(money, n);

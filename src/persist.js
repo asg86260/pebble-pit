@@ -165,6 +165,7 @@ export function persist() {
     seenRows: S.seenRows,
     pitStep: S.pitStep,
     pitFine: S.pitFine,
+    hideDone: S.hideDone,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
@@ -345,6 +346,7 @@ export function restore() {
   // permission would be a hole that quietly coarsened again the first time
   // anything asked it to settle.
   S.pitFine = s.pitFine || 0;
+  S.hideDone = !!s.hideDone;
   setPitGrain(s.pitStep || 0);
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {

@@ -414,6 +414,84 @@ const TESTS = [
   // The trades are bought at a building of their own, not on the bench. The
   // bench is the shop; this is a decision about people, and they read
   // differently for standing in different places.
+  // Nothing on any board sits on top of anything else.
+  //
+  // Every board is a grid of three columns, and every time a name gets longer or
+  // a price grows a second currency the risk is the same: the text runs past its
+  // column and the next one starts underneath it. It has happened on the tower
+  // twice and on the scrubbing house once, and each time it was found by looking
+  // at a screenshot. This asks the page instead, on every board at once, so the
+  // next one is found by the suite.
+  ['no row on any board sits on top of itself', async () => {
+    window.__reset();
+    await settle();
+    // enough of everything that every row on every board is showing
+    window.__crew(4, 3);
+    window.__grant({ cores: 6, shards: 4000, spores: 4000, sparks: 400 });
+    window.__lab(true);
+    window.__school({ open: true });
+    window.__loo(true);
+    window.__air({ open: true, scrubbers: 1 });
+    window.__meteor();
+    window.__wizardHat(1);
+    const St = (await import('/src/state.js')).S;
+    St.towerOpen = true;
+    St.casinoOpen = true;
+    St.quarryOpen = true;
+    St.farmOpen = true;
+    St.seenSpark = true;
+    window.__build();
+    run(20);
+
+    const boards = { bench: '#shop', lab: '#labshop', school: '#schoolshop',
+                     casino: '#casinoshop', scrub: '#scrubshop', quarry: '#quarryshop',
+                     farm: '#farmshop', tower: '#towershop', house: '#crewshop' };
+    const bad = [];
+    let rows = 0;
+    for (const [name, sel] of Object.entries(boards)) {
+      // Opened rather than unhidden. A board's rows are built empty and filled
+      // when it opens -- so a check that reveals the box by hand measures a
+      // column of blank cells and finds nothing wrong with any of them, which is
+      // how the first two versions of this passed while the tower's names were
+      // sitting on its prices.
+      window.__board(name);
+      await raf();
+      await raf();
+      if (name === 'house') { await openCrewList(); await raf(); }
+      for (const row of document.querySelectorAll(`${sel} button, ${sel} div.job, #crewlistrows button`)) {
+        if (row.offsetParent === null) continue;
+        for (const cell of row.children) {
+          const text = cell.textContent.trim();
+          if (!text || cell.offsetParent === null) continue;
+          rows++;
+          // What overlaps is the *text*, not the boxes. These rows are a grid, so
+          // the cells never overlap however long their contents are -- the words
+          // run out of the cell and are painted across the next one, because the
+          // sheet is nowrap. `scrollWidth` does not see it either: on a grid item
+          // with visible overflow it comes back equal to `clientWidth`. So the
+          // text is measured where it is actually painted, with a range round
+          // the cell's contents.
+          const range = document.createRange();
+          range.selectNodeContents(cell);
+          const ink = range.getBoundingClientRect();
+          const box = cell.getBoundingClientRect();
+          const over = Math.round(ink.right - box.right);
+          if (over > 1) {
+            bad.push(`${name}/${row.dataset.key || row.dataset.dial || text}: ` +
+                     `"${text}" runs ${over}px past its column`);
+          }
+        }
+      }
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(rows > 40, 'there is writing on the boards to look at', `${rows} cells`),
+      ok(bad.length === 0, 'and none of it runs past its column',
+         bad.slice(0, 4).join(' | ') || 'all clear')
+    ];
+  }],
+
   ['shop opens at the bench and is not buried', async () => {
     // The first time the board has been opened since the page loaded, which is
     // the case that used to be wrong: it was seated by the height it had before
@@ -702,7 +780,11 @@ const TESTS = [
       // throw carries depends on how long the body is in the air, which depends
       // on where it was standing when it was picked up -- so what is actually
       // being claimed is that the flick does something the standstill does not.
-      ok(carried > dropped + 15, 'a body flicked out of your hand travels while it falls',
+      // Eight pixels, not fifteen: gravity is heavier than it was, so everything
+      // thrown in this yard is in the air for less time and carries less far.
+      // The claim is unchanged -- the flick does something the standstill does
+      // not -- and the margin is what a shorter flight leaves of it.
+      ok(carried > dropped + 8, 'a body flicked out of your hand travels while it falls',
          `${carried}px thrown against ${dropped}px let go of`),
       ok(dropped < 10, 'and one let go of from a standstill comes straight down',
          `${dropped}px across`),
@@ -1296,8 +1378,11 @@ const TESTS = [
   ['your pick and a miner bite are bought apart', async () => {
     window.__crew(1, 0);
     // Yours is cut stone and theirs is what they are fed on: no core buys a
-    // rate any more, they open places.
+    // rate any more, they open places. And dust with it -- every rung above the
+    // first tier is priced in its own coin *and* in dust, so that the rock never
+    // stops being worth digging. See "The ladder" in DESIGN.md.
     window.__grant({ shards: 200, spores: 200 });
+    window.__give(4000);
     await hoverBench();
     const before = state();
     const gotBite = await buy('minerpick');

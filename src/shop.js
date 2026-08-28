@@ -6,8 +6,9 @@
 // three lines.
 
 import { S } from './state.js';
+import { RUNGS } from './config.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, rungOf, maxed } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -92,7 +93,11 @@ function build(el, list, sections, empty) {
   for (const sect of sections) {
     const rows = sect.keys
       .map(k => list.find(u => u.key === k))
-      .filter(u => u && u.show());
+      .filter(u => u && u.show())
+      // and, if asked, without the ones that are finished. A section with
+      // nothing left in it goes with them -- a heading over an empty space is
+      // worse than the rows were.
+      .filter(u => !(S.hideDone && maxed(u)));
     if (!rows.length) continue;
 
     const head = document.createElement('div');
@@ -250,7 +255,11 @@ export function refresh(el, list, headcount) {
     const parts = billOf(u).map(([money, n]) => `<span>${MARK[money]} ${n}</span>`);
     const bill = parts.join('');
     const [name, gain, price] = row.children;
-    price.classList.toggle('split', parts.length > 2);   // `price` is the .cost cell
+    // Any bill of more than one stacks. The price column is sized for a mark and
+    // a number, so even two side by side run out of it -- and above the first
+    // tier every rung is priced in its own coin *and* in dust, so two is now the
+    // common case rather than the exception.
+    price.classList.toggle('split', parts.length > 1);   // `price` is the .cost cell
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.
@@ -267,7 +276,21 @@ export function refresh(el, list, headcount) {
     const fresh = !S.seenRows.includes(u.key);
     if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
 
-    say(name, u.name);
+    // The name, and where the row is on its ladder. Five rungs to every ladder in
+    // the game (see RUNGS), so "3/5" means the same thing on every board, and a
+    // finished one says "5/5" and stays there rather than vanishing -- which is
+    // what the rate rows used to do when they hit a floor nobody had been told
+    // about.
+    say(name, u.rung ? `${u.name} ${rungOf(u)}/${RUNGS}` : u.name);
+    // A finished ladder has nothing left to say in the middle or on the right.
+    // "done" rather than a price, because a price on a row you cannot buy is a
+    // row that looks like you cannot afford it.
+    if (maxed(u)) {
+      sayHTML(gain, '');
+      sayHTML(price, 'done');
+      grey(row, true);
+      continue;
+    }
     sayHTML(gain, gainText(u));
     // A row that is not a purchase says what it *pays* where a price would go.
     // The casino's two decisions are the only ones: neither costs anything, and

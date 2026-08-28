@@ -1089,18 +1089,43 @@ It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
 what the tier-6 spark rungs and the paint store are for.
 
-### What is not settled
+### Settled
 
-- How many hearts a star carries. One is the clean answer and matches the rock;
-  it also means the industrial upgrades are strictly ordered by how many stars
-  you have finished, which may be too slow.
-- Which machines exist, and where. One per station is the legible answer and
-  lets you choose which part of the works gets dirty first, which is a real
-  decision -- but the cut and the beds are the two places a machine obviously
-  belongs, and a machine in the house would be a stretch.
+**A rung costs the tier's currency and dust, both.** The rock never stops giving
+dust, so a game whose sinks all ran out would be a game where the thing you do
+most stops mattering. Every rung above tier 1 is priced in its own currency
+*and* in dust, which keeps digging worth doing for the whole run and gives the
+higher tiers a floor under their price.
+
+**The rock gets a machine, and the machine needs somebody standing at it.** The
+cut, the beds and the rock all take one. What a machine is here is not "the
+thing that replaces you" -- it is a station: a body goes and works it, the way a
+body works the scrubbing house, and it is faster than the same body swinging by
+hand and it smokes. So the rock still comes apart under your own cursor, and the
+choice a machine offers is where to put a pair of hands, which is the choice the
+whole roster is already about.
+
+**One heart to a star.** Which makes the machine upgrades strictly ordered --
+one star finished, one machine driven harder -- and makes finishing a star the
+thing that gates the back half of the game. It puts real weight on the wizards:
+how fast they take a star apart and summon the next is now the pace of the whole
+late game, not just a way to make red.
+
+**A finished ladder stays on the board, reading 5/5, and there is a switch to
+hide the finished ones.** Seeing that you are done is the point of a ladder
+having an end; seeing it for ever once you have twenty of them is clutter. Both
+are true, so it is a preference rather than a rule.
+
+**Old saves are not carried over.** Levels above the new caps clamp. This game
+is still being built and its save format still moves; migration code for a shape
+that is not settled is work that gets thrown away.
+
+### Still open
+
 - How much smoke a rudimentary machine makes. It has to be visible within a
   minute or two of buying it, or the step does not read as a step.
-- Whether the tier-6 spark rungs are the same two rungs on every ladder or vary.
+- Whether the tier-6 spark rungs are the same two rungs on every ladder.
+- What a driven machine costs to *keep* running, if anything.
 
 ## The paint store (long term, not built)
 

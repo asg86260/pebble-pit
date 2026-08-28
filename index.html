@@ -17,6 +17,12 @@
   <div id="board" class="page" hidden>
     <div class="title">the bench</div>
     <div id="shop" class="rows"></div>
+    <!-- A ladder that is finished stays on the board saying so, because seeing
+         that you are done is the point of a ladder having an end. Once there are
+         a dozen of them that is a column of things you cannot buy, so this puts
+         them away -- a preference rather than a rule, since both readings are
+         true at different points in a game. -->
+    <button id="hidedone" type="button">hide finished</button>
     <button id="reset" type="button">reset progress</button>
   </div>
   <div id="lab" class="page" hidden>

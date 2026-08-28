@@ -28,7 +28,7 @@ import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
-import { UPGRADES, buy as buyRow } from './upgrades.js';
+import { UPGRADES, buy as buyRow, rungOf, maxed } from './upgrades.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -293,6 +293,18 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
 };
 
 export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = true; };
+
+// The rows themselves, for a check about what a row *is* rather than about what
+// the board looks like: how far up its ladder it is, whether it is finished, and
+// whether pressing it does anything.
+export const upgrades = () => UPGRADES;
+export const buyRowByKey = key => {
+  const u = UPGRADES.find(x => x.key === key);
+  if (!u) return false;
+  const was = rungOf(u);
+  buyRow(u);
+  return rungOf(u) > was;
+};
 
 // Press the pile, through the row on the board rather than around it: the price
 // is taken, the row's own rules about whether it may be bought at all apply, and

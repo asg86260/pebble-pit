@@ -115,7 +115,9 @@ canvas {
 
 .rows button {
   display: grid;
-  grid-template-columns: 11.2em 7.2em 4.6em;
+  /* the name column carries the rung now -- "upgrade pickaxe 3/5" -- and the
+     price column has to hold two currencies stacked */
+  grid-template-columns: 13.8em 7.2em 4.6em;
   align-items: baseline;
   gap: 0 6px;
   font: inherit;
@@ -199,7 +201,9 @@ canvas {
    it is not a price row and does not look like one. */
 .rows .job {
   display: grid;
-  grid-template-columns: 11.2em 1.8em 2.2em 1.8em;
+  /* the middle is a count of bodies on most of these rows and the stake on the
+     table's, which runs to four figures -- so it is cut for the wider of the two */
+  grid-template-columns: 11.2em 1.8em 4.2em 1.8em;
   align-items: baseline;
   gap: 0 6px;
   letter-spacing: .1em;
@@ -261,7 +265,9 @@ canvas {
    has no gain to state -- it says where that body is where a price would go --
    so the middle column is narrow and simply comes out empty on all but the one
    row that is buying something. */
-#crewshop button { grid-template-columns: 8.5em 2.6em 1fr; }
+/* The house board carries longer names than it was cut for -- "who lives here",
+   and a count that now says where it is going rather than just "+1". */
+#crewshop button { grid-template-columns: 11.2em 4.4em 1fr; }
 
 /* The sky's row says a signed rate where a price would go, and a rate is wider
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
@@ -291,8 +297,8 @@ canvas {
 .rows button .cost.split span + span { margin-left: 0; }
 .rows button .cost.split {
   display: inline-grid;
-  grid-template-columns: repeat(2, max-content);
-  gap: 0 .8em;
+  grid-template-columns: max-content;
+  gap: 0;
   justify-content: end;
   justify-items: end;
 }
@@ -371,6 +377,7 @@ canvas {
   line-height: 1.5;
 }
 
+#hidedone,
 #reset {
   align-self: flex-start;
   margin-top: 8px;
@@ -384,8 +391,11 @@ canvas {
   opacity: .35;
   cursor: pointer;
 }
+#hidedone:hover,
 #reset:hover { opacity: 1; }
 #reset.armed { opacity: 1; color: #fff; background: #000; border-style: solid; }
+/* the switch reads as thrown when it is thrown */
+#hidedone.on { opacity: 1; border-style: solid; }
 
 /* On a phone the board has to fit the screen and be big enough to hit with a
    thumb, so the columns tighten and the rows grow. It is opened by a tap on the
@@ -424,7 +434,8 @@ canvas {
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
-  #reset { padding: 6px 8px; }
+  #hidedone,
+#reset { padding: 6px 8px; }
   /* The panel stacks on a phone, so the submenu lands under the board it came
      out of rather than beside it -- which is still a submenu, and is the only
      way round that fits. Between the two of them they have one screen to share,
