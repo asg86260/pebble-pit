@@ -110,19 +110,23 @@ async function hoverBench() {
   await sleep(250);
 }
 
-// Standing at the block, with the view brought over first so that it is on the
-// screen to stand at. Where you have to stand is asked of the game rather than
-// written down here: the house is the one station that grows a room per body.
-async function hoverHouse() {
-  const h = state().houses;
-  const mid = (h.left + h.right) / 2;
-  window.__look(mid - 600);
-  await sleep(120);
-  const [hx, hy] = onScreen(mid, h.top + 20);
-  point('pointermove', hx, hy, 0);
-  await sleep(120);
-  return { x: hx, y: hy };
+// Standing at a station, which means standing at its *sign*: one target and one
+// size at every one of them, whatever the station behind it is. Where the sign
+// is comes from the game rather than from arithmetic here -- that is the whole
+// point of the signs, and a check that worked out the middle of the building
+// would be a check agreeing with the thing the signs replaced.
+async function hoverSign(which, look = true) {
+  const s = state().signs[which];
+  if (!s) return null;
+  if (look) { window.__look(s.x - 400); await sleep(120); }
+  const [x, y] = onScreen(s.x + s.w / 2, s.y + s.h / 2);
+  point('pointermove', x, y, 0);
+  await sleep(250);
+  return { x, y };
 }
+
+// The block's own, by the name the checks have always called it.
+const hoverHouse = () => hoverSign('house');
 
 // And the last step of the way to the people: the crew is a submenu now, so the
 // board is the block and the row that leads to the names, and the names come out
@@ -384,11 +388,7 @@ const TESTS = [
       .map(r => r.dataset.key);
 
     // standing at it opens its board, the same as the bench and the lab
-    window.__look(open.schoolX - 200);
-    await sleep(60);
-    const [sx, sy] = onScreen(open.schoolX + 60, open.groundY - 20);
-    point('pointermove', sx, sy, 0);
-    await sleep(250);
+    await hoverSign('school');
     const standing = state().schoolBoardOpen;
     await hoverAway();
     window.__look(state().openCamX);             // and leave the view where it was
@@ -549,6 +549,83 @@ const TESTS = [
          [...new Set(lit)].join(' ')),
       ok(dim.every(c => c !== 'rgb(0, 0, 0)'),
          'and only what you are short of is greyed', [...new Set(dim)].join(' '))
+    ];
+  }],
+
+  // A station is walked up to by its sign. The stations are not alike -- the lab
+  // is a small block, the casino four times as wide, the cut a hole with nothing
+  // standing over it at all, and the block grows a room a body until it is
+  // taller than the rock -- so a patch of ground drawn round each one was a
+  // different target at every one of them, and two of them overlapped on the way
+  // past. A sign is one size everywhere.
+  ['every station is walked up to by a sign, and they are all one size', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__crew(3, 2, 1, 1);
+    window.__school(true);
+    window.__lab(true);
+    run(20);
+    const signs = state().signs;
+    const kinds = Object.keys(signs);
+    const sizes = new Set(Object.values(signs).map(s => `${s.w}x${s.h}`));
+    // and each one stands clear of the ground it belongs to, not inside it
+    const feet = new Set(Object.values(signs).map(s => s.y + s.h));
+
+    const opened = [];
+    for (const which of ['lab', 'school', 'quarry', 'farm', 'house']) {
+      if (!signs[which]) continue;
+      await hoverAway();                       // off the last one before the next
+      await sleep(200);
+      await hoverSign(which);
+      opened.push(`${which}:${state()[which + 'BoardOpen'] ? 'open' : 'shut'}`);
+    }
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(kinds.length >= 5, 'a yard of open stations has a sign at each of them',
+         kinds.join(' ')),
+      ok(sizes.size === 1, 'and every one of them is the same size', [...sizes].join(' ')),
+      ok(feet.size === 1, 'standing at the same height off the same ground',
+         [...feet].join(' ')),
+      ok(opened.every(o => o.endsWith(':open')),
+         'and walking up to one opens the board behind it', opened.join(' '))
+    ];
+  }],
+
+  // What a board is showing, said on its sign, so that crossing the yard is a
+  // decision rather than a guess. The bench has always done this; the signs are
+  // what let every other station do it in the same two marks.
+  ['a sign says whether the board behind it is worth the walk', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(3, 2, 1, 1);
+    window.__school(true);                     // open, and nothing in the purse
+    run(20);
+    const fresh = state().signs.school.mark;
+
+    // read it, and the flag comes down. There is nothing here you can afford, so
+    // what is left is nothing: a sign with no news on it.
+    await hoverSign('school');
+    await sleep(300);
+    await hoverAway();
+    await sleep(300);
+    const read = state().signs.school.mark;
+
+    // and now something you could buy, from across the yard
+    window.__grant({ shards: 900 });
+    await sleep(300);
+    const rich = state().signs.school.mark;
+
+    window.__crew(0, 0);
+    window.__reset();
+    return [
+      ok(fresh === 'flag', 'a board you have never read flies a flag', fresh || 'nothing'),
+      ok(read === '', 'once read, with nothing you can afford, it says nothing',
+         read || 'nothing'),
+      ok(rich === 'dot', 'and a dot the moment there is something on it you can buy',
+         rich || 'nothing')
     ];
   }],
 
@@ -1288,11 +1365,7 @@ const TESTS = [
 
     // walk to the mouth of the cut
     const s0 = state();
-    window.__look(s0.quarryX - 200);
-    await sleep(60);
-    const [qx, qy] = onScreen(s0.quarryX + s0.quarryW / 2, s0.groundY - 10);
-    point('pointermove', qx, qy, 0);
-    await sleep(250);
+    await hoverSign('quarry');
     const atCut = state();
     const cutRows = [...document.querySelectorAll('#quarryshop [data-key]')].map(b => b.dataset.key);
     const deeper = document.querySelector('#quarryshop [data-key="quarrybench"]');
@@ -1301,11 +1374,7 @@ const TESTS = [
     const nowBenches = state().benches;
 
     // and out to the plots
-    window.__look(s0.farmX - 200);
-    await sleep(60);
-    const [fx, fy] = onScreen(s0.farmX + s0.farmW / 2, s0.groundY - 10);
-    point('pointermove', fx, fy, 0);
-    await sleep(250);
+    await hoverSign('farm');
     const atPlots = state();
     const plotRows = [...document.querySelectorAll('#farmshop [data-key]')].map(b => b.dataset.key);
 
@@ -1334,11 +1403,7 @@ const TESTS = [
     const s = state();
 
     // standing at it is what fills its board, the same as the bench
-    window.__look(s.schoolX - 200);
-    await sleep(60);
-    const [sx, sy] = onScreen(s.schoolX + 60, s.groundY - 20);
-    point('pointermove', sx, sy, 0);
-    await sleep(250);
+    await hoverSign('school');
 
     const heads = [...document.getElementById('schoolshop').children]
       .filter(el => el.dataset.sect);
@@ -1978,13 +2043,7 @@ const TESTS = [
     run(1);
 
     const el = document.getElementById('lab');
-    const s = state();
-    const at = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
-    const [lx, ly] = at(s.labX + 20, s.groundY - 30);
-    canvas().dispatchEvent(new PointerEvent('pointermove', {
-      clientX: lx, clientY: ly, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
-    await sleep(200);
-
+    await hoverSign('lab');
     const opened = !el.hidden;
     const before = state();
     const swing = el.querySelector('button[data-key="labswing"]');
@@ -2040,9 +2099,11 @@ const TESTS = [
     const point_ = (x, y) => canvas().dispatchEvent(new PointerEvent('pointermove', {
       clientX: x, clientY: y, pointerId: 1, isPrimary: true, buttons: 0, bubbles: true }));
     const away = () => point_(4, 4);             // nobody standing at any station
+    // at its sign, which is what standing at a station means
     const atLab = () => {
-      const s = state();
-      point_((s.labX + 20 - s.camX) * s.zoom, (s.groundY - 30 - s.camY) * s.zoom);
+      const s = state(), g = s.signs.lab;
+      if (!g) return;
+      point_((g.x + g.w / 2 - s.camX) * s.zoom, (g.y + g.h / 2 - s.camY) * s.zoom);
     };
 
     window.__abandon();
@@ -2656,15 +2717,7 @@ const TESTS = [
     const onBench = !!shop().querySelector('[data-key="worker"]') ||
                     !!shop().querySelector('[data-key="house"]');
 
-    const s = state();
-    const h = s.houses;
-    const mid = (h.left + h.right) / 2;
-    window.__look(mid - 600);
-    await sleep(120);
-    const [hx, hy] = onScreen(mid, h.top + 20);
-    point('pointermove', hx, hy, 0);
-    await sleep(160);
-
+    await hoverHouse();
     const before = state();
     const row = document.querySelector('#crewshop button[data-key="house"]');
     row?.click();

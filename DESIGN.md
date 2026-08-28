@@ -752,6 +752,33 @@ It says what it has without being opened, in one mark above the slab:
 A flag outranks a dot, because one more row under a heading you have already read is not news and
 a new group is. Opening the board reads every heading on it, and the flag comes down.
 
+**Every station says the same two things, on its sign.** The bench had this on its own for a long
+while, which meant the one board you were expected to keep returning to was the only one that told
+you whether it was worth returning to — and a yard of eight stations where seven of them are silent
+is a yard you cross on spec, which at this size is a walk you notice. So the marks moved onto the
+signs: a flag over a sign is a board with a row on it you have never seen, a dot is one with
+something you can afford, and the sign you are standing at shows neither, because you are reading
+the board itself. One alphabet: having learnt the bench you have learnt all of them.
+
+### The signs
+
+**A board comes out of a sign, not out of a building.** Standing at a station used to mean standing
+anywhere inside a patch of ground and air drawn round the whole of it — which is a different target
+at every station, because the stations are not alike. The lab is a small block, the casino four
+times as wide, the cut is a hole with nothing standing over it at all, and the crew's block grows a
+room per body until it is taller than the rock and its patch reaches up into the sky the boards hang
+in. So the same act — go and look at that — was the size of a shed in one place and the size of a
+wall in another, and two of them overlapped on the way past.
+
+A sign is one size everywhere: six cells by three on a three-cell post, two cells clear of its
+station, on the side you arrive from. White paper with a black edge, and the one you are standing at
+fills in solid. The board is seated over the sign and the wedge that keeps it open while you walk to
+it is drawn from the sign, so the sheet comes out of the thing the cursor is actually on.
+
+**The bench keeps its old whole-thing reach.** It is the first board there is, met before there is
+anything else on the ground for it to be consistent with, and a first board hiding behind a post is
+a first board nobody finds.
+
 The board is grouped by where the work is — you, the crew, the rock, the cave, the farm and the lab — with the headcount beside each heading. Each place that can be worked carries a **job
 row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board
 that spends nothing, and it is the only one you can run backwards. Every row is the same three

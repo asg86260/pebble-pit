@@ -28,8 +28,9 @@ import { SKY, DROPS, DRAUGHT, muckCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { bedX } from './farm.js';
-import { fmt } from './board.js';
+import { fmt, signMark } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
+import { drawSigns } from './sign.js';
 import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -2482,6 +2483,7 @@ export function draw() {
   drawTowerBar();          // and how far along the tower's hat is, over the tower
   drawLabMark();           // and a tick over it if it finished something
   drawCasinoMark();        // and which way the last hand at the table went
+  drawSigns(ctx, signMark);   // the post in front of each station, and what it is showing
   drawKitStands();                                // and the kit put out ready at each of them
   drawRoster(ctx, drawBody, drawHat, drawCart);   // who is working here, under the place they work
   drawIntro();             // the two of them, or whoever is under the rock
