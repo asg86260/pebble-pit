@@ -32,6 +32,11 @@ const resetEl = document.getElementById('reset');
 // from the first. A mouse only ever has one, so none of this gets in its way.
 const down = new Map();
 let panning = null;                        // where the fingers were last frame
+// and the same for the middle button, which is a mouse's version of the two
+// fingers: hold it down and the yard slides under the pointer. Kept apart from
+// `panning` because it is one pointer rather than the middle of several, and
+// because it must not be cancelled by the same "fewer than two fingers" rule.
+let wheelPan = null;
 const TAP_SLOP = 14;                       // pixels a tap may wander and still be a tap
 const TAP_TIME = 500;
 
@@ -68,6 +73,13 @@ export function pos(e) {
 // would put there is not wanted anywhere on the yard.
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 
+// The middle button scrolls the view sideways, and the browser would rather use
+// it to open its own autoscroll. Taken on `mousedown`, which is the event that
+// starts that, rather than on the pointer events below -- preventing the default
+// on a pointerdown does not stop it.
+canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
+canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
+
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything. A paused game you can still
   // swing at is not a paused game; the only live thing is the sheet saying so,
@@ -76,6 +88,14 @@ canvas.addEventListener('pointerdown', e => {
   // The right button picks somebody up and puts them down again, and does
   // nothing else at all -- see `lift`. It is checked before anything, because
   // it can never mean any of the things the left button means.
+  // The middle button looks around and does nothing else, the same deal the
+  // right button has with the crew. Checked before the left button's business
+  // for the same reason: it can never mean any of those things.
+  if (e.button === 1) {
+    wheelPan = e.clientX;
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
   if (e.button === 2) {
     const w = workerAt(...Object.values(pos(e)));
     if (w) {
@@ -117,6 +137,12 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointermove', e => {
   const held = down.get(e.pointerId);
   if (held) { held.x = e.clientX; held.y = e.clientY; }
+
+  if (wheelPan !== null) {                   // middle button: drag the view along
+    pan((wheelPan - e.clientX) / S.zoom);
+    wheelPan = e.clientX;
+    return;
+  }
 
   if (panning && down.size >= 2) {           // two fingers: drag the view along
     const now = middle();
@@ -190,6 +216,7 @@ canvas.addEventListener('pointermove', e => {
 });
 
 export function endDrag(e) {
+  if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
   const up = lifted();
   if (up) { drop(up); return; }
   const held = down.get(e.pointerId);
@@ -228,6 +255,7 @@ addEventListener('pointerup', endDrag);          // catch releases outside the c
 addEventListener('blur', () => {
   down.clear();
   panning = null;
+  wheelPan = null;
   S.mining = false;
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });

@@ -1355,6 +1355,37 @@ const TESTS = [
     ];
   }],
 
+  // What the two fingers are on a desk. A mouse has no second finger, and the
+  // yard is wider than any window it is looked at through, so without this the
+  // only ways along it are the wheel and walking somebody there.
+  ['the middle button drags the view', async () => {
+    const mouse = (type, x, button) =>
+      canvas().dispatchEvent(new PointerEvent(type, {
+        clientX: x, clientY: 300, pointerId: 9, isPrimary: true, pointerType: 'mouse',
+        button, buttons: type === 'pointerup' ? 0 : 4, bubbles: true, cancelable: true
+      }));
+    const before = state();
+    mouse('pointerdown', 600, 1);
+    for (let i = 1; i <= 8; i++) { mouse('pointermove', 600 - i * 20, 1); await sleep(16); }
+    const dragged = state();
+    mouse('pointerup', 440, 1);
+    await sleep(50);
+    // and nothing after the button is up: a view that kept sliding with the
+    // pointer afterwards would be a yard you could not stop looking at
+    mouse('pointermove', 900, 0);
+    await sleep(50);
+    const after = state();
+    return [
+      ok(dragged.camX > before.camX, 'the view moves with the button held',
+         `${before.camX} -> ${dragged.camX}`),
+      ok(after.camX === dragged.camX, 'and stops the moment it is let go',
+         `${dragged.camX} -> ${after.camX}`),
+      ok(!after.dragging && after.held === before.held,
+         'and it is a look around rather than a sweep',
+         `${before.held} -> ${after.held}`)
+    ];
+  }],
+
   ['a tap opens the board, because there is no hovering', async () => {
     // Start from closed, whatever an earlier check left behind. The far corner
     // of the window rather than the near one: a board holds itself open over the
