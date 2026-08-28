@@ -10,6 +10,7 @@ import {
   ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
 import { foul, throughRockMuck } from './smog.js';
+import { frames } from './clock.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -121,8 +122,10 @@ export function dropHeight() {
 // ground it needs, and knocks a few grains off the tops of the two banks.
 export function stepRock() {
   if (S.rockFall <= 0) return;
-  S.rockFallV += DROP_GRAV;
-  S.rockFall -= S.rockFallV;
+  // A rock takes the same time to come down whatever the machine is drawing at
+  const f = frames();
+  S.rockFallV += DROP_GRAV * f;
+  S.rockFall -= S.rockFallV * f;
   if (S.rockFall <= 0) {
     S.rockFall = 0;
     S.rockFallV = 0;

@@ -30,7 +30,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
 // over the same yard at the same moment being blown two different ways was the
 // plainest of the old faults: whichever one you happened to be watching, the
@@ -918,10 +918,12 @@ function pour(secs) {
 
 function stepDrops() {
   const m = muckCols();
+  const f = frames();
   for (let i = DROPS.length - 1; i >= 0; i--) {
     const d = DROPS[i];
-    d.vy += RAIN_GRAV;
-    d.y += d.vy;
+    // rain falls at pixels a frame, so it falls by however long the frame was
+    d.vy += RAIN_GRAV * f;
+    d.y += d.vy * f;
     const c = colAt(d.x);
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
     const rest = muckFloor(c) - m[c] * P;

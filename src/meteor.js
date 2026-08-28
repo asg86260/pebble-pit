@@ -17,7 +17,7 @@
 import { P, METEOR_CORE, METEOR_SPARKS, METEOR_CORE_SPARKS, SUMMON_MS, SUMMON_SHAKE, SPARK_CELL, someFind,
          BOLT_PACE, WIZ_ORBIT } from './config.js';
 import { S, sky } from './state.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { shakeView } from './world.js';
 
@@ -81,11 +81,12 @@ function stepBolts() {
     const tx = cellX(b.c) + sky.p / 2, ty = cellY(b.r) + sky.p / 2;
     const dx = tx - b.x, dy = ty - b.y;
     const d = Math.hypot(dx, dy);
-    if (d > BOLT_PACE) {
+    const step = BOLT_PACE * frames();     // pixels a frame, times the frame
+    if (d > step) {
       b.px = b.x;                       // where it was, for the tail behind it
       b.py = b.y;
-      b.x += (dx / d) * BOLT_PACE;
-      b.y += (dy / d) * BOLT_PACE;
+      b.x += (dx / d) * step;
+      b.y += (dy / d) * step;
       // and it sheds as it goes, so what crosses the gap is a thing burning
       // rather than a square sliding
       sparkle(b.x, b.y, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, 340);

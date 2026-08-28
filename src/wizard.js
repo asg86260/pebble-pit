@@ -20,6 +20,7 @@
 
 import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
          WIZ_TRAIL_MS, WIZ_TRAIL_LIFE } from './config.js';
+import { frames } from './clock.js';
 import { S, sky } from './state.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
@@ -112,7 +113,7 @@ export function floatDown(w) {
   const foot = walkY(w.x + WORKER / 2);
   w.aloft = w.y < foot;
   if (w.y >= foot) { w.y = foot; w.floating = false; w.aloft = false; return true; }
-  w.y = Math.min(foot, w.y + WIZ_RISE * 1.6);
+  w.y = Math.min(foot, w.y + WIZ_RISE * 1.6 * frames());   // pixels a frame
   return false;
 }
 

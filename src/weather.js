@@ -17,6 +17,7 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S } from './state.js';
+import { frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 
@@ -93,8 +94,12 @@ export function stepWeather(now) {
     c.x = S.camX * c.far - c.w * P - P * 4;    // in off the left, going right
     CLOUDS.push(c);
   }
+  // Scenery drifts in pixels a frame like everything else, so it too is stepped
+  // by how long the frame was -- otherwise the sky slows down on a slow machine
+  // while the clock behind it does not.
+  const f = frames();
   for (const c of CLOUDS) {
-    c.x += c.vx;
+    c.x += c.vx * f;
     const at = acrossView(c);
     if (at > S.viewW + P * 8) c.x -= wide;     // out the right, back in the left
     else if (at < -c.w * P - P * 8) c.x += wide;
@@ -107,9 +112,9 @@ export function stepWeather(now) {
   }
   for (let i = BIRDS.length - 1; i >= 0; i--) {
     const b = BIRDS[i];
-    b.x += b.vx;
-    b.y += Math.sin((b.x + b.sway) / 90) * 0.12;   // a long lazy rise and fall
-    b.flap += b.beat;
+    b.x += b.vx * f;
+    b.y += Math.sin((b.x + b.sway) / 90) * 0.12 * f;   // a long lazy rise and fall
+    b.flap += b.beat * f;
     // A lot is strung out well behind its leader, so the margin here has to be
     // wider than the tail is long or the stragglers are dropped before they fly
     const at = acrossView(b);

@@ -181,13 +181,20 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
 // by hand: a check that wants to watch a worker walk two thousand pixels runs
 // the steps instead of sitting through the seconds, and gets the same answer
 // every time rather than one that depends on how fast the machine is.
-export const fast = (seconds = 1) => {
-  const frames = Math.round(seconds * 60);
+// `hz` is what rate to pretend the machine is drawing at. It defaults to the
+// sixty the game is tuned in, which is what every check has always used and
+// what keeps them all measuring the same numbers -- but the whole point of the
+// yard being on the clock rather than on the frame is that thirty and a hundred
+// and twenty do the same amount of yard per second, and the only way to check
+// that is to be able to ask for them.
+export const fast = (seconds = 1, hz = 60) => {
+  const frames = Math.max(1, Math.round(seconds * hz));
+  const ms = 1000 / hz;
   for (let i = 0; i < frames; i++) {
     // the same shape as a real frame, held included: a check that presses space
     // should see what a player pressing space sees
     if (S.paused) continue;
-    advance(1000 / 60);
+    advance(ms);
     step();
   }
   S.dirty = true;

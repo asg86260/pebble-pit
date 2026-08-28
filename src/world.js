@@ -11,6 +11,7 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_BEDS0, FARM_BEDS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H } from './config.js';
+import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { shapePit } from './pit.js';
 
@@ -541,8 +542,12 @@ export function shakeView(amount) {
 // as crisp as a still one.
 export function stepShake() {
   if (!S.shake) return;
-  S.shakePh += SHAKE_RATE;
-  S.shake *= SHAKE_DECAY;
+  // A rock landing rocks the view for about as long either way, whatever the
+  // machine is drawing at: the phase is radians a frame and the fade is a
+  // proportion of what is left, so one is stepped and the other raised.
+  const f = frames();
+  S.shakePh += SHAKE_RATE * f;
+  S.shake *= SHAKE_DECAY ** f;
   if (S.shake < 0.2) { S.shake = 0; S.shakeX = 0; S.shakeY = 0; return; }
 
   // It may only rock as far as there is world to rock into. The view is already

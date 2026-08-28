@@ -38,7 +38,7 @@ import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
 import { canAfford, mineMs } from './upgrades.js';
-import { now as clockNow } from './clock.js';
+import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir } from './smog.js';
 import { stepScrub } from './scrubhouse.js';
 // The ground is the ground because of these: the grid module knows none of it.
@@ -82,6 +82,14 @@ export function step() {
   // arrive at the same plot; it is two length checks and it does nothing once
   // the beds are there.
   if (S.farmOpen) plantBeds();
+  // How long this frame was, before anything moves on the strength of it. It
+  // used to be worked out halfway down, which was fine while it was only handed
+  // to the things below it; now that everything which moves reads it (see
+  // `frames` in clock.js) it has to be the first thing the frame knows.
+  const frameNow = clockNow();
+  const dt = Math.min(100, frameNow - (S.lastFrame || frameNow));  // a long tab-out is not a long frame
+  S.lastFrame = frameNow;
+  setFrames(dt);
   stepCamera(clockNow());
   stepShake();                                // and whatever the last landing left
   stepAir();
@@ -89,8 +97,7 @@ export function step() {
   sampleRates(clockNow());
   const now = clockNow();
   stepWeather(now);
-  const dt = Math.min(100, now - (S.lastFrame || now));   // a long tab-out is not a long frame
-  S.lastFrame = now;
+
   // How much is lying about. Counting fifty thousand cells is not a thing to do
   // every frame, and the answer moves by a grain at a time, so it is counted
   // twice a second and the crew are told to stop or start on that.
@@ -132,11 +139,13 @@ export function step() {
     }
   }
 
+  const f = frames();
   for (let i = S.chips.length - 1; i >= 0; i--) {
     const ch = S.chips[i];
-    ch.vy += GRAV;
-    ch.x += ch.vx;
-    ch.y += ch.vy;
+    // however long this frame was, in the sixtieths these speeds are written in
+    ch.vy += GRAV * f;
+    ch.x += ch.vx * f;
+    ch.y += ch.vy * f;
 
     if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
     if (ch.x > S.worldW - P) {
@@ -258,9 +267,10 @@ export function surveyFloor() {
 // draws them.
 export function stepPaid() {
   const tx = bench.x + bench.w / 2, ty = bench.y - P * 2;
+  const f = frames();                            // the flight is a rate a frame
   for (let i = S.paid.length - 1; i >= 0; i--) {
     const m = S.paid[i];
-    m.t += m.rate;
+    m.t += m.rate * f;
     if (m.t >= 1) { S.paid.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 

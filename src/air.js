@@ -17,7 +17,7 @@ import { S, floor, pit, quarry, farm } from './state.js';
 import { at, count, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { windAt, give } from './wind.js';
 
 export const AIR = [];
@@ -202,7 +202,11 @@ export function stepAir() {
   if (AIR.length < want) AIR.push(born(false));
   else if (AIR.length > want + 8) AIR.splice(Math.floor(Math.random() * AIR.length), 1);
 
-  const keep = Math.max(0, 1 - AIR_STIR_EASE / 60);
+  // Everything below is written as pixels a frame, so it is stepped by however
+  // long this frame was -- and the easing, being a proportion of what is left
+  // rather than a distance, is raised to that power. See `frames` in clock.js.
+  const f = frames();
+  const keep = Math.max(0, 1 - AIR_STIR_EASE / 60) ** f;
   for (const m of AIR) {
     // The one wind, times what this band takes of it, times this mote's share.
     // The band is the depth: a far band leans less than a near one on the same
@@ -210,16 +214,16 @@ export function stepAir() {
     // shared wind is scaled per band rather than each band being given a wind of
     // its own -- two winds would have had the far dust drifting one way while
     // the near dust went the other, and depth would have read as disagreement.
-    m.x += wind * m.b.pace * m.lean - dx * m.b.take;
-    m.y += m.vy - dy * m.b.take;
+    m.x += (wind * m.b.pace * m.lean) * f - dx * m.b.take;
+    m.y += m.vy * f - dy * m.b.take;
 
     // and whatever draught the cursor left behind it, dying away. A real wind
     // for a moment rather than a shove: the mote keeps moving after the pointer
     // has gone by, and slows, which is what air does once something has been
     // through it.
     if (m.sx || m.sy) {
-      m.x += m.sx;
-      m.y += m.sy;
+      m.x += m.sx * f;
+      m.y += m.sy * f;
       m.sx *= keep;
       m.sy *= keep;
       if (Math.abs(m.sx) < 0.02) m.sx = 0;

@@ -21,7 +21,7 @@ import { stepFarmhand, newFarmhand, bedX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
          rockMuck, cutMuck, bedMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
@@ -61,7 +61,14 @@ function climbTo(w, foot) {
   // which is the one thing climbing was put in to stop.
   if (w.foot == null) w.foot = w.y;
   const d = foot - w.foot;
-  w.foot += Math.sign(d) * Math.min(Math.abs(d), Math.max(CLIMB_MIN, Math.abs(d) * CLIMB_SHARE));
+  // Per frame, times how long this frame was: at sixty that is one and the pace
+  // is exactly what it always was. See `frames` in clock.js. The share of what
+  // is left is a proportion rather than a distance, so it is raised to the
+  // power instead of multiplied -- a fourteenth of the way there twice is not
+  // twice a fourteenth of the way there.
+  const f = frames();
+  const chunk = Math.max(CLIMB_MIN * f, Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
+  w.foot += Math.sign(d) * Math.min(Math.abs(d), chunk);
   return w.foot;
 }
 const MINER_WALK = 0.5;   // pixels a frame along the row
@@ -131,7 +138,7 @@ function duck(w, zone) {
   // walked to the line lands a pixel inside it as often as not, and a body
   // stood with its shoulder against the rock does not read as out of the way.
   const out = mid < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
-  w.x += Math.sign(out - w.x) * Math.min(DUCK_PACE, Math.abs(out - w.x));
+  w.x += Math.sign(out - w.x) * Math.min(DUCK_PACE * frames(), Math.abs(out - w.x));
   return true;
 }
 
@@ -343,7 +350,7 @@ function downTheHole(w, to, dt) {
     w.y = walkY(w.x + WORKER / 2);
     w.dir = Math.sign(d) || 1;
     if (Math.abs(d) > 1) {
-      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       return;
     }
     w.x = lad.x - WORKER / 2;
@@ -358,7 +365,7 @@ function downTheHole(w, to, dt) {
     const lad = pitLadder(w.side || NEAR);
     w.x = lad.x - WORKER / 2;
     const foot = pitStand(w.x) - WORKER;
-    w.y = Math.min(w.y + CLIMB_PACE, foot);
+    w.y = Math.min(w.y + CLIMB_PACE * frames(), foot);
     if (w.y >= foot) w.inPit = want === (w.side || NEAR) && !pastPit(to) ? 'dig' : 'cross';
     return;
   }
@@ -370,7 +377,7 @@ function downTheHole(w, to, dt) {
     if (to == null || !overPitMouth(to)) { w.inPit = 'cross'; return; }
     const d = to - WORKER / 2 - w.x;
     if (Math.abs(d) > P * 2) {
-      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.dir = Math.sign(d);
     } else {
       sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
@@ -387,7 +394,7 @@ function downTheHole(w, to, dt) {
     const lad = pitLadder(want);
     const d = lad.x - WORKER / 2 - w.x;
     if (Math.abs(d) > 1) {
-      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.dir = Math.sign(d);
       w.y = pitStand(w.x) - WORKER;
       return;
@@ -404,7 +411,7 @@ function downTheHole(w, to, dt) {
   // rather than dragging it back across the mouth.
   const lad = pitLadder(w.side || NEAR);
   w.x = lad.x - WORKER / 2;
-  w.y = Math.max(w.y - CLIMB_PACE, lad.top);
+  w.y = Math.max(w.y - CLIMB_PACE * frames(), lad.top);
   if (w.y > lad.top) return;
   w.y = lad.top;
   w.inPit = null;
@@ -454,7 +461,7 @@ function relieve(w, now) {
     const d = w.looTo - w.x;
     if (Math.abs(d) > WORKER) {
       w.face = Math.sign(d) || w.face || 1;
-      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.y = walkY(w.x + WORKER / 2);
       w.lunge = 0;
       return true;
@@ -635,7 +642,7 @@ function elbowJig(w) {
     if (o === w || o.jigAt == null) continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
-    w.x -= Math.sign(d || w.jigDir || 1) * 0.5;
+    w.x -= Math.sign(d || w.jigDir || 1) * 0.5 * frames();
     return;
   }
 }
@@ -809,7 +816,7 @@ function stepCommute(w, zone) {
     const foot = quarryFace();
     if (Math.abs(w.x - foot) > 1) {
       w.y = quarryFloor(w.x + WORKER / 2) - WORKER;
-      w.x += Math.sign(foot - w.x) * Math.min(commutePace(), Math.abs(foot - w.x));
+      w.x += Math.sign(foot - w.x) * Math.min(commutePace() * frames(), Math.abs(foot - w.x));
       return;
     }
     w.x = foot;
@@ -821,7 +828,7 @@ function stepCommute(w, zone) {
   // A miner is the same thing the other way up, stood on top of the rock.
   const top = walkY(w.x + WORKER / 2);
   if (Math.abs(w.y - top) > 1) {
-    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE, Math.abs(top - w.y));
+    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE * frames(), Math.abs(top - w.y));
     return;
   }
 
@@ -829,7 +836,7 @@ function stepCommute(w, zone) {
 
   const d = w.walkTo - w.x;
   w.face = Math.sign(d) || w.face || 1;        // a cart is dragged behind
-  w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+  w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
   w.y = walkY(w.x + WORKER / 2);               // the bridge carries a commuter too
   if (Math.abs(d) < COMMUTE_SLOP) arrive(w);
 }
@@ -1038,9 +1045,15 @@ function fall(w) {
   // whatever is under it *there* -- so the foot is read after the step, not
   // before it, or a body thrown onto the rock would stop in the air where the
   // rock was not.
+  // Falling, in frames rather than in frames' worth of arithmetic. Speeds are
+  // pixels a frame and gravity is pixels a frame a frame, so both are stepped by
+  // however long this frame was; the drag is a proportion of what is left, so it
+  // is raised to that power instead. At sixty all three come out exactly as they
+  // were written.
+  const f = frames();
   if (w.vx) {
-    w.x += w.vx;
-    w.vx *= HURL_DRAG;
+    w.x += w.vx * f;
+    w.vx *= HURL_DRAG ** f;
     // The yard has ends. A body thrown at one bumps off it rather than sailing
     // out of the world and walking back in from nowhere.
     const lo = yardLeft(), hi = pit.x + pit.w - WORKER;
@@ -1049,8 +1062,8 @@ function fall(w) {
     if (Math.abs(w.vx) < 0.05) w.vx = 0;
   }
   const foot = landing(w);
-  w.vy += GRAV;
-  w.y += w.vy;
+  w.vy += GRAV * f;
+  w.y += w.vy * f;
   if (w.y < foot) return;
   w.y = foot;
   w.vy = 0;
@@ -1161,7 +1174,7 @@ function elbowIdle(w) {
     if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'idle') continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
-    w.x -= Math.sign(d || 1) * 0.25;
+    w.x -= Math.sign(d || 1) * 0.25 * frames();
     return;
   }
 }
@@ -1186,7 +1199,7 @@ function elbowMuck(w) {
     // each stands in the crew list, so they alternate and actually come apart --
     // a coin toss they both call the same way leaves them stacked for ever.
     const tie = S.workers.indexOf(w) % 2 ? 1 : -1;
-    w.x -= Math.sign(d || tie) * 0.35;
+    w.x -= Math.sign(d || tie) * 0.35 * frames();
     // Sideways, and nothing else. It used to plant the feet on the ground line
     // after the nudge, which is right for the yard and wrong on the hill: a
     // miner shovelling the crest was dropped the height of the rock on every
@@ -1340,7 +1353,7 @@ export function updateWorkers(now, dt) {
     // walk to it, then shovel: it is somewhere you go, not something that
     // happens wherever you are standing
     if (Math.abs(d) > P * 2) {
-      w.x += Math.sign(d) * Math.min(commutePace(), Math.abs(d));
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.dir = Math.sign(d);
       w.y = foot();
     } else {
@@ -1486,9 +1499,9 @@ export function updateWorkers(now, dt) {
       if (!inBand(here)) {
         const back = nearestInBand(here);
         if (back !== here) w.dir = Math.sign(back - here);
-        w.x += w.dir * MINER_WALK * 2.5;              // brisk, it has ground to make up
+        w.x += w.dir * MINER_WALK * 2.5 * frames();              // brisk, it has ground to make up
       } else {
-        const step = w.x + w.dir * MINER_WALK;
+        const step = w.x + w.dir * MINER_WALK * frames();
         if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
         else w.dir = -w.dir;
       }
@@ -1611,7 +1624,7 @@ export function updateWorkers(now, dt) {
       // held up, and dancing rather than standing there: see heldUp
       if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
       const pace = haulSpeed() * HAUL_EMPTY;
-      w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
+      w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P * 2) {
         S.coreItem = null;
         S.coreTaker = null;
@@ -1698,7 +1711,7 @@ export function updateWorkers(now, dt) {
       // hands free, so it moves; a load is what slows it down
       const pace = haulSpeed() * HAUL_EMPTY;
       w.face = Math.sign(target - w.x) || w.face || 1;   // a cart is dragged behind
-      w.x += Math.sign(target - w.x) * Math.min(pace, Math.abs(target - w.x));
+      w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
       // It scoops what is under it, not what its left edge is exactly on. The
       // last two columns before the lip sit further right than a worker is
       // allowed to stand, so a worker that had to be standing on them stood at
@@ -1735,7 +1748,7 @@ export function updateWorkers(now, dt) {
       // held up, and dancing rather than standing there: see heldUp
       if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
       w.face = Math.sign(target - w.x) || w.face || 1;
-      w.x += Math.sign(target - w.x) * Math.min(haulSpeed(), Math.abs(target - w.x));
+      w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
       if (Math.abs(target - w.x) < P) {
         if (w.hasCore) {
           S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
@@ -1779,7 +1792,7 @@ export function updateWorkers(now, dt) {
       const door = hireSpot().x;
       if (across(zone, w.x, door)) { heldUp(w, zone, now); continue; }
       w.face = Math.sign(door - w.x) || w.face || 1;
-      w.x += Math.sign(door - w.x) * Math.min(HOME_WALK, Math.abs(door - w.x));
+      w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
       w.y = walkY(w.x + WORKER / 2);
       if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
     } else {
@@ -1820,7 +1833,7 @@ export function updateWorkers(now, dt) {
         if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); continue; }
         w.face = Math.sign(d) || w.face || 1;
         // its own legs, not everybody's
-        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1), Math.abs(d));
+        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
         if (Math.abs(d) < 1) {
           w.roamTo = null;
           // and its own patience about standing there afterwards

@@ -36,7 +36,7 @@ import { S, pit, casino, table } from './state.js';
 import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, topRow, at, put, bottomY, surfaceY } from './grid.js';
 import { shakeView } from './world.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { spend, bankDust, takeCoreCells, pitRoom } from './pit.js';
 import { buildShop } from './shop.js';
 
@@ -355,11 +355,12 @@ export const potShade = cur =>
 // One frame of the grains in the air: they rise, they fall, they land in the
 // bed or they fade out.
 export function stepSparks(dt) {
+  const f = frames();
   for (let i = S.tableAir.length - 1; i >= 0; i--) {
     const k = S.tableAir[i];
-    if (!k.up) k.vy += TABLE_GRAV;
-    k.x += k.vx;
-    k.y += k.vy;
+    if (!k.up) k.vy += TABLE_GRAV * f;
+    k.x += k.vx * f;
+    k.y += k.vy * f;
     k.t += dt / 1000;
     // and they are gone when they reach the ground rather than falling through
     // it: a chip is not dust, it lands on nothing and it is worth nothing, but
