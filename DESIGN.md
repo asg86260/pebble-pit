@@ -759,56 +759,38 @@ second sheet to open beside it to carry one number is a row that does not say wh
 be short of time, so the clock on a bill is never greyed and is never the reason a row is out of
 reach; while something is being made the clock counts down what is left of it.
 
-**Every station says the same two things, on its sign.** The bench had this on its own for a long
-while, which meant the one board you were expected to keep returning to was the only one that told
-you whether it was worth returning to — and a yard of eight stations where seven of them are silent
-is a yard you cross on spec, which at this size is a walk you notice. So the marks moved onto the
-signs: a flag over a sign is a board with a row on it you have never seen, a dot is one with
-something you can afford, and the sign you are standing at shows neither, because you are reading
-the board itself. One alphabet: having learnt the bench you have learnt all of them.
+**Every station says whether it has anything, with one mark.** An arrow under the foot of it,
+pointing up at it: there is a row on that board you could buy right now. It goes when you have
+bought it, and while you are standing there reading the board, because you can see the board.
 
-### The signs
+One mark and one question. There were two for a while — a flag for a heading you had never read, a
+dot for something you could afford — and telling those apart is a thing to learn before the yard can
+be read at a glance, for a difference that changes nothing about what you do: you walk over and look
+either way. "A row you have not seen yet" went with it, and should have gone sooner: a yard you have
+just started has never seen any row, so every station stood there pointing at itself from the first
+frame, and a mark that is always up is a mark nobody reads.
 
-**A board comes out of a sign, not out of a building.** Standing at a station used to mean standing
-anywhere inside a patch of ground and air drawn round the whole of it — which is a different target
-at every station, because the stations are not alike. The lab is a small block, the casino four
-times as wide, the cut is a hole with nothing standing over it at all, and the crew's block grows a
-room per body until it is taller than the rock and its patch reaches up into the sky the boards hang
-in. So the same act — go and look at that — was the size of a shed in one place and the size of a
-wall in another, and two of them overlapped on the way past.
+It is drawn *under* the station, in the empty ground below the line, where nothing else in this game
+is drawn. Everything over a roof — the tower's bar, the lab's tick, the casino's last hand — is about
+what a place is *doing*; this is about what it is offering, and the two want telling apart.
 
-A sign is one size everywhere: six cells by three on a three-cell post, two cells clear of its
-station, on the side you arrive from. The board is seated over the sign and the wedge that keeps it
-open while you walk to it is drawn from the sign, so the sheet comes out of the thing the cursor is
-actually on.
+The mark is a solid head and no shaft. Five cells by three is three courses to say "up" in, and a
+shaft under a head that size stops reading as an arrow altogether: the widest course becomes a
+crossbar and what hangs below it a stem, which is a dagger, or with a stouter stem a plus.
 
-**The paper on it is a slot, not a panel.** Every building in this yard is a black mass with square
-white windows cut out of it, and a two-cell square of white framed in black on a post is that same
-token on a stick — the signs read as windows. One cell tall is a letterbox, which is a shape nothing
-else here has, and that proportion is the whole of why a sign now reads as a sign.
+**A station is walked up to by being a station.** Boards came out of signposts for a while — one
+target and one size at every one of them, since the stations are not alike — and it was worse: a yard
+of eight posts, each carrying a small white panel, in a game whose buildings are black masses with
+small white windows cut out of them. What you point at is the thing itself. The cut is the exception
+and always will be: it is a hole, and a bridge crosses it — a ramp up, a deck straight over the
+mouth, a ramp down — so pointing at the mouth meant pointing at the deck, and walking a hauler over
+the cut opened the cut's board on the way past. What you point at there is the ground that is
+missing.
 
-**Both marks are on the sign.** They used to float clear above it — the dot three cells up, the flag
-on a second post above the post the board already stands on. At the size these are drawn a cell
-floating on its own in the air is a speck of grit, and a post growing out of the top of a post is a
-mast. The notice is pinned in the slot, a cell and a half of it, because one cell disappears exactly
-when the yard is zoomed out and you are looking across it deciding where to walk; the pennant flies
-from a two-cell mast off the board's own head, which is where a flag goes. The one you are standing
-at is filled in solid and shows neither.
-
-Two things were tried and thrown out, both for the same reason — a sign has about thirty pixels by
-fifteen to work in. **A cantilever** (the board hung off the end of a tall post) had far and away the
-best silhouette until it was looked at beside the rest: it reads as a flag on a flagpole, and a flag
-is already what "there is something new here" means. A sign whose resting shape is one of its own
-states cannot say anything. And **a mark per station** in the paper, so that a sign said *which*
-place it belonged to — which would have been worth a great deal at the cut and the plots, the two
-sites with no building to recognise. Eight marks in a paper four cells by three come out at fifteen
-pixels by ten, where a shard, a hat and a puff of smoke are the same smudge; even drawn at eight
-times size the cut's triangle and the tower's collided. Eight marks nobody can tell apart are worse
-than eight blanks, which at least do not pretend to say anything.
-
-**The bench keeps its old whole-thing reach.** It is the first board there is, met before there is
-anything else on the ground for it to be consistent with, and a first board hiding behind a post is
-a first board nobody finds.
+**A press on the yard puts an open board away.** A board opens by being walked up to and closes by
+being walked away from, which is right while the cursor is drifting. A click is not drifting: it is
+somebody deciding to do something, and if that something is swinging at the rock then the sheet in
+the corner is over.
 
 The board is grouped by where the work is — you, the crew, the rock, the cave, the farm and the lab — with the headcount beside each heading. Each place that can be worked carries a **job
 row**: its name, a less, the count of bodies on it, and a more. It is the one row on the board

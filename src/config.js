@@ -84,6 +84,11 @@ export const INTRO_CHAT_MS = 9000;   // two of them, talking, before anything ha
 export const INTRO_HEART_MS = 1900;  // and how often one of them says the other thing
 export const INTRO_DOWN_MS = 2200;   // flat on its back after the rock lands
 export const INTRO_UP_MS = 3400;     // and up, staring at it, while the view pulls out
+// How long the crew stare at a rock that has just landed on the spot where one
+// of their own is. The same beat the opening gives the body it threw clear, cut
+// short: by the second rock it is a thing that happens rather than a thing that
+// has just happened for the first time.
+export const LAND_SAY_MS = 1600;
 export const INTRO_BEAT = 900;    // between one of them saying something and the other
 export const INTRO_APART = 20;    // and how far apart they stand, in world pixels
 export const INTRO_HURL = 4.2;    // how hard the one left standing is thrown back
@@ -1085,11 +1090,16 @@ export let CUT_STEP = 0.6;
 // at a bed and tends it, and it grows while tended. So the crop is the crew's
 // attention, which is the same trade the quarry asks for in a different shape.
 // The beds are broken one at a time, and a bed is a place for one body: the
-// same bargain the quarry makes, in the shape the farm makes it. Three come
-// with the ground; the rest are broken with what the ground gives up.
-export const FARM_BEDS0 = 3;     // beds the ground comes with
+// same bargain the quarry makes, in the shape the farm makes it. One comes with
+// the ground; the rest are broken with what the ground gives up.
+//
+// One rather than three, because breaking the ground should buy you a plot and
+// not a farm: three beds standing there on the day you pay for it is most of the
+// place handed over, and the row that breaks the next one is then an upgrade to
+// something that already works rather than the way the place gets built.
+export const FARM_BEDS0 = 1;     // beds the ground comes with
 export const FARM_BEDS_MAX = 7;  // and the whole plot, once it is all broken
-export const BED_COST = 2;       // spores for the first bed after the three
+export const BED_COST = 2;       // spores for the first bed after it
 export const BED_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one bed and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands

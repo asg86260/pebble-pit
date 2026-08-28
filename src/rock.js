@@ -6,11 +6,11 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS,
+  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
   ROCK_CLEAR, SHAKE_LAND
 } from './config.js';
 import { foul, throughRockMuck } from './smog.js';
-import { frames } from './clock.js';
+import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -135,6 +135,18 @@ export function stepRock() {
     // the knock is measured against the first rock rather than being one size
     // for all of them: rock ninety should land like rock ninety.
     shakeView(SHAKE_LAND * Math.min(1.6, S.gh / ROCK_H));
+    // And whoever watched it come down says so, once it is down and they are
+    // back on their feet. The opening does this with the first rock -- the body
+    // thrown clear gets up and stares at it -- and then the second one lands on
+    // the same spot, on the same person underneath, with nobody saying anything
+    // at all. It is the same event and it gets the same mark.
+    if (S.boulderNo > 1) {
+      const at = now();
+      for (const w of S.workers) {
+        if (w.inside || w.inPit || w.aloft) continue;
+        w.say = { mark: 'bang', until: at + LAND_SAY_MS };
+      }
+    }
     S.dirty = true;
   }
   placeRock();

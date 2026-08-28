@@ -110,23 +110,27 @@ async function hoverBench() {
   await sleep(250);
 }
 
-// Standing at a station, which means standing at its *sign*: one target and one
-// size at every one of them, whatever the station behind it is. Where the sign
-// is comes from the game rather than from arithmetic here -- that is the whole
-// point of the signs, and a check that worked out the middle of the building
-// would be a check agreeing with the thing the signs replaced.
-async function hoverSign(which, look = true) {
-  const s = state().signs[which];
-  if (!s) return null;
-  if (look) { window.__look(s.x - 400); await sleep(120); }
-  const [x, y] = onScreen(s.x + s.w / 2, s.y + s.h / 2);
+// Standing at a station. Where that is comes from the game rather than being
+// worked out again here: a check that did its own arithmetic on a building's
+// rectangle would go on passing after the rectangle stopped being the thing you
+// stand at.
+async function hoverStation(which, look = true) {
+  const r = state().stands[which];
+  if (!r) return null;
+  // The cut is a hole: its middle is thin air and its rect hangs below the
+  // ground line, so you stand at the near lip of it. Everywhere else the middle
+  // of the thing is the thing.
+  const wx = which === 'quarry' ? r.x + P * 2 : r.x + r.w / 2;
+  const wy = which === 'quarry' ? r.y + P * 3 : r.y + r.h / 2;
+  if (look) { window.__look(wx - 400); await sleep(120); }
+  const [x, y] = onScreen(wx, wy);
   point('pointermove', x, y, 0);
   await sleep(250);
   return { x, y };
 }
 
 // The block's own, by the name the checks have always called it.
-const hoverHouse = () => hoverSign('house');
+const hoverHouse = () => hoverStation('house');
 
 // And the last step of the way to the people: the crew is a submenu now, so the
 // board is the block and the row that leads to the names, and the names come out
@@ -388,7 +392,7 @@ const TESTS = [
       .map(r => r.dataset.key);
 
     // standing at it opens its board, the same as the bench and the lab
-    await hoverSign('school');
+    await hoverStation('school');
     const standing = state().schoolBoardOpen;
     await hoverAway();
     window.__look(state().openCamX);             // and leave the view where it was
@@ -552,83 +556,6 @@ const TESTS = [
     ];
   }],
 
-  // A station is walked up to by its sign. The stations are not alike -- the lab
-  // is a small block, the casino four times as wide, the cut a hole with nothing
-  // standing over it at all, and the block grows a room a body until it is
-  // taller than the rock -- so a patch of ground drawn round each one was a
-  // different target at every one of them, and two of them overlapped on the way
-  // past. A sign is one size everywhere.
-  ['every station is walked up to by a sign, and they are all one size', async () => {
-    window.__reset();
-    await settle();
-    window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900 });
-    window.__crew(3, 2, 1, 1);
-    window.__school(true);
-    window.__lab(true);
-    run(20);
-    const signs = state().signs;
-    const kinds = Object.keys(signs);
-    const sizes = new Set(Object.values(signs).map(s => `${s.w}x${s.h}`));
-    // and each one stands clear of the ground it belongs to, not inside it
-    const feet = new Set(Object.values(signs).map(s => s.y + s.h));
-
-    const opened = [];
-    for (const which of ['lab', 'school', 'quarry', 'farm', 'house']) {
-      if (!signs[which]) continue;
-      await hoverAway();                       // off the last one before the next
-      await sleep(200);
-      await hoverSign(which);
-      opened.push(`${which}:${state()[which + 'BoardOpen'] ? 'open' : 'shut'}`);
-    }
-    await hoverAway();
-    window.__crew(0, 0);
-    return [
-      ok(kinds.length >= 5, 'a yard of open stations has a sign at each of them',
-         kinds.join(' ')),
-      ok(sizes.size === 1, 'and every one of them is the same size', [...sizes].join(' ')),
-      ok(feet.size === 1, 'standing at the same height off the same ground',
-         [...feet].join(' ')),
-      ok(opened.every(o => o.endsWith(':open')),
-         'and walking up to one opens the board behind it', opened.join(' '))
-    ];
-  }],
-
-  // What a board is showing, said on its sign, so that crossing the yard is a
-  // decision rather than a guess. The bench has always done this; the signs are
-  // what let every other station do it in the same two marks.
-  ['a sign says whether the board behind it is worth the walk', async () => {
-    window.__reset();
-    await settle();
-    window.__crew(3, 2, 1, 1);
-    window.__school(true);                     // open, and nothing in the purse
-    run(20);
-    const fresh = state().signs.school.mark;
-
-    // read it, and the flag comes down. There is nothing here you can afford, so
-    // what is left is nothing: a sign with no news on it.
-    await hoverSign('school');
-    await sleep(300);
-    await hoverAway();
-    await sleep(300);
-    const read = state().signs.school.mark;
-
-    // and now something you could buy, from across the yard
-    window.__grant({ shards: 900 });
-    await sleep(300);
-    const rich = state().signs.school.mark;
-
-    window.__crew(0, 0);
-    window.__reset();
-    return [
-      ok(fresh === 'flag', 'a board you have never read flies a flag', fresh || 'nothing'),
-      ok(read === '', 'once read, with nothing you can afford, it says nothing',
-         read || 'nothing'),
-      ok(rich === 'dot', 'and a dot the moment there is something on it you can buy',
-         rich || 'nothing')
-    ];
-  }],
-
   // Time is a price. A thing that takes two minutes costs you two minutes, and
   // saying so in a note meant a second sheet opening beside the row to carry one
   // number -- so it is in the bill with the coins, under a clock, and the row
@@ -669,50 +596,212 @@ const TESTS = [
     ];
   }],
 
-  // The paper on a sign, measured in the pixels it is actually drawn in.
+  // One mark, under the station, for the one question worth asking from across
+  // the yard: is there anything on that board.
   //
-  // Every building here is a black mass with square white windows cut out of it,
-  // and the paper used to be a two-cell square framed in black -- the same token,
-  // on a post. One cell tall is a letterbox, which is a shape nothing else in
-  // this yard has, and it is the whole of why a sign now reads as a sign.
-  ['the paper on a sign is a slot, not a window', async () => {
+  // It is drawn *below* the ground line, which is otherwise empty -- everything
+  // over a roof is about what a place is doing, and this is about what it is
+  // offering. Measured in the pixels it is really drawn in, because a mark the
+  // yard does not actually paint is a mark nobody sees.
+  ['an arrow under a station says it has something for you', async () => {
     window.__reset();
     await settle();
-    window.__give(999999);
-    window.__grant({ cores: 9, shards: 900, spores: 900 });
     window.__crew(3, 2, 1, 1);
     window.__school(true);
     run(20);
-    const g = state().signs.school;
-    window.__look(g.x - 300);
-    await sleep(400);
+    window.__look(state().stands.school.x - 400);   // it has to be on the screen
+    await sleep(200);
+    await hoverAway();
+    await sleep(200);
+
+    const ink = which => {
+      const s = state(), r = s.stands[which];
+      if (!r) return 0;
+      const dpr = window.devicePixelRatio || 1;
+      const x0 = Math.round((r.x - s.camX) * s.zoom * dpr);
+      const y0 = Math.round((s.groundY + 6 - s.camY) * s.zoom * dpr);
+      const w = Math.max(1, Math.round(r.w * s.zoom * dpr));
+      const h = Math.max(1, Math.round(30 * s.zoom * dpr));
+      if (x0 < 0 || y0 < 0) return -1;
+      const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] < 128) n++;
+      return n;
+    };
+
+    // nothing in the purse: the school sells kit and cannot sell you any
+    const broke = { has: state().offers.includes('school'), ink: ink('school') };
+    window.__grant({ shards: 900 });
+    await sleep(300);
+    const rich = { has: state().offers.includes('school'), ink: ink('school') };
+
+    // and standing at it takes the arrow down: you are already reading it
+    await hoverStation('school');
+    await sleep(300);
+    const there = ink('school');
     await hoverAway();
     await sleep(300);
 
-    // down the middle of the board, from above its top edge to below its foot
-    const s = state();
-    const c = canvas();
-    const dpr = window.devicePixelRatio || 1;
-    const px = w => Math.round((w - s.camX) * s.zoom * dpr);
-    const py = w => Math.round((w - s.camY) * s.zoom * dpr);
-    const col = c.getContext('2d')
-      .getImageData(px(g.x + g.w / 2), py(g.y - 18), 1, py(g.y + g.h + 18) - py(g.y - 18));
-    const dark = [];
-    for (let i = 0; i < col.height; i++) dark.push(col.data[i * 4] < 128);
-    // the white run inside the board is the paper
-    const first = dark.indexOf(true), last = dark.lastIndexOf(true);
-    let white = 0, streak = 0;                  // not `run`: that is the suite's own
-    for (let i = first; i <= last; i++) {
-      if (!dark[i]) { streak++; white = Math.max(white, streak); } else streak = 0;
-    }
-    const cell = s.zoom * dpr * 6;              // a yard cell, in canvas pixels
+    window.__crew(0, 0);
+    window.__reset();
+    return [
+      ok(broke.has === false, 'a board with nothing you can buy offers nothing'),
+      ok(broke.ink === 0, 'and there is no arrow under it', `${broke.ink} px`),
+      ok(rich.has === true, 'money in the purse and it has something for you'),
+      ok(rich.ink > 0, 'and an arrow appears under it', `${rich.ink} px`),
+      ok(there === 0, 'and goes again while you are standing there reading it',
+         `${there} px`)
+    ];
+  }],
+
+  // The cut is the hole, and a bridge crosses it: a ramp up, a deck straight
+  // over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
+  // the mouth meant aiming at the deck, so walking a hauler over the cut opened
+  // the cut's board on the way past. What you point at is the ground that is
+  // missing.
+  ['the cut is opened by its hole, not by the bridge over it', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9 });
+    window.__crew(2, 2, 2, 0);
+    run(20);
+    const q = state().stands.quarry;
+    window.__look(q.x - 400);
+    await sleep(300);
+    const g = state().groundY;
+    const at = async (wx, wy) => {
+      const [x, y] = onScreen(wx, wy);
+      point('pointermove', x, y, 0);
+      await sleep(300);
+      return state().quarryBoardOpen;
+    };
+    const deck = await at(q.x + q.w / 2, g - 30);     // straight over the mouth
+    const ramp = await at(q.x - 40, g - 14);          // on the way up to it
+    const hole = await at(q.x + q.w / 2, g + 40);     // and down in the cut itself
+    await hoverAway();
     window.__crew(0, 0);
     return [
-      ok(first >= 0 && last > first, 'there is a sign there to measure',
-         `${first}..${last}`),
-      ok(white > cell * 0.5 && white < cell * 1.6,
-         'and the paper on it is one cell of slot, not two of window',
-         `${(white / cell).toFixed(2)} cells`)
+      ok(deck === false, 'crossing the deck does not open it'),
+      ok(ramp === false, 'nor does walking up the ramp'),
+      ok(hole === true, 'and the hole itself does')
+    ];
+  }],
+
+  // A board opens by being walked up to and closes by being walked away from,
+  // which is right while the cursor is drifting. A click is not drifting: it is
+  // somebody deciding to do something else, and the sheet in the corner is over.
+  ['a press on the yard puts an open board away', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9 });
+    window.__crew(3, 2, 1, 1);
+    window.__school(true);
+    run(20);
+    await hoverStation('school');
+    const open = state().schoolBoardOpen;
+
+    // bare ground, well clear of anything that is a station
+    const s = state();
+    const [x, y] = onScreen(s.stands.school.x - 260, s.groundY - 60);
+    canvas().dispatchEvent(new PointerEvent('pointerdown',
+      { clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0,
+        buttons: 1, bubbles: true }));
+    await sleep(300);
+    const shut = state().schoolBoardOpen;
+
+    // and standing at it again still opens it: this closes boards, it does not
+    // put them out of reach
+    await hoverStation('school');
+    const again = state().schoolBoardOpen;
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(open === true, 'the board is up to begin with'),
+      ok(shut === false, 'and a press on bare ground puts it away'),
+      ok(again === true, 'and walking back up to it brings it back')
+    ];
+  }],
+
+  // Folding the finished ladders away. The switch flipped and the label changed
+  // and the board did not move: the board only rebuilds when the *set* of rows
+  // it would build has changed, and the thing that works that set out was asking
+  // a different question from the thing that builds it -- so it said "same rows
+  // as last time" for ever.
+  ['hiding the finished ladders takes them off the board', async () => {
+    window.__reset();
+    await settle();
+    window.__give(99999999);
+    window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    run(20);
+    for (let i = 0; i < 9; i++) { window.__buy('carry'); window.__buy('pick'); }
+    window.__build();
+    window.__board('bench');
+    await sleep(400);
+    const rows = () => [...document.querySelectorAll('#shop button[data-key]')]
+      .filter(b => b.offsetParent).map(b => b.dataset.key);
+    const hide = document.getElementById('hidedone');
+
+    const before = rows();
+    hide.click();
+    await sleep(400);
+    const hidden = rows();
+    hide.click();
+    await sleep(400);
+    const back = rows();
+
+    window.__board(null);
+    const went = before.filter(k => !hidden.includes(k));
+    return [
+      ok(before.length > 0, 'there are rows on the bench', `${before.length}`),
+      ok(went.length === 2 && went.includes('carry') && went.includes('pick'),
+         'and the two ladders at the top of themselves go when they are hidden',
+         went.join(',') || 'none went'),
+      ok(back.length === before.length, 'and come back when they are shown again',
+         `${before.length} -> ${hidden.length} -> ${back.length}`)
+    ];
+  }],
+
+  // What the crew leave is on the screen while it lies there.
+  //
+  // The yard keeps two stacks -- what the weather drops, which everybody clears,
+  // and what a body leaves, which only a janitor clears -- and the drawing knew
+  // about the first and no more. So the crew's own piled up in the count, held
+  // open the row that sells the closet, and never appeared anywhere: which looks
+  // exactly like somebody going round and tidying it away.
+  ['what the crew leave is drawn where they left it', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(3, 2);
+    window.__tune('LOO_EVERY', 3000);
+    window.__air({ haze: 0, muck: 0 });         // no weather: all of it is theirs
+    run(90);
+    await sleep(200);
+
+    // the band of ground just above the line, across the middle of the yard
+    const s = state();
+    const dpr = window.devicePixelRatio || 1;
+    const x0 = Math.max(0, Math.round((s.camX + 40 - s.camX) * s.zoom * dpr));
+    const y0 = Math.round((s.groundY - 20 - s.camY) * s.zoom * dpr);
+    const w = Math.round(Math.min(s.viewW - 80, 900) * s.zoom * dpr);
+    const h = Math.round(20 * s.zoom * dpr);
+    const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
+    // the muck brown: warmer than the black everything else is drawn in
+    let brown = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i] > d[i + 2] + 12 && d[i] < 210 && d[i + 3] > 200) brown++;
+    }
+
+    window.__tune('LOO_EVERY', 600000);
+    window.__crew(0, 0);
+    window.__reset();
+    return [
+      ok(s.smog.poop > 0, 'the crew have left something', `${s.smog.poop} cells`),
+      ok(s.smog.muck.all === s.smog.poop,
+         'and with no weather in the yard, all of the mess is theirs',
+         `${s.smog.muck.all} of mess, ${s.smog.poop} theirs`),
+      ok(brown > 0, 'and it is drawn on the ground', `${brown} px of it`)
     ];
   }],
 
@@ -1452,7 +1541,7 @@ const TESTS = [
 
     // walk to the mouth of the cut
     const s0 = state();
-    await hoverSign('quarry');
+    await hoverStation('quarry');
     const atCut = state();
     const cutRows = [...document.querySelectorAll('#quarryshop [data-key]')].map(b => b.dataset.key);
     const deeper = document.querySelector('#quarryshop [data-key="quarrybench"]');
@@ -1461,7 +1550,7 @@ const TESTS = [
     const nowBenches = state().benches;
 
     // and out to the plots
-    await hoverSign('farm');
+    await hoverStation('farm');
     const atPlots = state();
     const plotRows = [...document.querySelectorAll('#farmshop [data-key]')].map(b => b.dataset.key);
 
@@ -1490,7 +1579,7 @@ const TESTS = [
     const s = state();
 
     // standing at it is what fills its board, the same as the bench
-    await hoverSign('school');
+    await hoverStation('school');
 
     const heads = [...document.getElementById('schoolshop').children]
       .filter(el => el.dataset.sect);
@@ -2130,7 +2219,7 @@ const TESTS = [
     run(1);
 
     const el = document.getElementById('lab');
-    await hoverSign('lab');
+    await hoverStation('lab');
     const opened = !el.hidden;
     const before = state();
     const swing = el.querySelector('button[data-key="labswing"]');
@@ -2188,7 +2277,7 @@ const TESTS = [
     const away = () => point_(4, 4);             // nobody standing at any station
     // at its sign, which is what standing at a station means
     const atLab = () => {
-      const s = state(), g = s.signs.lab;
+      const s = state(), g = s.stands.lab;
       if (!g) return;
       point_((g.x + g.w / 2 - s.camX) * s.zoom, (g.y + g.h / 2 - s.camY) * s.zoom);
     };

@@ -18,19 +18,17 @@ import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
-import { benchMark } from './upgrades.js';
 import { underground, quarryCut, ladder, cutCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, DRAUGHT, muckCols, muckFloor } from './smog.js';
+import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { bedX } from './farm.js';
-import { fmt, signMark } from './board.js';
+import { fmt, STATIONS, stationFoot, hasOffer, boardAt } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
-import { drawSigns } from './sign.js';
 import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -751,6 +749,13 @@ const MUCK_EDGE = MUCK_SKIN;
 export function drawMuck() {
   const m = muckCols();
   if (!m.length) return;
+  // Both stacks. The yard keeps what the weather drops and what a body leaves in
+  // two separate columns, because they are two different jobs -- everybody
+  // clears the first and only a janitor clears the second -- and this drew the
+  // first and no more. So what the crew left was never on the screen at all: it
+  // piled up in the count, held the row that sells the closet open, and looked
+  // for all the world like somebody had been round and tidied it away.
+  const poo = poopCols();
   const from = Math.max(0, Math.floor(S.camX / P) - 2);
   const to = Math.min(m.length - 1, Math.ceil((S.camX + S.viewW) / P) + 2);
   // Gathered up and drawn in two fills: after a heavy shower the layer runs the
@@ -759,7 +764,7 @@ export function drawMuck() {
   // -- the body first, its skin over the top -- for a fraction of the work.
   const body = [], skin = [];
   for (let c = from; c <= to; c++) {
-    const n = m[c];
+    const n = (m[c] || 0) + (poo[c] || 0);
     if (!n) continue;
     const foot = muckFloor(c);
 
@@ -1976,15 +1981,6 @@ export function drawBench() {
   ctx.fillRect(bench.x + P, bench.y + P * 2, P * 2, bench.h - P * 2);   // legs
   ctx.fillRect(bench.x + bench.w - P * 3, bench.y + P * 2, P * 2, bench.h - P * 2);
   ctx.fillRect(bench.x + P * 4, bench.y - P * 2, P * 2, P * 2);         // something clamped to it
-  if (S.boardOpen) return;
-  const x = bench.x + bench.w / 2 - P;             // a whole cell, so it stays square
-  const mark = benchMark();
-  if (mark === 'flag') {
-    ctx.fillRect(x, bench.y - P * 7, P, P * 7);                         // a post on the bench
-    ctx.fillRect(x + P, bench.y - P * 7, P * 2, P * 2);                 // with a flag on it
-  } else if (mark === 'dot') {
-    ctx.fillRect(x, bench.y - P * 5, P, P);                             // just a dot
-  }
 }
 
 // The body: one hollow square, whoever it is. Each job used to carry a mark of
@@ -2139,6 +2135,39 @@ const STAND_W = P * 5, STAND_H = P * 3;
 
 // How far above the slab each mark reaches, so the count can stand clear of it.
 const HAT_TALL = { helmet: P, lamp: P * 2, brim: P * 2, point: P * 3, cart: 0 };
+
+// An arrow under a station, pointing up at it: there is something on that board
+// you could buy.
+//
+// One mark and one question. There were two for a while -- a flag for a heading
+// you had never read, a dot for something you could afford -- and telling those
+// apart is a thing to learn before the yard can be read at a glance, for a
+// difference that changes nothing about what you do: you walk over and look
+// either way.
+//
+// It goes *under* the station, in the empty ground below the line, where nothing
+// else in this game is drawn. Over the roof it would be among the tower's bar,
+// the lab's tick and the casino's mark, every one of which is about what a place
+// is *doing*; this is about what it is offering, and those want telling apart.
+const OFFER_DOWN = P * 2;                // how far under the line it sits
+function drawOffers() {
+  ctx.fillStyle = '#000';
+  for (const which of STATIONS) {
+    if (boardAt() === which) continue;   // you are reading it: it needs no arrow
+    const x = stationFoot(which);
+    if (x == null || !hasOffer(which)) continue;
+    const mid = Math.round((x - P / 2) / P) * P;
+    const top = S.groundY + OFFER_DOWN;
+    // A solid head and no shaft. Five cells by three is three courses to say
+    // "up" in, and a shaft under a head that size does not read as an arrow at
+    // all -- the widest course becomes a crossbar and what hangs below it a
+    // stem, which is a dagger, or with a stouter stem a plus. The head alone is
+    // a pointer, and a pointer is the whole of what this has to be.
+    ctx.fillRect(mid, top, P, P);
+    ctx.fillRect(mid - P, top + P, P * 3, P);
+    ctx.fillRect(mid - P * 2, top + P * 2, P * 5, P);
+  }
+}
 
 export function drawKitStands() {
   ctx.fillStyle = '#000';
@@ -2400,6 +2429,20 @@ export function drawWorkers() {
   }
 }
 
+
+// TEMPORARY profiling scaffold
+export const __prof = {};
+let __profOn = false;
+export function __profStart() { __profOn = true; for (const k in __prof) delete __prof[k]; }
+export function __profStop() { __profOn = false; return __prof; }
+window.__profStart = __profStart; window.__profStop = __profStop;
+function __T(name, fn) {
+  if (!__profOn) return fn();
+  const t = performance.now();
+  const r = fn();
+  __prof[name] = (__prof[name] || 0) + (performance.now() - t);
+  return r;
+}
 export function draw() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#fff';                       // the page is painted, not assumed
@@ -2418,33 +2461,34 @@ export function draw() {
   // not something out on the horizon, so a cloud must never paint over it.
   ctx.save();
   world();
-  drawClouds();
-  drawBirds();
+  __T('drawClouds', drawClouds);
+  __T('drawBirds', drawBirds);
   ctx.restore();
 
-  drawAir();
+  __T('drawAir', drawAir);
 
   ctx.save();
   world();
-  drawCoreBehind();
-  drawGroundLine();
-  drawQuarry();              // a hole in the ground, so it goes down with the ground
-  drawBridge();              // and the way across it
-  drawFarm();
-  drawSky();
-  drawLab();
-  drawCasino();
-  drawScrub();
-  drawTower();
-  drawOuthouse();
-  drawPotPile();    // what is on the table, as a heap on the ground
-  drawSparks();     // and whatever the last spin threw out of it
-  drawSchool();
-  drawSmoke();
+  __T('drawCoreBehind', drawCoreBehind);
+  __T('drawGroundLine', drawGroundLine);
+  __T('drawQuarry', drawQuarry);              // a hole in the ground, so it goes down with the ground
+  __T('drawBridge', drawBridge);              // and the way across it
+  __T('drawFarm', drawFarm);
+  __T('drawSky', drawSky);
+  __T('drawLab', drawLab);
+  __T('drawCasino', drawCasino);
+  __T('drawScrub', drawScrub);
+  __T('drawTower', drawTower);
+  __T('drawOuthouse', drawOuthouse);
+  __T('drawPotPile', drawPotPile);    // what is on the table, as a heap on the ground
+  __T('drawSparks', drawSparks);     // and whatever the last spin threw out of it
+  __T('drawSchool', drawSchool);
+  __T('drawSmoke', drawSmoke);
   ctx.fillStyle = '#000';
 
   const deep = depthOf();
   let shade = 0;
+  __T('boulder', () => {
   for (let y = 0; y < S.gh; y++) {
     for (let x = 0; x < S.gw; x++) {
       const v = S.boulder[y][x];
@@ -2455,6 +2499,7 @@ export function draw() {
       ctx.fillRect(px, py, P, P);
     }
   }
+  });
 
   ctx.fillStyle = '#000';
 
@@ -2469,38 +2514,38 @@ export function draw() {
   // then stops dead at it is a heap that has been drawn around the wall; a heap
   // that piles up *against* the wall and buries its foot is a heap. The buildings
   // are the yard and the loose stuff is what the yard is full of.
-  drawBench();
-  drawHouses(ctx);         // and the crew are drawn later still, so they walk in front of both
+  __T('drawBench', drawBench);
+  __T('drawHouses', () => drawHouses(ctx));         // and the crew are drawn later still, so they walk in front of both
 
-  drawGrid(floor);
-  drawPit();
-  drawMuck();              // and whatever the last rain left on top of the lot
+  __T('drawGrid', () => drawGrid(floor));
+  __T('drawPit', drawPit);
+  __T('drawMuck', drawMuck);              // and whatever the last rain left on top of the lot
 
-  drawPitOutline();
+  __T('drawPitOutline', drawPitOutline);
 
-  drawPaid();
-  drawCore();
-  drawPileMarks();         // and a bar over anything that has stopped for a full one
-  drawLabBar();            // how far along the lab is, over the lab itself
-  drawDraught();           // the air going into the scrubbing house
-  drawTowerWaves();        // the tower pouring, while it is making a hat
-  drawTowerBar();          // and how far along the tower's hat is, over the tower
-  drawLabMark();           // and a tick over it if it finished something
-  drawCasinoMark();        // and which way the last hand at the table went
-  drawSigns(ctx, signMark);   // the post in front of each station, and what it is showing
-  drawKitStands();                                // and the kit put out ready at each of them
-  drawRoster(ctx, drawBody, drawHat, drawCart);   // who is working here, under the place they work
-  drawIntro();             // the two of them, or whoever is under the rock
-  drawWorkers();
-  drawSays();              // and what any of them stood about is saying
-  drawPuffs();             // what the crew are putting up there right now
-  drawSmog();              // and what it has gathered into up there
-  drawRain();              // and whatever is coming down out of it, or going into the house
-  drawPointed();           // and an arrow over whoever you just asked for by name
-  drawCursor();
+  __T('drawPaid', drawPaid);
+  __T('drawCore', drawCore);
+  __T('drawPileMarks', drawPileMarks);         // and a bar over anything that has stopped for a full one
+  __T('drawLabBar', drawLabBar);            // how far along the lab is, over the lab itself
+  __T('drawDraught', drawDraught);           // the air going into the scrubbing house
+  __T('drawTowerWaves', drawTowerWaves);        // the tower pouring, while it is making a hat
+  __T('drawTowerBar', drawTowerBar);          // and how far along the tower's hat is, over the tower
+  __T('drawLabMark', drawLabMark);           // and a tick over it if it finished something
+  __T('drawCasinoMark', drawCasinoMark);        // and which way the last hand at the table went
+  __T('drawOffers', drawOffers);            // and an arrow under whichever of them has something for you
+  __T('drawKitStands', drawKitStands);                                // and the kit put out ready at each of them
+  __T('drawRoster', () => drawRoster(ctx, drawBody, drawHat, drawCart));   // who is working here, under the place they work
+  __T('drawIntro', drawIntro);             // the two of them, or whoever is under the rock
+  __T('drawWorkers', drawWorkers);
+  __T('drawSays', drawSays);              // and what any of them stood about is saying
+  __T('drawPuffs', drawPuffs);             // what the crew are putting up there right now
+  __T('drawSmog', drawSmog);              // and what it has gathered into up there
+  __T('drawRain', drawRain);              // and whatever is coming down out of it, or going into the house
+  __T('drawPointed', drawPointed);           // and an arrow over whoever you just asked for by name
+  __T('drawCursor', drawCursor);
   ctx.restore();
 
-  drawAirNear();           // the nearest dust passes in front of the yard, not behind it
+  __T('drawAirNear', drawAirNear);           // the nearest dust passes in front of the yard, not behind it
 
   // The roster's counts, in screen pixels so the digits stay sharp, but moved
   // with the yard rather than pinned to the window: the number belongs to the
@@ -2508,10 +2553,10 @@ export function draw() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   const screenAt = (wx, wy) => ({ x: (wx - S.camX + S.shakeX) * S.zoom,
                                  y: (wy - S.camY + S.shakeY) * S.zoom });
-  drawRosterCounts(ctx, screenAt);
-  drawKitCounts(screenAt);       // and how many are waiting on each stand
+  __T('drawRosterCounts', () => drawRosterCounts(ctx, screenAt));
+  __T('drawKitCounts', () => drawKitCounts(screenAt));       // and how many are waiting on each stand
 
-  drawCount();             // last, and in screen pixels: it is read, not looked at
+  __T('drawCount', drawCount);             // last, and in screen pixels: it is read, not looked at
 
   // And then, only under `vite dev` and only if somebody has switched one on, a
   // filter held in front of the finished frame. `dev.js` installs this; a

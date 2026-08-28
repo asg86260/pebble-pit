@@ -4,7 +4,6 @@
 import { P } from './config.js';
 import { S, bench, lab, school, casino, scrub, quarry, farm, tower } from './state.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
-import { atSign, signAt } from './sign.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
@@ -45,12 +44,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // need no such care.
 const quarryMouth = { get x() { return quarry.x; }, get y() { return quarry.y; },
                       get w() { return quarry.w; }, get h() { return 0; } };
-// What a board hangs over, and what the wedge that keeps it open is drawn from:
-// the sign, wherever there is one, and the station itself for the bench. It has
-// to be the thing the cursor was actually on -- a board seated over the middle
-// of the casino while you are standing at a post off its right-hand end is a
-// board that walks away from you as it opens.
-const anchor = which => signAt(which) || standAt[which];
+const anchor = which => standAt[which];
 
 const standAt = { bench, lab, school, casino, scrub, farm, tower,
                   quarry: quarryMouth,
@@ -71,57 +65,115 @@ const listFor = which =>
   which === 'tower' ? TOWER_UPGRADES :
   which === 'house' ? crewRows() : [];
 
-// What a station is showing without being walked up to.
+// Every station that has a board. One list, so that a thing which is true of all
+// of them -- the mark under the foot of it, for one -- is written once, and the
+// next station gets it by being added here.
+export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
+                         'farm', 'tower', 'house'];
+
+// whether a station is there at all yet
+const standing = which =>
+  which === 'bench' ? S.seenBench :
+  which === 'lab' ? S.labOpen :
+  which === 'school' ? S.schoolOpen :
+  which === 'casino' ? S.casinoOpen :
+  which === 'scrub' ? S.scrubOpen :
+  which === 'quarry' ? S.quarryOpen :
+  which === 'farm' ? S.farmOpen :
+  which === 'tower' ? S.towerOpen :
+  which === 'house' ? S.crew > 0 : false;
+
+// Where a station's mark goes: the middle of it, on the ground. The cut is the
+// exception in the one way it always is -- it is a hole, so the middle of it is
+// thin air and the mark would hang over nothing. Its mark stands at the near
+// lip, which is the end you walk up to.
+// The ground a station stands on, for the checks: where you have to be to open
+// its board is the game's business, not arithmetic written out again in a check.
+export function standRect(which) {
+  if (!standing(which)) return null;
+  const r = standAt[which];
+  return r && { x: r.x, y: r.y, w: r.w, h: r.h };
+}
+
+export function stationFoot(which) {
+  if (!standing(which)) return null;
+  const r = standAt[which];
+  if (!r) return null;
+  return which === 'quarry' ? r.x : r.x + r.w / 2;
+}
+
+// Whether a station has anything for you.
 //
-// The bench has always carried this -- a flag for a heading you have not read, a
-// dot for something you could buy this second -- because the bench is the board
-// you keep coming back to. Every board is that now. A yard of eight stations
-// where only one of them says whether it is worth the walk is a yard you cross
-// on spec, and crossing it takes long enough to be a decision.
-//
-// One rule for all of them, off state the game already keeps: `S.seenRows` is
-// every row that has ever been on a board while you had it open, so a row that
-// is not in it is a row you have never seen -- which is a stronger thing to say
-// than "you can afford this" and is therefore said louder.
-export function signMark(which) {
-  const rows = listFor(which).filter(u => u.show && u.show());
-  const seen = new Set(S.seenRows);
-  if (rows.some(u => u.key && !seen.has(u.key))) return 'flag';
+// One mark and one question: is there something on that board worth the walk.
+// It was two for a while -- a flag for a heading you had never read, a dot for
+// something you could afford -- and two marks is a thing to learn before the
+// yard can be read at a glance, for a difference that changes nothing about
+// what you do next. You go and look either way.
+export function hasOffer(which) {
+  if (!standing(which)) return false;      // a place that is not there offers nothing
+  // Something you could buy this second, and nothing else. A row you have not
+  // seen before used to count too, which sounds right and is not: a yard you
+  // have just started has never seen any row, so every station would stand
+  // there pointing at itself from the first frame, and a mark that is always up
+  // is a mark nobody reads. This one goes up when there is something to do
+  // about it and comes down when you have done it.
+  //
   // A row that moves bodies about spends nothing, and a ladder at the top of
   // itself cannot be bought however much you are holding: neither is something
   // you would cross the yard for.
-  if (rows.some(u => !u.job && !u.dial && !u.price && !maxed(u) &&
-                     !u.dead?.() && canPay(u))) return 'dot';
-  return '';
+  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
+                                  !u.price && !maxed(u) && !u.dead?.() && canPay(u));
 }
 
 // near enough to a thing on the ground to be interested in it
 const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
                           y > r.y - P * 8 && y < r.y + r.h + P * 4;
 
-// Every station but one is walked up to by its sign -- one target, one size, the
-// same act at all eight of them. See sign.js for why, and for where they stand.
-//
-// The bench is the exception. It is the first board there is, met before there
-// is anything else on the ground for it to be consistent with, and a first board
-// hiding behind a post is a first board nobody finds.
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
-export const nearLab = (x, y) => atSign('lab', x, y);
-export const nearSchool = (x, y) => atSign('school', x, y);
-export const nearCasino = (x, y) => atSign('casino', x, y);
-export const nearScrub = (x, y) => atSign('scrub', x, y);
-// The two sites you dig rather than build. Neither has a wall to walk up to at
-// all, which is half the reason the signs went in: what you stand at is a post
-// at the near end of the ground, the same as everywhere else.
-export const nearQuarry = (x, y) => atSign('quarry', x, y);
-export const nearFarm = (x, y) => atSign('farm', x, y);
-export const nearTower = (x, y) => atSign('tower', x, y);
-// And the crew's block, which is the reason the rest of them have signs at all.
-// It is the one thing in the yard that grows: by twenty rooms it is taller than
-// the rock, and a patch of ground and air drawn round the whole of it reached up
-// into the sky the boards hang in, so walking down to the far corner of the
-// bench's board crossed the roof of the house and the house took the menu.
-export const nearHouse = (x, y) => atSign('house', x, y);
+export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
+export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
+export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
+export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
+// The cut is the hole, and only the hole.
+//
+// A bridge crosses it -- a ramp up, a deck straight over the mouth, a ramp down
+// -- and the crew walk every foot of that. Aiming at the mouth meant aiming at
+// the deck, which is a thing you cross on the way to somewhere else: walking a
+// hauler over the cut opened the cut's board every time. So what you point at is
+// the ground that is missing. Below the line and between the walls, padded a
+// cell sideways and no further, because a cell further either way is the ramp.
+const hole = () => ({ x: quarry.x, y: S.groundY, w: quarry.w, h: quarry.h });
+export const nearQuarry = (x, y) => {
+  if (!S.quarryOpen) return false;
+  const r = hole();
+  return x > r.x - P && x < r.x + r.w + P && y > r.y && y < r.y + r.h + P * 2;
+};
+export const nearFarm = (x, y) => S.farmOpen && near(farm, x, y);
+export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
+// And the house, once anybody lives in it -- with a tight right edge rather than
+// the usual eight cells.
+//
+// Every other station is a small thing with bare ground either side of it, so it
+// can afford to claim eight cells all round. The house is a wall of rooms, and
+// the gap between its right side and the bench is eight cells exactly: padded
+// like the rest it claimed the whole of that gap, including the ground the
+// cursor crosses on its way down to the corner of the bench's own board. Two
+// cells is still comfortably more than nothing, and it leaves the strip between
+// the two of them belonging to neither -- which is what the safe wedge needs.
+const HOUSE_PAD_IN = P * 2;
+export const nearHouse = (x, y) => {
+  if (S.crew < 1) return false;
+  const r = houseRect();
+  // A band at the door rather than the whole face of the block. The block is the
+  // one thing here that grows: by twenty rooms it is taller than the rock, and a
+  // region drawn round the whole of it reaches up into the air the boards hang
+  // in -- so walking down to the far corner of the bench's board crossed the
+  // roof of the house and the house took the menu. You stand at a door to go in
+  // somewhere. That is all this needs to be.
+  const top = Math.max(r.y, S.groundY - P * 10);
+  return x > r.x - P * 8 && x < r.x + r.w + HOUSE_PAD_IN &&
+         y > top && y < S.groundY + P * 4;
+};
 
 // The board stands on the bench, but it is a real element on a real screen: on a
 // phone the bench can be near an edge, or there can be less room above it than
@@ -433,6 +485,9 @@ export function showTipAt(text, sx, sy, centred) {
 // behind -- and a transition on `left` would turn every one of those into a
 // two-hundred-millisecond lag behind the yard.
 let at = null;
+// Which station's board is up, for the yard: the one you are reading needs no
+// arrow under it telling you to come and read it.
+export const boardAt = () => at;
 let slide = 0;
 let closing = 0;
 // The pointer has left a station but the board has not been given up on yet.

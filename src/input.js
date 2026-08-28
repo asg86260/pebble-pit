@@ -81,6 +81,13 @@ canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(); });
 
+// Standing at any station at all. The click handler and the move handler ask the
+// same question of the same list, so a station that answers one answers both.
+const atStation = (x, y) =>
+  nearBench(x, y) || nearLab(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
+  nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearTower(x, y) ||
+  nearHouse(x, y);
+
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything. A paused game you can still
   // swing at is not a paused game; the only live thing is the sheet saying so,
@@ -112,6 +119,15 @@ canvas.addEventListener('pointerdown', e => {
 
   const p = pos(e);
   S.mouse = p;
+  // A press on the yard puts any open board away, whatever else it goes on to
+  // mean. A board opens by being walked up to and closes by being walked away
+  // from, which is right while the cursor is drifting -- but a *click* is
+  // somebody deciding to do something, and if what they decided to do is swing
+  // at the rock or pick a body up then the sheet in the corner is over.
+  //
+  // Before everything else, so it happens whether or not the click lands on
+  // anything: clicking bare ground is still a decision to stop reading.
+  if (!atStation(p.x, p.y)) showPanel(null, true);
   // the sky is checked first, though nothing up there is ever over the rock
   if (startle(p.x, p.y)) return;
   // then the rosters: they stand well under the ground line, where a click has

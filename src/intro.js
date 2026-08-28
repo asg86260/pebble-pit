@@ -426,7 +426,13 @@ function finish() {
 //
 // It is the same square as everybody else, and it says the same dots, because
 // the point is that it is a person and not a prize.
-export const buriedVisible = () => S.buried && !S.boulder.some(row => row.some(v => v));
+// Visible while there is no rock on the spot -- and while there is one still on
+// its way down, which is the whole of the beat. A rock exists the instant it is
+// made, several seconds before it arrives, so going by "is there a rock" made
+// the square wink out while the next one was still up in the air and you never
+// saw it happen. It goes when the rock lands on it.
+export const buriedVisible = () =>
+  S.buried && (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
 
 export function buriedAt() {
   const x = Math.round((S.cx - WORKER / 2) / P) * P;

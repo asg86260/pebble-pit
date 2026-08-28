@@ -38,7 +38,6 @@ field or two on `S` and a constant or two in `config.js`.
 | `upgrades.js` | what the bench sells and what it costs | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
-| `sign.js` | the post in front of each station: where it stands, and what it says | one line per new station |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
 | `render.js` | everything drawn, nothing decided | painting **order** matters |

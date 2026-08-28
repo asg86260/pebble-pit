@@ -39,7 +39,12 @@ function shape(list, sections) {
   for (const sect of sections) {
     const rows = sect.keys.filter(k => {
       const u = list.find(x => x.key === k);
-      return u && u.show();
+      // The same two questions the building asks, and in the same order, or the
+      // signature says the board is unchanged while the board it would build is
+      // a different board. Folding the finished rows away used to do nothing at
+      // all for exactly that reason: the switch flipped, the label changed, and
+      // this said "same rows as last time" and never rebuilt them.
+      return u && u.show() && !(S.hideDone && maxed(u));
     });
     if (rows.length) out.push(sect.title, ...rows);
   }

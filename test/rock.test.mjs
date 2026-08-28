@@ -344,3 +344,35 @@ group('a miner tosses its spoil onto the heap', async () => {
        `${s.heapAtRock} cells high against the apron`)
   ];
 });
+
+// The one underneath is the reason any of this is happening, and the moment the
+// next rock lands on them is the only time you ever see it happen. It used to be
+// over before it started: a rock exists from the instant it is made, several
+// seconds before it arrives, so the square winked out while the rock was still
+// up in the air and what you saw was a thing disappearing rather than a thing
+// being buried.
+group('the one underneath is covered by the rock, not by the making of it', async () => {
+  window.__reset();
+  window.__crew(1, 0);
+  window.__jump(2);
+  window.__next();
+
+  let falling = 0, landed = 0, said = 0;
+  for (let i = 0; i < 400; i++) {
+    run(1 / 60);
+    const s = state();
+    if (s.rockFall > 0 && s.buriedVisible) falling++;
+    if (s.rockFall === 0 && s.rock > 0 && s.buriedVisible) landed++;
+    if (s.saying > 0) said++;
+  }
+  window.__crew(0, 0);
+  window.__reset();
+  return [
+    ok(falling > 10, 'it is there the whole way down', `${falling} frames`),
+    ok(landed === 0, 'and gone the moment the rock is on it', `${landed} frames after`),
+    // and somebody watched it happen. The opening gives the body it threw clear
+    // a mark over its head; every rock after that lands on the same spot, on the
+    // same person, and used to land in silence.
+    ok(said > 0, 'and whoever saw it says so', `${said} frames of it`)
+  ];
+});
