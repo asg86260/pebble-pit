@@ -803,6 +803,18 @@ export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the vie
 //
 // Gentler than dust, because a person is heavier than a grain and because a
 // body flung the length of the yard is a body with a very long walk back.
+// A flick of the cursor, in the grain it lets go of. These were in hands.js and
+// are here so they can be turned while the game is running: how hard a throw
+// feels is the sort of thing that has to be tried rather than reasoned about.
+//
+// They were tuned when a throw was pixels a *frame*, so on a screen drawing a
+// hundred and sixty-five of them a throw went nearly three times as far as it
+// was written to. Now that the yard moves on the clock (see `frames`), the same
+// numbers are the same throw everywhere -- which is correct, and reads as weak
+// to a hand used to the old one. So they are raised: half again on the flick,
+// and half again on the cap.
+export let THROW = 13;           // cursor pixels a millisecond, in pixels a frame
+export let THROW_MAX = 26;       // and the hardest a grain will ever leave your hand
 export let HURL = 0.55;        // share of the cursor's flick a body takes
 export const HURL_MAX = 9;       // and the fastest it will ever leave your hand
 export const HURL_DRAG = 0.995;  // air against it on the way
@@ -1330,6 +1342,8 @@ export const TUNABLE = [
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05 },
+  { key: 'THROW', label: 'throw dust', min: 2, max: 40, step: 1 },
+  { key: 'THROW_MAX', label: 'hardest throw', min: 4, max: 80, step: 1 },
   { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1 },
   { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1 },
   { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2 },
@@ -1357,6 +1371,8 @@ export function tuned(key) {
     case 'BANK_SLOPE': return BANK_SLOPE;
     case 'HAZE_CA': return HAZE_CA;
     case 'HURL': return HURL;
+    case 'THROW': return THROW;
+    case 'THROW_MAX': return THROW_MAX;
     case 'LOO_EVERY': return LOO_EVERY;
     case 'SPOIL_POP': return SPOIL_POP;
     case 'SPOIL_SIDE': return SPOIL_SIDE;
@@ -1385,6 +1401,8 @@ export function tune(key, v) {
     case 'BANK_SLOPE': BANK_SLOPE = v; break;
     case 'HAZE_CA': HAZE_CA = v; break;
     case 'HURL': HURL = v; break;
+    case 'THROW': THROW = v; break;
+    case 'THROW_MAX': THROW_MAX = v; break;
     case 'LOO_EVERY': LOO_EVERY = v; break;
     case 'SPOIL_POP': SPOIL_POP = v; break;
     case 'SPOIL_SIDE': SPOIL_SIDE = v; break;

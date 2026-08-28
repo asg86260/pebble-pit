@@ -476,7 +476,7 @@ canvas {
    puts the menu where it stands, and slides only while it is walking from one
    station to the other. Everything you can see is the sheet inside it, which is
    what fades. Two elements, so the two transforms never fight. */
-.panel.sliding { transition: transform .15s cubic-bezier(.2, .9, .25, 1); }
+.panel.sliding { transition: transform .28s cubic-bezier(.22, .61, .36, 1); }
 
 /* The purse and the board, side by side, sitting on the same line: the panel is
    seated by its bottom edge, so bottom-aligning them is what keeps the board
@@ -505,7 +505,7 @@ canvas {
   opacity: 0;
   transform: translateY(3px) scale(.985);
   transform-origin: 100% 100%;
-  transition: opacity .08s linear, transform .1s cubic-bezier(.2, .9, .25, 1);
+  transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1);
 }
 .panel.open .purse { opacity: 1; transform: none; }
 .purse:empty { display: none; }
@@ -527,7 +527,7 @@ canvas {
   opacity: 0;
   transform: translateY(3px) scale(.985);
   transform-origin: 0 100%;
-  transition: opacity .08s linear, transform .1s cubic-bezier(.2, .9, .25, 1);
+  transition: opacity .16s linear, transform .2s cubic-bezier(.22, .61, .36, 1);
 }
 .panel.open .sheet { opacity: 1; transform: none; }
 .panel .page[hidden] { display: none; }

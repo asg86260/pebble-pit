@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay } from './upgrades.js';
-import { closeBoard } from './board.js';
+import { closeBoard, closeSubmenu } from './board.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
@@ -167,7 +167,10 @@ function build(el, list, sections, empty) {
       // submenu you had to click for would be the one place that asked twice.
       // The press is still wired up -- see the row itself -- because a finger
       // cannot hover, and the two together are how it works on both.
-      if (u.over) b.addEventListener('pointerenter', () => u.over());
+      // Every row answers the question, including the ones with nothing behind
+      // them: hovering a row that leads nowhere puts away whatever the last row
+      // led to. See `closeSubmenu`.
+      b.addEventListener('pointerenter', () => (u.over ? u.over() : closeSubmenu()));
       if (u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();

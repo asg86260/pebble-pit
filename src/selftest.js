@@ -2457,6 +2457,46 @@ const TESTS = [
   // now -- and a submenu is only worth having if you can get to it: the board it
   // hangs off must not shut while the cursor is crossing to it, and neither of
   // them may shut while the cursor is on it.
+  // One row at a time is the row you are reading. A submenu opens because a row
+  // was hovered; hovering a different row is the answer changing, and the old
+  // sheet has no business still standing beside a board that is no longer about
+  // it.
+  ['reading another row puts the submenu away', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(2, 2);
+    run(60);
+    await hoverHouse();
+    const door = await openCrewList();
+    const list = document.getElementById('crewlist');
+    const wasOut = !list.hidden && state().crewListOpen;
+
+    // any other row on the same board -- the one that buys another house
+    const other = [...document.querySelectorAll('#crewshop button')]
+      .find(b => b !== door && b.offsetParent !== null);
+    if (other) {
+      const r = other.getBoundingClientRect();
+      other.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.left + 2, clientY: r.top + 2, bubbles: true }));
+      await raf();
+      await raf();
+    }
+    const after = state().crewListOpen;
+
+    // and back on the door it comes out again, so this is a change of mind
+    // rather than a submenu that can only be opened once
+    await openCrewList();
+    const again = state().crewListOpen;
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(wasOut, 'hovering the door opens the list'),
+      ok(!!other, 'there is another row on the board to read'),
+      ok(!after, 'and reading another row folds it away', `${after}`),
+      ok(again, 'and going back to the door brings it out again', `${again}`)
+    ];
+  }],
+
   ['the crew is a submenu of the house board', async () => {
     window.__reset();
     await settle();

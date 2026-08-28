@@ -333,6 +333,14 @@ export const closeBoard = () => showPanel(null, true);
 // would need its own hover handling to stop the board closing under it, its own
 // copy of the seating, and it would have got them subtly wrong on the day a
 // short window clamped the board and not it.
+// Whatever a row had opened beside the board, put away. Rows that lead somewhere
+// open it by being hovered (see `over` in shop.js), and a row that leads nowhere
+// used to leave the last one standing: you hovered the crew, walked down to the
+// row below, and the names stayed out beside a board that was no longer about
+// them. Hovering anything is an answer to "which row am I reading", and only one
+// row can be the answer.
+export const closeSubmenu = () => showCrewList(false);
+
 export function showCrewList(on) {
   // Only ever out beside the house. Asked for while any other board is up -- or
   // none -- the answer is no rather than a sheet of names hanging off the lab.
@@ -428,7 +436,9 @@ function settle(want) {
   if (wasAt || !panelEl.hidden) {
     panelEl.classList.add('sliding');
     clearTimeout(slide);
-    slide = setTimeout(() => panelEl.classList.remove('sliding'), 240);
+    // a shade longer than the slide itself, so the class is never taken off
+    // mid-glide and the box never finishes the move in one jump
+    slide = setTimeout(() => panelEl.classList.remove('sliding'), 340);
   }
   place(panelEl, standAt[want]);
   requestAnimationFrame(() => panelEl.classList.add('open'));
