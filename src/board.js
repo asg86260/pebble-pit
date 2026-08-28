@@ -485,9 +485,6 @@ export function showTipAt(text, sx, sy, centred) {
 // behind -- and a transition on `left` would turn every one of those into a
 // two-hundred-millisecond lag behind the yard.
 let at = null;
-// Which station's board is up, for the yard: the one you are reading needs no
-// arrow under it telling you to come and read it.
-export const boardAt = () => at;
 let slide = 0;
 let closing = 0;
 // The pointer has left a station but the board has not been given up on yet.

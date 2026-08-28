@@ -166,7 +166,7 @@ canvas {
    already uses for "there is something here": the dot on the bench itself, at
    the size a line of type can carry. It sits in the margin rather than in the
    name, so the names stay in one column and the board still scans down. */
-.rows button.new .name::before {
+.rows button.new .what::before {
   content: '';
   position: absolute;
   left: -9px;
@@ -175,9 +175,13 @@ canvas {
   height: 5px;
   margin-top: -2px;
   border-radius: 50%;
-  background: #000;
+  background: currentColor;
 }
-.rows button.new .name { position: relative; }
+/* Against the *title*, not against the cell. The name cell is two lines -- the
+   words, and the line the ladder's pips sit on, which is held whether or not
+   there are pips -- so a dot centred on the cell hangs half a line below the
+   words it belongs to, pointing at nothing. */
+.rows button.new .what { position: relative; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching

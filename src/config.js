@@ -1584,3 +1584,15 @@ export const LAB_IDLE_MS = 20000;
 // The rock is not in here on purpose. Its spoil is a long bank of dust running
 // out to the lip of the pit, and a bank is what it should look like.
 export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SLOPE));
+// --- Track PRESS ------------------------------------------------------------
+// The filter over the finished frame, and the only part of it that ships. See
+// press.js for what each one is and why these three can be drawn in 2D while the
+// other seven need a shader nobody should be asked to pay for.
+//
+// A hair of fringe, a whisper of scanline, and enough falloff at the edges to
+// put the page in a room rather than on a light box. The point of all three is
+// that the yard reads as coming off a screen rather than out of a printer, and
+// none of them may argue with a picture made of whole black pixels -- so every
+// one of these numbers is small on purpose, and the look is the mix rather than
+// any one of them.
+export const PRESS_MIX = { aberration: 0.1, scanlines: 0.2, vignette: 0.3 };

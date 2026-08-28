@@ -635,7 +635,7 @@ const TESTS = [
     await sleep(300);
     const rich = { has: state().offers.includes('school'), ink: ink('school') };
 
-    // and standing at it takes the arrow down: you are already reading it
+    // and standing at it changes nothing: what the arrow says is still true
     await hoverStation('school');
     await sleep(300);
     const there = ink('school');
@@ -649,7 +649,9 @@ const TESTS = [
       ok(broke.ink === 0, 'and there is no arrow under it', `${broke.ink} px`),
       ok(rich.has === true, 'money in the purse and it has something for you'),
       ok(rich.ink > 0, 'and an arrow appears under it', `${rich.ink} px`),
-      ok(there === 0, 'and goes again while you are standing there reading it',
+      // and it stays up while you are standing there. Taking it down read as the
+      // mark flickering off under the cursor, and what it says is still true.
+      ok(there > 0, 'and stays up while you are standing there reading it',
          `${there} px`)
     ];
   }],
@@ -802,6 +804,44 @@ const TESTS = [
          'and with no weather in the yard, all of the mess is theirs',
          `${s.smog.muck.all} of mess, ${s.smog.poop} theirs`),
       ok(brown > 0, 'and it is drawn on the ground', `${brown} px of it`)
+    ];
+  }],
+
+  // The dot that marks a row you have never had on an open board hangs off the
+  // *title*, not off the cell. The name cell is two lines -- the words, and the
+  // line the ladder's pips sit on, which is held whether or not there are pips --
+  // so a dot centred on the cell sits half a line below the words it belongs to,
+  // pointing at the gap under them.
+  ['the new-row dot is level with the name it marks', async () => {
+    window.__reset();
+    await settle();
+    window.__give(400);
+    run(20);
+    window.__build();
+    window.__board('bench');
+    await sleep(500);
+    const row = document.querySelector('#shop button.new');
+    const what = row && row.querySelector('.what');
+    const name = row && row.querySelector('.name');
+    const on = what && getComputedStyle(what, '::before').content;
+    const off = name && getComputedStyle(name, '::before').content;
+    const anchored = what && getComputedStyle(what).position;
+    // and the two lines really are at different heights, or this proves nothing
+    const wm = what && what.getBoundingClientRect();
+    const nm = name && name.getBoundingClientRect();
+    const apart = wm && nm
+      ? Math.round(Math.abs((nm.top + nm.height / 2) - (wm.top + wm.height / 2))) : 0;
+    window.__board(null);
+    return [
+      ok(!!row, 'there is a row on the bench nobody has read yet',
+         row ? row.dataset.key : 'none'),
+      ok(apart >= 2, 'the cell and the title are at different heights',
+         `${apart}px apart`),
+      ok(on && on !== 'none', 'the dot hangs off the title', String(on)),
+      ok(off === 'none' || off === undefined, 'and not off the cell round it',
+         String(off)),
+      ok(anchored === 'relative', 'which is what it is positioned against',
+         String(anchored))
     ];
   }],
 
@@ -2428,10 +2468,10 @@ const TESTS = [
     const after = state();
     window.__crew(0, 0);
     return [
-      ok(start.benches === 2 && start.bedCount === 3,
-         'a fresh cut holds two and the ground comes with three beds',
+      ok(start.benches === 2 && start.bedCount === 1,
+         'a fresh cut holds two and the ground comes with one bed',
          `${start.benches} benches, ${start.bedCount} beds`),
-      ok(packed.quarriers === 2 && packed.farmhands === 3,
+      ok(packed.quarriers === 2 && packed.farmhands === 1,
          'and no more than that can be sent to either',
          `${packed.quarriers} down, ${packed.farmhands} at the beds`),
       ok(rows.includes('quarrybench') && rows.includes('farmbed'),
@@ -2439,7 +2479,7 @@ const TESTS = [
       ok(grown.quarryH > deep && grown.farmW > wide,
          'buying one takes the cut deeper and the plot wider',
          `${deep}->${grown.quarryH} deep, ${wide}->${grown.farmW} wide`),
-      ok(after.quarriers === 3 && after.farmhands === 4,
+      ok(after.quarriers === 3 && after.farmhands === 2,
          'and there is room for one more body at each',
          `${after.quarriers} down, ${after.farmhands} at the beds`)
     ];

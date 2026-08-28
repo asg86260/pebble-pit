@@ -34,6 +34,9 @@
 // The press dials -- grain, bleed, halftone, vignette, plates -- are the same
 // pipeline pointed at what this game actually is: paper, ink, and a press.
 
+import { setPressAmount, setPressAll, isPressKey, PRESS_KEYS } from './press.js';
+import { PRESS_MIX } from './config.js';
+
 const canvas = document.createElement('canvas');
 canvas.id = 'fx';
 canvas.style.cssText = 'position:fixed;left:0;top:0;z-index:1;pointer-events:none';
@@ -61,21 +64,27 @@ void main() {
 // all because it is the light in the room rather than anything on the sheet.
 export const DIALS = [
   { key: 'curve', max: 2, of: 'tube' },
-  { key: 'aberration', max: 2, of: 'tube' },
+  { key: 'aberration', by: 'press', max: 2, of: 'tube' },
   { key: 'bloom', max: 2, of: 'tube' },
   { key: 'bleed', max: 1, of: 'press' },
   { key: 'halftone', max: 1, of: 'press' },
   { key: 'plates', max: 3, of: 'press' },
-  { key: 'scanlines', max: 1, of: 'tube' },
+  { key: 'scanlines', by: 'press', max: 1, of: 'tube' },
   { key: 'mask', max: 1, of: 'tube' },
   { key: 'grain', max: 2, of: 'press' },
-  { key: 'vignette', max: 2, of: 'press' }
+  { key: 'vignette', by: 'press', max: 2, of: 'press' }
 ];
 
 // Where it starts. A hair of fringe and a whisper of scanline: enough that the
 // page is coming off a screen rather than out of a printer, and not enough to
 // argue with a picture made of whole black pixels.
-export const DEFAULTS = { scanlines: 0.2, aberration: 0.1 };
+export const DEFAULTS = { ...PRESS_MIX };
+
+// The dials this shader still draws itself. The other three moved to press.js,
+// where they cost a blit instead of a round trip through a second context; they
+// stay in DIALS so the panel, the presets and the saved mix are unchanged, and
+// setAmount forwards them.
+const SHADER_DIALS = DIALS.filter(d => d.by !== 'press');
 
 const FRAG = `
 precision highp float;
@@ -97,13 +106,6 @@ vec2 fx_curve(vec2 at, float a) {
   return c * 0.5 + 0.5;
 }
 
-// The three colours arrive at slightly different places, further out from the
-// middle. Kept in device pixels rather than in a fraction of the screen, so it
-// is a fringe of a fixed width and not one that grows with the window.
-vec3 fx_aberration(vec2 at, vec3 col, float a) {
-  vec2 off = (at - 0.5) * a * 2.4 * cell / res;
-  return vec3(tap(at + off).r, col.g, tap(at - off).b);
-}
 
 // Bright things spill light into what is beside them. There is nothing here
 // brighter than the page, so what it finds to spill is the page itself.
@@ -144,10 +146,6 @@ vec3 fx_plates(vec2 at, vec3 col, float a) {
   return chroma > 0.08 ? min(col, off) : col;
 }
 
-// Every other line of the tube is dark.
-vec3 fx_scanlines(vec2 at, vec3 col, float a) {
-  return col * (1.0 - a * 0.28 * step(1.0, mod(floor(at.y * res.y), 2.0)));
-}
 
 // And every third column of it is a different phosphor.
 vec3 fx_mask(vec2 at, vec3 col, float a) {
@@ -161,11 +159,6 @@ vec3 fx_grain(vec2 at, vec3 col, float a) {
   return (col - a * 0.06 * (n - 0.45)) * mix(vec3(1.0), vec3(1.0, 0.996, 0.985), a);
 }
 
-// The edge of a lit page falls away.
-vec3 fx_vignette(vec2 at, vec3 col, float a) {
-  vec2 c = (at - 0.5) * vec2(res.x / res.y, 1.0);
-  return col * (1.0 - a * 0.5 * smoothstep(0.35, 0.95, length(c)));
-}
 
 void main() {
   vec2 at = uv;
@@ -177,15 +170,12 @@ void main() {
     }
   }
   vec3 col = tap(at);
-  if (a_aberration > 0.0) col = fx_aberration(at, col, a_aberration);
   if (a_bloom > 0.0) col = fx_bloom(at, col, a_bloom);
   if (a_bleed > 0.0) col = fx_bleed(at, col, a_bleed);
   if (a_halftone > 0.0) col = fx_halftone(at, col, a_halftone);
   if (a_plates > 0.0) col = fx_plates(at, col, a_plates);
-  if (a_scanlines > 0.0) col = fx_scanlines(at, col, a_scanlines);
   if (a_mask > 0.0) col = fx_mask(at, col, a_mask);
   if (a_grain > 0.0) col = fx_grain(at, col, a_grain);
-  if (a_vignette > 0.0) col = fx_vignette(at, col, a_vignette);
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -207,16 +197,18 @@ const amount = {};
 for (const d of DIALS) amount[d.key] = DEFAULTS[d.key] || 0;
 
 export const amounts = () => ({ ...amount });
-export const anyOn = () => DIALS.some(d => amount[d.key] > 0);
+export const anyOn = () => SHADER_DIALS.some(d => amount[d.key] > 0);
 
 export function setAmount(key, v) {
   if (!(key in amount)) return;
   amount[key] = v;
+  if (isPressKey(key)) setPressAmount(key, v);
   canvas.hidden = !anyOn();
 }
 
 export function setAll(mix) {
   for (const d of DIALS) amount[d.key] = mix[d.key] || 0;
+  setPressAll(mix);
   canvas.hidden = !anyOn();
 }
 
