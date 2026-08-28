@@ -275,7 +275,12 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   // way the lab does -- see `capOf`.
   window.__air({ scrubbers: 1, haze: 500 });
   runUntil(() => state().smog.scrubbing > 0, 40);
-  run(6);
+  // and then the sky has to arrive. The fan reaches about fifteen hundred
+  // pixels; what is further out than that is slid along the band towards the
+  // house rather than plucked out of it, so a house that has just started has a
+  // warm-up while the first of the band comes over the roof. Six seconds was
+  // enough when the draught acted on the whole world at once.
+  run(25);
   const on = state().smog;
 
   window.__air({ recycler: true, haze: 500 });

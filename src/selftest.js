@@ -536,7 +536,19 @@ const TESTS = [
         if (d > 0) right++; else left++;
       }
       const n = right + left;
-      return { n, most: Math.max(right, left), way: right >= left ? 1 : -1,
+      // and how far the body of it went, on average and with sign. In a sky with
+      // eddies in it this is the number that means "the wind took the smoke":
+      // counting heads asks whether every speck agreed, which in a fluid is a
+      // question about how big the swirls are next to how far apart the sampled
+      // motes happen to be.
+      let sum = 0;
+      for (let i = 0; i < Math.min(from.length, to.length); i++) {
+        const d = to[i] - from[i];
+        if (!d || Math.abs(d) > wrap) continue;
+        sum += d;
+      }
+      return { n, most: Math.max(right, left), way: sum >= 0 ? 1 : -1,
+               mean: n ? sum / n : 0,
                share: n ? Math.max(right, left) / n : 0 };
     };
 
@@ -556,7 +568,15 @@ const TESTS = [
       const s = tally(was.smog.skyX, is.smog.skyX, 60);
       if (a.n > dust.n) dust = a;
       if (s.n > smoke.n) smoke = s;
-      if (a.n >= 20 && s.n >= 10) { bothWays++; if (a.way === s.way) together++; }
+      // and only where there is a wind to agree about. The gusts ease through
+      // nought -- that is the lull, and it is meant to be there -- and at the
+      // turn the smoke's mean drift is a fraction of a pixel that the stirring
+      // can flip either way. Asking the two to agree there is asking them to
+      // agree about nothing.
+      if (a.n >= 20 && s.n >= 10 && Math.abs(is.wind) > 0.1) {
+        bothWays++;
+        if (a.way === s.way) together++;
+      }
       run(1.3);                        // and on to a different part of the gust
     }
 
@@ -566,9 +586,27 @@ const TESTS = [
       ok(dust.share > 0.95, 'and near enough all of it leans the same way at once',
          `${dust.most} of ${dust.n} agreed`),
       ok(smoke.n >= 10, 'there is smoke up there too', `${smoke.n} settled motes shifted`),
-      ok(smoke.share > 0.95, 'and it leans together as well',
-         `${smoke.most} of ${smoke.n} agreed`),
-      ok(bothWays > 0 && together === bothWays,
+      // The body of it moves, rather than every speck of it moving the same way.
+      //
+      // This asked that 95% of settled motes shift the same way inside a tenth
+      // of a second, and that was a true description of a band that was placed
+      // rather than blown: one shared creep moved every mote by the same amount,
+      // so of course they agreed. The sky is a fluid now -- see `flowAt` -- and
+      // a fluid has eddies: specks on the near side of a swirl go one way while
+      // their neighbours go the other, and unanimity would mean the stirring had
+      // stopped. Head-counting in a turbulent field measures how big the swirls
+      // are next to how far apart the sampled motes are, which is not weather.
+      // What the wind has to do is carry the smoke, and that is a mean.
+      ok(Math.abs(smoke.mean) > 0.02, 'and the body of it is carried',
+         `${smoke.mean.toFixed(3)}px a mote, ${smoke.n} moved`),
+      // Every reading but the turn. Dust on the ground answers a gust in the
+      // frame it happens -- it is being blown along a floor -- and smoke does
+      // not: a mote takes up the air's pace over about half a second (SKY_WIND),
+      // so at the moment the wind reverses the band is still going the old way
+      // for a beat. That lag is the smoke having weight, which is the thing the
+      // whole rework is for; demanding they agree in every sample is demanding
+      // the sky be as light as the floor.
+      ok(bothWays > 0 && together >= Math.ceil(bothWays * 0.75),
          'and the smoke leans the way the dust does: one wind, not two',
          `${together} of ${bothWays} readings agreed`),
       // A wind with no lull in it is a fan. Over eight seconds of a nine-second
