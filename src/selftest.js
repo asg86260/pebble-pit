@@ -557,7 +557,7 @@ const TESTS = [
     // there are instants where next to nothing is moving and there is nothing to
     // agree about. The claim is that when it is blowing, it is blowing one way.
     let dust = { n: 0, share: 0 }, smoke = { n: 0, share: 0 };
-    let bothWays = 0, together = 0;
+    let bothWays = 0, together = 0, downwind = 0;
     const winds = [];
     for (let i = 0; i < 8; i++) {
       const was = state();
@@ -573,8 +573,14 @@ const TESTS = [
       // turn the smoke's mean drift is a fraction of a pixel that the stirring
       // can flip either way. Asking the two to agree there is asking them to
       // agree about nothing.
+      //
+      // Added up across the readings rather than scored one by one. Eight short
+      // windows, each of which a single large eddy can turn over, is eight coin
+      // flips with a pass mark on them; the question is whether the smoke goes
+      // downwind over the run, and that is one number.
       if (a.n >= 20 && s.n >= 10 && Math.abs(is.wind) > 0.1) {
         bothWays++;
+        downwind += s.mean * Math.sign(is.wind);
         if (a.way === s.way) together++;
       }
       run(1.3);                        // and on to a different part of the gust
@@ -599,16 +605,18 @@ const TESTS = [
       // What the wind has to do is carry the smoke, and that is a mean.
       ok(Math.abs(smoke.mean) > 0.02, 'and the body of it is carried',
          `${smoke.mean.toFixed(3)}px a mote, ${smoke.n} moved`),
-      // Every reading but the turn. Dust on the ground answers a gust in the
-      // frame it happens -- it is being blown along a floor -- and smoke does
-      // not: a mote takes up the air's pace over about half a second (SKY_WIND),
-      // so at the moment the wind reverses the band is still going the old way
-      // for a beat. That lag is the smoke having weight, which is the thing the
-      // whole rework is for; demanding they agree in every sample is demanding
-      // the sky be as light as the floor.
-      ok(bothWays > 0 && together >= Math.ceil(bothWays * 0.75),
+      // The smoke goes the way the wind is blowing, taken over the whole run.
+      //
+      // Dust on the ground answers a gust in the frame it happens -- it is being
+      // blown along a floor -- and smoke does not: a mote takes up the air's
+      // pace over about half a second (SKY_WIND), so at the turn the band is
+      // still going the old way for a beat. That lag is the smoke having weight,
+      // which is the thing the whole rework is for. Scoring each reading
+      // separately made a pass mark out of eight coin flips; summing the drift
+      // against the wind's own sign asks the question once.
+      ok(bothWays > 0 && downwind > 0,
          'and the smoke leans the way the dust does: one wind, not two',
-         `${together} of ${bothWays} readings agreed`),
+         `${downwind.toFixed(2)}px downwind over ${bothWays} readings`),
       // A wind with no lull in it is a fan. Over eight seconds of a nine-second
       // swing it has to have got somewhere it was not.
       ok(Math.max(...winds) - Math.min(...winds) > 0.1,

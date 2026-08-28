@@ -7,7 +7,7 @@
 // settle to them as it fills, keeping every grain and only losing resolution.
 
 import { PIT_W_MAX,
-        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, PACK_SPARKS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
 import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome } from './grid.js';
@@ -190,6 +190,12 @@ export const pitCapacity = () => pit.cap || pit.cols * pit.rows;
 // the count keeps rising, the picture does not.
 export function refinePit() {
   if (S.pitStep >= PIT_GRAINS.length - 1) return;    // already as fine as it gets
+  // and no finer than has been paid for. A hole that quietly packed itself the
+  // moment it filled would be a hole with no ceiling, and the ceiling is the
+  // point: what a full pit means is that the yard has outgrown it, and the
+  // answer to that is something you go and get rather than something that
+  // happens to you. See `packPit`.
+  if (S.pitStep >= (S.pitFine || 0)) return;
 
   const oldP = pit.p, oldCols = pit.cols, oldRows = pit.rows, oldGrid = pit.grid;
   S.pitStep++;
@@ -228,6 +234,41 @@ export function refinePit() {
   seedPitCores();
   pit.painter.repaint();
   S.dirty = true;
+}
+
+// Sparks, pressing the pile.
+//
+// The machinery for this was written when the hole was built and then pinned
+// shut at one grain size -- `refinePit` shares every grain of the old pile out
+// across the finer columns standing where it did, so the profile survives and
+// only the resolution changes. What was missing was a reason: a pile that packs
+// itself when it is full has no ceiling, and something has to be spent.
+//
+// So the red out of the star's core buys it, and it happens the moment it is
+// bought rather than the next time the hole fills. You watch the pile settle
+// into itself and the room appear, which is the whole of what you paid for.
+export function packPit() {
+  if (!canPack()) return false;
+  S.pitFine = (S.pitFine || 0) + 1;
+  refinePit();
+  measurePit();
+  buildShop();
+  S.dirty = true;
+  return true;
+}
+
+// whether there is a finer grain left to buy at all
+export const canPack = () => (S.pitFine || 0) < PIT_GRAINS.length - 1;
+// and what the next one costs
+export const packCost = () => PACK_SPARKS[Math.min(S.pitFine || 0, PACK_SPARKS.length - 1)];
+// What it buys, said as a multiple of what the hole holds now. A grain half the
+// width holds four of itself in the same square of ground, so this is the ratio
+// squared and it is worked out rather than written down -- change PIT_GRAINS and
+// the row on the board says the right thing without anybody editing it.
+export function packGain() {
+  const now = PIT_GRAINS[S.pitStep] || PIT_GRAINS[0];
+  const next = PIT_GRAINS[Math.min(PIT_GRAINS.length - 1, (S.pitStep || 0) + 1)];
+  return Math.round((now / next) ** 2 * 10) / 10;
 }
 
 // paying comes out of the hole: grains are lifted off the top until the pile is

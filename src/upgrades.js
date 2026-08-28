@@ -13,8 +13,8 @@ import {
   TOWER_CORES, TOWER_DUST, TOWER_SHARDS, TOWER_SPORES
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
-import { S, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
-import { spend, takeCoreCells, pitCapacity } from './pit.js';
+import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
+import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, bedCount } from './world.js';
 import { syncWorkers } from './crew.js';
@@ -516,6 +516,21 @@ export const UPGRADES = [
   // The hole is not something you buy any more. It is the whole pit from the
   // first frame -- see pit.js: what you could hold used to be what you had dug,
   // which made a hole in the ground the ceiling on every other price in the game.
+  //
+  // What you can buy is how *finely* it holds it, which is a different thing:
+  // the hole stays the hole and the dust in it gets smaller. It is the one row
+  // on this board bought with red, and the only one where a wizard does
+  // something to the ground.
+  {
+    key: 'packpile',
+    name: 'press the pile',
+    note: () => `the hole holds ${packGain()} times as much, in the same hole`,
+    cost: () => packCost(),
+    currency: 'spark',
+    buy: () => { packPit(); lookAt(pit.x + pit.w / 2); },
+    // Once there is red to spend it on and there is a finer grain left to go to.
+    show: () => S.seenSpark && canPack()
+  },
 
   FARM
 ];
@@ -533,7 +548,8 @@ export const SECTIONS = [
   { title: 'the outhouse', keys: ['unlockouthouse'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
-  { title: 'the scrubbing house', keys: ['unlockscrub'] }
+  { title: 'the scrubbing house', keys: ['unlockscrub'] },
+  { title: 'the hole', keys: ['packpile'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

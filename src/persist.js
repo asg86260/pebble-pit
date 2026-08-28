@@ -164,6 +164,7 @@ export function persist() {
     seenSects: S.seenSects,
     seenRows: S.seenRows,
     pitStep: S.pitStep,
+    pitFine: S.pitFine,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
@@ -282,6 +283,7 @@ export function restore() {
     S.seenSects = [];
     S.seenRows = [];
     S.pitStep = 0;
+    S.pitFine = 0;
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
@@ -338,6 +340,11 @@ export function restore() {
   // the whole thing from the first frame, and it keeps it.
   // Nothing to restore: the hole is the whole hole from the first frame, and a
   // save from when it was dug out a purchase at a time simply arrives in one.
+  // What was paid for comes back before the grain does: `refinePit` will not go
+  // finer than `pitFine` allows, and a save that restored the grain without the
+  // permission would be a hole that quietly coarsened again the first time
+  // anything asked it to settle.
+  S.pitFine = s.pitFine || 0;
   setPitGrain(s.pitStep || 0);
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
@@ -487,6 +494,11 @@ function restoreCrew(who) {
 
 export function reset() {
   clear();
+  // Including what the hole had been pressed to. This is not the same field as
+  // the grain it is *at* -- the grain follows from the pile being rebuilt, and
+  // reset does rebuild it -- and leaving the paid-for permission behind meant a
+  // brand new yard came with the star's red already spent on it.
+  S.pitFine = 0;
   S.paused = false;                // a new game is not a held one
   showPanel(null);                 // nor one with the last game's board still up
   // the curtains are somebody's, and there is nobody here now

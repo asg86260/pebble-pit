@@ -733,7 +733,19 @@ export const PIT_W_MAX = 3600;   // and this wide, six hundred cells of it
 // sizes here lets the pile settle to them as it fills, which is how the hole
 // could be made to hold a million. For now it stays one size: dust in the pit
 // looks like dust everywhere else, and the hole fully dug out holds 27,600.
-export const PIT_GRAINS = [P];
+// Three sizes, and the hole only settles to a finer one when somebody has paid
+// for it -- see `packPit`. A grain is a whole number of pixels because
+// everything in this game is: six, then three, then two. Each step is the same
+// dust in a smaller grain, so the hole holds the square of what the grain shrank
+// by -- four times at three pixels, and nine at two.
+//
+// This is what red is for. The core of the star comes down as sparks, and what
+// they buy is a wizard pressing the pile: the one thing in the yard that is
+// plainly magic acting on the one thing in the yard that is plainly dirt. The
+// paint store is still coming and is a secondary effect of the same resource.
+export const PIT_GRAINS = [P, 3, 2];
+// what each pressing costs, in sparks, in the order they are bought
+export const PACK_SPARKS = [40, 140];
 export const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 // how many device pixels we are willing to fill a frame, before backing the

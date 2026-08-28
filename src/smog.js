@@ -291,6 +291,18 @@ const skyMote = (x, y, kind = 'dust') => ({
   y: y
 });
 
+// An even handful of a list, in its own order. Taking the first n of the sky
+// takes the *oldest* n -- near neighbours that have been drifting together for
+// minutes, which in a sky with eddies in it agree with each other rather than
+// with the weather. Striding across the whole list samples the band instead of
+// sampling one swirl.
+function spread(list, n) {
+  if (list.length <= n) return list;
+  const step = list.length / n, out = [];
+  for (let i = 0; i < n; i++) out.push(list[Math.floor(i * step)]);
+  return out;
+}
+
 // How many should be up there for the haze there is. The motes say where the sky
 // is thick and thin; this only says how many of them there are.
 const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
@@ -1479,7 +1491,7 @@ export function smogReport() {
            // sky with eddies in it they agree with each other rather than with
            // the wind, so a sample that small measures one swirl and calls it
            // the weather.
-           skyX: SKY.filter(m => !m.up).slice(0, 200).map(m => +m.x.toFixed(2)),
+           skyX: spread(SKY.filter(m => !m.up), 200).map(m => +m.x.toFixed(2)),
            puffs: climbing(), drops: DROPS.length, trend: airTrend(),
            // Motes the draught has hold of: near the mouth and plainly coming.
            // It used to be a list of specks on a scripted curve into the hood;

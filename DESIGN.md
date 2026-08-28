@@ -989,7 +989,24 @@ distance and throw, and the cell comes off where the bolt lands.)*
 
 *(An earlier version of this list also said "a third currency". The rule was never the count — it
 is that each one has exactly one job, and that the lab is the only place a multiplier lives. Red,
-below, is a resource with a job: it buys a colour. That is why it is allowed.)*
+below, is a resource with a job. That is why it is allowed.)*
+
+## What red is for (built)
+
+**Pressing the pile.** Red buys the hole the ability to hold its dust at a finer
+grain — six pixels, then three, then two — which is four times as much in the
+same hole, and then a little over twice that again. The machinery was written
+when the hole was and then pinned shut at one size, because a pile that packs
+itself the moment it fills is a hole with no ceiling; what a full pit means is
+that the yard has outgrown it, and the answer to that has to be something you go
+and get. It is the one row on the bench priced in sparks and the one place where
+something plainly magic acts on something plainly dirt. Every grain of the old
+pile is shared out across the finer columns standing where it did, so the profile
+survives, the count does not move, and what you watch is the pile settling into
+itself and the room appearing underneath. See `packPit` in pit.js.
+
+The paint store below is a *secondary* effect of the same resource rather than a
+second job — it spends red, it does not define it.
 
 ## The paint store (long term, not built)
 

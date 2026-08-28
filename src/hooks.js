@@ -28,7 +28,7 @@ import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
-import { UPGRADES } from './upgrades.js';
+import { UPGRADES, buy as buyRow } from './upgrades.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -277,10 +277,24 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
   if (o.cores) { S.cores += o.cores; S.seenCore = true; }
+  // Red, the same as the rest. It was the one currency this could not hand out,
+  // which meant every check about spending it had to bank spark grains in the
+  // hole by hand first -- and a dev hook that knows three of the four counters
+  // is a hook you have to remember the exception to.
+  if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
   buildShop(); S.dirty = true;
 };
 
 export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = true; };
+
+// Press the pile, through the row on the board rather than around it: the price
+// is taken, the row's own rules about whether it may be bought at all apply, and
+// what a check exercises is the thing a player clicks.
+export const press = () => {
+  const row = UPGRADES.find(u => u.key === 'packpile');
+  if (row) buyRow(row);
+  return { grain: pit.p, step: S.pitStep, paid: S.pitFine || 0, sparks: S.sparks };
+};
 
 // what the pile actually looks like, sampled across the hole: dust arrives at
 // the lip, so the shape of it is the shape of how it got there
