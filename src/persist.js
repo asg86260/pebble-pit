@@ -582,6 +582,7 @@ export function reset() {
   sky.n = 0;
   S.scrubbers = 0;
   S.janitors = 0;
+  S.introThrew = 0;
   S.harnessLevel = 0;
   S.bootsLevel = 0;
   S.seenMess = false;

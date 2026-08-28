@@ -307,7 +307,10 @@ group('the game opens on two squares and a rock lands on one', async () => {
     ok(after.crew === 1,
        'and the one left standing is the crew -- the first body is not bought',
        `${after.crew} hired`),
-    ok(after.stored >= 2,
+    // One grain, thrown. It used to carry two of them the length of the yard with
+    // the camera trailing behind, which is a correct demonstration and a dreadful
+    // thing to sit through -- see `show` in intro.js.
+    ok(after.stored >= 1,
        'and it has shown you where dust goes before you are given the yard',
        `${after.stored} in the hole`),
     ok(after.buried, 'with the other one under it'),

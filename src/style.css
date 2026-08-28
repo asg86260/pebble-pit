@@ -309,7 +309,7 @@ canvas {
 /* Rows with a bill rather than a price. The cost column is sized for one mark
    and a number, so these get the rest of the row instead -- what they buy is a
    thing rather than a rate, so the gain column had nothing to put in it. */
-#shop button[data-key="unlocktower"] { grid-template-columns: 9em 0 1fr; }
+#shop button[data-key="unlocktower"] { grid-template-columns: 11.2em 0 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
 /* A bill of three or four, two to a line.

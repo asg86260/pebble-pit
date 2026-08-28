@@ -26,11 +26,12 @@
 
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
-         INTRO_SHOW_DUST, INTRO_SHOW_IN, INTRO_SHOW_MAX,
+         INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS } from './config.js';
-import { S } from './state.js';
+import { S, pit } from './state.js';
 import { now } from './clock.js';
 import { makeBoulder, boulderAlive } from './rock.js';
+import { spawnChip, aim } from './dust.js';
 import { walkY, setZoom, clampCam } from './world.js';
 import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -48,6 +49,11 @@ export const introHolds = () => S.intro === 'chat' || S.intro === 'meet' || S.in
 // A fresh game, and nothing has happened yet.
 export function startIntro() {
   if (S.introDone) return;
+  // A fresh opening has not thrown anything yet. Without this a second playing
+  // -- a reset, or the checks running it twice in one process -- finds the mark
+  // from the first still set, never throws, and stands there until the timeout
+  // takes pity on it.
+  S.introThrew = 0;
   S.intro = 'chat';
   S.introAt = now();
   S.introSaid = 0;
@@ -336,22 +342,58 @@ function begin(t) {
   S.dirty = true;
 }
 
+// It knocks a couple of cells off, comes down off the rock, and throws one into
+// the hole.
+//
+// It used to *carry* it there: down tools, pick the dust up, and walk the length
+// of the yard with the camera trailing behind, twice, before you were allowed to
+// touch anything. Which is a correct demonstration of where dust goes and a
+// dreadful thing to sit through -- the first half-minute of the game spent
+// watching somebody walk. The hole is six hundred pixels from the rock and a
+// grain thrown properly carries further than that, so it throws.
+//
+// What is being shown is unchanged: dust comes off the rock and dust goes in the
+// hole. It is shown in one gesture instead of one errand.
 function show(t) {
-  // The view walks with it. The hole is off the side of any window you can see
-  // the rock in, so a body carrying dust there without the camera going too is a
-  // body walking off the screen.
   const w = S.workers[0];
-  if (w) {
-    S.camX += ((w.x + WORKER / 2 - S.viewW / 2) - S.camX) * 0.06;
-    S.camTo = null;
-    clampCam();
+  if (!w) { finish(); return; }
+
+  // Watching whatever there is to watch: the body while it is working, and the
+  // grain once it is in the air, because the grain is the thing being explained
+  // and it is going somewhere the body is not.
+  const chip = S.chips.find(c => c.intro);
+  const eye = chip ? chip.x : w.x + WORKER / 2;
+  S.camX += ((eye - S.viewW / 2) - S.camX) * 0.06;
+  S.camTo = null;
+  clampCam();
+
+  // Enough off the rock, and it throws one of them into the hole.
+  //
+  // From where it is standing -- up on the crest, which is where the work is and
+  // the best place in the yard to throw from. It stays a miner while it does it:
+  // handing the body to the hauling rules mid-scene means the scene is at the
+  // mercy of whatever a hauler decides to do next, and what it decides is to go
+  // and fetch something, which is the walk this is here to be rid of.
+  if (S.floorGrains >= INTRO_SHOW_DUST && !S.introThrew) {
+    const fx = w.x + WORKER / 2, fy = w.y + P * 2;
+    // Well inside the mouth rather than just over the lip. A throw is an arc and
+    // an arc has a spread; aimed at the edge, half of them come down short of it
+    // and lie on the ground, which demonstrates nothing.
+    const into = pit.x + P * 24;
+    const v = aim(fx, fy, into, P);
+    spawnChip(fx, fy, v.vx, v.vy, 4);
+    const thrown = S.chips[S.chips.length - 1];
+    if (thrown) thrown.intro = true;
+    w.lunge = 1;                                      // it puts its back into it
+    S.introThrew = t;
+    S.dirty = true;
   }
 
-  // enough on the ground to be worth carrying: down tools and carry it
-  if (S.miners && S.floorGrains >= INTRO_SHOW_DUST) assign('miners', -1);
-
-  if (S.stored < INTRO_SHOW_IN && t - S.introAt < INTRO_SHOW_MAX) return;
-  finish();
+  // It is over when the grain is in the hole -- or when it has plainly missed,
+  // which is a thing that can happen to a throw and is not worth waiting on.
+  if (S.stored >= 1) { finish(); return; }
+  if (S.introThrew && t - S.introThrew > 6000) { finish(); return; }
+  if (t - S.introAt >= INTRO_SHOW_MAX) finish();
 }
 
 // And it goes back to the rock. It is digging its mate out -- that is the whole

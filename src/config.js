@@ -88,12 +88,11 @@ export const INTRO_BEAT = 900;    // between one of them saying something and th
 export const INTRO_APART = 20;    // and how far apart they stand, in world pixels
 export const INTRO_HURL = 4.2;    // how hard the one left standing is thrown back
 // And then it shows you the loop rather than telling you: a few swings at the
-// rock, and the dust that comes off carried the length of the yard and tipped
-// into the hole. Two grains is enough -- what is being shown is where dust goes,
-// not how much of it there is -- and the view goes with it, because the hole is
-// off the side of any window you can see the rock in.
+// rock, and one grain of it thrown into the hole. What is being shown is where
+// dust goes, not how much of it there is -- and it is one throw rather than the
+// walk it used to be, because the first half-minute of a game is not the place
+// to watch somebody cross a yard twice. See `show` in intro.js.
 export const INTRO_SHOW_DUST = 3;   // grains knocked off before it downs tools
-export const INTRO_SHOW_IN = 2;     // and grains it puts in the hole before you take over
 export const INTRO_SHOW_MAX = 45000; // however long that takes, it is over by then
 // --- and the second act -------------------------------------------------------
 // The first rock comes off and they are together for a moment. It happens once,

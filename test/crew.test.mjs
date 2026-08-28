@@ -312,13 +312,20 @@ group('the crew go through the hole to get at the far side', async () => {
       if (x > far) beyond = Math.max(beyond, Math.round(x - far));
       deepest = Math.max(deepest, y - s.groundY);
     }
-    gone = s.smog.muck.all === 0;
+    // the rain's share of it. What a body leaves is a second stack that only a
+    // janitor may touch -- see `poopCols` -- and over three minutes of yard a
+    // crew of three will leave some, which would mean "all gone" never came.
+    gone = s.smog.muck.all - s.smog.poop === 0;
   }
 
   // and home again, which needs the crossing to work both ways
   window.__muckSet(c => (c * 6 + 3 > 1200 && c * 6 + 3 < 1500 ? 2 : 0));
   let back = false;
-  for (let i = 0; i < 400 && !back; i++) { run(0.25); back = state().smog.muck.all === 0; }
+  for (let i = 0; i < 400 && !back; i++) {
+    run(0.25);
+    const s = state();
+    back = s.smog.muck.all - s.smog.poop === 0;
+  }
 
   // and with nothing at all left anywhere, nobody is left standing out there:
   // the crossing only ever ran while there was muck to chase, so the last body
@@ -340,7 +347,8 @@ group('the crew go through the hole to get at the far side', async () => {
        `${deepest}px below the ground line`),
     ok(beyond > 40, 'and up the far wall and out onto ground they cannot otherwise stand on',
        `${beyond}px past the far wall`),
-    ok(gone, 'and shift the lot', `${Math.round(state().smog.muck.all)} left`),
+    ok(gone, 'and shift the lot',
+       `${Math.round(state().smog.muck.all - state().smog.poop)} of the rain's left`),
     ok(back, 'and come back through the same way when the near side needs them'),
     ok(home, 'and do not stand out there waiting to be asked: with nothing left to do on the far side they come home on their own',
        `${stranded.join()} past a wall at ${Math.round(far)}`)

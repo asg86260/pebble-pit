@@ -483,6 +483,38 @@ const TESTS = [
         }
       }
     }
+    // And again with the buildings *unbought*, because a row that sells a
+    // building is only on the board while you have not got one -- so the sweep
+    // above, which opens everything so that every board has rows, is the one
+    // sweep guaranteed never to see them. "Raise the tower" ran over its price
+    // for exactly this reason.
+    St.towerOpen = false;
+    St.casinoOpen = false;
+    St.labOpen = false;
+    St.outhouseOpen = false;
+    St.scrubOpen = false;
+    window.__build();
+    window.__board('bench');
+    await raf();
+    await raf();
+    for (const row of document.querySelectorAll('#shop button, #shop div.job')) {
+      if (row.offsetParent === null) continue;
+      for (const cell of row.children) {
+        const text = cell.textContent.trim();
+        if (!text || cell.offsetParent === null) continue;
+        rows++;
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const ink = range.getBoundingClientRect();
+        const box = cell.getBoundingClientRect();
+        const over = Math.round(ink.right - box.right);
+        if (over > 1) {
+          bad.push(`bench-unbought/${row.dataset.key || text}: ` +
+                   `"${text}" runs ${over}px past its column`);
+        }
+      }
+    }
+
     window.__board(null);
     window.__crew(0, 0);
     return [

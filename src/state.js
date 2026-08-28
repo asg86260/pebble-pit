@@ -245,6 +245,7 @@ export const S = {
   // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
   harnessLevel: 0,
   bootsLevel: 0,
+  introThrew: 0,          // when the opening's one throw was let go of
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
