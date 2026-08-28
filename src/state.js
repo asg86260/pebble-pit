@@ -240,6 +240,11 @@ export const S = {
   scrubbers: 0,           // and this many bodies are in it
   janitors: 0,            // and how many are shovelling up after everybody
   seenMess: false,        // and whether the yard has ever been left in a state
+  // The crew's second tier, which the cut pays for: a harness to carry with and
+  // boots to walk in. Their own counts rather than more rungs on the first two
+  // ladders, because a ladder has an end -- see "The ladder" in DESIGN.md.
+  harnessLevel: 0,
+  bootsLevel: 0,
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts

@@ -73,8 +73,12 @@ export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('s
 export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
 export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(1, minerGap(lvl) / mult('swing'));
 export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
-export const haulCap = (lvl = S.haulCarryLevel) => 1 + lvl;
-export const haulSpeed = (lvl = S.haulPaceLevel) => HAUL_BASE * (1 + 0.3 * lvl) * mult('haul');
+// What a pair of hands carries: what it can hold, and then what it can hold
+// *with something to hold it in*. The harness is the second tier -- bought with
+// stone out of the cut, because gear is what stone is for.
+export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lvl + gear * 2;
+export const haulSpeed = (lvl = S.haulPaceLevel, gear = S.bootsLevel) =>
+  HAUL_BASE * (1 + 0.3 * lvl + 0.45 * gear) * mult('haul');
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every miner in the yard hit harder was doing two jobs at once, and
@@ -254,6 +258,11 @@ export function rebalance() {
   for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'])
     S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
+  // and no ladder past its top, whatever a save says
+  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'minerPickLevel',
+                   'minerSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
+                   'harnessLevel', 'bootsLevel'])
+    S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
   // Carrying is the job nobody is assigned to: it is what a body does when it is
   // on nothing, so the haulers are whatever is left over. The carts are the
   // lip's kit and are counted with the rest of it, not held out of this.
@@ -468,6 +477,39 @@ export const UPGRADES = [
     buy: () => S.haulCarryLevel++,
     show: () => S.crew > 0
   },
+  // --- and the second round, which the cut pays for -------------------------
+  // A finite ladder means running out, and running out is the game telling you
+  // to go and open the next place. These are what is on the other side of that:
+  // the same two things about a pair of hands, bought again in the stone the cut
+  // gives up. They are not more rungs on the ladders above -- those are finished
+  // and say so -- they are gear, which is what blue is for.
+  {
+    key: 'harness',
+    name: 'harness',
+    unit: 'px',
+    rung: () => S.harnessLevel,
+    from: () => haulCap(),
+    to: () => haulCap(S.haulCarryLevel, S.harnessLevel + 1),
+    bill: () => [['shard', rungCost(8, S.harnessLevel)], ['dust', rungCost(400, S.harnessLevel)]],
+    cost: () => rungCost(400, S.harnessLevel),
+    buy: () => S.harnessLevel++,
+    // Once there is stone to spend, and not before: a row asking for a coin the
+    // yard has never handed you is a row that reads as broken.
+    show: () => S.seenShard && S.crew > 0
+  },
+  {
+    key: 'boots',
+    name: 'boots',
+    unit: 'px/s',
+    pct: true,
+    rung: () => S.bootsLevel,
+    from: () => haulSpeed() * 60,
+    to: () => haulSpeed(S.haulPaceLevel, S.bootsLevel + 1) * 60,
+    bill: () => [['shard', rungCost(6, S.bootsLevel)], ['dust', rungCost(300, S.bootsLevel)]],
+    cost: () => rungCost(300, S.bootsLevel),
+    buy: () => S.bootsLevel++,
+    show: () => S.seenShard && S.crew > 0
+  },
   {
     key: 'haulpace',
     name: 'speed',
@@ -628,7 +670,7 @@ export const UPGRADES = [
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'the crew', keys: ['haulcarry', 'haulpace'] },
+  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },

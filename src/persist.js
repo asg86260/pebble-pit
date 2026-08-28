@@ -231,6 +231,8 @@ export function persist() {
     wizards: S.wizards,
     scrubbers: S.scrubbers,
     janitors: S.janitors,
+    harnessLevel: S.harnessLevel,
+    bootsLevel: S.bootsLevel,
     seenMess: S.seenMess,
 
     recycler: S.recycler,
@@ -436,6 +438,8 @@ export function restore() {
   }
   S.scrubbers = s.scrubbers || 0;
   S.janitors = s.janitors || 0;
+  S.harnessLevel = s.harnessLevel || 0;
+  S.bootsLevel = s.bootsLevel || 0;
   S.seenMess = !!s.seenMess;
   S.recycler = !!s.recycler;
   S.seenAir = !!s.seenAir;
@@ -578,6 +582,8 @@ export function reset() {
   sky.n = 0;
   S.scrubbers = 0;
   S.janitors = 0;
+  S.harnessLevel = 0;
+  S.bootsLevel = 0;
   S.seenMess = false;
   S.recycler = false;
   S.seenAir = false;
