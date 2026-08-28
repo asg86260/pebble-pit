@@ -1038,7 +1038,7 @@ telling you where to go next, and it is the only nudge it needs to give.
 | 2 | spores | **the beds** | strength: yours and the crew's |
 | 3 | shards | **the cut** | gear: the pickaxes, the carts |
 | 4 | cores | a rock | buildings, and nothing else |
-| 5 | hearts | **a star** | the industrial upgrade at each station |
+| 5 | hearts | **a star** | the machines: faster, and dirtier with it |
 | 6 | sparks | a star | the last two rungs of every ladder |
 
 **The beds come before the cut.** Food makes bodies and stone makes tools, and a
@@ -1046,7 +1046,7 @@ body has to exist before its tool means anything -- so green is strength and blu
 is gear, in that order. It is also the way round that fixes the pile: spores
 currently buy one row in the whole game and sit there.
 
-**A core opens places and a heart industrialises them.** That is the same
+**A core opens places and a heart drives them harder.** That is the same
 sentence the game already says about cores, extended by one word. A rock gives
 dust all the way down and one core at its middle; a star gives sparks all the way
 down and one heart at its middle -- the last thing the wizards reach, and the
@@ -1058,32 +1058,48 @@ something that fell out of the sky. This is what red is *for* in the long run --
 the pit press is already this shape, and the paint store below spends the same
 red on something that is not a multiplier at all.
 
-### Industry is where the smoke comes from
+### The smoke comes on in two steps
 
-The one thing this changes about the rest of the game: **the yard is clean until
-you industrialise it.**
+The one thing this changes about the rest of the game: **the yard is clean while
+it is worked by hand, and it dirties in two deliberate steps, each of which you
+buy.**
 
-Every station gets one industrial upgrade, bought with a heart. It roughly
-doubles what that station makes, and it is the thing that starts the station
-fouling the sky. A gang with shovels barely marks the air (see SMOG_PER_DUST,
-which was cut hard for exactly this reason); a crusher in the cut is a different
-proposition.
+**The cut brings the first machines.** Opening the quarry is the moment this
+stops being a place with shovels in it: it comes with rudimentary machinery --
+a jaw on the face, a hoist on the deck -- which is faster than a body and makes a
+little smoke. Not much. Enough that the band over the yard starts to be a thing
+you can see thickening rather than a bar in a readout, and enough that the
+scrubbing house has a reason to exist by the time you can afford one. The two
+land in the same era, which is the whole point: the problem and the answer to it
+should be the same part of the game.
 
-That gets the whole pollution system out of the opening, where it was a problem
-shown to a player who had no answer to it -- the scrubbing house is thousands of
-dust away -- and puts it exactly where it belongs: as the cost of a decision you
-made, on the same board as the decision. It also gives the second half of the
-game its own economy, because a yard producing twice as much needs somewhere for
-it to go and something to spend it on.
+**A heart drives a machine harder.** Each machine takes one, and what it gets is
+speed -- roughly double -- and the smoke that comes with running something at
+twice the rate. So red out of the sky is what turns a works that ticks over into
+a works that pours, and the sky is where the bill for that arrives.
+
+That gives the pollution curve three flats and two steps: hand labour, which
+barely marks it; the first machines, which mark it; and the driven machines,
+which are a problem. Each step is a purchase you made, on the same board as the
+thing it pays for. What it is *not* is the shape it has now -- a meter that has
+been draining since your first swing, shown to somebody who has no answer to it
+for another few thousand dust.
+
+It also gives the second half of the game its own economy. A works producing
+twice as much needs somewhere to put it and something to spend it on, which is
+what the tier-6 spark rungs and the paint store are for.
 
 ### What is not settled
 
 - How many hearts a star carries. One is the clean answer and matches the rock;
   it also means the industrial upgrades are strictly ordered by how many stars
   you have finished, which may be too slow.
-- Whether the industrial upgrades are one ladder or one row per station. One row
-  per station is more legible and lets you choose *which* part of the works gets
-  dirty first, which is a real decision.
+- Which machines exist, and where. One per station is the legible answer and
+  lets you choose which part of the works gets dirty first, which is a real
+  decision -- but the cut and the beds are the two places a machine obviously
+  belongs, and a machine in the house would be a stretch.
+- How much smoke a rudimentary machine makes. It has to be visible within a
+  minute or two of buying it, or the step does not read as a step.
 - Whether the tier-6 spark rungs are the same two rungs on every ladder or vary.
 
 ## The paint store (long term, not built)
