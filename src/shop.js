@@ -146,8 +146,12 @@ function build(el, list, sections, empty) {
       // Three cells, not five. A row is a name, what buying it gives you, and
       // what it costs -- there is no before-and-after any more, so there is no
       // arrow between them and nothing to line the two halves up against.
-      b.innerHTML = '<span class="name"></span><span class="gain"></span>' +
-                    '<span class="cost"></span><span class="ladder"></span>';
+      // The pips live *inside* the name rather than beside it, so they sit under
+      // the title whatever the rest of the row is doing. As a cell of their own
+      // they were placed after the price -- and a price of two coins is two
+      // lines tall, which pushed the pips down past the words they belong to.
+      b.innerHTML = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
+                    '<span class="gain"></span><span class="cost"></span>';
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
@@ -263,7 +267,8 @@ export function refresh(el, list, headcount) {
     // downwards, where there is room, instead of sideways, where there is not.
     const parts = billOf(u).map(([money, n]) => `<span>${MARK[money]} ${n}</span>`);
     const bill = parts.join('');
-    const [name, gain, price, ladder] = row.children;
+    const [name, gain, price] = row.children;
+    const what = name.firstElementChild, ladder = name.lastElementChild;
     // Any bill of more than one stacks. The price column is sized for a mark and
     // a number, so even two side by side run out of it -- and above the first
     // tier every rung is priced in its own coin *and* in dust, so two is now the
@@ -274,7 +279,7 @@ export function refresh(el, list, headcount) {
     // nothing else on that board can be started until it is finished.
     if (S.research && list === LAB_UPGRADES) {
       const mine = S.research.key === u.key;
-      say(name, u.name);
+      say(what, u.name);
       sayHTML(gain, mine ? 'working' : '');   // how far along is a bar over the lab now
       sayHTML(price, mine ? '' : bill);
       grey(row, true);
@@ -290,7 +295,7 @@ export function refresh(el, list, headcount) {
     // finished one says "5/5" and stays there rather than vanishing -- which is
     // what the rate rows used to do when they hit a floor nobody had been told
     // about.
-    say(name, u.name);
+    say(what, u.name);
     // How far up the ladder, as a row of pips under the words rather than as a
     // number in the middle of them. "3/5" sat between the name and what the next
     // one buys, which is two numbers about different things a character apart --

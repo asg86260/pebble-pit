@@ -519,9 +519,10 @@ const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      // name, gain, price -- and a line of pips under them saying how far up the
-      // ladder the row is, which is a fourth child but not a fourth column
-      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are three columns and a ladder',
+      // Three columns: name, gain, price. The pips saying how far up the ladder a
+      // row is live inside the name -- under the title rather than beside it --
+      // so they are not a column at all.
+      ok(cells.length > 0 && cells.every(c => c.length === 3), 'rows are three columns',
          JSON.stringify(cells[0])),
       // name, rung, gain, price -- so the two that must never be empty are the
       // first and the last
@@ -2638,6 +2639,31 @@ const TESTS = [
   // crew list carried an instruction to close the crew list: hovering a body to
   // read it shut the sheet the body was written on. Which made the list
   // unusable, since reading it is the only thing it is for.
+  // Picking a name is the end of reading the list.
+  ['picking a name takes the view to them and folds the list away', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(60);
+    await hoverHouse();
+    await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    const before = state();
+    rows[rows.length - 1].click();
+    await sleep(120);
+    const after = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length > 1, 'there is a list of them to pick from', `${rows.length}`),
+      ok(!after.crewListOpen, 'picking one folds the list away',
+         `${before.crewListOpen} -> ${after.crewListOpen}`),
+      ok(!!after.follows, 'and the view goes to whoever it was', `${after.follows}`)
+    ];
+  }],
+
   ['hovering a name does not close the list it is on', async () => {
     window.__reset();
     await settle();

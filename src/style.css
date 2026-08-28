@@ -205,8 +205,15 @@ canvas {
    is two numbers about different things sitting a character apart -- the eye has
    to stop and read it, and it made an already busy line busier. Pips are counted
    at a glance, and under the row they cost no width at all. */
+/* The name is two lines when it is a ladder: the words, and the pips under them.
+   As a cell of its own the pips were placed after the price -- and a price of
+   two coins is two lines tall, which pushed them down clear of the words they
+   belong to. Inside the name they sit under the title whatever the rest of the
+   row is doing. */
+.rows button .name { display: flex; flex-direction: column; align-items: flex-start; }
+.rows button .name .what { font-style: normal; }
 .rows button .ladder {
-  grid-column: 1 / -1;
+  font-style: normal;
   /* big enough that a filled pip and a hollow one are plainly different, which
      at six tenths of an em they were not: it read as a dotted underline */
   font-size: .8em;

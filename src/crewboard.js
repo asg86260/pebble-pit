@@ -144,6 +144,14 @@ export function card(w) {
 function point(w) {
   follow(w);
   w.pointed = now() + POINT_MS;
+  // and the list has done its job, so it folds away.
+  //
+  // Picking a name is the end of reading the list, not a step in it: the view
+  // leaves for wherever that body is working, and a sheet of names left standing
+  // over the walk is a sheet about a place you are no longer looking at. The
+  // board it came out of stays -- you may want the next name -- and it closes on
+  // its own once the pointer follows the view away from the house.
+  showCrewList(false);
   S.dirty = true;
 }
 
