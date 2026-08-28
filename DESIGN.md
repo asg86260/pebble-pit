@@ -1008,6 +1008,84 @@ itself and the room appearing underneath. See `packPit` in pit.js.
 The paint store below is a *secondary* effect of the same resource rather than a
 second job — it spends red, it does not define it.
 
+## The ladder (design, not built)
+
+What is here now is eight rows that never end. Every one is a level you buy
+again at a price multiplied by something between 1.35 and 1.9, and the whole
+game is priced in dust: of the eight, exactly two spend anything else. Blue and
+green pile up unspent, which makes them flavour rather than currencies, and the
+only real decision the board offers is which exponent to feed next.
+
+Two of those rows are already finite and hide it. `swing` stops at MINE_FLOOR
+and the miners' at MINER_FLOOR, and when a row reaches its floor it *vanishes
+off the board*. So the game already has caps -- it just calls them infinite and
+then quietly removes the evidence. Saying so out loud costs nothing and turns a
+disappearance into "5 of 5", which is a thing you finished rather than a thing
+that went away.
+
+**Every upgrade is a ladder with an end, and the row says where you are on it.**
+`strength 3/5`. Cost rises gently within a ladder -- about half again a rung, so
+six times across the whole of it -- rather than exponentially, because the job
+of the *tier* is to gate progress and the job of the rungs is to be affordable
+enough to be worth reading. Running a tier dry is not a wall. It is the game
+telling you where to go next, and it is the only nudge it needs to give.
+
+### The tiers
+
+| tier | currency | comes from | what it buys |
+|---|---|---|---|
+| 1 | dust | the rock | your strength, hold to mine, your swing |
+| 2 | spores | **the beds** | strength: yours and the crew's |
+| 3 | shards | **the cut** | gear: the pickaxes, the carts |
+| 4 | cores | a rock | buildings, and nothing else |
+| 5 | hearts | **a star** | the industrial upgrade at each station |
+| 6 | sparks | a star | the last two rungs of every ladder |
+
+**The beds come before the cut.** Food makes bodies and stone makes tools, and a
+body has to exist before its tool means anything -- so green is strength and blue
+is gear, in that order. It is also the way round that fixes the pile: spores
+currently buy one row in the whole game and sit there.
+
+**A core opens places and a heart industrialises them.** That is the same
+sentence the game already says about cores, extended by one word. A rock gives
+dust all the way down and one core at its middle; a star gives sparks all the way
+down and one heart at its middle -- the last thing the wizards reach, and the
+reason to finish a star rather than abandon it half-mined.
+
+**Sparks are the multiplier.** Every ladder is five rungs of ground and two of
+red: the ground can take a stat as far as the ground goes, and past that it costs
+something that fell out of the sky. This is what red is *for* in the long run --
+the pit press is already this shape, and the paint store below spends the same
+red on something that is not a multiplier at all.
+
+### Industry is where the smoke comes from
+
+The one thing this changes about the rest of the game: **the yard is clean until
+you industrialise it.**
+
+Every station gets one industrial upgrade, bought with a heart. It roughly
+doubles what that station makes, and it is the thing that starts the station
+fouling the sky. A gang with shovels barely marks the air (see SMOG_PER_DUST,
+which was cut hard for exactly this reason); a crusher in the cut is a different
+proposition.
+
+That gets the whole pollution system out of the opening, where it was a problem
+shown to a player who had no answer to it -- the scrubbing house is thousands of
+dust away -- and puts it exactly where it belongs: as the cost of a decision you
+made, on the same board as the decision. It also gives the second half of the
+game its own economy, because a yard producing twice as much needs somewhere for
+it to go and something to spend it on.
+
+### What is not settled
+
+- How many hearts a star carries. One is the clean answer and matches the rock;
+  it also means the industrial upgrades are strictly ordered by how many stars
+  you have finished, which may be too slow.
+- Whether the industrial upgrades are one ladder or one row per station. One row
+  per station is more legible and lets you choose *which* part of the works gets
+  dirty first, which is a real decision.
+- Whether the tier-6 spark rungs are the same two rungs on every ladder or vary.
+
 ## The paint store (long term, not built)
 
 Written down so it does not get lost. Three parts, in order of how much they change:
