@@ -176,10 +176,14 @@ group('the sky fills up, and gives it back', async () => {
 // What the rain leaves is not material. It is shifted and it is gone -- nothing
 // carries it to the hole, nothing counts it, and the yard ends up exactly the
 // way it was. The shift is the whole of the cost.
-// Clearing up is the job when there is a mess. It used to be what a body did
+// Clearing it up is the job when there is a mess. It used to be what a body did
 // when it had nothing else on, which meant it was never done: there is always
 // dust to fetch, so a yard under an inch of muck stayed under it while the crew
 // walked over it carrying grains.
+//
+// The weather is everybody's. What a body *leaves* is the janitor's, and that is
+// a different stack in the same ground -- see `poopCols` -- so this group is
+// about the rain and says nothing about the other.
 group('a mess comes before the dust', async () => {
     run(0.4);
   window.__crew(1, 5);

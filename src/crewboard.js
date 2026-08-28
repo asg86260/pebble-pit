@@ -43,7 +43,7 @@ export function houseRect() {
 // which is the board saying it does not know where one of its own people is.
 const AT = { miners: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
              farmhands: 'at the farm plots', labbers: 'in the lab',
-             scrubbers: 'at the scrubbing house' };
+             scrubbers: 'at the scrubbing house', janitors: 'clearing up' };
 
 export function whereIs(w) {
   if (w.lifted) return 'in your hand';
@@ -75,7 +75,7 @@ export function whereIs(w) {
 // have one of `transporting` either.
 const DOES = { miners: 'mining the rock', quarriers: 'quarrying',
                farmhands: 'farming', labbers: 'researching',
-               scrubbers: 'clearing the air', haulers: 'transporting' };
+               scrubbers: 'clearing the air', janitors: 'shovelling', haulers: 'transporting' };
 const tally = n => Math.round(n || 0).toLocaleString('en-US');
 
 // Rows, not a sentence. A card you have to read is a card you read once; a card

@@ -918,7 +918,7 @@ const TESTS = [
   // same muck the sky rains down, and gets back to it -- so a bigger crew is
   // more hands and a bigger mess, and the shovelling has something to do that
   // did not come out of the weather.
-  ['a body stops now and then, and the crew clear up after it', async () => {
+  ['a body stops now and then, and somebody clears up after it', async () => {
     window.__reset();
     await settle();
     window.__crew(4, 0);                       // miners only: nobody to shovel it yet
@@ -937,9 +937,25 @@ const TESTS = [
     }
     const left = state().smog.muck.yard;
 
-    // and now somebody whose job it is to shift it
+    // and now somebody whose job it actually is.
+    //
+    // A crew is no longer that. What the sky drops is everybody's, but what a
+    // body leaves is a post -- so this needs the shed up and somebody put on it,
+    // which is the whole of what the shed buys. See `capOf` and `poopCols`.
     window.__crew(1, 4);
-    const cleared = runUntil(() => state().smog.muck.yard === 0, 90);
+    window.__loo(true);
+    window.__air({ janitors: 2 });
+    // and nothing new while we watch: the crew were going every six seconds for
+    // the sake of the lines above, and a yard being messed while it is cleared
+    // measures the race rather than the rule
+    window.__tune('LOO_EVERY', 600000);
+    // Gaining on it, rather than reaching nought. The crew are still going every
+    // six seconds -- that is what this group turned the interval down for -- so
+    // the yard is being messed up while it is being cleared, and two bodies with
+    // shovels walking the length of it will never see it empty. What is being
+    // checked is that somebody is now *on* it, which is the change.
+    const cleared = runUntil(() => state().smog.muck.yard === 0, 150);
+    const after = state().smog.muck.yard;
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
@@ -948,8 +964,8 @@ const TESTS = [
       ok(said > 0, 'a body says what it is about to do', `${said} frames saying it`),
       ok(mucked > 0, 'and leaves something behind', `${mucked} frames with muck in the yard`),
       ok(left > 0, 'which stays there while nobody is shovelling', `${Math.round(left)}`),
-      ok(cleared, 'and the crew clear it like any other mess',
-         `${Math.round(state().smog.muck.yard)} left`)
+      ok(cleared, 'and somebody put on it clears it',
+         `${Math.round(left)} -> ${Math.round(after)} left`)
     ];
   }],
 

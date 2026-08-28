@@ -82,6 +82,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // check never asked for walked off to a building that was not even open, and
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
+  S.janitors = 0;
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   if (wz > 0) openMeteor();
   // The cut and the plot only hold so many, so a hook asked for four down the
@@ -209,6 +210,7 @@ export const setAir = (o = {}) => {
   if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }
+  if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);
   if (o.rains != null) S.rains = o.rains;
   S.dirty = true;

@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, scrub, sky } from './state.js';
+import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
@@ -30,6 +30,10 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 export const POSTS = [
   { key: 'scrubjob', job: 'scrubbers',
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
+  // The shed does not clean anything. What it buys is somebody whose job the
+  // mess is -- see `capOf` -- so the post stands under it.
+  { key: 'loojob', job: 'janitors',
+    at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen },
   { key: 'labjob', job: 'labbers',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   { key: 'farmjob', job: 'farmhands',

@@ -6,13 +6,14 @@
 // on the board.
 
 import {
-  CAP_BASE, CAP_STEP, RUNGS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
+  CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
   QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
+import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
@@ -164,7 +165,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'wizards'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -193,7 +194,7 @@ export const TRADE_OF = { miners: 'breakers', haulers: 'carters',
 // and picked up: see crew.js.
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', wizard: 'wizards' };
+                        scrubber: 'scrubbers', janitor: 'janitors', wizard: 'wizards' };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
@@ -224,6 +225,14 @@ export const capOf = job =>
   // rather than as a place to be. What makes the sky come down quicker is the
   // recycler and the machine, not a queue inside the shed.
   job === 'scrubbers' ? 1 :
+  // Shovelling up after everybody is a job once there is a shed to gather it
+  // under. Before that the mess is the yard's problem and nobody is on it -- see
+  // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
+  //
+  // Two of them, because unlike the shed jobs this one is not a room with a
+  // bench in it: it is the whole yard, and a yard the length of this one is more
+  // ground than one pair of hands can keep up with.
+  job === 'janitors' ? (S.outhouseOpen ? 2 : 0) :
   // One body per hat, and the tower makes them one at a time. This is the only
   // station in the yard whose floor plan is a thing you buy rather than a thing
   // you build: there is as much room in the sky as there are people who can get
@@ -242,7 +251,7 @@ export function rebalance() {
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a bed that is not there.
-  for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'wizards'])
+  for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'])
     S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // Carrying is the job nobody is assigned to: it is what a body does when it is
@@ -540,8 +549,15 @@ export const UPGRADES = [
     note: () => 'the crew go here instead of wherever they are standing',
     cost: () => OUTHOUSE_DUST,
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },
-    // Offered once you have seen why you want one.
-    show: () => !S.outhouseOpen && S.crew > 1 && nearly(OUTHOUSE_DUST)
+    // Offered once you have seen why you want one -- which is now a thing you can
+    // point at rather than a guess about how far along you are.
+    //
+    // It used to appear on a headcount and a fraction of its price, which is the
+    // game deciding you are ready. What makes somebody want an outhouse is
+    // five patches of mess on the ground that nobody is clearing up, so that is
+    // what puts it on the board. It stays once seen: a yard that had five and
+    // then was tidied is a yard that has learned what the shed is for.
+    show: () => !S.outhouseOpen && (S.seenMess || poopLeft() >= LOO_MUCK * 5)
   },
   // The one thing a core buys, and the only row in the game with a bill rather
   // than a price. A core out of the rock, the dust the yard makes, the stone the

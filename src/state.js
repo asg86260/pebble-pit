@@ -238,6 +238,8 @@ export const S = {
   rains: 0,               // how many times they have
   scrubOpen: false,       // the house is built
   scrubbers: 0,           // and this many bodies are in it
+  janitors: 0,            // and how many are shovelling up after everybody
+  seenMess: false,        // and whether the yard has ever been left in a state
   recycler: false,        // which keep what they catch rather than binning it
   scrubBank: 0,           // part of a grain, on its way to being a whole one
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts

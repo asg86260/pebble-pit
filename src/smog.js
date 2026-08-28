@@ -27,7 +27,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP,
+         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now, frames } from './clock.js';
@@ -951,6 +951,27 @@ export function muckCols() {
   return S.muck;
 }
 
+// And what the crew leave, which is a different stack in the same shape.
+//
+// Two kinds of mess, and they are not the same job. What the sky drops is
+// weather: it lands on everybody's yard and everybody clears it. What a body
+// leaves is a body's own, and shovelling that is a post -- see `capOf`, and the
+// janitor. Kept apart rather than distinguished by a flag on a number, because
+// nearly everything that asks about muck wants one or the other and would have
+// had to say which every time.
+export function poopCols() {
+  if (!S.poop || S.poop.length !== floor.cols) {
+    const was = S.poop || [];
+    S.poop = new Array(floor.cols).fill(0);
+    for (let i = 0; i < Math.min(was.length, floor.cols); i++) S.poop[i] = was[i] || 0;
+  }
+  return S.poop;
+}
+
+// what is standing in a column, of whatever kind: for heights, for drawing, and
+// for anything that only wants to know whether the ground is clear
+export const messAt = c => (muckCols()[c] || 0) + (poopCols()[c] || 0);
+
 export const colAt = wx => Math.floor(wx / P);
 const inRange = (c, from, to) => c >= colAt(from) && c <= colAt(to);
 
@@ -1076,10 +1097,10 @@ export const workSpot = wx =>
 // more, whoever put it there -- without that a body could bury a column deeper
 // than a downpour ever would, and the crew would still be shovelling it long
 // after the weather had been dealt with.
-export function dropMuckAt(wx, n) {
+export function dropMuckAt(wx, n, kind = 'muck') {
   const at = cleanSpotNear(wx);
   if (at == null) return false;
-  const m = muckCols();
+  const m = kind === 'poop' ? poopCols() : muckCols();
   const c = colAt(at);
   m[c] = Math.min(MUCK_MAX, m[c] + n);
   S.dirty = true;
@@ -1112,7 +1133,11 @@ export function dropMuckAt(wx, n) {
 // arrives with several seconds of effort saved up and takes a trench out of it
 // on the first frame.
 export function sweepMuckAt(wx, n, hand) {
-  const m = muckCols();
+  // A janitor clears both stacks and takes what a body left first, since that is
+  // the job it was put on. Everybody else clears the weather and steps over the
+  // rest.
+  const own = hand && hand.type === 'janitor';
+  const stacks = own ? [poopCols(), muckCols()] : [muckCols()];
   const home = colAt(wx);
   const hold = hand || loose;
   hold.owed = Math.min(1, (hold.owed || 0) + n);
@@ -1121,12 +1146,15 @@ export function sweepMuckAt(wx, n, hand) {
   let took = 0;
   for (let d = 0; d < 60 && cells > 0; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !m[c] || cells < 1) continue;
-      const take = Math.min(m[c], cells);
-      m[c] -= take;
-      cells -= take;
-      took += take;
-      S.dirty = true;
+      if (c < 0 || c >= floor.cols || cells < 1) continue;
+      for (const m of stacks) {
+        if (!m[c] || cells < 1) continue;
+        const take = Math.min(m[c], cells);
+        m[c] -= take;
+        cells -= take;
+        took += take;
+        S.dirty = true;
+      }
     }
   }
   hold.owed -= took;
@@ -1148,20 +1176,27 @@ const loose = { owed: 0 };
 // inside a frame changes it: muck is only added by rain and only taken by work,
 // and both of those happen here.
 let siteAt = null;
+let poopTotal = 0;          // how much of the mess is what a body left
 let yardLeft = 0;
 let allLeft = 0;
 
 function refresh() {
   siteAt = [rockCols(), cutCols(), bedCols()].filter(Boolean);
-  const m = muckCols();
+  const m = muckCols(), poo = poopCols();
   let all = 0, yard = 0;
+  poopTotal = 0;
   for (let c = 0; c < m.length; c++) {
-    const v = m[c];
+    poopTotal += poo[c] || 0;
+    const v = (m[c] || 0) + (poo[c] || 0);
     if (!v) continue;
     all += v;
     if (!onSite(c)) yard += v;
   }
   allLeft = all;
+  // Once the yard has been left in a state it has been: the row that sells the
+  // shed hangs off this, and a row that appeared and then vanished again because
+  // somebody happened to tidy up would be the game changing its mind.
+  if (poopTotal >= LOO_MUCK * 5) S.seenMess = true;
   yardLeft = yard;
 }
 
@@ -1190,16 +1225,21 @@ const MUCK_ELBOW = 4;
 // Is there still anything to shift in this column? A claim is held until the
 // column it names is clear, so this is what tells a body it is done with it.
 export function muckAtCol(c) {
-  const m = muckCols();
-  return c >= 0 && c < m.length ? m[c] : 0;
+  return c >= 0 && c < floor.cols ? messAt(c) : 0;
 }
 
-export function nearestMuck(wx, taken) {
-  const m = muckCols();
+export function nearestMuck(wx, taken, hand) {
+  // What this pair of hands is allowed to shift. Weather is everybody's; what a
+  // body left is the janitor's -- so a hauler walking to the nearest mess must
+  // not be sent to a column that is nothing but the other kind, or it walks
+  // there, finds nothing it may touch, and stands over it.
+  const own = hand && hand.type === 'janitor';
+  const m = muckCols(), poo = poopCols();
+  const here = c => (m[c] || 0) + (own ? poo[c] || 0 : 0);
   const home = colAt(wx);
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || !m[c]) continue;
+      if (c < 0 || c >= m.length || !here(c)) continue;
       if (taken && taken.has(c)) continue;
       // A claim is a stretch, not a cell. Columns are six pixels and a body is
       // eighteen wide, so reserving the one cell somebody is shovelling puts the
@@ -1284,6 +1324,11 @@ export function pitStand(leftX, width = WORKER) {
 }
 
 export const muckLeft = () => allLeft;
+// how much of it is what a body left, which is the janitor's alone
+export const poopLeft = () => poopTotal;
+// and what a given pair of hands may actually shift, which is the number that
+// decides whether it is worth walking over there
+export const muckFor = w => (w && w.type === 'janitor' ? allLeft : allLeft - poopTotal);
 export const yardMuck = () => yardLeft;
 export const buried = () => rockMuck() > 0 || cutMuck() > 0 || bedMuck() > 0;
 
@@ -1448,6 +1493,7 @@ export function smogReport() {
            muck: { rock: rockMuck(), cut: cutMuck(), bed: bedMuck(),
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },
+           poop: poopTotal,
            ...airReadout() };
 }
 

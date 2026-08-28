@@ -22,7 +22,7 @@ import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
-import { sweepMuckAt, muckLeft, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
+import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
          rockMuck, cutMuck, bedMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
@@ -108,7 +108,18 @@ const MINER_WALK = 0.5;   // pixels a frame along the row
 // `landing` already knows the answer -- the rock's surface where there is rock,
 // the ground where there is not -- and `climbTo` walks the feet up to it at the
 // pace of the walk, so a body goes up the side of the hill it meets.
-const stand = w => climbTo(w, landing(w));
+// Only the gang that works the rock walks over the rock.
+//
+// Everybody else keeps to the ground and passes in front of it. A hauler is
+// carrying dust from the hill to the hole and has no business on the crest --
+// and a yard where every errand goes over the summit is a yard where the hill
+// is a road. The miners are the ones the hill is a workplace for, so they are
+// the ones who climb it.
+//
+// Falling is not affected: a body thrown on to the rock lands on the rock
+// whatever its job is, because that is physics rather than pathfinding, and
+// `fall` asks `landing` directly.
+const stand = w => climbTo(w, w.type === 'miner' ? landing(w) : walkY(w.x + WORKER / 2));
 
 
 export function findPeak() {
@@ -304,10 +315,17 @@ export function mainlyAt(w) {
 // The order jobs are filled in, and how a body for one is made from nothing.
 // Carrying comes last so that a spare body goes to a station that is short of
 // one before it goes back to sweeping the yard.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'wizard', 'hauler'];
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'janitor', 'wizard', 'hauler'];
 export const FACTORY = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-                  labber: newLabber, scrubber: newScrubber, wizard: newWizard,
-                  hauler: newHauler };
+                  labber: newLabber, scrubber: newScrubber, janitor: newJanitor,
+                  wizard: newWizard, hauler: newHauler };
+
+// Somebody whose job is the mess. It starts at the shed it belongs to, the way
+// every other body starts at its station -- though the work is wherever the mess
+// happens to be, which is anywhere on the ground.
+function newJanitor() {
+  return { type: 'janitor', goal: 'to', x: outhouse.x, y: 0 };
+}
 
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
@@ -317,6 +335,7 @@ function stationX(type) {
   if (type === 'farmhand') return bedX(0);
   if (type === 'labber') return labDoor() - WORKER / 2;
   if (type === 'scrubber') return scrubDoor() - WORKER / 2;
+  if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
   // pixels above that, but the walk is to here: the going up is the job, not the
   // commute.
@@ -524,7 +543,7 @@ function relieve(w, now) {
     // rid of it -- a shed with a hole under it is not a drain -- and that is the
     // whole of what it buys you: one patch to shovel instead of a yard of them.
     // Once the tower has seen to it there is nothing to shovel at all.
-    if (!S.magicLoo) dropMuckAt(w.x + WORKER / 2, LOO_MUCK);
+    if (!S.magicLoo) dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
     w.looUntil = 0;
     w.say = null;
     w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
@@ -876,6 +895,18 @@ function stepCommute(w, zone) {
   // A walk does both at once now. `stand` raises the feet by as much as the body
   // moved along and a half again (see CLIMB_SLOPE), which is enough for any
   // flank, and the two are one movement rather than two taking turns.
+  //
+  // Except below the ground line, where the old rule still holds and has to:
+  // a body at the foot of the ladder goes *up the ladder* before it goes
+  // anywhere, or it sets off across the yard on a diagonal through the wall of
+  // the cut. Standing still while it climbs is right here -- that is what a
+  // ladder is -- and it is only ever a second of it.
+  if (w.y + WORKER > S.groundY + 1) {
+    const top = walkY(w.x + WORKER / 2);
+    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE * frames(), Math.abs(top - w.y));
+    w.foot = w.y;               // so the walk above ground carries on from here
+    return;
+  }
 
   if (duck(w, zone)) { w.y = stand(w); return; }
 
@@ -907,7 +938,7 @@ export function syncWorkers() {
   // ever walking to it.
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers,
-                 scrubber: S.scrubbers, wizard: S.wizards };
+                 scrubber: S.scrubbers, janitor: S.janitors, wizard: S.wizards };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
@@ -1343,7 +1374,14 @@ export function updateWorkers(now, dt) {
   //
   // Returns true if the body is on muck duty and has had its turn this frame.
   function takeMuck(w) {
-    if (w.carry || w.hasCore || muckLeft() <= 0) return false;
+    // Two kinds of mess, and they are not the same job.
+    //
+    // What the sky drops is weather. It lands on everybody's yard and everybody
+    // clears it, the way they always have. What a body leaves behind is a body's
+    // own, and that is a post: it lies there until you put somebody on it, and
+    // there is nobody to put on it until the shed is up. Which is what the shed
+    // buys -- not a tidier yard, but the job. See `capOf` and `sweepMuckAt`.
+    if (w.carry || w.hasCore || muckFor(w) <= 0) return false;
     // One body, one column, held until that column is clear -- the same
     // booking a hauler makes on a column of dust.
     //
@@ -1353,7 +1391,7 @@ export function updateWorkers(now, dt) {
     // to the same spot anyway. A claim has to be kept to be a claim.
     if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
     if (w.muckAt == null) {
-      const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
+      const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
     } else {
       muckTaken.add(w.muckAt);
@@ -1612,6 +1650,25 @@ export function updateWorkers(now, dt) {
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }
     if (w.type === 'scrubber') { stepScrubber(w); continue; }
+    // The mess, and whoever is on it. A janitor does one thing: it walks to the
+    // nearest muck and shovels it. With nothing left to shovel it goes back to
+    // its shed and waits there, which is where you will look for it.
+    if (w.type === 'janitor') {
+      if (takeMuck(w)) continue;
+      w.goal = 'to';
+      w.muckAt = null;
+      const post = stationX('janitor');
+      const d = post - w.x;
+      if (Math.abs(d) > WORKER) {
+        w.face = Math.sign(d) || w.face || 1;
+        w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+        w.y = stand(w);
+      } else {
+        w.resting = true;
+        w.y = stand(w);
+      }
+      continue;
+    }
     // The one job that is not on the ground. Nothing else in the loop applies to
     // a body in the sky -- there is no rock to dodge up there, no lip to stop at
     // and no muck to shovel -- so it is taken out of the yard's rules entirely,
@@ -1636,7 +1693,7 @@ export function updateWorkers(now, dt) {
     if (!w.carry && !w.hasCore) {
       if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
       if (w.muckAt == null && muckLeft() > 0) {
-        const pick = nearestMuck(w.x + WORKER / 2, muckTaken);
+        const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
         w.muckAt = pick == null ? null : Math.floor(pick / P);
       } else if (w.muckAt != null) {
         muckTaken.add(w.muckAt);

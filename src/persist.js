@@ -230,12 +230,16 @@ export function persist() {
     brewLeft: Math.max(0, S.brewAt - clockNow()),
     wizards: S.wizards,
     scrubbers: S.scrubbers,
+    janitors: S.janitors,
+    seenMess: S.seenMess,
+
     recycler: S.recycler,
     seenAir: S.seenAir,
     haze: Math.round(S.haze),
     rains: S.rains,
     recycled: S.recycled,
     muck: S.muck || [],
+    poop: S.poop || [],
     pot: S.pot && { ...S.pot },
     chip: S.chip,
     mult: { ...S.mult },
@@ -431,6 +435,8 @@ export function restore() {
     S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
   S.scrubbers = s.scrubbers || 0;
+  S.janitors = s.janitors || 0;
+  S.seenMess = !!s.seenMess;
   S.recycler = !!s.recycler;
   S.seenAir = !!s.seenAir;
   S.haze = s.haze || 0;
@@ -444,6 +450,7 @@ export function restore() {
   S.raining = false;
   S.rainFor = 0;
   S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
+  S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
   // And the sky itself, not only the number for it. The haze was being written
   // down and read back while the motes it stands for were not: `settleCount`
   // only ever takes motes away in play -- one arrives by climbing off a swing,
@@ -570,6 +577,8 @@ export function reset() {
   sky.cells = null;
   sky.n = 0;
   S.scrubbers = 0;
+  S.janitors = 0;
+  S.seenMess = false;
   S.recycler = false;
   S.seenAir = false;
   S.haze = 0;
@@ -579,6 +588,7 @@ export function reset() {
   S.recycled = 0;
   S.scrubBank = 0;
   S.muck = [];
+  S.poop = [];
   seedSmog();
   S.casinoBoardOpen = false;
   S.pot = null;
