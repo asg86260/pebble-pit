@@ -419,6 +419,7 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   window.__buy('wizard');
   const brewing = state().brewing;   // the row stays up saying how long is left
   runUntil(() => state().wizardHats > 0, 240);
+  run(0.2);                                    // the frame after, so the yard has caught up
   const hatted = state();
 
   // somebody to put in it
@@ -438,6 +439,14 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
        'and the hat opens the sky, empty', `${hatted.meteor} cells`),
     ok(rose, 'the wizard goes up to nothing at all'),
     ok(came && sky.meteor > 60, 'and summons the first star into it',
-       `${sky.meteor} cells`)
+       `${sky.meteor} cells`),
+    // A station's strip is the ground it heaps what it makes on, and it is laid
+    // when the piles are laid. Opening the sky used to lay nothing, so the first
+    // sparks came down on ground that was nobody's strip -- a scatter, and then
+    // every one after it walking the length of the yard looking for a column
+    // with room in it.
+    ok(hatted.piles.some(p => p.key === 'sky'),
+       'and the ground under it is laid at the same moment, before anybody is up there',
+       hatted.piles.map(p => p.key).join(','))
   ];
 });

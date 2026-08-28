@@ -20,7 +20,7 @@ import { S, floor, pit, bench } from './state.js';
 import { plantBeds } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, pileAt } from './world.js';
+import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, pileAt, layPiles } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
@@ -82,6 +82,10 @@ export function step() {
   // arrive at the same plot; it is two length checks and it does nothing once
   // the beds are there.
   if (S.farmOpen) plantBeds();
+  // And the ground each station heaps on, for the same reason: a save, the dev
+  // panel and the door itself all arrive at the same strips. It does nothing at
+  // all unless the set of open places has actually changed. See `layPiles`.
+  layPiles();
   // How long this frame was, before anything moves on the strength of it. It
   // used to be worked out halfway down, which was fine while it was only handed
   // to the things below it; now that everything which moves reads it (see

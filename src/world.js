@@ -89,7 +89,28 @@ export const kitX = job =>
   // makes them: a hat on a stand outside the door of the place it was made in.
   job === 'wizards' ? tower.x - P * 8 : null;
 
+// The strips as they stand, and whether they still describe the yard.
+//
+// `refreshPiles` lays them once and they are kept, so every door that opens a
+// place has to remember to lay them again -- and of all the doors in the game
+// exactly one did. The scrubbing house laid its ground; the sky did not, so the
+// first star's sparks came down on ground that was nobody's strip, took the
+// scatter a bare patch takes, and every one after that walked the length of the
+// yard looking for a column with room in it.
+//
+// So the doors are not asked any more. What the strips depend on is written
+// here, beside the strips, and the ground is laid again when it changes: a new
+// site gets its strip by existing rather than by remembering.
+let laid = null;
+export function layPiles() {
+  const now = `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}`;
+  if (now === laid) return;
+  laid = now;
+  refreshPiles();
+}
+
 export function refreshPiles() {
+  laid = `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}`;
   S.piles = [
     // The ground under the recycler's spout. It is a station's strip like any
     // other -- what the house makes lands on it, heaps on it, and stops the
