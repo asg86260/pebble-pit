@@ -519,13 +519,13 @@ const TESTS = [
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
-      // name, rung, gain, price. The rung came out of the name and into a column
-      // of its own so the ladders line up under each other.
-      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are four columns',
+      // name, gain, price -- and a line of pips under them saying how far up the
+      // ladder the row is, which is a fourth child but not a fourth column
+      ok(cells.length > 0 && cells.every(c => c.length === 4), 'rows are three columns and a ladder',
          JSON.stringify(cells[0])),
       // name, rung, gain, price -- so the two that must never be empty are the
       // first and the last
-      ok(cells.every(c => c[0] && c[3]), 'every row has a name and a price',
+      ok(cells.every(c => c[0] && c[2]), 'every row has a name and a price',
          JSON.stringify(cells)),
       // What a row says in the middle is either where a count is going -- "4 -> 5"
       // -- or what share a rate gains, "+30%".
@@ -538,7 +538,7 @@ const TESTS = [
       // the row read the same either way. The number you have is the one thing
       // the board could not tell you and the yard could not either -- it is on
       // your cursor, not on a counter.
-      ok(cells.every(c => !c[2] || /^\+\d/.test(c[2]) || /^[\d,.]+ → /.test(c[2])),
+      ok(cells.every(c => !c[1] || /^\+\d/.test(c[1]) || /^[\d,.]+ → /.test(c[1])),
          'a count says where it is going, a rate says what it gains',
          JSON.stringify(cells.map(c => c[1]))),
       ok(Math.abs(first.top - again.top) < 2 && Math.abs(first.height - again.height) < 2,
@@ -2618,6 +2618,54 @@ const TESTS = [
   // sliver behind the board reads as a submenu that failed to open. It moves
   // now: right of the board by preference, left when the right has run out, and
   // on a line of its own when neither side will take it.
+  // A row's note is readable, which means it is not underneath the board the row
+  // is on. It sat at a lower layer than the menu, so a note with nowhere to
+  // stand did not overlap the board -- it disappeared into it, and the row
+  // looked like it had something to say and said nothing.
+  ['a note stands clear of the board it belongs to', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(4, 2);
+    window.__give(40000);
+    window.__grant({ shards: 400, spores: 1300, cores: 9 });
+    run(30);
+    window.__board('bench');
+    await sleep(200);
+
+    const tip = document.getElementById('tip');
+    const panel = document.getElementById('panel');
+    let notes = 0, over = 0, layered = true;
+    for (const b of shop().querySelectorAll('button')) {
+      const r = b.getBoundingClientRect();
+      b.dispatchEvent(new PointerEvent('pointerenter',
+        { clientX: r.right - 4, clientY: r.top + 4, bubbles: true }));
+      await sleep(30);
+      if (tip.hidden) continue;
+      notes++;
+      const t = tip.getBoundingClientRect(), p = panel.getBoundingClientRect();
+      const clash = t.left < p.right - 1 && t.right > p.left + 1 &&
+                    t.top < p.bottom - 1 && t.bottom > p.top + 1;
+      // A note may only land on the board when there is nowhere else for it: no
+      // room to the right of the board and none to the left either. On a window
+      // that narrow it is still readable, because it is drawn over the menu
+      // rather than under it, which is the half of this that always holds.
+      const roomRight = p.right + 8 + t.width <= innerWidth - 4;
+      const roomLeft = p.left - 8 - t.width >= 4;
+      if (clash && (roomRight || roomLeft)) over++;
+      // and above it in any case, so that even a note with nowhere else to go is
+      // readable rather than swallowed
+      if (+getComputedStyle(tip).zIndex <= +getComputedStyle(panel).zIndex) layered = false;
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(notes > 0, 'there are rows with something to say', `${notes} notes`),
+      ok(over === 0, 'and none of them lands on the board while there is room beside it',
+         `${over} of ${notes} overlapped`),
+      ok(layered, 'and a note is drawn over the menu, never under it')
+    ];
+  }],
+
   ['the submenu finds room however narrow the window is', async () => {
     window.__reset();
     await settle();

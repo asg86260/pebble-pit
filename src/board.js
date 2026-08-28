@@ -359,7 +359,34 @@ export function showTipAt(text, sx, sy, centred) {
   }
   if (text !== tipFor) { tipEl.textContent = text; tipEl.hidden = false; tipFor = text; }
   const w = tipEl.offsetWidth, h = tipEl.offsetHeight;
-  const x = centred ? sx - w / 2 : sx;
+  let x = centred ? sx - w / 2 : sx;
+
+  // Off the other side of the row when there is no room on this one.
+  //
+  // A row's note is put to the right of it. On a narrow window there is often
+  // nothing there, and clamping it back inside the glass slid it *under the
+  // board* -- where, being a lower layer than the menu, it was not merely in the
+  // way but invisible. A note nobody can read is worse than no note: the row
+  // looks like it has something to say and says nothing.
+  //
+  // So a note that will not fit on the right goes to the left of the thing it
+  // belongs to, which is what every menu in the world does with a submenu that
+  // has run out of screen. `sx` is the right-hand edge of the row it came from,
+  // so the left-hand side is that edge less the row's own width -- which is not
+  // known here, so the panel's left edge is used: the note stands off the whole
+  // board rather than off the row, and on that side that is the honest anchor.
+  if (!centred) {
+    const r = panelRect();
+    // A note about a row stands clear of the whole board, not just clear of the
+    // row. Anchored on the row's own right edge it lands *inside* the sheet --
+    // over the rows below it -- because the row ends where the board does.
+    if (r && !panelEl.hidden && x < r.x + r.w) {
+      const right = r.x + r.w + 8;
+      x = right + w <= S.W - GAP ? right
+        : r.x - w - 8 >= GAP ? r.x - w - 8       // no room that side: stand on the other
+        : x;                                     // nor that one: clamped below
+    }
+  }
   tipEl.style.left = `${Math.round(Math.max(GAP, Math.min(x, S.W - w - GAP)))}px`;
   tipEl.style.top = `${Math.round(Math.max(GAP, Math.min(sy, S.H - h - GAP)))}px`;
 }

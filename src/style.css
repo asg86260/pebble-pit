@@ -120,7 +120,7 @@ canvas {
      name, which made the longest name longer still and read as part of it. Its
      own narrow column instead -- so the ladders line up under each other and can
      be read down the board rather than picked out of the words. */
-  grid-template-columns: 11.2em 2.6em 7em 4.6em;
+  grid-template-columns: 11.2em 7em 4.6em;
   align-items: baseline;
   gap: 0 6px;
   font: inherit;
@@ -200,10 +200,23 @@ canvas {
 /* Where a ladder has got to. Quieter than the name and quieter than the price:
    it is the answer to "how much of this is left", which is a thing you glance at
    rather than read. */
-/* `max-content` on the column, so on a board where nothing is a ladder it takes
-   no room at all rather than leaving a stripe of white down the middle. */
-.rows button .rung { text-align: right; opacity: .45; font-size: .92em; }
-.rows button:hover:not(:disabled) .rung { opacity: .8; }
+/* How far up a ladder a row is: a line of pips under the words.
+   It was a "3/5" in a column between the name and what the next one buys, which
+   is two numbers about different things sitting a character apart -- the eye has
+   to stop and read it, and it made an already busy line busier. Pips are counted
+   at a glance, and under the row they cost no width at all. */
+.rows button .ladder {
+  grid-column: 1 / -1;
+  /* big enough that a filled pip and a hollow one are plainly different, which
+     at six tenths of an em they were not: it read as a dotted underline */
+  font-size: .8em;
+  letter-spacing: .22em;
+  line-height: 1;
+  opacity: .5;
+  margin-top: 1px;
+}
+.rows button:hover:not(:disabled) .ladder { opacity: .75; }
+.rows button .ladder:empty { display: none; }
 .rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
@@ -277,19 +290,19 @@ canvas {
    row that is buying something. */
 /* The house board carries longer names than it was cut for -- "who lives here",
    and a count that now says where it is going rather than just "+1". */
-#crewshop button { grid-template-columns: 11.2em max-content 4.4em 1fr; }
+#crewshop button { grid-template-columns: 11.2em 4.4em 1fr; }
 
 /* The sky's row says a signed rate where a price would go, and a rate is wider
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
    ran straight out of the sheet. The whole row is given to it instead, with the
    reading against the right edge like every other number on these boards. */
-#scrubshop button[data-key="airrate"] { grid-template-columns: 9em max-content 0 1fr; }
+#scrubshop button[data-key="airrate"] { grid-template-columns: 9em 0 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
 /* Rows with a bill rather than a price. The cost column is sized for one mark
    and a number, so these get the rest of the row instead -- what they buy is a
    thing rather than a rate, so the gain column had nothing to put in it. */
-#shop button[data-key="unlocktower"] { grid-template-columns: 9em max-content 0 1fr; }
+#shop button[data-key="unlocktower"] { grid-template-columns: 9em 0 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
 /* A bill of three or four, two to a line.
@@ -324,7 +337,7 @@ canvas {
 /* Wide enough for the longest name on it. "enchant the outhouse" is twenty
    letters at this tracking and the column was cut for a dozen, so the price
    started before the name had finished and the two sat on top of each other. */
-#towershop button { grid-template-columns: 15.4em max-content 0 1fr; }
+#towershop button { grid-template-columns: 15.4em 0 1fr; }
 #towershop button .gain { display: none; }
 
 /* A row that is a reading rather than a purchase. It sits on a board of things
@@ -362,7 +375,7 @@ canvas {
    middle column -- what a purchase gives you -- is closed up, and where the body
    is takes whatever room the longest answer needs: "at the scrubbing house" in
    the shop's 4.6em price column is a phrase running off the edge of the sheet. */
-#crewlist .rows button { grid-template-columns: 9.4em max-content 0 auto; }
+#crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
 
 /* The row that leads to it says so. Every other name on a board is a thing you
    press and something happens; this one is a door, and the mark is the one every
@@ -374,7 +387,10 @@ canvas {
 
 #tip {
   position: fixed;
-  z-index: 3;
+  /* Above the menu, not under it. A note belongs to a row on a board, so the one
+     thing it must never be is behind that board -- and at a lower layer, a note
+     with nowhere to stand did not overlap the menu, it disappeared into it. */
+  z-index: 20;
   padding: 3px 6px;
   background: #fff;
   border: 1px solid #000;
@@ -451,7 +467,7 @@ canvas {
      way round that fits. Between the two of them they have one screen to share,
      so the names get a shorter run of it before they start scrolling. */
   #crewlist { max-height: 30vh; }
-  #crewlist .rows button { grid-template-columns: 9.4em max-content 0 auto; }
+  #crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
 }
 
 /* the lab's rows say longer things than the bench's, and what they give is a
