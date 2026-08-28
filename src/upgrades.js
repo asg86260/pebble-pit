@@ -345,18 +345,22 @@ const site = ({ key, name, dust, open, at, show }) => ({
 // idea is coming is a price you cannot save for.
 const nearly = n => S.stored >= n * UNLOCK_SHOW;
 
-const CAVE = site({
-  key: 'unlockquarry', name: 'open the quarry', dust: QUARRY_DUST, open: 'quarryOpen',
-  at: () => quarry.x + quarry.w / 2,               // show them what they just bought
-  show: () => !S.quarryOpen && nearly(QUARRY_DUST)
+const FARM = site({
+  key: 'unlockfarm', name: 'break the ground', dust: FARM_DUST, open: 'farmOpen',
+  at: () => farm.x + farm.w / 2,                   // show them what they just bought
+  show: () => !S.farmOpen && nearly(FARM_DUST)
 });
 // One place at a time. Banking a single core used to reveal every site in the
 // game at once, which spoils the whole chain: each one is a surprise that the
 // last one earns.
-const FARM = site({
-  key: 'unlockfarm', name: 'break the ground', dust: FARM_DUST, open: 'farmOpen',
-  at: () => farm.x + farm.w / 2,
-  show: () => S.quarryOpen && !S.farmOpen
+//
+// And the beds earn the cut, rather than the other way round: a crop feeds a
+// body and a body swings a pick, so the place that makes bodies stronger opens
+// before the place that gives them better tools.
+const CAVE = site({
+  key: 'unlockquarry', name: 'open the quarry', dust: QUARRY_DUST, open: 'quarryOpen',
+  at: () => quarry.x + quarry.w / 2,
+  show: () => S.farmOpen && !S.quarryOpen
 });
 
 export const UPGRADES = [
@@ -522,7 +526,7 @@ export const UPGRADES = [
     buy: () => S.haulPaceLevel++,
     show: () => S.crew > 0
   },
-  CAVE,
+  FARM,
   // Growing a place you already have does not move the view.
   //
   // Opening one does, and should: four cores and a row in a menu, and the thing
@@ -663,7 +667,7 @@ export const UPGRADES = [
     show: () => S.seenSpark && canPack()
   },
 
-  FARM
+  CAVE
 ];
 
 // The order and the grouping on the board. A section with nothing to show in it

@@ -390,8 +390,11 @@ export const CASINO_H = P * 12;
 // Dust buys the yard now: it is the thing you are making, it arrives constantly,
 // and an expensive door is one you can see yourself walking towards. A core buys
 // the one thing you cannot get any other way -- see the tower.
-export const QUARRY_DUST = 600;    // the cut, and the first real bill
-export const FARM_DUST = 1800;     // the beds
+// The beds come before the cut. Food makes bodies and stone makes tools, and a
+// body has to exist before its tool means anything -- so green is strength and
+// blue is gear, in that order.
+export const FARM_DUST = 600;      // the beds, and the first real bill
+export const QUARRY_DUST = 1800;   // the cut
 export const SCRUB_DUST = 3500;    // the scrubbing house
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing

@@ -861,8 +861,8 @@ const TESTS = [
     // rows, so they are empty until something fills them in.
     refreshShopFromTest();
     const row = k => shop().querySelector(`[data-key="${k}"]`);
-    const quarry = row('unlockquarry');
-    const dustPrice = quarry && [...quarry.querySelectorAll('.cost i')].map(i => i.className);
+    const door = row('unlockfarm');           // the first one the yard offers
+    const dustPrice = door && [...door.querySelectorAll('.cost i')].map(i => i.className);
 
     // the tower takes a core and a thousand dust, and takes them together
     const cores0 = state().cores;
@@ -876,8 +876,8 @@ const TESTS = [
       ok(early.every(k => k === '-'), 'the first four rocks give up nothing',
          early.join(',')),
       ok(gotOne, 'and the fifth has a core in it'),
-      ok(!!quarry && dustPrice.join() === 'dust',
-         'the cut is bought with dust, not with a rock', String(dustPrice)),
+      ok(!!door && dustPrice.join() === 'dust',
+         'a place is bought with dust, not with a rock', String(dustPrice)),
       ok(!!tower, 'and the tower is on the bench once a core exists'),
       // A core and dust, and nothing else. It used to ask for all four at once,
       // which was the only bill in the game that did and the one row you had to
@@ -1106,6 +1106,11 @@ const TESTS = [
   ['the headcount rides on the section as a badge', async () => {
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
+    // Enough dust that the beds are on offer, so that there is a farm heading to
+    // look at: a section is only there while it has a row under it, and the one
+    // farm row a fresh yard has is the door.
+    window.__give(600);                      // the price of the beds
+    window.__build();
     await sleep(50);
     const rows = [...shop().children].filter(el => el.dataset.sect);
     const rock = rows.find(el => el.dataset.sect === 'the rock');
@@ -1145,9 +1150,9 @@ const TESTS = [
     window.__grant({ cores: 30, shards: 900, spores: 900 });
     window.__give(500000);
     buildShopFromTest();
-    shop().querySelector('[data-key="unlockquarry"]')?.click();
-    buildShopFromTest();
     shop().querySelector('[data-key="unlockfarm"]')?.click();
+    buildShopFromTest();
+    shop().querySelector('[data-key="unlockquarry"]')?.click();
     buildShopFromTest();
     const bench = [...shop().querySelectorAll('[data-key]')].map(b => b.dataset.key);
 
@@ -1999,12 +2004,12 @@ const TESTS = [
     window.__give(400);
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
-    const withDust = { quarry: has('unlockquarry'), farm: has('unlockfarm'),
+    const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
                        lab: has('unlocklab') };
 
-    window.__crew(1, 1, 1);                  // the quarry open
+    window.__crew(1, 1, 0, 1);               // the beds broken
     await sleep(150);
-    const withCave = { farm: has('unlockfarm'), lab: has('unlocklab') };
+    const withBeds = { quarry: has('unlockquarry'), lab: has('unlocklab') };
 
     window.__grant({ shards: 3 });
     await sleep(150);
@@ -2015,12 +2020,12 @@ const TESTS = [
 
     window.__crew(0, 0);
     return [
-      ok(!fresh.includes('pick') && !fresh.includes('unlockquarry'),
+      ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withDust.quarry && !withDust.farm && !withDust.lab,
-         'a pile of dust offers the quarry, and only the quarry',
+      ok(withDust.farm && !withDust.quarry && !withDust.lab,
+         'a pile of dust offers the beds, and only the beds',
          JSON.stringify(withDust)),
-      ok(withCave.farm && !withCave.lab, 'opening the quarry offers the farm'),
+      ok(withBeds.quarry && !withBeds.lab, 'breaking the ground offers the cut'),
       ok(withShard.lab, 'a shard in hand offers the lab')
     ];
   }],
@@ -2734,14 +2739,14 @@ const TESTS = [
       const up = await press(key);
       if (up !== null) rungs.push([key, up]);
     }
-    const door = await press('unlockquarry');
+    const door = await press('unlockfarm');
     await hoverAway();
     window.__reset();
     return [
       ok(rungs.length >= 3, 'there were rungs to buy', rungs.map(r => r[0]).join(', ')),
       ok(rungs.every(r => r[1]), 'and the board is still up after every one',
          rungs.filter(r => !r[1]).map(r => r[0]).join(', ') || 'all of them'),
-      ok(door === false, 'while opening the quarry puts it away', `${door}`)
+      ok(door === false, 'while breaking the ground puts it away', `${door}`)
     ];
   }],
 
