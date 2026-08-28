@@ -85,6 +85,18 @@ export function stepCore() {
     S.dirty = true;
   }
 
+  // The one beat the game gets to show what it is about waits here.
+  //
+  // After the first rock the pair are reunited on the bare ground and then the
+  // next rock comes down on it -- see `maybeReunion`. That needs a moment with
+  // the first rock dead and the next one not yet in the sky, and on a rock with
+  // a core in it there is one: the core has to roll clear first. The first four
+  // rocks have no core, so the whole thing happened inside a single call --
+  // the rock died, the flag came down and the next boulder was built before
+  // anything else in the frame had a chance to look -- and the beat never
+  // played at all. It was being held up by the very thing it is not about.
+  if (S.introDone && !S.reunionDone && S.boulderNo === 1 && !boulderAlive()) return;
+
   // the next rock rolls in once the core has dropped out of its way
   if (!S.coreBuried && !boulderAlive()) {
     const clear = !S.coreItem || S.heldCore || S.coreItem.rest;   // it has rolled clear

@@ -694,7 +694,10 @@ group('what the readout says is what is overhead', async () => {
   window.__air({ haze: 0 });
 
   return [
-    ok(later.haze > 200, 'the yard has had time to make a sky worth checking',
+    // Eighty rather than two hundred: a yard of bodies doing ordinary work barely
+    // marks the sky now (see SMOG_PER_DUST), and what this group is actually
+    // about is whether the number and the band agree -- not how big either is.
+    ok(later.haze > 80, 'the yard has had time to make a sky worth checking',
        `${Math.round(later.haze)} haze`),
     // Nought, not "nearly nought". The number is worked out from the specks now
     // rather than kept beside them, so there is no room for a gap at all -- and

@@ -129,9 +129,16 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // what comes out of its back, and how fast a rain empties it. The cycle keeps
 // the length it was tuned to and the sky it fills is three and a half times the
 // sky. Change one of the five and you are changing the balance, not the density.
-export const SMOG_PER_DUST = 0.64;
-export const QUARRY_FOUL = 5;        // a shard out of the cut is a hole full of it
-export const FARM_FOUL = 3;          // and turning a plot over lifts some too
+// What one grain of work puts in the sky.
+//
+// Cut hard, and deliberately: at 0.64 a yard of ordinary bodies doing ordinary
+// work filled the sky on its own, and the sky filling up is supposed to be what
+// *industry* does. Hand labour should barely mark it. What this buys is room for
+// the machinery to be the dirty thing, which is the shape the whole system was
+// written for -- see "the air" in DESIGN.md.
+export let SMOG_PER_DUST = 0.16;
+export const QUARRY_FOUL = 2;        // a shard out of the cut is a hole full of it
+export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // The sky has to get properly filthy before it comes down. It used to break at
 // nine hundred, which a working yard reaches before the haze is thick enough to
 // look like anything -- so the rain arrived while the sky was still a scatter of
@@ -499,10 +506,15 @@ export const CORE_FLICK = 260;       // ms a core cell holds a tone before it sh
 // inside it, so what it is taking apart is not behind it.
 export const WIZ_STANDOFF = 16;
 
+// A core and a thousand dust, and nothing else.
+//
+// It asked for all four at once, which is the only price in the game that does
+// -- and a bill with four lines on it is a row you have to study rather than
+// read. It also said the wrong thing: the row's own note is "what a core is
+// for", and a core that costs a core *and* a thousand of everything else is not
+// what a core is for, it is what the end of the game is for.
 export const TOWER_CORES = 1;
-export const TOWER_DUST = 5000;
-export const TOWER_SHARDS = 1000;
-export const TOWER_SPORES = 1000;
+export const TOWER_DUST = 1000;
 
 // Putting a stake down *is* the spin. There was a version where the pot opened
 // at half and climbed back to the stake over half a minute, and it was a puzzle
@@ -784,7 +796,7 @@ export const FIND_COLOR = {
 export const findKind = v =>
   v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
 export const someFind = base => base + Math.floor(Math.random() * FIND_TONES);
-export let GRAV = 0.45;
+export let GRAV = 1;
 // What a knocked-loose grain does on its way off. It is a blow, not a delivery:
 // a pop off the face and a little sideways from the hit, and where it comes down
 // is wherever the ground is under it when it gets there.
@@ -1283,6 +1295,20 @@ export const AIR_STIR_EASE = 3.0; // and how quickly it dies, share a second
 export const SMOKE_STIR = 0.007;   // how hard the cursor moves smoke
 export const SMOKE_STIR_R = 70;    // how far it reaches, in world pixels
 export const SMOKE_STIR_CAP = 3;   // and the furthest a mote is ever pushed
+
+// A plume takes it harder than the band does.
+//
+// These are one number for both, and the number is the band's: it was turned
+// right down because a hand through the haze was throwing the whole sky about.
+// But the band is settled air a long way up and a plume is smoke climbing off a
+// swing an arm's length away -- the one thing in the sky your hand is actually
+// near -- and at the band's figure a cursor went through a plume and nothing
+// happened at all. So the climb gets its own, four times as hard and allowed to
+// carry twice as far, which is still a nudge rather than a gust: what it looks
+// like is smoke bending round something moving through it.
+export const PLUME_STIR = 0.028;
+export const PLUME_STIR_R = 90;
+export const PLUME_STIR_CAP = 7;
 export const SMOKE_STIR_EASE = 2.4;   // and how quickly it eases back
 
 // How far a puff drifts sideways for every pixel it climbs. A tenth: enough that
@@ -1339,6 +1365,7 @@ export const TUNABLE = [
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
   { key: 'WIND', label: 'the wind', min: 0, max: 3, step: 0.05 },
+  { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02 },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05 },
@@ -1380,6 +1407,7 @@ export function tuned(key) {
     case 'AIR_STIR': return AIR_STIR;
     case 'WIND': return WIND;
     case 'GRAV': return GRAV;
+    case 'SMOG_PER_DUST': return SMOG_PER_DUST;
     case 'MINE_BASE': return MINE_BASE;
     case 'MINER_BASE': return MINER_BASE;
     case 'HAUL_BASE': return HAUL_BASE;
@@ -1410,6 +1438,7 @@ export function tune(key, v) {
     case 'AIR_STIR': AIR_STIR = v; break;
     case 'WIND': WIND = v; break;
     case 'GRAV': GRAV = v; break;
+    case 'SMOG_PER_DUST': SMOG_PER_DUST = v; break;
     case 'MINE_BASE': MINE_BASE = v; break;
     case 'MINER_BASE': MINER_BASE = v; break;
     case 'HAUL_BASE': HAUL_BASE = v; break;

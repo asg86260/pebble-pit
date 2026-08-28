@@ -10,7 +10,7 @@ import {
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
   QUARRY_BENCH_MAX, FARM_BEDS_MAX, BENCH_COST, BENCH_RATE, BED_COST, BED_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST, TOWER_SHARDS, TOWER_SPORES
+  TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
@@ -488,8 +488,7 @@ export const UPGRADES = [
     key: 'unlocktower',
     name: 'raise the tower',
     note: () => 'what a core is for',
-    bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST],
-                 ['shard', TOWER_SHARDS], ['spore', TOWER_SPORES]],
+    bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
     buy: () => { S.towerOpen = true; lookAt(tower.x + tower.w / 2); },
     // Not offered until a core exists to spend. Before that it is a row asking

@@ -138,7 +138,22 @@ function place(el, at) {
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
-  const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - h - GAP)));
+
+  // Clear of the rosters, which stand in their own strip under the ground line.
+  //
+  // A board is seated just above the station it belongs to, and then held inside
+  // the window -- and a board taller than the room above its station is pushed
+  // back down by that second rule. The quarry feels it first because it is the
+  // one station whose stand-point is the ground line itself (the cut is a hole,
+  // so what you stand at is its mouth), so its board starts lowest and is the
+  // first to land on the counters. The counters are how you put somebody on the
+  // job the board is about, so covering them with it is the worst thing it could
+  // land on.
+  const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
+  const lowest = Math.max(GAP, S.H - strip);
+  const highest = S.H - h - GAP;
+  const bottom = Math.round(highest < lowest ? highest      // a window too short for both
+                                             : Math.max(lowest, Math.min(stands, highest)));
   const y = Math.round(S.H - bottom - h);
 
   if (x === putX && y === putY) return;         // it has not moved: leave the layer alone
@@ -428,17 +443,32 @@ function settle(want) {
   fillPurse();
   remeasure();
 
-  // Walking from one station to another -- or arriving at one while the board
-  // from the last is still on its way out, which is the same walk taken slowly.
-  // What decides it is whether there is a board on the screen to slide: a box
-  // that is still standing there and then jumps is the jank; a box that is gone
-  // has nowhere to slide from.
-  if (wasAt || !panelEl.hidden) {
+  // Walking from one station to another slides. Arriving at one after the last
+  // board has *gone* does not.
+  //
+  // What decides it is whether there is anything on the screen to slide. A box
+  // standing at the lab that jumps to the school is the jank; a box that has
+  // already faded out has no place any more, and sliding it means an invisible
+  // sheet travelling the length of the yard and fading up somewhere along the
+  // way -- the board arrives late and from the wrong direction, which reads
+  // worse than the jump did. Gone is gone: it is placed where it belongs and
+  // fades in there.
+  //
+  // `open` is the class the fade hangs off, so it is exactly the question "can
+  // this be seen right now". `hidden` is no good for it -- that is only set a
+  // seventh of a second later, when the fade has finished.
+  const showing = !panelEl.hidden && panelEl.classList.contains('open');
+  if (showing) {
     panelEl.classList.add('sliding');
     clearTimeout(slide);
     // a shade longer than the slide itself, so the class is never taken off
     // mid-glide and the box never finishes the move in one jump
     slide = setTimeout(() => panelEl.classList.remove('sliding'), 340);
+  } else {
+    // and it must not be carrying a transition from the last time it moved, or
+    // the placing below is a glide from wherever it happened to be standing
+    clearTimeout(slide);
+    panelEl.classList.remove('sliding');
   }
   place(panelEl, standAt[want]);
   requestAnimationFrame(() => panelEl.classList.add('open'));

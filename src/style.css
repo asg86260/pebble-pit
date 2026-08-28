@@ -265,12 +265,32 @@ canvas {
 #scrubshop button[data-key="airrate"] { grid-template-columns: 9em 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
-/* The one row in the game with a bill rather than a price: four currencies at
-   once. The cost column is sized for one mark and a number, so the tower gets
-   the rest of the row instead -- it is the only thing it is buying, and it is
-   the last row on the board. */
+/* Rows with a bill rather than a price. The cost column is sized for one mark
+   and a number, so these get the rest of the row instead -- what they buy is a
+   thing rather than a rate, so the gain column had nothing to put in it. */
 #shop button[data-key="unlocktower"] { grid-template-columns: 9em 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
+
+/* A bill of three or four, two to a line.
+   Written as one line of words it ran off the edge of the sheet and sat on top
+   of the row's own name. Each price is its own cell now, and past two of them
+   the cell becomes a little grid: it grows downwards, where a menu has room,
+   instead of sideways, where it has none. Right-aligned within each column, the
+   way every other number on these boards is, and the columns are sized off the
+   widest of them so the marks line up under each other. */
+/* A bill of two stays on one line, but the marks still need air between them:
+   written as bare spans they abutted, and "1" and the mark after it read as one
+   token. */
+.rows button .cost span + span { margin-left: .9em; }
+
+.rows button .cost.split span + span { margin-left: 0; }
+.rows button .cost.split {
+  display: inline-grid;
+  grid-template-columns: repeat(2, max-content);
+  gap: 0 .8em;
+  justify-content: end;
+  justify-items: end;
+}
 
 /* The tower's rows are bills too, and longer ones: three currencies for a hat
    and two for a meteor, against a cost column sized for one mark and a number.

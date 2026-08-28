@@ -239,11 +239,18 @@ export function refresh(el, list, headcount) {
     }
     const u = list.find(x => x.key === row.dataset.key);
     if (!u) continue;
-    // What it costs, as a mark and a number for each currency in the bill. All
-    // but one row in the game is priced in a single thing; the tower is priced
-    // in all four, and reading every price the same way is what lets it be.
-    const bill = billOf(u).map(([money, n]) => `${MARK[money]} ${n}`).join(' ');
+    // What it costs, as a mark and a number for each currency in the bill. Most
+    // rows are priced in a single thing, and reading every price the same way is
+    // what lets the ones that are not be read at all.
+    //
+    // Each price is its own cell rather than words in a line: a bill of three or
+    // four ran off the edge of the sheet and sat on top of the row's name. Two
+    // to a line, in a little grid -- see `.price.split` -- so a long bill grows
+    // downwards, where there is room, instead of sideways, where there is not.
+    const parts = billOf(u).map(([money, n]) => `<span>${MARK[money]} ${n}</span>`);
+    const bill = parts.join('');
     const [name, gain, price] = row.children;
+    price.classList.toggle('split', parts.length > 2);   // `price` is the .cost cell
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.

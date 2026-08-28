@@ -737,7 +737,7 @@ const TESTS = [
     const quarry = row('unlockquarry');
     const dustPrice = quarry && [...quarry.querySelectorAll('.cost i')].map(i => i.className);
 
-    // the tower takes all four at once, and takes them together
+    // the tower takes a core and a thousand dust, and takes them together
     const cores0 = state().cores;
     const tower = row('unlocktower');
     const marks = tower && [...tower.querySelectorAll('.cost i')].map(i => i.className);
@@ -752,11 +752,15 @@ const TESTS = [
       ok(!!quarry && dustPrice.join() === 'dust',
          'the cut is bought with dust, not with a rock', String(dustPrice)),
       ok(!!tower, 'and the tower is on the bench once a core exists'),
-      ok(marks && marks.join() === 'core,dust,shard,spore',
-         'priced in all four at once', String(marks)),
+      // A core and dust, and nothing else. It used to ask for all four at once,
+      // which was the only bill in the game that did and the one row you had to
+      // study rather than read -- and it argued with the row's own note, which
+      // says a core is what this is for.
+      ok(marks && marks.join() === 'core,dust',
+         'priced in a core and dust', String(marks)),
       ok(built.towerOpen, 'buying it puts it up'),
-      ok(built.cores === cores0 - 1 && built.shards === 1000 && built.spores === 1000,
-         'and takes a bit of everything the yard makes',
+      ok(built.cores === cores0 - 1 && built.shards === 2000 && built.spores === 2000,
+         'and takes the core, and leaves the rest of the yard alone',
          `${cores0}->${built.cores} cores, ${built.shards} shards, ${built.spores} spores`)
     ];
   }],
@@ -2329,7 +2333,14 @@ const TESTS = [
     };
     const ground = await dropAt('h', s.rockX - 500);
     const carriedAfter = +(state().crewDetail.find(d => d[0] === 'h') || '|||c0').split('|')[3].slice(1);
-    const landed = await dropAt('m', s.rockX + s.rockW / 2);
+    // Over the middle of it. `rockX` is the rock's centre, so the old
+    // `rockX + rockW / 2` was its right-hand *edge* -- a body let go exactly
+    // above the last column of the hill, which lands on the rock or beside it
+    // depending on how far it drifts on the way down. It caught the edge while
+    // gravity was gentle enough to let it drift inward, and stopped catching it
+    // when gravity went up. The question is whether a body dropped over the rock
+    // lands on the rock, and the middle is where that is asked.
+    const landed = await dropAt('m', s.rockX);
     window.__crew(0, 0);
     return [
       ok(/^carrying {2}(nothing|[■▲⬢◯] \d)/m.test(hauled),

@@ -28,7 +28,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
          SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP,
-         DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
+         DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now, frames } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
@@ -410,13 +410,17 @@ export function stirSmoke(wx, wy, dx, dy) {
   const cap = v => Math.max(-SMOKE_STIR_CAP, Math.min(SMOKE_STIR_CAP, v));
   let moved = 0;
 
+  // The climbing ones, which take it harder: see PLUME_STIR. This is the smoke
+  // your hand is actually near.
+  const blow = Math.min(speed, 40) * PLUME_STIR;
+  const capUp = v => Math.max(-PLUME_STIR_CAP, Math.min(PLUME_STIR_CAP, v));
   for (const m of SKY) {
     if (!m.up) continue;
     const d = Math.hypot(m.x - wx, m.y - wy);
-    if (d > SMOKE_STIR_R) continue;
-    const k = push * (1 - d / SMOKE_STIR_R) ** 2;
-    m.sx = cap((m.sx || 0) + ux * k);
-    m.sy = cap((m.sy || 0) + uy * k);
+    if (d > PLUME_STIR_R) continue;
+    const k = blow * (1 - d / PLUME_STIR_R) ** 2;
+    m.sx = capUp((m.sx || 0) + ux * k);
+    m.sy = capUp((m.sy || 0) + uy * k);
     moved++;
   }
 

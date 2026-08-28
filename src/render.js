@@ -4,7 +4,7 @@
 // it stands in front of it, the crew and the spoil go over the rock, and the pit
 // is blitted from its own scratch canvas rather than drawn a grain at a time.
 
-import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, SHARD_CELL, SPARK_CELL,
+import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE_FROM, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
@@ -1885,6 +1885,12 @@ export function drawCoreAt(x, y) {
 // of it.
 export function drawCoreBehind() {
   if (S.heldCore || S.coreItem || !boulderAlive() || S.rockFall > 0) return;
+  // and there is nothing to see inside the first four, because there is nothing
+  // in them: cores start at CORE_FROM. `coreBuried` is set on every rock -- what
+  // it means is "this one still has something to give up", which is a question
+  // about the rock being whole rather than about what is inside it -- so drawing
+  // off it showed a core in four rocks that were never going to yield one.
+  if (S.boulderNo < CORE_FROM) return;
   const h = coreHome();
   drawCoreAt(h.x, h.y);
 }
@@ -1927,6 +1933,37 @@ export function drawCount() {
   const x = Math.max(10, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
   const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - 10);
 
+  // Everything that is going on it, bottom row first. Gathered before any of it
+  // is drawn because the card behind it has to be the size of all of it.
+  const lines = [{ cell: null, text: dust }];
+  if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(S.cores) });
+  if (S.seenShard) lines.push({ cell: SHARD_CELL, text: fmt(S.shards) });
+  if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: fmt(S.spores) });
+  if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: fmt(S.sparks) });
+
+  // The card.
+  //
+  // These numbers float over whatever the yard happens to be doing behind them:
+  // over the pit they are black on white and perfectly clear, and over a heap of
+  // dust or a body walking past they are black on black. A reading you cannot
+  // read half the time is not a reading. So they get a sheet to stand on, the
+  // same white box with a black edge every menu in this game is made of -- it is
+  // the same kind of thing, a panel that says what you have.
+  const PAD = 7;
+  const widest = lines.reduce((w, l) => Math.max(w, ctx.measureText(l.text).width), 0);
+  const box = {
+    x: Math.round(x - PAD),
+    y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
+    w: Math.round(MARK * 2 + widest + PAD * 2),
+    h: Math.round(MARK + (lines.length - 1) * ROW + PAD * 2)
+  };
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  // on the half pixel, so a two-wide edge lands on two whole ones
+  ctx.strokeRect(box.x + 1, box.y + 1, box.w - 2, box.h - 2);
+
   // a grain of dust, then the count of it
   ctx.fillStyle = '#000';
   ctx.fillRect(x, y - MARK, MARK, MARK);
@@ -1934,18 +1971,13 @@ export function drawCount() {
 
   // then one row for every other kind, each shown only once you have seen one
   let row = y;
-  // the same glyph the world draws, at the same size as each other
-  const line = (seen, cell, text) => {
-    if (!seen) return;
+  for (const l of lines) {
+    if (!l.cell) continue;                     // the dust is drawn above
     row -= ROW;
-    drawMark(cell, x + MARK / 2, row - MARK / 2, MARK, true);
+    drawMark(l.cell, x + MARK / 2, row - MARK / 2, MARK, true);
     ctx.fillStyle = '#000';
-    ctx.fillText(text, x + MARK * 2, row);
-  };
-  line(S.seenCore, CORE_CELL, String(S.cores));
-  line(S.seenShard, SHARD_CELL, fmt(S.shards));
-  line(S.seenSpore, SPORE_CELL, fmt(S.spores));
-  line(S.seenSpark, SPARK_CELL, fmt(S.sparks));
+    ctx.fillText(l.text, x + MARK * 2, row);
+  }
 }
 
 // The bench is not in the yard until there is something on it worth buying, and
