@@ -41,20 +41,41 @@ function element(tag = 'div') {
     removeChild: noop, addEventListener: noop, removeEventListener: noop,
     setAttribute: noop, getAttribute: () => null,
     getBoundingClientRect: () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 }),
-    querySelector: () => null, querySelectorAll: () => [],
+    className: '',
+    // Enough of a selector engine for `.cls`, which is how a row finds the cell
+    // it wants to fill in. Rows used to be addressed by position -- children[2]
+    // -- which meant wrapping two cells in a third renumbered every one of them.
+    querySelector: sel => el.querySelectorAll(sel)[0] || null,
+    querySelectorAll: sel => {
+      const want = String(sel).replace(/^\./, '');
+      const out = [];
+      const walk = e => {
+        for (const c of e.children) {
+          if (String(c.className).split(/\s+/).includes(want)) out.push(c);
+          walk(c);
+        }
+      };
+      walk(el);
+      return out;
+    },
     textContent: ''
   };
   // A row on a board is written as one string of markup and then filled in cell
-  // by cell -- `row.children[2].textContent = price`. So the one thing this has
-  // to do with markup is say how many children it made: a child per opening tag,
-  // each of them another element that says no to everything. Nothing reads them
-  // back, because nothing in a check that never draws is looking at a board.
+  // by cell -- `row.querySelector('.cost').textContent = price`. So what this has
+  // to do with markup is make a child per opening tag and remember what each one
+  // was called, which is all a row ever asks it. The children come out flat
+  // whatever the nesting said, and nothing minds: a row looks its cells up by
+  // name, and nothing in a check that never draws is looking at the shape.
   let html = '';
   Object.defineProperty(el, 'innerHTML', {
     get: () => html,
     set: v => {
       html = String(v);
-      el.children = (html.match(/<[a-zA-Z]/g) || []).map(() => element('span'));
+      el.children = [...html.matchAll(/<([a-zA-Z]+)([^>]*)>/g)].map(([, tag, attrs]) => {
+        const kid = element(tag);
+        kid.className = (attrs.match(/class="([^"]*)"/) || [, ''])[1];
+        return kid;
+      });
     }
   });
   return el;

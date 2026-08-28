@@ -52,6 +52,18 @@ function shape(list, sections) {
 // no longer be pressed is a row that just fired.
 const built = new WeakMap();
 
+// A count between a less and a more, in one cell rather than three.
+//
+// It used to be three cells of the row's own, which meant a job row and a price
+// row had different numbers of columns and no board could line the two up
+// without somebody cutting widths for both by hand. Wrapped, the two shapes
+// agree: a name, and one thing on the right of it.
+const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
+  '<span class="step">' +
+  '<button type="button" class="less">-</button>' +
+  '<span class="count"></span>' +
+  '<button type="button" class="more">+</button></span>';
+
 // Set when the set of rows changed, read once by the board after it has filled
 // them in. A flag rather than a call back into the board: this happens on a
 // purchase or a hire, and what has to happen next is a measurement of a board
@@ -115,11 +127,10 @@ function build(el, list, sections, empty) {
         const row = document.createElement('div');
         row.className = 'job';
         row.dataset.dial = u.key;
-        row.innerHTML = '<span class="name"></span><button type="button" class="less">-</button>' +
-                        '<span class="count"></span><button type="button" class="more">+</button>';
-        row.children[0].textContent = u.name;
-        row.children[1].addEventListener('click', () => u.less());
-        row.children[3].addEventListener('click', () => u.more());
+        row.innerHTML = STEPPER;
+        row.querySelector('.what').textContent = u.name;
+        row.querySelector('.less').addEventListener('click', () => u.less());
+        row.querySelector('.more').addEventListener('click', () => u.more());
         el.appendChild(row);
         continue;
       }
@@ -130,11 +141,10 @@ function build(el, list, sections, empty) {
         const row = document.createElement('div');
         row.className = 'job';
         row.dataset.job = u.key;
-        row.innerHTML = '<span class="name"></span><button type="button" class="less">-</button>' +
-                        '<span class="count"></span><button type="button" class="more">+</button>';
-        row.children[0].textContent = u.name;
-        row.children[1].addEventListener('click', () => u.less());
-        row.children[3].addEventListener('click', () => u.more());
+        row.innerHTML = STEPPER;
+        row.querySelector('.what').textContent = u.name;
+        row.querySelector('.less').addEventListener('click', () => u.less());
+        row.querySelector('.more').addEventListener('click', () => u.more());
         el.appendChild(row);
         continue;
       }
@@ -243,17 +253,17 @@ export function refresh(el, list, headcount) {
     if (row.dataset.dial) {
       const u = list.find(x => x.key === row.dataset.dial);
       if (!u) continue;
-      grey(row.children[1], u.lo());
-      say(row.children[2], u.value());
-      grey(row.children[3], u.hi());
+      grey(row.querySelector('.less'), u.lo());
+      say(row.querySelector('.count'), u.value());
+      grey(row.querySelector('.more'), u.hi());
       continue;
     }
     if (row.dataset.job) {
       const u = list.find(x => x.key === row.dataset.job);
       if (!u) continue;
-      grey(row.children[1], u.count() < 1);
-      say(row.children[2], String(u.count()));
-      grey(row.children[3], u.spare() < 1);
+      grey(row.querySelector('.less'), u.count() < 1);
+      say(row.querySelector('.count'), String(u.count()));
+      grey(row.querySelector('.more'), u.spare() < 1);
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
@@ -262,19 +272,20 @@ export function refresh(el, list, headcount) {
     // rows are priced in a single thing, and reading every price the same way is
     // what lets the ones that are not be read at all.
     //
-    // Each price is its own cell rather than words in a line: a bill of three or
-    // four ran off the edge of the sheet and sat on top of the row's name. Two
-    // to a line, in a little grid -- see `.price.split` -- so a long bill grows
-    // downwards, where there is room, instead of sideways, where there is not.
+    // Each price is its own cell rather than words in a line, so that a bill of
+    // three reads as three prices and not as one long number.
+    //
+    // It used to stack them, two to a line, because the price column was cut for
+    // a mark and a number and even two side by side ran out of it. The column is
+    // measured now, so they fit -- and a bill that grows downwards was the last
+    // thing on these boards making one row taller than the next.
     const parts = billOf(u).map(([money, n]) => `<span>${MARK[money]} ${n}</span>`);
     const bill = parts.join('');
     const [name, gain, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;
-    // Any bill of more than one stacks. The price column is sized for a mark and
-    // a number, so even two side by side run out of it -- and above the first
-    // tier every rung is priced in its own coin *and* in dust, so two is now the
-    // common case rather than the exception.
-    price.classList.toggle('split', parts.length > 1);   // `price` is the .cost cell
+    // Four or more is a bill nobody has written yet; if one is ever written it can
+    // stack again, and until then every row on a board is one line tall.
+    price.classList.toggle('split', parts.length > 3);   // `price` is the .cost cell
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.

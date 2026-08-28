@@ -40,7 +40,25 @@ canvas {
 }
 .panel[hidden] { display: none; }
 
-.rows { display: flex; flex-direction: column; gap: 3px; }
+/* The columns are cut to the words that are actually in them.
+   Every board used to carry its own hand-guessed widths -- nine of them across
+   this file, plus a rule per row for the two names that outgrew their column --
+   and the failure was always the same one: somebody wrote a longer name than the
+   guess, and the price started before the name had finished. A guess cannot be
+   right about words that have not been written yet.
+   So the sheet is the grid and a row is a subgrid of it. `max-content` measures
+   the longest name on this board and gives it exactly that, every row on the
+   board lines up under it because they share the tracks, and a new row that is
+   longer than all of them widens the column instead of running out of it. */
+.rows {
+  display: grid;
+  grid-template-columns: max-content max-content minmax(0, 1fr);
+  align-content: start;
+  gap: 3px 6px;
+}
+/* Headings, rows, notes: everything on the sheet spans the whole width of it,
+   and only the rows themselves take the tracks. */
+.rows > * { grid-column: 1 / -1; }
 
 .rows .sect {
   margin-top: 6px;
@@ -115,14 +133,13 @@ canvas {
 
 .rows button {
   display: grid;
-  /* Four things on a line: what it is, how far up it you are, what the next one
-     changes, and what it costs. The rung had been jammed on to the end of the
-     name, which made the longest name longer still and read as part of it. Its
-     own narrow column instead -- so the ladders line up under each other and can
-     be read down the board rather than picked out of the words. */
-  grid-template-columns: 11.2em 7em 4.6em;
+  /* Three things on a line: what it is, what the next one changes, and what it
+     costs -- in the sheet's own tracks, so that every row on the board agrees
+     about where each of them starts. How far up the ladder you are is a fourth
+     thing, and it is under the name rather than beside it: as a column of its
+     own it was two numbers about different things sitting a character apart. */
+  grid-template-columns: subgrid;
   align-items: baseline;
-  gap: 0 6px;
   font: inherit;
   letter-spacing: .1em;
   text-transform: uppercase;
@@ -196,7 +213,20 @@ canvas {
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
 .rows button .gain { opacity: .75; }
-.rows button .cost { text-align: right; opacity: .7; }
+.rows button .cost { grid-column: 3 / -1; text-align: right; opacity: .7; }
+
+/* The count and its two buttons, held in the one cell that a price would fill,
+   so that a row which moves bodies and a row which spends dust are the same
+   shape and can share the sheet's columns. */
+.rows .job .step {
+  grid-column: 2 / -1;
+  display: inline-grid;
+  grid-template-columns: auto minmax(1.8em, auto) auto;
+  align-items: baseline;
+  justify-self: end;
+  gap: 0 6px;
+}
+.rows .job .step .count { min-width: 1.8em; }
 /* Where a ladder has got to. Quieter than the name and quieter than the price:
    it is the answer to "how much of this is left", which is a thing you glance at
    rather than read. */
@@ -210,9 +240,9 @@ canvas {
    two coins is two lines tall, which pushed them down clear of the words they
    belong to. Inside the name they sit under the title whatever the rest of the
    row is doing. */
-.rows button .name { display: flex; flex-direction: column; align-items: flex-start; }
-.rows button .name .what { font-style: normal; }
-.rows button .ladder {
+.rows .name { display: flex; flex-direction: column; align-items: flex-start; }
+.rows .name .what { font-style: normal; }
+.rows .ladder {
   font-style: normal;
   /* big enough that a filled pip and a hollow one are plainly different, which
      at six tenths of an em they were not: it read as a dotted underline */
@@ -223,7 +253,13 @@ canvas {
   margin-top: 1px;
 }
 .rows button:hover:not(:disabled) .ladder { opacity: .75; }
-.rows button .ladder:empty { display: none; }
+/* A row with no ladder keeps the ladder's line anyway. The pips are half a line
+   under the name, and a board where some rows have them and some do not is a
+   board whose names sit at a different height in every row -- which is the thing
+   you notice before you notice any of the words. The space is held and left
+   blank instead, so every row on every board is exactly as tall as every other
+   and the names come down the sheet on one rhythm. */
+.rows .ladder { display: block; min-height: 1em; }
 .rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
@@ -231,11 +267,8 @@ canvas {
    it is not a price row and does not look like one. */
 .rows .job {
   display: grid;
-  /* the middle is a count of bodies on most of these rows and the stake on the
-     table's, which runs to four figures -- so it is cut for the wider of the two */
-  grid-template-columns: 11.2em 1.8em 4.2em 1.8em;
+  grid-template-columns: subgrid;
   align-items: baseline;
-  gap: 0 6px;
   letter-spacing: .1em;
   text-transform: uppercase;
   padding: 2px 3px;
@@ -295,21 +328,16 @@ canvas {
    has no gain to state -- it says where that body is where a price would go --
    so the middle column is narrow and simply comes out empty on all but the one
    row that is buying something. */
-/* The house board carries longer names than it was cut for -- "who lives here",
-   and a count that now says where it is going rather than just "+1". */
-#crewshop button { grid-template-columns: 11.2em 4.4em 1fr; }
 
 /* The sky's row says a signed rate where a price would go, and a rate is wider
    than a price: the cost column is sized for "24" and a mark, and "+42.7/min"
    ran straight out of the sheet. The whole row is given to it instead, with the
    reading against the right edge like every other number on these boards. */
-#scrubshop button[data-key="airrate"] { grid-template-columns: 9em 0 1fr; }
 #scrubshop button[data-key="airrate"] .gain { display: none; }
 
 /* Rows with a bill rather than a price. The cost column is sized for one mark
    and a number, so these get the rest of the row instead -- what they buy is a
    thing rather than a rate, so the gain column had nothing to put in it. */
-#shop button[data-key="unlocktower"] { grid-template-columns: 11.2em 0 1fr; }
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
 /* A bill of three or four, two to a line.
@@ -341,10 +369,6 @@ canvas {
    itself. Nothing is lost by it: what these rows buy is said in the note under
    the name, and a gain column on a row that buys a *thing* rather than a rate
    had nothing to put in it anyway. */
-/* Wide enough for the longest name on it. "enchant the outhouse" is twenty
-   letters at this tracking and the column was cut for a dozen, so the price
-   started before the name had finished and the two sat on top of each other. */
-#towershop button { grid-template-columns: 15.4em 0 1fr; }
 #towershop button .gain { display: none; }
 
 /* A row that is a reading rather than a purchase. It sits on a board of things
@@ -382,15 +406,14 @@ canvas {
    middle column -- what a purchase gives you -- is closed up, and where the body
    is takes whatever room the longest answer needs: "at the scrubbing house" in
    the shop's 4.6em price column is a phrase running off the edge of the sheet. */
-#crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
 
 /* The row that leads to it says so. Every other name on a board is a thing you
    press and something happens; this one is a door, and the mark is the one every
    menu in the world puts on a submenu. It rides inside the name so it goes black
    with the words when the row is under the cursor, rather than sitting out in
    the price column pretending to be a number. */
-#crewshop button[data-key="crewlist"] .name::after { content: ' \203A'; opacity: .5; }
-#crewshop button[data-key="crewlist"]:hover .name::after { opacity: 1; }
+#crewshop button[data-key="crewlist"] .what::after { content: ' \203A'; opacity: .5; }
+#crewshop button[data-key="crewlist"]:hover .what::after { opacity: 1; }
 
 #tip {
   position: fixed;
@@ -456,14 +479,12 @@ canvas {
     overflow-y: auto;
     letter-spacing: .06em;
   }
-  .rows { gap: 1px; }
+  .rows { gap: 1px 4px; }
   .rows button {
-    grid-template-columns: 9.4em 6.2em 3.8em;
-    gap: 0 4px;
     padding: 6px 3px;                /* a thumb, not a cursor */
     letter-spacing: .06em;
   }
-  .rows .job { grid-template-columns: 9.4em 2em 2em 2em; gap: 0 4px; padding: 4px 3px; }
+  .rows .job { padding: 4px 3px; }
   .rows .job button { padding: 4px 2px; }                /* a thumb, not a cursor */
   .rows button:hover:not(:disabled) { color: #000; background: none; }
   .rows button:active:not(:disabled) { color: #fff; background: #000; }
@@ -474,15 +495,8 @@ canvas {
      way round that fits. Between the two of them they have one screen to share,
      so the names get a shorter run of it before they start scrolling. */
   #crewlist { max-height: 30vh; }
-  #crewlist .rows button { grid-template-columns: 9.4em 0 auto; }
 }
 
-/* the lab's rows say longer things than the bench's, and what they give is a
-   bare percentage with no mark after it, so it gets its own column widths */
-#lab .rows button { grid-template-columns: 10.5em 5.4em 4.4em; }
-@media (max-width: 560px), (max-height: 560px), (pointer: coarse) {
-  #lab .rows button { grid-template-columns: 8.6em 4.6em 3.6em; }
-}
 
 /* the lab's stats page: a plain list of rates, under its rows */
 #stats {

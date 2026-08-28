@@ -422,6 +422,98 @@ const TESTS = [
   // twice and on the scrubbing house once, and each time it was found by looking
   // at a screenshot. This asks the page instead, on every board at once, so the
   // next one is found by the suite.
+  // The check above says today's names fit. This one says the board would still
+  // fit a name nobody has written yet, which is the thing that kept breaking:
+  // for a long time every board carried a hand-cut column width, and a name
+  // longer than somebody's guess ran over the price. So the column is measured
+  // now -- and what proves it is measured rather than merely wide enough is that
+  // making a name longer makes the column wider.
+  ['a longer name widens the column instead of running out of it', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__board('bench');
+    // The sheet scales in, and a width read through that transform is a width
+    // read mid-animation: it has to have arrived before any of this means
+    // anything.
+    await sleep(400);
+    const rows = () => [...document.querySelectorAll('#shop button')].filter(b => b.offsetParent);
+    const nameW = () => Math.round(rows()[0].querySelector('.name').getBoundingClientRect().width);
+    const over = b => {
+      const cell = b.querySelector('.name');
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      return Math.round(range.getBoundingClientRect().right - cell.getBoundingClientRect().right);
+    };
+
+    const was = nameW();
+    // every row shares the tracks, so one width is the board's width
+    const shared = new Set(rows().map(b => Math.round(b.querySelector('.name').getBoundingClientRect().width)));
+
+    const victim = rows().find(b => b.querySelector('.what'));
+    const said = victim.querySelector('.what').textContent;
+    victim.querySelector('.what').textContent = said + ' of the everlasting stone';
+    await raf();
+    await raf();
+    const now = nameW();
+    const spilled = rows().filter(b => over(b) > 1).length;
+
+    victim.querySelector('.what').textContent = said;
+    await raf();
+    const back = nameW();
+    window.__board(null);
+    return [
+      ok(shared.size === 1, 'every row on a board shares one name column',
+         `${shared.size} widths: ${[...shared].join(', ')}`),
+      ok(now > was, 'a longer name makes that column wider', `${was}px -> ${now}px`),
+      ok(spilled === 0, 'and none of the names run out of it', `${spilled} spilled`),
+      ok(Math.abs(back - was) <= 1, 'and taking the words back takes the width back',
+         `${now}px -> ${back}px, from ${was}px`)
+    ];
+  }],
+
+  // Down the sheet as well as across it. A board whose rows are all different
+  // heights is a board you read one row at a time, because there is no rhythm to
+  // run your eye down -- and the heights were different for two reasons that
+  // both used to be necessary and are not any more: a bill of two coins stacked
+  // to fit a column that could not hold it, and a row with no ladder dropped the
+  // half-line the pips sit on.
+  ['every row on a board is the same height as every other', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__crew(4, 3, 2, 2);
+    window.__air({ janitors: 1 });
+    run(20);
+    const boards = ['bench', 'house', 'quarry', 'farm', 'school', 'scrub', 'lab',
+                    'tower', 'casino'];
+    const bad = [];
+    let seen = 0;
+    for (const name of boards) {
+      window.__board(name);
+      await sleep(320);                        // the sheet scales in; let it land
+      if (name === 'house') { await openCrewList(); await sleep(200); }
+      const rows = [...document.querySelectorAll(
+        '.page:not([hidden]) .rows button, .page:not([hidden]) .rows .job, #crewlistrows button')]
+        .filter(e => e.offsetParent && !e.closest('.step'));
+      if (rows.length < 2) continue;
+      seen += rows.length;
+      const heights = [...new Set(rows.map(e => Math.round(e.getBoundingClientRect().height)))];
+      if (heights.length > 1) {
+        bad.push(`${name}: ${heights.sort((a, b) => a - b).join(', ')}px`);
+      }
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(seen > 20, 'there are rows on the boards to measure', `${seen} rows`),
+      ok(bad.length === 0, 'and each board comes down in one step',
+         bad.join(' | ') || 'all level')
+    ];
+  }],
+
   ['no row on any board sits on top of itself', async () => {
     window.__reset();
     await settle();
@@ -2103,11 +2195,11 @@ const TESTS = [
     // check left it on.
     const chips = [];
     const dial = () => casino().querySelector('[data-dial="chip"]');
-    for (let i = 0; i < 4; i++) { dial().children[1].click(); buildShopFromTest(); }
-    for (let i = 0; i < 4; i++) { chips.push(state().chip); dial().children[3].click(); buildShopFromTest(); }
+    for (let i = 0; i < 4; i++) { dial().querySelector('.less').click(); buildShopFromTest(); }
+    for (let i = 0; i < 4; i++) { chips.push(state().chip); dial().querySelector('.more').click(); buildShopFromTest(); }
 
     // and back down again, to put the smallest one down
-    for (let i = 0; i < 4; i++) { dial().children[1].click(); buildShopFromTest(); }
+    for (let i = 0; i < 4; i++) { dial().querySelector('.less').click(); buildShopFromTest(); }
     const held = state().stored;
     const stake = state().stakes.dust;
     row('stakedust').click();
@@ -2235,7 +2327,7 @@ const TESTS = [
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
 
-    dial().children[3].click(); buildShopFromTest();     // a hundred, so the heap is worth looking at
+    dial().querySelector('.more').click(); buildShopFromTest();     // a hundred, so the heap is worth looking at
     const stake = state().stakes.dust;
     row('stakedust').click();
     run(0.5);                                   // the first of it is still falling
@@ -2283,7 +2375,7 @@ const TESTS = [
     const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
                                        !state().spinning, 30);
 
-    dial().children[3].click(); buildShopFromTest();
+    dial().querySelector('.more').click(); buildShopFromTest();
     let win = null;
     for (let i = 0; i < 30 && !win; i++) {
       quiet();

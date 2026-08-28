@@ -659,6 +659,27 @@ into the same spot and differ only in their rows are three boards you have to wo
 says its own name** at the top, under a rule heavier than the ones between its sections — a heading
 inside a board is a group of rows, and this is the board.
 
+**A board's columns are measured, never guessed.** Every row on every sheet — a price row, a job
+row, a name in the settlement — is a subgrid of the sheet it sits on, and the sheet's name column
+is `max-content`: exactly as wide as the longest name actually on that board. This was nine
+hand-cut sets of column widths for a while, one per board plus a second set for narrow windows,
+plus a rule per row for the two names that had outgrown their column. Every one of them failed the
+same way — somebody wrote a longer name than the guess, and the price started before the name had
+finished — and the fix was always another number. A guess cannot be right about words nobody has
+written yet, so the sheet measures instead. A new row that is longer than all of them widens the
+column; it does not run out of it.
+
+That is also why a job row is a name and one stepper rather than a name and three cells: two row
+shapes with different numbers of columns cannot share a set of tracks, and it was that mismatch,
+not any one long name, that made per-board widths feel unavoidable.
+
+**And every row on a board is the same height as every other**, so the names come down the sheet on
+one rhythm rather than at whatever height the row above happened to end at. Two things used to break
+that, and both were workarounds for the guessed columns above: a bill of two coins stacked onto two
+lines because the price column could not hold them side by side, and a row with no ladder dropped
+the half-line the pips sit under the name on. The column holds the bill now, and the pip line is
+held whether or not there are pips in it.
+
 **What you have to spend stands beside what you are spending it on.** Every price on a board is a
 mark and a number, and the only place you could read what you *had* of that mark was the counter
 over the pit — the other end of the yard, in the corner of the window, and as often as not behind
@@ -1047,10 +1068,16 @@ cut or the beds -- so pricing them in stone or crop asks for a currency the game
 has not shown you yet, on two of the first rows you will ever read. A tier's
 currency gates the tier; it does not gate the way in.
 
-**The beds come before the cut.** Food makes bodies and stone makes tools, and a
-body has to exist before its tool means anything -- so green is strength and blue
-is gear, in that order. It is also the way round that fixes the pile: spores
-currently buy one row in the whole game and sit there.
+**The beds come before the cut.** *(built)* Food makes bodies and stone makes
+tools, and a body has to exist before its tool means anything -- so green is
+strength and blue is gear, in that order. It is also the way round that fixes the
+pile: spores currently buy one row in the whole game and sit there.
+
+The prices went with the order: six hundred for the beds, eighteen hundred for
+the cut, and the cut is offered once the ground is broken. The yard itself did
+not move -- the farm still stands out past the quarry, because where a place *is*
+and when it is *sold* are two different questions and only the second one is
+about pacing.
 
 **A core opens places and a heart drives them harder.** That is the same
 sentence the game already says about cores, extended by one word. A rock gives
