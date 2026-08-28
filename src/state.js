@@ -226,7 +226,6 @@ export const S = {
   quarryBoardOpen: false,
   farmBoardOpen: false,
   outhouseOpen: false,    // there is somewhere to go
-  magicLoo: false,        // and the tower has seen to what is in it
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,

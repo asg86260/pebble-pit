@@ -12,8 +12,7 @@
 // spell.
 
 import { S } from './state.js';
-import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES,
-         WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS } from './config.js';
+import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -57,20 +56,6 @@ export function stepTower() {
 }
 
 export const TOWER_UPGRADES = [
-  {
-    key: 'magicloo',
-    name: 'enchant the outhouse',
-    // What it does, in the words of the thing it undoes. A row that said
-    // "removes waste" would be a row about a system; this is about the shovel
-    // you put down.
-    note: () => 'and nobody has to shovel it ever again',
-    bill: () => [['dust', MAGIC_LOO_DUST], ['spore', MAGIC_LOO_SPORES]],
-    cost: () => MAGIC_LOO_DUST,
-    buy: () => { S.magicLoo = true; },
-    // Nothing to enchant until there is one, which is the joke: the tower's
-    // first piece of magic is plumbing.
-    show: () => S.outhouseOpen && !S.magicLoo
-  },
   // A meteor is not bought any more: raising the tower calls the first one down
   // -- see `unlocktower` in upgrades.js. It was a row that asked for a second
   // core to do the one thing the tower is *for*, on a board that then had
@@ -81,12 +66,15 @@ export const TOWER_UPGRADES = [
   // one body that will not be standing on it.
   {
     key: 'wizard',
-    name: 'raise a wizard',
-    note: () => brewing()
-      ? `at it: ${mins(brewLeft())} to go`
-      : `a hat nobody can work the sky without, in ${mins(WIZ_BREW_MS)}`,
+    name: 'train a wizard',
+    // No note. What the note said was how long it takes, and how long a thing
+    // takes is part of what it costs -- so it is priced in the bill with the
+    // rest of it, under a clock, and the row does not need a second sheet to
+    // open beside it to say one number. While one is being trained the clock
+    // counts down what is left of it.
     bill: () => { const c = wizCost();
-                  return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
+                  return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores],
+                          ['time', brewing() ? brewLeft() : WIZ_BREW_MS]]; },
     cost: () => wizCost().dust,
     // Paying starts it. What you get for the money is the tower's time, and it
     // takes as long as it takes.
@@ -102,5 +90,5 @@ export const TOWER_UPGRADES = [
 ];
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: ['magicloo', 'wizard'] }
+  { title: 'the tower', keys: ['wizard'] }
 ];

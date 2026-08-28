@@ -514,9 +514,8 @@ function relieve(w, now) {
 
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
     if (now < w.looUntil) { w.lunge = 0; return true; }
-    // What it leaves, where it was standing. Once the tower has seen to it there
-    // is nothing left at all.
-    if (!S.magicLoo) dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
+    // What it leaves, where it was standing, for a janitor to come and clear.
+    dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
     w.looUntil = 0;
     w.say = null;
     w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);

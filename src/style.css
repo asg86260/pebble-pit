@@ -182,9 +182,25 @@ canvas {
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
    pile up. */
-.dust, .core, .shard, .spore, .spark {
+.dust, .core, .shard, .spore, .spark, .clock {
   display: inline-block;
   vertical-align: baseline;
+}
+/* A clock, for the one price that is not a coin: what a thing costs in waiting.
+   A ring with a hand in it, at the size the coins are drawn, because it stands
+   in the same row as them and has to weigh the same. */
+.clock {
+  position: relative;
+  width: 8px; height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.clock::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 1px;
+  width: 1.5px; height: 2.5px;
+  background: currentColor;
 }
 .dust { width: 7px; height: 7px; background: currentColor; }
 .core {

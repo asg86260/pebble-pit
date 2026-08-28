@@ -629,6 +629,93 @@ const TESTS = [
     ];
   }],
 
+  // Time is a price. A thing that takes two minutes costs you two minutes, and
+  // saying so in a note meant a second sheet opening beside the row to carry one
+  // number -- so it is in the bill with the coins, under a clock, and the row
+  // itself says everything about itself.
+  ['what a thing costs in waiting is priced with the rest of it', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    run(30);
+    window.__build();
+    window.__buy('unlocktower');
+    window.__build();
+    window.__board('tower');
+    await sleep(500);
+    const row = document.querySelector('#towershop button[data-key="wizard"]');
+    const coins = row && [...row.querySelectorAll('.cost i')].map(i => i.className);
+    const said = row && row.querySelector('.cost').textContent.trim();
+    const tall = row && Math.round(row.getBoundingClientRect().height);
+    // A bill stacks two to a line once it is longer than the column can hold, and
+    // a stacked bill makes its row taller than every other row on the board. Four
+    // fits, so this one must not be stacking: asked of the cell itself, because
+    // the tower has one row and "every row here is the same height" is a thing a
+    // board with one row says whatever it does.
+    const stacked = row && row.querySelector('.cost').classList.contains('split');
+    window.__board(null);
+    return [
+      ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
+         'the tower trains a wizard', row && row.querySelector('.what').textContent),
+      ok(coins && coins.join() === 'dust,shard,spore,clock',
+         'and the waiting is the fourth thing it costs', String(coins)),
+      ok(/[0-9]+ ?(min|s)$/i.test((said || '').trim()), 'said as a length of time, not a count of milliseconds',
+         said),
+      ok(!row?.dataset.note && !row?.title,
+         'and the row keeps it all to itself: no sheet opens beside it'),
+      ok(stacked === false, 'and the bill of four still fits on one line',
+         stacked ? 'it stacked' : 'one line')
+    ];
+  }],
+
+  // The paper on a sign, measured in the pixels it is actually drawn in.
+  //
+  // Every building here is a black mass with square white windows cut out of it,
+  // and the paper used to be a two-cell square framed in black -- the same token,
+  // on a post. One cell tall is a letterbox, which is a shape nothing else in
+  // this yard has, and it is the whole of why a sign now reads as a sign.
+  ['the paper on a sign is a slot, not a window', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9, shards: 900, spores: 900 });
+    window.__crew(3, 2, 1, 1);
+    window.__school(true);
+    run(20);
+    const g = state().signs.school;
+    window.__look(g.x - 300);
+    await sleep(400);
+    await hoverAway();
+    await sleep(300);
+
+    // down the middle of the board, from above its top edge to below its foot
+    const s = state();
+    const c = canvas();
+    const dpr = window.devicePixelRatio || 1;
+    const px = w => Math.round((w - s.camX) * s.zoom * dpr);
+    const py = w => Math.round((w - s.camY) * s.zoom * dpr);
+    const col = c.getContext('2d')
+      .getImageData(px(g.x + g.w / 2), py(g.y - 18), 1, py(g.y + g.h + 18) - py(g.y - 18));
+    const dark = [];
+    for (let i = 0; i < col.height; i++) dark.push(col.data[i * 4] < 128);
+    // the white run inside the board is the paper
+    const first = dark.indexOf(true), last = dark.lastIndexOf(true);
+    let white = 0, streak = 0;                  // not `run`: that is the suite's own
+    for (let i = first; i <= last; i++) {
+      if (!dark[i]) { streak++; white = Math.max(white, streak); } else streak = 0;
+    }
+    const cell = s.zoom * dpr * 6;              // a yard cell, in canvas pixels
+    window.__crew(0, 0);
+    return [
+      ok(first >= 0 && last > first, 'there is a sign there to measure',
+         `${first}..${last}`),
+      ok(white > cell * 0.5 && white < cell * 1.6,
+         'and the paper on it is one cell of slot, not two of window',
+         `${(white / cell).toFixed(2)} cells`)
+    ];
+  }],
+
   ['no row on any board sits on top of itself', async () => {
     window.__reset();
     await settle();

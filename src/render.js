@@ -8,7 +8,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
-        TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R } from './config.js';
+        TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
@@ -1090,20 +1090,12 @@ export function drawOuthouse() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(c(MID - (DOOR - 1) / 2), r(TALL - 5), P * DOOR, P * 5);
 
-  // and the moon over it, three by three about the same column: a crescent, or
-  // a full one once the tower has seen to it. That is the only sign the magic is
-  // working -- what it does is make a thing not happen, and there is no way to
-  // draw an absence except by marking the place it would have been.
+  // and the moon cut in the door, three by three about the same column, which is
+  // what says shed rather than shack.
   const my = r(ROOF + 1);
-  if (S.magicLoo) {
-    ctx.fillRect(c(MID), my, P, P);
-    ctx.fillRect(c(MID - 1), my + P, P * 3, P);
-    ctx.fillRect(c(MID), my + P * 2, P, P);
-  } else {
-    ctx.fillRect(c(MID), my, P * 2, P);
-    ctx.fillRect(c(MID - 1), my + P, P, P);
-    ctx.fillRect(c(MID), my + P * 2, P * 2, P);
-  }
+  ctx.fillRect(c(MID), my, P * 2, P);
+  ctx.fillRect(c(MID - 1), my + P, P, P);
+  ctx.fillRect(c(MID), my + P * 2, P * 2, P);
   ctx.fillStyle = '#000';
 }
 
@@ -1124,7 +1116,7 @@ export function drawTower() {
   const r = n => y + P * n;                    // and n down from the top
   const WIDE = Math.round(w / P);              // 13 across
   const TALL = Math.round(h / P);              // 34 down
-  const SHAFT = 8;                             // the main shaft, on the left
+  const SHAFT = TOWER_SHAFT;                   // the main shaft, on the left
   const TUR = WIDE - SHAFT;                    // and the little one beside it
   const SPIRE = 7;                             // rows of roof on the main
   const TUR_ROOF = 4;                          // on the turret
@@ -1248,8 +1240,12 @@ export function drawTowerBar() {
 
 // Clear of the weather vane over the point, which is three cells up from the
 // roof: a bar drawn through it would be two marks in one place.
+// Over the spire, not over the building. The turret off the right-hand side is
+// two and a half cells of the tower's width, so the middle of the whole thing
+// sits well to the right of the point -- and a bar about the hat being made
+// under that roof belongs over that roof.
 export function towerBarAt() {
-  return { x: Math.round((tower.x + tower.w / 2) / P) * P,
+  return { x: Math.round((tower.x + P * TOWER_SHAFT / 2) / P) * P,
            y: Math.round((tower.y - P * 8) / P) * P };
 }
 
@@ -2094,8 +2090,11 @@ const CART_W = P * 4, CART_H = P * 2, CART_ABREAST = 4;
 
 function cartBox(x, y, face) {
   const back = face > 0 ? -1 : 1;                       // behind whichever way it is going
+  // A cell off the ground, because it is standing on a wheel now: see
+  // `drawCartBox`. The body of the cart rides above the axle, the way a barrow
+  // does, and what was on the ground before was the box itself.
   return { x: back < 0 ? x - CART_W - P : x + WORKER + P,
-           y: y + WORKER - CART_H, back };
+           y: y + WORKER - CART_H - P, back };
 }
 
 function drawCartBox(x, y) {
@@ -2107,6 +2106,11 @@ function drawCartBox(x, y) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 1, y + 1, CART_W - 2, CART_H - 2);
   ctx.fillStyle = '#000';
+  // And the wheel it rolls on, under the middle of it. A box sliding along the
+  // ground behind somebody is a crate being dragged; one cell of wheel under it
+  // is the difference between a thing hauled and a thing wheeled, and it is the
+  // whole reason a carter carries twice as much without going any slower.
+  ctx.fillRect(x + CART_W / 2 - P / 2, y + CART_H, P, P);
 }
 
 // The cart, hitched behind a body at (x, y). Exported because the roster draws

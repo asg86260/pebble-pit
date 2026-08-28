@@ -453,12 +453,6 @@ group('the outhouse gathers what the crew leave, and the tower does away with it
   run(90);
   const gathered = spread();
 
-  fresh();
-  yard.S.outhouseOpen = true;
-  yard.S.magicLoo = true;
-  run(90);
-  const magicked = spread();
-
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });
   window.__tune('LOO_EVERY', 600000);
@@ -467,10 +461,8 @@ group('the outhouse gathers what the crew leave, and the tower does away with it
        `${wild.all} over ${wild.cols} columns`),
     ok(gathered.all > 0, 'a shed does not make it go away',
        `${gathered.all} still to shovel`),
-    ok(gathered.cols <= wild.cols, 'it gathers it into one place instead',
-       `${wild.cols} columns without it, ${gathered.cols} with`),
-    ok(magicked.all === 0, 'and the tower is what actually does away with it',
-       `${magicked.all} left`)
+    ok(gathered.cols <= wild.cols, 'and the closet does not gather it either',
+       `${wild.cols} columns without it, ${gathered.cols} with`)
   ];
 });
 

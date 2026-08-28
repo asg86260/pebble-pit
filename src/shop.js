@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { RUNGS } from './config.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, rungOf, maxed } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, maxed } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -81,6 +81,13 @@ function build(el, list, sections, empty) {
   // whether these rows are the submenu itself rather than a board -- see the
   // note further down about what a row hover means
   const inSubmenu = el === crewListEl;
+  // A board whose one heading repeats the name at the top of it says the same
+  // thing twice with a rule between: a title reading "the tower" and, directly
+  // under it, a heading reading "the tower", over a single row. Where there are
+  // several headings they are doing their job -- telling the groups apart --
+  // and one of them matching the board's name is fine.
+  const title = el.closest('.page')?.querySelector('.title')?.textContent.trim();
+  const lone = sections.length === 1;
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
@@ -114,10 +121,12 @@ function build(el, list, sections, empty) {
       .filter(u => !(S.hideDone && maxed(u)));
     if (!rows.length) continue;
 
-    const head = document.createElement('div');
-    head.className = 'sect';
-    head.dataset.sect = sect.title;
-    el.appendChild(head);
+    if (!(lone && sect.title === title)) {
+      const head = document.createElement('div');
+      head.className = 'sect';
+      head.dataset.sect = sect.title;
+      el.appendChild(head);
+    }
 
     for (const u of rows) {
       // A dial is the same shape as a job row -- a setting between two buttons --
@@ -285,13 +294,14 @@ export function refresh(el, list, headcount) {
     // alike, a player with the stone and not the dust reads the same row as one
     // with neither, and has to go and count both piles to find out which.
     const parts = billOf(u).map(([money, n]) =>
-      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${n}</span>`);
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${priceText(money, n)}</span>`);
     const bill = parts.join('');
     const [name, gain, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;
-    // Four or more is a bill nobody has written yet; if one is ever written it can
-    // stack again, and until then every row on a board is one line tall.
-    price.classList.toggle('split', parts.length > 3);   // `price` is the .cost cell
+    // Five or more is a bill nobody has written yet; if one is ever written it can
+    // stack again, and until then every row on a board is one line tall. Four is
+    // written: a wizard costs dust, stone, crop and two minutes.
+    price.classList.toggle('split', parts.length > 4);   // `price` is the .cost cell
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.

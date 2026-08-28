@@ -364,6 +364,14 @@ export const OUTHOUSE_H = P * 10;
 // and this one was eighteen.
 export const TO_TOWER = -3324;
 export const TOWER_W = P * 13;
+// The main shaft, of those thirteen: the tall half with the pointed roof on it,
+// with the little turret making up the rest off its right-hand side. It is here
+// rather than inside the drawing because the bar that says how far along a hat
+// is has to stand over the *spire* and not over the middle of the whole
+// building -- the turret is two and a half cells of the width and pulls the
+// middle off the point -- and two places working that out from the same number
+// is the only way they agree.
+export const TOWER_SHAFT = 8;
 export const TOWER_H = P * 34;       // tall and thin: the one building that goes up
 // Twenty-six across, and it was eighteen. The wheel is set by the height rather
 // than the width -- it is as big as the block is short, and widening the block
@@ -415,12 +423,6 @@ export const CORE_FROM = 5;
 // thing bought with all four at once: a core out of the rock, the dust the yard
 // makes, the stone the cut gives up and the crop off the beds. Everything the
 // operation does, on one row.
-// And what the tower does once it is up. Priced in the crop rather than in
-// stone: it is the beds that grow the only thing anybody here eats, and this is
-// a spell about what happens afterwards.
-export const MAGIC_LOO_DUST = 4000;
-export const MAGIC_LOO_SPORES = 400;
-
 // --- the meteor, and the wizards who work it ------------------------------------
 // The second thing a core buys, and the only one that buys a *place*: the tower
 // calls the meteor down out of the far sky and it hangs there over the yard,

@@ -104,13 +104,27 @@ export function atSign(which, x, y) {
 // The same two marks, on the same terms, over every sign: one alphabet, so
 // having learnt the bench you have learnt all of them. The sign you are actually
 // standing at shows neither, because you are reading the board itself.
+//
+// Both of them are *on* the sign. They used to float clear above it -- the dot
+// three cells up, the flag on a second post above the post the board is already
+// on -- and at the size these are drawn a cell floating on its own in the air
+// reads as a speck of grit rather than as a notice, while a post growing out of
+// the top of a post reads as a mast. A notice goes on the board and a flag flies
+// from the head of the pole, which is where both of them are now.
 function drawMark(ctx, s, mark) {
-  const x = Math.round((s.x + s.w / 2 - P / 2) / P) * P;   // a whole cell, kept square
   if (mark === 'flag') {
-    ctx.fillRect(x, s.y - P * 5, P, P * 5);                // a post above the board
-    ctx.fillRect(x + P, s.y - P * 5, P * 2, P * 2);        // with a flag on it
+    // A short mast off the board's own head with a pennant on it. Two cells of
+    // mast, because it has to clear the board and nothing more: the flag is the
+    // loudest thing a sign can say and it says it by breaking the line the
+    // boards make along the yard, not by being tall.
+    ctx.fillRect(s.x + P / 2, s.y - P * 2, P, P * 2);
+    ctx.fillRect(s.x + P * 1.5, s.y - P * 2, P * 2, P);
   } else if (mark === 'dot') {
-    ctx.fillRect(x, s.y - P * 3, P, P);                    // just a dot
+    // A notice pinned in the slot, at the end you read to. A cell and a half
+    // rather than a cell: one cell survives at full size and disappears the
+    // moment the yard is zoomed out, which is exactly when you are looking
+    // across it deciding where to walk.
+    ctx.fillRect(s.x + s.w - P * 2.5, s.y + P, P * 1.5, P);
   }
 }
 
@@ -131,8 +145,13 @@ export function drawSigns(ctx, markOf = () => '') {
       ctx.fillRect(s.x, s.y, s.w, s.h);
     } else {
       ctx.fillRect(s.x, s.y, s.w, s.h);
+      // A letterbox of paper, one cell tall, not the two-cell square it was.
+      // Every building in this yard is a black mass with square white windows
+      // cut out of it, and a square of white framed in black on a post is a
+      // window on a stick -- it was the one thing about these that read as
+      // something else entirely. Nothing here is this shape but a sign.
       ctx.fillStyle = '#fff';
-      ctx.fillRect(s.x + P, s.y + P / 2, s.w - P * 2, s.h - P);
+      ctx.fillRect(s.x + P, s.y + P, s.w - P * 2, P);
       ctx.fillStyle = '#000';
       drawMark(ctx, s, markOf(which));      // the one you are at needs no telling
     }

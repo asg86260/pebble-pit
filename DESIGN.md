@@ -748,9 +748,16 @@ It says what it has without being opened, in one mark above the slab:
 | nothing | you have read the board and cannot afford anything new |
 | a dot | there is a row on it you could buy right now |
 | a flag on a post | a whole heading you have never seen has appeared |
+| a clock | what it costs in waiting, priced in the bill with the coins |
 
 A flag outranks a dot, because one more row under a heading you have already read is not news and
 a new group is. Opening the board reads every heading on it, and the flag comes down.
+
+**Time is a price.** A thing that takes two minutes costs you two minutes, so it is written in the
+bill beside the dust and the stone under a clock, not spelled out in a note. A row that needs a
+second sheet to open beside it to carry one number is a row that does not say what it is. You cannot
+be short of time, so the clock on a bill is never greyed and is never the reason a row is out of
+reach; while something is being made the clock counts down what is left of it.
 
 **Every station says the same two things, on its sign.** The bench had this on its own for a long
 while, which meant the one board you were expected to keep returning to was the only one that told
@@ -771,9 +778,33 @@ in. So the same act — go and look at that — was the size of a shed in one pl
 wall in another, and two of them overlapped on the way past.
 
 A sign is one size everywhere: six cells by three on a three-cell post, two cells clear of its
-station, on the side you arrive from. White paper with a black edge, and the one you are standing at
-fills in solid. The board is seated over the sign and the wedge that keeps it open while you walk to
-it is drawn from the sign, so the sheet comes out of the thing the cursor is actually on.
+station, on the side you arrive from. The board is seated over the sign and the wedge that keeps it
+open while you walk to it is drawn from the sign, so the sheet comes out of the thing the cursor is
+actually on.
+
+**The paper on it is a slot, not a panel.** Every building in this yard is a black mass with square
+white windows cut out of it, and a two-cell square of white framed in black on a post is that same
+token on a stick — the signs read as windows. One cell tall is a letterbox, which is a shape nothing
+else here has, and that proportion is the whole of why a sign now reads as a sign.
+
+**Both marks are on the sign.** They used to float clear above it — the dot three cells up, the flag
+on a second post above the post the board already stands on. At the size these are drawn a cell
+floating on its own in the air is a speck of grit, and a post growing out of the top of a post is a
+mast. The notice is pinned in the slot, a cell and a half of it, because one cell disappears exactly
+when the yard is zoomed out and you are looking across it deciding where to walk; the pennant flies
+from a two-cell mast off the board's own head, which is where a flag goes. The one you are standing
+at is filled in solid and shows neither.
+
+Two things were tried and thrown out, both for the same reason — a sign has about thirty pixels by
+fifteen to work in. **A cantilever** (the board hung off the end of a tall post) had far and away the
+best silhouette until it was looked at beside the rest: it reads as a flag on a flagpole, and a flag
+is already what "there is something new here" means. A sign whose resting shape is one of its own
+states cannot say anything. And **a mark per station** in the paper, so that a sign said *which*
+place it belonged to — which would have been worth a great deal at the cut and the plots, the two
+sites with no building to recognise. Eight marks in a paper four cells by three come out at fifteen
+pixels by ten, where a shard, a hat and a puff of smoke are the same smudge; even drawn at eight
+times size the cut's triangle and the tower's collided. Eight marks nobody can tell apart are worse
+than eight blanks, which at least do not pretend to say anything.
 
 **The bench keeps its old whole-thing reach.** It is the first board there is, met before there is
 anything else on the ground for it to be consistent with, and a first board hiding behind a post is

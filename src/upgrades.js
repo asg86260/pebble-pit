@@ -93,11 +93,19 @@ export const MARK = {
   core: '<i class="core"></i>',
   shard: '<i class="shard"></i>',
   spore: '<i class="spore"></i>',
-  spark: '<i class="spark"></i>'
+  spark: '<i class="spark"></i>',
+  // Time is a price like the rest of them. Something that takes two minutes
+  // costs you two minutes, and a row that said so in a note was a row you had to
+  // open a second sheet beside to read one number off. It goes in the bill with
+  // the coins, under a clock, and reads the same way they do.
+  time: '<i class="clock"></i>'
 };
 
-// what you have of one
+// what you have of one. Time is the exception and always will be: you cannot be
+// short of it, so a bill that asks for it is never the reason a row is out of
+// reach and the clock on it is never greyed.
 export const purse = money =>
+  money === 'time' ? Infinity :
   money === 'core' ? S.cores :
   money === 'shard' ? S.shards :
   money === 'spore' ? S.spores :
@@ -745,6 +753,13 @@ function take(money, n) {
 // whichever kind it is.
 export const billOf = u => u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
 
+// A price, in the words that price is said in. Coins are counted; time is read
+// off a clock, and a hundred and twenty thousand of anything is not a thing
+// anybody says about two minutes.
+export const priceText = (money, n) =>
+  money !== 'time' ? String(n) :
+  n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}s`;
+
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
 export function buy(u) {
@@ -759,7 +774,7 @@ export function buy(u) {
   if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return;
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
-  for (const [money, n] of billOf(u)) take(money, n);
+  for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
 
   u.buy();
   S.dirty = true;

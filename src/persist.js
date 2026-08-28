@@ -211,7 +211,6 @@ export function persist() {
     scrubOpen: S.scrubOpen,
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
-    magicLoo: S.magicLoo,
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
     // handed back. The hat on the go is not: a spell in the middle of being cast
@@ -420,7 +419,6 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
-  S.magicLoo = !!s.magicLoo;
   S.meteorOpen = !!s.meteorOpen;
   S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
@@ -569,7 +567,6 @@ export function reset() {
   S.scrubOpen = false;
   S.towerOpen = false;
   S.outhouseOpen = false;
-  S.magicLoo = false;
   S.meteorOpen = false;
   S.summon = 0;
   S.flashAt = 0;

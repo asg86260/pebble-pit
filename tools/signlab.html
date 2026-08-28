@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>sign lab</title>
+<style>
+  html, body { margin: 0; background: #fafafa; }
+  canvas { display: block; }
+</style>
+<canvas id="c" width="1560" height="820"></canvas>
+<script>
+// Round six, and the last one: the letterbox against itself.
+//
+// A four-by-one slot of paper reads as a sign because no window in this yard is
+// that shape -- they are all squares. What is left to settle is how loud the
+// notice on it should be, and that is only answerable at the size the yard draws
+// them and with eight of them in a row, because a sign is read as one of a set
+// while walking past.
+const ctx = document.getElementById('c').getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+let Z = 8;
+function box(ox, oy, x, y, w = 1, h = 1) {
+  ctx.fillRect(Math.round((ox + x) * Z), Math.round((oy + y) * Z),
+               Math.round(w * Z), Math.round(h * Z));
+}
+function building(ox, oy) {
+  ctx.fillStyle = '#000';
+  box(ox, oy, 0, 0, 10, 8);
+  ctx.fillStyle = '#fff';
+  for (const [x, y] of [[1, 1], [4, 1], [7, 1], [1, 4], [4, 4], [7, 4]]) box(ox, oy, x, y, 2, 2);
+  ctx.fillStyle = '#000';
+}
+
+// the two of them differ in one cell: how much of the slot the notice fills
+function make(fill) {
+  return function (ox, oy, state) {
+    ctx.fillStyle = '#000';
+    box(ox, oy, 2.5, -3, 1, 3);                 // post
+    box(ox, oy, 0, -6, 6, 3);                   // board
+    if (state === 'open') return;               // the one you are at is filled in
+    ctx.fillStyle = '#fff'; box(ox, oy, 1, -5, 4, 1); ctx.fillStyle = '#000';
+    if (state === 'dot') box(ox, oy, 5 - fill, -5, fill, 1);
+    if (state === 'flag') { box(ox, oy, 0.5, -8, 1, 2); box(ox, oy, 1.5, -8, 2, 1); }
+  };
+}
+const P = make(1), Q = make(1.5);
+
+const CANDS = [['P  a cell of notice', P], ['Q  a cell and a half', Q]];
+const STATES = ['', 'dot', 'flag', 'open'];
+
+ctx.fillStyle = '#fafafa';
+ctx.fillRect(0, 0, 1560, 820);
+ctx.font = '12px ui-monospace, "Courier New", monospace';
+
+function sheet(scale, oyStart, label, named) {
+  Z = scale;
+  ctx.fillStyle = '#666';
+  ctx.fillText(label, 8, oyStart * scale - 22);
+  let row = 0;
+  for (const [name, fn] of CANDS) {
+    const oy = oyStart + row * (scale >= 8 ? 15 : 12);
+    if (named) { ctx.fillStyle = '#888'; ctx.fillText(name, 8, (oy - 11) * Z + 2); }
+    let ox = 4;
+    for (const st of STATES) {
+      ctx.fillStyle = '#000'; ctx.fillRect((ox - 2) * Z, oy * Z, 24 * Z, 1);
+      building(ox - 1, oy - 8);
+      fn(ox + 13, oy, st);
+      ox += 30;
+    }
+    row++;
+  }
+}
+
+// eight along a yard, which is how they are actually met
+function street(scale, oy, fn, label) {
+  Z = scale;
+  ctx.fillStyle = '#666';
+  ctx.fillText(label, 8, oy * scale - 14);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(2 * Z, oy * Z, 300 * Z, 1);
+  const states = ['', 'dot', '', 'flag', '', 'dot', 'open', ''];
+  let ox = 6;
+  for (const st of states) {
+    building(ox, oy - 8);
+    fn(ox + 13, oy, st);
+    ox += 22;
+  }
+}
+
+sheet(8, 16, 'eight times size', true);
+sheet(5, 62, 'at the size the yard draws them', false);
+street(5, 100, P, 'P — a street of them, one dot, one flag, one open');
+street(5, 122, Q, 'Q — the same street');
+street(3, 146, Q, 'Q — zoomed out');
+
+// --- the cart, since it grew a wheel ------------------------------------------
+// Four cells by two of white box with a black edge, hitched behind a body. On
+// the ground it read as a crate being dragged; a cell of wheel under the middle
+// is the difference between hauled and wheeled.
+function carter(ox, oy, wheel) {
+  const W = 4, H = 2;
+  ctx.fillStyle = '#000';
+  box(ox, oy, 0, -3, 3, 3);                       // the body pulling it
+  const bx = ox + 4, by = oy - (wheel ? 3 : 2);
+  ctx.fillStyle = '#fff'; box(bx, by, 0, 0, W, H);
+  ctx.fillStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(Math.round(bx * Z) + 1, Math.round(by * Z) + 1,
+                 Math.round(W * Z) - 2, Math.round(H * Z) - 2);
+  box(ox + 3, oy - 2, 0, 0, 1, 0.4);              // the shaft
+  if (wheel) box(bx, by, W / 2 - 0.5, H, 1, 1);   // and the wheel
+}
+Z = 8;
+ctx.fillStyle = '#666';
+ctx.fillText('the cart: as it was, and with a wheel under it', 8, 200 * 8 / 8 + 560);
+ctx.fillStyle = '#000'; ctx.fillRect(8, 72 * 8, 60 * 8, 1);
+carter(3, 72, false); carter(14, 72, true);
+Z = 5;
+ctx.fillStyle = '#000'; ctx.fillRect(8, 128 * 5, 60 * 5, 1);
+carter(3, 128, false); carter(14, 128, true);
+Z = 3;
+ctx.fillStyle = '#000'; ctx.fillRect(8, 226 * 3, 60 * 3, 1);
+carter(3, 226, false); carter(14, 226, true);
+
+</script>

@@ -42,6 +42,11 @@ function element(tag = 'div') {
     setAttribute: noop, getAttribute: () => null,
     getBoundingClientRect: () => ({ x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 }),
     className: '',
+    // Nothing here is nested -- the children this makes are flat -- so nothing
+    // has an ancestor to find. It answers the question rather than not having
+    // the method, which is the difference between a check that runs and a check
+    // that dies on the way in.
+    closest: () => null,
     // Enough of a selector engine for `.cls`, which is how a row finds the cell
     // it wants to fill in. Rows used to be addressed by position -- children[2]
     // -- which meant wrapping two cells in a third renumbered every one of them.
