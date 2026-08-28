@@ -982,10 +982,15 @@ player to come back tomorrow. No score, no summary screen, no percentage-of-a-pe
 
 *(The thing in the sky was benched for exactly one reason: it hung there doing nothing, and an
 object that does that raises a question the game cannot answer. What it needed was a reason to be
-there — a place people go, or something worth walking out for — and it has one now. The tower
-calls it down for cores; a wizard, which is a hat the tower makes over a couple of minutes, is the
-one body that can leave the ground; and what comes off it is dust from the rind and **red** from
-the core. It runs out, and the wizards make the next one: they hold their ring
+there — a place people go, or something worth walking out for — and it has one now. The tower is
+raised for cores and raises nothing but hats; a wizard, which is a hat the tower makes over a couple
+of minutes, is the one body that can leave the ground; and what comes off a star is dust from the
+rind and **red** from the core. **The first star is summoned like every other one.** The tower used
+to call one down as it went up, which put a star overhead before anybody could reach it and made
+the first wizard a person who turns up to take apart something that was already there — when making
+it is the whole of what a wizard does. So the first hat opens the sky *empty*, whoever wears it goes
+up to nothing at all, and the first thing that happens up there is the thing that happens every time
+after: they hold their ring
 round the empty spot and pour into the middle of it until a star is there, which
 takes about three quarters of a minute for one body and half of that for two. An
 empty sky is a job rather than a wait, and a yard with nobody in the air stays

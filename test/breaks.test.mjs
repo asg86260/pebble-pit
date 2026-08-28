@@ -100,35 +100,40 @@ group('a crew with nowhere to put anything walks home rather than freezing', asy
   ];
 });
 
-// The outhouse is the one building whose whole point is that somebody is inside
-// it. They used to walk to the door and stand in the road for a minute with a
-// mark over their head, which is a body queueing at a shed it never used.
-group('the crew go inside the outhouse, and the shed says how many are in', async () => {
+// What the closet buys is a job, not a place.
+//
+// It was a shed the crew walked to: across the yard, in for a minute, out, and
+// back to work, several times an hour each. That is a lot of walking to buy, it
+// takes bodies off the job for the length of it, and it makes the purchase a
+// destination when what you actually wanted was somebody whose job it is to
+// clear up. So they go where they stand, whether the closet is up or not, and
+// what the closet changes is that a janitor can be posted at all.
+group('the closet buys the job, not somewhere to walk to', async () => {
   window.__crew(3, 3);
-  window.__loo();
+  window.__loo();                            // the closet up
   window.__tune('LOO_EVERY', 4000);          // ten minutes a body, wound in
+  window.__air({ haze: 0, muck: 0 });
   run(4);
 
-  const went = runUntil(() => state().inLoo > 0, 120);
-  const busy = state();
-  const inside = yard.S.workers.filter(w => w.inLoo);
-  const mid = busy.outhouseX + 21;           // the middle of a seven-cell front
-  const atShed = inside.every(w => Math.abs(w.x + 9 - mid) < 12);
+  const shed = state().outhouseX;
+  // where they were when they went, and how far that is from the closet
+  const went = runUntil(() => state().saying > 0, 120);
+  const going = yard.S.workers.filter(w => w.say && w.say.mark === 'loo');
+  const away = going.map(w => Math.round(Math.abs(w.x - shed)));
+  const nobodyIn = state().inLoo === 0;
 
-  // and out again, on their own
-  const came = runUntil(() => state().inLoo === 0, 120);
+  run(30);
   const after = state();
 
   window.__tune('LOO_EVERY', 600000);
   window.__crew(0, 0);
-  window.__air({ haze: 0, muck: 0 });
   return [
-    ok(went && busy.inLoo > 0, 'a body due one goes in', `${busy.inLoo} inside`),
-    ok(atShed, 'and it is in the shed rather than beside it',
-       inside.map(w => Math.round(w.x)).join()),
-    ok(inside.every(w => !w.say),
-       'with nothing over its head: what says so is the shed, from over the roof'),
-    ok(came && after.inLoo === 0, 'and it comes out again on its own',
-       `${after.inLoo} left inside`)
+    ok(went && going.length > 0, 'a body due one goes', `${going.length} at it`),
+    ok(nobodyIn, 'and nobody is inside the shed, because nobody walked to it',
+       `${state().inLoo} inside`),
+    ok(away.some(d => d > 200), 'they go where they were working, wherever that is',
+       `${away.join(', ')}px from the closet`),
+    ok(after.smog.poop > 0, 'and what they leave is left there for somebody to clear',
+       `${after.smog.poop} cells`)
   ];
 });

@@ -174,8 +174,16 @@ function point(w) {
 // of names taller than the window, standing on the ground the house is standing
 // on, with the one row you can actually press hiding at the top of it. The names
 // are a list you go and read; the block is a thing you buy.
+// The way through to the people is at the *top* of the sheet and the thing you
+// buy is at the bottom, which is the wrong way round to read and the right way
+// round to use. The board comes out above the house and the cursor arrives from
+// the house, so whatever is on the bottom row is what the cursor crosses first
+// -- and with the door down there, every walk up to the block to put another one
+// up went through the settlement on the way and threw the sheet open sideways.
+// A row that only puts a list up is a fine thing to have to reach for; a row you
+// came to press is not.
 export function crewRows() {
-  return [HOUSE_ROW, CREW_ROW];
+  return [CREW_ROW, HOUSE_ROW];
 }
 
 // The door through to them. It is priced like the rows below it are -- where the
@@ -233,6 +241,6 @@ function people() {
 // the sheet that opens off it wears the same word at the top, which is how a
 // submenu says which heading it came out of.
 export const crewSections = () => [
-  { title: 'the block', keys: [HOUSE_ROW.key] },
-  { title: 'the crew', keys: [CREW_ROW.key] }
+  { title: 'the crew', keys: [CREW_ROW.key] },
+  { title: 'the block', keys: [HOUSE_ROW.key] }
 ];

@@ -11,7 +11,7 @@ import { group, ok, state, run, runUntil, yard, P, WORKER } from './helpers.mjs'
 const wizards = () => state().workerPos.filter(p => p[0] === 'w');
 const wizardY = () => state().wizardY;
 
-group('the tower calls a meteor down, and it is a rock like any other', async () => {
+group('a star is a rock like any other', async () => {
   window.__crew(0, 0);
   const bare = state();
   window.__meteor();
@@ -24,7 +24,7 @@ group('the tower calls a meteor down, and it is a rock like any other', async ()
     ok(!bare.meteorOpen && bare.meteor === 0, 'a new yard has an empty sky',
        `${bare.meteor} cells up there`),
     ok(called.meteorOpen && called.meteor > 60,
-       'and the tower puts a whole one in it', `${called.meteor} cells`),
+       'and a whole one in it is a good many cells', `${called.meteor} cells`),
     ok(called.meteorRind > 0 && called.meteorCore > 0,
        'grey on the outside and red in the middle',
        `${called.meteorRind} rind, ${called.meteorCore} core`),
@@ -396,5 +396,48 @@ group('the sky is saved as it was left', async () => {
     ok(after.wizardHats === before.wizardHats && after.meteorOpen,
        'and the tower still has its hat and its sky',
        `${after.wizardHats} hats, open ${after.meteorOpen}`)
+  ];
+});
+
+// The tower is a tower. What it is for is hats, and what a hat is for is the
+// sky -- so the sky arrives with the first person who can reach it, and it
+// arrives the way every sky after it does: summoned, out of nothing, by somebody
+// hanging in the middle of where it is going to be.
+//
+// It used to come down with the tower itself, which put a star overhead before
+// there was anybody who could touch it, and made the first wizard a person who
+// turns up to take apart something that was already there.
+group('the tower goes up bare, and the first hat calls the first star', async () => {
+  window.__reset();
+  window.__give(999999);
+  window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+  window.__build();
+  const raised = window.__buy('unlocktower');
+  const tower = state();
+
+  // the tower's own row, pressed the way a player presses it
+  window.__buy('wizard');
+  const brewing = state().brewing;   // the row stays up saying how long is left
+  runUntil(() => state().wizardHats > 0, 240);
+  const hatted = state();
+
+  // somebody to put in it
+  window.__crew(0, 0, 0, 0, 0, 1);
+  const rose = runUntil(() => state().aloft > 0, 90);
+  const came = runUntil(() => state().meteor > 0, 240);
+  const sky = state();
+
+  window.__crew(0, 0);
+  window.__reset();
+  return [
+    ok(raised && tower.towerOpen, 'the tower goes up'),
+    ok(!tower.meteorOpen && tower.meteor === 0,
+       'and nothing comes down with it', `${tower.meteor} cells`),
+    ok(brewing, 'a hat can be started without a sky to point at'),
+    ok(hatted.meteorOpen && hatted.meteor === 0,
+       'and the hat opens the sky, empty', `${hatted.meteor} cells`),
+    ok(rose, 'the wizard goes up to nothing at all'),
+    ok(came && sky.meteor > 60, 'and summons the first star into it',
+       `${sky.meteor} cells`)
   ];
 });

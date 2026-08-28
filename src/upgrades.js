@@ -583,26 +583,29 @@ export const UPGRADES = [
     // it, which reads as the game not having noticed.
     show: () => !S.scrubOpen && S.rains > 0 && S.seenAir
   },
-  // The last thing on the ground, and the only one that makes nothing. It is
-  // the far end of the walk on purpose, and it is the last core you spend.
-  // Somewhere to go. What it does is not remove the mess -- a shed with a hole
-  // under it is not a drain -- it *gathers* it: the crew stop leaving one wherever
-  // they were working and leave it all in one place instead, which is one patch
-  // to shovel rather than a yard of them. The tower deals with the rest, later.
+  // The last thing on the ground, and the only one that makes nothing.
+  //
+  // What it buys is a *job*, not a place. It was a shed the crew walked to,
+  // which sent everybody across the yard and back several times an hour and made
+  // the purchase a destination -- and a body walking to a shed is a body not
+  // working. So the crew go where they stand, as they always did, and what this
+  // puts up is the cupboard the shovels live in: somewhere for a janitor to
+  // keep one, and therefore somewhere for there to be a janitor at all. See
+  // `capOf`, which will not let you post one until this is up.
   {
     key: 'unlockouthouse',
-    name: 'build the outhouse',
-    note: () => 'the crew go here instead of wherever they are standing',
+    name: "build the janitor's closet",
+    note: () => 'somewhere to keep a shovel, and somebody to swing it',
     cost: () => OUTHOUSE_DUST,
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },
     // Offered once you have seen why you want one -- which is now a thing you can
     // point at rather than a guess about how far along you are.
     //
     // It used to appear on a headcount and a fraction of its price, which is the
-    // game deciding you are ready. What makes somebody want an outhouse is
-    // five patches of mess on the ground that nobody is clearing up, so that is
-    // what puts it on the board. It stays once seen: a yard that had five and
-    // then was tidied is a yard that has learned what the shed is for.
+    // game deciding you are ready. What makes somebody want a janitor is five
+    // patches of mess on the ground that nobody is clearing up, so that is what
+    // puts it on the board. It stays once seen: a yard that had five and then
+    // was tidied is a yard that has learned what the job is for.
     show: () => !S.outhouseOpen && (S.seenMess || poopLeft() >= LOO_MUCK * 5)
   },
   // The one thing a core buys, and the only row in the game with a bill rather
@@ -615,16 +618,14 @@ export const UPGRADES = [
     note: () => 'what a core is for',
     bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
     cost: () => TOWER_DUST,                      // for anything that asks in one coin
-    // Raising it calls the first one down. The sky is what the tower is for, and
-    // charging separately for it -- a second core, on a board that had nothing
-    // else to offer until you paid -- meant building the thing that reaches the
-    // sky and then being told the sky was extra. After this first one the
-    // wizards summon their own.
+    // Raising it raises a tower and nothing else. It used to call the first star
+    // down with it, which put the sky there before there was anybody who could
+    // reach it -- and made the wizards people who take an existing thing apart,
+    // when making it is the whole of what they do. The first hat out of this
+    // tower summons the first star, the same way every hat after it summons the
+    // next one. See `stepTower`.
     buy: () => {
       S.towerOpen = true;
-      S.meteorOpen = true;
-      S.skyShown = true;
-      makeMeteor();
       lookAt(tower.x + tower.w / 2);
     },
     // Not offered until a core exists to spend. Before that it is a row asking

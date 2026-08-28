@@ -433,3 +433,102 @@ group('clearing a handful puts the crew back to work', async () => {
        `${rockFreed} -> ${working.rock}`)
   ];
 });
+
+// A body that is nearly full does not cross the yard for one more thing.
+//
+// A find is picked before dust however far off it lies, and that is right: a
+// green one is worth walking for. It stops being right when the hands doing the
+// walking have one grain of room left. That body goes the length of the world,
+// past the hole it could have emptied into on the way, to fetch one thing --
+// while an empty pair of hands behind it fetches dust from under its feet. The
+// work still gets done, by the wrong body, which is the only thing a hauler can
+// get wrong.
+group('a laden body banks what it has rather than crossing the yard', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(2, 4, 0, 2);                  // two on the beds: green, at the far end
+  window.__levels({ haulCarryLevel: 5 });     // hands big enough to be part-full
+  const s0 = state();
+  for (let x = s0.pitX - 900; x < s0.pitX - 60; x += P * 8) window.__pile(x, 6);
+  run(20);                                    // let the beds come in
+
+  const cap = state().haulCap;
+  const banked0 = state().pit;
+  // The rule itself rather than the shape of it: a share of the walking is a
+  // number that moves from run to run, and a threshold picked to sit between two
+  // of them is a check that fails on a quiet afternoon.
+  // At the moment of claiming, which is what the rule is about. A claim already
+  // held can drift out of reach as the body fills up at the column it is
+  // standing on, and giving that up would be giving up a column it is halfway
+  // through -- so what has to be true is that it never *sets off* on one.
+  let far = 0, took = 0;
+  const had = new Map();
+  for (let i = 0; i < 3600; i++) {
+    run(1 / 60);
+    const s = state();
+    s.crewDetail.forEach((row, idx) => {
+      const [type, , x, c, k] = row.split('|');
+      if (type !== 'h') return;
+      const claim = Number(k.slice(1));
+      const before = had.get(idx);
+      had.set(idx, claim);
+      if (!(claim >= 0) || before === claim) return;   // nothing newly taken on
+      const carry = Number(c.slice(1)), px = Number(x);
+      if (carry < cap / 2) return;            // room to spare: it may go anywhere
+      took++;
+      const to = s.floorX + claim * P;
+      if (Math.abs(to - px) > Math.abs(s.pitX - px)) far++;
+    });
+  }
+  const held = took;
+  const banked = state().pit - banked0;
+  window.__reset();
+  return [
+    ok(cap >= 6, 'the hands are big enough for a part load to mean anything', `${cap}`),
+    ok(held >= 5, 'and laden hands did take a column on often enough to judge',
+       `${held} times`),
+    ok(far === 0, 'never one further off than the hole it could empty into first',
+       `${far} of ${held}`),
+    ok(banked > 0, 'and the hole still fills', `${banked} grains`)
+  ];
+});
+
+// And when the ground is backing up, the heap comes first.
+//
+// A find is picked before dust, which is right nearly all of the time: a green
+// one is rare and dust is not. It stops being right the moment a heap fills,
+// because a full heap *stops the station behind it* -- the rock stops coming
+// apart -- while a find lying about stops nothing and is worth exactly as much
+// in an hour. A yard where the crew step over the heap that is holding up the
+// works to go and collect a spore is a yard that grinds to a halt with everybody
+// busy.
+group('a heap that is backing up is cleared before the finds are collected', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(4, 4, 0, 2);                  // and two on the beds, paying green
+  window.__levels({ haulCarryLevel: 5, pickLevel: 6, minerPickLevel: 6 });
+  run(30);                                    // long enough to be a going concern
+
+  let full = 0, n = 0;
+  for (let i = 0; i < 5400; i++) {
+    run(1 / 60);
+    if (state().pileFull.rock) full++;
+    n++;
+  }
+  const s = state();
+  window.__reset();
+  const stopped = full / n;
+  return [
+    ok(s.pileCount.rock > 0, 'there is a heap under the rock to be dealt with',
+       `${s.pileCount.rock} of ${s.pileLimit.rock}`),
+    // It sat full about five sixths of the run while the finds always won, and
+    // about seven tenths once the heap could win. Four fifths is the wrong side
+    // of that and clear of the noise.
+    ok(stopped < 0.8, 'the rock is not stopped by its own heap for most of the run',
+       `${(stopped * 100).toFixed(1)}% of the time`),
+    // The point of clearing it is what gets banked while the works keep running:
+    // this ran at about fifty grains before and two hundred after.
+    ok(s.pit > 100, 'and a good deal more comes off the yard for it',
+       `${s.pit} grains banked`)
+  ];
+});

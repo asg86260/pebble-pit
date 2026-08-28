@@ -1106,30 +1106,6 @@ export function drawOuthouse() {
   ctx.fillStyle = '#000';
 }
 
-// Who is in there, said over the roof: one mark a body, in a row. The outhouse
-// is the one building whose whole point is that somebody is inside it and you
-// cannot see them -- a shed with the door shut and nothing to say about it is a
-// shed nobody would ever look at twice.
-export function drawOuthouseUse() {
-  if (!S.outhouseOpen) return;
-  const busy = S.workers.filter(w => w.inLoo).length;
-  if (!busy) return;
-  // The middle of the shed, and not the middle of the shed rounded to the
-  // lattice: a seven-cell front has its centre *on* the middle column, and
-  // rounding that to a cell edge put the mark half a body off the ridge.
-  const mid = outhouse.x + outhouse.w / 2;
-  // Stacked, not spread. Two of them side by side sat off over the eaves and
-  // read as marks about the yard rather than about the shed; going up says
-  // "another one" without the first one moving.
-  ctx.fillStyle = MUCK_TONE;
-  for (let i = 0; i < busy; i++) {
-    const top = outhouse.y - P * 3 - i * P * 3;
-    ctx.fillRect(mid - P * 1.5, top, P * 3, P);
-    ctx.fillRect(mid - P * 0.5, top - P, P, P);
-  }
-  ctx.fillStyle = '#000';
-}
-
 // The tower. Everything the crew put up is a shed or a hole; this is neither, so
 // it is the one thing here with a roof that comes to a point -- and a smaller one
 // beside it doing the same, because two pointed roofs at different heights is
@@ -2080,7 +2056,15 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
     // was drawn at a *negative* width and so never drawn at all: a lopsided stub
     // rather than a hat. It is the one piece of headgear in the yard with a
     // shape of its own and it was the one drawn wrong.
-    ctx.fillRect(x - (tight ? 0 : P), y - P, WORKER + (tight ? 0 : P * 2), P);
+    //
+    // And it keeps its brim wherever it is drawn. `tight` is for hats that can
+    // afford to lose their overhang -- a helmet is a helmet either way -- and
+    // this is the one that cannot: the brim standing proud of the body is the
+    // whole of what says wizard. Squeezed to the body's own width it was three
+    // cells on three cells with a nub on top, which is a bottle with a cork in
+    // it, and it was what every counter in the game was wearing while the body
+    // out in the yard wore a cone.
+    ctx.fillRect(x - P, y - P, WORKER + P * 2, P);
     ctx.fillRect(x, y - P * 2, WORKER, P);
     ctx.fillRect(x + P, y - P * 3, P, P);
     return;
@@ -2352,7 +2336,7 @@ export function drawIntro() {
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the cut, in the outhouse, or home
-    if (underground(w) || indoors(w) || inHouse(w) || atHome(w) || w.inLoo) continue;
+    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
@@ -2494,7 +2478,6 @@ export function draw() {
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
   drawDraught();           // the air going into the scrubbing house
-  drawOuthouseUse();       // and who is in the outhouse, over its roof
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower
   drawLabMark();           // and a tick over it if it finished something

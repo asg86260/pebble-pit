@@ -17,6 +17,7 @@ import { MAGIC_LOO_DUST, MAGIC_LOO_SPORES,
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
+import { emptySky } from './meteor.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -41,6 +42,15 @@ export function stepTower() {
   if (!brewing() || now() < S.brewAt) return;
   S.brewAt = 0;
   S.wizardHats++;
+  // The first hat opens the sky -- empty, because a star is a thing wizards make
+  // and this is the moment there is one to make it. Whoever wears this hat goes
+  // up to nothing at all and summons the first one, which is what the ring of
+  // them does for every star after it too.
+  if (!S.meteorOpen) {
+    S.meteorOpen = true;
+    S.skyShown = true;
+    emptySky();
+  }
   rebalance();
   syncWorkers();
   S.dirty = true;
@@ -86,7 +96,8 @@ export const TOWER_UPGRADES = [
     // saying how long is left rather than vanishing until it is done.
     buy: () => { if (!brewing()) S.brewAt = now() + WIZ_BREW_MS; },
     dead: () => brewing(),
-    show: () => S.meteorOpen
+    // Once the tower is up, not once the sky is: this row is how the sky opens.
+    show: () => S.towerOpen
   }
 ];
 

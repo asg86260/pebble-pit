@@ -151,7 +151,16 @@ canvas {
   cursor: pointer;
 }
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
-.rows button:disabled { opacity: .3; cursor: default; }
+/* A row you cannot press yet is dimmed by *colour* rather than by opacity, so
+   that something inside it can still be darker than it is. Opacity on the row
+   multiplies everything under it and there is no way back up from it -- which
+   was fine while a dimmed row was one flat statement, and is not fine now that
+   half of a bill can be affordable and half of it not. */
+.rows button:disabled { color: #aaa; cursor: default; }
+.rows button:disabled .gain, .rows button:disabled .cost { opacity: 1; }
+/* The coins you have, in a bill you cannot yet pay. What is greyed is what you
+   are short of, which is the question you were asking. */
+.rows button:disabled .cost .have { color: #000; opacity: .7; }
 
 /* A row you have never had on an open board. The mark is the one the yard
    already uses for "there is something here": the dot on the bench itself, at

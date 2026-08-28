@@ -7,7 +7,8 @@
 import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
-        HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS } from './config.js';
+        HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
+        PILE_LIMIT } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -511,38 +512,10 @@ function relieve(w, now) {
   // session of watching nothing happen and concluding the knob is broken.
   if (w.looAt > now + LOO_EVERY) w.looAt = now + LOO_EVERY * Math.random();
 
-  // On its way there. A body walks to the outhouse like it walks to everything
-  // else -- it is a shed on the far side of the yard, not a state you enter.
-  if (w.looTo != null) {
-    const d = w.looTo - w.x;
-    if (Math.abs(d) > WORKER) {
-      w.face = Math.sign(d) || w.face || 1;
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.y = stand(w);
-      w.lunge = 0;
-      return true;
-    }
-    // Arrived, and *in* it. A body that stood outside the door for a minute with
-    // a mark over its head was a body queueing at a shed it never used -- the
-    // whole of what the outhouse is for is that the crew go inside it, and what
-    // says so from across the yard is the marks over the roof rather than a
-    // figure standing in the road. See `drawOuthouseUse`.
-    w.looTo = null;
-    w.inLoo = true;
-    w.x = outhouse.x + outhouse.w / 2 - WORKER / 2;
-    w.y = stand(w);
-    w.say = null;
-    w.looUntil = now + LOO_MS;
-    return true;
-  }
-
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
     if (now < w.looUntil) { w.lunge = 0; return true; }
-    w.inLoo = false;                       // out again, at the door it went in by
-    // What it leaves. The outhouse gathers it into one place rather than getting
-    // rid of it -- a shed with a hole under it is not a drain -- and that is the
-    // whole of what it buys you: one patch to shovel instead of a yard of them.
-    // Once the tower has seen to it there is nothing to shovel at all.
+    // What it leaves, where it was standing. Once the tower has seen to it there
+    // is nothing left at all.
     if (!S.magicLoo) dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
     w.looUntil = 0;
     w.say = null;
@@ -561,17 +534,18 @@ function relieve(w, now) {
   // already indoors to come back out and shovel, which is a yard that can never
   // settle. It is also what was asked for: they go while they are working.
   if (w.goal === 'home' || w.goal === 'idle' || w.brk) return false;
-  // There is somewhere to go: it walks there. Nothing is dropped on the way and
-  // nothing where it was standing.
-  if (S.outhouseOpen) {
-    w.looTo = outhouse.x + outhouse.w / 2 - WORKER / 2;
-    w.resting = false;
-    return true;
-  }
   // Nowhere within reach that anybody could clean: hold on. A body down a hole
   // or shut in a building is the case this catches.
   if (cleanSpotNear(w.x + WORKER / 2) == null) return false;
-  // No shed to go to, so it goes where it stands, and says so over its own head.
+  // It goes where it stands, and says so over its own head -- always, now.
+  //
+  // There used to be a shed to walk to, and the crew walked to it: across the
+  // yard, in, out, and back to work. That is a long way to send somebody, it
+  // took them off the job for the length of the walk, and it turned the thing
+  // you bought into a place rather than a job. What you buy now is the closet a
+  // janitor keeps a shovel in -- the *post*, not the destination -- so the mess
+  // still lands where the body was working and somebody whose job it is comes
+  // round and clears it. See `capOf`, which is what the closet actually opens.
   w.looUntil = now + LOO_MS;
   w.say = { mark: 'loo', until: w.looUntil };
   w.resting = false;                       // stopped, but this is not a break
@@ -1339,6 +1313,23 @@ function nearestMark(w, taken) {
   return best;
 }
 
+// How much more this trip will hold.
+const roomLeft = w => load(w) - (w.carry || 0);
+
+// Whether anything on the ground is backing up.
+//
+// A pile that fills stops the station behind it: the rock stops coming apart,
+// the cut stops being cut. A find lying on the ground stops nothing at all -- it
+// is worth money and it is in nobody's way. So while a heap is near its limit
+// the dust is the urgent thing and the find can wait, which is the other way
+// round from the rest of the time.
+//
+// Three quarters rather than full, because full is already too late: by then the
+// station has stopped, and what you want is the crew turning up before it does.
+const BACKED_UP = 0.75;
+const pilingUp = () => S.piles.some(p =>
+  (S.pileCount[p.key] || 0) >= (PILE_LIMIT[p.key] || Infinity) * BACKED_UP);
+
 // the columns already spoken for this frame
 function claims() {
   const taken = new Set();
@@ -1813,9 +1804,32 @@ export function updateWorkers(now, dt) {
         // Nothing at all is fetched without room for it -- a shard on the ground
         // with a full hole behind it is a shard that stays on the ground.
         if (bookRoom(w) > 0) {
-          const c = nearestMark(w, taken);                // a find first, if there is one
-          const pick = c >= 0 ? c : nearestDust(w.x, taken);
-          if (pick >= 0) { w.claim = pick; taken.add(pick); }
+          // A find first, if there is one -- unless the heaps are backing up, and
+          // then the dust first, because that is the half of it that stops the
+          // yard working. Whichever is chosen, the other is the fallback: a body
+          // that came out to fetch goes back with something.
+          const mark = nearestMark(w, taken);
+          const dust = nearestDust(w.x, taken);
+          const first = pilingUp() ? dust : mark;
+          const other = pilingUp() ? mark : dust;
+          const pick = first >= 0 ? first : other;
+          // And nothing further off than the hole is, once the hands are more
+          // than half full.
+          //
+          // A find is taken before dust however far away it lies, which is right
+          // -- a green one is worth crossing the yard for. It is not right for a
+          // body with one grain of room left: it walks the length of the world,
+          // past the hole it could have emptied into on the way, to fetch one
+          // thing it can barely hold, while an empty pair of hands behind it
+          // fetches dust from under its feet. So the walk has to be worth the
+          // room: half a load or more free and it goes anywhere, and under that
+          // it takes what is nearer than the hole or banks what it has and comes
+          // back out empty, when the whole yard is open to it again.
+          const far = pick >= 0 &&
+            Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
+          if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
+            w.claim = pick; taken.add(pick);
+          }
         }
       }
       if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }

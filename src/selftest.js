@@ -514,6 +514,44 @@ const TESTS = [
     ];
   }],
 
+  // A bill of two coins is a row you cannot press for either of two reasons, and
+  // "you are short of something" is not the same news as "you are short of
+  // *this*". Dimmed alike, a player holding the stone but not the dust reads the
+  // same row as one holding neither, and has to go and count both piles to find
+  // out which half to go and fix.
+  ['a bill you can half afford says which half', async () => {
+    window.__reset();
+    await settle();
+    window.__give(3000);                       // dust enough, stone not
+    window.__grant({ cores: 1, shards: 2, spores: 0 });
+    window.__crew(2, 2);
+    run(20);
+    window.__board('bench');
+    await sleep(400);
+    const rows = [...document.querySelectorAll('#shop button[data-key]')]
+      .filter(b => b.offsetParent && b.querySelectorAll('.cost span').length > 1);
+    const ink = el => getComputedStyle(el).color;
+    const dim = [], lit = [];
+    for (const b of rows) {
+      if (!b.disabled) continue;              // an affordable row is not the case
+      for (const sp of b.querySelectorAll('.cost span')) {
+        (sp.classList.contains('short') ? dim : lit).push(ink(sp));
+      }
+    }
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(dim.length > 0 && lit.length > 0,
+         'there is a row priced in something you have and something you have not',
+         `${lit.length} held, ${dim.length} short`),
+      ok(lit.every(c => c === 'rgb(0, 0, 0)'),
+         'what you have is written as plainly as on any other row',
+         [...new Set(lit)].join(' ')),
+      ok(dim.every(c => c !== 'rgb(0, 0, 0)'),
+         'and only what you are short of is greyed', [...new Set(dim)].join(' '))
+    ];
+  }],
+
   ['no row on any board sits on top of itself', async () => {
     window.__reset();
     await settle();
@@ -2839,6 +2877,57 @@ const TESTS = [
       ok(rungs.every(r => r[1]), 'and the board is still up after every one',
          rungs.filter(r => !r[1]).map(r => r[0]).join(', ') || 'all of them'),
       ok(door === false, 'while breaking the ground puts it away', `${door}`)
+    ];
+  }],
+
+  // The board comes out above the house and the cursor comes up from the house,
+  // so the bottom row of the sheet is the one it walks through -- and while that
+  // was the door to the settlement, going to put another block up threw the list
+  // of names open every single time, which is a sheet doubling in width under a
+  // cursor that was aiming at something else.
+  ['walking up to the block does not open the settlement on the way', async () => {
+    window.__reset();
+    await settle();
+    window.__give(999999);
+    window.__grant({ cores: 9 });
+    window.__crew(6, 3);
+    run(20);
+    // stood at the house, which is what puts the board up in the first place --
+    // the walk has to start from where a hand actually starts
+    const from = await hoverHouse();
+    await sleep(400);
+    const buy = document.querySelector('#crewshop button[data-key="house"]');
+    const rows = [...document.querySelectorAll('#crewshop button')];
+    const box = buy.getBoundingClientRect();
+    const x = Math.round(box.left + box.width / 2);
+    let opened = false;
+    // Up from the house, a few pixels at a time, the way a hand moves -- and
+    // crossing into a row has to *say* so. A synthetic pointermove raises no
+    // enter and no leave of its own, and a row opens its list on being entered,
+    // so a walk that only moves is a walk that can never trip the thing this is
+    // looking for.
+    let was = null;
+    for (let y = Math.round(from.y); y >= Math.round(box.top + 8); y -= 6) {
+      const el = document.elementFromPoint(x, y) || document.querySelector('canvas');
+      const at = { clientX: x, clientY: y, bubbles: true };
+      if (el !== was) {
+        if (was) was.dispatchEvent(new PointerEvent('pointerleave', { ...at, bubbles: false }));
+        el.dispatchEvent(new PointerEvent('pointerenter', { ...at, bubbles: false }));
+        was = el;
+      }
+      el.dispatchEvent(new PointerEvent('pointermove', at));
+      await sleep(16);
+      if (state().crewListOpen) opened = true;
+    }
+    const arrived = state();
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(rows.length === 2 && rows[rows.length - 1].dataset.key === 'house',
+         'the row you press is the one nearest the yard',
+         rows.map(r => r.dataset.key).join(' then ')),
+      ok(!opened, 'and reaching it never puts the settlement up'),
+      ok(arrived.houseBoardOpen, 'and the board is still there when you get there')
     ];
   }],
 

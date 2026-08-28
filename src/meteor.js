@@ -126,6 +126,25 @@ export const meteorAlive = () => S.meteorOpen && sky.n > 0;
 // A new one, filled in from the middle out: a disc of rind with a core in it.
 // Anything outside the circle is nothing at all, so what you see is a round
 // thing rather than a square one with corners knocked off.
+// The sky before there is anything in it: the lattice a star gets built in, and
+// no star. What it is for is the first one.
+//
+// The tower used to call a star down as it went up, which made the wizards
+// people who took an existing thing apart. They are the ones who *make* it --
+// they do it for every star after the first, in a ring, pouring light into the
+// middle of an empty spot -- and the first is the one worth watching them do.
+// So raising the tower raises a tower, and the sky opens when there is somebody
+// who can work it. From there this is the same state a picked-clean sky is in,
+// and `summoning` and `summon` do not have to know which one they are looking
+// at.
+export function emptySky() {
+  const n = Math.max(3, Math.round(sky.r * 2 / P));
+  sky.cols = sky.rows = n;
+  sky.cells = new Uint8Array(n * n);
+  sky.n = 0;
+  S.dirty = true;
+}
+
 export function makeMeteor() {
   const n = Math.max(3, Math.round(sky.r * 2 / P));
   sky.cols = sky.rows = n;

@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { RUNGS } from './config.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, rungOf, maxed } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, rungOf, maxed } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -279,7 +279,13 @@ export function refresh(el, list, headcount) {
     // a mark and a number and even two side by side ran out of it. The column is
     // measured now, so they fit -- and a bill that grows downwards was the last
     // thing on these boards making one row taller than the next.
-    const parts = billOf(u).map(([money, n]) => `<span>${MARK[money]} ${n}</span>`);
+    // And each coin says whether you have it. A bill of two is a row you cannot
+    // press for one of two reasons, and "you are short of something" is not the
+    // same information as "you are short of *this*": with the whole row dimmed
+    // alike, a player with the stone and not the dust reads the same row as one
+    // with neither, and has to go and count both piles to find out which.
+    const parts = billOf(u).map(([money, n]) =>
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">${MARK[money]} ${n}</span>`);
     const bill = parts.join('');
     const [name, gain, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;

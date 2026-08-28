@@ -29,6 +29,10 @@ import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { UPGRADES, buy as buyRow, rungOf, maxed } from './upgrades.js';
+import { TOWER_UPGRADES } from './tower.js';
+import { LAB_UPGRADES } from './lab.js';
+import { SCHOOL_UPGRADES } from './school.js';
+import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -300,12 +304,24 @@ export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = t
 // the board looks like: how far up its ladder it is, whether it is finished, and
 // whether pressing it does anything.
 export const upgrades = () => UPGRADES;
+// Any board's rows, not just the bench's. A check that wants to press the row
+// that raises a wizard should press *that row*, prices and rules and all, rather
+// than reach past it for the dev handle that sets the flag the row would have
+// set -- which is how a check ends up agreeing with a shortcut instead of with
+// the game.
+const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
+                        ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES];
+
 export const buyRowByKey = key => {
-  const u = UPGRADES.find(x => x.key === key);
+  const u = everyRow().find(x => x.key === key);
   if (!u) return false;
+  // Did it fire? A rung says so by going up. A row that buys a *thing* has no
+  // rung to count, and says so by no longer being on the board -- which is the
+  // same question the shop asks when it decides whether a press did anything.
   const was = rungOf(u);
+  const showed = u.show();
   buyRow(u);
-  return rungOf(u) > was;
+  return rungOf(u) > was || (showed && !u.show());
 };
 
 // Press the pile, through the row on the board rather than around it: the price
