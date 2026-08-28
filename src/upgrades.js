@@ -450,7 +450,11 @@ export const UPGRADES = [
     rung: () => S.haulCarryLevel,
     from: () => haulCap(),
     to: () => haulCap(S.haulCarryLevel + 1),
-    bill: () => [['spore', rungCost(6, S.haulCarryLevel)], ['dust', rungCost(50, S.haulCarryLevel)]],
+    // Dust and nothing else. The crew's first two ladders are the first thing
+    // anybody buys after their own hands, and they come long before the cut or
+    // the beds -- so pricing them in stone or crop was asking for a currency the
+    // game has not shown you yet, on the two rows most likely to be the first
+    // you ever read. The first round is dust. See "The ladder" in DESIGN.md.
     cost: () => rungCost(50, S.haulCarryLevel),
     buy: () => S.haulCarryLevel++,
     show: () => S.crew > 0
@@ -463,7 +467,6 @@ export const UPGRADES = [
     rung: () => S.haulPaceLevel,
     from: () => haulSpeed() * 60,
     to: () => haulSpeed(S.haulPaceLevel + 1) * 60,
-    bill: () => [['shard', rungCost(5, S.haulPaceLevel)], ['dust', rungCost(60, S.haulPaceLevel)]],
     cost: () => rungCost(60, S.haulPaceLevel),
     buy: () => S.haulPaceLevel++,
     show: () => S.crew > 0

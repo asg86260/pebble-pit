@@ -1034,12 +1034,18 @@ telling you where to go next, and it is the only nudge it needs to give.
 
 | tier | currency | comes from | what it buys |
 |---|---|---|---|
-| 1 | dust | the rock | your strength, hold to mine, your swing |
-| 2 | spores | **the beds** | strength: yours and the crew's |
+| 1 | dust | the rock | your strength, hold to mine, your swing, and the crew's first strength and speed |
+| 2 | spores | **the beds** | strength past what feeding a body by hand can do |
 | 3 | shards | **the cut** | gear: the pickaxes, the carts |
 | 4 | cores | a rock | buildings, and nothing else |
 | 5 | hearts | **a star** | the machines: faster, and dirtier with it |
 | 6 | sparks | a star | the last two rungs of every ladder |
+
+**The first round is dust, all of it.** The crew's strength and speed are the
+first things anybody buys after their own hands, and they come long before the
+cut or the beds -- so pricing them in stone or crop asks for a currency the game
+has not shown you yet, on two of the first rows you will ever read. A tier's
+currency gates the tier; it does not gate the way in.
 
 **The beds come before the cut.** Food makes bodies and stone makes tools, and a
 body has to exist before its tool means anything -- so green is strength and blue
