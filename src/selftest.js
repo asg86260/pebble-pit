@@ -2622,6 +2622,54 @@ const TESTS = [
   // is on. It sat at a lower layer than the menu, so a note with nowhere to
   // stand did not overlap the board -- it disappeared into it, and the row
   // looked like it had something to say and said nothing.
+  // Getting to the names is possible with a hand rather than with a ruler.
+  //
+  // The path from the door on the house board to a body's row in the list beside
+  // it crosses a strip of bare canvas -- and a real pointer does not cross it in
+  // a straight line: it dips under the sheet, overshoots the gap, cuts the
+  // corner. Every one of those is a frame spent a little outside the panel, and
+  // the board used to shut on it and take the list with it, which made the
+  // submenu impossible to reach.
+  ['you can get to the names without a ruler', async () => {
+    window.__reset();
+    await settle();
+    window.__crew(6, 2);
+    window.__give(40000);
+    run(30);
+    await hoverHouse();
+    const door = await openCrewList();
+    await sleep(120);
+    const rows = [...document.querySelectorAll('#crewlistrows button')];
+    const dr = door.getBoundingClientRect();
+    const target = rows[0].getBoundingClientRect();
+
+    // the ugliest crossing there is: out of the bottom of the board, along under
+    // the panel, and up into the list
+    const dip = document.getElementById('panel').getBoundingClientRect().bottom + 18;
+    const path = [
+      [dr.right - 6, dr.bottom - 2],
+      [dr.right + 10, dip],
+      [(dr.right + target.left) / 2, dip],
+      [target.left + 20, dip],
+      [target.left + 20, target.top + 6]
+    ];
+    let openThroughout = true;
+    for (const [x, y] of path) {
+      point('pointermove', x, y, 0);          // to the canvas: the game's own ears
+      await sleep(50);
+      if (!state().houseBoardOpen || !state().crewListOpen) openThroughout = false;
+    }
+    const at = state();
+    await hoverAway();
+    window.__crew(0, 0);
+    return [
+      ok(rows.length > 0, 'there are names to walk to', `${rows.length} of them`),
+      ok(openThroughout, 'and the board and its list survive the crossing'),
+      ok(at.houseBoardOpen && at.crewListOpen, 'and are still up at the far end of it',
+         `${at.houseBoardOpen}, ${at.crewListOpen}`)
+    ];
+  }],
+
   ['a note stands clear of the board it belongs to', async () => {
     window.__reset();
     await settle();

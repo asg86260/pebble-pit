@@ -238,7 +238,19 @@ const GAP = 4;                             // never flush against the edge
 // out, the rectangle is wider by the width of it and the wedge reaches the far
 // corner of the list, the gap between the two sheets included. Hovering the
 // names, and walking across to them, is being on the board.
-const SAFE_SLACK = 12;             // and a little grace either side of that
+// And the grace either side of it, which is generous on purpose.
+//
+// Twelve pixels is what a rectangle needs and not what a hand needs. A pointer
+// crossing from the board to the names beside it does not travel in a straight
+// line -- it dips below the sheet, overshoots the gap, arcs round the corner --
+// and every one of those is a frame or two spent a few pixels outside a box that
+// is *right there on the screen*. Which shut the board, and took the list with
+// it, while the cursor was plainly on its way into it.
+//
+// Nothing is lost by being generous here. The zone only holds the board open
+// while it is already open; stepping properly away still shuts it, because
+// properly away is further than this.
+const SAFE_SLACK = 34;
 
 // Where the board actually is on screen, from the numbers `place` already keeps.
 // `putY` is how far its bottom edge stands above the foot of the window -- that
