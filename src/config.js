@@ -1061,16 +1061,23 @@ export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // rather than a find -- and a tap is a number going up, not a thing you went and
 // got.
 //
-// A cut is full of dirt. Somebody works down through it, and at the bottom there
-// is a seam: a handful of stone all at once, thrown up over the rim, and then the
-// climb out and the hole falls in again behind them. Deeper cut, bigger seam.
-// The blue arrives in lumps you can watch coming.
+// So a cut is a *job*: full of dirt, worked down through, and the ground falls
+// back in behind the last one out. Deeper cut, more stone in it. What that first
+// bought was a seam at the bottom -- dig the lot out, then stand there and throw
+// a handful over the rim -- and that overshot in the other direction. A minute
+// of swinging that pays on its last frame is a loading bar with people drawn on
+// it, and the pile outside only ever moved while nobody was digging.
+//
+// What is here now is the middle of the two: the stone is *in the ground*,
+// scattered through the cells of the cut, and a swing either turns some up or
+// does not. A dig is still a bounded thing you finish, and still worth exactly
+// CUT_SEAM a bench -- see `findShards`, which deals the scatter rather than
+// rolling it, so the amount never drifts and a dig never ends owing you any.
 // The swinging in one dig, at pace nought. What a dig actually takes is this
 // plus the walking between cells, which is real and is meant to be: a cut is
 // worked by people crossing it, not by a number filling.
-export let CUT_DIG_MS = 16000;   // to get from the surface to the seam, at pace 0
-export const CUT_SEAM = 2;         // shards in the seam, per bench of depth
-export const CUT_TOSS_MS = 320;    // and how fast they go up over the rim
+export let CUT_DIG_MS = 16000;   // to get from the surface to the bottom, at pace 0
+export const CUT_SEAM = 2;         // shards in the ground, per bench of depth
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // And how fast it steps between the cells of its own face, which is a different

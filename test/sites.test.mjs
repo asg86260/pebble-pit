@@ -17,11 +17,11 @@ group('the quarry gives up shards, and somebody fetches them', async () => {
     const s = state();
     onTheFloor = onTheFloor || s.workerPos.some(p =>
       p[0] === 'q' && +p.split(',')[1] > s.groundY);
-    return s.finds.includes('shard');
-    // A cut is dug out to a seam now rather than shedding a shard every few
-    // swings, so the first blue of a run is a whole dig away -- about a minute
-    // of three bodies working down through the ground. That is the point of it:
-    // blue arrives in a handful you waited for.
+    // Both, and not just the shard: what a cut holds is scattered through the
+    // ground, so a swing at the surface can turn one up before anybody has got
+    // properly down the hole. The shard on its own would let this pass without
+    // a quarrier ever having stood on the floor of the thing.
+    return onTheFloor && s.finds.includes('shard');
   }, 180);
   const waiting = state();
 
@@ -271,5 +271,62 @@ group('muck in the hole lies on the dust and is climbed down to', async () => {
        `${wasAt} -> ${after.workerPos.filter(p => p[0] === 'h').join()}`),
     ok(after.pit === state().pit,
        'and not one grain of it counted against what the hole holds')
+  ];
+});
+
+// What a cut holds is scattered through it, not stacked at the bottom.
+//
+// A dig used to pay on its last frame: work the whole hole out, then stand there
+// and throw a handful over the rim. That made a minute of digging worth nothing
+// to watch and the pile outside only ever moved while nobody was swinging. Now
+// the stone is in the ground and a swing either turns some up or does not -- but
+// the *amount* is unchanged, because a shard still in the ground is in one of
+// the cells still in the ground, so a finished dig has always found all of it.
+group('a cut gives its stone up while it is being dug', async () => {
+  window.__crew(0, 0, 3);
+  window.__levels({ quarryPaceLevel: 6 });   // brisk, so a few holes fit in the window
+  quickCrew();
+  window.__clearFloor();
+  run(4);
+
+  // Shards brought up, counted off the crew rather than off the pile, so that
+  // sweeping the yard between samples does not lose any.
+  const quarried = () => state().crewNames.split(' ')
+    .reduce((a, p) => a + (+(p.split('|')[4] || 'q0').slice(1) || 0), 0);
+
+  // Watch a few holes go down. A dig ends when the ground falls back in, which
+  // is the share dug dropping away from wherever it had got to.
+  // Counting starts at the first fall-in and not before: the hole that was
+  // already half worked when the window opened has some of its stone up already,
+  // and half a dig measured against a whole seam is a sum that will not come out.
+  let digs = -1, midDig = 0, seam = state().seam;
+  let was = state().quarryDug, cells0 = 0, q0 = 0, cells1 = 0, q1 = 0;
+  for (let i = 0; i < 1100; i++) {
+    run(0.4);
+    window.__clearFloor();                   // the quarry's pile never fills up
+    const s = state();
+    if (digs >= 0 && s.quarryDug > 0.05 && s.quarryDug < 0.8 && s.quarryOwed < s.seam) midDig++;
+    if (s.quarryDug < was - 0.3) {
+      if (digs < 0) { cells0 = cells1 = s.quarryTotal; q0 = q1 = quarried(); digs = 0; }
+      // and the tally is read at a fall-in too, never mid-hole: the dig still
+      // going on when the window shuts has some of its stone up and the rest
+      // still in the ground, which is neither a whole seam nor none of one.
+      else { digs++; cells1 = s.quarryTotal; q1 = quarried(); }
+    }
+    was = s.quarryDug;
+    seam = s.seam;
+  }
+  digs = Math.max(0, digs);
+  const cells = cells1 - cells0, got = q1 - q0;
+  window.__crew(0, 0, 0);
+  return [
+    ok(digs > 0, 'a hole or two got dug right out and fell back in', `${digs} digs`),
+    ok(got === digs * seam,
+       'and each finished dig gave up its whole seam, no more and no less',
+       `${got} shards over ${digs} digs of ${seam}`),
+    ok(midDig > 0, 'stone turns up part-way down, not only at the bottom',
+       `${midDig} frames of a half-dug hole already short of its ${seam}`),
+    ok(cells > got * 3, 'and a swing that turns something up is the rare one',
+       `${got} shards out of ${cells} cells`)
   ];
 });

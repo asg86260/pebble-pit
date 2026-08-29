@@ -13,12 +13,13 @@ group('every trade doubles the work it is for', async () => {
   window.__clearFloor();
   // What the sites *do* in a fixed stretch of yard. The plots are measured by
   // what lands in their pile; the quarry is measured by how far down it gets,
-  // because a cut pays in a seam at the bottom of a whole dig now and a
-  // ninety-second window of one is a window with nothing in it either way.
-  // How far it got is the work; the seam is only where the work is handed over.
+  // because what a cut pays is fixed per dig -- the stone is scattered through
+  // the ground and a dig turns up all of it -- so counting shards would measure
+  // how many holes happened to finish inside the window rather than how hard
+  // anybody worked. How far it got is the work.
   // Cells out of the ground, counted outright: the share dug runs round and
   // round as the hole is emptied and falls in, so a window that happens to cross
-  // a payout reads as negative work.
+  // the end of a dig reads as negative work.
   const dug = () => state().quarryTotal;
   const p0 = dug();
   run(90);

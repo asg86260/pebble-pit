@@ -8,7 +8,7 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, CUT_TOSS_MS } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
@@ -209,6 +209,10 @@ export function stepQuarrier(w, now) {
     if (Math.abs(d) >= 1) return;
     w.x = rim;
     if (S.quarrySpent) return;                      // stood at the rim until it fills
+    // Ground nobody has broken into yet. `fillQuarry` lays the stone in behind a
+    // finished dig, but the first hole of a session was never filled in by
+    // anybody -- it has simply always been there -- so it is laid here.
+    if (S.quarryOwed <= 0 && !dugShare()) S.quarryOwed = seamShards();
     w.goal = 'down';
     w.seat = seatX(w);
     return;
@@ -286,28 +290,9 @@ export function stepQuarrier(w, now) {
     w.swingAt = now + QUARRY_SWING * (0.7 + Math.random() * 0.6);
   }
 
-  // At the seam: the handful goes up over the rim, a stone at a time, so it
-  // reads as somebody unloading rather than a number arriving.
-  //
-  // The seam is the hole's, not the finder's. Three bodies at the bottom share
-  // one handful out between them -- they got there faster, which is what more
-  // hands buys, and a gang that each walked off with a full seam would make
-  // headcount pay twice for the same hole.
-  if (S.quarryOwed > 0) {
-    if (now < (w.tossAt || 0)) return;
-    tossOut(w.x + WORKER / 2, w.y + WORKER);
-    w.quarried = (w.quarried || 0) + 1;
-    foul(QUARRY_FOUL, w.x + WORKER / 2, w.y, 'shard');
-    S.quarryOwed--;
-    w.tossAt = now + CUT_TOSS_MS;
-    w.lunge = 1;
-    if (S.quarryOwed <= 0) S.quarrySpent = true;       // that is the lot: everybody out
-    S.dirty = true;
-    return;
-  }
-
-  // Seam emptied and the hole dug out: up the ladder. The ground comes back in
-  // behind the last one out -- see the 'up' leg.
+  // The hole dug out: up the ladder. The ground comes back in behind the last
+  // one out -- see the 'up' leg. There is nothing to stay down for: whatever the
+  // ground held was found on the way through it.
   if (quarryDone()) { w.goal = 'up'; return; }
 
   // Digging. Silt first: rain fills the quarry from the top, and it has to come out
@@ -339,9 +324,13 @@ export function stepQuarrier(w, now) {
   if (now < w.next) return;
 
   const c = w.cell;
+  // What is still in the ground, counted before this swing takes a cell out of
+  // it, so the cell being dug is one of the ones the stone could be in.
+  const left = cellsLeft();
   cells[c]++;
   S.quarryTotal = (S.quarryTotal || 0) + 1;
   w.cell = null;                               // done with that one: it picks another
+  findShards(w, left);
   // Digging raises dust, not only the seam at the bottom. The quarry used to foul
   // the air once per shard, which was the same event as producing one; now that
   // production is a lump at the end, fouling only on the payout meant a cut
@@ -353,10 +342,44 @@ export function stepQuarrier(w, now) {
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
   S.dirty = true;
 
-  if (quarryDone() && S.quarryOwed <= 0) {
-    S.quarryOwed = seamShards();
-    w.tossAt = 0;
-  }
+  if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out
+}
+
+// --- what is in the ground ------------------------------------------------------
+// A dig is worth `seamShards()`, and it always was. What changed is where in the
+// dig they turn up.
+//
+// They used to be a seam at the bottom: dig the whole cut out, then stand there
+// and throw a handful up over the rim. Which made the digging itself worth
+// nothing to watch -- a minute of swinging that pays on the last frame is a
+// loading bar with people drawn on it, and the pile outside only ever moved
+// while nobody was digging.
+//
+// So the stone is *scattered through the ground* instead, and a swing either
+// turns some up or does not. The scatter is dealt rather than rolled: each shard
+// still in the ground is in one of the cells still in the ground, picked evenly,
+// so a swing turns one up with a chance of one-in-what-is-left. Two things fall
+// out of that and both are the point. The dig pays exactly what it always paid,
+// so `dig deeper` is worth exactly what the board says. And the last cell of a
+// cut is certain -- one cell left, one place a shard can be -- so a dig never
+// ends owing you anything, and there is no run of bad luck that costs you a
+// quarry.
+//
+// `left` is the count *including* the cell just swung, which is what makes that
+// last cell come out at one-in-one.
+function findShards(w, left) {
+  if (S.quarryOwed <= 0 || left <= 0) return;
+  let found = 0;
+  for (let n = 0; n < S.quarryOwed; n++) if (Math.random() * left < 1) found++;
+  if (!found) return;
+  S.quarryOwed -= found;
+  w.quarried = (w.quarried || 0) + found;
+  // The swing that found it is the swing that throws it out, so the stone leaves
+  // the hole from the cell it came out of rather than from wherever the body
+  // happened to finish up.
+  for (let n = 0; n < found; n++) tossOut(w.x + WORKER / 2, w.y + WORKER);
+  foul(QUARRY_FOUL * found, w.x + WORKER / 2, w.y, 'shard');
+  S.dirty = true;
 }
 
 // nobody is out of sight any more: the whole point of a cut rather than a shaft
@@ -426,6 +449,14 @@ export function quarryDone() {
   return cells.length > 0;
 }
 
+// and how much of it is still in, in cells -- what a find is drawn against
+export function cellsLeft() {
+  const cells = quarryCells();
+  let left = 0;
+  for (let c = 0; c < cells.length; c++) left += Math.max(0, quarryTarget(c) - cells[c]);
+  return left;
+}
+
 // how much of it is out, for a readout
 export function dugShare() {
   const cells = quarryCells();
@@ -487,6 +518,11 @@ export function nextQuarryCell(x, self = null) {
 export function fillQuarry() {
   const cells = quarryCells();
   for (let c = 0; c < cells.length; c++) cells[c] = 0;
+  // Fresh ground with the next dig's stone already in it. It is set here rather
+  // than when somebody first swings because the amount depends on how deep the
+  // cut is, and a bench bought halfway down a dig should pay from the next one
+  // -- the ground you are standing in holds what it held when it was laid.
+  S.quarryOwed = seamShards();
   S.dirty = true;
 }
 
