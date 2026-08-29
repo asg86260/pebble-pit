@@ -437,6 +437,11 @@ group('a jaw pays a dig exactly what a gang would', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 1);
+  // Wound right down for the measuring. At its real rate the jaw takes a hole
+  // out in well under a second, and a whole dig can begin and end inside one
+  // sample -- so the fall-ins get miscounted and the sum comes out one short.
+  // What is being checked is the arithmetic of the payout, not the speed of it.
+  window.__tune('MACHINE_GAIN', 0.15);
   window.__machine('jaw', { bought: true, on: true });
   window.__clearFloor();
   run(4);
@@ -460,6 +465,7 @@ group('a jaw pays a dig exactly what a gang would', async () => {
   }
   digs = Math.max(0, digs);
   const got = q1 - q0;
+  window.__tune('MACHINE_GAIN', 1.5);
   window.__crew(0, 0, 0);
   return [
     ok(digs > 0, 'the jaw digs a hole right out and it falls back in',

@@ -24,6 +24,12 @@ import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
+import { machine } from './machines.js';
+import { walkY } from './world.js';
+import { jawX, jawY } from './quarry.js';
+import { ramX } from './rock.js';
+import { tillerAt } from './farm.js';
+import { MACHINE_PUFF_MS, MACHINE_PUFF_S } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -2478,8 +2484,12 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
+  drawJaw();                 // after the quarry, or its white columns erase it
   drawBridge();              // and the way across it
+  drawHoist();               // which the hoist stands on
   drawFarm();
+  drawTiller();
+  drawRam();                 // before the rock, so the hill stands in front of it
   drawSky();
   drawLab();
   drawCasino();
@@ -2652,3 +2662,143 @@ export function drawCursor() {
 
 // the board opens when the cursor comes near the bench. There is nothing to
 // click: the ground round it sweeps like anywhere else
+
+
+// --- the machines ---------------------------------------------------------------
+// Three machines and a hoist, drawn the way everything else in this yard is
+// drawn: a solid black shape with a few white holes knocked in it, laid out in
+// whole cells off a snapped corner.
+//
+// Each one moves, and each one moves *differently*, because that is what makes
+// three black blocks read as three different machines from across the yard. The
+// jaw opens and shuts. The hoist's skip rides up and down its rope. The ram's
+// piston strikes and draws back. The tiller crawls the row. None of those phases
+// is stored on the machine as a position -- they are read off the clock, so a
+// paused game holds still and a machine that is not running settles rather than
+// freezing mid-stroke.
+//
+// Nothing here decides *whether* a machine is working. It asks the record, and
+// the record is the same one `stepMachines` reads.
+
+// How far through its stroke, 0..1, and nought when it is not actually working.
+// A machine standing idle with its mouth half open reads as broken; one that
+// closes and stays closed reads as off, which is what it is.
+function stroke(key, ms = 900) {
+  const m = machine(key);
+  if (!m || !m.bought || !m.on) return 0;
+  return (now() % ms) / ms;
+}
+
+// A machine that has been bought but is not running is still *there* -- it is a
+// large object somebody paid for. It is drawn the same and simply does not move.
+const built = key => { const m = machine(key); return !!(m && m.bought); };
+
+// The jaw: a block on the floor of the cut with a mouth cut white out of its
+// front, opening and shutting on its own beat. It stands on the ground as the
+// ground is now -- see `jawY`, which reads `dugTopY` -- so when the quarry falls
+// back in the jaw comes up with it, the way a quarrier's feet do.
+export function drawJaw() {
+  if (!S.quarryOpen || !built('jaw')) return;
+  const x = Math.round(jawX() / P) * P;
+  const y = Math.round(jawY() / P) * P;
+  const W = 4, H = 3;                          // cells
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, W * P, H * P);
+  // the stack, standing a cell proud of the body on the far side from the face
+  ctx.fillRect(x + P * (W - 1), y - P * 2, P, P * 2);
+  // The mouth: a white slot in the near face that opens a cell and shuts again.
+  // Two frames of animation is all it needs -- it is eighteen pixels of machine.
+  const open = stroke('jaw') < 0.5 ? 1 : 2;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, y + P, P, P * open);
+}
+
+// The hoist: an upright frame on the deck over the mouth of the cut, a white
+// rope line down the middle of it, and a skip that rides the rope. Its x comes
+// off `ladder()` so the rope and the rungs cannot drift apart when the quarry is
+// resited.
+export function drawHoist() {
+  if (!S.quarryOpen || !built('jaw')) return;
+  const l = ladder();
+  const x = Math.round((l.x - P * 3) / P) * P;
+  const top = Math.round((l.top - P * 7) / P) * P;
+  const H = 7;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, top, P, P * H);                        // the near leg
+  ctx.fillRect(x + P * 2, top, P, P * H);                // and the far one
+  ctx.fillRect(x, top, P * 3, P);                        // the head
+  // the rope, white, and the skip riding it
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + P, top + P, P, P * (H - 1));
+  const t = stroke('jaw', 2200);
+  const ride = Math.round(Math.abs(1 - t * 2) * (H - 3));  // up and back down
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + P, top + P + ride * P, P, P);
+}
+
+// The ram: a squat engine outside the apron with an arm that reaches into the
+// face and strikes. One white slot for the piston, and the arm is the thing that
+// moves -- it is the only machine whose working end is somewhere other than
+// where its body stands, which is the whole of why it can be there at all.
+export function drawRam() {
+  if (!built('ram')) return;
+  const x = Math.round(ramX() / P) * P;
+  const y = Math.round((S.groundY - P * 4) / P) * P;
+  const W = 4, H = 4;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, W * P, H * P);
+  ctx.fillRect(x + P, y - P * 2, P, P * 2);              // the stack
+  // The arm: out towards the hill on the stroke, back on the return.
+  const t = stroke('ram', 700);
+  const reach = t < 0.35 ? 3 : t < 0.5 ? 2 : 1;
+  ctx.fillRect(x + W * P, y + P, P * reach, P);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + P, y + P, P * 2, P);                   // the slot
+}
+
+// The tiller: a low frame that crawls the plot line and turns the ground behind
+// it. The only machine that travels, which is what makes it read as a different
+// kind of thing at a glance. Its x is derived from the plot it is working, so it
+// is where the work is by construction.
+export function drawTiller() {
+  if (!S.farmOpen || !built('tiller')) return;
+  const x = Math.round(tillerAt() / P) * P;
+  // It sits *on* the ground, so its foot is where a body's foot is. `walkY` is
+  // the top of a body standing there, not the surface under it -- a box drawn at
+  // `walkY - height` hangs below the line rather than standing on it.
+  const y = Math.round((walkY(x + WORKER / 2) + WORKER - P * 2) / P) * P;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, P * 3, P * 2);
+  ctx.fillRect(x + P, y - P * 2, P, P * 2);              // the stack
+  // Two wheels, white, turning: the cell that is cut out moves round the frame,
+  // which at this size is what a turning wheel looks like.
+  const t = stroke('tiller', 520);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + (t < 0.5 ? 0 : P * 2), y + P, P, P);
+}
+
+// A puff off a machine's stack. It is the same smoke the lab's chimney makes and
+// the same list, flagged `mach` so that the lab's own count -- which means
+// something specific, that research is being worked on -- is not muddled by it.
+//
+// Only a machine that is actually running smokes, and `stepMachines` is what
+// decides that. A stack puffing over an idle machine would be the drawing
+// claiming something the yard denies.
+const STACKS = {
+  jaw:    () => ({ x: jawX() + P * 3, y: jawY() - P * 2 }),
+  ram:    () => ({ x: ramX() + P, y: S.groundY - P * 6 }),
+  tiller: () => ({ x: tillerAt() + P, y: walkY(tillerAt() + WORKER / 2) + WORKER - P * 4 })
+};
+
+export function stepMachineSmoke(now) {
+  for (const key of Object.keys(STACKS)) {
+    const m = machine(key);
+    if (!m || !m.bought || !m.on) continue;
+    if (!m.working) continue;                  // idle, unmanned, or stood down
+    if (now < (m.puffAt || 0)) continue;
+    m.puffAt = now + MACHINE_PUFF_MS * (0.6 + Math.random() * 0.8);
+    const at = STACKS[key]();
+    S.smoke.push({ x: at.x, y: at.y, drift: (Math.random() - 0.5) * 0.3,
+                   s: MACHINE_PUFF_S, mach: true, t: 0 });
+  }
+}

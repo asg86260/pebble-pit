@@ -633,6 +633,12 @@ defineMachine('jaw', {
   type: 'quarrier',
   at: jawX,
   y: jawY,
+  // Where the *body* stands, which is not where the machine is. The jaw is on
+  // the floor of the cut; its tender works the hoist on the deck at the head of
+  // the ladder, which is also where the lever is. A tender posted down the hole
+  // would have to climb a ladder into a hole full of machine to do a job that is
+  // done at the top of it.
+  tendAt: quarryFace,
   // One cell takes it the station's own clock divided by what it is worth. The
   // pace upgrade and the quarry's own multiplier are inside `cellMs`, so they
   // keep applying to the machine exactly as they do to the hands.
@@ -652,7 +658,23 @@ defineMachine('jaw', {
     // record of its own -- the crew list counts people -- and the tender is the
     // one who brought it up, which is what `quarried` has always meant.
     findShards(tender || { x: jawX(), y: jawY() }, left);
-    if (quarryDone()) S.quarrySpent = true;
+    // And the ground comes back in behind it.
+    //
+    // Worked by hand this happens on the way *out*: the last body up the ladder
+    // fills the hole in behind itself, because dropping the dirt back under the
+    // feet of anybody still down there rode them up like a lift. A machine has
+    // nobody down there to consider -- its tender works the hoist on the deck --
+    // so the cut falls in the moment it is worked out, which is the same event
+    // without the climb.
+    //
+    // Without this the jaw dug the hole out exactly once and then stood in it
+    // for ever: `fillQuarry` had only ever been reached from a quarrier's own
+    // step, and a tended station does not run one.
+    if (quarryDone()) {
+      const below = S.workers.some(o => o.type === 'quarrier' && o.y > S.groundY);
+      if (!below) { fillQuarry(); S.quarrySpent = false; }
+      else S.quarrySpent = true;
+    }
     S.dirty = true;
     return true;
   }

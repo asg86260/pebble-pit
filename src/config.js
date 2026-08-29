@@ -1070,6 +1070,12 @@ export let MACHINE_FOUL = 3;
 // is a bare 5 inlined in the shared runner.
 export const ROCK_GANG = 5;
 
+// How often a machine's stack puffs, and how big the puff is. The lab's chimney
+// (HOUSE_PUFF_MS) and the cigarette's 0.55 are the two precedents; a machine sits
+// between them -- more often than a hearth, bigger than a cigarette.
+export const MACHINE_PUFF_MS = 520;
+export const MACHINE_PUFF_S = 0.8;
+
 // What the three of them cost.
 //
 // Every machine is priced in sparks, which is what makes them the last thing in

@@ -195,24 +195,33 @@ export const FARM_SECTIONS = [
 // mid-crawl resites the farm, and a remembered index would be a machine working
 // a furrow that had moved out from under it.
 export const tillerAt = () => {
-  const n = plotCount();
-  if (n < 1) return farm.x;
-  // Where along the row it is, worked out from the plot it is due to work next:
-  // the least ripe one, which is the one a hand would have picked too.
-  let want = 0, low = Infinity;
-  for (let i = 0; i < n; i++) {
-    const v = S.plots[i] == null ? 0 : S.plots[i];
-    if (v < low) { low = v; want = i; }
-  }
-  return plotX(want) - WORKER - P * 2;
+  if (plotCount() < 1) return farm.x;
+  // Where along the row it is, worked out from the furrow it is on -- the same
+  // answer `bite` uses, so the machine is always drawn at the work it is doing.
+  //
+  // It works one furrow through and then moves on, which is what a hand does and
+  // what the drawing needs. Taking the *least* ripe each beat looked like the
+  // same thing written the other way round and was not: a furrow stopped being
+  // the least ripe the instant it was touched, so the tiller shuffled along the
+  // whole row every beat, brought all seven on together, cut none of them, and
+  // its tender spent the entire day walking after it and never quite arriving.
+  return plotX(tillerPlot()) - WORKER - P * 2;
 };
 
+// Which furrow it is on. A ripe one first, then the least ripe.
+//
+// The "least ripe" half on its own was the whole of it to begin with, and it was
+// wrong in a way that took a check to see: the moment a plot came ripe it stopped
+// being the least ripe, so the tiller moved on and left it standing. It brought
+// all seven furrows to ripe and cut none of them. A hand does not work like that
+// -- it stays at its plot until the crop is off -- and neither should this.
 const tillerPlot = () => {
   const n = plotCount();
-  let want = 0, low = Infinity;
+  let want = 0, best = -1;
   for (let i = 0; i < n; i++) {
     const v = S.plots[i] == null ? 0 : S.plots[i];
-    if (v < low) { low = v; want = i; }
+    if (v >= 1) return i;                      // ripe: take it off before anything else
+    if (v > best) { best = v; want = i; }      // else finish the one already started
   }
   return want;
 };

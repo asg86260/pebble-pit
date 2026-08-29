@@ -38,6 +38,7 @@ import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
 import { canAfford, mineMs, restaff } from './upgrades.js';
+import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir } from './smog.js';
 import { stepScrub } from './scrubhouse.js';
@@ -126,6 +127,7 @@ export function step() {
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on
+  stepMachineSmoke(now);                      // and the stacks over the machines
   stepSmoke(now, dt);                         // which the chimney says out loud
   stepCasino(dt);                             // and the wheel, if there is anything on the table
   stepTable(dt);                              // and the pot, arriving or leaving, a grain at a time

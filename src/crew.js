@@ -857,6 +857,45 @@ export function stepLevers() {
   }
 }
 
+// Tending. One body, standing at the machine that has taken its job over.
+//
+// It is a walk like any other -- the machine is somewhere to be, and getting
+// there is the same commute a body makes to a plot or a face. What it does when
+// it arrives is nothing, visibly, which is correct: the machine is doing the
+// work and the body is the reason it is allowed to.
+//
+// Returns true when it has handled the body, so the station's own step is
+// skipped. It answers false for every body at a station with no machine running,
+// which is every body in the game until one is bought.
+function stepTender(w, now) {
+  const job = JOB_OF[w.type];
+  const key = JOB_MACHINE[job];
+  if (!key) return false;
+  const r = machine(key);
+  if (!r || !r.bought || !r.on) return false;
+  const spec = specOf(key);
+  if (!spec) return false;
+
+  w.y = walkY(w.x + WORKER / 2);
+  // Beside it, not on top of it, the same way a farmhand stands beside a plot
+  // rather than over the crop.
+  const to = (spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P);
+  const d = to - w.x;
+  if (Math.abs(d) > 1) {
+    w.face = Math.sign(d) || w.face || 1;
+    w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+    w.resting = false;
+    return true;
+  }
+  w.x = to;
+  w.face = 1;
+  // Not resting: it is at work, whatever it looks like. `break.js` hands a
+  // cigarette to a body that had stopped anyway, and a tender has not stopped --
+  // the runner also sets this, and both are right for the same reason.
+  w.resting = false;
+  return true;
+}
+
 // --- running a machine ----------------------------------------------------------
 // One frame of all three. The beat, the manning rule, and the extra dirt; the
 // work itself belongs to the station and is called through its own `bite`.
@@ -882,7 +921,8 @@ function tenderFor(spec, at) {
     if (w.type !== spec.type) continue;
     if (w.walking || w.inside || w.aloft || w.inPit || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
-    if (Math.abs((w.x + WORKER / 2) - (at + P)) > MACHINE_REACH) continue;
+    const post = spec.tendAt ? spec.tendAt() : at;
+    if (Math.abs(w.x - post) > MACHINE_REACH) continue;
     return w;
   }
   return null;
@@ -895,6 +935,7 @@ export function stepMachines(now) {
     if (!r || !spec || !r.bought || !r.on) continue;
 
     const at = spec.at();
+    r.working = false;                         // until it gets through all of it
     const tender = tenderFor(spec, at);
     // Unmanned: it does not tick, and -- because `beatAt` is left where it is --
     // it does not bank up a burst of work to do the moment somebody wanders back
@@ -908,6 +949,10 @@ export function stepMachines(now) {
     if (now < r.beatAt) continue;
     r.beatAt = now + ms;
     if (!spec.bite(tender)) continue;
+    // It did a unit of work this beat, which is the one thing the stack is
+    // allowed to read: a chimney smoking over a machine that is not getting
+    // anything done would be the drawing claiming what the yard denies.
+    r.working = true;
 
     // The extra dirt, from the machine's stack, in one place.
     //
@@ -1802,6 +1847,16 @@ export function updateWorkers(now, dt) {
       w.goal = 'to';
       w.muckAt = null;
     }
+    // A station whose machine is running is a station whose hand work has been
+    // taken over. Its body *tends*: it walks to the machine and stands at it,
+    // and the machine does the digging or the tilling or the swinging.
+    //
+    // Without this the tender did both -- it stood at the machine and worked its
+    // own face at the same time, so the cut was dug twice over and a dig paid
+    // more than its seam. The shovels are not deleted, though: they are the
+    // fallback, and the moment the lever goes off this branch stops matching and
+    // the station's own step takes over again mid-stride.
+    if (stepTender(w, now)) continue;
     if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }
