@@ -100,3 +100,48 @@ export const running = key => {
 // imports nothing from there and is imported by it, so the dependency runs one
 // way: `capOf` asks whether a machine is running, and nothing here asks `capOf`
 // anything.
+
+// --- the lever ------------------------------------------------------------------
+// A machine can be shut off, and its station goes straight back to hand work --
+// which is why nothing in `stepQuarrier`, `stepFarmhand` or the miner branch is
+// deleted when a machine is bought. The shovels are the fallback, and the lever
+// picks which of the two is running.
+//
+// Throwing it is a **job**, not a setting. You ask; the nearest body free to go
+// walks over and does it. Nothing in this yard happens without hands, and a
+// switch that flipped the moment you clicked it would be the one thing in the
+// game that did.
+//
+// An earlier draft promised that off could be instant, on the grounds that a
+// running machine always has its tender standing at it. That is not true here
+// and should not be made true: `takeMuck` pulls the tender off for a mess on its
+// own site, `stepKit` sends it for a spare hat, `relieve` stops it where it
+// stands, and the player can pick it up and carry it across the yard. Every one
+// of those is a rule the yard already keeps. So there is one mechanism, and its
+// cost simply *happens* to be nil in the common case, because the tender is
+// usually standing right there.
+//
+// What that promise was trying to close -- a yard choking on smoke with nobody
+// free to go and stop it -- is closed better by a rule the yard already has: an
+// unmanned machine produces nothing and smokes nothing. The moment the last body
+// walks away from it, it stops. See `runMachine`.
+export function askLever(which, on) {
+  const m = machine(which);
+  if (!m || !m.bought) return false;
+  if (m.on === !!on) { m.ask = null; return false; }   // already the way you want it
+  m.ask = { on: !!on };
+  S.dirty = true;
+  return true;
+}
+
+// The ask is dropped when it is answered, and also when it stops making sense --
+// a machine sold, a save loaded, a check resetting the yard.
+export const clearAsk = which => { const m = machine(which); if (m) m.ask = null; };
+
+// What the lever is set to be, counting an ask that has not been walked to yet.
+// The drawing wants this so a thrown lever can read as *thrown and on its way*
+// rather than as nothing having happened.
+export const asked = which => {
+  const m = machine(which);
+  return m ? (m.ask ? m.ask.on : m.on) : false;
+};

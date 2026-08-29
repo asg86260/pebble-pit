@@ -30,14 +30,14 @@ import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
 import { makePainter } from './painter.js';
-import { updateWorkers, stepRecords } from './crew.js';
+import { updateWorkers, stepRecords, stepLevers } from './crew.js';
 import { catchAir } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
-import { canAfford, mineMs } from './upgrades.js';
+import { canAfford, mineMs, restaff } from './upgrades.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir } from './smog.js';
 import { stepScrub } from './scrubhouse.js';
@@ -111,6 +111,14 @@ export function step() {
   if (S.tick % 15 === 1) surveyFloor();
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
+  // A lever that was thrown during the pass asks for its station to be staffed
+  // again, and it cannot do that itself: `restaff` calls `syncWorkers`, which
+  // replaces `S.workers` -- the very array the pass was walking. So the arrival
+  // sets a latch and it is drained here, one frame's worth at a time, safely
+  // outside the loop. This is the same reason the yard does its rebuilding
+  // between passes rather than inside them.
+  if (S.restaff) { const r = S.restaff; S.restaff = null; restaff(r.job, r.want); }
+  stepLevers();                               // and anybody sent to throw one
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on

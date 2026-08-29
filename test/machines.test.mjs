@@ -7,7 +7,7 @@
 // them back, and that a machine left running by one check cannot silently
 // rewrite what the next one is allowed to mean.
 
-import { yard, group, ok, state, run, quickCrew, openSites, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P, WORKER } from './helpers.mjs';
 
 // The two boards nobody could buy from.
 //
@@ -212,5 +212,143 @@ group('what a machine remembers across a reload', async () => {
     ok(state().quarriers <= 1,
        'and the cap is applied on the way in, not after the gang has been placed',
        `${state().quarriers} at the cut`)
+  ];
+});
+
+// --- the lever ------------------------------------------------------------------
+// Nothing in this yard happens without hands, and a switch that flipped the
+// moment you clicked it would be the one thing in the game that did. So the
+// lever is asked for, and somebody walks over and throws it.
+//
+// Every check below goes through `__lever`, never `__machine`: the hook that
+// sets the facts outright would pass all of this while asserting nothing at all
+// about the walk, which is the whole of what a lever is.
+group('a lever is thrown by somebody who walked to it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 2, 1);                    // a tender and two spare pairs of hands
+  window.__machine('jaw', { bought: true, on: false });
+  const at = state().machines.jaw.leverX;
+
+  // Everybody put well away from the lever, so the walk is a real one.
+  for (const w of yard.S.workers) w.x = at + 420;
+  run(0.2);
+
+  const asked = window.__lever('jaw', true);
+  run(0.3);
+  const early = state();                     // still walking: it cannot be on yet
+  const got = runUntil(() => state().machines.jaw.on, 40);
+  const on = state();
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(asked, 'the ask is taken'),
+    ok(!early.machines.jaw.on, 'and the machine is not on while somebody is still walking',
+       `on=${early.machines.jaw.on}`),
+    ok(early.machines.jaw.goer, 'somebody has set off for it',
+       `${early.machines.jaw.goer}`),
+    ok(early.machines.jaw.ask === true, 'and the ask stands until they arrive'),
+    ok(got && on.machines.jaw.on, 'it goes on when they get there'),
+    ok(on.machines.jaw.ask === null, 'and the ask is spent', `${on.machines.jaw.ask}`)
+  ];
+});
+
+// The tender is usually standing at the machine, so off costs no walk worth
+// noticing. That is a consequence of where it is, not a guarantee the code makes.
+group('off is quick because the walk is short', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1, 5);
+  window.__machine('jaw', { bought: true, on: true });
+  runUntil(() => {
+    const q = yard.S.workers.find(o => o.type === 'quarrier');
+    return q && !q.walking;
+  }, 40);
+  const before = state();
+
+  window.__lever('jaw', false);
+  const quick = runUntil(() => !state().machines.jaw.on, 12);
+  const off = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(before.machines.jaw.on, 'it is running to begin with'),
+    ok(quick, 'and a body is near enough to stop it without a journey'),
+    ok(!off.machines.jaw.on, 'so it stops'),
+    ok(off.quarriers === 5, 'and the gang it displaced comes back',
+       `${before.quarriers} -> ${off.quarriers}`)
+  ];
+});
+
+// An ask outlives a yard with nobody free: it is answered when somebody is.
+//
+// The bodies are held in the player's hand rather than taken off the books,
+// because `__crew` stops every machine and drops every ask -- deliberately, so a
+// machine cannot leak from one check into the next -- and a yard with nobody in
+// it is therefore a yard with no ask in it either. A body being carried about is
+// the honest version of "nobody free": the worker pass skips it entirely, which
+// is exactly what makes it durable enough to hold for a window.
+group('an ask nobody can answer stands until somebody can', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1);
+  window.__machine('jaw', { bought: true, on: false });
+  run(0.5);
+  for (const w of yard.S.workers) w.lifted = true;
+
+  window.__lever('jaw', true);
+  run(4);
+  const stuck = state();
+
+  for (const w of yard.S.workers) w.lifted = false;
+  const got = runUntil(() => state().machines.jaw.on, 60);
+  window.__crew(0, 0, 0);
+  return [
+    ok(stuck.machines.jaw.ask === true, 'the ask stands with nobody able to go',
+       `${stuck.machines.jaw.ask}`),
+    ok(!stuck.machines.jaw.on, 'and nothing has happened'),
+    ok(!stuck.machines.jaw.goer, 'and nobody has set off', `${stuck.machines.jaw.goer}`),
+    ok(got, 'and it is answered the moment somebody can go')
+  ];
+});
+
+// Picking up the body that was on its way.
+//
+// The dispatcher sends one walker per lever, or the whole yard files across to
+// the same switch. That claim has to be given up when the walk is: a lever
+// claimed for ever by a pair of hands now in the player's is a machine that
+// never starts and never says why.
+group('picking up the walker hands the lever back', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 3, 1);
+  window.__machine('jaw', { bought: true, on: false });
+  const at = state().machines.jaw.leverX;
+  for (const w of yard.S.workers) w.x = at + 420;
+  run(0.2);
+
+  window.__lever('jaw', true);
+  runUntil(() => state().machines.jaw.goer, 20);
+  const walker = yard.S.workers.find(o => o.throwing === 'jaw');
+  const name = walker && walker.name;
+  yard.lift ? yard.lift(walker) : (walker.lifted = true, walker.throwing = null,
+                                   walker.legs = null, walker.walking = false);
+
+  const got = runUntil(() => state().machines.jaw.on, 60);
+  // The one who threw it is still walking *back* to its own station, and still
+  // holds the claim while it does -- which is right: the errand is the walk out
+  // and the walk home, the same shape as fetching a hat.
+  const home = runUntil(() => state().machines.jaw.goer === null, 40);
+  const on = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(name, 'somebody sets off for the lever', `${name}`),
+    ok(got, 'and picking them up does not strand the ask'),
+    ok(on.machines.jaw.on, 'somebody else finishes the errand'),
+    ok(home, 'and the claim is given up when they get back to their own work',
+       `${on.machines.jaw.goer}`)
   ];
 });

@@ -27,6 +27,7 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitS
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
+import { MACHINES, machine, JOB_MACHINE } from './machines.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -714,9 +715,13 @@ function arrive(w) {
   // not about the job it happens to be on this second
   if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
   if (w.leg === 'wear') { w.trained = true; w.kitOf = w.wanting; w.wanting = null; }
+  // Somebody has walked to a lever and is standing at it. This is the only place
+  // in the game a machine starts or stops, which is the point of the walk.
+  if (w.leg === 'lever') throwLever(w.throwing);
   S.dirty = true;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
-  if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false; return; }
+  if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false;
+                          w.throwing = null; return; }
   settle(w);
 }
 
@@ -764,6 +769,85 @@ function stepKit() {
       const w = freeAt(job, true);
       if (w) errand(w, job, 'drop');
     }
+  }
+}
+
+// --- the levers -----------------------------------------------------------------
+// Where each machine's lever stands. Derived every time it is asked for, never
+// stored: the quarry falls in and is dug out again, the farm is resited when a
+// plot is bought, and a remembered x would be a lever in the wrong field.
+//
+// The jaw's is at the head of the ladder rather than down on the floor of the
+// cut beside the machine itself. That is not a fudge -- it is where the hoist
+// stands, on the deck over the mouth, and a switch for the whole works belongs
+// at the top of the hole rather than at the bottom of it. It also means stopping
+// a jaw is not a climb down a ladder into a hole full of machine.
+export function leverX(key) {
+  if (key === 'jaw') return quarryFace();
+  if (key === 'tiller') return plotX(0);
+  if (key === 'ram') return rockLeft() - WORKER * 2;
+  return null;
+}
+
+// Throw it, now, because somebody is standing at it.
+//
+// `was` is the whole of why a lever is worth throwing twice: `rebalance` only
+// ever clamps *down*, so switching a machine on walks the gang to carrying and
+// nothing walks them home. The complement is recorded here and given back here.
+//
+// It cannot put the bodies back itself. `restaff` calls `syncWorkers`, which
+// replaces `S.workers` -- and this runs inside the loop that is iterating it. So
+// it sets a latch and the frame drains it afterwards. See game.js.
+function throwLever(key) {
+  const m = machine(key);
+  if (!m || !m.bought) return;
+  const want = m.ask ? m.ask.on : !m.on;
+  const job = (MACHINES.find(x => x.key === key) || {}).job;
+  m.ask = null;
+  if (m.on === want) return;
+  m.on = want;
+  if (want) m.was = S[job] || 0;                 // what it is standing in for
+  else { S.restaff = { job, want: m.was }; m.was = 0; }
+  S.dirty = true;
+}
+
+// Somebody to send. Deliberately a wider net than `freeAt`: a lever is not a
+// station's own errand, so anybody not otherwise engaged will do -- and that
+// matters, because the commonest case is a machine whose own station now holds
+// one body and five haulers who used to work there.
+//
+// The filters are the ones a walk cannot survive. A body in a hole or a building
+// is not somewhere a commute can start, one in the air even less so, and one in
+// the player's hand is not going anywhere it chose.
+const freeForLever = at => {
+  let best = null, near = Infinity;
+  for (const o of S.workers) {
+    if (o.walking || o.inside || o.aloft || o.inPit || o.carry || o.hasCore) continue;
+    if (o.lifted || o.falling || o.looUntil) continue;
+    const d = Math.abs((o.x + WORKER / 2) - at);
+    if (d < near) { near = d; best = o; }
+  }
+  return best;
+};
+
+// One frame of the levers. An ask stands until somebody answers it: if there is
+// nobody free this frame there will be somebody next frame, and a lever that
+// gave up because the yard was busy would be a lever you had to click twice.
+export function stepLevers() {
+  for (const m of MACHINES) {
+    const r = machine(m.key);
+    if (!r || !r.bought || !r.ask) continue;
+    // Already on its way. One walk per lever, or the whole yard sets off for the
+    // same switch and five of them arrive at a machine that is already running.
+    if (S.workers.some(o => o.walking && !o.lifted && o.throwing === m.key)) continue;
+    const at = leverX(m.key);
+    if (at == null) continue;
+    const w = freeForLever(at);
+    if (!w) continue;                            // nobody free: the ask stands
+    w.throwing = m.key;
+    w.legs = [{ to: at, do: 'lever' },
+              { to: stationX(w.type) ?? w.x, do: 'back' }];
+    nextLeg(w);
   }
 }
 
@@ -1021,6 +1105,18 @@ export function lift(w) {
   if (!w) return false;
   for (const o of S.workers) o.lifted = false;
   w.lifted = true;
+  // An errand it was in the middle of is dropped, and the lever it was walking
+  // to goes back into the pile of things wanting doing. Without this, picking up
+  // the one body on its way to a lever would leave the ask claimed for ever by a
+  // pair of hands that is now in yours: the dispatcher sees somebody already on
+  // their way and stands everybody else down, and the machine never starts.
+  //
+  // The *ask* is not cancelled, only the walk. What you asked for is still what
+  // you want, and somebody else can go.
+  w.throwing = null;
+  w.legs = null;
+  w.leg = null;
+  w.walking = false;
   // Picked out of the sky. Whatever it was hanging off is no longer its
   // business, and it is not aloft any more either -- it is in your hand, and
   // what happens when you let go is what happens to anything you let go of.

@@ -29,7 +29,7 @@ import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
-import { machine, MACHINES } from './machines.js';
+import { machine, MACHINES, askLever } from './machines.js';
 import { UPGRADES, buy as buyRow, rungOf, maxed } from './upgrades.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { LAB_UPGRADES } from './lab.js';
@@ -76,6 +76,11 @@ export const machineSet = (which, o = {}) => {
 // Every station given every slot it will ever have, which is what the machines
 // are gated behind. A check that wants to buy one should not have to know that
 // the numbers are five and seven.
+// The lever, asked for honestly: somebody has to walk over and throw it. The
+// lever's own check must use this and never `machineSet`, or it asserts nothing
+// about the walk -- which is the whole of what the lever is.
+export const lever = (which, on) => askLever(which, !!on);
+
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
