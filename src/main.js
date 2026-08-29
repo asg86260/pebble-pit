@@ -26,15 +26,54 @@ import { tick } from './clock.js';
 // this is the one line where the two of them meet.
 export function relayout() { resize(settleIntoWorld); remeasure(); }
 
+// What the frame spent, under `vite dev` and nowhere else.
+//
+// A dropped frame is nearly impossible to argue about from the outside: the rate
+// falls, everything is a suspect, and every guess costs an afternoon of building
+// scenes that turn out not to be the one the player was looking at. There are
+// only three things in a frame -- the yard thinks, the yard is drawn, the page
+// is written -- so the frame says which of the three it was and there is nothing
+// left to guess.
+//
+// `import.meta.env.DEV` is a constant at build time, so a build folds `mark`
+// into a function that returns nought and drops the rest: a player pays four
+// calls that do nothing, and the panel is not there to read them anyway.
+const DEV = import.meta.env.DEV;
+const mark = DEV ? () => performance.now() : () => 0;
+export const beat = { step: 0, draw: 0, hud: 0, frame: 0,
+                      worst: 0, worstOf: '-', since: 0 };
+// A tenth each frame, so the numbers settle enough to read but still move when
+// the yard does. The worst is kept flat rather than averaged -- an average of a
+// hitch is not a hitch -- and cleared every few seconds so it is the worst of
+// what is happening now rather than the worst since the tab opened.
+function record(t0, t1, t2, t3) {
+  const step = t1 - t0, draw = t2 - t1, hud = t3 - t2, all = t3 - t0;
+  beat.step += (step - beat.step) * 0.1;
+  beat.draw += (draw - beat.draw) * 0.1;
+  beat.hud += (hud - beat.hud) * 0.1;
+  beat.frame += (all - beat.frame) * 0.1;
+  if (t3 - beat.since > 5000) { beat.worst = 0; beat.worstOf = '-'; beat.since = t3; }
+  if (all > beat.worst) {
+    beat.worst = all;
+    beat.worstOf = step >= draw && step >= hud ? 'step'
+                 : draw >= hud ? 'draw' : 'hud';
+  }
+}
+
 // Held, the yard is still drawn -- it is the thing you are looking at, and a
 // paused game that stopped painting would be a game that had crashed.
 const heldSheet = document.getElementById('held');
 function frame() {
   tick(S.paused);
   if (heldSheet.hidden === S.paused) heldSheet.hidden = !S.paused;
+  const t0 = mark();
   if (!S.paused) step();
+  const t1 = mark();
   draw();
+  const t2 = mark();
   hud();
+  const t3 = mark();
+  if (DEV) record(t0, t1, t2, t3);
   requestAnimationFrame(frame);
 }
 

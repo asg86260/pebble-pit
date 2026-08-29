@@ -13,7 +13,7 @@
 import { S } from './state.js';
 import { SKY } from './smog.js';
 import { TUNABLE, tune, tuned } from './config.js';
-import { relayout } from './main.js';
+import { relayout, beat } from './main.js';
 
 const KEY = 'boulder-clicker/dev-open';
 const el = document.createElement('div');
@@ -179,6 +179,16 @@ line('running at', box => {
   box.appendChild(out);
 });
 
+// And where the frame went. Three numbers and a worst, because a rate on its own
+// says a frame was slow and never says which part of it was: the yard thinking,
+// the yard being drawn, or the page being written. The worst is the last five
+// seconds, so it is a hitch you can still remember happening.
+line('spent on', box => {
+  const out = document.createElement('span');
+  out.dataset.beat = '1';
+  box.appendChild(out);
+});
+
 // What is doing the drawing. Asked once, because it cannot change while the page
 // is open, and shown here because it is the first thing worth knowing when the
 // frame rate is wrong: this game is fill-rate bound, so a browser quietly
@@ -203,6 +213,10 @@ line('drawn by', box => {
 });
 
 function refresh() {
+  for (const n of el.querySelectorAll('[data-beat]')) {
+    n.textContent = `step ${beat.step.toFixed(1)}  draw ${beat.draw.toFixed(1)}  ` +
+                    `hud ${beat.hud.toFixed(1)}  |  worst ${beat.worst.toFixed(1)}ms (${beat.worstOf})`;
+  }
   for (const n of el.querySelectorAll('[data-fps]')) {
     const px = Math.round(innerWidth * S.dpr) * Math.round(innerHeight * S.dpr);
     n.textContent = `${meter.fps} fps  ${(px / 1e6).toFixed(1)}M px  ${SKY.length} in the sky`;
