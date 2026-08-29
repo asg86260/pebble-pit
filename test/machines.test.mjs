@@ -584,32 +584,156 @@ group('the tiller crawls the row and brings the plots in', async () => {
 });
 
 // --- the ram --------------------------------------------------------------------
-group('the ram works the rock', async () => {
+// The ram is measured against itself with the lever off, and it has to be.
+//
+// The first version of this group asserted `took > 0` with the ram running and
+// called that proof -- but the one miner the cap leaves at the station is still
+// a miner, and its own swings are what that number counted. The ram took *no*
+// bites at all for the whole of that commit, and the check said it was working.
+// A machine is only ever proved by the difference it makes.
+group('the ram works the rock, measured against not having one', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
   window.__crew(1, 0);
-  window.__machine('ram', { bought: true, on: true });
   window.__clearFloor();
   window.__jump(3);
   run(4);
 
-  const r0 = state().rock;
-  run(8);
-  const took = r0 - state().rock;
+  // The same one body, the same rock, twice: once with the lever off and once on.
+  // The yard is swept as we go. Without it this measures which of the two fills
+  // the rock's pile first -- there are no haulers here, the station stands down
+  // at PILE_LIMIT, and the quicker worker simply jams sooner. That is a real
+  // thing about the yard and it is not the thing this group is about.
+  const window10 = () => {
+    const before = state().rock;
+    for (let i = 0; i < 20; i++) { run(0.5); window.__clearFloor(); }
+    return before - state().rock;
+  };
+  const byHand = window10();
 
-  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
-  const b0 = state().rock;
-  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
-  const alone = b0 - state().rock;
-  for (const w of yard.S.workers) w.lifted = false;
+  window.__jump(3);
+  window.__machine('ram', { bought: true, on: true });
+  run(4);
+  const byMachine = window10();
+  const worked = state().machines.ram.workedAt > 0;
 
-  const still = state().machines.ram.on;
   window.__crew(0, 0, 0);
   return [
-    ok(took > 0, 'the ram takes the hill apart', `${took} cells`),
-    ok(alone === 0, 'and does nothing with nobody standing at it', `${alone} cells`),
-    ok(still, 'and it is idle rather than switched off')
+    ok(byHand > 0, 'one pair of hands takes rock off the hill', `${byHand} cells`),
+    ok(worked, 'the ram actually gets a bite in, which is the thing that was never true'),
+    ok(byMachine > byHand * 2,
+       'and the ram takes off a great deal more than the hands it stood down',
+       `${byHand} by hand -> ${byMachine} by machine`)
+  ];
+});
+
+// A tender tends. It does not also work its own face, which is the bug that
+// made a cut pay more than its seam -- and nothing asserted it either way.
+group('a tender does no hand work of its own', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 5);
+  window.__machine('jaw', { bought: true, on: true });
+  window.__clearFloor();
+  run(6);
+
+  // Nobody is ever down the hole: the jaw is worked from the deck.
+  let under = 0;
+  for (let i = 0; i < 40; i++) { run(0.25); under = Math.max(under, state().underground); }
+  window.__crew(0, 0, 0);
+  return [
+    ok(under === 0, 'the cut is worked without anybody standing in it',
+       `${under} below ground`)
+  ];
+});
+
+// Two machines at once, and both gangs back. The restaff latch holds one
+// station at a time, and two levers thrown together used to be a way to lose a
+// gang -- nothing in the file ever ran more than one machine.
+group('two machines can be thrown off without losing a gang', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1, 5, 7);
+  window.__fullSites();
+  const before = state();
+
+  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('tiller', { bought: true, on: true });
+  const both = state();
+
+  window.__machine('jaw', { on: false });
+  window.__machine('tiller', { on: false });
+  const back = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(both.quarriers === 1 && both.farmhands === 1,
+       'two machines running leave one body each',
+       `${both.quarriers} cut, ${both.farmhands} farm`),
+    ok(back.quarriers === before.quarriers,
+       'and the cut gets its gang back', `${before.quarriers} -> ${back.quarriers}`),
+    ok(back.farmhands === before.farmhands,
+       'and so does the farm', `${before.farmhands} -> ${back.farmhands}`),
+    ok(back.crew === before.crew, 'with the same crew throughout', `${back.crew}`)
+  ];
+});
+
+// The dial has to actually do something. It did not: a beat floor of one frame
+// meant every machine at every setting delivered the same rate, and turning
+// MACHINE_GAIN up changed nothing at all.
+group('turning the gain up actually makes a machine quicker', async () => {
+  const cellsAt = gain => {
+    window.__reset();
+    openSites();
+    window.__fullSites();
+    window.__tune('MACHINE_GAIN', gain);
+    window.__crew(0, 0, 1);
+    window.__machine('jaw', { bought: true, on: true });
+    window.__clearFloor();
+    runUntil(() => state().quarryTotal > 0, 40);
+    const c0 = state().quarryTotal;
+    for (let i = 0; i < 16; i++) { run(0.5); window.__clearFloor(); }
+    return state().quarryTotal - c0;
+  };
+  const slow = cellsAt(0.5);
+  const fast = cellsAt(4);
+  window.__tune('MACHINE_GAIN', 1.5);
+  window.__crew(0, 0, 0);
+  return [
+    ok(slow > 0 && fast > 0, 'the jaw works at either setting',
+       `${slow} and ${fast} cells`),
+    ok(fast > slow * 2,
+       'and eight times the dial is a great deal more ground out of the hole',
+       `gain 0.5: ${slow} cells -> gain 4: ${fast} cells`)
+  ];
+});
+
+// A cut worked right out has to fall back in, and with a machine there is no
+// gang climbing out to do it. This deadlocked the quarry for good.
+group('a jaw fills the cut in behind itself, for ever', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 1);
+  window.__machine('jaw', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+
+  // Several digs' worth. If the hole is ever worked out and not filled, the
+  // count stops and never starts again.
+  const marks = [];
+  for (let i = 0; i < 40; i++) { run(0.5); window.__clearFloor(); marks.push(state().quarryTotal); }
+  const s = state();
+  window.__crew(0, 0, 0);
+  const stalled = marks[marks.length - 1] === marks[Math.floor(marks.length / 2)];
+  return [
+    ok(!stalled, 'the jaw keeps taking ground out over many digs',
+       `${marks[Math.floor(marks.length / 2)]} -> ${marks[marks.length - 1]} cells`),
+    ok(!s.quarryDone || s.quarryDug < 1,
+       'and never ends stood in a hole it cannot fill in',
+       `dug ${s.quarryDug}, done ${s.quarryDone}`)
   ];
 });
 
@@ -772,5 +896,40 @@ group('buying a machine sends somebody to start it', async () => {
     ok(on && after.machines.jaw.on, 'and it runs once they get there'),
     ok(after.quarriers === 1, 'and the cut is down to its tender',
        `${justBought.quarriers} -> ${after.quarriers}`)
+  ];
+});
+
+// The lever has to exist *in the yard*, not only in a dev hook. A machine you
+// can buy and never switch off is a one-way door, and for most of this build
+// that is exactly what it was: the mechanism was written, and nothing drew a
+// lever or hit-tested one.
+group('a lever is a thing in the yard you can point at', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 2, 5);
+  window.__fullSites();
+  window.__machine('jaw', { bought: true, on: true });
+  run(2);
+
+  const box = state().machines.jaw.leverBox;
+  const on = state().machines.jaw.on;
+
+  // Clicked where it is drawn, through the same hit test the pointer uses.
+  const hit = yard.leverHit
+    ? yard.leverHit(box.x + box.w / 2, box.y + box.h / 2)
+    : window.__clickLever('jaw');
+  const asked = state().machines.jaw.ask;
+  const off = runUntil(() => !state().machines.jaw.on, 60);
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(box && box.w > 0, 'a bought machine has a lever standing in the yard',
+       JSON.stringify(box)),
+    ok(on, 'and it is running to begin with'),
+    ok(hit, 'the lever answers a click where it is drawn'),
+    ok(asked === false, 'which asks for it to go off rather than flipping it',
+       `${asked}`),
+    ok(off, 'and somebody walks over and throws it')
   ];
 });

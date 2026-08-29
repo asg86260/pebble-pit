@@ -234,7 +234,7 @@ defineMachine('tiller', {
   // A unit of the farm's work is a slice of tending, so the beat is short and
   // the bite is small -- the plot comes on by the same fraction a hand would
   // have brought it on in that time, times what the machine is worth.
-  ms: rate => Math.max(30, tendMs() / 40 / Math.max(0.01, rate)),
+  ms: rate => tendMs() / 40 / Math.max(0.01, rate),
   ready: () => !S.pileFull.farm && plotCount() > 0,
   bite: tender => {
     plantPlots();

@@ -1073,6 +1073,15 @@ export const ROCK_GANG = 5;
 // How often a machine's stack puffs, and how big the puff is. The lab's chimney
 // (HOUSE_PUFF_MS) and the cigarette's 0.55 are the two precedents; a machine sits
 // between them -- more often than a hearth, bigger than a cigarette.
+// The most units of its station's work a machine will do in one frame. A machine
+// quicker than a frame does several, or the frame becomes the rate and the gain
+// dial stops meaning anything -- but a tab left in the background for a minute
+// should not come back and take the whole quarry out on the frame it wakes.
+export const MACHINE_MAX_BEATS = 8;
+// How long after its last unit of work a machine still reads as running. A beat
+// lands on one frame in three at best, so "is it working" has to be a moment
+// rather than a frame or the drawing strobes.
+export const MACHINE_IDLE_MS = 600;
 export const MACHINE_PUFF_MS = 520;
 export const MACHINE_PUFF_S = 0.8;
 

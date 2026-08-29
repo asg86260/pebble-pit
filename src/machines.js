@@ -203,3 +203,15 @@ export const canBuy = (key, slotsFull) => {
   const m = machine(key);
   return !!m && !m.bought && slotsFull();
 };
+
+
+// --- where the lever is -----------------------------------------------------------
+// One box, read by both the drawing and the hit test. The roster's buttons are
+// laid out this way for the same reason: a control drawn in one place and
+// clicked in another is a control that works until somebody moves it.
+//
+// The x comes from `leverX` in crew.js, which is the one place that knows where
+// each machine's post is. This only decides how big the thing is and how far off
+// the ground it stands.
+export const LEVER_W = 3;                  // cells
+export const LEVER_H = 4;

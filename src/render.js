@@ -18,18 +18,20 @@ import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
 import { pitDepth, pitFull } from './pit.js';
 
-import { underground, quarryShape, ladder, quarryCells } from './quarry.js';
+import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
-import { machine } from './machines.js';
+import { machine, MACHINES, asked } from './machines.js';
+import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX } from './rock.js';
+import { rockLeft } from './world.js';
 import { tillerAt } from './farm.js';
-import { MACHINE_PUFF_MS, MACHINE_PUFF_S } from './config.js';
+import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -2490,6 +2492,7 @@ export function draw() {
   drawFarm();
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
+  drawLevers();              // and the one control in the yard that is not on a board
   drawSky();
   drawLab();
   drawCasino();
@@ -2686,6 +2689,14 @@ export function drawCursor() {
 function stroke(key, ms = 900) {
   const m = machine(key);
   if (!m || !m.bought || !m.on) return 0;
+  // And not while it is standing idle. `on` is the lever; `workedAt` is when it
+  // last actually got something done. A machine with nobody at it, or one stood
+  // down by a full pile, kept chewing away visibly while producing nothing --
+  // the drawing claiming exactly what the yard denies.
+  //
+  // Against the *moment* rather than the frame flag: a beat lands on one frame
+  // in three or worse, and a stroke gated on the flag itself would strobe.
+  if (now() - (m.workedAt || 0) > MACHINE_IDLE_MS) return 0;
   return (now() % ms) / ms;
 }
 
@@ -2721,18 +2732,22 @@ export function drawHoist() {
   if (!S.quarryOpen || !built('jaw')) return;
   const l = ladder();
   const x = Math.round((l.x - P * 3) / P) * P;
-  const top = Math.round((l.top - P * 7) / P) * P;
+  // On the deck, not on the ladder's overhang: `l.top` stands LADDER_OVER proud
+  // of the walking surface, and standing the frame on it left the hoist floating
+  // a cell above the boards.
+  const top = Math.round((groundAt(l.x + LADDER_W / 2) - P * 7) / P) * P;
   const H = 7;
   ctx.fillStyle = '#000';
   ctx.fillRect(x, top, P, P * H);                        // the near leg
   ctx.fillRect(x + P * 2, top, P, P * H);                // and the far one
   ctx.fillRect(x, top, P * 3, P);                        // the head
-  // the rope, white, and the skip riding it
-  ctx.fillStyle = '#fff';
+  // The rope is black on a white yard -- it was drawn white, which on this
+  // background is nothing at all -- and the skip is cut white out of it, so the
+  // two cannot be confused with each other.
   ctx.fillRect(x + P, top + P, P, P * (H - 1));
   const t = stroke('jaw', 2200);
-  const ride = Math.round(Math.abs(1 - t * 2) * (H - 3));  // up and back down
-  ctx.fillStyle = '#000';
+  const ride = Math.round(Math.abs(1 - t * 2) * (H - 2));  // the whole drop, and back
+  ctx.fillStyle = '#fff';
   ctx.fillRect(x + P, top + P + ride * P, P, P);
 }
 
@@ -2749,8 +2764,12 @@ export function drawRam() {
   ctx.fillRect(x, y, W * P, H * P);
   ctx.fillRect(x + P, y - P * 2, P, P * 2);              // the stack
   // The arm: out towards the hill on the stroke, back on the return.
+  // The arm is as long as the gap it has to cross, worked out rather than
+  // guessed: three cells of literal left it striking empty air a good way short
+  // of the hill. It draws back by two on the return.
+  const gap = Math.max(1, Math.round((rockLeft() - (x + W * P)) / P) + 1);
   const t = stroke('ram', 700);
-  const reach = t < 0.35 ? 3 : t < 0.5 ? 2 : 1;
+  const reach = t < 0.35 ? gap : t < 0.5 ? gap - 1 : Math.max(1, gap - 2);
   ctx.fillRect(x + W * P, y + P, P * reach, P);
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + P, y + P, P * 2, P);                   // the slot
@@ -2777,6 +2796,25 @@ export function drawTiller() {
   ctx.fillRect(x + (t < 0.5 ? 0 : P * 2), y + P, P, P);
 }
 
+// The lever. A stand with an arm on it, and the arm's angle says what the lever
+// has been *asked* for rather than what the machine is doing -- so throwing it
+// reads as thrown immediately, while somebody is still walking over, instead of
+// looking like nothing happened for the length of a commute.
+//
+// That distinction is the whole of why `asked()` exists.
+export function drawLevers() {
+  for (const m of MACHINES) {
+    const b = leverBox(m.key);
+    if (!b) continue;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(b.x, b.y + b.h - P, b.w, P);            // the stand
+    ctx.fillRect(b.x + P, b.y + P, P, b.h - P * 2);      // the post
+    // Over for on, down for off. Two cells of travel is all it needs to read.
+    const on = asked(m.key);
+    ctx.fillRect(b.x + (on ? b.w - P : 0), b.y, P, P * 2);
+  }
+}
+
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and
 // the same list, flagged `mach` so that the lab's own count -- which means
 // something specific, that research is being worked on -- is not muddled by it.
@@ -2794,7 +2832,7 @@ export function stepMachineSmoke(now) {
   for (const key of Object.keys(STACKS)) {
     const m = machine(key);
     if (!m || !m.bought || !m.on) continue;
-    if (!m.working) continue;                  // idle, unmanned, or stood down
+    if (now - (m.workedAt || 0) > MACHINE_IDLE_MS) continue;   // idle, unmanned, or stood down
     if (now < (m.puffAt || 0)) continue;
     m.puffAt = now + MACHINE_PUFF_MS * (0.6 + Math.random() * 0.8);
     const at = STACKS[key]();

@@ -26,7 +26,7 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers } from './crew.js';
+import { syncWorkers, leverBox, leverHit } from './crew.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES, askLever } from './machines.js';
@@ -85,6 +85,15 @@ export const machineSet = (which, o = {}) => {
 // lever's own check must use this and never `machineSet`, or it asserts nothing
 // about the walk -- which is the whole of what the lever is.
 export const lever = (which, on) => askLever(which, !!on);
+
+// Click the lever where it is drawn, through the very hit test the pointer uses.
+// A check that reached for `askLever` directly would prove the mechanism and say
+// nothing about whether there is anything in the yard to click.
+export const clickLever = which => {
+  const b = leverBox(which);
+  if (!b) return false;
+  return leverHit(b.x + b.w / 2, b.y + b.h / 2);
+};
 
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;

@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -27,7 +27,7 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitS
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
-import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
+import { MACHINES, machine, JOB_MACHINE, specOf, askLever, asked, LEVER_W, LEVER_H } from './machines.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -789,6 +789,38 @@ export function leverX(key) {
   return null;
 }
 
+// The lever as a thing in the yard: where it stands and how big it is, in world
+// pixels. The drawing and the hit test both read this, so they cannot drift.
+//
+// It is a thing you point at rather than a row on a board, and deliberately:
+// `buy` returns immediately for any row carrying a `job` or a `dial`, and a
+// lever is neither a purchase nor a stepper -- and the ram has no board of its
+// own to put one on anyway. Same argument that moved the quarry's rows onto the
+// quarry board: a decision about a place is made at the place.
+export function leverBox(key) {
+  const x = leverX(key);
+  if (x == null) return null;
+  const m = machine(key);
+  if (!m || !m.bought) return null;
+  const w = P * LEVER_W, h = P * LEVER_H;
+  return { x: Math.round((x + WORKER + P) / P) * P,
+           y: Math.round((walkY(x) + WORKER - h) / P) * P, w, h };
+}
+
+// Somewhere in the yard was clicked. If it was a lever, throw it -- which means
+// asking, and somebody walks over.
+export function leverHit(x, y) {
+  for (const m of MACHINES) {
+    const b = leverBox(m.key);
+    if (!b) continue;
+    if (x < b.x - P || x > b.x + b.w + P || y < b.y - P || y > b.y + b.h + P) continue;
+    const r = machine(m.key);
+    askLever(m.key, !(r.ask ? r.ask.on : r.on));
+    return true;
+  }
+  return false;
+}
+
 // Throw it, now, because somebody is standing at it.
 //
 // `was` is the whole of why a lever is worth throwing twice: `rebalance` only
@@ -876,7 +908,28 @@ function stepTender(w, now) {
   const spec = specOf(key);
   if (!spec) return false;
 
+  // Down a hole and needing to be up top. A body caught by the lever while it is
+  // still on the floor of the cut has to *climb out* -- assigning it `walkY`
+  // lifted it straight up through the wall, which is the one thing this yard
+  // never does. The muck branch has the same problem and solves it the same way:
+  // walk the floor to the foot of the ladder, then go up it.
+  if (w.y + WORKER > S.groundY + 1) {
+    const foot = quarryFace();
+    const d = foot - w.x;
+    if (Math.abs(d) > 1) {
+      w.face = Math.sign(d) || w.face || 1;
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+    } else {
+      w.x = foot;
+      w.y = Math.max(w.y - CLIMB_PACE, walkY(w.x + WORKER / 2));
+    }
+    w.resting = false;
+    return true;
+  }
   w.y = walkY(w.x + WORKER / 2);
+  // A tender is not on its way to a cell any more, and a claim it left behind
+  // would keep every other body off that cell for as long as it stands there.
+  w.cell = null;
   // Beside it, not on top of it, the same way a farmhand stands beside a plot
   // rather than over the crop.
   const to = (spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P);
@@ -937,22 +990,38 @@ export function stepMachines(now) {
     const at = spec.at();
     r.working = false;                         // until it gets through all of it
     const tender = tenderFor(spec, at);
-    // Unmanned: it does not tick, and -- because `beatAt` is left where it is --
-    // it does not bank up a burst of work to do the moment somebody wanders back
-    // into reach either. It simply is not running.
+    // Unmanned: it does not tick, and the beat is pushed forward every idle
+    // frame so the clock cannot fall behind. There is nothing banked to pay out
+    // the moment somebody wanders back into reach; it simply is not running.
     if (!tender) { r.beatAt = now + 200; continue; }
     tender.resting = false;                    // it is working, whatever it looks like
     if (!spec.ready()) { r.beatAt = now + 200; continue; }
 
-    const ms = spec.ms(machineRate(m.job));
+    // How long one unit of the station's own work takes it. Not clamped to a
+    // frame: a machine quicker than sixteen milliseconds has to do *several*
+    // units in the frame, or the clamp silently becomes the rate and the dial
+    // stops meaning anything at all. That is exactly what was happening -- every
+    // machine at every setting of MACHINE_GAIN delivered the same thirty-three
+    // units a second, and turning the dial up changed nothing.
+    const ms = Math.max(1, spec.ms(machineRate(m.job)));
     if (!r.beatAt || r.beatAt > now + ms) r.beatAt = now + ms;   // a dial turned down
     if (now < r.beatAt) continue;
+    // How many beats are owed, capped so that a tab left in the background does
+    // not come back and take a hundred cells out of the ground in one frame.
+    let owed = Math.min(MACHINE_MAX_BEATS, Math.max(1, Math.floor((now - r.beatAt) / ms) + 1));
     r.beatAt = now + ms;
-    if (!spec.bite(tender)) continue;
+    let did = 0;
+    while (owed-- > 0 && spec.bite(tender)) did++;
+    if (!did) continue;
     // It did a unit of work this beat, which is the one thing the stack is
     // allowed to read: a chimney smoking over a machine that is not getting
     // anything done would be the drawing claiming what the yard denies.
     r.working = true;
+    // When it last got something done. `working` is true only on the frames a
+    // beat actually lands, which for a fast machine is one frame in three -- so
+    // a drawing gated on the flag itself strobes. What the drawing wants to know
+    // is "has this been working lately", and that is a moment, not a frame.
+    r.workedAt = now;
 
     // The extra dirt, from the machine's stack, in one place.
     //
@@ -960,7 +1029,9 @@ export function stepMachines(now) {
     // went through the station's own function. What a machine adds is the rest
     // of MACHINE_FOUL -- so this is one call rather than three trebled constants
     // at four call sites, and it is why the stack is worth drawing.
-    const extra = Math.max(0, MACHINE_FOUL - 1);
+    // Per unit of work done, not per frame -- a machine that got through four
+    // cells this frame made four cells' worth of dirt.
+    const extra = Math.max(0, MACHINE_FOUL - 1) * did;
     if (extra > 0) foul(extra, at + P, spec.y ? spec.y() : walkY(at), 'shard');
     S.dirty = true;
   }
@@ -1702,6 +1773,15 @@ export function updateWorkers(now, dt) {
     // and now and then a body has to stop, whatever it was doing
     if (relieve(w, now)) continue;
 
+    // Every station's tender is caught here, *before* the station's own branch --
+    // the miner's included. It used to sit below all of them, which is fine for
+    // the quarrier and the farmhand because their branches fall through to it,
+    // and was fatal for the miner because its branch `continue`s on every path.
+    // The ram was bought, clamped the gang to one, and then no miner ever walked
+    // to it and it never took a single bite: four fifths of the rock's crew
+    // stood down for a machine that did nothing.
+    if (stepTender(w, now)) continue;
+
     if (w.type === 'miner') {
       // The rock is off. The crew take five on the bare ground. It runs until the next
       // rock has come down, so nobody is caught mid-hop underneath it.
@@ -1847,16 +1927,6 @@ export function updateWorkers(now, dt) {
       w.goal = 'to';
       w.muckAt = null;
     }
-    // A station whose machine is running is a station whose hand work has been
-    // taken over. Its body *tends*: it walks to the machine and stands at it,
-    // and the machine does the digging or the tilling or the swinging.
-    //
-    // Without this the tender did both -- it stood at the machine and worked its
-    // own face at the same time, so the cut was dug twice over and a dig paid
-    // more than its seam. The shovels are not deleted, though: they are the
-    // fallback, and the moment the lever goes off this branch stops matching and
-    // the station's own step takes over again mid-stride.
-    if (stepTender(w, now)) continue;
     if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
     if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
     if (w.type === 'labber') { stepLabber(w); continue; }

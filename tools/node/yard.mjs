@@ -49,7 +49,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
     __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,
     __machine: hooks.machineSet, __fullSites: hooks.fullSites,
     __lever: hooks.lever, __swing: hooks.swing, __cold: hooks.coldReload,
-    __rows: hooks.allRows,
+    __rows: hooks.allRows, __clickLever: hooks.clickLever,
     __lab: hooks.openLab, __research: hooks.finishResearch, __grant: hooks.grant,
     __spend: hooks.spendDust, __press: hooks.press,
     __upgrades: hooks.upgrades, __buy: hooks.buyRowByKey, __pitProfile: hooks.pitProfile, __dig: hooks.dig,

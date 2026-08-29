@@ -622,10 +622,11 @@ export const QUARRY_SECTIONS = [
 // every column when the ground falls back in, and a jaw with a remembered `y`
 // would be under it. `dugTopY` is where it stands, the same answer a quarrier's
 // feet get.
-export const jawX = () => {
-  const c = quarryShape();
-  return Math.round((c.from + P * 2) / P) * P;
-};
+// Clear of the ladder rather than on it. It was derived off the mouth's near
+// edge, which is where the ladder stands -- so the jaw straddled the rungs and
+// its white mouth punched a hole through them. Derived off the ladder itself,
+// the one place that answer lives, the two cannot drift.
+export const jawX = () => Math.round((ladder().x + LADDER_W + P) / P) * P;
 export const jawY = () => dugTopY(jawX() + P) - P * 3;
 
 defineMachine('jaw', {
@@ -642,14 +643,31 @@ defineMachine('jaw', {
   // One cell takes it the station's own clock divided by what it is worth. The
   // pace upgrade and the quarry's own multiplier are inside `cellMs`, so they
   // keep applying to the machine exactly as they do to the hands.
-  ms: rate => Math.max(30, cellMs() / Math.max(0.01, rate)),
+  ms: rate => cellMs() / Math.max(0.01, rate),
   // Not while the ground it stands on is gone, not while the hole is full of
   // silt, and not while there is nowhere to put what comes out. Every one of
   // those is the station's own rule, asked the station's own way.
-  ready: () => !S.pileFull.quarry && !quarryDone() && throughQuarryMuck(1) > 0,
+  // Not while there is nowhere to put what comes out, and not while the hole is
+  // full of silt. `quarryDone()` is deliberately *not* here: the beat on which
+  // the cut is worked out is the beat on which the ground has to come back in,
+  // and forbidding it deadlocked the quarry for good -- `fillQuarry` has only
+  // two callers, this machine and a quarrier climbing out, and a tended station
+  // does not run one.
+  ready: () => !S.pileFull.quarry && throughQuarryMuck(1) > 0,
   bite: tender => {
+    // A cut already worked out: the ground comes back in and this beat is spent
+    // on that. See `ready`, which used to refuse the beat entirely.
+    if (quarryDone()) {
+      if (S.workers.some(o => o.type === 'quarrier' && o.y > S.groundY)) return false;
+      fillQuarry();
+      S.quarrySpent = false;
+      return false;
+    }
     const cells = quarryCells();
-    const c = nextQuarryCell(jawX() + P, null);
+    // The tender is passed through, not `null`. A body keeps its `cell` claim
+    // when it takes up tending, and a claim nobody is walking to would keep the
+    // machine off that cell for as long as the machine ran.
+    const c = nextQuarryCell(jawX() + P, tender);
     if (c == null || c < 0) return false;
     const left = cellsLeft();
     cells[c]++;
@@ -657,6 +675,10 @@ defineMachine('jaw', {
     // The find is credited to whoever is standing at it. A machine has no
     // record of its own -- the crew list counts people -- and the tender is the
     // one who brought it up, which is what `quarried` has always meant.
+    // The same dust a swing raises. `stepQuarrier` fouls once per cell taken --
+    // digging raises dust, not only the stone at the bottom of it -- and the jaw
+    // takes cells the same way, so it owes the same.
+    foul(1, jawX() + P, jawY(), 'shard');
     findShards(tender || { x: jawX(), y: jawY() }, left);
     // And the ground comes back in behind it.
     //

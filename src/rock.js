@@ -7,7 +7,7 @@
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
   ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
-  ROCK_CLEAR, SHAKE_LAND
+  ROCK_CLEAR, SHAKE_LAND, WORKER
 } from './config.js';
 import { foul, throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
@@ -374,16 +374,37 @@ defineMachine('ram', {
   type: 'miner',
   at: ramX,
   y: () => S.groundY - P * 4,
-  ms: rate => Math.max(30, minerMs() / Math.max(0.01, rate)),
+  // Where the body stands. The yard side of the machine, clear of the apron --
+  // `ROCK_CLEAR` is ground the yard actively sweeps, and a tender posted in it
+  // would be shovelled at. Without a `tendAt` the runner looked for a miner
+  // within reach of the machine's own x, which is fifty-odd pixels the far side
+  // of the apron from anywhere a miner ever stands, so the ram was never manned
+  // and never took a bite.
+  tendAt: () => ramX() - WORKER - P,
+  ms: rate => minerMs() / Math.max(0.01, rate),
   ready: () => !S.pileFull.rock && boulderAlive(),
   bite: tender => {
     // Where the arm lands: the near shoulder of the hill, at about the height a
     // body would be swinging at. `knockOff` finds the cell from there exactly as
     // it does for a miner or for the player's own pointer.
-    const x = rockLeft() + P;
-    const y = rockTopY(x) + P * 2;
-    knockOff(x, y, minerBite());
-    if (tender) tender.mined = (tender.mined || 0) + 1;
+    // The nearest column that still has rock in it, not a fixed spot.
+    //
+    // It struck `rockLeft() + P` every beat, which is fine until that column is
+    // gone -- and then the arm went on swinging at a hole in the air for the
+    // rest of the boulder. Measured, the ram came out *slower than the single
+    // pair of hands it had stood down*, which is a machine you paid fifty sparks
+    // to make things worse. A miner walks the face; the ram reaches along it.
+    let col = -1;
+    for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) { col = c; break; }
+    if (col < 0) return false;                 // nothing left of this one
+    const x = rockLeft() + col * P + P / 2;
+    const y = rockTopY(col) + P * 2;
+    const bite = minerBite();
+    knockOff(x, y, bite);
+    // Credited what it took, not one a strike -- `mined` counts cells off the
+    // hill everywhere else it is written, and a machine that counted strikes
+    // would read as a fifth of the work on the crew list.
+    if (tender) tender.mined = (tender.mined || 0) + bite;
     S.dirty = true;
     return true;
   }
