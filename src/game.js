@@ -37,7 +37,7 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
-import { canAfford, mineMs, restaff } from './upgrades.js';
+import { canAfford, mineMs, restaff, staffSheds } from './upgrades.js';
 import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir } from './smog.js';
@@ -110,6 +110,10 @@ export function step() {
   // four times a second, not twice: this is what tells a station it has room
   // again, and waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();
+  // The lab and the scrubbing house take a body when there is work for one. Not
+  // every frame: it is a decision about the roster, and the roster does not need
+  // revisiting sixty times a second.
+  if (S.tick % 15 === 7) staffSheds();
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
   // A lever that was thrown during the pass asks for its station to be staffed
@@ -152,7 +156,7 @@ export function step() {
       // cursor is -- see `topOfRock`. You aim a click; holding the button is
       // working, and a rock is worked from the top down.
       const at = overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
-      if (at) knockOff(at.x, at.y);
+      if (at) knockOff(at.x, at.y, undefined, false);   // hold-to-mine is still your hands
       S.nextHit += mineMs();
     }
   }

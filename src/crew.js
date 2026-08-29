@@ -1782,6 +1782,20 @@ export function updateWorkers(now, dt) {
     // stood down for a machine that did nothing.
     if (stepTender(w, now)) continue;
 
+    // A body in the lab stays in the lab.
+    //
+    // Everything below this line is a reason to walk somewhere -- a mess, a hat,
+    // a rock coming down, the loo -- and none of them should reach through a
+    // closed door. Research is one job being worked on by one pair of hands, and
+    // a labber that wandered out to shovel and back left the bench cold for the
+    // length of two commutes while the chimney went on smoking, which is the
+    // building claiming something the crew deny.
+    //
+    // It is a guard rather than a fix to whichever branch was reaching in,
+    // because the thing that is true is about the lab and not about any one of
+    // them: there is a door, and it is shut.
+    if (w.type === 'labber' && w.goal === 'in') { stepLabber(w); continue; }
+
     if (w.type === 'miner') {
       // The rock is off. The crew take five on the bare ground. It runs until the next
       // rock has come down, so nobody is caught mid-hop underneath it.

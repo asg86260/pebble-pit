@@ -18,7 +18,7 @@ import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } fro
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy } from './machines.js';
+import { machineFor, buyMachine, canBuy, MACHINES, running } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, RAM_BILL } from './config.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
@@ -330,6 +330,47 @@ export function restaff(job, want) {
 // `haulers` is a fact on S rather than a sum worked out where it is read, so
 // that the crew code can treat it like any other job. This is the one place it
 // is set, and every path that moves a body goes through here.
+
+// The one-body stations staff themselves.
+//
+// The lab and the scrubbing house each hold exactly one pair of hands and have
+// exactly one thing to do with them, so the `+`/`-` under each was a control
+// with one meaningful setting -- and the game asked you to find it twice, on two
+// different boards, for no decision. What was really being asked is "do you want
+// the lab working", and the answer is always yes when there is research on and
+// hands going spare.
+//
+// It runs on the clock rather than inside `rebalance`, because the things it
+// reacts to -- research starting, the house going up -- do not go through
+// `rebalance` and should not have to. A rule about how the yard staffs itself
+// belongs in the yard's own loop.
+//
+// It staffs *up* only. Letting go is already written and better: the lab turns
+// its people out after LAB_IDLE_MS of nothing to work on, with a grace period so
+// a body that has just walked over is not sent straight back. Forcing the count
+// down here would delete that. The house has no such timer and wants none -- a
+// scrubbing house that is standing is one that should be running.
+export function staffSheds() {
+  let moved = false;
+  // Each of them staffs itself *when there is something to do*, which is the
+  // whole of what the stepper under it used to ask. A house standing over a
+  // clean sky does not quietly take a body off the yard for nothing -- that
+  // would be the one thing a player could not opt out of, and buying the house
+  // would cost a pair of hands for ever rather than when it is earning them.
+  for (const [job, wanted] of [['labbers', S.labOpen && !!S.research],
+                               ['scrubbers', S.scrubOpen && S.haze > 0]]) {
+    if (!wanted) continue;
+    const room = capOf(job) - S[job];
+    if (room > 0 && spareHands() > 0) { S[job] += Math.min(room, spareHands()); moved = true; }
+  }
+  // And the house gives its body back when the sky is clean. The lab has its own
+  // timer for this and a better one -- a grace period, so somebody who has just
+  // walked over is not turned straight round -- but the house has nothing to
+  // wait for: a clean sky is a finished job.
+  if (S.scrubbers > 0 && !(S.scrubOpen && S.haze > 0)) { S.scrubbers = 0; moved = true; }
+  if (moved) { rebalance(); syncWorkers(); S.dirty = true; }
+}
+
 export function rebalance() {
   // Hats are not clamped to bodies. A station may own more of them than it has
   // people standing at it -- that is the whole point of the kit belonging to the
@@ -686,7 +727,16 @@ export const UPGRADES = [
     // can see passing, and at a quarter it was twenty minutes of honest work: a
     // quarter of an hour watching the sky dirty with nothing on any board about
     // it, which reads as the game not having noticed.
-    show: () => !S.scrubOpen && S.rains > 0 && S.seenAir
+    // ...and after the first machine is running.
+    //
+    // That is the third thing, and it is the one that makes the house an answer
+    // rather than a chore. Hand labour dirties the sky slowly; a machine dirties
+    // it three times over per unit of work and never stops for a cigarette. Sold
+    // before then, the house is a building you buy to fix a number that was
+    // creeping; sold after, it is the bill for the thing you just switched on --
+    // and the two land in the same part of the game, which is what the smoke
+    // curve in DESIGN.md is trying to arrange.
+    show: () => !S.scrubOpen && S.rains > 0 && S.seenAir && MACHINES.some(m => running(m.key))
   },
   // The last thing on the ground, and the only one that makes nothing.
   //

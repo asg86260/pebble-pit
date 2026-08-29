@@ -484,7 +484,7 @@ export const swing = (n = 1) => {
   const before = countRock();
   for (let i = 0; i < n; i++) {
     const x = rockLeft() + P * 2;
-    knockOff(x, rockTopY(x) + P * 2);
+    knockOff(x, rockTopY(x) + P * 2, undefined, false);
   }
   S.dirty = true;
   return before - countRock();

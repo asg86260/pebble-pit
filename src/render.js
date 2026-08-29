@@ -612,25 +612,58 @@ function warning(x, y) {
 // with their warning hanging over the farm, three thousand pixels from the thing
 // that had stopped. A station added tomorrow gets the middle of its own heap
 // without anybody remembering to come back here.
-export function pileMarkAt(key) {
+// --- where a station's marks go -------------------------------------------------
+// Two things can hang under a station: a bar saying it has stopped, and a
+// pointer saying its board has something on it. They used to work out their own
+// positions independently -- one off `stationFoot`, one off the pile's strip,
+// each with its own idea of how far under the line to sit -- and the answer was
+// that they landed on top of each other at some stations and a long way apart at
+// others, with nothing anywhere deciding which.
+//
+// So there is a row of **slots** under each station, and each kind of mark has
+// one. A slot is a place, not a queue: the pointer sits in the same spot whether
+// or not the bar is showing, so a mark never moves because a different mark
+// appeared. That is the whole of what makes a row of icons readable -- you learn
+// where to look once.
+const SLOT_W = P * 6;
+const SLOTS = ['stopped', 'offer'];        // left to right, and never reordered
+
+// The middle of a station's row of slots. Everything that hangs under a station
+// is measured from here, so moving a station moves its marks with it.
+export function markAnchor(key) {
   const box = key === 'quarry' ? quarry
             : key === 'farm' ? farm
             : key === 'scrub' ? scrub
             : null;
   const strip = S.piles.find(p => p.key === key);
-  const x = key === 'rock' ? S.cx
+  // The quarry is a hole, and its marks used to hang off the left-hand lip --
+  // which is the corner the ladder comes up and the busiest few cells in the
+  // yard. They stand on the ground to the *right* of the mouth instead, where
+  // there is nothing else and nothing walks.
+  const x = key === 'quarry' ? quarry.x + quarry.w + SLOT_W
+          : key === 'rock' ? S.cx
           : key === 'sky' ? sky.x
           : box ? box.x + box.w / 2
           : strip ? (strip.from + strip.to) / 2
-          : farm.x + farm.w / 2;
-  // clear of the station itself: the quarry hangs below the ground line, so a
-  // mark under the ground would be a mark down the shaft, and the star is four
-  // hundred pixels up with no ground under it at all -- its mark hangs beneath
-  // the star, where the wizards are, rather than on the floor of the yard.
-  const y = key === 'quarry' ? quarry.y + quarry.h + P * 5
-          : key === 'sky' ? sky.y + sky.r + P * 9
-          : S.groundY + P * 7;
+          : (f => f == null ? farm.x + farm.w / 2 : f)(stationFoot(key));
+  // Clear of the station itself. The star is four hundred pixels up with no
+  // ground under it at all, so its marks hang beneath it where the wizards are;
+  // everything else stands on the floor of the yard, including the quarry now
+  // that its marks are beside the hole rather than over it.
+  const y = key === 'sky' ? sky.y + sky.r + P * 9 : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
+}
+
+// One slot of that row.
+export function markAt(key, kind) {
+  const at = markAnchor(key);
+  const i = Math.max(0, SLOTS.indexOf(kind));
+  const left = at.x - (SLOTS.length * SLOT_W) / 2 + SLOT_W / 2;
+  return { x: Math.round((left + i * SLOT_W) / P) * P, y: at.y };
+}
+
+export function pileMarkAt(key) {
+  return markAt(key, 'stopped');
 }
 
 // where the cursor has to be to be asking about one
@@ -2177,22 +2210,24 @@ const HAT_TALL = { helmet: P, lamp: P * 2, brim: P * 2, point: P * 3, cart: 0 };
 // else in this game is drawn. Over the roof it would be among the tower's bar,
 // the lab's tick and the casino's mark, every one of which is about what a place
 // is *doing*; this is about what it is offering, and those want telling apart.
-const OFFER_DOWN = P * 2;                // how far under the line it sits
 function drawOffers() {
   ctx.fillStyle = '#000';
   for (const which of STATIONS) {
-    const x = stationFoot(which);
-    if (x == null || !hasOffer(which)) continue;
-    const mid = Math.round((x - P / 2) / P) * P;
-    const top = S.groundY + OFFER_DOWN;
-    // A solid head and no shaft. Five cells by three is three courses to say
-    // "up" in, and a shaft under a head that size does not read as an arrow at
-    // all -- the widest course becomes a crossbar and what hangs below it a
-    // stem, which is a dagger, or with a stouter stem a plus. The head alone is
-    // a pointer, and a pointer is the whole of what this has to be.
-    ctx.fillRect(mid, top, P, P);
-    ctx.fillRect(mid - P, top + P, P * 3, P);
-    ctx.fillRect(mid - P * 2, top + P * 2, P * 5, P);
+    if (stationFoot(which) == null || !hasOffer(which)) continue;
+    const at = markAt(which, 'offer');
+    // A diamond, not an arrow.
+    //
+    // The arrow was a solid head pointing up, and up is a direction -- which
+    // asks to be read as "go this way" when what it means is "there is something
+    // here". A diamond has no direction in it at all: it is a marker, the same
+    // shape a map puts on a place, and it stops competing with the pointer over
+    // a body's head that really does mean go and look at this.
+    //
+    // Five courses about the middle: 1, 3, 5, 3, 1.
+    for (let i = 0; i < 5; i++) {
+      const wide = (i < 3 ? i : 4 - i);                // 0,1,2,1,0
+      ctx.fillRect(at.x - wide * P, at.y - P * 2 + i * P, P * (wide * 2 + 1), P);
+    }
   }
 }
 

@@ -314,7 +314,17 @@ export function pickCell(mx, my) {
 
 // `want` is how many pixels this swing takes. Your pick and a miner's are two
 // different tools, so whoever is swinging says which.
-export function knockOff(mx, my, want = pickCount()) {
+// `dirties` is whose swing this is.
+//
+// The yard fouls the sky; **your own hands do not.** Every mote overhead should
+// be something the works did while you watched, and a player tapping the rock is
+// not the works -- it is the one job in the game with no wages, no walk and no
+// body, and pricing it in smoke taxes the thing the game is named after. It also
+// made the opening dirty: a yard with one boulder, no crew and no buildings
+// still had a browning sky, from nothing but you clicking.
+//
+// Everything with a body still pays: a miner's swing, and the ram's.
+export function knockOff(mx, my, want = pickCount(), dirties = true) {
   const c = pickCell(mx, my);
   if (!c) return;
 
@@ -343,7 +353,7 @@ export function knockOff(mx, my, want = pickCount()) {
     spawnSpoil(px, py, shade);
   }
   // and it goes up from where it came off, not from a counter somewhere
-  foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py, 'dust');
+  if (dirties) foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py, 'dust');
   S.dirty = true;
   refreshRockTops();
 }

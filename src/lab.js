@@ -197,19 +197,11 @@ export function stepLabber(w) {
 }
 
 export const LAB_UPGRADES = [
-  // Who is standing in it, on the board that belongs to it. The bench can move
-  // bodies about too, but the lab is where you are when you start a piece of
-  // research, and walking back to the bench to staff it is a walk for nothing.
-  {
-    key: 'labcrew',
-    name: 'in the lab',
-    job: 'labbers',
-    count: () => S.labbers,
-    spare: () => idle(),
-    less: () => assign('labbers', -1),
-    more: () => assign('labbers', 1),
-    show: () => true
-  },
+  // There is no row here for who is standing in it any more. The lab holds one
+  // body and has one thing to do with it, so the stepper had one useful setting
+  // and asked you to go and find it. It takes somebody when there is research on
+  // and hands to spare, and gives them back when the bench is clear -- see
+  // `rebalance`.
   {
     key: 'labswing',
     name: 'swing speed',

@@ -2264,16 +2264,19 @@ const TESTS = [
     await sleep(120);
     const started = state();
 
-    run(12);                                     // and leave the lab empty
+    // Every spare pair of hands put on the rock, so there is nobody for the lab
+    // to take. An empty lab is a yard with nobody free now, rather than a roster
+    // you simply did not touch: the lab staffs itself the moment there is
+    // research on and somebody going spare, so leaving the stepper alone is no
+    // longer a way to keep it empty.
+    for (let i = 0; i < 8; i++) window.__assign('miners', 1);
+    run(12);
     const empty = state();
 
-    // One body, because one is all the lab holds now. This used to ask for two
-    // and then allow forty seconds for a piece worth forty-five worker-seconds,
-    // which was right while two of them were sharing it and became a coin toss
-    // the moment the cap meant only one turned up: it finished or it did not
-    // depending on how the frames fell. Long enough for one body to get there
-    // and do the whole of it.
-    window.__assign('labbers', 1);
+    // And now let one go. Nobody sends it: it is spare, there is work, and that
+    // is the whole of the rule.
+    window.__assign('miners', -1);
+    runUntil(() => state().labbers === 1, 60);
     runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(5);
     const part = state();
@@ -2290,7 +2293,7 @@ const TESTS = [
       ok(started.mult.swing === before.mult.swing,
          'the multiplier does not move on paying', `${started.mult.swing}`),
       ok(empty.research && empty.research.at === 0,
-         'an empty lab gets no work done at all',
+         'a lab with nobody to spare gets no work done at all',
          `${empty.research && empty.research.at}`),
       ok(part.labbers === 1 && part.research && part.research.at > 0.1,
          'somebody in it and it moves', `${part.research && part.research.at}`),
@@ -2327,13 +2330,19 @@ const TESTS = [
     await sleep(220);
 
     const el = document.getElementById('lab');
-    const more = el.querySelector('.job[data-job="labcrew"] .more');
-    more.click(); more.click();
-    const staffed = state();
-
+    // Nobody is put on the lab by hand any more: it holds one body, has one
+    // thing to do with it, and takes somebody the moment there is research on
+    // and hands to spare. So the staffing here is a consequence of starting the
+    // work rather than something done before it.
     el.querySelector('button[data-key="labswing"]').click();
     await sleep(140);
     const started = state();
+
+    // Read *after* the work is started, because that is what fetches somebody:
+    // the staffing is a consequence of there being research on, not a thing done
+    // to the roster beforehand.
+    runUntil(() => state().labbers === 1, 60);
+    const staffed = state();
 
     away();                                      // and walk off while they work
     await sleep(220);
@@ -2349,7 +2358,7 @@ const TESTS = [
     away();
     await sleep(160);
     return [
-      ok(staffed.labbers === 1, 'the lab board puts somebody in the lab itself',
+      ok(staffed.labbers === 1, 'the lab takes somebody the moment there is work',
          `${staffed.labbers}`),
       ok(!!started.research && started.labDone === null,
          'and starting a piece leaves nothing to report yet',
@@ -3484,8 +3493,19 @@ const TESTS = [
 
     // and now the lab is told to watch it
     window.__research('labair');
+    const told = has();
+
+    // ...and the third thing: a machine running. Hand labour dirties the sky
+    // slowly, and a house sold against that is a cure for a number that was
+    // creeping. A machine dirties it three times over per unit of work, so the
+    // house is the bill for the thing you have just switched on -- problem and
+    // answer in the same part of the game, which is what the smoke curve in
+    // DESIGN.md is arranging.
+    window.__fullSites();
+    window.__machine('jaw', { bought: true, on: true });
     const both = has();
     const air = state().smog;
+    window.__machine('jaw', { on: false, bought: false });
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
@@ -3493,7 +3513,9 @@ const TESTS = [
       ok(!clean, 'a yard that has never been rained on is offered nothing', `${clean}`),
       ok(!rained, 'and a yard that has been rained on but never looked into it, nothing either',
          `${air.rains} rains, row ${rained}`),
-      ok(both, 'the readout is what opens it', `${both}`),
+      ok(!told, 'nor one that has read the sky but has nothing running that dirties it',
+         `${told}`),
+      ok(both, 'the rain, the readout and a machine are what open it', `${both}`),
       ok(air.rains > 0, 'and it took a real rain to get there', `${air.rains}`)
     ];
   }],
@@ -3511,6 +3533,12 @@ const TESTS = [
     runUntil(() => state().smog.rains > 0, 30);
     run(20);
     window.__research('labair');
+    // ...and a machine running, which is the third thing the house waits on now.
+    // Hand labour dirties the sky slowly; a machine dirties it three times over
+    // per unit of work, and the house is the bill for the thing you switched on
+    // rather than a cure sold ahead of the disease.
+    window.__fullSites();
+    window.__machine('jaw', { bought: true, on: true });
     buildShopFromTest();
     shop().querySelector('[data-key="unlockscrub"]').click();
     buildShopFromTest();

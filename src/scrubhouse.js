@@ -82,17 +82,10 @@ export const SCRUB_UPGRADES = [
   // Who is standing in it, on the board that belongs to it -- the same row the
   // lab has, for the same reason: you are here, and walking back to the bench to
   // staff the place you are standing in is a walk for nothing.
-  {
-    key: 'scrubcrew',
-    name: 'in the house',
-    note: () => 'each body pulls more of the sky down',
-    job: 'scrubbers',
-    count: () => S.scrubbers,
-    spare: () => idle(),
-    less: () => assign('scrubbers', -1),
-    more: () => assign('scrubbers', 1),
-    show: () => true
-  },
+  // No row for who is in it. It is a shed with a fan in it -- `capOf` has said so
+  // since the day it was built -- so the stepper only ever went between nought
+  // and one, and nought is a house you have paid for and switched off. It staffs
+  // itself while it is standing; see `rebalance`.
   // The reading, over the row that decides what to do about it: how many bodies
   // go in here is the one thing anybody does about that number, and a reading you
   // can act on belongs where you act on it.

@@ -27,15 +27,16 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 
 // Each station and the job it stands for, in yard order, left to right, so the
 // roster reads the way the world does.
+//
+// The lab and the scrubbing house are not on it. Each holds one body and has one
+// thing to do with it, so a counter under either was a control with one useful
+// setting -- and a roster is for the places where *how many* is the question.
+// Both staff themselves now; see `rebalance`.
 export const POSTS = [
-  { key: 'scrubjob', job: 'scrubbers',
-    at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: 'janitors',
     at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen },
-  { key: 'labjob', job: 'labbers',
-    at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   { key: 'farmjob', job: 'farmhands',
     at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: 'quarriers',
