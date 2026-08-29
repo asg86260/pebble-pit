@@ -11,10 +11,11 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
-import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune } from './config.js';
+import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
-import { blocked, resite, clampCam } from './world.js';
+import { blocked, resite, clampCam, benches, plotCount } from './world.js';
 import { makeBoulder, rockSize, depthOf } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
@@ -26,13 +27,16 @@ import { WIZ_BREW_MS } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
 import { syncWorkers } from './crew.js';
-import { rebalance, assign as assignJob } from './upgrades.js';
+import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
+import { machine, MACHINES } from './machines.js';
 import { UPGRADES, buy as buyRow, rungOf, maxed } from './upgrades.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { LAB_UPGRADES } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
+import { QUARRY_UPGRADES } from './quarry.js';
+import { FARM_UPGRADES } from './farm.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -42,6 +46,51 @@ import { step } from './game.js';
 
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
+// --- the machines ---------------------------------------------------------------
+// Set a machine's facts outright, for a check that wants one running without
+// spending twenty seconds of simulated yard walking a body to a lever. The
+// lever's *own* check must use `lever` below and never this one, or it asserts
+// nothing about the walk.
+export const machineSet = (which, o = {}) => {
+  const m = machine(which);
+  if (!m) return null;
+  const was = m.on;
+  if (o.bought != null) m.bought = !!o.bought;
+  if (o.on != null) m.on = !!o.on && m.bought;
+  if (o.driven != null) m.driven = !!o.driven;
+  const job = MACHINES.find(x => x.key === which).job;
+  if (m.on && !m.was) m.was = S[job] || 0;
+  if (!m.on) m.ask = null;
+  // Off the same way the lever goes off: the gang it displaced comes back. A
+  // hook that only clamped would let a check watch a machine stop and conclude
+  // that stopping one strands its station, which is the opposite of what the
+  // yard does.
+  if (!m.on && was && m.was) { const want = m.was; m.was = 0; restaff(job, want); }
+  rebalance();
+  syncWorkers();
+  buildShop();
+  S.dirty = true;
+  return { ...m };
+};
+
+// Every station given every slot it will ever have, which is what the machines
+// are gated behind. A check that wants to buy one should not have to know that
+// the numbers are five and seven.
+export const fullSites = () => {
+  S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
+  S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
+  S.minerPickLevel = RUNGS;
+  S.minerSpeedLevel = RUNGS;
+  S.quarryOpen = true;
+  S.farmOpen = true;
+  resite();
+  rebalance();
+  buildShop();
+  S.dirty = true;
+  return { benches: benches(), plots: plotCount(),
+           pick: S.minerPickLevel, speed: S.minerSpeedLevel };
+};
+
 export const clearFloor = () => {
   floor.grid.fill(0);
   floor.painter.repaint();
@@ -87,6 +136,15 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
   S.janitors = 0;
+  // And every machine stops. This is the same trap as the scrubbers above, one
+  // level worse: a machine left running by whatever ran before does not merely
+  // move bodies about, it rewrites what the next `__crew(0, 0, 3)` is *allowed*
+  // to mean -- three quarriers asked for, one bench's worth permitted, and two
+  // of them quietly carrying dust while a check swears it staffed the cut.
+  for (const m of MACHINES) {
+    const r = machine(m.key);
+    if (r) { r.on = false; r.ask = null; r.was = 0; }
+  }
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   if (wz > 0) openMeteor();
   // The quarry and the plot only hold so many, so a hook asked for four down the
@@ -309,19 +367,32 @@ export const upgrades = () => UPGRADES;
 // than reach past it for the dev handle that sets the flag the row would have
 // set -- which is how a check ends up agreeing with a shortcut instead of with
 // the game.
+// Every row anywhere, for `buyRowByKey`. The two *station* boards were missing
+// from this list -- so `__buy('quarrybench')` answered `false`, and a check
+// written against it would have passed by asserting nothing at all. They are the
+// boards the machines' own rows live on, so it is fixed before there is a
+// machine to get it wrong.
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
-                        ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES];
+                        ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
+                        ...QUARRY_UPGRADES, ...FARM_UPGRADES];
 
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);
   if (!u) return false;
-  // Did it fire? A rung says so by going up. A row that buys a *thing* has no
-  // rung to count, and says so by no longer being on the board -- which is the
-  // same question the shop asks when it decides whether a press did anything.
+  // Did it fire? Three ways a row can say so, because there are three shapes of
+  // row. A ladder says so by its rung going up. A row that buys a *thing* says so
+  // by leaving the board. And a station's own rows -- a bench, a plot -- do
+  // neither: they stay put and there is no rung, and what moves is the figure
+  // they report. That last case used to answer `false` however well it had
+  // worked, so a check could take a bench out of the quarry and be told nothing
+  // had happened.
   const was = rungOf(u);
+  const from = u.from ? u.from() : null;
   const showed = u.show();
   buyRow(u);
-  return rungOf(u) > was || (showed && !u.show());
+  return rungOf(u) > was
+      || (u.from && u.from() !== from)
+      || (showed && !u.show());
 };
 
 // Press the pile, through the row on the board rather than around it: the price

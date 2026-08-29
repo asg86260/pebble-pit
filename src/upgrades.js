@@ -18,6 +18,8 @@ import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } fro
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
+import { machineFor } from './machines.js';
+import { MACHINE_GAIN, ROCK_GANG } from './config.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -224,6 +226,17 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job));
 // The rock and the lab have no such plan: a rock is as long as it is and a room
 // holds who it holds.
 export const capOf = job =>
+  // A station being worked by a machine holds one body: the tender. This is the
+  // scrubbing house's rule, and its comment two paragraphs down is the argument
+  // for it word for word -- a machine runs itself once somebody is standing in
+  // it, and a second pair of hands is a queue rather than a place to be.
+  //
+  // It reads the lever (`on`) and not whether anybody is actually standing
+  // there. That distinction is the whole of why this works: a cap derived from
+  // "is it manned" would flip every time the tender walked off to shovel, and
+  // `rebalance` would thrash the gang between the station and carrying, twice a
+  // minute, for ever.
+  machineFor(job) ? 1 :
   job === 'quarriers' ? benches() :
   job === 'farmhands' ? plotCount() :
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
@@ -252,6 +265,52 @@ export const capOf = job =>
   job === 'wizards' ? S.wizardHats : Infinity;
 export const roomAt = job => capOf(job) - S[job];
 
+// What the station could hold by hand -- its complement, before it was given a
+// machine. `capOf` answers 1 while a machine runs, which is the right answer to
+// "where can I put a body" and the wrong one to "what is this machine standing
+// in for", so the two questions get two functions.
+//
+// The rock is the one station with no floor plan to read: `capOf('miners')` is
+// `Infinity` and should stay that way. Its complement is `ROCK_GANG`, a named
+// constant in config with its reasoning over it.
+export const handsOf = job =>
+  job === 'miners' ? ROCK_GANG
+                   : (n => Number.isFinite(n) ? n : ROCK_GANG)(capOfBare(job));
+
+// `capOf` with the machine branch stepped over, so `handsOf` can ask what the
+// station's floor plan is while the machine is running -- which is exactly when
+// anybody wants to know.
+const capOfBare = job =>
+  job === 'quarriers' ? benches() :
+  job === 'farmhands' ? plotCount() :
+  job === 'labbers' ? 1 :
+  job === 'scrubbers' ? 1 :
+  job === 'janitors' ? (S.outhouseOpen ? 2 : 0) :
+  job === 'wizards' ? S.wizardHats : Infinity;
+
+// What the machine is worth, in hands, at this station. The dial is measured
+// rather than believed -- see MACHINE_GAIN.
+export const machineRate = job =>
+  handsOf(job) * MACHINE_GAIN * (machineFor(job)?.driven ? 2 : 1);
+
+// Put a gang back where a machine displaced it.
+//
+// `rebalance` only ever clamps *down*: when the lever went on it walked the
+// surplus to carrying, and nothing walks them home again. So throwing the lever
+// off has to ask for them back, or every "off" costs five clicks on the roster
+// and nobody ever throws the lever twice.
+//
+// It restores a complement; it does not conjure bodies. If the hands have since
+// been sent down the quarry or up the tower, what comes back is whatever was
+// idle, and no more.
+export function restaff(job, want) {
+  const room = Math.max(0, Math.min(want, capOf(job)) - S[job]);
+  if (room > 0) S[job] += Math.min(room, Math.max(0, idle()));
+  rebalance();
+  syncWorkers();
+  S.dirty = true;
+}
+
 // `haulers` is a fact on S rather than a sum worked out where it is read, so
 // that the crew code can treat it like any other job. This is the one place it
 // is set, and every path that moves a body goes through here.
@@ -263,8 +322,14 @@ export function rebalance() {
   // player can do breaks that either, but a save from a wider plot can, and the
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a plot that is not there.
-  for (const job of ['quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'])
-    S[job] = Math.min(S[job], capOf(job));
+  // Over `JOBS`, not over a hand-kept copy of it. The list used to be written out
+  // here with `miners` deliberately left off, because `capOf('miners')` is
+  // `Infinity` and clamping to it is a no-op -- which was true right up until the
+  // ram made it finite, and then the one job the list omitted was the one job
+  // that needed clamping and nothing walked the gang off the rock. A no-op for
+  // six of the seven is a cheaper thing to carry than a second copy of a list
+  // that is declared eighty lines up.
+  for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
   for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'minerPickLevel',

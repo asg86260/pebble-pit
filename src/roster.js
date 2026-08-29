@@ -16,7 +16,7 @@ import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
-import { assign, idle, hats, worn, spareKit, roomAt } from './upgrades.js';
+import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -289,6 +289,11 @@ export function rosterReport() {
     return { key: p.key, job: p.job, n: S[p.job], hats: hats(p.job), worn: worn(p.job),
              spareKit: spareKit(p.job), fixed: !!p.fixed, hitW: H.w, hitH: H.h,
              room: Math.min(99, roomAt(p.job)),
+             // What the station holds now -- 1 while a machine runs -- and what
+             // it would hold by hand. Without both, a check cannot tell a capped
+             // station from a small one.
+             cap: capOf(p.job) === Infinity ? null : capOf(p.job),
+             hands: handsOf(p.job),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],

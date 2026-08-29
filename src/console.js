@@ -24,6 +24,7 @@ Object.assign(window, {
   __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
   __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,
   __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,
+  __machine: hooks.machineSet, __fullSites: hooks.fullSites,
   __lab: hooks.openLab, __research: hooks.finishResearch, __grant: hooks.grant,
   __spend: hooks.spendDust, __press: hooks.press,
   __upgrades: hooks.upgrades, __buy: hooks.buyRowByKey, __pitProfile: hooks.pitProfile, __dig: hooks.dig,

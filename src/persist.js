@@ -10,6 +10,7 @@ import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, sky } from './state.js';
+import { freshMachines, MACHINES } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount } from './grid.js';
@@ -211,6 +212,15 @@ export function persist() {
     scrubOpen: S.scrubOpen,
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
+    // The machines, as facts only. Whether each was bought, whether its lever is
+    // on, and the complement it displaced. The beats, the phases and an ask
+    // somebody was halfway through walking to are not saved: no body is saved
+    // either, so an ask that outlived the reload would be an ask nobody was ever
+    // going to arrive for. It is dropped, and it can be made again.
+    machines: Object.fromEntries(MACHINES.map(m => {
+      const r = (S.machines && S.machines[m.key]) || {};
+      return [m.key, { bought: !!r.bought, on: !!r.on, was: r.was | 0, driven: !!r.driven }];
+    })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
     // handed back. The hat on the go is not: a spell in the middle of being cast
@@ -309,6 +319,7 @@ export function restore() {
     S.quarriers = 0;
     S.quarryPaceLevel = 0;
     S.benchLevel = 0;
+    S.machines = freshMachines();   // a new yard has no machines in it
     S.spores = 0;
     S.seenSpore = false;
     S.farmOpen = false;
@@ -419,6 +430,20 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
+  // Before the `rebalance()` further down, and that ordering is the whole point:
+  // a restored machine changes what its station's cap *is*, and a rebalance run
+  // against the old cap would leave five bodies standing at a cut that now holds
+  // one. A save from before the machines existed has no block at all, and gets
+  // three fresh records rather than three undefineds.
+  S.machines = freshMachines();
+  for (const m of MACHINES) {
+    const r = (s.machines && s.machines[m.key]) || {};
+    const rec = S.machines[m.key];
+    rec.bought = !!r.bought;
+    rec.on = !!r.bought && !!r.on;      // a lever cannot be on for a machine nobody bought
+    rec.was = r.was | 0;
+    rec.driven = !!r.driven;
+  }
   S.meteorOpen = !!s.meteorOpen;
   S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
@@ -551,6 +576,7 @@ export function reset() {
   S.quarriers = 0;
   S.quarryPaceLevel = 0;
   S.benchLevel = 0;
+  S.machines = freshMachines();     // a new yard has no machines in it
   S.spores = 0;
   S.seenSpore = false;
   S.farmOpen = false;

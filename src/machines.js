@@ -1,0 +1,102 @@
+// The machines: the jaw at the cut, the ram at the rock, the tiller at the plots.
+//
+// A machine here is not the thing that replaces you. It is a **station**: a body
+// walks to it and works it, the way a body works the scrubbing house, and it is
+// faster than the same station worked by hand and it smokes. So the yard's two
+// oldest rules survive it intact -- nobody teleports, and a station idles until
+// somebody is actually standing there -- and the second of those turns out to be
+// the whole safety net this feature needs. See `manned`.
+//
+// The three of them share everything that can be shared. What is genuinely
+// per-machine is a short list and it is worth naming, because the temptation is
+// to write three machines and call it one feature: the *geometry* (where the
+// thing stands, which is read off the station's own functions every frame), the
+// *bite* (one unit of the station's own work, done by calling the station's own
+// code), the *gate* on its shop row, and the *drawing*. Everything else -- the
+// record, the capacity rule, the lever, the errand, the fouling, the stack, the
+// walk back to carrying -- lives here once.
+//
+// One prohibition, stated up front because it is what keeps the jaw from being
+// buried alive: **nothing about a machine's position is ever stored.** The
+// quarry falls in behind the last body out and `fillQuarry` zeroes every column;
+// a jaw with a remembered `y` would be under the new ground. Its `y` is
+// `dugTopY(x) - height`, read every frame, so when the ground comes back the jaw
+// comes up with it exactly the way a quarrier's feet do. The same goes for the
+// hoist off `ladder()`, the ram off `rockEdge(-1)` and the tiller along the plot
+// line. Geometry is derived, never remembered.
+
+import { S } from './state.js';
+
+// The three of them, and the job each one stands in for. The job is the link to
+// everything else: it is what `capOf` answers about, what `handsOf` reads, and
+// what `restaff` puts back.
+export const MACHINES = [
+  { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
+  { key: 'ram',    job: 'miners',    name: 'the ram' },
+  { key: 'tiller', job: 'farmhands', name: 'the tiller' }
+];
+
+export const JOB_MACHINE = { quarriers: 'jaw', miners: 'ram', farmhands: 'tiller' };
+
+// A machine's record. One shape, three of them, and it is a keyed object rather
+// than nine flat fields on S for a reason worth writing down: it is four places
+// to remember when the save format moves instead of thirty-six, and the note in
+// `reset()` about `S.pitFine` records exactly the bug that forgetting one gives
+// you.
+//
+// `bought`, `on` and `was` are facts about the yard. `ask` is a request that has
+// not been walked to yet. The rest are clocks the drawing reads.
+const fresh = () => ({
+  bought: false,
+  on: false,
+  // A lever thrown is a *request*, not a change: somebody has to walk over and
+  // do it. This lives on S rather than on the body walking, because no body is
+  // ever persisted -- so a reload drops the walk, and an ask that outlived it
+  // would be an ask nobody was ever going to arrive for.
+  ask: null,
+  // What the station held when the lever went on, so that throwing it off can
+  // put the gang back. `rebalance` only ever clamps *down* -- it walks the
+  // surplus to carrying and nothing walks them home again -- so without this,
+  // every "off" would cost five clicks on the roster and nobody would ever
+  // throw the lever twice.
+  was: 0,
+  beatAt: 0,             // when its next unit of work is due
+  phase: 0,              // where it is in its own animation, 0..1
+  puffAt: 0,             // and when the stack is next due to puff
+  // Declared, and false, and unused until a star's core can be turned into a
+  // heart. When that lands it multiplies exactly one number -- see `machineRate`
+  // -- rather than arriving as a second feature wearing this one's coat.
+  driven: false
+});
+
+export const freshMachines = () => Object.fromEntries(MACHINES.map(m => [m.key, fresh()]));
+
+// The record for a key, and never null. It seeds itself rather than relying on
+// something having run first: `restore` and both `reset` paths lay the records
+// down, but a check that pokes at S directly, or a save from before the machines
+// existed, would otherwise reach a `null` here -- and a feature whose every read
+// has to guard is a feature that will be read unguarded exactly once.
+export const machine = key => {
+  if (!S.machines) S.machines = freshMachines();
+  return S.machines[key] || null;
+};
+
+// The machine standing in for a job, if there is one and it is running. This is
+// the question every other file asks, and it is deliberately about *on* rather
+// than about *manned*: see `capOf`.
+export const machineFor = job => {
+  const k = JOB_MACHINE[job];
+  const m = k && machine(k);
+  return m && m.bought && m.on ? m : null;
+};
+
+export const running = key => {
+  const m = machine(key);
+  return !!(m && m.bought && m.on);
+};
+
+// `handsOf`, `machineRate` and `restaff` live in upgrades.js beside `capOf`,
+// which is the one place that knows what a station's floor plan is. This file
+// imports nothing from there and is imported by it, so the dependency runs one
+// way: `capOf` asks whether a machine is running, and nothing here asks `capOf`
+// anything.

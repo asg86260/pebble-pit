@@ -210,6 +210,16 @@ export const S = {
   // hole is emptied and falls in, so it cannot say how much work was done over a
   // stretch that happens to cross a payout; this only ever goes up.
   quarryTotal: 0,
+  // The three machines, keyed. One object rather than nine flat fields on S,
+  // because it is four places to remember when the save format moves instead of
+  // thirty-six -- and the note in `reset()` about `S.pitFine` is what forgetting
+  // one of thirty-six looks like afterwards. See machines.js for the shape.
+  machines: null,
+  // A machine whose lever has just been thrown wants its gang back, and that
+  // cannot happen inside the worker pass: `rebalance`/`syncWorkers` replace
+  // `S.workers`, and the pass is iterating it. So the arrival sets this and the
+  // frame drains it afterwards. See game.js.
+  restaff: null,
   // This dig is finished with: the seam is out and everybody is on their way up.
   // Nobody goes back down until the last one is out and the quarry has fallen in,
   // or the first body back down finds an empty hole and turns straight round.

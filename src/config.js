@@ -1034,6 +1034,41 @@ export const QUARRY_H = 126;      // and how deep the first cut goes
 // can see from the rim.
 export const QUARRY_BENCH0 = 2;    // bodies a fresh quarry has room for
 export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
+
+// --- the machines ---------------------------------------------------------------
+// What a machine is worth, as a multiple of the complement its station could
+// hold by hand. See `handsOf` and DESIGN.md's "The machines".
+//
+// This is a dial to be **measured**, not believed, and the number here is a
+// guess until a check has measured it. The reason is that hands spend a great
+// deal of their day *walking* -- CUT_STEP from cell to cell across the floor of
+// the cut, along the plot line, up and down the face -- and a machine that
+// stands in one place does not. So a machine ticking at one and a half times the
+// station's clock is worth rather more than one and a half hands, and by how
+// much depends on how far apart the work is, which is not a thing you can reason
+// out from here. The honest form of this number is whatever a node check that
+// runs a machine against a real gang of five says it should be.
+export let MACHINE_GAIN = 1.5;
+// And how much dirtier a machine is than the hands it replaced, per unit of work
+// -- not per minute. A machine that is three times as dirty *and* three times as
+// quick would be nine times the smoke, which is a number nobody chose. The
+// station's own work fouls at 1x where it happened, because it goes through the
+// station's own function; the runner adds the remaining (MACHINE_FOUL - 1) from
+// the machine's stack, in one place. That is what the stack is for, and it is
+// why this is not three trebled constants at four call sites.
+export let MACHINE_FOUL = 3;
+// The rock's complement, which is the one a machine cannot read off the station.
+// `capOf('miners')` is `Infinity` and rightly so -- a rock is as long as it is,
+// and there is no floor plan to run out of. But the ram still has to be worth
+// something, and "worth as much as whatever gang you happen to have on it" is a
+// machine that gets better the less you need it.
+//
+// Five, because five is what a crest holds before bodies start being elbowed
+// round the shoulder of it and the sixth is working the far side on its own. It
+// is a number in config.js with its reasoning over it, which is where every
+// number in this game lives -- what the rule against per-case constants forbids
+// is a bare 5 inlined in the shared runner.
+export const ROCK_GANG = 5;
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 export const BENCH_COST = 3;       // shards for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets
@@ -1407,6 +1442,8 @@ export const TUNABLE = [
   { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
   { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000 },
+  { key: 'MACHINE_GAIN', label: 'a machine is worth', min: 0.5, max: 6, step: 0.1 },
+  { key: 'MACHINE_FOUL', label: 'a machine is dirtier by', min: 1, max: 12, step: 0.5 },
   { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05 },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
@@ -1442,6 +1479,8 @@ export function tuned(key) {
     case 'HAUL_BASE': return HAUL_BASE;
     case 'CUT_STEP': return CUT_STEP;
     case 'CUT_DIG_MS': return CUT_DIG_MS;
+    case 'MACHINE_GAIN': return MACHINE_GAIN;
+    case 'MACHINE_FOUL': return MACHINE_FOUL;
     case 'QUARRY_BASE': return QUARRY_BASE;
     case 'TEND_BASE': return TEND_BASE;
     case 'CUT_MS': return CUT_MS;
@@ -1473,6 +1512,8 @@ export function tune(key, v) {
     case 'HAUL_BASE': HAUL_BASE = v; break;
     case 'CUT_STEP': CUT_STEP = v; break;
     case 'CUT_DIG_MS': CUT_DIG_MS = v; break;
+    case 'MACHINE_GAIN': MACHINE_GAIN = v; break;
+    case 'MACHINE_FOUL': MACHINE_FOUL = v; break;
     case 'QUARRY_BASE': QUARRY_BASE = v; break;
     case 'TEND_BASE': TEND_BASE = v; break;
     case 'CUT_MS': CUT_MS = v; break;
