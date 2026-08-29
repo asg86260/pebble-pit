@@ -352,3 +352,152 @@ group('picking up the walker hands the lever back', async () => {
        `${on.machines.jaw.goer}`)
   ];
 });
+
+// --- the jaw --------------------------------------------------------------------
+// The machine that works the cut. What it does is what a quarrier does, through
+// the same two functions, one cell at a time -- and the checks below are mostly
+// about that "one cell at a time", because it is what everything underneath
+// stands on.
+group('a manned jaw digs, and an unmanned one does not', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 1);                    // one tender, which is all it holds
+  window.__machine('jaw', { bought: true, on: true });
+  window.__clearFloor();
+  runUntil(() => {
+    const q = yard.S.workers.find(o => o.type === 'quarrier');
+    return q && !q.walking;
+  }, 40);
+
+  const a0 = state().quarryTotal;
+  run(8);
+  const worked = state().quarryTotal - a0;
+
+  // and now take the tender away, and nothing else about the machine changes
+  for (const w of yard.S.workers) w.lifted = true;
+  const b0 = state().quarryTotal;
+  for (let i = 0; i < 30; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
+  const alone = state().quarryTotal - b0;
+
+  for (const w of yard.S.workers) w.lifted = false;
+  // Read before `__crew`, which stops every machine on purpose.
+  const still = state().machines.jaw.on;
+  window.__crew(0, 0, 0);
+  return [
+    ok(worked > 0, 'a machine with somebody standing at it takes the ground out',
+       `${worked} cells`),
+    ok(alone === 0, 'and one with nobody at it does nothing at all',
+       `${alone} cells with nobody standing there`),
+    ok(still, 'and it stopped without the lever having moved -- it is idle, not off')
+  ];
+});
+
+// The invariant the whole scatter rests on. `findShards` pays a dig exactly its
+// seam *because* the count of what is left is taken before each single cell
+// comes out, which is what makes the last cell one-in-one. A jaw that took a
+// column at a beat would quietly rewrite what `dig deeper` is worth.
+group('a jaw pays a dig exactly what a gang would', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 1);
+  window.__machine('jaw', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+
+  const quarried = () => state().crewNames.split(' ')
+    .reduce((a, p) => a + (+(p.split('|')[4] || 'q0').slice(1) || 0), 0);
+
+  // Measured between two fall-ins, exactly as the hand version is: a dig caught
+  // half done has some of its stone up and the rest still in the ground.
+  let digs = -1, seam = state().seam, was = state().quarryDug, q0 = 0, q1 = 0;
+  for (let i = 0; i < 900; i++) {
+    run(0.4);
+    window.__clearFloor();
+    const s = state();
+    if (s.quarryDug < was - 0.3) {
+      if (digs < 0) { digs = 0; q0 = q1 = quarried(); }
+      else { digs++; q1 = quarried(); }
+    }
+    was = s.quarryDug;
+    seam = s.seam;
+  }
+  digs = Math.max(0, digs);
+  const got = q1 - q0;
+  window.__crew(0, 0, 0);
+  return [
+    ok(digs > 0, 'the jaw digs a hole right out and it falls back in',
+       `${digs} digs`),
+    ok(got === digs * seam,
+       'and each one pays exactly the seam, no more and no less',
+       `${got} over ${digs} digs of ${seam}`)
+  ];
+});
+
+// A machine obeys the station's own rules, because it is asking them through the
+// station's own functions rather than keeping its own copy.
+group('a full pile stops the jaw like it stops a gang', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 1);
+  window.__machine('jaw', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+
+  // fill the quarry's own strip until the station stands down
+  const p = state().piles.find(x => x.key === 'quarry');
+  for (let i = 0; i < 400; i++) window.__pile(p.from + (i % 40) * 4, 6);
+  run(2);
+  const full = state();
+  const a0 = full.quarryTotal;
+  run(6);
+  const whileFull = state().quarryTotal - a0;
+
+  window.__clearFloor();
+  const b0 = state().quarryTotal;
+  run(6);
+  const after = state().quarryTotal - b0;
+  window.__crew(0, 0, 0);
+  return [
+    ok(full.pileFull.quarry, 'the quarry pile is full', `${JSON.stringify(full.pileCount)}`),
+    ok(whileFull === 0, 'and the jaw stands down with it', `${whileFull} cells`),
+    ok(after > 0, 'and starts again the moment there is room', `${after} cells`)
+  ];
+});
+
+// What the machine costs the sky. Measured against the dial rather than against
+// an absolute, because the band saturates -- past MOTE_CAP a mote is turned away
+// with its dirt -- and a standing count reads the same at the cap whatever the
+// rate. Two runs of the same work, one dirty machine and one clean, is a
+// comparison the ceiling cannot flatten.
+group('a machine is dirtier per unit of work than the hands were', async () => {
+  const perCell = foulDial => {
+    window.__reset();
+    openSites();
+    window.__fullSites();
+    window.__tune('MACHINE_FOUL', foulDial);
+    window.__crew(0, 0, 1);
+    window.__machine('jaw', { bought: true, on: true });
+    window.__clearFloor();
+    window.__air({ haze: 0, muck: 0 });
+    run(4);
+    const c0 = state().quarryTotal, s0 = state().smog.sky;
+    for (let i = 0; i < 20; i++) { run(0.5); window.__clearFloor(); }
+    const cells = state().quarryTotal - c0, made = state().smog.sky - s0;
+    return { cells, made, per: made / Math.max(1, cells) };
+  };
+
+  const clean = perCell(1);
+  const dirty = perCell(3);
+  window.__crew(0, 0, 0);
+  return [
+    ok(clean.cells > 0 && dirty.cells > 0, 'the jaw works either way',
+       `${clean.cells} and ${dirty.cells} cells`),
+    ok(clean.made > 0, 'and digging dirties the sky at all', `${clean.made}`),
+    ok(dirty.per > clean.per * 1.5,
+       'and a machine at three fouls well over one lot per cell of work',
+       `${clean.per.toFixed(2)} -> ${dirty.per.toFixed(2)} per cell`)
+  ];
+});

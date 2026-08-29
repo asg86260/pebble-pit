@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -16,7 +16,7 @@ import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
-import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF } from './upgrades.js';
+import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
@@ -25,9 +25,9 @@ import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
          rockMuck, quarryMuck, plotMuck,
-         pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
+         pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
-import { MACHINES, machine, JOB_MACHINE } from './machines.js';
+import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -848,6 +848,70 @@ export function stepLevers() {
     w.legs = [{ to: at, do: 'lever' },
               { to: stationX(w.type) ?? w.x, do: 'back' }];
     nextLeg(w);
+  }
+}
+
+// --- running a machine ----------------------------------------------------------
+// One frame of all three. The beat, the manning rule, and the extra dirt; the
+// work itself belongs to the station and is called through its own `bite`.
+//
+// It lives here rather than in machines.js because it needs the crew, and
+// machines.js is imported by `upgrades.js` -- which the quarry, the farm and the
+// rock all import in turn. A runner in there that reached back into the stations
+// would close that ring. So the stations register what only they can answer and
+// this walks the list.
+
+// Somebody of the right trade, standing at the machine and not doing something
+// else. This is the yard's oldest rule rather than a new one -- **a station
+// idles until somebody is actually standing there** -- and it is what makes the
+// whole feature safe: an unmanned machine produces nothing and smokes nothing,
+// so a yard under its own smoke with nobody free to stop it cannot get worse.
+// The moment the last body walks away, the machine stops.
+//
+// It is deliberately generous about *which* body. A machine that insisted on one
+// particular tender would stop every time that tender went for a hat.
+const MACHINE_REACH = WORKER * 3;
+function tenderFor(spec, at) {
+  for (const w of S.workers) {
+    if (w.type !== spec.type) continue;
+    if (w.walking || w.inside || w.aloft || w.inPit || w.lifted || w.falling) continue;
+    if (w.looUntil) continue;                  // stopped, but not for the machine
+    if (Math.abs((w.x + WORKER / 2) - (at + P)) > MACHINE_REACH) continue;
+    return w;
+  }
+  return null;
+}
+
+export function stepMachines(now) {
+  for (const m of MACHINES) {
+    const r = machine(m.key);
+    const spec = specOf(m.key);
+    if (!r || !spec || !r.bought || !r.on) continue;
+
+    const at = spec.at();
+    const tender = tenderFor(spec, at);
+    // Unmanned: it does not tick, and -- because `beatAt` is left where it is --
+    // it does not bank up a burst of work to do the moment somebody wanders back
+    // into reach either. It simply is not running.
+    if (!tender) { r.beatAt = now + 200; continue; }
+    tender.resting = false;                    // it is working, whatever it looks like
+    if (!spec.ready()) { r.beatAt = now + 200; continue; }
+
+    const ms = spec.ms(machineRate(m.job));
+    if (!r.beatAt || r.beatAt > now + ms) r.beatAt = now + ms;   // a dial turned down
+    if (now < r.beatAt) continue;
+    r.beatAt = now + ms;
+    if (!spec.bite(tender)) continue;
+
+    // The extra dirt, from the machine's stack, in one place.
+    //
+    // The station's own work already fouled once where it happened, because it
+    // went through the station's own function. What a machine adds is the rest
+    // of MACHINE_FOUL -- so this is one call rather than three trebled constants
+    // at four call sites, and it is why the stack is worth drawing.
+    const extra = Math.max(0, MACHINE_FOUL - 1);
+    if (extra > 0) foul(extra, at + P, spec.y ? spec.y() : walkY(at), 'shard');
+    S.dirty = true;
   }
 }
 

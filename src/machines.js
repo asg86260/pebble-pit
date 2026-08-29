@@ -145,3 +145,25 @@ export const asked = which => {
   const m = machine(which);
   return m ? (m.ask ? m.ask.on : m.on) : false;
 };
+
+// --- the runner -----------------------------------------------------------------
+// One beat, three machines, and the station's own work done by the station's own
+// code.
+//
+// The stations register themselves rather than being imported here, and that is
+// not a style choice: `capOf` has to ask whether a machine is running, so
+// `upgrades.js` imports this file -- and the quarry, the farm and the rock all
+// import `upgrades.js`. A runner that reached into them would close that ring.
+// So the dependency is turned round: each station hands this file the two or
+// three things only it can answer, and this file never learns where any of them
+// live.
+const SPEC = {};
+
+// `at`    -- where the machine stands, derived, never stored
+// `ms`    -- how long one unit of its station's work takes it, at this rate
+// `bite`  -- do exactly one unit of the station's own work, through the station's
+//            own function, so that everything underneath keeps applying
+// `ready` -- anything else that has to be true: the pile not full, the muck
+//            cleared, the ground still there to work
+export const defineMachine = (key, spec) => { SPEC[key] = spec; };
+export const specOf = key => SPEC[key] || null;

@@ -19,6 +19,7 @@ import { walkY, groundAt, benches, resite, pileOf } from './world.js';
 import { mult } from './lab.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
+import { defineMachine } from './machines.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -591,3 +592,58 @@ export const QUARRY_UPGRADES = [
 export const QUARRY_SECTIONS = [
   { title: 'the quarry', keys: ['quarrybench', 'quarrypace'] }
 ];
+
+
+// --- the jaw --------------------------------------------------------------------
+// The machine that works the cut, and the hoist that lifts what it finds up over
+// the rim. What it does is exactly what a quarrier does -- pick a cell, take it
+// out, and see what was in it -- and it does it by calling the same two
+// functions a quarrier calls.
+//
+// That is the rule, and it is worth being blunt about why. `findShards` pays a
+// dig exactly `seamShards()` *because* `left` is `cellsLeft()` counted before
+// each single cell comes out, which is what makes the last cell one-in-one. A
+// jaw that ate a whole column at a beat "to look mechanical" would quietly
+// rewrite what `dig deeper` is worth and collapse the argument the scatter is
+// built on. So it takes one cell, through the station's own code, and every
+// ladder underneath it keeps applying because it is the same code the hands run.
+//
+// Its own geometry is derived every frame and never stored: `fillQuarry` zeroes
+// every column when the ground falls back in, and a jaw with a remembered `y`
+// would be under it. `dugTopY` is where it stands, the same answer a quarrier's
+// feet get.
+export const jawX = () => {
+  const c = quarryShape();
+  return Math.round((c.from + P * 2) / P) * P;
+};
+export const jawY = () => dugTopY(jawX() + P) - P * 3;
+
+defineMachine('jaw', {
+  job: 'quarriers',
+  type: 'quarrier',
+  at: jawX,
+  y: jawY,
+  // One cell takes it the station's own clock divided by what it is worth. The
+  // pace upgrade and the quarry's own multiplier are inside `cellMs`, so they
+  // keep applying to the machine exactly as they do to the hands.
+  ms: rate => Math.max(30, cellMs() / Math.max(0.01, rate)),
+  // Not while the ground it stands on is gone, not while the hole is full of
+  // silt, and not while there is nowhere to put what comes out. Every one of
+  // those is the station's own rule, asked the station's own way.
+  ready: () => !S.pileFull.quarry && !quarryDone() && throughQuarryMuck(1) > 0,
+  bite: tender => {
+    const cells = quarryCells();
+    const c = nextQuarryCell(jawX() + P, null);
+    if (c == null || c < 0) return false;
+    const left = cellsLeft();
+    cells[c]++;
+    S.quarryTotal = (S.quarryTotal || 0) + 1;
+    // The find is credited to whoever is standing at it. A machine has no
+    // record of its own -- the crew list counts people -- and the tender is the
+    // one who brought it up, which is what `quarried` has always meant.
+    findShards(tender || { x: jawX(), y: jawY() }, left);
+    if (quarryDone()) S.quarrySpent = true;
+    S.dirty = true;
+    return true;
+  }
+});
