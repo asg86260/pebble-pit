@@ -29,7 +29,7 @@ import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX } from './rock.js';
-import { rockLeft } from './world.js';
+import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
