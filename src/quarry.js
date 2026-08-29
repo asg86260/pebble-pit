@@ -8,7 +8,7 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
@@ -19,7 +19,8 @@ import { walkY, groundAt, benches, resite, pileOf } from './world.js';
 import { mult } from './lab.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
-import { defineMachine } from './machines.js';
+import { defineMachine, buyMachine, canBuy } from './machines.js';
+import { rebalance } from './upgrades.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -570,6 +571,15 @@ export const QUARRY_UPGRADES = [
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },
   {
+    // The last thing the cut ever sells, and it does not appear until the hole is
+    // as deep as it will ever go. See `canBuy`.
+    key: 'jaw',
+    name: 'the jaw',
+    bill: () => JAW_BILL,
+    buy: () => { buyMachine('jaw'); rebalance(); },
+    show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX)
+  },
+  {
     key: 'quarrypace',
     // It was "quarry lamps" -- the fiction being that you work faster when you
     // can see. A nice thought and a bad row: nothing else on these boards is
@@ -590,7 +600,7 @@ export const QUARRY_UPGRADES = [
 // One heading. The quarry is one place and everything on this board is about the
 // same hole, so a second would be a heading for the sake of having two.
 export const QUARRY_SECTIONS = [
-  { title: 'the quarry', keys: ['quarrybench', 'quarrypace'] }
+  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'jaw'] }
 ];
 
 

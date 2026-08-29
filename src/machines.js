@@ -171,3 +171,35 @@ const SPEC = {};
 //            cleared, the ground still there to work
 export const defineMachine = (key, spec) => { SPEC[key] = spec; };
 export const specOf = key => SPEC[key] || null;
+
+
+// --- buying one ------------------------------------------------------------------
+// A machine is not offered until its station has been given everything hands can
+// be given. That is the gate, and it is what stops a machine hollowing out the
+// ladder underneath it: `the next plot` can never be made worthless by a tiller
+// you were able to buy instead of it, because the tiller is the thing you get
+// *for* buying the last plot.
+//
+// The gate is a function per machine rather than a rule here, because what
+// "every slot" means is the station's own business -- benches, plots, or a pair
+// of kit ladders. What is shared is everything around it.
+export function buyMachine(key) {
+  const m = machine(key);
+  if (!m || m.bought) return;
+  m.bought = true;
+  // And it starts. Somebody walks over and throws the lever, which is the same
+  // journey as any other -- a machine that arrived already running would be the
+  // one thing in the yard that did something without hands, and one that arrived
+  // switched off would read as a purchase that did nothing.
+  m.ask = { on: true };
+  S.dirty = true;
+}
+
+// A row is on the board while the station is full and the machine is not yet
+// bought. It is gated on **bought**, never on running: a row that came and went
+// with the lever would rebuild the board every time somebody threw it, dropping
+// the hover and re-firing the new-row mark.
+export const canBuy = (key, slotsFull) => {
+  const m = machine(key);
+  return !!m && !m.bought && slotsFull();
+};

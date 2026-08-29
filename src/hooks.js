@@ -30,7 +30,7 @@ import { syncWorkers } from './crew.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES, askLever } from './machines.js';
-import { UPGRADES, buy as buyRow, rungOf, maxed } from './upgrades.js';
+import { UPGRADES, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { LAB_UPGRADES } from './lab.js';
 import { SCHOOL_UPGRADES } from './school.js';
@@ -391,6 +391,20 @@ export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = t
 // the board looks like: how far up its ladder it is, whether it is finished, and
 // whether pressing it does anything.
 export const upgrades = () => UPGRADES;
+
+// Every row on every board, with whether it is actually being offered and what
+// it costs. `upgrades` above hands back the bench's array raw -- rows the board
+// is not showing included -- which is fine for what it was for and useless for
+// asking "is this row on offer yet", which is the whole of what a gate is.
+export const allRows = () => everyRow().map(u => ({
+  key: u.key,
+  name: u.name,
+  shown: !!u.show(),
+  // Not every row has a price. A job row moves bodies, a dial sets a number and
+  // a payout row hands something over -- `billOf` would ask all three what they
+  // cost and get an exception.
+  bill: (u.bill || u.cost) ? billOf(u).map(([money, n]) => [money, n]) : []
+}));
 // Any board's rows, not just the bench's. A check that wants to press the row
 // that raises a wizard should press *that row*, prices and rules and all, rather
 // than reach past it for the dev handle that sets the flag the row would have

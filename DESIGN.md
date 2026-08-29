@@ -1247,7 +1247,7 @@ five-bench, fully-hatted machine arriving at fifteen hands.
 |---|---|---|---|
 | station | the cut | the rock | the plots |
 | unlocked by | 5/5 benches | strength and speed both 5/5 | 7/7 plots |
-| price | 30 sparks, 25 shards, 2,000 dust | 50 sparks, 40 shards, 2,300 dust | 20 sparks, 18 shards, 1,200 dust |
+| price | 30 sparks, 2,000 dust, 25 spores | 50 sparks, 40 shards, 30 spores | 20 sparks, 1,200 dust, 18 shards |
 | complement | 5 benches | 5 (`ROCK_GANG`) | 7 plots |
 | worth | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` |
 
@@ -1258,10 +1258,25 @@ A machine wearing the same word would collide in every one of those places. A
 ram is also what the drawing already describes: an arm that reaches into the
 face and strikes.
 
-Three currencies on one row, which nothing else in the game does. For the
-dearest purchase in it, *everything the yard makes goes into this* is a fair
-thing for a price to say. All three together are a hundred sparks, against a pit
-press at forty and then a hundred and forty.
+**No machine is priced in what its own station makes.** The jaw works the cut
+and the cut makes shards, so the jaw is not priced in shards; the ram works the
+rock and the rock makes dust; the tiller works the plots and the plots make
+spores. Each is bought with sparks and with the two ground currencies its own
+station does *not* produce.
+
+That is one rule rather than three prices, and it says something true: **a
+machine is paid for by the rest of the yard.** A station that could buy its own
+machine out of its own output is a station whose machine is really just a bigger
+version of itself, and the purchase stops being a decision about where the whole
+works is going and becomes a lever you pull on one number. It also settles the
+uneasiness about the row: three currencies on one row is unlike anything else in
+the game, and *everything but this station's own coin* is a better reason for
+that than "it is expensive".
+
+All three together are a hundred sparks, against a pit press at forty and then a
+hundred and forty. They are the first rows in the game priced in sparks at all,
+which makes them the first exercise `take('spark')` has ever had -- its comment
+has said "nothing is priced in sparks yet" since the day red was banked.
 
 **What they look like.** Black mass with white cut out of it, like everything
 else, and each one reads differently at a glance because each one moves
@@ -1383,6 +1398,11 @@ standing mote count, which reads the same at the cap whatever the rate.
 - Whether the tier-6 spark rungs are the same two rungs on every ladder.
 - Whether the three machines should be reachable in any order, or whether the
   jaw ought to be the one that teaches the idea.
+- Whether the rest of the boards should follow the same rule the machines now
+  do -- a bench costs shards and the cut makes shards, which is the thing the
+  machines were deliberately priced away from. It is a bigger change than this
+  section, and it is the one that would make the rule the yard's rather than
+  the machines'.
 
 *(Two that were open are settled above: a machine fouls three times over per unit
 of work, and a driven machine costs nothing to keep running -- the lever is the

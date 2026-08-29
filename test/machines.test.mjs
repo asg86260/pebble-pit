@@ -644,3 +644,127 @@ group('the ram replaces the miners and never your own cursor', async () => {
        "because what the ram stands in for is the crew's job, not yours")
   ];
 });
+
+// --- buying one -----------------------------------------------------------------
+// A machine is not offered until its station has been given everything hands can
+// be given. That gate is what stops a machine hollowing out the ladder beneath
+// it: `the next plot` can never be made worthless by a tiller bought instead of
+// it, because the tiller is what you get *for* buying the last plot.
+group('a machine is not for sale until every slot is bought', async () => {
+  window.__reset();
+  openSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(9000);
+  // Every board, and only the rows actually being offered. `__upgrades` hands
+  // back the bench's array raw, unshown rows included, which cannot answer the
+  // question a gate is about.
+  const rows = () => window.__rows().filter(r => r.shown).map(r => r.key);
+
+  const bare = rows();
+  window.__levels({ benchLevel: 2 });        // four of five benches
+  const nearly = rows();
+  window.__fullSites();
+  const full = rows();
+  return [
+    ok(!bare.includes('jaw') && !bare.includes('tiller') && !bare.includes('ram'),
+       'none of the three is on a board to begin with',
+       bare.filter(k => ['jaw', 'ram', 'tiller'].includes(k)).join(',') || 'none'),
+    ok(!nearly.includes('jaw'), 'nor with one bench still to take out'),
+    ok(full.includes('jaw'), 'and the jaw appears when the last bench is bought'),
+    ok(full.includes('tiller'), 'the tiller when the last furrow is'),
+    ok(full.includes('ram'), "and the ram when the rock's kit is bought right out")
+  ];
+});
+
+// The first thing in this game ever priced in sparks. `take('spark')` has been
+// written and unexercised since the day red was banked -- its comment says so --
+// so this is also the first run `takeCoreCells(n, SPARK_CELL)` has ever had.
+group('a machine is paid for in three coins at once', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__tip(9000);
+  run(1);
+
+  // Every coin but one: the row is there and refuses.
+  window.__grant({ sparks: 999, spores: 999 });     // no shards
+  const poor = window.__buy('ram');
+  const stillThere = window.__rows().some(r => r.key === 'ram' && r.shown);
+
+  window.__grant({ shards: 999 });
+  const before = state();
+  const rich = window.__buy('ram');
+  const after = state();
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(!poor, 'a machine cannot be bought with two of its three coins'),
+    ok(stillThere, 'and the row stays on the board rather than vanishing'),
+    ok(rich, 'and it is bought when the third is in hand'),
+    ok(after.machines.ram.bought, 'the machine is yours', JSON.stringify(after.machines.ram)),
+    ok(after.sparks < before.sparks, 'sparks came out of the pile',
+       `${before.sparks} -> ${after.sparks}`),
+    ok(after.shards < before.shards, 'and shards', `${before.shards} -> ${after.shards}`),
+    ok(after.spores < before.spores, 'and spores', `${before.spores} -> ${after.spores}`),
+    ok(!window.__rows().some(r => r.key === 'ram' && r.shown),
+       'and the row comes off the board once it is bought')
+  ];
+});
+
+// No machine is priced in what its own station makes. One rule, three prices:
+// a machine is paid for by the rest of the yard.
+group('a machine is never priced in what its own station makes', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(9000);
+  const bill = key => {
+    const r = window.__rows().find(x => x.key === key);
+    return r ? r.bill.map(b => b[0]) : [];
+  };
+  const jaw = bill('jaw'), ram = bill('ram'), till = bill('tiller');
+  return [
+    ok(jaw.length === 3 && ram.length === 3 && till.length === 3,
+       'each is priced in three coins',
+       `jaw ${jaw}, ram ${ram}, tiller ${till}`),
+    ok(jaw.includes('spark') && ram.includes('spark') && till.includes('spark'),
+       'every one of them in sparks, which is what makes them the last thing'),
+    ok(!jaw.includes('shard'), 'the jaw works the cut, so it is not priced in shards',
+       jaw.join(',')),
+    ok(!ram.includes('dust'), 'the ram works the rock, so it is not priced in dust',
+       ram.join(',')),
+    ok(!till.includes('spore'), 'the tiller works the plots, so not in spores',
+       till.join(','))
+  ];
+});
+
+// Buying one starts it -- by sending somebody to throw the lever, like anything
+// else. A machine that arrived already running would be the one thing in the
+// yard that happened without hands; one that arrived off would read as a
+// purchase that did nothing.
+group('buying a machine sends somebody to start it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 2, 5);
+  window.__fullSites();
+  window.__grant({ sparks: 999, spores: 999 });
+  window.__tip(9000);
+  run(1);
+
+  window.__buy('jaw');
+  const justBought = state();
+  const on = runUntil(() => state().machines.jaw.on, 60);
+  const after = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(justBought.machines.jaw.bought, 'it is bought'),
+    ok(!justBought.machines.jaw.on, 'and not yet running: somebody has to go and start it'),
+    ok(justBought.machines.jaw.ask === true, 'the ask is standing', 
+       `${justBought.machines.jaw.ask}`),
+    ok(on && after.machines.jaw.on, 'and it runs once they get there'),
+    ok(after.quarriers === 1, 'and the cut is down to its tender',
+       `${justBought.quarriers} -> ${after.quarriers}`)
+  ];
+});

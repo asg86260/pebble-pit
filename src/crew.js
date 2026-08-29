@@ -806,7 +806,13 @@ function throwLever(key) {
   m.ask = null;
   if (m.on === want) return;
   m.on = want;
-  if (want) m.was = S[job] || 0;                 // what it is standing in for
+  // Both directions go through the latch, and that is not symmetry for its own
+  // sake. Switching a machine *on* changes what `capOf` answers, and nothing in
+  // the yard recomputes that per frame -- so a lever thrown on without a
+  // rebalance left the whole gang standing at a station that now holds one, for
+  // good. It was only ever hidden because the checks reached the same state
+  // through `__machine`, which rebalances on the way past.
+  if (want) { m.was = S[job] || 0; S.restaff = { job, want: 0 }; }
   else { S.restaff = { job, want: m.was }; m.was = 0; }
   S.dirty = true;
 }

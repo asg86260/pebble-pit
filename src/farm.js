@@ -6,14 +6,15 @@
 // different shape: the quarry spends a worker's *time away*, the farm spends a
 // worker *standing still*.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX } from './config.js';
+import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
 import { foul, throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
 import { walkY, plotCount, resite } from './world.js';
-import { defineMachine } from './machines.js';
+import { defineMachine, buyMachine, canBuy } from './machines.js';
+import { rebalance } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -146,6 +147,14 @@ export const FARM_UPGRADES = [
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },
   {
+    // The last thing the plots ever sell, once every furrow is broken.
+    key: 'tiller',
+    name: 'the tiller',
+    bill: () => TILLER_BILL,
+    buy: () => { buyMachine('tiller'); rebalance(); },
+    show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX)
+  },
+  {
     key: 'tend',
     // "tending" was the truest word for it -- a farmhand tends a plot and this is
     // how fast -- and it was the odd one out on a board where every other rate
@@ -164,7 +173,7 @@ export const FARM_UPGRADES = [
 ];
 
 export const FARM_SECTIONS = [
-  { title: 'the farm', keys: ['farmplot', 'tend'] }
+  { title: 'the farm', keys: ['farmplot', 'tend', 'tiller'] }
 ];
 
 

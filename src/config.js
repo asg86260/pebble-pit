@@ -1069,6 +1069,28 @@ export let MACHINE_FOUL = 3;
 // number in this game lives -- what the rule against per-case constants forbids
 // is a bare 5 inlined in the shared runner.
 export const ROCK_GANG = 5;
+
+// What the three of them cost.
+//
+// Every machine is priced in sparks, which is what makes them the last thing in
+// the game, and then in **the two ground currencies its own station does not
+// produce**. The jaw works the cut and the cut makes shards, so the jaw is not
+// priced in shards; the ram works the rock and the rock makes dust, so the ram
+// is not priced in dust; the tiller works the plots and the plots make spores.
+//
+// That is one rule rather than three prices, and it says something true: a
+// machine is paid for by the rest of the yard. A station that could buy its own
+// machine out of its own output is a station whose machine is really just a
+// bigger version of itself, and the purchase stops being a decision about where
+// the whole works is going.
+//
+// A `bill` is what a row with more than one coin on it uses -- see `billOf`.
+// The tower has been the only such row in the game; these are the first that are
+// priced in sparks at all, which means they are also the first exercise
+// `takeCoreCells` has ever had.
+export const JAW_BILL    = [['spark', 30], ['dust', 2000], ['spore', 25]];
+export const RAM_BILL    = [['spark', 50], ['shard', 40], ['spore', 30]];
+export const TILLER_BILL = [['spark', 20], ['dust', 1200], ['shard', 18]];
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 export const BENCH_COST = 3;       // shards for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets

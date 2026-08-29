@@ -18,8 +18,8 @@ import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } fro
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor } from './machines.js';
-import { MACHINE_GAIN, ROCK_GANG } from './config.js';
+import { machineFor, buyMachine, canBuy } from './machines.js';
+import { MACHINE_GAIN, ROCK_GANG, RAM_BILL } from './config.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -317,6 +317,9 @@ export const machineRate = job =>
 // been sent down the quarry or up the tower, what comes back is whatever was
 // idle, and no more.
 export function restaff(job, want) {
+  // `want` of nought is the other direction: a machine has just been switched
+  // *on* and all this has to do is let `rebalance` clamp the station down to the
+  // one tender. Same latch, same drain, one function.
   const room = Math.max(0, Math.min(want, capOf(job)) - S[job]);
   if (room > 0) S[job] += Math.min(room, Math.max(0, idle()));
   rebalance();
@@ -463,6 +466,22 @@ export const UPGRADES = [
     cost: () => rungCost(8, S.carryLevel),
     buy: () => S.carryLevel++,
     show: () => true
+  },
+  {
+    // The rock's machine, and the only one of the three sold from the bench --
+    // because the rock is the one station with no board of its own, its two kit
+    // rows having always lived here under 'the rock'.
+    //
+    // Its gate is those two rows bought right out. The cut has benches and the
+    // plots have furrows; the rock has no floor plan to fill, so what stands for
+    // "everything hands can be given" here is its gear. `RUNGS` is read rather
+    // than written: a ladder that grew a sixth rung should move this gate with
+    // it.
+    key: 'ram',
+    name: 'the ram',
+    bill: () => RAM_BILL,
+    buy: () => { buyMachine('ram'); rebalance(); },
+    show: () => canBuy('ram', () => S.minerPickLevel >= RUNGS && S.minerSpeedLevel >= RUNGS)
   },
   {
     key: 'auto',
@@ -762,7 +781,7 @@ export const UPGRADES = [
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
-  { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
+  { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
