@@ -5,7 +5,9 @@
 // faster than the same station worked by hand and it smokes. So the yard's two
 // oldest rules survive it intact -- nobody teleports, and a station idles until
 // somebody is actually standing there -- and the second of those turns out to be
-// the whole safety net this feature needs. See `manned`.
+// the whole safety net this feature needs: an unmanned machine produces nothing
+// and smokes nothing. See `stepMachines` in crew.js, which is where that is
+// enforced.
 //
 // The three of them share everything that can be shared. What is genuinely
 // per-machine is a short list and it is worth naming, because the temptation is
@@ -36,7 +38,9 @@ export const MACHINES = [
   { key: 'tiller', job: 'farmhands', name: 'the tiller' }
 ];
 
-export const JOB_MACHINE = { quarriers: 'jaw', miners: 'ram', farmhands: 'tiller' };
+// Derived, not written out again: a hand-kept inverse of the table six lines
+// above is a second place to forget.
+export const JOB_MACHINE = Object.fromEntries(MACHINES.map(m => [m.job, m.key]));
 
 // A machine's record. One shape, three of them, and it is a keyed object rather
 // than nine flat fields on S for a reason worth writing down: it is four places

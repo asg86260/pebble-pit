@@ -293,7 +293,7 @@ export function rosterReport() {
              // it would hold by hand. Without both, a check cannot tell a capped
              // station from a small one.
              cap: capOf(p.job) === Infinity ? null : capOf(p.job),
-             hands: handsOf(p.job),
+             hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],

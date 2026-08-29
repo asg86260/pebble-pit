@@ -12,10 +12,11 @@ import {
 import { foul, throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
+import { defineMachine } from './machines.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
-import { pickCount } from './upgrades.js';
+import { pickCount, minerBite, minerMs } from './upgrades.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -347,3 +348,43 @@ export function knockOff(mx, my, want = pickCount()) {
   refreshRockTops();
 }
 
+
+
+// --- the ram --------------------------------------------------------------------
+// The machine at the foot of the hill. Its arm reaches up into the face and
+// strikes, and what a strike does is exactly what a miner's swing does, through
+// `knockOff`, so the muck on top of the rock is spent first and the spoil falls
+// where spoil falls.
+//
+// **It replaces the miners, and not you.** That is the one line DESIGN.md says
+// twice, and it falls out for free here: the player's own swings go through
+// `knockOff` from `input.js`, which this does not touch. The hill still comes
+// apart under your cursor at exactly the rate it did.
+//
+// Where it stands is the awkward part and worth writing down. `ROCK_CLEAR` keeps
+// an apron of bare ground either side of the hill -- `blocked` refuses those
+// columns and `clearApron` shovels them -- so the ram cannot stand *in* the
+// apron without the yard trying to sweep it away. It stands just outside, and
+// reaches: `rockLeft()` less its own width and a cell of daylight. The arm is
+// long, which is what an arm is for.
+export const ramX = () => Math.round((rockLeft() - ROCK_CLEAR - P * 5) / P) * P;
+
+defineMachine('ram', {
+  job: 'miners',
+  type: 'miner',
+  at: ramX,
+  y: () => S.groundY - P * 4,
+  ms: rate => Math.max(30, minerMs() / Math.max(0.01, rate)),
+  ready: () => !S.pileFull.rock && boulderAlive(),
+  bite: tender => {
+    // Where the arm lands: the near shoulder of the hill, at about the height a
+    // body would be swinging at. `knockOff` finds the cell from there exactly as
+    // it does for a miner or for the player's own pointer.
+    const x = rockLeft() + P;
+    const y = rockTopY(x) + P * 2;
+    knockOff(x, y, minerBite());
+    if (tender) tender.mined = (tender.mined || 0) + 1;
+    S.dirty = true;
+    return true;
+  }
+});

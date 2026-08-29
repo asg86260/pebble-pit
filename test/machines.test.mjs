@@ -85,8 +85,9 @@ group('a machine at a station leaves room for one body', async () => {
        `${before.crew} -> ${on.crew}`),
     ok(on.haulers === haulBefore + 4, 'the four it displaced carry dust instead',
        `${haulBefore} -> ${on.haulers}`),
-    ok(off.quarriers === 1 || off.quarriers === 5,
-       'and switching it off restores the cap', `${off.quarriers} at the cut`)
+    ok(off.quarriers === 5,
+       'and switching it off walks the whole gang back to the cut',
+       `${on.quarriers} -> ${off.quarriers}`)
   ];
 });
 
@@ -109,7 +110,12 @@ group('throwing a machine off puts its gang back', async () => {
     ok(capped.quarriers === 1, 'one body while it runs', `${capped.quarriers}`),
     ok(back.quarriers === 5, 'and the whole gang back when the lever goes off',
        `${capped.quarriers} -> ${back.quarriers}`),
-    ok(back.crew === capped.crew, 'without conjuring anybody', `${back.crew}`)
+    // On the bodies, not on `S.crew`: the ledger total is a number `restaff`
+    // never touches, so asserting it unchanged could not have failed however
+    // badly the gang was put back.
+    ok(back.miners + back.quarriers + back.farmhands + back.haulers === back.crew,
+       'without conjuring anybody: every body is on exactly one job',
+       `${back.quarriers} cut + ${back.haulers} carrying of ${back.crew}`)
   ];
 });
 
@@ -150,6 +156,12 @@ group('a machine is worth its complement times the dial', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
+  // Tuned *away* from the default and back, so the group can tell a rate that is
+  // read off the dial from one that happens to match it. Setting the dial to the
+  // value it already had proved nothing at all.
+  window.__crew(0, 1);                       // the carrying post only shows with a crew
+  window.__tune('MACHINE_GAIN', 2);
+  const two = state().machines;
   window.__tune('MACHINE_GAIN', 1.5);
   const s = state();
   const jaw = s.machines.jaw, ram = s.machines.ram, till = s.machines.tiller;
@@ -160,7 +172,13 @@ group('a machine is worth its complement times the dial', async () => {
        'seven plots is ten and a half', `${till.hands} -> ${till.rate}`),
     ok(ram.hands === 5 && Math.abs(ram.rate - 7.5) < 0.01,
        "and the rock's five puts the ram level with the jaw",
-       `${ram.hands} -> ${ram.rate}`)
+       `${ram.hands} -> ${ram.rate}`),
+    ok(Math.abs(two.jaw.rate - 10) < 0.01 && Math.abs(two.tiller.rate - 14) < 0.01,
+       'and the whole of it moves with the dial rather than being written down',
+       `at 2: jaw ${two.jaw.rate}, tiller ${two.tiller.rate}`),
+    ok((s.roster.find(r => r.job === 'haulers') || {}).hands === null,
+       'while a job with no floor plan reports no complement at all',
+       `${JSON.stringify((s.roster.find(r => r.job === 'haulers') || {}).hands)}`)
   ];
 });
 
@@ -200,8 +218,20 @@ group('what a machine remembers across a reload', async () => {
   window.__machine('tiller', { bought: true, on: false });
   const before = state().machines;
 
-  window.__reload();
+  // The gang is put back at the cut *in the save*, which is the state an honest
+  // lever-on actually writes: `throwLever` sets `on` and the rebalance happens on
+  // a later frame, so a tab closed in between saves five quarriers alongside a
+  // running jaw. The load is the only thing that can fix it.
+  yard.S.quarriers = 5;
+  yard.S.haulers = 0;
+
+  // A cold load, not the dev reload. `__reload` is persist-then-restore in one
+  // process, so a machine still running in memory makes restore's rebalance
+  // clamp by accident -- which is exactly how the ordering bug this asserts
+  // against hid for a commit.
+  window.__cold();
   const after = state().machines;
+  const s = state();
   window.__crew(0, 0, 0);
   return [
     ok(after.jaw.bought && after.jaw.on, 'a bought, running machine comes back both',
@@ -209,9 +239,14 @@ group('what a machine remembers across a reload', async () => {
     ok(after.tiller.bought && !after.tiller.on,
        'and one that was bought and idle comes back idle', JSON.stringify(after.tiller)),
     ok(!after.ram.bought, 'one nobody bought is still unbought'),
-    ok(state().quarriers <= 1,
-       'and the cap is applied on the way in, not after the gang has been placed',
-       `${state().quarriers} at the cut`)
+    ok(after.jaw.was === 5,
+       'and the complement it displaced comes back with it, or there is no way home',
+       `was ${after.jaw.was}`),
+    ok(s.quarriers === 1,
+       'the cap is applied on the way in, not after the gang has been placed',
+       `${s.quarriers} at the cut, cap ${s.roster.find(r => r.job === 'quarriers').cap}`),
+    ok(s.haulers === 4, 'and the four it displaced are carrying dust',
+       `${s.haulers} carrying`)
   ];
 });
 
@@ -482,7 +517,13 @@ group('a machine is dirtier per unit of work than the hands were', async () => {
     window.__machine('jaw', { bought: true, on: true });
     window.__clearFloor();
     window.__air({ haze: 0, muck: 0 });
-    run(4);
+    // Wait for the tender to actually be at the machine. A window that is spent
+    // walking reads as a clean run, and comparing a working machine against a
+    // walking one is not the comparison this group is about.
+    runUntil(() => {
+      const q = yard.S.workers.find(o => o.type === 'quarrier');
+      return q && !q.walking && state().quarryTotal > 0;
+    }, 40);
     const c0 = state().quarryTotal, s0 = state().smog.sky;
     for (let i = 0; i < 20; i++) { run(0.5); window.__clearFloor(); }
     const cells = state().quarryTotal - c0, made = state().smog.sky - s0;
@@ -499,5 +540,107 @@ group('a machine is dirtier per unit of work than the hands were', async () => {
     ok(dirty.per > clean.per * 1.5,
        'and a machine at three fouls well over one lot per cell of work',
        `${clean.per.toFixed(2)} -> ${dirty.per.toFixed(2)} per cell`)
+  ];
+});
+
+// --- the tiller -----------------------------------------------------------------
+// The one machine that travels, and the one whose tender travels with it.
+group('the tiller crawls the row and brings the plots in', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 0, 1);                 // one tender at the farm
+  window.__machine('tiller', { bought: true, on: true });
+  window.__clearFloor();
+  run(6);
+
+  const a0 = state().pileCount.farm;
+  const seen = new Set();
+  for (let i = 0; i < 60; i++) {
+    run(0.5);
+    const m = state().machines.tiller;
+    if (m && m.x != null) seen.add(Math.round(m.x / 40));
+  }
+  const cut = state().pileCount.farm - a0;
+
+  // and with nobody at it, it stops where it stands
+  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
+  const b0 = state().pileCount.farm;
+  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
+  const alone = state().pileCount.farm - b0;
+
+  for (const w of yard.S.workers) w.lifted = false;
+  window.__crew(0, 0, 0);
+  return [
+    ok(cut > 0, 'the tiller brings plots in and cuts them', `${cut} onto the pile`),
+    ok(alone === 0, 'and stops where it stands with nobody at it', `${alone} more`)
+  ];
+});
+
+// --- the ram --------------------------------------------------------------------
+group('the ram works the rock', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0);
+  window.__machine('ram', { bought: true, on: true });
+  window.__clearFloor();
+  window.__jump(3);
+  run(4);
+
+  const r0 = state().rock;
+  run(8);
+  const took = r0 - state().rock;
+
+  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
+  const b0 = state().rock;
+  for (let i = 0; i < 20; i++) { for (const w of yard.S.workers) w.lifted = true; run(0.3); }
+  const alone = b0 - state().rock;
+  for (const w of yard.S.workers) w.lifted = false;
+
+  const still = state().machines.ram.on;
+  window.__crew(0, 0, 0);
+  return [
+    ok(took > 0, 'the ram takes the hill apart', `${took} cells`),
+    ok(alone === 0, 'and does nothing with nobody standing at it', `${alone} cells`),
+    ok(still, 'and it is idle rather than switched off')
+  ];
+});
+
+// The one line DESIGN.md says twice. A machine on the rock replaces the crew's
+// hand work, never the player's own swings.
+//
+// This is measured with a real swing, through the very call `input.js` makes
+// when you click the hill. An earlier draft of this check compared a report
+// field with itself -- the field did not exist, so it read `undefined ===
+// undefined` and passed while asserting nothing at all, which is worse than
+// failing.
+group('the ram replaces the miners and never your own cursor', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0);
+  window.__clearFloor();
+  window.__jump(3);
+  run(2);
+
+  // What one swing of yours takes with no machine anywhere...
+  const bare = window.__swing(6);
+
+  // ...and what it takes with the ram running beside you. The crew's hands have
+  // been stood down and replaced; yours have not.
+  window.__machine('ram', { bought: true, on: true });
+  run(1);
+  const withRam = window.__swing(6);
+
+  const s = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(bare > 0, 'a swing of your own takes rock off', `${bare} cells`),
+    ok(withRam === bare,
+       'and takes exactly as much with the ram running beside it',
+       `${bare} -> ${withRam}`),
+    ok(s.machines.ram.job === 'miners',
+       "because what the ram stands in for is the crew's job, not yours")
   ];
 });

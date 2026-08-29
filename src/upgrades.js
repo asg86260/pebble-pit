@@ -225,18 +225,11 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job));
 //
 // The rock and the lab have no such plan: a rock is as long as it is and a room
 // holds who it holds.
-export const capOf = job =>
-  // A station being worked by a machine holds one body: the tender. This is the
-  // scrubbing house's rule, and its comment two paragraphs down is the argument
-  // for it word for word -- a machine runs itself once somebody is standing in
-  // it, and a second pair of hands is a queue rather than a place to be.
-  //
-  // It reads the lever (`on`) and not whether anybody is actually standing
-  // there. That distinction is the whole of why this works: a cap derived from
-  // "is it manned" would flip every time the tender walked off to shovel, and
-  // `rebalance` would thrash the gang between the station and carrying, twice a
-  // minute, for ever.
-  machineFor(job) ? 1 :
+// What a station's floor plan says it holds. One table, read by both questions
+// below, because a second hand-kept copy of it is precisely the bug `rebalance`
+// was fixed for one screen down: the copy that gets forgotten is the one that
+// matters.
+const capOfBare = job =>
   job === 'quarriers' ? benches() :
   job === 'farmhands' ? plotCount() :
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
@@ -249,6 +242,8 @@ export const capOf = job =>
   // the same draught -- so the extra bodies read as a way to buy a faster sky
   // rather than as a place to be. What makes the sky come down quicker is the
   // recycler and the machine, not a queue inside the shed.
+  //
+  // This is also the argument for the machines, word for word. See `capOf`.
   job === 'scrubbers' ? 1 :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
@@ -262,7 +257,26 @@ export const capOf = job =>
   // station in the yard whose floor plan is a thing you buy rather than a thing
   // you build: there is as much room in the sky as there are people who can get
   // to it.
-  job === 'wizards' ? S.wizardHats : Infinity;
+  job === 'wizards' ? S.wizardHats :
+  // The rock and the lip have no plan: a rock is as long as it is, and carrying
+  // is what a body does when it is on nothing at all.
+  Infinity;
+
+// Where a body may be put, which is the floor plan unless a machine has the
+// station.
+//
+// A station being worked by a machine holds one body: the tender. That is the
+// scrubbing house's rule and its comment above is the argument for it word for
+// word -- a machine runs itself once somebody is standing in it, and a second
+// pair of hands is a queue rather than a place to be.
+//
+// It reads the lever (`on`) and not whether anybody is actually standing there.
+// That distinction is the whole of why this works: a cap derived from "is it
+// manned" would flip every time the tender walked off to shovel, and `rebalance`
+// would thrash the gang between the station and carrying, twice a minute, for
+// ever.
+export const capOf = job => machineFor(job) ? 1 : capOfBare(job);
+
 export const roomAt = job => capOf(job) - S[job];
 
 // What the station could hold by hand -- its complement, before it was given a
@@ -273,20 +287,19 @@ export const roomAt = job => capOf(job) - S[job];
 // The rock is the one station with no floor plan to read: `capOf('miners')` is
 // `Infinity` and should stay that way. Its complement is `ROCK_GANG`, a named
 // constant in config with its reasoning over it.
-export const handsOf = job =>
-  job === 'miners' ? ROCK_GANG
-                   : (n => Number.isFinite(n) ? n : ROCK_GANG)(capOfBare(job));
+// What the station could hold by hand -- its complement, before it was given a
+// machine. `capOf` answers 1 while a machine runs, which is the right answer to
+// "where can I put a body" and the wrong one to "what is this machine standing
+// in for", so the two questions get two functions off the one table.
+//
+// The rock is the one station with a machine and no floor plan to read, so its
+// complement is `ROCK_GANG` -- a named constant in config with its reasoning
+// over it. Every *other* plan-less job keeps `Infinity` and is reported as
+// having no complement at all, rather than being quietly handed the rock's: the
+// lip has no machine and no floor plan, and a roster claiming carrying holds
+// five would be a number with nothing behind it.
+export const handsOf = job => job === 'miners' ? ROCK_GANG : capOfBare(job);
 
-// `capOf` with the machine branch stepped over, so `handsOf` can ask what the
-// station's floor plan is while the machine is running -- which is exactly when
-// anybody wants to know.
-const capOfBare = job =>
-  job === 'quarriers' ? benches() :
-  job === 'farmhands' ? plotCount() :
-  job === 'labbers' ? 1 :
-  job === 'scrubbers' ? 1 :
-  job === 'janitors' ? (S.outhouseOpen ? 2 : 0) :
-  job === 'wizards' ? S.wizardHats : Infinity;
 
 // What the machine is worth, in hands, at this station. The dial is measured
 // rather than believed -- see MACHINE_GAIN.

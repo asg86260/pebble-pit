@@ -13,6 +13,7 @@ import { foul, throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
 import { walkY, plotCount, resite } from './world.js';
+import { defineMachine } from './machines.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -165,3 +166,75 @@ export const FARM_UPGRADES = [
 export const FARM_SECTIONS = [
   { title: 'the farm', keys: ['farmplot', 'tend'] }
 ];
+
+
+// --- the tiller -----------------------------------------------------------------
+// The one machine that travels. It crawls the plot line end to end, bringing
+// each plot on and cutting it where it grew -- the same pair of jobs a farmhand
+// does, through the same two calls, one plot at a time.
+//
+// It travels because the farm is a *row* and not a place: a machine parked at
+// one end of seven plots working the far one by remote would be the only thing
+// in this yard that reached. So the tiller walks its own line, and its tender
+// walks with it: the tender's spot is derived off the tiller's x every frame,
+// which means pulling the tender away for a mess stops the tiller where it
+// stands rather than leaving it crawling on unattended. That is the
+// idles-until-somebody-is-standing-there rule applied to a station that moves,
+// and it costs one comparison in the runner.
+//
+// Its index is derived from where it has got to, never stored: a plot bought
+// mid-crawl resites the farm, and a remembered index would be a machine working
+// a furrow that had moved out from under it.
+export const tillerAt = () => {
+  const n = plotCount();
+  if (n < 1) return farm.x;
+  // Where along the row it is, worked out from the plot it is due to work next:
+  // the least ripe one, which is the one a hand would have picked too.
+  let want = 0, low = Infinity;
+  for (let i = 0; i < n; i++) {
+    const v = S.plots[i] == null ? 0 : S.plots[i];
+    if (v < low) { low = v; want = i; }
+  }
+  return plotX(want) - WORKER - P * 2;
+};
+
+const tillerPlot = () => {
+  const n = plotCount();
+  let want = 0, low = Infinity;
+  for (let i = 0; i < n; i++) {
+    const v = S.plots[i] == null ? 0 : S.plots[i];
+    if (v < low) { low = v; want = i; }
+  }
+  return want;
+};
+
+defineMachine('tiller', {
+  job: 'farmhands',
+  type: 'farmhand',
+  at: tillerAt,
+  y: () => walkY(tillerAt() + WORKER / 2) - P,
+  // A unit of the farm's work is a slice of tending, so the beat is short and
+  // the bite is small -- the plot comes on by the same fraction a hand would
+  // have brought it on in that time, times what the machine is worth.
+  ms: rate => Math.max(30, tendMs() / 40 / Math.max(0.01, rate)),
+  ready: () => !S.pileFull.farm && plotCount() > 0,
+  bite: tender => {
+    plantPlots();
+    const i = tillerPlot();
+    if (i == null || i >= S.plots.length) return false;
+    if (S.plots[i] < 1) {
+      S.plots[i] = Math.min(1, S.plots[i] + 1 / 40);
+      if (S.plots[i] >= 1) S.plotTone[i] = someFind(SPORE_CELL);
+      S.dirty = true;
+      return true;
+    }
+    // Ripe: taken off from exactly where it grew, through the farm's own `cut`,
+    // so the pile, the pile mark and the tone all keep working untouched.
+    if (throughPlotMuck(1) < 1) return false;
+    cut(i, plotX(i));
+    if (tender) tender.farmed = (tender.farmed || 0) + 1;
+    foul(FARM_FOUL, plotX(i), S.groundY - P * 2, 'spore');
+    S.dirty = true;
+    return true;
+  }
+});

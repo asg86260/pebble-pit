@@ -398,6 +398,29 @@ export function restore() {
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
   S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0);
+  // Before the `rebalance()` below, and that ordering is the whole point: a
+  // restored machine changes what its station's cap *is*, and a rebalance run
+  // against the old cap leaves five bodies standing at a cut that now holds one.
+  //
+  // This block used to sit thirty-seven lines further down, under a comment
+  // saying exactly what is written above -- which was simply not true, and the
+  // clamp it promised never ran. A save with the gang still at the cut and the
+  // jaw switched on came back with five bodies against a cap of one, and stayed
+  // that way: nothing recomputes it per frame. It only ever looked right through
+  // the dev reload, which is `persist()` then `restore()` in one process, where
+  // the still-running in-memory machine made the rebalance clamp by accident.
+  //
+  // A save from before the machines existed has no block at all, and gets three
+  // fresh records rather than three undefineds.
+  S.machines = freshMachines();
+  for (const m of MACHINES) {
+    const r = (s.machines && s.machines[m.key]) || {};
+    const rec = S.machines[m.key];
+    rec.bought = !!r.bought;
+    rec.on = !!r.bought && !!r.on;      // a lever cannot be on for a machine nobody bought
+    rec.was = r.was | 0;
+    rec.driven = !!r.driven;
+  }
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;
   // A save from when one pick row bought both keeps what its miners had.
@@ -430,20 +453,6 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
-  // Before the `rebalance()` further down, and that ordering is the whole point:
-  // a restored machine changes what its station's cap *is*, and a rebalance run
-  // against the old cap would leave five bodies standing at a cut that now holds
-  // one. A save from before the machines existed has no block at all, and gets
-  // three fresh records rather than three undefineds.
-  S.machines = freshMachines();
-  for (const m of MACHINES) {
-    const r = (s.machines && s.machines[m.key]) || {};
-    const rec = S.machines[m.key];
-    rec.bought = !!r.bought;
-    rec.on = !!r.bought && !!r.on;      // a lever cannot be on for a machine nobody bought
-    rec.was = r.was | 0;
-    rec.driven = !!r.driven;
-  }
   S.meteorOpen = !!s.meteorOpen;
   S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;

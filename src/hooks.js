@@ -15,8 +15,8 @@ import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
-import { blocked, resite, clampCam, benches, plotCount } from './world.js';
-import { makeBoulder, rockSize, depthOf } from './rock.js';
+import { blocked, resite, clampCam, benches, plotCount, rockLeft } from './world.js';
+import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, pitTop as muckTopAt , fillSky } from './smog.js';
@@ -55,7 +55,12 @@ export const machineSet = (which, o = {}) => {
   const m = machine(which);
   if (!m) return null;
   const was = m.on;
-  if (o.bought != null) m.bought = !!o.bought;
+  // Unbuying implies the lever goes down. `on` without `bought` is a state the
+  // rest of the code is entitled to assume cannot happen -- `machineFor` checks
+  // both, `restore` normalises it away -- and a machine left on after being
+  // unbought would strand the gang it had displaced, with nothing to switch off
+  // to get them back.
+  if (o.bought != null) { m.bought = !!o.bought; if (!m.bought) m.on = false; }
   if (o.on != null) m.on = !!o.on && m.bought;
   if (o.driven != null) m.driven = !!o.driven;
   const job = MACHINES.find(x => x.key === which).job;
@@ -336,6 +341,25 @@ export const coldSky = () => { SKY.length = 0; };
 
 export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 
+// A reload that is actually cold.
+//
+// `reload` above is `persist()` then `restore()` in one process, so anything
+// still standing in `S` survives into the load. That is fine for what it was
+// for and useless for checking the *order* things are restored in: a machine
+// still running in memory made `restore`'s rebalance clamp by accident, and hid
+// the fact that the records were being laid down thirty-seven lines after it.
+//
+// So this blanks what a fresh page would not have, and makes the save do the
+// work. It is a dev hook rather than a path the game takes, which is why it can
+// afford to reach into S like this.
+export const coldReload = () => {
+  persist();
+  S.machines = null;
+  restore();
+  buildShop();
+  S.dirty = true;
+};
+
 export const openLab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
 
 // dev: the shed, without paying for it -- for a look at what the crew do with it
@@ -427,6 +451,22 @@ export const pitProfile = (n = 20) => {
 // The hole is the whole hole from the first frame, so there is nothing to dig.
 // Kept as a no-op because the panel and a check or two still say the word.
 export const dig = () => {};
+
+// One swing of the player's own, through the very call `input.js` makes when you
+// click the hill. It exists so a check can prove the thing DESIGN.md says twice
+// -- that a machine on the rock replaces the crew's hands and never yours -- by
+// measuring a swing rather than by reading a number off the report and comparing
+// it with itself.
+export const swing = (n = 1) => {
+  const before = countRock();
+  for (let i = 0; i < n; i++) {
+    const x = rockLeft() + P * 2;
+    knockOff(x, rockTopY(x) + P * 2);
+  }
+  S.dirty = true;
+  return before - countRock();
+};
+const countRock = () => S.boulder.flat().reduce((a, b) => a + b, 0);
 
 // dev: turn one of the numbers the panel turns, from a check. Nature is every
 // ten minutes a body now, which is right for playing and useless for a check
