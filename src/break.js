@@ -30,7 +30,19 @@ const KINDS = [
   { key: 'talk',  weight: 4, needs: 'mate' }
 ];
 
-const pick = () => {
+// A body whose break is always the same thing. Most of the yard takes whatever
+// comes up, and the point of that is that you never know what you will catch
+// somebody at. A janitor is the other case: it is the one job that spends the
+// whole day stood at its post with nothing to do until somebody makes a mess,
+// so the standing about *is* what you see of it, and a job you mostly see idle
+// wants an idle you can recognise from across the yard. So it always smokes.
+const HABIT = { janitor: 'smoke' };
+
+const kind = key => KINDS.find(k => k.key === key);
+
+const pick = w => {
+  const habit = HABIT[w.type];
+  if (habit) return kind(habit);
   let n = Math.random() * KINDS.reduce((a, k) => a + k.weight, 0);
   for (const k of KINDS) if ((n -= k.weight) < 0) return k;
   return KINDS[0];
@@ -42,7 +54,7 @@ const pick = () => {
 function mate(w) {
   let best = null, near = BREAK_NEAR;
   for (const o of S.workers) {
-    if (o === w || !o.resting || o.brk) continue;
+    if (o === w || !o.resting || o.brk || HABIT[o.type]) continue;
     const d = Math.abs(o.x - w.x);
     if (d > near || Math.abs(o.y - w.y) > WORKER * 2) continue;
     near = d;
@@ -55,8 +67,11 @@ function begin(w, now) {
   // Most turns come to nothing, and that is the whole tuning of this: what makes
   // a cigarette worth noticing is that the last four times you looked over there
   // nobody was having one.
-  if (Math.random() > BREAK_ODDS) return sit(w, now);
-  const k = pick();
+  // -- unless the break is the body's habit, which is not a thing you catch it
+  // at. A janitor smoking once in three turns would read as a janitor doing
+  // nothing, which is exactly what it looks like anyway.
+  if (!HABIT[w.type] && Math.random() > BREAK_ODDS) return sit(w, now);
+  const k = pick(w);
   const other = k.needs === 'mate' ? mate(w) : null;
   if (k.needs === 'mate' && !other) return sit(w, now);   // nobody to talk to; wait
   const until = now + BREAK_LIFE * (0.7 + Math.random() * 0.8);

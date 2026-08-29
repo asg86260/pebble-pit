@@ -137,3 +137,39 @@ group('the closet buys the job, not somewhere to walk to', async () => {
        `${after.smog.poop} cells`)
   ];
 });
+
+// A job you mostly see idle wants an idle you can recognise.
+//
+// A janitor stands at its post all day and does nothing until somebody makes a
+// mess, so the standing about is most of what you ever see it do. Left on the
+// yard's usual break -- a turn every twenty-odd seconds, landing one time in
+// three, and then any of four things -- what you see is a square not moving. So
+// the janitor's break is a habit rather than a turn: it comes round every time,
+// and it is always the cigarette.
+group('a janitor on his break smokes, every time', async () => {
+  window.__crew(2, 0);
+  window.__loo();
+  window.__air({ janitors: 1, haze: 0, muck: 0 });
+  window.__clearFloor();
+  window.__tune('LOO_EVERY', 600000);        // nobody makes work for him
+  run(4);
+
+  const kinds = [];
+  let cig = 0;
+  for (let i = 0; i < 60; i++) {
+    run(2);
+    const s = state();
+    cig = Math.max(cig, s.cigSmoke);
+    for (const b of s.breaks) if (b.type === 'janitor' && !kinds.includes(b.kind)) kinds.push(b.kind);
+  }
+
+  window.__air({ janitors: 0 });
+  window.__crew(0, 0);
+  return [
+    ok(kinds.length > 0, 'a janitor with nothing to shovel gets up to something',
+       kinds.join(',')),
+    ok(kinds.every(k => k === 'smoke'), 'and it is a cigarette, never anything else',
+       kinds.join(',')),
+    ok(cig > 0, 'which puts smoke in the air over him', `${cig} puffs`)
+  ];
+});
