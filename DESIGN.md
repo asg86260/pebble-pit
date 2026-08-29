@@ -1111,8 +1111,8 @@ telling you where to go next, and it is the only nudge it needs to give.
 | 2 | spores | **the plots** | strength past what feeding a body by hand can do |
 | 3 | shards | **the quarry** | gear: the pickaxes, the carts |
 | 4 | cores | a rock | buildings, and nothing else |
-| 5 | hearts | **a star** | the machines: faster, and dirtier with it |
-| 6 | sparks | a star | the last two rungs of every ladder |
+| 5 | hearts | **a star** | driving a machine: faster, and dirtier with it |
+| 6 | sparks | a star | the last two rungs of every ladder, and the machines themselves |
 
 **The first round is dust, all of it.** The crew's strength and speed are the
 first things anybody buys after their own hands, and they come long before the
@@ -1145,30 +1145,124 @@ red on something that is not a multiplier at all.
 
 ### The smoke comes on in two steps
 
-The one thing this changes about the rest of the game: **the yard is clean while
-it is worked by hand, and it dirties in two deliberate steps, each of which you
-buy.**
+The one thing this changes about the rest of the game: **the yard is worked by
+hand for most of its length, and it dirties in two deliberate steps, each of
+which you buy.**
 
-**The quarry brings the first machines.** Opening the quarry is the moment this
-stops being a place with shovels in it: it comes with rudimentary machinery --
-a jaw on the face, a hoist on the deck -- which is faster than a body and makes a
-little smoke. Not much. Enough that the band over the yard starts to be a thing
-you can see thickening rather than a bar in a readout, and enough that the
-scrubbing house has a reason to exist by the time you can afford one. The two
-land in the same era, which is the whole point: the problem and the answer to it
-should be the same part of the game.
+**The machines come last, not first.** They used to be pencilled in beside the
+quarry -- open the cut, get a jaw and a hoist with it -- on the argument that a
+problem and its answer belong in the same part of the game. That argument was
+right about the pairing and wrong about which pair. A machine is the *end* of a
+station, not its opening: see "The machines" below, where each one is locked
+behind every slot that station will ever have and priced in sparks out of a
+star. What answers hand labour is the scrubbing house, bought early because hand
+labour already fouls the sky; what the machines do is make the house you already
+own stop being enough.
+
+So the curve has three beats rather than two. **A problem you can answer** --
+hand smoke, and a shed with a fan in it. **An answer that stops being enough** --
+the machines, which foul three times over per unit of work. **And an answer you
+have to drive** -- the scrubbing house's own ladder, which is where the back half
+of the sky's economy lives.
 
 **A heart drives a machine harder.** Each machine takes one, and what it gets is
-speed -- roughly double -- and the smoke that comes with running something at
-twice the rate. So red out of the sky is what turns a works that ticks over into
-a works that pours, and the sky is where the bill for that arrives.
+speed -- double -- and the smoke that comes with running something at twice the
+rate. So red out of the sky is what turns a works that ticks over into a works
+that pours, and the sky is where the bill for that arrives. Sparks *buy* a
+machine and a heart *drives* it, which keeps the two steps apart: a star sheds
+sparks all the way down and has exactly one heart in the middle of it.
 
-That gives the pollution curve three flats and two steps: hand labour, which
-barely marks it; the first machines, which mark it; and the driven machines,
-which are a problem. Each step is a purchase you made, on the same board as the
-thing it pays for. What it is *not* is the shape it has now -- a meter that has
-been draining since your first swing, shown to somebody who has no answer to it
-for another few thousand dust.
+What this is *not* is the shape it has now -- a meter that has been draining
+since your first swing, shown to somebody who has no answer to it for another
+few thousand dust.
+
+### The machines
+
+Three of them: **the jaw** on the cut, **the breaker** on the rock, **the
+tiller** on the plots. The lab, the school and the casino stay buildings, and
+the scrubbing house is already a machine.
+
+**A machine is a station, and it takes the hand work over.** A body walks to it
+and works it, the way a body works the scrubbing house -- and the scrubbing
+house is the precedent for the rest of this, right down to the comment in
+`capOf`: *a machine that runs itself once somebody is standing in it*, where the
+extra bodies would be a queue rather than a place to be. So a running machine
+makes its station hold **one body**, `rebalance` walks the surplus back to
+carrying on its own, and no station needs a line of code written for it.
+
+The rock is the exception the doc has always made and still makes: the breaker
+replaces the *miners'* hand work, not yours. The hill still comes apart under
+your own cursor.
+
+**Every slot first.** A machine is not offered until the station has been given
+everything hands can be given -- all five benches at the cut, all seven plots at
+the farm, both of the rock's kit ladders at 5/5. This is what stops a machine
+from hollowing out the ladder underneath it: `the next plot` can never be made
+worthless by a tiller you were able to buy instead of it, because the tiller is
+the thing you get *for* buying the last plot.
+
+**So a machine is worth a full complement and half again.** It has to be. Gated
+that way, you buy it at the exact moment the cut holds five and the farm holds
+seven, and a machine worth "about three hands" would be a downgrade you paid
+sparks for. The rate is read off the station rather than picked: whatever
+`capOf` said before the machine, times one and a half, at the station's current
+upgrade level so the ladders below it keep applying. Five benches is seven and a
+half hands; seven plots is ten and a half.
+
+The rock is the one place the rule has nothing to read, because `capOf` for
+miners is `Infinity` -- a rock is as long as it is. Its notional full gang is
+five, which puts the breaker level with the jaw.
+
+| | the jaw and hoist | the breaker | the tiller |
+|---|---|---|---|
+| station | the cut | the rock | the plots |
+| unlocked by | 5/5 benches | strength and speed both 5/5 | 7/7 plots |
+| price | 30 sparks, 25 shards, 2,000 dust | 50 sparks, 40 shards, 2,300 dust | 20 sparks, 18 shards, 1,200 dust |
+| worth | 7 1/2 hands | 7 1/2 hands | 10 1/2 hands |
+| with a heart | doubled | doubled | doubled |
+
+Three currencies on one row, which nothing else in the game does. For the
+dearest purchase in it, *everything the yard makes goes into this* is a fair
+thing for a price to say. All three together are a hundred sparks, against a pit
+press at forty and then a hundred and forty.
+
+**What they look like.** Black mass with white cut out of it, like everything
+else, and each one reads differently at a glance because each one moves
+differently.
+
+- **The jaw** is a block on the floor of the cut, a body and a half tall, with a
+  mouth cut white out of its front that opens and shuts on its own beat. It eats
+  a cell at a time and shunts along when a column is worked out, which is all
+  the walking it does. The **hoist** stands on the deck over the mouth: an
+  upright frame, a white rope line, and a skip that rides it up the ladder's
+  line. What the jaw finds goes up in the skip, which retires the throw over the
+  rim and finally gives the bridge deck something to be for. Its stack is *down
+  in the hole*, so the smoke climbs out of the quarry mouth and a working cut
+  visibly breathes.
+- **The breaker** is a squat engine at the foot of the hill on the yard side,
+  with an arm that reaches up into the face and strikes. One white slot for the
+  piston. Its stack is at head height in the middle of the yard, where you
+  cannot fail to see it: the rock is the busiest station and so the dirtiest.
+- **The tiller** is a low frame that crawls the plot line end to end and turns
+  the ground behind it. The only machine that travels, which is what makes it
+  read as a different thing from across the yard, and its thin trail drifting
+  over the green is the best argument the game makes for the lever.
+
+**And there is a lever, and somebody has to throw it.** A machine can be shut
+off, and the station goes back to hand work -- which is why the shovels are not
+deleted when you buy one, they are the fallback. Throwing it is a job, not a
+setting: you ask, and the nearest free body walks over and does it, the way a
+janitor walks to a mess. Nothing in this yard happens without hands.
+
+One thing falls out of that for free and is worth keeping: a *running* machine
+always has its tender standing at it, so **off is instant and on takes a walk.**
+That closes the trap where a yard under its own smoke has no spare body to go
+and stop it.
+
+The lever is also more than a smoke valve. A machine is a flat rate and a gang
+is not, so late on -- more crew, more kit -- there are yards where the hands beat
+the machine and the right move is to throw it off. That is a decision that stays
+live for the rest of the run.
 
 It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
@@ -1207,10 +1301,14 @@ that is not settled is work that gets thrown away.
 
 ### Still open
 
-- How much smoke a rudimentary machine makes. It has to be visible within a
-  minute or two of buying it, or the step does not read as a step.
 - Whether the tier-6 spark rungs are the same two rungs on every ladder.
-- What a driven machine costs to *keep* running, if anything.
+- Whether the three machines should be reachable in any order, or whether the
+  jaw ought to be the one that teaches the idea.
+
+*(Two that were open are settled above: a machine fouls three times over per unit
+of work, and a driven machine costs nothing to keep running -- the lever is the
+control, and a fuel bill would be a second meter to watch for no decision the
+lever does not already offer.)*
 
 ## The paint store (long term, not built)
 
