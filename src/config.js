@@ -815,6 +815,7 @@ export let GRAV = 1;
 // red one side and cyan the other is enough to say it is being looked *through*.
 // Nothing at the middle of the window, most at the edges, like the glass it is
 // pretending to be.
+//
 export let HAZE_CA = 1.7;        // pixels of separation, at the edge of the view
 // --- throwing somebody --------------------------------------------------------
 // A body let go of used to drop straight down, however you were moving when you
@@ -1590,10 +1591,9 @@ export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SL
 // to do this cost twenty milliseconds a frame on a large window, and none of it
 // was the shading.
 //
-// A hair of fringe, a whisper of scanline, and enough falloff at the edges to
-// put the page in a room rather than on a light box. The point of all three is
-// that the yard reads as coming off a screen rather than out of a printer, and
-// none of them may argue with a picture made of whole black pixels -- so every
-// one of these numbers is small on purpose, and the look is the mix rather than
-// any one of them.
-export const PRESS_MIX = { aberration: 0, scanlines: 0.2, vignette: 0.3 };
+// A whisper of scanline, and enough falloff at the edges to put the page in a
+// room rather than on a light box. The point of both is that the yard reads as
+// coming off a screen rather than out of a printer, and neither may argue with a
+// picture made of whole black pixels -- so both numbers are small on purpose,
+// and the look is the pair of them rather than either one.
+export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };

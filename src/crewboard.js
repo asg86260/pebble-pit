@@ -13,7 +13,7 @@
 
 import { S } from './state.js';
 import { cubes, houseLeft } from './house.js';
-import { HOUSE_COLS, HOUSE_CUBE } from './config.js';
+import { HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
 import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
 import { follow, atStation } from './world.js';
@@ -24,14 +24,26 @@ import { now } from './clock.js';
 import { POINT_MS } from './config.js';
 import { WORKER, SHARD_CELL, SPORE_CELL, findKind } from './config.js';
 
-// The block, as a rectangle to stand near. Worked out from a full base rather
-// than from what is built, like everything else about this place: the plot is
-// the plot whether there are two rooms on it or twenty.
+// The block, as a rectangle to stand near: what is actually built, on a plot
+// that never moves.
+//
+// The left edge is the plot's, worked out from a full base, because the
+// settlement fills its ground from one end and must not slide along it as it
+// grows -- see `cubes`. Everything else is the rooms themselves. The height
+// always was: a rectangle up to the sky over a settlement two rooms high would
+// be a stand reaching into the air the boards hang in. The width was not, and
+// it should have been the same rule -- a plot eight rooms wide with three rooms
+// on it put the middle of the block out over bare ground, so the arrow that
+// says there is something on this board pointed at the dirt beside the house
+// rather than at the house.
 export function houseRect() {
   const stack = cubes();
   const top = stack.length ? Math.min(...stack.map(c => c.y)) : S.groundY;
-  return { x: houseLeft(), y: top,
-           w: HOUSE_COLS * HOUSE_CUBE, h: S.groundY - top };
+  const left = houseLeft();
+  // The ground course is the widest -- every course above it is shorter -- so
+  // the far side of the block is the far side of whichever room reaches furthest.
+  const right = stack.length ? Math.max(...stack.map(c => c.x)) + HOUSE_CUBE : left;
+  return { x: left, y: top, w: right - left, h: S.groundY - top };
 }
 
 // Where a body is, in the words the yard would use. Not its job -- its job is on

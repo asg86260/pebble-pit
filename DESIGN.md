@@ -636,6 +636,13 @@ off a body instead of off a roof. A **note** over the head is singing, a **burst
 **dots** are talking — and dots going back and forth between two bodies who have turned to face each
 other is a conversation, which is a thing you read off the pair rather than off either of them.
 
+**The janitor is the exception, and smokes.** Every other trade takes whatever comes up, and the
+point of that is that you never know what you will catch somebody at. A janitor spends the whole day
+stood at its post with nothing to do until somebody makes a mess, so the standing about *is* what you
+see of it — and a job you mostly see idle wants an idle you can recognise from across the yard. So
+its break is a habit rather than a turn: it comes round every time, it is always the cigarette, and
+nobody drags it into a conversation.
+
 **The roster counts them.** Under the headcount at each station, a second line: the mark that
 trade wears out in the yard, and how many of them there are. Three of the four show the hatted
 square; the haulers show a **body with a cart behind it** — what a carter is, rather than a cart
@@ -1558,12 +1565,12 @@ lot: it was a third of what a player was being asked to download.
 
 ## The filter
 
-Three looks are laid over the finished frame in `press.js`: a hair of **chromatic aberration**, a
-whisper of **scanlines**, and enough **vignette** that the page is in a room rather than on a light
-box. Enough that the yard reads as coming off a screen rather than out of a printer, and not enough
-to argue with a picture made of whole black pixels. The amounts are in `config.js` as `PRESS_MIX`,
-they ship as they stand, and there is no dial: a look you can move at runtime is a look nobody has
-decided on, and these are decided.
+Two looks are laid over the finished frame in `press.js`: a whisper of **scanlines**, and enough
+**vignette** that the page is in a room rather than on a light box. Enough that the yard reads as
+coming off a screen rather than out of a printer, and not enough to argue with a picture made of
+whole black pixels. The amounts are in `config.js` as `PRESS_MIX`, they ship as they stand, and
+there is no dial: a look you can move at runtime is a look nobody has decided on, and these are
+decided.
 
 **It is drawn in 2D, on the canvas the game is already drawing into, and that is the whole point.**
 There used to be ten of these on a WebGL post-process pass — the frame handed to a second context
@@ -1576,26 +1583,27 @@ frame — thirty frames a second on a card that draws the yard itself in two —
 default, so every frame rate anybody ever read off the dev panel was the filter's number rather
 than the game's.
 
-So the answer was not a cheaper shader. It was not leaving the context. These three are the ones
-that can be said in 2D:
+So the answer was not a cheaper shader. It was not leaving the context. Scanlines are a two-pixel
+pattern made once; the vignette is one radial gradient made once per window size. Together they
+cost about **three tenths of a millisecond** on three and a half million pixels. The vignette goes
+on last because it is the light in the room rather than anything on the sheet.
 
-- **aberration** — the three colours arrive at slightly different places, further out from the
-  middle. An offset proportional to the distance from the centre *is* a scale about the centre, so
-  this is not a per-pixel sample at all: it is the red channel drawn a hair large and the blue a
-  hair small, which `drawImage` does for free.
-- **scanlines** — every other row of device pixels is darker. A two-pixel pattern, made once.
-- **vignette** — the edge of a lit page falls away. One radial gradient, made once per size.
+**Chromatic aberration was built and then taken out**, which is worth writing down so nobody builds
+it twice. It can be done in 2D, and elegantly — an offset proportional to the distance from the
+centre *is* a scale about the centre, so the fringe is the red channel drawn a hair small and the
+blue a hair large, which `drawImage` does for free. What it is not is cheap. Lifting a single
+colour channel off a 2D canvas means copying the whole frame and multiplying it by a primary,
+twice, then compositing both back: eight fullscreen operations and two more canvases the size of
+the window. On the same scene it cost **three milliseconds a frame on its own** — ten times the two
+that remain — taking 154 fps down to 106. And it has to fight the game, which is black shapes on
+white paper: the whole pixel discipline here exists to stop edges going grey or fringed, and colour
+is reserved for what the sites give up.
 
-Applied in that order, which is the order they were in on the shader: the glass fringes what is on
-it before the tube's own lines cross it, and the light in the room falls off last of all because it
-is the room rather than anything on the sheet.
-
-**The other seven went with the pass.** Curvature, bloom, bleed, halftone, plates and the phosphor
-mask all need to look at neighbouring pixels or bend the sampling grid, and 2D has no way to say
-that without reading the frame back itself, which is the thing this file exists to avoid. Most of
-them were built for bright things on a dark screen in a dark room anyway, and this is black shapes
-on white paper: white cannot get brighter, so bloom has nothing to bloom and only eats the black.
-The three that stayed are the three that earn their place.
+**The rest went with the pass.** Curvature, bloom, bleed, halftone, plates and the phosphor mask all
+need to look at neighbouring pixels or bend the sampling grid, and 2D has no way to say that
+without reading the frame back itself, which is the thing `press.js` exists to avoid. Most were
+built for bright things on a dark screen in a dark room anyway, and white cannot get brighter, so
+bloom has nothing to bloom and only eats the black.
 
 ## Fitting the window
 
