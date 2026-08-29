@@ -1172,13 +1172,19 @@ that pours, and the sky is where the bill for that arrives. Sparks *buy* a
 machine and a heart *drives* it, which keeps the two steps apart: a star sheds
 sparks all the way down and has exactly one heart in the middle of it.
 
+*Hearts do not exist yet.* There is no heart currency, no mark, no cell colour
+and no path from a finished star to one in hand -- so the doubling is a second
+feature wearing this one's coat, and it is **not** in the first build. The three
+machines ship at their undriven rate, and the shared runner carries a `driven`
+flag that multiplies exactly one number when the star's core economy arrives.
+
 What this is *not* is the shape it has now -- a meter that has been draining
 since your first swing, shown to somebody who has no answer to it for another
 few thousand dust.
 
 ### The machines
 
-Three of them: **the jaw** on the cut, **the breaker** on the rock, **the
+Three of them: **the jaw** on the cut, **the ram** on the rock, **the
 tiller** on the plots. The lab, the school and the casino stay buildings, and
 the scrubbing house is already a machine.
 
@@ -1190,7 +1196,7 @@ extra bodies would be a queue rather than a place to be. So a running machine
 makes its station hold **one body**, `rebalance` walks the surplus back to
 carrying on its own, and no station needs a line of code written for it.
 
-The rock is the exception the doc has always made and still makes: the breaker
+The rock is the exception the doc has always made and still makes: the ram
 replaces the *miners'* hand work, not yours. The hill still comes apart under
 your own cursor.
 
@@ -1201,25 +1207,56 @@ from hollowing out the ladder underneath it: `the next plot` can never be made
 worthless by a tiller you were able to buy instead of it, because the tiller is
 the thing you get *for* buying the last plot.
 
-**So a machine is worth a full complement and half again.** It has to be. Gated
-that way, you buy it at the exact moment the cut holds five and the farm holds
-seven, and a machine worth "about three hands" would be a downgrade you paid
-sparks for. The rate is read off the station rather than picked: whatever
-`capOf` said before the machine, times one and a half, at the station's current
-upgrade level so the ladders below it keep applying. Five benches is seven and a
-half hands; seven plots is ten and a half.
+**So a machine is worth a full complement, times a dial.** Gated as above, you
+buy it at the exact moment the cut holds five and the farm holds seven, so a
+machine worth "about three hands" would be a downgrade you paid sparks for. The
+rate is read off the station rather than picked: `handsOf(job)` -- what `capOf`
+said before the machine -- times `MACHINE_GAIN`.
+
+**And the machine does the station's own unit of work, one unit at a time,
+through the station's own function, on the station's own clock divided by its
+hands.** This is the rule that keeps everything underneath it true. The jaw takes
+*one cell* through `nextQuarryCell` and `findShards`, so a dig still pays exactly
+`seamShards()` and the last cell is still one-in-one. The tiller ripens and cuts
+through the farm's own pair. The ram swings `minerBite()` through `knockOff`. A
+machine that ate a column at a time "to look mechanical" would silently rewrite
+what `dig deeper` is worth. Every ladder below a machine keeps applying because
+the machine is running the same code the hands ran.
+
+**`MACHINE_GAIN` is a dial to be measured, not believed.** Hands spend a great
+deal of their day *walking* -- `CUT_STEP` between cells, along the plot line,
+across the face -- and a machine that stands still does not. So a machine at
+1.5x the clock is worth rather more than 1.5 hands, and the honest way to set
+the number is a node check that measures a running machine against a real gang
+of five and says what it found. Until that check exists the number in config is
+a guess with a comment saying so.
 
 The rock is the one place the rule has nothing to read, because `capOf` for
-miners is `Infinity` -- a rock is as long as it is. Its notional full gang is
-five, which puts the breaker level with the jaw.
+miners is `Infinity` -- a rock is as long as it is. Its complement is
+`ROCK_GANG`, a named constant in config with its reasoning over it, which is
+where every number in this game lives. What the rule against per-case constants
+forbids is a `5` inlined in shared code, not a named one in `config.js`.
 
-| | the jaw and hoist | the breaker | the tiller |
+**A machine reads its station's ladders, never its hats.** Seven grower brims
+over a farm that now holds one body is intended -- the hats are the *fallback's*
+kit, waiting for the lever to go off -- and a trained tender does not make the
+machine faster. That keeps the rate a fact about the station, and stops a
+five-bench, fully-hatted machine arriving at fifteen hands.
+
+| | the jaw and hoist | the ram | the tiller |
 |---|---|---|---|
 | station | the cut | the rock | the plots |
 | unlocked by | 5/5 benches | strength and speed both 5/5 | 7/7 plots |
 | price | 30 sparks, 25 shards, 2,000 dust | 50 sparks, 40 shards, 2,300 dust | 20 sparks, 18 shards, 1,200 dust |
-| worth | 7 1/2 hands | 7 1/2 hands | 10 1/2 hands |
-| with a heart | doubled | doubled | doubled |
+| complement | 5 benches | 5 (`ROCK_GANG`) | 7 plots |
+| worth | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` |
+
+**It is called the ram and not the breaker.** `TRADE_OF.miners` is already
+`'breakers'` -- a breaker is the *hat* the school sells for the rock, counted in
+`S.breakers`, saved, reported, and referred to by that name in a dozen comments.
+A machine wearing the same word would collide in every one of those places. A
+ram is also what the drawing already describes: an arm that reaches into the
+face and strikes.
 
 Three currencies on one row, which nothing else in the game does. For the
 dearest purchase in it, *everything the yard makes goes into this* is a fair
@@ -1254,15 +1291,49 @@ deleted when you buy one, they are the fallback. Throwing it is a job, not a
 setting: you ask, and the nearest free body walks over and does it, the way a
 janitor walks to a mess. Nothing in this yard happens without hands.
 
-One thing falls out of that for free and is worth keeping: a *running* machine
-always has its tender standing at it, so **off is instant and on takes a walk.**
-That closes the trap where a yard under its own smoke has no spare body to go
-and stop it.
+**The lever is a thing in the yard, drawn on the machine and clicked there** --
+not a row on a board. `buy()` returns immediately for any row carrying a `job` or
+a `dial`, and a lever is neither a purchase nor a `+`/`-` stepper; and the ram
+has no board of its own to put it on. It is hit-tested beside the roster's
+buttons, with a tooltip that says why nothing happened when there is no free body
+to send. Same argument that moved the quarry's rows onto the quarry board: a
+decision about a place is made at the place.
 
-The lever is also more than a smoke valve. A machine is a flat rate and a gang
-is not, so late on -- more crew, more kit -- there are yards where the hands beat
-the machine and the right move is to throw it off. That is a decision that stays
-live for the rest of the run.
+**Off is quick because the walk is short, not because of a guarantee.** An
+earlier draft claimed a running machine always has its tender standing at it, so
+off could be instant. That is not true of this yard and should not be made true:
+`takeMuck` pulls the tender off for a mess on its own site, `stepKit` sends it
+for a spare hat, `relieve` stops it where it stands, and the player can pick it
+up and carry it away. Every one of those is a rule already kept, and none should
+be waived for a machine. So there is one mechanism -- ask, and the nearest
+eligible body walks over -- whose cost simply happens to be nil in the common
+case, because the tender is usually standing right there.
+
+**What that draft was trying to close is closed better by a rule already in the
+yard: an unmanned machine produces nothing and smokes nothing.** A yard choking
+on its own smoke with nobody to spare cannot get worse, because the moment the
+last body walks away from the machine, the machine stops. That is the
+idles-until-somebody-is-standing-there rule, not a new exemption -- and it
+settles the muck case too. Muck on the cut stops the jaw, the tender climbs out
+and shovels it, and the machine picks up when the tender comes back.
+
+**Throwing it off puts the gang back.** `rebalance` only ever clamps *down*: it
+walks the surplus to carrying and nothing walks them home. So a machine records
+the complement it displaced when the lever went on, and throwing it off restores
+up to that many from whoever is idle. It restores a complement; it does not
+conjure bodies. Without this, every "off" would cost five clicks on the roster
+and the lever would be a decision nobody made twice.
+
+**How live a decision the lever really is, honestly.** A machine is a flat rate
+and a gang is not -- but the cut can never hold more than its five benches and
+the farm never more than its seven plots, so at any `MACHINE_GAIN` above 1 the
+hands can never out-work the jaw or the tiller. The rock is the exception, and
+the only one: `capOf('miners')` is `Infinity`, so a big enough gang really can
+beat the ram, and there the lever is a rate decision for the rest of the run.
+For the other two it is a smoke valve and a way to get the gang back for
+somewhere else, which is worth having and is not the same claim. If the measured
+`MACHINE_GAIN` comes out near 1, all three become live and the sentence can be
+written the strong way; that is a thing to settle with the check, not in prose.
 
 It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
@@ -1298,6 +1369,14 @@ are true, so it is a preference rather than a rule.
 **Old saves are not carried over.** Levels above the new caps clamp. This game
 is still being built and its save format still moves; migration code for a shape
 that is not settled is work that gets thrown away.
+
+**The machines cannot ship before the sky can hold them.** `foul` turns a mote
+away *with its dirt* once the band is at `MOTE_CAP`, and past that point further
+fouling is free -- so three machines at three times the dirt would pin the sky
+and the feature's own economy would be swallowed by a ceiling. Two consequences,
+both binding. `SMOG_CAP` goes up, as one systemic number with its reasoning. And
+every check about machine dirt asserts on the *rate* of fouling, never on the
+standing mote count, which reads the same at the cap whatever the rate.
 
 ### Still open
 
