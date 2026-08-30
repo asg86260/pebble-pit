@@ -424,6 +424,29 @@ export const upgrades = () => UPGRADES;
 // Every board, as its rows and its section key-lists, so a check can ask whether
 // the two agree. They are two separate edits and only one of them is where the
 // row is written, which is how five rows came to exist on no board at all.
+// Take one row's key out of every section, to prove a board still draws it.
+// `null` puts them all back. Only a check ever calls this.
+let unsectioned = null;
+export const unsection = key => {
+  const all = [SECTIONS, LAB_SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
+               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS];
+  if (unsectioned) {
+    for (const [sect, keys] of unsectioned) sect.keys = keys;
+    unsectioned = null;
+  }
+  if (!key) { buildShop(); return true; }
+  unsectioned = [];
+  let found = false;
+  for (const list of all) for (const sect of list) {
+    if (!sect.keys.includes(key)) continue;
+    unsectioned.push([sect, sect.keys]);
+    sect.keys = sect.keys.filter(k => k !== key);
+    found = true;
+  }
+  buildShop();
+  return found;
+};
+
 export const boards = () => [
   { name: 'bench',  keys: UPGRADES.map(u => u.key),        sections: SECTIONS.map(x => x.keys) },
   { name: 'lab',    keys: LAB_UPGRADES.map(u => u.key),    sections: LAB_SECTIONS.map(x => x.keys) },

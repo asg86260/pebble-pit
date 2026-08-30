@@ -28,11 +28,42 @@ group('every row on every board has somewhere to be drawn', async () => {
   }
   return [
     ok(boards.length >= 4, 'there are boards to check', `${boards.length}`),
+    // Still worth saying, because a row under "and" is a row whose heading
+    // somebody forgot -- it is visible, which is the thing that matters, but it
+    // is not where it was meant to be.
     ok(orphans.length === 0,
-       'no row exists that no board will draw',
+       'every row is named by a section, so none of them land under "and"',
        orphans.join(', ') || 'none'),
     ok(ghosts.length === 0,
        'and no board names a row that does not exist',
        ghosts.join(', ') || 'none')
+  ];
+});
+
+// And a row nobody named still gets drawn.
+//
+// This is the guarantee rather than the guard. The check above says every row
+// has a heading, which is a tidiness rule and can be broken by anybody adding a
+// row; this says that breaking it costs you the *heading* and not the row. The
+// rows are what exist. The sections only say how they are grouped.
+group('a row no section names is still drawn', async () => {
+  window.__reset();
+  openSites();
+  window.__lab(true);
+  window.__grant({ shards: 400, spores: 400, cores: 9 });
+  window.__tip(20000);
+
+  // Take a row's key out of every section on its board and check it survives.
+  const before = window.__rows().filter(r => r.shown).map(r => r.key);
+  const hidden = window.__unsection('labswing');
+  const after = window.__rows().filter(r => r.shown).map(r => r.key);
+  window.__unsection(null);                    // and put the sections back
+
+  return [
+    ok(before.includes('labswing'), 'the row is on its board to begin with'),
+    ok(hidden, 'its key can be taken out of every section'),
+    ok(after.includes('labswing'),
+       'and it is still drawn with no section naming it',
+       after.filter(k => k.startsWith('lab')).join(','))
   ];
 });

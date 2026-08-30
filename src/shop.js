@@ -34,9 +34,28 @@ const towerEl = document.getElementById('towershop');
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
 // and only the *set* of rows needs the DOM touched.
+// The sections a board actually draws: the ones it declares, and then a last
+// group holding every row nobody named.
+//
+// The rows are the source of truth for what *exists*; the sections say how it is
+// grouped and in what order. It used to be the other way about -- `shape` and
+// `build` walked the sections and looked each key up -- which means a row is
+// only real if somebody remembered to write its name a second time, in another
+// file, in a list that has nothing to do with the row.
+//
+// Nine rows were lost to that. They were declared, priced, gated and buyable,
+// and no board would draw them, because adding a row is two edits and only one
+// of them is where the row is. Forgetting the second one should cost a *heading*
+// -- the row lands at the bottom under "and" -- rather than costing the row.
+const grouped = (list, sections) => {
+  const named = new Set(sections.flatMap(x => x.keys));
+  const rest = list.map(u => u.key).filter(k => !named.has(k));
+  return rest.length ? [...sections, { title: 'and', keys: rest }] : sections;
+};
+
 function shape(list, sections) {
   const out = [];
-  for (const sect of sections) {
+  for (const sect of grouped(list, sections)) {
     const rows = sect.keys.filter(k => {
       const u = list.find(x => x.key === k);
       // The same two questions the building asks, and in the same order, or the
@@ -92,7 +111,7 @@ function build(el, list, sections, empty) {
   // several headings they are doing their job -- telling the groups apart --
   // and one of them matching the board's name is fine.
   const title = el.closest('.page')?.querySelector('.title')?.textContent.trim();
-  const lone = sections.length === 1;
+  const lone = grouped(list, sections).length === 1;
   const now = shape(list, sections);
   if (built.get(el) === now) return;
   built.set(el, now);
@@ -116,7 +135,7 @@ function build(el, list, sections, empty) {
     el.appendChild(line);
     return;
   }
-  for (const sect of sections) {
+  for (const sect of grouped(list, sections)) {
     const rows = sect.keys
       .map(k => list.find(u => u.key === k))
       .filter(u => u && u.show())
