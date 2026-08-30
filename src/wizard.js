@@ -22,6 +22,7 @@ import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
          WIZ_TRAIL_MS, WIZ_TRAIL_LIFE } from './config.js';
 import { frames } from './clock.js';
 import { S, sky } from './state.js';
+import { STEP } from './lab.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
 
@@ -129,6 +130,10 @@ function descend(w) {
   return false;
 }
 
+// How often one throws, and how much a throw takes off. The tower's two ladders.
+export const wizMs = () => Math.max(120, WIZ_MS / Math.pow(STEP, S.wizSpeedLevel || 0));
+export const wizBite = () => 1 + (S.wizPowerLevel || 0);
+
 export function stepWizard(w, now) {
   if (w.aloft) trail(w, now);
 
@@ -177,7 +182,7 @@ export function stepWizard(w, now) {
     // better than one of them floating back down to the ground for it.
     w.cell = nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, true))
           || nextCell(w.x + WORKER / 2, w.y + WORKER / 2, spokenFor(w, false));
-    w.next = now + WIZ_MS;
+    w.next = now + wizMs();
   }
   // Out to the ring the short way: straight away from the middle of the star,
   // from wherever the body happens to be. Never across it -- a wizard given a
@@ -194,7 +199,7 @@ export function stepWizard(w, now) {
     w.x += (dx / d) * Math.min(WIZ_RISE, d);
     w.y += (dy / d) * Math.min(WIZ_RISE, d);
     if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
-    w.next = Math.max(w.next, now + WIZ_MS / 2);   // no throwing while travelling
+    w.next = Math.max(w.next, now + wizMs() / 2);   // no throwing while travelling
     // and it takes its place on the ring from where it got there, so there is
     // nothing to travel round to
     w.orb0 = Math.atan2(my - sky.y, mx - sky.x) - now / 1000 * WIZ_SPIN;
@@ -249,11 +254,11 @@ export function stepWizard(w, now) {
   if (S.pileFull.sky) { w.lunge = 0; return; }
 
   if (now >= w.next && w.cell) {
-    fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell);
-    w.mined = (w.mined || 0) + 1;
+    fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, wizBite());
+    w.mined = (w.mined || 0) + wizBite();
     w.lunge = 1;
     w.cell = null;                 // the bolt has it now; pick the next one
-    w.next = now + WIZ_MS;
+    w.next = now + wizMs();
   }
 }
 

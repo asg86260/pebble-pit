@@ -233,6 +233,14 @@ export const S = {
   // The second piece being looked into, when there is a bench for it. One field
   // rather than a list: the lab holds two, and two is the whole of the upgrade.
   research2: null,
+  // How often a wizard throws, and how much of the star comes off when it lands.
+  // The tower had no ladders at all: the one thing standing between you and
+  // every spark in the game could only be made faster by hiring another body.
+  // How much harder the scrubbing house pulls. It was built to answer hand
+  // labour and the machines out-dirty it several times over.
+  fanLevel: 0,
+  wizSpeedLevel: 0,
+  wizPowerLevel: 0,
   labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 

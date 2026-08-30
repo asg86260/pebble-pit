@@ -305,6 +305,15 @@ export const SCRUB_CATCH = 260;
 // have to be emptied somewhere, and the crew shovel it like any other mess.
 export const SCRUB_PER_MUCK = 90;   // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
+// The house's own ladder, and the reason it needs one now.
+//
+// It was built to answer hand labour, which dirties the sky slowly. A machine
+// dirties it a great deal harder and never stops for a cigarette -- and there
+// are three of them -- so a house that could only ever pull at the rate it was
+// built with is a house that stops being an answer the moment the yard is worth
+// having one. A bigger fan is what keeps it in the argument.
+export const FAN_COST = 18;          // shards for the first rung
+export const FAN_RATE = 1.75;        // and how much steeper each one gets
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one
 export const RECYCLE_PER = 28;      // motes caught per grain of dust it gives back -- per mote
@@ -473,6 +482,16 @@ export const WIZ_RATE = 1.7;         // and each one after the first
 export const WIZ_BREW_MS = 120000;   // how long the tower is at it
 // What a wizard does once it is up there: a bolt at the star, this often.
 export const WIZ_MS = 1100;
+// The tower's own two ladders, and the sky's first.
+//
+// The wizards were the one trade with nothing to buy for them. Everything on the
+// ground can be made quicker or stronger, and the thing standing between you and
+// every spark in the game -- how fast a star comes apart -- could only be made
+// faster by hiring another body and buying it a hat. So: how often a bolt goes,
+// and how much of the star it takes when it lands.
+export const WIZ_SPEED_COST = 12;    // sparks for the first rung of either
+export const WIZ_POWER_COST = 16;
+export const WIZ_LADDER_RATE = 1.8;  // and how much steeper each one gets
 // It does not touch the thing. A body hanging against the rind with its arms in
 // it was a miner on a rock four hundred feet up; what it does instead is circle
 // the star at a distance and throw magic at it, which is the one thing in this

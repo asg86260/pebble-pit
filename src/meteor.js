@@ -61,9 +61,9 @@ export function stepSparkle(dt) {
 // the ring the wizards fly, and the bolts leave from
 export const orbitR = () => sky.r + WIZ_ORBIT;
 
-export function fire(fromX, fromY, cell) {
+export function fire(fromX, fromY, cell, bite = 1) {
   if (!cell) return;
-  BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY, c: cell.c, r: cell.r });
+  BOLTS.push({ x: fromX, y: fromY, px: fromX, py: fromY, c: cell.c, r: cell.r, bite });
   // and the throw itself: a handful of specks off the hand it left, thrown the
   // way it went. A bolt that simply existed one frame and was gone the next had
   // nothing to say about where it came from.
@@ -95,9 +95,33 @@ function stepBolts() {
       S.dirty = true;
       continue;
     }
+    // What it takes when it lands. One cell is a bolt; a stronger one takes the
+    // cells around it too, spreading outward from where it hit rather than
+    // punching a deeper hole -- a star should come apart in patches, the way the
+    // rock comes off in layers.
     takeCell(b.c, b.r);
+    for (let n = 1; n < (b.bite || 1); n++) {
+      const near = nearestLive(b.c, b.r);
+      if (!near) break;
+      takeCell(near.c, near.r);
+    }
     BOLTS.splice(i, 1);
   }
+}
+
+// The nearest cell of the star still standing, for a bolt that takes more than
+// one. Searched in rings out from where it hit, so what comes off is a patch
+// rather than a line.
+function nearestLive(c0, r0) {
+  for (let d = 1; d < 8; d++) {
+    for (let dr = -d; dr <= d; dr++) for (let dc = -d; dc <= d; dc++) {
+      if (Math.max(Math.abs(dr), Math.abs(dc)) !== d) continue;
+      const c = c0 + dc, r = r0 + dr;
+      if (c < 0 || r < 0 || c >= sky.cols || r >= sky.rows) continue;
+      if (sky.cells[r * sky.cols + c]) return { c, r };
+    }
+  }
+  return null;
 }
 
 const at = (c, r) => sky.cells[r * sky.cols + c];

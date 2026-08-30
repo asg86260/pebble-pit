@@ -106,7 +106,10 @@ export function outletMuck() {
   for (let c = from; c <= to; c++) n += m[c] || 0;
   return n;
 }
-export const scrubRate = () => (S.scrubOpen ? inScrub() * SCRUB_PULL : 0);
+// What one body in the house is worth, with whatever fan has been fitted. A
+// quarter again a rung, the same step every ladder in this game takes.
+export const fanPull = () => SCRUB_PULL * Math.pow(1.25, S.fanLevel || 0);
+export const scrubRate = () => (S.scrubOpen ? inScrub() * fanPull() : 0);
 // Where the thread ends, and where the dust comes back out. Both are places on
 // the building rather than numbers near it: the head of the throat, which is the
 // cell the hood's taper closes to and the last of it you can see, and the lip of
@@ -677,7 +680,7 @@ export const DRAUGHT = [];
 
 function breathe(secs) {
   const to = intake();
-  const power = scrubRate() / SCRUB_PULL;
+  const power = scrubRate() / fanPull();
   let n = DRAUGHT_PER_S * power * secs;
   while (n > 0) {
     if (n < 1 && Math.random() > n) break;
@@ -704,7 +707,7 @@ function breathe(secs) {
 
 function pull(secs) {
   const to = intake();
-  const power = scrubRate() / SCRUB_PULL;      // bodies inside
+  const power = scrubRate() / fanPull();       // bodies inside
 
   for (let i = SKY.length - 1; i >= 0; i--) {
     const m = SKY[i];

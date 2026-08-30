@@ -10,7 +10,9 @@
 // it are bodies not on the rock. That is the cost, and it is a decision you can
 // take back whenever you like -- the same bargain every other station makes.
 
-import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS } from './config.js';
+import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
+         FAN_COST, FAN_RATE, RUNGS } from './config.js';
+import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
 import { idle, assign } from './upgrades.js';
@@ -79,6 +81,23 @@ export function stepScrubber(w) {
 }
 
 export const SCRUB_UPGRADES = [
+  {
+    // The house was built to answer hand labour, and the machines out-dirty it
+    // several times over and never stop. Without a ladder of its own it stops
+    // being an answer at exactly the point the yard is worth having one.
+    key: 'fan',
+    name: 'a bigger fan',
+    unit: 'motes/s',
+    pct: true,
+    rung: () => S.fanLevel,
+    from: () => fanPull(),
+    to: () => fanPull() * 1.25,
+    cost: () => Math.round(FAN_COST * Math.pow(FAN_RATE, S.fanLevel)),
+    currency: 'shard',
+    buy: () => { S.fanLevel++; },
+    show: () => S.scrubOpen && S.fanLevel < RUNGS
+  },
+
   // Who is standing in it, on the board that belongs to it -- the same row the
   // lab has, for the same reason: you are here, and walking back to the bench to
   // staff the place you are standing in is a walk for nothing.

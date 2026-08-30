@@ -213,6 +213,9 @@ export function persist() {
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
     labKitLevel: S.labKitLevel,
+    fanLevel: S.fanLevel,
+    wizSpeedLevel: S.wizSpeedLevel,
+    wizPowerLevel: S.wizPowerLevel,
     labRooms: S.labRooms,
     research2: S.research2,
     // The machines, as facts only. Whether each was bought, whether its lever is
@@ -325,6 +328,8 @@ export function restore() {
     S.benchLevel = 0;
     S.machines = freshMachines();   // a new yard has no machines in it
     S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
+  S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0;
+    S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0;
     S.spores = 0;
     S.seenSpore = false;
     S.farmOpen = false;
@@ -462,6 +467,9 @@ export function restore() {
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
   S.labKitLevel = s.labKitLevel || 0;
+  S.fanLevel = s.fanLevel || 0;
+  S.wizSpeedLevel = s.wizSpeedLevel || 0;
+  S.wizPowerLevel = s.wizPowerLevel || 0;
   S.labRooms = Math.max(1, s.labRooms || 1);
   S.research2 = s.research2 || null;
   S.meteorOpen = !!s.meteorOpen;

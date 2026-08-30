@@ -254,7 +254,8 @@ export const plots = () => {
 export const levels = (o = {}) => {             // set upgrade levels, for weighing balance
   for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'minerSpeedLevel',
                    'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
-                   'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel']) {
+                   'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
+                   'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();

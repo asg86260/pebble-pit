@@ -11,8 +11,11 @@
 // a spell that lands the moment you can afford it is a shop row rather than a
 // spell.
 
+import { wizMs, wizBite } from './wizard.js';
+import { STEP } from './lab.js';
 import { S } from './state.js';
-import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS } from './config.js';
+import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
+         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -56,6 +59,38 @@ export function stepTower() {
 }
 
 export const TOWER_UPGRADES = [
+  {
+    // How often a wizard throws. The tower had no ladders at all -- the one
+    // thing standing between you and every spark in the game could only be made
+    // faster by hiring another body and buying it a hat.
+    key: 'wizspeed',
+    name: 'quicker casting',
+    unit: 'bolts/min',
+    pct: true,
+    rung: () => S.wizSpeedLevel,
+    from: () => 60000 / wizMs(),
+    to: () => 60000 / (wizMs() / STEP),
+    bill: () => [['spark', Math.round(WIZ_SPEED_COST * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel))],
+                 ['dust', Math.round(600 * Math.pow(WIZ_LADDER_RATE, S.wizSpeedLevel))]],
+    buy: () => { S.wizSpeedLevel++; },
+    show: () => S.towerOpen && S.seenSpark && S.wizSpeedLevel < RUNGS
+  },
+  {
+    // And how much of the star comes off when one lands. A star should come
+    // apart in patches, so a stronger bolt spreads outward from where it hit
+    // rather than punching a deeper hole.
+    key: 'wizpower',
+    name: 'heavier bolts',
+    unit: 'cells/bolt',
+    rung: () => S.wizPowerLevel,
+    from: () => wizBite(),
+    to: () => wizBite() + 1,
+    bill: () => [['spark', Math.round(WIZ_POWER_COST * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel))],
+                 ['dust', Math.round(900 * Math.pow(WIZ_LADDER_RATE, S.wizPowerLevel))]],
+    buy: () => { S.wizPowerLevel++; },
+    show: () => S.towerOpen && S.seenSpark && S.wizPowerLevel < RUNGS
+  },
+
   // A meteor is not bought any more: raising the tower calls the first one down
   // -- see `unlocktower` in upgrades.js. It was a row that asked for a second
   // core to do the one thing the tower is *for*, on a board that then had
