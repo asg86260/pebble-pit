@@ -1000,6 +1000,14 @@ export const DIZZY_MS = 1400;      // and how long the stars last afterwards
 // How long a janitor leans on one spot before wandering to another. Waiting for
 // somebody to make a mess is most of its day, so it is the idle you see most of
 // in this yard, and it is worth more than standing still.
+// How fast a body ambles when it is not going anywhere in particular, in pixels
+// per frame. It is its own number and NOT a fraction of the walking pace, which
+// is what it used to be: an idling janitor chased its new leaning-spot at nearly
+// half of a commute -- a hundred pixels a second -- so it stood dead still for
+// several seconds and then scooted a few cells in a blink. Stuck, then vibrating,
+// which is exactly how it read. An amble is a speed, not a discount on walking,
+// and raising the crew's boots should not make loitering frantic.
+export const IDLE_PACE = 0.28;
 export const JANITOR_PROP = 7000;
 export let LOO_EVERY = 600000;   // how often a body is about due, on average
 export const LOO_SPREAD = 0.55;  // and how much that wanders, either side

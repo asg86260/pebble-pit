@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -2102,7 +2102,12 @@ export function updateWorkers(now, dt) {
         const sway = now / 1000 * IDLE_BEAT + w.ph;
         const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
         const step = to - w.x;
-        w.x += Math.sign(step) * Math.min(commutePace() * frames() * 0.45
+        // At an amble, and at its own pace rather than at a fraction of a
+        // commute. Chased at half a walking pace the spot two or three cells
+        // away was reached in a blink, so the whole idle was a long freeze and
+        // then a scoot -- and it got worse every time the crew's legs did.
+        // `IDLE_PACE` is the speed of loitering and belongs to loitering.
+        w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
                  * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
         w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
       }

@@ -141,7 +141,7 @@ export const posts = () => POSTS.filter(p => p.show());
 // at the quarry are different things standing there rather than the same grey lump
 // in two places.
 export const KIT_MARK = { miners: 'helmet', quarriers: 'lamp', farmhands: 'brim',
-                          haulers: 'cart', wizards: 'point' };
+                          haulers: 'cart', wizards: 'point', janitors: 'cap' };
 
 export function kitStands() {
   const out = [];
@@ -225,6 +225,9 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     }
 
     drawBody(b.badge.x, b.badge.y);
+    // The janitor's cap is not kit, it is the job -- so the counter wears it
+    // whether or not anybody has been trained, the same as out in the yard.
+    if (p.job === 'janitors') drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
     // The sky is the one post where the hat *is* the job: there is no such thing
     // as a wizard without one, so the body at the top of its roster wears it and
     // the plain square underneath -- a body that could not be up there at all --
