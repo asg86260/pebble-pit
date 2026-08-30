@@ -469,7 +469,13 @@ group('a laden body banks what it has rather than crossing the yard', async () =
   // through -- so what has to be true is that it never *sets off* on one.
   let far = 0, took = 0;
   const had = new Map();
-  for (let i = 0; i < 3600; i++) {
+  // Two minutes rather than one. The event being counted -- a hauler that is
+  // already half laden taking on a new column -- got rarer when the crew's base
+  // pace went up, because a quicker hauler fills its hands and banks them sooner
+  // and so spends less of its time part-laden. The property under test did not
+  // change; the number of chances to observe it in a fixed window did, and the
+  // answer to a thin sample is a longer look rather than a lower bar.
+  for (let i = 0; i < 7200; i++) {
     run(1 / 60);
     const s = state();
     s.crewDetail.forEach((row, idx) => {

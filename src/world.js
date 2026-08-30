@@ -7,6 +7,7 @@
 
 import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
+        SITES, TO_FIRST_SITE,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
@@ -109,27 +110,115 @@ export function layPiles() {
   refreshPiles();
 }
 
+// Walk the table and hand every site its ground.
+//
+// Right to left from the rock, because the rock and the lip are the two things
+// that may never move: `S.worldW` is measured off `pit.x`, `floor.cols` off
+// `S.worldW`, and a changed `floor.cols` invalidates every saved floor grid. So
+// the walk starts at a fixed point and everything else follows from the table.
+//
+// A site's heap is placed in the same step that reserves its ground, which is
+// the whole point. `heap()` used to build the strips afterwards from the placed
+// buildings and clamp the far end against a neighbour -- so a strip could come
+// back with its end left of its start, and a yard with an inverted strip hangs
+// at boot. Here the near end and the far end are both produced by one cursor
+// walking one way, and an inverted strip is not a thing that can be expressed.
+//
+// Returns a map of key -> { x, w } and the strips, in yard order.
+export function placeSites() {
+  const snap = v => Math.round(v / P) * P;
+  const at = {}, strips = [];
+  // Anchored on `S.cx`, which never moves -- NOT on `rockLeft()`, which moves
+  // with the rock. The first draft started the walk at the rock's left edge and
+  // tied a knot: the biggest rock is sized by how much room there is before the
+  // bench, the bench was placed relative to the rock's edge, and the rock's edge
+  // is where its width put it. The yard came up with a bench a hundred and
+  // thirty pixels out and a rock taller than it was wide.
+  let x = snap(S.cx - TO_FIRST_SITE);
+
+  for (const row of SITES) {
+    const w = snap(row.w());
+    const pileW = row.pile ? heapBase(row.pile) * P : 0;
+
+    if (row.side === 'left') {
+      // The scrubbing house: its spout is on the left wall, so its heap lies on
+      // that side and the walk meets the building before the ground it pays on to.
+      const left = snap(x - w);
+      at[row.key] = { x: left, w };
+      if (pileW) {
+        const to = snap(left - row.standoff);
+        strips.push({ key: row.pile, from: to - pileW, to });
+        x = to - pileW;
+      } else x = left;
+    } else {
+      // Everything else throws towards the rock, so its heap is on its right and
+      // the walk meets the heap first.
+      const to = x;
+      const from = to - pileW;
+      if (pileW) strips.push({ key: row.pile, from, to });
+      const left = snap(from - row.standoff - w);
+      at[row.key] = { x: left, w };
+      x = left;
+    }
+    x = snap(x - row.gap);
+  }
+
+  // The rock's own spoil is NOT in here, and that is deliberate. Every strip the
+  // walk produces belongs to a building that stands still, so it can be worked
+  // out once; the rock's near end is `rockLeft() + S.gw * P`, and the rock is a
+  // different size for every boulder. Frozen at layout time it went stale the
+  // moment a smaller rock came down -- `pileAt` then called columns bare that
+  // were in the heap, the ceiling for them was `LOOSE_DEEP` instead of the
+  // slope, and the spoil stood twelve cells against the boulder. It is rebuilt
+  // live in `refreshPiles`, where it can follow the thing it belongs to.
+  strips.sort((a, b) => a.from - b.from);
+
+  // And the one rule a strip has to satisfy, checked here rather than trusted.
+  //
+  // Three cells is a hard floor, not a taste: `bankCeiling` is zero at both end
+  // columns of a strip, so a strip under three cells wide has no column that can
+  // hold a single grain -- dust thrown at it would walk off looking for
+  // somewhere else and pile up in a neighbour's heap. Loudly, because the
+  // failure this replaces was silent: a clamped strip inverted, and the yard
+  // hung at boot with nothing said about why.
+  for (let i = 0; i < strips.length; i++) {
+    const p = strips[i];
+    if (!(p.to - p.from >= 3 * P))
+      throw new Error(`the ${p.key} heap has no room: ${p.from}..${p.to}. `
+                    + `Widen a gap in SITES, or lower PILE_LIMIT.${p.key}.`);
+    if (i && p.from < strips[i - 1].to)
+      throw new Error(`the ${p.key} heap overlaps the ${strips[i - 1].key} heap: `
+                    + `${p.from} is left of ${strips[i - 1].to}.`);
+  }
+  return { at, strips };
+}
+
 export function refreshPiles() {
   laid = `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}`;
   S.piles = [
-    // The ground under the recycler's spout. It is a station's strip like any
-    // other -- what the house makes lands on it, heaps on it, and stops the
-    // house when there is no room left -- and it is only there once the house
-    // is, because until then nothing pays out on it.
-    // It runs *away* from the building rather than out of it: the spout is on
-    // the left wall, so the ground it pays on to is the ground to its left, and
-    // a strip laid the usual way round would have put the heap inside the house.
-    ...(S.scrubOpen ? [scrubHeap()] : []),
     // The ground under the star, for what the wizards knock off it. Four hundred
     // pixels up is still a station, and what a station makes has to have
-    // somewhere of its own to land.
+    // somewhere of its own to land. It is the one strip not in the SITES table,
+    // because the thing that owns it does not stand on the ground and so has no
+    // place in a walk along it.
     ...(S.meteorOpen ? [skyHeap()] : []),
-    heap('farm', farm.x + farm.w + PILE_STANDOFF.farm, quarry.x - PILE_GAP),
-    // the school is the next thing along the ground now, not the bench
-    heap('quarry', quarry.x + quarry.w + PILE_STANDOFF.quarry, school.x - PILE_GAP),
+    // And the rest off the same walk that reserved the ground for them, in
+    // `placeSites`. They used to be rebuilt here from where the buildings had
+    // ended up, with `heap()` clamping the far end against a neighbour -- which
+    // is how a strip came back with its end left of its start, and a yard with
+    // an inverted strip hangs at boot.
+    //
+    // The ground is reserved from the moment the table names a site; the strip
+    // only *appears* once the site it belongs to is standing, because until then
+    // nothing pays out on to it. That is the whole of the difference between
+    // reserving a spot and opening one.
+    ...(S.strips || []).filter(p => p.key !== 'scrub' || S.scrubOpen),
+    // and the rock's, worked out fresh every time, because the rock it stands
+    // off from is a different size for every boulder
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
-  ];
+  ].sort((a, b) => a.from - b.from);   // `yardLeft` reads the leftmost
 }
+
 
 // The ground under the star, centred on it: sparks fall straight down, so the
 // strip is under where they fall rather than off to one side of it.
@@ -214,20 +303,27 @@ export const blocked = c => {
   // settled out there would sit in plain sight for the rest of the run with
   // nothing able to reach it.
   if (x + P <= yardLeft()) return true;
-  // The rock's apron is *not* barred any more, and that is the point.
+  // The rock's apron stays barred, and this is the second go at that.
   //
-  // It used to be, on the argument that a rock comes down there and a grain
-  // lying on that spot is a grain about to be underneath one. True -- but that
-  // is a thing which happens at a *moment*, and the moment already has its own
-  // answer in `clearApron`, which sweeps the apron clear as the next rock is
-  // made. Barring the ground permanently to forestall it was a standing
-  // prohibition doing a one-off sweep's job, and what it cost was the strip of
-  // yard directly in front of the hill staying conspicuously, permanently bare
-  // while dust piled up either side of it.
+  // It was opened up so that dust could lie in front of the hill, which is a
+  // fair thing to want -- the strip there is conspicuously bare while dust banks
+  // up either side of it. Opening it broke three things in turn, and the third
+  // is the one that settles it: dust in the clearance is swept by `clearApron`
+  // every time a rock is made, and it goes to the nearest column that will take
+  // it, which is the first column of the rock's own spoil heap. That column then
+  // stands twelve cells against the boulder -- the exact sheer wall
+  // `bankCeiling` exists to prevent.
   //
-  // It stays a cliff for `bankCeiling`, which is a different question -- how
-  // *high* the sand may stand there, not whether it may lie there at all -- so
-  // what lands in front of the rock is the thin scatter it should be.
+  // The other two: a grain may come to rest *under* the boulder, and the bare
+  // ground on the heap side is what the heap stands off from, so freeing it lets
+  // the heap creep up against the rock.
+  //
+  // All three say the same thing. The apron is not incidentally bare, it is the
+  // clearance three separate rules are written against. Making dust lie there
+  // means deciding what those rules should say instead, which is a design
+  // question rather than a one-line fix -- and it wants an answer about WHICH
+  // strip is meant before anybody changes them.
+  if (pastApron(x) < 0) return true;
   if (S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w) return true;
   if (overPitMouth(x)) return true;
   return false;
@@ -369,10 +465,20 @@ export function resize(after) {
   pit.x = S.cx + TO_LEDGE;
   shapePit();
 
-  bench.w = BENCH_W;
-  bench.h = P * 7;
-  bench.x = S.cx + TO_BENCH;
-  bench.y = S.groundY - bench.h;
+  // Everything on the ground comes off one walk of the SITES table. Each box
+  // still says how TALL it is -- height is a fact about the building, not about
+  // the yard -- but where it stands is the table's business now, and the strips
+  // its heap lies on are produced by the same pass rather than worked out
+  // afterwards from where the buildings ended up.
+  const placed = placeSites();
+  S.placed = placed.at;
+  S.strips = placed.strips;
+  const seat = (box, key, h) => {
+    const spot = placed.at[key];
+    box.w = spot.w; box.h = h; box.x = spot.x; box.y = S.groundY - h;
+  };
+
+  seat(bench, 'bench', P * 7);
 
   // the one thing that is not on the ground
   sky.x = S.cx + TO_SKY;
@@ -381,46 +487,28 @@ export function resize(after) {
 
   // The school stands on the bare ground between the quarry's spoil and the
   // crew's front doors: where you go to learn a trade is on the way to work.
-  school.w = SCHOOL_W;
-  school.h = SCHOOL_H;
-  school.x = Math.round((S.cx + TO_SCHOOL - SCHOOL_W / 2) / P) * P;
-  school.y = S.groundY - school.h;
+  seat(school, 'school', SCHOOL_H);
 
-  lab.w = LAB_W;
-  lab.h = LAB_H;
-  lab.x = S.cx + TO_LAB;
-  lab.y = S.groundY - lab.h;
+  seat(lab, 'lab', LAB_H);
 
   // Past the lab, at the quiet end of the walk. What it does is about the sky
   // over the whole yard rather than about any one site, so it does not belong
   // among the places that dig -- and the walk out to it is the last of the
   // walks, which is what the cores have bought all the way along.
-  scrub.w = SCRUB_W;
-  scrub.h = SCRUB_H;
-  scrub.x = Math.round((S.cx + TO_SCRUB) / P) * P;
-  scrub.y = S.groundY - scrub.h;
+  seat(scrub, 'scrub', SCRUB_H);
 
   // The last thing on the ground. Everything the cores open lies further out
   // than the last, and the one place that makes nothing is the longest walk.
-  casino.w = CASINO_W;
-  casino.h = CASINO_H;
-  casino.x = S.cx + TO_CASINO;
-  casino.y = S.groundY - casino.h;
+  seat(casino, 'casino', CASINO_H);
 
   // The outhouse, on the bare strip between the school and the rooms: no pile
   // claims that ground and it is where the crew already are.
-  outhouse.w = OUTHOUSE_W;
-  outhouse.h = OUTHOUSE_H;
-  outhouse.x = Math.round((S.cx + TO_OUTHOUSE) / P) * P;
-  outhouse.y = S.groundY - outhouse.h;
+  seat(outhouse, 'outhouse', OUTHOUSE_H);
 
   // The far end of everything. It is tall rather than wide, because it is the one
   // building that goes up rather than along: everything else in this yard is a
   // shed or a hole, and the thing a core buys should not look like either.
-  tower.w = TOWER_W;
-  tower.h = TOWER_H;
-  tower.x = Math.round((S.cx + TO_TOWER) / P) * P;
-  tower.y = S.groundY - tower.h;
+  seat(tower, 'tower', TOWER_H);
 
   // And the ground the pot stands on: everything from the left-hand end of the
   // world to the lab, which is both sides of the casino. A heap goes down beside
@@ -437,13 +525,17 @@ export function resize(after) {
 
   // the quarry is a hole in the ground, so it hangs below the line rather than
   // standing on it
-  quarry.w = QUARRY_W;
-  quarry.x = S.cx + TO_QUARRY;
+  quarry.w = placed.at.quarry.w;
+  quarry.x = placed.at.quarry.x;
   quarry.y = S.groundY;
 
   // the plots stand on the ground, out past the quarry
   farm.h = FARM_H;
-  farm.x = S.cx + TO_FARM;
+  // The farm's *reservation* is its widest future self -- see SITES -- while its
+  // width today is however many plots have been broken. So it stands where the
+  // table put it and grows rightwards into ground already set aside for it,
+  // which is why breaking new ground never shoves the lab along.
+  farm.x = placed.at.farm.x;
   farm.y = S.groundY;
 
   // and the two things about them that are not fixed: how deep the quarry has been

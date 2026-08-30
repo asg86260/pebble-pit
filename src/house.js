@@ -26,7 +26,14 @@ import { rockLeft } from './world.js';
 // this ground as the game goes on, so what the block has to fit is the room
 // left at the biggest rock -- 240px between the bench and the apron -- and not
 // the room it has at rock one.
-export const houseCx = () => Math.round((S.cx + HOUSE_TO) / P) * P;
+// The middle of the block, off the same walk that places everything else. It was
+// `S.cx + HOUSE_TO`, one more hand-measured offset that had to agree with its
+// neighbours by luck.
+export const houseCx = () => {
+  const spot = S.placed && S.placed.house;
+  return spot ? Math.round((spot.x + spot.w / 2) / P) * P
+              : Math.round((S.cx + HOUSE_TO) / P) * P;
+};
 
 // The far edge of the plot, whether anybody lives on it or not. The quarry's
 // spoil stops here: a pile is allowed to run to the next thing along the ground,

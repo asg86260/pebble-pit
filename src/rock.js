@@ -6,12 +6,12 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
+  ROCK_W_MAX, ROCK_H_MAX, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
   ROCK_CLEAR, SHAKE_LAND, WORKER
 } from './config.js';
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
-import { S, floor } from './state.js';
+import { S, floor, bench } from './state.js';
 import { defineMachine } from './machines.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { pastApron, blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -40,7 +40,11 @@ export function rockSize() {
   // The bench stands off one flank, so what the rock has to spread into is the
   // gap to whichever of its edges faces the rock -- and it keeps a hand's width
   // clear of that, rather than growing up against it.
-  const toBench = Math.abs(TO_BENCH < 0 ? TO_BENCH + BENCH_W : TO_BENCH);
+  // Measured off where the bench actually stands, not off the offset it used to
+  // be placed by. The two said the same thing only for as long as nobody moved
+  // the bench; now that placement comes out of the SITES table, an edit to that
+  // table would have let the rock grow quietly into the bench.
+  const toBench = Math.abs(S.cx - (bench.x + bench.w));
   const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((toBench - P * 14) * 2 / P)));
   return {
     w: wide - (wide % 2),
@@ -243,26 +247,17 @@ export function makeBoulder(fromSky = false) {
 // so a bigger rock never lands standing in a heap
 export function clearApron() {
   if (!floor.grid) return;
-  // Ask the thing this actually means rather than borrowing `blocked`.
-  //
-  // `blocked` used to answer this question by accident, because the apron was
-  // one of the places it barred. Now that dust is allowed to lie in front of the
-  // rock, `blocked` says nothing about the apron -- so a sweep written against
-  // it would have found nothing to move, and a grain put back with it would have
-  // gone straight back where it came from. `pastApron` is the question: is this
-  // column inside the ground the next rock is about to occupy?
-  const inApron = c => pastApron(floor.x + c * P) < 0;
-  const notApron = c => blocked(c) || inApron(c);
   for (let c = 0; c < floor.cols; c++) {
-    if (!inApron(c)) continue;
+    if (!blocked(c)) continue;
     for (let r = 0; r < floor.rows; r++) {
       const v = at(floor, c, r);
       if (!v) continue;
       put(floor, c, r, 0);
-      addGrain(floor, floor.x + c * P, notApron, v);    // to the nearest clear column
+      addGrain(floor, floor.x + c * P, blocked, v);     // to the nearest clear column
     }
   }
 }
+
 
 export function gridToString() {
   let s = '';
