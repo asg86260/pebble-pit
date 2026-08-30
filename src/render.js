@@ -25,6 +25,7 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
+import { drawSprite, spriteW, spriteH, HATS, JAW, HOIST, RAM, TILLER } from './sprites.js';
 import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
@@ -2120,51 +2121,23 @@ export function drawBody(x, y) {
 // `tight` pulls the sun hat's brim in by a cell each side. It is for the roster,
 // where the mark stands in a slot with a number beside it and a brim at full
 // span reaches under the digits; out in the yard it wears its proper width.
+// A hat, from the table in sprites.js. `tight` pulls an overhanging brim in to
+// the body's own width, for the hats drawn on a counter where there is no room
+// beside them -- and the wizard's point is exempt, because the brim standing
+// proud of the body is the whole of what says wizard.
+//
+// The shapes themselves are not here any more. They were a handful of `fillRect`
+// calls with offsets in them, which is hard to read and impossible to *design*:
+// nobody can look at `fillRect(x + P, y - P, WORKER - P * 2, P)` and see a flat
+// cap. They are pictures now, in one file, one character to a cell.
 export function drawHat(x, y, kind = 'helmet', tight = false) {
-  ctx.fillStyle = '#000';
-  if (kind === 'cap') {
-    // A flat cap with a peak out front. It is the only hat here that is *not* a
-    // trade -- a janitor buys no kit and wears nothing the school sells -- and
-    // that is the point of it: the one body in this yard whose whole job is to
-    // be somewhere else in a minute needs to be findable at a glance.
-    ctx.fillRect(x + P, y - P, WORKER - P * 2, P);          // the crown
-    ctx.fillRect(x - P, y, P * 3, P);                       // and the peak
-    return;
-  }
-  if (kind === 'brim') {
-    // Two clear cells of brim past the body on each side, and a low crown on
-    // top of it. Narrower than this and it was a helmet somebody had sat on:
-    // what says sun hat is the overhang, so the overhang is most of the shape.
-    const over = tight ? P : P * 2;
-    ctx.fillRect(x - over, y - P, WORKER + over * 2, P);
-    ctx.fillRect(x + P * 2, y - P * 2, WORKER - P * 4, P);
-    return;
-  }
-  if (kind === 'point') {
-    // The wizard's, and the only hat here that goes up rather than across: a
-    // brim a cell proud each side, and a cone stepped off it -- five cells, then
-    // three, then one, which is the only symmetrical taper a three-cell body
-    // will carry.
-    //
-    // The middle course used to be two cells wide, sat off-centre, and the tip
-    // was drawn at a *negative* width and so never drawn at all: a lopsided stub
-    // rather than a hat. It is the one piece of headgear in the yard with a
-    // shape of its own and it was the one drawn wrong.
-    //
-    // And it keeps its brim wherever it is drawn. `tight` is for hats that can
-    // afford to lose their overhang -- a helmet is a helmet either way -- and
-    // this is the one that cannot: the brim standing proud of the body is the
-    // whole of what says wizard. Squeezed to the body's own width it was three
-    // cells on three cells with a nub on top, which is a bottle with a cork in
-    // it, and it was what every counter in the game was wearing while the body
-    // out in the yard wore a cone.
-    ctx.fillRect(x - P, y - P, WORKER + P * 2, P);
-    ctx.fillRect(x, y - P * 2, WORKER, P);
-    ctx.fillRect(x + P, y - P * 3, P, P);
-    return;
-  }
-  ctx.fillRect(x, y - P, WORKER, P);
-  if (kind === 'lamp') ctx.fillRect(x + WORKER / 2 - P / 2, y - P * 2, P, P);
+  const rows = HATS[kind] || HATS.helmet;
+  const w = spriteW(rows);
+  // Centred on the body, and sitting on top of it.
+  const over = tight && kind !== 'point' ? Math.min(w, 3) : w;
+  const put = rows.map(r => r.slice(0, over));
+  const left = x + (WORKER - spriteW(put) * P) / 2;
+  drawSprite(ctx, put, Math.round(left / P) * P, y - spriteH(put) * P);
 }
 
 // What a body has on. It is asked of the *kit* -- which station the thing came
@@ -2503,13 +2476,6 @@ export function drawWorkers() {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
       drawBody(x, y);
       drawHat(x, y, 'cap');
-      // and the shovel, held out in front of it: a shaft and a blade, leaning
-      // the way it is facing.
-      const dir = w.face || 1;
-      const hx = dir > 0 ? x + WORKER : x - P;
-      ctx.fillStyle = '#000';
-      ctx.fillRect(hx, y + P, P, P * 2);                    // the shaft
-      ctx.fillRect(hx - (dir > 0 ? 0 : P), y + P * 3, P * 2, P);   // the blade
       continue;
     }
 
@@ -2826,16 +2792,13 @@ export function drawJaw() {
   if (!S.quarryOpen || !built('jaw')) return;
   const x = Math.round(jawX() / P) * P;
   const y = Math.round(jawY() / P) * P;
-  const W = 4, H = 3;                          // cells
+  // Two pictures, mouth open and mouth shut. A moving part is a different shape,
+  // not the same shape shifted, so it is drawn as a different picture.
+  drawSprite(ctx, JAW[stroke('jaw') < 0.5 ? 0 : 1], x, y);
+  // the stack, which is not part of the machine's own picture because the smoke
+  // comes off the top of it and wants to know where that is
   ctx.fillStyle = '#000';
-  ctx.fillRect(x, y, W * P, H * P);
-  // the stack, standing a cell proud of the body on the far side from the face
-  ctx.fillRect(x + P * (W - 1), y - P * 2, P, P * 2);
-  // The mouth: a white slot in the near face that opens a cell and shuts again.
-  // Two frames of animation is all it needs -- it is eighteen pixels of machine.
-  const open = stroke('jaw') < 0.5 ? 1 : 2;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y + P, P, P * open);
+  ctx.fillRect(x + P * 4, y - P * 2, P, P * 2);
 }
 
 // The hoist: an upright frame on the deck over the mouth of the cut, a white
@@ -2844,47 +2807,23 @@ export function drawJaw() {
 // resited.
 export function drawHoist() {
   if (!S.quarryOpen || !built('jaw')) return;
-  // Over the jaw, in the middle of the mouth -- not off on the bridge by the
-  // ladder. A hoist lifts what the jaw digs, so standing it at the other end of
-  // the hole made the rope between them a diagonal across the cut and the pair
-  // of them read as two unrelated objects. The whole machine is one machine: the
-  // jaw on the floor, the frame directly over it, the rope between.
   const x = Math.round((jawX() + P) / P) * P;
-  // Its head stands above the ground line, so the frame is a thing you can see
-  // over the mouth of the cut from anywhere in the yard.
   const top = Math.round((S.groundY - P * 8) / P) * P;
-  const H = 7;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x, top, P, P * H);                        // the near leg
-  ctx.fillRect(x + P * 2, top, P, P * H);                // and the far one
-  ctx.fillRect(x, top, P * 3, P);                        // the head
-  // The rope is black on a white yard -- it was drawn white, which on this
-  // background is nothing at all -- and the skip is cut white out of it, so the
-  // two cannot be confused with each other.
-  ctx.fillRect(x + P, top + P, P, P * (H - 1));
-  const t = stroke('jaw', 2200);
-  const ride = Math.round(Math.abs(1 - t * 2) * (H - 2));  // the whole drop, and back
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x + P, top + P + ride * P, P, P);
+  drawSprite(ctx, HOIST, x, top);
 
-  // And the line goes all the way down to the machine it is lifting from.
-  //
-  // The frame stood on the deck with a rope inside it and the jaw sat on the
-  // floor of the cut with nothing between them, so the two read as two separate
-  // objects that happened to be near each other. A hoist is a thing connected to
-  // what it hoists -- that is the whole of what makes it a hoist -- so the line
-  // carries on down the mouth of the cut to the jaw's roof.
-  ctx.fillStyle = '#000';
+  // The line down to the jaw, and the skip riding it. Not part of the frame's
+  // picture: how far it reaches is how deep the cut has been taken, which is a
+  // fact about the game rather than about the shape.
   const jy = jawY();
-  const from = top + P * H;
+  const from = top + spriteH(HOIST) * P;
+  ctx.fillStyle = '#000';
   if (jy > from) ctx.fillRect(x + P, from, P, jy - from);
-  // and the skip rides that stretch too, when it is down the hole
   const drop = Math.round((jy - from) / P);
-  if (drop > 0) {
-    const deep = Math.round(Math.abs(1 - ((now() % 2200) / 2200) * 2) * drop);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(x + P, from + deep * P, P, P);
-  }
+  const t = stroke('jaw', 2200);
+  const ride = Math.round(Math.abs(1 - t * 2) * Math.max(0, drop));
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x + P, from + ride * P, P, P);
+  ctx.fillStyle = '#000';
 }
 
 // The ram: a squat engine outside the apron with an arm that reaches into the
@@ -2894,61 +2833,35 @@ export function drawHoist() {
 export function drawRam() {
   if (!built('ram')) return;
   const x = Math.round(ramX() / P) * P;
-  // Big enough to read beside a boulder.
-  //
-  // Four cells square is a thumbnail next to a hill forty cells across -- from
-  // any distance the machine that is supposed to be taking the thing apart was a
-  // speck beside it. An engine that out-works five hatted miners should look
-  // like it could.
-  const W = 7, H = 6;
-  const y = Math.round((S.groundY - P * H) / P) * P;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x, y, W * P, H * P);
-  ctx.fillRect(x + P, y - P * 3, P * 2, P * 3);          // the stack
-  // The arm: out towards the hill on the stroke, back on the return.
-  // The arm is as long as the gap it has to cross, worked out rather than
-  // guessed: three cells of literal left it striking empty air a good way short
-  // of the hill. It draws back by two on the return.
-  // The stroke, and it is a stroke you can see.
-  //
-  // It was a two-cell wiggle at the end of an arm a dozen cells long, and idle
-  // it drew *fully extended* -- so the one thing this machine had to say, that
-  // it is driving something into the hill, it never said. It draws right back to
-  // its own body and punches out to the face: the arm is the whole of the
-  // animation, so it may as well use the whole of the distance.
+  const W = spriteW(RAM), H = spriteH(RAM);
+  const y = Math.round((S.groundY - H * P) / P) * P;
+  drawSprite(ctx, RAM, x, y);
+
+  // The arm, whose *length* is the animation -- so it is drawn rather than
+  // pictured. Out fast, held, then drawn back slowly, which is what a ram does
+  // and what makes the hit read as a hit rather than as a slider going to and
+  // fro. At rest it stands half out, so the arm is part of the machine's shape
+  // instead of something that only exists while you happen to be watching.
   const gap = Math.max(2, Math.round((rockLeft() - (x + W * P)) / P) + 1);
   const t = stroke('ram', 900);
-  // Out fast, hold, then draw back slowly -- which is what a ram does, and what
-  // makes the hit read as a hit rather than as a slider going back and forth.
-  // At rest it stands half out, so the arm is part of the machine's shape rather
-  // than something that only exists while you happen to be watching it work. It
-  // retracted to a single cell when idle, which is why this read as a machine
-  // with no arm at all.
   const rest = Math.max(2, Math.round(gap / 2));
   const reach = t === 0 ? rest
-              : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18))   // the drive
-              : t < 0.34 ? gap                                            // and it lands
+              : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18))
+              : t < 0.34 ? gap
               : Math.max(2, Math.round(gap - (gap - rest) * ((t - 0.34) / 0.66)));
+  ctx.fillStyle = '#000';
   ctx.fillRect(x + W * P, y + P * 2, P * reach, P * 2);
-  // a head on the end of it, so what meets the rock is a face and not a line
-  ctx.fillRect(x + W * P + (reach - 1) * P, y + P, P * 2, P * 4);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x + P, y + P * 2, P * 3, P * 2);          // the slot
+  ctx.fillRect(x + W * P + (reach - 1) * P, y + P, P * 2, P * 4);   // the head
 
-  // How far through this boulder it is, as a bar across the engine's flank.
-  //
-  // The ram is the one machine whose work you cannot see the shape of. A cut
-  // gets visibly deeper and a plot visibly greener; the hill just gets smaller,
-  // slowly, and from beside the machine there is nothing to say whether the
-  // thing is halfway through or has barely started. The bar is that, and it
-  // fills as the rock goes.
+  // How far through this boulder it is. The hill is the one workplace whose
+  // progress has no shape you can read from beside the machine.
   const share = rockShare();
   if (share > 0) {
     const wide = Math.max(1, Math.round((W - 2) * share));
     ctx.fillStyle = '#fff';
-    ctx.fillRect(x + P, y + P * 4, (W - 2) * P, P);      // the track
+    ctx.fillRect(x + P, y + P * 4, (W - 2) * P, P);
     ctx.fillStyle = '#000';
-    ctx.fillRect(x + P, y + P * 4, wide * P, P);         // and how far along
+    ctx.fillRect(x + P, y + P * 4, wide * P, P);
   }
 }
 
@@ -2969,29 +2882,18 @@ export function drawRam() {
 export function drawTiller() {
   if (!S.farmOpen || !built('tiller')) return;
   const x = Math.round(tillerAt() / P) * P;
-  const g = Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P;   // the ground
+  const g = Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P;
+  drawSprite(ctx, TILLER, x, g - spriteH(TILLER) * P);
+
+  // The spokes turning. Two cells, moving round the wheels the picture already
+  // has -- which at this size is the whole of what a turning wheel looks like.
   const t = stroke('tiller', 700);
-  ctx.fillStyle = '#000';
-
-  // the bonnet, low and forward
-  ctx.fillRect(x, g - P * 3, P * 3, P * 2);
-  // the body over the back axle, standing taller
-  ctx.fillRect(x + P * 3, g - P * 5, P * 3, P * 4);
-  // the stack, at the front of the bonnet the way a tractor's is
-  ctx.fillRect(x + P, g - P * 6, P, P * 3);
-
-  // The big wheel at the back and the little one at the front. A spoke is cut
-  // white out of each and moves round it, which at this size is the whole of
-  // what a turning wheel looks like.
-  const big = { x: x + P * 4, y: g - P * 2, r: 2 };
-  const small = { x: x + P, y: g - P, r: 1 };
-  for (const w of [big, small]) {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(w.x - w.r * P, w.y - w.r * P, (w.r * 2 + 1) * P, (w.r * 2 + 1) * P);
+  const a = t * Math.PI * 2;
+  const y0 = g - spriteH(TILLER) * P;
+  for (const [wx, wy, r] of [[x + P * 5, y0 + P * 4, 1], [x + P, y0 + P * 4, 0]]) {
     ctx.fillStyle = '#fff';
-    const a = t * Math.PI * 2;
-    ctx.fillRect(Math.round((w.x + Math.cos(a) * w.r * P) / P) * P,
-                 Math.round((w.y + Math.sin(a) * w.r * P) / P) * P, P, P);
+    ctx.fillRect(Math.round((wx + Math.cos(a) * r * P) / P) * P,
+                 Math.round((wy + Math.sin(a) * r * P) / P) * P, P, P);
   }
   ctx.fillStyle = '#000';
 }
