@@ -2028,14 +2028,28 @@ function drawCoreGlow(cx, cy) {
       // produces a pair of opposite cells.
       const x = ox + evenly(Math.cos(a) * r / P) * P;
       const y = oy + evenly(Math.sin(a) * r / P) * P;
-      // Nothing below the ground line -- what this reads as is heat coming off
-      // the thing, and heat does not go down into the dirt. Unless the thing is
-      // already down there, in which case the ground line is not a lid.
-      if (cy < S.groundY && y - P / 2 >= S.groundY) continue;   // the cell's own top edge
+      // The ring is a whole ring, and the ground line is not a lid.
+      //
+      // Everything at or below the line used to be dropped, on the grounds that
+      // this reads as heat and heat does not go down into the dirt. What that
+      // actually produced was a DOME: a core resting on the ground has its
+      // middle nine pixels up, so most of the ring was under the line and thrown
+      // away, and what was left sat above the disc like a hat. No amount of
+      // fixing the origin helps -- the origin was right and half the drawing was
+      // being deleted -- and "the animation is not centred on the circle" is
+      // exactly what a half-ring above a circle looks like.
+      //
+      // So it is drawn whole. A core glows all round, which is what a thing
+      // giving something off does.
       const key = `${x},${y}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      ctx.fillRect(x, y, P, P);
+      // `x, y` is where the cell's MIDDLE goes; `fillRect` wants its top-left.
+      // Passing one as the other puts every cell of the ring half a cell down
+      // and to the right, which is the whole ring off its own disc -- and it is
+      // the same half cell three times over now, so it is worth being explicit:
+      // this offset is the conversion, not a nudge.
+      ctx.fillRect(x - P / 2, y - P / 2, P, P);
     }
   }
   ctx.globalAlpha = 1;
