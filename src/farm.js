@@ -9,7 +9,7 @@
 import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
   from './config.js';
-import { foul, throughPlotMuck } from './smog.js';
+import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
 import { walkY, plotCount, resite } from './world.js';

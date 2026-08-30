@@ -9,7 +9,7 @@ import {
   ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
   ROCK_CLEAR, SHAKE_LAND, WORKER
 } from './config.js';
-import { foul, throughRockMuck } from './smog.js';
+import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
 import { defineMachine } from './machines.js';

@@ -1242,6 +1242,7 @@ const loose = { owed: 0 };
 // and both of those happen here.
 let siteAt = null;
 let poopTotal = 0;          // how much of the mess is what a body left
+let yardPoop = 0;           // ...and how much of that is off the sites
 let yardLeft = 0;
 let allLeft = 0;
 
@@ -1250,8 +1251,10 @@ function refresh() {
   const m = muckCols(), poo = poopCols();
   let all = 0, yard = 0;
   poopTotal = 0;
+  yardPoop = 0;
   for (let c = 0; c < m.length; c++) {
     poopTotal += poo[c] || 0;
+    if (!onSite(c)) yardPoop += poo[c] || 0;
     const v = (m[c] || 0) + (poo[c] || 0);
     if (!v) continue;
     all += v;
@@ -1299,12 +1302,27 @@ export function nearestMuck(wx, taken, hand) {
   // not be sent to a column that is nothing but the other kind, or it walks
   // there, finds nothing it may touch, and stands over it.
   const own = hand && hand.type === 'janitor';
+  // And what this pair of hands can stand on. Muck really does lie over the
+  // mouth of the pit -- `muckTop` sends it down to `pitTop` -- but the only body
+  // that knows how to get down there is a hauler, which has `downTheHole`. Every
+  // other trade claimed the column through here, walked to it, and then stood at
+  // `walkY`: the ground line, with the dust it was shovelling several hundred
+  // pixels below its feet. That is the reported "some workers are walking
+  // through the air over the pit", and the reason some behaved is that those
+  // ones were haulers.
+  //
+  // The gate belongs here rather than at the five call sites of `takeMuck`,
+  // because here is where a claim is made and all five of them claim through it.
+  // It tests `overPitMouth`, the same predicate the hauler's own pit branch
+  // tests, so the two sides cannot drift apart.
+  const canDescend = hand && hand.type === 'hauler';
   const m = muckCols(), poo = poopCols();
   const here = c => (m[c] || 0) + (own ? poo[c] || 0 : 0);
   const home = colAt(wx);
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= m.length || !here(c)) continue;
+      if (!canDescend && overPitMouth(c * P + P / 2)) continue;
       if (taken && taken.has(c)) continue;
       // A claim is a stretch, not a cell. Columns are six pixels and a body is
       // eighteen wide, so reserving the one cell somebody is shovelling puts the
@@ -1319,7 +1337,11 @@ export function nearestMuck(wx, taken, hand) {
   // for the nearest anyway: two on one patch is better than one doing nothing,
   // and it is what happens at the end of a clear-up when there is one cell left.
   if (!taken) return null;
-  return nearestMuck(wx, null);
+  // `hand` goes through. Dropping it here meant the second pass forgot both what
+  // this body is allowed to shift and what it is able to stand on, so the very
+  // fallback that exists to stop a body standing still could send it somewhere
+  // it cannot work.
+  return nearestMuck(wx, null, hand);
 }
 
 // The ladders into the hole: one down each wall, and the dust in the bottom
@@ -1393,7 +1415,26 @@ export const muckLeft = () => allLeft;
 export const poopLeft = () => poopTotal;
 // and what a given pair of hands may actually shift, which is the number that
 // decides whether it is worth walking over there
-export const muckFor = w => (w && w.type === 'janitor' ? allLeft : allLeft - poopTotal);
+//
+// One rule, asked at two ranges. What a body may shift is: everything, if it is
+// a janitor; everything but what other bodies left, otherwise. That sentence is
+// written once, in `mineToShift`, and the two questions that need it differ only
+// in how far they look.
+//
+// They used to be written twice and they disagreed. `muckFor` took the poop out
+// and `yardMuck` left it in, so with no outhouse up -- where poop accumulates
+// and nothing ever clears it -- a quarrier standing in a full cut was told by
+// `yardMuck` that there was work up top and told by `muckFor`, the moment it got
+// there, that there was none. It climbed out, was refused a shovel, climbed back
+// in, and did that for as long as you watched. That is the reported "quarry
+// workers are getting stuck on the ladder": not a ladder fault at all, but two
+// spellings of one question.
+const mineToShift = (w, total, poop) => (w && w.type === 'janitor' ? total : total - poop);
+export const muckFor = w => mineToShift(w, allLeft, poopTotal);
+// the same question, asked only of the ground that is not a site
+export const yardMuckFor = w => mineToShift(w, yardLeft, yardPoop);
+// the raw number, for the yard's own account of itself -- a report wants what is
+// out there, not what one pair of hands is allowed to touch
 export const yardMuck = () => yardLeft;
 export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0;
 

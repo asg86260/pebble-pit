@@ -12,7 +12,7 @@ import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BIL
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
-import { foul, throughQuarryMuck, yardMuck } from './smog.js';
+import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
@@ -269,7 +269,7 @@ export function stepQuarrier(w, now) {
   // the foot of the ladder and climbs out the way it always climbs out; the
   // crew loop takes it from there and hands it a shovel. Nobody is lifted out.
   if (S.pileFull.quarry) {
-    if (yardMuck() > 0) {
+    if (yardMuckFor(w) > 0) {
       const d = rim - w.x;
       if (Math.abs(d) > 1) {
         w.face = Math.sign(d) || w.face || 1;
@@ -335,11 +335,12 @@ export function stepQuarrier(w, now) {
   S.quarryTotal = (S.quarryTotal || 0) + 1;
   w.cell = null;                               // done with that one: it picks another
   findShards(w, left);
-  // Digging raises dust, not only the seam at the bottom. The quarry used to foul
-  // the air once per shard, which was the same event as producing one; now that
-  // production is a lump at the end, fouling only on the payout meant a cut
-  // could be worked for half a minute without the sky noticing -- and the blue
-  // in the sky over the quarry never appeared at all between seams.
+  // Digging raises dust, and none of it reaches the sky. This used to foul once
+  // per cell taken, on the argument that digging dirties the air whether or not
+  // it turns up a shard -- which is true of dust and false of the rule the yard
+  // now keeps: hand work never fouls, anywhere, and a machine's stack is the
+  // only thing that does. See `foul`, which refuses everything but a machine's
+  // dirt rather than trusting nobody else to ask.
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
@@ -691,9 +692,10 @@ defineMachine('jaw', {
     // The find is credited to whoever is standing at it. A machine has no
     // record of its own -- the crew list counts people -- and the tender is the
     // one who brought it up, which is what `quarried` has always meant.
-    // The same dust a swing raises. `stepQuarrier` fouls once per cell taken --
-    // digging raises dust, not only the stone at the bottom of it -- and the jaw
-    // takes cells the same way, so it owes the same.
+    // The same finds a swing turns up: the jaw takes cells the way a body does,
+    // so it owes the same shards. What it does *not* share is the sky -- the jaw
+    // fouls from its own stack, in `stepMachines`, and a body digging fouls not
+    // at all.
     findShards(tender || { x: jawX(), y: jawY() }, left);
     // And the ground comes back in behind it.
     //

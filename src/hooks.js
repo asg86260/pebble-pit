@@ -19,7 +19,7 @@ import { blocked, resite, clampCam, benches, plotCount, rockLeft } from './world
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
-import { SKY, pitTop as muckTopAt , fillSky } from './smog.js';
+import { SKY, pitTop as muckTopAt , fillSky, poopCols } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -637,6 +637,17 @@ export const muckSet = f => {
   for (let c = 0; c < m.length; c++) m[c] = f(c) || 0;
   S.dirty = true;
   return m.reduce((n, v) => n + v, 0);
+};
+
+// The other kind of mess, laid by hand. There was a way to set the weather's
+// muck and no way at all to set what a body left, which meant the one condition
+// that tells the two apart -- a yard whose only remaining mess is poop, with
+// nobody to shovel it -- could not be built by a check.
+export const poopSet = f => {
+  const q = poopCols();
+  for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;
+  S.dirty = true;
+  return q.reduce((n, v) => n + v, 0);
 };
 
 export const muckOverPit = () => {
