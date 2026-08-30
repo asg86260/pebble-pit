@@ -17,7 +17,8 @@ import { labRooms } from './lab.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
-import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
+import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+         FARM_CORES, QUARRY_CORES } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
@@ -538,8 +539,12 @@ export const HOUSE_ROW = {
 // rock each -- which made the opening four rocks of watching a number climb with
 // nothing to do about it but swing, and spent the rarest thing in the game on
 // doors. Dust buys the yard now.
-const site = ({ key, name, dust, open, at, show }) => ({
-  key, name, cost: () => dust,
+// A place costs a core *and* dust. The core is what says this is a place rather
+// than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
+// the rock worth digging after it, which every bill above tier one does.
+const site = ({ key, name, cores, dust, open, at, show }) => ({
+  key, name,
+  bill: () => [['core', cores], ['dust', dust]],
   buy: () => { S[open] = true; lookAt(at()); },
   show
 });
@@ -548,11 +553,15 @@ const site = ({ key, name, dust, open, at, show }) => ({
 // revealed by a counter passing a mark nobody can see -- and a price you have no
 // idea is coming is a price you cannot save for.
 const nearly = n => S.stored >= n * UNLOCK_SHOW;
+// ...and a place is only worth showing once a core has been seen at all, because
+// until then the price is in a currency you have no idea exists.
+const seenACore = () => S.seenCore;
 
 const FARM = site({
-  key: 'unlockfarm', name: 'break the ground', dust: FARM_DUST, open: 'farmOpen',
+  key: 'unlockfarm', name: 'break the ground',
+  cores: FARM_CORES, dust: FARM_DUST, open: 'farmOpen',
   at: () => farm.x + farm.w / 2,                   // show them what they just bought
-  show: () => !S.farmOpen && nearly(FARM_DUST)
+  show: () => !S.farmOpen && seenACore() && nearly(FARM_DUST)
 });
 // One place at a time. Banking a single core used to reveal every site in the
 // game at once, which spoils the whole chain: each one is a surprise that the
@@ -562,7 +571,8 @@ const FARM = site({
 // body and a body swings a pick, so the place that makes bodies stronger opens
 // before the place that gives them better tools.
 const CAVE = site({
-  key: 'unlockquarry', name: 'open the quarry', dust: QUARRY_DUST, open: 'quarryOpen',
+  key: 'unlockquarry', name: 'open the quarry',
+  cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
   show: () => S.farmOpen && !S.quarryOpen
 });

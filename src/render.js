@@ -2259,19 +2259,23 @@ function drawOffers() {
     // shape a map puts on a place, and it stops competing with the pointer over
     // a body's head that really does mean go and look at this.
     //
-    // Solid, and seven courses: 1, 3, 5, 7, 5, 3, 1.
+    // Solid, five courses, and drawn on a half cell: 1, 3, 5, 3, 1.
     //
-    // Five courses solid was the first try and it read as a fat plus -- at that
-    // size the corner steps are the same size as the arms and nothing tells you
-    // which is which. Hollowing it fixed that and cost more than it bought: an
-    // outline is a lighter mark than everything else in this yard, which is
-    // solid black on white, and it stopped reading as a thing and started
-    // reading as a hole. Seven courses solid is the answer to the original
-    // problem -- a slope needs a few steps before it reads as a slope -- and it
-    // is the same weight of ink as the mark beside it.
-    for (let i = 0; i < 7; i++) {
-      const wide = (i < 4 ? i : 6 - i);                // 0,1,2,3,2,1,0
-      ctx.fillRect(at.x - wide * P, at.y - P * 3 + i * P, P * (wide * 2 + 1), P);
+    // Seven whole cells was legible and far too loud -- forty-odd pixels of
+    // solid black hanging under a station, bigger than most of the things it
+    // was pointing at. Five courses is the smallest a *diamond* can be and
+    // still be one: a slope needs two steps before it reads as a slope, and
+    // fewer than that is a plus however you draw it.
+    //
+    // On whole cells. A half cell was tried to make it smaller still and is not
+    // worth it: this yard is drawn on a lattice, and the one mark that steps off
+    // it does not look smaller, it looks blurred. Five courses of whole cells is
+    // a third off the seven-course version, which is what was actually wrong
+    // with it.
+    const u = P;
+    for (let i = 0; i < 5; i++) {
+      const wide = (i < 3 ? i : 4 - i);                // 0,1,2,1,0
+      ctx.fillRect(at.x - wide * u, at.y - u * 2 + i * u, u * (wide * 2 + 1), u);
     }
   }
 }

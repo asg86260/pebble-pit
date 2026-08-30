@@ -1299,8 +1299,17 @@ const TESTS = [
       ok(early.every(k => k === '-'), 'the first four rocks give up nothing',
          early.join(',')),
       ok(gotOne, 'and the fifth has a core in it'),
-      ok(!!door && dustPrice.join() === 'dust',
-         'a place is bought with dust, not with a rock', String(dustPrice)),
+      // A place is bought with a rock *and* with dust, which is what every bill
+      // above the first tier looks like: the core says this is a place rather
+      // than a rung, and the dust keeps the hill worth digging after it.
+      //
+      // This asserted dust alone for a while, when the two grounds were priced
+      // in dust to keep them cheap and early. What that bought was two places
+      // you could stumble into without noticing, on a currency already pouring
+      // in, and a tier whose one job is buildings with two of its buildings
+      // taken off it.
+      ok(!!door && dustPrice.includes('core') && dustPrice.includes('dust'),
+         'a place is bought with a rock and with dust', String(dustPrice)),
       ok(!!tower, 'and the tower is on the bench once a core exists'),
       // A core and dust, and nothing else. It used to ask for all four at once,
       // which was the only bill in the game that did and the one row you had to
@@ -2425,6 +2434,10 @@ const TESTS = [
     // else. A door shows once you are within half its price of affording it, so
     // what reveals the quarry is having most of what it costs.
     window.__give(400);
+    // And a rock finished, because a place costs one. The plots are not offered
+    // on a pile of dust alone any more: until a core has been seen at all, the
+    // price is in a currency you have no idea exists.
+    window.__grant({ cores: 3 });
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
     const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
@@ -2446,7 +2459,7 @@ const TESTS = [
       ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
       ok(withDust.farm && !withDust.quarry && !withDust.lab,
-         'a pile of dust offers the plots, and only the plots',
+         'a rock and a pile of dust offer the plots, and only the plots',
          JSON.stringify(withDust)),
       ok(withPlots.quarry && !withPlots.lab, 'breaking the ground offers the quarry'),
       ok(withShard.lab, 'a shard in hand offers the lab')
@@ -3140,6 +3153,9 @@ const TESTS = [
     await settle();
     window.__crew(2, 2);
     window.__give(200000);
+    // ...and rocks finished, because a place is bought with one now as well as
+    // with dust.
+    window.__grant({ cores: 5 });
     run(20);
     await hoverBench();
     const press = async key => {

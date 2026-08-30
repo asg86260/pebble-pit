@@ -79,8 +79,20 @@ group('the sky reads as one rate, and it can go negative', async () => {
     ok(losing.fouling > 0 && losing.scrubbing === 0,
        'a yard with nobody in the house is putting up and taking down nothing',
        `+${losing.fouling}/min, -${losing.scrubbing}/min`),
-    ok(Math.abs(winning.fouling - losing.fouling) < losing.fouling,
-       'and the rate it fouls at does not move because somebody walked into the house',
+    // That the yard goes on fouling, not that it fouls at exactly the same rate.
+    //
+    // This used to compare the two readings and demand they be close, which
+    // worked while the rock was the source: a gang on a hill swings at a steady
+    // beat from the first frame. The rock raises nothing now, so the source is
+    // the cut -- and a cut is *bursty* by design. Bodies climb down, work a hole
+    // out, climb back up and the ground falls in behind them, so the rate over
+    // any few seconds depends on where in that cycle you looked. Comparing two
+    // samples of it measures the dig, not the house.
+    //
+    // The claim was only ever that scrubbing and fouling are two different
+    // things and the house does not stop the works.
+    ok(winning.fouling > 0,
+       'and the works goes on fouling whether or not somebody is in the house',
        `${losing.fouling} -> ${winning.fouling}`),
     ok(winning.scrubbing > 0 && winning.fouling - winning.scrubbing < 0,
        'so a staffed house turns it the other way, which is the whole reading',
@@ -446,9 +458,12 @@ group('the sky says which part of the works dirtied it', async () => {
   // `__air` and the crew keep it topped up.
   openSites();
   window.__fullSites();
-  window.__crew(2, 0, 5, 2);
+  window.__crew(2, 0, 5, 7);
   window.__air({ haze: 0, muck: 0 });
-  run(25);
+  // Long enough for a plot to come all the way on and be cut. The quarry fouls
+  // per cell dug and starts almost at once; the farm only fouls when a crop is
+  // taken off, which is a whole ripening away.
+  run(60);
   const s = state();
   const k = s.smog.skyKinds || {};
   window.__crew(0, 0);
