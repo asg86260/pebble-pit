@@ -1044,7 +1044,14 @@ export const SCRUB_CLOG = 26;
 // so at the limit the crew mine exactly as fast as the crew carry. That is not
 // a stutter, it is the yard finding its level.
 export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
-export let HAUL_BASE = 0.9;    // hauler walking speed carrying a load, px per frame
+// Hauler walking speed carrying a load, px per frame.
+//
+// Was 0.9, which is 54 pixels a second: most of a minute to cross a yard four
+// thousand wide, before anything is bought. A body that slow does not read as
+// somebody walking to work, it reads as somebody who has been paused. The whole
+// ladder above it is unchanged -- every multiplier still multiplies this -- so
+// what moved is where the ladder starts, not how far it goes.
+export let HAUL_BASE = 1.4;
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // --- between rocks ----------------------------------------------------------
@@ -1772,7 +1779,11 @@ export const HOUSE_COLS = 6;
 // it: at level nothing the crew's own pace is slower than this, and a walk that
 // got *longer* because nothing had been bought yet is a walk nobody would read
 // as a body going somewhere.
-export const COMMUTE_PACE = 2.4;
+// Raised with it, and by the same proportion, so the two keep the relationship
+// the comment above describes: an empty body still walks at this floor rather
+// than at its carrying speed, and a walk still never gets longer for having
+// bought nothing.
+export const COMMUTE_PACE = 3.9;
 // Near enough to have arrived. A station is a place rather than a pixel, and a
 // body made to land exactly on one would shuffle on the spot for ever.
 export const COMMUTE_SLOP = P * 2;

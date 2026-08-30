@@ -121,9 +121,15 @@ group('a body walks to its new work instead of appearing at it', async () => {
   window.__assign('miners', 1);
   const off = state();
 
-  // a sixth of a second at a time, so the climb out is not stepped over
+  // A thirtieth of a second at a time, so the climb out is not stepped over.
+  //
+  // This was a sixth, which was fine while it was written and became too coarse
+  // the moment the crew's base pace went up: the whole climb fell between two
+  // samples and the check reported nought rising samples for a body that had
+  // climbed perfectly well. The cadence has to be finer than the fastest thing
+  // it is watching, not tuned to whatever the pace happened to be.
   const trail = [];
-  for (let i = 0; i < 30; i++) { run(1 / 6); trail.push(body()); }
+  for (let i = 0; i < 150; i++) { run(1 / 30); trail.push(body()); }
   const arrived = runUntil(() => state().commuting.length === 0, 200);
   const home = body();
   const after = state();
