@@ -60,6 +60,22 @@ const SCENES = {
   marks: `${RICH} window.__assign('carters', -9); window.__fast(240);
           window.__look(window.__state().farmX - 300);`,
 
+  // The bare strip in front of the hill, which is where dust was never allowed
+  // to lie. Grains are tipped straight onto the ground either side of the rock.
+  apron: `${RICH} window.__jump(4);
+          (x => { for (let d = -260; d < 260; d += 12) window.__pile(x + d, 60); })
+            (window.__state().rockLeftX);
+          window.__fast(4); window.__look(window.__state().rockLeftX - 340);`,
+
+  // A core, for the glow around it. It is the one thing in the yard drawn from a
+  // snapped middle rather than a corner, so it is the one thing where being half
+  // a cell out shows.
+  // Centred on the core itself, not on a landmark near it -- at the zoom this
+  // wants, "near" is off the edge of the crop.
+  core: `${RICH} window.__drop(); window.__fast(3);
+         (c => window.__look(c.x - window.innerWidth / 2))(window.__state().coreItem
+           || { x: window.__state().coreHome.x });`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`
 };

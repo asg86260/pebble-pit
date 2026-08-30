@@ -14,7 +14,7 @@ import { frames, now } from './clock.js';
 import { S, floor } from './state.js';
 import { defineMachine } from './machines.js';
 import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
-import { blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
+import { pastApron, blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
 
@@ -243,13 +243,23 @@ export function makeBoulder(fromSky = false) {
 // so a bigger rock never lands standing in a heap
 export function clearApron() {
   if (!floor.grid) return;
+  // Ask the thing this actually means rather than borrowing `blocked`.
+  //
+  // `blocked` used to answer this question by accident, because the apron was
+  // one of the places it barred. Now that dust is allowed to lie in front of the
+  // rock, `blocked` says nothing about the apron -- so a sweep written against
+  // it would have found nothing to move, and a grain put back with it would have
+  // gone straight back where it came from. `pastApron` is the question: is this
+  // column inside the ground the next rock is about to occupy?
+  const inApron = c => pastApron(floor.x + c * P) < 0;
+  const notApron = c => blocked(c) || inApron(c);
   for (let c = 0; c < floor.cols; c++) {
-    if (!blocked(c)) continue;
+    if (!inApron(c)) continue;
     for (let r = 0; r < floor.rows; r++) {
       const v = at(floor, c, r);
       if (!v) continue;
       put(floor, c, r, 0);
-      addGrain(floor, floor.x + c * P, blocked, v);     // to the nearest clear column
+      addGrain(floor, floor.x + c * P, notApron, v);    // to the nearest clear column
     }
   }
 }

@@ -337,10 +337,15 @@ const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
 //
 // So they are handed out here, where every body in the game is made, rather than
 // eight times over in eight factories that each have to remember.
+// The `?.()` is for a save written by a build that had a trade this one does not.
+// `restoreCrew` guards that case -- `if (!made.type) continue;` -- but it guards
+// it *after* calling this, and spreading the result of calling `undefined` throws
+// before the guard is ever reached. An old save should cost you one body, not the
+// whole load.
 export const FACTORY = type => ({
   ph: Math.random() * Math.PI * 2,
   sp: 0.5 + Math.random() * 0.9,
-  ...MAKE[type]()
+  ...(MAKE[type]?.() || {})
 });
 
 // Somebody whose job is the mess. It starts at the shed it belongs to, the way

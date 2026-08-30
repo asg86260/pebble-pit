@@ -388,7 +388,7 @@ function drawCorona(hot) {
       // Brighter the more of the fire is uncovered: a crusted star throws a dull
       // corona and a stripped one blazes.
       ctx.fillStyle = tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2];
-      ctx.fillRect(x, y, P, P);
+      ctx.fillRect(x - P / 2, y - P / 2, P, P);   // about its middle, like every other mark
     }
   }
   ctx.globalAlpha = 1;
@@ -1935,8 +1935,21 @@ function drawCoreGlow(cx, cy) {
   // one side than the other and the glow sat visibly off its own disc. Measured
   // out from a snapped middle, it is symmetrical by construction and still lands
   // on whole cells.
-  const ox = Math.round(cx / P) * P;
-  const oy = Math.round(cy / P) * P;
+  // Snapped to a cell *centre*, not a cell corner, and that is the whole of what
+  // was wrong with it. `fillRect(x, y, P, P)` takes a top-left, so measuring the
+  // ring out from a corner-snapped middle and then painting from that point hung
+  // the entire glow half a cell down and to the right of the disc it belongs to
+  // -- plus up to another half cell of drift, because a core that is not on a
+  // whole cell rounds harder on one side than the other. Half a cell on an
+  // eighteen-pixel core is a third of it, which is why it read as a glow using
+  // the sprite's bottom-right as its middle.
+  //
+  // A centre-snapped middle with each cell painted about its own centre lands on
+  // exactly the same lattice -- `x - P / 2` is `floor(cx / P) * P + k * P` --
+  // and is symmetrical by construction. It is the anchor `drawMark` has always
+  // used; the glow was the one thing measuring from the wrong kind of point.
+  const ox = Math.floor(cx / P) * P + P / 2;
+  const oy = Math.floor(cy / P) * P + P / 2;
   for (let i = 0; i < WAVES; i++) {
     const k = ((t / WAVE_MS) + i / WAVES) % 1;
     const r = CORE_SIZE / 2 + k * WAVE_REACH;
@@ -1955,7 +1968,7 @@ function drawCoreGlow(cx, cy) {
       // Nothing below the ground line -- what this reads as is heat coming off
       // the thing, and heat does not go down into the dirt. Unless the thing is
       // already down there, in which case the ground line is not a lid.
-      if (cy < S.groundY && y >= S.groundY) continue;
+      if (cy < S.groundY && y - P / 2 >= S.groundY) continue;   // the cell's own top edge
       const key = `${x},${y}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -2281,11 +2294,12 @@ function drawOffers() {
     // Four points and a fill has no steps in it at all, so the slopes are
     // slopes at any size. The core is drawn the same way and for the same
     // reason: some shapes are not made of cells.
-    // Smaller than it was. At two and a half cells by three it was the biggest
+    // Half the size it was. At two and a half cells by three it was the biggest
     // thing on the ground line -- taller than the plots it hung under and heavier
     // than the counter beside it -- which is the wrong weight for a mark whose
-    // whole job is to be noticed and then ignored.
-    const w = P * 1.6, h = P * 2;
+    // whole job is to be noticed and then ignored. It has no steps in it, so it
+    // stays a clean diamond at any size; there was nothing keeping it large.
+    const w = P * 1.25, h = P * 1.5;
     ctx.beginPath();
     ctx.moveTo(at.x + P / 2, at.y - h);          // top
     ctx.lineTo(at.x + P / 2 + w, at.y);          // right

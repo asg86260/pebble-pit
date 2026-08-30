@@ -202,8 +202,7 @@ export const pastPit = x => x >= pit.x + pit.w;
 //
 // Three places stay shut, and they are the three that are not ground.
 //
-// Under the rock, because a rock comes down there and a grain lying on that
-// spot is a grain about to be underneath one. Over the mouth of the quarry and over
+// Over the mouth of the quarry and over
 // the mouth of the hole, because neither of those is somewhere to stand a grain:
 // they are openings, and dust lying across an opening is dust lying on nothing.
 // Dust that reaches the hole goes *in* it, which is the whole point of the hole.
@@ -215,7 +214,20 @@ export const blocked = c => {
   // settled out there would sit in plain sight for the rest of the run with
   // nothing able to reach it.
   if (x + P <= yardLeft()) return true;
-  if (pastApron(x) < 0) return true;
+  // The rock's apron is *not* barred any more, and that is the point.
+  //
+  // It used to be, on the argument that a rock comes down there and a grain
+  // lying on that spot is a grain about to be underneath one. True -- but that
+  // is a thing which happens at a *moment*, and the moment already has its own
+  // answer in `clearApron`, which sweeps the apron clear as the next rock is
+  // made. Barring the ground permanently to forestall it was a standing
+  // prohibition doing a one-off sweep's job, and what it cost was the strip of
+  // yard directly in front of the hill staying conspicuously, permanently bare
+  // while dust piled up either side of it.
+  //
+  // It stays a cliff for `bankCeiling`, which is a different question -- how
+  // *high* the sand may stand there, not whether it may lie there at all -- so
+  // what lands in front of the rock is the thin scatter it should be.
   if (S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w) return true;
   if (overPitMouth(x)) return true;
   return false;

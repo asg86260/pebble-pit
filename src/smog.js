@@ -145,7 +145,14 @@ export function foul(grains, x, y, kind = 'dust') {
   // stack, in soot, in one place -- see `stepMachines` -- rather than being added
   // to what the station raised. Without this the sky over a working quarry went
   // blue, because the cut's dust is blue and the machine was still raising it.
-  if (S.machineWorking && kind !== 'mach') return 0;
+  // ...and it does not matter whether one is working *now*. This used to read
+  // `S.machineWorking && kind !== 'mach'`, which is a gate that depends on the
+  // state of the yard at the moment somebody asks -- so the guarantee "hand work
+  // never fouls" was true only while a machine happened to be mid-beat. It is
+  // unconditional now: the sky has one producer, and the only dirt it accepts is
+  // a machine's. Anything else is refused here rather than being trusted not to
+  // ask, which is what makes the rule a rule instead of a habit.
+  if (kind !== 'mach') return 0;
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   made += add;                     // counted where it is made -- see `sampleAir`
