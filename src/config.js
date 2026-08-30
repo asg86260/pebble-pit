@@ -1231,6 +1231,17 @@ export const FARM_WALK = 1.1;
 // game asks.
 export const LAB_EFFORT = 1;      // a worker does one second of work a second
 export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
+// What a bench costs, and how much steeper each one gets. The lab's own ladder:
+// it is the one building that never made itself quicker, so every piece of
+// research took exactly as long as the first one did however far into a run you
+// were -- and the lab is the thing standing between you and every other
+// multiplier in the game.
+export const BENCH_KIT_COST = 8;
+export const BENCH_KIT_RATE = 1.8;
+// And the second bench: a lab that can look into two things at once, with a body
+// at each. It is a *place*, not a rung -- see `capOf` -- and it is the only
+// thing in the game that widens a station that has always held one.
+export const LAB_ROOM_COST = 14;
 // The crew go *inside* the lab, so there is nothing to watch. What tells you it
 // is being worked is the chimney: it smokes while somebody is in there on a
 // piece of research, and harder the more of them there are. An idle lab, or a

@@ -13,6 +13,7 @@ import {
   TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
+import { labRooms } from './lab.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
@@ -235,7 +236,11 @@ const capOfBare = job =>
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
-  job === 'labbers' ? 1 :
+  // One body per bench. It has always been one, and the note below is still the
+  // argument for it -- research is one thing being looked into at a time, and a
+  // second pair of hands on *one* bench is a queue. What the second bench buys
+  // is a second *thing*, not a second helper.
+  job === 'labbers' ? labRooms() :
   // One body in the scrubbing house too, and for the same reason: it is a shed
   // with a fan in it. A second body was a second pair of hands on a machine
   // that runs itself once somebody is standing in it -- the draught it makes is

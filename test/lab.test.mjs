@@ -1,0 +1,72 @@
+// The lab's own two upgrades: a bench that works faster, and a second bench.
+//
+// It was the one building in the yard with no ladder of its own -- every piece
+// of research took exactly as long as the first however far into a run you were,
+// and the lab is what stands between you and every other multiplier in the game.
+
+import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+
+group('the lab can be made quicker at what it does', async () => {
+  window.__reset();
+  openSites();
+  window.__lab(true);
+  window.__crew(0, 2);
+  window.__grant({ shards: 400, spores: 400, cores: 9 });
+  run(2);
+
+  const at = () => state().research && state().research.at;
+  const runFor = () => {
+    window.__research(null);
+    window.__buy('labswing');
+    runUntil(() => state().labbers === 1, 60);
+    runUntil(() => state().commuting.length === 0, 60);
+    const before = at() || 0;
+    run(6);
+    return (at() || 1) - before;
+  };
+  const slow = runFor();
+  const bought = window.__buy('labkit');
+  const fast = runFor();
+
+  window.__crew(0, 0);
+  return [
+    ok(bought, 'the lab sells better instruments'),
+    ok(slow > 0, 'and research moves without them', `${slow.toFixed(3)} in six seconds`),
+    ok(fast > slow * 1.1, 'and moves quicker with them',
+       `${slow.toFixed(3)} -> ${fast.toFixed(3)}`)
+  ];
+});
+
+// One body to a bench, and a second bench is a second *thing being looked into*
+// -- not two people leaning over one, which is a queue and is what capOf has
+// always refused.
+group('a second bench is a second thing looked into', async () => {
+  window.__reset();
+  openSites();
+  window.__lab(true);
+  window.__crew(0, 3);
+  window.__grant({ shards: 400, spores: 400, cores: 99 });
+  run(2);
+
+  const one = state();
+  const roomBefore = one.roster ? null : null;
+  window.__buy('labswing');
+  const first = state();
+  window.__buy('labhaul');                    // no room for it yet
+  const stillOne = state();
+
+  const bought = window.__buy('labroom');
+  window.__buy('labhaul');
+  runUntil(() => state().labbers === 2, 60);
+  const two = state();
+
+  window.__crew(0, 0);
+  return [
+    ok(!!first.research, 'one piece goes on the bench', JSON.stringify(first.research && first.research.key)),
+    ok(!stillOne.research2, 'and a second has nowhere to go with one bench'),
+    ok(bought, 'the lab sells a second bench'),
+    ok(!!two.research && !!two.research2, 'and then two pieces are looked into at once',
+       `${two.research && two.research.key} + ${two.research2 && two.research2.key}`),
+    ok(two.labbers === 2, 'with a body at each', `${two.labbers}`)
+  ];
+});

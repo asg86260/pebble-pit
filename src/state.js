@@ -224,6 +224,15 @@ export const S = {
   // Nobody goes back down until the last one is out and the quarry has fallen in,
   // or the first body back down finds an empty hole and turns straight round.
   quarrySpent: false,
+  // How much quicker the lab's own bench is, and whether a second one has been
+  // built. The lab was the one building with no ladder of its own: every piece
+  // took as long as the first however far in you were, and it is the thing
+  // standing between you and every other multiplier in the game.
+  labKitLevel: 0,
+  labRooms: 1,
+  // The second piece being looked into, when there is a bench for it. One field
+  // rather than a list: the lab holds two, and two is the whole of the upgrade.
+  research2: null,
   labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 

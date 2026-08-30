@@ -212,6 +212,9 @@ export function persist() {
     scrubOpen: S.scrubOpen,
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
+    labKitLevel: S.labKitLevel,
+    labRooms: S.labRooms,
+    research2: S.research2,
     // The machines, as facts only. Whether each was bought, whether its lever is
     // on, and the complement it displaced. The beats, the phases and an ask
     // somebody was halfway through walking to are not saved: no body is saved
@@ -321,6 +324,7 @@ export function restore() {
     S.quarryPaceLevel = 0;
     S.benchLevel = 0;
     S.machines = freshMachines();   // a new yard has no machines in it
+    S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
     S.spores = 0;
     S.seenSpore = false;
     S.farmOpen = false;
@@ -457,6 +461,9 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
+  S.labKitLevel = s.labKitLevel || 0;
+  S.labRooms = Math.max(1, s.labRooms || 1);
+  S.research2 = s.research2 || null;
   S.meteorOpen = !!s.meteorOpen;
   S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
@@ -590,6 +597,7 @@ export function reset() {
   S.quarryPaceLevel = 0;
   S.benchLevel = 0;
   S.machines = freshMachines();     // a new yard has no machines in it
+  S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
   S.spores = 0;
   S.seenSpore = false;
   S.farmOpen = false;

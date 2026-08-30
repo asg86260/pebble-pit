@@ -2269,8 +2269,14 @@ const TESTS = [
     // you simply did not touch: the lab staffs itself the moment there is
     // research on and somebody going spare, so leaving the stepper alone is no
     // longer a way to keep it empty.
-    for (let i = 0; i < 30 && state().idle > 0; i++) window.__assign('miners', 1);
-    run(12);
+    // Drained as the clock runs, not once beforehand. Bodies come free again --
+    // a hauler with nothing to fetch, a gang stood down -- and the lab takes the
+    // first spare pair of hands it sees, so a yard drained on one frame is not a
+    // yard with nobody to spare twelve seconds later.
+    for (let i = 0; i < 24; i++) {
+      while (state().idle > 0) window.__assign('miners', 1);
+      run(0.5);
+    }
     const empty = state();
 
     // And now let one go. Nobody sends it: it is spare, there is work, and that

@@ -14,11 +14,12 @@
 
 import { S, lab } from './state.js';
 import { puff } from './puff.js';
-import { assign, idle } from './upgrades.js';
+import { assign, idle, rebalance } from './upgrades.js';
 import { walkY } from './world.js';
 import { now } from './clock.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
-         SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD} from './config.js';
+         SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
+         BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -35,9 +36,29 @@ export const mult = k =>
 // never be finished and never even properly started.
 export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, S.mult[FIELD[key]] || 0));
 
+// How fast a body at the bench works, in worker-seconds a second.
+//
+// The lab's own ladder, and the one it never had: every other station in the
+// yard can be made quicker at what it does, and the lab -- which is what stands
+// between you and every other multiplier in the game -- worked at exactly the
+// pace it did on the first day for the whole run. A quarter again a rung, the
+// same step every ladder in here takes.
+export const labPace = () => LAB_EFFORT * Math.pow(STEP, S.labKitLevel || 0);
+
+// How many pieces the lab can have on the go, which is how many benches are in
+// it. A room with two benches in it can look into two things, with a body at
+// each -- see `capOf`, which is what actually lets the second body in.
+export const labRooms = () => Math.max(1, S.labRooms || 1);
+
+// The pieces on the go, in order. One field per bench rather than a list,
+// because two is the whole of the upgrade and a list of two is a list you have
+// to remember to keep in step.
+export const onTheGo = () => [S.research, S.research2].filter(Boolean);
+export const roomFree = () => onTheGo().length < labRooms();
+
 const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
 
-// Start one. Only one at a time: a lab does one thing at a time.
+// Start one. One to a bench, and a lab with one bench in it does one thing.
 //
 // And it calls back whoever let themselves out. A body that walked out of an
 // empty lab did so because there was nothing to do in it; the moment there is,
@@ -47,8 +68,12 @@ const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 
 // Only the ones the lab itself sent home, and only if they are still spare: a
 // body you have since put on the rock stays on the rock.
 export function begin(key) {
-  if (S.research) return;
-  S.research = { key, done: 0 };
+  if (!roomFree()) return;
+  // The first free bench. Two fields rather than a list, because two is the
+  // whole of the upgrade and a list of two is a list to keep in step.
+  const piece = { key, done: 0 };
+  if (!S.research) S.research = piece;
+  else S.research2 = piece;
   while (S.labLeft > 0 && idle() > 0) { assign('labbers', 1); S.labLeft--; }
   S.labLeft = 0;
   S.dirty = true;
@@ -92,20 +117,37 @@ export function finish(key) {
   // the one piece that is not a multiplier finishes by turning a readout on
   if (key === 'labair') S.seenAir = true;
   else S.mult[FIELD[key]]++;
-  S.research = null;
+  // Whichever bench it was on, and the second slides up so `research` is always
+  // the one that has been going longest.
+  if (S.research && S.research.key === key) { S.research = S.research2; S.research2 = null; }
+  else if (S.research2 && S.research2.key === key) S.research2 = null;
   S.dirty = true;
 }
 
 export function stepLab(dt) {
   letIdleGo();
   const on = inLab();
-  if (!S.research || !on) return;
-  S.research.done += on * LAB_EFFORT * (dt / 1000);
-  if (S.research.done < workFor(S.research.key)) return;
-  const key = S.research.key;      // read before `finish` clears the slot
-  finish(key);
-  S.labDone = key;                 // a mark over the lab until somebody looks
-  cough();                         // and one last plume off the chimney
+  if (!on) return;
+
+  // One body to a bench, and each piece worked on by the body at its own bench.
+  //
+  // Not `on` bodies against one piece: a second labber used to make the single
+  // piece come twice as fast, which is two people leaning over one bench. With
+  // two benches they look into two things, which is what the second bench is
+  // for -- and with one bench a second body has nowhere to stand anyway, because
+  // `capOf` says so.
+  const going = [S.research, S.research2].filter(Boolean);
+  if (!going.length) return;
+  const each = Math.min(on, going.length);
+  for (let i = 0; i < each; i++) {
+    const r = going[i];
+    r.done += labPace() * (dt / 1000);
+    if (r.done < workFor(r.key)) continue;
+    const key = r.key;             // read before `finish` clears the slot
+    finish(key);
+    S.labDone = key;               // a mark over the lab until somebody looks
+    cough();                       // and one last plume off the chimney
+  }
   S.dirty = true;
 }
 
@@ -196,6 +238,38 @@ export function stepLabber(w) {
 }
 
 export const LAB_UPGRADES = [
+  {
+    // The lab's own ladder, and the one it never had. Every other station can be
+    // made quicker at what it does; the lab -- which stands between you and every
+    // other multiplier in the game -- worked at the pace it did on the first day
+    // for the whole run.
+    key: 'labkit',
+    name: 'better instruments',
+    unit: 'work/s',
+    pct: true,
+    rung: () => S.labKitLevel,
+    from: () => labPace(),
+    to: () => labPace() * STEP,
+    cost: () => Math.round(BENCH_KIT_COST * Math.pow(BENCH_KIT_RATE, S.labKitLevel)),
+    currency: 'shard',
+    buy: () => { S.labKitLevel++; },
+    show: () => S.labOpen && S.labKitLevel < RUNGS
+  },
+  {
+    // A second bench, which is a *place* rather than a rung: it is the only thing
+    // in this game that widens a station that has always held one. What it buys
+    // is a second thing being looked into, with a body at each -- not two people
+    // leaning over the same bench, which is a queue and is what `capOf` has
+    // always refused.
+    key: 'labroom',
+    name: 'a second bench',
+    from: () => labRooms(),
+    to: () => labRooms() + 1,
+    cost: () => LAB_ROOM_COST,
+    currency: 'core',
+    buy: () => { S.labRooms = 2; rebalance(); },
+    show: () => S.labOpen && labRooms() < 2
+  },
   // There is no row here for who is standing in it any more. The lab holds one
   // body and has one thing to do with it, so the stepper had one useful setting
   // and asked you to go and find it. It takes somebody when there is research on
