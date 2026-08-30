@@ -60,3 +60,43 @@ group('a bought-up tower takes a star apart quicker', async () => {
        `${bare} -> ${kitted} cells`)
   ];
 });
+
+// The tower reaching into the yard rather than into its own tower. Spells are
+// one-offs rather than rungs, because that is what a spell is: a ladder is
+// something you grind, and "the machines run half again as fast" is worth more
+// than five rungs of nine per cent.
+group('the tower can enchant the rest of the yard', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 0, 0, 0, 1);
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(30000);
+  run(2);
+
+  const offered = window.__rows().filter(r => r.shown).map(r => r.key);
+  const beforeRate = state().machines.jaw.rate;
+  const beforeSeam = state().seam;
+
+  const drove = window.__buy('spelldrive');
+  const blessed = window.__buy('spellluck');
+  const after = state();
+
+  const gone = window.__rows().filter(r => r.shown).map(r => r.key);
+  window.__crew(0, 0);
+  return [
+    ok(offered.filter(k => k.startsWith('spell')).length >= 4,
+       'four enchantments on the tower once red has been seen',
+       offered.filter(k => k.startsWith('spell')).join(',')),
+    ok(drove && blessed, 'and they can be laid on the yard'),
+    ok(after.spells.includes('drive') && after.spells.includes('luck'),
+       'the yard remembers which', after.spells.join(',')),
+    ok(after.machines.jaw.rate > beforeRate * 1.4,
+       'a quickened machine works half again as fast',
+       `${beforeRate} -> ${after.machines.jaw.rate}`),
+    ok(after.seam > beforeSeam,
+       'and a blessed cut turns up more stone', `${beforeSeam} -> ${after.seam}`),
+    ok(!gone.includes('spelldrive'),
+       'and a spell already laid is not offered twice')
+  ];
+});

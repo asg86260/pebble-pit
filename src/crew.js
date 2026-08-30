@@ -27,6 +27,8 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitS
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
+import { spelled } from './tower.js';
+import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf, askLever, asked, LEVER_W, LEVER_H } from './machines.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -450,7 +452,7 @@ function downTheHole(w, to, dt) {
       if (t >= (w.sweepAt || 0)) {
         sweepMuckAt(w.x + WORKER / 2, 1, w);
         w.lunge = 1;
-        w.sweepAt = t + MUCK_SWING * (0.85 + Math.random() * 0.3);
+        w.sweepAt = t + swingFor(w) * (0.85 + Math.random() * 0.3);
       }
     }
     w.y = pitStand(w.x) - WORKER;
@@ -783,6 +785,12 @@ function stepKit() {
     }
   }
 }
+
+// How long between one stroke of a shovel and the next. A hastened janitor works
+// at twice the pace, which is the tower reaching into the yard rather than into
+// its own tower -- see SPELLS.
+const swingFor = w =>
+  MUCK_SWING / (w.type === 'janitor' && spelled('sweep') ? SPELL_SWEEP : 1);
 
 // --- the levers -----------------------------------------------------------------
 // Where each machine's lever stands. Derived every time it is asked for, never
@@ -1763,7 +1771,7 @@ export function updateWorkers(now, dt) {
       if (now >= (w.sweepAt || 0)) {
         sweepMuckAt(w.x + WORKER / 2, 1, w);
         w.lunge = 1;
-        w.sweepAt = now + MUCK_SWING * (0.85 + Math.random() * 0.3);
+        w.sweepAt = now + swingFor(w) * (0.85 + Math.random() * 0.3);
       }
       // and not shoulder to shoulder with the next one. A yard under muck
       // has something to shovel wherever you stand, so a gang that arrived
@@ -2012,7 +2020,8 @@ export function updateWorkers(now, dt) {
         const sway = now / 1000 * IDLE_BEAT + w.ph;
         const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
         const step = to - w.x;
-        w.x += Math.sign(step) * Math.min(commutePace() * frames() * 0.45, Math.abs(step));
+        w.x += Math.sign(step) * Math.min(commutePace() * frames() * 0.45
+                 * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
         w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
       }
       continue;

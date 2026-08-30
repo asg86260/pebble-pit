@@ -243,6 +243,9 @@ export const S = {
   // where its tender stands.
   tillerAt: 0,
   fanLevel: 0,
+  // Which of the tower's enchantments have been laid on the yard. A set of keys
+  // rather than a count each: a spell is either on or it is not.
+  spells: [],
   wizSpeedLevel: 0,
   wizPowerLevel: 0,
   labbers: 0,             // and the ones standing in the lab, working on the research

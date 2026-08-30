@@ -20,6 +20,8 @@ import { mult } from './lab.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
+import { spelled } from './tower.js';
+import { SPELL_LUCK } from './config.js';
 import { rebalance, kitFull } from './upgrades.js';
 
 // how long a trip takes, at this pace
@@ -530,7 +532,8 @@ export function fillQuarry() {
 
 // What the seam is worth: a handful per bench, so taking the quarry deeper is worth
 // something at the bottom rather than only being further to climb.
-export const seamShards = () => Math.max(1, Math.round(benches() * CUT_SEAM));
+export const seamShards = () =>
+  Math.max(1, Math.round(benches() * CUT_SEAM * (spelled('luck') ? SPELL_LUCK : 1)));
 
 // How long one cell takes. The whole dig is CUT_DIG_MS at pace nought, spread
 // over however many cells the quarry is -- so taking the quarry deeper makes the dig

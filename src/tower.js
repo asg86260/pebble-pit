@@ -15,7 +15,7 @@ import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './lab.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
-         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS } from './config.js';
+         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -58,7 +58,20 @@ export function stepTower() {
   S.dirty = true;
 }
 
+// Whether an enchantment has been laid on the yard.
+export const spelled = key => (S.spells || []).includes(key);
+
 export const TOWER_UPGRADES = [
+  // The spells. One row each, bought once, and each one a plain sentence about
+  // somewhere else in the yard -- which is the whole reason they are not rungs.
+  ...SPELLS.map(sp => ({
+    key: 'spell' + sp.key,
+    name: sp.name,
+    note: () => sp.note,
+    bill: () => [['spark', sp.spark], ['dust', 2500]],
+    buy: () => { if (!spelled(sp.key)) S.spells = [...(S.spells || []), sp.key]; },
+    show: () => S.towerOpen && S.seenSpark && !spelled(sp.key)
+  })),
   {
     // How often a wizard throws. The tower had no ladders at all -- the one
     // thing standing between you and every spark in the game could only be made

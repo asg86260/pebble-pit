@@ -489,6 +489,33 @@ export const WIZ_MS = 1100;
 // every spark in the game -- how fast a star comes apart -- could only be made
 // faster by hiring another body and buying it a hat. So: how often a bolt goes,
 // and how much of the star it takes when it lands.
+// --- what the tower does for the rest of the yard --------------------------------
+// Spells, and they are deliberately not another ladder.
+//
+// Everything else the tower sells is about the tower: a wizard, a faster bolt, a
+// heavier one. What was missing is the tower having anything to do with the
+// ground -- so these are one-off enchantments laid on *other* stations, bought
+// once each, each one a plain statement about somewhere else in the yard.
+//
+// One-offs rather than rungs because that is what a spell is. A ladder is a
+// thing you grind; an enchantment is a thing that is either on the yard or not,
+// and the sentence "the machines run half again as fast" is worth more than five
+// rungs of nine per cent.
+export const SPELLS = [
+  { key: 'drive',  name: 'quicken the machines', spark: 45,
+    note: 'every machine in the yard works half again as fast' },
+  { key: 'luck',   name: 'bless the cut',        spark: 35,
+    note: 'a dig turns up a quarter again as much stone' },
+  { key: 'thrift', name: 'raise the houses',     spark: 30,
+    note: 'a house costs half what it did' },
+  { key: 'sweep',  name: 'hasten the janitors',  spark: 25,
+    note: 'a janitor shovels and walks at twice the pace' }
+];
+export const SPELL_DRIVE = 1.5;      // what each one is worth
+export const SPELL_LUCK = 1.25;
+export const SPELL_THRIFT = 0.5;
+export const SPELL_SWEEP = 2;
+
 export const WIZ_SPEED_COST = 12;    // sparks for the first rung of either
 export const WIZ_POWER_COST = 16;
 export const WIZ_LADDER_RATE = 1.8;  // and how much steeper each one gets
@@ -1204,7 +1231,16 @@ export let QUARRY_BASE = 11000;  // a shard off the face at pace 0
 // plus the walking between cells, which is real and is meant to be: a cut is
 // worked by people crossing it, not by a number filling.
 export let CUT_DIG_MS = 16000;   // to get from the surface to the bottom, at pace 0
-export const CUT_SEAM = 2;         // shards in the ground, per bench of depth
+// Three, not two.
+//
+// Blue was the thing everybody waited on. A plot comes on by itself while you
+// watch and a dig has to be worked out end to end for its handful, so green
+// arrived in a steady trickle and blue in lumps that were a long way apart -- and
+// with the two grounds now paying for each other (the cut is deepened with
+// spores and the plots are broken with shards) the slower of the two sets the
+// pace of both. Half again per bench is the smallest change that fixes it
+// without touching what a dig *is*.
+export const CUT_SEAM = 3;         // shards in the ground, per bench of depth
 export const QUARRY_FLOOR = 2200;  // the quickest a trip will ever be
 export const QUARRY_WALK = 1.1;    // a quarrier's walking speed, px per frame
 // And how fast it steps between the cells of its own face, which is a different

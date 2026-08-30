@@ -20,7 +20,9 @@ import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
-import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL } from './config.js';
+import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
+         SPELL_DRIVE, SPELL_THRIFT } from './config.js';
+import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -355,7 +357,10 @@ export const kitMult = job => {
 // finish *before* the machine, and the machine is worth half again what they
 // were, which is what MACHINE_GAIN has meant all along.
 export const machineRate = job =>
-  handsOf(job) * kitMult(job) * MACHINE_GAIN * (machineFor(job)?.driven ? 2 : 1);
+  handsOf(job) * kitMult(job) * MACHINE_GAIN
+  * (machineFor(job)?.driven ? 2 : 1)
+  // and the tower's, if the yard has been enchanted
+  * (spelled('drive') ? SPELL_DRIVE : 1);
 
 // Put a gang back where a machine displaced it.
 //
@@ -521,7 +526,8 @@ export const HOUSE_ROW = {
   // One pool pays for every job now, so the curve is gentler than the four
   // it replaced: 1.7 a body was steep because it was steep four times over,
   // and the same eight bodies came to about 1,500 dust between them.
-  cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))),
+  cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))
+                         * (spelled('thrift') ? SPELL_THRIFT : 1)),
   buy: hire,
   show: () => S.crew > 0
 };
