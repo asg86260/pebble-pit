@@ -27,6 +27,7 @@ import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
 import { leverBox } from './crew.js';
 import { walkY } from './world.js';
+import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX } from './rock.js';
 import { rockLeft, groundAt } from './world.js';
@@ -2871,7 +2872,6 @@ export function stepMachineSmoke(now) {
     if (now < (m.puffAt || 0)) continue;
     m.puffAt = now + MACHINE_PUFF_MS * (0.6 + Math.random() * 0.8);
     const at = STACKS[key]();
-    S.smoke.push({ x: at.x, y: at.y, drift: (Math.random() - 0.5) * 0.3,
-                   s: MACHINE_PUFF_S, mach: true, t: 0 });
+    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach' });
   }
 }

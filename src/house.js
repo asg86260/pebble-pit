@@ -19,6 +19,7 @@
 import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_SHUT,
          HOUSE_CURTAIN, HOUSE_PUFF_MS, DOOR_W, DOOR_H } from './config.js';
 import { S, bench } from './state.js';
+import { puff } from './puff.js';
 import { rockLeft } from './world.js';
 
 // The middle of the plot, and it never moves. The rock grows leftwards into
@@ -182,7 +183,7 @@ export function stepHouse(now) {
   // Marked as the crew's, because the lab's chimney means something specific --
   // that research is being worked on -- and a check reads it. Two chimneys, one
   // list, and only one of them is a signal.
-  S.smoke.push({ x: at.x + P, y: at.y - P * 4, drift: (Math.random() - 0.5) * 0.25, t: 0, house: true });
+  puff(at.x + P, at.y - P * 4, { flag: 'house' });
 }
 
 // --- drawing -----------------------------------------------------------------

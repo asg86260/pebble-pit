@@ -1031,8 +1031,11 @@ export function stepMachines(now) {
     // at four call sites, and it is why the stack is worth drawing.
     // Per unit of work done, not per frame -- a machine that got through four
     // cells this frame made four cells' worth of dirt.
+    // Grey, and 'mach' rather than the station's own kind. What comes off a stack
+    // is soot: stone dust off a face is blue because it is stone, and a sky going
+    // blue because you bought an engine says the wrong thing twice over.
     const extra = Math.max(0, MACHINE_FOUL - 1) * did;
-    if (extra > 0) foul(extra, at + P, spec.y ? spec.y() : walkY(at), 'shard');
+    if (extra > 0) foul(extra, at + P, spec.y ? spec.y() : walkY(at), 'mach');
     S.dirty = true;
   }
 }

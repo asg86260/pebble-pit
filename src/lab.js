@@ -13,11 +13,12 @@
 // keeps, so growth has to come from doing the same work sooner.
 
 import { S, lab } from './state.js';
+import { puff } from './puff.js';
 import { assign, idle } from './upgrades.js';
 import { walkY } from './world.js';
 import { now } from './clock.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
-         SMOKE_MS, SMOKE_LIFE, SMOKE_RISE } from './config.js';
+         SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD} from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -170,13 +171,11 @@ export const inLab = () => S.workers.filter(indoors).length;
 export function stepSmoke(now, dt) {
   const on = inLab();
   if (S.research && on && now >= S.smokeAt) {
-    S.smoke.push({
-      x: lab.x + FLUE_MID + (Math.random() - 0.5) * P,
-      y: lab.y,
-      drift: (Math.random() - 0.5) * 0.25,
-      t: 0
-    });
-    S.smokeAt = now + SMOKE_MS / Math.min(4, on);
+    puff(lab.x + FLUE_MID, lab.y);
+    // Longer between puffs than it used to be, because there is a great deal
+    // more in each one: the same amount of smoke, arriving as smoke rather than
+    // as a dotted line.
+    S.smokeAt = now + SMOKE_MS * 2.2 / Math.min(4, on);
   }
   for (let i = S.smoke.length - 1; i >= 0; i--) {
     const p = S.smoke[i];

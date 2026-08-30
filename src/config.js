@@ -1050,13 +1050,16 @@ export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
 // runs a machine against a real gang of five says it should be.
 export let MACHINE_GAIN = 1.5;
 // And how much dirtier a machine is than the hands it replaced, per unit of work
-// -- not per minute. A machine that is three times as dirty *and* three times as
-// quick would be nine times the smoke, which is a number nobody chose. The
+// -- not per minute. This is the compounding that makes the number so easy to
+// get wrong: a machine is *also* fifteen times as quick, so at three times the
+// dirt per unit it was forty-five times the smoke of the gang it replaced, and
+// the sky went from a slow brown to pinned in about a minute. Well under two is
+// plenty when the thing is working that much harder. The
 // station's own work fouls at 1x where it happened, because it goes through the
 // station's own function; the runner adds the remaining (MACHINE_FOUL - 1) from
 // the machine's stack, in one place. That is what the stack is for, and it is
 // why this is not three trebled constants at four call sites.
-export let MACHINE_FOUL = 3;
+export let MACHINE_FOUL = 1.6;
 // The rock's complement, which is the one a machine cannot read off the station.
 // `capOf('miners')` is `Infinity` and rightly so -- a rock is as long as it is,
 // and there is no floor plan to run out of. But the ram still has to be worth
@@ -1082,8 +1085,19 @@ export const MACHINE_MAX_BEATS = 8;
 // lands on one frame in three at best, so "is it working" has to be a moment
 // rather than a frame or the drawing strobes.
 export const MACHINE_IDLE_MS = 600;
-export const MACHINE_PUFF_MS = 520;
-export const MACHINE_PUFF_S = 0.8;
+export const MACHINE_PUFF_MS = 1500;
+export const MACHINE_PUFF_S = 1.15;
+
+// A puff is a handful of motes let go together, not one square.
+//
+// Every chimney in this game used to emit a single mote on a short timer, which
+// at any distance reads as a dotted line rather than as smoke -- a thing
+// ticking, not a thing billowing. A real puff arrives all at once and comes
+// apart on the way up, so: several motes on the same beat, spread a little,
+// sized a little differently, drifting a little differently, and a longer wait
+// between one puff and the next.
+export const PUFF_MOTES = 3;         // motes let go together
+export const PUFF_SPREAD = 0.8;      // how far apart they start, in cells
 
 // What the three of them cost.
 //
@@ -1338,7 +1352,16 @@ export const SWAY_PACE = 0.42;
 export const SMOG_TINTS = {
   dust:  ['#2b2b2b', '#3a3733', '#232830', '#332b2b'],
   shard: ['#1436b8', '#2444c4', '#0f2c9c', '#2a3fa8'],
-  spore: ['#12703a', '#1c8046', '#0d6032', '#237a48']
+  spore: ['#12703a', '#1c8046', '#0d6032', '#237a48'],
+  // What comes off a machine's stack is soot, and soot is grey.
+  //
+  // It used to go up as the station's own kind -- the jaw's extra dirt was blue,
+  // because the cut's dust is blue -- and a sky going blue because you bought a
+  // machine said the wrong thing twice over. Stone dust off a face is blue
+  // because it is stone; what an engine puts up is what an engine puts up
+  // wherever it stands, and it is the one thing in the sky that is nobody's
+  // resource. A shade darker than the rock's dust, because it is dirtier.
+  mach:  ['#1e1e1e', '#282828', '#161616', '#232323']
 };
 
 export const AIR_KINDS = ['dust', 'shard', 'spore'];

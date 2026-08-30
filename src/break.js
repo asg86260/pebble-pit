@@ -20,6 +20,7 @@
 
 import { P, WORKER, BREAK_WAIT, BREAK_ODDS, BREAK_LIFE, BREAK_NEAR, BREAK_BEAT } from './config.js';
 import { S } from './state.js';
+import { puff } from './puff.js';
 
 // What a body can be caught doing. `alone` is whether it needs somebody to do
 // it at, which is the whole of the difference between singing and talking.
@@ -97,15 +98,12 @@ function stepOne(w, now) {
 
   if (b.kind === 'smoke') {
     // the same smoke the chimney makes, smaller, off the side of its head
-    S.smoke.push({
-      x: w.x + WORKER + P * 0.5 * (w.face || 1) - (w.face > 0 ? 0 : WORKER),
-      y: w.y + P,
-      drift: (Math.random() - 0.5) * 0.2,
-      s: 0.55,
-      cig: true,                             // not the chimney's, and not counted with it
-      t: 0
-    });
-    b.next = now + BREAK_BEAT * (0.8 + Math.random() * 0.6);
+    // A smaller puff than a chimney's and fewer motes in it -- it is a cigarette
+    // -- but a puff all the same, drawn on the same beat as everything else that
+    // smokes here.
+    puff(w.x + WORKER + P * 0.5 * (w.face || 1) - (w.face > 0 ? 0 : WORKER), w.y + P,
+         { s: 0.6, n: 2, flag: 'cig' });
+    b.next = now + BREAK_BEAT * 1.6 * (0.8 + Math.random() * 0.6);
     return;
   }
 
