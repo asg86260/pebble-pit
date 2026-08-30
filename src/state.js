@@ -314,9 +314,18 @@ export const S = {
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --
 // and the bench. These are mutated in place and never reassigned, so they are
 // consts rather than fields on S. `p` is the size of one grain in that grid.
-export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null };
+//
+// The four `awake*` fields belong to `settle` -- see grid.js, "which columns are
+// still moving" -- and they are declared here, empty, rather than being added
+// when the sand first needs them. That is not tidiness. A grid object is read a
+// hundred thousand times a frame by everything that asks where the ground is,
+// and growing it a field at a time after the engine has already optimised for
+// its shape costs more than the whole of the saving the fields were added for:
+// measured, adding them lazily made the frame slower than not having them at
+// all. Anything that puts a new sand plot together should declare them too.
+export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const school = { x: 0, y: 0, w: 0, h: 0 };
-export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null };
+export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
@@ -332,7 +341,7 @@ export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
 // The ground the pot piles up on: a real plot of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.
-export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0 };
+export const table = { x: 0, y: 0, cols: 0, rows: 80, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The meteor: the one thing in this game that is not on the ground. `cells` is a
 // disc of them -- rind and core -- and `n` is how many are left in it, which is
 // what says whether there is still a meteor there at all. See meteor.js.

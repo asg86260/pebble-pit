@@ -10,6 +10,13 @@
 //   onPut(c, r)                          optional: told about every cell written
 //   repose                               optional: heaps stand up instead of spreading flat
 //   spillsInto(x), spillsAt, spill(x, y, v)   optional: where a heap topples over an edge
+//   awake, awakeOf, awakeN, awakeList    which columns are still moving; see below
+//
+// The four `awake*` fields are this file's own bookkeeping and nothing outside
+// it touches them, but a new grid should still declare them empty in its object
+// literal rather than let them be added here on the first grain -- a grid object
+// is read a hundred thousand times a frame and growing its shape late costs more
+// than the whole of what they save. See `floor` in state.js.
 //
 // Cells hold a shade, 1..SHADES.length, or 0 for empty. Anything above that is
 // for the owner to mean what it likes by (the pit puts cores in its pile).
@@ -44,6 +51,64 @@ export const shadeNear = (centre, spread = 1) =>
 
 export const at = (b, c, r) => b.grid[r * b.cols + c];
 
+// --- which columns are still moving -------------------------------------------
+//
+// `settle` used to walk every cell of every grid every frame, asking each one
+// whether it had anywhere to fall. The yard floor is a hundred and twenty
+// thousand cells and the hole is another forty-odd thousand, and on an empty
+// yard the answer was no every single time: two thirds of a frame spent finding
+// out that nothing had happened, at sixty frames a second, for ever.
+//
+// Sand only moves where something has just touched it. So each grid keeps one
+// flag per column -- awake or asleep. A column is woken when a cell in it or
+// beside it is written, and it goes back to sleep the moment a pass over it
+// moves nothing. A heap that has found its angle stops being read at all, and a
+// grid nobody has touched costs one integer check.
+//
+// Per column rather than per cell, because a grain leaving a cell disturbs the
+// whole column above it -- everything up there falls a row -- and because the
+// walk is column-shaped already. Waking the two neighbours as well is what makes
+// a grain able to topple sideways into ground that was asleep.
+//
+// The flags are deliberately generous. Waking a column that did not need it
+// costs one ordinary pass and is never visible; the other way round -- a grid
+// that believes it is settled when it is not -- is dust hanging in mid-air,
+// which is the bug this whole structure has to be built so as not to have. So
+// anything that writes cells behind `put`'s back says so out loud (`recount`,
+// `wakeGrid`), and a grid whose cells have been swapped out from under it
+// wholesale is spotted here and woken end to end without being asked.
+function awakeCols(b) {
+  if (b.awake && b.awake.length === b.cols && b.awakeOf === b.grid) return b.awake;
+  b.awake = new Uint8Array(b.cols);
+  b.awakeOf = b.grid;
+  b.awake.fill(1);
+  b.awakeN = b.cols;
+  return b.awake;
+}
+
+// this column and the two beside it are worth another look
+export function wake(b, c) {
+  const a = awakeCols(b);
+  const lo = c > 0 ? c - 1 : 0, hi = c + 1 < b.cols ? c + 1 : b.cols - 1;
+  for (let n = lo; n <= hi; n++) if (!a[n]) { a[n] = 1; b.awakeN++; }
+}
+
+// The whole grid: for anything that has written cells without going through
+// `put`, or that has changed the rules the last pass settled against -- a new
+// ceiling, a strip of ground that has just opened, a save being unpacked.
+export function wakeGrid(b) {
+  if (!b.cols) return;
+  awakeCols(b).fill(1);
+  b.awakeN = b.cols;
+}
+
+// How many columns `settle` has actually looked at. Only a check reads this: it
+// is how "an untouched yard does no work" is asserted as a fact about the code
+// rather than as a stopwatch reading, which would flake on a busy machine.
+let work = 0;
+export const settleWork = () => work;
+export const resetSettleWork = () => { work = 0; };
+
 // A grid may keep a live count of how many of its cells are occupied. Give it an
 // `n` and this maintains it; leave `n` undefined and nothing is counted.
 //
@@ -58,6 +123,7 @@ export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
   b.grid[i] = v;
+  wake(b, c);                              // and this is the one place sand starts moving
   if (b.onPut) b.onPut(c, r);
 };
 
@@ -67,7 +133,7 @@ export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 // after anything that writes the cells wholesale rather than through `put`
-export const recount = b => { b.n = count(b); };
+export const recount = b => { b.n = count(b); wakeGrid(b); };
 export const countDust = b => {
   let n = 0;
   for (const v of b.grid) if (isDust(v)) n++;
@@ -155,9 +221,35 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
 
 // One sand tick: unsupported grains fall, then slump sideways. `from`/`to` limit
 // it to a band of columns, so a very large grid can be settled a piece a frame.
+//
+// Only the awake columns of that band are walked -- see `awakeCols` above -- and
+// they are all put back to sleep before the walk starts. A column then earns its
+// next pass by having done something in this one: every move goes through `put`,
+// and `put` wakes the column it wrote and the two beside it. So a grain that
+// falls keeps its own column awake until it lands, and a grain that topples
+// sideways wakes the ground it landed on.
+//
+// Returns how many columns it looked at, which is the cost of the call.
 export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
+  const awake = awakeCols(b);
+  if (!b.awakeN) return 0;                 // nothing anywhere has moved: no cell is read
+  // Taken as a list rather than tested column by column inside the row loop,
+  // because the rows are the outer loop: the band would otherwise be scanned
+  // once per row instead of once per pass.
+  const cols = b.awakeList || (b.awakeList = []);
+  cols.length = 0;
+  for (let c = from; c < to; c++) {
+    if (!awake[c]) continue;
+    awake[c] = 0;
+    b.awakeN--;
+    cols.push(c);
+  }
+  work += cols.length;
+  if (!cols.length) return 0;
+  const wide = cols.length;
   for (let r = 1; r < b.rows; r++) {
-    for (let c = from; c < to; c++) {
+    for (let k = 0; k < wide; k++) {
+      const c = cols[k];
       if (!at(b, c, r)) continue;
       const v = at(b, c, r);
       if (!at(b, c, r - 1)) { put(b, c, r, 0); put(b, c, r - 1, v); continue; }
@@ -184,21 +276,29 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
       }
     }
   }
+  return wide;
 }
 
 // A big grid is too many cells to walk every frame, so it is settled a band of
 // columns at a time, picking up where it left off. The sand slumps a beat behind
 // itself, which nobody can see, and the frame cost is flat whatever the size.
+//
+// The band is still worth having now that the awake columns are the only ones
+// walked: it is what caps the cost of the one frame after a whole grid is woken
+// -- a save loading, a plot regridding, a rock landing -- so that pass is spread
+// over a few frames instead of arriving as a single hitch.
 export function settleSome(b, budget) {
   const band = Math.max(1, Math.min(b.cols, Math.floor(budget / b.rows)));
   const from = b.settleAt || 0;
-  settle(b, undefined, from, Math.min(b.cols, from + band));
+  const did = settle(b, undefined, from, Math.min(b.cols, from + band));
   b.settleAt = from + band >= b.cols ? 0 : from + band;
+  return did;
 }
 
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
+  wakeGrid(b);                             // the cells went, and not through `put`
   if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);
   const shade = 4;                         // repacked dust, middling grey
@@ -215,6 +315,11 @@ export function fillFlat(b, n) {
 export function resizeGrid(b) {
   const want = b.cols * b.rows;
   const had = b.grid ? count(b) : 0;
+  // Called whenever the world is laid out again, which is exactly when the rules
+  // a settled column settled against may have moved under it: a station's strip,
+  // the rock's apron, the ceiling a bank leans to. So the whole grid gets one
+  // more look even when the box has not changed size at all.
+  wakeGrid(b);
   if (b.grid && b.grid.length === want) return;
   b.grid = new Uint8Array(want);
   fillFlat(b, had);

@@ -13,7 +13,7 @@ import { S, floor, pit, sky } from './state.js';
 import { freshMachines, MACHINES } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
-import { at, put, count, fillFlat, isDust, recount } from './grid.js';
+import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
@@ -53,6 +53,11 @@ export function gridFill(b, str) {
     if (v) b.grid.fill(v, i, i + len);
     i += len;
   }
+  // A pile written straight into the cells is a pile the sand knows nothing
+  // about. It was settled when it was saved and it will almost certainly settle
+  // again on the first pass, but "almost certainly" is not how dust is allowed
+  // to hang in the air, so the whole plot gets looked at once.
+  wakeGrid(b);
   return i === b.grid.length;
 }
 

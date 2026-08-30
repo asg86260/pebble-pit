@@ -10,7 +10,7 @@ import { PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, PACK_SPARKS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome } from './grid.js';
+import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome, wakeGrid } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
@@ -102,9 +102,23 @@ export function wirePit() {
   if (!pit.painter) pit.painter = makePainter(pit);
   pit.onPut = pit.painter.mark;            // every change is told to the painter
   pit.painter.repaint();
+  wakeGrid(pit);                           // a dug hole is a new ceiling over every column
 }
 
+// Whether the hole underneath was full the last time the pile was settled. The
+// pit is the one grid whose ceiling changes for every column at once: while
+// there is room down there nothing may stand above the brim, and the moment the
+// hole fills every column is allowed to heap. That is a rule change, not a cell
+// change, so the grain that happened to fill the hole wakes its own column and
+// nothing else -- and every other column would sit at the old brim for ever.
+// One comparison a frame buys the whole plot another look at the moment it
+// matters. It goes the other way too: spending lifts grains off the top, the
+// hole stops being full, and the brim comes back down over the lot.
+let wasFull = false;
+
 export function settlePit() {
+  const full = pit.n >= pit.holeCap;
+  if (full !== wasFull) { wasFull = full; wakeGrid(pit); }
   settleSome(pit, SETTLE_BUDGET);
 }
 

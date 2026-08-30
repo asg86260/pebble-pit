@@ -15,6 +15,7 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { shapePit } from './pit.js';
+import { wakeGrid } from './grid.js';
 
 const canvas = document.getElementById('c');
 
@@ -217,6 +218,13 @@ export function refreshPiles() {
     // off from is a different size for every boulder
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
   ].sort((a, b) => a.from - b.from);   // `yardLeft` reads the leftmost
+  // The strips are what `blocked` and `bankCeiling` are written against, so a
+  // column that had settled did so under the old ones. A wider rock, a station
+  // opening, the star drifting: any of them can hand a column ground it did not
+  // have or a ceiling it may no longer reach, and a column that is asleep would
+  // never find out. So the floor gets one full look after every relaying -- it
+  // is a handful of times a run, and it costs one ordinary pass.
+  wakeGrid(floor);
 }
 
 
