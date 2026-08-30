@@ -595,13 +595,20 @@ export function drawPileMarks() {
 
 // a warning triangle: hollow, with a bar and a dot inside it. A triangle sits
 // low in its own outline, so the mark hangs below the middle of it.
-function warning(x, y) {
-  drawTriangle(x, y, P * 4, true);
+//
+// One radius, and everything inside is a fraction of it. The bar and the dot
+// used to be four numbers of their own, which meant the triangle could only ever
+// be the size those four numbers had been picked for -- shrink it and the mark
+// inside stayed put and burst out through the side. The shape has one dimension
+// now and changing it changes the whole sign.
+const WARN_R = P * 2.6;
+function warning(x, y, r = WARN_R) {
+  drawTriangle(x, y, r, true);
   ctx.fillStyle = '#000';
   // the mark sits inside the outline rather than on it: a triangle's base is its
   // lowest edge, and a dot resting on that reads as a smudge
-  ctx.fillRect(x - P / 2, y - P, P, P * 1.6);
-  ctx.fillRect(x - P / 2, y + P * 1.4, P, P);
+  ctx.fillRect(x - r / 8, y - r / 4, r / 4, r * 0.4);
+  ctx.fillRect(x - r / 8, y + r * 0.35, r / 4, r / 4);
 }
 
 // Under the station, not over it: the pile is the station's problem and the mark
@@ -628,7 +635,13 @@ function warning(x, y) {
 // or not the bar is showing, so a mark never moves because a different mark
 // appeared. That is the whole of what makes a row of icons readable -- you learn
 // where to look once.
-const SLOT_W = P * 6;
+// How far apart the slots sit, and it follows the marks rather than leading
+// them. Six cells was the gap the old, larger signs needed; with smaller ones in
+// the same slots the pair stopped reading as a row and started reading as two
+// marks that happened to be near each other. Four and a half went too far the
+// other way -- the triangle is 5.2 cells across and the diamond 3.2, so their
+// half-widths alone come to 4.2 and the two were all but touching.
+const SLOT_W = P * 5.5;
 const SLOTS = ['stopped', 'offer'];        // left to right, and never reordered
 
 // Which of them a station is showing right now.
@@ -692,7 +705,11 @@ export function pileMarkAt(key) {
 // where the cursor has to be to be asking about one
 export function overPileMark(key, mx, my) {
   const at = pileMarkAt(key);
-  return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
+  // Half a slot, so the two marks can never both answer to the same cursor.
+  // This was a flat five cells, which was inside the six-cell gap and is wider
+  // than the gap now -- hovering the diamond would have asked about the triangle
+  // as well, and whichever was tested first would have won.
+  return Math.abs(mx - at.x) < SLOT_W / 2 && Math.abs(my - at.y) < P * 4;
 }
 
 // The hole's own mark. Above the ground line rather than below it, because below
@@ -2264,7 +2281,11 @@ function drawOffers() {
     // Four points and a fill has no steps in it at all, so the slopes are
     // slopes at any size. The core is drawn the same way and for the same
     // reason: some shapes are not made of cells.
-    const w = P * 2.5, h = P * 3;
+    // Smaller than it was. At two and a half cells by three it was the biggest
+    // thing on the ground line -- taller than the plots it hung under and heavier
+    // than the counter beside it -- which is the wrong weight for a mark whose
+    // whole job is to be noticed and then ignored.
+    const w = P * 1.6, h = P * 2;
     ctx.beginPath();
     ctx.moveTo(at.x + P / 2, at.y - h);          // top
     ctx.lineTo(at.x + P / 2 + w, at.y);          // right

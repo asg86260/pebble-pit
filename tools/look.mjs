@@ -54,6 +54,12 @@ const SCENES = {
   yard: `${RICH} window.__buy('jaw'); window.__buy('tiller'); window.__buy('ram');
          window.__look(window.__state().pitX - 400);`,
 
+  // The two marks that hang under a station: the stopped triangle and the offer
+  // diamond. Both want a station whose pile has filled and which has something
+  // to sell, so the yard is run for a while with nobody to carry anything away.
+  marks: `${RICH} window.__assign('carters', -9); window.__fast(240);
+          window.__look(window.__state().farmX - 300);`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`
 };
