@@ -156,7 +156,16 @@ canvas {
    multiplies everything under it and there is no way back up from it -- which
    was fine while a dimmed row was one flat statement, and is not fine now that
    half of a bill can be affordable and half of it not. */
-.rows button:disabled { color: #aaa; cursor: default; }
+/* And it is said twice, in tone *and* in position.
+   One step of grey was carrying the whole answer to the first question anybody
+   asks of a board -- what can I buy right now -- and on a sheet that is already
+   black type on white, one step of grey is not much of a step. So a row you can
+   pay for keeps a solid rule down its left edge, and a row you cannot goes
+   lighter than it did. The rule is the part that scans: you can find the
+   affordable rows down a long board without reading any of it. */
+.rows button { border-left: 2px solid transparent; padding-left: 5px; }
+.rows button:not(:disabled) { border-left-color: #000; }
+.rows button:disabled { color: #c9c9c9; cursor: default; border-left-color: transparent; }
 .rows button:disabled .gain, .rows button:disabled .cost { opacity: 1; }
 /* The coins you have, in a bill you cannot yet pay. What is greyed is what you
    are short of, which is the question you were asking. */

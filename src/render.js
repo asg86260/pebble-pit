@@ -1887,6 +1887,17 @@ const WAVE_ALPHA = 0.62;
 
 function drawCoreGlow(cx, cy) {
   const t = now();
+  // The middle, snapped once, and every cell of every ring measured from *it*.
+  //
+  // Each cell used to be snapped to the world grid on its own -- `round(x / P)`
+  // of an absolute position -- which puts the ring where the grid happens to
+  // fall rather than round the thing it belongs to. The core does not sit on a
+  // whole cell (it rolls, and you carry it about), so the rounding bit harder on
+  // one side than the other and the glow sat visibly off its own disc. Measured
+  // out from a snapped middle, it is symmetrical by construction and still lands
+  // on whole cells.
+  const ox = Math.round(cx / P) * P;
+  const oy = Math.round(cy / P) * P;
   for (let i = 0; i < WAVES; i++) {
     const k = ((t / WAVE_MS) + i / WAVES) % 1;
     const r = CORE_SIZE / 2 + k * WAVE_REACH;
@@ -1900,8 +1911,8 @@ function drawCoreGlow(cx, cy) {
     const seen = new Set();
     for (let j = 0; j < n; j++) {
       const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
-      const x = Math.round((cx + Math.cos(a) * r) / P) * P;
-      const y = Math.round((cy + Math.sin(a) * r) / P) * P;
+      const x = ox + Math.round(Math.cos(a) * r / P) * P;
+      const y = oy + Math.round(Math.sin(a) * r / P) * P;
       // Nothing below the ground line -- what this reads as is heat coming off
       // the thing, and heat does not go down into the dirt. Unless the thing is
       // already down there, in which case the ground line is not a lid.
@@ -1917,10 +1928,13 @@ function drawCoreGlow(cx, cy) {
 }
 
 export function drawCoreAt(x, y) {
-  drawCoreGlow(x + CORE_SIZE / 2, y + CORE_SIZE / 2);
+  // One middle for both, so the glow and the thing it is coming off cannot
+  // disagree about where the thing is.
+  const cx = x + CORE_SIZE / 2, cy = y + CORE_SIZE / 2;
+  drawCoreGlow(cx, cy);
   // radius allows for the 2px stroke, so the circle stays inside its box and
   // never paints over the ground line it is resting on
-  drawCircle(x + CORE_SIZE / 2, y + CORE_SIZE / 2, CORE_SIZE / 2 - 2);
+  drawCircle(cx, cy, CORE_SIZE / 2 - 2);
 }
 
 // Buried in the rock: drawn first so the boulder covers it until you dig it out.

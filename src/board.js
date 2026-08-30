@@ -241,7 +241,16 @@ function seatFlyout(el, at) {
 
 function place(el, at) {
   const w = sized.w || el.offsetWidth, h = sized.h || el.offsetHeight;
-  const want = (at.x - S.camX) * S.zoom;
+  // Centred over the station, not hung off its left edge.
+  //
+  // For a building the two are nearly the same thing and nobody noticed. The
+  // farm is not a building: it is a *row*, as wide as however many furrows you
+  // have bought, so a board pinned to its left edge sat a long way off the end
+  // of the plots and read as belonging to whatever was next along. Measuring
+  // from the middle puts every board over the thing it is about, and the farm
+  // stops being the odd one out.
+  const mid = at.x + (at.w || 0) / 2;
+  const want = (mid - S.camX) * S.zoom - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;

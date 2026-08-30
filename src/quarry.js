@@ -566,7 +566,13 @@ export const QUARRY_UPGRADES = [
     from: () => benches(),
     to: () => benches() + 1,
     cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
-    currency: 'shard',
+    // Green, not blue. A station that is bought deeper with the very thing it
+    // produces is a station that pays for itself, and a loop that closes on
+    // itself like that is not a decision -- you dig because digging buys more
+    // digging. Priced in the *other* ground's crop, the cut and the plots pay
+    // for each other, and getting the quarry down a bench means the farm has
+    // been kept up. Same argument as the machines, one tier down.
+    currency: 'spore',
     buy: () => { S.benchLevel++; resite(); },
     show: () => S.quarryOpen && benches() < QUARRY_BENCH_MAX
   },
@@ -592,7 +598,7 @@ export const QUARRY_UPGRADES = [
     from: () => quarryRate(),
     to: () => quarryRate(S.quarryPaceLevel + 1),
     cost: () => Math.round(3 * Math.pow(1.7, S.quarryPaceLevel)),
-    currency: 'shard',
+    currency: 'spore',
     buy: () => S.quarryPaceLevel++,
     show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
   }

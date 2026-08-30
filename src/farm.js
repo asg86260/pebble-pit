@@ -142,7 +142,9 @@ export const FARM_UPGRADES = [
     from: () => plotCount(),
     to: () => plotCount() + 1,
     cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel)),
-    currency: 'spore',
+    // Blue, not green -- see the quarry's rows for the argument. The two grounds
+    // pay for each other, so a wider plot means the cut has been worked.
+    currency: 'shard',
     buy: () => { S.plotLevel++; resite(); },
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },
@@ -167,7 +169,7 @@ export const FARM_UPGRADES = [
     from: () => tendRate(),
     to: () => tendRate(S.tendLevel + 1),
     cost: () => Math.round(4 * Math.pow(1.7, S.tendLevel)),
-    currency: 'spore',
+    currency: 'shard',
     buy: () => S.tendLevel++,
     show: () => S.farmOpen && tendMs() > TEND_FLOOR
   }
