@@ -219,7 +219,8 @@ export function persist() {
     // going to arrive for. It is dropped, and it can be made again.
     machines: Object.fromEntries(MACHINES.map(m => {
       const r = (S.machines && S.machines[m.key]) || {};
-      return [m.key, { bought: !!r.bought, on: !!r.on, was: r.was | 0, driven: !!r.driven }];
+      return [m.key, { bought: !!r.bought, on: !!r.on, was: r.was | 0,
+                       driven: !!r.driven, tookKit: !!r.tookKit }];
     })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
@@ -420,6 +421,9 @@ export function restore() {
     rec.on = !!r.bought && !!r.on;      // a lever cannot be on for a machine nobody bought
     rec.was = r.was | 0;
     rec.driven = !!r.driven;
+    // A machine bought before this was written took a full set and has no
+    // record of it. It is bought, so it did.
+    rec.tookKit = rec.bought ? (r.tookKit == null ? true : !!r.tookKit) : false;
   }
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;

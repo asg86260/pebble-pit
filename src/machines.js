@@ -64,6 +64,11 @@ const fresh = () => ({
   // every "off" would cost five clicks on the roster and nobody would ever
   // throw the lever twice.
   was: 0,
+  // It was bought with a full set of specialists, and took them. Kept as a fact
+  // on the record rather than read off the station, because the station's hat
+  // count is nought afterwards and the machine still has to be worth what that
+  // set made -- see `machineRate`.
+  tookKit: false,
   beatAt: 0,             // when its next unit of work is due
   phase: 0,              // where it is in its own animation, 0..1
   puffAt: 0,             // and when the stack is next due to puff
@@ -187,6 +192,26 @@ export function buyMachine(key) {
   const m = machine(key);
   if (!m || m.bought) return;
   m.bought = true;
+  // The machine absorbs the specialists.
+  //
+  // It is gated behind a full set of hats, and it is worth what that set made --
+  // so once it is standing, the hats have been *spent*. Leaving them on the shelf
+  // gave you a drawer of helmets nobody could wear: a machine caps its station at
+  // one body, so four of the five would sit at the kit stand for the rest of the
+  // run, still counted, still drawn, meaning nothing.
+  //
+  // Nothing has to be written to make this look like anything: the count goes to
+  // nought, `stepKit` sees heads wearing kit the station no longer owns, and each
+  // one walks over and hands it in. The specialists trained the machine and then
+  // took their helmets off, which is the truest thing this yard can say about
+  // what a machine is.
+  //
+  // What it costs is the fallback. See `machineRate` and DESIGN.md: throwing the
+  // lever off now leaves a bare gang rather than a kitted one, so the lever is a
+  // way to stop the smoke and get the bodies back, not a way to swap between two
+  // equally good ways of working.
+  m.tookKit = true;
+  S.dirty = true;
   // And it starts. Somebody walks over and throws the lever, which is the same
   // journey as any other -- a machine that arrived already running would be the
   // one thing in the yard that did something without hands, and one that arrived

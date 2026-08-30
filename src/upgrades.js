@@ -18,7 +18,7 @@ import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } fro
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy, MACHINES, running } from './machines.js';
+import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, RAM_BILL } from './config.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
@@ -313,7 +313,16 @@ export const kitFull = job => {
 };
 
 // What one pair of hands at this station is worth, counting the kit on its head.
-export const kitMult = job => (kitFull(job) ? 2 : 1);
+//
+// A station with a machine on it answers 2 whatever its hat count says, and has
+// to: the machine was gated behind a full set and then *took* them -- see
+// `buyMachine` -- so reading the station afterwards would find nought hats and
+// quietly halve the thing you had just bought.
+export const kitMult = job => {
+  const m = machineFor(job) || (JOB_MACHINE[job] && machine(JOB_MACHINE[job]));
+  if (m && m.bought && m.tookKit) return 2;
+  return kitFull(job) ? 2 : 1;
+};
 
 // What the machine is worth, in hands, at this station.
 //
@@ -380,7 +389,24 @@ export function restaff(job, want) {
 // a body that has just walked over is not sent straight back. Forcing the count
 // down here would delete that. The house has no such timer and wants none -- a
 // scrubbing house that is standing is one that should be running.
+// A station whose machine took its kit owns no hats. Zeroed here rather than in
+// `buyMachine`, because this is the one place that is allowed to move counts
+// about -- and because a save from before the machines existed can arrive with
+// both a machine and a full set, which is the same tidy-up.
+//
+// Nothing else is needed to make it read: `stepKit` finds heads wearing kit the
+// station does not own and walks each one over to hand it in.
+function stripKit() {
+  for (const m of MACHINES) {
+    const r = machine(m.key);
+    if (!r || !r.bought || !r.tookKit) continue;
+    const trade = TRADE_OF[m.job];
+    if (trade && S[trade] > 0) { S[trade] = 0; S.dirty = true; }
+  }
+}
+
 export function staffSheds() {
+  stripKit();
   let moved = false;
   // Each of them staffs itself *when there is something to do*, which is the
   // whole of what the stepper under it used to ask. A house standing over a

@@ -1418,10 +1418,18 @@ standing mote count, which reads the same at the cap whatever the rate.
 ### Still open
 
 - Whether the tier-6 spark rungs are the same two rungs on every ladder.
-- What the specialists are *for* once a machine is running. The gate makes
-  finishing them worth doing, and throwing the lever off puts a fully-hatted gang
-  straight back to work -- but a player who never throws it again has a drawer of
-  helmets. Perhaps a driven machine should want them.
+(The question of what the specialists are *for* once a machine is running is
+settled: the machine **takes** them. It is gated behind a full set and is worth
+what that set made, so buying it spends them -- the count goes to nought and each
+body walks over and hands its helmet in, using the kit errand that was already
+there. The specialists trained the machine and then took their hats off, which is
+the truest thing this yard can say about what a machine is.
+
+What that costs is the fallback, and it should be said plainly: throwing the
+lever off now leaves a **bare** gang rather than a kitted one, five hands where
+there were ten. The lever is a way to stop the smoke and get the bodies back for
+somewhere else. It is not a way to swap between two equally good ways of working,
+and it never really was -- see the honest note above.)
 - Whether the three machines should be reachable in any order, or whether the
   jaw ought to be the one that teaches the idea.
 - Whether the rest of the boards should follow the same rule the machines now

@@ -620,9 +620,14 @@ group('the ram works the rock, measured against not having one', async () => {
   // as the machine putting rock back.
   const mined = () => state().crewNames.split(' ')
     .reduce((a, p) => a + (+(p.split('|')[3] || 'm0').slice(1) || 0), 0);
+  // Swept often, not occasionally. The ram fills the rock's pile in well under
+  // half a second, and a station stands down on a full pile -- so a sweep every
+  // half second measures how fast the yard can be tidied rather than how fast the
+  // machine works. (That throttle is real and is the right pressure on haulage;
+  // it is simply not what this group is about.)
   const window10 = () => {
     const before = mined();
-    for (let i = 0; i < 20; i++) { run(0.5); window.__clearFloor(); }
+    for (let i = 0; i < 100; i++) { run(0.1); window.__clearFloor(); }
     return mined() - before;
   };
   const byHand = window10();
@@ -1028,5 +1033,49 @@ group('a jaw out-digs the kitted gang it stood down', async () => {
     ok(byMachine > byHand * 1.2,
        'and by a margin worth fifty sparks',
        `${(byMachine / Math.max(1, byHand)).toFixed(2)}x`)
+  ];
+});
+
+// The machine absorbs the specialists.
+//
+// It is gated behind a full set of hats and is worth what that set made, so once
+// it is standing the hats have been spent. Leaving them on the shelf gave you a
+// drawer of helmets nobody could wear -- the station holds one body now, so four
+// of five would sit at the kit stand for the rest of the run, still counted,
+// still drawn, meaning nothing.
+group('buying a machine takes the specialists with it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1, 5);
+  window.__fullSites();
+  window.__grant({ sparks: 999, spores: 999 });
+  window.__tip(9000);
+  run(2);
+  const before = state();
+
+  window.__buy('jaw');
+  run(1);
+  const bought = state();
+  // the hats are handed in over the next few seconds, by the bodies wearing them
+  const handed = runUntil(() => state().machines.jaw.kit === 0, 60);
+  run(6);
+  const after = state();
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(before.machines.jaw.kit === 5, 'five blasters at the cut to begin with',
+       `${before.machines.jaw.kit}`),
+    ok(bought.machines.jaw.bought, 'the jaw is bought'),
+    ok(handed && after.machines.jaw.kit === 0,
+       'and the station owns no blasters afterwards', `${after.machines.jaw.kit}`),
+    // The rate must not follow the hats down. It was bought against a kitted
+    // gang and is worth what that gang made; reading the station afterwards
+    // would find nought hats and quietly halve the thing you just paid for.
+    ok(Math.abs(after.machines.jaw.rate - 15) < 0.01,
+       'and the machine is still worth the fifteen hands it was bought as',
+       `${after.machines.jaw.rate}`),
+    ok(after.trained.indexOf('q') < 0,
+       'with nobody left wearing one', `${after.trained}`)
   ];
 });
