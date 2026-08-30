@@ -232,6 +232,15 @@ export const MUCK_MAX = 6;           // and never stacks deeper than this in a c
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
 // it is not slow: it is the shift the rain cost you.
 export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands shifts
+// ...and it comes off a cell at a time, on a swing, at that rate.
+//
+// The shovelling used to be a rate poured in every frame with the body's lunge
+// held at full: a shape vibrating over a heap that shrank continuously, which is
+// not somebody working, it is a progress bar wearing a hat. The rock has had the
+// right answer since the beginning -- walk up, swing, a cell comes off, swing
+// again -- and there is no reason the mess should read differently from the
+// stone.
+export const MUCK_SWING = Math.round(1000 / MUCK_SWEEP);
 
 // The scrubbing house: a place with nobody in it does nothing at all.
 // The front of the scrubbing house, in cells. These live here rather than in the

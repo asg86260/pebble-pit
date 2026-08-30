@@ -6,7 +6,7 @@
 
 import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
-        MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
+        MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
@@ -438,8 +438,20 @@ function downTheHole(w, to, dt) {
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.dir = Math.sign(d);
     } else {
-      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
-      w.lunge = 1;
+      // The same swing as up top -- see `takeMuck`. Feet planted, a cell to a
+      // stroke, rather than a heap quietly melting under a shaking body.
+      // `now` is the clock *function* in here -- this one is not handed the frame
+      // time the way the yard's branches are -- so it has to be called. Compared
+      // against the function it is never greater, and the body stood over the
+      // heap swinging at nothing at all.
+      const t = now();
+      w.x = Math.round(w.x / P) * P;
+      w.lunge *= 0.84;
+      if (t >= (w.sweepAt || 0)) {
+        sweepMuckAt(w.x + WORKER / 2, 1, w);
+        w.lunge = 1;
+        w.sweepAt = t + MUCK_SWING * (0.85 + Math.random() * 0.3);
+      }
     }
     w.y = pitStand(w.x) - WORKER;
     return;
@@ -1732,9 +1744,27 @@ export function updateWorkers(now, dt) {
       // two cells in towards the exact column it had claimed while the elbow
       // pushed it back out again -- a body sliding on the spot for as long as
       // there was muck in front of it.
+      //
+      // And it shovels the way a miner mines: it plants its feet, swings, and a
+      // cell comes off. The muck was being poured away at a *rate* with the
+      // lunge pinned at full every frame, which reads as a shape vibrating over
+      // a heap that melts -- a progress bar wearing a hat. Same throughput, one
+      // cell to a swing, so there is something to watch and something to count.
+      //
+      // Its feet land on a whole cell and stay on it between swings. Pinning it
+      // outright was tried and is wrong: the elbow that keeps a gang from
+      // standing in each other needs to be able to move a body, and a gang that
+      // cannot be spaced out bunches onto one spot and clears a yard slower than
+      // it did before. Snapping is enough -- what read as sliding was a body
+      // creeping a fraction of a pixel a frame with its lunge pinned at full.
+      w.x = Math.round(w.x / P) * P;
       w.y = foot();
-      sweepMuckAt(w.x + WORKER / 2, MUCK_SWEEP * (dt / 1000), w);
-      w.lunge = 1;
+      w.lunge *= 0.84;
+      if (now >= (w.sweepAt || 0)) {
+        sweepMuckAt(w.x + WORKER / 2, 1, w);
+        w.lunge = 1;
+        w.sweepAt = now + MUCK_SWING * (0.85 + Math.random() * 0.3);
+      }
       // and not shoulder to shoulder with the next one. A yard under muck
       // has something to shovel wherever you stand, so a gang that arrived
       // together would each find work on the spot they arrived on and clear
