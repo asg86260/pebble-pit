@@ -984,7 +984,11 @@ export const HURL_DRAG = 0.995;  // air against it on the way
 // throw, and what it earns is a moment of not knowing which way is up.
 export const SHAKE_TURNS = 4;      // changes of direction that count as a shaking
 export const SHAKE_WINDOW = 700;   // inside this long, in ms
-export const DIZZY_MS = 1400;      // and how long the stars last afterwards
+export const DIZZY_MS = 2000;      // and how long the stars last afterwards
+// A shaken body drops what it was holding, hat and all, and stands there seeing
+// stars before it gathers itself. How far it wobbles while it does.
+export const WOBBLE = P / 2;       // pixels either side of where it landed
+export const WOBBLE_BEAT = 11;     // radians a second -- unsteady, not a shiver
 
 // --- nature ------------------------------------------------------------------
 // A body works all day and now and then it has to stop. It puts down what it is
@@ -1442,6 +1446,20 @@ export const CLOUDS_WANTED = 5;   // how many are kept in the strip of sky in vi
 // which is the one thing it must never read as.
 export const MUCK_TONE = '#7a6047';
 export const MUCK_SKIN = '#57402c';     // and the top course, so the layer has a lid
+// What a body left smells, and the yard says so: a couple of flies over it and a
+// wisp coming off it. Only over what a body left -- what the weather drops is
+// dirty and not rotten, and giving both of them flies would take away the one
+// thing that tells the two layers apart at a glance.
+export const FLIES_PER = 2;          // over a column that gets them
+// ...and one column in this many does. Flies belong to a HEAP, not to a cell:
+// two over every column of a patch thirty wide is sixty flies, which is a black
+// wall rather than a suggestion of a smell.
+export const FLY_EVERY = 5;
+export const FLY_ORBIT = P * 1.7;    // how far one strays from the column
+export const FLY_BEAT = 3.1;         // radians a second it goes round at
+export const STINK_RISE = 26;        // pixels a second a wisp climbs
+export const STINK_LIFE = 2.4;       // seconds before it has gone
+export const STINK_EVERY = 3;        // one column in this many gets one
 
 export const CLOUD_TONE = '#efefef';
 export const CLOUD_UNDER = '#e3e3e3';   // the bottom bar, so a cloud has an underside

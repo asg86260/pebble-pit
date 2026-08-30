@@ -1252,7 +1252,12 @@ const TESTS = [
       // not -- and the margin is what a shorter flight leaves of it.
       ok(carried > dropped + 8, 'a body flicked out of your hand travels while it falls',
          `${carried}px thrown against ${dropped}px let go of`),
-      ok(dropped < 10, 'and one let go of from a standstill comes straight down',
+      // Sixteen, not ten. A body let go of from a standstill still comes
+      // straight down -- what it does *after* it lands is walk back to work, and
+      // the crew walk half again as fast as they did, so the same sample taken
+      // the same moment later catches it a few pixels further along. The claim
+      // is about the fall, and the margin is what the walk adds to it.
+      ok(dropped < 16, 'and one let go of from a standstill comes straight down',
          `${dropped}px across`),
       ok(dizzy.saying > 0, 'shaking one about leaves it seeing stars',
          `${dizzy.saying} saying something`),

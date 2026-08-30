@@ -8,10 +8,10 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
-import { at, put, colOf } from './grid.js';
-import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
+import { at, put, colOf, addGrain } from './grid.js';
+import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth, blocked } from './world.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
@@ -1433,7 +1433,22 @@ export function drop(w) {
   // Shaken about rather than thrown: it lands not knowing which way is up. The
   // count is taken while it is in your hand -- see `shakeHeld` -- and spent
   // here, so one shaking is one dizzy spell however long you keep hold of it.
-  if (w.shook >= SHAKE_TURNS) w.dizzyFor = DIZZY_MS;
+  if (w.shook >= SHAKE_TURNS) {
+    w.dizzyFor = DIZZY_MS;
+    // Shaken hard enough and it lets go of everything.
+    //
+    // What it was carrying goes on the ground where it lands rather than into
+    // the pit -- it was never banked, and a load that survives being turned
+    // upside down is a load nobody would believe in. The hat comes off with it,
+    // and lands where the body lands: it is a thing on a head, not a property of
+    // the body, and this is the one moment in the game that makes that visible.
+    w.spill = w.carry || 0;
+    w.carry = 0;
+    if (w.trained) {
+      w.hatOff = { kind: w.trained, of: w.kitOf };
+      w.trained = false;
+    }
+  }
   w.shook = 0;
   w.turnedAt = 0;
   w.lastDir = 0;
@@ -1505,6 +1520,15 @@ function fall(w) {
     w.dizzyUntil = now() + w.dizzyFor;
     w.say = { mark: 'dizzy', until: w.dizzyUntil };
     w.dizzyFor = 0;
+    w.landedAt = w.x;                       // what it wobbles about
+    // Whatever it was carrying, on the ground under it.
+    if (w.spill) { for (let i = 0; i < w.spill; i++) addGrain(floor, w.x + WORKER / 2, blocked); w.spill = 0; }
+    // And its hat where it fell, to be picked up when the stars clear. It is
+    // NOT put back on here: the body has to go and get it, the same as it has
+    // to walk everywhere else.
+    if (w.hatOff) w.hatOff.x = Math.round(w.x);
+    S.dirty = true;
+    return;                                 // it is in no state to be given a job
   }
   // Straight back to it if this is where it works, and a walk if it is not.
   if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
@@ -1887,6 +1911,36 @@ export function updateWorkers(now, dt) {
     // in the air, on the cursor: not doing anything, and nothing being done to it
     if (w.lifted) continue;
     if (w.falling) { fall(w); continue; }
+    // Seeing stars. A body shaken about does nothing at all until they clear --
+    // it used to be handed its job back the instant its feet touched, so the
+    // stars were decoration over somebody already working. It rocks where it
+    // landed instead, and then goes and picks its hat up.
+    if (w.dizzyUntil && now < w.dizzyUntil) {
+      w.x = w.landedAt + Math.sin(now / 1000 * WOBBLE_BEAT + w.ph) * WOBBLE;
+      w.y = stand(w);
+      continue;
+    }
+    if (w.dizzyUntil) {
+      w.dizzyUntil = 0;
+      w.x = Math.round(w.landedAt);
+      w.landedAt = null;
+      // and if its hat came off, it is not going back to work bare-headed
+      if (!w.hatOff) { retask(w, w.type); continue; }
+    }
+    if (w.hatOff) {
+      const d = w.hatOff.x - w.x;
+      if (Math.abs(d) > P) {
+        w.face = Math.sign(d) || w.face || 1;
+        w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+        w.y = stand(w);
+        continue;
+      }
+      w.trained = w.hatOff.kind;
+      w.kitOf = w.hatOff.of;
+      w.hatOff = null;
+      retask(w, w.type);
+      continue;
+    }
     // and a body drifting down out of the sky, which is a body doing nothing
     // else until its feet are down -- see `floatDown`
     if (w.floating) { if (!floatDown(w)) continue; }

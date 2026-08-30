@@ -11,7 +11,7 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
-import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
+import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
@@ -26,7 +26,7 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers } from './crew.js';
+import { syncWorkers, drop as dropHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
@@ -643,6 +643,18 @@ export const muckSet = f => {
 // muck and no way at all to set what a body left, which meant the one condition
 // that tells the two apart -- a yard whose only remaining mess is poop, with
 // nobody to shovel it -- could not be built by a check.
+// Shake somebody, without a pointer. The browser suite waggles a real cursor,
+// which is the honest test of the gesture; this is for the yard checks, which
+// care about what a shaking DOES rather than about how it is performed.
+export const shake = (i = 0) => {
+  const w = S.workers[i];
+  if (!w) return null;
+  w.lifted = true;
+  w.shook = SHAKE_TURNS;                 // as if it had been waggled about
+  dropHeld(w);
+  return { hatOff: !!w.hatOff, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
+};
+
 export const poopSet = f => {
   const q = poopCols();
   for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;

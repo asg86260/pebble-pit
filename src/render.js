@@ -21,7 +21,8 @@ import { pitDepth, pitFull } from './pit.js';
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
-import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
+import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
+         FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
@@ -388,7 +389,7 @@ function drawCorona(hot) {
       // Brighter the more of the fire is uncovered: a crusted star throws a dull
       // corona and a stripped one blazes.
       ctx.fillStyle = tones[hot > 0.25 ? 0 : hot > 0.05 ? 1 : 2];
-      ctx.fillRect(x - P / 2, y - P / 2, P, P);   // about its middle, like every other mark
+      ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);   // about its middle
     }
   }
   ctx.globalAlpha = 1;
@@ -828,6 +829,47 @@ export function drawLab() {
 const MUCK_GREY = MUCK_TONE;
 const MUCK_EDGE = MUCK_SKIN;
 
+// Flies, and a wisp coming off it.
+//
+// Only over what a body left. The weather's muck is dirty and this is rotten,
+// and those are already told apart by being two different piles doing two
+// different jobs -- so the flies say which is which at a glance, from across the
+// yard, without anybody having to read a colour.
+//
+// Nothing is remembered between frames. A fly's whole life is a function of
+// which column it is over and what time it is, so there is no swarm to keep, no
+// list to add to when a body squats and none to prune when a janitor shovels:
+// the flies are over the poop because the poop is there, and they are gone in
+// the same frame it is. The column index seeds the phase so that neighbouring
+// columns are not one animation played side by side.
+function drawStink(from, to, poo) {
+  const t = now() / 1000;
+  ctx.fillStyle = '#000';
+  for (let c = from; c <= to; c++) {
+    const n = poo[c] || 0;
+    if (!n) continue;
+    const top = muckFloor(c) - n * P;
+    const seed = c * 2.399;                        // no two columns in step
+    for (let k = 0; k < (c % FLY_EVERY ? 0 : FLIES_PER); k++) {
+      const ph = seed + k * 2.1;
+      // Drawn on the lattice like everything else: a fly off the grid is a
+      // black speck that shimmers against the cells it crosses.
+      const fx = Math.round((c * P + Math.cos(t * FLY_BEAT + ph) * FLY_ORBIT) / P) * P;
+      const fy = Math.round((top - P * 2 + Math.sin(t * FLY_BEAT * 1.5 + ph) * P * 1.2) / P) * P;
+      ctx.fillRect(fx, fy, P, P);
+    }
+    // And a wisp off one column in three, climbing and fading. One per column
+    // was a curtain; the point is a suggestion of a smell, not a chimney.
+    if (c % STINK_EVERY) continue;
+    const age = (t + seed) % STINK_LIFE;
+    const wy = Math.round((top - P - age * STINK_RISE) / P) * P;
+    const wx = Math.round((c * P + Math.sin(t + seed) * P) / P) * P;
+    ctx.globalAlpha = 0.28 * (1 - age / STINK_LIFE);
+    ctx.fillRect(wx, wy, P, P);
+    ctx.globalAlpha = 1;
+  }
+}
+
 export function drawMuck() {
   const m = muckCols();
   if (!m.length) return;
@@ -870,6 +912,8 @@ export function drawMuck() {
     // depth of two reads as two rather than as one taller one
     skin.push(c * P, foot - n * P);
   }
+  // and the flies, over what a body left rather than over the whole layer
+  drawStink(from, to, poo);
   if (body.length) {
     ctx.fillStyle = MUCK_GREY;
     ctx.beginPath();
@@ -1924,6 +1968,9 @@ const WAVE_MS = 2400;              // how long one takes to walk out and go
 const WAVE_REACH = P * 6;          // and how far it gets
 const WAVE_ALPHA = 0.62;
 
+// Rounding that treats the two sides of nought alike. See the ring below.
+const evenly = v => Math.sign(v) * Math.round(Math.abs(v));
+
 function drawCoreGlow(cx, cy) {
   const t = now();
   // The middle, snapped once, and every cell of every ring measured from *it*.
@@ -1935,21 +1982,22 @@ function drawCoreGlow(cx, cy) {
   // one side than the other and the glow sat visibly off its own disc. Measured
   // out from a snapped middle, it is symmetrical by construction and still lands
   // on whole cells.
-  // Snapped to a cell *centre*, not a cell corner, and that is the whole of what
-  // was wrong with it. `fillRect(x, y, P, P)` takes a top-left, so measuring the
-  // ring out from a corner-snapped middle and then painting from that point hung
-  // the entire glow half a cell down and to the right of the disc it belongs to
-  // -- plus up to another half cell of drift, because a core that is not on a
-  // whole cell rounds harder on one side than the other. Half a cell on an
-  // eighteen-pixel core is a third of it, which is why it read as a glow using
-  // the sprite's bottom-right as its middle.
+  // The origin IS the centre of the circle. Not a cell corner, not the nearest
+  // cell centre -- the point the disc is drawn around.
   //
-  // A centre-snapped middle with each cell painted about its own centre lands on
-  // exactly the same lattice -- `x - P / 2` is `floor(cx / P) * P + k * P` --
-  // and is symmetrical by construction. It is the anchor `drawMark` has always
-  // used; the glow was the one thing measuring from the wrong kind of point.
-  const ox = Math.floor(cx / P) * P + P / 2;
-  const oy = Math.floor(cy / P) * P + P / 2;
+  // This has been wrong twice, in the same way both times: the ring was measured
+  // out from a *snapped* version of the middle, so it sat wherever the lattice
+  // fell rather than around the thing it belongs to. Snapping to a corner put it
+  // half a cell down and right; snapping to a cell centre fixed the systematic
+  // half-cell and left up to another half of drift, because a core does not sit
+  // on a whole cell -- it rolls, and you carry it about. Three pixels on an
+  // eighteen-pixel core is still visibly off its own disc.
+  //
+  // So nothing is snapped. Each cell is still a whole cell and still a whole
+  // cell's step from the next -- the shape is as square as it ever was -- but
+  // the point they are all measured from is `cx, cy` exactly, which makes the
+  // ring symmetric about the disc by construction at any position.
+  const ox = cx, oy = cy;
   for (let i = 0; i < WAVES; i++) {
     const k = ((t / WAVE_MS) + i / WAVES) % 1;
     const r = CORE_SIZE / 2 + k * WAVE_REACH;
@@ -1959,12 +2007,27 @@ function drawCoreGlow(cx, cy) {
     // one cell per cell of arc, and never the same cell twice: a ring drawn at
     // an even angle doubles up on the diagonals, and a cell painted twice at
     // half alpha is a cell at full alpha
-    const n = Math.max(8, Math.round((Math.PI * 2 * r) / P));
+    // An EVEN number of them, always.
+    //
+    // This is why the ring leaned. The angles sampled are `j/n` of a turn plus
+    // however far round the ring has spun; when n is even that set is closed
+    // under adding half a turn, so every cell has an exact opposite and the
+    // whole thing is symmetric about the middle wherever it has spun to. When n
+    // is odd nothing pairs up and the ring really is lopsided -- a different way
+    // each frame, which is how it looked.
+    const spokes = Math.max(8, Math.round((Math.PI * 2 * r) / P));
+    const n = spokes + (spokes % 2);
     const seen = new Set();
     for (let j = 0; j < n; j++) {
       const a = (j / n) * Math.PI * 2 + k * 0.8;      // and it turns as it goes
-      const x = ox + Math.round(Math.cos(a) * r / P) * P;
-      const y = oy + Math.round(Math.sin(a) * r / P) * P;
+      // Rounded away from nought rather than always upwards -- the other half
+      // of the lean. `Math.round` goes half-UP, so a cell wanted at plus a half
+      // lands on 1 and its mirror at minus a half lands on 0: the offset exists
+      // on one side and not on the other. `cell` is odd-symmetric, so
+      // `cell(-v) === -cell(v)` for every v and a pair of opposite spokes always
+      // produces a pair of opposite cells.
+      const x = ox + evenly(Math.cos(a) * r / P) * P;
+      const y = oy + evenly(Math.sin(a) * r / P) * P;
       // Nothing below the ground line -- what this reads as is heat coming off
       // the thing, and heat does not go down into the dirt. Unless the thing is
       // already down there, in which case the ground line is not a lid.
@@ -2307,6 +2370,17 @@ function drawOffers() {
     ctx.lineTo(at.x + P / 2 - w, at.y);          // left
     ctx.closePath();
     ctx.fill();
+  }
+}
+
+// A hat that has been shaken off somebody, lying where it fell until its owner
+// comes round and fetches it. Drawn on the ground rather than on a stand: it was
+// not put down, it came off.
+export function drawDroppedHats() {
+  for (const w of S.workers) {
+    if (!w.hatOff || w.hatOff.x == null) continue;
+    const g = Math.round(walkY(w.hatOff.x + WORKER / 2) + WORKER);
+    drawHat(w.hatOff.x, g, w.hatOff.kind);
   }
 }
 
@@ -2676,6 +2750,7 @@ export function draw() {
   drawCasinoMark();        // and which way the last hand at the table went
   drawOffers();            // and an arrow under whichever of them has something for you
   drawKitStands();                                // and the kit put out ready at each of them
+  drawDroppedHats();                              // and any that has been shaken off somebody
   drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch);   // who is working here, under the place they work
   drawIntro();             // the two of them, or whoever is under the rock
   drawWorkers();
