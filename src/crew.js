@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth } from './world.js';
@@ -1963,7 +1963,27 @@ export function updateWorkers(now, dt) {
         w.y = stand(w);
       } else {
         w.resting = true;
-        w.y = stand(w);
+        // Waiting for a mess is most of a janitor's day, so it is worth watching.
+        //
+        // It used to stand exactly on its post, rigid, until something got
+        // dropped -- and a body that never moves reads as a body the game has
+        // forgotten about. It gets what a stood-down miner gets, and a little
+        // more of it: the same slow shift of weight about the spot it stopped
+        // on, on its own phase, and now and then it wanders a few cells along
+        // and props itself up somewhere else. Somebody minding a shed, rather
+        // than somebody switched off beside one.
+        if (w.idleAt == null || now >= (w.propAt || 0)) {
+          // A new spot to lean on, a few cells either way and never off the
+          // shed's own ground.
+          w.idleAt = post + (Math.random() - 0.5) * P * 10;
+          w.propAt = now + JANITOR_PROP * (0.6 + Math.random() * 0.9);
+          w.face = Math.sign(w.idleAt - w.x) || w.face || 1;
+        }
+        const sway = now / 1000 * IDLE_BEAT + w.ph;
+        const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
+        const step = to - w.x;
+        w.x += Math.sign(step) * Math.min(commutePace() * frames() * 0.45, Math.abs(step));
+        w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
       }
       continue;
     }

@@ -2269,7 +2269,7 @@ const TESTS = [
     // you simply did not touch: the lab staffs itself the moment there is
     // research on and somebody going spare, so leaving the stepper alone is no
     // longer a way to keep it empty.
-    for (let i = 0; i < 8; i++) window.__assign('miners', 1);
+    for (let i = 0; i < 30 && state().idle > 0; i++) window.__assign('miners', 1);
     run(12);
     const empty = state();
 

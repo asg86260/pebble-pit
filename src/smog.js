@@ -863,6 +863,16 @@ const RAIN_FLOOR = 4;
 // stalling with a sky still overhead.
 const settled = m => !m.up && m.age >= SMOG_SINK;
 
+// ...and part of *this* shower.
+//
+// A shower rains the sky that was overhead when it broke, and no more. Without
+// that mark it rained whatever happened to be up there at the time, so every
+// mote that climbed into the band during a downpour was taken straight back down
+// again -- and the works went on fouling all the way through, so the shower fed
+// on its own smoke and ran far longer than there was sky to justify. New haze
+// arriving belongs to the next one.
+const doomed = m => settled(m) && m.rain === S.rains;
+
 function pour(secs) {
   if (!SKY.length) { S.raining = false; return; }
 
@@ -885,7 +895,7 @@ function pour(secs) {
   // pick has to cost nothing. Taken by swapping the chosen one out of the back
   // of the list, which is a pick without a search.
   const pick = [];
-  for (let i = 0; i < SKY.length; i++) if (settled(SKY[i])) pick.push(i);
+  for (let i = 0; i < SKY.length; i++) if (doomed(SKY[i])) pick.push(i);
   // Nothing settled left, and what is left is still climbing. A shower does not
   // reach down the plume and pull specks back out of it -- it is over, and what
   // is on its way up belongs to the next one.
@@ -917,7 +927,8 @@ function pour(secs) {
   // frame would start another shower with nothing to pour -- on and off, every
   // frame, for ever, which is what a haze that never comes back looks like from
   // the outside.
-  if (!SKY.some(settled)) S.raining = false;
+  // Over when the sky it broke on is gone, whatever has arrived since.
+  if (!SKY.some(doomed)) S.raining = false;
 }
 
 function stepDrops() {
@@ -1348,7 +1359,13 @@ export function stepSmog(dt) {
   reckon();
   // A shower starts over from the first spot every time -- the ramp is a fact
   // about this one, not a clock that carries on between them.
-  if (S.haze >= SMOG_RAIN_AT && !raining()) { S.raining = true; S.rains++; S.rainFor = 0; }
+  if (S.haze >= SMOG_RAIN_AT && !raining()) {
+    S.raining = true; S.rains++; S.rainFor = 0;
+    // Everything settled up there right now belongs to this shower. Anything
+    // that arrives after this frame does not, and will still be there when it
+    // stops -- which is what a sky that keeps being dirtied ought to look like.
+    for (const m of SKY) if (settled(m)) m.rain = S.rains;
+  }
   if (raining()) pour(secs);
   place(secs);
   stepDrops();

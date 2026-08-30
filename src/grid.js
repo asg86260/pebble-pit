@@ -99,13 +99,50 @@ export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 // and a single thing that is not dust lies where it was dropped.
 export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   let col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
-  const full = c => at(b, c, b.rows - 1) || (skip && skip(c)) ||
-                    (!free && !roomFor(b, c, topRow(b, c) + 1));
+  // Two different reasons a column will not take a grain, and they want two
+  // different answers.
+  //
+  // **Barred** is not ground at all: under the rock, over the mouth of the hole,
+  // over the mouth of the cut. A grain aimed there has to go somewhere, and how
+  // far it has to walk to find ground is however wide the thing in the way is --
+  // the rock is forty cells across. So that search stays unbounded.
+  //
+  // **Heaped** is ground that has simply reached its ceiling. That search used
+  // to be unbounded too, and it is where dust was teleporting from: a grain
+  // landing on a full patch of bare yard walked outward until it found room,
+  // which was usually the nearest station's strip, a hundred cells away. The
+  // spout paid out and the grain appeared in the farm's heap.
+  //
+  // A grain rolling off the shoulder of a heap onto the next column is a thing
+  // that happens. Travelling the length of the yard to find a hole is not, and
+  // it is worse than losing the grain, because it puts dust somewhere nobody
+  // carried it. So it looks a few cells either side and then gives up.
+  const barred = c => at(b, c, b.rows - 1) || (skip && skip(c));
+  const full = c => barred(c) || (!free && !roomFor(b, c, topRow(b, c) + 1));
   if (full(col)) {
+    // ...and it may not cross out of the ground it landed on.
+    //
+    // Distance was the wrong rule to reach for. A heap is *meant* to spread: a
+    // load tipped at the lip fills the hole end to end, and the scrubbing house's
+    // chute pays out along its own strip until the strip is full. What was
+    // actually wrong is that a grain could spread out of one kind of ground and
+    // into another -- land on a full patch of bare yard, walk outward looking for
+    // room, and come to rest in the nearest station's heap a hundred cells away.
+    // The spout paid out and the dust appeared somewhere nobody had carried it.
+    //
+    // So it spreads as far as it likes inside the strip it is in, or along the
+    // bare ground it is on, and never from one into the other. See `floor.region`.
+    //
+    // Barred ground is the exception and stays exempt: under the rock, over the
+    // mouth of the hole, over the mouth of the cut. That is not ground at all, a
+    // grain aimed there has to go *somewhere*, and how far it must walk is
+    // however wide the thing in the way is.
+    const from = barred(col) || !b.region ? null : b.region(col);
+    const ok = c => !full(c) && (from === null || b.region(c) === from);
     let alt = -1;
     for (let d = 1; d < b.cols; d++) {
-      if (col - d >= 0 && !full(col - d)) { alt = col - d; break; }
-      if (col + d < b.cols && !full(col + d)) { alt = col + d; break; }
+      if (col - d >= 0 && ok(col - d)) { alt = col - d; break; }
+      if (col + d < b.cols && ok(col + d)) { alt = col + d; break; }
     }
     col = alt;
   }

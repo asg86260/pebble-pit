@@ -446,6 +446,20 @@ export function resize(after) {
   S.worldH = S.groundY + PIT_H + FLOOR_MARGIN;
 
   floor.x = 0;
+  // Which ground a column belongs to: a station's strip, by name, or `null` for
+  // the bare yard between them.
+  //
+  // It is what stops dust teleporting. A grain landing on full ground looks for
+  // room, and it used to look everywhere -- so a grain dropped on a full patch of
+  // bare yard walked outward until it found space, which was usually the nearest
+  // station's heap a hundred cells away. The spout paid out and the dust appeared
+  // somewhere nobody had carried it. A heap may still spread the whole length of
+  // itself; it simply may not spread into somebody else's.
+  floor.region = c => {
+    const x = floor.x + c * P;
+    for (const p of S.piles) if (x >= p.from && x < p.to) return p.key;
+    return null;
+  };
   floor.cols = Math.ceil(S.worldW / P);
   floor.y = S.groundY - floor.rows * P;
 
