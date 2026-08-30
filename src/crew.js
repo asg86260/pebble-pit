@@ -34,6 +34,7 @@ import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf, askLever, asked, LEVER_W, LEVER_H } from './machines.js';
+import { rand } from './rng.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -219,12 +220,12 @@ export const homeCount = () => S.workers.filter(atHome).length;
 function newMiner() {
   return {
     type: 'miner', next: 0, lunge: 0,
-    x: rockLeft() + Math.random() * S.gw * P, y: S.cy,
-    dir: Math.random() < 0.5 ? -1 : 1,
-    ph: Math.random() * Math.PI * 2,        // where in its wobble it starts
-    sp: 0.5 + Math.random() * 0.9,          // how fast it sways
-    wob: 0.05 + Math.random() * 0.10,       // how far it drifts round its seat
-    rw: 0.4 + Math.random() * 0.9           // how much it drifts in and out
+    x: rockLeft() + rand() * S.gw * P, y: S.cy,
+    dir: rand() < 0.5 ? -1 : 1,
+    ph: rand() * Math.PI * 2,        // where in its wobble it starts
+    sp: 0.5 + rand() * 0.9,          // how fast it sways
+    wob: 0.05 + rand() * 0.10,       // how far it drifts round its seat
+    rw: 0.4 + rand() * 0.9           // how much it drifts in and out
   };
 }
 
@@ -242,8 +243,8 @@ function newHauler() {
     // length of time is a marching band, not a yard at rest -- and it is the
     // same trick every other job here already uses to stop a gang reading as one
     // animation played six times.
-    amble: 0.7 + Math.random() * 0.6,
-    linger: 0.6 + Math.random() * 1.3
+    amble: 0.7 + rand() * 0.6,
+    linger: 0.6 + rand() * 1.3
   };
 }
 
@@ -274,7 +275,7 @@ function newName() {
   const taken = new Set(S.workers.map(w => w.name));
   const free = NAMES.filter(n => !taken.has(n));
   const from = free.length ? free : NAMES;
-  return from[Math.floor(Math.random() * from.length)];
+  return from[Math.floor(rand() * from.length)];
 }
 
 // The record a body keeps. `lived` is counted up rather than measured from a
@@ -351,8 +352,8 @@ const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
 // before the guard is ever reached. An old save should cost you one body, not the
 // whole load.
 export const FACTORY = type => ({
-  ph: Math.random() * Math.PI * 2,
-  sp: 0.5 + Math.random() * 0.9,
+  ph: rand() * Math.PI * 2,
+  sp: 0.5 + rand() * 0.9,
   ...(MAKE[type]?.() || {})
 });
 
@@ -484,7 +485,7 @@ function downTheHole(w, to, dt) {
       if (t >= (w.sweepAt || 0)) {
         sweepMuckAt(w.x + WORKER / 2, 1, w);
         w.lunge = 1;
-        w.sweepAt = t + swingFor(w) * (0.85 + Math.random() * 0.3);
+        w.sweepAt = t + swingFor(w) * (0.85 + rand() * 0.3);
       }
     }
     w.y = pitStand(w.x) - WORKER;
@@ -549,7 +550,7 @@ function relieve(w, now) {
   // at a random point of its first cycle breaks them apart on the first pass and
   // the wander keeps them apart after that.
   if (!w.looAt) {
-    w.looAt = now + LOO_EVERY * Math.random();
+    w.looAt = now + LOO_EVERY * rand();
     return false;
   }
   // Nobody waits longer than the interval itself. A body is handed its hour when
@@ -557,7 +558,7 @@ function relieve(w, now) {
   // otherwise do nothing at all until every body already standing there had
   // waited out the old one -- which for a ten-minute default is most of a
   // session of watching nothing happen and concluding the knob is broken.
-  if (w.looAt > now + LOO_EVERY) w.looAt = now + LOO_EVERY * Math.random();
+  if (w.looAt > now + LOO_EVERY) w.looAt = now + LOO_EVERY * rand();
 
   if (w.looUntil) {                        // mid-way through: it is not doing anything else
     if (now < w.looUntil) { w.lunge = 0; return true; }
@@ -565,7 +566,7 @@ function relieve(w, now) {
     dropMuckAt(w.x + WORKER / 2, LOO_MUCK, 'poop');
     w.looUntil = 0;
     w.say = null;
-    w.looAt = now + LOO_EVERY * (1 + (Math.random() - 0.5) * 2 * LOO_SPREAD);
+    w.looAt = now + LOO_EVERY * (1 + (rand() - 0.5) * 2 * LOO_SPREAD);
     return true;                           // one last frame of standing, then back to it
   }
 
@@ -692,32 +693,32 @@ function jig(w, now, zone) {
   // a mark to dance around, taken once, so the gang spread out instead of
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
-    w.jigAt = w.x + (Math.random() - 0.5) * JIG_SPREAD * 2;
-    w.move = MOVE_KEYS[Math.floor(Math.random() * MOVE_KEYS.length)];
+    w.jigAt = w.x + (rand() - 0.5) * JIG_SPREAD * 2;
+    w.move = MOVE_KEYS[Math.floor(rand() * MOVE_KEYS.length)];
     w.moveFrom = w.x;
     w.moveTil = 0;
-    w.jigDir = Math.random() < 0.5 ? -1 : 1;
+    w.jigDir = rand() < 0.5 ? -1 : 1;
     // Where in the beat this body is. The gang on the rock are dealt a slot
     // each and used to take it from that, which is fine until somebody who has
     // never been on the rock joins in: a hauler has no slot, and an undefined
     // one turned the whole hop into NaN and parked the body off the top of the
     // world. Anybody can dance now, so the offset belongs to the dance.
-    w.jigPh = Math.random() * 2;
+    w.jigPh = rand() * 2;
   }
   // a new move every couple of beats, and never the one it is already doing
   if (now >= w.moveTil) {
     const other = MOVE_KEYS.filter(m => m !== w.move);
-    w.move = other[Math.floor(Math.random() * other.length)];
+    w.move = other[Math.floor(rand() * other.length)];
     // Where it starts this one from. A move that works around a fixed point --
     // the spin -- wants that point to be where the body actually is, or the
     // first frame of it drags the body back to wherever the patch was centred.
     w.moveFrom = w.x;
-    w.moveTil = now + (1400 + Math.random() * 1200);
+    w.moveTil = now + (1400 + rand() * 1200);
     w.jigDir = -w.jigDir;
     // and something over its head, now and then rather than every time: five
     // bodies all shouting at once is noise
-    if (Math.random() < 0.5)
-      w.say = { mark: Math.random() < 0.5 ? 'note' : 'burst', until: now + 900 };
+    if (rand() < 0.5)
+      w.say = { mark: rand() < 0.5 ? 'note' : 'burst', until: now + 900 };
   }
   if (w.say && now >= w.say.until) w.say = null;
 
@@ -1722,7 +1723,7 @@ function strollTo(w) {
   const add = (weight, x) => { if (x != null) for (let i = 0; i < weight; i++) spots.push(x); }
 
   // a few steps, and nothing more: most of what waiting looks like
-  add(5, w.x + (Math.random() - 0.5) * ROAM_RANGE);
+  add(5, w.x + (rand() - 0.5) * ROAM_RANGE);
   // over to somebody, and stopping beside them rather than on them
   const mate = nearIdle(w);
   add(4, mate ? mate.x + Math.sign(w.x - mate.x) * ROAM_ELBOW : null);
@@ -1731,7 +1732,7 @@ function strollTo(w) {
   add(2, pit.x - WORKER * 3);
 
   const lo = yardLeft(), hi = pit.x - WORKER;
-  return Math.max(lo, Math.min(hi, spots[Math.floor(Math.random() * spots.length)]));
+  return Math.max(lo, Math.min(hi, spots[Math.floor(rand() * spots.length)]));
 }
 
 // Nobody stands inside anybody. Two idlers who end up on the same spot drift
@@ -1999,7 +2000,7 @@ export function updateWorkers(now, dt) {
       if (now >= (w.sweepAt || 0)) {
         sweepMuckAt(w.x + WORKER / 2, 1, w);
         w.lunge = 1;
-        w.sweepAt = now + swingFor(w) * (0.85 + Math.random() * 0.3);
+        w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
       }
       // and not shoulder to shoulder with the next one. A yard under muck
       // has something to shovel wherever you stand, so a gang that arrived
@@ -2211,7 +2212,7 @@ export function updateWorkers(now, dt) {
         knockOff(w.x + WORKER / 2, surf + P / 2, bite);
         w.mined = (w.mined || 0) + bite;
         w.lunge = 1;
-        w.next = now + minerMs() * (0.85 + Math.random() * 0.3);    // never quite in time
+        w.next = now + minerMs() * (0.85 + rand() * 0.3);    // never quite in time
       }
       continue;
     }
@@ -2271,8 +2272,8 @@ export function updateWorkers(now, dt) {
         if (w.idleAt == null || now >= (w.propAt || 0)) {
           // A new spot to lean on, a few cells either way and never off the
           // shed's own ground.
-          w.idleAt = post + (Math.random() - 0.5) * P * 10;
-          w.propAt = now + JANITOR_PROP * (0.6 + Math.random() * 0.9);
+          w.idleAt = post + (rand() - 0.5) * P * 10;
+          w.propAt = now + JANITOR_PROP * (0.6 + rand() * 0.9);
           w.face = Math.sign(w.idleAt - w.x) || w.face || 1;
         }
         const sway = now / 1000 * IDLE_BEAT + w.ph;
@@ -2599,7 +2600,7 @@ export function updateWorkers(now, dt) {
       // in. After a good while of it -- staggered, so they trickle off rather
       // than clocking out together -- a body goes home. It is not a rate and it
       // costs nothing: every one of them is back the moment there is work.
-      if (!w.idleSince) w.idleSince = now + HOME_AFTER * (0.6 + Math.random() * 0.9);
+      if (!w.idleSince) w.idleSince = now + HOME_AFTER * (0.6 + rand() * 0.9);
       if (!w.brk && now >= w.idleSince) { w.goal = 'home'; w.roamTo = null; continue; }
       // Stood still between strolls is the one moment a hauler is properly
       // stopped, and it is the only moment it is allowed a break: a body
@@ -2619,7 +2620,7 @@ export function updateWorkers(now, dt) {
         if (Math.abs(d) < 1) {
           w.roamTo = null;
           // and its own patience about standing there afterwards
-          w.restUntil = now + (500 + Math.random() * 3000) * (w.linger || 1);
+          w.restUntil = now + (500 + rand() * 3000) * (w.linger || 1);
         }
       }
     }

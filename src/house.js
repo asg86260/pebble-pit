@@ -21,6 +21,7 @@ import { P, ROCK_CLEAR, HOUSE_TO, HOUSE_CUBE, HOUSE_COLS, HOUSE_FLIP_MS, HOUSE_S
 import { S, bench } from './state.js';
 import { puff } from './puff.js';
 import { rockLeft } from './world.js';
+import { rand } from './rng.js';
 
 // The middle of the plot, and it never moves. The rock grows leftwards into
 // this ground as the game goes on, so what the block has to fit is the room
@@ -186,7 +187,7 @@ export function stepHouse(now) {
   // empty house is the building claiming somebody is in when the windows say
   // otherwise, and the two have to agree or neither is worth looking at.
   if (!at || !homeCount() || now < S.houseSmokeAt) return;
-  S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + Math.random() * 0.8);
+  S.houseSmokeAt = now + HOUSE_PUFF_MS * (0.6 + rand() * 0.8);
   // Marked as the crew's, because the lab's chimney means something specific --
   // that research is being worked on -- and a check reads it. Two chimneys, one
   // list, and only one of them is a signal.

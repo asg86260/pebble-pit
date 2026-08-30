@@ -20,6 +20,7 @@ import { S } from './state.js';
 import { frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
+import { rand } from './rng.js';
 
 const BIRD_TAIL = P * 90;    // how far off either side of the view a lot may stretch
 
@@ -47,23 +48,23 @@ function band() {
 
 function inBand() {
   const { top, low } = band();
-  return top + Math.random() * (low - top);
+  return top + rand() * (low - top);
 }
 
 // A cloud is a few flat bars stacked and stepped in, which is all a cloud has to
 // be in a game drawn out of cells. Widest at the bottom, narrowing upwards, and
 // never symmetrical.
 function makeCloud(x) {
-  const w = 10 + Math.floor(Math.random() * 12);
+  const w = 10 + Math.floor(rand() * 12);
   const bars = [];
   let a = 0, b = w;
   for (let r = 0; r < 4; r++) {
     bars.push({ a, b, r });
-    a += 1 + Math.floor(Math.random() * 3);
-    b -= 1 + Math.floor(Math.random() * 3);
+    a += 1 + Math.floor(rand() * 3);
+    b -= 1 + Math.floor(rand() * 3);
     if (b - a < 3) break;
   }
-  const far = 0.14 + Math.random() * 0.22;
+  const far = 0.14 + rand() * 0.22;
   return { x, y: inBand(), w, bars, far, vx: CLOUD_DRIFT * (0.5 + far) };
 }
 
@@ -81,7 +82,7 @@ export function seedWeather() {
   if (!CLOUDS_ON) return;
   for (let i = 0; i < CLOUDS_WANTED; i++) {
     const c = makeCloud(0);
-    c.x = S.camX * c.far + (i + Math.random()) * (S.viewW / CLOUDS_WANTED) - c.w * P;
+    c.x = S.camX * c.far + (i + rand()) * (S.viewW / CLOUDS_WANTED) - c.w * P;
     CLOUDS.push(c);
   }
 }
@@ -108,7 +109,7 @@ export function stepWeather(now) {
   if (!nextBirds) nextBirds = now + BIRD_GAP / 2;
   if (now >= nextBirds) {
     sendBirds();
-    nextBirds = now + BIRD_GAP * (0.6 + Math.random() * 0.8);
+    nextBirds = now + BIRD_GAP * (0.6 + rand() * 0.8);
   }
   for (let i = BIRDS.length - 1; i >= 0; i--) {
     const b = BIRDS[i];
@@ -145,21 +146,21 @@ export function skyReport() {
 // A few birds, strung out rather than in a formation: same heading, each a
 // little behind and a little off the last.
 export function sendBirds() {
-  const dir = Math.random() < 0.5 ? 1 : -1;
-  const far = 0.35 + Math.random() * 0.3;
+  const dir = rand() < 0.5 ? 1 : -1;
+  const far = 0.35 + rand() * 0.3;
   const y = inBand();
-  const speed = BIRD_SPEED * (0.7 + Math.random() * 0.6) * dir;
+  const speed = BIRD_SPEED * (0.7 + rand() * 0.6) * dir;
   const from = dir > 0 ? -P * 8 : S.viewW + P * 8;
-  const n = 2 + Math.floor(Math.random() * (BIRD_FLOCK - 1));
+  const n = 2 + Math.floor(rand() * (BIRD_FLOCK - 1));
   for (let i = 0; i < n; i++) {
     BIRDS.push({
-      x: S.camX * far + from - dir * i * (P * 6 + Math.random() * P * 8),
-      y: y + (Math.random() - 0.5) * P * 6,
+      x: S.camX * far + from - dir * i * (P * 6 + rand() * P * 8),
+      y: y + (rand() - 0.5) * P * 6,
       vx: speed,
       far,
-      sway: Math.random() * 1000,
-      flap: Math.random() * 10,
-      beat: 0.12 + Math.random() * 0.06
+      sway: rand() * 1000,
+      flap: rand() * 10,
+      beat: 0.12 + rand() * 0.06
     });
   }
 }
@@ -184,7 +185,7 @@ export function startle(wx, wy) {
       // fall down the one line, and gravity does the rest
       // the two palest shades, and never 0: a cell of 0 is an empty one, and a
       // grain spawned as one lands nowhere and is counted as nothing
-      spawnChip(from, b.y, bell() * 0.3, 0, 1 + Math.floor(Math.random() * 2));
+      spawnChip(from, b.y, bell() * 0.3, 0, 1 + Math.floor(rand() * 2));
     }
 
     BIRDS.splice(i, 1);

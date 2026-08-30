@@ -23,13 +23,35 @@ export const runUntil = (done, limit = 60) => yard.until(done, limit);
 // shape the browser suite uses, so a group carries its words across unchanged.
 export const ok = (cond, what, detail = '') => ({ pass: !!cond, what, detail });
 
+// The seed every group in a file starts from.
+//
+// The yard's chance comes out of one generator now (src/rng.js), and on load it
+// is seeded from the clock, so a check that runs a busy yard for thirty seconds
+// used to be looking at a different yard every run. That is what the wide
+// tolerance bands in these files were buying, and what the three checks that
+// failed under load and passed on the retry were paying for: a failure you
+// cannot run again is a failure you cannot bisect.
+//
+// So every group starts from a known number. It is one constant per *file* --
+// each file is its own node process with its own yard, so the same constant is
+// a different run in each of them -- and a group that fails can be run again
+// and fail the same way. There is nothing special about the number itself; it
+// is only a name for a run. A file that wants its own may pass one to `group`.
+export const SEED = 20250830;
+
 // One group of checks, run out of a fresh game. The whole group runs before
 // anything is reported, so a group of six failing checks says six things rather
 // than the first one and nothing else -- which is what the browser suite does
 // and what makes a failure worth reading.
-export function group(name, fn) {
+//
+// The reset is `__seed` rather than `__reset`: seeding and clearing are one act
+// (see `seedGame` in hooks.js), because a seed handed to a yard that is already
+// standing gives a run that is half one seed and half another and cannot be had
+// again. So the group starts from the seed, and the seed is where the run
+// starts.
+export function group(name, fn, seed = SEED) {
   test(name, async () => {
-    yard.reset();
+    window.__seed(seed);
     const checks = (await fn()) || [];
     const bad = checks.filter(c => !c.pass);
     assert.equal(bad.length, 0,

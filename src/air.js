@@ -19,6 +19,7 @@ import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now, frames } from './clock.js';
 import { windAt, give } from './wind.js';
+import { rand } from './rng.js';
 
 export const AIR = [];
 
@@ -36,7 +37,7 @@ export function seedAir() {
 
 // which band a new mote belongs to, by the share each one is meant to hold
 function pickBand() {
-  let r = Math.random();
+  let r = rand();
   for (const b of AIR_BANDS) { r -= b.share; if (r <= 0) return b; }
   return AIR_BANDS[AIR_BANDS.length - 1];
 }
@@ -70,10 +71,10 @@ function offAWalker() {
   const crew = S.workers;
   if (!crew.length) return null;
   for (let tries = 0; tries < 6; tries++) {
-    const w = crew[Math.floor(Math.random() * crew.length)];
+    const w = crew[Math.floor(rand() * crew.length)];
     const was = wasAt.get(w);
     if (was === undefined || Math.abs(w.x - was) < 0.3) continue;   // standing still: no dust
-    const x = (w.x + Math.random() * WORKER - S.camX) * S.zoom;
+    const x = (w.x + rand() * WORKER - S.camX) * S.zoom;
     const y = (w.y + WORKER - S.camY) * S.zoom - 2;   // just clear of the boots
     if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
     return { x, y };
@@ -89,12 +90,12 @@ function rememberWalkers() {
 // a spot just above the dust in a random column of a pile, in screen pixels, or
 // null if there is nothing lying about within the window
 function offAPile() {
-  const b = Math.random() < 0.5 ? floor : pit;
+  const b = rand() < 0.5 ? floor : pit;
   for (let tries = 0; tries < 12; tries++) {
-    const c = Math.floor(Math.random() * b.cols);
+    const c = Math.floor(rand() * b.cols);
     if (!at(b, c, 0)) continue;
     if (b === floor && blocked(c)) continue;
-    const x = (b.x + c * b.p + Math.random() * b.p - S.camX) * S.zoom;
+    const x = (b.x + c * b.p + rand() * b.p - S.camX) * S.zoom;
     const y = (surfaceY(b, c) - P - S.camY) * S.zoom;
     if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) continue;
     return { x, y };
@@ -131,9 +132,9 @@ function offASite() {
   if (S.quarryOpen) open.push(quarry);
   if (S.farmOpen) open.push(farm);
   if (!open.length) return null;
-  const site = open[Math.floor(Math.random() * open.length)];
-  const x = (site.x + Math.random() * site.w - S.camX) * S.zoom;
-  const y = (S.groundY - Math.random() * AIR_SITE_UP - S.camY) * S.zoom;
+  const site = open[Math.floor(rand() * open.length)];
+  const x = (site.x + rand() * site.w - S.camX) * S.zoom;
+  const y = (S.groundY - rand() * AIR_SITE_UP - S.camY) * S.zoom;
   if (x < -MARGIN || x > S.W + MARGIN || y < -MARGIN || y > S.H + MARGIN) return null;
   return { x, y };
 }
@@ -148,35 +149,35 @@ function place(m, anywhere) {
   // sitting there, and dust at somebody's feet is the one bit of the air that
   // is plainly caused by something you are watching
   const from = anywhere ? null
-             : (Math.random() < AIR_SITE ? offASite() : null)
+             : (rand() < AIR_SITE ? offASite() : null)
                || offAWalker() || (S.dustSeen > 20 ? offAPile() : null);
   if (from) { m.x = from.x; m.y = from.y; m.kind = kindAt(m.x); return m; }
 
-  m.x = Math.random() * S.W;
+  m.x = rand() * S.W;
   m.kind = kindAt(m.x);
-  if (anywhere && Math.random() > AIR_LOW) { m.y = Math.random() * S.H; return m; }
+  if (anywhere && rand() > AIR_LOW) { m.y = rand() * S.H; return m; }
 
   // low: in the band of air just over the ground, clamped to the window so a
   // ground line scrolled off the bottom does not take the whole field with it
   const g = Math.min(Math.max(groundOnScreen(), 0), S.H);
-  m.y = g - Math.random() * AIR_LOW_BAND * S.zoom;
-  if (m.y < 0 || m.y > S.H) m.y = Math.random() * S.H;
+  m.y = g - rand() * AIR_LOW_BAND * S.zoom;
+  if (m.y < 0 || m.y > S.H) m.y = rand() * S.H;
   return m;
 }
 
 function born(anywhere) {
   const b = pickBand();
-  const grit = Math.random() < AIR_GRIT;
+  const grit = rand() < AIR_GRIT;
   return place({
     b,
     grit,                                        // heavier: it sinks instead of climbing
-    vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + Math.random() * 0.8),
+    vy: (grit ? AIR_SINK : -AIR_RISE) * b.pace * (0.6 + rand() * 0.8),
     // How much of the wind this one takes, fixed for its life. A fifth either
     // way, and less again if it is grit, which is heavy. It used to be a phase
     // and a period -- its own cosine, its own beat -- and that is what made the
     // field look shaken rather than blown: a mote leaning the opposite way to
     // the one beside it says there is no wind, whatever else is going on.
-    lean: give(Math.random(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
+    lean: give(rand(), AIR_GIVE) * (grit ? AIR_GRIT_LEAN : 1)
   }, anywhere);
 }
 
@@ -200,7 +201,7 @@ export function stepAir() {
   // the air thickens and thins a mote at a time, so a pile being carried away
   // does not put a hole in the sky
   if (AIR.length < want) AIR.push(born(false));
-  else if (AIR.length > want + 8) AIR.splice(Math.floor(Math.random() * AIR.length), 1);
+  else if (AIR.length > want + 8) AIR.splice(Math.floor(rand() * AIR.length), 1);
 
   // Everything below is written as pixels a frame, so it is stepped by however
   // long this frame was -- and the easing, being a proportion of what is left

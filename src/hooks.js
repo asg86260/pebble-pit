@@ -14,9 +14,9 @@
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
-import { S, floor, pit } from './state.js';
+import { S, BLANK, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
-import { blocked, resite, clampCam, benches, plotCount, rockLeft } from './world.js';
+import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
@@ -44,8 +44,9 @@ import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
-import { advance } from './clock.js';
-import { step } from './game.js';
+import { advance, restart as restartClock } from './clock.js';
+import { step, settleIntoWorld } from './game.js';
+import { rand, seedRng, seed } from './rng.js';
 
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
@@ -356,6 +357,33 @@ export const abandon = () => { S.research = null; buildShop(); S.dirty = true; }
 // every check in the suite is five seconds of nothing being checked.
 export const newGame = (intro = false) => { resetGame(); if (!intro) skipIntro(); };
 
+// Say which run this is, and start it.
+//
+// A seed is a fact about a whole run, not a setting you can change halfway
+// through one: the yard already standing when the seed arrives was built out of
+// the old chance, so seeding without clearing it gives a game that is half one
+// run and half another, and asking for the same seed again does not give it
+// back. So this does both, always, and there is deliberately no way to do only
+// the first. Hand it a number, get a yard that will do exactly what it did the
+// last time that number was handed over.
+// What it does is boot the game again, in the order the page boots it: the
+// chance from the seed, the clock from nothing, the yard back to what state.js
+// declares (see `BLANK` there -- `reset` alone leaves a dozen fields of the last
+// run behind, which is invisible in play and fatal to a repeat), the world laid
+// out over it, and then the new game. The weather is part of laying the world
+// out, and has to be: the drifting field of motes remembers which camera it last
+// slid from, so a field left over from the last run wraps end to end on the
+// first frame of this one and a hundred and fifty draws go by that did not go by
+// before.
+export const seedGame = n => {
+  seedRng(n);
+  restartClock();
+  for (const k of Object.keys(BLANK)) S[k] = structuredClone(BLANK[k]);
+  resize(settleIntoWorld);
+  newGame();
+  return seed();
+};
+
 // dev: come back to the game the way a page refresh does -- write what is here,
 // then read it back into an empty yard. Nothing else in the checks can tell the
 // difference between a reload and this.
@@ -550,7 +578,7 @@ const countRock = () => S.boulder.flat().reduce((a, b) => a + b, 0);
 // through it.
 export const tuneOne = (key, v) => tune(key, v);
 
-export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + Math.random() * 40, shade); };
+export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.x + rand() * 40, shade); };
 
 // dev: hand over dust, and dig the room to hold it. The hole turns dust away
 // when it is full, which is the game working -- but a check that wants two
@@ -567,7 +595,7 @@ export const tip = (n, shade = 4) => { for (let i = 0; i < n; i++) bankDust(pit.
 export const give = (n, shade = 4) => {
   let got = 0, col = 0;
   for (let i = 0; i < n; i++) {
-    if (bankDust(pit.x + Math.random() * pit.w, shade)) { got++; continue; }
+    if (bankDust(pit.x + rand() * pit.w, shade)) { got++; continue; }
     let placed = false, tried = 0;
     while (!placed && tried++ < pit.cols) {
       placed = bankDust(pit.x + col * pit.p, shade);
@@ -720,7 +748,7 @@ export const HANDLES = {
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __air: setAir, __coldSky: coldSky,
   __toss: toss, __take: takeFromPile, __place: placeBody,
-  __abandon: abandon, __reset: newGame, __reload: reload,
+  __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __machine: machineSet, __fullSites: fullSites,
   __lever: lever, __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection, __clickLever: clickLever,

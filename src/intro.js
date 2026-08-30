@@ -35,6 +35,7 @@ import { spawnChip, aim } from './dust.js';
 import { walkY, setZoom, clampCam } from './world.js';
 import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
+import { rand } from './rng.js';
 
 // Where the two of them stand: either side of the spot the rock is about to
 // land on, which is the middle of the yard and the middle of the game. The one
@@ -219,7 +220,7 @@ function talking(t) {
     if (heart) S.introHeart = t;
     who.say = heart
       ? { mark: 'heart', until: t + INTRO_BEAT * 1.6 }
-      : { mark: 'dots', n: 1 + Math.floor(Math.random() * 3), until: t + INTRO_BEAT * 0.9 };
+      : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
     for (const b of S.pair) b.turn = b !== who;
   }
 
@@ -444,6 +445,6 @@ export function stepBuried(t) {
   if (!buriedVisible()) { S.buriedSay = null; return; }
   if (S.buriedSay && t < S.buriedSay.until) return;
   S.buriedSay = t < (S.buriedSayAt || 0) ? null
-    : { mark: 'dots', n: 1 + Math.floor(Math.random() * 3), until: t + INTRO_BEAT * 0.9 };
+    : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
   if (S.buriedSay) S.buriedSayAt = t + INTRO_BEAT * 1.6;
 }

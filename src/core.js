@@ -13,6 +13,7 @@ import { boulderAlive, makeBoulder } from './rock.js';
 import { rockLeft } from './world.js';
 import { now } from './clock.js';
 import { introHolds } from './intro.js';
+import { rand } from './rng.js';
 
 // The core sits at the *foot* of the rock and only comes loose when it is bare.
 //
@@ -34,7 +35,7 @@ export function dropCore() {
   // Thrown clear of the rock, out over its own spoil. The next rock stands where
   // the last one did, so a core that settled in its footprint would be one you
   // could not pick up -- it is aimed past the edge rather than left to roll.
-  const land = rockEdge(1) + P * 3 + Math.random() * P * 8;
+  const land = rockEdge(1) + P * 3 + rand() * P * 8;
   const v = aim(h.x, h.y, land, CORE_SIZE);
   S.coreItem = { x: h.x, y: h.y, vx: v.vx, vy: v.vy, rest: false };
 }
@@ -45,7 +46,7 @@ export function dropCore() {
 // lost: the caller leaves it lying where it is until there is somewhere to put
 // it, which is a hole you have to dig rather than a core you dropped.
 export function bankCore(x) {
-  const at = (x ?? pit.x + pit.w / 2) + (Math.random() - 0.5) * P * 10;
+  const at = (x ?? pit.x + pit.w / 2) + (rand() - 0.5) * P * 10;
   if (!addGrain(pit, Math.max(pit.x, Math.min(pit.x + pit.w - P, at)), null, CORE_CELL)) return false;
   S.cores++;
   S.seenCore = true;

@@ -39,6 +39,7 @@ import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
 import { spend, bankDust, takeCoreCells, pitRoom } from './pit.js';
 import { buildShop } from './shop.js';
+import { rand } from './rng.js';
 
 // What is on the table right now, and nothing about it moves on its own: a pot
 // is what the last spin left, until the next one.
@@ -140,8 +141,8 @@ function payOutStep(dt) {
       // Not a ballistic lob: the hole is three thousand pixels away and the arc
       // that gets there under gravity is one that leaves the sky. This is a
       // thrown line with a hump in it, which is what a long throw looks like.
-      arc: { x0: x, y0: y, x1: pit.x + Math.random() * Math.min(700, pit.w),
-             y1: S.groundY - P * 2, k: 0, high: P * 30 + Math.random() * P * 30 }
+      arc: { x0: x, y0: y, x1: pit.x + rand() * Math.min(700, pit.w),
+             y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30 }
     });
   }
   if (p.left < 1) { S.paying = null; S.dirty = true; }
@@ -165,12 +166,12 @@ export const sliceKeeps = i => (i * CASINO_WIN_SLICES) % CASINO_SLICES < CASINO_
 // deciding, which is the only way a wheel is worth having.
 function spin() {
   S.hand = null;                                 // the last one is old news now
-  S.spinWon = Math.random() < CASINO_ODDS;
+  S.spinWon = rand() < CASINO_ODDS;
 
   // a slice of the colour it is going to land on, picked at random among them
   const want = [];
   for (let i = 0; i < CASINO_SLICES; i++) if (sliceKeeps(i) === S.spinWon) want.push(i);
-  const slice = want[Math.floor(Math.random() * want.length)];
+  const slice = want[Math.floor(rand() * want.length)];
   const step = (Math.PI * 2) / CASINO_SLICES;
   // the pointer is at the top, so the wheel has to turn until that slice's
   // middle is under it
@@ -277,23 +278,23 @@ function trickleIn(dt, cur) {
   const find = potShade(cur);
   const at = potAt();
   while (n-- > 0) {
-    const shade = find ? someFind(find) : 1 + Math.floor(Math.random() * SHADES.length);
+    const shade = find ? someFind(find) : 1 + Math.floor(rand() * SHADES.length);
     if (S.tableAir.length < IN_AIR) {
       S.tableAir.push({
-        x: at.x + (Math.random() - 0.5) * P * 20,
+        x: at.x + (rand() - 0.5) * P * 20,
         // Out of the sky, but out of the sky a little way up rather than out of
         // the top of the plot: the grid stands eighty cells tall, and a grain
         // starting up there spends two seconds falling before it is anything to
         // look at. This is high enough to read as coming down and near enough
         // that the heap grows while you are watching it.
-        y: S.groundY - P * 30 - Math.random() * P * 14,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: 0.9 + Math.random() * 0.8,
+        y: S.groundY - P * 30 - rand() * P * 14,
+        vx: (rand() - 0.5) * 0.3,
+        vy: 0.9 + rand() * 0.8,
         t: 0, s: shade, lands: true
       });
     // and the ones that are not worth a falling square still go in across a
     // spread of ground rather than all down one column
-    } else if (!addGrain(table, at.x + (Math.random() - 0.5) * P * 20, table.blocked, shade)) {
+    } else if (!addGrain(table, at.x + (rand() - 0.5) * P * 20, table.blocked, shade)) {
       table.capped = table.n;
       break;
     }
@@ -316,8 +317,8 @@ function drainOut(dt) {
     if (S.tableAir.length < IN_AIR) S.tableAir.push({
       x: table.x + c * P,
       y: bottomY(table) - (r + 1) * P,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: -(0.3 + Math.random() * 0.5),
+      vx: (rand() - 0.5) * 0.35,
+      vy: -(0.3 + rand() * 0.5),
       up: true, fade: true,            // it goes, and it goes by fading out
       t: 0, s: v
     });

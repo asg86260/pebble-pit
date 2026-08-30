@@ -20,6 +20,23 @@ let wall = performance.now();
 
 export const now = () => t;
 
+// Back to the start of a run.
+//
+// The hand above starts wherever the wall happened to be when the page loaded,
+// and that is right for play: it only ever has to go forward. It is wrong for a
+// run you want to have again. Some of the yard is worked out from the time
+// itself rather than from how much of it has passed -- the wind over the yard is
+// a wave read off `now()`, and so is anything else with a phase -- so two runs
+// of the same seed that start at different times are two different yards, and no
+// amount of seeding the chance fixes it. Reseeding without this gave the same
+// draws in a yard leaning a different way.
+//
+// So a seeded run starts the clock as well as the chance: `seedGame` in hooks.js
+// calls this before it clears the yard, and the pair of them is what "the same
+// run" means. Nothing in play calls it -- the player's clock is never wound
+// back, and this is why the comment above still holds where it matters.
+export function restart(at = 0) { t = at; wall = performance.now(); }
+
 // A real frame: however much the wall moved, unless the game is being held.
 //
 // The wall is read either way. A pause that stopped reading it would come back

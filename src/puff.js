@@ -11,6 +11,7 @@
 
 import { P, PUFF_MOTES, PUFF_SPREAD } from './config.js';
 import { S } from './state.js';
+import { rand } from './rng.js';
 
 // One puff: a handful of motes let go together and coming apart on the way up.
 //
@@ -25,11 +26,11 @@ export function puff(x, y, o = {}) {
     // read as one square with a fat edge.
     const off = (i - (n - 1) / 2) * P * PUFF_SPREAD;
     S.smoke.push({
-      x: x + off + (Math.random() - 0.5) * P * 0.4,
-      y: y + (Math.random() - 0.5) * P * 0.6,
-      drift: (o.drift || 0) + (Math.random() - 0.5) * 0.25,
-      s: (o.s || 1) * (0.75 + Math.random() * 0.5),
-      t: Math.random() * 0.15,               // and not all at the same age -- seconds
+      x: x + off + (rand() - 0.5) * P * 0.4,
+      y: y + (rand() - 0.5) * P * 0.6,
+      drift: (o.drift || 0) + (rand() - 0.5) * 0.25,
+      s: (o.s || 1) * (0.75 + rand() * 0.5),
+      t: rand() * 0.15,               // and not all at the same age -- seconds
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }

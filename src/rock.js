@@ -17,6 +17,7 @@ import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { pastApron, blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
+import { rand } from './rng.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -171,7 +172,7 @@ function jolt() {
         if (!v) continue;
         put(floor, c, r, 0);
         spawnChip(floor.x + c * P, bottomY(floor) - (r + 1) * P,
-                  side * (0.2 + Math.random() * 0.5), -(1.2 + Math.random() * 1.4), v);
+                  side * (0.2 + rand() * 0.5), -(1.2 + rand() * 1.4), v);
         left--;
         break;                              // one off the top of each column
       }
@@ -201,8 +202,8 @@ export function makeBoulder(fromSky = false) {
   S.gw = size.w;
   S.gh = size.h;
   const deep = depthOf();
-  const seed = [Math.random() * 6, Math.random() * 6, Math.random() * 6,
-                Math.random() < 0.5 ? -1 : 1];
+  const seed = [rand() * 6, rand() * 6, rand() * 6,
+                rand() < 0.5 ? -1 : 1];
 
   const crest = [];
   for (let x = 0; x < S.gw; x++) {

@@ -10,9 +10,10 @@ import { defineMachine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs } from './upgrades.js';
 import { pitFull } from './pit.js';
+import { rand } from './rng.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
-export const bell = () => Math.random() + Math.random() + Math.random() - 1.5;
+export const bell = () => rand() + rand() + rand() - 1.5;
 
 // `land` is where an aimed chip is meant to come down. A chip without one comes
 // down wherever it meets the ground, which is what a swept or spilled grain does.

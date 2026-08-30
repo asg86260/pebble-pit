@@ -24,6 +24,7 @@ import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
 import { rebalance, kitFull } from './upgrades.js';
+import { rand } from './rng.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -71,12 +72,12 @@ export function newQuarrier() {
     // swinging on the same frame, which read as one animation played twice
     // rather than as two people working. The miners have had their own rhythms
     // since the day they were written; these are the same four numbers.
-    swingAt: now() + Math.random() * QUARRY_SWING,
+    swingAt: now() + rand() * QUARRY_SWING,
     lunge: 0,
-    ph: Math.random() * Math.PI * 2,       // where in its sway it starts
-    sp: 0.5 + Math.random() * 0.9,         // and how fast it sways
-    pace: 0.7 + Math.random() * 0.6,       // and how briskly it works along the face
-    dir: Math.random() < 0.5 ? -1 : 1,
+    ph: rand() * Math.PI * 2,       // where in its sway it starts
+    sp: 0.5 + rand() * 0.9,         // and how fast it sways
+    pace: 0.7 + rand() * 0.6,       // and how briskly it works along the face
+    dir: rand() < 0.5 ? -1 : 1,
     seat: 0,                               // where along the floor it stands
     x: quarryFace(),
     y: 0,
@@ -302,7 +303,7 @@ export function stepQuarrier(w, now) {
   // is going: a cut should look worked whether or not it is about to pay.
   if (now >= w.swingAt) {
     w.lunge = 1;
-    w.swingAt = now + QUARRY_SWING * (0.7 + Math.random() * 0.6);
+    w.swingAt = now + QUARRY_SWING * (0.7 + rand() * 0.6);
   }
 
   // The hole dug out: up the ladder. The ground comes back in behind the last
@@ -354,7 +355,7 @@ export function stepQuarrier(w, now) {
   // dirt rather than trusting nobody else to ask.
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
-  w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
+  w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + rand() * 0.3);
   S.dirty = true;
 
   if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out
@@ -385,7 +386,7 @@ export function stepQuarrier(w, now) {
 function findShards(w, left) {
   if (S.quarryOwed <= 0 || left <= 0) return;
   let found = 0;
-  for (let n = 0; n < S.quarryOwed; n++) if (Math.random() * left < 1) found++;
+  for (let n = 0; n < S.quarryOwed; n++) if (rand() * left < 1) found++;
   if (!found) return;
   S.quarryOwed -= found;
   w.quarried = (w.quarried || 0) + found;
@@ -525,7 +526,7 @@ export function nextQuarryCell(x, self = null) {
   if (!open.length) return -1;
   const home = Math.max(0, Math.min(cells.length - 1, colOfX(x)));
   open.sort((a, b) => Math.abs(a - home) - Math.abs(b - home));
-  return open[Math.floor(Math.random() * Math.min(NEAR_CELLS, open.length))];
+  return open[Math.floor(rand() * Math.min(NEAR_CELLS, open.length))];
 }
 
 // and the ground fills back in behind them

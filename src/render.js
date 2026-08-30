@@ -48,6 +48,7 @@ import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { now } from './clock.js';
 import { press } from './press.js';
+import { rand } from './rng.js';
 
 const canvas = document.getElementById('c');
 export const ctx = canvas.getContext('2d');
@@ -3132,7 +3133,7 @@ export function stepMachineSmoke(now) {
     if (!m || !m.bought || !m.on) continue;
     if (now - (m.workedAt || 0) > MACHINE_IDLE_MS) continue;   // idle, unmanned, or stood down
     if (now < (m.puffAt || 0)) continue;
-    m.puffAt = now + MACHINE_PUFF_MS * (0.6 + Math.random() * 0.8);
+    m.puffAt = now + MACHINE_PUFF_MS * (0.6 + rand() * 0.8);
     const at = STACKS[key]();
     puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach' });
   }

@@ -21,6 +21,7 @@
 import { P, WORKER, BREAK_WAIT, BREAK_ODDS, BREAK_LIFE, BREAK_NEAR, BREAK_BEAT } from './config.js';
 import { S } from './state.js';
 import { puff } from './puff.js';
+import { rand } from './rng.js';
 
 // What a body can be caught doing. `alone` is whether it needs somebody to do
 // it at, which is the whole of the difference between singing and talking.
@@ -44,7 +45,7 @@ const kind = key => KINDS.find(k => k.key === key);
 const pick = w => {
   const habit = HABIT[w.type];
   if (habit) return kind(habit);
-  let n = Math.random() * KINDS.reduce((a, k) => a + k.weight, 0);
+  let n = rand() * KINDS.reduce((a, k) => a + k.weight, 0);
   for (const k of KINDS) if ((n -= k.weight) < 0) return k;
   return KINDS[0];
 };
@@ -71,11 +72,11 @@ function begin(w, now) {
   // -- unless the break is the body's habit, which is not a thing you catch it
   // at. A janitor smoking once in three turns would read as a janitor doing
   // nothing, which is exactly what it looks like anyway.
-  if (!HABIT[w.type] && Math.random() > BREAK_ODDS) return sit(w, now);
+  if (!HABIT[w.type] && rand() > BREAK_ODDS) return sit(w, now);
   const k = pick(w);
   const other = k.needs === 'mate' ? mate(w) : null;
   if (k.needs === 'mate' && !other) return sit(w, now);   // nobody to talk to; wait
-  const until = now + BREAK_LIFE * (0.7 + Math.random() * 0.8);
+  const until = now + BREAK_LIFE * (0.7 + rand() * 0.8);
   w.brk = { kind: k.key, until, next: now, turn: true, with: other || null };
   if (other) {
     other.brk = { kind: 'talk', until, next: now, turn: false, with: w };
@@ -87,7 +88,7 @@ function begin(w, now) {
 }
 
 // nothing to do and nobody to do it with: try again in a while
-const sit = (w, now) => { w.brkAt = now + BREAK_WAIT * (0.5 + Math.random()); };
+const sit = (w, now) => { w.brkAt = now + BREAK_WAIT * (0.5 + rand()); };
 
 // One body, one frame of its break. `say` is a mark standing over its head with
 // a moment left to live, and the drawing knows nothing else about any of this.
@@ -103,7 +104,7 @@ function stepOne(w, now) {
     // smokes here.
     puff(w.x + WORKER + P * 0.5 * (w.face || 1) - (w.face > 0 ? 0 : WORKER), w.y + P,
          { s: 0.6, n: 2, flag: 'cig' });
-    b.next = now + BREAK_BEAT * 1.6 * (0.8 + Math.random() * 0.6);
+    b.next = now + BREAK_BEAT * 1.6 * (0.8 + rand() * 0.6);
     return;
   }
 
@@ -114,7 +115,7 @@ function stepOne(w, now) {
     const o = b.with;
     if (!o || !o.brk || o.brk.with !== w) { end(w, now); return; }
     if (b.turn) {
-      w.say = { mark: 'dots', n: 1 + Math.floor(Math.random() * 3), until: now + BREAK_BEAT };
+      w.say = { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: now + BREAK_BEAT };
       b.turn = false;
       o.brk.turn = true;
     }

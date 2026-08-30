@@ -17,6 +17,7 @@ import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
+import { rand } from './rng.js';
 
 // how long one plot takes to come on, at this level of tending
 export const tendMs = (lvl = S.tendLevel) =>
@@ -42,7 +43,7 @@ export function newFarmhand() {
   plantPlots();
   return {
     type: 'farmhand', goal: 'to', plot: 0, quarryAt: 0, stoopAt: 0, lunge: 0,
-    bob: Math.random() * Math.PI * 2,      // its own rhythm, so a row of them is not a chorus
+    bob: rand() * Math.PI * 2,      // its own rhythm, so a row of them is not a chorus
     x: plotX(0), y: 0, carry: 0
   };
 }
@@ -93,7 +94,7 @@ export function stepFarmhand(w, now, dt) {
   w.lunge *= 0.84;
   if (now >= w.stoopAt) {
     w.lunge = 1;
-    w.stoopAt = now + TEND_STOOP * (0.75 + Math.random() * 0.6);
+    w.stoopAt = now + TEND_STOOP * (0.75 + rand() * 0.6);
   }
   w.x = plotX(w.plot) - WORKER - P * 2 + Math.sin(now / 620 + w.bob) * P * 0.9;
 

@@ -25,6 +25,7 @@ import { S, sky } from './state.js';
 import { STEP } from './lab.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
+import { rand } from './rng.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -34,7 +35,7 @@ export function newWizard() {
   // Its own spot on the ground under the meteor, a few cells either side of the
   // middle of it. They go up from where they are standing, so a gang given one
   // column between them would rise as a single body four deep.
-  const x = underMeteor() + Math.round((Math.random() - 0.5) * 6) * P;
+  const x = underMeteor() + Math.round((rand() - 0.5) * 6) * P;
   return {
     type: 'wizard', x, spot: x, y: walkY(x + WORKER / 2),
     aloft: false,           // whether its feet are off the ground
@@ -42,8 +43,8 @@ export function newWizard() {
     cell: null,             // the cell of the meteor it is working on
     next: 0,                // when its next pass at that cell comes due
     goal: 'to',
-    ph: Math.random() * Math.PI * 2,        // where in its drift it starts
-    sp: 0.4 + Math.random() * 0.5
+    ph: rand() * Math.PI * 2,        // where in its drift it starts
+    sp: 0.4 + rand() * 0.5
   };
 }
 
@@ -95,10 +96,10 @@ function spaceOut(w, secs) {
 // scatters are the same magic.
 function trail(w, now) {
   if (now < (w.trailAt || 0)) return;
-  w.trailAt = now + WIZ_TRAIL_MS * (0.7 + Math.random() * 0.6);
-  sparkle(w.x + WORKER / 2 + (Math.random() - 0.5) * P * 2, w.y + WORKER - P / 2,
-          (Math.random() - 0.5) * 0.3,
-          0.15 + Math.random() * 0.25,      // it sinks: it is falling out of the spell
+  w.trailAt = now + WIZ_TRAIL_MS * (0.7 + rand() * 0.6);
+  sparkle(w.x + WORKER / 2 + (rand() - 0.5) * P * 2, w.y + WORKER - P / 2,
+          (rand() - 0.5) * 0.3,
+          0.15 + rand() * 0.25,      // it sinks: it is falling out of the spell
           WIZ_TRAIL_LIFE);
 }
 

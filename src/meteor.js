@@ -20,6 +20,7 @@ import { S, sky } from './state.js';
 import { now, frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { shakeView } from './world.js';
+import { rand } from './rng.js';
 
 // what a cell of it is
 export const RIND = 1, CORE = 2;
@@ -42,7 +43,7 @@ export const SPARKLE = [];
 
 export function sparkle(x, y, vx, vy, life) {
   if (SPARKLE.length > 500) return;          // a fog of it is not a spell
-  SPARKLE.push({ x, y, vx, vy, born: now(), life, tone: Math.floor(Math.random() * 4) });
+  SPARKLE.push({ x, y, vx, vy, born: now(), life, tone: Math.floor(rand() * 4) });
 }
 
 export function stepSparkle(dt) {
@@ -71,8 +72,8 @@ export function fire(fromX, fromY, cell, bite = 1) {
   const d = Math.hypot(dx, dy) || 1;
   for (let i = 0; i < 6; i++)
     sparkle(fromX, fromY,
-            (dx / d) * (0.6 + Math.random() * 0.8) + (Math.random() - 0.5) * 0.6,
-            (dy / d) * (0.6 + Math.random() * 0.8) + (Math.random() - 0.5) * 0.6, 320);
+            (dx / d) * (0.6 + rand() * 0.8) + (rand() - 0.5) * 0.6,
+            (dy / d) * (0.6 + rand() * 0.8) + (rand() - 0.5) * 0.6, 320);
 }
 
 function stepBolts() {
@@ -89,9 +90,9 @@ function stepBolts() {
       b.y += (dy / d) * step;
       // and it sheds as it goes, so what crosses the gap is a thing burning
       // rather than a square sliding
-      sparkle(b.x, b.y, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, 340);
-      if (Math.random() < 0.5)
-        sparkle(b.x, b.y, (Math.random() - 0.5) * 1.1, (Math.random() - 0.5) * 1.1, 220);
+      sparkle(b.x, b.y, (rand() - 0.5) * 0.5, (rand() - 0.5) * 0.5, 340);
+      if (rand() < 0.5)
+        sparkle(b.x, b.y, (rand() - 0.5) * 1.1, (rand() - 0.5) * 1.1, 220);
       S.dirty = true;
       continue;
     }
@@ -236,10 +237,10 @@ export function takeCell(c, r) {
   const x = cellX(c), y = cellY(r);
   const n = kind === CORE ? METEOR_CORE_SPARKS : METEOR_SPARKS;
   for (let i = 0; i < n; i++)
-    spawnChip(x, y, bell() * 0.4, 0.2 + Math.random() * 0.2, someFind(SPARK_CELL));
+    spawnChip(x, y, bell() * 0.4, 0.2 + rand() * 0.2, someFind(SPARK_CELL));
   // and a burst of the magic that did it, thrown back off the face
   for (let i = 0; i < 5; i++)
-    sparkle(x + P / 2, y + P / 2, (Math.random() - 0.5) * 1.6, (Math.random() - 0.5) * 1.6, 380);
+    sparkle(x + P / 2, y + P / 2, (rand() - 0.5) * 1.6, (rand() - 0.5) * 1.6, 380);
   // Worked out. What comes next is not a timer and not another purchase: the
   // wizards make it. See `summon`.
   if (sky.n === 0) S.summon = 0;
@@ -298,9 +299,9 @@ export function summon(hands, secs) {
   S.flashAt = now();
   const out = 44;
   for (let i = 0; i < out; i++) {
-    const a = (i / out) * Math.PI * 2 + Math.random() * 0.1;
-    const v = 2.2 + Math.random() * 2.4;
-    sparkle(sky.x, sky.y, Math.cos(a) * v, Math.sin(a) * v, 700 + Math.random() * 400);
+    const a = (i / out) * Math.PI * 2 + rand() * 0.1;
+    const v = 2.2 + rand() * 2.4;
+    sparkle(sky.x, sky.y, Math.cos(a) * v, Math.sin(a) * v, 700 + rand() * 400);
   }
   shakeView(SUMMON_SHAKE);                  // and the ground feels it
   makeMeteor();

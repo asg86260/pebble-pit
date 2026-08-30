@@ -20,6 +20,7 @@ import { now } from './clock.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
          BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
+import { rand } from './rng.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -169,9 +170,9 @@ const FLUE_MID = P * 3.5;
 const DONE_PUFFS = 8;
 function cough() {
   for (let i = 0; i < DONE_PUFFS; i++) S.smoke.push({
-    x: lab.x + FLUE_MID + (Math.random() - 0.5) * P * 2,
+    x: lab.x + FLUE_MID + (rand() - 0.5) * P * 2,
     y: lab.y - i * P,
-    drift: (Math.random() - 0.5) * 0.35,
+    drift: (rand() - 0.5) * 0.35,
     t: i * SMOKE_LIFE / (DONE_PUFFS * 1.6)
   });
 }

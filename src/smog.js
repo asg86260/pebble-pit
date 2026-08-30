@@ -43,6 +43,7 @@ import { rockLeft, overPitMouth } from './world.js';
 import { surfaceY, colOf, shadeNear } from './grid.js';
 import { pitDepth } from './pit.js';
 import { dugTopY } from './quarry.js';
+import { rand } from './rng.js';
 // Counted here rather than imported from `scrubhouse.js`, which is the same sum
 // that file exports for everybody else. It is one line, and importing it made a
 // ring -- the boards read the sky, the scrubbing house is a board, and the sky
@@ -208,14 +209,14 @@ export function foul(grains, x, y, kind = 'dust') {
       // the same look a mote in the band has, because it is going to be one --
       // see `look`
       ...look(kind),
-      x: x + (Math.random() - 0.5) * P * 2,
+      x: x + (rand() - 0.5) * P * 2,
       y,
-      vy: -(0.55 + Math.random() * 0.5),
+      vy: -(0.55 + rand() * 0.5),
       // its share of the wind on the way up, a sixth either way. It was a sway
       // before -- its own sine on its own phase -- so a column of puffs off one
       // swing wove through itself on the way up like a shoal rather than being
       // carried off the way the day is going.
-      give: give(Math.random(), SMOG_GIVE),
+      give: give(rand(), SMOG_GIVE),
       fade: 1,
       // What put it up. Carried to the top of the climb and handed to the mote,
       // which is the whole of how a dirty sky says which part of the works is
@@ -226,7 +227,7 @@ export function foul(grains, x, y, kind = 'dust') {
       // every puff leaning on the same shared sway sent the lot up as one straight
       // cylinder, which reads as a pipe rather than as smoke.
       y0: y,
-      lean: (Math.random() - 0.5) * 2
+      lean: (rand() - 0.5) * 2
     });
   }
 }
@@ -234,7 +235,7 @@ export function foul(grains, x, y, kind = 'dust') {
 // Whole things out of a fractional amount: the whole ones, and the fraction left
 // over as a chance at one more. Over a run this is exact, and it is the only way
 // to spend a fraction of a speck when a speck is the smallest thing there is.
-const whole = n => Math.floor(n) + (Math.random() < n - Math.floor(n) ? 1 : 0);
+const whole = n => Math.floor(n) + (rand() < n - Math.floor(n) ? 1 : 0);
 
 // What the sky holds at its filthiest, in motes rather than in dirt. Everything
 // else in this file counts specks now, so the ceiling does too.
@@ -270,10 +271,10 @@ const look = (kind = 'dust') => ({
   // A band of specks all drawn at exactly one weight is a screen of identical
   // dots -- it reads as noise laid over the sky rather than as smoke of
   // different ages and thicknesses hanging in it. Texture, not confetti.
-  ink: 0.8 + Math.random() * 0.4,
+  ink: 0.8 + rand() * 0.4,
   // and which of its kind's shades it is. See SMOG_TINTS: a kind is a small
   // family of tones, not one flat colour.
-  tone: Math.floor(Math.random() * (SMOG_TINTS[kind] || SMOG_TINTS.dust).length)
+  tone: Math.floor(rand() * (SMOG_TINTS[kind] || SMOG_TINTS.dust).length)
 });
 
 // A mote is a place in the band, a share of the wind, and -- for its first few
@@ -287,7 +288,7 @@ const skyMote = (x, y, kind = 'dust') => ({
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
   // stood -- movement everywhere and no direction anywhere.
-  give: give(Math.random(), SMOG_GIVE),
+  give: give(rand(), SMOG_GIVE),
   roam: 0,
   // How long it has been up there. The stretch of sky it is placed within opens
   // out with this, which is what dispersal is here -- see `spreadAt`.
@@ -636,9 +637,9 @@ function place(secs) {
 // there is nothing to trim to.
 function fillTo(want) {
   const span = Math.max(P, S.worldW || 0);
-  while (SKY.length > want) SKY.splice(Math.floor(Math.random() * SKY.length), 1);
+  while (SKY.length > want) SKY.splice(Math.floor(rand() * SKY.length), 1);
   while (SKY.length < want) {
-    const m = skyMote(Math.random() * span, bandTop());
+    const m = skyMote(rand() * span, bandTop());
     m.age = SMOG_SPREAD_MAX / SMOG_SPREAD_RATE;   // loaded, not arrived: long since spread
     SKY.push(m);
   }
@@ -696,12 +697,12 @@ function breathe(secs) {
   const power = scrubRate() / fanPull();
   let n = DRAUGHT_PER_S * power * secs;
   while (n > 0) {
-    if (n < 1 && Math.random() > n) break;
+    if (n < 1 && rand() > n) break;
     n -= 1;
     // in from anywhere round the hood, though mostly from above it: what a fan
     // facing the sky pulls on is the sky
-    const a = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.4;
-    const d = DRAUGHT_FROM * (0.5 + Math.random() * 0.5);
+    const a = -Math.PI / 2 + (rand() - 0.5) * Math.PI * 1.4;
+    const d = DRAUGHT_FROM * (0.5 + rand() * 0.5);
     DRAUGHT.push({ x: to.x + Math.cos(a) * d, y: to.y + Math.sin(a) * d, t: 0 });
   }
   for (let i = DRAUGHT.length - 1; i >= 0; i--) {
@@ -820,7 +821,7 @@ function swallow() {
     // rock's spoil, which is mottled because it comes from different depths.
     // Nothing about a machine handing back what it caught says every grain is
     // identical -- see `shadeNear`.
-    spawnChip(out.x, out.y, (Math.random() - 0.5) * 0.5, 0.15, shadeNear(RECYCLE_TONE));
+    spawnChip(out.x, out.y, (rand() - 0.5) * 0.5, 0.15, shadeNear(RECYCLE_TONE));
   }
 }
 
@@ -919,15 +920,15 @@ function pour(secs) {
 
   const gone = new Set();
   while (n > 0 && pick.length) {
-    if (n < 1 && Math.random() > n) break;
+    if (n < 1 && rand() > n) break;
     n -= 1;
-    const at = Math.floor(Math.random() * pick.length);
+    const at = Math.floor(rand() * pick.length);
     const i = pick[at];
     pick[at] = pick[pick.length - 1];
     pick.pop();
     gone.add(i);
     const m = SKY[i];
-    DROPS.push({ x: m.x, y: m.y, vy: 0.2 + Math.random() * 0.4 });
+    DROPS.push({ x: m.x, y: m.y, vy: 0.2 + rand() * 0.4 });
   }
 
   // and out of the sky in one pass, keeping the order of what is left
@@ -959,7 +960,7 @@ function stepDrops() {
     if (c < 0 || c >= m.length) { DROPS.splice(i, 1); continue; }
     const rest = muckFloor(c) - m[c] * P;
     if (d.y < rest - P) continue;
-    if (Math.random() < RAIN_MARK && m[c] < MUCK_MAX) m[c]++;
+    if (rand() < RAIN_MARK && m[c] < MUCK_MAX) m[c]++;
     DROPS.splice(i, 1);
     S.dirty = true;
   }

@@ -9,6 +9,7 @@ import { at, put, inside, colOf, bottomY } from './grid.js';
 import { spawnChip } from './dust.js';
 import { capacity } from './upgrades.js';
 import { now } from './clock.js';
+import { rand } from './rng.js';
 
 // in config.js now, so they can be turned while the game is running -- see the
 // note there about what the clock did to them
@@ -42,10 +43,10 @@ export function catchAir(mx, my) {
     room--;
     S.motes.push({
       s: ch.s,
-      a: Math.random() * Math.PI * 2,
-      d: P * (1 + Math.random() * 2.6),
-      spin: (Math.random() - 0.5) * 0.03,
-      bob: Math.random() * Math.PI * 2
+      a: rand() * Math.PI * 2,
+      d: P * (1 + rand() * 2.6),
+      spin: (rand() - 0.5) * 0.03,
+      bob: rand() * Math.PI * 2
     });
     S.dirty = true;
   }
@@ -94,10 +95,10 @@ export function sweep(mx, my) {
     for (let i = 0; i < taken; i++) {
       S.motes.push({
         s: lifted[i],
-        a: Math.random() * Math.PI * 2,
-        d: P * (1 + Math.random() * 2.6),
-        spin: (Math.random() - 0.5) * 0.03,
-        bob: Math.random() * Math.PI * 2
+        a: rand() * Math.PI * 2,
+        d: P * (1 + rand() * 2.6),
+        spin: (rand() - 0.5) * 0.03,
+        bob: rand() * Math.PI * 2
       });
     }
     S.dirty = true;
@@ -113,9 +114,9 @@ export function release(x, y) {
   }
   if (!S.held) return;
   for (let i = 0; i < S.held; i++) {
-    spawnChip(x + (Math.random() - 0.5) * P * 6, y + (Math.random() - 0.5) * P * 6,
-              vx + (Math.random() - 0.5) * 1.4,
-              vy + (Math.random() - 0.5) * 1.4,
+    spawnChip(x + (rand() - 0.5) * P * 6, y + (rand() - 0.5) * P * 6,
+              vx + (rand() - 0.5) * 1.4,
+              vy + (rand() - 0.5) * 1.4,
               S.motes[i]?.s || 1);
   }
   S.held = 0;

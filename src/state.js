@@ -311,6 +311,28 @@ export const S = {
   settleAt: 0             // the column the pit settler got to last frame
 };
 
+// The yard as it is written above, kept.
+//
+// `reset` in persist.js puts a game back by naming a hundred fields and what
+// each of them goes back to, and that list has to be kept level with this one.
+// It never quite is: `dustSeenAt`, `nextBoulderAt`, `quarryCells`, `tick` and a
+// handful of others are declared here and forgotten there, so a "new game" in a
+// page that has already played one starts with the last game's cached dust
+// count, its rock timer and its quarry. In play that is nearly invisible -- the
+// clock only goes forward, so a stale stamp is a stamp in the past, and the
+// first survey of the ground overwrites the counts within a frame. It is not
+// invisible at all to a run started again from a seed, where the clock starts
+// again too and every one of those stamps is suddenly a whole run in the
+// future: the yard behaves differently, draws a different number of times, and
+// two runs of one seed part company on their first frame.
+//
+// So the declaration is the list, and there is only the one. `seedGame` in
+// hooks.js puts every field back to what it says here before it clears the
+// yard, which is the difference between a new game and a new game in a page
+// that remembers the last one. Nothing in play reads this: a player's new game
+// goes through `reset` as it always did.
+export const BLANK = JSON.parse(JSON.stringify(S));
+
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --
 // and the bench. These are mutated in place and never reassigned, so they are
 // consts rather than fields on S. `p` is the size of one grain in that grid.

@@ -1,6 +1,8 @@
 // Every number that decides how the game looks and plays, and nothing that
 // changes while it runs. If you are tuning the game, it is all in here.
 
+import { rand } from './rng.js';
+
 export const P = 6;              // pixel size, in world units
 // How big a cell is drawn, in screen pixels. This is the whole of the zoom: the
 // picture never scales to fit a window, so this is the size the game is, and
@@ -943,7 +945,7 @@ export const FIND_COLOR = {
 // which kind a cell belongs to, and one of that kind with a tone of its own
 export const findKind = v =>
   v >= SHARD_CELL && v <= FIND_TOP ? SHARD_CELL + Math.floor((v - SHARD_CELL) / FIND_TONES) * FIND_TONES : 0;
-export const someFind = base => base + Math.floor(Math.random() * FIND_TONES);
+export const someFind = base => base + Math.floor(rand() * FIND_TONES);
 export let GRAV = 1;
 // What a knocked-loose grain does on its way off. It is a blow, not a delivery:
 // a pop off the face and a little sideways from the hit, and where it comes down

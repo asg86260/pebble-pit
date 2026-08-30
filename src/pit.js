@@ -14,6 +14,7 @@ import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY,
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
+import { rand } from './rng.js';
 
 // --- how big the hole is -----------------------------------------------------
 // One hole, the whole thing, from the first frame.
@@ -306,9 +307,9 @@ export function spend(cost) {
           y0: bottomY(pit) - (r + 1) * pit.p,
           x: pit.x + c * pit.p,
           y: bottomY(pit) - (r + 1) * pit.p,
-          t: -Math.random() * 0.5,           // they leave in a stream, not a block
-          rate: 0.012 + Math.random() * 0.01,
-          lift: 60 + Math.random() * 90,     // how high it arcs on the way
+          t: -rand() * 0.5,           // they leave in a stream, not a block
+          rate: 0.012 + rand() * 0.01,
+          lift: 60 + rand() * 90,     // how high it arcs on the way
           s: v
         });
       }

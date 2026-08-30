@@ -45,6 +45,7 @@ import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
 import { smogReport } from './smog.js';
 import { now as clockNow } from './clock.js';
+import { seed } from './rng.js';
 import { windAt } from './wind.js';
 import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
@@ -104,7 +105,12 @@ export function strandedDust() {
 }
 
 // Every number the yard has to say about itself, in one object.
-export const snapshot = () => ({ houses: houseReport(), paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), benchW: bench.w, rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), shake: +S.shake.toFixed(2), shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)], dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length,
+export const snapshot = () => ({
+  // Which run this is. Every wobble in the yard was worked out from this number
+  // (see rng.js), so a check that fails and prints its snapshot has named the
+  // run that failed rather than describing a yard nobody can build again.
+  seed: seed(),
+  houses: houseReport(), paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), benchW: bench.w, rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), shake: +S.shake.toFixed(2), shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)], dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length,
   // how many motes are still carrying a draught the cursor left in them, and how
   // far the strongest of them is being carried
   airStirred: AIR.filter(m => m.sx || m.sy).length,

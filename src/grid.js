@@ -22,6 +22,7 @@
 // for the owner to mean what it likes by (the pit puts cores in its pile).
 
 import { SHADES } from './config.js';
+import { rand } from './rng.js';
 
 export const shadeOf = v => SHADES[Math.min(SHADES.length, Math.max(1, v)) - 1];
 
@@ -47,7 +48,7 @@ export const depthShade = (v, max) =>
 // leans that way instead of running off it.
 export const shadeNear = (centre, spread = 1) =>
   Math.max(1, Math.min(SHADES.length,
-                       Math.round(centre + (Math.random() * 2 - 1) * spread)));
+                       Math.round(centre + (rand() * 2 - 1) * spread)));
 
 export const at = (b, c, r) => b.grid[r * b.cols + c];
 
