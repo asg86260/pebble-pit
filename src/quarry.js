@@ -8,6 +8,7 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
+import { keepTo, stepRoute, ways } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
@@ -204,32 +205,45 @@ function tossOut(x, y) {
 export function stepQuarrier(w, now) {
   const rim = quarryFace();
 
-  // Walk along the ground to the head of the ladder -- and wait there if the dig
-  // is spent, because there is nothing down an emptied hole to go down for.
+  // Going down to work, and there is nothing here about a ladder.
+  //
+  // These two used to be a walk along the ground to the head of the ladder and
+  // then a climb down it, both written out by hand -- and the same pair was
+  // written out again in `stepCommute`, and a third time in the pit, and every
+  // other path that moved a body knew about none of them. That is what "they
+  // climb out the sides depending on what they are doing" was: a rule kept in
+  // the places that happened to remember it.
+  //
+  // Now the body asks for a route to its seat and walks it. The route goes down
+  // the ladder because the ladder is the only edge between the yard and the
+  // floor of the cut -- see route.js -- so a body that gets down there at all
+  // gets down there that way, and one that is asked to go somewhere no route
+  // reaches simply does not go.
   if (w.goal === 'to') {
-    w.y = walkY(w.x + WORKER / 2);
-    const d = rim - w.x;
-    w.x += Math.sign(d) * Math.min(QUARRY_WALK, Math.abs(d));
-    if (Math.abs(d) >= 1) return;
-    w.x = rim;
-    if (S.quarrySpent) return;                      // stood at the rim until it fills
+    // Stood at the head of the ladder until the seam fills back in: there is
+    // nothing down an emptied hole to go down for.
+    if (S.quarrySpent) {
+      if (!keepTo(w, rim)) return;
+      if (stepRoute(w, QUARRY_WALK)) return;
+      w.route = null;
+      return;
+    }
     // Ground nobody has broken into yet. `fillQuarry` lays the stone in behind a
     // finished dig, but the first hole of a session was never filled in by
     // anybody -- it has simply always been there -- so it is laid here.
     if (S.quarryOwed <= 0 && !dugShare()) S.quarryOwed = seamShards();
-    w.goal = 'down';
     w.seat = seatX(w);
+    w.goal = 'down';
+    w.route = null;
     return;
   }
 
-  // Down the ladder, hand over hand, and off it on top of whatever dirt is left.
-  // A fresh quarry is full to the ground line, so on the first dig that is barely a
-  // climb at all; by the time the seam is showing it is the whole way down.
   if (w.goal === 'down') {
-    w.x = rim;                                   // it holds on: nothing drifts
-    const foot = dugTopY(w.x + WORKER / 2) - WORKER;
-    w.y = Math.min(w.y + CLIMB_PACE, foot);
-    if (w.y >= foot) { w.y = foot; w.goal = 'work'; w.dugAt = now; }
+    if (!keepTo(w, w.seat, ways().cut)) { w.goal = 'to'; return; }
+    if (stepRoute(w, QUARRY_WALK)) return;
+    w.route = null;
+    w.goal = 'work';
+    w.dugAt = now;
     return;
   }
 
@@ -240,11 +254,9 @@ export function stepQuarrier(w, now) {
   // under its feet. At the bottom it turns and throws the seam up over the rim
   // one stone at a time, climbs out, and the quarry falls in behind it.
   if (w.goal === 'up') {                         // out, with the seam gone up before it
-    w.x = quarryFace();
-    const top = walkY(w.x + WORKER / 2);
-    w.y = Math.max(w.y - CLIMB_PACE, top);
-    if (w.y > top) return;
-    w.y = top;
+    if (!keepTo(w, rim, ways().yard)) { w.goal = 'work'; return; }
+    if (stepRoute(w, QUARRY_WALK)) return;
+    w.route = null;
     w.goal = 'to';
     w.cell = null;                             // it is not digging anything now
     // The last one out is what fills the hole back in. Doing it the moment the
@@ -269,16 +281,15 @@ export function stepQuarrier(w, now) {
   // the foot of the ladder and climbs out the way it always climbs out; the
   // crew loop takes it from there and hands it a shovel. Nobody is lifted out.
   if (S.pileFull.quarry) {
+    // Nowhere to put a seam and a mess up top: it goes and clears the mess. It
+    // used to walk itself along its own floor to the foot of the ladder here,
+    // which is the third copy of that walk in this file. It asks to be up top
+    // instead, and the route takes it along the floor and up the rungs -- the
+    // same three lines that carry it anywhere else.
     if (yardMuckFor(w) > 0) {
-      const d = rim - w.x;
-      if (Math.abs(d) > 1) {
-        w.face = Math.sign(d) || w.face || 1;
-        w.x += Math.sign(d) * Math.min(CUT_STEP * (w.trained ? 1.5 : 1), Math.abs(d));
-      } else {
-        w.x = rim;
-        w.cell = null;
-        w.goal = 'up';
-      }
+      w.cell = null;
+      w.goal = 'up';
+      w.route = null;
       w.resting = false;
       w.next = now + cellMs();
       return;

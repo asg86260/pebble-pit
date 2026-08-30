@@ -11,6 +11,7 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
+import { routeReport, groundTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
 import { S, floor, pit } from './state.js';
@@ -676,3 +677,62 @@ export const muckOverPit = () => {
 
 // look somewhere, for a screenshot or a check that wants to see the far end
 export const look = x => { S.camX = x; S.camTo = null; clampCam(); S.dirty = true; return Math.round(S.camX); };
+
+// --- getting about ------------------------------------------------------------
+// How a body would get from where it is to a place, in words. The checks ask
+// this rather than watching a walk and guessing at it: a route is a thing the
+// game works out, so it can be read before anybody takes a step.
+export const routeOf = (i, toX) => {
+  const w = S.workers[i];
+  return w ? routeReport(w, toX) : null;
+};
+
+// The surface under a place, which is the one question the whole of route.js is
+// built on: the ground, the bridge, the rock or the top of a heap, whichever is
+// highest.
+export const surfaceAt = wx => Math.round(groundTop(wx));
+
+// Every way there is, and every link between them: the connectivity of the
+// world, which is what decides every route in it.
+export const waysNow = () => {
+  const all = ways();
+  return { ways: Object.keys(all), links: links(all).map(l => ({ name: l.name, x: Math.round(l.x), a: l.a, b: l.b })) };
+};
+
+
+// --- the handles ---------------------------------------------------------------
+// Every way in, under the name the checks call it by, as one table.
+//
+// There were two of these: one in console.js for the browser suite and one in
+// tools/node/yard.mjs for the node suite, each written out by hand. A hook added
+// to one of them existed in one suite and not the other, and the check that used
+// it failed in a way that had nothing to do with what it was checking.
+//
+// It is the same fault this whole file is full of examples of: a list that has
+// to be kept level with another list is a list that will not be. So there is one
+// list, and the two suites spread it.
+export const HANDLES = {
+  __clearFloor: clearFloor, __pile: pile, __jump: jump,
+  __preview: preview, __next: next, __drop: drop,
+  __birds: birds, __crew: crew, __school: school,
+  __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
+  __levels: levels, __fast: fast, __air: setAir, __coldSky: coldSky,
+  __toss: toss, __take: takeFromPile, __place: placeBody,
+  __abandon: abandon, __reset: newGame, __reload: reload,
+  __machine: machineSet, __fullSites: fullSites,
+  __lever: lever, __swing: swing, __cold: coldReload,
+  __rows: allRows, __boards: boards, __unsection: unsection, __clickLever: clickLever,
+  __lab: openLab, __research: finishResearch, __grant: grant,
+  __spend: spendDust, __press: press,
+  __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
+  __tip: tip, __give: give,
+  __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
+  __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
+  __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
+  __meteor: openMeteor, __wizardHat: wizardHat,
+  __loo: openLoo, __brew: brewWizard,
+  __muckOverPit: muckOverPit, __look: look,
+  // getting about: the surface under a place, the ways there are, and how a
+  // given body would get somewhere
+  __route: routeOf, __surface: surfaceAt, __ways: waysNow
+};

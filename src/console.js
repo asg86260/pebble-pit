@@ -17,27 +17,7 @@ import { seatBoard, boardFit, showPanel } from './board.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
-  __clearFloor: hooks.clearFloor, __pile: hooks.pile, __jump: hooks.jump,
-  __preview: hooks.preview, __next: hooks.next, __drop: hooks.drop,
-  __birds: hooks.birds, __crew: hooks.crew, __school: hooks.school,
-  __assign: hooks.assign, __build: hooks.rebuildBoards, __fill: hooks.fillBoard, __tune: hooks.tuneOne, __plots: hooks.plots,
-  __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
-  __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,
-  __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,
-  __machine: hooks.machineSet, __fullSites: hooks.fullSites,
-  __lever: hooks.lever, __swing: hooks.swing, __cold: hooks.coldReload,
-  __rows: hooks.allRows, __boards: hooks.boards, __unsection: hooks.unsection, __clickLever: hooks.clickLever,
-  __lab: hooks.openLab, __research: hooks.finishResearch, __grant: hooks.grant,
-  __spend: hooks.spendDust, __press: hooks.press,
-  __upgrades: hooks.upgrades, __buy: hooks.buyRowByKey, __pitProfile: hooks.pitProfile, __dig: hooks.dig,
-  __tip: hooks.tip, __give: hooks.give,
-  __skyX: hooks.skyX, __puffFades: hooks.puffFades, __skyFades: hooks.skyFades,
-  __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
-  __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet, __poopSet: hooks.poopSet, __shake: hooks.shake,
-  __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
-  __loo: hooks.openLoo,
-  __brew: hooks.brewWizard,
-  __muckOverPit: hooks.muckOverPit, __look: hooks.look,
+  ...hooks.HANDLES,
   __placeBoard: seatBoard, __boardFit: boardFit,
   // dev: open a board without walking to the building and tapping it, for a
   // check or a look at how a sheet lays out

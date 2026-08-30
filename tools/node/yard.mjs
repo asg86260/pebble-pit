@@ -38,30 +38,7 @@ export async function newYard({ W = 800, H = 600 } = {}) {
   // check moved over from there says `window.__crew(3, 2)` and means it: there
   // is a `window` here because the shim made one, and these are the very
   // functions the shell hangs on the real one.
-  Object.assign(globalThis, {
-    __clearFloor: hooks.clearFloor, __pile: hooks.pile, __jump: hooks.jump,
-    __preview: hooks.preview, __next: hooks.next, __drop: hooks.drop,
-    __birds: hooks.birds, __crew: hooks.crew, __school: hooks.school,
-    __assign: hooks.assign, __build: hooks.rebuildBoards, __plots: hooks.plots,
-    __levels: hooks.levels, __fast: hooks.fast, __air: hooks.setAir,
-    __tune: hooks.tuneOne, __fill: hooks.fillBoard, __coldSky: hooks.coldSky,
-    __toss: hooks.toss, __take: hooks.takeFromPile, __place: hooks.placeBody,
-    __abandon: hooks.abandon, __reset: hooks.newGame, __reload: hooks.reload,
-    __machine: hooks.machineSet, __fullSites: hooks.fullSites,
-    __lever: hooks.lever, __swing: hooks.swing, __cold: hooks.coldReload,
-    __rows: hooks.allRows, __boards: hooks.boards, __unsection: hooks.unsection, __clickLever: hooks.clickLever,
-    __lab: hooks.openLab, __research: hooks.finishResearch, __grant: hooks.grant,
-    __spend: hooks.spendDust, __press: hooks.press,
-    __upgrades: hooks.upgrades, __buy: hooks.buyRowByKey, __pitProfile: hooks.pitProfile, __dig: hooks.dig,
-    __tip: hooks.tip, __give: hooks.give, __state: snapshot,
-    __skyX: hooks.skyX, __puffFades: hooks.puffFades, __skyFades: hooks.skyFades,
-    __dustSpan: hooks.dustSpan, __dustOverPit: hooks.dustOverPit, __skyJoin: hooks.skyJoin, __skyXY: hooks.skyXY,
-    __pitTop: hooks.pitTop, __overPit: hooks.overPit, __muckSet: hooks.muckSet, __poopSet: hooks.poopSet, __shake: hooks.shake,
-    __meteor: hooks.openMeteor, __wizardHat: hooks.wizardHat,
-    __loo: hooks.openLoo,
-    __brew: hooks.brewWizard,
-    __muckOverPit: hooks.muckOverPit, __look: hooks.look
-  });
+  Object.assign(globalThis, { ...hooks.HANDLES, __state: snapshot });
 
   // Run until it is true, a game second at a time, and say whether it ever was.
   // The limit is in game seconds, so it is a fact about the yard rather than

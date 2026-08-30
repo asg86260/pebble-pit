@@ -18,6 +18,7 @@ import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine, askLever, asked } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
+import { KIT_MARK, boughtKit } from './kit.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -140,8 +141,7 @@ export const posts = () => POSTS.filter(p => p.show());
 // What each trade wears is its own shape, so the stand at the plots and the stand
 // at the quarry are different things standing there rather than the same grey lump
 // in two places.
-export const KIT_MARK = { miners: 'helmet', quarriers: 'lamp', farmhands: 'brim',
-                          haulers: 'cart', wizards: 'point', janitors: 'cap' };
+export { KIT_MARK } from './kit.js';
 
 export function kitStands() {
   const out = [];
@@ -225,9 +225,12 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     }
 
     drawBody(b.badge.x, b.badge.y);
-    // The janitor's cap is not kit, it is the job -- so the counter wears it
-    // whether or not anybody has been trained, the same as out in the yard.
-    if (p.job === 'janitors') drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
+    // A hat nobody buys is the job rather than a doubling on it, so the counter
+    // wears it whether or not anybody has been trained -- the same as out in the
+    // yard, and for the same reason: see `wearing` in kit.js. Asked of the kit
+    // table rather than by naming the janitor, so the next innate hat needs no
+    // line here.
+    if (KIT_MARK[p.job] && !boughtKit(p.job)) drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
     // The sky is the one post where the hat *is* the job: there is no such thing
     // as a wizard without one, so the body at the top of its roster wears it and
     // the plain square underneath -- a body that could not be up there at all --

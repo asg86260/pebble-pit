@@ -985,6 +985,22 @@ export const HURL_DRAG = 0.995;  // air against it on the way
 export const SHAKE_TURNS = 4;      // changes of direction that count as a shaking
 export const SHAKE_WINDOW = 700;   // inside this long, in ms
 export const SHAKE_SHED = 2;       // grains shaken loose at every change of direction
+// What a shaken-loose grain leaves the hands with. It falls -- it is a chip like
+// every other loose thing in this yard, on the same arc and under the same
+// gravity -- so all it needs is a shove, and the shove is the shaking itself.
+// `SHAKE_FLING` is the share of the hand's own travel each grain takes, so
+// waving somebody about hard throws their load further than jiggling them does;
+// `SHAKE_SCATTER` is the spread on top of that, which is what makes it a
+// spray rather than a line; and it comes out upward first, the way anything
+// flung out of a moving pair of hands does.
+// How far a mess will slide looking for ground that holds it, in cells. Past
+// this it stays where it is: a slope that long is not a bank beside something,
+// it is the yard, and a mess sliding a hundred cells to find a footing would be
+// a mess crossing the works on its own.
+export const MESS_SLIDE = 14;
+export const SHAKE_FLING = 0.06;   // share of the hand's travel a shed grain takes
+export const SHAKE_SCATTER = 1.1;  // and the spread either side of it
+export const SHAKE_LIFT = 1.4;     // it comes out upwards before it comes down
 export const DIZZY_MS = 2000;      // and how long the stars last afterwards
 // A shaken body drops what it was holding, hat and all, and stands there seeing
 // stars before it gathers itself. How far it wobbles while it does.
@@ -1130,7 +1146,17 @@ export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands
 // crew take five on the bare ground, and the next rock comes down out of the sky
 // rather than being there the next time you look.
 export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
-export const DANCE_BEAT = 2.6;   // hops a second, each one a beat behind the last
+// Hops a second at the base rate, which each move then takes its own multiple of
+// -- see MOVES in crew.js. It was 2.6, which is a bounce every three hundred and
+// eighty milliseconds: too quick to read as a body doing something and quick
+// enough to read as a body juddering. A dance you can count is a dance.
+export const DANCE_BEAT = 1.5;
+// How fast a dancing body travels, in world pixels a frame at the tuned rate --
+// the same units every other pace in this file is in, so it is comparable with
+// them: a brisk amble, quicker than loitering (IDLE_PACE) and well under a
+// commute. It used to be six hundredths of a cell a frame with no frame time in
+// it at all, which is a thirtieth of this and got slower the better your screen.
+export const JIG_PACE = 1.5;
 // How far up a new rock starts. It used to be this number flat, and this number
 // is most of the way up a window rather than off the top of one -- so the rock
 // appeared out of nothing in the middle of the sky and fell the second half of

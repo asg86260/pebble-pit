@@ -202,22 +202,24 @@ export const idle = () => spareHands();
 // waiting for the next body sent over. Move everybody off and the hats stay
 // behind; move somebody back and they are wearing one before they get there.
 // Nothing is ever wasted and nothing is ever locked.
-export const TRADE_OF = { miners: 'breakers', haulers: 'carters',
-                          quarriers: 'blasters', farmhands: 'growers',
-                          // and the tower's, which is not a doubling but a
-                          // licence: no hat, no flying. See wizard.js.
-                          wizards: 'wizardHats' };
-// What job a body is doing, from what it is. A trade is counted off the bodies
-// now rather than off a number, because a hat is a thing somebody walked over
-// and picked up: see crew.js.
-export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', janitor: 'janitors', wizard: 'wizards' };
+// Which station owns which hats, and what job a body is doing from what it is.
+// Both live in kit.js now, with the shape of the hat and the rest of what a hat
+// is, and are passed straight through here: the shop asks about a trade, and a
+// trade is a fact about a hat.
+import { TRADE_OF, JOB_OF } from './kit.js';
+export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
 export const hats = job => S[TRADE_OF[job]] || 0;
-export const worn = job => S.workers.filter(w => JOB_OF[w.type] === job && w.trained).length;
+// Counted off `kitOf` -- whose kit it is -- and not off the job the body is on.
+// Those two agree except for the length of a walk back, and reading the job was
+// how a helmet came to be counted twice: a body moved from the rock to carrying
+// keeps the helmet on its head until it has walked it to the stand, and while it
+// did, `JOB_OF` said hauler, the rock counted nobody wearing its kit, and the
+// rock put a helmet it did not have out on the stand for the next body along.
+// The hat is on a head. That is the fact, and this is the count of it.
+export const worn = job => S.workers.filter(w => w.trained && w.kitOf === job).length;
 export const spareKit = job => Math.max(0, hats(job) - worn(job));
 
 // How many bodies a station has room for. Two of them have a floor plan: a cut

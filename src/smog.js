@@ -21,10 +21,11 @@
 // air is bodies not on the rock, and the recycler turns what they catch back into
 // dust on the ground.
 
+import { footing, solidNear, SOLID } from './route.js';
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
-         SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
+         SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
          SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
@@ -1088,14 +1089,10 @@ export const throughPlotMuck = n => clearRange(plotCols(), n);
 // rather than on the rock -- it steps aside, the way anybody would.
 export function cleanSpotNear(wx, reach = 90) {
   const m = muckCols();
-  const home = colAt(wx);
-  for (let d = 0; d <= reach; d++) {
-    for (const c of (d ? [home - d, home + d] : [home])) {
-      if (c < 0 || c >= m.length || onSite(c)) continue;
-      return c * P + P / 2;
-    }
-  }
-  return null;
+  const at = solidNear(wx, reach);
+  if (at == null) return null;
+  const c = colAt(at);
+  return c < 0 || c >= m.length ? null : c * P + P / 2;
 }
 
 // Where a body goes to *stand* to work a patch. Out on the yard that is the
@@ -1116,8 +1113,22 @@ export const onRock = wx => {
   return !!r && wx > r.from && wx < r.to;
 };
 
-export const workSpot = wx =>
-  onRock(wx) ? wx : onSite(colAt(wx)) ? (cleanSpotNear(wx) ?? wx) : wx;
+// Where a body goes to stand to work a patch: the patch, if there is footing
+// under it, and the nearest footing there is if not.
+//
+// This used to name the places. The rock was an exception ("a body clearing the
+// face climbs up and shovels where the muck is"), the quarry and the plots were
+// worked from the edge, and heaps were not thought about at all -- which is why
+// a body sent to clear a mess on a full heap stood at the height of the ground
+// in the middle of it, and read as walking through the bank rather than in front
+// of it. Three answers to one question, and a fourth case nobody had answered.
+//
+// It is one question now, and `footing` answers it: can you stand here. The rock
+// is solid, so the answer over the rock is yes and a body climbs it -- the old
+// exception, arrived at rather than written down. A heap is loose and a mouth is
+// nothing, so the answer over either is no and the body steps to the side. See
+// route.js.
+export const workSpot = wx => footing(wx) === SOLID ? wx : (solidNear(wx) ?? wx);
 
 // Capped like everything else the sky drops. A column holds MUCK_MAX and no
 // more, whoever put it there -- without that a body could bury a column deeper
@@ -1168,6 +1179,40 @@ export function slumpMess() {
         if (k < 0 || k >= m.length) continue;
         if (h - (m[k] || 0) > MESS_ANGLE) { m[c]--; m[k] = (m[k] || 0) + 1; break; }
       }
+    }
+  }
+  slideOffLoose();
+}
+
+// Mess that has ended up on ground that will not hold it, sliding to ground that
+// will. `dropMuckAt` already puts what falls on solid footing, so nothing lands
+// on a bank -- but a bank grows. Tip a load onto a heap that a rain has already
+// dirtied and the mess is suddenly halfway up a slope of loose dust, where
+// nobody can stand to shovel it; leave it there and it is a mess that can never
+// be cleared, on ground nobody can reach.
+//
+// So it slides, the same way the mess already topples off its own slopes one
+// step above. It is the settling rule applied to a second kind of slope: loose
+// dust is a surface nothing rests on, and this is what "nothing rests on it"
+// looks like a frame at a time.
+//
+// One column a pass. This runs every frame, the slide is only ever a few cells,
+// and a loop that walked the whole yard looking for solid ground for every dirty
+// column would be the most expensive thing in the file.
+function slideOffLoose() {
+  for (const m of [muckCols(), poopCols()]) {
+    for (let c = 0; c < m.length; c++) {
+      if (!m[c]) continue;
+      const x = c * P + P / 2;
+      if (footing(x) === SOLID) continue;
+      const to = solidNear(x, MESS_SLIDE);
+      if (to == null) continue;
+      const k = colAt(to);
+      if (k === c || k < 0 || k >= m.length || (m[k] || 0) >= MUCK_MAX) continue;
+      m[c]--;
+      m[k] = (m[k] || 0) + 1;
+      S.dirty = true;
+      return;                       // one column a pass; the rest follow it down
     }
   }
 }
@@ -1268,10 +1313,20 @@ function refresh() {
   yardLeft = yard;
 }
 
+// Ground a shovel cannot be swung on, because there is nowhere to stand. It is
+// asked of the footing rather than of a list of buildings, so what is held out
+// is exactly what cannot be worked: the two mouths, and the plots, which are
+// loose in the sense that matters here -- you would be treading on the crop.
+//
+// The rock is no longer on this list and that is the point. It is solid ground
+// that happens to be uphill, so a mess on it is a mess like any other and
+// whoever is nearest goes and clears it. It used to be held out here and then
+// let back in by a special case in `workSpot`, which is two rules cancelling.
 function onSite(c) {
-  if (!siteAt) return false;
-  for (const r of siteAt) if (inRange(c, r.from, r.to)) return true;
-  return false;
+  const x = c * P + P / 2;
+  if (footing(x) !== SOLID) return true;
+  const p = plotCols();
+  return !!p && inRange(c, p.from, p.to);
 }
 
 // How much ground a body shovelling claims either side of itself, in columns: a

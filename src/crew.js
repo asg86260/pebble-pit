@@ -4,11 +4,12 @@
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // quarry and the farm arrive, its own file.
 
-import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
+import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDLE_STRIDE,
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT, SHAKE_SHED } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
+        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth, blocked } from './world.js';
@@ -17,6 +18,8 @@ import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
+import { KIT_JOBS } from './kit.js';
+import { standTop, keepTo, stepRoute, wayAt } from './route.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
@@ -110,21 +113,26 @@ const MINER_WALK = 0.5;   // pixels a frame along the row
 // at work. What that looks like is a body running to the middle of the rock and
 // then rising out of it, which is exactly what it was doing.
 //
-// `landing` already knows the answer -- the rock's surface where there is rock,
-// the ground where there is not -- and `climbTo` walks the feet up to it at the
-// pace of the walk, so a body goes up the side of the hill it meets.
-// Only the gang that works the rock walks over the rock.
+// One surface, for everybody.
 //
-// Everybody else keeps to the ground and passes in front of it. A hauler is
-// carrying dust from the hill to the hole and has no business on the crest --
-// and a yard where every errand goes over the summit is a yard where the hill
-// is a road. The miners are the ones the hill is a workplace for, so they are
-// the ones who climb it.
+// It used to be two, chosen by job: a miner got the rock's face and everybody
+// else got the ground line, on the argument that a yard where every errand goes
+// over the summit is a yard where the hill is a road. That argument was about
+// what looks right, and it was paid for in the currency this file keeps running
+// out of -- a fact about the world kept in a body's job title. Every path that
+// moved a body had to know which of the two it was on, and the ones that forgot
+// walked bodies through solid rock.
 //
-// Falling is not affected: a body thrown on to the rock lands on the rock
-// whatever its job is, because that is physics rather than pathfinding, and
-// `fall` asks `landing` directly.
-const stand = w => climbTo(w, w.type === 'miner' ? landing(w) : walkY(w.x + WORKER / 2));
+// So the question is asked of the *place* now and not of the walker. What is
+// under this x, given that a body is three cells wide: the deck of the bridge,
+// the face of the hill, or the ground. A heap is deliberately not in that list
+// -- see `footing` in route.js -- so a body passes in front of a bank rather
+// than climbing it, which is what a bank of loose dust deserves.
+//
+// Falling agrees with walking now, because both ask the same thing. It used to
+// be possible for a body to land somewhere it could not then stand.
+const surfaceUnder = w => standTop(w.x) - WORKER;
+const stand = w => climbTo(w, surfaceUnder(w));
 
 
 export function findPeak() {
@@ -601,9 +609,78 @@ function relieve(w, now) {
 // beats each and then swapped, and a patch of ground each to do them on. Bodies
 // that travel and change what they are doing read as pleased with themselves;
 // bodies that stay on their mark read as an animation.
-const MOVES = ['hop', 'step', 'spin'];
-const JIG_SPREAD = P * 9;          // how far off its mark a body will wander
-const JIG_STEP = P;                // and it goes in whole cells, like everything else
+// It read as vibrating again, and for a different reason each time, so here is
+// the whole of what a body has to dance with -- because the answer is short, and
+// every move below is built out of it and nothing else:
+//
+//   **Where it is.** `w.x`, in whole cells.
+//   **How high it is.** `w.y` off `w.foot`, in whole cells.
+//
+// That is the list. A body is a filled square, symmetrical, drawn from `x` and
+// `y` alone -- `drawBody` takes no facing, and there is nothing on a body that
+// is not the same on both sides of it. So `w.dir` and `w.face` draw *nothing*:
+// the old spin turned the body over twice a second and the screen did not change
+// a pixel, and the old step travelled six hundredths of a cell a frame,
+// undivided by frame time, so it barely went anywhere and went less of it the
+// faster the display ran. Two of the three moves were invisible. What was left
+// was a square changing height on the spot at two and a half beats a second --
+// which is the definition of vibrating, and is exactly what it looked like.
+//
+// So each move is written in travel and height, both of which can be seen, and
+// each is given its own rate so the gang are not all pulsing on one tick. And it
+// is a table rather than a chain of ifs: a move is a row, the next one is
+// another row, and no row can quietly forget to move.
+//
+//   beat   how fast this move pulses, as a multiple of DANCE_BEAT. A hop is
+//          quicker than a step, because a step is a longer thing to do.
+//   at     one frame of it: where the body goes and how high, given the swing
+//          (0..1, the pulse), the length of the frame, and the ground under a
+//          falling rock that it may not wander onto.
+const MOVES = {
+  // Straight up and down, and high: three cells at the top of it. The one move
+  // that is all height and no ground.
+  hop: {
+    beat: 1.35,
+    at: (w, swing) => { w.y = w.foot - Math.round(swing * 3) * P; }
+  },
+
+  // Across its patch and back, in whole cells and at a pace you can see, with a
+  // bob under it. The travel is the whole point: a body crossing the ground is
+  // doing something a body on its mark is not, and it is what spreads a gang out
+  // over the yard instead of leaving them stacked where the rock finished.
+  step: {
+    beat: 0.55,
+    at: (w, swing, dt, zone) => {
+      const off = w.x - w.jigAt;
+      if (Math.abs(off) > JIG_SPREAD) w.jigDir = -Math.sign(off);
+      // And the ground under a coming rock is not part of anybody's patch. It is
+      // a wall to the dance exactly as the edge of the patch is: the body turns
+      // and paces the other way, rather than being walked into a place the dodge
+      // then has to drag it out of.
+      const next = w.x + w.jigDir * JIG_PACE * dt;
+      if (zone && next + WORKER > zone.from && next < zone.to) w.jigDir = -w.jigDir;
+      else w.x = next;
+      w.dir = w.face = w.jigDir;
+      w.y = w.foot - Math.round(swing) * P;
+    }
+  },
+
+  // A tight turn on the spot. Facing cannot be drawn, so turning is drawn the
+  // only way it can be: a cell out and a cell back while it bobs, which traces a
+  // little loop. Round the mark it started this move on rather than round the
+  // patch's, so switching into it does not jerk the body back across ground it
+  // has just stepped over.
+  spin: {
+    beat: 1.6,
+    at: (w, swing, dt, zone, beat) => {
+      const to = w.moveFrom + Math.round(Math.sin(beat * Math.PI * 2)) * P;
+      if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
+      w.y = w.foot - Math.round(swing * 2) * P;
+    }
+  }
+};
+const MOVE_KEYS = Object.keys(MOVES);
+const JIG_SPREAD = P * 14;         // how far off its mark a body will wander
 
 // `zone` is the ground the next rock is coming down on, when there is one. The
 // dance has to know about it, because the dance travels: a body stepping across
@@ -616,7 +693,8 @@ function jig(w, now, zone) {
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
     w.jigAt = w.x + (Math.random() - 0.5) * JIG_SPREAD * 2;
-    w.move = MOVES[Math.floor(Math.random() * MOVES.length)];
+    w.move = MOVE_KEYS[Math.floor(Math.random() * MOVE_KEYS.length)];
+    w.moveFrom = w.x;
     w.moveTil = 0;
     w.jigDir = Math.random() < 0.5 ? -1 : 1;
     // Where in the beat this body is. The gang on the rock are dealt a slot
@@ -628,8 +706,12 @@ function jig(w, now, zone) {
   }
   // a new move every couple of beats, and never the one it is already doing
   if (now >= w.moveTil) {
-    const other = MOVES.filter(m => m !== w.move);
+    const other = MOVE_KEYS.filter(m => m !== w.move);
     w.move = other[Math.floor(Math.random() * other.length)];
+    // Where it starts this one from. A move that works around a fixed point --
+    // the spin -- wants that point to be where the body actually is, or the
+    // first frame of it drags the body back to wherever the patch was centred.
+    w.moveFrom = w.x;
     w.moveTil = now + (1400 + Math.random() * 1200);
     w.jigDir = -w.jigDir;
     // and something over its head, now and then rather than every time: five
@@ -639,43 +721,22 @@ function jig(w, now, zone) {
   }
   if (w.say && now >= w.say.until) w.say = null;
 
-  const beat = now / 1000 * DANCE_BEAT + (w.slot != null ? w.slot * 0.5 : w.jigPh);
+  // Each move to its own rate, so a gang doing three different things are not
+  // all pulsing on the same tick -- which is what turns five dancers into one
+  // flickering row. The phase is the body's own on top of that, so even two on
+  // the same move are off each other's beat.
+  const move = MOVES[w.move] || MOVES.hop;
+  const beat = now / 1000 * DANCE_BEAT * move.beat
+             + (w.slot != null ? w.slot * 0.5 : w.jigPh);
   const swing = Math.abs(Math.sin(beat * Math.PI));
-
-  if (w.move === 'hop') {
-    // straight up, and higher than it was: two cells is a bob, three is a jump
-    w.y = w.foot - Math.round(swing * 3) * P;
-    return;
-  }
-
-  if (w.move === 'step') {
-    // sideways in whole cells, turning back at the edge of its patch. The
-    // travel is the whole point: a body crossing the ground is doing something
-    // a body on its mark is not.
-    const off = w.x - w.jigAt;
-    if (Math.abs(off) > JIG_SPREAD) w.jigDir = -Math.sign(off);
-    // And the ground under a coming rock is not part of anybody's patch. It is
-    // a wall to the dance exactly as the edge of the patch is: the body turns
-    // and paces the other way, rather than being walked into a place the dodge
-    // then has to drag it out of.
-    const next = w.x + w.jigDir * JIG_STEP * 0.06;
-    if (zone && next + WORKER > zone.from && next < zone.to) w.jigDir = -w.jigDir;
-    else w.x = next;
-    w.dir = w.jigDir;
-    w.y = w.foot - Math.round(swing) * P;        // and a small bob under it
-    return;
-  }
-
-  // spin: on the spot, but turning -- the one move where what changes is which
-  // way it is facing, which on a square is the hat swapping sides
-  w.dir = Math.sin(beat * Math.PI * 0.5) > 0 ? 1 : -1;
-  w.y = w.foot - Math.round(swing * 2) * P;
+  move.at(w, swing, frames(), zone, beat);
 }
 
 // wiped when the dance ends, so the next one picks fresh ground
 function stopJig(w) {
   w.jigAt = null;
   w.move = null;
+  w.moveFrom = null;
   w.moveTil = 0;
   w.jigPh = 0;
 }
@@ -745,6 +806,7 @@ function nextLeg(w) {
   w.leg = leg.do;
   w.walkTo = leg.to;
   w.walking = true;
+  w.route = null;                  // somewhere new to get to, so a new way there
 }
 
 function arrive(w) {
@@ -759,7 +821,7 @@ function arrive(w) {
   S.dirty = true;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
   if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false;
-                          w.throwing = null; return; }
+                          w.route = null; w.throwing = null; return; }
   settle(w);
 }
 
@@ -771,7 +833,11 @@ function arrive(w) {
 // without: a body sent to the sky with nothing on its head walks to the tower,
 // picks up what the tower has made, and only then goes up. Everywhere else the
 // hat is a doubling; here it is the whole trade.
-const KIT_JOBS = ['miners', 'haulers', 'quarriers', 'farmhands', 'wizards'];
+//
+// Read off the kit table rather than written out again: a job is on this list if
+// its hat is one the yard sells, which is the same fact as having a trade behind
+// it. The janitor's cap is not on it and should not be -- there is nothing to
+// fetch and nothing to hand in. See kit.js.
 
 // somebody on that job who could go on an errand right now: hands empty, not
 // already walking, and not indoors
@@ -780,9 +846,15 @@ const KIT_JOBS = ['miners', 'haulers', 'quarriers', 'farmhands', 'wizards'];
 // length of the walk, which for that one is a four-hundred-pixel drop mid-frame.
 // It comes down on its own when it has nothing to do -- see wizard.js -- and
 // that is when it can be sent for a hat.
-const freeAt = (job, hatted) => S.workers.find(o =>
-  JOB_OF[o.type] === job && !!o.trained === hatted && !o.walking &&
-  !o.inside && !o.aloft && !o.carry && !o.hasCore);
+const canRun = o => !o.walking && !o.inside && !o.aloft && !o.carry && !o.hasCore;
+
+// Somebody on that job standing bare-headed, who could go and get one.
+const bareAt = job => S.workers.find(o => JOB_OF[o.type] === job && !o.trained && canRun(o));
+
+// Somebody wearing that station's kit, whoever it is and whatever it is doing
+// now. Asked by `kitOf` and not by job, because the whole point of the two
+// questions below is bodies whose job and whose hat have come apart.
+const hattedIn = job => S.workers.find(o => o.trained && o.kitOf === job && canRun(o));
 
 // Kit already spoken for by somebody on their way to it. Without this, two
 // bodies put on the rock in the same breath both set off for the last helmet
@@ -790,21 +862,44 @@ const freeAt = (job, hatted) => S.workers.find(o =>
 const claimed = job => S.workers.filter(o => o.wanting === job).length;
 export const kitFree = job => spareKit(job) - claimed(job);
 
+// Three ways a hat can be somewhere it should not be, checked every pass.
+//
+// `retask` already walks a body's kit back to its stand when it is moved off a
+// job, and that is still the tidy path -- but it is a list of legs, and a list of
+// legs is abandoned the moment a rock falls, a mess lands, or somebody picks the
+// body up and shakes it. So the leaving rule cannot only live there. It lives
+// here as well, as an invariant this reasserts: whatever happened to the walk, a
+// station's kit ends up either on somebody standing at that station or on its
+// stand, and it gets there on foot.
+//
+// One errand at a time per station, so buying four helmets is four trips rather
+// than the whole gang filing down the hill at once.
 function stepKit() {
   for (const job of KIT_JOBS) {
     if (S.workers.some(o => o.walking && o.fetching === job)) continue;   // one errand a station
 
+    // Kit that has walked off the job it belongs to. A body moved from the rock
+    // to carrying is still in the rock's helmet, and it takes it off the way it
+    // put it on: it walks to the stand and puts it down. This is what "the kit
+    // stays where the work is" means when the walk is watched rather than
+    // assumed, and it is checked before anything is handed out -- a helmet on
+    // the wrong head is not a helmet the rock can lend to anybody else.
+    const stray = S.workers.find(o => o.trained && o.kitOf === job &&
+                                      JOB_OF[o.type] !== job && canRun(o));
+    if (stray) { errand(stray, job, 'drop'); continue; }
+
     // A hat lying spare and somebody bare-headed to come and get it.
     if (kitFree(job) > 0) {
-      const w = freeAt(job, false);
+      const w = bareAt(job);
       if (w) { errand(w, job, 'wear'); continue; }
     }
     // Or the other way about: a head wearing kit the station does not own any
-    // more. That cannot happen by playing -- hats are never sold -- but a save
-    // from another shape of the game or a dev hook can leave one, and a body
-    // walking about in a helmet nobody paid for is a helmet counted twice.
+    // more. That cannot happen by playing -- hats are never sold -- but a
+    // machine taking a station's kit does it, and so does a save from another
+    // shape of the game or a dev hook. A body walking about in a helmet nobody
+    // paid for is a helmet counted twice.
     if (worn(job) > hats(job)) {
-      const w = freeAt(job, true);
+      const w = hattedIn(job);
       if (w) errand(w, job, 'drop');
     }
   }
@@ -1185,78 +1280,42 @@ function retask(w, type) {
 // floor so an unupgraded crew is no slower at it than it ever was.
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
 
+// On the open yard rather than down a working: the one question the dodge, the
+// dance and the idle all want, and it is asked of where the body is rather than
+// of a flag anybody has to remember to set.
+const onYard = w => wayAt(w.x, w.y).key === 'yard';
+
+// One frame of a body walking to where it has been sent.
+//
+// The whole of the going is route.js's now, and what is left here is what this
+// function was always actually about: a body may not walk under a falling rock,
+// and when it gets there it starts work.
+//
+// What went is three quarters of it, and all of it was the quarry. There was a
+// block that walked a body below the ground line along the floor of the cut to
+// the foot of the ladder, and a second block that held it still while it climbed
+// -- both written out here, both written out again in `stepQuarrier`, and
+// neither of them known to any of the other dozen places that move a body. The
+// ladder is a link between two ways now (see route.js), and the reason a body
+// leaves the cut by it is that there is no other edge out: the shortest path
+// from the floor of a hole to anywhere on the yard goes up the ladder because
+// every path does.
 function stepCommute(w, zone) {
-  // Out of the hole by the way it came in. A body down the quarry walks along the
-  // floor to the foot of the ladder and goes up it: rising through the wall
-  // wherever it happened to be standing was the same not-a-thing-that-happens
-  // as sinking into the ground, and the ladder is there to be used both ways.
-  //
-  // Measured at the feet, not the top of the head. A body is three cells tall,
-  // and a cut that has only just been started is shallower than that -- so a
-  // quarrier standing in a hole up to its shoulders read as being *above* ground
-  // and climbed straight out through the dirt. It never showed while the quarry was
-  // a fixed hole a body could only ever be right at the bottom of; it showed the
-  // moment the hole started at nothing and got deeper.
-  if (w.y + WORKER > S.groundY) {
-    const foot = quarryFace();
-    if (Math.abs(w.x - foot) > 1) {
-      w.y = quarryFloor(w.x + WORKER / 2) - WORKER;
-      w.x += Math.sign(foot - w.x) * Math.min(commutePace() * frames(), Math.abs(foot - w.x));
-      return;
-    }
-    w.x = foot;
-  }
+  // The route is worked out once, when the walk starts, and then walked. It is
+  // re-asked if the ground has changed under it -- the quarry is filled in and
+  // re-dug while people are walking about on it -- which is what `sendTo`
+  // returning false means: there is no longer a way from here to there.
+  if (!keepTo(w, w.walkTo)) { arrive(w); return; }
 
-  // There used to be a block here that got the body to the right height *before*
-  // letting it walk at all: "the level of the ground first, and only then along
-  // it". Its reason was the quarry -- a quarrier setting off from the bottom of a
-  // hole would otherwise rise through the wall on the diagonal -- and that reason
-  // is served above, where a body below the ground line walks to the foot of the
-  // ladder and goes up it.
-  //
-  // What was left of it was a body standing on the rock, and there it did harm
-  // twice over. It moved `w.y` directly, so `w.foot` -- which is what the walk
-  // below climbs with -- was left saying something else, and the two disagreed
-  // every frame. And it `return`ed, so while the feet were catching up the body
-  // did not move along at all: rise, step, rise, step. Which is a body that
-  // cannot climb a slope smoothly.
-  //
-  // A walk does both at once now. `stand` raises the feet by as much as the body
-  // moved along and a half again (see CLIMB_SLOPE), which is enough for any
-  // flank, and the two are one movement rather than two taking turns.
-  //
-  // Except below the ground line, where the old rule still holds and has to:
-  // a body at the foot of the ladder goes *up the ladder* before it goes
-  // anywhere, or it sets off across the yard on a diagonal through the wall of
-  // the quarry. Standing still while it climbs is right here -- that is what a
-  // ladder is -- and it is only ever a second of it.
-  if (w.y + WORKER > S.groundY + 1) {
-    const top = walkY(w.x + WORKER / 2);
-    w.y += Math.sign(top - w.y) * Math.min(CLIMB_PACE * frames(), Math.abs(top - w.y));
-    w.foot = w.y;               // so the walk above ground carries on from here
-    return;
-  }
+  // A rock coming down stops a walk, but only a walk that is on the open yard: a
+  // body on a rung is not standing anywhere a rock can land, and holding it
+  // against the ladder for the length of a fall is how it used to be pushed off
+  // one.
+  if (onYard(w) && duck(w, zone)) { w.y = stand(w); return; }
 
-  if (duck(w, zone)) { w.y = stand(w); return; }
-
-  const d = w.walkTo - w.x;
-  w.face = Math.sign(d) || w.face || 1;        // a cart is dragged behind
-  w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-  // Over the ground, or over whatever is standing on it.
-  //
-  // `walkY` is the ground line and the bridge -- it does not know about the
-  // rock. So a body walking to the rock walked *through* it: across the whole
-  // footprint at ground level, buried to the shoulders in the middle of the
-  // hill, and only when it arrived and started work did its feet find the
-  // surface and haul it up. Which is exactly what running to the centre and then
-  // going to the top looks like, because that is what it was.
-  //
-  // Measured before: twenty-three pixels inside the rock at the halfway mark.
-  // `landing` already knows the answer -- the rock's surface where a body is, or
-  // the ground where there is no rock -- and `climbTo` walks the feet up it at
-  // the pace of the walk. Which is a body going up the side it met.
-  w.y = climbTo(w, landing(w));
-  if (Math.abs(d) < COMMUTE_SLOP) arrive(w);
+  if (stepRoute(w, commutePace())) return;
+  w.route = null;
+  arrive(w);
 }
 
 export function syncWorkers() {
@@ -1463,6 +1522,38 @@ export function drop(w) {
 // a shaking goes both. So the changes are counted, and they lapse -- four of
 // them inside three-quarters of a second is a shaking, four spread over a minute
 // of carrying somebody about is just carrying somebody about.
+// What comes out of somebody being shaken, and where it goes.
+//
+// It used to be laid straight into the floor grid at the body's own column: the
+// grains simply appeared on the ground, fully settled, however high up you were
+// holding the body and however hard you were waving it. Which is not a load
+// coming out of somebody's arms, it is a heap being drawn under them -- and the
+// game already had the thing this wanted. Everything else loose in this yard is
+// a chip: a shade with a place and a velocity, falling under the same gravity,
+// landing where it meets the ground. A miner's spoil is one, a hauler's tip is
+// one, the load a stood-down body drops is one.
+//
+// So this is one too. Each grain leaves the hands where the hands actually are,
+// carrying a share of the hand's own travel plus a scatter, and falls from
+// there. Shake somebody high over the yard and their load rains down from up
+// there; shake them hard and it goes further; shake them gently and it drops
+// round their feet. Nothing about that had to be written -- it is what falling
+// already does.
+function shedLoad(w, dx) {
+  const out = Math.min(w.carry, SHAKE_SHED);
+  for (let i = 0; i < out; i++) {
+    // Off the top of the load, which is what is nearest the top of the pile in
+    // its arms -- so a grain that comes out is drawn as the thing it is, the
+    // same as it is drawn on the way in.
+    const shade = w.load?.length ? w.load.pop() : 1;
+    spawnChip(w.x + WORKER / 2, w.y + WORKER / 2,
+              dx * SHAKE_FLING + bell() * SHAKE_SCATTER,
+              -SHAKE_LIFT + bell() * 0.4, shade);
+  }
+  w.carry -= out;
+  S.dirty = true;
+}
+
 export function shakeHeld(w, dx) {
   if (!w || Math.abs(dx) < 1) return;
   const dir = Math.sign(dx);
@@ -1471,36 +1562,22 @@ export function shakeHeld(w, dx) {
   if (w.lastDir && dir !== w.lastDir) {
     w.shook = (w.shook || 0) + 1;
     w.turnedAt = t;
-    // And it sheds its load as it goes, a bit at every turn, rather than
-    // dumping the lot when it lands. Shaking something out of somebody is the
-    // point of shaking them: you should see it coming out while you do it, not
-    // find a heap under them afterwards. It falls to the ground beneath
-    // wherever you are holding them.
     // Stars while you are still shaking it, not only once it lands. The whole
     // gesture is something you do and watch, so the yard should answer during
     // it: the moment it has been turned about enough to count, it starts seeing
     // them, and `drop` carries the same spell on past the landing.
     if (w.shook >= SHAKE_TURNS) w.say = { mark: 'dizzy', until: t + DIZZY_MS };
-    if (w.carry > 0) {
-      const out = Math.min(w.carry, SHAKE_SHED);
-      for (let i = 0; i < out; i++) addGrain(floor, w.x + WORKER / 2, blocked);
-      w.carry -= out;
-      S.dirty = true;
-    }
+    if (w.carry > 0) shedLoad(w, dx);
   }
   w.lastDir = dir;
 }
 
 // Where a dropped body comes to rest: the rock if it is over the rock, the
 // ground if it is not. Put a miner on the rock and it should land on the rock.
-function landing(w) {
-  const mid = w.x + WORKER / 2;
-  if (boulderAlive() && mid > rockLeft() && mid < rockLeft() + S.gw * P) {
-    const col = colAtX(mid);
-    if (S.rockTops[col] >= 0) return standOn(rockTopY(col));
-  }
-  return walkY(mid);
-}
+// Where a dropped body comes to rest. The same surface it walks on, which is
+// the whole of it: a body thrown at the hill lands on the hill and then walks
+// off it, rather than landing on a face the walk does not believe in.
+const landing = w => surfaceUnder(w);
 
 // one frame of that fall, and what happens when it stops
 function fall(w) {

@@ -40,7 +40,8 @@ import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
 import { fmt, STATIONS, stationFoot, hasOffer } from './board.js';
-import { drawRoster, drawRosterCounts, kitStands, KIT_MARK } from './roster.js';
+import { drawRoster, drawRosterCounts, kitStands } from './roster.js';
+import { wearing, HAT_TALL } from './kit.js';
 import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -2258,12 +2259,10 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   drawSprite(ctx, rows, left, y - spriteH(rows) * P);
 }
 
-// What a body has on. It is asked of the *kit* -- which station the thing came
-// off -- and never of the job the body is doing, because those two are different
-// for the length of the walk back: somebody taken off the rock is a hauler as
-// far as the books are concerned and is still carrying the rock's helmet, and
-// drawing it as a hauler put a cart behind it for the whole of that walk.
-const wearing = w => w.trained ? KIT_MARK[w.kitOf] || null : null;
+// What a body has on: asked of kit.js, which is the one place that knows. It
+// used to be worked out here, which meant the drawing believed in a different
+// set of hats from the roster, the errand and the shop -- and the janitor's cap,
+// which only this file believed in at all.
 
 // A carter drags a cart: a box on the ground behind it, hitched by a shaft, and
 // what it is carrying rides *in* the cart rather than over its head. That is the
@@ -2326,7 +2325,8 @@ function drawCart(x, y, face) {
 const STAND_W = P * 5, STAND_H = P * 3;
 
 // How far above the slab each mark reaches, so the count can stand clear of it.
-const HAT_TALL = { helmet: P, lamp: P * 2, brim: P * 2, point: P * 3, cart: 0 };
+// Off the kit table with the rest of it: a hat added there stands the right
+// height here without anybody remembering to come and say so.
 
 // An arrow under a station, pointing up at it: there is something on that board
 // you could buy.
@@ -2597,75 +2597,78 @@ export function drawIntro() {
   if (S.buriedSay) drawSaying(at.x, at.y, S.buriedSay);
 }
 
+// How each kind of body is drawn, as a row rather than as a branch.
+//
+// This was six branches, each repeating the same four steps in a slightly
+// different order and each free to forget one of them -- which is how a hat came
+// to be drawn on five kinds of body and not the sixth, and how a miner walking a
+// shovelful of muck across the yard carried it invisibly. A body is a body: it
+// stands somewhere, it may be dragging a cart, it wears whatever is on its head,
+// and it is holding whatever it picked up. The only things that actually differ
+// between one kind and the next are in this table.
+//
+//   lunge  which way a swing throws the body: down into the work for anybody on
+//          the ground, up for a wizard, whose work is above it. 0 for the bodies
+//          that do not swing at all.
+//   load   how what it is carrying is drawn. A quarrier brings up one thing at a
+//          time and it rides over its head as that thing; everybody else stacks
+//          grains, in the cart if there is one.
+const LOOK = {
+  janitor:  { lunge:  1 },
+  labber:   { lunge:  1 },
+  farmhand: { lunge:  1 },
+  quarrier: { lunge:  1, load: 'shard' },
+  wizard:   { lunge: -1 },
+  miner:    { lunge:  0 },
+  hauler:   { lunge:  0 }
+};
+const PLAIN = { lunge: 0 };
+
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home
     if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
-    // The janitor, who is nobody's trade and wears no kit anybody sells, so
-    // without something of its own it is one more identical square in a yard
-    // full of them -- and it is the one body you most often want to find,
-    // because its whole job is to be somewhere else in a minute.
-    if (w.type === 'janitor') {
-      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
-      drawBody(x, y);
-      drawHat(x, y, 'cap');
-      continue;
-    }
+    const look = LOOK[w.type] || PLAIN;
+    const x = Math.round(w.x);
+    const y = Math.round(w.y + (w.lunge || 0) * look.lunge * P);
 
-    if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
-      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
-      drawBody(x, y);
-      if (wearing(w) && wearing(w) !== 'cart') drawHat(x, y, wearing(w));
-      // what a quarrier is bringing up rides over its head, the way a load does
-      if (w.type === 'quarrier' && w.carry) drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2);
-      continue;
-    }
+    // A cart is kit like any other, so it is drawn off what the body is holding
+    // rather than off what the books say it is. Somebody walking a cart back to
+    // the lip is walking a cart back to the lip, whatever job it is on this
+    // second -- the same rule a helmet has always had.
+    const cart = wearing(w) === 'cart' ? cartBox(x, y, w.face || 1) : null;
+    if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
 
-    // A wizard, wherever it has got to: on the ground walking out to the tower,
-    // or four hundred pixels up with its hat on. Nothing else about it is drawn
-    // differently -- it is a body, and the whole trick of it is that it is a
-    // body somewhere a body cannot be.
-    if (w.type === 'wizard') {
-      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * -P);
-      drawBody(x, y);
-      if (wearing(w)) drawHat(x, y, wearing(w));
-      continue;
-    }
+    drawBody(x, y);
 
-    if (w.type === 'miner') {
-      drawBody(Math.round(w.x), Math.round(w.y));
-      if (wearing(w) && wearing(w) !== 'cart') drawHat(Math.round(w.x), Math.round(w.y), wearing(w));
-    } else {
-      // where it actually is, not where the ground line is: on the bridge those
-      // are different, and it was the ground line that won
-      const y = Math.round(w.y);
-      const x = Math.round(w.x);
-      const cart = wearing(w) === 'cart' ? cartBox(x, y, w.face || 1) : null;
-      if (cart) drawCart(x, y, w.face || 1);       // behind the body it follows
-      drawBody(x, y);
-      // and a hauler still carrying somewhere else's kit back to it wears that,
-      // not a cart it never picked up
-      const hat = wearing(w);
-      if (hat && hat !== 'cart') drawHat(x, y, hat);
-      // A load is drawn grain by grain as whatever each grain is, so a worker
-      // walking a shard to the pit is visibly walking a shard to the pit. It
-      // rides overhead, stacked two abreast -- or in the cart, four abreast,
-      // if there is a cart to put it in.
-      const abreast = cart ? CART_ABREAST : 2;
-      const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
-      const top = cart ? cart.y : y;
-      const cap = cart ? 40 : 24;
-      for (let i = 0; i < Math.min(w.carry, cap); i++) {
-        drawMark(w.load?.[i] || 1,
-                 left + (i % abreast) * P + P / 2,
-                 top - P * (Math.floor(i / abreast) + 1) + P / 2);
-      }
-      ctx.fillStyle = '#000';
-      if (w.hasCore) {
-        const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
-        drawCircle(Math.round(w.x) + WORKER / 2, y - P * (stack + 2), P * 1.2);
-      }
+    // and whatever is on its head. One line, for everybody: this is the whole of
+    // what "hats are always shown" means.
+    const hat = wearing(w);
+    if (hat && hat !== 'cart') drawHat(x, y, hat);
+
+    if (!w.carry && !w.hasCore) continue;
+
+    // What it brought up, over its head, as the thing itself.
+    if (look.load === 'shard') { drawMark(SHARD_CELL, x + WORKER / 2, y - P * 2); continue; }
+
+    // A load is drawn grain by grain as whatever each grain is, so a worker
+    // walking a shard to the pit is visibly walking a shard to the pit. It
+    // rides overhead, stacked two abreast -- or in the cart, four abreast,
+    // if there is a cart to put it in.
+    const abreast = cart ? CART_ABREAST : 2;
+    const left = cart ? cart.x : x + (WORKER - P * 2) / 2;
+    const top = cart ? cart.y : y;
+    const cap = cart ? 40 : 24;
+    for (let i = 0; i < Math.min(w.carry, cap); i++) {
+      drawMark(w.load?.[i] || 1,
+               left + (i % abreast) * P + P / 2,
+               top - P * (Math.floor(i / abreast) + 1) + P / 2);
+    }
+    ctx.fillStyle = '#000';
+    if (w.hasCore) {
+      const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
+      drawCircle(x + WORKER / 2, y - P * (stack + 2), P * 1.2);
     }
   }
 }
