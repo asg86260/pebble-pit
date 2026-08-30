@@ -121,7 +121,18 @@ if (profile) {
   console.log(`wrote ${profile}`);
 }
 if (shot) {
-  const png = await send('Page.captureScreenshot', { format: 'png' });
+  // `ZOOM=4` crops to the middle of the viewport and blows it up four times.
+  //
+  // A yard shot at 800x600 is a fine picture of the yard and useless for looking
+  // at a hat, which is two cells of a three-cell body: about twelve pixels, and
+  // no amount of squinting at a full-width shot settles whether it is sitting
+  // straight. The capture can scale a clip for us, so it does.
+  const z = Number(process.env.ZOOM || 0);
+  const clip = z > 1 ? (() => {
+    const [w, h] = (process.env.WINDOW || '800,600').split(',').map(Number);
+    return { x: w / 2 - w / z / 2, y: h / 2 - h / z / 2, width: w / z, height: h / z, scale: z };
+  })() : undefined;
+  const png = await send('Page.captureScreenshot', clip ? { format: 'png', clip } : { format: 'png' });
   writeFileSync(shot, Buffer.from(png.result.data, 'base64'));
   console.log(`wrote ${shot}`);
 } else {

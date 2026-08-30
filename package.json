@@ -13,7 +13,8 @@
     "test:browser:par": "node tools/test.mjs",
     "test:browser:serial": "node tools/headless.mjs --serial",
     "test:all": "node --test test/*.test.mjs && node tools/headless.mjs",
-    "watch": "node --test --watch"
+    "watch": "node --test --watch",
+    "look": "node tools/look.mjs"
   },
   "devDependencies": {
     "vite": "^7.1.3"

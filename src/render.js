@@ -2138,8 +2138,16 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   const rows = (tight && HATS_TIGHT[kind]) || HATS[kind] || HATS.helmet;
   // Centred on the body, sitting with its bottom row one cell above the top of
   // it -- which is where every hat in this yard has always sat.
+  // Not snapped to the cell grid.
+  //
+  // A body moves in whole *pixels* -- `drawBody` rounds `w.x` and no further --
+  // so a hat snapped to the six-pixel lattice hopped a cell at a time while the
+  // head under it slid, and spent most of every step somewhere the body was not.
+  // The offset is a whole number of pixels already (a hat is an odd number of
+  // cells wide on a three-cell body), so the snapping was doing nothing but
+  // introducing the lag.
   const left = x + (WORKER - spriteW(rows) * P) / 2;
-  drawSprite(ctx, rows, Math.round(left / P) * P, y - spriteH(rows) * P);
+  drawSprite(ctx, rows, left, y - spriteH(rows) * P);
 }
 
 // What a body has on. It is asked of the *kit* -- which station the thing came
@@ -2883,7 +2891,12 @@ export function drawRam() {
 // standing there, not the surface under it.
 export function drawTiller() {
   if (!S.farmOpen || !built('tiller')) return;
-  const x = Math.round(tillerAt() / P) * P;
+  // Whole pixels, not whole cells. The tractor *crosses the farm*, and snapped
+  // to the six-pixel lattice it went along the row in hops while the body riding
+  // it slid -- so the driver spent most of every step beside the seat rather
+  // than in it. Everything that moves in this yard moves in pixels; the cell
+  // grid is what things are *made of*, not what they travel on.
+  const x = Math.round(tillerAt());
   const g = Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P;
   drawSprite(ctx, TILLER, x, g - spriteH(TILLER) * P);
 
@@ -2904,7 +2917,9 @@ export function drawTiller() {
 // driver sits. It is the one body in this yard that is not standing on the
 // ground, and that is the point -- it is *driving* rather than tending.
 export const tillerSeat = () => ({
-  x: Math.round(tillerAt() / P) * P + P * 4,
+  // Read the same way the tractor is drawn -- whole pixels -- or the seat and
+  // the machine disagree by up to a cell and the driver rides beside it.
+  x: Math.round(tillerAt()) + P * 4,
   y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P - P * 5 - WORKER
 });
 
