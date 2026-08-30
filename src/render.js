@@ -2122,6 +2122,15 @@ export function drawBody(x, y) {
 // span reaches under the digits; out in the yard it wears its proper width.
 export function drawHat(x, y, kind = 'helmet', tight = false) {
   ctx.fillStyle = '#000';
+  if (kind === 'cap') {
+    // A flat cap with a peak out front. It is the only hat here that is *not* a
+    // trade -- a janitor buys no kit and wears nothing the school sells -- and
+    // that is the point of it: the one body in this yard whose whole job is to
+    // be somewhere else in a minute needs to be findable at a glance.
+    ctx.fillRect(x + P, y - P, WORKER - P * 2, P);          // the crown
+    ctx.fillRect(x - P, y, P * 3, P);                       // and the peak
+    return;
+  }
   if (kind === 'brim') {
     // Two clear cells of brim past the body on each side, and a low crown on
     // top of it. Narrower than this and it was a helmet somebody had sat on:
@@ -2485,6 +2494,24 @@ export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home
     if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
+
+    // The janitor, who is nobody's trade and wears no kit anybody sells, so
+    // without something of its own it is one more identical square in a yard
+    // full of them -- and it is the one body you most often want to find,
+    // because its whole job is to be somewhere else in a minute.
+    if (w.type === 'janitor') {
+      const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);
+      drawBody(x, y);
+      drawHat(x, y, 'cap');
+      // and the shovel, held out in front of it: a shaft and a blade, leaning
+      // the way it is facing.
+      const dir = w.face || 1;
+      const hx = dir > 0 ? x + WORKER : x - P;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(hx, y + P, P, P * 2);                    // the shaft
+      ctx.fillRect(hx - (dir > 0 ? 0 : P), y + P * 3, P * 2, P);   // the blade
+      continue;
+    }
 
     if (w.type === 'labber' || w.type === 'farmhand' || w.type === 'quarrier') {
       const x = Math.round(w.x), y = Math.round(w.y + (w.lunge || 0) * P);

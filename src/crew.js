@@ -321,9 +321,27 @@ export function mainlyAt(w) {
 // Carrying comes last so that a spare body goes to a station that is short of
 // one before it goes back to sweeping the yard.
 const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'janitor', 'wizard', 'hauler'];
-export const FACTORY = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-                  labber: newLabber, scrubber: newScrubber, janitor: newJanitor,
-                  wizard: newWizard, hauler: newHauler };
+const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
+               labber: newLabber, scrubber: newScrubber, janitor: newJanitor,
+               wizard: newWizard, hauler: newHauler };
+
+// Every body gets a rhythm of its own, whatever trade it is.
+//
+// `ph` and `sp` are where a body is in its own sway and how fast it sways, and
+// they are what stop a gang reading as one animation played five times. Some of
+// the factories set them and some did not, which was fine while only the trades
+// that sway used them -- and then the janitor was given something to do while it
+// waits, read a phase nobody had given it, and multiplied its position by the
+// sine of `undefined`. A body at NaN is a body nowhere: it vanishes, and asking
+// the view to follow it takes you to an empty white corner of the world.
+//
+// So they are handed out here, where every body in the game is made, rather than
+// eight times over in eight factories that each have to remember.
+export const FACTORY = type => ({
+  ph: Math.random() * Math.PI * 2,
+  sp: 0.5 + Math.random() * 0.9,
+  ...MAKE[type]()
+});
 
 // Somebody whose job is the mess. It starts at the shed it belongs to, the way
 // every other body starts at its station -- though the work is wherever the mess
@@ -358,7 +376,7 @@ function settle(w) {
   // still holding it -- the only place a load is meant to leave a body is the
   // hole, or the ground at its feet when the job itself is taken away.
   const carry = w.carry || 0, load = w.load || [], core = !!w.hasCore;
-  const fresh = FACTORY[w.type]();
+  const fresh = FACTORY(w.type);
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
   Object.assign(w, fresh);
@@ -1281,7 +1299,7 @@ export function syncWorkers() {
     for (let short = want[type] - have(type); short > 0; short--) {
       const spare = stood.shift();
       if (spare) { retask(spare, type); S.workers.push(spare); }
-      else S.workers.push(Object.assign(FACTORY[type](), newRecord()));
+      else S.workers.push(Object.assign(FACTORY(type), newRecord()));
     }
   }
 

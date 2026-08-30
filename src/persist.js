@@ -552,9 +552,10 @@ function restoreCrew(who) {
   S.workers = [];
   if (!Array.isArray(who)) return;
   for (const k of who) {
-    const make = FACTORY[k.type];
-    if (!make) continue;
-    S.workers.push(wearRecord(Object.assign(make(), newRecord()), k));
+    if (!k.type) continue;
+    const made = FACTORY(k.type);
+    if (!made.type) continue;                  // a trade this build does not have
+    S.workers.push(wearRecord(Object.assign(made, newRecord()), k));
   }
 }
 

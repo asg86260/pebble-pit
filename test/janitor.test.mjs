@@ -6,7 +6,7 @@
 // somebody on it, and there is nobody to put on it until the outhouse is up.
 // Which is what the shed buys: not a tidier yard, but the job.
 
-import { yard, group, ok, state, run } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
 
 group('what a body leaves lies there until somebody is put on it', async () => {
   window.__reset();
@@ -74,5 +74,47 @@ group('the shed is offered once the yard is in a state', async () => {
     ok(clean.smog.poop === 0, 'a new yard is clean', `${clean.smog.poop}`),
     ok(!before, 'and the shed is not on the board yet'),
     ok(after, 'five patches of it later, it is')
+  ];
+});
+
+// Nobody ever ends up nowhere.
+//
+// The janitor was given something to do while it waits, read a sway phase that
+// nothing had given it, and multiplied its position by the sine of `undefined`.
+// A body at NaN is a body nowhere -- it vanishes off the yard, and asking the
+// view to follow it takes you to an empty white corner of the world.
+//
+// It is checked for the whole crew rather than for the janitor, because the
+// cause was a per-trade habit -- some factories handed out a rhythm and some did
+// not -- and the next trade to be given an idle would have found the same hole.
+group('every body has a rhythm, and none of them ends up nowhere', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 2, 3, 3, 0, 1);
+  window.__loo();
+  window.__assign('janitors', 1);
+  window.__air({ muck: 40 });
+  run(3);
+
+  const bodies = () => yard.S.workers;
+  const noPhase = [];
+  let lost = null;
+  for (let i = 0; i < 40; i++) {
+    run(1);
+    for (const w of bodies()) {
+      if (!Number.isFinite(w.ph)) noPhase.push(`${w.type}:${w.name}`);
+      if (!Number.isFinite(w.x) || !Number.isFinite(w.y)) {
+        lost = lost || `${w.type}:${w.name} at ${w.x},${w.y}`;
+      }
+    }
+  }
+  const types = [...new Set(bodies().map(w => w.type))];
+  window.__crew(0, 0, 0);
+  return [
+    ok(types.length >= 4, 'a yard with several trades in it', types.join(',')),
+    ok(noPhase.length === 0, 'every body has a sway of its own',
+       [...new Set(noPhase)].join(', ') || 'all of them do'),
+    ok(!lost, 'and nobody is at a position that is not a number', lost || 'nobody')
   ];
 });
