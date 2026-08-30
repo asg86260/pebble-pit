@@ -19,7 +19,10 @@ import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P, WORKER 
 group('a station board can be bought from at all', async () => {
   window.__reset();
   openSites();
-  window.__grant({ shards: 400, spores: 400, dust: 40000 });
+  // `__grant` has no dust in it -- dust is banked, not granted -- and the farm's
+  // rows are priced in it now.
+  window.__grant({ shards: 400, spores: 400 });
+  window.__tip(9000);
   const before = state().benches;
   const bought = window.__buy('quarrybench');
   const after = state().benches;

@@ -340,7 +340,6 @@ export function stepQuarrier(w, now) {
   // production is a lump at the end, fouling only on the payout meant a cut
   // could be worked for half a minute without the sky noticing -- and the blue
   // in the sky over the quarry never appeared at all between seams.
-  foul(1, w.x + WORKER / 2, w.y, 'shard');
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
   w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + Math.random() * 0.3);
@@ -382,7 +381,6 @@ function findShards(w, left) {
   // the hole from the cell it came out of rather than from wherever the body
   // happened to finish up.
   for (let n = 0; n < found; n++) tossOut(w.x + WORKER / 2, w.y + WORKER);
-  foul(QUARRY_FOUL * found, w.x + WORKER / 2, w.y, 'shard');
   S.dirty = true;
 }
 
@@ -696,7 +694,6 @@ defineMachine('jaw', {
     // The same dust a swing raises. `stepQuarrier` fouls once per cell taken --
     // digging raises dust, not only the stone at the bottom of it -- and the jaw
     // takes cells the same way, so it owes the same.
-    foul(1, jawX() + P, jawY(), 'shard');
     findShards(tender || { x: jawX(), y: jawY() }, left);
     // And the ground comes back in behind it.
     //

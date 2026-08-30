@@ -6,7 +6,7 @@
 // that pays dust and a core that pays sparks, somebody who walks and climbs to
 // get there, and a hat without which none of it happens at all.
 
-import { group, ok, state, run, runUntil, yard, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, openSites, P, WORKER } from './helpers.mjs';
 
 const wizards = () => state().workerPos.filter(p => p[0] === 'w');
 const wizardY = () => state().wizardY;
@@ -411,6 +411,12 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   window.__reset();
   window.__give(999999);
   window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+  // The ground standing first. The tower is the end of the chain now -- what a
+  // finished yard buys -- so its row is not offered until the plots, the cut and
+  // the lab are all up.
+  openSites();
+  window.__lab(true);
+  window.__crew(0, 0);
   window.__build();
   const raised = window.__buy('unlocktower');
   const tower = state();

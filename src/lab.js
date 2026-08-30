@@ -125,7 +125,13 @@ export function finish(key) {
 }
 
 export function stepLab(dt) {
-  letIdleGo();
+  // Nobody is turned out any more. The lab used to empty itself after a while
+  // with nothing to research, which reads as thoughtful and is the building
+  // overruling the roster: you put somebody in, and some time later they were
+  // somewhere else without your having said so. If the bench is idle that is a
+  // thing for you to notice and act on, and the counter under the lab is where
+  // you act on it.
+
   const on = inLab();
   if (!on) return;
 
@@ -340,7 +346,9 @@ export const LAB_UPGRADES = [
 ];
 
 export const LAB_SECTIONS = [
-  { title: 'the crew', keys: ['labcrew'] },
+  // The lab's own two, first, because they are about this room rather than about
+  // somewhere else in the yard.
+  { title: 'the lab', keys: ['labkit', 'labroom'] },
   { title: 'the work', keys: ['labswing', 'labhaul'] },
   { title: 'the ground', keys: ['labcave', 'labtend'] },
   { title: 'the air', keys: ['labair'] }

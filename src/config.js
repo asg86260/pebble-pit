@@ -1296,7 +1296,7 @@ export let CUT_STEP = 0.6;
 // something that already works rather than the way the place gets built.
 export const FARM_PLOTS0 = 1;     // plots the ground comes with
 export const FARM_PLOTS_MAX = 7;  // and the whole plot, once it is all broken
-export const PLOT_COST = 2;       // spores for the first plot after it
+export const PLOT_COST = 90;      // dust for the first plot after it
 export const PLOT_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one plot and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands

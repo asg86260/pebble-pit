@@ -123,7 +123,6 @@ export function stepFarmhand(w, now, dt) {
   if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS; return; }
   cut(i, plotX(i));
   w.farmed = (w.farmed || 0) + 1;
-  foul(FARM_FOUL, plotX(i), S.groundY - P * 2, 'spore');
   w.quarryAt = 0;
   w.plot = pickPlot(w);
   w.goal = 'to';
@@ -142,9 +141,19 @@ export const FARM_UPGRADES = [
     from: () => plotCount(),
     to: () => plotCount() + 1,
     cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel)),
-    // Blue, not green -- see the quarry's rows for the argument. The two grounds
-    // pay for each other, so a wider plot means the cut has been worked.
-    currency: 'shard',
+    // Dust, not shards.
+    //
+    // The rule is that a station is not bought deeper with the thing it makes,
+    // and the first go at that had the two grounds paying for each other: the
+    // cut deepened with spores, the plots broken with shards. Half right. The
+    // plots open *before* the cut, so pricing them in shards priced the earlier
+    // place in a currency the later one has not started making yet -- a row you
+    // cannot buy and cannot see why.
+    //
+    // The cut keeps its spores, because the farm really is standing by the time
+    // you get there. The plots take dust, which the rock has been making since
+    // the first swing.
+    currency: 'dust',
     buy: () => { S.plotLevel++; resite(); },
     show: () => S.farmOpen && plotCount() < FARM_PLOTS_MAX
   },
@@ -168,8 +177,8 @@ export const FARM_UPGRADES = [
     pct: true,
     from: () => tendRate(),
     to: () => tendRate(S.tendLevel + 1),
-    cost: () => Math.round(4 * Math.pow(1.7, S.tendLevel)),
-    currency: 'shard',
+    cost: () => Math.round(150 * Math.pow(1.7, S.tendLevel)),
+    currency: 'dust',
     buy: () => S.tendLevel++,
     show: () => S.farmOpen && tendMs() > TEND_FLOOR
   }
@@ -275,8 +284,7 @@ defineMachine('tiller', {
     if (throughPlotMuck(1) < 1) return false;
     cut(i, plotX(i));
     if (tender) tender.farmed = (tender.farmed || 0) + 1;
-    foul(FARM_FOUL, plotX(i), S.groundY - P * 2, 'spore');
-    S.dirty = true;
+      S.dirty = true;
     return true;
   }
 });

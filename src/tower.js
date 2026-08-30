@@ -138,5 +138,8 @@ export const TOWER_UPGRADES = [
 ];
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: ['wizard'] }
+  { title: 'the tower', keys: ['wizard', 'wizspeed', 'wizpower'] },
+  // And what the tower does for the rest of the yard, which is the only thing on
+  // any board that is about somewhere else entirely.
+  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) }
 ];

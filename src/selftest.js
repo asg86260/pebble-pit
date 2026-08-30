@@ -565,6 +565,12 @@ const TESTS = [
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
+    // The ground first. The tower is the end of the chain now -- it is what a
+    // finished yard buys -- so its row does not appear until the plots, the cut
+    // and the lab are all standing.
+    window.__crew(0, 0, 1, 1);
+    window.__lab(true);
+    window.__crew(0, 0);
     run(30);
     window.__build();
     window.__buy('unlocktower');
@@ -1286,6 +1292,16 @@ const TESTS = [
     const row = k => shop().querySelector(`[data-key="${k}"]`);
     const door = row('unlockfarm');           // the first one the yard offers
     const dustPrice = door && [...door.querySelectorAll('.cost i')].map(i => i.className);
+
+    // And *then* the ground standing, which is what the tower waits on: its row
+    // is the end of the chain now -- what a finished yard buys -- so the plots,
+    // the cut and the lab all have to be up before it is offered. Read in this
+    // order because opening the plots is what takes their own door off the board.
+    window.__crew(0, 0, 1, 1);
+    window.__lab(true);
+    window.__crew(0, 0);
+    buildShopFromTest();
+    refreshShopFromTest();
 
     // the tower takes a core and a thousand dust, and takes them together
     const cores0 = state().cores;
@@ -2177,13 +2193,19 @@ const TESTS = [
     run(1);
     const idle = state();
 
-    document.querySelector('#labshop button[data-key]').click();
+    // A *research* row by name. The lab's first row is its own ladder now --
+    // better instruments -- and clicking whatever happens to be first started a
+    // purchase instead of a piece of work.
+    document.querySelector('#labshop button[data-key="labswing"]').click();
     await sleep(120);
     run(3);
     const paidButEmpty = state();
 
+    // One body. The lab holds one to a bench and starts with one bench, so the
+    // second `assign` was always a no-op -- and now that nothing staffs itself,
+    // a group that relied on it getting somebody in anyway gets an empty lab.
     window.__assign('labbers', 1);
-    window.__assign('labbers', 1);
+    runUntil(() => state().labbers === 1, 60);
     runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(4);
     const worked = state();
@@ -2278,19 +2300,13 @@ const TESTS = [
     // you simply did not touch: the lab staffs itself the moment there is
     // research on and somebody going spare, so leaving the stepper alone is no
     // longer a way to keep it empty.
-    // Drained as the clock runs, not once beforehand. Bodies come free again --
-    // a hauler with nothing to fetch, a gang stood down -- and the lab takes the
-    // first spare pair of hands it sees, so a yard drained on one frame is not a
-    // yard with nobody to spare twelve seconds later.
-    for (let i = 0; i < 24; i++) {
-      while (state().idle > 0) window.__assign('miners', 1);
-      run(0.5);
-    }
+    // Nobody put in it. The lab does not staff itself -- you decide whether it is
+    // running -- so an empty lab is simply one you have not filled.
+    run(12);
     const empty = state();
 
-    // And now let one go. Nobody sends it: it is spare, there is work, and that
-    // is the whole of the rule.
-    window.__assign('miners', -1);
+    // And now somebody is put in, which is the only way anybody gets in.
+    window.__assign('labbers', 1);
     runUntil(() => state().labbers === 1, 60);
     runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(5);
@@ -2313,8 +2329,8 @@ const TESTS = [
       // get a fraction of a second at the bench. What is being checked is that
       // an unstaffed lab does not *work*, not that it never once had anybody in
       // it during twelve seconds of a busy yard.
-      ok(empty.research && empty.research.at < 0.05,
-         'a lab with nobody to spare gets next to no work done',
+      ok(empty.research && empty.research.at === 0,
+         'a lab nobody has been put in gets no work done at all',
          `${empty.research && empty.research.at}`),
       ok(part.labbers === 1 && part.research && part.research.at > 0.1,
          'somebody in it and it moves', `${part.research && part.research.at}`),
@@ -2359,9 +2375,8 @@ const TESTS = [
     await sleep(140);
     const started = state();
 
-    // Read *after* the work is started, because that is what fetches somebody:
-    // the staffing is a consequence of there being research on, not a thing done
-    // to the roster beforehand.
+    // Somebody put in it, which is the only way anybody gets in.
+    window.__assign('labbers', 1);
     runUntil(() => state().labbers === 1, 60);
     const staffed = state();
 
@@ -2379,7 +2394,7 @@ const TESTS = [
     away();
     await sleep(160);
     return [
-      ok(staffed.labbers === 1, 'the lab takes somebody the moment there is work',
+      ok(staffed.labbers === 1, 'a body can be put in the lab',
          `${staffed.labbers}`),
       ok(!!started.research && started.labDone === null,
          'and starting a piece leaves nothing to report yet',
@@ -2483,6 +2498,10 @@ const TESTS = [
     const packed = state();
 
     window.__grant({ shards: 40, spores: 40 });
+    // And dust, which the farm's rows are priced in now: the plots open before
+    // the cut, so pricing them in shards priced the earlier place in a currency
+    // the later one has not started making yet.
+    window.__tip(20000);
     buildShopFromTest();
     // Each is on the board at its own site now, not on the bench: see
     // 'the quarry and the plots are bought where they are'.
@@ -2757,7 +2776,7 @@ const TESTS = [
   // The lab empties itself when there is nothing to research. That is the game
   // tidying up after you, and making you go and undo it before anything can
   // happen is a chore rather than a decision.
-  ['starting research calls back whoever the lab let out', async () => {
+  ['a body put in the lab stays in it, work or no work', async () => {
     window.__reset();
     await settle();
     window.__lab(true);
@@ -2775,10 +2794,16 @@ const TESTS = [
     window.__crew(0, 0);
     return [
       ok(staffed.labbers === 1, 'one is put in the lab', `${staffed.labbers}`),
-      ok(empty.labbers < 1, 'with nothing to work on it lets itself out',
+      // It keeps them. The lab used to turn its own people out after a while
+      // with nothing to research, and call them back when work arrived -- which
+      // reads as thoughtful and is the building overruling the roster: you put
+      // somebody in, and later they were somewhere else without your having said
+      // so. An idle bench is a thing for you to notice, and the counter under
+      // the lab is where you act on it.
+      ok(empty.labbers === 1, 'and with nothing to work on it keeps them anyway',
          `${empty.labbers} left in`),
-      ok(back.labbers === 1, 'and starting a piece of research calls it back',
-         `${back.labbers} back in`),
+      ok(back.labbers === 1, 'and they are still there when work arrives',
+         `${back.labbers} in`),
       ok(!!back.research, 'with the work actually started', JSON.stringify(back.research))
     ];
   }],
@@ -3307,6 +3332,11 @@ const TESTS = [
     window.__crew(4, 2);
     window.__give(40000);
     window.__grant({ shards: 400, spores: 1300, cores: 9 });
+    // The ground up, so the rows that carry a note are on the bench: the tower
+    // is one of them and it is the last thing the chain offers now.
+    window.__crew(0, 0, 1, 1);
+    window.__lab(true);
+    window.__crew(4, 2);
     run(30);
     window.__board('bench');
     await sleep(200);

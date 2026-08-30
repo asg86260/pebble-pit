@@ -407,6 +407,18 @@ export function inSafeZone(px, py) {
   ]), px, py);
 }
 
+// The crew list belongs to the house's board and to nothing else, so it may not
+// outlive it.
+//
+// Closing it was the job of every path that put a board away, which is the kind
+// of rule that holds right up until a path is added that does not know about it
+// -- and then the list hangs in the yard with no board under it and nothing that
+// will ever take it down, because the thing that would have closed it has
+// already run. Said once, every frame, as something that is simply true.
+export function tidyBoards() {
+  if (at !== 'house' && S.crewListOpen) showCrewList(false);
+}
+
 export function placeBoard() {
   if (!at) return;
   // the side the submenu stands on is a question about the window, so it is

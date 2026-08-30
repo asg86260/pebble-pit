@@ -182,7 +182,7 @@ group('a hat is still on after a reload', async () => {
 
 // A lab with nothing to research is a room of people doing nothing, and there
 // is no button that takes them off it. So they take themselves off.
-group('an idle lab lets its people go', async () => {
+group('a body put in the lab stays in the lab', async () => {
   window.__abandon();                         // nothing for them to work on
   window.__crew(0, 1);
   window.__lab(true);
@@ -202,10 +202,15 @@ group('an idle lab lets its people go', async () => {
     ok(waiting.labbers === 1,
        'an empty lab does not turn people out the moment they arrive',
        `${waiting.labbers}`),
-    ok(gone.labbers === 0, 'but it does not keep them standing in it for ever',
+    // It keeps them. The lab used to turn its own people out after a while with
+    // nothing to research, which reads as thoughtful and is the building
+    // overruling the roster: you put somebody in, and some time later they were
+    // somewhere else without your having said so. An idle bench is a thing for
+    // you to notice, and the counter under the lab is where you act on it.
+    ok(gone.labbers === 1, 'and it keeps them until you say otherwise',
        `${gone.labbers}`),
-    ok(gone.haulers === 1 && gone.crew === 1,
-       'and the one it lets go is back to carrying dust, not off the payroll',
+    ok(gone.haulers === 0,
+       'and nobody is handed back to carrying without you saying so',
        `${gone.haulers} carrying of ${gone.crew}`)
   ];
 });

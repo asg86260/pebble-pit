@@ -388,29 +388,10 @@ export function restaff(job, want) {
 // that the crew code can treat it like any other job. This is the one place it
 // is set, and every path that moves a body goes through here.
 
-// The one-body stations staff themselves.
-//
-// The lab and the scrubbing house each hold exactly one pair of hands and have
-// exactly one thing to do with them, so the `+`/`-` under each was a control
-// with one meaningful setting -- and the game asked you to find it twice, on two
-// different boards, for no decision. What was really being asked is "do you want
-// the lab working", and the answer is always yes when there is research on and
-// hands going spare.
-//
-// It runs on the clock rather than inside `rebalance`, because the things it
-// reacts to -- research starting, the house going up -- do not go through
-// `rebalance` and should not have to. A rule about how the yard staffs itself
-// belongs in the yard's own loop.
-//
-// It staffs *up* only. Letting go is already written and better: the lab turns
-// its people out after LAB_IDLE_MS of nothing to work on, with a grace period so
-// a body that has just walked over is not sent straight back. Forcing the count
-// down here would delete that. The house has no such timer and wants none -- a
-// scrubbing house that is standing is one that should be running.
 // A station whose machine took its kit owns no hats. Zeroed here rather than in
-// `buyMachine`, because this is the one place that is allowed to move counts
-// about -- and because a save from before the machines existed can arrive with
-// both a machine and a full set, which is the same tidy-up.
+// `buyMachine`, because this is the one place allowed to move counts about --
+// and because a save from before the machines existed can arrive with both a
+// machine and a full set, which is the same tidy-up.
 //
 // Nothing else is needed to make it read: `stepKit` finds heads wearing kit the
 // station does not own and walks each one over to hand it in.
@@ -423,26 +404,16 @@ function stripKit() {
   }
 }
 
+// Nothing staffs itself.
+//
+// The lab and the scrubbing house used to take a body when there was work and
+// give it back when there was not, on the argument that each is one room with
+// one job and the choice made itself. It does not: what that setting decides is
+// whether the station runs at all, and a building quietly taking a pair of hands
+// off the rock -- or handing them back mid-shift -- is the yard overruling the
+// roster. Both are on the roster again and both stay where they are put.
 export function staffSheds() {
   stripKit();
-  let moved = false;
-  // Each of them staffs itself *when there is something to do*, which is the
-  // whole of what the stepper under it used to ask. A house standing over a
-  // clean sky does not quietly take a body off the yard for nothing -- that
-  // would be the one thing a player could not opt out of, and buying the house
-  // would cost a pair of hands for ever rather than when it is earning them.
-  for (const [job, wanted] of [['labbers', S.labOpen && !!S.research],
-                               ['scrubbers', S.scrubOpen && S.haze > 0]]) {
-    if (!wanted) continue;
-    const room = capOf(job) - S[job];
-    if (room > 0 && spareHands() > 0) { S[job] += Math.min(room, spareHands()); moved = true; }
-  }
-  // And the house gives its body back when the sky is clean. The lab has its own
-  // timer for this and a better one -- a grace period, so somebody who has just
-  // walked over is not turned straight round -- but the house has nothing to
-  // wait for: a clean sky is a finished job.
-  if (S.scrubbers > 0 && !(S.scrubOpen && S.haze > 0)) { S.scrubbers = 0; moved = true; }
-  if (moved) { rebalance(); syncWorkers(); S.dirty = true; }
 }
 
 export function rebalance() {
@@ -889,9 +860,20 @@ export const UPGRADES = [
       S.towerOpen = true;
       lookAt(tower.x + tower.w / 2);
     },
-    // Not offered until a core exists to spend. Before that it is a row asking
-    // for a thing the game has not shown you yet.
+    // Not offered until the ground is finished: the plots, the cut and the lab
+    // all standing, and a core seen.
+    //
+    // A core is a core, so as soon as one was banked the tower stood on the
+    // bench beside the plots -- and it is the most interesting row on the board
+    // by a mile, so it took the whole chain in one step. The tower is the thing
+    // that comes *after* the yard works: it is what a finished ground buys, and
+    // the star it reaches is the tier above everything on the floor. Sold before
+    // the lab, it is a wizard summoned by somebody with no quarry.
+    //
+    // Each of the three earns the next -- see the doors above -- and this is the
+    // end of that chain rather than a fourth thing competing with it.
     show: () => !S.towerOpen && S.seenCore
+              && S.farmOpen && S.quarryOpen && S.labOpen
   },
   {
     key: 'unlockcasino',
@@ -936,7 +918,7 @@ export const UPGRADES = [
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
+  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },

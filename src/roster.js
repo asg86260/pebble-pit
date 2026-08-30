@@ -29,11 +29,22 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 // Each station and the job it stands for, in yard order, left to right, so the
 // roster reads the way the world does.
 //
-// The lab and the scrubbing house are not on it. Each holds one body and has one
-// thing to do with it, so a counter under either was a control with one useful
-// setting -- and a roster is for the places where *how many* is the question.
-// Both staff themselves now; see `rebalance`.
+// The lab and the scrubbing house are on it again. They were taken off on the
+// grounds that each holds one body and has one thing to do with it, so the
+// counter had a single useful setting -- true, and beside the point. What you
+// are actually deciding is whether that station is *running at all*, which is
+// worth a control however few settings it has, and the yard deciding it for you
+// means a pair of hands can be taken off the rock by a building without you
+// having said so.
+//
+// And once somebody is put in, they stay in. See `stepLab`: the lab used to turn
+// its own people out after a while with nothing to do, which is the same thing
+// wearing a friendlier coat.
 export const POSTS = [
+  { key: 'scrubjob', job: 'scrubbers',
+    at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
+  { key: 'labjob', job: 'labbers',
+    at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: 'janitors',

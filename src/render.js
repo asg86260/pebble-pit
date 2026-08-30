@@ -2259,24 +2259,27 @@ function drawOffers() {
     // shape a map puts on a place, and it stops competing with the pointer over
     // a body's head that really does mean go and look at this.
     //
-    // Solid, five courses, and drawn on a half cell: 1, 3, 5, 3, 1.
+    // A real diamond, drawn as a shape rather than built out of cells.
     //
-    // Seven whole cells was legible and far too loud -- forty-odd pixels of
-    // solid black hanging under a station, bigger than most of the things it
-    // was pointing at. Five courses is the smallest a *diamond* can be and
-    // still be one: a slope needs two steps before it reads as a slope, and
-    // fewer than that is a plus however you draw it.
+    // This is the one mark in the yard that is not on the lattice, and it earns
+    // the exception the same way the core's ring does: it has to be small *and*
+    // unambiguous, and those two things fight on a six-pixel grid. Stepped, a
+    // diamond small enough not to shout is five courses -- and five courses of
+    // square cells is a fat plus, because the corner steps are the same size as
+    // the arms and nothing in the shape tells you which is which. Every attempt
+    // to fix that made it bigger, hollow, or blurred.
     //
-    // On whole cells. A half cell was tried to make it smaller still and is not
-    // worth it: this yard is drawn on a lattice, and the one mark that steps off
-    // it does not look smaller, it looks blurred. Five courses of whole cells is
-    // a third off the seven-course version, which is what was actually wrong
-    // with it.
-    const u = P;
-    for (let i = 0; i < 5; i++) {
-      const wide = (i < 3 ? i : 4 - i);                // 0,1,2,1,0
-      ctx.fillRect(at.x - wide * u, at.y - u * 2 + i * u, u * (wide * 2 + 1), u);
-    }
+    // Four points and a fill has no steps in it at all, so the slopes are
+    // slopes at any size. The core is drawn the same way and for the same
+    // reason: some shapes are not made of cells.
+    const w = P * 2.5, h = P * 3;
+    ctx.beginPath();
+    ctx.moveTo(at.x + P / 2, at.y - h);          // top
+    ctx.lineTo(at.x + P / 2 + w, at.y);          // right
+    ctx.lineTo(at.x + P / 2, at.y + h);          // bottom
+    ctx.lineTo(at.x + P / 2 - w, at.y);          // left
+    ctx.closePath();
+    ctx.fill();
   }
 }
 

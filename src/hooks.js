@@ -32,13 +32,13 @@ import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES, askLever } from './machines.js';
-import { UPGRADES, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
-import { TOWER_UPGRADES } from './tower.js';
-import { LAB_UPGRADES } from './lab.js';
-import { SCHOOL_UPGRADES } from './school.js';
-import { SCRUB_UPGRADES } from './scrubhouse.js';
-import { QUARRY_UPGRADES } from './quarry.js';
-import { FARM_UPGRADES } from './farm.js';
+import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
+import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
+import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
+import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
+import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
+import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
+import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -421,6 +421,19 @@ export const upgrades = () => UPGRADES;
 // it costs. `upgrades` above hands back the bench's array raw -- rows the board
 // is not showing included -- which is fine for what it was for and useless for
 // asking "is this row on offer yet", which is the whole of what a gate is.
+// Every board, as its rows and its section key-lists, so a check can ask whether
+// the two agree. They are two separate edits and only one of them is where the
+// row is written, which is how five rows came to exist on no board at all.
+export const boards = () => [
+  { name: 'bench',  keys: UPGRADES.map(u => u.key),        sections: SECTIONS.map(x => x.keys) },
+  { name: 'lab',    keys: LAB_UPGRADES.map(u => u.key),    sections: LAB_SECTIONS.map(x => x.keys) },
+  { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
+  { name: 'school', keys: SCHOOL_UPGRADES.map(u => u.key), sections: SCHOOL_SECTIONS.map(x => x.keys) },
+  { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
+  { name: 'quarry', keys: QUARRY_UPGRADES.map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
+  { name: 'farm',   keys: FARM_UPGRADES.map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) }
+];
+
 export const allRows = () => everyRow().map(u => ({
   key: u.key,
   name: u.name,
