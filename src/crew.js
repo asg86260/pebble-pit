@@ -1631,8 +1631,27 @@ const roomLeft = w => load(w) - (w.carry || 0);
 // Three quarters rather than full, because full is already too late: by then the
 // station has stopped, and what you want is the crew turning up before it does.
 const BACKED_UP = 0.75;
-const pilingUp = () => S.piles.some(p =>
-  (S.pileCount[p.key] || 0) >= (PILE_LIMIT[p.key] || Infinity) * BACKED_UP);
+// Whether a heap is backing up, and *which* heap, because the two want opposite
+// answers out of a body deciding what to fetch next.
+//
+// This used to be "is any pile backing up", and the answer to that was "fetch
+// dust". Which is right when the dust is what is backing up and exactly wrong
+// when it is not: a full quarry heap is a reason to go and get *shards* sooner,
+// not a reason to walk past them carrying grit. And it stopped being an edge
+// case the day the machines landed -- a ram fills the rock's pile in under a
+// second and never empties it, so `pilingUp` was true for the rest of the run,
+// dust won every single time, and the crew stopped fetching the other two
+// resources at all.
+const backedUp = key =>
+  (S.pileCount[key] || 0) >= (PILE_LIMIT[key] || Infinity) * BACKED_UP;
+// Kept for the pile mark and the stand-down rules, which are about a station
+// having nowhere to put what it makes -- a different question from what a body
+// coming out to fetch should pick up.
+export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
+
+// Whether a column is one of the finds lying about, so a body that has gone for
+// one can be told apart from a body shifting grit.
+const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
 
 // the columns already spoken for this frame
 function claims() {
@@ -2164,7 +2183,9 @@ export function updateWorkers(now, dt) {
     if (w.goal === 'seek') {
       // It keeps the column it set off for until that column is bare. Picking
       // the nearest one afresh every frame is what made the crew swarm.
-      if (w.claim >= 0 && !at(floor, w.claim, 0)) { taken.delete(w.claim); w.claim = -1; }
+      if (w.claim >= 0 && !at(floor, w.claim, 0)) {
+        taken.delete(w.claim); w.claim = -1; w.forMark = false;
+      }
       if (w.claim < 0) {
         // Book the hole before picking a column, not after filling your hands.
         // Nothing at all is fetched without room for it -- a shard on the ground
@@ -2176,8 +2197,26 @@ export function updateWorkers(now, dt) {
           // that came out to fetch goes back with something.
           const mark = nearestMark(w, taken);
           const dust = nearestDust(w.x, taken);
-          const first = pilingUp() ? dust : mark;
-          const other = pilingUp() ? mark : dust;
+          // A find first -- but not by everybody at once while a heap is jammed.
+          //
+          // This was an all-or-nothing switch and both settings are wrong. "Any
+          // heap backing up, fetch dust" is what it was, and the machines made
+          // that permanently true: a ram fills the rock's pile in under a second
+          // and never empties it, so dust won every time for the rest of the run
+          // and the crew stopped fetching the other two grounds at all. Turning
+          // it off outright is worse in the other direction -- measured, the rock
+          // then stands on its own heap 85% of a run, because the stations keep
+          // dripping finds and a good share of the crew is always off chasing
+          // one.
+          //
+          // So it is a *cap* rather than a switch. A find is one grain worth a
+          // whole shard, so one body fetching them keeps up with what the yard
+          // produces; everybody else shifts grit. The other two grounds keep
+          // coming in and the rock keeps working.
+          const busy = S.workers.filter(o => o.type === 'hauler' && o.forMark).length;
+          const spare = !backedUp('rock') || busy < 1;
+          const first = spare ? mark : dust;
+          const other = spare ? dust : mark;
           const pick = first >= 0 ? first : other;
           // And nothing further off than the hole is, once the hands are more
           // than half full.
@@ -2195,6 +2234,10 @@ export function updateWorkers(now, dt) {
             Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
           if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
             w.claim = pick; taken.add(pick);
+            // Remembered so the cap above can count how many are off after
+            // finds. It is a fact about the trip, not about the column: the
+            // column stops being a find the moment it is picked up.
+            w.forMark = isMark(pick);
           }
         }
       }

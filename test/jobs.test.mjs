@@ -254,3 +254,40 @@ group('the save keeps what matters', async () => {
        'the rock is saved cell by cell')
   ];
 });
+
+// A backed-up rock pile is not a reason to stop fetching shards.
+//
+// The crew used to ask "is *any* heap backing up" and answer "fetch dust". That
+// is right when the dust is what is backing up and exactly wrong when it is not
+// -- and it stopped being an edge case the day the machines landed, because a
+// ram fills the rock's pile in under a second and never empties it. Dust won
+// every time for the rest of the run and the other two resources were left where
+// they lay.
+group('a full rock pile does not stop the crew fetching the other grounds', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 4, 2);                    // carriers, and somebody working the cut
+  window.__clearFloor();
+  run(3);
+
+  // Back the rock's heap right up, the way a machine does.
+  const p = state().piles.find(x => x.key === 'rock');
+  for (let i = 0; i < 900; i++) window.__pile(p.from + (i % 60) * 4, 8);
+  run(2);
+  const jammed = state();
+
+  // and put a shard on the ground out by the plots
+  window.__toss('shard', state().farmX + 40);
+  run(1);
+  const before = state().shards;
+  const got = runUntil(() => state().shards > before, 90);
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(jammed.pileFull.rock, 'the rock heap is backed up',
+       `${jammed.pileCount.rock} on it`),
+    ok(got, 'and a shard on the ground is still fetched',
+       `${before} -> ${state().shards}`)
+  ];
+});
