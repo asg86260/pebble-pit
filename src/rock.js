@@ -419,3 +419,17 @@ defineMachine('ram', {
     return true;
   }
 });
+
+
+// How far through this boulder the yard has got, 0 to 1. The ram draws a bar off
+// it: the hill is the one workplace whose progress has no shape you can read
+// from beside the machine -- a cut gets visibly deeper, a plot visibly greener,
+// and a rock just gets smaller.
+export function rockShare() {
+  if (!S.boulder || !S.boulder.length) return 0;
+  const full = S.gw * S.gh * depthOf();
+  if (!full) return 0;
+  let left = 0;
+  for (const row of S.boulder) for (const v of row) left += v;
+  return Math.max(0, Math.min(1, 1 - left / full));
+}

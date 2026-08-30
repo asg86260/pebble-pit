@@ -238,6 +238,10 @@ export const S = {
   // every spark in the game could only be made faster by hiring another body.
   // How much harder the scrubbing house pulls. It was built to answer hand
   // labour and the machines out-dirty it several times over.
+  // Where the tiller has got to on its run up the row and back, 0..2. Everything
+  // about the machine is read off it: where it is drawn, which furrow it works,
+  // where its tender stands.
+  tillerAt: 0,
   fanLevel: 0,
   wizSpeedLevel: 0,
   wizPowerLevel: 0,

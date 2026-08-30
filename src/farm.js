@@ -199,16 +199,11 @@ export const FARM_SECTIONS = [
 // a furrow that had moved out from under it.
 export const tillerAt = () => {
   if (plotCount() < 1) return farm.x;
-  // Where along the row it is, worked out from the furrow it is on -- the same
-  // answer `bite` uses, so the machine is always drawn at the work it is doing.
-  //
-  // It works one furrow through and then moves on, which is what a hand does and
-  // what the drawing needs. Taking the *least* ripe each beat looked like the
-  // same thing written the other way round and was not: a furrow stopped being
-  // the least ripe the instant it was touched, so the tiller shuffled along the
-  // whole row every beat, brought all seven on together, cut none of them, and
-  // its tender spent the entire day walking after it and never quite arriving.
-  return plotX(tillerPlot()) - WORKER - P * 2;
+  // Between the two ends of the row, wherever the run has got to. Not snapped to
+  // a plot: a tractor is between furrows as often as it is on one.
+  const n = plotCount();
+  const a = plotX(0) - WORKER - P * 2, b = plotX(n - 1) - WORKER - P * 2;
+  return a + (b - a) * tillerRun();
 };
 
 // Which furrow it is on. A ripe one first, then the least ripe.
@@ -218,15 +213,25 @@ export const tillerAt = () => {
 // being the least ripe, so the tiller moved on and left it standing. It brought
 // all seven furrows to ripe and cut none of them. A hand does not work like that
 // -- it stays at its plot until the crop is off -- and neither should this.
+// Which furrow it is over. A tractor does not choose a plot -- it works the row,
+// end to end, and whatever is under it when it passes gets worked.
+//
+// It picked the plot it wanted and stood at it before, which is what a *hand*
+// does. What that lost is the thing a tractor is: something that crosses the
+// whole farm, and whose position is the reason a plot came on rather than a
+// consequence of it. So the run is a clock, the machine's x follows the run, and
+// the plot it works is simply the one it is over.
+export const tillerRun = () => {
+  const n = plotCount();
+  if (n < 2) return 0;
+  // Up the row and back down it, so it is always somewhere and never jumps.
+  const k = (S.tillerAt || 0) % 2;
+  return k < 1 ? k : 2 - k;
+};
+
 const tillerPlot = () => {
   const n = plotCount();
-  let want = 0, best = -1;
-  for (let i = 0; i < n; i++) {
-    const v = S.plots[i] == null ? 0 : S.plots[i];
-    if (v >= 1) return i;                      // ripe: take it off before anything else
-    if (v > best) { best = v; want = i; }      // else finish the one already started
-  }
-  return want;
+  return Math.max(0, Math.min(n - 1, Math.round(tillerRun() * (n - 1))));
 };
 
 defineMachine('tiller', {
@@ -241,6 +246,22 @@ defineMachine('tiller', {
   ready: () => !S.pileFull.farm && plotCount() > 0,
   bite: tender => {
     plantPlots();
+    // The run moves on. This is the tractor crossing the farm, and everything
+    // else about it -- where it is drawn, which furrow it works, where its
+    // tender stands -- is read off this one number.
+    const n = Math.max(1, plotCount());
+    S.tillerAt = ((S.tillerAt || 0) + 1 / (n * 40)) % 2;
+
+    // What it does to the row it is crossing. A tractor going up a field brings
+    // the whole field on, not the one furrow it happens to be over: that is the
+    // difference between a machine and a very fast farmhand, and it is what the
+    // thing is for. The furrow under it comes on fastest; the rest come on with
+    // it, more slowly.
+    for (let k = 0; k < n && k < S.plots.length; k++) {
+      if (S.plots[k] < 1) S.plots[k] = Math.min(1, S.plots[k] + 1 / (40 * n));
+      if (S.plots[k] >= 1 && !S.plotTone[k]) S.plotTone[k] = someFind(SPORE_CELL);
+    }
+
     const i = tillerPlot();
     if (i == null || i >= S.plots.length) return false;
     if (S.plots[i] < 1) {

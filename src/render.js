@@ -29,7 +29,7 @@ import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
-import { ramX } from './rock.js';
+import { ramX, rockShare } from './rock.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
@@ -629,6 +629,21 @@ function warning(x, y) {
 const SLOT_W = P * 6;
 const SLOTS = ['stopped', 'offer'];        // left to right, and never reordered
 
+// Which of them a station is showing right now.
+//
+// They used to sit in fixed places whether or not the other was there, on the
+// argument that a mark which never moves is a mark you learn the position of.
+// That is true of a row of controls and wrong for a pair of signs: one sign
+// hanging off to the left of nothing reads as a thing that has come loose. So
+// they are centred as a group -- one in the middle, two side by side about the
+// middle -- which is what anybody drawing this by hand would have done.
+function marksOn(key) {
+  const on = [];
+  if (S.pileFull[key]) on.push('stopped');
+  if (STATIONS.includes(key) && hasOffer(key)) on.push('offer');
+  return on;
+}
+
 // The middle of a station's row of slots. Everything that hangs under a station
 // is measured from here, so moving a station moves its marks with it.
 export function markAnchor(key) {
@@ -658,8 +673,13 @@ export function markAnchor(key) {
 // One slot of that row.
 export function markAt(key, kind) {
   const at = markAnchor(key);
-  const i = Math.max(0, SLOTS.indexOf(kind));
-  const left = at.x - (SLOTS.length * SLOT_W) / 2 + SLOT_W / 2;
+  // Centred as a group, in the order the slots are declared -- so with one up it
+  // is in the middle, and when the second appears they part about the middle
+  // rather than one of them staying put and the other arriving beside it.
+  const on = marksOn(key);
+  const i = on.indexOf(kind);
+  if (i < 0) return { x: at.x, y: at.y };     // asked about one that is not up
+  const left = at.x - (on.length * SLOT_W) / 2 + SLOT_W / 2;
   return { x: Math.round((left + i * SLOT_W) / P) * P, y: at.y };
 }
 
@@ -2238,10 +2258,23 @@ function drawOffers() {
     // shape a map puts on a place, and it stops competing with the pointer over
     // a body's head that really does mean go and look at this.
     //
-    // Five courses about the middle: 1, 3, 5, 3, 1.
-    for (let i = 0; i < 5; i++) {
-      const wide = (i < 3 ? i : 4 - i);                // 0,1,2,1,0
-      ctx.fillRect(at.x - wide * P, at.y - P * 2 + i * P, P * (wide * 2 + 1), P);
+    // Hollow, and that is what makes it read.
+    //
+    // Solid, a five-course diamond -- 1, 3, 5, 3, 1 -- is geometrically a
+    // diamond and looks like a fat plus, because at five cells across the
+    // corner steps are the same size as the arms and nothing tells you which
+    // is which. An outline has only the sloping edges in it, so the two long
+    // diagonals are the whole shape and there is nothing left to mistake for
+    // an arm.
+    //
+    // Seven courses rather than five, for the same reason: a slope needs a few
+    // steps before it reads as a slope.
+    for (let i = 0; i < 7; i++) {
+      const wide = (i < 4 ? i : 6 - i);                // 0,1,2,3,2,1,0
+      const y = at.y - P * 3 + i * P;
+      if (wide === 0) { ctx.fillRect(at.x, y, P, P); continue; }   // the tips
+      ctx.fillRect(at.x - wide * P, y, P, P);                      // and the two edges
+      ctx.fillRect(at.x + wide * P, y, P, P);
     }
   }
 }
@@ -2799,6 +2832,25 @@ export function drawHoist() {
   const ride = Math.round(Math.abs(1 - t * 2) * (H - 2));  // the whole drop, and back
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + P, top + P + ride * P, P, P);
+
+  // And the line goes all the way down to the machine it is lifting from.
+  //
+  // The frame stood on the deck with a rope inside it and the jaw sat on the
+  // floor of the cut with nothing between them, so the two read as two separate
+  // objects that happened to be near each other. A hoist is a thing connected to
+  // what it hoists -- that is the whole of what makes it a hoist -- so the line
+  // carries on down the mouth of the cut to the jaw's roof.
+  ctx.fillStyle = '#000';
+  const jy = jawY();
+  const from = top + P * H;
+  if (jy > from) ctx.fillRect(x + P, from, P, jy - from);
+  // and the skip rides that stretch too, when it is down the hole
+  const drop = Math.round((jy - from) / P);
+  if (drop > 0) {
+    const deep = Math.round(Math.abs(1 - ((now() % 2200) / 2200) * 2) * drop);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + P, from + deep * P, P, P);
+  }
 }
 
 // The ram: a squat engine outside the apron with an arm that reaches into the
@@ -2823,6 +2875,22 @@ export function drawRam() {
   ctx.fillRect(x + W * P, y + P, P * reach, P);
   ctx.fillStyle = '#fff';
   ctx.fillRect(x + P, y + P, P * 2, P);                   // the slot
+
+  // How far through this boulder it is, as a bar across the engine's flank.
+  //
+  // The ram is the one machine whose work you cannot see the shape of. A cut
+  // gets visibly deeper and a plot visibly greener; the hill just gets smaller,
+  // slowly, and from beside the machine there is nothing to say whether the
+  // thing is halfway through or has barely started. The bar is that, and it
+  // fills as the rock goes.
+  const share = rockShare();
+  if (share > 0) {
+    const wide = Math.max(1, Math.round((W - 1) * share));
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(x + P / 2, y + P * 2 + P / 2, (W - 1) * P, P);     // the track
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + P / 2, y + P * 2 + P / 2, wide * P, P);        // and how far along
+  }
 }
 
 // The tiller: a low frame that crawls the plot line and turns the ground behind
