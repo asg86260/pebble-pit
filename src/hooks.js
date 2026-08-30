@@ -11,7 +11,7 @@
 // `crew` from this file. One implementation, so a hook cannot mean two
 // different things depending on which suite asked.
 
-import { routeReport, groundTop, ways, links } from './route.js';
+import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
 import { S, floor, pit } from './state.js';
@@ -687,10 +687,12 @@ export const routeOf = (i, toX) => {
   return w ? routeReport(w, toX) : null;
 };
 
-// The surface under a place, which is the one question the whole of route.js is
-// built on: the ground, the bridge, the rock or the top of a heap, whichever is
-// highest.
-export const surfaceAt = wx => Math.round(groundTop(wx));
+// The highest thing there is to stand on at a place: the ground, the deck of the
+// bridge, or the face of the hill where the hill reaches. Not which *way* that
+// belongs to -- the yard's floor and the hill are two ways now (see route.js),
+// and a check that wants to know whether there is rock in a column asks this and
+// compares it with the ground line.
+export const surfaceAt = wx => Math.round(rockTop(wx));
 
 // Every way there is, and every link between them: the connectivity of the
 // world, which is what decides every route in it.

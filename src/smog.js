@@ -1095,24 +1095,6 @@ export function cleanSpotNear(wx, reach = 90) {
   return c < 0 || c >= m.length ? null : c * P + P / 2;
 }
 
-// Where a body goes to *stand* to work a patch. Out on the yard that is the
-// patch itself; on the rock, the quarry or the plots it is the nearest ground
-// beside it. A shovel reaches on to a site, a pair of boots does not -- so the
-// body steps up to the edge of the thing and works across it, the same way it
-// steps aside to leave anything of its own on ground somebody can clean.
-// The rock is the exception, and it is the obvious one: a rock is a hill with a
-// gang standing on top of it all day. A body clearing the face climbs up and
-// shovels where the muck is, the way a miner works where the rock is -- reaching
-// across from the apron was a body cleaning a roof from a ladder it never moved.
-//
-// The quarry and the plots stay worked from the edge. There is nowhere to stand on
-// either of them: one is a hole with benches in it and the other is a plot you
-// would be treading on.
-export const onRock = wx => {
-  const r = rockCols();
-  return !!r && wx > r.from && wx < r.to;
-};
-
 // Where a body goes to stand to work a patch: the patch, if there is footing
 // under it, and the nearest footing there is if not.
 //
