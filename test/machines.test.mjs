@@ -180,8 +180,12 @@ group('a machine is worth its complement times the dial', async () => {
     ok(Math.abs(two.jaw.rate - 20) < 0.01 && Math.abs(two.tiller.rate - 28) < 0.01,
        'and the whole of it moves with the dial rather than being written down',
        `at 2: jaw ${two.jaw.rate}, tiller ${two.tiller.rate}`),
-    ok((s.roster.find(r => r.job === 'haulers') || {}).hands === null,
-       'while a job with no floor plan reports no complement at all',
+    // Carrying has no floor plan either, and used to report none. It has a
+    // complement now because it has a machine: what the belt stands in for is a
+    // full crew of carriers, and a station a machine can replace has to be able
+    // to say what it is worth.
+    ok((s.roster.find(r => r.job === 'haulers') || {}).hands === 6,
+       'and carrying, which has a belt now, reports the whole lip gang',
        `${JSON.stringify((s.roster.find(r => r.job === 'haulers') || {}).hands)}`)
   ];
 });
@@ -1081,5 +1085,61 @@ group('buying a machine takes the specialists with it', async () => {
        `${after.machines.jaw.rate}`),
     ok(after.trained.indexOf('q') < 0,
        'with nobody left wearing one', `${after.trained}`)
+  ];
+});
+
+// --- the belt -------------------------------------------------------------------
+// The fourth machine, and the odd one out: it does not work a face, it works the
+// ground between the rock and the hole. It is what the yard starts asking for
+// the moment any other machine runs -- a ram fills the rock's pile in well under
+// a second and then stands down waiting to be carried.
+group('the belt carries dust to the hole without anybody walking it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1);                       // one body, and it tends the belt
+  window.__machine('belt', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+
+  // A heap of loose dust on the open ground between the rock and the lip.
+  const s0 = state();
+  const mid = Math.round((s0.rockX ?? s0.cx ?? 0));
+  for (let i = 0; i < 200; i++) window.__pile(s0.pitX - 300 + (i % 30) * 6, 3);
+  run(1);
+  const before = state();
+
+  run(14);
+  const after = state();
+  window.__crew(0, 0);
+  return [
+    ok(before.floor > 0, 'there is dust lying on the ground', `${before.floor} grains`),
+    ok(after.stored > before.stored,
+       'and it ends up in the hole', `${before.stored} -> ${after.stored}`),
+    ok(after.floor < before.floor,
+       'without anybody carrying it, because the belt did',
+       `${before.floor} -> ${after.floor} on the ground`)
+  ];
+});
+
+// It is priced and gated like the rest, but on the lip's own gear.
+group('the belt waits for the whole of the lip to be bought out', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(20000);
+  const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
+
+  const bare = shown();
+  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  const geared = shown();
+  window.__school({ carters: 6 });
+  const kitted = shown();
+  return [
+    ok(!bare.includes('belt'), 'not offered on a lip with its gear unbought'),
+    ok(!geared.includes('belt'), 'nor with the gear bought and no carters'),
+    ok(kitted.includes('belt'), 'and offered once both are done',
+       kitted.filter(k => k === 'belt').join(''))
   ];
 });

@@ -35,7 +35,10 @@ import { S } from './state.js';
 export const MACHINES = [
   { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
   { key: 'ram',    job: 'miners',    name: 'the ram' },
-  { key: 'tiller', job: 'farmhands', name: 'the tiller' }
+  { key: 'tiller', job: 'farmhands', name: 'the tiller' },
+  // The fourth, and the odd one out: it does not work a face, it works the
+  // *ground between* the rock and the hole. See the belt's spec in dust.js.
+  { key: 'belt',   job: 'haulers',   name: 'the belt' }
 ];
 
 // Derived, not written out again: a hand-kept inverse of the table six lines

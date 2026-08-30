@@ -20,7 +20,7 @@ import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
-import { MACHINE_GAIN, ROCK_GANG, RAM_BILL } from './config.js';
+import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL } from './config.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
@@ -303,7 +303,14 @@ export const roomAt = job => capOf(job) - S[job];
 // having no complement at all, rather than being quietly handed the rock's: the
 // lip has no machine and no floor plan, and a roster claiming carrying holds
 // five would be a number with nothing behind it.
-export const handsOf = job => job === 'miners' ? ROCK_GANG : capOfBare(job);
+export const handsOf = job =>
+  job === 'miners' ? ROCK_GANG :
+  // Carrying has no floor plan either, and for a different reason: it is not a
+  // place at all. It is what a body does when it is on nothing, so "how many fit"
+  // is the whole crew, and what the belt stands in for is a full complement of
+  // carriers.
+  job === 'haulers' ? LIP_GANG :
+  capOfBare(job);
 
 
 // Whether a station's kit is complete: a hat for every pair of hands it holds.
@@ -585,6 +592,27 @@ export const UPGRADES = [
     buy: () => { buyMachine('ram'); rebalance(); },
     show: () => canBuy('ram', () => S.minerPickLevel >= RUNGS && S.minerSpeedLevel >= RUNGS,
                        () => kitFull('miners'))
+  },
+  {
+    // The belt from the rock to the hole, and the one machine that changes the
+    // yard's *traffic* rather than a station's rate.
+    //
+    // It is what the yard starts asking for the moment any other machine runs: a
+    // ram fills the rock's pile in well under a second and then stands down
+    // waiting to be carried, so haulage becomes the bottleneck exactly when the
+    // works becomes worth watching. DESIGN.md's tier three promised carts from
+    // the beginning.
+    //
+    // Gated like the others: every rung of the lip's own gear, and a cart for
+    // every pair of hands.
+    key: 'belt',
+    name: 'the belt',
+    bill: () => BELT_BILL,
+    buy: () => { buyMachine('belt'); rebalance(); },
+    show: () => canBuy('belt',
+                       () => S.haulCarryLevel >= RUNGS && S.haulPaceLevel >= RUNGS
+                          && S.harnessLevel >= RUNGS && S.bootsLevel >= RUNGS,
+                       () => kitFull('haulers'))
   },
   {
     key: 'auto',

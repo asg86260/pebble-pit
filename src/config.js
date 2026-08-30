@@ -1152,6 +1152,15 @@ export const PUFF_SPREAD = 0.8;      // how far apart they start, in cells
 export const JAW_BILL    = [['spark', 30], ['dust', 2000], ['spore', 25]];
 export const RAM_BILL    = [['spark', 50], ['shard', 40], ['spore', 30]];
 export const TILLER_BILL = [['spark', 20], ['dust', 1200], ['shard', 18]];
+// The belt is the one machine not priced away from its own station's coin,
+// because carrying does not *have* a coin: a hauler makes nothing, it moves what
+// everybody else made. So it is priced in all three grounds, which is the truest
+// thing a price can say about a thing the whole yard uses.
+export const BELT_BILL = [['spark', 40], ['shard', 30], ['spore', 30]];
+// The rock's notional gang was five; the lip's is what a full crew of carriers
+// looks like, which is rather more -- carrying is the job everybody falls back
+// to, so at any moment most of the yard is doing it.
+export const LIP_GANG = 6;
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 export const BENCH_COST = 3;       // shards for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets

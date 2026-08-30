@@ -3,9 +3,13 @@
 // Nothing here knows what a worker is or what the shop sells. A chip is a shade,
 // a place and a velocity, and it stops being one when it lands.
 
-import { P, GRAV } from './config.js';
+import { P, GRAV, WORKER } from './config.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
+import { defineMachine } from './machines.js';
+import { at, put, colOf, bottomY } from './grid.js';
+import { scoopMs } from './upgrades.js';
+import { pitFull } from './pit.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => Math.random() + Math.random() + Math.random() - 1.5;
@@ -60,3 +64,67 @@ export function aim(x, y, land, size) {
   return { vx: (land - x) / t, vy: -pop };
 }
 
+
+
+// --- the belt -------------------------------------------------------------------
+// From the rock to the hole, and the one machine that changes the yard's traffic
+// rather than a station's rate.
+//
+// It does not work a face. What it works is the *ground between* the rock and
+// the lip: it picks loose dust off the floor a grain at a time and puts it in
+// the hole, which is the whole of what a hauler does, minus the walking. That is
+// why it has no site of its own and stands along the run instead.
+//
+// Its tender stands at the lip, where the haulers already gather.
+export const beltFrom = () => Math.round((S.cx + P * 6) / P) * P;
+export const beltTo = () => Math.round((pit.x - P * 2) / P) * P;
+export const beltY = () => S.groundY - P * 5;
+
+defineMachine('belt', {
+  job: 'haulers',
+  type: 'hauler',
+  at: beltFrom,
+  y: beltY,
+  tendAt: () => beltTo() - WORKER - P,
+  // A grain moved takes the same time a hauler's scoop does, divided by what the
+  // belt is worth. `scoopMs` carries the lip's own ladders, so everything bought
+  // for carrying still applies to the machine that replaced it.
+  ms: rate => scoopMs() / Math.max(0.01, rate),
+  ready: () => !pitFull(),
+  bite: tender => {
+    // The nearest loose grain along the run. Never out of a station's strip:
+    // those heaps belong to their stations and are carried by hand -- the belt
+    // is for what is lying on the open ground between the rock and the hole,
+    // which is where the rock's spoil lands and where a machine's output piles
+    // up while it waits for somebody.
+    const from = beltFrom(), to = beltTo();
+    const c0 = colOf(floor, from), c1 = colOf(floor, to);
+    for (let c = c0; c <= c1; c++) {
+      // The rock's own spoil and the bare ground between here and the lip. Not
+      // another station's heap: the cut's stone and the farm's crop are carried
+      // by hand to their own piles and belong there, and a belt that swept them
+      // into the hole would be stealing rather than hauling.
+      //
+      // The rock's *is* fair game, and is most of the point: it is what the ram
+      // buries the yard in, and it is the pile the haulers were built to empty.
+      const reg = floor.region ? floor.region(c) : null;
+      if (reg !== null && reg !== 'rock') continue;
+      for (let r = floor.rows - 1; r >= 0; r--) {
+        const v = at(floor, c, r);
+        if (!v) continue;
+        put(floor, c, r, 0);
+        // Thrown along the belt and into the hole, so it is seen to travel
+        // rather than teleporting -- the same arc a hauler's tip uses.
+        const x = floor.x + c * P;
+        const y = bottomY(floor) - (r + 1) * P;
+        const land = to + P * 4;
+        const v2 = aim(x, y, land, P * 2);
+        spawnChip(x, y, v2.vx, v2.vy, v, land);
+        if (tender) tender.stored = (tender.stored || 0) + 1;
+        S.dirty = true;
+        return true;
+      }
+    }
+    return false;
+  }
+});

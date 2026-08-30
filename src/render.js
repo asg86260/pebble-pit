@@ -30,6 +30,7 @@ import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX, rockShare } from './rock.js';
+import { beltFrom, beltTo, beltY } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
@@ -2575,6 +2576,7 @@ export function draw() {
   drawFarm();
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
+  drawBelt();                // the road from the rock to the hole
   drawLevers();              // and the one control in the yard that is not on a board
   drawSky();
   drawLab();
@@ -2933,6 +2935,28 @@ export function drawLevers() {
   }
 }
 
+// The belt: a run of trestles from the rock to the lip with a band over them, and
+// the band moves. It is the only machine that is *long* rather than tall, which
+// is what makes it read as a different kind of thing at a glance -- the other
+// three are engines standing at a face, and this is a road.
+export function drawBelt() {
+  if (!built('belt')) return;
+  const from = beltFrom(), to = beltTo(), y = beltY();
+  ctx.fillStyle = '#000';
+  ctx.fillRect(from, y, to - from, P);                   // the band
+  for (let x = from; x < to; x += P * 8) {               // and what holds it up
+    ctx.fillRect(x, y + P, P, S.groundY - y - P);
+  }
+  // The load on it, moving. White cut out of the band, a few cells apart, so
+  // what you see is the band running rather than a black bar sitting there.
+  const t = stroke('belt', 900);
+  ctx.fillStyle = '#fff';
+  for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
+    ctx.fillRect(x, y, P, P);
+  }
+  ctx.fillStyle = '#000';
+}
+
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and
 // the same list, flagged `mach` so that the lab's own count -- which means
 // something specific, that research is being worked on -- is not muddled by it.
@@ -2943,7 +2967,8 @@ export function drawLevers() {
 const STACKS = {
   jaw:    () => ({ x: jawX() + P * 3, y: jawY() - P * 2 }),
   ram:    () => ({ x: ramX() + P, y: S.groundY - P * 6 }),
-  tiller: () => ({ x: tillerAt() + P, y: walkY(tillerAt() + WORKER / 2) + WORKER - P * 4 })
+  tiller: () => ({ x: tillerAt() + P, y: walkY(tillerAt() + WORKER / 2) + WORKER - P * 4 }),
+  belt:   () => ({ x: beltTo() - P * 2, y: beltY() - P * 3 })
 };
 
 export function stepMachineSmoke(now) {

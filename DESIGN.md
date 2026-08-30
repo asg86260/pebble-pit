@@ -1184,8 +1184,21 @@ few thousand dust.
 
 ### The machines
 
-Three of them: **the jaw** on the cut, **the ram** on the rock, **the
-tiller** on the plots. The lab, the school and the casino stay buildings, and
+Four of them: **the jaw** on the cut, **the ram** on the rock, **the tiller** on
+the plots, and **the belt** from the rock to the hole.
+
+The belt is the odd one out and is worth saying why. The other three work a
+face; it works the *ground between* two places, picking loose dust off the floor
+and putting it in the hole -- the whole of what a hauler does, minus the walking.
+It is what the yard starts asking for the moment any other machine runs: a ram
+fills the rock's pile in well under a second and then stands down waiting to be
+carried, so haulage is the bottleneck exactly when the works becomes worth
+watching. Tier three promised carts from the beginning.
+
+It is also the one machine not priced away from its own station's coin, because
+carrying has not got one -- a hauler makes nothing, it moves what everybody else
+made -- so it is priced in all three grounds at once, which is the truest thing a
+price can say about a thing the whole yard uses. The lab, the school and the casino stay buildings, and
 the scrubbing house is already a machine.
 
 **A machine is a station, and it takes the hand work over.** A body walks to it
