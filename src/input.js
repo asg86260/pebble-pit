@@ -210,12 +210,23 @@ canvas.addEventListener('pointermove', e => {
                : nearTower(S.mouse.x, S.mouse.y) ? 'tower'
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house' : null;
-    // On its way to the board that is open outranks standing at another station.
-    // These used to be the other way round, which was fine while the stations had
-    // bare ground between them: there are six buildings now, the walk down to the
-    // far corner of an open sheet crosses whatever is next door, and the station
-    // next door took the menu off you halfway there.
-    if (!inSafeZone(e.clientX, e.clientY)) showPanel(want);
+    // Standing at a station outranks being on the way to the open board.
+    //
+    // These have been swapped round twice now and both extremes are wrong. With
+    // the wedge second, the station next door took the menu off you halfway down
+    // to the corner of an open sheet -- there are six buildings and the walk
+    // crosses whatever is between. With the wedge *first*, which is what it has
+    // been, the board you already had glued itself in place: hover the bench,
+    // then go and stand at the houses, and the bench stayed up because the
+    // houses are inside the wedge on the way to it.
+    //
+    // The distinction is what the cursor is actually over. A station under the
+    // pointer is not a journey, it is an arrival, and it takes the board every
+    // time. The wedge is for the ground *between* things -- which is all it was
+    // ever meant to protect -- so it only gets a say when the answer would
+    // otherwise be "nothing".
+    if (want) showPanel(want);
+    else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // and whatever the cursor is asking about, which is not the same question:
     // a board opens because you walked up to a station, a tooltip opens because
     // you went and looked at a mark

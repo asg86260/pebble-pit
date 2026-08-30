@@ -353,7 +353,17 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
     spawnSpoil(px, py, shade);
   }
   // and it goes up from where it came off, not from a counter somewhere
-  if (dirties) foul(want, cellPos(c.x, c.y).px, cellPos(c.x, c.y).py, 'dust');
+  // Nothing. Taking rock apart does not dirty the sky, by anybody.
+  //
+  // It was the player's own swings first -- a yard with one boulder and no crew
+  // still had a browning sky from nothing but clicking -- and this is the same
+  // complaint one step along: a body with a pick is not a works. What dirties
+  // this yard is machinery, and the ram's dirt goes up off the ram's stack like
+  // every other machine's, in soot, in one place.
+  //
+  // `dirties` stays because the distinction between your hands and the crew's is
+  // still worth being able to draw; there is simply nothing on either side of it
+  // at the rock any more.
   S.dirty = true;
   refreshRockTops();
 }

@@ -2259,23 +2259,19 @@ function drawOffers() {
     // shape a map puts on a place, and it stops competing with the pointer over
     // a body's head that really does mean go and look at this.
     //
-    // Hollow, and that is what makes it read.
+    // Solid, and seven courses: 1, 3, 5, 7, 5, 3, 1.
     //
-    // Solid, a five-course diamond -- 1, 3, 5, 3, 1 -- is geometrically a
-    // diamond and looks like a fat plus, because at five cells across the
-    // corner steps are the same size as the arms and nothing tells you which
-    // is which. An outline has only the sloping edges in it, so the two long
-    // diagonals are the whole shape and there is nothing left to mistake for
-    // an arm.
-    //
-    // Seven courses rather than five, for the same reason: a slope needs a few
-    // steps before it reads as a slope.
+    // Five courses solid was the first try and it read as a fat plus -- at that
+    // size the corner steps are the same size as the arms and nothing tells you
+    // which is which. Hollowing it fixed that and cost more than it bought: an
+    // outline is a lighter mark than everything else in this yard, which is
+    // solid black on white, and it stopped reading as a thing and started
+    // reading as a hole. Seven courses solid is the answer to the original
+    // problem -- a slope needs a few steps before it reads as a slope -- and it
+    // is the same weight of ink as the mark beside it.
     for (let i = 0; i < 7; i++) {
       const wide = (i < 4 ? i : 6 - i);                // 0,1,2,3,2,1,0
-      const y = at.y - P * 3 + i * P;
-      if (wide === 0) { ctx.fillRect(at.x, y, P, P); continue; }   // the tips
-      ctx.fillRect(at.x - wide * P, y, P, P);                      // and the two edges
-      ctx.fillRect(at.x + wide * P, y, P, P);
+      ctx.fillRect(at.x - wide * P, at.y - P * 3 + i * P, P * (wide * 2 + 1), P);
     }
   }
 }
@@ -2577,7 +2573,6 @@ export function draw() {
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
   drawBelt();                // the road from the rock to the hole
-  drawLevers();              // and the one control in the yard that is not on a board
   drawSky();
   drawLab();
   drawCasino();
@@ -2636,7 +2631,7 @@ export function draw() {
   drawCasinoMark();        // and which way the last hand at the table went
   drawOffers();            // and an arrow under whichever of them has something for you
   drawKitStands();                                // and the kit put out ready at each of them
-  drawRoster(ctx, drawBody, drawHat, drawCart);   // who is working here, under the place they work
+  drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch);   // who is working here, under the place they work
   drawIntro();             // the two of them, or whoever is under the rock
   drawWorkers();
   drawSays();              // and what any of them stood about is saying
@@ -2815,12 +2810,15 @@ export function drawJaw() {
 // resited.
 export function drawHoist() {
   if (!S.quarryOpen || !built('jaw')) return;
-  const l = ladder();
-  const x = Math.round((l.x - P * 3) / P) * P;
-  // On the deck, not on the ladder's overhang: `l.top` stands LADDER_OVER proud
-  // of the walking surface, and standing the frame on it left the hoist floating
-  // a cell above the boards.
-  const top = Math.round((groundAt(l.x + LADDER_W / 2) - P * 7) / P) * P;
+  // Over the jaw, in the middle of the mouth -- not off on the bridge by the
+  // ladder. A hoist lifts what the jaw digs, so standing it at the other end of
+  // the hole made the rope between them a diagonal across the cut and the pair
+  // of them read as two unrelated objects. The whole machine is one machine: the
+  // jaw on the floor, the frame directly over it, the rope between.
+  const x = Math.round((jawX() + P) / P) * P;
+  // Its head stands above the ground line, so the frame is a thing you can see
+  // over the mouth of the cut from anywhere in the yard.
+  const top = Math.round((S.groundY - P * 8) / P) * P;
   const H = 7;
   ctx.fillStyle = '#000';
   ctx.fillRect(x, top, P, P * H);                        // the near leg
@@ -2862,21 +2860,46 @@ export function drawHoist() {
 export function drawRam() {
   if (!built('ram')) return;
   const x = Math.round(ramX() / P) * P;
-  const y = Math.round((S.groundY - P * 4) / P) * P;
-  const W = 4, H = 4;
+  // Big enough to read beside a boulder.
+  //
+  // Four cells square is a thumbnail next to a hill forty cells across -- from
+  // any distance the machine that is supposed to be taking the thing apart was a
+  // speck beside it. An engine that out-works five hatted miners should look
+  // like it could.
+  const W = 7, H = 6;
+  const y = Math.round((S.groundY - P * H) / P) * P;
   ctx.fillStyle = '#000';
   ctx.fillRect(x, y, W * P, H * P);
-  ctx.fillRect(x + P, y - P * 2, P, P * 2);              // the stack
+  ctx.fillRect(x + P, y - P * 3, P * 2, P * 3);          // the stack
   // The arm: out towards the hill on the stroke, back on the return.
   // The arm is as long as the gap it has to cross, worked out rather than
   // guessed: three cells of literal left it striking empty air a good way short
   // of the hill. It draws back by two on the return.
-  const gap = Math.max(1, Math.round((rockLeft() - (x + W * P)) / P) + 1);
-  const t = stroke('ram', 700);
-  const reach = t < 0.35 ? gap : t < 0.5 ? gap - 1 : Math.max(1, gap - 2);
-  ctx.fillRect(x + W * P, y + P, P * reach, P);
+  // The stroke, and it is a stroke you can see.
+  //
+  // It was a two-cell wiggle at the end of an arm a dozen cells long, and idle
+  // it drew *fully extended* -- so the one thing this machine had to say, that
+  // it is driving something into the hill, it never said. It draws right back to
+  // its own body and punches out to the face: the arm is the whole of the
+  // animation, so it may as well use the whole of the distance.
+  const gap = Math.max(2, Math.round((rockLeft() - (x + W * P)) / P) + 1);
+  const t = stroke('ram', 900);
+  // Out fast, hold, then draw back slowly -- which is what a ram does, and what
+  // makes the hit read as a hit rather than as a slider going back and forth.
+  // At rest it stands half out, so the arm is part of the machine's shape rather
+  // than something that only exists while you happen to be watching it work. It
+  // retracted to a single cell when idle, which is why this read as a machine
+  // with no arm at all.
+  const rest = Math.max(2, Math.round(gap / 2));
+  const reach = t === 0 ? rest
+              : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18))   // the drive
+              : t < 0.34 ? gap                                            // and it lands
+              : Math.max(2, Math.round(gap - (gap - rest) * ((t - 0.34) / 0.66)));
+  ctx.fillRect(x + W * P, y + P * 2, P * reach, P * 2);
+  // a head on the end of it, so what meets the rock is a face and not a line
+  ctx.fillRect(x + W * P + (reach - 1) * P, y + P, P * 2, P * 4);
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + P, y + P, P * 2, P);                   // the slot
+  ctx.fillRect(x + P, y + P * 2, P * 3, P * 2);          // the slot
 
   // How far through this boulder it is, as a bar across the engine's flank.
   //
@@ -2887,11 +2910,11 @@ export function drawRam() {
   // fills as the rock goes.
   const share = rockShare();
   if (share > 0) {
-    const wide = Math.max(1, Math.round((W - 1) * share));
+    const wide = Math.max(1, Math.round((W - 2) * share));
     ctx.fillStyle = '#fff';
-    ctx.fillRect(x + P / 2, y + P * 2 + P / 2, (W - 1) * P, P);     // the track
+    ctx.fillRect(x + P, y + P * 4, (W - 2) * P, P);      // the track
     ctx.fillStyle = '#000';
-    ctx.fillRect(x + P / 2, y + P * 2 + P / 2, wide * P, P);        // and how far along
+    ctx.fillRect(x + P, y + P * 4, wide * P, P);         // and how far along
   }
 }
 
@@ -2899,22 +2922,53 @@ export function drawRam() {
 // it. The only machine that travels, which is what makes it read as a different
 // kind of thing at a glance. Its x is derived from the plot it is working, so it
 // is where the work is by construction.
+// The tiller: a tractor, and it should look like one from across the yard.
+//
+// It was a three-by-two box with a chimney, which is the same shape as every
+// other machine here and says nothing. A tractor has a silhouette everybody
+// already knows -- a big wheel at the back, a small one at the front, a bonnet
+// sloping down between them and somebody sitting up over the back axle -- and
+// that silhouette is worth more than any amount of detail.
+//
+// The ground line is where a body's feet are: `walkY` is the top of a body
+// standing there, not the surface under it.
 export function drawTiller() {
   if (!S.farmOpen || !built('tiller')) return;
   const x = Math.round(tillerAt() / P) * P;
-  // It sits *on* the ground, so its foot is where a body's foot is. `walkY` is
-  // the top of a body standing there, not the surface under it -- a box drawn at
-  // `walkY - height` hangs below the line rather than standing on it.
-  const y = Math.round((walkY(x + WORKER / 2) + WORKER - P * 2) / P) * P;
+  const g = Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P;   // the ground
+  const t = stroke('tiller', 700);
   ctx.fillStyle = '#000';
-  ctx.fillRect(x, y, P * 3, P * 2);
-  ctx.fillRect(x + P, y - P * 2, P, P * 2);              // the stack
-  // Two wheels, white, turning: the cell that is cut out moves round the frame,
-  // which at this size is what a turning wheel looks like.
-  const t = stroke('tiller', 520);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x + (t < 0.5 ? 0 : P * 2), y + P, P, P);
+
+  // the bonnet, low and forward
+  ctx.fillRect(x, g - P * 3, P * 3, P * 2);
+  // the body over the back axle, standing taller
+  ctx.fillRect(x + P * 3, g - P * 5, P * 3, P * 4);
+  // the stack, at the front of the bonnet the way a tractor's is
+  ctx.fillRect(x + P, g - P * 6, P, P * 3);
+
+  // The big wheel at the back and the little one at the front. A spoke is cut
+  // white out of each and moves round it, which at this size is the whole of
+  // what a turning wheel looks like.
+  const big = { x: x + P * 4, y: g - P * 2, r: 2 };
+  const small = { x: x + P, y: g - P, r: 1 };
+  for (const w of [big, small]) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(w.x - w.r * P, w.y - w.r * P, (w.r * 2 + 1) * P, (w.r * 2 + 1) * P);
+    ctx.fillStyle = '#fff';
+    const a = t * Math.PI * 2;
+    ctx.fillRect(Math.round((w.x + Math.cos(a) * w.r * P) / P) * P,
+                 Math.round((w.y + Math.sin(a) * w.r * P) / P) * P, P, P);
+  }
+  ctx.fillStyle = '#000';
 }
+
+// Where the tender sits: up on the back of it, over the axle, which is where a
+// driver sits. It is the one body in this yard that is not standing on the
+// ground, and that is the point -- it is *driving* rather than tending.
+export const tillerSeat = () => ({
+  x: Math.round(tillerAt() / P) * P + P * 4,
+  y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P - P * 5 - WORKER
+});
 
 // The lever. A stand with an arm on it, and the arm's angle says what the lever
 // has been *asked* for rather than what the machine is doing -- so throwing it
@@ -2922,19 +2976,6 @@ export function drawTiller() {
 // looking like nothing happened for the length of a commute.
 //
 // That distinction is the whole of why `asked()` exists.
-export function drawLevers() {
-  for (const m of MACHINES) {
-    const b = leverBox(m.key);
-    if (!b) continue;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(b.x, b.y + b.h - P, b.w, P);            // the stand
-    ctx.fillRect(b.x + P, b.y + P, P, b.h - P * 2);      // the post
-    // Over for on, down for off. Two cells of travel is all it needs to read.
-    const on = asked(m.key);
-    ctx.fillRect(b.x + (on ? b.w - P : 0), b.y, P, P * 2);
-  }
-}
-
 // The belt: a run of trestles from the rock to the lip with a band over them, and
 // the band moves. It is the only machine that is *long* rather than tall, which
 // is what makes it read as a different kind of thing at a glance -- the other
@@ -2955,6 +2996,39 @@ export function drawBelt() {
     ctx.fillRect(x, y, P, P);
   }
   ctx.fillStyle = '#000';
+}
+
+// The machine's switch, drawn on the roster under the headcount.
+//
+// Two words would be easiest and this game does not use words, so it is the same
+// pair of marks the yard already uses for a body and for a thing that runs: a
+// worker square for hands, and a filled block for the machine. Whichever is
+// doing the work is solid; the other is an outline. One glance says who is
+// working this station.
+export function drawRunSwitch(box, on, pending) {
+  const y = box.y, x = box.x;
+  const w = P * 3;
+  // hands on the left, machine on the right, always in that order
+  const hands = { x: x + P, y, w, h: P * 3 };
+  const mach = { x: x + P * 5, y, w, h: P * 3 };
+  for (const [b, live] of [[hands, !on], [mach, on]]) {
+    if (live) {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+    } else {
+      ctx.fillStyle = '#000';
+      ctx.fillRect(b.x, b.y, b.w, P);
+      ctx.fillRect(b.x, b.y + b.h - P, b.w, P);
+      ctx.fillRect(b.x, b.y, P, b.h);
+      ctx.fillRect(b.x + b.w - P, b.y, P, b.h);
+    }
+  }
+  // and a mark between them when it has been asked for and nobody has arrived:
+  // the switch is thrown, somebody is walking, and the yard has not changed yet
+  if (pending !== on) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + P * 4, y + P, P, P);
+  }
 }
 
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and

@@ -27,7 +27,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX,
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK,
+         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now, frames } from './clock.js';
@@ -141,6 +141,11 @@ const outlet = () => ({ x: scrub.x - P, y: scrub.y + scrub.h - P * SCRUB_ARM });
 // asking what is under it now would give the wrong answer. Where it came from is
 // a fact about the mote, so the mote holds it.
 export function foul(grains, x, y, kind = 'dust') {
+  // Nothing a machine does fouls where it happened. Its dirt goes up off its own
+  // stack, in soot, in one place -- see `stepMachines` -- rather than being added
+  // to what the station raised. Without this the sky over a working quarry went
+  // blue, because the cut's dust is blue and the machine was still raising it.
+  if (S.machineWorking && kind !== 'mach') return 0;
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   made += add;                     // counted where it is made -- see `sampleAir`
@@ -1116,9 +1121,48 @@ export function dropMuckAt(wx, n, kind = 'muck') {
   if (at == null) return false;
   const m = kind === 'poop' ? poopCols() : muckCols();
   const c = colAt(at);
-  m[c] = Math.min(MUCK_MAX, m[c] + n);
+  // A unit at a time, each into the lowest column nearby, which is what makes a
+  // heap rather than a pillar.
+  //
+  // It used to go into one column and stack there until it hit MUCK_MAX -- so
+  // what a body left behind was a tower of it in a single cell, standing
+  // straight up out of flat ground like a chimney. Nothing else in this yard
+  // behaves like that: dust falls where it falls and slumps sideways, and the
+  // mess should read the same way, as something that was dropped and settled.
+  for (let i = 0; i < n; i++) {
+    let best = c, low = m[c] || 0;
+    for (let d = 1; d <= MESS_SLUMP; d++) {
+      for (const k of [c - d, c + d]) {
+        if (k < 0 || k >= m.length) continue;
+        const h = m[k] || 0;
+        // Strictly lower, so it fills the dip beside the heap before it starts a
+        // new one further out -- and the nearer of two equal columns wins,
+        // because the loop reaches them in that order.
+        if (h < low) { low = h; best = k; }
+      }
+    }
+    if (low >= MUCK_MAX) break;                // nowhere near here has room
+    m[best] = Math.min(MUCK_MAX, (m[best] || 0) + 1);
+  }
   S.dirty = true;
   return true;
+}
+
+// One pass of the mess settling: a column standing more than a step above its
+// neighbour topples a unit into it. Sand does this every frame -- see `settle` in
+// grid.js -- and the mess is drawn out of the same cells, so it should stand at
+// the same angle.
+export function slumpMess() {
+  for (const m of [muckCols(), poopCols()]) {
+    for (let c = 0; c < m.length; c++) {
+      const h = m[c] || 0;
+      if (h < 2) continue;
+      for (const k of [c - 1, c + 1]) {
+        if (k < 0 || k >= m.length) continue;
+        if (h - (m[k] || 0) > MESS_ANGLE) { m[c]--; m[k] = (m[k] || 0) + 1; break; }
+      }
+    }
+  }
 }
 
 // The rest of it, shifted from wherever the body doing the shifting is standing,

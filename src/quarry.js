@@ -632,11 +632,19 @@ export const QUARRY_SECTIONS = [
 // every column when the ground falls back in, and a jaw with a remembered `y`
 // would be under it. `dugTopY` is where it stands, the same answer a quarrier's
 // feet get.
-// Clear of the ladder rather than on it. It was derived off the mouth's near
-// edge, which is where the ladder stands -- so the jaw straddled the rungs and
-// its white mouth punched a hole through them. Derived off the ladder itself,
-// the one place that answer lives, the two cannot drift.
-export const jawX = () => Math.round((ladder().x + LADDER_W + P) / P) * P;
+// The middle of the mouth.
+//
+// It stood beside the ladder in the near corner, which is the busiest few cells
+// in the yard -- the rungs, the tender, the hoist and the kit stand all in one
+// column -- and it read as a thing shoved into a corner rather than as the
+// machine working the cut. A cut is worked from the middle of it.
+//
+// Derived off the shape of the hole, so it stays in the middle however deep the
+// thing is taken.
+export const jawX = () => {
+  const c = quarryShape();
+  return Math.round(((c.from + c.to) / 2 - P * 2) / P) * P;
+};
 export const jawY = () => dugTopY(jawX() + P) - P * 3;
 
 defineMachine('jaw', {

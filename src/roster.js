@@ -16,6 +16,7 @@ import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
+import { JOB_MACHINE, machine, askLever, asked } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -96,7 +97,18 @@ function boxes(p) {
     num: { x: left + BTN + GAP + WORKER + GAP, y, w: NUM, h: BTN },
     more: { x: left + WIDE - BTN, y: y - BTN / 2, w: BTN, h: BTN },
     trade: { x: left + BTN + GAP, y: under - WORKER / 2, w: WORKER, h: WORKER },
-    tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN }
+    tradeNum: { x: left + BTN + GAP + WORKER + GAP, y: under, w: NUM, h: BTN },
+    // The machine's switch, on the roster under the headcount.
+    //
+    // It was a lever standing in the yard, and two things were wrong with that.
+    // No works has a lever bolted to the ground beside the machine it drives --
+    // and drawn small enough to sit in a pixel yard it read as a fencepost, one
+    // more black shape among the hundred that do nothing. The question it asks
+    // is "is this station worked by hands or by the machine", which is the same
+    // question the counter above it answers about *how many* hands, so it
+    // belongs there: one strip per station, saying who is doing the work.
+    run: { x: left, y: y + WORKER + P * 2 + (p.kit ? WORKER + P * 2 : 0),
+           w: WIDE, h: BTN }
   };
 }
 
@@ -173,6 +185,12 @@ export function rosterHit(x, y) {
     if (inside(hit(b.less), x, y)) { assign(p.job, -1); return true; }
     if (inside(hit(b.more), x, y)) { assign(p.job, 1); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
+    // ...and the machine's switch, when the station has one standing.
+    if (machineOn(p.job) !== null && inside(hit(b.run), x, y)) {
+      const key = JOB_MACHINE[p.job];
+      askLever(key, !asked(key));
+      return true;
+    }
   }
   return false;
 }
@@ -182,11 +200,18 @@ export function rosterHit(x, y) {
 // crisp as everything else. The count is the one thing drawn in screen pixels:
 // it is type, and type scaled by five sixths is type with a fuzzy edge.
 
-export function drawRoster(ctx, drawBody, drawHat, drawCart) {
+export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
   const spare = idle();
   for (const p of posts()) {
     const b = boxes(p);
     const n = S[p.job];
+
+    // Who is working this station: the hands or the machine. Only on the
+    // stations that have one standing, which is none of them for most of a run.
+    const on = machineOn(p.job);
+    if (on !== null && drawRun) {
+      drawRun(b.run, on, JOB_MACHINE[p.job] ? asked(JOB_MACHINE[p.job]) : on);
+    }
 
     drawBody(b.badge.x, b.badge.y);
     // The sky is the one post where the hat *is* the job: there is no such thing
@@ -283,6 +308,14 @@ export function drawRosterCounts(ctx, screenAt) {
 }
 
 // what the roster is showing and where its buttons are, for the checks
+// Whether this station has a machine standing, and whether it is running -- or
+// `null` when it has none, which is most of them for most of a run.
+export const machineOn = job => {
+  const key = JOB_MACHINE[job];
+  const m = key && machine(key);
+  return m && m.bought ? !!m.on : null;
+};
+
 export function rosterReport() {
   return posts().map(p => {
     const b = boxes(p);
@@ -294,6 +327,9 @@ export function rosterReport() {
              // it would hold by hand. Without both, a check cannot tell a capped
              // station from a small one.
              cap: capOf(p.job) === Infinity ? null : capOf(p.job),
+             machine: machineOn(p.job),
+             asked: JOB_MACHINE[p.job] ? asked(JOB_MACHINE[p.job]) : null,
+             run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],

@@ -231,6 +231,13 @@ export const MUCK_MAX = 6;           // and never stacks deeper than this in a c
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
 // it is not slow: it is the shift the rain cost you.
+// How far a dropped unit of mess will look for a lower spot, and how much taller
+// than its neighbour a column of it may stand before it topples. Between them
+// they are the angle a heap of it rests at -- the same thing the sand does, for
+// the same reason: it is drawn out of the same cells and should stand the same
+// way.
+export const MESS_SLUMP = 3;
+export const MESS_ANGLE = 2;
 export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands shifts
 // ...and it comes off a cell at a time, on a swing, at that rate.
 //

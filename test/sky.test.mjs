@@ -50,11 +50,24 @@ group('the thing in the sky is benched', async () => {
 // at nought however many bodies you move.
 group('the sky reads as one rate, and it can go negative', async () => {
     run(0.4);
-  window.__crew(4, 4);
+  // Somebody on the cut. This group needs a yard that is actively fouling, and
+  // mining raises nothing at all now -- the rock is silent, by anybody -- so the
+  // source has to be the quarry.
+  openSites();
+  window.__fullSites();
+  window.__crew(4, 4, 5);
   window.__lab(true);
-  window.__air({ open: true, haze: 600 });
   window.__research('labair');
-  run(10);
+  // Long enough for the cut to be working at its steady rate. The rock fouled
+  // from the first frame; a quarry takes a while to get going -- bodies walk to
+  // the rim, climb down, and only then start taking ground out -- so a reading at
+  // ten seconds catches it still ramping and looks, twenty seconds later, like
+  // the house changed it.
+  run(40);
+  // And the sky held well under the line, because a shower is very much a thing
+  // "taking down" the sky and this group is about the house doing it.
+  window.__air({ open: true, haze: Math.round(state().smog.at / 3) });
+  run(2);
   const losing = state().smog;
 
   window.__air({ scrubbers: 2, haze: 600 });
@@ -87,6 +100,13 @@ group('the sky fills up, and gives it back', async () => {
   window.__crew(3, 3);
   run(5);
   window.__clearFloor();
+  // Wound up by hand. This used to be twenty seconds of mining, which was the
+  // loudest source in the game; the rock raises nothing at all now, by anybody,
+  // so a yard that is only mining has a clean sky and there is nothing here to
+  // watch gather. What this group is about is what the sky *does* once there is
+  // one -- clouds, rain, muck, and the gang getting back to work under it -- and
+  // none of that cares where the haze came from.
+  window.__air({ haze: Math.round(state().smog.at / 4) });
   run(20);
   const dirty = state().smog;
 
@@ -107,6 +127,14 @@ group('the sky fills up, and gives it back', async () => {
   window.__air({ haze: state().smog.at - 1 });
   run(1);
   const full = state().smog;
+
+  // And then over the line by hand. It used to get there on its own: the yard
+  // was mining, mining was the loudest source in the game, and a sky held a hair
+  // under the line crossed it within a second. The rock raises nothing at all
+  // now, so a yard held just short of raining stays just short of raining for
+  // ever, and everything below waits on a shower that never comes.
+  window.__air({ haze: state().smog.at + 40 });
+  run(1);
 
   // Watched all the way down rather than sampled at the ends: the whole claim
   // is that it thins out, and a before and an after cannot tell a fade from a
@@ -133,6 +161,10 @@ group('the sky fills up, and gives it back', async () => {
   // when it landed -- and a limit inside that spread is a check that fails on
   // the weather rather than on the code.
   runUntil(() => state().smog.muck.rock === 0, 150);
+  // Long enough to be swinging again -- and it takes longer than it did, because
+  // the yard that fills this sky is now the cut rather than the rock, so there
+  // are five more bodies to sort out and the gang walk back to the hill from
+  // wherever the shovelling left them.
   run(10);                                    // and long enough to be swinging again
   const dried = state();
   // and the yard goes back the way it was found: a sky left full and a gang
@@ -142,13 +174,14 @@ group('the sky fills up, and gives it back', async () => {
   window.__clearFloor();
   return [
     ok(bare.haze === 0, 'a new yard has a clean sky', `${bare.haze}`),
-    ok(dirty.haze > 0 && dirty.fouling > 0,
-       'and mining puts what it takes out into it', `${dirty.haze}, ${dirty.fouling}/min`),
+    // The cut, not the rock. Taking rock apart raises nothing at all now, by
+    // anybody -- what dirties this yard is the quarry, the plots and machinery.
+    ok(dirty.haze > 0, 'and a sky can be put into it', `${dirty.haze}`),
     ok(bare.cloudR === 0 && half.cloudR > 0 && full.cloudR > half.cloudR,
        'which gathers into clouds that grow as it fills',
        `${bare.cloudR} -> ${half.cloudR} -> ${full.cloudR} cells across`),
     ok(dirty.puffs > 0 || dirty.sky > 0,
-       'and you can see it going up: a puff off the swing, climbing',
+       'and you can see it up there, or on its way',
        `${dirty.puffs} climbing, ${dirty.sky} arrived`),
     ok(gathered.clump < 8 && gathered.bins > seeded.bins / 2,
        'and once up there it lies as a haze over everything, not in knots',
@@ -404,7 +437,16 @@ group('the air over a site is the colour of what comes out of it', async () => {
 // which part of the works is dirtying it.
 group('the sky says which part of the works dirtied it', async () => {
   window.__reset();
-  window.__crew(2, 0, 2, 2);
+  // Somebody on the cut, because that is what dirties a yard now.
+  //
+  // These groups all used the rock, which was the loudest source in the game and
+  // is silent: taking rock apart raises nothing at all, by anybody. What fouls
+  // is the quarry, the plots, and machinery. The cut is slower than the rock
+  // was, so where a group needs a *sky* rather than a rate it is seeded with
+  // `__air` and the crew keep it topped up.
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 0, 5, 2);
   window.__air({ haze: 0, muck: 0 });
   run(25);
   const s = state();
@@ -414,7 +456,10 @@ group('the sky says which part of the works dirtied it', async () => {
   return [
     ok(s.smog.sky > 0, 'there is a sky to read', `${s.smog.sky} motes`),
     ok(!k.none, 'every mote knows what put it up', JSON.stringify(k)),
-    ok(k.dust > 0, 'the rock sends up its own', `${k.dust || 0}`),
+    // Blue and green, from the two grounds that still raise anything by hand.
+    // The rock raises nothing at all now, so there is no `dust` in the band
+    // unless a machine has put soot there.
+    ok(k.spore > 0, 'the plots send up their own', `${k.spore || 0}`),
     ok(k.shard > 0, 'and so does the quarry -- while it is being dug, not only when it pays',
        `${k.shard || 0}`),
     ok(Object.keys(k).length > 1, 'so a dirty sky is not one flat colour', JSON.stringify(k))
@@ -680,7 +725,16 @@ group('the sky and the mess are still there after a reload', async () => {
 // always short, the number is still over the line when it runs out, and the
 // next frame reads a filthy sky over an empty one and starts another shower.
 group('what the readout says is what is overhead', async () => {
-  window.__crew(3, 3);
+  // Somebody on the cut, because that is what dirties a yard now.
+  //
+  // These groups all used the rock, which was the loudest source in the game and
+  // is silent: taking rock apart raises nothing at all, by anybody. What fouls
+  // is the quarry, the plots, and machinery. The cut is slower than the rock
+  // was, so where a group needs a *sky* rather than a rate it is seeded with
+  // `__air` and the crew keep it topped up.
+  openSites();
+  window.__fullSites();
+  window.__crew(3, 3, 5);
   haveRock();
   run(20);
   const early = state().smog;
@@ -716,7 +770,16 @@ group('what the readout says is what is overhead', async () => {
 // started a shower, found nothing to pour, and stopped again. On, off, on, off,
 // and the readout never moved.
 group('a shower ends clean, and the next sky is made from nothing', async () => {
-  window.__crew(3, 3);
+  // Somebody on the cut, because that is what dirties a yard now.
+  //
+  // These groups all used the rock, which was the loudest source in the game and
+  // is silent: taking rock apart raises nothing at all, by anybody. What fouls
+  // is the quarry, the plots, and machinery. The cut is slower than the rock
+  // was, so where a group needs a *sky* rather than a rate it is seeded with
+  // `__air` and the crew keep it topped up.
+  openSites();
+  window.__fullSites();
+  window.__crew(3, 3, 5);
   haveRock();
   window.__air({ haze: state().smog.at + 30 });     // a sky over the line
   const wet = runUntil(() => state().smog.raining, 10);
@@ -762,7 +825,16 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
 // from nothing over the best part of a second -- so what you watched was one
 // cell going out and another coming in beside it.
 group('a speck off a swing is the speck in the band', async () => {
-  window.__crew(2, 0);
+  // Somebody on the cut, because that is what dirties a yard now.
+  //
+  // These groups all used the rock, which was the loudest source in the game and
+  // is silent: taking rock apart raises nothing at all, by anybody. What fouls
+  // is the quarry, the plots, and machinery. The cut is slower than the rock
+  // was, so where a group needs a *sky* rather than a rate it is seeded with
+  // `__air` and the crew keep it topped up.
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 0, 5);
   haveRock();
   run(3);
   const climbing = () => yard.smogSky().filter(m => m.up);
@@ -781,7 +853,7 @@ group('a speck off a swing is the speck in the band', async () => {
   window.__crew(0, 0);
   window.__air({ haze: 0 });
   return [
-    ok(rose && !!mote, 'a swing puts a speck in the air'),
+    ok(rose && !!mote, 'a cell taken out of the cut puts a speck in the air'),
     ok(stillThere && mote && !mote.up,
        'and the thing that arrives in the band is that same speck',
        `${stillThere ? 'still the same object' : 'a different one'}`),

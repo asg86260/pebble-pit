@@ -931,7 +931,7 @@ group('buying a machine sends somebody to start it', async () => {
 // can buy and never switch off is a one-way door, and for most of this build
 // that is exactly what it was: the mechanism was written, and nothing drew a
 // lever or hit-tested one.
-group('a lever is a thing in the yard you can point at', async () => {
+group('the machine is switched from the station roster', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -940,22 +940,21 @@ group('a lever is a thing in the yard you can point at', async () => {
   window.__machine('jaw', { bought: true, on: true });
   run(2);
 
-  const box = state().machines.jaw.leverBox;
+  const post = state().roster.find(r => r.job === 'quarriers');
   const on = state().machines.jaw.on;
 
-  // Clicked where it is drawn, through the same hit test the pointer uses.
-  const hit = yard.leverHit
-    ? yard.leverHit(box.x + box.w / 2, box.y + box.h / 2)
-    : window.__clickLever('jaw');
+  // Pressed where it is drawn, through the same hit test the pointer uses.
+  const hit = window.__clickLever('jaw');
   const asked = state().machines.jaw.ask;
   const off = runUntil(() => !state().machines.jaw.on, 60);
 
   window.__crew(0, 0, 0);
   return [
-    ok(box && box.w > 0, 'a bought machine has a lever standing in the yard',
-       JSON.stringify(box)),
+    ok(post && post.machine !== null && post.run,
+       'a station with a machine standing has a switch on its roster',
+       JSON.stringify(post && post.run)),
     ok(on, 'and it is running to begin with'),
-    ok(hit, 'the lever answers a click where it is drawn'),
+    ok(hit, 'the switch answers a press where it is drawn'),
     ok(asked === false, 'which asks for it to go off rather than flipping it',
        `${asked}`),
     ok(off, 'and somebody walks over and throws it')

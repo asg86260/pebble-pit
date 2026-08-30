@@ -245,6 +245,10 @@ export const S = {
   fanLevel: 0,
   // Which of the tower's enchantments have been laid on the yard. A set of keys
   // rather than a count each: a spell is either on or it is not.
+  // True for the few lines a machine is driving a station's own code. What it
+  // switches off is the station fouling where the work happened: a machine's
+  // dirt goes up off its stack instead, all of it, in soot. See `foul`.
+  machineWorking: false,
   spells: [],
   wizSpeedLevel: 0,
   wizPowerLevel: 0,

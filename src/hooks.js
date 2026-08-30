@@ -26,7 +26,9 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers, leverBox, leverHit } from './crew.js';
+import { syncWorkers } from './crew.js';
+import { rosterReport, rosterHit } from './roster.js';
+import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES, askLever } from './machines.js';
@@ -89,10 +91,14 @@ export const lever = (which, on) => askLever(which, !!on);
 // Click the lever where it is drawn, through the very hit test the pointer uses.
 // A check that reached for `askLever` directly would prove the mechanism and say
 // nothing about whether there is anything in the yard to click.
+// Press the machine's switch where it is drawn, through the very hit test the
+// pointer uses. There is no lever in the yard any more -- it is a toggle on the
+// station's roster, under the headcount, which is where the question "who is
+// working this station" is already being asked and answered.
 export const clickLever = which => {
-  const b = leverBox(which);
-  if (!b) return false;
-  return leverHit(b.x + b.w / 2, b.y + b.h / 2);
+  const post = rosterReport().find(r => JOB_MACHINE[r.job] === which);
+  if (!post || !post.run) return false;
+  return rosterHit(post.run[0], post.run[1]);
 };
 
 export const fullSites = () => {

@@ -40,7 +40,7 @@ import { stepIntro, stepBuried, maybeReunion } from './intro.js';
 import { canAfford, mineMs, restaff, staffSheds } from './upgrades.js';
 import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
-import { stepSmog, sampleAir } from './smog.js';
+import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepScrub } from './scrubhouse.js';
 // The ground is the ground because of these: the grid module knows none of it.
 // A new plot of sand somewhere else is another few lines like this, not another
@@ -114,6 +114,9 @@ export function step() {
   // every frame: it is a decision about the roster, and the roster does not need
   // revisiting sixty times a second.
   if (S.tick % 15 === 7) staffSheds();
+  // And the mess settles, a few times a second rather than every frame: a heap
+  // finding its angle is a slow thing and nobody is watching a single cell.
+  if (S.tick % 12 === 3) slumpMess();
   stepRock();                                 // a new one on its way down
   updateWorkers(now, dt);
   // A lever that was thrown during the pass asks for its station to be staffed

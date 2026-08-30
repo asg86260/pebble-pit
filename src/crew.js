@@ -27,6 +27,7 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitS
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
+import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf, askLever, asked, LEVER_W, LEVER_H } from './machines.js';
@@ -946,10 +947,33 @@ function stepTender(w, now) {
     w.resting = false;
     return true;
   }
-  w.y = walkY(w.x + WORKER / 2);
   // A tender is not on its way to a cell any more, and a claim it left behind
   // would keep every other body off that cell for as long as it stands there.
   w.cell = null;
+
+  // The tiller's tender rides it. Everybody else in this yard stands on the
+  // ground; a tractor has a seat, and somebody walking along beside one all day
+  // is somebody who has forgotten what it is for. It is put in the seat rather
+  // than walked to a spot beside it -- and it still had to *walk over* to get
+  // aboard, which the branch below does.
+  if (key === 'tiller') {
+    const seat = tillerSeat();
+    const d = seat.x - w.x;
+    if (Math.abs(d) > WORKER * 2) {                // still catching it up
+      w.y = walkY(w.x + WORKER / 2);
+      w.face = Math.sign(d) || w.face || 1;
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+      w.resting = false;
+      return true;
+    }
+    w.x = seat.x;                                  // aboard
+    w.y = seat.y;
+    w.face = 1;
+    w.resting = false;
+    return true;
+  }
+
+  w.y = walkY(w.x + WORKER / 2);
   // Beside it, not on top of it, the same way a farmhand stands beside a plot
   // rather than over the crop.
   const to = (spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P);
@@ -1030,8 +1054,15 @@ export function stepMachines(now) {
     // not come back and take a hundred cells out of the ground in one frame.
     let owed = Math.min(MACHINE_MAX_BEATS, Math.max(1, Math.floor((now - r.beatAt) / ms) + 1));
     r.beatAt = now + ms;
+    // The station's own functions are about to run, and they must not foul: the
+    // dirt for this beat goes up off the stack, in soot, all in one place. A flag
+    // rather than an argument threaded through four files, because what is true
+    // is about the *frame* -- the yard is being worked by a machine right now --
+    // and every path underneath wants the same answer.
     let did = 0;
+    S.machineWorking = true;
     while (owed-- > 0 && spec.bite(tender)) did++;
+    S.machineWorking = false;
     if (!did) continue;
     // It did a unit of work this beat, which is the one thing the stack is
     // allowed to read: a chimney smoking over a machine that is not getting
@@ -1054,8 +1085,17 @@ export function stepMachines(now) {
     // Grey, and 'mach' rather than the station's own kind. What comes off a stack
     // is soot: stone dust off a face is blue because it is stone, and a sky going
     // blue because you bought an engine says the wrong thing twice over.
-    const extra = Math.max(0, MACHINE_FOUL - 1) * did;
-    if (extra > 0) foul(extra, at + P, spec.y ? spec.y() : walkY(at), 'mach');
+    // All of it, and all of it soot.
+    //
+    // This used to be the *extra* over what the station's own work already put
+    // up -- so a jaw's dirt went into the sky as one part blue (the cut's own
+    // dust, raised inside its own functions) and a bit of grey on top, and the
+    // sky over a working quarry stayed blue. What an engine puts up is what an
+    // engine puts up wherever it stands, and it is the one thing in the sky that
+    // is nobody's resource. So the station's own fouling is switched off while a
+    // machine drives it and the whole amount comes off the stack in one colour.
+    const dirt = MACHINE_FOUL * did;
+    if (dirt > 0) foul(dirt, at + P, spec.y ? spec.y() : walkY(at), 'mach');
     S.dirty = true;
   }
 }
