@@ -13,23 +13,48 @@
 import { group, ok, state, run } from './helpers.mjs';
 import { DIZZY_MS } from '../src/config.js';
 
-group('a shaken body drops everything, and goes back for its hat', async () => {
+group('a shaken body sheds its load while you shake it', async () => {
   window.__reset();
   window.__crew(2, 2);
-  window.__school({ breakers: 2 });        // so somebody has a hat to lose
-  run(6);                                   // and has gone and put it on
+
+  // Wait for somebody to actually have something in its hands, or there is no
+  // load to shake out and the check passes by testing nothing.
+  let carried = 0, j = -1;
+  for (let n = 0; n < 60 && carried === 0; n++) {
+    run(0.5);
+    const d = state().crewDetail;
+    j = d.findIndex(r => Number(r.split('|')[3].slice(1)) > 0);
+    if (j >= 0) carried = Number(d[j].split('|')[3].slice(1));
+  }
+  const shook = window.__shake(j);
+  window.__crew(0, 0);
+
+  return [
+    ok(carried > 0, 'it had something in its hands to lose', `${carried}`),
+    // Shaking something out of somebody is the point of shaking them: it should
+    // come out while you do it, not appear in a heap underneath afterwards.
+    ok(shook.shed > 0 && shook.spill === 0,
+       'and the load comes out as it is shaken, not when it lands',
+       `shed ${shook.shed} while shaken, ${shook.spill} left to fall`)
+  ];
+});
+
+group('a shaken body drops its hat, and goes back for it', async () => {
+  window.__reset();
+  window.__crew(2, 2);
+  window.__school({ breakers: 2 });         // so somebody has a hat to lose
+  run(6);                                    // and has gone and put it on
 
   const wore = state().trained.length;
-  const i = state().crewDetail.findIndex(d => d[0] === 'm');
-  const shook = window.__shake(i);
-  run(0.2);                                 // land
+  const j = state().crewDetail.findIndex(d => d[0] === 'm');
+  const shook = window.__shake(j);
+  run(0.2);                                  // land
 
   const justAfter = state();
   run(DIZZY_MS / 1000 * 0.5);
-  const midWobble = state();
-  const wobbling = midWobble.saying > 0;
+  const wobbling = state().saying > 0;
 
-  run(DIZZY_MS / 1000 + 6);                 // stars clear, and it fetches the hat
+  run(DIZZY_MS / 1000 + 6);                  // stars clear, and it fetches the hat
   const after = state();
   window.__crew(0, 0);
 
@@ -39,7 +64,7 @@ group('a shaken body drops everything, and goes back for its hat', async () => {
     ok(justAfter.trained.length === wore - 1,
        'and it is not wearing one while it lies about',
        `${justAfter.trained.length} against ${wore}`),
-    ok(wobbling, 'it stands there seeing stars', `${midWobble.saying} saying something`),
+    ok(wobbling, 'it stands there seeing stars'),
     ok(after.saying === 0, 'and comes round', `${after.saying} still at it`),
     ok(after.trained.length === wore,
        'and puts the hat back on, having walked over to it',

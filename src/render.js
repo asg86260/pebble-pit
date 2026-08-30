@@ -1939,15 +1939,17 @@ export function overLabMark(mx, my) {
   return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
 }
 
+// A core: a solid disc, not a ring.
+//
+// It was drawn hollow -- white inside a thick black stroke -- which reads as an
+// outline of a thing rather than as the thing. Everything else worth something
+// in this yard is solid, and the one object the whole game is about was the one
+// drawn as a hole.
 export function drawCircle(cxp, cyp, r) {
   ctx.beginPath();
   ctx.arc(cxp, cyp, r, 0, Math.PI * 2);
-  ctx.fillStyle = '#fff';
-  ctx.fill();
-  ctx.lineWidth = Math.max(1, r / 3);
-  ctx.strokeStyle = '#000';
-  ctx.stroke();
   ctx.fillStyle = '#000';
+  ctx.fill();
 }
 
 // --- what a core gives off ----------------------------------------------------
@@ -1971,7 +1973,7 @@ const WAVE_ALPHA = 0.62;
 // Rounding that treats the two sides of nought alike. See the ring below.
 const evenly = v => Math.sign(v) * Math.round(Math.abs(v));
 
-function drawCoreGlow(cx, cy) {
+function drawCoreGlow(cx, cy, capAtGround) {
   const t = now();
   // The middle, snapped once, and every cell of every ring measured from *it*.
   //
@@ -2028,19 +2030,18 @@ function drawCoreGlow(cx, cy) {
       // produces a pair of opposite cells.
       const x = ox + evenly(Math.cos(a) * r / P) * P;
       const y = oy + evenly(Math.sin(a) * r / P) * P;
-      // The ring is a whole ring, and the ground line is not a lid.
+      // A whole ring, except where the thing is still inside the rock.
       //
-      // Everything at or below the line used to be dropped, on the grounds that
-      // this reads as heat and heat does not go down into the dirt. What that
-      // actually produced was a DOME: a core resting on the ground has its
-      // middle nine pixels up, so most of the ring was under the line and thrown
-      // away, and what was left sat above the disc like a hat. No amount of
-      // fixing the origin helps -- the origin was right and half the drawing was
-      // being deleted -- and "the animation is not centred on the circle" is
-      // exactly what a half-ring above a circle looks like.
-      //
-      // So it is drawn whole. A core glows all round, which is what a thing
-      // giving something off does.
+      // A core lying about glows all round, which is what a thing giving
+      // something off does -- the ground line is not a lid for it. But the one
+      // still buried is drawn BEHIND the boulder so the boulder covers it, and
+      // the rock only covers what is above the ground line: the bottom of the
+      // ring came out underneath the hill and lay on the open ground, glowing,
+      // while the core was still in the rock. So that one -- and only that one
+      // -- keeps the cut.
+      if (capAtGround && y - P / 2 >= S.groundY) continue;
+
+
       const key = `${x},${y}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -2056,11 +2057,11 @@ function drawCoreGlow(cx, cy) {
   ctx.fillStyle = '#000';
 }
 
-export function drawCoreAt(x, y) {
+export function drawCoreAt(x, y, capAtGround) {
   // One middle for both, so the glow and the thing it is coming off cannot
   // disagree about where the thing is.
   const cx = x + CORE_SIZE / 2, cy = y + CORE_SIZE / 2;
-  drawCoreGlow(cx, cy);
+  drawCoreGlow(cx, cy, capAtGround);
   // radius allows for the 2px stroke, so the circle stays inside its box and
   // never paints over the ground line it is resting on
   drawCircle(cx, cy, CORE_SIZE / 2 - 2);
@@ -2082,7 +2083,7 @@ export function drawCoreBehind() {
   // off it showed a core in four rocks that were never going to yield one.
   if (S.boulderNo < CORE_FROM) return;
   const h = coreHome();
-  drawCoreAt(h.x, h.y);
+  drawCoreAt(h.x, h.y, true);          // still in the rock: nothing spills onto the ground
 }
 
 // out in the world: on the cursor or lying on the ground

@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, HAUL_EMPTY, DUCK_PACE, IDLE_BEAT, IDL
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT } from './config.js';
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT, SHAKE_SHED } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth, blocked } from './world.js';
@@ -1442,6 +1442,8 @@ export function drop(w) {
     // upside down is a load nobody would believe in. The hat comes off with it,
     // and lands where the body lands: it is a thing on a head, not a property of
     // the body, and this is the one moment in the game that makes that visible.
+    // Whatever is still in its hands when you let go -- most of it has already
+    // been shaken out by now, see `shakeHeld`; this is the remainder.
     w.spill = w.carry || 0;
     w.carry = 0;
     if (w.trained) {
@@ -1469,6 +1471,22 @@ export function shakeHeld(w, dx) {
   if (w.lastDir && dir !== w.lastDir) {
     w.shook = (w.shook || 0) + 1;
     w.turnedAt = t;
+    // And it sheds its load as it goes, a bit at every turn, rather than
+    // dumping the lot when it lands. Shaking something out of somebody is the
+    // point of shaking them: you should see it coming out while you do it, not
+    // find a heap under them afterwards. It falls to the ground beneath
+    // wherever you are holding them.
+    // Stars while you are still shaking it, not only once it lands. The whole
+    // gesture is something you do and watch, so the yard should answer during
+    // it: the moment it has been turned about enough to count, it starts seeing
+    // them, and `drop` carries the same spell on past the landing.
+    if (w.shook >= SHAKE_TURNS) w.say = { mark: 'dizzy', until: t + DIZZY_MS };
+    if (w.carry > 0) {
+      const out = Math.min(w.carry, SHAKE_SHED);
+      for (let i = 0; i < out; i++) addGrain(floor, w.x + WORKER / 2, blocked);
+      w.carry -= out;
+      S.dirty = true;
+    }
   }
   w.lastDir = dir;
 }

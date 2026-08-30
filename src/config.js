@@ -984,6 +984,7 @@ export const HURL_DRAG = 0.995;  // air against it on the way
 // throw, and what it earns is a moment of not knowing which way is up.
 export const SHAKE_TURNS = 4;      // changes of direction that count as a shaking
 export const SHAKE_WINDOW = 700;   // inside this long, in ms
+export const SHAKE_SHED = 2;       // grains shaken loose at every change of direction
 export const DIZZY_MS = 2000;      // and how long the stars last afterwards
 // A shaken body drops what it was holding, hat and all, and stands there seeing
 // stars before it gathers itself. How far it wobbles while it does.

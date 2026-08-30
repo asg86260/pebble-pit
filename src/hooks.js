@@ -26,7 +26,7 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers, drop as dropHeld } from './crew.js';
+import { syncWorkers, drop as dropHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
@@ -650,9 +650,14 @@ export const shake = (i = 0) => {
   const w = S.workers[i];
   if (!w) return null;
   w.lifted = true;
-  w.shook = SHAKE_TURNS;                 // as if it had been waggled about
+  // Waggled for real, through the same function a cursor drives, so what a check
+  // sees is what a shaking actually does -- the load coming out turn by turn
+  // included. Setting `shook` by hand skipped exactly that.
+  const had = w.carry | 0;
+  for (let i = 0; i <= SHAKE_TURNS; i++) shakeHeld(w, i % 2 ? 6 : -6);
+  const shed = had - (w.carry | 0);
   dropHeld(w);
-  return { hatOff: !!w.hatOff, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
+  return { hatOff: !!w.hatOff, shed, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
 };
 
 export const poopSet = f => {
