@@ -49,39 +49,55 @@ export const spriteW = rows => Math.max(...rows.map(r => r.length));
 export const spriteH = rows => rows.length;
 
 // --- what the crew wear ---------------------------------------------------------
-// A body is three cells wide, so a hat is drawn against that. Anything wider
-// than three overhangs, which is the whole of what a sun hat is.
+// A body is three cells wide, and a hat sits with its bottom row one cell above
+// the top of it. Anything wider than three overhangs the shoulders, which is the
+// whole of what a sun hat is and most of what says wizard.
+//
+// These are the sizes the yard has always drawn. The first go at moving them
+// here guessed at them and made every one of them bigger -- a five-by-two
+// helmet on a three-cell body -- so the crew wore buckets.
 export const HATS = {
-  // A miner's helmet: a dome with a small brim in front of it.
+  // A miner's helmet: the body's own width, one course.
   helmet: [
-    '.###.',
-    '#####'
+    '###'
   ],
-  // A quarrier's lamp: the same helmet with a light on the front of it.
+  // A quarrier's, with the lamp on the front of it.
   lamp: [
-    '.###.',
-    '#####',
-    'o....'
+    '.#.',
+    '###'
   ],
-  // A farmhand's sun hat. The overhang is the shape -- narrower than this and it
-  // is a helmet somebody has sat on.
+  // A farmhand's sun hat. The overhang *is* the shape -- two clear cells past
+  // the body each side -- and there is a low crown on top of it now. The crown
+  // was always meant to be there and was drawn at a negative width, so for as
+  // long as this hat has existed it has been a flat disc.
   brim: [
     '..###..',
     '#######'
   ],
-  // A wizard's point.
+  // A wizard's point, and the only hat here that goes up rather than across.
   point: [
     '..#..',
     '.###.',
     '#####'
   ],
-  // A janitor's flat cap, with a peak out front. The only hat here that is not a
-  // trade: a janitor buys no kit and wears nothing the school sells, and it is
-  // the body you most often want to pick out of a yard.
+  // A janitor's flat cap: a low crown with the peak out front. It is the only
+  // hat that is not a trade -- a janitor buys no kit and wears nothing the
+  // school sells -- so it is the one that has to be told apart by shape alone,
+  // which is why it is lopsided where the others are symmetrical.
   cap: [
+    '.###',
+    '####'
+  ]
+};
+
+// Some hats are drawn on a counter, where there is no bare ground either side to
+// overhang into. These are the same hats with the overhang taken off -- written
+// out rather than sliced off the wide one, because a shape trimmed by code is a
+// shape nobody has looked at.
+export const HATS_TIGHT = {
+  brim: [
     '.###.',
-    '#####',
-    '##...'
+    '#####'
   ]
 };
 

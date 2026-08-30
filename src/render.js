@@ -25,7 +25,7 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
-import { drawSprite, spriteW, spriteH, HATS, JAW, HOIST, RAM, TILLER } from './sprites.js';
+import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER } from './sprites.js';
 import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
@@ -2131,13 +2131,15 @@ export function drawBody(x, y) {
 // nobody can look at `fillRect(x + P, y - P, WORKER - P * 2, P)` and see a flat
 // cap. They are pictures now, in one file, one character to a cell.
 export function drawHat(x, y, kind = 'helmet', tight = false) {
-  const rows = HATS[kind] || HATS.helmet;
-  const w = spriteW(rows);
-  // Centred on the body, and sitting on top of it.
-  const over = tight && kind !== 'point' ? Math.min(w, 3) : w;
-  const put = rows.map(r => r.slice(0, over));
-  const left = x + (WORKER - spriteW(put) * P) / 2;
-  drawSprite(ctx, put, Math.round(left / P) * P, y - spriteH(put) * P);
+  // `tight` is for a hat drawn on a counter, where there is no bare ground
+  // either side to overhang into -- and only the sun hat has a narrower version,
+  // because a helmet is a helmet either way and the wizard's brim standing proud
+  // of the body is the whole of what says wizard.
+  const rows = (tight && HATS_TIGHT[kind]) || HATS[kind] || HATS.helmet;
+  // Centred on the body, sitting with its bottom row one cell above the top of
+  // it -- which is where every hat in this yard has always sat.
+  const left = x + (WORKER - spriteW(rows) * P) / 2;
+  drawSprite(ctx, rows, Math.round(left / P) * P, y - spriteH(rows) * P);
 }
 
 // What a body has on. It is asked of the *kit* -- which station the thing came
