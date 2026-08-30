@@ -1237,19 +1237,41 @@ miners is `Infinity` -- a rock is as long as it is. Its complement is
 where every number in this game lives. What the rule against per-case constants
 forbids is a `5` inlined in shared code, not a named one in `config.js`.
 
-**A machine reads its station's ladders, never its hats.** Seven grower brims
-over a farm that now holds one body is intended -- the hats are the *fallback's*
-kit, waiting for the lever to go off -- and a trained tender does not make the
-machine faster. That keeps the rate a fact about the station, and stops a
-five-bench, fully-hatted machine arriving at fifteen hands.
+**A machine waits for the specialists, and is then worth more than they were.**
+This is the correction that makes the upgrade path hold together, and the first
+draft had it exactly backwards.
+
+That draft said a machine reads its station's *ladders* and never its *hats*, on
+the argument that a trained tender should not make the machine faster and a
+five-bench fully-hatted machine should not arrive at fifteen hands. Right worry,
+wrong thing. A hat is a flat doubling wherever one is worn -- twice the bite on
+the rock, twice the pace at a cell, twice the tending on a plot -- so a kitted
+complement of five is worth ten hands, and a machine at complement-times-one-and-
+a-half was worth seven and a half. **You paid fifty sparks to make the quarry
+slower.**
+
+Worse, it made the specialists obsolete at a stroke. A machine caps its station
+at one body, so the moment you threw the lever every helmet you had bought went
+into a drawer, and the trade ladder stopped being worth finishing halfway up.
+
+So the gate is **every slot and every hat**, and the rate is measured against the
+gang that set of hats made: complement, times the doubling each of those hands is
+wearing, times `MACHINE_GAIN`. Five hatted benches is fifteen. The specialists
+become the last thing you buy before the machine, and the machine is worth half
+again what they were -- which is what the dial has meant all along.
+
+It also settles what `MACHINE_GAIN` is a multiple *of*, which was the vaguest
+thing in this section: it is a multiple of a fully-kitted station, and there is a
+check that measures a running jaw against five hatted quarriers working the same
+cut in the same yard.
 
 | | the jaw and hoist | the ram | the tiller |
 |---|---|---|---|
 | station | the cut | the rock | the plots |
-| unlocked by | 5/5 benches | strength and speed both 5/5 | 7/7 plots |
+| unlocked by | 5/5 benches, 5 blasters | both kit ladders 5/5, 5 breakers | 7/7 plots, 7 growers |
 | price | 30 sparks, 2,000 dust, 25 spores | 50 sparks, 40 shards, 30 spores | 20 sparks, 1,200 dust, 18 shards |
 | complement | 5 benches | 5 (`ROCK_GANG`) | 7 plots |
-| worth | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` | complement x `MACHINE_GAIN` |
+| worth | 15 hands | 15 hands | 21 hands |
 
 **It is called the ram and not the breaker.** `TRADE_OF.miners` is already
 `'breakers'` -- a breaker is the *hat* the school sells for the rock, counted in
@@ -1341,8 +1363,8 @@ and the lever would be a decision nobody made twice.
 
 **How live a decision the lever really is, honestly.** A machine is a flat rate
 and a gang is not -- but the cut can never hold more than its five benches and
-the farm never more than its seven plots, so at any `MACHINE_GAIN` above 1 the
-hands can never out-work the jaw or the tiller. The rock is the exception, and
+the farm never more than its seven plots, and the machine is now measured against
+a *hatted* complement, so the hands can never out-work the jaw or the tiller. The rock is the exception, and
 the only one: `capOf('miners')` is `Infinity`, so a big enough gang really can
 beat the ram, and there the lever is a rate decision for the rest of the run.
 For the other two it is a smoke valve and a way to get the gang back for
@@ -1396,6 +1418,10 @@ standing mote count, which reads the same at the cap whatever the rate.
 ### Still open
 
 - Whether the tier-6 spark rungs are the same two rungs on every ladder.
+- What the specialists are *for* once a machine is running. The gate makes
+  finishing them worth doing, and throwing the lever off puts a fully-hatted gang
+  straight back to work -- but a player who never throws it again has a drawer of
+  helmets. Perhaps a driven machine should want them.
 - Whether the three machines should be reachable in any order, or whether the
   jaw ought to be the one that teaches the idea.
 - Whether the rest of the boards should follow the same rule the machines now

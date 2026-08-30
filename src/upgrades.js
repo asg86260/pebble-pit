@@ -301,10 +301,40 @@ export const roomAt = job => capOf(job) - S[job];
 export const handsOf = job => job === 'miners' ? ROCK_GANG : capOfBare(job);
 
 
-// What the machine is worth, in hands, at this station. The dial is measured
-// rather than believed -- see MACHINE_GAIN.
+// Whether a station's kit is complete: a hat for every pair of hands it holds.
+//
+// A hat is a flat doubling wherever one is worn -- twice the bite on the rock,
+// twice the pace at a cell, twice the tending on a plot, twice the load at the
+// lip. So a fully-hatted complement is worth twice a bare one, and that is the
+// gang a machine actually has to beat.
+export const kitFull = job => {
+  const trade = TRADE_OF[job];
+  return !!trade && hats(job) >= handsOf(job);
+};
+
+// What one pair of hands at this station is worth, counting the kit on its head.
+export const kitMult = job => (kitFull(job) ? 2 : 1);
+
+// What the machine is worth, in hands, at this station.
+//
+// It reads the hats, and this is the correction that makes the whole upgrade
+// path hold together. It used to read the ladders only, on the argument that a
+// machine should not be able to arrive at fifteen hands off kit you happened to
+// have bought -- which was the right worry about the wrong thing. What it
+// actually produced was a machine that was a *downgrade*: a fully-hatted cut of
+// five is worth ten hands, and the jaw at complement-times-one-and-a-half was
+// worth seven and a half. You paid fifty sparks to make the quarry slower.
+//
+// And it made the specialists obsolete at a stroke. A machine caps its station
+// at one body, so every hat you had bought went in a drawer the moment you threw
+// the lever, and the whole trade ladder stopped being worth finishing.
+//
+// So the gate is a full set of hats -- see `canBuy` -- and the rate is measured
+// against the gang that set of hats made. The specialists become the thing you
+// finish *before* the machine, and the machine is worth half again what they
+// were, which is what MACHINE_GAIN has meant all along.
 export const machineRate = job =>
-  handsOf(job) * MACHINE_GAIN * (machineFor(job)?.driven ? 2 : 1);
+  handsOf(job) * kitMult(job) * MACHINE_GAIN * (machineFor(job)?.driven ? 2 : 1);
 
 // Put a gang back where a machine displaced it.
 //
@@ -522,7 +552,8 @@ export const UPGRADES = [
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
-    show: () => canBuy('ram', () => S.minerPickLevel >= RUNGS && S.minerSpeedLevel >= RUNGS)
+    show: () => canBuy('ram', () => S.minerPickLevel >= RUNGS && S.minerSpeedLevel >= RUNGS,
+                       () => kitFull('miners'))
   },
   {
     key: 'auto',

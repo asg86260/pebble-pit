@@ -166,14 +166,18 @@ group('a machine is worth its complement times the dial', async () => {
   const s = state();
   const jaw = s.machines.jaw, ram = s.machines.ram, till = s.machines.tiller;
   return [
-    ok(jaw.hands === 5 && Math.abs(jaw.rate - 7.5) < 0.01,
-       'five benches is seven and a half hands', `${jaw.hands} -> ${jaw.rate}`),
-    ok(till.hands === 7 && Math.abs(till.rate - 10.5) < 0.01,
-       'seven plots is ten and a half', `${till.hands} -> ${till.rate}`),
-    ok(ram.hands === 5 && Math.abs(ram.rate - 7.5) < 0.01,
+    // Complement, times the doubling every one of those hands is wearing, times
+    // the dial. A machine is gated behind a full set of hats, so the gang it
+    // stands in for is always a kitted one and the rate is measured against
+    // that -- five benches of blasters is ten hands, and the jaw is half again.
+    ok(jaw.hands === 5 && jaw.kitFull && Math.abs(jaw.rate - 15) < 0.01,
+       'five hatted benches is fifteen hands', `${jaw.hands} kitted -> ${jaw.rate}`),
+    ok(till.hands === 7 && Math.abs(till.rate - 21) < 0.01,
+       'seven hatted furrows is twenty-one', `${till.hands} -> ${till.rate}`),
+    ok(ram.hands === 5 && Math.abs(ram.rate - 15) < 0.01,
        "and the rock's five puts the ram level with the jaw",
        `${ram.hands} -> ${ram.rate}`),
-    ok(Math.abs(two.jaw.rate - 10) < 0.01 && Math.abs(two.tiller.rate - 14) < 0.01,
+    ok(Math.abs(two.jaw.rate - 20) < 0.01 && Math.abs(two.tiller.rate - 28) < 0.01,
        'and the whole of it moves with the dial rather than being written down',
        `at 2: jaw ${two.jaw.rate}, tiller ${two.tiller.rate}`),
     ok((s.roster.find(r => r.job === 'haulers') || {}).hands === null,
@@ -610,10 +614,16 @@ group('the ram works the rock, measured against not having one', async () => {
   // the rock's pile first -- there are no haulers here, the station stands down
   // at PILE_LIMIT, and the quicker worker simply jams sooner. That is a real
   // thing about the yard and it is not the thing this group is about.
+  // Counted off the crew rather than off the hill. `state().rock` is what is
+  // left of the boulder, which goes *up* when one is finished and the next comes
+  // down -- and the ram is quick enough to do that inside the window, which read
+  // as the machine putting rock back.
+  const mined = () => state().crewNames.split(' ')
+    .reduce((a, p) => a + (+(p.split('|')[3] || 'm0').slice(1) || 0), 0);
   const window10 = () => {
-    const before = state().rock;
+    const before = mined();
     for (let i = 0; i < 20; i++) { run(0.5); window.__clearFloor(); }
-    return before - state().rock;
+    return mined() - before;
   };
   const byHand = window10();
 
@@ -936,5 +946,87 @@ group('a lever is a thing in the yard you can point at', async () => {
     ok(asked === false, 'which asks for it to go off rather than flipping it',
        `${asked}`),
     ok(off, 'and somebody walks over and throws it')
+  ];
+});
+
+// --- the specialists ------------------------------------------------------------
+// A machine is gated behind a full set of hats as well as a full set of slots,
+// and that is not a difficulty tax. Without it, buying a machine put every
+// helmet you owned in a drawer -- a machine caps its station at one body -- so
+// the trade ladder stopped being worth finishing halfway up. And the machine was
+// a *downgrade*: a hatted hand is worth two, so a kitted cut of five is worth
+// ten and the jaw was worth seven and a half.
+group('a machine waits for the specialists, and then beats them', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(9000);
+  const offered = () => window.__rows().filter(r => r.shown).map(r => r.key);
+
+  const kitted = offered();
+  // and now take the hats away again
+  window.__school({ blasters: 0, growers: 0, breakers: 0 });
+  const bare = offered();
+  // half a set is not a set
+  window.__school({ blasters: 3 });
+  const half = offered();
+  window.__school({ blasters: 5, growers: 7, breakers: 5 });
+  const back = offered();
+
+  return [
+    ok(kitted.includes('jaw'), 'a fully slotted, fully hatted cut is offered a jaw'),
+    ok(!bare.includes('jaw'), 'a cut with no blasters in it is not',
+       bare.filter(k => k === 'jaw').join(',') || 'not offered'),
+    ok(!half.includes('jaw'), 'and nor is one with three of its five'),
+    ok(back.includes('jaw'), 'the last hat is what puts the row up'),
+    ok(!bare.includes('tiller') && !bare.includes('ram'),
+       'and the same for the other two')
+  ];
+});
+
+// The measurement DESIGN.md promised and never had: a machine against a real
+// gang, kit and all, on the same station in the same yard. `MACHINE_GAIN` is a
+// dial to be measured rather than believed, and this is the measuring.
+group('a jaw out-digs the kitted gang it stood down', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+
+  // Five blasters at the cut, working it by hand.
+  window.__crew(0, 0, 5);
+  window.__fullSites();
+  window.__clearFloor();
+  run(6);
+  const byHand = (() => {
+    const before = state().quarryTotal;
+    for (let i = 0; i < 30; i++) { run(0.5); window.__clearFloor(); }
+    return state().quarryTotal - before;
+  })();
+  const hatted = state().crewDetail.length;
+
+  // The same yard, the same crew, with the jaw running instead.
+  window.__machine('jaw', { bought: true, on: true });
+  run(6);
+  const byMachine = (() => {
+    const before = state().quarryTotal;
+    for (let i = 0; i < 30; i++) { run(0.5); window.__clearFloor(); }
+    return state().quarryTotal - before;
+  })();
+
+  const s = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(byHand > 0, 'five hatted quarriers take ground out', `${byHand} cells`),
+    ok(s.machines.jaw.kitFull, 'and the cut had its whole set of blasters on'),
+    ok(byMachine > byHand,
+       'and the jaw, standing four of them down, still takes out more',
+       `${byHand} by hand -> ${byMachine} by machine`),
+    // Not a squeaker. The point of the gate is that finishing the specialists is
+    // worth doing and the machine is worth buying after it, and a machine that
+    // barely edged a gang would make both feel like a waste.
+    ok(byMachine > byHand * 1.2,
+       'and by a margin worth fifty sparks',
+       `${(byMachine / Math.max(1, byHand)).toFixed(2)}x`)
   ];
 });

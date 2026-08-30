@@ -195,13 +195,27 @@ export function buyMachine(key) {
   S.dirty = true;
 }
 
-// A row is on the board while the station is full and the machine is not yet
-// bought. It is gated on **bought**, never on running: a row that came and went
-// with the lever would rebuild the board every time somebody threw it, dropping
-// the hover and re-firing the new-row mark.
-export const canBuy = (key, slotsFull) => {
+// A row is on the board while the station has been given everything hands can be
+// given, and the machine is not yet bought.
+//
+// **Everything** is two things, and the second was missing. Every slot -- five
+// benches, seven furrows, both of the rock's kit ladders -- and every *hat*: a
+// specialist for each pair of hands the station holds.
+//
+// The hats matter for the same reason the slots do, only more so. A machine caps
+// its station at one body, so without this gate every helmet you had bought went
+// into a drawer the moment you threw the lever, and the trade ladder stopped
+// being worth finishing halfway up. Gated this way round, the specialists are
+// the last thing you buy before the machine and the machine is worth half again
+// what they were -- see `machineRate`, which reads the hats for exactly this
+// reason.
+//
+// Gated on **bought**, never on running: a row that came and went with the lever
+// would rebuild the board every time somebody threw it, dropping the hover and
+// re-firing the new-row mark.
+export const canBuy = (key, slotsFull, kitFull) => {
   const m = machine(key);
-  return !!m && !m.bought && slotsFull();
+  return !!m && !m.bought && slotsFull() && kitFull();
 };
 
 

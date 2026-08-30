@@ -14,7 +14,7 @@ import { FARM_FOUL } from './config.js';
 import { S, farm } from './state.js';
 import { walkY, plotCount, resite } from './world.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance } from './upgrades.js';
+import { rebalance, kitFull } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 
@@ -152,7 +152,8 @@ export const FARM_UPGRADES = [
     name: 'the tiller',
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
-    show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX)
+    show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX,
+                                      () => kitFull('farmhands'))
   },
   {
     key: 'tend',

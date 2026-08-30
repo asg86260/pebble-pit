@@ -12,7 +12,7 @@
 // different things depending on which suite asked.
 
 import { P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
 import { S, floor, pit } from './state.js';
 import { at, put, addGrain } from './grid.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft } from './world.js';
@@ -102,12 +102,20 @@ export const fullSites = () => {
   S.minerSpeedLevel = RUNGS;
   S.quarryOpen = true;
   S.farmOpen = true;
+  // And a full set of specialists, which is the other half of what a machine is
+  // gated behind. A check that wants a machine should not have to know that the
+  // hats are called breakers, blasters and growers.
+  S.breakers = Math.max(S.breakers, ROCK_GANG);
+  S.blasters = Math.max(S.blasters, QUARRY_BENCH_MAX);
+  S.growers = Math.max(S.growers, FARM_PLOTS_MAX);
+  S.schoolOpen = true;
   resite();
   rebalance();
   buildShop();
   S.dirty = true;
   return { benches: benches(), plots: plotCount(),
-           pick: S.minerPickLevel, speed: S.minerSpeedLevel };
+           pick: S.minerPickLevel, speed: S.minerSpeedLevel,
+           breakers: S.breakers, blasters: S.blasters, growers: S.growers };
 };
 
 export const clearFloor = () => {

@@ -20,7 +20,7 @@ import { mult } from './lab.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance } from './upgrades.js';
+import { rebalance, kitFull } from './upgrades.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -577,7 +577,8 @@ export const QUARRY_UPGRADES = [
     name: 'the jaw',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
-    show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX)
+    show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
+                                       () => kitFull('quarriers'))
   },
   {
     key: 'quarrypace',
