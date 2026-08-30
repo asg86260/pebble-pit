@@ -116,44 +116,160 @@ group('a heap is passed in front of, the rock is walked over', async () => {
   ];
 });
 
-group('every body walks the same ground', async () => {
+group('the hill is a workplace, not a road', async () => {
   window.__reset();
   window.__crew(2, 4, 0, 0);
   run(20);
+  // A mess laid out on the bare ground away to the left of the hill, so the
+  // haulers have a reason to walk the width of the yard and cross the footprint
+  // on the way. Without it they work the pile and the hole, which are both on
+  // the same side of the rock, and the check below has nothing to look at.
+  const left = state().rockLeftX, right = left + state().gw * 6;
+  window.__muckSet(c => (c * 6 < left - 60 && c % 4 === 0 ? 3 : 0));
+  run(4);
 
   const gy = groundY();
-  const left = state().rockLeftX, right = left + state().gw * 6;
-  // Anybody at all, over the rock's footprint, at any time: nobody should ever
-  // be *inside* the hill. This used to be true of miners only.
-  // How far into the hill a body is allowed to be. Not nothing: feet follow the
-  // ground at the pace of the walk and a half again (see CLIMB_SLOPE), so a body
-  // arriving at a cliff face is briefly below the surface while it climbs it.
-  // That is a climb, and it is what a climb looks like. What it must never be is
-  // the old behaviour -- a body at ground level in the middle of the footprint,
-  // buried to well over its own height, for the whole width of the rock.
-  // A body and a half. Measured at 24px worst case against a sheer face, and it
-  // was 120px before -- a body at ground level in the middle of the hill. The
-  // remaining lag is `climbTo` easing up a wall it cannot climb at walking pace;
-  // see the review. This is a floor under the regression, not a target.
+  // What counts as being up on the hill rather than in front of it. A few
+  // pixels, because the flanks come down to the ground line and a body at the
+  // very toe of the rock is standing on both.
+  const UP = 6;
+  // And how far into the face a body up on it is allowed to be. Feet follow the
+  // surface at the pace of the walk and a half again (see CLIMB_SLOPE), so a
+  // body that has just met a sheer step is briefly inside it while it climbs.
+  // A body and a half, measured at 24px worst case. This is a floor under the
+  // regression rather than a target.
   const DEEP = 30;
-  let deep = 0, over = 0, worst = 0;
-  for (let i = 0; i < 900; i++) {
+
+  const climbed = new Set();       // who was ever up on the hill
+  let crossed = 0, ramped = 0, deep = 0, sunk = 0, worst = 0, worstFlat = 0;
+  const why = [];
+  for (let i = 0; i < 1800; i++) {
     run(1 / 60);
     for (const b of detail()) {
-      const mid = b.x + 9;
+      const mid = b.x + 9, feet = b.y + 18;
       if (mid < left || mid > right) continue;
       const surf = window.__surface(mid);
-      if (surf > gy - 6) continue;                     // no rock in this column
-      const into = (b.y + 18) - surf;
-      worst = Math.max(worst, into);
-      if (into > DEEP) deep++;
-      else over++;
+      if (surf > gy - 6) continue;                  // no rock left in this column
+      if (feet > gy + 1) { sunk++; continue; }      // nobody is under the yard here
+      if (feet < gy - UP) {
+        // Up on the hill. Whoever it is, it is there because its work is there,
+        // and it is standing on the face rather than inside it.
+        climbed.add(b.t);
+        const into = feet - surf;
+        worst = Math.max(worst, into);
+        if (into > DEEP) { deep++; if (why.length < 4) why.push(`${b.t} ${Math.round(into)}px in at ${b.x}`); }
+        // A hauler has no business on the hill in this yard: the mess is all on
+        // bare ground and the rock's pile is off the footprint. One up there is
+        // one that took the crest as a shortcut.
+        if (b.t === 'h') ramped++;
+      } else if (b.t === 'h') {
+        // A hauler in front of the hill, on the floor of the yard and at the
+        // height of it. Haulers only, because they are the ones with no reason
+        // ever to leave the ground here -- a miner passing through this band is
+        // a miner walking down off the crest to a mess, and it is meant to be
+        // between the two heights for the few frames that takes.
+        crossed++;
+        worstFlat = Math.max(worstFlat, Math.abs(feet - gy));
+      }
     }
   }
 
   return [
-    ok(over > 0, 'somebody crossed the hill', `${over} frames on it`),
-    ok(deep === 0, 'and nobody was ever buried in it',
-       `${deep} frames deeper than a body, worst ${Math.round(worst)}px`)
+    // The gang's work is on the rock, so the route to their stand goes up it.
+    // Nothing tells them to climb: their stand is a place on the hill's surface,
+    // so the shortest walk to it is a walk on to the hill.
+    ok(climbed.has('m'), 'the gang climb the hill, because their work is on it',
+       `up there: ${[...climbed].join('') || 'nobody'}`),
+    // And everybody else goes past it. This is the whole of the bug: with the
+    // hill in the yard's floor the shortest path across the yard went over the
+    // summit, so every errand in the game ramped up and over a hill it had no
+    // business on.
+    ok(crossed > 0, 'and a hauler crossed the footprint on the ground',
+       `${crossed} frames in front of it`),
+    ok(ramped === 0, 'a hauler crossing the hill walks in front of it, not over it',
+       `${ramped} frames up on the crest`),
+    ok(worstFlat <= 1, 'and it stays on the ground line the whole way across',
+       `worst ${Math.round(worstFlat)}px off the line`),
+    // Neither of the two ways buries anybody: not in the rock, and not in the
+    // ground the rock is standing on.
+    ok(deep === 0, 'nobody up on the hill is ever buried in it',
+       `${deep} frames deeper than a body, worst ${Math.round(worst)}px${why.length ? ` -- ${why.join(' / ')}` : ''}`),
+    ok(sunk === 0, 'and nobody in front of it is ever under the yard', `${sunk} frames`)
+  ];
+});
+
+group('the way over the hill is the hill that is left', async () => {
+  window.__reset();
+  window.__crew(4, 0, 0, 0);
+  run(20);
+
+  // The rock as it stands once the gang have been at it a while: the crest is
+  // down, the flanks are chewed, and the outline is nothing like the one it
+  // landed with. Everything below is asked of *that* shape, because a way whose
+  // span or surface was written down when the rock arrived is a way over rock
+  // that is not there any more.
+  run(90);
+
+  const gy = groundY(), cell = 6;
+  const foot = state().rockLeftX, cols = state().gw;
+  const world = window.__ways();
+  const flanks = world.links.filter(l => l.a === 'rock' || l.b === 'rock');
+
+  // Where the rock still reaches, read off the surface a column at a time --
+  // the same question `rockSpan` asks of the columns, asked here of the answer
+  // the surface gives, so the two cannot agree by sharing a mistake.
+  let lo = null, hi = null;
+  for (let c = 0; c < cols; c++) {
+    if (window.__surface(foot + c * cell + cell / 2) < gy - 1) { if (lo === null) lo = c; hi = c; }
+  }
+  const alive = state().rock > 0;
+
+  // And a body on it while the ground goes down under it. The gang are taking
+  // the cells out from under their own feet and the outline they are standing on
+  // is jagged -- craters where somebody has been working, spikes between them --
+  // so there are two ways this can go wrong: a body sunk into a face it has not
+  // climbed yet, and a body jumping to the new surface the frame a swing lands.
+  // Both are measured, a frame at a time, because both take one frame.
+  let into = 0, jump = 0;
+  let prev = detail();
+  for (let i = 0; i < 600; i++) {
+    run(1 / 60);
+    const now = detail();
+    for (let k = 0; k < now.length; k++) {
+      const b = now[k], mid = b.x + 9, feet = b.y + 18;
+      if (mid < foot || mid > foot + cols * cell || feet > gy - 6) continue;
+      into = Math.max(into, feet - window.__surface(mid));
+      if (prev[k] && prev[k].t === b.t) jump = Math.max(jump, Math.abs(b.y - prev[k].y));
+    }
+    prev = now;
+  }
+
+  return [
+    ok(alive && world.ways.includes('rock'), 'the hill is a way of its own while there is hill left',
+       world.ways.join(' ')),
+    ok(flanks.length === 2, 'joined to the yard at its two flanks and nowhere else',
+       JSON.stringify(flanks)),
+    // The span is the rock that is left, not the footprint it landed in. Mine a
+    // flank away and the foot of the hill moves in, and the links move with it,
+    // because they are worked out from the columns every time they are asked
+    // for rather than remembered from when the rock came down.
+    ok(lo !== null && flanks.some(l => Math.abs(l.x - (foot + lo * cell - 18)) < 1),
+       'the near flank sits just clear of the leftmost rock that is left',
+       `${JSON.stringify(flanks.map(l => l.x))} against ${lo === null ? '-' : foot + lo * cell - 18}`),
+    ok(hi !== null && flanks.some(l => Math.abs(l.x - (foot + (hi + 1) * cell)) < 1),
+       'and the far flank just clear of the rightmost',
+       `${JSON.stringify(flanks.map(l => l.x))} against ${hi === null ? '-' : foot + (hi + 1) * cell}`),
+    // And the walk over it tracks the outline as the outline changes, craters
+    // and steps included, without anybody clipping through a spike of it. A body
+    // and a half, measured at 23px, and the same floor-under-the-regression the
+    // group above uses.
+    ok(into <= 30, 'and nobody on it is ever buried in the shape it is left with',
+       `worst ${Math.round(into)}px into the face`),
+    // A cell a frame is what `climbTo` allows, and the bob and the swing ride on
+    // top of that. Anything much over it is a body being put on the new surface
+    // rather than walking down to it -- a miner hopping down the hill a cell at
+    // a time as the swings land, which is what easing is here to stop.
+    ok(jump <= 12, 'and it walks down to the new surface rather than being put on it',
+       `worst ${Math.round(jump)}px in a frame`)
   ];
 });

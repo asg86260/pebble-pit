@@ -42,29 +42,69 @@ import { frames } from './clock.js';
 // --- the surface --------------------------------------------------------------
 // What is underfoot at a place on the open yard, as a world y of its top.
 //
-// Everything that can be stood on is in here and nothing is held out. The rock
-// is a hill you walk over; a heap of dust is a bank you walk over; the bridge is
-// a deck you walk along. None of them is a special case with a flag beside it --
-// they are three things that are higher than the ground, and the surface is
-// whichever of them is highest.
+// This is the floor of the yard and nothing else: the ground line, and the deck
+// of the bridge where somebody has laid one over the mouth of the hole. It is
+// what a body walking from one end of the world to the other walks along.
 //
-// This is what makes the pathing question answerable at all. "Take the shortest
-// path" needs a world where every point either has a height or is not a point;
-// as soon as some places are walkable-but-flagged, every walker has to know the
-// flags, and that was the old game.
+// The hill is deliberately NOT in here, and that is the whole of what this file
+// learned the hard way. For a while it was, on the argument that one surface for
+// everybody is simpler than two chosen by job title -- and it is, but the thing
+// that made it wrong was never the arithmetic. Put the hill in the floor and the
+// hill becomes a road: every hauler, janitor and wizard with business on the far
+// side of the yard ramps up over the summit and down the other side, because the
+// summit is the shortest way along the only surface there is. A yard where every
+// errand goes over the crest is a yard where the hill is a road.
+//
+// So the hill is its own way instead -- see `ways` below -- exactly as the cut
+// and the hole are, and for the same reason: it is a surface you get on to and
+// off again at particular places, not a stretch of the floor. Which of the two a
+// body walks is then decided by what a route costs, and never by what the body
+// does for a living.
+//
+// A heap of dust is not in here either. See `footing` below: loose ground is
+// something you pass in front of, not something you stand on top of.
 export function groundTop(x) {
-  // the ground line, or the bridge where there is one over the mouth
-  let top = Math.min(groundAt(x), S.groundY);
+  return Math.min(groundAt(x), S.groundY);
+}
 
-  // the hill, where there is one under this column
-  if (boulderAlive()) {
-    const c = Math.floor((x - rockLeft()) / P);
-    if (c >= 0 && c < S.gw) top = Math.min(top, rockTopY(c));
-  }
+// And the surface of the hill, column by column, for the columns it has: the
+// rock is a heightfield, so its top is a step per cell rather than a curve. Off
+// its footprint, or in a column the crew have taken all the way down, there is
+// no hill and the answer is the floor -- which is what makes the two ends of the
+// rock way meet the yard at the same height as the yard.
+//
+// Nothing else in the game is allowed to ask `rockTopY` about a walk. This is
+// the one place the hill turns into a surface, and it is a surface like any
+// other from here on.
+export function rockTop(x) {
+  const ground = groundTop(x);
+  if (!boulderAlive()) return ground;
+  const c = Math.floor((x - rockLeft()) / P);
+  if (c < 0 || c >= S.gw) return ground;
+  return Math.min(ground, rockTopY(c));
+}
 
-  // A heap of dust is deliberately NOT in here. See `footing` below: loose
-  // ground is something you pass in front of, not something you stand on top of.
-  return top;
+// How far the hill still reaches, left and right, or null when there is no hill
+// left to reach anywhere.
+//
+// Worked out from the columns every time it is asked, never kept. The rock is
+// being taken apart while people are walking about on it: the gang start on the
+// crest and work down, the flanks go bare long before the middle does, and a
+// span remembered from when the rock landed is a way that runs out over ground
+// anybody can already walk. Same rule as `quarryFace` -- the cut's ladder moves
+// as the cut is dug, so nothing writes down where it is.
+//
+// The ends are the outermost columns that still have rock in them. Columns
+// hollowed out *between* those two are left inside the span on purpose: a notch
+// mined through the middle of a hill is a dip in the hill, not two hills, and
+// `rockTop` gives it at the height of the ground so the way runs down into it
+// and up the other side.
+export function rockSpan() {
+  if (!boulderAlive()) return null;
+  let lo = -1, hi = -1;
+  for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) { if (lo < 0) lo = c; hi = c; }
+  if (lo < 0) return null;
+  return { from: rockLeft() + lo * P, to: rockLeft() + (hi + 1) * P };
 }
 
 // --- what is underfoot, as opposed to how high it is --------------------------
@@ -100,10 +140,17 @@ export function heapAt(x) {
 // anything; it is a bank once it is deep enough to stand up against a body.
 const HEAP_DEEP = P * 2;
 
+// The ways that are holes in the ground rather than stretches of it. They are
+// the two with a mouth you can be over, and the two with something over your
+// head when you are down one, and both of those come up often enough in other
+// files to be worth naming once here rather than four times elsewhere.
+export const WORKINGS = ['cut', 'hole'];
+export const downAWorking = key => WORKINGS.includes(key);
+
 export function footing(x, all = ways()) {
   // a mouth is not a surface. Whichever way is under this point, its floor is a
   // long way down, and what is at ground level here is fresh air.
-  for (const key of ['cut', 'hole']) {
+  for (const key of WORKINGS) {
     const w = all[key];
     if (w && x > w.from && x < w.to && standTop(x - WORKER / 2, w.at) > S.groundY + P) return NONE;
   }
@@ -152,8 +199,10 @@ export const feetOn = (way, leftX) => standTop(leftX, way.at) - WORKER;
 //   at     the surface under a point on it
 //
 // The yard is the way everything else hangs off. It runs the whole width of the
-// world, and `groundTop` gives its height, so the rock and the heaps are part of
-// it rather than obstacles on it.
+// world and `groundTop` gives its height, so a heap of dust is part of it rather
+// than an obstacle on it -- you pass in front of a bank, and the ground line is
+// where you pass it at. The hill is not part of it: it is a way of its own, and
+// the reason why is written out at `groundTop`.
 export function ways() {
   const out = { yard: { key: 'yard', from: -1e6, to: 1e6, at: groundTop } };
 
@@ -168,24 +217,74 @@ export function ways() {
   if (pit.grid && pit.cols)
     out.hole = { key: 'hole', from: pit.x, to: pit.x + pit.w, at: pitTop };
 
+  // The hill, which is the same shape of thing turned the other way up: a
+  // surface *above* the ground, joined to the yard at the two places you can
+  // walk on to it, and only there. It exists while there is a rock to stand on
+  // and stops existing when the crew have taken the last of it down, at which
+  // point every route that used it simply stops being offered -- the same way a
+  // filled-in cut takes its ladder with it.
+  //
+  // Its span is whatever of the footprint still has rock standing in it -- see
+  // `rockSpan` -- and its surface is read off the columns the moment it is
+  // asked, so the way *is* the outline of what is left. Mine the crest down and
+  // the walk over it flattens the same frame; mine a flank away and the hill
+  // gets shorter and its foot moves in.
+  const span = rockSpan();
+  if (span) out.rock = { key: 'rock', from: span.from, to: span.to, at: rockTop };
+
   return out;
 }
 
 // Which way a body is on, from where it is. Asked rather than stored, so a body
-// that is dropped into a hole is in the hole and a body that walks off the end of
-// one is out of it, without anybody having to remember to say so.
+// that is dropped into a hole is in the hole, a body thrown on to the crest is
+// on the hill, and a body that walks off the end of either is out of it, without
+// anybody having to remember to say so.
 //
-// Below the ground line and inside a hole's span is in that hole. Everywhere
-// else is the yard -- including standing on the rock and standing on a heap,
-// which are the yard, higher up.
+// Below the yard's floor and inside a working's span is down that working.
+//
+// Above the yard's floor and inside the hill's footprint is on the hill -- and
+// the discriminator there is *height*, not x. This is the whole of the thing the
+// bug was about: a hauler crossing the footprint at ground level and a miner
+// standing on the crest are at the same x and are not in the same place, and the
+// only thing that tells them apart is that one of them is up in the air. So the
+// question asked is "is this body higher than the yard would put it, somewhere
+// the hill is higher than the yard" -- and a body at the height of the floor,
+// however far across the footprint it is, is on the floor, walking in front of
+// the hill.
+//
+// A body part way up the face on its way to the top answers yes, which is right:
+// it is on the hill, climbing it. And a heap is nobody's way -- standing on a
+// bank is standing on the yard, higher up, because a bank is not something you
+// stand on at all.
 export function wayAt(x, y, all = ways()) {
   const feet = y + WORKER;
   if (feet > S.groundY + 1) {
-    for (const key of ['cut', 'hole']) {
+    for (const key of WORKINGS) {
       const w = all[key];
       if (w && x + WORKER > w.from && x < w.to) return w;
     }
   }
+  // and up on the hill if the hill is what is over this spot -- the same
+  // question `wayOver` asks of a place -- and the feet are up there with it.
+  const over = wayOver(x, all);
+  if (over !== all.yard && feet < standTop(x, all.yard.at) - 1) return over;
+  return all.yard;
+}
+
+// The way a place is on, when the place is named by an x and nothing else.
+//
+// Almost everything that sends a body somewhere knows a number and not a
+// surface: a station's stand, the head of a ladder, a patch of muck. Whatever is
+// highest there is what "there" means -- a spot on the hill's footprint is on
+// the hill, and everywhere else is the yard. That is the one line that decides
+// who climbs: the gang's stand is on the crest, so their route goes up; a load
+// of dust waiting on the far side of the yard is on the ground, so the route to
+// it runs along the floor in front of the hill, which is flatter and shorter and
+// therefore cheaper. Neither of those is a rule about miners or about haulers.
+export function wayOver(x, all = ways()) {
+  const r = all.rock;
+  if (r && x + WORKER > r.from && x < r.to
+      && standTop(x, r.at) < standTop(x, all.yard.at) - 1) return r;
   return all.yard;
 }
 
@@ -202,6 +301,17 @@ export function links(all = ways()) {
   if (all.hole) {
     out.push({ x: pitLadder(NEAR).x, a: 'yard', b: 'hole', name: 'near pit ladder' });
     out.push({ x: pitLadder(FAR).x, a: 'yard', b: 'hole', name: 'far pit ladder' });
+  }
+  // The two flanks of the hill. There is no ladder up a hill: you get on to it
+  // by walking on to it, at the toe, on whichever side you arrive at -- and that
+  // is exactly what a link is for. Each one sits just clear of the footprint, so
+  // both ways are at the height of the yard there and the change costs nothing;
+  // the going up is the walk along the rock way afterwards, which follows the
+  // face cell by cell. That is how the gang have always mounted the hill, and it
+  // is now the only way anybody does.
+  if (all.rock) {
+    out.push({ x: all.rock.from - WORKER, a: 'yard', b: 'rock', name: 'near rock flank' });
+    out.push({ x: all.rock.to, a: 'yard', b: 'rock', name: 'far rock flank' });
   }
   return out;
 }
@@ -272,8 +382,25 @@ export const routeFor = (w, toX, toWay = null) => {
 export function stepRoute(w, pace) {
   const legs = w.route;
   if (!legs || !legs.length) return false;
-  const leg = legs[0];
   const dt = frames();
+
+  // A change of way with no height in it takes no time. Walking on to the toe
+  // of the hill is a step across a join, not a climb: both ways are at the
+  // height of the yard there, so the body is already standing where the change
+  // puts it and the frame should carry on into the walk beyond rather than
+  // being spent standing at the join. A frame spent is a frame's worth of
+  // ground not covered, and a frame is a different length at every tick rate --
+  // which is how a free join turned into a walk that was longer at a hundred
+  // and twenty than at thirty.
+  while (legs.length && legs[0].climb
+         && Math.abs(feetOn(legs[0].to, legs[0].climb.x) - w.y) < 0.5) {
+    w.x = legs[0].climb.x;
+    w.y = feetOn(legs[0].to, w.x);
+    w.way = legs[0].to.key;
+    legs.shift();
+  }
+  if (!legs.length) return false;
+  const leg = legs[0];
 
   // Up or down a ladder, and nothing else while it is on one: a body on a rung
   // is not somewhere it can be walked sideways from, which is the rule that used

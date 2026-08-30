@@ -19,14 +19,14 @@ import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
 import { KIT_JOBS } from './kit.js';
-import { standTop, keepTo, stepRoute, wayAt } from './route.js';
+import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop, downAWorking } from './route.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
-import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot, onRock,
+import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot,
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
@@ -104,7 +104,8 @@ function climbTo(w, foot) {
 }
 const MINER_WALK = 0.5;   // pixels a frame along the row
 
-// Where a body's feet go when it is walking: on whatever is under it.
+// Where a body's feet go when it is standing still or walking: on whatever it is
+// standing on.
 //
 // This used to be `walkY` everywhere -- the ground line and the bridge, which do
 // not know the rock is there. So anybody crossing the hill's footprint walked
@@ -113,25 +114,24 @@ const MINER_WALK = 0.5;   // pixels a frame along the row
 // at work. What that looks like is a body running to the middle of the rock and
 // then rising out of it, which is exactly what it was doing.
 //
-// One surface, for everybody.
+// Then it was one surface for everybody, the hill included, and that fixed the
+// burying and broke the yard the other way about: with the hill in the floor,
+// the shortest path from one side of the yard to the other goes over the crest,
+// so every hauler and every janitor ramped up and over the summit on every
+// errand. A hill that everybody walks over is a road.
 //
-// It used to be two, chosen by job: a miner got the rock's face and everybody
-// else got the ground line, on the argument that a yard where every errand goes
-// over the summit is a yard where the hill is a road. That argument was about
-// what looks right, and it was paid for in the currency this file keeps running
-// out of -- a fact about the world kept in a body's job title. Every path that
-// moved a body had to know which of the two it was on, and the ones that forgot
-// walked bodies through solid rock.
+// Both of those are the same mistake -- deciding a body's footing from its x
+// alone -- and the answer is not to go back to asking its job. A body's footing
+// comes from the *way it is on*: the floor of the yard, the floor of a working,
+// or the face of the hill, and `wayAt` says which from where the body actually
+// is. Two bodies at the same x, one at ground level and one up on the crest,
+// are in two different places and get two different answers, and neither of
+// them was asked what it does for a living.
 //
-// So the question is asked of the *place* now and not of the walker. What is
-// under this x, given that a body is three cells wide: the deck of the bridge,
-// the face of the hill, or the ground. A heap is deliberately not in that list
-// -- see `footing` in route.js -- so a body passes in front of a bank rather
-// than climbing it, which is what a bank of loose dust deserves.
-//
-// Falling agrees with walking now, because both ask the same thing. It used to
-// be possible for a body to land somewhere it could not then stand.
-const surfaceUnder = w => standTop(w.x) - WORKER;
+// Which way a body ends up on is decided when it is sent somewhere: a route on
+// to the hill puts it on the hill, and it stays there until it walks off the
+// end or climbs down a flank. See route.js.
+const surfaceUnder = w => feetOn(wayAt(w.x, w.y), w.x);
 const stand = w => climbTo(w, surfaceUnder(w));
 
 
@@ -1280,10 +1280,15 @@ function retask(w, type) {
 // floor so an unupgraded crew is no slower at it than it ever was.
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
 
-// On the open yard rather than down a working: the one question the dodge, the
+// Up in the open rather than down a working: the one question the dodge, the
 // dance and the idle all want, and it is asked of where the body is rather than
 // of a flag anybody has to remember to set.
-const onYard = w => wayAt(w.x, w.y).key === 'yard';
+//
+// The hill counts as the open, because it is: a gang standing on the crest is
+// standing under the sky in the middle of the drop zone, and they are the ones
+// with the most reason to get out from under a rock coming down. Only a body on
+// a rung or on the floor of a hole has something over its head.
+const onYard = w => !downAWorking(wayAt(w.x, w.y).key);
 
 // One frame of a body walking to where it has been sent.
 //
@@ -1305,7 +1310,14 @@ function stepCommute(w, zone) {
   // re-asked if the ground has changed under it -- the quarry is filled in and
   // re-dug while people are walking about on it -- which is what `sendTo`
   // returning false means: there is no longer a way from here to there.
-  if (!keepTo(w, w.walkTo)) { arrive(w); return; }
+  //
+  // And what it is walking *to* is a place, so it is on a way of its own. A
+  // stand on the hill's footprint is on the hill, so the route climbs a flank
+  // and walks the crest to it; a place out on the yard is on the yard, so the
+  // route runs along the floor in front of the hill, which is flat and shorter
+  // and therefore what the search picks. That is the whole of who goes over the
+  // rock and who goes past it, and neither half of it is a job title.
+  if (!keepTo(w, w.walkTo, wayOver(w.walkTo))) { arrive(w); return; }
 
   // A rock coming down stops a walk, but only a walk that is on the open yard: a
   // body on a rung is not standing anywhere a rock can land, and holding it
@@ -1572,12 +1584,18 @@ export function shakeHeld(w, dx) {
   w.lastDir = dir;
 }
 
-// Where a dropped body comes to rest: the rock if it is over the rock, the
-// ground if it is not. Put a miner on the rock and it should land on the rock.
-// Where a dropped body comes to rest. The same surface it walks on, which is
-// the whole of it: a body thrown at the hill lands on the hill and then walks
-// off it, rather than landing on a face the walk does not believe in.
-const landing = w => surfaceUnder(w);
+// Where a dropped body comes to rest: the highest thing under it, hill included.
+//
+// Falling is physics and not routing, so this is the one place that still asks
+// about the world by x alone -- a body in the air is not on any way, and what
+// stops it is whatever it hits. Throw somebody at the hill and they land on the
+// hill; throw them past it and they land on the ground.
+//
+// Landing on the hill is then a body standing on the hill, because `wayAt` asks
+// how high the feet are and gets its answer from where the fall put them. So the
+// next errand routes down a flank and walks off, rather than the body being
+// dropped back to the ground line the moment it is given something to do.
+const landing = w => standTop(w.x, rockTop) - WORKER;
 
 // one frame of that fall, and what happens when it stops
 function fall(w) {
@@ -1929,19 +1947,28 @@ export function updateWorkers(now, dt) {
       w.idleAt = null;
     }
     const d = to - WORKER / 2 - w.x;
-    // Where its feet go while it is doing this: the ground, or the face of the
-    // rock if that is what it is standing on. Climbed to rather than assigned,
-    // so a body going up the hill goes up it rather than appearing at the top --
-    // the same climb the gang working the rock make.
-    // Always eased, whichever side of the rock's edge the body is standing on.
-    // Only the rock branch used to climb and the ground branch set the height
-    // outright, so a body shovelling at the foot of the hill -- where a pixel of
-    // sway puts its middle on and off the footprint from one frame to the next --
-    // flicked between the crest and the yard as the two branches took turns. The
-    // question the edge answers is *where it is going*, not how fast it gets
-    // there.
-    const foot = () => climbTo(w, onRock(w.x + WORKER / 2) && boulderAlive()
-      ? landing(w) : walkY(w.x + WORKER / 2));
+    // Where its feet go while it is doing this: on the way the *mess* is on, all
+    // the way there.
+    //
+    // This used to ask where the body's middle was: over the rock's footprint,
+    // stand on the rock; anywhere else, stand on the ground. Two things wrong
+    // with that, and the second one is the reason this whole file stopped
+    // asking questions of an x. A pixel of sway at the foot of the hill put the
+    // body's middle on and off the footprint from one frame to the next, so it
+    // flicked between the crest and the yard as the two branches took turns.
+    // And a body whose mess was away on the far side of the yard climbed the
+    // hill and came down it again on the way past, for no reason but that its
+    // route lay over the footprint -- the hill as a road, in the one walk in
+    // this file that does not go through route.js.
+    //
+    // The mess is a place, and a place is on a way (see `wayOver` in route.js).
+    // Muck on the face is on the hill, so the walk to it climbs a flank and goes
+    // up -- the same climb the gang working the rock make. Muck out on the yard
+    // is on the yard, so the walk to it stays on the ground line for its whole
+    // length, footprint or no footprint. Either way it is climbed to rather than
+    // assigned, so nobody appears at the top of anything.
+    const on = wayOver(to - WORKER / 2);
+    const foot = () => climbTo(w, feetOn(on, w.x));
     // walk to it, then shovel: it is somewhere you go, not something that
     // happens wherever you are standing
     if (Math.abs(d) > P * 2) {
