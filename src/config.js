@@ -1096,6 +1096,21 @@ export const CAP_STEP = 1;       // extra capacity per upgrade
 // the pickaxe. What changes between them is what a rung costs and what it is
 // bought with, which is the tier -- see "The ladder" in DESIGN.md.
 export const RUNGS = 5;
+
+// And how many of one trade a station will ever own. A shorter ladder than the
+// rest on purpose: kit is the one thing you buy that a *body* has to wear, so
+// its ceiling is the answer to "how many of this station's hands are the good
+// ones" rather than "how far up is this number". Three of five on the rock,
+// three of five in the cut -- enough that a full set is worth finishing and
+// short enough that finishing it is a thing you do rather than a thing you keep
+// paying for.
+//
+// It is also what makes the machines arrive. A machine is gated behind a full
+// set -- see `kitFull` -- and a full set used to mean a hat for every pair of
+// hands the station could hold, which is a bill that grows with the station and
+// a gate that receded as you walked at it. A set is three now, and the ram, the
+// jaw, the tiller and the belt are things you can actually get to.
+export const KIT_MAX = 3;
 export const WORKER = P * 3;     // worker square size
 
 // How far either way loitering may take a body from the post it is minding, and

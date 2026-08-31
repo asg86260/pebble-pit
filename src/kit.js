@@ -21,20 +21,24 @@
 //           time, so the count is what you have bought
 //   stock   or: how many the station simply has, for a hat that comes with the
 //           building rather than off a shelf. See the janitor's cap.
+//   max     and, for a trade, how many of it the station will ever own. The
+//           school's four are capped at `KIT_MAX`; the wizard's point is not,
+//           because it is a licence to fly rather than a doubling, and the tower
+//           brews as many as you have the patience for.
 //   tall    how far it stands above the head, for the count over its stand
 //
 // Every row says where its hats come from, and says it exactly once: `trade` or
 // `stock`, never both and never neither. `stockOf` is the one question the rest
 // of the game asks -- "how many does this station own" -- and it does not care
 // which of the two answered it.
-import { P, LOO_POSTS } from './config.js';
+import { P, LOO_POSTS, KIT_MAX } from './config.js';
 import { S } from './state.js';
 
 export const KIT = {
-  miners:    { mark: 'helmet', trade: 'breakers',   tall: P },
-  quarriers: { mark: 'lamp',   trade: 'blasters',   tall: P * 2 },
-  farmhands: { mark: 'brim',   trade: 'growers',    tall: P * 2 },
-  haulers:   { mark: 'cart',   trade: 'carters',    tall: 0 },
+  miners:    { mark: 'helmet', trade: 'breakers',   tall: P,     max: KIT_MAX },
+  quarriers: { mark: 'lamp',   trade: 'blasters',   tall: P * 2, max: KIT_MAX },
+  farmhands: { mark: 'brim',   trade: 'growers',    tall: P * 2, max: KIT_MAX },
+  haulers:   { mark: 'cart',   trade: 'carters',    tall: 0,     max: KIT_MAX },
   // Not a doubling but a licence: no hat, no flying. See wizard.js.
   wizards:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
   // The one hat nobody buys -- and it used to be the one hat nobody walked for
@@ -77,8 +81,25 @@ export const hasKit = job => !!(KIT[job] && (KIT[job].trade || KIT[job].stock));
 // only place in the game that knows there are two ways, and it is deliberately
 // the smallest thing in the file: `hats` in upgrades.js is this function under
 // the name the rest of the game calls it by.
-export const stockOf = job =>
-  !hasKit(job) ? 0 : KIT[job].stock ? KIT[job].stock() : (S[KIT[job].trade] || 0);
+//
+// A trade with a ceiling is clamped here rather than only at the counter,
+// because the counter is not the only way the number moves: a save written
+// before the ceiling existed, and every test hook that sets a count outright,
+// arrive with whatever they arrive with. Clamped at the one place that reads it,
+// a station can never own more hats than the game says exist -- and every count
+// downstream of this, on the stand, on the roster and in the machine's arithmetic,
+// agrees without being told.
+export const stockOf = job => {
+  if (!hasKit(job)) return 0;
+  const k = KIT[job];
+  if (k.stock) return k.stock();
+  const n = S[k.trade] || 0;
+  return k.max ? Math.min(k.max, n) : n;
+};
+
+// And the ceiling itself, for the board that sells them: how many of this
+// station's hats there are to buy, or `Infinity` for the one that has no end.
+export const kitMaxOf = job => (KIT[job] && KIT[job].max) || Infinity;
 
 // The four tables the rest of the game used to keep by hand, now read off the
 // one above. They are still exported under their old names because they are

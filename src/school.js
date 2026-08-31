@@ -19,7 +19,8 @@
 // people, and they read differently for standing in different places.
 
 import { S } from './state.js';
-import { TRADE_COST, TRADE_RATE } from './config.js';
+import { TRADE_COST, TRADE_RATE, KIT_MAX } from './config.js';
+import { stockOf } from './kit.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 
@@ -48,25 +49,44 @@ const OPEN = { miners: () => true, haulers: () => true,
                quarriers: () => S.quarryOpen, farmhands: () => S.farmOpen };
 
 export const tradeCost = t =>
-  Math.round(TRADE_COST * Math.pow(TRADE_RATE, S[t.count]));
+  Math.round(TRADE_COST * Math.pow(TRADE_RATE, stockOf(t.job)));
 
 // Nobody is taught here any more and nobody is nailed down: what is bought is
 // the kit, and it stays at the station. Whoever is standing there picks it up,
 // and whoever is sent there next picks up whatever the last one put down.
 //
-// There is no ceiling on it. There used to be one -- a hat a bench, a hat a plot,
-// and never more of either than there were bodies in the yard -- from back when
-// a hat was a body that had been upgraded, and buying one more than you had
-// people for was buying nothing. Kit is not a person: a helmet on the stand is a
-// helmet the next hire puts on the moment you take them on, and stocking the
-// rock before you have staffed it is a perfectly sensible thing to do with a
-// pile of shards. What limits it is the price, which doubles-and-a-bit every
-// time, and that is limit enough.
+// Three to a station, and no more -- `KIT_MAX`.
+//
+// There used to be no ceiling at all, on the argument that the price was limit
+// enough: it goes up by three fifths every time, so you stop when you stop
+// wanting to pay. Which is a limit that never actually says no, and a row that
+// never says no is a row you are still buying an hour later out of habit rather
+// than because you decided to. Worse, it was the *only* answer to what a station
+// is worth, so a station's whole story was "keep feeding it shards".
+//
+// A set of three is a thing you finish, and finishing it is what the machine
+// asks for -- see `kitFull`. So the shards go somewhere with an end on it, and
+// what is on the other side of that end is the ram, the jaw, the tiller and the
+// belt. That is the ladder this board was always supposed to be the bottom of.
+//
+// The ceiling before *this* one was a hat a bench and a hat a plot, from back
+// when a hat was a body that had been upgraded and buying one more than you had
+// people for was buying nothing. That is still the wrong shape and is not what
+// this is: kit is not a person, a helmet on the stand is a helmet the next hire
+// puts on the moment you take them on, and stocking the rock before you have
+// staffed it stays a perfectly sensible thing to do with a pile of shards.
+// What has a number on it is how many helmets the rock will ever have, not how
+// many heads are under them today.
 function train(t) {
+  if (taught(t) >= KIT_MAX) return;
   S[t.count]++;
   rebalance();
   syncWorkers();
 }
+
+// How many of this trade the station has, read through the kit table so that the
+// board, the price and the ceiling all count the same hats the yard counts.
+const taught = t => stockOf(t.job);
 
 export const SCHOOL_UPGRADES = TRADES.map(t => ({
   key: t.key,
@@ -78,8 +98,14 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   unit: null,
   // One more of that hat on the stand. What it is worth is in the note; what the
   // row says is what it does to the count.
-  from: () => S[t.count],
-  to: () => S[t.count] + 1,
+  from: () => taught(t),
+  to: () => taught(t) + 1,
+  // A ladder like every other ladder on every other board, and shorter than most
+  // -- three rungs rather than five, which is why it says how long it is. The
+  // pips under the name are the whole of what the ceiling had to be told to the
+  // player: a finished set reads "done" and stays on the board saying so.
+  rung: () => taught(t),
+  rungs: () => KIT_MAX,
   cost: () => tradeCost(t),
   currency: 'shard',
   buy: () => train(t),
@@ -122,5 +148,5 @@ export const SCHOOL_SECTIONS = [
 export const kitCount = title => {
   const sect = SCHOOL_SECTIONS.find(s => s.title === title);
   const t = sect && TRADES.find(x => x.key === sect.keys[0]);
-  return t ? S[t.count] : 0;
+  return t ? taught(t) : 0;
 };

@@ -45,7 +45,7 @@ import { buildShop } from './shop.js';
 // how a rate reads -- going from a swing a second to two is a different feeling
 // from going from nine to ten, and paying the same for both is what makes a
 // long tail of upgrades feel like nothing is happening.
-const swing = (base, floor, rungs) => lvl => {
+export const swing = (base, floor, rungs) => lvl => {
   const k = Math.max(0, Math.min(1, lvl / rungs));
   return Math.round(base + (floor - base) * (1 - Math.pow(1 - k, 1.6)));
 };
@@ -67,7 +67,17 @@ export const rungCost = (first, lvl) => Math.round(first * Math.pow(1.6, lvl));
 // no `rung` is not a ladder at all -- a building, a one-off, a job -- and is
 // never finished.
 export const rungOf = u => (u.rung ? u.rung() : 0);
-export const maxed = u => !!u.rung && rungOf(u) >= RUNGS;
+// How long this row's ladder is. `RUNGS` unless the row says otherwise, which is
+// one row in the game and its argument is over `KIT_MAX`: the kit ladders are
+// three rungs, and a board drawing five pips over a ladder that ends at three is
+// a board promising two purchases that do not exist.
+//
+// Read through one function rather than compared against `RUNGS` at each of the
+// four places that ask -- the pips, the count under them, "done", and the fold
+// -- because a cap only half of them know about is a row that says 3/5 and
+// cannot be bought.
+export const rungsOf = u => (u.rungs ? u.rungs() : RUNGS);
+export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
 
 // Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
 // is this" is one question with one answer wherever it is asked.
@@ -215,7 +225,7 @@ export const idle = () => spareHands();
 // Both live in kit.js now, with the shape of the hat and the rest of what a hat
 // is, and are passed straight through here: the shop asks about a trade, and a
 // trade is a fact about a hat.
-import { TRADE_OF, JOB_OF, stockOf, hasKit } from './kit.js';
+import { TRADE_OF, JOB_OF, stockOf, hasKit, kitMaxOf } from './kit.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -346,25 +356,48 @@ export const handsOf = job =>
   capOfBare(job);
 
 
-// Whether a station's kit is complete: a hat for every pair of hands it holds.
+// How much kit a station will ever own: its trade's own ceiling (`KIT_MAX`, for
+// the four the school sells), or its whole complement if it holds fewer hands
+// than that. The second half is what keeps a small station honest -- the
+// closet's two posts are fully kitted at two, and asking it for a third cap
+// would be asking for a cap with no head to go under.
+export const kitCap = job => Math.min(handsOf(job), kitMaxOf(job));
+
+// Whether a station's kit is complete: every hat it will ever own, bought.
+//
+// It used to be a hat for every pair of hands -- which is a gate that recedes as
+// you walk at it, because the hands are themselves a thing you buy. Deepening
+// the cut moved the jaw further away; breaking another furrow moved the tiller.
+// The ceiling is a number now (see `KIT_MAX`), so a set is a set.
+export const kitFull = job => hasKit(job) && hats(job) >= kitCap(job);
+
+// What the station's gang is worth, in bare pairs of hands.
 //
 // A hat is a flat doubling wherever one is worn -- twice the bite on the rock,
 // twice the pace at a cell, twice the tending on a plot, twice the load at the
-// lip. So a fully-hatted complement is worth twice a bare one, and that is the
-// gang a machine actually has to beat.
-export const kitFull = job => hasKit(job) && hats(job) >= handsOf(job);
-
-// What one pair of hands at this station is worth, counting the kit on its head.
+// lip -- so a hatted body counts twice and a bare one counts once, and the gang
+// is the complement plus however many of it are hatted.
 //
-// A station with a machine on it answers 2 whatever its hat count says, and has
-// to: the machine was gated behind a full set and then *took* them -- see
-// `buyMachine` -- so reading the station afterwards would find nought hats and
-// quietly halve the thing you had just bought.
-export const kitMult = job => {
+// This is a sum rather than a multiplier now, and it has to be: with kit capped
+// below the complement there is no longer one number that describes every body
+// at the station. Five hands and three helmets is eight, not five-times-
+// anything, and rounding it to "fully kitted" or "bare" is what would make a
+// machine either a bargain or a downgrade depending on which way it rounded.
+//
+// A station whose machine took its kit is counted at a full set whatever its hat
+// count says, and has to be: the machine was gated behind a full set and then
+// *took* them -- see `buyMachine` -- so reading the station afterwards would
+// find nought hats and quietly shrink the thing you had just bought.
+export const gangWorth = job => {
+  const n = handsOf(job);
+  if (!isFinite(n)) return n;
   const m = machineFor(job) || (JOB_MACHINE[job] && machine(JOB_MACHINE[job]));
-  if (m && m.bought && m.tookKit) return 2;
-  return kitFull(job) ? 2 : 1;
+  const hatted = (m && m.bought && m.tookKit) ? kitCap(job) : Math.min(hats(job), n);
+  return n + hatted;
 };
+
+// The same thing per pair of hands, for anybody who wants it as a multiplier.
+export const kitMult = job => gangWorth(job) / handsOf(job);
 
 // What the machine is worth, in hands, at this station.
 //
@@ -380,12 +413,14 @@ export const kitMult = job => {
 // at one body, so every hat you had bought went in a drawer the moment you threw
 // the lever, and the whole trade ladder stopped being worth finishing.
 //
-// So the gate is a full set of hats -- see `canBuy` -- and the rate is measured
-// against the gang that set of hats made. The specialists become the thing you
-// finish *before* the machine, and the machine is worth half again what they
-// were, which is what MACHINE_GAIN has meant all along.
+// So the gate is a full set of hats -- `KIT_MAX` of them, see `canBuy` -- and the
+// rate is measured against the gang that set of hats made, which is `gangWorth`
+// and is a sum rather than a multiple now that a set is smaller than a
+// complement. The specialists become the thing you finish *before* the machine,
+// and the machine is worth half again what they were, which is what MACHINE_GAIN
+// has meant all along.
 export const machineRate = job =>
-  handsOf(job) * kitMult(job) * MACHINE_GAIN
+  gangWorth(job) * MACHINE_GAIN
   * (machineFor(job)?.driven ? 2 : 1)
   // and the tower's, if the yard has been enchanted
   * (spelled('drive') ? SPELL_DRIVE : 1);

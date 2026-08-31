@@ -13,7 +13,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
@@ -31,7 +31,7 @@ import { finish } from './lab.js';
 import { syncWorkers, drop as dropHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
-import { rebalance, assign as assignJob, restaff } from './upgrades.js';
+import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES, askLever, hasLever } from './machines.js';
 import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
@@ -118,10 +118,11 @@ export const fullSites = () => {
   S.farmOpen = true;
   // And a full set of specialists, which is the other half of what a machine is
   // gated behind. A check that wants a machine should not have to know that the
-  // hats are called breakers, blasters and growers.
-  S.breakers = Math.max(S.breakers, ROCK_GANG);
-  S.blasters = Math.max(S.blasters, QUARRY_BENCH_MAX);
-  S.growers = Math.max(S.growers, FARM_PLOTS_MAX);
+  // hats are called breakers, blasters and growers -- nor how many make a set,
+  // which is `kitCap` and is a smaller number than the complement now.
+  S.breakers = Math.max(S.breakers, kitCap('miners'));
+  S.blasters = Math.max(S.blasters, kitCap('quarriers'));
+  S.growers = Math.max(S.growers, kitCap('farmhands'));
   S.schoolOpen = true;
   resite();
   rebalance();

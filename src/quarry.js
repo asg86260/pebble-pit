@@ -9,7 +9,7 @@
 // cores is shown until one is banked.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
-import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
@@ -26,13 +26,29 @@ import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
-import { rebalance, kitFull, commutePace } from './upgrades.js';
+import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 
 // how long a trip takes, at this pace
+// A ladder with an end on it, like every other rate in the game -- five rungs
+// from the base to the floor, and the fifth rung *is* the floor. See `swing` in
+// upgrades.js, whose comment is the argument for this shape.
+//
+// It used to be a fraction a level for ever: multiply by 0.82 and clamp. Which
+// put the floor at somewhere around the ninth rung -- a number nobody had
+// written down and the board could not show, so the row simply stopped being
+// worth buying at a point you had to discover by buying past it. Spread over the
+// rungs, the last one lands on the floor and the row says so.
+// The ladder is built at the moment it is read rather than once at the top of
+// the file. Two reasons, and both of them matter: the base is a dial in the dev
+// tuner (`let`, in config.js), so a ladder frozen at module load would go on
+// answering with the number the game started with -- and upgrades.js imports
+// this file, so a `swing(...)` run while this module's body is being evaluated
+// can be reached before upgrades.js has finished defining it.
+const quarryGap = lvl => swing(QUARRY_BASE, QUARRY_FLOOR, RUNGS)(Math.min(lvl, RUNGS));
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
-  Math.max(500, Math.round(Math.max(QUARRY_FLOOR, QUARRY_BASE * Math.pow(0.82, lvl)) / mult('quarry')));
+  Math.max(500, Math.round(quarryGap(lvl) / mult('quarry')));
 
 export const quarryRate = (lvl = S.quarryPaceLevel) => 60000 / quarryMs(lvl);   // trips a minute
 
@@ -818,10 +834,14 @@ export const QUARRY_UPGRADES = [
     pct: true,
     from: () => quarryRate(),
     to: () => quarryRate(S.quarryPaceLevel + 1),
-    cost: () => Math.round(3 * Math.pow(1.7, S.quarryPaceLevel)),
+    rung: () => S.quarryPaceLevel,
+    cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.quarryPaceLevel)),
     currency: 'spore',
     buy: () => S.quarryPaceLevel++,
-    show: () => S.quarryOpen && quarryMs() > QUARRY_FLOOR
+    // It stays on the board once it is finished, saying "done" -- it used to
+    // vanish the moment it reached the floor, which is a cap the game had and
+    // would not admit to.
+    show: () => S.quarryOpen
   }
 ];
 

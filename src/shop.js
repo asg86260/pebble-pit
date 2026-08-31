@@ -6,9 +6,8 @@
 // three lines.
 
 import { S } from './state.js';
-import { RUNGS } from './config.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, maxed } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -342,11 +341,11 @@ export function refresh(el, list, headcount) {
     const fresh = !S.seenRows.includes(u.key);
     if (row.classList.contains('new') !== fresh) row.classList.toggle('new', fresh);
 
-    // The name, and where the row is on its ladder. Five rungs to every ladder in
-    // the game (see RUNGS), so "3/5" means the same thing on every board, and a
-    // finished one says "5/5" and stays there rather than vanishing -- which is
-    // what the rate rows used to do when they hit a floor nobody had been told
-    // about.
+    // The name, and where the row is on its ladder. Five rungs to nearly every
+    // ladder in the game (see RUNGS; the kit is the one that is shorter, and says
+    // so), so "3 of 5" means the same thing wherever it is read, and a finished
+    // one says so and stays there rather than vanishing -- which is what the rate
+    // rows used to do when they hit a floor nobody had been told about.
     say(what, u.name);
     // How far up the ladder, as a row of pips under the words rather than as a
     // number in the middle of them. "3/5" sat between the name and what the next
@@ -355,10 +354,14 @@ export function refresh(el, list, headcount) {
     // no column: they are drawn *under* the row, in the two pixels of space the
     // rows already have between them.
     if (ladder) {
+      // How long the ladder is is the row's own business -- most are `RUNGS`,
+      // the kit ladders are shorter -- so the pips are counted off the row
+      // rather than off the constant. See `rungsOf`.
       const at = u.rung ? rungOf(u) : 0;
-      const want = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, RUNGS - at)) : '';
+      const of = rungsOf(u);
+      const want = u.rung ? '●'.repeat(at) + '○'.repeat(Math.max(0, of - at)) : '';
       if (ladder.textContent !== want) ladder.textContent = want;
-      ladder.title = u.rung ? `${at} of ${RUNGS}` : '';
+      ladder.title = u.rung ? `${at} of ${of}` : '';
     }
     // A finished ladder has nothing left to say in the middle or on the right.
     // "done" rather than a price, because a price on a row you cannot buy is a

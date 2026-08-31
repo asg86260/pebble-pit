@@ -169,18 +169,19 @@ group('a machine is worth its complement times the dial', async () => {
   const s = state();
   const jaw = s.machines.jaw, ram = s.machines.ram, till = s.machines.tiller;
   return [
-    // Complement, times the doubling every one of those hands is wearing, times
-    // the dial. A machine is gated behind a full set of hats, so the gang it
-    // stands in for is always a kitted one and the rate is measured against
-    // that -- five benches of blasters is ten hands, and the jaw is half again.
-    ok(jaw.hands === 5 && jaw.kitFull && Math.abs(jaw.rate - 15) < 0.01,
-       'five hatted benches is fifteen hands', `${jaw.hands} kitted -> ${jaw.rate}`),
-    ok(till.hands === 7 && Math.abs(till.rate - 21) < 0.01,
-       'seven hatted furrows is twenty-one', `${till.hands} -> ${till.rate}`),
-    ok(ram.hands === 5 && Math.abs(ram.rate - 15) < 0.01,
+    // The complement, plus one again for each of it that is wearing a hat,
+    // times the dial. A machine is gated behind a full set -- three, `KIT_MAX` --
+    // so the gang it stands in for is five benches of which three are hatted:
+    // eight hands, and the jaw is half again on top of that.
+    ok(jaw.hands === 5 && jaw.kitFull && Math.abs(jaw.rate - 12) < 0.01,
+       'five benches, three of them hatted, is twelve hands',
+       `${jaw.hands} kitted -> ${jaw.rate}`),
+    ok(till.hands === 7 && Math.abs(till.rate - 15) < 0.01,
+       'seven furrows and three brims is fifteen', `${till.hands} -> ${till.rate}`),
+    ok(ram.hands === 5 && Math.abs(ram.rate - 12) < 0.01,
        "and the rock's five puts the ram level with the jaw",
        `${ram.hands} -> ${ram.rate}`),
-    ok(Math.abs(two.jaw.rate - 20) < 0.01 && Math.abs(two.tiller.rate - 28) < 0.01,
+    ok(Math.abs(two.jaw.rate - 16) < 0.01 && Math.abs(two.tiller.rate - 20) < 0.01,
        'and the whole of it moves with the dial rather than being written down',
        `at 2: jaw ${two.jaw.rate}, tiller ${two.tiller.rate}`),
     // Carrying has no floor plan either, and used to report none. It has a
@@ -983,17 +984,17 @@ group('a machine waits for the specialists, and then beats them', async () => {
   // and now take the hats away again
   window.__school({ blasters: 0, growers: 0, breakers: 0 });
   const bare = offered();
-  // half a set is not a set
-  window.__school({ blasters: 3 });
+  // half a set is not a set -- and a set is three now, so half of it is two
+  window.__school({ blasters: 2 });
   const half = offered();
-  window.__school({ blasters: 5, growers: 7, breakers: 5 });
+  window.__school({ blasters: 3, growers: 3, breakers: 3 });
   const back = offered();
 
   return [
     ok(kitted.includes('jaw'), 'a fully slotted, fully hatted cut is offered a jaw'),
     ok(!bare.includes('jaw'), 'a cut with no blasters in it is not',
        bare.filter(k => k === 'jaw').join(',') || 'not offered'),
-    ok(!half.includes('jaw'), 'and nor is one with three of its five'),
+    ok(!half.includes('jaw'), 'and nor is one with two of its three'),
     ok(back.includes('jaw'), 'the last hat is what puts the row up'),
     ok(!bare.includes('tiller') && !bare.includes('ram'),
        'and the same for the other two')
@@ -1074,7 +1075,7 @@ group('buying a machine takes the specialists with it', async () => {
 
   window.__crew(0, 0, 0);
   return [
-    ok(before.machines.jaw.kit === 5, 'five blasters at the cut to begin with',
+    ok(before.machines.jaw.kit === 3, 'a full set of three blasters at the cut to begin with',
        `${before.machines.jaw.kit}`),
     ok(bought.machines.jaw.bought, 'the jaw is bought'),
     ok(handed && after.machines.jaw.kit === 0,
@@ -1082,8 +1083,8 @@ group('buying a machine takes the specialists with it', async () => {
     // The rate must not follow the hats down. It was bought against a kitted
     // gang and is worth what that gang made; reading the station afterwards
     // would find nought hats and quietly halve the thing you just paid for.
-    ok(Math.abs(after.machines.jaw.rate - 15) < 0.01,
-       'and the machine is still worth the fifteen hands it was bought as',
+    ok(Math.abs(after.machines.jaw.rate - 12) < 0.01,
+       'and the machine is still worth the twelve hands it was bought as',
        `${after.machines.jaw.rate}`),
     ok(after.trained.indexOf('q') < 0,
        'with nobody left wearing one', `${after.trained}`)

@@ -8,7 +8,7 @@
 // still*. What a hand is worth is one plot's worth of tending in the time one
 // plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL } from './config.js';
+import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, RUNGS } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -17,7 +17,7 @@ import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
 import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance, kitFull, commutePace } from './upgrades.js';
+import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
@@ -25,8 +25,14 @@ import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
 
 // how long one plot takes to come on, at this level of tending
+// Five rungs from the base to the floor, the fifth rung being the floor itself
+// -- the same shape as every other rate in the game. See `swing` in upgrades.js,
+// and `quarryMs`, which was the same fraction-a-level-for-ever and is fixed the
+// same way.
+// Built when it is read, for the two reasons `quarryMs` sets out.
+const tendGap = lvl => swing(TEND_BASE, TEND_FLOOR, RUNGS)(Math.min(lvl, RUNGS));
 export const tendMs = (lvl = S.tendLevel) =>
-  Math.max(400, Math.round(Math.max(TEND_FLOOR, TEND_BASE * Math.pow(0.82, lvl)) / mult('tend')));
+  Math.max(400, Math.round(tendGap(lvl) / mult('tend')));
 
 export const tendRate = (lvl = S.tendLevel) => 60000 / tendMs(lvl);   // plots a minute
 
@@ -266,10 +272,12 @@ export const FARM_UPGRADES = [
     pct: true,
     from: () => tendRate(),
     to: () => tendRate(S.tendLevel + 1),
-    cost: () => Math.round(150 * Math.pow(1.7, S.tendLevel)),
+    rung: () => S.tendLevel,
+    cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.tendLevel)),
     currency: 'dust',
     buy: () => S.tendLevel++,
-    show: () => S.farmOpen && tendMs() > TEND_FLOOR
+    // and stays on the board once it is finished, saying so. See `quarrypace`.
+    show: () => S.farmOpen
   }
 ];
 

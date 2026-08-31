@@ -26,16 +26,28 @@ import { rand } from './rng.js';
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
 export const STEP = 1.25;
 
-// each multiplier stands on its own
-export const mult = k =>
-  Math.pow(STEP, S.mult[k] || 0);
+// each multiplier stands on its own, and each has an end -- `RUNGS` rungs, like
+// every other ladder in the game.
+//
+// It used to have none. The price went up nine tenths a level and that was the
+// whole of the limit, which is the arithmetic of a row meant to be bought for
+// ever: you stop when the number gets silly, at a rung nobody wrote down, and
+// the board could not tell you how far along you were because there was no along
+// to be far. Four ladders that end are four things to *finish*, and finishing
+// them is what the rest of the yard is waiting on.
+//
+// Clamped where it is read rather than only where it is bought, so a save from
+// before the ceiling -- which may hold any level at all -- reads as a finished
+// ladder rather than as a multiplier nothing else in the game agrees with.
+export const levelOf = k => Math.min(RUNGS, S.mult[k] || 0);
+export const mult = k => Math.pow(STEP, levelOf(k));
 
 // what a piece of research asks of the crew, in worker-seconds
 // Anything without a field of its own -- the readout is the only one -- is a
 // plain piece of work at the base effort. Without this it asked for `S.mult`
 // under `undefined`, which is NaN worker-seconds: a piece of research that could
 // never be finished and never even properly started.
-export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, S.mult[FIELD[key]] || 0));
+export const workFor = key => Math.round(LAB_WORK * Math.pow(1.35, levelOf(FIELD[key])));
 
 // How fast a body at the bench works, in worker-seconds a second.
 //
@@ -70,6 +82,10 @@ const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 
 // body you have since put on the rock stays on the rock.
 export function begin(key) {
   if (!roomFree()) return;
+  // and never a rung past the top of its ladder. The board greys a finished row,
+  // but the board is not the only way in here -- a stale save and the dev hooks
+  // both call this straight -- and one guard at the door is cheaper than four.
+  if (FIELD[key] && levelOf(FIELD[key]) >= RUNGS) return;
   // The first free bench. Two fields rather than a list, because two is the
   // whole of the upgrade and a list of two is a list to keep in step.
   const piece = { key, done: 0 };
@@ -286,33 +302,39 @@ export const LAB_UPGRADES = [
     key: 'labswing',
     name: 'swing speed',
     pct: true,
+    rung: () => levelOf('swing'),
     from: () => mult('swing'),
     to: () => mult('swing') * STEP,
-    cost: () => Math.round(3 * Math.pow(1.9, S.mult.swing)),
+    cost: () => Math.round(3 * Math.pow(1.9, levelOf('swing'))),
     currency: 'shard',
     buy: () => begin('labswing'),
+    // A finished ladder stays on the board saying so, like every other one.
     show: () => true
   },
   {
     key: 'labhaul',
     name: 'carry speed',
     pct: true,
+    rung: () => levelOf('haul'),
     from: () => mult('haul'),
     to: () => mult('haul') * STEP,
-    cost: () => Math.round(4 * Math.pow(1.9, S.mult.haul)),
+    cost: () => Math.round(4 * Math.pow(1.9, levelOf('haul'))),
     currency: 'shard',
     buy: () => begin('labhaul'),
+    // A finished ladder stays on the board saying so, like every other one.
     show: () => true
   },
   {
     key: 'labcave',
     name: 'quarry speed',
     pct: true,
+    rung: () => levelOf('quarry'),
     from: () => mult('quarry'),
     to: () => mult('quarry') * STEP,
-    cost: () => Math.round(3 * Math.pow(1.9, S.mult.quarry)),
+    cost: () => Math.round(3 * Math.pow(1.9, levelOf('quarry'))),
     currency: 'spore',
     buy: () => begin('labcave'),
+    // A finished ladder stays on the board saying so, like every other one.
     show: () => true
   },
   // Not a multiplier: a pair of eyes. Everything else the lab sells makes a
@@ -337,11 +359,13 @@ export const LAB_UPGRADES = [
     key: 'labtend',
     name: 'plot speed',
     pct: true,
+    rung: () => levelOf('tend'),
     from: () => mult('tend'),
     to: () => mult('tend') * STEP,
-    cost: () => Math.round(4 * Math.pow(1.9, S.mult.tend)),
+    cost: () => Math.round(4 * Math.pow(1.9, levelOf('tend'))),
     currency: 'spore',
     buy: () => begin('labtend'),
+    // A finished ladder stays on the board saying so, like every other one.
     show: () => true
   }
 ];

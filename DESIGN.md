@@ -1177,7 +1177,13 @@ disappearance into "5 of 5", which is a thing you finished rather than a thing
 that went away.
 
 **Every upgrade is a ladder with an end, and the row says where you are on it.**
-`strength 3/5`. Cost rises gently within a ladder -- about half again a rung, so
+`strength 3/5`. Every rate row in the game is one now, and the last two to be
+converted were the cut's `speed` and the plots' `speed`: both were a fraction a
+level for ever with a floor somewhere around the ninth rung, which is a cap the
+game had and would not admit to. Both are `swing(base, floor, RUNGS)` now, so
+the fifth rung *is* the floor and the row says so. So are the lab's four
+multipliers, which were the last genuinely endless rows on any board -- see
+"The kit has a ceiling" below for the one ladder that is shorter than five. Cost rises gently within a ladder -- about half again a rung, so
 six times across the whole of it -- rather than exponentially, because the job
 of the *tier* is to gate progress and the job of the rungs is to be affordable
 enough to be worth reading. Running a tier dry is not a wall. It is the game
@@ -1331,7 +1337,8 @@ your own cursor.
 
 **Every slot first.** A machine is not offered until the station has been given
 everything hands can be given -- all five benches at the cut, all seven plots at
-the farm, both of the rock's kit ladders at 5/5. This is what stops a machine
+the farm, both of the rock's kit ladders at 5/5 -- and a full set of kit, which
+is `KIT_MAX` and is three. This is what stops a machine
 from hollowing out the ladder underneath it: `the next plot` can never be made
 worthless by a tiller you were able to buy instead of it, because the tiller is
 the thing you get *for* buying the last plot.
@@ -1384,23 +1391,58 @@ at one body, so the moment you threw the lever every helmet you had bought went
 into a drawer, and the trade ladder stopped being worth finishing halfway up.
 
 So the gate is **every slot and every hat**, and the rate is measured against the
-gang that set of hats made: complement, times the doubling each of those hands is
-wearing, times `MACHINE_GAIN`. Five hatted benches is fifteen. The specialists
-become the last thing you buy before the machine, and the machine is worth half
-again what they were -- which is what the dial has meant all along.
+gang that set of hats made: the complement, plus one again for each of it that is
+wearing a hat, times `MACHINE_GAIN`. Five benches with three lamps between them
+is eight hands, and the jaw is twelve. The specialists become the last thing you
+buy before the machine, and the machine is worth half again what they were --
+which is what the dial has meant all along.
 
 It also settles what `MACHINE_GAIN` is a multiple *of*, which was the vaguest
-thing in this section: it is a multiple of a fully-kitted station, and there is a
-check that measures a running jaw against five hatted quarriers working the same
-cut in the same yard.
+thing in this section: it is a multiple of a kitted station, and there is a check
+that measures a running jaw against the quarriers working the same cut in the
+same yard.
+
+### The kit has a ceiling
+
+**Three of any one trade, and no more** -- `KIT_MAX`. A shorter ladder than the
+rest on purpose: kit is the one thing you buy that a *body* has to wear, so its
+ceiling answers "how many of this station's hands are the good ones" rather than
+"how far up is this number". The school's board draws three pips instead of five
+and says `done` on the third.
+
+It had none at all before, on the argument that the price was limit enough: it
+rises three fifths a hat, so you stop when you stop wanting to pay. Which is a
+limit that never actually says no, and a row that never says no is a row you are
+still buying an hour later out of habit. It was also the *only* answer to what a
+station is worth, so a station's whole story was "keep feeding it shards".
+
+And it is what makes the machines arrive. A full set used to mean a hat for every
+pair of hands the station could hold -- a gate that receded as you walked at it,
+because the hands are themselves a thing you buy: deepening the cut moved the jaw
+further away and breaking another furrow moved the tiller. A set is three now, so
+a set is a set, and the ram, the jaw, the tiller and the belt are things you can
+actually get to. That is the whole point of the ceiling: the shards go somewhere
+with an end on it, and what is on the other side of that end is a machine.
+
+The ceiling before *this* one was a hat a bench and a hat a plot, from back when
+a hat was a body that had been upgraded. That is still the wrong shape and is not
+what this is: kit is not a person, a helmet on the stand is a helmet the next
+hire puts on the moment you take them on, and stocking the rock before you have
+staffed it stays a sensible thing to do with a pile of shards. What has a number
+on it is how many helmets the rock will ever have, not how many heads are under
+them today.
+
+The wizard's point is not capped, and is the exception that says what the rule
+is about: it is a licence to fly rather than a doubling, and the tower brews as
+many as you have the patience for.
 
 | | the jaw and hoist | the ram | the tiller |
 |---|---|---|---|
 | station | the cut | the rock | the plots |
-| unlocked by | 5/5 benches, 5 blasters | both kit ladders 5/5, 5 breakers | 7/7 plots, 7 growers |
+| unlocked by | 5/5 benches, 3 blasters | both kit ladders 5/5, 3 breakers | 7/7 plots, 3 growers |
 | price | 30 sparks, 2,000 dust, 25 spores | 50 sparks, 40 shards, 30 spores | 20 sparks, 1,200 dust, 18 shards |
 | complement | 5 benches | 5 (`ROCK_GANG`) | 7 plots |
-| worth | 15 hands | 15 hands | 21 hands |
+| worth | 12 hands | 12 hands | 15 hands |
 
 **It is called the ram and not the breaker.** `TRADE_OF.miners` is already
 `'breakers'` -- a breaker is the *hat* the school sells for the rock, counted in
