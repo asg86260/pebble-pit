@@ -300,8 +300,15 @@ group('the wizards summon the next star, and more of them do it quicker', async 
     ok(emptied && bare.meteor === 0, 'the star is worked out', `${bare.meteor} cells`),
     ok(one > 0, 'and the bodies left up there start making the next one',
        `${one.toFixed(3)} in eight seconds, one body`),
-    ok(two > one * 1.5,
-       'two of them make it better than half again as fast as one',
+    // Nearly twice, not "better than half again". Two pairs of hands pour twice
+    // as fast as one, and on a seeded run that is what comes out: 0.191 of a
+    // charge in eight seconds with one wizard up there against 0.381 with two,
+    // a ratio of 1.995 every time. Half again was the band that a run-to-run
+    // sky needed; against a run that repeats, a wizard that had quietly stopped
+    // pulling its weight would sail through it. Eighty-five percent of double
+    // leaves room for the odd frame at either end of the eight seconds.
+    ok(two > one * 1.85,
+       'two of them make it very nearly twice as fast as one',
        `${one.toFixed(3)} a body -> ${two.toFixed(3)} for two`),
     ok(made && after.meteor > 60, 'and there is a star at the end of it',
        `${after.meteor} cells`),

@@ -42,7 +42,12 @@ group('red presses the pile, and the hole holds more of the same dust', async ()
        'red buys the next grain down', `${before.pitGrain}px -> ${after.pitGrain}px`),
     ok(after.sparks === shown.sparks - 40,
        'and it is paid for', `${shown.sparks} -> ${after.sparks} sparks`),
-    ok(after.pitCapacity > before.pitCapacity * 3.5,
+    // Four times, near enough to say four. A grain half as wide packs four of
+    // itself into the same square of ground, so the answer is arithmetic rather
+    // than chance -- and on a seeded run it is 37566 of room becoming 149916,
+    // which is 3.991. Three and a half was a band for a number that has no
+    // wobble in it at all; at 3.9 this catches a share-out that drops a column.
+    ok(after.pitCapacity > before.pitCapacity * 3.9,
        'the same hole holds four times as much',
        `${before.pitCapacity} -> ${after.pitCapacity}`),
     // The one thing a compression may never do. Every grain of the old pile is

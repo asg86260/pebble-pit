@@ -2,13 +2,28 @@
 // reload, a number that matches what is actually overhead, and a shower that
 // leaves it made from nothing again.
 //
-// The rate group comes first because it winds MACHINE_GAIN down and never puts
-// it back, and the shower group below is written against a jaw fouling at that
-// wounded rate -- at the real one the plume outruns the rain and the shower
-// stops over a filthy band. They were neighbours in one long file; keep them
-// neighbours here.
+// Every group in here that runs a jaw says for itself what a jaw is worth, and
+// puts it back afterwards. It used to be that the rate group wound MACHINE_GAIN
+// down and never put it back, and every group after it quietly inherited the
+// wounded rate -- so the file only worked in the order it was written in, and a
+// comment at the top asked whoever came next to keep it that way. The seeded
+// restart each group gets does not undo a `__tune`: a tuned constant is a
+// module-level `let` in config.js and not part of the saved yard, so `__seed`
+// cannot put it back and nothing else was going to. Saying it out loud in each
+// group costs one line and makes the file read in any order.
 
 import { yard, group, ok, state, run, runUntil, haveRock, openSites } from './helpers.mjs';
+import { tuned } from '../src/config.js';
+
+// What a jaw is worth when nobody has wound it down -- read once, at load, before
+// any group has had a chance to touch it.
+const JAW_WORTH = tuned('MACHINE_GAIN');
+
+// A jaw at its real rate out-fouls a fully staffed house about three to one, and
+// outruns a shower besides, so the groups below that want to watch the house or
+// the rain rather than the balance work a wounded one.
+const woundJaw = () => window.__tune('MACHINE_GAIN', 0.08);
+const healJaw = () => window.__tune('MACHINE_GAIN', JAW_WORTH);
 
 // One number, signed, on the board where you do something about it. The rate
 // the yard fouls has to be measured at the source: inferred from the haze it
@@ -22,10 +37,9 @@ group('the sky reads as one rate, and it can go negative', async () => {
   // source has to be the quarry.
   openSites();
   window.__fullSites();
-  // Wound well down. A jaw at its real rate out-fouls a fully staffed house
-  // about three to one, which is a fact about the balance and not what this
-  // group is measuring: it is about the house turning the reading round.
-  window.__tune('MACHINE_GAIN', 0.08);
+  // Wound well down: what this group is about is the house turning the reading
+  // round, not the balance between a jaw and a houseful of bodies.
+  woundJaw();
   window.__crew(4, 4, 5);
   window.__machine('jaw', { bought: true, on: true });
   window.__lab(true);
@@ -51,6 +65,7 @@ group('the sky reads as one rate, and it can go negative', async () => {
   const winning = state().smog;
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0, open: false, scrubbers: 0 });
+  healJaw();
   return [
     ok(losing.fouling > 0 && losing.scrubbing === 0,
        'a yard with nobody in the house is putting up and taking down nothing',
@@ -99,13 +114,21 @@ group('the sky and the mess are still there after a reload', async () => {
   const now = state().smog;
   window.__air({ haze: 0, muck: 0 });
 
+  // All three bands come in against a deterministic run, because a reload is a
+  // round trip and a round trip has no wobble in it: on a fixed seed the haze
+  // comes back at 1600 against 1600, the band at 3333 motes against 3333, and
+  // the mess at 804 cells against 804 -- not close, the same. The old bands were
+  // two of haze, a twentieth of the sky and three cells of mess, which is a fifth
+  // of the whole band's worth of slack in the middle one: a save that dropped one
+  // mote in twenty would have gone straight through it. A grain either way is
+  // left for the rounding on the way in and out, and nothing beyond that.
   return [
-    ok(Math.abs(now.haze - was.haze) <= 2, 'the haze comes back at the level it was left',
+    ok(Math.abs(now.haze - was.haze) <= 1, 'the haze comes back at the level it was left',
        `${Math.round(was.haze)} -> ${Math.round(now.haze)}`),
-    ok(was.sky > 100 && Math.abs(now.sky - was.sky) <= was.sky * 0.05,
+    ok(was.sky > 100 && Math.abs(now.sky - was.sky) <= 2,
        'and as the sky itself, not as a number over an empty band',
        `${was.sky} motes -> ${now.sky}`),
-    ok(now.muck.cols === was.muck.cols && Math.abs(now.muck.all - was.muck.all) <= 3,
+    ok(now.muck.cols === was.muck.cols && Math.abs(now.muck.all - was.muck.all) <= 1,
        'and the mess on the ground is where it was left',
        `${was.muck.all} over ${was.muck.cols} columns -> ${now.muck.all} over ${now.muck.cols}`)
   ];
@@ -127,6 +150,7 @@ group('what the readout says is what is overhead', async () => {
   // yard. No hand work fouls at all any more -- not the rock, not the cut, not
   // the plots. That is the whole of the smoke curve: a yard worked by people is
   // clean, and what you buy when you buy an engine is the sky.
+  woundJaw();
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
@@ -138,6 +162,7 @@ group('what the readout says is what is overhead', async () => {
   const later = state().smog;
   window.__crew(0, 0);
   window.__air({ haze: 0 });
+  healJaw();
 
   return [
     // Eighty rather than two hundred: a yard of bodies doing ordinary work barely
@@ -170,6 +195,10 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   // yard. No hand work fouls at all any more -- not the rock, not the cut, not
   // the plots. That is the whole of the smoke curve: a yard worked by people is
   // clean, and what you buy when you buy an engine is the sky.
+  // At the real rate the plume outruns the rain and the shower stops over a band
+  // that is still filthy, which is a fact about the balance and not about whether
+  // a shower ends clean.
+  woundJaw();
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
@@ -198,6 +227,7 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   const after = state().smog;
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0 });
+  healJaw();
   return [
     ok(wet, 'a sky over the line comes down'),
     ok(dry && dry.haze < 40,
@@ -223,6 +253,7 @@ group('a speck off a swing is the speck in the band', async () => {
   // yard. No hand work fouls at all any more -- not the rock, not the cut, not
   // the plots. That is the whole of the smoke curve: a yard worked by people is
   // clean, and what you buy when you buy an engine is the sky.
+  woundJaw();
   openSites();
   window.__fullSites();
   window.__crew(2, 0, 5);
@@ -244,6 +275,7 @@ group('a speck off a swing is the speck in the band', async () => {
   const stillThere = mote && yard.smogSky().includes(mote);
   window.__crew(0, 0);
   window.__air({ haze: 0 });
+  healJaw();
   return [
     ok(rose && !!mote, 'a cell taken out of the cut puts a speck in the air'),
     ok(stillThere && mote && !mote.up,

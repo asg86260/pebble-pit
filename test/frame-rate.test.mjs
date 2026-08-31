@@ -68,6 +68,12 @@ group('a walk is a distance over a time, whatever the frame rate', async () => {
   // coarser tick lands those clamps in slightly different places. The mechanism
   // carries a body the same distance per second; the clamps put it down a pixel
   // or two either side of where a finer tick would have.
+  //
+  // Left at eight percent when the bands round it came in, because this one is
+  // not buying room for chance -- the run is seeded and it comes out at 210 /
+  // 228 / 211 pixels every time, a spread of eighteen, which is 7.9 percent and
+  // is all clamp. Tightening it would not be a stronger claim about the frame
+  // rate, it would be a claim about where the clamps happen to land.
   return [
     ok(tuned > 150, 'the body actually walks somewhere', `${tuned}px`),
     ok(spread <= tuned * 0.08,
@@ -81,23 +87,24 @@ group('the yard walks the same distance whatever the frame rate', async () => {
   const tuned = walkAt(60);
   const fast = walkAt(120);
   window.__reset();
-  // Generous, and it has to be: bodies pick jobs, claim patches and elbow each
-  // other, so two runs are never identical to the pixel. What is being checked
-  // is that thirty is not half of sixty, which is what it was.
+  // A coarser step does not move a body further per second -- the group above
+  // measures that on one body and gets the same walk to within the clamps --
+  // but it does make each body's decisions land in slightly different places,
+  // and nine bodies compounding that over ten seconds pull apart. So the band is
+  // wider than the one-body check above and always will be: what it is protecting against is a
+  // yard that runs at half speed on a slow machine, not a yard that picks a
+  // different job first.
   //
-  // Widened from a quarter to a half, and the reason is worth writing down. A
-  // coarser step does not move a body further per second -- the group above
-  // measures that at a fifth of a percent -- but it does make each body's
-  // decisions land in slightly different places, and nine bodies compounding
-  // that over ten seconds can differ by a third. Tightening this would only
-  // catch chaos; the guarantee it exists to protect now has a check of its own
-  // that holds to two percent.
-  // Stated as what it is actually protecting against, rather than as a band that
-  // keeps clipping. The fault this group exists to catch is a yard that runs at
-  // half speed on a slow machine -- so the claim is "not half, and not double",
-  // and the wide middle is the job-picking chaos described above. A symmetric
-  // quarter-band read as precision it never had.
-  const near = (a, b) => a > b * 0.6 && a < b * 1.8;
+  // Set against a deterministic run rather than against the worst yard the
+  // chance could build. The seed is fixed and the sim takes its chance from one
+  // generator, so these three numbers are the same three numbers every time:
+  // thirty comes in at 1.27 of sixty and a hundred and twenty at 0.88 of it,
+  // and the whole of that spread is decisions landing differently, not legs
+  // moving at different speeds. The band was six-tenths to one-and-four-fifths,
+  // which was buying room for a chaos that no longer exists; it is now the
+  // observed spread with about a quarter again round it. Tighter than this
+  // would be pinning the job-picking, which is not what this group is about.
+  const near = (a, b) => a > b * 0.85 && a < b * 1.4;
   return [
     ok(tuned > 200, 'the crew get somewhere at sixty', `${tuned}px`),
     ok(near(slow, tuned), 'and the same somewhere at thirty',
@@ -134,13 +141,23 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
   window.__air({ haze: 0, muck: 0 });
 
   const near = (a, b, slack) => Math.abs(a - b) <= slack;
+  // Both slacks are set against a deterministic run. The fall comes in at 0.73s
+  // at thirty and 0.70s at sixty and at a hundred and twenty -- one tick of the
+  // coarse clock apart, which is the whole of the difference and is exactly what
+  // a fall measured in whole frames has to be. Two of those ticks is the slack;
+  // it was an eighth of a second, which was four of them.
+  //
+  // The shower leaves 2571 cells at thirty against 2589 at sixty, eighteen cells
+  // apart out of two and a half thousand. Three percent leaves four times that
+  // in hand and still catches a shower that pours at half the rate on a slow
+  // machine, which is the fault. Thirty percent could not have caught anything.
   return [
     ok(tuned > 0.15, 'a rock takes a moment to come down', `${tuned}s`),
-    ok(near(slow, tuned, 0.12) && near(fast, tuned, 0.12),
+    ok(near(slow, tuned, 0.07) && near(fast, tuned, 0.07),
        'and the same moment at thirty and at a hundred and twenty',
        `${slow}s / ${tuned}s / ${fast}s`),
     ok(rainTuned > 0, 'a shower leaves muck on the ground', `${rainTuned} cells`),
-    ok(near(rainSlow, rainTuned, Math.max(40, rainTuned * 0.3)),
+    ok(near(rainSlow, rainTuned, Math.max(40, rainTuned * 0.03)),
        'and the same shower at thirty', `${rainSlow} against ${rainTuned}`)
   ];
 });
