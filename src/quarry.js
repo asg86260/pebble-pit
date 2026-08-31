@@ -170,7 +170,8 @@ export const quarryBand = () => {
 // somebody already working the stretch this one is about to walk into
 function elbowRoom(w, x) {
   return S.workers.some(o => o !== w && o.type === 'quarrier' && o.goal === 'work' &&
-                             (o.x - w.x) * w.dir > 0 && Math.abs(o.x - x) < WORKER * 1.3);
+                             (o.x - w.x) * (w.face || 1) > 0 &&
+                             Math.abs(o.x - x) < WORKER * 1.3);
 }
 
 function seatX(w) {
@@ -357,7 +358,6 @@ export function stepQuarrier(w, now) {
   const to = quarry.x + w.cell * P + P / 2 - WORKER / 2;
   const d = to - w.x;
   if (Math.abs(d) > 1) {
-    w.face = Math.sign(d) || w.face || 1;
     // A blaster is a little quicker on its feet as well as quicker with the pick.
     // Halving only the swing stopped doubling anything the moment a body had to
     // walk to every cell -- but a trade is a man who knows the work, not a man

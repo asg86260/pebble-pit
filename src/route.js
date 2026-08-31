@@ -496,7 +496,9 @@ export function stepRoute(w, pace) {
 
   const d = leg.to - w.x;
   if (Math.abs(d) > 0.5) {
-    w.face = w.dir = Math.sign(d) || w.face || 1;
+    // Nothing about facing here. Which way a body is pointing is measured off
+    // the ground it has covered, once, at the end of the frame -- see
+    // `faceTravel` in crew.js -- so a leg that moves a body says so by moving it.
     w.x += Math.sign(d) * Math.min(pace * dt, Math.abs(d));
   } else w.x = leg.to;
   // and the feet follow the surface it is walking over, which is what puts a

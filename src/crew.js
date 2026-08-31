@@ -100,11 +100,17 @@ export function nearestInBand(from) {
   return from;
 }
 
-// somebody already working the stretch this one is about to walk into
+// Somebody already working the stretch this one is about to walk into.
+//
+// It asks `mineDir` -- the way this one is working along the row -- rather than
+// which way it is facing. They are the same thing for a miner on the crest and
+// they are not the same field: a heading is remembered between frames and turned
+// round at the ends of the layer, and a facing is measured off the ground the
+// body has just covered. See `faceTravel`.
 export function elbowed(w, x) {
   for (const o of S.workers) {
     if (o === w || o.type !== 'miner') continue;
-    if ((o.x - w.x) * w.dir <= 0) continue;             // behind it: not in the way
+    if ((o.x - w.x) * w.mineDir <= 0) continue;         // behind it: not in the way
     if (Math.abs(o.x - x) < WORKER * 1.2) return true;
   }
   return false;
@@ -164,7 +170,7 @@ function newMiner() {
   return {
     type: 'miner', next: 0, lunge: 0,
     x: rockLeft() + rand() * S.gw * P, y: S.cy,
-    dir: rand() < 0.5 ? -1 : 1,
+    mineDir: rand() < 0.5 ? -1 : 1,  // which way along the layer it is working
     ph: rand() * Math.PI * 2,        // where in its wobble it starts
     sp: 0.5 + rand() * 0.9,          // how fast it sways
     wob: 0.05 + rand() * 0.10,       // how far it drifts round its seat
@@ -532,8 +538,8 @@ function relieve(w, now) {
 //
 // That is the list. A body is a filled square, symmetrical, drawn from `x` and
 // `y` alone -- `drawBody` takes no facing, and there is nothing on a body that
-// is not the same on both sides of it. So `w.dir` and `w.face` draw *nothing*:
-// the old spin turned the body over twice a second and the screen did not change
+// is not the same on both sides of it. So facing draws *nothing* here: the old
+// spin turned the body over twice a second and the screen did not change
 // a pixel, and the old step travelled six hundredths of a cell a frame,
 // undivided by frame time, so it barely went anywhere and went less of it the
 // faster the display ran. Two of the three moves were invisible. What was left
@@ -574,7 +580,6 @@ const MOVES = {
       const next = w.x + w.jigDir * JIG_PACE * dt;
       if (zone && next + WORKER > zone.from && next < zone.to) w.jigDir = -w.jigDir;
       else w.x = next;
-      w.dir = w.face = w.jigDir;
       w.y = w.foot - Math.round(swing) * P;
     }
   },
@@ -983,7 +988,6 @@ function stepTender(w, now) {
     const foot = quarryFace();
     const d = foot - w.x;
     if (Math.abs(d) > 1) {
-      w.face = Math.sign(d) || w.face || 1;
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
     } else {
       w.x = foot;
@@ -1006,14 +1010,12 @@ function stepTender(w, now) {
     const d = seat.x - w.x;
     if (Math.abs(d) > WORKER * 2) {                // still catching it up
       w.y = walkY(w.x + WORKER / 2);
-      w.face = Math.sign(d) || w.face || 1;
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
       w.resting = false;
       return true;
     }
     w.x = seat.x;                                  // aboard
     w.y = seat.y;
-    w.face = 1;
     w.resting = false;
     return true;
   }
@@ -1024,13 +1026,11 @@ function stepTender(w, now) {
   const to = (spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P);
   const d = to - w.x;
   if (Math.abs(d) > 1) {
-    w.face = Math.sign(d) || w.face || 1;
     w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
     w.resting = false;
     return true;
   }
   w.x = to;
-  w.face = 1;
   // Not resting: it is at work, whatever it looks like. `break.js` hands a
   // cigarette to a body that had stopped anyway, and a tender has not stopped --
   // the runner also sets this, and both are right for the same reason.
@@ -1776,6 +1776,90 @@ const backedUp = key =>
 // coming out to fetch should pick up.
 export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 
+// --- one body's frame ----------------------------------------------------------
+// Everything that happens to a body between one frame and the next, in the order
+// it happens.
+//
+// This was one `for` loop of six hundred lines with a dozen `continue`s in it,
+// and the *order* of those was load-bearing and written down nowhere. Two of
+// them have already cost a bug apiece, and both bugs read the same way -- the
+// game quietly not doing a thing you had paid for:
+//
+//   **The tender used to sit below the stations.** That is harmless for the
+//   quarrier and the farmhand, whose branches fall through to it, and it was
+//   fatal for the miner, whose branch `continue`s on every path. The ram was
+//   bought, it clamped the gang to one man, and then no miner ever walked to it
+//   and it never took a single bite.
+//
+//   **The pit used to sit below the dodge.** The dodge puts a body back on the
+//   ground line; the climb pushes it two pixels down a rung. The pair of them
+//   took turns and held a hauler at the top of the ladder for ever.
+//
+// Neither is a bug in a branch. Both are bugs in where a branch was pasted, and
+// nothing in the file could have told you so. So the order is a list now.
+//
+// A **stage** is one thing that can happen to any body, whatever it does for a
+// living. It is handed the body and the frame, and it returns true when it has
+// used the frame up -- nothing below it runs. A **job** is a row: what it does
+// when nothing above has claimed it, plus the handful of answers a stage needs
+// from it. Adding a job is a row. Adding a shared concern is a stage, and you
+// have to say out loud where in the list it goes.
+//
+// The list, and why each one sits where it does:
+//
+//   1. **lifted** -- in the air on the cursor. Not doing anything, and nothing
+//      being done to it. First because a body you are holding is not in the yard.
+//   2. **falling** -- let go of, and on its way down. Before everything, for the
+//      same reason: gravity is not negotiating with the day's work.
+//   3. **dizzy** -- shaken about, seeing stars. It rocks where it landed and does
+//      nothing at all until they clear; it used to be handed its job back the
+//      instant its feet touched, so the stars were decoration over somebody
+//      already working.
+//   4. **hat** -- its hat came off in the shaking, and it is not going back to
+//      work bare-headed. Directly under `dizzy` because it is the tail of it.
+//   5. **floating** -- drifting down out of the sky. Falls *through* on the frame
+//      its feet land, so a wizard set down carries on with its day.
+//   6. **commute** -- on its way to a job it has been put on, and doing none of it
+//      yet. Above everything below because a body walking somewhere is not yet
+//      anywhere: the work, the mess and the loo are all things you do where you
+//      have arrived.
+//   7. **relieve** -- now and then a body has to stop, whatever it was doing.
+//      Below the commute (you do not stop halfway across the yard) and above the
+//      work (it is the one thing that interrupts work).
+//   8. **tender** -- somebody minding a machine. **Above the stations, and this
+//      is the first ordering bug quoted above.** A miner's branch ends in
+//      `continue` on every path, so a tender check below it was never reached.
+//   9. **shutIn** -- a body behind a closed door stays behind it. Everything
+//      below this line is a reason to walk somewhere -- a mess, a hat, a rock
+//      coming down -- and none of them should reach through a shut door. It is a
+//      guard rather than a fix to whichever branch was reaching in, because the
+//      thing that is true is about the lab and not about any one of them.
+//  10. **held** -- the rock is off and the gang have the ground to themselves.
+//      Above the mess so that a miner dances rather than fetching a shovel in
+//      the five seconds the yard is celebrating, and below the commute so that a
+//      body already on its way somewhere keeps going.
+//  11. **mess** -- muck on the ground, and somebody whose job it is. Last of the
+//      stages: clearing up beats the work, because the work is not going
+//      anywhere and the mess is in everybody's way. Which mess is whose is the
+//      job's own row -- see `mess` in JOBS.
+//
+// ...and then `work`, which is the job itself.
+//
+// The one exception is the hauler's mess, and it is marked `late` on the row
+// rather than hidden inside the stage: a hauler's mess can be lying in the
+// bottom of the hole, and the way down there is a route rather than a walk, so
+// the trip has to be decided together with the rest of its errands. See
+// `haulerWork`.
+
+// The yard is celebrating: a rock has just come off, or the next one is on its
+// way down.
+const dancing = c => c.now < S.danceUntil || S.rockFall > 0;
+
+// Up on the surface, rather than down on the floor of a working. A quarrier at
+// the bottom of the cut walks to the ladder and climbs it first -- see
+// `stepQuarrier` -- and arrives up here on the ground like anybody else.
+const upTop = w => w.y + WORKER <= S.groundY + 1;
+
 // Whether a column is one of the finds lying about, so a body that has gone for
 // one can be told apart from a body shifting grit.
 const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
@@ -1792,6 +1876,841 @@ export function topGrain(c) {
   return -1;
 }
 
+// --- going and shovelling -------------------------------------------------------
+// One thing a body can be told to do, because several different kinds of body
+// have to be able to do it.
+//
+// This used to live inline in the shared part of the loop, below the miners' own
+// branch -- and that branch ends in `continue`, so a miner never reached it. That
+// was invisible while the rock was worth swinging at. It stops being invisible
+// the moment the rock's pile fills up, which is what happens when the hole is
+// full and the haulers cannot clear it: the miners stand down, "free to take
+// five", and take five under a yard of muck with nothing else in the world to
+// do. Idle bodies and a mess is the one combination this whole idea was written
+// to rule out.
+//
+// Returns true if the body is on muck duty and has had its turn this frame.
+function takeMess(w, c) {
+  const { now, taken, muckTaken } = c;
+  // Two kinds of mess, and they are not the same job.
+  //
+  // What the sky drops is weather. It lands on everybody's yard and everybody
+  // clears it, the way they always have. What a body leaves behind is a body's
+  // own, and that is a post: it lies there until you put somebody on it, and
+  // there is nobody to put on it until the shed is up. Which is what the shed
+  // buys -- not a tidier yard, but the job. See `capOf` and `sweepMuckAt`.
+  if (w.carry || w.hasCore || muckFor(w) <= 0) return false;
+  // One body, one column, held until that column is clear -- the same
+  // booking a hauler makes on a column of dust.
+  //
+  // The set below is rebuilt every pass, so on its own it only stopped two
+  // bodies choosing the same column *in the same frame*: every one of them
+  // then re-chose the nearest the very next frame, and the whole crew walked
+  // to the same spot anyway. A claim has to be kept to be a claim.
+  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+  if (w.muckAt == null) {
+    const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
+    w.muckAt = pick == null ? null : Math.floor(pick / P);
+  } else {
+    muckTaken.add(w.muckAt);
+  }
+  // The patch, and the ground to work it from. They are the same place out on
+  // the yard and they are not on the rock, the quarry or the plots: a body cannot
+  // stand on a site, so it walks to the edge of it and reaches across. The
+  // claim is still the muck's own column, so it is held until that column is
+  // clear rather than until the ground beside it is.
+  const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
+  const to = patch == null ? null : workSpot(patch);
+  if (to == null) return false;
+  if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+  unbook(w);
+  // Out of the house first. A mess is the one thing that calls a body back
+  // off its own doorstep, and this runs before the going-home branch --
+  // so a body indoors used to pick up a shovel without ever coming out,
+  // and worked the yard invisible and still counted as being at home.
+  w.inside = false;
+  w.goal = 'muck';
+  // Off the rock, and down -- but climbed down, not dropped down.
+  //
+  // This used to put the body's feet on the ground line the moment the job
+  // came up, on the reasoning that a miner going shovelling is a miner off the
+  // rock. It is, eventually; it is not off it in the frame it decides to go.
+  // A body standing on the crest with muck to clear fell ninety pixels in one
+  // frame -- the height of the hill, from the top of it to the yard, between
+  // one frame and the next -- and then walked to the mess. Which is the one
+  // thing this file exists to not do.
+  //
+  // Nothing needs setting. `foot()` below already asks where the body is: on
+  // the rock's footprint it climbs to the rock's surface, off it, it walks the
+  // ground -- and `climbTo` eases from wherever the feet actually are, in
+  // either direction. A miner leaving the crest walks down it the way it
+  // walked up.
+  if (w.type === 'miner') {
+    if (w.jigAt != null) { stopJig(w); w.say = null; }
+    w.resting = false;
+    w.idleAt = null;
+  }
+  const d = to - WORKER / 2 - w.x;
+  // Where its feet go while it is doing this: on the way the *mess* is on, all
+  // the way there.
+  //
+  // This used to ask where the body's middle was: over the rock's footprint,
+  // stand on the rock; anywhere else, stand on the ground. Two things wrong
+  // with that, and the second one is the reason this whole file stopped
+  // asking questions of an x. A pixel of sway at the foot of the hill put the
+  // body's middle on and off the footprint from one frame to the next, so it
+  // flicked between the crest and the yard as the two branches took turns.
+  // And a body whose mess was away on the far side of the yard climbed the
+  // hill and came down it again on the way past, for no reason but that its
+  // route lay over the footprint -- the hill as a road, in the one walk in
+  // this file that does not go through route.js.
+  //
+  // The mess is a place, and a place is on a way (see `wayOver` in route.js).
+  // Muck on the face is on the hill, so the walk to it climbs a flank and goes
+  // up -- the same climb the gang working the rock make. Muck out on the yard
+  // is on the yard, so the walk to it stays on the ground line for its whole
+  // length, footprint or no footprint. Either way it is climbed to rather than
+  // assigned, so nobody appears at the top of anything.
+  const on = wayOver(to - WORKER / 2);
+  const foot = () => climbTo(w, feetOn(on, w.x));
+  // walk to it, then shovel: it is somewhere you go, not something that
+  // happens wherever you are standing
+  if (Math.abs(d) > P * 2) {
+    w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+    w.y = foot();
+  } else {
+    // Arrived: it stands still and shovels. It used to keep walking the last
+    // two cells in towards the exact column it had claimed while the elbow
+    // pushed it back out again -- a body sliding on the spot for as long as
+    // there was muck in front of it.
+    //
+    // And it shovels the way a miner mines: it plants its feet, swings, and a
+    // cell comes off. The muck was being poured away at a *rate* with the
+    // lunge pinned at full every frame, which reads as a shape vibrating over
+    // a heap that melts -- a progress bar wearing a hat. Same throughput, one
+    // cell to a swing, so there is something to watch and something to count.
+    //
+    // Its feet land on a whole cell and stay on it between swings. Pinning it
+    // outright was tried and is wrong: the elbow that keeps a gang from
+    // standing in each other needs to be able to move a body, and a gang that
+    // cannot be spaced out bunches onto one spot and clears a yard slower than
+    // it did before. Snapping is enough -- what read as sliding was a body
+    // creeping a fraction of a pixel a frame with its lunge pinned at full.
+    w.x = Math.round(w.x / P) * P;
+    w.y = foot();
+    w.lunge *= 0.84;
+    if (now >= (w.sweepAt || 0)) {
+      sweepMuckAt(w.x + WORKER / 2, 1, w);
+      w.lunge = 1;
+      w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
+    }
+    // and not shoulder to shoulder with the next one. A yard under muck
+    // has something to shovel wherever you stand, so a gang that arrived
+    // together would each find work on the spot they arrived on and clear
+    // the whole mess as one lump you cannot count.
+    elbowMuck(w);
+  }
+  return true;
+}
+
+// --- the work -------------------------------------------------------------------
+// One frame of a job, once every stage above has passed the body on.
+
+function minerWork(w, c) {
+  const { now } = c;
+
+  // Back to it. The dance leaves its ground and its move behind, so the next
+  // rock is celebrated somewhere else -- and the say goes with it, or a body
+  // walks back up the hill still shouting about the last one.
+  if (w.jigAt != null) { stopJig(w); w.say = null; }
+
+  // The crew climb the hill and work it from the top down. Each one keeps a
+  // stretch of the crest to itself, stands on whatever rock is left there and
+  // sinks with it as the rock goes; when its stretch is bare it ambles along
+  // to the nearest that is not.
+  // The rock's pile is full. The crew stand where they are until it has
+  // been carried away: dust with nowhere to go used to roll into the pit,
+  // which banks it for nothing and leaves the haulers with no job.
+  if (S.pileFull.rock) {
+    w.resting = true;                      // stopped, and free to take five
+    // Standing down is not being switched off. It shifts its weight where
+    // it stands: a slow pace of about a cell either side of the spot it
+    // stopped on, and now and then it straightens up. Every miner has its
+    // own phase already, so a stopped gang reads as a gang standing about
+    // rather than as one animation played five times -- and it is nothing
+    // like the dance, which is three hops a second and goes nowhere.
+    if (w.idleAt == null) w.idleAt = w.x;
+    const idle = now / 1000 * IDLE_BEAT + w.ph;
+    w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
+    const surf = rockTopY(colAtX(w.x + WORKER / 2));
+    w.y = climbTo(w, standOn(surf)) - (Math.sin(idle) > 0.9 ? P : 0);
+    w.lunge *= 0.82;
+    w.next = now + minerMs();
+    return;
+  }
+  w.resting = false;
+  w.idleAt = null;
+
+  const t = now / 1000;
+
+  // Walk the layer, turning at its ends and before walking into a mate. A
+  // miner that finds itself off the layer -- because the rest of the gang
+  // took the row down around it, or because it was hired onto a flank --
+  // climbs back to it rather than standing there boring a shaft.
+  //
+  // `mineDir` is the way it is working *along the row*, which is a thing it
+  // remembers between frames and turns round at the ends -- not the way it
+  // happens to be facing, which is measured off its own feet. See
+  // `faceTravel`.
+  const here = colAtX(w.x + WORKER / 2);
+  if (!inBand(here)) {
+    const back = nearestInBand(here);
+    if (back !== here) w.mineDir = Math.sign(back - here);
+    w.x += w.mineDir * MINER_WALK * 2.5 * frames();       // brisk, it has ground to make up
+  } else {
+    const step = w.x + w.mineDir * MINER_WALK * frames();
+    if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
+    else w.mineDir = -w.mineDir;
+  }
+
+  const col = colAtX(w.x + WORKER / 2);
+  const surf = rockTopY(col);
+  w.lunge *= 0.82;
+  // Where it is standing, climbed to rather than assigned. The bob and the
+  // swing go on top of the foot, not into it: they are what the body is
+  // doing, and easing them would damp them into nothing.
+  w.y = climbTo(w, standOn(surf)) + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
+
+  if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
+    // twice the bite for a breaker: the shards bought a bigger swing on a
+    // body that is not going anywhere
+    const bite = minerBite() * (w.trained ? 2 : 1);
+    knockOff(w.x + WORKER / 2, surf + P / 2, bite);
+    w.mined = (w.mined || 0) + bite;
+    w.lunge = 1;
+    w.next = now + minerMs() * (0.85 + rand() * 0.3);    // never quite in time
+  }
+}
+
+// The mess, and whoever is on it. A janitor does one thing: it walks to the
+// nearest muck and shovels it. With nothing left to shovel it goes back to
+// its shed and waits there, which is where you will look for it.
+function janitorWork(w, c) {
+  const { now } = c;
+  const post = stationX('janitor');
+  const d = post - w.x;
+  if (Math.abs(d) > WORKER) {
+    w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+    w.y = stand(w);
+    return;
+  }
+  w.resting = true;
+  // Waiting for a mess is most of a janitor's day, so it is worth watching.
+  //
+  // It used to stand exactly on its post, rigid, until something got
+  // dropped -- and a body that never moves reads as a body the game has
+  // forgotten about. It gets what a stood-down miner gets, and a little
+  // more of it: the same slow shift of weight about the spot it stopped
+  // on, on its own phase, and now and then it wanders a few cells along
+  // and props itself up somewhere else. Somebody minding a shed, rather
+  // than somebody switched off beside one.
+  if (w.idleAt == null || now >= (w.propAt || 0)) {
+    // A new spot to lean on, a few cells either way and never off the
+    // shed's own ground.
+    w.idleAt = post + (rand() - 0.5) * P * 10;
+    w.propAt = now + JANITOR_PROP * (0.6 + rand() * 0.9);
+  }
+  const sway = now / 1000 * IDLE_BEAT + w.ph;
+  const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
+  const step = to - w.x;
+  // At an amble, and at its own pace rather than at a fraction of a
+  // commute. Chased at half a walking pace the spot two or three cells
+  // away was reached in a blink, so the whole idle was a long freeze and
+  // then a scoot -- and it got worse every time the crew's legs did.
+  // `IDLE_PACE` is the speed of loitering and belongs to loitering.
+  w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
+           * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
+  w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
+}
+
+// Carrying, which is the job with no station: the dust is wherever it fell, so
+// somebody put on it is already at work.
+//
+// It is much the longest of them, because a hauler is the body the yard's own
+// furniture happens to: the hole it tips into, the lip it may not walk over, the
+// books it holds room in, and the loose core nobody else will pick up.
+function haulerWork(w, c) {
+  const { now, zone, taken, muckTaken } = c;
+
+  // Down the hole, and nothing else applies.
+  //
+  // This is checked before everything, including the dodge -- a body on a
+  // ladder inside the pit is not standing where a rock can land on it, and it
+  // cannot go anywhere but up or down anyway. It was in the middle of the
+  // hauler's decisions to begin with, under the dodge, and the dodge put it
+  // back on the ground line every other frame: the climb pushed it two pixels
+  // down the ladder, the dodge lifted it two back, and the pair of them held it
+  // at the top of the ladder for ever, taking turns.
+  // Which patch this one is going for -- the same claim `takeMess` makes, made
+  // here so that the trip down the hole is made against it too. It used to ask
+  // for the nearest muck outright, claims and all ignored, so every hauler in
+  // the yard worked out the same patch in the bottom of the hole, went down
+  // for it together and stood in one another on the one column until it was
+  // gone. One patch, one body, in the hole as much as out of it.
+  if (!w.carry && !w.hasCore) {
+    if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+    if (w.muckAt == null && muckLeft() > 0) {
+      const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
+      w.muckAt = pick == null ? null : Math.floor(pick / P);
+    } else if (w.muckAt != null) {
+      muckTaken.add(w.muckAt);
+    }
+  }
+  const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
+    ? w.muckAt * P + P / 2 : null;
+
+  // In the hole, over the hole, or on the ground beyond it: all one errand,
+  // and all one question.
+  //
+  // It used to be four -- `inPit`, `overPitMouth`, a `wrongSide` worked out
+  // against a remembered `farSide`, and a `marooned` for the body left
+  // stranded out past the far wall when the crossing stopped running. Every
+  // one of those is now the same sentence: which way is the body on, and
+  // which way is its work on. A body on the hole's own surface or on the
+  // strip past it is somewhere only a route reaches; so is a patch of muck
+  // lying on either.
+  const all = ways();
+  const here = wayAt(w.x, w.y, all);
+  const on = patch == null ? null : wayOver(patch - WORKER / 2, all);
+  const away = here.key === 'hole' || here.key === 'past';
+  const through = on != null && (on.key === 'hole' || on.key === 'past');
+
+  if (away || through) {
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+    unbook(w);
+    w.goal = 'muck';
+    downTheHole(w, through ? patch : null);
+    return;
+  }
+
+  // a rock coming down beats anything it was carrying or fetching. It keeps its
+  // claim and picks the job up again on the far side.
+  if (duck(w, zone)) { w.y = stand(w); return; }
+
+  // The rock has landed and this one was dancing while it came down. Put the
+  // dance away before it walks off, or it carries the hop and the shout on to
+  // the next thing it does -- the same tidy-up the gang on the rock do.
+  if (w.jigAt != null && S.rockFall <= 0) { stopJig(w); w.say = null; }
+
+  // fetch a loose core if there is one, else scoop dust, then tip it all
+  // over the ledge
+  if ((w.goal === 'seek' || w.goal === 'idle') &&
+      S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
+      (!S.coreTaker || S.coreTaker === w) && bookRoom(w, 1) > 0) {
+    S.coreTaker = w;
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
+    const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
+    // held up, and dancing rather than standing there: see heldUp
+    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
+    const pace = haulSpeed() * HAUL_EMPTY;
+    w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
+    if (Math.abs(target - w.x) < P * 2) {
+      S.coreItem = null;
+      S.coreTaker = null;
+      w.hasCore = true;
+      tookOne(w);                            // a core is a grain of the hole too
+      w.goal = 'dump';
+      S.dirty = true;
+    }
+    return;
+  }
+
+  // The lip, and everybody stops at it. The hole is where dust goes, not where
+  // a body with a load in its hands walks.
+  //
+  // A route has this for nothing: the floor of the yard ends at the near wall,
+  // the ground past the far one is its own way, and the only edges between
+  // them are the two ladders -- so no route ever offers a leg across the
+  // opening (see `ways` in route.js). What the clamp is here for is the walks
+  // this file still does by hand: a stroll to nowhere in particular, a step
+  // towards a loose core, a nudge at somebody's elbow. None of those knows
+  // what a way is.
+  //
+  // Which side it is held on is not remembered any more. It is the side the
+  // body is standing on, which is a thing you can see by looking at it.
+  if (!w.route) {
+    if (here.key === 'past') { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
+    else if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
+  }
+  w.y = stand(w);
+
+  // Nothing to go for and nothing owing. A hauler with no room booked and none
+  // to book stands down rather than walking to the lip and throwing at a brim,
+  // the same as a gang stops when the pile it is filling has no room left. It
+  // keeps whatever it is already carrying -- a load tipped into a full pit is
+  // a load lost -- and picks the job up the moment a dig makes room.
+  //
+  // Somebody already on a trip is left to finish it: the room it is holding is
+  // room it booked, and turning it round at the lip is the exact thing this is
+  // here to stop. A core is not dust and the hole always takes one.
+  const noRoom = !w.hasCore && !w.carry && roomOnBoard(w) < 1 && pitFree() < 1;
+  // Somebody already on their way home is left alone. Telling a body there is
+  // no room is telling it to stand down, and a body walking to the door has
+  // stood down already -- so this used to catch it, put it back on `idle`, and
+  // the idle branch would send it home again on the very next frame. Home,
+  // idle, home, idle, and it never took a step: a yard full of dust, a full
+  // hole, and the whole crew stood stock still between the pile and the lip.
+  if (noRoom && w.goal !== 'idle' && w.goal !== 'home') {
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+    unbook(w);
+    w.goal = 'idle';
+  }
+
+  w.resting = false;
+  if (w.goal !== 'idle' && w.goal !== 'home') w.idleSince = 0;
+
+  // Muck lying about the yard comes first -- and this is the one job that picks
+  // its shovel up here rather than in the mess stage. See `late` on the row.
+  //
+  // It used to be what a body did when it had nothing else on, which meant it
+  // was never done: there is always dust to fetch, so a yard under an inch of
+  // muck stayed under an inch of muck while the crew walked over it carrying
+  // grains. Clearing up is the job when there is a mess -- the dust is not
+  // going anywhere and the mess is in everybody's way.
+  //
+  // Hands full is the one exception: a body already carrying a load finishes
+  // the trip first. Putting a load down to pick up a shovel is a load on the
+  // floor and a trip wasted.
+  if (takeMess(w, c)) return;
+  JOBS.hauler.mess.back(w);                        // the yard is clear
+  if (w.goal === 'seek') {
+    // It keeps the column it set off for until that column is bare. Picking
+    // the nearest one afresh every frame is what made the crew swarm.
+    if (w.claim >= 0 && !at(floor, w.claim, 0)) {
+      taken.delete(w.claim); w.claim = -1; w.forMark = false;
+    }
+    if (w.claim < 0) {
+      // Book the hole before picking a column, not after filling your hands.
+      // Nothing at all is fetched without room for it -- a shard on the ground
+      // with a full hole behind it is a shard that stays on the ground.
+      if (bookRoom(w) > 0) {
+        // A find first, if there is one -- unless the heaps are backing up, and
+        // then the dust first, because that is the half of it that stops the
+        // yard working. Whichever is chosen, the other is the fallback: a body
+        // that came out to fetch goes back with something.
+        const mark = nearestMark(w, taken);
+        const dust = nearestDust(w.x, taken);
+        // A find first -- but not by everybody at once while a heap is jammed.
+        //
+        // This was an all-or-nothing switch and both settings are wrong. "Any
+        // heap backing up, fetch dust" is what it was, and the machines made
+        // that permanently true: a ram fills the rock's pile in under a second
+        // and never empties it, so dust won every time for the rest of the run
+        // and the crew stopped fetching the other two grounds at all. Turning
+        // it off outright is worse in the other direction -- measured, the rock
+        // then stands on its own heap 85% of a run, because the stations keep
+        // dripping finds and a good share of the crew is always off chasing
+        // one.
+        //
+        // So it is a *cap* rather than a switch. A find is one grain worth a
+        // whole shard, so one body fetching them keeps up with what the yard
+        // produces; everybody else shifts grit. The other two grounds keep
+        // coming in and the rock keeps working.
+        const busy = S.workers.filter(o => o.type === 'hauler' && o.forMark).length;
+        const spare = !backedUp('rock') || busy < 1;
+        const first = spare ? mark : dust;
+        const other = spare ? dust : mark;
+        const pick = first >= 0 ? first : other;
+        // And nothing further off than the hole is, once the hands are more
+        // than half full.
+        //
+        // A find is taken before dust however far away it lies, which is right
+        // -- a green one is worth crossing the yard for. It is not right for a
+        // body with one grain of room left: it walks the length of the world,
+        // past the hole it could have emptied into on the way, to fetch one
+        // thing it can barely hold, while an empty pair of hands behind it
+        // fetches dust from under its feet. So the walk has to be worth the
+        // room: half a load or more free and it goes anywhere, and under that
+        // it takes what is nearer than the hole or banks what it has and comes
+        // back out empty, when the whole yard is open to it again.
+        const far = pick >= 0 &&
+          Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
+        if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
+          w.claim = pick; taken.add(pick);
+          // Remembered so the cap above can count how many are off after
+          // finds. It is a fact about the trip, not about the column: the
+          // column stops being a find the moment it is picked up.
+          w.forMark = isMark(pick);
+        }
+      }
+    }
+    if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; return; }
+    const col = w.claim;
+    const target = floor.x + col * P;
+    // held up, and dancing rather than standing there: see heldUp
+    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
+    // hands free, so it moves; a load is what slows it down
+    const pace = haulSpeed() * HAUL_EMPTY;
+    w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
+    // It scoops what is under it, not what its left edge is exactly on. The
+    // last two columns before the lip sit further right than a worker is
+    // allowed to stand, so a worker that had to be standing on them stood at
+    // the lip for ever with the dust a hand's width away.
+    const under = target >= w.x - P && target <= w.x + WORKER;
+    if (under && now >= w.next) {
+      const r = topGrain(col);
+      if (r >= 0) {
+        // A grain is worth taking only if this trip booked room for it --
+        // otherwise it stays on the ground, which is somewhere, rather than in
+        // a pair of hands, which is not. Dust or find, it is the same rule.
+        if (roomOnBoard(w) > 0) {
+          (w.load ||= []).push(at(floor, col, r));
+          put(floor, col, r, 0);
+          w.carry++;
+          tookOne(w);
+          w.next = now + scoopMs();
+          S.dirty = true;
+        } else {
+          // the booking is used up: this trip is done
+          taken.delete(col);
+          w.claim = -1;
+          w.goal = w.carry ? 'dump' : 'idle';
+          return;
+        }
+      }
+    }
+    if (w.carry >= load(w)) {                  // a cart holds twice
+      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+      w.goal = 'dump';
+    }
+  } else if (w.goal === 'dump') {
+    const target = pit.x - WORKER;                 // the lip, where they can stand
+    // held up, and dancing rather than standing there: see heldUp
+    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
+    w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
+    if (Math.abs(target - w.x) < P) {
+      if (w.hasCore) {
+        S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
+        w.hasCore = false;
+        S.dirty = true;
+      }
+      // A proper toss off the lip, so it arcs out over the edge -- and it is
+      // aimed at the hole, the same way spoil is aimed at a pile. It used to
+      // be a fixed spray, which was fine while the pit ran two windows to the
+      // right and never once while it is a scrape: the same throw sailed over
+      // the far wall and came down on the ground behind it.
+      const from = w.x + WORKER / 2, up = S.groundY - WORKER - P;
+      const far = pit.x + Math.max(P, pit.w - P * 2);
+      for (let i = 0; i < w.carry; i++) {
+        // most of it near the lip, where they are standing, tailing away down
+        // the hole -- which is the shape the pile has always had
+        const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+        const v = aim(from, up, land, P);
+        spawnChip(from, up, v.vx, v.vy, w.load?.[i] || 1);
+      }
+      w.stored = (w.stored || 0) + w.carry;
+      w.carry = 0;
+      w.load = [];
+      unbook(w);                             // the room it booked is spent
+      w.goal = 'seek';
+      S.dirty = true;
+    }
+  } else if (w.goal === 'home') {
+    // Knocked off. It walks to the door it was hired out of and goes in, and
+    // the moment there is dust on the ground it comes straight back out --
+    // which is the one thing that has to be true of this, because a crew you
+    // cannot get back is a crew you would never let go in the first place.
+    w.resting = false;
+    if (!noRoom && nearestDust(w.x, taken) >= 0) {
+      w.inside = false;
+      w.goal = 'seek';
+      return;
+    }
+    unbook(w);
+    if (w.inside) return;                      // in out of it, and nothing to watch
+    const door = hireSpot().x;
+    if (across(zone, w.x, door)) { heldUp(w, zone, now); return; }
+    w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
+    w.y = stand(w);
+    if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
+  } else {
+    // Nothing to fetch and nothing to carry. Rather than standing to
+    // attention they amble: a spot to stroll to, a stand about when they get
+    // there, then another. A yard at rest should read as at rest, not as
+    // switched off.
+    unbook(w);                  // idle hands hold no room
+    if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; return; }
+
+    // A rock has just come off, or the next one is on its way down, and this
+    // body has nothing to do about either. It joins in rather than ambling
+    // about with its hands in its pockets: the gang on the ground are already
+    // celebrating, and a yard where half of it is dancing and the other half
+    // is strolling reads as half the yard not having noticed.
+    //
+    // This is the hauler's own `held`, and it is down here rather than up in
+    // the stage because it is the *last* thing a hauler will do with a frame:
+    // a body with a load in its hands or a column booked has somewhere to be,
+    // and the ones fetching, tipping and walking home all dance from where the
+    // rock catches them -- see `across` and `heldUp` above.
+    //
+    // Everything the dance needs is here -- it spreads out from where it
+    // stands, and it elbows clear of anybody it is standing in.
+    if (dancing(c)) { heldUp(w, zone, now); return; }
+
+    // A yard with nothing in it to carry is a yard nobody needs to be stood
+    // in. After a good while of it -- staggered, so they trickle off rather
+    // than clocking out together -- a body goes home. It is not a rate and it
+    // costs nothing: every one of them is back the moment there is work.
+    if (!w.idleSince) w.idleSince = now + HOME_AFTER * (0.6 + rand() * 0.9);
+    if (!w.brk && now >= w.idleSince) { w.goal = 'home'; w.roamTo = null; return; }
+    // Stood still between strolls is the one moment a hauler is properly
+    // stopped, and it is the only moment it is allowed a break: a body
+    // walking somewhere is on its way there.
+    w.resting = w.roamTo === null || w.roamTo === undefined;
+    if (w.roamTo === null || w.roamTo === undefined) {
+      elbowIdle(w);                  // and not stood inside somebody
+      // and it stays put while it is having one: a body that wandered off
+      // mid-cigarette would be a body that was never really standing there
+      if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
+    } else {
+      const d = w.roamTo - w.x;
+      if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); return; }
+      // its own legs, not everybody's
+      w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
+      if (Math.abs(d) < 1) {
+        w.roamTo = null;
+        // and its own patience about standing there afterwards
+        w.restUntil = now + (500 + rand() * 3000) * (w.linger || 1);
+      }
+    }
+  }
+}
+
+// --- the jobs --------------------------------------------------------------------
+// One row a job, and the row is the whole of what makes that job different.
+// Everything that is the same for everybody is a stage above, and everything a
+// stage needs to know about a particular trade is answered from here rather than
+// from an `if` on `w.type` inside the stage. It is the same shape as `LOOK` in
+// render.js and `MOVES` in the dance: a new job is a row, and no row can quietly
+// forget to answer.
+//
+//   work    one frame of the job, when nothing above has claimed the body.
+//   shutIn  when this body is behind a door and nothing outside reaches it.
+//   held    what it does while the rock is off and the yard is celebrating.
+//           Returns true when it has used the frame up.
+//   mess    the shovelling rule, in three parts:
+//             when  is there a mess this body should be on right now
+//             back  where it goes when there is not
+//             late  it picks its own shovel up, inside `work`, rather than in
+//                   the mess stage. The hauler alone, and see the note there.
+//
+// The mess rules, said once and in one place: a miner shovels what is lying on
+// the rock, and the whole yard when its pile is full and there is nothing else
+// in the world it could be doing; a quarrier and a farmhand shovel their own
+// site's, and only from up on the surface; a janitor shovels everything,
+// everywhere, always, because that is the whole of the job; a hauler shovels the
+// yard. A labber, a scrubber and a wizard have no shovel at all -- a body behind
+// a door or four hundred feet up is not somewhere a mess reaches.
+const JOBS = {
+  miner: {
+    work: minerWork,
+    // The rock is off. The crew take five on the bare ground. It runs until the
+    // next rock has come down, so nobody is caught mid-hop underneath it.
+    held: (w, c) => {
+      if (!dancing(c)) return false;
+      const { now, zone } = c;
+      w.resting = false;                     // a dance is not a break
+      w.idleAt = null;
+      w.lunge = 0;
+      w.next = now + minerMs();              // nobody swings at nothing
+      // The next rock lands where the last one stood, and the last one is
+      // what they were standing on. So the first thing they do when the job
+      // is off is walk out of its footprint -- and they celebrate from
+      // there, rather than being stood under a rock coming out of the sky.
+      // Everything that puts a miner somewhere other than on the rock has to
+      // say so, or the climb picks up again from wherever it was standing
+      // before -- a body that danced on the bare ground and then went back to
+      // work would jump the whole height of the rock in one frame.
+      // Out of the way first -- and its mark comes with it, so the dance it
+      // goes back to is on the ground it has been moved to rather than the
+      // ground it was moved off.
+      if (duck(w, zone)) {
+        plant(w, standOn(S.groundY));
+        if (w.jigAt != null) w.jigAt = w.x;
+        return true;
+      }
+      plant(w, standOn(S.groundY));
+      jig(w, now, zone);
+      return true;
+    },
+    // A mess on the rock comes before the rock. It used to come before nothing
+    // but standing about: a miner picked up a shovel only when its pile was full
+    // and there was no swing left to take, and the layer on the rock was not
+    // something a shovel could touch at all -- it was worked off a swing at a
+    // time by whoever happened to be mining. Nobody mining meant nobody
+    // clearing, for the rest of the run: a full pile, a crew with nobody on the
+    // rock, or the gap between one rock and the next all left the face under
+    // muck for good.
+    //
+    // Its own site and not the whole yard -- unless its pile is full, in which
+    // case there is nothing else for it to be doing. A gang that downed tools
+    // for every patch anywhere would stop mining altogether for the minute and a
+    // half a full rain takes to shift.
+    mess: {
+      when: () => rockMuck() > 0 || S.pileFull.rock,
+      // and back up the hill when the face is clear. A miner carries no goal of
+      // its own, so the shovel's is put down with the shovel.
+      back: w => { if (w.goal === 'muck') { w.goal = null; w.muckAt = null; } }
+    }
+  },
+
+  // A mess on its own site comes before the station, the same as it does for the
+  // gang on the rock: what is lying on the quarry or on the plots is in the way
+  // of the body working it. This used to run only when their own pile was full
+  // -- their branches end in `continue`, above the shovelling -- so a working
+  // quarry and a working farm meant two bodies walking over the muck all day,
+  // and the layer on the quarry and the plots could only be dug and tended
+  // through, a cell at a time, by whoever happened to be there.
+  //
+  // The rest of the yard they leave to the haulers.
+  quarrier: {
+    work: (w, c) => stepQuarrier(w, c.now),
+    mess: {
+      when: w => upTop(w) && (quarryMuck() > 0 || S.pileFull.quarry),
+      // and back to the station when the mess is gone or the pile has been
+      // cleared: `to` is the walk to it, so nobody is put back.
+      back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
+    }
+  },
+
+  farmhand: {
+    work: (w, c) => stepFarmhand(w, c.now, c.dt),
+    mess: {
+      when: w => upTop(w) && (plotMuck() > 0 || S.pileFull.farm),
+      back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
+    }
+  },
+
+  // A body in the lab stays in the lab. Research is one job being worked on by
+  // one pair of hands, and a labber that wandered out to shovel and back left
+  // the bench cold for the length of two commutes while the chimney went on
+  // smoking, which is the building claiming something the crew deny.
+  labber: { work: stepLabber, shutIn: w => w.goal === 'in' },
+
+  scrubber: { work: stepScrubber },
+
+  janitor: {
+    work: janitorWork,
+    mess: {
+      when: () => true,
+      back: w => { w.goal = 'to'; w.muckAt = null; }
+    }
+  },
+
+  // The one job that is not on the ground. Nothing else in the pipeline applies
+  // to a body in the sky -- there is no rock to dodge up there, no lip to stop
+  // at and no muck to shovel -- so it is taken out of the yard's rules entirely,
+  // the same way a body down the hole is.
+  wizard: { work: (w, c) => stepWizard(w, c.now) },
+
+  hauler: {
+    work: haulerWork,
+    mess: {
+      late: true,
+      when: () => true,
+      back: w => { if (w.goal === 'muck') { w.goal = 'idle'; w.muckAt = null; } }
+    }
+  }
+};
+
+// Carrying is the fallback as well as a row: a body of a type nobody has written
+// a row for is a body with no station, and a body with no station fetches dust.
+const jobOf = w => JOBS[w.type] || JOBS.hauler;
+
+// --- the stages -------------------------------------------------------------------
+// The list from the top of this section, in order, as code. Each one is handed
+// the body and the frame and answers true when it has used the frame up.
+const STAGES = [
+  // in the air, on the cursor: not doing anything, and nothing being done to it
+  w => w.lifted === true,
+
+  // let go of, and on its way down
+  w => { if (!w.falling) return false; fall(w); return true; },
+
+  // Seeing stars. A body shaken about does nothing at all until they clear --
+  // it used to be handed its job back the instant its feet touched, so the
+  // stars were decoration over somebody already working. It rocks where it
+  // landed instead, and then goes and picks its hat up.
+  (w, c) => {
+    if (w.dizzyUntil && c.now < w.dizzyUntil) {
+      w.x = w.landedAt + Math.sin(c.now / 1000 * WOBBLE_BEAT + w.ph) * WOBBLE;
+      w.y = stand(w);
+      return true;
+    }
+    if (!w.dizzyUntil) return false;
+    w.dizzyUntil = 0;
+    w.x = Math.round(w.landedAt);
+    w.landedAt = null;
+    // and if its hat came off, it is not going back to work bare-headed: the
+    // stage below takes it from here on this very frame
+    if (w.hatOff) return false;
+    retask(w, w.type);
+    return true;
+  },
+
+  // gone to pick a knocked-off hat back up
+  w => {
+    if (!w.hatOff) return false;
+    const d = w.hatOff.x - w.x;
+    if (Math.abs(d) > P) {
+      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
+      w.y = stand(w);
+      return true;
+    }
+    w.trained = w.hatOff.kind;
+    w.kitOf = w.hatOff.of;
+    w.hatOff = null;
+    retask(w, w.type);
+    return true;
+  },
+
+  // A body drifting down out of the sky, which is a body doing nothing else
+  // until its feet are down -- see `floatDown`. It falls *through* on the frame
+  // it lands, so the rest of its day happens as usual.
+  w => w.floating === true && !floatDown(w),
+
+  // on its way to a job it has just been put on, and doing none of it yet
+  (w, c) => { if (!w.walking) return false; stepCommute(w, c.zone); return true; },
+
+  // and now and then a body has to stop, whatever it was doing
+  (w, c) => relieve(w, c.now),
+
+  // Every station's tender, *before* the station's own work -- the miner's
+  // included. See the first of the two ordering bugs at the top of this section.
+  (w, c) => stepTender(w, c.now),
+
+  // a body behind a shut door, and nothing outside reaches it
+  (w, c) => {
+    const job = jobOf(w);
+    if (!job.shutIn?.(w)) return false;
+    job.work(w, c);
+    return true;
+  },
+
+  // the rock is off and the yard is celebrating
+  (w, c) => jobOf(w).held?.(w, c) === true,
+
+  // Muck on the ground and somebody whose job it is -- and, when there is none,
+  // the goal the job goes back to.
+  (w, c) => {
+    const mess = jobOf(w).mess;
+    if (!mess || mess.late) return false;
+    if (mess.when(w, c) && takeMess(w, c)) return true;
+    mess.back(w);
+    return false;
+  }
+];
+
 export function updateWorkers(now, dt) {
   if (S.miners > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
@@ -1801,142 +2720,6 @@ export function updateWorkers(now, dt) {
   // fetching one is -- it walks to a mess, clears it, and looks again -- so the
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
-  // Going and shovelling, as one thing a body can be told to do, because two
-  // different kinds of body have to be able to do it.
-  //
-  // This used to live inline in the shared part of the loop, below the miners'
-  // own branch -- and that branch ends in `continue`, so a miner never reached
-  // it. That was invisible while the rock was worth swinging at. It stops being
-  // invisible the moment the rock's pile fills up, which is what happens when
-  // the hole is full and the haulers cannot clear it: the miners stand down,
-  // "free to take five", and take five under a yard of muck with nothing else
-  // in the world to do. Idle bodies and a mess is the one combination this
-  // whole idea was written to rule out.
-  //
-  // Returns true if the body is on muck duty and has had its turn this frame.
-  function takeMuck(w) {
-    // Two kinds of mess, and they are not the same job.
-    //
-    // What the sky drops is weather. It lands on everybody's yard and everybody
-    // clears it, the way they always have. What a body leaves behind is a body's
-    // own, and that is a post: it lies there until you put somebody on it, and
-    // there is nobody to put on it until the shed is up. Which is what the shed
-    // buys -- not a tidier yard, but the job. See `capOf` and `sweepMuckAt`.
-    if (w.carry || w.hasCore || muckFor(w) <= 0) return false;
-    // One body, one column, held until that column is clear -- the same
-    // booking a hauler makes on a column of dust.
-    //
-    // The set below is rebuilt every pass, so on its own it only stopped two
-    // bodies choosing the same column *in the same frame*: every one of them
-    // then re-chose the nearest the very next frame, and the whole crew walked
-    // to the same spot anyway. A claim has to be kept to be a claim.
-    if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-    if (w.muckAt == null) {
-      const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
-      w.muckAt = pick == null ? null : Math.floor(pick / P);
-    } else {
-      muckTaken.add(w.muckAt);
-    }
-    // The patch, and the ground to work it from. They are the same place out on
-    // the yard and they are not on the rock, the quarry or the plots: a body cannot
-    // stand on a site, so it walks to the edge of it and reaches across. The
-    // claim is still the muck's own column, so it is held until that column is
-    // clear rather than until the ground beside it is.
-    const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
-    const to = patch == null ? null : workSpot(patch);
-    if (to == null) return false;
-    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-    unbook(w);
-    // Out of the house first. A mess is the one thing that calls a body back
-    // off its own doorstep, and this runs before the going-home branch --
-    // so a body indoors used to pick up a shovel without ever coming out,
-    // and worked the yard invisible and still counted as being at home.
-    w.inside = false;
-    w.goal = 'muck';
-    // Off the rock, and down -- but climbed down, not dropped down.
-    //
-    // This used to put the body's feet on the ground line the moment the job
-    // came up, on the reasoning that a miner going shovelling is a miner off the
-    // rock. It is, eventually; it is not off it in the frame it decides to go.
-    // A body standing on the crest with muck to clear fell ninety pixels in one
-    // frame -- the height of the hill, from the top of it to the yard, between
-    // one frame and the next -- and then walked to the mess. Which is the one
-    // thing this file exists to not do.
-    //
-    // Nothing needs setting. `foot()` below already asks where the body is: on
-    // the rock's footprint it climbs to the rock's surface, off it, it walks the
-    // ground -- and `climbTo` eases from wherever the feet actually are, in
-    // either direction. A miner leaving the crest walks down it the way it
-    // walked up.
-    if (w.type === 'miner') {
-      if (w.jigAt != null) { stopJig(w); w.say = null; }
-      w.resting = false;
-      w.idleAt = null;
-    }
-    const d = to - WORKER / 2 - w.x;
-    // Where its feet go while it is doing this: on the way the *mess* is on, all
-    // the way there.
-    //
-    // This used to ask where the body's middle was: over the rock's footprint,
-    // stand on the rock; anywhere else, stand on the ground. Two things wrong
-    // with that, and the second one is the reason this whole file stopped
-    // asking questions of an x. A pixel of sway at the foot of the hill put the
-    // body's middle on and off the footprint from one frame to the next, so it
-    // flicked between the crest and the yard as the two branches took turns.
-    // And a body whose mess was away on the far side of the yard climbed the
-    // hill and came down it again on the way past, for no reason but that its
-    // route lay over the footprint -- the hill as a road, in the one walk in
-    // this file that does not go through route.js.
-    //
-    // The mess is a place, and a place is on a way (see `wayOver` in route.js).
-    // Muck on the face is on the hill, so the walk to it climbs a flank and goes
-    // up -- the same climb the gang working the rock make. Muck out on the yard
-    // is on the yard, so the walk to it stays on the ground line for its whole
-    // length, footprint or no footprint. Either way it is climbed to rather than
-    // assigned, so nobody appears at the top of anything.
-    const on = wayOver(to - WORKER / 2);
-    const foot = () => climbTo(w, feetOn(on, w.x));
-    // walk to it, then shovel: it is somewhere you go, not something that
-    // happens wherever you are standing
-    if (Math.abs(d) > P * 2) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.dir = Math.sign(d);
-      w.y = foot();
-    } else {
-      // Arrived: it stands still and shovels. It used to keep walking the last
-      // two cells in towards the exact column it had claimed while the elbow
-      // pushed it back out again -- a body sliding on the spot for as long as
-      // there was muck in front of it.
-      //
-      // And it shovels the way a miner mines: it plants its feet, swings, and a
-      // cell comes off. The muck was being poured away at a *rate* with the
-      // lunge pinned at full every frame, which reads as a shape vibrating over
-      // a heap that melts -- a progress bar wearing a hat. Same throughput, one
-      // cell to a swing, so there is something to watch and something to count.
-      //
-      // Its feet land on a whole cell and stay on it between swings. Pinning it
-      // outright was tried and is wrong: the elbow that keeps a gang from
-      // standing in each other needs to be able to move a body, and a gang that
-      // cannot be spaced out bunches onto one spot and clears a yard slower than
-      // it did before. Snapping is enough -- what read as sliding was a body
-      // creeping a fraction of a pixel a frame with its lunge pinned at full.
-      w.x = Math.round(w.x / P) * P;
-      w.y = foot();
-      w.lunge *= 0.84;
-      if (now >= (w.sweepAt || 0)) {
-        sweepMuckAt(w.x + WORKER / 2, 1, w);
-        w.lunge = 1;
-        w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
-      }
-      // and not shoulder to shoulder with the next one. A yard under muck
-      // has something to shovel wherever you stand, so a gang that arrived
-      // together would each find work on the spot they arrived on and clear
-      // the whole mess as one lump you cannot count.
-      elbowMuck(w);
-    }
-    return true;
-  }
-
   const muckTaken = new Set();
   // and the columns already spoken for by bodies that are on their way to them
   for (const w of S.workers) if (w.muckAt != null) muckTaken.add(w.muckAt);
@@ -1949,618 +2732,55 @@ export function updateWorkers(now, dt) {
   if (zone) {
     const from = Math.max(0, colOf(floor, zone.from));
     const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
-    for (let c = from; c <= to; c++) taken.add(c);
+    for (let col = from; col <= to; col++) taken.add(col);
     for (const w of S.workers) {
       if (w.type === 'hauler' && w.claim >= from && w.claim <= to) w.claim = -1;
     }
   }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;
   stepKit();                        // and anybody with kit to go and fetch or put back
+
+  // Where everybody was standing when the frame began, so that where they are
+  // standing when it ends can say which way they are facing. See `faceTravel`.
+  const was = new Map();
+  for (const w of S.workers) was.set(w, w.x);
+
+  // The frame, as one thing to hand about: the clock, its length, the ground a
+  // rock is coming down on, and the two books of claims that keep the crew from
+  // all setting off for the same cell.
+  const c = { now, dt, zone, taken, muckTaken };
   for (const w of S.workers) {
-    // in the air, on the cursor: not doing anything, and nothing being done to it
-    if (w.lifted) continue;
-    if (w.falling) { fall(w); continue; }
-    // Seeing stars. A body shaken about does nothing at all until they clear --
-    // it used to be handed its job back the instant its feet touched, so the
-    // stars were decoration over somebody already working. It rocks where it
-    // landed instead, and then goes and picks its hat up.
-    if (w.dizzyUntil && now < w.dizzyUntil) {
-      w.x = w.landedAt + Math.sin(now / 1000 * WOBBLE_BEAT + w.ph) * WOBBLE;
-      w.y = stand(w);
-      continue;
-    }
-    if (w.dizzyUntil) {
-      w.dizzyUntil = 0;
-      w.x = Math.round(w.landedAt);
-      w.landedAt = null;
-      // and if its hat came off, it is not going back to work bare-headed
-      if (!w.hatOff) { retask(w, w.type); continue; }
-    }
-    if (w.hatOff) {
-      const d = w.hatOff.x - w.x;
-      if (Math.abs(d) > P) {
-        w.face = Math.sign(d) || w.face || 1;
-        w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-        w.y = stand(w);
-        continue;
-      }
-      w.trained = w.hatOff.kind;
-      w.kitOf = w.hatOff.of;
-      w.hatOff = null;
-      retask(w, w.type);
-      continue;
-    }
-    // and a body drifting down out of the sky, which is a body doing nothing
-    // else until its feet are down -- see `floatDown`
-    if (w.floating) { if (!floatDown(w)) continue; }
-    // on its way to a job it has just been put on, and doing none of it yet
-    if (w.walking) { stepCommute(w, zone); continue; }
+    let done = false;
+    for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
+    if (!done) jobOf(w).work(w, c);
+  }
 
-    // and now and then a body has to stop, whatever it was doing
-    if (relieve(w, now)) continue;
+  faceTravel(was);
+}
 
-    // Every station's tender is caught here, *before* the station's own branch --
-    // the miner's included. It used to sit below all of them, which is fine for
-    // the quarrier and the farmhand because their branches fall through to it,
-    // and was fatal for the miner because its branch `continue`s on every path.
-    // The ram was bought, clamped the gang to one, and then no miner ever walked
-    // to it and it never took a single bite: four fifths of the rock's crew
-    // stood down for a machine that did nothing.
-    if (stepTender(w, now)) continue;
-
-    // A body in the lab stays in the lab.
-    //
-    // Everything below this line is a reason to walk somewhere -- a mess, a hat,
-    // a rock coming down, the loo -- and none of them should reach through a
-    // closed door. Research is one job being worked on by one pair of hands, and
-    // a labber that wandered out to shovel and back left the bench cold for the
-    // length of two commutes while the chimney went on smoking, which is the
-    // building claiming something the crew deny.
-    //
-    // It is a guard rather than a fix to whichever branch was reaching in,
-    // because the thing that is true is about the lab and not about any one of
-    // them: there is a door, and it is shut.
-    if (w.type === 'labber' && w.goal === 'in') { stepLabber(w); continue; }
-
-    if (w.type === 'miner') {
-      // The rock is off. The crew take five on the bare ground. It runs until the next
-      // rock has come down, so nobody is caught mid-hop underneath it.
-      if (now < S.danceUntil || S.rockFall > 0) {
-        w.resting = false;                     // a dance is not a break
-        w.idleAt = null;
-        w.lunge = 0;
-        w.next = now + minerMs();              // nobody swings at nothing
-        // The next rock lands where the last one stood, and the last one is
-        // what they were standing on. So the first thing they do when the job
-        // is off is walk out of its footprint -- and they celebrate from
-        // there, rather than being stood under a rock coming out of the sky.
-        // Everything that puts a miner somewhere other than on the rock has to
-        // say so, or the climb picks up again from wherever it was standing
-        // before -- a body that danced on the bare ground and then went back to
-        // work would jump the whole height of the rock in one frame.
-        // Out of the way first -- and its mark comes with it, so the dance it
-        // goes back to is on the ground it has been moved to rather than the
-        // ground it was moved off.
-        if (duck(w, zone)) {
-          plant(w, standOn(S.groundY));
-          if (w.jigAt != null) w.jigAt = w.x;
-          continue;
-        }
-        plant(w, standOn(S.groundY));
-        jig(w, now, zone);
-        continue;
-      }
-
-      // Back to it. The dance leaves its ground and its move behind, so the next
-      // rock is celebrated somewhere else -- and the say goes with it, or a body
-      // walks back up the hill still shouting about the last one.
-      if (w.jigAt != null) { stopJig(w); w.say = null; }
-
-      // And a mess on the rock comes before the rock. It used to come before
-      // nothing but standing about: a miner picked up a shovel only when its
-      // pile was full and there was no swing left to take, and the layer on the
-      // rock was not something a shovel could touch at all -- it was worked off
-      // a swing at a time by whoever happened to be mining. Nobody mining meant
-      // nobody clearing, for the rest of the run: a full pile, a crew with
-      // nobody on the rock, or the gap between one rock and the next all left
-      // the face under muck for good.
-      //
-      // Its own site and not the whole yard. Muck lying on the thing it is
-      // stood on is in its way and it clears it; muck out on the yard is the
-      // haulers' job, and a gang that downed tools for every patch anywhere
-      // would stop mining altogether for the minute and a half a full rain
-      // takes to shift.
-      if (rockMuck() > 0 && takeMuck(w)) continue;
-      // and back up the hill when the face is clear. A miner carries no goal of
-      // its own, so the shovel's is put down with the shovel.
-      if (w.goal === 'muck') { w.goal = null; w.muckAt = null; }
-
-      // The crew climb the hill and work it from the top down. Each one keeps a
-      // stretch of the crest to itself, stands on whatever rock is left there and
-      // sinks with it as the rock goes; when its stretch is bare it ambles along
-      // to the nearest that is not.
-      // The rock's pile is full. The crew stand where they are until it has
-      // been carried away: dust with nowhere to go used to roll into the pit,
-      // which banks it for nothing and leaves the haulers with no job.
-      if (S.pileFull.rock) {
-        // Nothing to swing at and a mess anywhere in the yard: go and clear it.
-        // Standing about under muck is the one combination this whole idea was
-        // written to rule out.
-        if (takeMuck(w)) continue;
-        w.resting = true;                      // stopped, and free to take five
-        // Standing down is not being switched off. It shifts its weight where
-        // it stands: a slow pace of about a cell either side of the spot it
-        // stopped on, and now and then it straightens up. Every miner has its
-        // own phase already, so a stopped gang reads as a gang standing about
-        // rather than as one animation played five times -- and it is nothing
-        // like the dance, which is three hops a second and goes nowhere.
-        if (w.idleAt == null) w.idleAt = w.x;
-        const idle = now / 1000 * IDLE_BEAT + w.ph;
-        w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
-        const surf = rockTopY(colAtX(w.x + WORKER / 2));
-        w.y = climbTo(w, standOn(surf)) - (Math.sin(idle) > 0.9 ? P : 0);
-        w.lunge *= 0.82;
-        w.next = now + minerMs();
-        continue;
-      }
-      w.resting = false;
-      w.idleAt = null;
-
-      const t = now / 1000;
-
-      // Walk the layer, turning at its ends and before walking into a mate. A
-      // miner that finds itself off the layer -- because the rest of the gang
-      // took the row down around it, or because it was hired onto a flank --
-      // climbs back to it rather than standing there boring a shaft.
-      const here = colAtX(w.x + WORKER / 2);
-      if (!inBand(here)) {
-        const back = nearestInBand(here);
-        if (back !== here) w.dir = Math.sign(back - here);
-        w.x += w.dir * MINER_WALK * 2.5 * frames();              // brisk, it has ground to make up
-      } else {
-        const step = w.x + w.dir * MINER_WALK * frames();
-        if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
-        else w.dir = -w.dir;
-      }
-
-      const col = colAtX(w.x + WORKER / 2);
-      const surf = rockTopY(col);
-      w.lunge *= 0.82;
-      // Where it is standing, climbed to rather than assigned. The bob and the
-      // swing go on top of the foot, not into it: they are what the body is
-      // doing, and easing them would damp them into nothing.
-      w.y = climbTo(w, standOn(surf)) + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
-
-      if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
-        // twice the bite for a breaker: the shards bought a bigger swing on a
-        // body that is not going anywhere
-        const bite = minerBite() * (w.trained ? 2 : 1);
-        knockOff(w.x + WORKER / 2, surf + P / 2, bite);
-        w.mined = (w.mined || 0) + bite;
-        w.lunge = 1;
-        w.next = now + minerMs() * (0.85 + rand() * 0.3);    // never quite in time
-      }
-      continue;
-    }
-
-    // A mess on its own site comes before the station, the same as it does for
-    // the gang on the rock: what is lying on the quarry or on the plots is in the
-    // way of the body working it. This used to run only when their own pile was
-    // full -- their branches end in `continue`, above the shovelling -- so a
-    // working quarry and a working farm meant two bodies walking over the muck
-    // all day, and the layer on the quarry and the plots could only be dug and
-    // tended through, a cell at a time, by whoever happened to be there.
-    //
-    // The rest of the yard they leave to the haulers -- unless their own pile is
-    // full, in which case there is nothing else for them to be doing.
-    //
-    // Only from the surface. A quarrier at the bottom of the quarry walks to the
-    // ladder and climbs it first -- see `stepQuarrier` -- and arrives here on
-    // the ground like anybody else.
-    const upTop = w.y + WORKER <= S.groundY + 1;
-    const mine = w.type === 'quarrier' ? quarryMuck() > 0 || S.pileFull.quarry
-               : w.type === 'farmhand' ? plotMuck() > 0 || S.pileFull.farm : false;
-    if (mine && upTop && takeMuck(w)) continue;
-    // and back to the station when the mess is gone or the pile has been
-    // cleared: `to` is the walk to it, for both of them, so nobody is put back.
-    if (w.goal === 'muck' && (w.type === 'quarrier' || w.type === 'farmhand')) {
-      w.goal = 'to';
-      w.muckAt = null;
-    }
-    if (w.type === 'quarrier') { stepQuarrier(w, now); continue; }
-    if (w.type === 'farmhand') { stepFarmhand(w, now, dt); continue; }
-    if (w.type === 'labber') { stepLabber(w); continue; }
-    if (w.type === 'scrubber') { stepScrubber(w); continue; }
-    // The mess, and whoever is on it. A janitor does one thing: it walks to the
-    // nearest muck and shovels it. With nothing left to shovel it goes back to
-    // its shed and waits there, which is where you will look for it.
-    if (w.type === 'janitor') {
-      if (takeMuck(w)) continue;
-      w.goal = 'to';
-      w.muckAt = null;
-      const post = stationX('janitor');
-      const d = post - w.x;
-      if (Math.abs(d) > WORKER) {
-        w.face = Math.sign(d) || w.face || 1;
-        w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-        w.y = stand(w);
-      } else {
-        w.resting = true;
-        // Waiting for a mess is most of a janitor's day, so it is worth watching.
-        //
-        // It used to stand exactly on its post, rigid, until something got
-        // dropped -- and a body that never moves reads as a body the game has
-        // forgotten about. It gets what a stood-down miner gets, and a little
-        // more of it: the same slow shift of weight about the spot it stopped
-        // on, on its own phase, and now and then it wanders a few cells along
-        // and props itself up somewhere else. Somebody minding a shed, rather
-        // than somebody switched off beside one.
-        if (w.idleAt == null || now >= (w.propAt || 0)) {
-          // A new spot to lean on, a few cells either way and never off the
-          // shed's own ground.
-          w.idleAt = post + (rand() - 0.5) * P * 10;
-          w.propAt = now + JANITOR_PROP * (0.6 + rand() * 0.9);
-          w.face = Math.sign(w.idleAt - w.x) || w.face || 1;
-        }
-        const sway = now / 1000 * IDLE_BEAT + w.ph;
-        const to = w.idleAt + Math.sin(sway * IDLE_STRIDE) * P;
-        const step = to - w.x;
-        // At an amble, and at its own pace rather than at a fraction of a
-        // commute. Chased at half a walking pace the spot two or three cells
-        // away was reached in a blink, so the whole idle was a long freeze and
-        // then a scoot -- and it got worse every time the crew's legs did.
-        // `IDLE_PACE` is the speed of loitering and belongs to loitering.
-        w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
-                 * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
-        w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
-      }
-      continue;
-    }
-    // The one job that is not on the ground. Nothing else in the loop applies to
-    // a body in the sky -- there is no rock to dodge up there, no lip to stop at
-    // and no muck to shovel -- so it is taken out of the yard's rules entirely,
-    // the same way a body down the hole is.
-    if (w.type === 'wizard') { stepWizard(w, now); continue; }
-
-    // Down the hole, and nothing else applies.
-    //
-    // This is checked before everything, including the dodge -- a body on a
-    // ladder inside the pit is not standing where a rock can land on it, and it
-    // cannot go anywhere but up or down anyway. It was in the middle of the
-    // hauler's decisions to begin with, under the dodge, and the dodge put it
-    // back on the ground line every other frame: the climb pushed it two pixels
-    // down the ladder, the dodge lifted it two back, and the pair of them held it
-    // at the top of the ladder for ever, taking turns.
-    // Which patch this one is going for -- the same claim `takeMuck` makes, made
-    // here so that the trip down the hole is made against it too. It used to ask
-    // for the nearest muck outright, claims and all ignored, so every hauler in
-    // the yard worked out the same patch in the bottom of the hole, went down
-    // for it together and stood in one another on the one column until it was
-    // gone. One patch, one body, in the hole as much as out of it.
-    if (!w.carry && !w.hasCore) {
-      if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-      if (w.muckAt == null && muckLeft() > 0) {
-        const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
-        w.muckAt = pick == null ? null : Math.floor(pick / P);
-      } else if (w.muckAt != null) {
-        muckTaken.add(w.muckAt);
-      }
-    }
-    const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
-      ? w.muckAt * P + P / 2 : null;
-
-    // In the hole, over the hole, or on the ground beyond it: all one errand,
-    // and all one question.
-    //
-    // It used to be four -- `inPit`, `overPitMouth`, a `wrongSide` worked out
-    // against a remembered `farSide`, and a `marooned` for the body left
-    // stranded out past the far wall when the crossing stopped running. Every
-    // one of those is now the same sentence: which way is the body on, and
-    // which way is its work on. A body on the hole's own surface or on the
-    // strip past it is somewhere only a route reaches; so is a patch of muck
-    // lying on either.
-    const all = ways();
-    const here = wayAt(w.x, w.y, all);
-    const on = patch == null ? null : wayOver(patch - WORKER / 2, all);
-    const away = here.key === 'hole' || here.key === 'past';
-    const through = on != null && (on.key === 'hole' || on.key === 'past');
-
-    if (away || through) {
-      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-      unbook(w);
-      w.goal = 'muck';
-      downTheHole(w, through ? patch : null);
-      continue;
-    }
-
-    // hauler: a rock coming down beats anything it was carrying or fetching.
-    // It keeps its claim and picks the job up again on the far side.
-    if (duck(w, zone)) { w.y = stand(w); continue; }
-
-    // The rock has landed and this one was dancing while it came down. Put the
-    // dance away before it walks off, or it carries the hop and the shout on to
-    // the next thing it does -- the same tidy-up the gang on the rock do.
-    if (w.jigAt != null && S.rockFall <= 0) { stopJig(w); w.say = null; }
-
-    // fetch a loose core if there is one, else scoop dust, then tip it all
-    // over the ledge
-    if ((w.goal === 'seek' || w.goal === 'idle') &&
-        S.coreItem && S.coreItem.rest && !S.heldCore && !w.hasCore &&
-        (!S.coreTaker || S.coreTaker === w) && bookRoom(w, 1) > 0) {
-      S.coreTaker = w;
-      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
-      const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-      // held up, and dancing rather than standing there: see heldUp
-      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
-      const pace = haulSpeed() * HAUL_EMPTY;
-      w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
-      if (Math.abs(target - w.x) < P * 2) {
-        S.coreItem = null;
-        S.coreTaker = null;
-        w.hasCore = true;
-        tookOne(w);                            // a core is a grain of the hole too
-        w.goal = 'dump';
-        S.dirty = true;
-      }
-      continue;
-    }
-
-    // The lip, and everybody stops at it. The hole is where dust goes, not where
-    // a body with a load in its hands walks.
-    //
-    // A route has this for nothing: the floor of the yard ends at the near wall,
-    // the ground past the far one is its own way, and the only edges between
-    // them are the two ladders -- so no route ever offers a leg across the
-    // opening (see `ways` in route.js). What the clamp is here for is the walks
-    // this file still does by hand: a stroll to nowhere in particular, a step
-    // towards a loose core, a nudge at somebody's elbow. None of those knows
-    // what a way is.
-    //
-    // Which side it is held on is not remembered any more. It is the side the
-    // body is standing on, which is a thing you can see by looking at it.
-    if (!w.route) {
-      if (here.key === 'past') { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
-      else if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
-    }
-    w.y = stand(w);
-
-    // Nothing to go for and nothing owing. A hauler with no room booked and none
-    // to book stands down rather than walking to the lip and throwing at a brim,
-    // the same as a gang stops when the pile it is filling has no room left. It
-    // keeps whatever it is already carrying -- a load tipped into a full pit is
-    // a load lost -- and picks the job up the moment a dig makes room.
-    //
-    // Somebody already on a trip is left to finish it: the room it is holding is
-    // room it booked, and turning it round at the lip is the exact thing this is
-    // here to stop. A core is not dust and the hole always takes one.
-    const noRoom = !w.hasCore && !w.carry && roomOnBoard(w) < 1 && pitFree() < 1;
-    // Somebody already on their way home is left alone. Telling a body there is
-    // no room is telling it to stand down, and a body walking to the door has
-    // stood down already -- so this used to catch it, put it back on `idle`, and
-    // the idle branch would send it home again on the very next frame. Home,
-    // idle, home, idle, and it never took a step: a yard full of dust, a full
-    // hole, and the whole crew stood stock still between the pile and the lip.
-    if (noRoom && w.goal !== 'idle' && w.goal !== 'home') {
-      if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-      unbook(w);
-      w.goal = 'idle';
-    }
-
-    w.resting = false;
-    if (w.goal !== 'idle' && w.goal !== 'home') w.idleSince = 0;
-
-    // Muck lying about the yard comes first.
-    //
-    // It used to be what a body did when it had nothing else on, which meant it
-    // was never done: there is always dust to fetch, so a yard under an inch of
-    // muck stayed under an inch of muck while the crew walked over it carrying
-    // grains. Clearing up is the job when there is a mess -- the dust is not
-    // going anywhere and the mess is in everybody's way.
-    //
-    // Hands full is the one exception: a body already carrying a load finishes
-    // the trip first. Putting a load down to pick up a shovel is a load on the
-    // floor and a trip wasted.
-    if (takeMuck(w)) continue;
-    if (w.goal === 'muck') { w.goal = 'idle'; w.muckAt = null; }   // the yard is clear
-    if (w.goal === 'seek') {
-      // It keeps the column it set off for until that column is bare. Picking
-      // the nearest one afresh every frame is what made the crew swarm.
-      if (w.claim >= 0 && !at(floor, w.claim, 0)) {
-        taken.delete(w.claim); w.claim = -1; w.forMark = false;
-      }
-      if (w.claim < 0) {
-        // Book the hole before picking a column, not after filling your hands.
-        // Nothing at all is fetched without room for it -- a shard on the ground
-        // with a full hole behind it is a shard that stays on the ground.
-        if (bookRoom(w) > 0) {
-          // A find first, if there is one -- unless the heaps are backing up, and
-          // then the dust first, because that is the half of it that stops the
-          // yard working. Whichever is chosen, the other is the fallback: a body
-          // that came out to fetch goes back with something.
-          const mark = nearestMark(w, taken);
-          const dust = nearestDust(w.x, taken);
-          // A find first -- but not by everybody at once while a heap is jammed.
-          //
-          // This was an all-or-nothing switch and both settings are wrong. "Any
-          // heap backing up, fetch dust" is what it was, and the machines made
-          // that permanently true: a ram fills the rock's pile in under a second
-          // and never empties it, so dust won every time for the rest of the run
-          // and the crew stopped fetching the other two grounds at all. Turning
-          // it off outright is worse in the other direction -- measured, the rock
-          // then stands on its own heap 85% of a run, because the stations keep
-          // dripping finds and a good share of the crew is always off chasing
-          // one.
-          //
-          // So it is a *cap* rather than a switch. A find is one grain worth a
-          // whole shard, so one body fetching them keeps up with what the yard
-          // produces; everybody else shifts grit. The other two grounds keep
-          // coming in and the rock keeps working.
-          const busy = S.workers.filter(o => o.type === 'hauler' && o.forMark).length;
-          const spare = !backedUp('rock') || busy < 1;
-          const first = spare ? mark : dust;
-          const other = spare ? dust : mark;
-          const pick = first >= 0 ? first : other;
-          // And nothing further off than the hole is, once the hands are more
-          // than half full.
-          //
-          // A find is taken before dust however far away it lies, which is right
-          // -- a green one is worth crossing the yard for. It is not right for a
-          // body with one grain of room left: it walks the length of the world,
-          // past the hole it could have emptied into on the way, to fetch one
-          // thing it can barely hold, while an empty pair of hands behind it
-          // fetches dust from under its feet. So the walk has to be worth the
-          // room: half a load or more free and it goes anywhere, and under that
-          // it takes what is nearer than the hole or banks what it has and comes
-          // back out empty, when the whole yard is open to it again.
-          const far = pick >= 0 &&
-            Math.abs((floor.x + pick * P) - w.x) > Math.abs(pit.x - w.x);
-          if (pick >= 0 && !(far && roomLeft(w) <= load(w) / 2)) {
-            w.claim = pick; taken.add(pick);
-            // Remembered so the cap above can count how many are off after
-            // finds. It is a fact about the trip, not about the column: the
-            // column stops being a find the moment it is picked up.
-            w.forMark = isMark(pick);
-          }
-        }
-      }
-      if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; continue; }
-      const c = w.claim;
-      const target = floor.x + c * P;
-      // held up, and dancing rather than standing there: see heldUp
-      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
-      // hands free, so it moves; a load is what slows it down
-      const pace = haulSpeed() * HAUL_EMPTY;
-      w.face = Math.sign(target - w.x) || w.face || 1;   // a cart is dragged behind
-      w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
-      // It scoops what is under it, not what its left edge is exactly on. The
-      // last two columns before the lip sit further right than a worker is
-      // allowed to stand, so a worker that had to be standing on them stood at
-      // the lip for ever with the dust a hand's width away.
-      const under = target >= w.x - P && target <= w.x + WORKER;
-      if (under && now >= w.next) {
-        const r = topGrain(c);
-        if (r >= 0) {
-          // A grain is worth taking only if this trip booked room for it --
-          // otherwise it stays on the ground, which is somewhere, rather than in
-          // a pair of hands, which is not. Dust or find, it is the same rule.
-          if (roomOnBoard(w) > 0) {
-            (w.load ||= []).push(at(floor, c, r));
-            put(floor, c, r, 0);
-            w.carry++;
-            tookOne(w);
-            w.next = now + scoopMs();
-            S.dirty = true;
-          } else {
-            // the booking is used up: this trip is done
-            taken.delete(c);
-            w.claim = -1;
-            w.goal = w.carry ? 'dump' : 'idle';
-            continue;
-          }
-        }
-      }
-      if (w.carry >= load(w)) {                  // a cart holds twice
-        if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
-        w.goal = 'dump';
-      }
-    } else if (w.goal === 'dump') {
-      const target = pit.x - WORKER;                 // the lip, where they can stand
-      // held up, and dancing rather than standing there: see heldUp
-      if (across(zone, w.x, target)) { heldUp(w, zone, now); continue; }
-      w.face = Math.sign(target - w.x) || w.face || 1;
-      w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
-      if (Math.abs(target - w.x) < P) {
-        if (w.hasCore) {
-          S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
-          w.hasCore = false;
-          S.dirty = true;
-        }
-        // A proper toss off the lip, so it arcs out over the edge -- and it is
-        // aimed at the hole, the same way spoil is aimed at a pile. It used to
-        // be a fixed spray, which was fine while the pit ran two windows to the
-        // right and never once while it is a scrape: the same throw sailed over
-        // the far wall and came down on the ground behind it.
-        const from = w.x + WORKER / 2, up = S.groundY - WORKER - P;
-        const far = pit.x + Math.max(P, pit.w - P * 2);
-        for (let i = 0; i < w.carry; i++) {
-          // most of it near the lip, where they are standing, tailing away down
-          // the hole -- which is the shape the pile has always had
-          const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
-          const v = aim(from, up, land, P);
-          spawnChip(from, up, v.vx, v.vy, w.load?.[i] || 1);
-        }
-        w.stored = (w.stored || 0) + w.carry;
-        w.carry = 0;
-        w.load = [];
-        unbook(w);                             // the room it booked is spent
-        w.goal = 'seek';
-        S.dirty = true;
-      }
-    } else if (w.goal === 'home') {
-      // Knocked off. It walks to the door it was hired out of and goes in, and
-      // the moment there is dust on the ground it comes straight back out --
-      // which is the one thing that has to be true of this, because a crew you
-      // cannot get back is a crew you would never let go in the first place.
-      w.resting = false;
-      if (!noRoom && nearestDust(w.x, taken) >= 0) {
-        w.inside = false;
-        w.goal = 'seek';
-        continue;
-      }
-      unbook(w);
-      if (w.inside) continue;                    // in out of it, and nothing to watch
-      const door = hireSpot().x;
-      if (across(zone, w.x, door)) { heldUp(w, zone, now); continue; }
-      w.face = Math.sign(door - w.x) || w.face || 1;
-      w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
-      w.y = stand(w);
-      if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
-    } else {
-      // Nothing to fetch and nothing to carry. Rather than standing to
-      // attention they amble: a spot to stroll to, a stand about when they get
-      // there, then another. A yard at rest should read as at rest, not as
-      // switched off.
-      unbook(w);                  // idle hands hold no room
-      if (!noRoom && nearestDust(w.x, taken) >= 0) { w.goal = 'seek'; w.idleSince = 0; continue; }
-
-      // A rock has just come off, or the next one is on its way down, and this
-      // body has nothing to do about either. It joins in rather than ambling
-      // about with its hands in its pockets: the gang on the ground are already
-      // celebrating, and a yard where half of it is dancing and the other half
-      // is strolling reads as half the yard not having noticed.
-      //
-      // Everything the dance needs is here -- it spreads out from where it
-      // stands, and it elbows clear of anybody it is standing in.
-      if (now < S.danceUntil || S.rockFall > 0) { heldUp(w, zone, now); continue; }
-
-      // A yard with nothing in it to carry is a yard nobody needs to be stood
-      // in. After a good while of it -- staggered, so they trickle off rather
-      // than clocking out together -- a body goes home. It is not a rate and it
-      // costs nothing: every one of them is back the moment there is work.
-      if (!w.idleSince) w.idleSince = now + HOME_AFTER * (0.6 + rand() * 0.9);
-      if (!w.brk && now >= w.idleSince) { w.goal = 'home'; w.roamTo = null; continue; }
-      // Stood still between strolls is the one moment a hauler is properly
-      // stopped, and it is the only moment it is allowed a break: a body
-      // walking somewhere is on its way there.
-      w.resting = w.roamTo === null || w.roamTo === undefined;
-      if (w.roamTo === null || w.roamTo === undefined) {
-        elbowIdle(w);                  // and not stood inside somebody
-        // and it stays put while it is having one: a body that wandered off
-        // mid-cigarette would be a body that was never really standing there
-        if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
-      } else {
-        const d = w.roamTo - w.x;
-        if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); continue; }
-        w.face = Math.sign(d) || w.face || 1;
-        // its own legs, not everybody's
-        w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
-        if (Math.abs(d) < 1) {
-          w.roamTo = null;
-          // and its own patience about standing there afterwards
-          w.restUntil = now + (500 + rand() * 3000) * (w.linger || 1);
-        }
-      }
-    }
+// Which way everybody is facing, worked out once and from the one thing that can
+// answer it: where a body was when the frame began, and where it is now.
+//
+// Facing used to be two fields -- `w.dir` and `w.face` -- assigned in eight
+// places between them, always on the way *into* a walk and always from the sign
+// of a distance that had not been travelled yet. Between them they were drawn in
+// exactly one spot, the side a cart trails on, and one of the eight writers set
+// a field that nothing at all read: the dance's `spin` turned a body over twice
+// a second and the screen did not change a pixel, because `drawBody` is a
+// symmetric square that takes no facing. Unrenderable state is how that
+// happened, and eight writers is how it went unnoticed.
+//
+// So there is one field, and nobody who is about to move sets it. It is
+// *measured*, here, after everything that could have moved a body has had its
+// go -- a commute, a route, a shovel, a stroll, a dance, a duck, a climb, a
+// nudge at somebody's elbow -- and it comes out right for every one of them
+// without a single one of them mentioning it. A body that did not move keeps the
+// way it was facing, which is what standing still looks like.
+const FACE_STILL = 0.01;             // under this it did not go anywhere
+function faceTravel(was) {
+  for (const [w, x0] of was) {
+    const d = w.x - x0;
+    if (Math.abs(d) > FACE_STILL) w.face = Math.sign(d);
   }
 }
 
