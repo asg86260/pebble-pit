@@ -166,6 +166,13 @@ export function beltRunning(now) {
 export function catchBelt(ch, now, f) {
   if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
   if (!beltRunning(now)) return false;
+  // A full hole stops the band (see `stepBelt`), and a stopped band takes
+  // nothing new: without this the ram's spoil landed on it, rode to the head,
+  // was handed back out of the brim onto the ground, and rode again -- a loop
+  // that ran for as long as the hole stayed full. Refused here, the spoil falls
+  // through to the rock's own pile, and the pile filling is what stands the ram
+  // down: the same mark that stops every other machine.
+  if (pitFull()) return false;
   const y = beltY();
   const under = ch.y + P, was = under - ch.vy * f;
   if (was > y || under < y) return false;             // did not cross the band this frame
@@ -194,6 +201,11 @@ export function catchBelt(ch, now, f) {
 export function stepBelt(now, f) {
   if (!S.belt || !S.belt.length) return;
   if (!beltRunning(now)) return;
+  // Nowhere to put anything down: the band stands still with its loads on it,
+  // exactly as it does when its tender walks off. `ready` already refuses new
+  // bites on a full hole; this is the other half, without which the loads
+  // already riding were tipped into a hole that handed every one straight back.
+  if (pitFull()) return;
   const top = bandY(), head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];

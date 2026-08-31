@@ -1251,6 +1251,56 @@ group('a grain rides the belt rather than being thrown over it', async () => {
   ];
 });
 
+// A full hole stops the band. `ready` has always refused new bites on a full
+// pit, but the loads already riding were tipped off the head into a hole that
+// handed every one straight back out over the lip -- and the ram's spoil kept
+// landing on the band from above, so the yard ran a circle of dump and reject
+// for as long as the hole stayed full. Now the band stands still with its loads
+// on it, takes nothing new out of the air, and the ram works on with its spoil
+// landing on the ground -- where the pile filling is what stands it down, the
+// same mark that stops every other machine.
+group('a full hole stops the band, and the ram works on', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 2);
+  window.__machine('ram', { bought: true, on: true });
+  window.__machine('belt', { bought: true, on: true });
+  haveRock();
+  window.__clearFloor();
+  run(2);
+
+  // Loads on the band first, then the hole filled under them.
+  const s0 = state();
+  for (let i = 0; i < 80; i++) window.__pile(s0.pitX - 500 + (i % 40) * 6, 3);
+  runUntil(() => state().belt > 0, 20);
+  // to the brim and no further: a tip past capacity is a failed bank per grain
+  window.__tip(state().pitCapacity - state().stored + 8);
+  run(1);
+  const full = state();
+
+  run(3);
+  const later = state();
+  window.__crew(0, 0);
+
+  const frozen = full.beltX.length && later.beltX.length &&
+                 String(full.beltX) === String(later.beltX);
+  return [
+    ok(full.pitFull, 'the hole is full'),
+    ok(full.belt > 0, 'with loads still riding the band', `${full.belt} loads`),
+    ok(later.belt >= full.belt, 'none of them is tipped into the full hole',
+       `${full.belt} -> ${later.belt}`),
+    ok(frozen, 'and the band stands still with them on it',
+       `${full.beltX} -> ${later.beltX}`),
+    ok(later.stored <= full.stored, 'the hole takes nothing over the brim',
+       `${full.stored} -> ${later.stored}`),
+    ok(later.rock < full.rock, 'the ram goes on working the rock',
+       `${full.rock} -> ${later.rock}`),
+    ok(later.floor > full.floor, 'and its spoil lands on the ground instead of the band',
+       `${full.floor} -> ${later.floor}`)
+  ];
+});
+
 // And it does not have to be picked up off the ground at all. The band is a
 // surface: the rock's spoil comes down on it straight off the shovel and the
 // yard between the rock and the hole never sees it.

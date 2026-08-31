@@ -32,7 +32,7 @@ import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX, rockShare, sandTopY } from './rock.js';
-import { beltFrom, beltTo, beltReach, beltPost, beltY } from './dust.js';
+import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
@@ -3267,7 +3267,13 @@ export function drawBelt() {
   // is the *band* moving and nothing else -- it used to stand in for the load as
   // well, back when the load was thrown over the top of it in one arc and never
   // touched it. What is actually being carried is drawn below, as grains.
-  const t = stroke('belt', 900);
+  //
+  // Not `stroke`: that reads `workedAt`, which is stamped by *bites*, and the
+  // belt has hardly bitten since the rock's spoil started landing on the band
+  // straight off the shovel -- so the marks stood still under moving loads.
+  // The band runs whenever it is manned, on, and has somewhere to put things
+  // down, which is exactly the gate `stepBelt` keeps.
+  const t = beltRunning(now()) && !pitFull() ? (now() % 900) / 900 : 0;
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
     ctx.fillRect(x, y, P, P);
@@ -3282,35 +3288,39 @@ export function drawBelt() {
 
 // The machine's switch, drawn on the roster under the headcount.
 //
-// Two words would be easiest and this game does not use words, so it is the same
-// pair of marks the yard already uses for a body and for a thing that runs: a
-// worker square for hands, and a filled block for the machine. Whichever is
-// doing the work is solid; the other is an outline. One glance says who is
-// working this station.
-export function drawRunSwitch(box, on, pending) {
-  const y = box.y, x = box.x;
-  const w = P * 3;
-  // hands on the left, machine on the right, always in that order
-  const hands = { x: x + P, y, w, h: P * 3 };
-  const mach = { x: x + P * 5, y, w, h: P * 3 };
-  for (const [b, live] of [[hands, !on], [mach, on]]) {
-    if (live) {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(b.x, b.y, b.w, b.h);
-    } else {
-      ctx.fillStyle = '#000';
-      ctx.fillRect(b.x, b.y, b.w, P);
-      ctx.fillRect(b.x, b.y + b.h - P, b.w, P);
-      ctx.fillRect(b.x, b.y, P, b.h);
-      ctx.fillRect(b.x + b.w - P, b.y, P, b.h);
-    }
-  }
-  // and a mark between them when it has been asked for and nobody has arrived:
-  // the switch is thrown, somebody is walking, and the yard has not changed yet
-  if (pending !== on) {
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x + P * 4, y + P, P, P);
-  }
+// A picture of the machine, and a checkbox: ticked, the machine works the
+// station; clear, the hands do. It used to be a pair of marks -- a worker
+// square and a machine block, each solid or outline, with a pending dot between
+// them -- which is four drawings for a yes-or-no question, and it read as one.
+// The checkbox shows what has been *asked* for rather than what the machine is
+// doing, so a click reads as a click immediately while somebody is still
+// walking over to throw the lever -- the same promise `asked()` has always
+// carried, and the whole of why it exists.
+export function drawRunSwitch(box, on, pending, key) {
+  // The very shape that stands in the yard, not a smaller cousin of it: the
+  // icon's whole job is "that thing", and the thing is its own best picture.
+  const icon = { jaw: JAW[0], ram: RAM, tiller: TILLER }[key];
+  // Six cells of checkbox on a four-cell strip, centred, because a four-cell
+  // box with a cell of border has a two-by-two heart -- so a ticked one was
+  // border touching tick, which is a solid block, which is not a checkbox.
+  // The cell of air between the two is what makes the state readable.
+  const w = P * 6;
+  const by = box.y + Math.round((box.h - w) / P / 2) * P;
+  const ih = icon ? spriteH(icon) * P : 0;
+  const bx = box.x + (icon ? (spriteW(icon) + 2) * P : 0);
+  // A cell of clear air behind the pair, because the quarry's strip hangs over
+  // the mouth of the cut: a black sprite drawn on the black of the benches is
+  // no drawing at all. Everywhere else the ground behind is white already and
+  // this paints nothing anyone can see.
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(box.x - P, by - P, bx + w - box.x + P * 2, w + P * 2);
+  if (icon) drawSprite(ctx, icon, box.x, by + w - ih);   // feet on the same line
+  ctx.fillStyle = '#000';
+  ctx.fillRect(bx, by, w, P);
+  ctx.fillRect(bx, by + w - P, w, P);
+  ctx.fillRect(bx, by, P, w);
+  ctx.fillRect(bx + w - P, by, P, w);
+  if (pending) ctx.fillRect(bx + P * 2, by + P * 2, P * 2, P * 2);
 }
 
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and
