@@ -85,8 +85,8 @@ export const HATS = {
   // school sells -- so it is the one that has to be told apart by shape alone,
   // which is why it is lopsided where the others are symmetrical.
   cap: [
-    '.###',
-    '####'
+    '###',
+    '###'
   ]
 };
 
