@@ -1519,6 +1519,13 @@ const loose = { owed: 0 };
 // under the sixth.
 let tallied = null;
 
+// Forget the frame's tally. The memo invalidates itself on a new frame and on
+// the arrays being replaced -- but a hand reaching in BETWEEN frames and
+// rewriting the cells in place (the __muckSet/__poopSet hooks are the hands)
+// changes the world without changing either key, and every reader until the
+// next tick gets the old answer. The hook calls this; nothing in play needs to.
+export const retally = () => { tallied = null; };
+
 function tally() {
   const stacks = KINDS.map(k => cols(k));
   if (tallied && tallied.tick === S.tick && stacks.every((s, i) => s === tallied.stacks[i]))
@@ -1569,7 +1576,7 @@ function onSite(c) {
 
 // How much ground a body shovelling claims either side of itself, in columns: a
 // body is three cells wide, so this keeps the next one clear of its elbows.
-const MUCK_ELBOW = 4;
+export const MUCK_ELBOW = 4;
 
 // The nearest loose muck to a place, as a world x, or null if the yard is clear.
 // Somebody has to walk to it: shovelling from wherever you happen to be standing
@@ -1629,15 +1636,18 @@ export function nearestMuck(wx, taken, hand) {
       return c * P + P / 2;
     }
   }
-  // Everything within reach is spoken for. Rather than standing still it goes
-  // for the nearest anyway: two on one patch is better than one doing nothing,
-  // and it is what happens at the end of a clear-up when there is one cell left.
-  if (!taken) return null;
-  // `hand` goes through. Dropping it here meant the second pass forgot both what
-  // this body is allowed to shift and what it is able to stand on, so the very
-  // fallback that exists to stop a body standing still could send it somewhere
-  // it cannot work.
-  return nearestMuck(wx, null, hand);
+  // Everything within reach is spoken for -- so there is nothing here for THIS
+  // pair of hands, and it says so.
+  //
+  // There used to be a second pass here that handed out the nearest patch
+  // anyway, on the argument that two on one patch beats one doing nothing. What
+  // that actually bought was the end of every clear-up: three bodies granted
+  // the same last cell, standing in each other and jostling over one shovelful.
+  // The dust system answers the same moment the other way -- a hauler with
+  // nothing left to claim rests and asks again next frame -- and a claim frees
+  // the instant its column is clear, so the wait is a beat, not a stall. One
+  // patch, one body, to the very last cell.
+  return null;
 }
 
 export const muckLeft = () => tally().all;

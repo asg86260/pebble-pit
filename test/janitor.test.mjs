@@ -192,3 +192,40 @@ group('a janitor with nothing to do loiters, and is not yanked back', async () =
        `${Math.round(far)}px off the post, allowed ${AT_POST}`)
   ];
 });
+
+group('a claim on a mess keeps its elbows out', async () => {
+  window.__reset();
+  window.__crew(0, 4);
+  window.__loo();
+  window.__assign('janitors', 2);
+  // An earlier group tunes LOO_EVERY down to seconds and a tuned constant
+  // outlives the reboot (see the note in sky-readout): four bodies on a
+  // four-second bladder spend the window queuing, not claiming.
+  window.__tune('LOO_EVERY', 600000);
+  run(10);
+  // One patch, thirty columns wide, and four pairs of hands sent at it: the
+  // haulers may shift weather and the janitors everything, so everybody comes.
+  window.__muckSet(c => (c > 338 && c < 368) ? 3 : 0);   // bare yard between the farm and the quarry
+
+  // `nearestMuck` reserves a body's width either side of a claim -- but that
+  // reservation used to live only in the frame the claim was made: the rebuild
+  // carried the claimed column forward without its elbows, so from the next
+  // frame a fresh body could book the cell beside a held claim, and the crew
+  // bunched and jostled over one spot. Sampled every frame of the clear-up:
+  // no two held claims may ever stand closer than the elbow.
+  let worst = Infinity;
+  for (let i = 0; i < 60 * 12 && muckLeft() > 0; i++) {
+    run(1 / 60);
+    const claims = yard.S.workers.filter(w => w.muckAt != null)
+                                 .map(w => w.muckAt).sort((a, b) => a - b);
+    for (let k = 1; k < claims.length; k++) worst = Math.min(worst, claims[k] - claims[k - 1]);
+  }
+  const { MUCK_ELBOW } = await import('../src/smog.js');
+  window.__reset();
+
+  return [
+    ok(worst !== Infinity, 'more than one body claimed at once', `${worst}`),
+    ok(worst > MUCK_ELBOW, 'and no two claims ever stood inside each other\'s elbows',
+       `closest pair ${worst} columns, elbow ${MUCK_ELBOW}`)
+  ];
+});

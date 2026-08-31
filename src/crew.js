@@ -27,7 +27,7 @@ import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
-import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot,
+import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_ELBOW,
          rockMuck, quarryMuck, plotMuck,
          dropMuckAt, cleanSpotNear, foul } from './smog.js';
 import { doorAt } from './house.js';
@@ -1922,12 +1922,16 @@ function takeMess(w, c) {
   // bodies choosing the same column *in the same frame*: every one of them
   // then re-chose the nearest the very next frame, and the whole crew walked
   // to the same spot anyway. A claim has to be kept to be a claim.
-  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
+  // A finished column is let go and the next one picked a FRAME later, not in
+  // the same breath. The set is rebuilt at the top of the frame from every held
+  // claim with its elbows out -- including this body's own, which it has only
+  // just finished with -- so a same-frame re-pick was barred from the four
+  // columns either side of where it stood, and a lone cleaner hopped away from
+  // its own remnants. One frame of empty hands and the rebuild is clean.
+  if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) { w.muckAt = null; return false; }
   if (w.muckAt == null) {
     const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
-  } else {
-    muckTaken.add(w.muckAt);
   }
   // The patch, and the ground to work it from. They are the same place out on
   // the yard and they are not on the rock, the quarry or the plots: a body cannot
@@ -2195,12 +2199,12 @@ function haulerWork(w, c) {
   // for it together and stood in one another on the one column until it was
   // gone. One patch, one body, in the hole as much as out of it.
   if (!w.carry && !w.hasCore) {
+    // Cleared and re-picked a frame apart, for the reason takeMess gives: the
+    // frame's set still carries this body's own elbows.
     if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) w.muckAt = null;
-    if (w.muckAt == null && muckLeft() > 0) {
+    else if (w.muckAt == null && muckLeft() > 0) {
       const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
       w.muckAt = pick == null ? null : Math.floor(pick / P);
-    } else if (w.muckAt != null) {
-      muckTaken.add(w.muckAt);
     }
   }
   const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
@@ -2758,8 +2762,17 @@ export function updateWorkers(now, dt) {
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
   const muckTaken = new Set();
-  // and the columns already spoken for by bodies that are on their way to them
-  for (const w of S.workers) if (w.muckAt != null) muckTaken.add(w.muckAt);
+  // The columns already spoken for by bodies that are on their way to them --
+  // WITH their elbows. `nearestMuck` reserves a body's width either side when a
+  // claim is made, but this rebuild used to carry only the claimed column
+  // itself forward, so the reservation lasted exactly one frame: from the next
+  // frame on, a fresh body could claim the cell beside a held claim, and the
+  // two of them shovelled the same patch standing in each other. A claim held
+  // is a claim with its elbows out, every frame, or it is not a claim.
+  for (const w of S.workers) {
+    if (w.muckAt == null) continue;
+    for (let k = w.muckAt - MUCK_ELBOW; k <= w.muckAt + MUCK_ELBOW; k++) muckTaken.add(k);
+  }
   // ...and the ground nobody may be *fetching from*, which is not the same rule
   // and used to be missing. A hauler ducks out of the way and then walks
   // straight back in, because what pulled it there was a column of dust it had

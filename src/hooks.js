@@ -20,7 +20,7 @@ import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from 
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt } from './pit.js';
 import { spawnChip } from './dust.js';
-import { SKY, fillSky, poopCols, moteX, moteY, clearSky } from './smog.js';
+import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -702,6 +702,7 @@ export const overPit = c => overPitMouth(c * P + P / 2);
 export const muckSet = f => {
   const m = S.muck && S.muck.length ? S.muck : (S.muck = new Array(floor.cols).fill(0));
   for (let c = 0; c < m.length; c++) m[c] = f(c) || 0;
+  retally();                       // an in-place write between frames: see smog.js
   S.dirty = true;
   return m.reduce((n, v) => n + v, 0);
 };
@@ -730,6 +731,7 @@ export const shake = (i = 0) => {
 export const poopSet = f => {
   const q = poopCols();
   for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;
+  retally();                       // same in-place write, same stale memo
   S.dirty = true;
   return q.reduce((n, v) => n + v, 0);
 };
