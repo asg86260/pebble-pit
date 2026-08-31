@@ -40,7 +40,13 @@ group('a stopped crew takes a break, a working one does not', async () => {
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(idle.resting > 0, 'a gang with nowhere to put anything is stood about',
+    // Five of the six, not "somebody". The seed is fixed and the run repeats, so
+    // this is measured rather than hoped for: all six of them are stood about
+    // over the two minutes this watches, every time. "More than nought" was the
+    // band a run-to-run yard needed -- one body idling would have passed it while
+    // the other five carried on working a yard they cannot put anything down in,
+    // which is the fault this group exists to catch.
+    ok(idle.resting >= 5, 'a gang with nowhere to put anything is stood about',
        `${idle.resting} of 6`),
     ok(idle.breaks.length > 0, 'and somebody, now and then, gets up to something',
        idle.breaks.join(',')),
@@ -91,7 +97,10 @@ group('a crew with nowhere to put anything walks home rather than freezing', asy
   window.__clearFloor();
   return [
     ok(full.pitFull, 'the hole is full', `${full.stored} of ${full.pitCapacity}`),
-    ok(full.floorGrains > 100, 'and the yard is not', `${full.floorGrains} lying about`),
+    // Seven hundred of them lie about on a seeded run; five hundred is that with
+    // a comfortable margin, and a good deal more than the hundred that would
+    // also have been true of a yard that had barely started mining.
+    ok(full.floorGrains > 500, 'and the yard is not', `${full.floorGrains} lying about`),
     ok(full.houses.home === 6, 'so every one of them has gone home',
        `${full.houses.home} in, ${stalled.length} still out`),
     ok(dug.houses.home === 0, 'and room in it brings them all back out',
@@ -131,7 +140,12 @@ group('the closet buys the job, not somewhere to walk to', async () => {
     ok(went && going.length > 0, 'a body due one goes', `${going.length} at it`),
     ok(nobodyIn, 'and nobody is inside the shed, because nobody walked to it',
        `${state().inLoo} inside`),
-    ok(away.some(d => d > 200), 'they go where they were working, wherever that is',
+    // Four hundred pixels, against the six hundred and seventy-five the one body
+    // due a break is actually standing at on a seeded run. Two hundred was the
+    // old band, and two hundred is a distance a body could be from the closet
+    // while still walking to it -- which is the very thing this is meant to rule
+    // out.
+    ok(away.some(d => d > 400), 'they go where they were working, wherever that is',
        `${away.join(', ')}px from the closet`),
     ok(after.smog.poop > 0, 'and what they leave is left there for somebody to clear',
        `${after.smog.poop} cells`)

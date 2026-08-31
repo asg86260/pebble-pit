@@ -176,8 +176,13 @@ group('the sky says which part of the works dirtied it', async () => {
 // how many motes exist, it is how many are in front of you.
 //
 // Measured as a share of the band actually on screen, because that is the thing
-// being looked at. Both numbers below are well under what it runs at, so this
-// fails when the sky goes thin rather than when it wobbles.
+// being looked at. Both numbers below are set against a deterministic run: a
+// tenth of a sky covers 4.0 percent of the band in the window, half a sky 19.5
+// percent and a full one 37.6, the same three figures every time the seed is the
+// same. They used to be one percent and eight, which were a fifth and a half of
+// what the yard actually does -- room for a wobble the seeded run does not have.
+// At three and fifteen this fails when the sky goes thin, which is the fault it
+// is here for, and still has a quarter again in hand.
 group('a dirty sky can be seen from where you stand', async () => {
   window.__crew(0, 0);
   const at = state().smog.at;
@@ -200,10 +205,10 @@ group('a dirty sky can be seen from where you stand', async () => {
   window.__air({ haze: 0 });
 
   return [
-    ok(tenth > 0.01,
+    ok(tenth > 0.03,
        'a sky a tenth of the way to rain has something in it to see',
        `${(tenth * 100).toFixed(1)}% of the band in the window`),
-    ok(half > 0.08,
+    ok(half > 0.15,
        'half a sky covers enough of the band to read as haze',
        `${(half * 100).toFixed(1)}%`),
     ok(full > half && half > tenth,
