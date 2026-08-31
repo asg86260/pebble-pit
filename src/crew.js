@@ -12,23 +12,24 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain } from './grid.js';
-import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, overPitMouth, blocked } from './world.js';
+import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
 import { KIT_JOBS } from './kit.js';
-import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop, downAWorking } from './route.js';
+import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop,
+         ways, climbTo, plant, inWorking } from './route.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
-import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitStand, workSpot,
+import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot,
          rockMuck, quarryMuck, plotMuck,
-         pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, foul, NEAR, FAR } from './smog.js';
+         dropMuckAt, cleanSpotNear, foul } from './smog.js';
 import { doorAt } from './house.js';
 import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
@@ -45,64 +46,6 @@ const MINE_BAND = 3;      // cells below the peak still counted as the top layer
 const ROAM_RANGE = 420;   // how far an idle worker will wander for no reason
 const ROAM_PACE = 0.45;   // and how slowly it goes about it
 const ROAM_ELBOW = WORKER * 1.4;   // how close two of them will stand
-// How fast a body on the rock gets from one height to another.
-//
-// It used to be told where it was standing every frame -- the top of whatever
-// column it was over, exactly, no matter how far that was from where it had been
-// the frame before. So a miner ambling along the crest snapped up and down the
-// steps like a cursor, and a gang that took a row out from under itself dropped
-// six cells in one frame. A rock is a thing you climb.
-//
-// The pace is a floor and a fraction: near enough and it steps down a cell at a
-// time, a long way off and it moves briskly, so it can always keep up with a
-// crest coming apart underneath it and never looks detached from the rock.
-const CLIMB_MIN = 1.1;             // pixels a frame at the least
-const CLIMB_SHARE = 0.14;          // and this much of whatever is left
-// and however far it walked, times this. A body walking on to the hill goes up
-// the side it meets, which means its feet have to rise as fast as it is moving
-// along: at a fixed pace the walk outruns the climb, and what that looks like is
-// a body crossing the footprint at ground level and rising somewhere near the
-// middle -- measured, twenty-three pixels inside the rock at fifty-six per cent
-// of the way across it. Running to the centre and then going to the top.
-//
-// One and six tenths carries any slope up to about sixty degrees, which is the
-// flank of a hill. What is steeper than that is the last cell or two under the
-// crest, and easing up those is right: that part is a climb rather than a walk.
-const CLIMB_SLOPE = 1.6;
-
-// One frame of a body getting from the height it is at to the height it should
-// be at, and the height it reaches. Every branch that puts a miner on the rock
-// goes through this -- working it and stood down over a full pile are the same
-// body on the same crest, and only one of them easing was a body that snapped
-// the moment the yard filled up.
-function climbTo(w, foot) {
-  // From where the body actually is. Seeding this with the target instead is a
-  // body that arrives at the foot of the rock and is suddenly on top of it --
-  // which is the one thing climbing was put in to stop.
-  if (w.foot == null) w.foot = w.y;
-  const d = foot - w.foot;
-  // How far it walked since the last time its feet were asked about, which is
-  // what lets a walk up a slope keep its feet on the slope. See CLIMB_SLOPE.
-  const along = Math.abs(w.x - (w.footAt ?? w.x));
-  w.footAt = w.x;
-  // Per frame, times how long this frame was: at sixty that is one and the pace
-  // is exactly what it always was. See `frames` in clock.js. The share of what
-  // is left is a proportion rather than a distance, so it is raised to the
-  // power instead of multiplied -- a fourteenth of the way there twice is not
-  // twice a fourteenth of the way there.
-  const f = frames();
-  const chunk = Math.max(CLIMB_MIN * f, along * CLIMB_SLOPE,
-                         Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
-  // and never more than a cell in a frame. The rock's surface is made of whole
-  // cells, so what is under a body's feet does not slope -- it *steps*, six
-  // pixels at a time, and at a corner two or three of those arrive together. A
-  // foot that took all of it at once was a body jumping up the hill rather than
-  // walking up it. A cell a frame is three hundred and sixty pixels a second,
-  // which is faster than anything in this yard moves and still smooth.
-  const step = Math.min(chunk, P * f);
-  w.foot += Math.sign(d) * Math.min(Math.abs(d), step);
-  return w.foot;
-}
 const MINER_WALK = 0.5;   // pixels a frame along the row
 
 // Where a body's feet go when it is standing still or walking: on whatever it is
@@ -407,15 +350,20 @@ function settle(w) {
   // for the rest of that body's life. Three of them were cleared here already
   // (the legs of a walk); the rest were not, and one of them was live.
   //
-  // A hauler part way down the hole carries `inPit`, and `inPit` is the flag the
-  // hauler's own branch reads *before* everything else to decide it is standing
-  // on the pile rather than on the yard. Put that body on the plots and it walks
-  // about the yard for as long as you like with the flag still set, and nothing
-  // shows. Put it back on carrying, and the first line of the hauler drops it on
-  // to a pile eight hundred pixels away: three hundred pixels straight down into
-  // solid ground, outside the hole entirely. Nobody would have found that by
-  // looking -- the two halves of it are minutes apart -- and verify.js reported
-  // it on the frame, with the seed, the first time the invariants were run.
+  // A hauler part way down the hole used to carry `inPit`, and `inPit` was the
+  // flag the hauler's own branch read *before* everything else to decide it was
+  // standing on the pile rather than on the yard. Put that body on the plots and
+  // it walked about the yard for as long as you liked with the flag still set,
+  // and nothing showed. Put it back on carrying, and the first line of the
+  // hauler dropped it on to a pile eight hundred pixels away: three hundred
+  // pixels straight down into solid ground, outside the hole entirely. Nobody
+  // would have found that by looking -- the two halves of it are minutes apart
+  // -- and verify.js reported it on the frame, with the seed, the first time the
+  // invariants were run.
+  //
+  // That particular field is gone (the hole is walked by route now, and which
+  // side of it a body is on is a thing you can see by looking at the body), but
+  // the half-finished walk it belonged to is not, and neither is the reason.
   //
   // So the whole of the journey goes, not the walk alone: where it was headed,
   // which way it was on, which patch it had spoken for, and how far its feet had
@@ -426,133 +374,68 @@ function settle(w) {
   w.route = null;
   w.routeTo = null;
   w.routeWay = null;
-  w.inPit = null;
-  w.side = null;
-  w.farSide = false;
   w.muckAt = null;
   w.foot = null;
   w.footAt = null;
 }
 
 // --- down the hole, and out the other side ---------------------------------------
-// Muck that fell in the pit lies on the dust at the bottom of it, and muck that
-// fell past the pit lies on ground the crew can only get to by going through.
-// Both are the same errand: down one wall, along the top of the pile, up whichever
-// wall you need.
+// Muck that fell in the hole lies on the dust at the bottom of it, and muck that
+// fell past the hole lies on ground the crew can only get to by going through.
+// Both are the same errand, and neither of them is written out here any more.
 //
-// Four legs. For three of them the body is out of the yard's ordinary rules -- it
-// is past the lip clamp, it is not on `walkY`, and what it stands on is the top of
-// the pile rather than the ground. It is checked before everything else a hauler
-// might do, including the rock dodge: a body on a ladder is not standing anywhere
-// a rock can land, and it cannot go anywhere but up or down anyway.
+// This was a five-state machine -- `to`, `down`, `dig`, `cross`, `up`, with a
+// `w.side` and a `w.farSide` and a lip clamp with two sides to it -- sitting
+// beside a routing system that does all of that generically for everybody else,
+// and beside a hole whose two ladders were already rows in the links table. Two
+// systems doing one job, and the copy that drifts is always the one that is not
+// the general one.
 //
-// That ordering was found the hard way. With the dodge running first, the climb
-// pushed the body two pixels down the ladder and the dodge lifted it two back onto
-// the ground line, and the pair of them held it at the top of the ladder for ever,
-// taking turns.
-function downTheHole(w, to, dt) {
-  if (!w.inPit) w.inPit = 'to';
+// So the body asks for a route and walks it, exactly as a quarrier does since
+// the cut stopped having its own way out. Nothing below says "ladder", "side"
+// or "across": the ladders are the only edges out of the hole, and the strip of
+// ground past the far wall is joined to the world only through it -- see `ways`
+// and `links` in route.js -- so a body that gets to either at all gets there
+// that way, and one asked to go somewhere no route reaches stays where it is.
+//
+// What stays is the digging, because digging is work and not getting about.
+function downTheHole(w, to) {
+  const all = ways();
+  // Nothing to go for means coming home, and home is the near lip: the yard is
+  // over there. This is what fetches a body back off the far ground once the
+  // last of the muck out there has been shifted -- which used to be a rule of
+  // its own called `marooned`, because the crossing only ever ran while there
+  // was muck to chase and the last body out there was stranded for good.
+  const at = to == null ? pit.x - WORKER : to - WORKER / 2;
+  const on = to == null ? all.yard : wayOver(at, all);
+  // Still on the way: a couple of cells short is arrived, the same slack
+  // `takeMuck` allows up top, so a body settling on to a patch is not walked
+  // back a pixel at a time every time it plants its feet on a whole cell.
+  if (Math.abs(at - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
+    if (!keepTo(w, at, on)) return;
+    if (stepRoute(w, commutePace())) return;
+    w.route = null;
+    return;
+  }
+  w.route = null;
+  if (to == null) return;
 
-  // Which wall this trip is aiming at. Muck in the hole is worked from the pile,
-  // so it wants whichever wall is nearer; muck out past the hole wants the far
-  // wall, because that is the only way onto that ground.
+  // Arrived. The same swing as up top -- see `takeMuck`. Feet planted, a cell to
+  // a stroke, rather than a heap quietly melting under a shaking body.
   //
-  // Nothing to go for means going home, and home is always the near side: the
-  // yard is over there. Aiming at the wall it came down before, this was a body
-  // climbing into the hole and straight back out the side it started on.
-  const want = to == null ? NEAR
-             : pastPit(to) ? FAR
-             : overPitMouth(to) ? pitSide(to)
-             : NEAR;
-
-  // along the ground to the head of the ladder on the side it is standing on
-  if (w.inPit === 'to') {
-    const from = w.farSide ? FAR : NEAR;
-    const lad = pitLadder(from);
-    const d = lad.x - WORKER / 2 - w.x;
-    w.y = stand(w);
-    w.dir = Math.sign(d) || 1;
-    if (Math.abs(d) > 1) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      return;
-    }
-    w.x = lad.x - WORKER / 2;
-    w.y = lad.top;
-    w.side = from;
-    w.inPit = 'down';
-    return;
+  // `now` is the clock *function* in here -- this one is not handed the frame
+  // time the way the yard's branches are -- so it has to be called. Compared
+  // against the function it is never greater, and the body stood over the heap
+  // swinging at nothing at all.
+  const t = now();
+  w.x = Math.round(w.x / P) * P;
+  w.y = climbTo(w, feetOn(on, w.x));
+  w.lunge *= 0.84;
+  if (t >= (w.sweepAt || 0)) {
+    sweepMuckAt(w.x + WORKER / 2, 1, w);
+    w.lunge = 1;
+    w.sweepAt = t + swingFor(w) * (0.85 + rand() * 0.3);
   }
-
-  // down it, hand over hand: it holds on, so nothing drifts sideways
-  if (w.inPit === 'down') {
-    const lad = pitLadder(w.side || NEAR);
-    w.x = lad.x - WORKER / 2;
-    const foot = pitStand(w.x) - WORKER;
-    w.y = Math.min(w.y + CLIMB_PACE * frames(), foot);
-    if (w.y >= foot) w.inPit = want === (w.side || NEAR) && !pastPit(to) ? 'dig' : 'cross';
-    return;
-  }
-
-  // Along the top of the pile to the patch, and shovel it. The surface is not
-  // level -- a pile heaps under the lip and runs away downhill -- so it walks the
-  // shape of it the way a quarrier walks the floor of the quarry.
-  if (w.inPit === 'dig') {
-    if (to == null || !overPitMouth(to)) { w.inPit = 'cross'; return; }
-    const d = to - WORKER / 2 - w.x;
-    if (Math.abs(d) > P * 2) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.dir = Math.sign(d);
-    } else {
-      // The same swing as up top -- see `takeMuck`. Feet planted, a cell to a
-      // stroke, rather than a heap quietly melting under a shaking body.
-      // `now` is the clock *function* in here -- this one is not handed the frame
-      // time the way the yard's branches are -- so it has to be called. Compared
-      // against the function it is never greater, and the body stood over the
-      // heap swinging at nothing at all.
-      const t = now();
-      w.x = Math.round(w.x / P) * P;
-      w.lunge *= 0.84;
-      if (t >= (w.sweepAt || 0)) {
-        sweepMuckAt(w.x + WORKER / 2, 1, w);
-        w.lunge = 1;
-        w.sweepAt = t + swingFor(w) * (0.85 + rand() * 0.3);
-      }
-    }
-    w.y = pitStand(w.x) - WORKER;
-    return;
-  }
-
-  // Across the pile to the foot of whichever ladder it is leaving by. Climbing
-  // the wall from wherever it happened to finish shovelling is not climbing a
-  // ladder.
-  if (w.inPit === 'cross') {
-    const lad = pitLadder(want);
-    const d = lad.x - WORKER / 2 - w.x;
-    if (Math.abs(d) > 1) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.dir = Math.sign(d);
-      w.y = pitStand(w.x) - WORKER;
-      return;
-    }
-    w.x = lad.x - WORKER / 2;
-    w.side = want;
-    w.inPit = 'up';
-    return;
-  }
-
-  // and up, and out -- on whichever side it climbed. Which side it comes out is
-  // the whole of what this errand changes about a body: past the far wall it is
-  // on ground it could not otherwise stand on, and the lip clamp holds it there
-  // rather than dragging it back across the mouth.
-  const lad = pitLadder(w.side || NEAR);
-  w.x = lad.x - WORKER / 2;
-  w.y = Math.max(w.y - CLIMB_PACE * frames(), lad.top);
-  if (w.y > lad.top) return;
-  w.y = lad.top;
-  w.inPit = null;
-  w.farSide = w.side === FAR;
-  // and it steps off the ladder onto the ground on that side
-  w.x = w.farSide ? pit.x + pit.w : pit.x - WORKER;
 }
 
 // --- nature -------------------------------------------------------------------
@@ -604,7 +487,7 @@ function relieve(w, now) {
   // finish what you are holding -- and there is nowhere to go from the sky. A
   // wizard aloft is not somewhere a walk can start: it comes down when it has
   // nothing to do, and it can go then.
-  if (w.inside || w.inPit || w.aloft || w.carry || w.hasCore) return false;
+  if (w.inside || inWorking(w) || w.aloft || w.carry || w.hasCore) return false;
   // Only while it is working. A body winding down -- nothing to carry, on its
   // way home, or standing about between strolls -- is a body whose day is over,
   // and one that stopped on the way in would leave something for the ones
@@ -810,6 +693,7 @@ function elbowJig(w) {
 function heldUp(w, zone, now) {
   w.resting = false;                   // waiting on a rock is not a break
   w.foot = walkY(w.x + WORKER / 2);
+  w.footAt = w.x;
   jig(w, now, zone);
   elbowJig(w);
   if (!zone) return;
@@ -1042,7 +926,7 @@ function throwLever(key) {
 const freeForLever = at => {
   let best = null, near = Infinity;
   for (const o of S.workers) {
-    if (o.walking || o.inside || o.aloft || o.inPit || o.carry || o.hasCore) continue;
+    if (o.walking || o.inside || o.aloft || inWorking(o) || o.carry || o.hasCore) continue;
     if (o.lifted || o.falling || o.looUntil) continue;
     const d = Math.abs((o.x + WORKER / 2) - at);
     if (d < near) { near = d; best = o; }
@@ -1177,7 +1061,7 @@ const MACHINE_REACH = WORKER * 3;
 function tenderFor(spec, at) {
   for (const w of S.workers) {
     if (w.type !== spec.type) continue;
-    if (w.walking || w.inside || w.aloft || w.inPit || w.lifted || w.falling) continue;
+    if (w.walking || w.inside || w.aloft || inWorking(w) || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
     const post = spec.tendAt ? spec.tendAt() : at;
     if (Math.abs(w.x - post) > MACHINE_REACH) continue;
@@ -1331,7 +1215,7 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // standing under the sky in the middle of the drop zone, and they are the ones
 // with the most reason to get out from under a rock coming down. Only a body on
 // a rung or on the floor of a hole has something over its head.
-const onYard = w => !downAWorking(wayAt(w.x, w.y).key);
+const onYard = w => !inWorking(w);
 
 // One frame of a body walking to where it has been sent.
 //
@@ -1670,7 +1554,7 @@ function fall(w) {
   w.vy = 0;
   w.vx = 0;
   w.falling = false;
-  w.foot = null;                   // it climbs to wherever it is standing now
+  w.foot = w.footAt = null;        // it climbs to wherever it is standing now
   // and if it was shaken on the way up, it stands there seeing stars first
   if (w.dizzyFor) {
     w.dizzyUntil = now() + w.dizzyFor;
@@ -1802,7 +1686,7 @@ function elbowIdle(w) {
 // for it anyway.
 function elbowMuck(w) {
   for (const o of S.workers) {
-    if (o === w || o.inside || o.goal !== 'muck' || o.inPit) continue;
+    if (o === w || o.inside || o.goal !== 'muck' || inWorking(o)) continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= WORKER * 0.8) continue;
     // Two on the very same pixel have no side to push to. The tiebreak is where
@@ -2158,11 +2042,11 @@ export function updateWorkers(now, dt) {
         // goes back to is on the ground it has been moved to rather than the
         // ground it was moved off.
         if (duck(w, zone)) {
-          w.y = w.foot = standOn(S.groundY);
+          plant(w, standOn(S.groundY));
           if (w.jigAt != null) w.jigAt = w.x;
           continue;
         }
-        w.foot = standOn(S.groundY);
+        plant(w, standOn(S.groundY));
         jig(w, now, zone);
         continue;
       }
@@ -2362,23 +2246,30 @@ export function updateWorkers(now, dt) {
         muckTaken.add(w.muckAt);
       }
     }
-    const inHole = w.inPit || (!w.carry && !w.hasCore && muckLeft() > 0)
-      ? (w.muckAt == null ? null : w.muckAt * P + P / 2) : null;
-    // in the hole, over the hole, or on the other side of it: all one errand
-    const wrongSide = inHole != null && pastPit(inHole) !== !!w.farSide;
+    const patch = !w.carry && !w.hasCore && muckLeft() > 0 && w.muckAt != null
+      ? w.muckAt * P + P / 2 : null;
 
-    // And a body stranded out past the far wall with nothing left to do out
-    // there comes home, whether or not there is muck anywhere to call it back.
-    // Without this the far side was a one-way trip: the crossing only ever ran
-    // while there was muck to chase, so the last body to finish out there stood
-    // on ground the lip clamp would not let it leave, for good.
-    const marooned = w.farSide && !w.inPit && !w.carry && !w.hasCore && !muckPastPit();
+    // In the hole, over the hole, or on the ground beyond it: all one errand,
+    // and all one question.
+    //
+    // It used to be four -- `inPit`, `overPitMouth`, a `wrongSide` worked out
+    // against a remembered `farSide`, and a `marooned` for the body left
+    // stranded out past the far wall when the crossing stopped running. Every
+    // one of those is now the same sentence: which way is the body on, and
+    // which way is its work on. A body on the hole's own surface or on the
+    // strip past it is somewhere only a route reaches; so is a patch of muck
+    // lying on either.
+    const all = ways();
+    const here = wayAt(w.x, w.y, all);
+    const on = patch == null ? null : wayOver(patch - WORKER / 2, all);
+    const away = here.key === 'hole' || here.key === 'past';
+    const through = on != null && (on.key === 'hole' || on.key === 'past');
 
-    if (w.inPit || overPitMouth(inHole) || wrongSide || marooned) {
+    if (away || through) {
       if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
       unbook(w);
       w.goal = 'muck';
-      downTheHole(w, marooned ? null : inHole, dt);
+      downTheHole(w, through ? patch : null);
       continue;
     }
 
@@ -2414,17 +2305,21 @@ export function updateWorkers(now, dt) {
       continue;
     }
 
-    // The lip, and everybody stops at it -- on whichever side of the hole they are
-    // standing. This is the line that keeps the crew out of the pit, and it is
-    // right for every errand but one: the hole is where dust goes, not where a
-    // body with a load in its hands walks.
+    // The lip, and everybody stops at it. The hole is where dust goes, not where
+    // a body with a load in its hands walks.
     //
-    // It has two sides now, because the crew can be on either. Written as one
-    // wall it dragged a body that had climbed out the far ladder straight back
-    // across the mouth, which is the clamp undoing the only reason anybody went
-    // down there.
-    if (!w.inPit) {
-      if (w.farSide) { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
+    // A route has this for nothing: the floor of the yard ends at the near wall,
+    // the ground past the far one is its own way, and the only edges between
+    // them are the two ladders -- so no route ever offers a leg across the
+    // opening (see `ways` in route.js). What the clamp is here for is the walks
+    // this file still does by hand: a stroll to nowhere in particular, a step
+    // towards a loose core, a nudge at somebody's elbow. None of those knows
+    // what a way is.
+    //
+    // Which side it is held on is not remembered any more. It is the side the
+    // body is standing on, which is a thing you can see by looking at it.
+    if (!w.route) {
+      if (here.key === 'past') { if (w.x < pit.x + pit.w) w.x = pit.x + pit.w; }
       else if (w.x > pit.x - WORKER) w.x = pit.x - WORKER;
     }
     w.y = stand(w);

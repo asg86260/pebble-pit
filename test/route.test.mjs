@@ -10,6 +10,9 @@
 
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 
+import { S } from '../src/state.js';
+import { stepQuarrier } from '../src/quarry.js';
+
 const detail = () => state().crewDetail.map(d => {
   const [t, goal, x, c, k, p, w, y] = d.split('|');
   return { t, goal, x: +x, carry: +c.slice(1), kit: w.slice(1), y: +y.slice(1) };
@@ -256,5 +259,94 @@ group('the way over the hill is the hill that is left', async () => {
     // a time as the swings land, which is what easing is here to stop.
     ok(jump <= 12, 'and it walks down to the new surface rather than being put on it',
        `worst ${Math.round(jump)}px in a frame`)
+  ];
+});
+
+// The hole is not a wall with a way round it: the ground past the far wall is
+// reached by going through, and nothing but the shape of the world says so.
+//
+// This is what `downTheHole` used to be -- a five-state machine with its own
+// ladder discipline, its own `w.side` and its own two-sided lip clamp, sitting
+// beside a routing system that already had both of the pit's ladders in its
+// links table. The rule stated here is about the world rather than about a
+// hauler, so it holds for anything anybody sends out there later.
+group('the ground past the hole is reached through it', async () => {
+  window.__reset();
+  window.__crew(0, 2);
+  run(2);
+
+  const s = state();
+  const world = window.__ways();
+  const holeLinks = world.links.filter(l => l.a === 'hole' || l.b === 'hole');
+  const near = holeLinks.find(l => l.name === 'near pit ladder');
+  const far = holeLinks.find(l => l.name === 'far pit ladder');
+
+  // Somebody standing in the yard, asked to get to the ground behind the hole.
+  const out = window.__route(0, s.pitX + s.pitW + 40);
+
+  return [
+    ok(world.ways.includes('past'),
+       'the strip behind the far wall is a way of its own', world.ways.join(' ')),
+    ok(holeLinks.length === 2, 'the hole is joined to the world by its two ladders',
+       JSON.stringify(holeLinks)),
+    // Which ways each ladder joins is the whole of it. The near one is the only
+    // edge between the yard and the pile; the far one is the only edge between
+    // the pile and the ground beyond. Neither of them joins the two halves of
+    // the floor, because nothing does -- there is a hole in between.
+    ok(near && near.a === 'yard' && near.b === 'hole',
+       'the near ladder is the only step down from the yard', JSON.stringify(near)),
+    ok(far && far.a === 'past' && far.b === 'hole',
+       'and the far one comes up on the ground behind', JSON.stringify(far)),
+    // And the route that follows from that, with nobody told to climb anything.
+    ok(out && out.legs.length === 5,
+       'so getting out there is a walk, two climbs and two more walks',
+       JSON.stringify(out)),
+    ok(out && out.legs.some(l => l.includes('near pit ladder'))
+           && out.legs.some(l => l.includes('far pit ladder')),
+       'down one ladder and up the other', JSON.stringify(out && out.legs))
+  ];
+});
+
+// A height belongs to a place, and a body is only ever put at one if it is
+// standing at that place.
+//
+// The quarrier's work branch read the floor of the cut and assigned it, flatly,
+// to whatever body was in the work state -- and nothing in the branch asked
+// where the body was. Anything that leaves that state set while the body is
+// somewhere else (picked up and put down, shoved along, sent off for a hat, a
+// walk cut short) put a digger at the height of a hole thousands of pixels
+// away and left it there, swinging, for as long as you watched. Reported from a
+// browser run as a body sunk under the surface it was standing over for
+// hundreds of frames.
+//
+// Stated as a rule about the world rather than about a quarrier: a body's
+// standing height comes from the way it is on. If the state a body is in
+// disagrees with where the body is, it is the state that is wrong.
+group('a body is never put at the height of a hole it is not in', async () => {
+  window.__reset();
+  window.__crew(0, 0, 2);
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  runUntil(() => state().underground > 0, 40);      // somebody down the cut, digging
+
+  const w = S.workers.find(o => o.type === 'quarrier');
+  // Up on the hill, a long way from the cut, and still on the digging job.
+  const onRock = state().rockLeftX + state().gw * 3;
+  const top = window.__surface(onRock + 9);
+  w.x = onRock;
+  w.y = top - 18;
+  w.foot = w.footAt = null;
+  w.goal = 'work';
+  w.route = null;
+  stepQuarrier(w, 0);
+  const feet = w.y + 18;
+
+  return [
+    ok(top < groundY() - 12, 'the spot picked is genuinely up the hill',
+       `${top} against a ground line of ${groundY()}`),
+    ok(w.goal !== 'work', 'a body outside the cut is not digging, whatever it was on',
+       `${w.goal}`),
+    ok(feet <= top + 8, 'and it is standing on the hill rather than inside it',
+       `feet ${Math.round(feet)} against a surface of ${top}`)
   ];
 });

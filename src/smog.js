@@ -1342,7 +1342,8 @@ export function nearestMuck(wx, taken, hand) {
   const own = hand && hand.type === 'janitor';
   // And what this pair of hands can stand on. Muck really does lie over the
   // mouth of the pit -- `muckTop` sends it down to `pitTop` -- but the only body
-  // that knows how to get down there is a hauler, which has `downTheHole`. Every
+  // with any business down there is a hauler, and it is the only one whose
+  // branch routes down a ladder for it. Every
   // other trade claimed the column through here, walked to it, and then stood at
   // `walkY`: the ground line, with the dust it was shovelling several hundred
   // pixels below its feet. That is the reported "some workers are walking

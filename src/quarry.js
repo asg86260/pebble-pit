@@ -8,7 +8,7 @@
 // Nothing about the quarry is shown until it is opened, the way nothing about
 // cores is shown until one is banked.
 
-import { keepTo, stepRoute, ways } from './route.js';
+import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
@@ -267,6 +267,35 @@ export function stepQuarrier(w, now) {
       fillQuarry();
       S.quarrySpent = false;
     }
+    return;
+  }
+
+  // Digging happens down the cut, and a body that is not down the cut is not
+  // digging, whatever its goal happens to say.
+  //
+  // The line below takes a height from a *place* -- the floor of the hole -- and
+  // puts a body at it, and until this guard it did that wherever the body was
+  // standing. Anything that leaves `work` set while the body is somewhere else
+  // -- picked up and put down, shoved along, sent off for a hat, a walk cut
+  // short -- pinned it to the height of a hole thousands of pixels away, and it
+  // stayed there, swinging, because nothing in this branch ever asked where it
+  // was. Reported from a browser run as a quarrier sunk a hundred pixels into
+  // the hill it was standing on, for hundreds of frames.
+  //
+  // So the state answers for itself: if where a body is disagrees with what it
+  // says it is doing, it is the state that is wrong. Outside the span of the
+  // cut it goes back to the top of the walk and asks for a route down like
+  // anybody else, and stands on the way it is actually on in the meantime.
+  // Asked of the quarry's own ground rather than of the cut way, because the
+  // way only exists once the quarry has been opened and the digging does not
+  // wait on that: a gang put on an unopened quarry work it just the same.
+  const all = ways();
+  if (w.x + WORKER <= quarry.x || w.x >= quarry.x + quarry.w) {
+    w.goal = 'to';
+    w.route = null;
+    w.cell = null;
+    w.resting = false;
+    w.y = climbTo(w, feetOn(wayAt(w.x, w.y, all), w.x));
     return;
   }
 
