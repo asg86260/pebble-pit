@@ -289,7 +289,8 @@ export const yardLeft = () =>
 // somewhere, and the somewhere is the floor -- so dust is allowed to lie there
 // and be fetched back like anything else.
 export const pastPit = x => x >= pit.x + pit.w;
-// Where a grain may not come to rest, and it is one place: under the rock.
+// Where a grain may not come to rest, and it is three places: under the rock and
+// over the two mouths. Everywhere else in the world is ground.
 //
 // It used to be everywhere that was not a station's strip or the ground past the
 // hole, which made the piles the only places dust could exist. Drop a grain on the
@@ -308,35 +309,41 @@ export const pastPit = x => x >= pit.x + pit.w;
 // the mouth of the hole, because neither of those is somewhere to stand a grain:
 // they are openings, and dust lying across an opening is dust lying on nothing.
 // Dust that reaches the hole goes *in* it, which is the whole point of the hole.
+// And under the boulder, because that is not ground either: it is rock.
+//
+// The ground off the left-hand end of the yard used to be a fourth, on the
+// grounds that the crew are held between the first pile and the lip, so a grain
+// out there was stranded. It is not stranded. Your own cursor sweeps wherever
+// the camera goes and the camera goes to the left edge of the world, so that
+// ground is yours to gather rather than theirs to fetch -- and it takes the
+// same scatter bare ground takes anywhere. The crew's bounds do not move:
+// `yardLeft` is still where they stop walking, and `nearestDust` will not claim
+// a column past it.
 export const blocked = c => {
   const x = floor.x + c * P;
-  // And the ground off the left-hand end of the yard, which is shut for a
-  // different reason: it is not an opening, it is simply somewhere nobody can
-  // walk. The crew are held between the first pile and the lip, so a grain that
-  // settled out there would sit in plain sight for the rest of the run with
-  // nothing able to reach it.
-  if (x + P <= yardLeft()) return true;
-  // The rock's apron stays barred, and this is the second go at that.
+  // The boulder's own footprint, and nothing wider than it. The clearance either
+  // side of it is ground, and this is the second go at saying so.
   //
-  // It was opened up so that dust could lie in front of the hill, which is a
-  // fair thing to want -- the strip there is conspicuously bare while dust banks
-  // up either side of it. Opening it broke three things in turn, and the third
-  // is the one that settles it: dust in the clearance is swept by `clearApron`
-  // every time a rock is made, and it goes to the nearest column that will take
-  // it, which is the first column of the rock's own spoil heap. That column then
-  // stands twelve cells against the boulder -- the exact sheer wall
-  // `bankCeiling` exists to prevent.
+  // It was opened once before and put back, because opening the whole apron
+  // broke three separate things. Each of them has an answer now, and the answers
+  // are elsewhere rather than here:
   //
-  // The other two: a grain may come to rest *under* the boulder, and the bare
-  // ground on the heap side is what the heap stands off from, so freeing it lets
-  // the heap creep up against the rock.
+  //   1. `clearApron` used to shovel the clearance into the nearest column that
+  //      would take it -- the first column of the rock's own heap, which then
+  //      stood twelve cells against the boulder. It throws now, on the same arc
+  //      a miner's spoil takes, so the sweepings land out along the heap like
+  //      everything else that is thrown at it.
+  //   2. A bank standing up against the hill: `bankCeiling` treats the footprint
+  //      as the cliff it used to treat the apron as, so the clearance takes a
+  //      low scatter that shades up into the heap instead of a wall.
+  //   3. The heap's standoff: the strips come out of the SITES table and out of
+  //      `rockLeft()`, never out of where dust happens to be lying, so the heap
+  //      stands off the rock by `ROCK_CLEAR` whatever is on the ground.
   //
-  // All three say the same thing. The apron is not incidentally bare, it is the
-  // clearance three separate rules are written against. Making dust lie there
-  // means deciding what those rules should say instead, which is a design
-  // question rather than a one-line fix -- and it wants an answer about WHICH
-  // strip is meant before anybody changes them.
-  if (pastApron(x) < 0) return true;
+  // What is left is the one thing that was never a matter of taste: a grain may
+  // not come to rest inside a rock. The footprint moves with every boulder, so
+  // it is asked of `rockLeft()` and `S.gw` rather than of anything remembered.
+  if (pastRock(x) < 0) return true;
   if (S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w) return true;
   if (overPitMouth(x)) return true;
   return false;
@@ -345,19 +352,25 @@ export const blocked = c => {
 // which pile a station's own output belongs in
 export const pileOf = key => S.piles.find(p => p.key === key);
 
-// How far past the apron a column is, in cells, or -1 for one inside it.
-export const pastApron = x => {
-  const near = rockLeft() - ROCK_CLEAR, far = rockLeft() + S.gw * P + ROCK_CLEAR;
+// How far past the boulder's own footprint a column is, in cells, or -1 for one
+// standing under it. Measured off `rockLeft()` and `S.gw`, so it follows the
+// rock: a narrower boulder gives back the ground the last one stood on.
+//
+// This used to be `pastApron` and was measured off the apron -- the footprint
+// plus `ROCK_CLEAR` either side -- because the apron was what `blocked` barred.
+// The clearance is ground now, and the only thing here that is not is the rock.
+export const pastRock = x => {
+  const near = rockLeft(), far = rockLeft() + S.gw * P;
   return x + P <= near ? (near - (x + P)) / P : x >= far ? (x - far) / P : -1;
 };
 
-// How high the ground may stand in a column. There are two cliffs in this yard
-// that the sand cannot slump over: the rock's bare apron, and either end of the
-// yard. A bank beside any of them would stand up as a sheer wall -- and a bank
-// that reached the lip would tip itself in, four cells at a time, and bank the
-// whole yard for free with nobody carrying anything. So a bank may only rise as
-// it gets away from all three, and it lies as a thin scatter against the ends.
-// Between them there is as much room as the slope allows.
+// How high the ground may stand in a column. The cliffs in this yard that the
+// sand cannot slump over are the rock's footprint and the near lip of the hole.
+// A bank beside either would stand up as a sheer wall -- and a bank that reached
+// the lip would tip itself in, four cells at a time, and bank the whole yard for
+// free with nobody carrying anything. So a bank may only rise as it gets away
+// from them, and it lies as a thin scatter against them. Between them there is
+// as much room as the slope allows.
 export const bankCeiling = c => {
   const x = floor.x + c * P;
   // The ground past the far wall of the hole is the fourth cliff, and the only
@@ -376,7 +389,14 @@ export const bankCeiling = c => {
   // stay: nought means "full", and full means `addGrain` goes looking for
   // somewhere else and the grain you dropped ends up in a pile you were not
   // pointing at.
-  if (!p) return LOOSE_DEEP;
+  //
+  // Except against the hill, which is the cliff this whole rule exists for. The
+  // clearance either side of the boulder is bare ground now, and a scatter
+  // standing its full depth hard against the rock is the same sheer wall in
+  // miniature. So it rises away from the footprint on the arithmetic every other
+  // bank here rises on, and levels off at the scatter -- which reads as a low
+  // ramp out of the foot of the hill and up into the heap beyond it.
+  if (!p) return Math.min(LOOSE_DEEP, Math.max(0, pastRock(x)) * BANK_SLOPE);
   // both ends of a pile are cliffs the sand may not lean on: the station behind
   // it and the bare ground in front of it. So it rises only as it gets away from
   // them, which is what stops it standing up as a wall against either.

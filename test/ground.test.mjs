@@ -15,8 +15,20 @@ import { rand } from '../src/rng.js';
 // module the yard is running: a check that reached for its own copy of the sky
 // would be startling a bird nobody can see.
 import { BIRDS, startle } from '../src/weather.js';
-import { yardLeft } from '../src/world.js';
-import { S } from '../src/state.js';
+import { yardLeft, bankCeiling, pastRock } from '../src/world.js';
+import { S, floor } from '../src/state.js';
+import { at, put } from '../src/grid.js';
+import { LOOSE_DEEP } from '../src/config.js';
+
+// How many grains are standing in a column, read straight off the grid. The
+// snapshot counts the yard; these checks are about the shape of one seam, so
+// they read the columns themselves.
+const heightAt = x => {
+  const c = Math.max(0, Math.min(floor.cols - 1, Math.round((x - floor.x) / P)));
+  for (let r = floor.rows - 1; r >= 0; r--) if (at(floor, c, r)) return r + 1;
+  return 0;
+};
+const colOfX = x => Math.max(0, Math.min(floor.cols - 1, Math.round((x - floor.x) / P)));
 
 // The last columns of ground sit further right than a worker is allowed to
 // stand, so one that had to be standing on a column to scoop it stood at the
@@ -380,16 +392,22 @@ group('dust lies where it is dropped, not where a pile is', async () => {
   ];
 });
 
-// Ground that is barred is not all one thing. Under the rock and over the two
-// mouths there is ground a few cells away either side, and a grain aimed at one
-// of them rolls clear the way a grain rolls off any shoulder. Off the left-hand
-// end of the yard there is not: it is barred because nobody can walk there, and
-// it runs three hundred columns to the edge of the world. A grain let go out
-// there used to walk the whole way in and land in the first strip it met, which
-// is the farm's -- dust in a heap nobody had carried anything to. Two rules now,
-// one at each end of it: nothing is shed over ground like that in the first
-// place, and a grain that finds no ground within reach falls off the world.
-group('dust let go off the end of the yard does not walk home', async () => {
+// Ground that is barred is not all one thing, and the left-hand end of the yard
+// is no longer any of it.
+//
+// It used to be: barred because nobody could walk out there, three hundred
+// columns of it running to the edge of the world, and a grain let go over it
+// walked the whole way in and landed in the first strip it met -- the farm's --
+// which is dust in a heap nobody carried anything to.
+//
+// The answer was never to bar the ground. Your cursor sweeps wherever the
+// camera goes and the camera goes to the left edge of the world, so that ground
+// is reachable; what was wrong was the walking, and the walking is what stops.
+// A grain let go out there lands where it was let go of, lies there as the same
+// thin scatter bare ground takes anywhere, and waits for you rather than for
+// the crew. The crew's own bounds have not moved -- they still stop at
+// `yardLeft` -- so nothing books a column it cannot stand on.
+group('dust let go off the end of the yard lies where it fell', async () => {
   window.__crew(0, 0);
   run(1);
   window.__clearFloor();
@@ -410,11 +428,24 @@ group('dust let go off the end of the yard does not walk home', async () => {
   run(1);
 
   // Then a long way past the end of it -- two hundred columns out, well beyond
-  // anything a grain is allowed to walk to get out from under an obstacle.
-  window.__pile(left - P * 200, 30);
+  // anything a grain was ever allowed to walk to get out from under an obstacle.
+  const off = Math.round((left - P * 200) / P) * P;
+  window.__pile(off, 30);
   run(2);
-  const off = state();
-  const heaped = Object.values(off.pileCount).reduce((a, b) => a + b, 0);
+  const after = state();
+  const offSpan = window.__dustSpan();
+  const heaped = Object.values(after.pileCount).reduce((a, b) => a + b, 0);
+
+  // Nobody may book it, either. A hauler held at `yardLeft` that claimed a
+  // column two hundred out would set off, stop at the end of its own span, and
+  // stand there with a claim it can never work off.
+  window.__crew(0, 3);
+  quickCrew();
+  run(6);
+  const claims = state().workerPos.filter(w => w[0] === 'h')
+    .map(w => +w.split(':')[1].split(',')[0]);
+  const worked = state();
+  window.__crew(0, 0);
   window.__clearFloor();
   run(1);
 
@@ -429,7 +460,8 @@ group('dust let go off the end of the yard does not walk home', async () => {
     return S.chips.length;
   };
   const shedOverYard = bird(Math.round(bare / P) * P);
-  const shedOffYard = bird(Math.round((left - P * 200) / P) * P);
+  const shedOffYard = bird(off);
+  const shedOffWorld = bird(-P * 40);
   S.chips.length = 0;
   BIRDS.length = 0;
   window.__clearFloor();
@@ -438,15 +470,146 @@ group('dust let go off the end of the yard does not walk home', async () => {
     ok(laid.floor >= 15, 'a grain let go on bare ground stays on it', `${laid.floor} lying`),
     ok(Math.abs(span.lo - bare) < 60 && Math.abs(span.hi - bare) < 60,
        'and it lies where it was let go of', `dropped at ${bare}, lying ${span.lo}..${span.hi}`),
-    ok(off.floor === 0, 'a grain let go off the end of the yard lands nowhere at all',
-       `${off.floor} on the floor`),
-    ok(heaped === 0, 'and above all not in a heap two hundred columns away',
-       JSON.stringify(off.pileCount)),
-    ok(off.dustAtQuarry === 0, 'nor out there where nobody can reach it',
-       `${off.dustAtQuarry} beyond the end`),
+    ok(after.floor >= 25, 'a grain let go off the end of the yard lands there too',
+       `${after.floor} on the floor`),
+    ok(offSpan.lo != null && Math.abs(offSpan.lo - off) < 120 && Math.abs(offSpan.hi - off) < 120,
+       'and lies where it was dropped rather than walking home',
+       `dropped at ${off}, lying ${offSpan.lo}..${offSpan.hi}`),
+    ok(heaped === 0, 'no heap two hundred columns away gains a grain by it',
+       JSON.stringify(after.pileCount)),
+    ok(claims.every(x => x >= left - WORKER), 'and no body walks out to fetch it',
+       `haulers at ${claims.join(', ')}, the yard starts ${Math.round(left)}`),
+    ok(worked.floor >= 25, 'the drop is still lying there when they have had their chance',
+       `${worked.floor} on the floor`),
     ok(shedOverYard > 0, 'a bird over the yard still sheds when it is startled',
        `${shedOverYard} grains`),
-    ok(shedOffYard === 0, 'and one over the far end sheds nothing, having nowhere to shed it',
-       `${shedOffYard} grains`)
+    ok(shedOffYard > 0, 'and one over the far end sheds too, now that ground holds dust',
+       `${shedOffYard} grains`),
+    ok(shedOffWorld === 0, 'but one off the edge of the world sheds nothing',
+       `${shedOffWorld} grains`)
+  ];
+});
+
+// The strip in front of the hill. It was bare for as long as the game has
+// existed, and not because nothing was ever dropped there: `blocked` refused
+// every column of the rock's clearance, so a grain aimed at it rolled out to
+// the nearest column that would have it. Only the boulder's own footprint is
+// refused now, and the clearance is ground like the rest of the yard.
+group('dust lies on the ground in front of the hill', async () => {
+  window.__crew(0, 0);
+  await haveRock();
+  window.__clearFloor();
+  run(0.5);
+  const s = state();
+
+  // The clearance on the yard side: between the near edge of the boulder and
+  // the near end of the heap that stands off it.
+  const face = s.rockLeftX + s.rockW;
+  const heap = s.piles.find(p => p.key === 'rock');
+  const mid = Math.round((face + heap.from) / 2 / P) * P;
+  for (let d = -60; d <= 60; d += P) window.__pile(mid + d, 12);
+  run(3);
+  const laid = state();
+
+  // The seam: every column from the foot of the hill out into the heap, and
+  // what the ceiling says each of them is allowed.
+  const seam = [];
+  for (let x = face; x <= heap.from + P * 20; x += P)
+    seam.push({ x, h: heightAt(x), cap: bankCeiling(colOfX(x)) });
+
+  const inClear = seam.filter(q => q.x < heap.from);
+  const under = (() => {
+    let n = 0;
+    for (let c = 0; c < floor.cols; c++) {
+      if (pastRock(floor.x + c * P) >= 0) continue;
+      for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+    }
+    return n;
+  })();
+
+  // A wall is a column standing well over what the ceiling beside it allows.
+  // Nothing here may: the clearance is capped by the scatter, and the heap
+  // rises off its own end at the slope.
+  const wall = seam.find(q => q.h > q.cap + 1);
+  window.__clearFloor();
+
+  return [
+    ok(laid.floor > 0, 'dust let go in front of the hill stays there', `${laid.floor} lying`),
+    ok(inClear.some(q => q.h > 0), 'the clearance holds it',
+       `${inClear.filter(q => q.h > 0).length} of ${inClear.length} columns standing`),
+    ok(inClear.every(q => q.h <= LOOSE_DEEP), 'no deeper than bare ground anywhere else',
+       `tallest ${Math.max(...inClear.map(q => q.h))}, scatter is ${LOOSE_DEEP}`),
+    ok(under === 0, 'and not one grain under the boulder itself', `${under} under it`),
+    ok(seam[0].h === 0 && seam[1] && seam[1].h <= 2,
+       'the ground lies down against the foot of the hill rather than standing up',
+       JSON.stringify(seam.slice(0, 4).map(q => q.h))),
+    ok(!wall, 'and nothing along the seam stands up as a wall',
+       wall ? `${wall.h} cells at ${wall.x}, ceiling ${wall.cap}` : '')
+  ];
+});
+
+// A new boulder lands on whatever the last one left lying on its footprint, and
+// that dust has to go somewhere. It used to be handed to `addGrain`, which walks
+// outward for the first column with room -- the first column of the rock's own
+// heap, which then stood a dozen cells hard against the boulder. It is thrown
+// now, on the arc a miner's spoil takes, so it leaves the ground as dust in the
+// air and comes down out along the heap like everything else thrown at it.
+group('a rock landing throws the dust off its footprint rather than shovelling it', async () => {
+  window.__crew(0, 0);
+  await haveRock();
+  window.__clearFloor();
+  run(0.5);
+
+  // Dust standing on the footprint, which is the one place `__pile` will not
+  // put it -- the ground under a boulder is refused, and rightly. So it is
+  // written straight into the grid: this is the state a rock coming down on a
+  // dusty footprint finds, however it got there.
+  let planted = 0;
+  for (let c = 0; c < floor.cols; c++) {
+    if (pastRock(floor.x + c * P) >= 0) continue;
+    for (let r = 0; r < 2; r++) { put(floor, c, r, 1); planted++; }
+  }
+  const before = state();
+  const heapBefore = before.pileCount.rock || 0;
+
+  // The next boulder, which sweeps as it lands. The banks either side are bare,
+  // so nothing here is the jolt shaking grains off them: every chip in the air
+  // came off the footprint.
+  window.__next();
+  let airborne = 0;
+  for (let i = 0; i < 200; i++) {
+    run(0.1);
+    airborne = Math.max(airborne, state().chips);
+    const s = state();
+    if (s.rock > 0 && !s.rockFall && !s.dancing) break;
+  }
+  await haveRock();
+  run(6);
+  const after = state();
+
+  const under = (() => {
+    let n = 0;
+    for (let c = 0; c < floor.cols; c++) {
+      if (pastRock(floor.x + c * P) >= 0) continue;
+      for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
+    }
+    return n;
+  })();
+  const heap = after.piles.find(p => p.key === 'rock');
+  const firstCol = heightAt(heap.from);
+  window.__clearFloor();
+
+  return [
+    ok(planted > 0 && before.floor >= planted,
+       'there is dust on the footprint to begin with', `${planted} grains planted`),
+    ok(airborne > 0, 'the sweepings leave the ground as dust in the air rather than being written across it',
+       `${airborne} chips flying at the most`),
+    ok(under === 0, 'nothing is left standing under the new boulder', `${under} under it`),
+    ok((after.pileCount.rock || 0) > heapBefore,
+       'and what was swept lands on the heap that belongs to the rock',
+       `${heapBefore} -> ${after.pileCount.rock || 0}`),
+    ok(firstCol <= bankCeiling(colOfX(heap.from)) + 1,
+       'the first column of that heap is not a wall against the rock',
+       `${firstCol} cells, ceiling ${bankCeiling(colOfX(heap.from))}`)
   ];
 });

@@ -177,12 +177,17 @@ group('the sky says which part of the works dirtied it', async () => {
 //
 // Measured as a share of the band actually on screen, because that is the thing
 // being looked at. Both numbers below are set against a deterministic run: a
-// tenth of a sky covers 4.0 percent of the band in the window, half a sky 19.5
-// percent and a full one 37.6, the same three figures every time the seed is the
-// same. They used to be one percent and eight, which were a fifth and a half of
-// what the yard actually does -- room for a wobble the seeded run does not have.
-// At three and fifteen this fails when the sky goes thin, which is the fault it
-// is here for, and still has a quarter again in hand.
+// tenth of a sky covers 2.9 percent of the band in the window, half a sky 17.1
+// percent and a full one 34.9, the same three figures every time the seed is the
+// same and the code that runs before this group is the same. They move whenever
+// an earlier group's own dust draws a different number of chances off the same
+// seed -- dust leniency's ground out past the left end of the yard, and the
+// clearance in front of the hill, both being ground now, cost this run a few
+// more grains' worth of scatter than the run these figures used to describe. It
+// used to read one percent and eight, before that -- a fifth and a half of what
+// the yard actually does, room for a wobble the seeded run does not have. At
+// two and thirteen this fails when the sky goes thin, which is the fault it is
+// here for, and still has a quarter again in hand.
 group('a dirty sky can be seen from where you stand', async () => {
   window.__crew(0, 0);
   const at = state().smog.at;
@@ -205,10 +210,10 @@ group('a dirty sky can be seen from where you stand', async () => {
   window.__air({ haze: 0 });
 
   return [
-    ok(tenth > 0.03,
+    ok(tenth > 0.022,
        'a sky a tenth of the way to rain has something in it to see',
        `${(tenth * 100).toFixed(1)}% of the band in the window`),
-    ok(half > 0.15,
+    ok(half > 0.13,
        'half a sky covers enough of the band to read as haze',
        `${(half * 100).toFixed(1)}%`),
     ok(full > half && half > tenth,
