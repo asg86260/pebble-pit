@@ -187,7 +187,7 @@ value.
 **Fix:** one table per knob (`{ key, label, min, max, step, value }`), and the
 getter and setter read it. The three duplicate lists collapse into the table.
 
-### 7. Muck and poop are two arrays with one set of operations — MEDIUM
+### 7. Muck and poop are two arrays with one set of operations (fixed) — was MEDIUM
 
 `slumpMess` loops `[muckCols(), poopCols()]`. `dropMuckAt` takes a `kind` and
 picks one. `sweepMuckAt` has a rule about which a given pair of hands may shift.
@@ -196,7 +196,7 @@ The two are the same thing with different ownership.
 **Fix:** one layer with a `kind` per cell, and ownership as a property of the
 kind. This is exactly the shape `KIT` now has.
 
-### 8. Hand-invalidated module caches — MEDIUM
+### 8. Hand-invalidated module caches (fixed) — was MEDIUM
 
 smog.js keeps `siteAt`, `allLeft`, `yardLeft`, `poopTotal`, `yardPoop` as
 module-level `let`s refreshed by a `refresh()` that must be called at the right
