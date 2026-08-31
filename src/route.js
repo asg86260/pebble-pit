@@ -176,7 +176,7 @@ export function solidNear(x, reach = 40, all = ways()) {
 // What a body actually stands on, given that it is three cells wide and the
 // ground is not level. The highest surface under any part of it -- so a body at
 // the foot of a bank stands on the bank rather than sinking its uphill half into
-// it. It is the rule `pitStand` had for the pit and `climbTo` had for the rock,
+// it. It is the rule `pitStand` had for the pit and the climber had for the rock,
 // which are now one rule for one surface.
 export function standTop(leftX, at = groundTop, width = WORKER) {
   let top = Infinity;
@@ -214,8 +214,25 @@ export function ways() {
 
   // and the floor of the hole, which is the same shape of thing: a surface below
   // the ground with ladders at both ends.
-  if (pit.grid && pit.cols)
+  //
+  // The hole also cuts the yard in two, and that is not a detail. The mouth is
+  // not a surface -- `footing` says so -- so the floor of the yard genuinely
+  // stops at the near wall and starts again past the far one, and the strip of
+  // ground out there is joined to the rest of the world only by going down one
+  // ladder and up the other. Written as one floor running the whole width, a
+  // route from the yard to that strip is a walk straight across the opening,
+  // which is a body walking on air; and the far ladder is then a rung nobody
+  // has any reason to use, because the ground at the top of it was already
+  // reachable on the flat.
+  //
+  // So it is two ways with a hole between them, and the crossing costs what
+  // climbing down and up again costs. That is the whole of what `downTheHole`
+  // used to say by hand, said once, for everybody.
+  if (pit.grid && pit.cols) {
     out.hole = { key: 'hole', from: pit.x, to: pit.x + pit.w, at: pitTop };
+    out.past = { key: 'past', from: pit.x + pit.w, to: 1e6, at: groundTop };
+    out.yard.to = pit.x;
+  }
 
   // The hill, which is the same shape of thing turned the other way up: a
   // surface *above* the ground, joined to the yard at the two places you can
@@ -266,8 +283,32 @@ export function wayAt(x, y, all = ways()) {
   }
   // and up on the hill if the hill is what is over this spot -- the same
   // question `wayOver` asks of a place -- and the feet are up there with it.
-  const over = wayOver(x, all);
-  if (over !== all.yard && feet < standTop(x, all.yard.at) - 1) return over;
+  const r = all.rock;
+  if (r && wayOver(x, all) === r && feet < standTop(x, all.yard.at) - 1) return r;
+  // Otherwise it is on the floor of the yard, and the only question left is
+  // which side of the hole it is standing on. A body at the height of the
+  // ground with the mouth under it is a body at the head of a ladder, one foot
+  // over the lip: it is on the side it stepped off on, which is the side the
+  // greater part of it is standing over. See `floorWay`.
+  const on = floorWay(x, all);
+  return on === all.hole ? all.yard : on;
+}
+
+// Which floor a place is on: the yard, or the strip past the far wall of the
+// hole, or -- for a place rather than a body -- the top of the pile between the
+// two.
+//
+// Taken at the middle of a body rather than at its edge, because a body
+// straddles a lip while it steps on and off the head of a ladder and has to
+// come down on one side of it or the other. That one line is what replaced
+// `w.farSide`: which side of the hole somebody is on is a thing you can see by
+// looking at them, not a flag they have to remember to keep up to date.
+function floorWay(x, all) {
+  const h = all.hole;
+  if (!h) return all.yard;
+  const mid = x + WORKER / 2;
+  if (mid > h.to) return all.past;
+  if (mid > h.from) return h;
   return all.yard;
 }
 
@@ -281,12 +322,28 @@ export function wayAt(x, y, all = ways()) {
 // of dust waiting on the far side of the yard is on the ground, so the route to
 // it runs along the floor in front of the hill, which is flatter and shorter and
 // therefore cheaper. Neither of those is a rule about miners or about haulers.
+//
+// And a place over the mouth of the hole is *in* the hole. There is no floor
+// over an opening, and what a thing dropped there comes to rest on is the top
+// of the pile -- `muckFloor` sends it to `pitTop` for exactly that reason. So
+// the walk to a patch of muck over the mouth is a walk on to the hole's own
+// surface, which is a walk down a ladder, and nothing had to be told that.
 export function wayOver(x, all = ways()) {
   const r = all.rock;
   if (r && x + WORKER > r.from && x < r.to
       && standTop(x, r.at) < standTop(x, all.yard.at) - 1) return r;
-  return all.yard;
+  return floorWay(x, all);
 }
+
+// Is this body down a working: below the ground, in the cut or the hole?
+//
+// Asked in half a dozen places -- a lever wants somebody who can walk to it, a
+// rock landing wants everybody who can see it, a body about to be caught short
+// wants to be somewhere a shovel can reach -- and every one of them used to ask
+// `w.inPit`, which was a flag the pit's own state machine kept and no other
+// hole in the yard had. The question is about where a body is, so it is asked
+// of where the body is.
+export const inWorking = w => downAWorking(wayAt(w.x, w.y).key);
 
 // --- the links ----------------------------------------------------------------
 // Where one way joins another, and the only places they do. A link is a ladder:
@@ -298,9 +355,19 @@ export function wayOver(x, all = ways()) {
 export function links(all = ways()) {
   const out = [];
   if (all.cut) out.push({ x: quarryFace(), a: 'yard', b: 'cut', name: 'quarry ladder' });
+  // The two ladders in the walls of the hole, and they do not join the same
+  // pair of ways: the near one joins the yard to the pile, the far one joins
+  // the pile to the strip of ground beyond the far wall. Which is what they
+  // are: there is no walking round to the top of the far ladder, so the only
+  // approach to it is from inside the hole, and the only approach to the
+  // ground it stands on is up it.
+  //
+  // That is the whole of the crossing. A body with business out past the hole
+  // is offered one route, it has two climbs in it, and neither this file nor
+  // the body knows that the errand is unusual.
   if (all.hole) {
     out.push({ x: pitLadder(NEAR).x, a: 'yard', b: 'hole', name: 'near pit ladder' });
-    out.push({ x: pitLadder(FAR).x, a: 'yard', b: 'hole', name: 'far pit ladder' });
+    out.push({ x: pitLadder(FAR).x, a: 'past', b: 'hole', name: 'far pit ladder' });
   }
   // The two flanks of the hill. There is no ladder up a hill: you get on to it
   // by walking on to it, at the toe, on whichever side you arrive at -- and that
@@ -366,9 +433,23 @@ export function route(fromX, fromWay, toX, toWay, all = ways(), reach = links(al
 
 // The route a body would take from where it is standing to a place on the open
 // yard, which is what almost everything asks for.
+//
+// "The open yard" is a floor and not a name. Everywhere left of the hole that
+// is the yard, and past the far wall of it that is the strip out there -- the
+// same floor, with a hole in the middle of it -- so a caller that knows an x
+// and nothing else gets the floor that x is actually on. Written as the yard
+// outright, a walk to the ground behind the hole came back as one leg straight
+// across the mouth, which is a body walking on air.
 export const routeFor = (w, toX, toWay = null) => {
   const all = ways();
-  return route(w.x, wayAt(w.x, w.y, all), toX, toWay || all.yard, all);
+  return route(w.x, wayAt(w.x, w.y, all), toX, toWay || openFloor(toX, all), all);
+};
+
+// The floor at a place. Over the mouth of a hole there is no floor, and what a
+// caller naming a bare x means by it is the lip it would stand at.
+const openFloor = (x, all) => {
+  const on = floorWay(x, all);
+  return on === all.hole ? all.yard : on;
 };
 
 // --- walking it ---------------------------------------------------------------
@@ -395,7 +476,7 @@ export function stepRoute(w, pace) {
   while (legs.length && legs[0].climb
          && Math.abs(feetOn(legs[0].to, legs[0].climb.x) - w.y) < 0.5) {
     w.x = legs[0].climb.x;
-    w.y = feetOn(legs[0].to, w.x);
+    plant(w, feetOn(legs[0].to, w.x));
     w.way = legs[0].to.key;
     legs.shift();
   }
@@ -408,8 +489,8 @@ export function stepRoute(w, pace) {
   if (leg.climb) {
     w.x = leg.climb.x;
     const want = feetOn(leg.to, w.x);
-    w.y += Math.sign(want - w.y) * Math.min(CLIMB_PACE * dt, Math.abs(want - w.y));
-    if (Math.abs(want - w.y) < 0.5) { w.y = want; w.way = leg.to.key; legs.shift(); }
+    plant(w, w.y + Math.sign(want - w.y) * Math.min(CLIMB_PACE * dt, Math.abs(want - w.y)));
+    if (Math.abs(want - w.y) < 0.5) { plant(w, want); w.way = leg.to.key; legs.shift(); }
     return true;
   }
 
@@ -419,29 +500,116 @@ export function stepRoute(w, pace) {
     w.x += Math.sign(d) * Math.min(pace * dt, Math.abs(d));
   } else w.x = leg.to;
   // and the feet follow the surface it is walking over, which is what puts a
-  // body up the side of the rock and over a heap without either being mentioned
-  w.y = climbToward(w, feetOn(leg.along, w.x), pace * dt);
-  // The other climber in this game keeps its own memory of where the feet are
-  // (see `climbTo` in crew.js), and a body handed back and forth between the two
-  // with those out of step gets dragged between two answers every frame. One
-  // line, and the two agree.
-  w.foot = w.y;
-  w.footAt = w.x;
+  // body up the side of the rock and over a heap without either being
+  // mentioned -- and, where the surface ahead is too steep for the feet to
+  // follow, holds the body back at the foot of it. See `climbTo`, which is the
+  // one climber in this game now: the second one lived here, kept level with
+  // the first by a hand-written line that copied `w.y` into `w.foot` after
+  // every frame of every walk.
+  w.y = climbTo(w, feetOn(leg.along, w.x));
   if (Math.abs(leg.to - w.x) < 0.5) legs.shift();
   return legs.length > 0;
 }
 
-// Feet that follow the ground rather than being put on it. A body climbs at the
-// pace it is walking and a half again, so it can get up any slope in this yard
-// without ever being teleported to the top of one.
+// --- the climber ---------------------------------------------------------------
+// One frame of a body getting from the height it is at to the height it should
+// be at, and the height it reaches. Everything that moves a body along a surface
+// goes through this: a miner on the crest, a hauler crossing the pile, a janitor
+// walking past a bank, and every leg of every route.
 //
-// The half again is what makes a slope climbable at all: at exactly the walking
-// pace a body on a 45-degree bank falls behind the ground for as long as the
-// bank lasts. See CLIMB_SLOPE in crew.js, which this replaces.
-const CLIMB_SLOPE = 1.5;
-export function climbToward(w, want, step) {
-  const d = want - w.y;
-  return w.y + Math.sign(d) * Math.min(Math.max(step * CLIMB_SLOPE, CLIMB_PACE * frames()), Math.abs(d));
+// There were two of these. This one lived in crew.js and kept its answer in
+// `w.foot`; the other lived here and did not, and the two were held level by a
+// line in `stepRoute` that wrote `w.y` back into `w.foot` after every frame of
+// every walk. A body handed back and forth between them with those out of step
+// was dragged between two answers. One climber, and the cache is inside it.
+//
+// The pace is a floor and a fraction: near enough and it steps down a cell at a
+// time, a long way off and it moves briskly, so it can always keep up with a
+// crest coming apart underneath it and never looks detached from the rock.
+const CLIMB_MIN = 1.1;             // pixels a frame at the least
+const CLIMB_SHARE = 0.14;          // and this much of whatever is left
+// and however far it walked, times this. A body walking on to the hill goes up
+// the side it meets, which means its feet have to rise as fast as it is moving
+// along: at a fixed pace the walk outruns the climb, and what that looks like is
+// a body crossing the footprint at ground level and rising somewhere near the
+// middle -- measured, twenty-three pixels inside the rock at fifty-six per cent
+// of the way across it. Running to the centre and then going to the top.
+//
+// One and six tenths carries any slope up to about sixty degrees, which is the
+// flank of a hill. What is steeper than that is a wall, and a wall is not
+// something this number is meant to carry -- see below.
+const CLIMB_SLOPE = 1.6;
+
+// Feet where they are put, rather than eased to: a rung of a ladder, a step
+// across a join, a body set down after a fall. The climber's memory is set with
+// the body, so the next frame eases on from here instead of from wherever the
+// body used to be.
+export function plant(w, y) {
+  w.y = w.foot = y;
+  w.footAt = w.x;
+  return y;
+}
+
+export function climbTo(w, want) {
+  // From where the body actually is. Seeding this with the target instead is a
+  // body that arrives at the foot of the rock and is suddenly on top of it --
+  // which is the one thing climbing was put in to stop.
+  if (w.foot == null) w.foot = w.y;
+  const was = w.footAt == null ? w.x : w.footAt;
+  // How far it walked since the last time its feet were asked about, which is
+  // what lets a walk up a slope keep its feet on the slope. See CLIMB_SLOPE.
+  const along = w.x - was;
+  const d = want - w.foot;
+  // Per frame, times how long this frame was: at sixty that is one and the pace
+  // is exactly what it always was. See `frames` in clock.js. The share of what
+  // is left is a proportion rather than a distance, so it is raised to the
+  // power instead of multiplied -- a fourteenth of the way there twice is not
+  // twice a fourteenth of the way there.
+  const f = frames();
+  const chunk = Math.max(CLIMB_MIN * f, Math.abs(along) * CLIMB_SLOPE,
+                         Math.abs(d) * (1 - (1 - CLIMB_SHARE) ** f));
+  // and never more than a cell in a frame. The rock's surface is made of whole
+  // cells, so what is under a body's feet does not slope -- it *steps*, six
+  // pixels at a time, and at a corner two or three of those arrive together. A
+  // foot that took all of it at once was a body jumping up the hill rather than
+  // walking up it. A cell a frame is three hundred and sixty pixels a second,
+  // which is faster than anything in this yard moves and still smooth.
+  const step = Math.min(chunk, P * f);
+
+  // A wall is not a slope, and this is the one place that says so.
+  //
+  // Everything above is an *ease*: the feet come up at the walking pace and a
+  // half, which carries any bank in this yard and cannot carry a sheer face.
+  // Walk into one and the body keeps its pace while its feet fall behind, so
+  // for the length of the climb the body is inside the rock -- measured at
+  // twenty-four pixels, which is more than a body is tall. The old answer to
+  // that would be a faster ease, and a faster ease only moves the face that
+  // beats it.
+  //
+  // So the feet lead and the body follows. If the ground it has just walked on
+  // to is higher than the feet can reach this frame, then it did not get there:
+  // the step is given back and the body stands at the foot of the face and
+  // climbs, and it walks on in the frame its feet arrive. That is what a climb
+  // *is*, and it is exactly what the ladder links already say about the two
+  // holes with rungs in them -- said here for every face that has none, and
+  // without naming a slope, a height or a job.
+  //
+  // The line is where it is because everything above already decides it. What
+  // the feet can reach in a frame is `step`, and `step` is the walking pace and
+  // a half: so a slope a walk can carry is carried, and anything steeper is
+  // climbed. Nothing here is tuned, and nothing had to be told what a wall is.
+  //
+  // A stop rather than a slowing, and that matters. Braking in proportion to
+  // how far behind the feet are makes the walk depend on a *state* -- the lag
+  // -- and a state that unwinds at a different rate every tick length is a walk
+  // that is a different length at thirty frames a second than at sixty.
+  // `frame-rate.test.mjs` caught exactly that, the hour it was written.
+  const rise = -d;                        // how far UP the feet still have to come
+  if (rise > step) w.x = was;
+
+  w.footAt = w.x;
+  w.foot += Math.sign(d) * Math.min(Math.abs(d), step);
+  return w.foot;
 }
 
 // Put a body on a route to somewhere, or say there is no way there.

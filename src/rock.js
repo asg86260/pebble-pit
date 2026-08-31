@@ -17,6 +17,7 @@ import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
 import { pastApron, blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
+import { inWorking } from './route.js';
 import { rand } from './rng.js';
 
 // --- boulder ----------------------------------------------------------------
@@ -149,7 +150,7 @@ export function stepRock() {
     if (S.boulderNo > 1) {
       const at = now();
       for (const w of S.workers) {
-        if (w.inside || w.inPit || w.aloft) continue;
+        if (w.inside || inWorking(w) || w.aloft) continue;
         w.say = { mark: 'bang', until: at + LAND_SAY_MS };
       }
     }
