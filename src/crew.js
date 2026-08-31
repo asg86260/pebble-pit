@@ -9,7 +9,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
-        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT } from './config.js';
+        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE } from './config.js';
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
@@ -440,7 +440,6 @@ function downTheHole(w, to) {
   const t = now();
   w.x = Math.round(w.x / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
-  w.lunge *= 0.84;
   if (t >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);
     w.lunge = 1;
@@ -473,7 +472,6 @@ function downTheCut(w, col) {
   // the same cadence `haulSpeed`'s own fetching keeps on the yard.
   w.x = Math.round(w.x / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
-  w.lunge *= 0.84;
   if (now() < (w.next || 0)) return;
   const r = topRow(cut, col);
   if (r < 0 || !isDust(at(cut, col, r)) || roomOnBoard(w) < 1) { w.cutClaim = null; return; }
@@ -2453,7 +2451,6 @@ function takeMess(w, c) {
   // creeping a fraction of a pixel a frame with its lunge pinned at full.
   w.x = Math.round(w.x / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
-  w.lunge *= 0.84;
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);
     w.lunge = 1;
@@ -2509,7 +2506,6 @@ function minerWork(w, c) {
     // every few seconds. It read as a glitch, not a posture; the amble and the
     // sway carry the standing-about on their own.
     w.y = climbTo(w, standOn(surf));
-    w.lunge *= 0.82;
     w.next = now + minerMs();
     return;
   }
@@ -2540,7 +2536,6 @@ function minerWork(w, c) {
 
   const col = colAtX(w.x + WORKER / 2);
   const surf = rockTopY(col);
-  w.lunge *= 0.82;
   // Where it is standing, climbed to rather than assigned. The bob and the
   // swing go on top of the foot, not into it: they are what the body is
   // doing, and easing them would damp them into nothing.
@@ -3381,6 +3376,11 @@ export function updateWorkers(now, dt) {
   // floor and the surface of the hill.
   const c = { now, dt, zone, taken, muckTaken, cutTaken, rockTaken };
   for (const w of S.workers) {
+    // A swing settles, wherever the body spends this frame. Whoever swings sets
+    // the lunge to 1 and nobody eases it themselves -- see `LUNGE_EASE`, and the
+    // janitor that used to be dragged from one patch of muck to the next at full
+    // lunge by the branches that forgot.
+    if (w.lunge) w.lunge *= LUNGE_EASE;
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }
     if (!done) jobOf(w).work(w, c);
