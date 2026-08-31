@@ -15,8 +15,9 @@ import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
+import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance, kitFull } from './upgrades.js';
+import { rebalance, kitFull, commutePace } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
@@ -158,6 +159,17 @@ export function stepFarmhand(w, now, dt, c = null) {
     // stand beside the plot, not on top of it, so the crop can be seen growing
     const target = plotX(w.plot) - WORKER - P * 2;
     const d = target - w.x;
+    // From further than the row itself, this is a trip and it goes by route at
+    // a trip's pace. FARM_WALK is the amble from one plot to the next and was
+    // being used for the whole way home: a farmhand carried across the world by
+    // a shovelling errand crawled back at sixty-five pixels a second, for a
+    // minute and a half, straight over the mouth of the hole -- no route, so no
+    // ladder, a walk on whatever happened to be under it. The route also puts
+    // the crossing back on the ladders where there is one to cross.
+    if (Math.abs(d) > P * 12) {
+      if (keepTo(w, target, ways().yard) && stepRoute(w, commutePace())) return;
+      w.route = null;
+    }
     w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
     if (Math.abs(d) < 1) w.goal = 'tend';
     return;

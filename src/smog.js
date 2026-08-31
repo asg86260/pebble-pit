@@ -1618,7 +1618,14 @@ export function nearestMuck(wx, taken, hand) {
   // because here is where a claim is made and all five of them claim through it.
   // It tests `overPitMouth`, the same predicate the hauler's own pit branch
   // tests, so the two sides cannot drift apart.
-  const canDescend = hand && hand.type === 'hauler';
+  // A hauler -- and a janitor. The gate was written when the hauler's own pit
+  // branch was the only way down; a mess is reached by route now, and the hole
+  // is on the ways like everywhere else. What kept the janitor out was only
+  // this line -- and poop is the one mess nobody else may shift, so what a body
+  // left on the pile (bodies work down there, and cross it) lay in the hole for
+  // the rest of the run with the janitor loitering at its shed: barred here,
+  // while every hauler that could walk to it was barred by `shiftable`.
+  const canDescend = hand && (hand.type === 'hauler' || hand.type === 'janitor');
   const m = muckCols();
   const here = c => { let n = 0; for (const s of mine) n += s[c] || 0; return n; };
   const home = colAt(wx);

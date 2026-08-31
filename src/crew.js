@@ -19,7 +19,7 @@ import { spawnChip, bell, aim } from './dust.js';
 import { tidyStep, TIDY_ELBOW } from './tidy.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate,
-         roomAt, rebalance } from './upgrades.js';
+         roomAt, rebalance, commutePace } from './upgrades.js';
 import { KIT_JOBS, TYPE_OF } from './kit.js';
 import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop,
          ways, climbTo, plant, inWorking, footing, solidNear, SOLID } from './route.js';
@@ -1493,9 +1493,10 @@ function retask(w, type) {
 // One frame of that walk. Nothing else happens on the way -- it does not mine,
 // carry, tend, research or cut until it is standing where the job is.
 // The pace a body crosses the yard at when it has been put on something else.
-// Its own legs, hands free -- it is carrying nothing -- with COMMUTE_PACE as the
-// floor so an unupgraded crew is no slower at it than it ever was.
-export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
+// Its own legs, hands free. Lives in upgrades.js now so the stations can pace
+// their own long trips with it; re-exported here for everybody that always
+// imported it from the crew.
+export { commutePace } from './upgrades.js';
 
 // Up in the open rather than down a working: the one question the dodge, the
 // dance and the idle all want, and it is asked of where the body is rather than

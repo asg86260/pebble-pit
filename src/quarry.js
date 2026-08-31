@@ -26,7 +26,7 @@ import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
-import { rebalance, kitFull } from './upgrades.js';
+import { rebalance, kitFull, commutePace } from './upgrades.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 
@@ -394,7 +394,16 @@ export function stepQuarrier(w, now, ctx = null) {
 
   if (w.goal === 'down') {
     if (!keepTo(w, w.seat, ways().cut)) { w.goal = 'to'; return; }
-    if (stepRoute(w, QUARRY_WALK)) return;
+    // The dig-shuffle pace is for legs in the cut; a leg up in the open is a
+    // commute. A quarrier carried across the yard by a shovelling errand used
+    // to walk its whole way home at the shuffle -- a fifth of a walking pace,
+    // for however far the errand had taken it. Only up in the open: below the
+    // ground line everything keeps the shuffle, so nothing about the ladder,
+    // the descent or the fill-in behind the last body out moves by a frame.
+    const brisk = w.y + WORKER <= S.groundY + 1
+      && Math.abs(w.x - quarryFace()) > P * 50
+      && w.route && w.route[0] && w.route[0].along && w.route[0].along.key !== 'cut';
+    if (stepRoute(w, brisk ? commutePace() : QUARRY_WALK)) return;
     w.route = null;
     w.goal = 'work';
     w.dugAt = now;
@@ -409,7 +418,10 @@ export function stepQuarrier(w, now, ctx = null) {
   // one stone at a time, climbs out, and the quarry falls in behind it.
   if (w.goal === 'up') {                         // out, with the seam gone up before it
     if (!keepTo(w, rim, ways().yard)) { w.goal = 'work'; return; }
-    if (stepRoute(w, QUARRY_WALK)) return;
+    const briskUp = w.y + WORKER <= S.groundY + 1
+      && Math.abs(w.x - quarryFace()) > P * 50
+      && w.route && w.route[0] && w.route[0].along && w.route[0].along.key !== 'cut';
+    if (stepRoute(w, briskUp ? commutePace() : QUARRY_WALK)) return;
     w.route = null;
     w.goal = 'to';
     w.cell = null;                             // it is not digging anything now

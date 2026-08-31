@@ -18,7 +18,7 @@ import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-         FARM_CORES, QUARRY_CORES } from './config.js';
+         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
@@ -86,6 +86,15 @@ export const haulCap = (lvl = S.haulCarryLevel, gear = S.harnessLevel) => 1 + lv
 export const haulSpeed = (lvl = S.haulPaceLevel, gear = S.bootsLevel) =>
   HAUL_BASE * (1 + 0.3 * lvl + 0.45 * gear) * mult('haul');
 export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mult('haul'));
+// A trip's pace, for anybody making one. It lived in crew.js, and the stations
+// could not reach it -- crew.js imports them -- so each grew a private walking
+// speed tuned for its own few feet of ground: FARM_WALK for stepping to the
+// next plot, QUARRY_WALK for shuffling in the cut. Both were then used for
+// whole commutes, and a farmhand carried across the world by a shovelling
+// errand came home at a plot-shuffle: sixty-five pixels a second, ninety-five
+// seconds of crawling, cured by picking the body up and dropping it. A trip is
+// a trip, whoever makes it.
+export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
 // that made every miner in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
