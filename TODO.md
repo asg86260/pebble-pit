@@ -151,11 +151,30 @@ the pile-full mark. Build it in stages that each leave the game playable.
 
 ---
 
+## 5a. The stuck yard -- FIXED
+
+**Status:** fixed, from a player's save (test/fixtures/stuck-yard.json, and the
+check that loads it). Four defects lined up: the fall rule knocked climbers off
+the tall rock's sheer toe and off the full pit's banked pile (climbTo stamps an
+active ascent now, and the fall rule honours it); a body walking the brimming
+pile read as standing on the yard a body's height below (wayAt answers the pile
+now); a fall's landing re-tasked the body home across the world with its muck
+claim still held (a landing resumes a shovelling errand, and a retask releases
+any claim); and every hauler in the yard stood in a stack at the belt's post
+(one tender now, ties broken by roster order). None of it showed on the small
+fresh yards the other checks build, which is why the save is the fixture.
+
+---
+
 ## 5. Workers jitter on the rock's flank during a muck clear-up
 
 **Status:** diagnosed to one commit and one mechanism; the obvious fixes are
 measured and both trade it for a worse regression. Needs one more question
 answered before it can land.
+
+**Update:** the 5a fixes halved this (264 -> 130 cycles/min) by ending the
+knock-offs, but the bed9ba5 mechanism below still stands and so does its open
+question.
 
 **The symptom.** During and after a rain, bodies shovelling the hill bounce at
 its flank -- ease up a few pixels a frame, snap down 8-10px, repeat, about three

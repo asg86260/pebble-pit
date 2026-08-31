@@ -1217,6 +1217,27 @@ function stepTender(w, now) {
   const spec = specOf(key);
   if (!spec) return false;
 
+  // One machine, one tender. This used to catch every body of the trade: the
+  // machine caps its station at one, but nothing capped how many walked to the
+  // post -- so a yard carrying nine haulers when the belt was bought parked all
+  // nine at its post for the rest of the run, standing in a stack, while the
+  // weather's muck -- chiefly the haulers' job -- lay where it fell. Whoever is
+  // nearest the post is the tender this frame; everybody else answers to the
+  // yard's ordinary work, exactly as if the machine were not theirs to mind.
+  const post = spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P;
+  const mine = Math.abs(w.x - post);
+  const me = S.workers.indexOf(w);
+  for (let i = 0; i < S.workers.length; i++) {
+    const o = S.workers[i];
+    if (o === w || o.type !== w.type) continue;
+    if (o.walking || o.inside || o.aloft || o.lifted || o.falling || o.looUntil) continue;
+    const d = Math.abs(o.x - post);
+    // Nearer takes it; a dead heat goes to whoever is first in the roster. Nine
+    // bodies parked on the same pixel are all exactly as near, and without the
+    // tie-break every one of them concluded it was the tender.
+    if (d < mine - 0.5 || (Math.abs(d - mine) <= 0.5 && i < me)) return false;
+  }
+
   // Down a hole and needing to be up top. A body caught by the lever while it is
   // still on the floor of the cut has to *climb out* -- assigning it `walkY`
   // lifted it straight up through the wall, which is the one thing this yard
@@ -1403,6 +1424,13 @@ function errand(w, job, what) {
 // job is on that job as far as the books are concerned. What it does not do is
 // any of the work, until it gets there.
 function retask(w, type) {
+  // Off the errand, off its claim. A re-tasked body is commuting, and a commute
+  // owns it until it arrives -- a muck column it was walking to stays barred to
+  // the whole crew for as long as the claim rides along. Claims are cheap and
+  // re-picked in a frame; a held one with nobody coming is the deadlock every
+  // stuck-yard report in TODO.md ends at.
+  w.muckAt = null;
+  if (w.goal === 'muck') w.goal = null;
   // Off the sky and down. A wizard is the one body here that can be stood down
   // while it is four hundred pixels up, and whatever it is put on next reads its
   // height as the ground it is standing on -- so it has to come down before it
@@ -1909,8 +1937,20 @@ function fall(w) {
     S.dirty = true;                         // the hat is on its own arc already
     return;                                 // it is in no state to be given a job
   }
-  // Straight back to it if this is where it works, and a walk if it is not.
+  // Straight back to it if this is where it works, and a walk if it is not --
+  // unless it fell in the middle of a shovelling errand, in which case the
+  // errand is still its and it picks the trip up from where it came down.
+  //
+  // Falls are routine now, not catastrophes: a full pit's pile undulates, and a
+  // body crossing it steps off a two-cell dip and lands a body's height lower
+  // on the same pile. Re-tasking on every landing sent that body home across
+  // half the world, its claim still held so nobody else could take the patch,
+  // and its errand marched it straight back to the same dip -- a lap of the
+  // yard per fall, for ever, which from outside is "the whole crew is stuck".
+  // The mess stage steers a body with a claim on every frame, so all a landing
+  // has to do is drop the stale route and let it.
   if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
+  else if (w.goal === 'muck' && w.muckAt != null) w.route = null;
   else retask(w, w.type);
 }
 
@@ -3099,9 +3139,23 @@ const STAGES = [
     // as it comes into the world; treating that settling-in as a fall dropped
     // newborns out of the sky with their velocities zeroed, and a warm-up's
     // worth of hat errands never happened.
+    // ...and not a body scaling a face. `climbTo`'s wall rule holds a body at
+    // the foot of anything steeper than a walk and leads it up by the feet, and
+    // for the length of that climb the surface under it really is a long way
+    // down -- that is what climbing a wall looks like. It was read as
+    // unsupported, knocked off at five cells, landed, was re-tasked home by the
+    // landing, and sent straight back by its errand: on any rock whose toe
+    // stands taller than five cells -- every boulder past the mid game -- the
+    // whole crew shuttled between their stations and the flank for ever, and
+    // the mess on the hill was never cleared, every column of it claimed by a
+    // body that could not get up to it. The stamp is this frame's or last's,
+    // written by the one climber in the game, so a body genuinely dropped --
+    // ground mined out from under it, a ledge walked off -- has no stamp and
+    // falls exactly as it did.
     if (!w.falling && !w.lifted && !w.aloft && !w.floating && !w.inside &&
         w.jigAt == null && onYard(w) && (w.lived || 0) > 4000 &&
         !(w.route && w.route[0] && w.route[0].climb) &&
+        S.tick - (w.scaleAt ?? -9) > 2 &&
         surfaceUnder(w) - w.y > P * 5) {
       w.falling = true;
       w.vy = 0;

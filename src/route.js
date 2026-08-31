@@ -291,6 +291,17 @@ export function wayAt(x, y, all = ways()) {
   // over the lip: it is on the side it stepped off on, which is the side the
   // greater part of it is standing over. See `floorWay`.
   const on = floorWay(x, all);
+  // A body standing at the height of the pile, with the pile under it, is ON
+  // the pile -- the hole's own way, the one a hauler crosses a full pit by.
+  // It used to be read as being on the yard, which is right for a body at the
+  // head of a ladder with the pile far below and wrong for a body walking a
+  // pile banked up to the brim: the yard's surface is then a body's height
+  // under its feet, and the fall rule -- which asks this very function where
+  // the body is standing -- read the crossing as five cells of nothing and
+  // knocked it into the hole it was already walking over. Landed, it was
+  // re-tasked home by the landing, sent straight back by its errand, and
+  // crossed into the same fall for ever.
+  if (on === all.hole && Math.abs(feet - standTop(x, on.at)) <= P * 2) return on;
   return on === all.hole ? all.yard : on;
 }
 
@@ -449,6 +460,17 @@ export const routeFor = (w, toX, toWay = null) => {
 // caller naming a bare x means by it is the lip it would stand at.
 const openFloor = (x, all) => {
   const on = floorWay(x, all);
+  // A body standing at the height of the pile, with the pile under it, is ON
+  // the pile -- the hole's own way, the one a hauler crosses a full pit by.
+  // It used to be read as being on the yard, which is right for a body at the
+  // head of a ladder with the pile far below and wrong for a body walking a
+  // pile banked up to the brim: the yard's surface is then a body's height
+  // under its feet, and the fall rule -- which asks this very function where
+  // the body is standing -- read the crossing as five cells of nothing and
+  // knocked it into the hole it was already walking over. Landed, it was
+  // re-tasked home by the landing, sent straight back by its errand, and
+  // crossed into the same fall for ever.
+  if (on === all.hole && Math.abs(feet - standTop(x, on.at)) <= P * 2) return on;
   return on === all.hole ? all.yard : on;
 };
 
@@ -607,7 +629,26 @@ export function climbTo(w, want) {
   // that is a different length at thirty frames a second than at sixty.
   // `frame-rate.test.mjs` caught exactly that, the hour it was written.
   const rise = -d;                        // how far UP the feet still have to come
-  if (rise > step) w.x = was;
+  // Going up at all is climbing, and a climbing body is not an unsupported one.
+  // The wall branch below stamps the sheer case, but a climber's feet also lag
+  // on any slope steep enough that a frame's walk outruns a frame's ease --
+  // the flank of a full pit's pile, the toe of a big hill -- and the fall rule
+  // read that lag as five cells of nothing and knocked the climber off ground
+  // it was in the middle of mounting. The stamp says: these feet are being led
+  // up a face by the one climber in the game, this very frame.
+  if (rise > 0.5) w.scaleAt = S.tick;
+  if (rise > step) {
+    w.x = was;
+    // And say so, on the body, with this frame's number. A wall climb holds the
+    // body at the foot of the face with its feet leading up it, which from the
+    // outside is indistinguishable from the thing the fall rule exists to catch:
+    // a body high over the ground with nothing under it. The fall rule exempts a
+    // ladder because a climb leg names itself; a face has no leg, so this is the
+    // face naming itself. A stamp rather than a flag, because a flag would need
+    // clearing by every mover that ends a climb, and a stale one would hold a
+    // genuinely dropped body in the air.
+    w.scaleAt = S.tick;
+  }
   // There is deliberately NO mirror of that rule facing down. It was tried --
   // hold the step whenever the ground falls away faster than the feet follow --
   // and seven checks failed inside the minute: walks legitimately stride down
