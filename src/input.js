@@ -439,9 +439,12 @@ document.getElementById('panel').addEventListener('pointerleave', e => {
 addEventListener('keydown', e => {
   // ctrl+R is the browser reloading, not the player asking for a new game
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  // and a bare r wipes a run with no way back, so it stays a dev shortcut: what
-  // a player gets is the reset button, which asks twice
-  if (import.meta.env.DEV && (e.key === 'r' || e.key === 'R')) reset();
+  // There is no reset key. There used to be a bare r, dev builds only, and it
+  // wiped a run with no way back for anybody playing off the dev server -- one
+  // slip of a finger reaching for t or e. Erasing everything is the one act in
+  // this game that must never be quicker than two deliberate clicks, so the
+  // armed button in the corner is the whole of it. The checks reset through
+  // __reset, which never went through the keyboard.
   // The yard stops where it is. Nothing is saved, nothing is skipped: the clock
   // simply does not advance, so a held game comes back exactly where it was left.
   if (e.code === 'Space' || e.key === ' ') {
