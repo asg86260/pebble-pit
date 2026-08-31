@@ -2069,7 +2069,12 @@ function minerWork(w, c) {
     const idle = now / 1000 * IDLE_BEAT + w.ph;
     w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
     const surf = rockTopY(colAtX(w.x + WORKER / 2));
-    w.y = climbTo(w, standOn(surf)) - (Math.sin(idle) > 0.9 ? P : 0);
+    // No straightening-up hop. There used to be a whole cell of it -- the body
+    // rose 6px the frame its sway crossed a threshold and dropped 6px when it
+    // crossed back, which at these beats is an instant third-of-a-body jump
+    // every few seconds. It read as a glitch, not a posture; the amble and the
+    // sway carry the standing-about on their own.
+    w.y = climbTo(w, standOn(surf));
     w.lunge *= 0.82;
     w.next = now + minerMs();
     return;
@@ -2160,7 +2165,9 @@ function janitorWork(w, c) {
   // `IDLE_PACE` is the speed of loitering and belongs to loitering.
   w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
            * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
-  w.y = stand(w) - (Math.sin(sway) > 0.92 ? P : 0);   // and it straightens up
+  // and its feet stay on the ground -- the straightening-up hop is gone, for
+  // the same reason the miner's is: see the note there.
+  w.y = stand(w);
 }
 
 // Carrying, which is the job with no station: the dust is wherever it fell, so
