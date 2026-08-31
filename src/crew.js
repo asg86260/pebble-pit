@@ -3071,7 +3071,38 @@ const STAGES = [
   w => w.lifted === true,
 
   // let go of, and on its way down
-  w => { if (!w.falling) return false; fall(w); return true; },
+  w => {
+    // An unsupported body FALLS. The climber's ease is for feet following
+    // ground that is there; when the ground is not -- the rock finished under
+    // a gang standing on it, a column mined out, a stroll off a ledge -- the
+    // ease drew a body gliding gently down through open air, which is the
+    // reported "floating off the rock". More than a couple of cells of nothing
+    // under the feet is not a climb, it is a drop, and gravity takes it. A
+    // body on a ladder is the exception: a climb leg holds it over its way's
+    // floor on purpose, rungs are what it is standing on.
+    // The bar sits above every deliberate jump in the yard -- the dance's hop
+    // is three cells, the swings and bobs less -- and a dancing body is let
+    // alone entirely: its height IS the animation. What is left above five
+    // cells of nothing is ground that genuinely is not there.
+    // And only under the open sky. A body down a working stands on its way's
+    // own floor, which `fall` knows nothing about -- its landing is the yard's
+    // surface, so a quarrier tripped mid-dig was yanked UP through the wall
+    // onto the bridge. The reported float is bodies over the yard and the
+    // hill; the holes keep their ladders and their eases.
+    // And not in its first moments. A fresh body is born at its station's own
+    // height -- a miner at the heart of the rock -- and eases onto the surface
+    // as it comes into the world; treating that settling-in as a fall dropped
+    // newborns out of the sky with their velocities zeroed, and a warm-up's
+    // worth of hat errands never happened.
+    if (!w.falling && !w.lifted && !w.aloft && !w.floating && !w.inside &&
+        w.jigAt == null && onYard(w) && (w.lived || 0) > 4000 &&
+        !(w.route && w.route[0] && w.route[0].climb) &&
+        surfaceUnder(w) - w.y > P * 5) {
+      w.falling = true;
+      w.vy = 0;
+      w.vx = 0;
+    }
+    if (!w.falling) return false; fall(w); return true; },
 
   // Seeing stars. A body shaken about does nothing at all until they clear --
   // it used to be handed its job back the instant its feet touched, so the
