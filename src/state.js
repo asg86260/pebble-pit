@@ -39,6 +39,7 @@ export const S = {
   boulder: [],            // rows of ints: 0 empty, else the rock still stacked there
   gw: 0, gh: 0,           // its size in cells
   rockTops: [],           // topmost rock cell per column, for the crew to stand on
+  rockSand: null,         // and what is lying on top of it: a stack of shades per column
   tick: 0,                // frames, for the things not worth doing in all of them
   floorGrains: 0,         // dust lying about the yard, counted now and then
   floorMarks: [],         // and where anything in it that is not dust has come to rest

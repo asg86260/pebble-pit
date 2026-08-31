@@ -434,6 +434,23 @@ it on its own rhythm and shifting its weight between times, because a farm shoul
 whether or not anything is ripening this second. Either way the body is not carrying dust, which is what makes assigning one a
 decision rather than a free tap.
 
+**A hand keeps the row, not one furrow.** *(built)* Half of a farmhand's tending goes into the plot
+it is standing over and half is spread evenly over the others — `TEND_HERE` in config.js. It used to
+all land under the body, which meant a farm with one hand on it was one stalk and six patches of
+bare dirt for as long as you left it there: the row read as **abandoned** rather than as slow, and a
+single assignment felt wasted instead of cheap. Somebody walking a farm all day waters what it
+passes.
+
+The split is exact, so the pace is untouched: a hand is worth one plot's worth of tending in the
+time one plot takes, wherever that tending lands, and the farm's output is its headcount and
+nothing else. A full complement is one hand to each plot — which is what `pickPlot` arranges and
+what `capOf('farmhands')` allows — and each plot then takes its own body's half plus an even cut of
+everyone else's, which comes to one whole share, exactly where the old rule landed. One hand on
+seven plots brings all seven on at about a seventh of the pace (measured: 12% of a full crew's
+output over three minutes, the shortfall on 1/7 being the walking a lone keeper does that seven
+standing bodies do not). Slower, which is why you assign more than one; never dead, which is why
+assigning one is worth doing. Nothing still grows with nobody on the farm at all.
+
 ## Economy
 
 | | Mark | Source | Spends on |

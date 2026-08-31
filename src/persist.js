@@ -277,6 +277,10 @@ export function persist() {
     recycled: S.recycled,
     muck: S.muck || [],
     poop: S.poop || [],
+    // and what is lying on top of the rock, which is a layer like the two above
+    // and belongs to the rock the save already writes down. Column by column,
+    // bottom grain first.
+    rockSand: (S.rockSand || []).map(a => (a || []).join(',')),
     pot: S.pot && { ...S.pot },
     // A pot that was still pouring when the tab shut is a bet that was made. The
     // sand itself is not saved -- the table's grid never is -- so what comes back
@@ -554,6 +558,11 @@ export function restore() {
   S.rainFor = 0;
   S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
   S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
+  // A save from before the rock was something dust could lie on has none, and
+  // comes back to a bare hill.
+  S.rockSand = Array.isArray(s.rockSand)
+    ? s.rockSand.map(a => String(a || '').split(',').filter(Boolean).map(Number))
+    : null;
   // And the sky itself, not only the number for it. The haze was being written
   // down and read back while the motes it stands for were not: `settleCount`
   // only ever takes motes away in play -- one arrives by climbing off a swing,
@@ -727,6 +736,7 @@ export function reset(fresh = true) {
   S.scrubBank = 0;
   S.muck = [];
   S.poop = [];
+  S.rockSand = null;
   seedSmog();
   S.casinoBoardOpen = false;
   S.pot = null;

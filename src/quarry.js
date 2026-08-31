@@ -17,7 +17,7 @@ import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
-import { at, put, wakeGrid, isDust, surfaceY } from './grid.js';
+import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
 import { mult } from './lab.js';
@@ -28,6 +28,7 @@ import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
 import { rebalance, kitFull } from './upgrades.js';
 import { rand } from './rng.js';
+import { tidyStep } from './tidy.js';
 
 // how long a trip takes, at this pace
 export const quarryMs = (lvl = S.quarryPaceLevel) =>
@@ -274,6 +275,31 @@ export function cutTop(x) {
   return surfaceY(cut, c) + cut.p;
 }
 
+// The floor of the cut, as a patch the one tidying rule can work -- see tidy.js.
+// A quarrier between digs picks up the nearest grain that has fallen in on it
+// and throws it up over the rim onto the quarry's own heap, on the same arc a
+// seam takes: `tossOut` is what clears the rim, and dust and stone leave this
+// hole exactly the same way.
+//
+// The claim book it is handed is `cutTaken`, which is the haulers' book for the
+// same floor -- one book, so a quarrier and a hauler can never go for the same
+// column. See the pick in crew.js.
+export const cutPatch = () => ({
+  key: 'quarry',
+  cols: cut.cols,
+  colOf: x => colOf(cut, x),
+  xOf: c => cut.x + c * P + P / 2,
+  peek: c => { const r = topRow(cut, c); return r >= 0 && isDust(at(cut, c, r)) ? at(cut, c, r) : 0; },
+  take: c => {
+    const r = topRow(cut, c);
+    if (r < 0 || !isDust(at(cut, c, r))) return 0;
+    const v = at(cut, c, r);
+    put(cut, c, r, 0);
+    return v;
+  },
+  yOf: c => cut.y + (cut.rows - 1 - topRow(cut, c)) * P
+});
+
 // Back to a fresh cut: no dust, and the rock refilled to whatever the dig
 // depth is at the time it is called. Used when a save comes in, since the dig
 // depth it names has already been restored by the time this runs -- see
@@ -330,7 +356,7 @@ function tossOut(x, y, what = someFind(SHARD_CELL)) {
 }
 
 // one quarrier, one frame
-export function stepQuarrier(w, now) {
+export function stepQuarrier(w, now, ctx = null) {
   const rim = quarryFace();
 
   // Going down to work, and there is nothing here about a ladder.
@@ -472,7 +498,11 @@ export function stepQuarrier(w, now) {
   // Digging. Silt first: rain fills the quarry from the top, and it has to come out
   // before the ground under it does.
   if (throughQuarryMuck(1) <= 0) return;
-  if (now < w.next) return;
+  // Between digs, and only between them: what has fallen down the mouth is
+  // lying on the floor it is working, so it goes up over the rim on the same
+  // throw the seam takes. Behind the swing's own clock, so tidying never costs
+  // a cell -- see tidy.js.
+  if (now < w.next) { tidyStep(w, cutPatch(), ctx && ctx.cutTaken, now); return; }
 
   // A cell is somewhere you go, not something that happens wherever you are
   // standing. It picks one, walks to it, and digs when it gets there -- which is

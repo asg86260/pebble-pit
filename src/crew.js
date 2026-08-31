@@ -14,8 +14,9 @@ import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
 import { throwVel } from './hands.js';
-import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
+import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
+import { tidyStep, TIDY_ELBOW } from './tidy.js';
 import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
 import { KIT_JOBS } from './kit.js';
@@ -382,6 +383,7 @@ function settle(w) {
   w.routeWay = null;
   w.muckAt = null;
   w.cutClaim = null;
+  w.tidyAt = null;
   w.foot = null;
   w.footAt = null;
 }
@@ -1634,7 +1636,17 @@ function fall(w) {
     w.dizzyFor = 0;
     w.landedAt = w.x;                       // what it wobbles about
     // Whatever it was carrying, on the ground under it.
-    if (w.spill) { for (let i = 0; i < w.spill; i++) addGrain(floor, w.x + WORKER / 2, blocked); w.spill = 0; }
+    // Shaken loose, and it lands where the body is standing -- which, for a
+    // miner, is on top of the hill. The rock is a surface now, so what a shaken
+    // body drops there stays there instead of walking eighty columns out from
+    // under the footprint to find ground that would take it.
+    if (w.spill) {
+      for (let i = 0; i < w.spill; i++) {
+        const x = w.x + WORKER / 2;
+        if (!restOnRock(x, 1)) addGrain(floor, x, blocked);
+      }
+      w.spill = 0;
+    }
     // And its hat where it fell, to be picked up when the stars clear. It is
     // NOT put back on here: the body has to go and get it, the same as it has
     // to walk everywhere else.
@@ -2192,6 +2204,12 @@ function minerWork(w, c) {
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     w.next = now + minerMs() * (0.85 + rand() * 0.3);    // never quite in time
+  } else if (boulderAlive()) {
+    // Between swings, and never instead of one: a grain that came down on the
+    // hill is lying on the ground this body is working, so it goes on the rock's
+    // own heap on the same throw its spoil takes. See tidy.js, and `rockSand` in
+    // rock.js for what it is lying on.
+    tidyStep(w, rockPatch(), c.rockTaken, now);
   }
 }
 
@@ -2717,7 +2735,7 @@ const JOBS = {
   //
   // The rest of the yard they leave to the haulers.
   quarrier: {
-    work: (w, c) => stepQuarrier(w, c.now),
+    work: (w, c) => stepQuarrier(w, c.now, c),
     mess: {
       when: w => upTop(w) && (quarryMuck() > 0 || S.pileFull.quarry),
       // and back to the station when the mess is gone or the pile has been
@@ -2727,7 +2745,7 @@ const JOBS = {
   },
 
   farmhand: {
-    work: (w, c) => stepFarmhand(w, c.now, c.dt),
+    work: (w, c) => stepFarmhand(w, c.now, c.dt, c),
     mess: {
       when: w => upTop(w) && (plotMuck() > 0 || S.pileFull.farm),
       back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
@@ -2879,6 +2897,27 @@ export function updateWorkers(now, dt) {
   // hauler on their way down the ladder for it.
   const cutTaken = new Set();
   for (const w of S.workers) if (w.cutClaim != null) cutTaken.add(w.cutClaim);
+  // And the tidying claims, which are the same rule again on three more patches
+  // of ground -- the floor of the cut, the strip the plots stand on, and the
+  // surface of the hill. Held on the body between frames and rebuilt here WITH
+  // their elbows, for the reason written over the muck book above: a claim
+  // carried forward without its elbows is a reservation that lasts one frame.
+  //
+  // Two of the three join a book that already exists rather than opening one
+  // beside it. The cut's floor is fetched from by haulers as well, so a
+  // quarrier's claim goes in `cutTaken` and neither trade can pick a column the
+  // other has; the farm's strip is floor, so a hand's claim goes in `taken`
+  // beside the haulers' own. Only the rock has ground nobody else works.
+  const rockTaken = new Set();
+  const bookFor = w => w.type === 'quarrier' ? cutTaken
+                     : w.type === 'farmhand' ? taken
+                     : w.type === 'miner' ? rockTaken : null;
+  for (const w of S.workers) {
+    if (w.tidyAt == null) continue;
+    const book = bookFor(w);
+    if (!book) continue;
+    for (let k = w.tidyAt - TIDY_ELBOW; k <= w.tidyAt + TIDY_ELBOW; k++) book.add(k);
+  }
   // ...and the ground nobody may be *fetching from*, which is not the same rule
   // and used to be missing. A hauler ducks out of the way and then walks
   // straight back in, because what pulled it there was a column of dust it had
@@ -2902,9 +2941,10 @@ export function updateWorkers(now, dt) {
   for (const w of S.workers) was.set(w, w.x);
 
   // The frame, as one thing to hand about: the clock, its length, the ground a
-  // rock is coming down on, and the two books of claims that keep the crew from
-  // all setting off for the same cell.
-  const c = { now, dt, zone, taken, muckTaken, cutTaken };
+  // rock is coming down on, and the books of claims that keep the crew from all
+  // setting off for the same cell -- the yard's floor, the mess, the cut's own
+  // floor and the surface of the hill.
+  const c = { now, dt, zone, taken, muckTaken, cutTaken, rockTaken };
   for (const w of S.workers) {
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }

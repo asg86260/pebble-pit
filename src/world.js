@@ -348,6 +348,14 @@ export const blocked = c => {
 // What is left is the one thing that was never a matter of taste: a grain may
   // not come to rest inside a rock. The footprint moves with every boulder, so
   // it is asked of `rockLeft()` and `S.gw` rather than of anything remembered.
+  //
+  // Inside it, and not on top of it. The hill stopped blocking dust the day it
+  // got a surface of its own: a chip that comes down over the crest lands ON the
+  // outline as it has actually been mined and lies there until a miner throws it
+  // on the heap. That is `rockSand` in rock.js, and it is a layer above this
+  // grid rather than a column in it -- the same shape of answer the cut's mouth
+  // got. What this line still bars is the yard's own floor running in under the
+  // boulder's foot, which is not a surface at all.
   // The quarry's mouth is not barred any more either: a grain over the open cut
   // does not rest on the opening, it falls INTO it -- the chip loop intercepts
   // it into the cut's own grid, the way the pit has always taken its dust.
