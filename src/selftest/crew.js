@@ -64,7 +64,12 @@ export const TESTS = [
     run(3);
     const c = grab();
     await sleep(20);
-    for (let i = 0; i < 8; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); await sleep(30); }
+    // Waggled PAST the threshold, derived from it: n moves alternating sides is
+    // n-1 changes of direction, so the loop runs SHAKE_TURNS + 3 to clear the
+    // bar with margin. Written as the number 8 it silently stopped being a
+    // shaking the day the threshold moved to 8 -- seven turns, no stars.
+    const waggles = (await import('../config.js')).SHAKE_TURNS + 3;
+    for (let i = 0; i < waggles; i++) { point('pointermove', c.sx + (i % 2 ? 26 : -26), c.sy, 2); await sleep(30); }
     point('pointerup', c.sx, c.sy, 0);
     run(0.6);
     const dizzy = state();
