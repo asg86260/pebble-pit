@@ -1321,6 +1321,11 @@ export function stepMachines(now) {
     // frame so the clock cannot fall behind. There is nothing banked to pay out
     // the moment somebody wanders back into reach; it simply is not running.
     if (!tender) { r.beatAt = now + 200; continue; }
+    // Somebody is standing at it, this frame. The belt's band reads this to know
+    // whether to keep running -- a load already on it must not be gated on the
+    // machine having *bitten*, since the ground goes clean long before the last
+    // grain reaches the hole. See `stepBelt`.
+    r.mannedAt = now;
     tender.resting = false;                    // it is working, whatever it looks like
     if (!spec.ready()) { r.beatAt = now + 200; continue; }
 

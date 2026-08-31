@@ -24,7 +24,7 @@ import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { wireCut } from './quarry.js';
-import { spawnChip, spawnSpoil } from './dust.js';
+import { spawnChip, spawnSpoil, stepBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
@@ -181,6 +181,10 @@ export function step() {
   }
 
   const f = frames();
+  // The belt's band, before the chips: a load that runs off the head becomes a
+  // chip this same frame, and it should fall on the frame it left rather than
+  // hanging in the air for one.
+  stepBelt(now, f);
   for (let i = S.chips.length - 1; i >= 0; i--) {
     const ch = S.chips[i];
     // however long this frame was, in the sixtieths these speeds are written in

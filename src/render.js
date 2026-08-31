@@ -32,7 +32,7 @@ import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX, rockShare, sandTopY } from './rock.js';
-import { beltFrom, beltTo, beltY } from './dust.js';
+import { beltFrom, beltTo, beltReach, beltPost, beltY } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
@@ -3257,16 +3257,26 @@ export function drawBelt() {
   const from = beltFrom(), to = beltTo(), y = beltY();
   ctx.fillStyle = '#000';
   ctx.fillRect(from, y, to - from, P);                   // the band
-  for (let x = from; x < to; x += P * 8) {               // and what holds it up
+  // And what holds it up -- only as far as there is ground to stand on. The head
+  // overhangs the mouth of the hole, so a leg out there would be a leg planted
+  // in mid-air over a hundred feet of nothing.
+  for (let x = from; x < beltReach(); x += P * 8) {
     ctx.fillRect(x, y + P, P, S.groundY - y - P);
   }
-  // The load on it, moving. White cut out of the band, a few cells apart, so
-  // what you see is the band running rather than a black bar sitting there.
+  // The band's own marks: white cut out of it, a few cells apart, running. This
+  // is the *band* moving and nothing else -- it used to stand in for the load as
+  // well, back when the load was thrown over the top of it in one arc and never
+  // touched it. What is actually being carried is drawn below, as grains.
   const t = stroke('belt', 900);
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
     ctx.fillRect(x, y, P, P);
   }
+  ctx.fillStyle = '#000';
+  // What is riding it: each load a grain, drawn as whatever it is, sitting on
+  // the band. Same call a chip in the air gets, because it is the same grain --
+  // it was one a moment ago and it will be one again off the head.
+  for (const b of S.belt) drawMark(b.s, Math.round(b.x) + P / 2, Math.round(b.y) + P / 2);
   ctx.fillStyle = '#000';
 }
 
@@ -3314,7 +3324,9 @@ const STACKS = {
   jaw:    () => ({ x: jawX() + P * 3, y: jawY() - P * 2 }),
   ram:    () => ({ x: ramX() + P, y: S.groundY - P * 6 }),
   tiller: () => ({ x: tillerAt() + P, y: walkY(tillerAt() + WORKER / 2) + WORKER - P * 4 }),
-  belt:   () => ({ x: beltTo() - P * 2, y: beltY() - P * 3 })
+  // At the lip end, over the last leg that has ground under it -- not at the
+  // head, which hangs out over the hole.
+  belt:   () => ({ x: beltPost(), y: beltY() - P * 3 })
 };
 
 export function stepMachineSmoke(now) {

@@ -1224,6 +1224,28 @@ fills the rock's pile in well under a second and then stands down waiting to be
 carried, so haulage is the bottleneck exactly when the works becomes worth
 watching. Tier three promised carts from the beginning.
 
+**And the dust rides it.** This is the difference between a belt and a picture of
+one, and the first build got it wrong: the bite threw each grain the whole length
+of the yard in one arc, over the top of a band it never touched, and what you saw
+travelling along the band was a white pattern painted on it. Delete the belt,
+leave a catapult, and not a number changes.
+
+So a grain the belt picks up is a **load** -- `{ x, y, s }` in `S.belt` -- and a
+load is not a chip. A chip is thrown once and left to gravity; a load is carried,
+and the machine decides where it goes next on every frame. It has two legs: the
+scoop takes it from wherever it lay to the band, and then the band runs it to the
+head. The lift is a *climb*, not a throw, and that is forced rather than chosen --
+the heap between the rock and the hole is routinely deeper than the belt is tall,
+and a grain tossed at the band from inside a heap lands back on the heap. It also
+means the scoop reaches *down* to a grain lying on top of a heap above the band,
+which is the same two lines of code.
+
+The head **overhangs the mouth of the hole**, so the load runs off the end and
+falls in. A belt that stopped short of the lip would need its last two cells
+thrown, and a load thrown off the end of a conveyor is the bouncing this replaced.
+Nothing stands out there: the tender's post is on the near lip, and the trestles
+stop where the ground does.
+
 It is also the one machine not priced away from its own station's coin, because
 carrying has not got one -- a hauler makes nothing, it moves what everybody else
 made -- so it is priced in all three grounds at once, which is the truest thing a

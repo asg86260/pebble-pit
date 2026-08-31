@@ -1198,6 +1198,86 @@ group('a belt comes back running', async () => {
   ];
 });
 
+// The dust *rides* the belt. This is the check the drawing cannot make for
+// itself: before this, the bite threw each grain the whole length of the yard in
+// one arc, over the top of a band it never touched, and the load you saw moving
+// along it was a white pattern painted on the band. Nothing about the numbers
+// would have changed if the belt had been deleted and a catapult left in its
+// place -- which is precisely what it was.
+group('a grain rides the belt rather than being thrown over it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1);
+  window.__machine('belt', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+
+  // A heap on the open ground well back along the run, so a load has a good
+  // stretch of belt to travel and cannot be mistaken for one that started at the
+  // hole. Inside the run: the belt's tail is out by the rock and ground beyond it
+  // is ground the belt does not reach, which is a fact about the machine and not
+  // a bug to be tested for here.
+  const s0 = state();
+  for (let i = 0; i < 120; i++) window.__pile(s0.pitX - 500 + (i % 40) * 6, 3);
+  run(1);
+  const before = state();
+
+  // Part-way through: there is dust on the band, out along it, and it is not in
+  // the air. The old belt would have had every grain in `chips` and none here.
+  let onBand = 0, seen = [];
+  for (let i = 0; i < 30; i++) {
+    run(0.1);
+    const s = state();
+    if (s.belt > onBand) onBand = s.belt;
+    if (s.beltX.length) seen.push(s.beltX[0]);
+  }
+  // and it all arrives
+  run(10);
+  const after = state();
+  window.__crew(0, 0);
+
+  const moved = seen.length > 1 && seen.some(x => x !== seen[0]);
+  return [
+    ok(before.floor > 0, 'there is dust on the ground', `${before.floor} grains`),
+    ok(onBand > 0, 'and some of it is on the band, being carried', `${onBand} loads`),
+    ok(moved, 'and what is on the band is moving along it',
+       seen.slice(0, 6).join(' -> ')),
+    ok(after.belt === 0, 'the band empties when the ground does', `${after.belt} left on it`),
+    ok(after.stored > before.stored, 'and the hole has it', `${before.stored} -> ${after.stored}`),
+    ok(after.floor < before.floor, 'and the ground has not',
+       `${before.floor} -> ${after.floor}`)
+  ];
+});
+
+// A load already on the band is not the machine's *bite*, so it must not be
+// gated on one: the ground goes clean long before the last grain reaches the
+// hole, and a band that stopped when there was nothing left to pick up would
+// leave a row of grains hanging in the air over the yard.
+group('the last load off a swept yard still reaches the hole', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 1);
+  window.__machine('belt', { bought: true, on: true });
+  window.__clearFloor();
+  run(4);
+  const s0 = state();
+  for (let i = 0; i < 40; i++) window.__pile(s0.pitX - 500 + (i % 20) * 6, 2);
+  const before = state();
+  // long enough that the ground is bare well before the end of it
+  run(20);
+  const after = state();
+  window.__crew(0, 0);
+  return [
+    ok(after.floor === 0, 'the ground is bare', `${after.floor} left`),
+    ok(after.belt === 0, 'and nothing is left standing on the band', `${after.belt}`),
+    ok(after.stored >= before.stored + before.floor,
+       'every grain that was on it got there',
+       `${before.floor} on the ground, ${before.stored} -> ${after.stored} in the hole`)
+  ];
+});
+
 // It is priced and gated like the rest, but on the lip's own gear.
 group('the belt waits for the whole of the lip to be bought out', async () => {
   window.__reset();

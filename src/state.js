@@ -77,6 +77,7 @@ export const S = {
 
   // --- dust in the air and on the cursor ---
   chips: [],              // knocked loose, still flying
+  belt: [],               // riding the belt, between the ground and the hole
   paid: [],               // flying out of the pit to the bench, on the way to being spent
   motes: [],              // the load drifting round the cursor
   trail: [],              // recent cursor positions, for the throw

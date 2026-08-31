@@ -494,6 +494,11 @@ export const snapshot = () => ({
 
   // The casino chips in flight.
   chips: S.chips.length,
+  // What is riding the belt, and how far along. A check that wants to know the
+  // dust *travelled* rather than being thrown over the top of the band has to be
+  // able to see it on the band.
+  belt: S.belt.length,
+  beltX: S.belt.slice(0, 8).map(b => Math.round(b.x)),
   chipShades: S.chips.slice(0, 8).map(c => c.s),
   chipX: S.chips.slice(0, 8).map(c => Math.round(c.x)),
 

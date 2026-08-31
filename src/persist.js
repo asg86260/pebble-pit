@@ -660,6 +660,7 @@ export function reset(fresh = true) {
   S.shutters = [];
   S.shutterAt = 0;
   S.chips = [];
+  S.belt = [];                       // and what was riding the belt, for the same reason
   S.paid = [];
   S.stored = 0;
   S.banked = 0;

@@ -6,7 +6,7 @@
 import { P, GRAV, WORKER } from './config.js';
 import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
-import { defineMachine } from './machines.js';
+import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs } from './upgrades.js';
 import { pitFull } from './pit.js';
@@ -77,16 +77,105 @@ export function aim(x, y, land, size) {
 // why it has no site of its own and stands along the run instead.
 //
 // Its tender stands at the lip, where the haulers already gather.
+//
+// Three x's, and they are three different things, which is why they are three
+// functions rather than one with arithmetic done on it at each call site:
+//
+//   `beltFrom`  the tail, out by the rock, where the run starts.
+//   `beltTo`    the head, which **overhangs the mouth of the hole**. A belt that
+//               stopped short of the lip would need the last two cells thrown,
+//               and a load thrown off the end of a conveyor is the bouncing this
+//               replaced. It runs out over the hole and the load falls off it.
+//   `beltPost`  where the tender stands, which is on the near lip and nowhere
+//               near the head: the head is out over open air.
+//   `beltReach` the last ground it sweeps -- the near lip, not the head, since
+//               there is no ground under the head to pick anything off.
 export const beltFrom = () => Math.round((S.cx + P * 6) / P) * P;
-export const beltTo = () => Math.round((pit.x - P * 2) / P) * P;
+export const beltTo = () => Math.round((pit.x + P * 4) / P) * P;
+export const beltReach = () => Math.round((pit.x - P * 2) / P) * P;
+export const beltPost = () => beltReach() - WORKER - P;
 export const beltY = () => S.groundY - P * 5;
+
+// How fast the band runs, in world pixels a frame at sixty. Fast enough that a
+// load is plainly travelling rather than creeping, slow enough that you can
+// watch one go the length of the yard.
+export const BELT_PACE = P * 0.9;
+// And how fast the scoop lifts one out of the ground onto it. Quicker than the
+// band, because the climb is a couple of cells and the run is the whole yard.
+const BELT_LIFT = P * 0.7;
+
+// --- what is riding it ----------------------------------------------------------
+// A load is a grain and where it has got to: `{ x, y, s }`. It is **not a chip**,
+// and that is the whole of this feature. A chip is a thing in the air with a
+// velocity, thrown once and then left to gravity; a load is a thing being
+// carried, and where it goes next is decided by the machine every frame.
+//
+// It used to be a chip: the bite threw the grain the whole length of the yard in
+// one arc, over the top of a belt it never touched, and what you saw running
+// along the band was a white pattern painted on it. The belt was scenery with a
+// catapult behind it.
+//
+// A load has two legs and they are the same two lines of code. It is lifted --
+// the scoop takes it out of wherever it lay and puts it on the band, which is a
+// *climb* and not a throw, because the heap between the rock and the hole is
+// routinely deeper than the belt is tall and a grain tossed at the band from
+// inside a heap lands back on the heap. Then it rides, and the ride is the belt
+// doing its job.
+//
+// It is not saved. Neither are the chips (see `restore`), and for the same
+// reason: what is in the air at the moment you close the tab is a frame's worth
+// of dust, and a save format that carried it would be carrying it for ever.
+const bandY = () => beltY() - P;              // where a load sits: on top of the band
+
+// A grain leaves the ground and is on the machine from this moment. Wherever it
+// lay -- buried in a heap, or up on top of one well above the band -- the scoop
+// takes it to the band, down as readily as up.
+export function loadBelt(x, y, shade) {
+  S.belt.push({ x, y, s: shade });
+  S.dirty = true;
+}
+
+// One frame of the band. It runs while the belt is on and manned -- `mannedAt`
+// is stamped by `stepMachines`, which is the one place that knows whether
+// anybody is standing at it -- so a belt whose tender wanders off stops with its
+// load still on it, which is the rule every other machine keeps.
+//
+// It is not gated on the machine having *bitten* this frame: the ground goes
+// clean long before the last load reaches the hole, and a band that stopped when
+// there was nothing left to pick up would leave a row of grains hanging in the
+// air over the yard.
+export function stepBelt(now, f) {
+  if (!S.belt || !S.belt.length) return;
+  const m = machine('belt');
+  if (!m || !m.bought || !m.on || now - (m.mannedAt || 0) > 250) return;
+  const top = bandY(), head = beltTo();
+  for (let i = S.belt.length - 1; i >= 0; i--) {
+    const b = S.belt[i];
+    if (b.y !== top) {
+      // Still on the scoop. It creeps forward while it climbs, so the lift reads
+      // as a machine taking it up onto the band rather than a grain levitating.
+      const d = top - b.y;
+      b.y += Math.sign(d) * Math.min(BELT_LIFT * f, Math.abs(d));
+      b.x += BELT_PACE * 0.35 * f;
+      continue;
+    }
+    b.x += BELT_PACE * f;
+    if (b.x < head) continue;
+    // Off the end of the head, which is out over the mouth of the hole: it
+    // drops, carrying the band's speed forward with it, and the chip loop puts
+    // it in the hole exactly as it does everything else thrown at that hole.
+    S.belt.splice(i, 1);
+    spawnChip(b.x, b.y, BELT_PACE, 0, b.s);
+  }
+  S.dirty = true;
+}
 
 defineMachine('belt', {
   job: 'haulers',
   type: 'hauler',
   at: beltFrom,
   y: beltY,
-  tendAt: () => beltTo() - WORKER - P,
+  tendAt: beltPost,
   // A grain moved takes the same time a hauler's scoop does, divided by what the
   // belt is worth. `scoopMs` carries the lip's own ladders, so everything bought
   // for carrying still applies to the machine that replaced it.
@@ -98,7 +187,7 @@ defineMachine('belt', {
     // is for what is lying on the open ground between the rock and the hole,
     // which is where the rock's spoil lands and where a machine's output piles
     // up while it waits for somebody.
-    const from = beltFrom(), to = beltTo();
+    const from = beltFrom(), to = beltReach();
     const c0 = colOf(floor, from), c1 = colOf(floor, to);
     for (let c = c0; c <= c1; c++) {
       // The rock's own spoil and the bare ground between here and the lip. Not
@@ -114,13 +203,16 @@ defineMachine('belt', {
         const v = at(floor, c, r);
         if (!v) continue;
         put(floor, c, r, 0);
-        // Thrown along the belt and into the hole, so it is seen to travel
-        // rather than teleporting -- the same arc a hauler's tip uses.
+        // Onto the band above where it lay, and then it *rides*. It used to be
+        // thrown the whole way to the hole in one arc, which is a machine that
+        // lobs -- the belt was scenery with a catapult behind it, and the load
+        // you saw moving along the band was a white pattern painted on it. Now
+        // the pattern is the band and the grains on it are the grains: the scoop
+        // tosses one up, it comes down on the belt, and the belt carries it out
+        // over the hole and drops it in. See `loadBelt` and `stepBelt`.
         const x = floor.x + c * P;
         const y = bottomY(floor) - (r + 1) * P;
-        const land = to + P * 4;
-        const v2 = aim(x, y, land, P * 2);
-        spawnChip(x, y, v2.vx, v2.vy, v, land);
+        loadBelt(x, y, v);
         if (tender) tender.stored = (tender.stored || 0) + 1;
         S.dirty = true;
         return true;

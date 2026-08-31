@@ -72,8 +72,17 @@ const SCENES = {
   // trestles from the rock to the lip, its tender standing at the hole end, and
   // the ground under it being swept into it. Bought and running -- it has no
   // lever, so there is nothing to throw and nobody walks anywhere to start it.
-  belt: `${RICH} ${LIP} window.__buy('ram'); window.__buy('belt'); window.__fast(8);
-         window.__look(window.__state().pitX - 400);`,
+  // Deliberately not built on RICH: that tips ninety thousand dust into the hole,
+  // and a full hole stops the belt exactly as it stops a gang, so the scene came
+  // out with a stopped-station triangle over an empty band. It gets the coins and
+  // the sites it needs and leaves the hole room to take what the belt brings.
+  belt: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+         window.__grant({sparks:999, shards:999, spores:999}); ${LIP}
+         window.__buy('ram'); window.__buy('belt'); window.__fast(8);
+         window.__clearFloor();
+         (s => { for (let i = 0; i < 2400; i++)
+                   window.__pile(s.pitX - 1500 + (i % 240) * 6, 1); })(window.__state());
+         window.__look(window.__state().pitX - 620);`,
 
   // The two marks that hang under a station: the stopped triangle and the offer
   // diamond. Both want a station whose pile has filled and which has something
