@@ -1880,7 +1880,26 @@ export function shakeHeld(w, dx) {
 // how high the feet are and gets its answer from where the fall put them. So the
 // next errand routes down a flank and walks off, rather than the body being
 // dropped back to the ground line the moment it is given something to do.
-const landing = w => standTop(w.x, rockTop) - WORKER;
+// ...on the hill or the ground as it always did -- except over the mouth of
+// the hole, where the floor is the pile. `rockTop` knows nothing of the hole,
+// so a body falling over the mouth landed at the ground line: inside the pile
+// when the pile stood proud of it, in mid-air over the mouth when it did not.
+// Landed inside the pile, it read as standing on the yard, and its next route
+// to the patch ten pixels away went back across the yard and up the near
+// ladder -- the reported lap out along the pile, down to "ground level", back
+// to the yard and out again.
+//
+// Deliberately NOT the general "whatever way is over this spot": that was
+// tried, and a kitted gang mining deep notches fell through them to the ground
+// line instead of landing on the neighbouring rock the way `standTop` has
+// always caught them, and the rock's own throughput dropped by a quarter. The
+// hill keeps its old landing to the pixel; only the mouth changes.
+const landing = w => {
+  const mid = w.x + WORKER / 2;
+  const h = ways().hole;
+  if (h && mid > h.from && mid < h.to) return standTop(w.x, h.at) - WORKER;
+  return standTop(w.x, rockTop) - WORKER;
+};
 
 // one frame of that fall, and what happens when it stops
 function fall(w) {

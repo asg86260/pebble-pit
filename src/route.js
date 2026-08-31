@@ -301,7 +301,30 @@ export function wayAt(x, y, all = ways()) {
   // knocked it into the hole it was already walking over. Landed, it was
   // re-tasked home by the landing, sent straight back by its errand, and
   // crossed into the same fall for ever.
-  if (on === all.hole && Math.abs(feet - standTop(x, on.at)) <= P * 2) return on;
+  // Judged at the body's own middle rather than by `standTop`, and that is not
+  // a shortcut. `standTop` answers with the highest column under the body's
+  // width, which is right for where its feet come to rest and wrong for saying
+  // where it is standing: a body down in a one-body dip between two crests of
+  // pile read as two cells *below* the surface, was ruled off the pile, and its
+  // next route to a patch ten pixels away went back across the yard and up the
+  // near ladder -- the reported lap: out along the pile, a fall into a dip,
+  // back to the yard, out along the pile again.
+  // ...within a couple of cells of either reading of the pile: `standTop`, the
+  // highest column under the body's width -- where its feet come to rest on a
+  // crest -- or the column under its own middle, where they rest in a dip a
+  // body wide. One reading alone gets one of those wrong: judged only by
+  // `standTop` a body down a dip read as buried under its neighbours; judged
+  // only at its middle a body on a crest read as hovering. Both wrong answers
+  // came out 'yard', and the next route to a patch ten pixels along went back
+  // across the yard, through the pile's own mass at ground height, and up the
+  // near ladder -- the reported lap. A body at a ladder head with the pile far
+  // below matches neither reading and stays the yard's, which is what the
+  // mapping below has always been for.
+  if (on === all.hole) {
+    const under = standTop(x, on.at);
+    const mid = on.at(x + WORKER / 2);
+    if (Math.min(Math.abs(feet - under), Math.abs(feet - mid)) <= P * 2) return on;
+  }
   return on === all.hole ? all.yard : on;
 }
 
@@ -470,7 +493,30 @@ const openFloor = (x, all) => {
   // knocked it into the hole it was already walking over. Landed, it was
   // re-tasked home by the landing, sent straight back by its errand, and
   // crossed into the same fall for ever.
-  if (on === all.hole && Math.abs(feet - standTop(x, on.at)) <= P * 2) return on;
+  // Judged at the body's own middle rather than by `standTop`, and that is not
+  // a shortcut. `standTop` answers with the highest column under the body's
+  // width, which is right for where its feet come to rest and wrong for saying
+  // where it is standing: a body down in a one-body dip between two crests of
+  // pile read as two cells *below* the surface, was ruled off the pile, and its
+  // next route to a patch ten pixels away went back across the yard and up the
+  // near ladder -- the reported lap: out along the pile, a fall into a dip,
+  // back to the yard, out along the pile again.
+  // ...within a couple of cells of either reading of the pile: `standTop`, the
+  // highest column under the body's width -- where its feet come to rest on a
+  // crest -- or the column under its own middle, where they rest in a dip a
+  // body wide. One reading alone gets one of those wrong: judged only by
+  // `standTop` a body down a dip read as buried under its neighbours; judged
+  // only at its middle a body on a crest read as hovering. Both wrong answers
+  // came out 'yard', and the next route to a patch ten pixels along went back
+  // across the yard, through the pile's own mass at ground height, and up the
+  // near ladder -- the reported lap. A body at a ladder head with the pile far
+  // below matches neither reading and stays the yard's, which is what the
+  // mapping below has always been for.
+  if (on === all.hole) {
+    const under = standTop(x, on.at);
+    const mid = on.at(x + WORKER / 2);
+    if (Math.min(Math.abs(feet - under), Math.abs(feet - mid)) <= P * 2) return on;
+  }
   return on === all.hole ? all.yard : on;
 };
 
