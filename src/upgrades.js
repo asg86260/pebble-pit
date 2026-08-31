@@ -226,7 +226,14 @@ export const hats = stockOf;
 // rock put a helmet it did not have out on the stand for the next body along.
 // The hat is on a head. That is the fact, and this is the count of it.
 export const worn = job => S.workers.filter(w => w.trained && w.kitOf === job).length;
-export const spareKit = job => Math.max(0, hats(job) - worn(job));
+// Kit knocked off a head and lying loose in the yard is the station's, but it
+// is not ON THE STAND: until its owner picks it back up (or hands it in) nobody
+// else can be sent to wear it. Without this a shaken carter's cart was counted
+// spare while it lay on the ground, a second hauler fetched a phantom from an
+// empty stand, and when the first recovered its real cart the books read one
+// too many and marched it straight back.
+export const loose = job => S.workers.filter(w => w.hatOff && w.hatOff.of === job).length;
+export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 
 // How many bodies a station has room for. Two of them have a floor plan: a cut
 // holds one body per bench and a plot holds one per plot, and there is nowhere

@@ -1263,7 +1263,18 @@ function retask(w, type) {
   }
   const to = stationX(type);
   if (to !== null) legs.push({ to, do: 'work' });
-  if (!legs.length) { w.trained = false; w.kitOf = null; settle(w); return; }
+  // No legs means nothing to walk for -- it does NOT mean the kit comes off.
+  // This line used to strip `trained`/`kitOf` outright, and the one job with no
+  // station to walk to is the hauler: a carter retasked in place (picked up and
+  // put down, recovered from a shaking) had its cart confiscated by the books
+  // on the very frame it got it back, and then went and fetched a phantom from
+  // the stand. Kit that belongs to a different station than the new job already
+  // got its drop leg above; kit that belongs to THIS job stays on.
+  if (!legs.length) {
+    if (w.trained && w.kitOf !== job) { w.trained = false; w.kitOf = null; }
+    settle(w);
+    return;
+  }
   w.legs = legs;
   nextLeg(w);
 }
