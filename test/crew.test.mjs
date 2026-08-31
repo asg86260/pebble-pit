@@ -5,6 +5,12 @@
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFloorAt, P, WORKER } from './helpers.mjs';
+// The yard's own chance, for the dust a check heaps itself. `Math.random` here
+// would hand each run a differently-shaped pile out of the same seed, which is
+// the seed's whole point undone from the test side. Every group is seeded
+// before its body runs (see `group` in helpers.mjs), so this draws from the
+// same stream the game does.
+import { rand } from '../src/rng.js';
 
 // A crew that has been stood down is still a crew standing there. Frozen
 // squares read as a bug; shifting about reads as waiting.
@@ -412,7 +418,7 @@ group('clearing a handful puts the crew back to work', async () => {
   const nearly = state().pileLimit.rock - 70;
   for (let i = 0; i < 300 && state().pileCount.rock < nearly; i++) {
     const q = strip();
-    window.__pile(q.from + Math.random() * (q.to - q.from) * 0.8, 20);
+    window.__pile(q.from + rand() * (q.to - q.from) * 0.8, 20);
     run(0.1);
   }
   const stopped = runUntil(() => state().pileFull.rock, 60);

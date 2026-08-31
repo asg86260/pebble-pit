@@ -2,6 +2,15 @@
 // can reach it.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+// Where a check scatters its own dust, it scatters it out of the yard's own
+// generator rather than the platform's. A fixture placed with `Math.random` is
+// a fixture that lands somewhere else every run, which puts back exactly the
+// run-to-run wobble the seed was brought in to take out -- and it does it
+// invisibly, because the leak is on this side of the line rather than in the
+// game. Every group here is seeded before its body runs (see `group` in
+// helpers.mjs), so `rand()` below is part of the same repeatable stream the
+// yard is drawing from.
+import { rand } from '../src/rng.js';
 
 // The last columns of ground sit further right than a worker is allowed to
 // stand, so one that had to be standing on a column to scoop it stood at the
@@ -25,7 +34,7 @@ group('the ground never banks dust by itself', async () => {
   const strip = () => state().piles.find(q => q.key === 'rock');
   for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
     const p = strip();
-    window.__pile(p.from + Math.random() * (p.to - p.from), 80);
+    window.__pile(p.from + rand() * (p.to - p.from), 80);
     run(0.2);
   }
   const full = state();
@@ -177,7 +186,7 @@ group('each station piles to its right, and stops when its pile is full', async 
   // fill the rock's strip by hand rather than waiting eight minutes for it
   for (let i = 0; i < 200 && !state().pileFull.rock; i++) {
     const p = state().piles.find(q => q.key === 'rock');
-    window.__pile(p.from + Math.random() * (p.to - p.from), 60);
+    window.__pile(p.from + rand() * (p.to - p.from), 60);
     run(0.2);
   }
   const full = state();
@@ -281,7 +290,7 @@ group('a full pile is a heap you can read', async () => {
     // most of it lands close and it tails away along the strip, which is what
     // makes a heap a mound rather than a carpet
     for (let i = 0; i < 20; i++) {
-      const bell = Math.random() + Math.random() + Math.random() - 1.5;
+      const bell = rand() + rand() + rand() - 1.5;
       const at = p.from + Math.min(1, Math.abs(bell)) * (p.to - p.from) * 0.5;
       window.__toss('shard', at);
     }
@@ -302,7 +311,13 @@ group('a full pile is a heap you can read', async () => {
   return [
     ok(cells <= 30, 'a site heaps into a strip narrow enough to stand up in',
        `${cells} cells across`),
-    ok(part && tall(part) >= wide(part) / 3,
+    // Two thirds as high as it is wide. A third was the band a heap thrown out
+    // of `Math.random` needed -- the same twenty shards landed in a different
+    // place every run, so the band had to hold for the flattest scatter the
+    // chance could deal. Off the seeded fixture it is 9 cells high over 13
+    // across every time, which is 0.69; 0.6 is that with a margin, and it is
+    // low enough to still be about the shape rather than about the count.
+    ok(part && tall(part) >= wide(part) * 0.6,
        'a quarter of a pile is already a mound rather than a scatter',
        part && `${tall(part)} cells high over ${wide(part)} across`),
     ok(filled, 'and it fills to its limit', `${full.pileCount.quarry} grains`),
@@ -316,7 +331,12 @@ group('a full pile is a heap you can read', async () => {
     // A full pile is a triangle standing on the whole strip: its high point is
     // in the middle of it, not against either end, which is what says at a
     // glance that there is no more room rather than merely a lot lying there.
-    ok(tall(crest) >= cells / 2,
+    // Seven tenths of the strip's width, not half of it. Half was room held
+    // open for a scatter that landed differently every run; the seeded heap
+    // stands 17 cells over a strip 22 across, which is 0.77 to the digit on
+    // three runs. At 0.7 a heap that flattened by two cells is a failure
+    // rather than a pass with room to spare.
+    ok(tall(crest) >= cells * 0.7,
        'a full one stands at its crest', `${tall(crest)} cells over ${cells}`),
     ok(peak > cells / 4 && peak < cells * 3 / 4,
        'and the crest is in the middle of the strip', `column ${peak} of ${cells}`),
