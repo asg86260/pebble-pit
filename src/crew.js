@@ -1518,10 +1518,10 @@ export function drop(w) {
     // it was a body holding nothing and still naming a shade for it, which is
     // the one shape of untidiness that eventually gets read.
     w.load = [];
-    if (w.trained) {
-      w.hatOff = { kind: w.trained, of: w.kitOf };
-      w.trained = false;
-    }
+    // The hat usually left the head mid-shake -- see `shakeHeld` -- but a
+    // shaking finished in the very gesture of letting go still costs it, flung
+    // from where the hand is the same way.
+    if (w.trained) flingHat(w, v.vx * 4);
   }
   w.shook = 0;
   w.turnedAt = 0;
@@ -1567,6 +1567,35 @@ function shedLoad(w, dx) {
   S.dirty = true;
 }
 
+// The hat leaves the head as a thing in flight: a share of the hand's travel,
+// a kick upward, and gravity from there. It is not a chip -- a chip is a grain
+// and banks itself; a hat has a kind and an owner walking back for it -- so it
+// keeps its own little arc on `w.hatOff` and `stepHat` flies it down to the
+// surface, rock outline included, where it lies until the body comes round.
+function flingHat(w, dx) {
+  if (w.hatOff) return;                     // one head, one hat, one arc
+  w.hatOff = { kind: w.trained, of: w.kitOf, rest: false,
+               x: w.x, y: w.y - P,
+               vx: Math.max(-HURL_MAX, Math.min(HURL_MAX, dx * SHAKE_FLING * 2 + bell())),
+               vy: -SHAKE_LIFT * 1.4 + bell() * 0.4 };
+  w.trained = false;
+  S.dirty = true;
+}
+
+// One frame of a knocked-off hat falling. Runs whatever its owner is doing --
+// a hat in the air does not wait for the body that lost it to be put down.
+export function stepHat(w) {
+  const h = w.hatOff;
+  if (!h || h.rest) return;
+  const f = frames();
+  h.vy += GRAV * f;
+  h.x += h.vx * f;
+  h.y += h.vy * f;
+  const floor = standTop(h.x, rockTop);     // the ground, or the hill's outline
+  if (h.y >= floor) { h.y = floor; h.x = Math.round(h.x); h.rest = true; }
+  S.dirty = true;
+}
+
 export function shakeHeld(w, dx) {
   if (!w || Math.abs(dx) < 1) return;
   const dir = Math.sign(dx);
@@ -1579,7 +1608,16 @@ export function shakeHeld(w, dx) {
     // gesture is something you do and watch, so the yard should answer during
     // it: the moment it has been turned about enough to count, it starts seeing
     // them, and `drop` carries the same spell on past the landing.
-    if (w.shook >= SHAKE_TURNS) w.say = { mark: 'dizzy', until: t + DIZZY_MS };
+    if (w.shook >= SHAKE_TURNS) {
+      w.say = { mark: 'dizzy', until: t + DIZZY_MS };
+      // And the hat comes off NOW, not when the body lands -- flung from the
+      // hand with the same motion the shed grains take, falling under the same
+      // gravity, resting where it comes down. It used to appear on the ground
+      // wherever the body happened to land, which is the same teleport the
+      // shaken-out dust used to make; a hat is a thing in the air like any
+      // other, and you should see it go.
+      if (w.trained) flingHat(w, dx);
+    }
     if (w.carry > 0) shedLoad(w, dx);
   }
   w.lastDir = dir;
@@ -1650,8 +1688,7 @@ function fall(w) {
     // And its hat where it fell, to be picked up when the stars clear. It is
     // NOT put back on here: the body has to go and get it, the same as it has
     // to walk everywhere else.
-    if (w.hatOff) w.hatOff.x = Math.round(w.x);
-    S.dirty = true;
+    S.dirty = true;                         // the hat is on its own arc already
     return;                                 // it is in no state to be given a job
   }
   // Straight back to it if this is where it works, and a walk if it is not.
@@ -2819,9 +2856,12 @@ const STAGES = [
     return true;
   },
 
-  // gone to pick a knocked-off hat back up
+  // gone to pick a knocked-off hat back up -- once it has actually come down.
+  // A body recovered before its hat has landed stands where it is for the
+  // half-second the arc takes, rather than chasing a point still in the air.
   w => {
     if (!w.hatOff) return false;
+    if (!w.hatOff.rest) return true;
     const d = w.hatOff.x - w.x;
     if (Math.abs(d) > P) {
       w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
@@ -2939,6 +2979,11 @@ export function updateWorkers(now, dt) {
   // standing when it ends can say which way they are facing. See `faceTravel`.
   const was = new Map();
   for (const w of S.workers) was.set(w, w.x);
+
+  // Knocked-off hats keep falling whatever their owners are doing -- a hat in
+  // the air does not wait for the body that lost it to be put down, and the
+  // owner may well still be in your hand while it comes down.
+  for (const w of S.workers) stepHat(w);
 
   // The frame, as one thing to hand about: the clock, its length, the ground a
   // rock is coming down on, and the books of claims that keep the crew from all

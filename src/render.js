@@ -2505,14 +2505,16 @@ function drawOffers() {
   }
 }
 
-// A hat that has been shaken off somebody, lying where it fell until its owner
-// comes round and fetches it. Drawn on the ground rather than on a stand: it was
-// not put down, it came off.
+// A hat that has been shaken off somebody: in the air on its own little arc
+// while it falls, then lying where it came down until its owner comes round and
+// fetches it. Drawn off its own position both ways -- it flies off the head the
+// moment the shaking counts, so for the first half-second what you see is a hat
+// tumbling away from a body still in your hand. Not on a stand: it was not put
+// down, it came off.
 export function drawDroppedHats() {
   for (const w of S.workers) {
     if (!w.hatOff || w.hatOff.x == null) continue;
-    const g = Math.round(walkY(w.hatOff.x + WORKER / 2) + WORKER);
-    drawHat(w.hatOff.x, g, w.hatOff.kind);
+    drawHat(Math.round(w.hatOff.x), Math.round(w.hatOff.y), w.hatOff.kind);
   }
 }
 
