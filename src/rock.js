@@ -13,8 +13,8 @@ import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor, bench } from './state.js';
 import { defineMachine } from './machines.js';
-import { at, put, addGrain, depthShade, colOf, bottomY } from './grid.js';
-import { pastApron, blocked, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
+import { at, put, depthShade, colOf, bottomY } from './grid.js';
+import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
 import { inWorking } from './route.js';
@@ -245,17 +245,30 @@ export function makeBoulder(fromSky = false) {
   if (!fromSky) clearApron();
 }
 
-// shift any dust the last rock left inside this one's apron out to clear ground,
-// so a bigger rock never lands standing in a heap
+// Shift any dust the last rock left standing where this one's foot is going, so
+// a boulder never lands in a heap. Only the footprint: the clearance either side
+// of it is ground now, and dust lying there is dust lying where it landed.
+//
+// It is *thrown*, not moved. It used to be handed to `addGrain`, which walks
+// outward for the nearest column that will take it -- and the nearest column is
+// the first column of the rock's own heap, so a bigger boulder coming down on a
+// dusty footprint stood a dozen cells of it hard against its own foot. That is
+// the sheer wall `bankCeiling` exists to prevent, arriving by the one door that
+// does not go past `bankCeiling` at all.
+//
+// So the sweepings take the arc a miner's spoil takes, onto the heap that
+// belongs to the rock, and land out along it honestly. Nothing is made and
+// nothing is lost: every grain lifted here is one grain put back in the air.
 export function clearApron() {
   if (!floor.grid) return;
   for (let c = 0; c < floor.cols; c++) {
-    if (!blocked(c)) continue;
+    const x = floor.x + c * P;
+    if (pastRock(x) >= 0) continue;
     for (let r = 0; r < floor.rows; r++) {
       const v = at(floor, c, r);
       if (!v) continue;
       put(floor, c, r, 0);
-      addGrain(floor, floor.x + c * P, blocked, v);     // to the nearest clear column
+      spawnSpoil(x, bottomY(floor) - (r + 1) * P, v);
     }
   }
 }
@@ -389,11 +402,11 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
 // apart under your cursor at exactly the rate it did.
 //
 // Where it stands is the awkward part and worth writing down. `ROCK_CLEAR` keeps
-// an apron of bare ground either side of the hill -- `blocked` refuses those
-// columns and `clearApron` shovels them -- so the ram cannot stand *in* the
-// apron without the yard trying to sweep it away. It stands just outside, and
-// reaches: `rockLeft()` less its own width and a cell of daylight. The arm is
-// long, which is what an arm is for.
+// the rock's heap standing off the hill, and the boulder grows into the ground
+// in front of it every time a new one comes down -- so a ram parked against the
+// face would be inside the next rock. It stands clear of the apron and reaches:
+// `rockLeft()` less its own width and a cell of daylight. The arm is long, which
+// is what an arm is for.
 export const ramX = () => Math.round((rockLeft() - ROCK_CLEAR - P * 5) / P) * P;
 
 defineMachine('ram', {
@@ -402,8 +415,8 @@ defineMachine('ram', {
   at: ramX,
   y: () => S.groundY - P * 4,
   // Where the body stands. The yard side of the machine, clear of the apron --
-  // `ROCK_CLEAR` is ground the yard actively sweeps, and a tender posted in it
-  // would be shovelled at. Without a `tendAt` the runner looked for a miner
+  // the ground right against the face is where the next boulder lands, and a
+  // tender posted in it would be stood on. Without a `tendAt` the runner looked for a miner
   // within reach of the machine's own x, which is fifty-odd pixels the far side
   // of the apron from anywhere a miner ever stands, so the ram was never manned
   // and never took a bite.

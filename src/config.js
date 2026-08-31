@@ -837,7 +837,12 @@ export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so
 // How deep dust may lie on ground that is nobody's pile. Enough that anything you
 // put down stays put and settles like sand; not enough that the bare yard becomes
 // somewhere to store it.
-export const LOOSE_DEEP = 3;
+//
+// A `let`, and a row in TUNABLE, because it is now the ceiling on a great deal
+// more ground than it used to be: the rock's clearance and the whole run out
+// past the left-hand end of the yard are bare ground like any other, and how
+// deep a scatter reads across all of it is a thing to look at rather than guess.
+export let LOOSE_DEEP = 3;
 
 export let BANK_SLOPE = 1.5;
 // The hole is given, not dug. It is PIT_W_MAX across and PIT_H down from the
@@ -1788,6 +1793,8 @@ export const TUNABLE = [
     get: () => DEVICE_PIXELS, set: v => { DEVICE_PIXELS = v; } },
   { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1,
     get: () => BANK_SLOPE, set: v => { BANK_SLOPE = v; } },
+  { key: 'LOOSE_DEEP', label: 'scatter depth', min: 1, max: 12, step: 1,
+    get: () => LOOSE_DEEP, set: v => { LOOSE_DEEP = v; } },
   { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05,
     get: () => GRAV, set: v => { GRAV = v; } },
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02,

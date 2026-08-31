@@ -1726,13 +1726,22 @@ function elbowMuck(w) {
 // again when the first of them picks it up.
 function nearestDust(x, taken) {
   const last = Math.max(0, colOf(floor, pit.x) - 1);
-  const from = Math.max(0, Math.min(last, colOf(floor, x)));
+  // And the near end is where the crew stop walking, not where the ground stops.
+  // Dust may lie the whole way out to the edge of the world now -- a bird sheds
+  // over it, and your own cursor reaches it -- but a body held at `yardLeft`
+  // cannot stand on a column past it. Booked one anyway, it would set off, stop
+  // at the end of its own span, and stand there for the rest of the run with a
+  // claim on ground it can never reach. What lies out there is yours to sweep
+  // up, not theirs to fetch, which is the same bargain the ground past the lip
+  // has always had.
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
+  const from = Math.max(first, Math.min(last, colOf(floor, x)));
   for (let d = 0; d <= last; d++) {
     for (const c of [from - d, from + d]) {
       // Anything in a column is worth fetching, barred or not: a barred column
       // normally holds nothing, and when it does hold something -- a shard set
       // down at the plots -- somebody should still go out and get it.
-      if (c < 0 || c > last || taken.has(c)) continue;
+      if (c < first || c > last || taken.has(c)) continue;
       if (at(floor, c, 0)) return c;
     }
   }
@@ -1748,11 +1757,13 @@ function nearestMark(w, taken) {
   // Nothing beyond the near lip: a body cannot cross the hole, so a find over
   // there is one it would set off for and stand at the edge of for ever. What
   // lands past the pit is yours to sweep up, not theirs to fetch -- the same
-  // bound `nearestDust` has always kept.
+  // bound `nearestDust` has always kept. And nothing off the near end either,
+  // for the same reason at the other end of the same walk.
   const last = Math.max(0, colOf(floor, pit.x) - 1);
+  const first = Math.max(0, Math.min(last, colOf(floor, yardLeft())));
   for (const m of S.floorMarks) {
     const c = colOf(floor, m.x);
-    if (c < 0 || c > last || taken.has(c) || !at(floor, c, 0)) continue;
+    if (c < first || c > last || taken.has(c) || !at(floor, c, 0)) continue;
     const d = Math.abs(m.x - w.x);
     if (d < bestD) { bestD = d; best = c; }
   }

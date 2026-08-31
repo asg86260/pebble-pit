@@ -1,7 +1,8 @@
 # Still to do
 
-Four items left from `feedback.md` / `feedback2.md`, plus one piece of
-housekeeping. Everything else in both files is done and on main.
+Three items left from `feedback.md` / `feedback2.md`, plus one piece of
+housekeeping. One further item (dust leniency) is done and kept below for the
+record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
 into, and what is blocking it — so none of this has to be re-derived.
@@ -69,31 +70,43 @@ Moving rows silently would rearrange a shop the player has learned.
 
 ---
 
-## 3. Dust in front of the rock pile — ATTEMPTED AND BACKED OUT
+## 3. Dust in front of the rock pile, and off the left end of the yard — DONE
 
-**Status:** blocked on one question. Do not retry without answering it.
+**Status:** done. Two leniency changes, landed together.
 
-**The question:** *which strip is meant* — the yard side you are looking at
-(between the bench and the rock), or the gap between the rock and its own spoil
-heap? They need opposite changes.
+**The apron opens.** `blocked()` (`src/world.js`) no longer bars the rock's
+clearance, only its footprint — `pastRock`, the renamed and narrowed
+`pastApron`. The first attempt broke three things by freeing the whole apron at
+once; each now has its own fix instead of being begged off:
 
-**What happened when the apron was freed.** Deleting `if (pastApron(x) < 0)
-return true;` from `blocked()` broke three separate things, in this order:
+1. Grains still cannot come to rest **under the boulder** — `pastRock` covers
+   the footprint only, not a hand's width either side, so the ground the rock
+   stands on stays barred.
+2. The **heap-side clearance the spoil heap stands off from** is untouched: the
+   heap's near end still comes from `rockLeft()`/`SITES`, never from wherever
+   dust happens to be lying, so it cannot creep up against the boulder.
+3. `clearApron()` (`src/rock.js`) no longer shovels the footprint's leftover
+   dust into the nearest column — it throws each grain as a `spawnSpoil` chip,
+   the arc a miner's spoil takes, so a new boulder's sweepings land out along
+   the heap instead of stacking a wall against it. `bankCeiling`
+   (`src/world.js`) treats the footprint edge as the cliff the clearance ramps
+   away from, so the seam reads as a low scatter shading into the heap.
 
-1. Grains came to rest **under the boulder** — a grain about to be inside a
-   rock. `pastApron` covers the rock *plus* a hand's width either side, so
-   freeing all of it frees the ground the rock stands on.
-2. The **heap-side clearance is what the spoil heap stands off from**. Freeing
-   it let the heap creep up against the boulder.
-3. `clearApron()` sweeps whatever lies in the apron into the nearest column that
-   will take it — which is the first column of the rock's own spoil heap —
-   **every time a rock is made**. That column then stood twelve cells against
-   the boulder: exactly the sheer wall `bankCeiling` exists to prevent.
+**The far left opens.** Ground left of `yardLeft()` now takes the ordinary
+`LOOSE_DEEP` scatter out to the edge of the world instead of being barred.
+Birds mint dust over it (`weather.js`'s `holdsDust` now checks the floor's
+world bounds, not `yardLeft`). Haulers still do not walk out there:
+`nearestDust`/`nearestMark` (`src/crew.js`) clamp their near end at
+`yardLeft()`, so a claim is never booked on a column no body can stand on to
+work off.
 
-**The conclusion.** The apron is not incidentally bare. It is the clearance
-three separate rules are written against, and making dust lie there means
-deciding what those three rules say instead. That is a design decision, not a
-one-line change.
+**LOOSE_DEEP** became a `let` and a row in `config.js`'s `TUNABLE` table, since
+it now caps a great deal more ground than it used to.
+
+Covered by three new groups in `test/ground.test.mjs`: "dust let go off the end
+of the yard lies where it fell", "dust lies on the ground in front of the
+hill", and "a rock landing throws the dust off its footprint rather than
+shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ---
 

@@ -17,7 +17,6 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
-import { yardLeft } from './world.js';
 import { frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
@@ -184,7 +183,7 @@ export const overBird = (wx, wy) =>
 // question is answered with that much margin and no chip is traced.
 const BIRD_DRIFT = P * 4;
 const holdsDust = x =>
-  x + BIRD_DRIFT > yardLeft() && x - BIRD_DRIFT < floor.x + floor.cols * floor.p;
+  x + BIRD_DRIFT > floor.x && x - BIRD_DRIFT < floor.x + floor.cols * floor.p;
 
 export function startle(wx, wy) {
   for (let i = 0; i < BIRDS.length; i++) {
@@ -197,17 +196,19 @@ export function startle(wx, wy) {
     // so a bird over the wrong place simply drops none, and nothing is stranded
     // by not making it.
     //
-    // What the wrong place is, is one place: past the left-hand end of the yard,
-    // where the ground is barred because nobody can walk out there and it runs
-    // on to the edge of the world. A grain let go over that used to walk inland
-    // looking for ground it was allowed to lie on and come to rest in the farm's
-    // heap, a couple of hundred columns from the bird that shed it.
+    // What the wrong place is, is off the world: past either end of the floor
+    // grid, where there is no column for a grain to land in and it would walk
+    // inland looking for one. The left-hand end of the yard used to be the wrong
+    // place too, on the grounds that nobody could walk out there. It is ordinary
+    // ground now -- your cursor reaches everywhere the camera does -- so a bird
+    // may mint over it exactly as it does over the middle of the yard. This
+    // tracks `blocked`: birds shed over anything that holds dust.
     //
     // The mouths are not the wrong place and are deliberately not checked. Dust
     // let go over the hole falls *in* the hole, which is what the hole is for and
     // what the chip already does before the ground is ever asked; over the cut
-    // and over the rock's apron it rolls the few cells clear that a grain rolls
-    // off any shoulder.
+    // and over the rock it rolls the few cells clear that a grain rolls off any
+    // shoulder.
     if (holdsDust(from)) for (let n = 0; n < BIRD_DUST; n++) {
       // no arc and no target: a small sideways nudge so the few of them do not
       // fall down the one line, and gravity does the rest

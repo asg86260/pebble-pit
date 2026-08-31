@@ -13,7 +13,7 @@
 //
 // Nothing here changes anything. Every line is a reading.
 
-import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind, ROCK_CLEAR,
+import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
@@ -30,7 +30,7 @@ const skyLeft = kind => {
 };
 import { at, count, countDust } from './grid.js';
 import { wayAt } from './route.js';
-import { rockLeft, yardLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX } from './world.js';
+import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX } from './world.js';
 import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
@@ -63,11 +63,16 @@ export function dustPastPit() {
   return n;
 }
 
-// how the banks sit against the rock: nothing in the apron, and the first column
-// of dust outside it only a grain or two tall, so the heap ramps away
+// How the banks sit against the rock: nothing under the boulder itself, and the
+// first column of dust outside it only a grain or two tall, so the ground ramps
+// away from the foot of the hill instead of standing up against it.
+//
+// It used to measure from the apron, because the apron was barred ground. The
+// clearance holds dust now and the footprint is the only thing that does not,
+// so `inApron` is what is standing inside the rock -- which is nought, always.
 export function apronReport() {
   let inApron = 0, tallest = 0, crest = 0;
-  const near = rockLeft() - ROCK_CLEAR, far = rockLeft() + S.gw * P + ROCK_CLEAR;
+  const near = rockLeft(), far = rockLeft() + S.gw * P;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
     let h = 0;
@@ -80,18 +85,28 @@ export function apronReport() {
   return { inApron, tallest, crest };
 }
 
-// dust heaped anywhere it would bury something: over the mouth of the quarry, or
-// out past it towards the plots
+// Dust lying across the mouth of the cut, which is a number that should always
+// be nought: a grain over an opening is a grain lying on nothing.
+//
+// It used to count everything off the left-hand end of the yard instead, back
+// when that ground was barred and anything out there was dust that had gone
+// somewhere nobody could reach. That ground is ordinary ground now, so counting
+// it says nothing -- and the mouth it was named for was never being looked at.
 export function dustAtQuarry() {
+  if (!S.quarryOpen) return 0;
   let n = 0;
   for (let c = 0; c < floor.cols; c++) {
-    if (floor.x + c * P + P > yardLeft()) continue;
+    const x = floor.x + c * P;
+    if (!(x + P > quarry.x && x < quarry.x + quarry.w)) continue;
     for (let r = 0; r < floor.rows; r++) if (at(floor, c, r)) n++;
   }
   return n;
 }
 
-// how much dust has ended up somewhere the player cannot get at it
+// How the ground either side of the hill reads: what is lying behind it, and
+// what is standing under it. The second is the invariant -- nothing may ever be
+// under the rock -- and the first is a measure of how much of the yard's dust
+// has ended up on the far side of the boulder from the crew.
 export function strandedDust() {
   let left = 0, under = 0;
   const l = rockLeft(), r = l + S.gw * P;
