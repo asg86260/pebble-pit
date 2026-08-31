@@ -42,7 +42,7 @@
 // reaches the flag -- so a rule added here costs a player nothing.
 
 import { WORKER } from './config.js';
-import { S, pit, floor } from './state.js';
+import { S, pit, floor, cut } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, WORKINGS } from './route.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
@@ -338,7 +338,7 @@ export function verifyWorld() {
   // the reset in persist.js) but this line, which catches it if any of them is
   // ever missed or a seventh is added.
   if (S.tick % LEDGER_EVERY === 0) {
-    for (const [name, b] of [['the hole', pit], ['the yard', floor]]) {
+    for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut]]) {
       if (!b.grid || b.n == null) continue;
       const real = count(b);
       if (b.n !== real)

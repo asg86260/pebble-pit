@@ -935,6 +935,23 @@ export const SPORE_CELL = SHARD_CELL + FIND_TONES;
 export const SPARK_CELL = SPORE_CELL + FIND_TONES;
 export const FIND_TOP = SPARK_CELL + FIND_TONES - 1;
 
+// And one cell that is not a grain at all: the rock a plot of sand is dug into.
+//
+// The cut in the quarry is a plot of sand whose floor moves -- it is the top of
+// whatever has not been dug out yet, one height per column, and it goes down as
+// the gang work. A grid's `ceiling` cannot say that: a ceiling counts up from
+// the bottom of the plot, and the bottom of the cut is the deepest the hole will
+// ever be, so a ceiling would stand the dust at the bottom of a hole nobody has
+// dug and leave rock hanging over it.
+//
+// So the rock is *in* the plot, as cells, which is what it is. Undug ground
+// fills its column from the floor of the grid upwards; dust lands on top of it
+// and falls further the frame a cell is taken out from under it, without the
+// sand being told that a quarry exists. The painter has no colour for it, so it
+// draws as nothing and the quarry's own drawing shows through -- see painter.js,
+// "anything the painter does not have a colour for is left clear".
+export const ROCK_CELL = FIND_TOP + 1;
+
 // The first colour in the game, and the reason it goes here first: everything
 // the *ground* makes is a grey, because grey is how deep the rock was. The
 // things the sites give up are not dust and never came off the rock, so they are

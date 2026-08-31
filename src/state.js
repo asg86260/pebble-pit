@@ -358,6 +358,27 @@ export const BLANK = JSON.parse(JSON.stringify(S));
 export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const school = { x: 0, y: 0, w: 0, h: 0 };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The sand in the quarry: dust that fell down the cut and has not been carried
+// out of it yet. A plot like the pit's, and laid out the same way -- `y` is the
+// ground line and the floor of the grid is the deepest the cut will ever be dug,
+// so a column's cells run from the deepest line up to the rim.
+//
+// What a grain rests on is the ground nobody has taken out yet, and that is kept
+// in the cells themselves as `ROCK_CELL` -- see config.js, and `layCut` in
+// quarry.js. `rock` is how many of those there are, so "how much dust is lying
+// down there" is `n - rock` and not a walk of the plot; it is kept level by the
+// four places that lay or take out rock, and rule 7 in verify.js watches `n`.
+// `fixed` is what stops a settling pass reading a piece of rock as a grain with
+// somewhere to fall or slide -- see grid.js.
+//
+// Every field is declared here, including the four `awake*` ones that belong to
+// `settle` and the ledger `n`, for the reason written out above `floor`: a grid
+// object is read a hundred thousand times a frame and growing its shape after
+// the fact costs more than the fields save.
+export const cut = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null,
+                     n: 0, rock: 0, blocked: null, ceiling: null, region: null, fixed: null,
+                     repose: false, onPut: null, settleAt: 0,
+                     awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };

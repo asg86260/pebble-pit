@@ -35,7 +35,7 @@ import { S, floor, pit, quarry } from './state.js';
 import { groundAt, rockLeft } from './world.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { surfaceY, colOf } from './grid.js';
-import { dugTopY, quarryFace } from './quarry.js';
+import { cutTop, quarryFace } from './quarry.js';
 import { pitTop, pitLadder, NEAR, FAR } from './pit.js';
 import { frames } from './clock.js';
 
@@ -210,7 +210,7 @@ export function ways() {
   // ground and it is not joined to the yard anywhere except at the ladder --
   // which is the whole reason a quarrier cannot climb out of the side of it.
   if (S.quarryOpen)
-    out.cut = { key: 'cut', from: quarry.x, to: quarry.x + quarry.w, at: dugTopY };
+    out.cut = { key: 'cut', from: quarry.x, to: quarry.x + quarry.w, at: cutTop };
 
   // and the floor of the hole, which is the same shape of thing: a surface below
   // the ground with ladders at both ends.

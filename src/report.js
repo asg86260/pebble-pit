@@ -15,7 +15,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { leverX } from './crew.js';
@@ -404,6 +404,9 @@ export const snapshot = () => ({
   // The dust in the pit, grain by grain.
   pitGrains: count(pit),
   pitDust: countDust(pit),
+
+  // And the dust lying in the cut, fallen down the mouth and not yet fetched.
+  cutDust: countDust(cut),
 
   // The crew, counted, and the roster board that moves them about.
   crew: S.crew,

@@ -10,8 +10,8 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
         SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT } from './config.js';
-import { S, floor, pit, bench, outhouse } from './state.js';
-import { at, put, colOf, addGrain } from './grid.js';
+import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
+import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone } from './rock.js';
@@ -186,7 +186,7 @@ function newHauler() {
   const { x } = hireSpot();
   return {
     type: 'hauler', x, y: walkY(x + WORKER / 2),
-    carry: 0, next: 0, goal: 'seek', claim: -1, roamTo: null,
+    carry: 0, next: 0, goal: 'seek', claim: -1, cutClaim: null, roamTo: null,
     // Its own legs and its own patience, for when it has nowhere to be. Six
     // bodies strolling at exactly one speed and standing about for exactly one
     // length of time is a marching band, not a yard at rest -- and it is the
@@ -381,6 +381,7 @@ function settle(w) {
   w.routeTo = null;
   w.routeWay = null;
   w.muckAt = null;
+  w.cutClaim = null;
   w.foot = null;
   w.footAt = null;
 }
@@ -442,6 +443,62 @@ function downTheHole(w, to) {
     w.lunge = 1;
     w.sweepAt = t + swingFor(w) * (0.85 + rand() * 0.3);
   }
+}
+
+// --- down the ladder, for a load of the cut's own dust -------------------------
+// Grains that fell in through the cut's mouth lie on the floor of the working
+// and have to be carried out like anything else on the yard -- down the one
+// ladder there is, out with a claim on a column exactly the way the yard's own
+// dust is claimed, and banked at the pit like any other load. Mirrors
+// `downTheHole`: a column rather than a body, and a route rather than a walk
+// written out by hand.
+function downTheCut(w, col) {
+  const all = ways();
+  const spot = col == null ? quarry.x - WORKER : cut.x + col * P + P / 2 - WORKER / 2;
+  const on = col == null ? all.yard : all.cut;
+  if (!on) { w.cutClaim = null; return; }
+  if (Math.abs(spot - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
+    if (!keepTo(w, spot, on)) { w.cutClaim = null; return; }
+    if (stepRoute(w, commutePace())) return;
+    w.route = null;
+    return;
+  }
+  w.route = null;
+  if (col == null) return;
+
+  // Arrived at the column it claimed. Feet planted, and a scoop at a time --
+  // the same cadence `haulSpeed`'s own fetching keeps on the yard.
+  w.x = Math.round(w.x / P) * P;
+  w.y = climbTo(w, feetOn(on, w.x));
+  w.lunge *= 0.84;
+  if (now() < (w.next || 0)) return;
+  const r = topRow(cut, col);
+  if (r < 0 || !isDust(at(cut, col, r)) || roomOnBoard(w) < 1) { w.cutClaim = null; return; }
+  (w.load ||= []).push(at(cut, col, r));
+  put(cut, col, r, 0);
+  w.carry = (w.carry || 0) + 1;
+  tookOne(w);
+  w.next = now() + scoopMs();
+  S.dirty = true;
+}
+
+// The nearest column of the cut's own dust that nobody else has gone for, by
+// the same rule `nearestDust` keeps for the yard's own piles: one column, one
+// worker. Only a hauler ever calls this -- it is the one trade whose branch
+// routes down the ladder for it -- so the claim it makes is already held to
+// `nearestMuck`'s own rule: nobody stands on the floor of the cut who cannot
+// walk down to it.
+function nearestCutDust(x, taken) {
+  if (!cut.grid) return -1;
+  const from = Math.max(0, Math.min(cut.cols - 1, colOf(cut, x)));
+  for (let d = 0; d <= cut.cols; d++) {
+    for (const c of [from - d, from + d]) {
+      if (c < 0 || c >= cut.cols || taken.has(c)) continue;
+      const r = topRow(cut, c);
+      if (r >= 0 && isDust(at(cut, c, r))) return c;
+    }
+  }
+  return -1;
 }
 
 // --- nature -------------------------------------------------------------------
@@ -2192,7 +2249,7 @@ function janitorWork(w, c) {
 // furniture happens to: the hole it tips into, the lip it may not walk over, the
 // books it holds room in, and the loose core nobody else will pick up.
 function haulerWork(w, c) {
-  const { now, zone, taken, muckTaken } = c;
+  const { now, zone, taken, muckTaken, cutTaken } = c;
 
   // Down the hole, and nothing else applies.
   //
@@ -2242,6 +2299,26 @@ function haulerWork(w, c) {
     unbook(w);
     w.goal = 'muck';
     downTheHole(w, through ? patch : null);
+    return;
+  }
+
+  // Down the cut, on the same trip -- the same shape of question `away ||
+  // through` just asked, and answered the same way: still down there, or
+  // committed to going. A hauler already on the cut's own floor keeps working
+  // it even after its claim runs out (there may be another grain worth taking
+  // before the trip home), and one only on its way there is caught by the
+  // claim alone. Unlike muck, this carries a real load booked against the pit,
+  // so it is not folded into `away || through` above -- there is no unbooking
+  // it on the way past.
+  if (here.key === 'cut' || w.cutClaim != null) {
+    if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
+    const fetching = w.cutClaim != null && roomOnBoard(w) > 0 && (w.carry || 0) < load(w);
+    w.goal = 'cut';
+    downTheCut(w, fetching ? w.cutClaim : null);
+    if (!fetching) {
+      w.cutClaim = null;
+      if (wayAt(w.x, w.y, all).key === 'yard') w.goal = w.carry ? 'dump' : 'idle';
+    }
     return;
   }
 
@@ -2335,6 +2412,20 @@ function haulerWork(w, c) {
   // floor and a trip wasted.
   if (takeMess(w, c)) return;
   JOBS.hauler.mess.back(w);                        // the yard is clear
+
+  // Fresh dust down the cut, worth a look before the yard's own: it is what
+  // keeps the ladder trip working rather than only ever starting from muck.
+  // One column, one hauler -- see `nearestCutDust` -- and it only ever fires
+  // for a body with empty hands and nothing else already claimed, so it never
+  // steals a load that is already somebody's.
+  if ((w.goal === 'seek' || w.goal === 'idle') && w.claim < 0 && !w.carry && !w.hasCore &&
+      w.cutClaim == null && cut.n > (cut.rock || 0) && bookRoom(w) > 0) {
+    const pick = nearestCutDust(w.x + WORKER / 2, cutTaken);
+    // A claim taken and acted on the same frame it is found, or a floor column
+    // picked below could double up with it: two claims on one pair of hands.
+    if (pick >= 0) { w.cutClaim = pick; cutTaken.add(pick); w.goal = 'cut'; return; }
+  }
+
   if (w.goal === 'seek') {
     // It keeps the column it set off for until that column is bare. Picking
     // the nearest one afresh every frame is what made the crew swarm.
@@ -2773,7 +2864,7 @@ export function updateWorkers(now, dt) {
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
   const muckTaken = new Set();
-  // The columns already spoken for by bodies that are on their way to them --
+// The columns already spoken for by bodies that are on their way to them --
   // WITH their elbows. `nearestMuck` reserves a body's width either side when a
   // claim is made, but this rebuild used to carry only the claimed column
   // itself forward, so the reservation lasted exactly one frame: from the next
@@ -2784,6 +2875,10 @@ export function updateWorkers(now, dt) {
     if (w.muckAt == null) continue;
     for (let k = w.muckAt - MUCK_ELBOW; k <= w.muckAt + MUCK_ELBOW; k++) muckTaken.add(k);
   }
+  // And the same book, kept for the cut's own dust: one column of it, one
+  // hauler on their way down the ladder for it.
+  const cutTaken = new Set();
+  for (const w of S.workers) if (w.cutClaim != null) cutTaken.add(w.cutClaim);
   // ...and the ground nobody may be *fetching from*, which is not the same rule
   // and used to be missing. A hauler ducks out of the way and then walks
   // straight back in, because what pulled it there was a column of dust it had
@@ -2809,7 +2904,7 @@ export function updateWorkers(now, dt) {
   // The frame, as one thing to hand about: the clock, its length, the ground a
   // rock is coming down on, and the two books of claims that keep the crew from
   // all setting off for the same cell.
-  const c = { now, dt, zone, taken, muckTaken };
+  const c = { now, dt, zone, taken, muckTaken, cutTaken };
   for (const w of S.workers) {
     let done = false;
     for (const stage of STAGES) if (stage(w, c) === true) { done = true; break; }

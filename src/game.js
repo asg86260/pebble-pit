@@ -16,13 +16,14 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT } from './config.js';
-import { S, floor, pit, bench } from './state.js';
+import { S, floor, pit, cut, quarry, bench } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, pileAt, layPiles } from './world.js';
+import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
+import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil } from './dust.js';
 import { stepCore } from './core.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
@@ -65,6 +66,7 @@ export function settleIntoWorld() {
   placeRock();
   wireGround();
   wirePit();
+  wireCut();                               // the cut's own sand, sized off the quarry
   wireTable();                             // the ground the pot piles up on
   resizeGrid(floor);
   if (!pit.grid) setPitGrain(S.pitStep);   // the pit never changes with the window
@@ -227,6 +229,33 @@ export function step() {
       continue;
     }
 
+    // down the ladder's own hole: the cut collects whatever falls through its
+    // mouth, exactly the way the pit does through the mouth of the hole. See
+    // `overCutMouth`, and the one clause this took out of `blocked` in world.js
+    // -- a grain over the mouth used to have nowhere at all to land, because
+    // there was no cut for it to land in.
+    if (overCutMouth(ch.x) && ch.y + P >= S.groundY) {
+      const cc = Math.max(0, Math.min(cut.cols - 1, colOf(cut, ch.x)));
+      if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; ch.vx = 0; }
+      if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; ch.vx = 0; }
+      if (ch.vy > 0 && ch.y >= surfaceY(cut, cc)) {
+        // Almost always room: the cut is a working plot, not a bank, and the
+        // grid is mostly open air above whatever rock is left. The one time it
+        // is not is a chip still in flight the instant `fillQuarry` puts the
+        // ground back in underneath it -- the whole column solid rock, rim to
+        // floor, nowhere for the grain to go. It is not an opening any more
+        // either way, so it comes down on it exactly as it would on any other
+        // ground: every pixel is worth one dust, the same rule the fill itself
+        // keeps.
+        if (!addGrain(cut, ch.x, null, ch.s)) {
+          if (!addGrain(floor, ch.x, blocked, ch.s)) bankDust(ch.x, ch.s);
+        }
+        S.chips.splice(i, 1);
+        S.dirty = true;
+      }
+      continue;
+    }
+
     // Land on the floor dust -- but an aimed chip clears the bank it is thrown
     // over first. Stopping it on the near face is what built the bank towards
     // the rock instead of away from it: every chip came down on the slope facing
@@ -245,6 +274,7 @@ export function step() {
 
   settleSome(floor, SETTLE_BUDGET);
   settlePit();
+  if (cut.grid) settleSome(cut, SETTLE_BUDGET);
 }
 
 // One walk of the ground, four times a second, for the things worth knowing about
