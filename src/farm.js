@@ -1,13 +1,15 @@
 // The farm: plots out past the quarry.
 //
-// Nothing grows in them on its own. A farmhand stands at a plot and tends it, and
-// it comes on while tended; when it is ripe it is cut and a spore rises off it.
-// So the crop is the crew's attention -- the same trade the quarry asks for, in a
-// different shape: the quarry spends a worker's *time away*, the farm spends a
-// worker *standing still*.
+// Nothing grows in them on its own. A farmhand works the row -- most of its
+// tending goes into the plot it is standing over, the rest over the others -- and
+// when a plot is ripe it is cut and a spore rises off it. So the crop is the
+// crew's attention -- the same trade the quarry asks for, in a different shape:
+// the quarry spends a worker's *time away*, the farm spends a worker *standing
+// still*. What a hand is worth is one plot's worth of tending in the time one
+// plot takes, however many plots that is spread across.
 
 import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL } from './config.js';
-import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, SPORE_CELL, someFind }
+import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
@@ -46,6 +48,41 @@ export function newFarmhand() {
     bob: rand() * Math.PI * 2,      // its own rhythm, so a row of them is not a chorus
     x: plotX(0), y: 0, carry: 0
   };
+}
+
+// One hand, one frame of tending, spread over the row.
+//
+// It used to be one line inside the runner, and the line put the whole of a
+// hand's work into the plot under it. That is what made a lone farmhand feel
+// like nothing: six plots of bare dirt beside the one it happened to be at, for
+// as long as you left it there. A keeper walking a farm all day waters what it
+// passes; this is that.
+//
+// The share is exact, so nothing at the top of the ladder moves. A full
+// complement is one hand to each plot -- which is what `pickPlot` arranges and
+// what `capOf('farmhands')` allows -- and each of those plots then takes
+// TEND_HERE from the body in front of it plus an even cut of the rest from every
+// other body, which comes to one whole share. That is precisely where the old
+// rule landed. What changed is the bottom: one hand on seven plots brings all
+// seven on at a seventh of the pace. Slower, which is why you assign more than
+// one; never dead, which is why assigning one is worth doing.
+function tend(w, dt) {
+  const n = S.plots.length;
+  if (!n) return;
+  const share = dt / tendMs() * (w.trained ? 2 : 1);       // a grower is worth two
+  // With one furrow broken there is no rest of the row to spread over, and the
+  // whole share stays where the body is standing.
+  const here = n > 1 ? share * TEND_HERE : share;
+  const spill = n > 1 ? share * (1 - TEND_HERE) / (n - 1) : 0;
+  for (let k = 0; k < n; k++) {
+    if (S.plots[k] >= 1) continue;
+    S.plots[k] = Math.min(1, S.plots[k] + (k === w.plot ? here : spill));
+    // Ripe, wherever it ripened. The spore forms at the tip of the stalk and
+    // stands there until somebody walks over and takes it off -- a plot that
+    // came on down the row is a plot waiting to be cut, not a plot cut by
+    // nobody.
+    if (S.plots[k] >= 1) { S.plotTone[k] = someFind(SPORE_CELL); S.dirty = true; }
+  }
 }
 
 // the plot most worth walking to: the one furthest along that nobody else has
@@ -102,22 +139,16 @@ export function stepFarmhand(w, now, dt) {
   w.resting = false;
   const i = w.plot;
 
-  // bringing it on. The moment it is ripe a spore forms at the tip of the stalk
-  // and stays there: it is a thing that grew, and it should be seen to have
-  // grown before anybody takes it away.
-  if (S.plots[i] < 1) {
-    // a grower brings a plot on twice as fast
-    S.plots[i] = Math.min(1, S.plots[i] + dt / tendMs() * (w.trained ? 2 : 1));
-    if (S.plots[i] >= 1) {
-      S.plotTone[i] = someFind(SPORE_CELL);
-      w.quarryAt = now + CUT_MS;
-      S.dirty = true;
-    }
-    return;
-  }
+  // bringing the row on, this plot first. The moment one is ripe a spore forms
+  // at the tip of the stalk and stays there: it is a thing that grew, and it
+  // should be seen to have grown before anybody takes it away.
+  tend(w, dt);
+  if (S.plots[i] < 1) return;
 
-  // then it is taken off, from exactly where it grew
-  if (!w.quarryAt) w.quarryAt = now + CUT_MS;         // walked up to one already ripe
+  // then it is taken off, from exactly where it grew. The wait is the same
+  // whether it ripened under this body's hands or came on while the body was
+  // further down the row.
+  if (!w.quarryAt) w.quarryAt = now + CUT_MS;
   if (now < w.quarryAt) return;
   // a smothered plot is dug out before it is picked: the muck is on top of the
   // crop, not beside it
@@ -263,10 +294,12 @@ defineMachine('tiller', {
     S.tillerAt = ((S.tillerAt || 0) + 1 / (n * 40)) % 2;
 
     // What it does to the row it is crossing. A tractor going up a field brings
-    // the whole field on, not the one furrow it happens to be over: that is the
-    // difference between a machine and a very fast farmhand, and it is what the
-    // thing is for. The furrow under it comes on fastest; the rest come on with
-    // it, more slowly.
+    // the whole field on, not the one furrow it happens to be over. A hand keeps
+    // the row too, now, for the same reason a farm should never look abandoned
+    // -- so what the machine is for is not the shape of the work but the amount
+    // of it: seven furrows' worth of keeping without seven bodies to keep them.
+    // The furrow under it comes on fastest; the rest come on with it, more
+    // slowly.
     for (let k = 0; k < n && k < S.plots.length; k++) {
       if (S.plots[k] < 1) S.plots[k] = Math.min(1, S.plots[k] + 1 / (40 * n));
       if (S.plots[k] >= 1 && !S.plotTone[k]) S.plotTone[k] = someFind(SPORE_CELL);

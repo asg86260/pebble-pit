@@ -1469,6 +1469,23 @@ export const FARM_GATE = P * 6;
 export let TEND_BASE = 9000;   // to bring one plot on at tending 0
 export const TEND_FLOOR = 1800;
 export const FARM_WALK = 1.1;
+// How much of a hand's tending stays on the plot it is standing over. The rest
+// goes over the other plots, evenly.
+//
+// A hand is worth one plot's worth of tending in the time one plot takes, and
+// that has not changed -- the farm's pace is its headcount and nothing else.
+// What this splits is where the work *lands*. All of it used to land under the
+// body, so a farm with one hand on it was one stalk and six patches of bare
+// dirt: the row read as abandoned rather than as slow, and a single hand felt
+// like a wasted assignment instead of a cheap one.
+//
+// Half and half. Enough in front of the body that the plot it is working is
+// plainly the one coming on -- the crop is still the crew's attention, and you
+// can see where the attention is -- and enough over the row that nothing in it
+// is standing still. It is a share of the same one plot's worth either way, so
+// a full complement, one hand to each plot, puts a whole share on every plot
+// between them and lands exactly where the old one-hand-one-plot rule did.
+export const TEND_HERE = 0.5;
 // A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.

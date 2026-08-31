@@ -46,6 +46,13 @@ const SCENES = {
   // The plots, and the tractor crossing them.
   farm: `${RICH} window.__buy('tiller'); window.__look(window.__state().farmX - 200);`,
 
+  // One hand on the whole row. This is the shot the row is *for*: a single body
+  // stooping over one plot with the other six visibly coming on behind it,
+  // rather than one stalk and six patches of bare dirt.
+  keeper: `window.__reset(); window.__crew(0,0,0,1);
+           window.__levels({plotLevel:6, tendLevel:6}); window.__fast(70);
+           window.__look(window.__state().farmX - 200);`,
+
   // The hill, and the ram driving into it.
   rock: `${RICH} window.__buy('ram'); window.__jump(6);
          window.__look(window.__state().rockLeftX - 200);`,
