@@ -608,6 +608,14 @@ export function climbTo(w, want) {
   // `frame-rate.test.mjs` caught exactly that, the hour it was written.
   const rise = -d;                        // how far UP the feet still have to come
   if (rise > step) w.x = was;
+  // There is deliberately NO mirror of that rule facing down. It was tried --
+  // hold the step whenever the ground falls away faster than the feet follow --
+  // and seven checks failed inside the minute: walks legitimately stride down
+  // ramps, off ladder heads and over lips all across this yard, and a walk that
+  // stops at every descent is a different length at every frame rate. What made
+  // a body float off the crest was never the climber: it was movers that never
+  // asked it (a roam that moved x and left y) or overrode it (a sway written as
+  // a position). Fix the mover, not the law of walking.
 
   w.footAt = w.x;
   w.foot += Math.sign(d) * Math.min(Math.abs(d), step);

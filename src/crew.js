@@ -2223,7 +2223,13 @@ function minerWork(w, c) {
     // like the dance, which is three hops a second and goes nowhere.
     if (w.idleAt == null) w.idleAt = w.x;
     const idle = now / 1000 * IDLE_BEAT + w.ph;
-    w.x = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
+    // Stepped toward the sway's target, never assigned to it. An absolute
+    // assignment overwrites whatever the climber gave back last frame -- its
+    // whole way of refusing a step is to undo it -- so a sway written as
+    // position dragged bodies over edges the climber was refusing. The janitor
+    // idles this way already; now the stood-down miner does too.
+    const swayTo = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
+    w.x += Math.sign(swayTo - w.x) * Math.min(IDLE_PACE * frames(), Math.abs(swayTo - w.x));
     const surf = rockTopY(colAtX(w.x + WORKER / 2));
     // No straightening-up hop. There used to be a whole cell of it -- the body
     // rose 6px the frame its sway crossed a threshold and dropped 6px when it
@@ -2702,6 +2708,11 @@ function haulerWork(w, c) {
     w.resting = w.roamTo === null || w.roamTo === undefined;
     if (w.roamTo === null || w.roamTo === undefined) {
       elbowIdle(w);                  // and not stood inside somebody
+      // Feet on the ground even while stood still. A resting body never asked
+      // where the ground was, so one that stopped at the crest's edge -- or was
+      // put down mid-air by anything at all -- rested exactly there, hanging.
+      // The climber eases it down the outline in place.
+      w.y = stand(w);
       // and it stays put while it is having one: a body that wandered off
       // mid-cigarette would be a body that was never really standing there
       if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
@@ -2709,7 +2720,21 @@ function haulerWork(w, c) {
       const d = w.roamTo - w.x;
       if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); return; }
       // its own legs, not everybody's
+      const stride = w.x;
       w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
+      // and its feet on the ground it is strolling over. The roam never asked --
+      // it moved x and left y where the last job put it, so a body dropped on
+      // the crest of the rock strolled off the edge at crest height, drawing a
+      // straight line through open air.
+      w.y = stand(w);
+      // A stroll does not stride off a cliff. If the step just taken left the
+      // feet hanging more than a couple of cells over the ground below, the
+      // step is given back and the feet come down first. This lives HERE, in
+      // the leisure code, and not in the climber: working walks legitimately
+      // drop down ramps and lips all over the yard and their length is a tested
+      // promise -- a roam has nowhere to be, so it can afford to pick its way
+      // down the outline.
+      if (standTop(w.x, rockTop) - (w.y + WORKER) > P * 2) w.x = stride;
       if (Math.abs(d) < 1) {
         w.roamTo = null;
         // and its own patience about standing there afterwards
