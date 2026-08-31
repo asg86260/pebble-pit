@@ -18,7 +18,7 @@ import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine, askLever, asked } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
-import { KIT_MARK, boughtKit } from './kit.js';
+import { KIT_MARK } from './kit.js';
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -49,7 +49,7 @@ export const POSTS = [
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: 'janitors',
-    at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen },
+    at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen, kit: true },
   { key: 'farmjob', job: 'farmhands',
     at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
   { key: 'quarryjob', job: 'quarriers',
@@ -225,12 +225,13 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     }
 
     drawBody(b.badge.x, b.badge.y);
-    // A hat nobody buys is the job rather than a doubling on it, so the counter
-    // wears it whether or not anybody has been trained -- the same as out in the
-    // yard, and for the same reason: see `wearing` in kit.js. Asked of the kit
-    // table rather than by naming the janitor, so the next innate hat needs no
-    // line here.
-    if (KIT_MARK[p.job] && !boughtKit(p.job)) drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
+    // The counter is a bare body, and that is every post but the sky now. It
+    // used to have a second case: a hat nobody bought was worn by the badge
+    // unconditionally, because the janitor's cap was worn unconditionally out in
+    // the yard. The cap hangs on a stand outside the closet like every other hat
+    // in this yard, so the janitor's roster is the ordinary two lines -- so many
+    // bodies, so many caps -- and the line that made an exception of it is gone
+    // along with the exception.
     // The sky is the one post where the hat *is* the job: there is no such thing
     // as a wizard without one, so the body at the top of its roster wears it and
     // the plain square underneath -- a body that could not be up there at all --

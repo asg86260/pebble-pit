@@ -76,6 +76,15 @@ const SCENES = {
          (c => window.__look(c.x - window.innerWidth / 2))(window.__state().coreItem
            || { x: window.__state().coreHome.x });`,
 
+  // The closet, its roster and its stand. The caps are the one hat in the yard
+  // nobody buys -- the shed simply has two of them -- so this is where you look
+  // to see that a stock reads the same as a trade: a stand outside the door with
+  // a cap on it and a figure over it, one body gone to fetch one, and the post's
+  // ordinary two lines under the shed.
+  loo: `window.__reset(); window.__crew(0,3); window.__loo();
+        window.__assign('janitors',1); window.__fast(30);
+        window.__look(window.__state().outhouseX - 260);`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`
 };

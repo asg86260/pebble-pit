@@ -45,7 +45,7 @@ import { WORKER } from './config.js';
 import { S, pit, floor } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, WORKINGS } from './route.js';
-import { KIT, KIT_JOBS, TRADE_OF, JOB_OF } from './kit.js';
+import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
 import { count } from './grid.js';
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
@@ -108,7 +108,9 @@ function deepest(leftX, at) {
 // `worn <= hats` is not quite an invariant, and the reason is that hats can be
 // taken *away* from a station while they are still on heads. A machine spends
 // them (see `buy` in machines.js), the school's count can be set back by a dev
-// hook, and a save from another shape of the game arrives that way. In all three
+// hook, a save from another shape of the game arrives that way, and a station
+// whose kit is a stock rather than a purchase loses the lot the moment the
+// building is shut (`__loo(false)`, and the caps are on two heads). In all of them
 // the bodies then walk over and hand the kit in -- `stepKit` reasserts it -- and
 // for the length of those walks the station is legitimately over.
 //
@@ -309,9 +311,10 @@ export function verifyWorld() {
   // while they are still on heads and the bodies then walk them back. See
   // `everOwned` for the whole of that.
   for (const job of KIT_JOBS) {
-    const owned = S[TRADE_OF[job]] || 0;
+    const owned = stockOf(job);
     if (!Number.isInteger(owned) || owned < 0)
-      fail('a station has a hat count that is not a count', `${TRADE_OF[job]} is ${owned}`);
+      fail('a station has a hat count that is not a count',
+           `${TRADE_OF[job] || job} is ${owned}`);
     let out = 0;
     for (const w of S.workers) if (w.trained && w.kitOf === job) out++;
     const mark = out <= owned ? owned : Math.max(everOwned.get(job) ?? owned, owned);

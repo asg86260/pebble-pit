@@ -390,6 +390,14 @@ export const TO_CASINO = -3078;
 export const TO_OUTHOUSE = -756;
 export const OUTHOUSE_W = P * 7;
 export const OUTHOUSE_H = P * 10;
+// How many janitors the closet opens a place for -- and, because the caps hang
+// on the stand outside it, how many caps there are. One number for both: a post
+// with no cap to go with it would be a body sent to a job with nothing to pick
+// up. Two, because unlike the shed jobs this one is not a room with a bench in
+// it -- it is the whole yard, and a yard this long is more ground than one pair
+// of hands keeps up with. See `capOf` in upgrades.js and the janitors' row in
+// kit.js, which both read this.
+export const LOO_POSTS = 2;
 
 // Far enough past the casino to read as its own place rather than the next unit
 // along: the gaps between the buildings out here run about a hundred and fifty,

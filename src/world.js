@@ -89,7 +89,12 @@ export const kitX = job =>
   job === 'farmhands' ? farm.x - P * 18 :
   // The wizards' stand is at the foot of the tower, because the tower is what
   // makes them: a hat on a stand outside the door of the place it was made in.
-  job === 'wizards' ? tower.x - P * 8 : null;
+  job === 'wizards' ? tower.x - P * 8 :
+  // And the janitors' outside the closet, which is where their caps come from --
+  // the shed keeps them, the way the tower keeps the cones. Clear to the left of
+  // the front, because the door is cut in the middle of it and a stand across a
+  // doorway is a stand somebody has to walk round to get in.
+  job === 'janitors' ? outhouse.x - P * 6 : null;
 
 // The strips as they stand, and whether they still describe the yard.
 //
