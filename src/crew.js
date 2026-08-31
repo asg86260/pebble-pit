@@ -8,7 +8,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         COMMUTE_PACE, COMMUTE_SLOP, CLIMB_PACE, HOME_AFTER, HOME_WALK, ROCK_CLEAR, GRAV,
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
-        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
+        PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
         SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT } from './config.js';
 import { S, floor, pit, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain } from './grid.js';
@@ -2123,7 +2123,10 @@ function janitorWork(w, c) {
   const { now } = c;
   const post = stationX('janitor');
   const d = post - w.x;
-  if (Math.abs(d) > WORKER) {
+  // Far enough off its post to have left it, which is a wider mark than being
+  // off the post -- the loitering below is *meant* to take it a few cells away.
+  // See `AT_POST` in config.js, which is that wander plus what rides on it.
+  if (Math.abs(d) > AT_POST) {
     w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
     w.y = stand(w);
     return;
@@ -2140,8 +2143,9 @@ function janitorWork(w, c) {
   // than somebody switched off beside one.
   if (w.idleAt == null || now >= (w.propAt || 0)) {
     // A new spot to lean on, a few cells either way and never off the
-    // shed's own ground.
-    w.idleAt = post + (rand() - 0.5) * P * 10;
+    // shed's own ground. `IDLE_ROAM` is how far that is, and the walk back
+    // to the post is measured off the same number -- see `AT_POST`.
+    w.idleAt = post + (rand() * 2 - 1) * IDLE_ROAM;
     w.propAt = now + JANITOR_PROP * (0.6 + rand() * 0.9);
   }
   const sway = now / 1000 * IDLE_BEAT + w.ph;

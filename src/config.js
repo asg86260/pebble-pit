@@ -1062,6 +1062,29 @@ export const CAP_STEP = 1;       // extra capacity per upgrade
 export const RUNGS = 5;
 export const WORKER = P * 3;     // worker square size
 
+// How far either way loitering may take a body from the post it is minding, and
+// -- out of the same number -- how far off its post it has to be before it
+// counts as having *left*, which is the only thing a walk back is for. They are
+// written here together because they are one measurement, and here rather than
+// beside IDLE_PACE because the second of them is a body wide.
+//
+// They were two numbers and they disagreed. The idle picks a new spot to lean on
+// up to five cells either way and sways a cell on top of that; the walk back to
+// the post fired at anything over a body's width, which is three. So the
+// loitering did exactly what it is for, ambled out past three cells, and was
+// yanked back inside by a single frame of commute -- fifteen frames at
+// IDLE_PACE and then a fourteen-pixel snap, over and over, for as long as you
+// watched. That is not a janitor drifting about its shed, it is a janitor on a
+// rubber band; and the only reason it was hard to name is that the snap is one
+// frame and your eye reads it as a stutter rather than as a walk.
+//
+// So the mark a walk fires at is everything the idle can honestly do -- the
+// wander, the sway on top of it, and a body's width of slack -- and the two
+// cannot drift apart again, because the second is written as the sum of the
+// first and the things that ride on it.
+export const IDLE_ROAM = P * 5;
+export const AT_POST = IDLE_ROAM + P + WORKER;
+
 // One doorway, for every building in the yard that has one.
 //
 // They were all different: two cells by three at the school, three by three at
