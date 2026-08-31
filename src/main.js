@@ -87,7 +87,11 @@ restore();
 buildShop();
 syncWorkers();
 
-S.camX = openingCamX();
+// Where the view opens: where you left it, or -- on a game that has never been
+// played, or a save from before the view was written down -- on the rock.
+// `clampCam` is what makes a remembered spot safe on a window that has changed
+// size or a world that has since grown or shrunk.
+S.camX = S.camWas ?? openingCamX();
 clampCam();
 // the window changing shape, and getting the game written down
 addEventListener('resize', relayout);

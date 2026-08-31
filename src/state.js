@@ -20,6 +20,11 @@ export const S = {
   viewW: 0, viewH: 0,     // what the window covers, in world units
   camX: 0, camY: 0,       // how far the view has been scrolled over the world
   camTo: null,            // somewhere the view is gliding to, or null
+  // Where the view was left last time, if the save had it. Only read once, at
+  // boot: coming back to a game should put you back where you were looking,
+  // not march you off to the rock again. Null on a game that has never been
+  // played, and the opening view is what that gets. See main.js.
+  camWas: null,
   follow: null,           // somebody the view is keeping up with, or null
   camLockY: null,         // and a height it is held at, for the opening only
   // A knock the view is still rocking through, and where that has it this

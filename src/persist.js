@@ -179,6 +179,11 @@ export function persist() {
     seenRows: S.seenRows,
     pitStep: S.pitStep,
     pitFine: S.pitFine,
+    // Where the view is. Scrolling the yard is how you look at any of this, and
+    // a reload that dumped you back at the rock threw away the one piece of
+    // where-you-were the player sets by hand. Rounded because a pixel of a
+    // pixel is not worth the characters.
+    camX: Math.round(S.camX),
     hideDone: S.hideDone,
     pickLevel: S.pickLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
@@ -331,6 +336,9 @@ export function restore() {
   S.runSeed = Number.isFinite(s?.runSeed) ? s.runSeed >>> 0 : seed();
   if (Number.isFinite(s?.rngState)) setRngState(s.rngState);
   S.boulderNo = s?.boulderNo || 1;
+  // Where the view was left. Read at boot and nowhere else, and only believed
+  // if it is a number -- an old save has none, and gets the opening view.
+  S.camWas = Number.isFinite(s?.camX) ? s.camX : null;
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     // A game that has never been played does not start with a rock. It starts
     // with two people, and the rock is what happens to them -- see intro.js.
