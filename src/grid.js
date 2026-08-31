@@ -168,6 +168,28 @@ export function topRow(b, c) {
 // beside it, by letting it rise only as it gets further away.
 export const roomFor = (b, c, r) => !b.ceiling || r < b.ceiling(c);
 
+// How far a grain may walk to get out from under something that is not ground,
+// in columns.
+//
+// The rule the walk is written to is "however wide the thing in the way is", and
+// the widest thing in any of these yards is the hill with the bare clearance kept
+// either side of it: at its largest that is a little over eighty columns of
+// floor. So ninety-six is that with slack, and a rock grown wider still would
+// want this raised rather than the ceiling taken off again.
+//
+// It used to have no ceiling at all, and that is the second half of the dust
+// that was arriving in heaps nobody filled. The first half was fixed above by
+// keeping a heaped grain inside its own region; this is the other one. Off the
+// left-hand end of the yard there are three hundred columns of ground that is
+// barred because nobody can walk there, and it runs to the edge of the world --
+// so a grain let go out there walked the whole way in and came to rest in the
+// first strip it met, which is the farm's. Nobody carried it and the counter
+// went up anyway.
+//
+// Past the reach the grain is simply dropped. Falling off the world is truer
+// than appearing in a heap nobody filled.
+const BARRED_REACH = 96;
+
 // drop one grain in at x. If that column is full or barred it goes in the
 // nearest one that is not; false means there was nowhere at all.
 // `free` ignores the ceiling: what a bank may stand at is about heaps of dust,
@@ -180,7 +202,8 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
   // **Barred** is not ground at all: under the rock, over the mouth of the hole,
   // over the mouth of the cut. A grain aimed there has to go somewhere, and how
   // far it has to walk to find ground is however wide the thing in the way is --
-  // the rock is forty cells across. So that search stays unbounded.
+  // the rock and its clearance are eighty-odd columns across. So that search
+  // crosses whatever it likes on its way, and stops at `BARRED_REACH`.
   //
   // **Heaped** is ground that has simply reached its ceiling. That search used
   // to be unbounded too, and it is where dust was teleporting from: a grain
@@ -208,14 +231,17 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
     // So it spreads as far as it likes inside the strip it is in, or along the
     // bare ground it is on, and never from one into the other. See `floor.region`.
     //
-    // Barred ground is the exception and stays exempt: under the rock, over the
-    // mouth of the hole, over the mouth of the cut. That is not ground at all, a
-    // grain aimed there has to go *somewhere*, and how far it must walk is
-    // however wide the thing in the way is.
-    const from = barred(col) || !b.region ? null : b.region(col);
+    // Barred ground is the exception and stays exempt from the region rule: under
+    // the rock, over the mouth of the hole, over the mouth of the cut. That is
+    // not ground at all, a grain aimed there has to go *somewhere*, and how far
+    // it must walk is however wide the thing in the way is -- which is what
+    // `BARRED_REACH` says, and it is the one limit that search does have.
+    const out = barred(col);
+    const from = out || !b.region ? null : b.region(col);
     const ok = c => !full(c) && (from === null || b.region(c) === from);
+    const reach = out ? BARRED_REACH : b.cols;
     let alt = -1;
-    for (let d = 1; d < b.cols; d++) {
+    for (let d = 1; d <= reach && d < b.cols; d++) {
       if (col - d >= 0 && ok(col - d)) { alt = col - d; break; }
       if (col + d < b.cols && ok(col + d)) { alt = col + d; break; }
     }

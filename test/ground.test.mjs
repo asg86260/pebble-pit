@@ -11,6 +11,12 @@ import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WOR
 // helpers.mjs), so `rand()` below is part of the same repeatable stream the
 // yard is drawing from.
 import { rand } from '../src/rng.js';
+// The bird is startled through the same call the click makes, out of the same
+// module the yard is running: a check that reached for its own copy of the sky
+// would be startling a bird nobody can see.
+import { BIRDS, startle } from '../src/weather.js';
+import { yardLeft } from '../src/world.js';
+import { S } from '../src/state.js';
 
 // The last columns of ground sit further right than a worker is allowed to
 // stand, so one that had to be standing on a column to scoop it stood at the
@@ -371,5 +377,76 @@ group('dust lies where it is dropped, not where a pile is', async () => {
     ok(Math.abs(span.lo - at) < 60 && Math.abs(span.hi - at) < 60,
        'and it lies where it was put rather than being walked off to a heap',
        `dropped at ${at}, lying ${span.lo}..${span.hi}`)
+  ];
+});
+
+// Ground that is barred is not all one thing. Under the rock and over the two
+// mouths there is ground a few cells away either side, and a grain aimed at one
+// of them rolls clear the way a grain rolls off any shoulder. Off the left-hand
+// end of the yard there is not: it is barred because nobody can walk there, and
+// it runs three hundred columns to the edge of the world. A grain let go out
+// there used to walk the whole way in and land in the first strip it met, which
+// is the farm's -- dust in a heap nobody had carried anything to. Two rules now,
+// one at each end of it: nothing is shed over ground like that in the first
+// place, and a grain that finds no ground within reach falls off the world.
+group('dust let go off the end of the yard does not walk home', async () => {
+  window.__crew(0, 0);
+  run(1);
+  window.__clearFloor();
+  const s = state();
+  const left = yardLeft();
+
+  // Bare yard first, so the rest is read against a ground that does take dust:
+  // the gap between two stations, where nothing heaps on purpose.
+  const gaps = s.piles.slice(0, -1)
+    .map((p, i) => ({ from: p.to, to: s.piles[i + 1].from }))
+    .filter(g => g.to - g.from > 120);
+  const bare = Math.round((gaps[0].from + gaps[0].to) / 2);
+  window.__pile(bare, 20);
+  run(2);
+  const laid = state();
+  const span = window.__dustSpan();
+  window.__clearFloor();
+  run(1);
+
+  // Then a long way past the end of it -- two hundred columns out, well beyond
+  // anything a grain is allowed to walk to get out from under an obstacle.
+  window.__pile(left - P * 200, 30);
+  run(2);
+  const off = state();
+  const heaped = Object.values(off.pileCount).reduce((a, b) => a + b, 0);
+  window.__clearFloor();
+  run(1);
+
+  // And the bird itself, put up where the check wants it rather than where the
+  // weather happened to send one. `far: 1` is a bird at the ground's own depth,
+  // so the x it is clicked at is the x it is over whatever the camera is doing.
+  const bird = x => {
+    S.chips.length = 0;
+    BIRDS.length = 0;
+    BIRDS.push({ x, y: S.camY + P * 20, vx: 0, far: 1, sway: 0, flap: 0, beat: 0.2 });
+    startle(x, S.camY + P * 20);
+    return S.chips.length;
+  };
+  const shedOverYard = bird(Math.round(bare / P) * P);
+  const shedOffYard = bird(Math.round((left - P * 200) / P) * P);
+  S.chips.length = 0;
+  BIRDS.length = 0;
+  window.__clearFloor();
+
+  return [
+    ok(laid.floor >= 15, 'a grain let go on bare ground stays on it', `${laid.floor} lying`),
+    ok(Math.abs(span.lo - bare) < 60 && Math.abs(span.hi - bare) < 60,
+       'and it lies where it was let go of', `dropped at ${bare}, lying ${span.lo}..${span.hi}`),
+    ok(off.floor === 0, 'a grain let go off the end of the yard lands nowhere at all',
+       `${off.floor} on the floor`),
+    ok(heaped === 0, 'and above all not in a heap two hundred columns away',
+       JSON.stringify(off.pileCount)),
+    ok(off.dustAtQuarry === 0, 'nor out there where nobody can reach it',
+       `${off.dustAtQuarry} beyond the end`),
+    ok(shedOverYard > 0, 'a bird over the yard still sheds when it is startled',
+       `${shedOverYard} grains`),
+    ok(shedOffYard === 0, 'and one over the far end sheds nothing, having nowhere to shed it',
+       `${shedOffYard} grains`)
   ];
 });

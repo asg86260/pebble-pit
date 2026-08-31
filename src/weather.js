@@ -16,7 +16,8 @@ import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_D
          SMOG_TOP, SMOG_BAND,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
-import { S } from './state.js';
+import { S, floor } from './state.js';
+import { yardLeft } from './world.js';
 import { frames } from './clock.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
@@ -174,13 +175,40 @@ export function sendBirds() {
 export const overBird = (wx, wy) =>
   BIRDS.some(b => Math.abs(wx - skyX(b)) <= BIRD_REACH && Math.abs(wy - b.y) <= BIRD_REACH);
 
+// Ground a shaken grain could come to rest on, at a world x.
+//
+// It is asked about where the bird is, not about where each grain will land,
+// because the two are within a few cells of each other: the only sideways push
+// a shaken grain gets is `bell() * 0.3` of a pixel a frame, which over the whole
+// fall from the band the birds cross is two or three cells either way. So the
+// question is answered with that much margin and no chip is traced.
+const BIRD_DRIFT = P * 4;
+const holdsDust = x =>
+  x + BIRD_DRIFT > yardLeft() && x - BIRD_DRIFT < floor.x + floor.cols * floor.p;
+
 export function startle(wx, wy) {
   for (let i = 0; i < BIRDS.length; i++) {
     const b = BIRDS[i];
     if (Math.abs(wx - skyX(b)) > BIRD_REACH || Math.abs(wy - b.y) > BIRD_REACH) continue;
 
     const from = skyX(b);
-    for (let n = 0; n < BIRD_DUST; n++) {
+    // Nothing is shaken loose over ground that would not have it. The grains are
+    // minted here rather than carried -- the bird is not holding five of them --
+    // so a bird over the wrong place simply drops none, and nothing is stranded
+    // by not making it.
+    //
+    // What the wrong place is, is one place: past the left-hand end of the yard,
+    // where the ground is barred because nobody can walk out there and it runs
+    // on to the edge of the world. A grain let go over that used to walk inland
+    // looking for ground it was allowed to lie on and come to rest in the farm's
+    // heap, a couple of hundred columns from the bird that shed it.
+    //
+    // The mouths are not the wrong place and are deliberately not checked. Dust
+    // let go over the hole falls *in* the hole, which is what the hole is for and
+    // what the chip already does before the ground is ever asked; over the cut
+    // and over the rock's apron it rolls the few cells clear that a grain rolls
+    // off any shoulder.
+    if (holdsDust(from)) for (let n = 0; n < BIRD_DUST; n++) {
       // no arc and no target: a small sideways nudge so the few of them do not
       // fall down the one line, and gravity does the rest
       // the two palest shades, and never 0: a cell of 0 is an empty one, and a
