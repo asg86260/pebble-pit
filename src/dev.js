@@ -12,7 +12,7 @@
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
-import { TUNABLE, tune, tuned } from './config.js';
+import { TUNABLE, tune } from './config.js';
 import { relayout, beat } from './main.js';
 
 const KEY = 'boulder-clicker/dev-open';
@@ -125,7 +125,9 @@ line('run on', box => {
 });
 
 // the numbers themselves. Anything in TUNABLE turns up here without this file
-// being told about it, which is the point of the list living in config.
+// being told about it, which is the point of the table living in config: a row
+// carries its own label, its own ends, and its own way of reading the number,
+// so a slider is built out of the row and nothing here knows any knob by name.
 for (const t of TUNABLE) {
   line(t.label, box => {
     const slider = document.createElement('input');
@@ -133,9 +135,9 @@ for (const t of TUNABLE) {
     slider.min = t.min;
     slider.max = t.max;
     slider.step = t.step;
-    slider.value = tuned(t.key);
+    slider.value = t.get();
     const shown = document.createElement('b');
-    shown.textContent = tuned(t.key);
+    shown.textContent = t.get();
     slider.addEventListener('input', () => {
       shown.textContent = tune(t.key, +slider.value);
       if (t.layout) relayout();

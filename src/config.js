@@ -877,8 +877,11 @@ export const PACK_SPARKS = [40, 140];
 export const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 // how many device pixels we are willing to fill a frame, before backing the
-// resolution off. A phone at three to one is about three million
-export const DEVICE_PIXELS = 9e6;
+// resolution off. A phone at three to one is about three million.
+// A `let`, because it is one of the dials -- it sat in TUNABLE as a `const` with
+// no way in or out of the switches, so its slider read nothing and wrote nothing.
+// One row with its own pair of accessors is what caught it.
+export let DEVICE_PIXELS = 9e6;
 // cells of sand any one grid is allowed to look at in a frame. The ground can
 // hold a hundred thousand and the pit a million; walking either every frame is
 // the most expensive thing in the game, and settling a band at a time is free
@@ -1700,15 +1703,47 @@ export const WIND_MS = 9000;      // the slower of the swings the wind is made o
 export const WIND_LULL = 0.45;
 
 // --- turning the knobs ------------------------------------------------------
-// A handful of these are `let` rather than `const` so a dev panel can move them
-// while the game is running. Modules import the binding, not a copy, so a change
-// here is a change everywhere the moment it is made -- which is the whole point:
-// the way to find a good number is to sit with the game and push it about.
+// One dial, one row, one home.
 //
-// Nothing outside this file writes them. `tune` is the only door in, and the
-// panel builds itself out of TUNABLE rather than knowing any of them by name.
+// A handful of these numbers are `let` rather than `const` so a dev panel can
+// move them while the game is running. Modules import the binding, not a copy,
+// so a change here is a change everywhere the moment it is made -- which is the
+// whole point: the way to find a good number is to sit with the game and push it
+// about. That is why the `let`s stay exactly where they are, up in the tracks
+// they belong to, next to the comments that explain them.
+//
+// What used to be spread out was everything *else* about a dial. A knob was four
+// facts kept in four places -- the `export let` itself, a row in the panel's
+// list, a case in the getter's switch, and a case in the setter's switch -- and
+// a new one had to be added to all four or it went half-missing, with nothing
+// said about it. DEVICE_PIXELS is what that cost looked like: it was in the list
+// and in neither switch, so the panel drew it a slider that read nothing and
+// wrote its value into a pile limit that did not exist. A dial the panel shows
+// and the game does not hear is not a dial, it is a picture of one.
+//
+// So: one row per knob, holding everything anybody asks about one -- what it is
+// called, what it is called *on screen*, how far it goes and in what steps, and
+// the one pair of lines that reads and writes the binding. The pair is the
+// irreducible cost of a live binding: nothing but an assignment in this file can
+// move an imported `let`. But it is written once, beside the row it belongs to,
+// and a row without it is a syntax nobody can miss rather than a slider that
+// quietly lies.
+//
+// Nothing outside this file writes them. `tune` is the only door in, it will not
+// open on a key that has no row, and the panel builds itself out of TUNABLE
+// rather than knowing any of them by name.
+//
+//   key     the name, for the panel's own bookkeeping and for `__tune`
+//   label   what the panel calls it
+//   min     the ends of the slider, and how far one nudge of it moves
+//   max
+//   step
+//   layout  the yard has to be measured again after this one moves
+//   get     read the binding
+//   set     write it -- and anything else that has to happen when it moves
 export const TUNABLE = [
-  { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true },
+  { key: 'CELL', label: 'zoom', min: 3, max: 10, step: 1, layout: true,
+    get: () => CELL, set: v => { CELL = v; } },
   // The one dial that is about the frame rate rather than the game, and it is
   // here because the frame rate is a pixel count: this yard fills pixels, it
   // does not think -- measured, its own work is under a twentieth of a frame and
@@ -1718,107 +1753,91 @@ export const TUNABLE = [
   // that reports more than one device pixel to the css pixel. On a plain
   // monitor the ratio is already one and turning this down changes nothing;
   // on a laptop at two, halving the budget is halving the work.
-  { key: 'DEVICE_PIXELS', label: 'pixels a frame', min: 1e6, max: 12e6, step: 5e5, layout: true },
-  { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1 },
-  { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05 },
-  { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02 },
-  { key: 'WIND', label: 'the wind', min: 0, max: 3, step: 0.05 },
-  { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02 },
-  { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1 },
-  { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000 },
-  { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05 },
-  { key: 'THROW', label: 'throw dust', min: 2, max: 40, step: 1 },
-  { key: 'THROW_MAX', label: 'hardest throw', min: 4, max: 80, step: 1 },
-  { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1 },
-  { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1 },
-  { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2 },
-  { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20 },
-  { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20 },
-  { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1 },
-  { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000 },
-  { key: 'MACHINE_GAIN', label: 'a machine is worth', min: 0.5, max: 6, step: 0.1 },
-  { key: 'MACHINE_FOUL', label: 'a machine is dirtier by', min: 1, max: 12, step: 0.5 },
-  { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05 },
-  { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200 },
-  { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200 },
-  { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50 },
-  { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5 },
-  { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250 },
-  { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1 },
-  { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50 },
-  { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4 },
-  { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4 },
-  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4 },
-  { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4 }
+  { key: 'DEVICE_PIXELS', label: 'pixels a frame', min: 1e6, max: 12e6, step: 5e5, layout: true,
+    get: () => DEVICE_PIXELS, set: v => { DEVICE_PIXELS = v; } },
+  { key: 'BANK_SLOPE', label: 'pile slope', min: 0.4, max: 4, step: 0.1,
+    get: () => BANK_SLOPE, set: v => { BANK_SLOPE = v; } },
+  { key: 'GRAV', label: 'gravity', min: 0.1, max: 1.5, step: 0.05,
+    get: () => GRAV, set: v => { GRAV = v; } },
+  { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02,
+    get: () => AIR_STIR, set: v => { AIR_STIR = v; } },
+  { key: 'WIND', label: 'the wind', min: 0, max: 3, step: 0.05,
+    get: () => WIND, set: v => { WIND = v; } },
+  { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02,
+    get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
+  { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1,
+    get: () => HAZE_CA, set: v => { HAZE_CA = v; } },
+  { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000,
+    get: () => LOO_EVERY, set: v => { LOO_EVERY = v; } },
+  { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05,
+    get: () => HURL, set: v => { HURL = v; } },
+  { key: 'THROW', label: 'throw dust', min: 2, max: 40, step: 1,
+    get: () => THROW, set: v => { THROW = v; } },
+  { key: 'THROW_MAX', label: 'hardest throw', min: 4, max: 80, step: 1,
+    get: () => THROW_MAX, set: v => { THROW_MAX = v; } },
+  { key: 'SPOIL_POP', label: 'spoil pop', min: 0.5, max: 8, step: 0.1,
+    get: () => SPOIL_POP, set: v => { SPOIL_POP = v; } },
+  { key: 'SPOIL_SIDE', label: 'spoil spread', min: 0, max: 5, step: 0.1,
+    get: () => SPOIL_SIDE, set: v => { SPOIL_SIDE = v; } },
+  { key: 'TRADE_COST', label: 'a trade costs', min: 2, max: 4000, step: 2,
+    get: () => TRADE_COST, set: v => { TRADE_COST = v; } },
+  { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20,
+    get: () => MINE_BASE, set: v => { MINE_BASE = v; } },
+  { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20,
+    get: () => MINER_BASE, set: v => { MINER_BASE = v; } },
+  { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1,
+    get: () => HAUL_BASE, set: v => { HAUL_BASE = v; } },
+  { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000,
+    get: () => CUT_DIG_MS, set: v => { CUT_DIG_MS = v; } },
+  { key: 'MACHINE_GAIN', label: 'a machine is worth', min: 0.5, max: 6, step: 0.1,
+    get: () => MACHINE_GAIN, set: v => { MACHINE_GAIN = v; } },
+  { key: 'MACHINE_FOUL', label: 'a machine is dirtier by', min: 1, max: 12, step: 0.5,
+    get: () => MACHINE_FOUL, set: v => { MACHINE_FOUL = v; } },
+  { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05,
+    get: () => CUT_STEP, set: v => { CUT_STEP = v; } },
+  { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200,
+    get: () => QUARRY_BASE, set: v => { QUARRY_BASE = v; } },
+  { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200,
+    get: () => TEND_BASE, set: v => { TEND_BASE = v; } },
+  { key: 'CUT_MS', label: 'time to cut', min: 0, max: 3000, step: 50,
+    get: () => CUT_MS, set: v => { CUT_MS = v; } },
+  { key: 'LAB_WORK', label: 'research effort', min: 5, max: 300, step: 5,
+    get: () => LAB_WORK, set: v => { LAB_WORK = v; } },
+  { key: 'DANCE_MS', label: 'the dance', min: 0, max: 12000, step: 250,
+    get: () => DANCE_MS, set: v => { DANCE_MS = v; } },
+  { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1,
+    get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } },
+  // The piles are fields of one object rather than bindings of their own, so
+  // their pairs read and write a field. Same row, same door.
+  { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50,
+    get: () => PILE_LIMIT.rock, set: v => { PILE_LIMIT.rock = v; } },
+  { key: 'PILE_LIMIT.quarry', label: 'quarry pile holds', min: 4, max: 400, step: 4,
+    get: () => PILE_LIMIT.quarry, set: v => { PILE_LIMIT.quarry = v; } },
+  { key: 'PILE_LIMIT.farm', label: 'farm pile holds', min: 4, max: 400, step: 4,
+    get: () => PILE_LIMIT.farm, set: v => { PILE_LIMIT.farm = v; } },
+  { key: 'PILE_LIMIT.scrub', label: 'house pile holds', min: 4, max: 400, step: 4,
+    get: () => PILE_LIMIT.scrub, set: v => { PILE_LIMIT.scrub = v; } },
+  { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4,
+    get: () => PILE_LIMIT.sky, set: v => { PILE_LIMIT.sky = v; } }
 ];
 
-export function tuned(key) {
-  switch (key) {
-    case 'CELL': return CELL;
-    case 'BANK_SLOPE': return BANK_SLOPE;
-    case 'HAZE_CA': return HAZE_CA;
-    case 'HURL': return HURL;
-    case 'THROW': return THROW;
-    case 'THROW_MAX': return THROW_MAX;
-    case 'LOO_EVERY': return LOO_EVERY;
-    case 'SPOIL_POP': return SPOIL_POP;
-    case 'SPOIL_SIDE': return SPOIL_SIDE;
-    case 'TRADE_COST': return TRADE_COST;
-    case 'AIR_STIR': return AIR_STIR;
-    case 'WIND': return WIND;
-    case 'GRAV': return GRAV;
-    case 'SMOG_PER_DUST': return SMOG_PER_DUST;
-    case 'MINE_BASE': return MINE_BASE;
-    case 'MINER_BASE': return MINER_BASE;
-    case 'HAUL_BASE': return HAUL_BASE;
-    case 'CUT_STEP': return CUT_STEP;
-    case 'CUT_DIG_MS': return CUT_DIG_MS;
-    case 'MACHINE_GAIN': return MACHINE_GAIN;
-    case 'MACHINE_FOUL': return MACHINE_FOUL;
-    case 'QUARRY_BASE': return QUARRY_BASE;
-    case 'TEND_BASE': return TEND_BASE;
-    case 'CUT_MS': return CUT_MS;
-    case 'LAB_WORK': return LAB_WORK;
-    case 'DANCE_MS': return DANCE_MS;
-    case 'SHAKE_LAND': return SHAKE_LAND;
-    default: return PILE_LIMIT[key.split('.')[1]];
-  }
-}
+// The rows, by key. Asking for a knob that has no row is worth hearing about:
+// it used to come back `undefined`, and setting one wrote the value into a pile
+// limit nobody had named.
+const KNOB = new Map(TUNABLE.map(t => [t.key, t]));
+const knob = key => {
+  const t = KNOB.get(key);
+  if (!t) throw new Error(`no such knob: ${key}`);
+  return t;
+};
+
+export const tuned = key => knob(key).get();
 
 export function tune(key, v) {
-  switch (key) {
-    case 'CELL': CELL = v; break;
-    case 'BANK_SLOPE': BANK_SLOPE = v; break;
-    case 'HAZE_CA': HAZE_CA = v; break;
-    case 'HURL': HURL = v; break;
-    case 'THROW': THROW = v; break;
-    case 'THROW_MAX': THROW_MAX = v; break;
-    case 'LOO_EVERY': LOO_EVERY = v; break;
-    case 'SPOIL_POP': SPOIL_POP = v; break;
-    case 'SPOIL_SIDE': SPOIL_SIDE = v; break;
-    case 'TRADE_COST': TRADE_COST = v; break;
-    case 'AIR_STIR': AIR_STIR = v; break;
-    case 'WIND': WIND = v; break;
-    case 'GRAV': GRAV = v; break;
-    case 'SMOG_PER_DUST': SMOG_PER_DUST = v; break;
-    case 'MINE_BASE': MINE_BASE = v; break;
-    case 'MINER_BASE': MINER_BASE = v; break;
-    case 'HAUL_BASE': HAUL_BASE = v; break;
-    case 'CUT_STEP': CUT_STEP = v; break;
-    case 'CUT_DIG_MS': CUT_DIG_MS = v; break;
-    case 'MACHINE_GAIN': MACHINE_GAIN = v; break;
-    case 'MACHINE_FOUL': MACHINE_FOUL = v; break;
-    case 'QUARRY_BASE': QUARRY_BASE = v; break;
-    case 'TEND_BASE': TEND_BASE = v; break;
-    case 'CUT_MS': CUT_MS = v; break;
-    case 'LAB_WORK': LAB_WORK = v; break;
-    case 'DANCE_MS': DANCE_MS = v; break;
-    case 'SHAKE_LAND': SHAKE_LAND = v; break;
-    default: PILE_LIMIT[key.split('.')[1]] = v;
-  }
-  return tuned(key);
+  const t = knob(key);
+  t.set(v);
+  return t.get();
 }
-
 // --- Track HOUSE -------------------------------------------------------------
 // Where the crew live: a shack per body, on the bare ground out past the bench,
 // between it and the quarry. The block is sized to the room it has at the
