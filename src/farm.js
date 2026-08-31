@@ -186,7 +186,6 @@ export function stepFarmhand(w, now, dt, c = null) {
   // It works the plot rather than standing to attention beside it: it stoops over
   // it on its own rhythm and shifts its weight between times. Whether the farm
   // is producing and whether it looks tended are two different questions.
-  w.lunge *= 0.84;
   if (now >= w.stoopAt) {
     w.lunge = 1;
     w.stoopAt = now + TEND_STOOP * (0.75 + rand() * 0.6);
@@ -333,6 +332,19 @@ export const tillerRun = () => {
   // Up the row and back down it, so it is always somewhere and never jumps.
   const k = (S.tillerAt || 0) % 2;
   return k < 1 ? k : 2 - k;
+};
+
+// Which way it is pointing: 1 up the row, -1 back down it.
+//
+// Read off the same clock the position is, never stored. A tractor at the far
+// end of the row turns round and comes back, and it does not reverse the whole
+// way -- every other body in this yard faces where it is going, and the one that
+// crosses the most ground was the one that did not. The run is a saw wave, so
+// the direction is simply which half of it we are in, and the turn happens at
+// exactly the frame the travel does.
+export const tillerWay = () => {
+  if (plotCount() < 2) return 1;              // standing still: it faces the row
+  return ((S.tillerAt || 0) % 2) < 1 ? 1 : -1;
 };
 
 const tillerPlot = () => {

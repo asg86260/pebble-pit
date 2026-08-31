@@ -108,52 +108,116 @@ export const HATS_TIGHT = {
 
 // The jaw, on the floor of the cut. Its mouth opens and shuts, so there are two
 // of it.
+//
+// Half again the size it was, and that is the whole of the change. A machine in
+// this yard costs a full set of specialists and does the work of all of them, and
+// at five cells by four it was two-thirds the height of one of the bodies it had
+// just put out of a job -- so the thing you had saved up the whole ladder for
+// arrived looking like a crate somebody had left in the hole. Every machine here
+// is now about three bodies wide, which is the smallest a thing can be and still
+// read as *plant* rather than as an object.
 export const JAW = [
   [
-    '.####',
-    'ooo##',
-    'ooo##',
-    '#####'
+    '..######',
+    '.#######',
+    'oooo####',
+    'oooo####',
+    'oooo####',
+    '########'
   ],
   [
-    '.####',
-    '#o###',
-    '#o###',
-    '#####'
+    '..######',
+    '.#######',
+    '#oo#####',
+    '#oo#####',
+    '#oo#####',
+    '########'
   ]
 ];
 
 // The hoist's frame, on the deck over the mouth. The rope and the skip are drawn
 // under it, as long as the hole is deep.
+//
+// A frame, and drawn like one: white knocked out of the whole inside of it with
+// a band of black across the middle and a stub of upright in each half, so it
+// reads as braced steel rather than as a black slab. Filled in, at this height,
+// it was a monolith standing over the cut -- the biggest black shape in the yard,
+// and a picture of nothing.
+//
+// The rope runs down the channel at the bottom, and which column that is, is
+// read off the sprite rather than written down twice -- see `ropeCol`.
 export const HOIST = [
-  '###',
-  '#o#',
-  '#o#',
-  '#o#',
-  '#o#',
-  '#o#',
-  '#.#'
+  '#####',
+  '#ooo#',
+  '#o#o#',
+  '#ooo#',
+  '#####',
+  '#ooo#',
+  '#o#o#',
+  '#ooo#',
+  '#o.o#'
 ];
 
 // The ram, at the foot of the hill. The arm is drawn separately because its
 // length is the animation.
 export const RAM = [
-  '.##....',
-  '.##....',
-  '#######',
-  '#ooo###',
-  '#ooo###',
-  '#######'
+  '..##.......',
+  '..##.......',
+  '..##.......',
+  '###########',
+  '#oooo######',
+  '#oooo######',
+  '#oooo######',
+  '###########'
 ];
 
 // The tiller: a tractor, and the silhouette everybody already knows -- a big
 // wheel at the back, a little one at the front, a bonnet sloping down between
 // them, and the driver up over the back axle.
+//
+// The wheels are rings: white knocked out of the chassis for the hub, black left
+// round it for the tyre, and the bottom row broken so the two of them are two
+// wheels rather than one long skirt. The back one is twice the width of the
+// front, which is the one thing about a tractor everybody can see from a field
+// away.
 export const TILLER = [
-  '.#.....',
-  '.#..###',
-  '####..#',
-  '#######',
-  '#o##o##',
-  '.oo.ooo'
+  '..#.......',
+  '..#......#',
+  '..#......#',
+  '..#####..#',
+  '##########',
+  '#oo##oooo#',
+  '#oo##oooo#',
+  '.##..####.'
 ];
+
+// The same three at roster size.
+//
+// A machine's own picture is the best possible icon of it right up until the
+// picture is eleven cells wide, and a roster strip is eighteen. So the switch
+// gets a mark: the shape the machine had when it *was* small, which is not a
+// compromise -- it was a good drawing of a jaw, and it still is. The rule is the
+// ordinary one for a mark: enough of the silhouette to tell it from the other
+// two, and nothing else.
+export const MACHINE_MARK = {
+  jaw: [
+    '.####',
+    'ooo##',
+    'ooo##',
+    '#####'
+  ],
+  ram: [
+    '.##....',
+    '.##....',
+    '#######',
+    '#ooo###',
+    '#######'
+  ],
+  tiller: [
+    '.#.....',
+    '.#..###',
+    '####..#',
+    '#######',
+    '#o##o##'
+  ]
+};
