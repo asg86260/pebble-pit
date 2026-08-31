@@ -33,6 +33,12 @@ import { mkdirSync } from 'node:fs';
 const RICH = `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
   window.__grant({sparks:999,shards:999,spores:999,cores:9}); window.__tip(90000);`;
 
+// The lip bought out: every rung of the crew's own gear and a cart for every
+// pair of hands, which is what the belt is gated behind. `__fullSites` does the
+// same for the cut, the field and the rock, but carrying has no site to fill.
+const LIP = `window.__levels({haulCarryLevel:5, haulPaceLevel:5, harnessLevel:5,
+  bootsLevel:5}); window.__school({carters:6});`;
+
 const SCENES = {
   // Bodies, wearing everything the school sells, standing where you can see them.
   crew: `window.__reset(); window.__crew(3,2,2,2);
@@ -58,7 +64,15 @@ const SCENES = {
          window.__look(window.__state().rockLeftX - 200);`,
 
   // Everything at once, every machine running, for the shape of the whole thing.
-  yard: `${RICH} window.__buy('jaw'); window.__buy('tiller'); window.__buy('ram');
+  yard: `${RICH} ${LIP} window.__buy('jaw'); window.__buy('tiller');
+         window.__buy('ram'); window.__buy('belt'); window.__fast(6);
+         window.__look(window.__state().pitX - 400);`,
+
+  // The belt, which is the one machine that is long rather than tall: a run of
+  // trestles from the rock to the lip, its tender standing at the hole end, and
+  // the ground under it being swept into it. Bought and running -- it has no
+  // lever, so there is nothing to throw and nobody walks anywhere to start it.
+  belt: `${RICH} ${LIP} window.__buy('ram'); window.__buy('belt'); window.__fast(8);
          window.__look(window.__state().pitX - 400);`,
 
   // The two marks that hang under a station: the stopped triangle and the offer

@@ -16,7 +16,7 @@ import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
-import { JOB_MACHINE, machine, askLever, asked } from './machines.js';
+import { JOB_MACHINE, machine, askLever, asked, hasLever } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 import { KIT_MARK } from './kit.js';
 
@@ -221,7 +221,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     // stations that have one standing, which is none of them for most of a run.
     const on = machineOn(p.job);
     if (on !== null && drawRun) {
-      drawRun(b.run, on, JOB_MACHINE[p.job] ? asked(JOB_MACHINE[p.job]) : on);
+      drawRun(b.run, on, asked(JOB_MACHINE[p.job]));
     }
 
     drawBody(b.badge.x, b.badge.y);
@@ -331,6 +331,10 @@ export function drawRosterCounts(ctx, screenAt) {
 export const machineOn = job => {
   const key = JOB_MACHINE[job];
   const m = key && machine(key);
+  // A machine with no lever gets no switch: the belt is on whenever it is
+  // bought, and a switch that cannot be thrown is worse than no switch at all --
+  // which is exactly what carrying had, since a fixed post takes no clicks.
+  if (!key || !hasLever(key)) return null;
   return m && m.bought ? !!m.on : null;
 };
 
@@ -346,7 +350,9 @@ export function rosterReport() {
              // station from a small one.
              cap: capOf(p.job) === Infinity ? null : capOf(p.job),
              machine: machineOn(p.job),
-             asked: JOB_MACHINE[p.job] ? asked(JOB_MACHINE[p.job]) : null,
+             // Both null on a station with no switch, so the report says one
+             // thing about it rather than two.
+             asked: machineOn(p.job) === null ? null : asked(JOB_MACHINE[p.job]),
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,

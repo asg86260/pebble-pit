@@ -36,10 +36,31 @@ export const MACHINES = [
   { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
   { key: 'ram',    job: 'miners',    name: 'the ram' },
   { key: 'tiller', job: 'farmhands', name: 'the tiller' },
-  // The fourth, and the odd one out: it does not work a face, it works the
-  // *ground between* the rock and the hole. See the belt's spec in dust.js.
-  { key: 'belt',   job: 'haulers',   name: 'the belt' }
+  // The fourth, and the odd one out twice over: it does not work a face -- it
+  // works the *ground between* the rock and the hole, see the belt's spec in
+  // dust.js -- and it has no lever.
+  //
+  // No lever, because there is nothing to point at. The other three stand
+  // somewhere: a jaw is in the cut, a ram is at the rock, a tiller is in the
+  // field, and a switch belongs at the place it is about. A belt is a run of
+  // trestles the width of the yard, so a switch on it would be a switch in the
+  // middle of nowhere -- and carrying is the one roster with no buttons on it,
+  // being the post you never staff by hand, so there was nowhere to put one
+  // there either. It was drawn on the carrying roster and could not be pressed,
+  // and `leverX` had no answer for it, so the ask the purchase raised stood for
+  // ever and the belt you had just paid for never started.
+  //
+  // So: bought is running. It is the one machine you cannot stop, which costs
+  // nothing -- the lever's job is to get a station's gang back and to stop the
+  // smoke, and the belt displaces no gang you would want back and works the
+  // ground rather than a face. And the yard's own rule still holds over it: an
+  // unmanned belt does nothing, so it stops the moment its tender walks off.
+  { key: 'belt',   job: 'haulers',   name: 'the belt', lever: false }
 ];
+
+// Whether a machine has a lever to throw. Read off the table above rather than
+// asked of the key here and there, so there is one place that says which.
+export const hasLever = key => (MACHINES.find(m => m.key === key) || {}).lever !== false;
 
 // Derived, not written out again: a hand-kept inverse of the table six lines
 // above is a second place to forget.
@@ -140,6 +161,8 @@ export const running = key => {
 export function askLever(which, on) {
   const m = machine(which);
   if (!m || !m.bought) return false;
+  if (!hasLever(which)) return false;           // nothing to throw, and it is on
+
   if (m.on === !!on) { m.ask = null; return false; }   // already the way you want it
   m.ask = { on: !!on };
   S.dirty = true;
@@ -219,7 +242,20 @@ export function buyMachine(key) {
   // journey as any other -- a machine that arrived already running would be the
   // one thing in the yard that did something without hands, and one that arrived
   // switched off would read as a purchase that did nothing.
-  m.ask = { on: true };
+  //
+  // Unless it has no lever, in which case there is nobody to send and nothing to
+  // send them to: it is on, and the bookkeeping the lever would have done on the
+  // way past is done here instead. `rebalance` only ever clamps down, so the
+  // complement the machine displaces has to be recorded and walked to carrying
+  // in the same breath -- see `throwLever`, which this is the leverless half of.
+  if (!hasLever(key)) {
+    m.on = true;
+    const job = (MACHINES.find(x => x.key === key) || {}).job;
+    m.was = S[job] || 0;
+    S.restaff = { job, want: 0 };
+  } else {
+    m.ask = { on: true };
+  }
   S.dirty = true;
 }
 

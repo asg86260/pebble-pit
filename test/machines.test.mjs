@@ -1124,6 +1124,80 @@ group('the belt carries dust to the hole without anybody walking it', async () =
   ];
 });
 
+// The belt has no lever, and buying one is the whole of switching it on.
+//
+// This is the check the feature shipped without, and the bug it hid: every belt
+// check reached in through `__machine` and set `on` itself, so nothing ever
+// bought one the way a player does. Done that way, the purchase raised an ask
+// that `stepLevers` could never answer -- `leverX` had no post for a machine
+// that stands across the whole yard -- and the switch drawn on the carrying
+// roster could not be pressed, carrying being a fixed post. So the belt was
+// bought, paid for, took the carters' carts, and never ran.
+group('a belt bought is a belt running, with no lever to throw', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 3);
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__school({ carters: 6 });
+  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+
+  const bought = window.__buy('belt');
+  const atOnce = state().machines.belt;
+  // and it stays on: nothing walks over to it, and nothing turns it off again
+  run(6);
+  const later = state().machines.belt;
+
+  // No switch on the carrying roster, and nothing to click if you go looking.
+  const clicked = window.__clickLever('belt');
+  const asked = window.__lever('belt', false);
+  run(4);
+  const after = state().machines.belt;
+
+  // And it carries, bought this way, with nobody having touched a lever.
+  window.__clearFloor();
+  const s0 = state();
+  for (let i = 0; i < 200; i++) window.__pile(s0.pitX - 300 + (i % 30) * 6, 3);
+  run(1);
+  const before = state();
+  run(14);
+  const moved = state();
+  window.__crew(0, 0);
+  return [
+    ok(bought, 'the row is affordable and buys'),
+    ok(atOnce.on, 'and it is running the instant it is bought', `on ${atOnce.on}`),
+    ok(!atOnce.ask, 'with no ask left standing for nobody to answer',
+       JSON.stringify(atOnce.ask)),
+    ok(later.on, 'and still running six seconds later'),
+    ok(!clicked && !asked, 'there is no switch to press and no lever to ask for',
+       `clicked ${clicked}, asked ${asked}`),
+    ok(after.on, 'so it cannot be stopped by asking'),
+    ok(moved.stored > before.stored && moved.floor < before.floor,
+       'and it carries the ground to the hole, bought the way a player buys it',
+       `${before.floor} -> ${moved.floor} on the ground, ` +
+       `${before.stored} -> ${moved.stored} in the hole`)
+  ];
+});
+
+// A belt survives a reload running, because there is no lever to have left off.
+group('a belt comes back running', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 3);
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__school({ carters: 6 });
+  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__buy('belt');
+  window.__reload();
+  const back = state().machines.belt;
+  window.__crew(0, 0);
+  return [
+    ok(back.bought && back.on, 'bought and running after a reload',
+       `bought ${back.bought}, on ${back.on}`)
+  ];
+});
+
 // It is priced and gated like the rest, but on the lip's own gear.
 group('the belt waits for the whole of the lip to be bought out', async () => {
   window.__reset();

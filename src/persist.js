@@ -11,7 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { resetCut } from './quarry.js';
-import { freshMachines, MACHINES } from './machines.js';
+import { freshMachines, MACHINES, hasLever } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
@@ -473,7 +473,11 @@ export function restore() {
     const r = (s.machines && s.machines[m.key]) || {};
     const rec = S.machines[m.key];
     rec.bought = !!r.bought;
-    rec.on = !!r.bought && !!r.on;      // a lever cannot be on for a machine nobody bought
+    // A lever cannot be on for a machine nobody bought -- and a machine with no
+    // lever is on the moment it is bought, so a save that predates the belt
+    // losing its lever (or one written while its ask was still standing) comes
+    // back running rather than bought-and-stopped for ever.
+    rec.on = !!r.bought && (hasLever(m.key) ? !!r.on : true);
     rec.was = r.was | 0;
     rec.driven = !!r.driven;
     // A machine bought before this was written took a full set and has no

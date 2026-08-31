@@ -33,7 +33,7 @@ import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
-import { machine, MACHINES, askLever } from './machines.js';
+import { machine, MACHINES, askLever, hasLever } from './machines.js';
 import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -70,6 +70,9 @@ export const machineSet = (which, o = {}) => {
   if (o.bought != null) { m.bought = !!o.bought; if (!m.bought) m.on = false; }
   if (o.on != null) m.on = !!o.on && m.bought;
   if (o.driven != null) m.driven = !!o.driven;
+  // A machine with no lever has no off: bought is running. A check that asked
+  // for one bought would otherwise get the state the game itself cannot reach.
+  if (!hasLever(which)) m.on = m.bought;
   const job = MACHINES.find(x => x.key === which).job;
   if (m.on && !m.was) m.was = S[job] || 0;
   if (!m.on) m.ask = null;

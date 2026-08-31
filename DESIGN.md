@@ -1403,6 +1403,21 @@ up to that many from whoever is idle. It restores a complement; it does not
 conjure bodies. Without this, every "off" would cost five clicks on the roster
 and the lever would be a decision nobody made twice.
 
+**Except the belt, which has none: bought is running.** The other three stand
+somewhere -- a jaw in the cut, a ram at the rock, a tiller in the field -- and a
+switch belongs at the place it is about. A belt is a run of trestles the width of
+the yard, so a switch on it would be a switch in the middle of nowhere; and the
+switch's other home, the station's roster, is no home either, carrying being the
+one post you never staff by hand and so the one roster that takes no clicks. It
+was built with a lever anyway, and the lever was the bug: the purchase raised an
+ask that nothing could ever answer, so a belt you had paid for -- in all three
+grounds, having handed over the carters' carts for it -- stood there and never
+ran. What the lever is *for* it does not need. It displaces no gang you would
+want back, because carrying is where `rebalance` walks the surplus to anyway, and
+it works the ground rather than a face, so there is no hand fallback to switch to.
+And the safety net is not the lever, it is the older rule: an unmanned belt does
+nothing, so it stops the moment its tender walks off.
+
 **How live a decision the lever really is, honestly.** A machine is a flat rate
 and a gang is not -- but the cut can never hold more than its five benches and
 the farm never more than its seven plots, and the machine is now measured against
