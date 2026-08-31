@@ -313,7 +313,6 @@ export const S = {
   runSeed: 0,
   dirty: false,           // something changed worth saving
   lastFrame: 0,           // for the length of the last frame
-  dustSeen: 0, dustSeenAt: 0,   // a cached count, for how many motes drift about
   settleAt: 0             // the column the pit settler got to last frame
 };
 
@@ -321,7 +320,7 @@ export const S = {
 //
 // `reset` in persist.js puts a game back by naming a hundred fields and what
 // each of them goes back to, and that list has to be kept level with this one.
-// It never quite is: `dustSeenAt`, `nextBoulderAt`, `quarryCells`, `tick` and a
+// It never quite is: `nextBoulderAt`, `quarryCells`, `tick` and a
 // handful of others are declared here and forgotten there, so a "new game" in a
 // page that has already played one starts with the last game's cached dust
 // count, its rock timer and its quarry. In play that is nearly invisible -- the
@@ -351,7 +350,12 @@ export const BLANK = JSON.parse(JSON.stringify(S));
 // its shape costs more than the whole of the saving the fields were added for:
 // measured, adding them lazily made the frame slower than not having them at
 // all. Anything that puts a new sand plot together should declare them too.
-export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The yard floor. `n` is the live count of occupied cells, kept by `put` and
+// repaired by `recount` after anything that writes the cells wholesale -- the
+// same ledger the hole keeps, and watched by the same rule 7. It is here so that
+// "how much dust is lying about" is a field read rather than a walk of a hundred
+// and twenty thousand cells four times a second. See grid.js `put`.
+export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const school = { x: 0, y: 0, w: 0, h: 0 };
 export const pit = { x: 0, y: 0, w: 0, h: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };

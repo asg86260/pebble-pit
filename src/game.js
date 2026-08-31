@@ -255,7 +255,6 @@ export function surveyFloor() {
   const marks = [];
   const count = {};
   for (const p of S.piles) count[p.key] = 0;
-  let grains = 0;
   for (let c = 0; c < floor.cols; c++) {
     const x = floor.x + c * P;
     const pile = pileAt(x);
@@ -272,11 +271,15 @@ export function surveyFloor() {
         marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
       }
     }
-    grains += n;
     if (pile) count[pile.key] += n;
   }
   S.floorMarks = marks;
-  S.floorGrains = grains;
+  // The total is not counted here. The floor keeps its own ledger -- `put`
+  // maintains it and verify.js rule 7 watches it drift -- so re-deriving it from
+  // the same walk would be a second copy of a number that is already exact. The
+  // walk stays for the two things a ledger cannot answer: which strip each grain
+  // is standing on, and where the cells that are not dust have come to rest.
+  S.floorGrains = floor.n;
   S.pileCount = count;
 
   // A pile that is full stops the station behind it, and the moment there is

@@ -12,6 +12,52 @@ in here is the same 1800 frames both times.
 The headline: **one function is four fifths of the frame, and it is not doing
 any of the things a frame is for.**
 
+## 0. What has been taken off this list
+
+Everything in section 3 below is written as it was found; this is what has since
+been done about it, measured the same way on the same three yards.
+
+| yard | at 6be3311 | now |
+|---|---:|---:|
+| empty, no crew | 0.048 | 0.027 |
+| busy 14-body | 0.170 | 0.121 |
+| 14 + all four machines, ~6,600-mote sky | 0.501 | 0.232 |
+| the same, over a sky restored from a save (~9,500 motes) | 4.98 | 2.80 |
+
+- **1, `refresh()`** — gone with the mess-layer rework at 415f36c. There is no
+  `refresh` any more: `tally()` skips bare ground and memoizes on the tick.
+- **3, `dustAbout()`** — done. `floor` keeps a ledger the way the pit does, and
+  the four-a-second walk of a hundred and sixty thousand cells is two field
+  reads. That is the whole of the empty yard's cost above.
+- **4, `unpull()`** — done. A flag set by `pull` and the plume half of
+  `stirSmoke`, cleared by the pass that zeroes the offsets.
+- **5, `surveyFloor()`** — half done. The total comes off the ledger. The walk
+  stays, because the other two things it works out — which strip each grain
+  stands on, and where the cells that are not dust are — are genuinely per
+  column and no ledger answers them.
+- **2, settled sky motes** — done, and the diagnosis in section 3 was wrong.
+  The per-mote arithmetic was never the cost. `settleHere` finished a mote's
+  climb with `delete m.lean; delete m.y0`, and a `delete` puts an object into
+  dictionary mode for good — so **every settled mote in the sky was a hash
+  table**, and `place` reads eleven fields off each of them sixty times a
+  second. One shape of mote, declared whole in `skyMote`, took `stepSmog` on a
+  4,600-mote band from 1.25 ms/frame to 0.098. Alongside it: the slot's four
+  derived numbers are worked out once instead of per mote per frame (they were
+  two allocations a mote a frame), the band's top and depth and the frame's
+  wind are hoisted out of the loop, and a mote past `AGE_STILL` skips the
+  stretch, the ease, the fade and its own clock entirely — which is the
+  *at rest* case, and it fires on a restored sky but rarely on a working one,
+  because rain recycles a machine yard's band long before a mote is 405 seconds
+  old.
+
+What is still true, and is the honest limit of item 2: a settled mote is cheap
+but not free. Its position is written every frame because the band sways and the
+whole sky creeps on the wind, and six other places — the rain, the draught, the
+recycler, the pointer, the readouts, the drawing — read that position out of the
+mote as a field. A sky that stored anchors and let the drawing evaluate
+`anchor + f(t)` on the motes actually on screen would be free. That is the
+redesign; it is not done.
+
 ## 1. The frame budget
 
 The busy yard costs ~0.80 ms/frame bare, ~0.89 under the profiler. Broken down

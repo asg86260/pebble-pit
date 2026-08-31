@@ -14,7 +14,7 @@ import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AI
          AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE } from './config.js';
 import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm } from './state.js';
-import { at, count, surfaceY } from './grid.js';
+import { at, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now, frames } from './clock.js';
@@ -150,7 +150,7 @@ function place(m, anywhere) {
   // is plainly caused by something you are watching
   const from = anywhere ? null
              : (rand() < AIR_SITE ? offASite() : null)
-               || offAWalker() || (S.dustSeen > 20 ? offAPile() : null);
+               || offAWalker() || (dustAbout() > 20 ? offAPile() : null);
   if (from) { m.x = from.x; m.y = from.y; m.kind = kindAt(m.x); return m; }
 
   m.x = rand() * S.W;
@@ -184,11 +184,11 @@ function born(anywhere) {
 // How many motes the yard is asking for, before the cap. A well-stocked pit
 // asks for far more than the screen can carry -- the cap is what stops the air
 // turning to soup -- so this is the number that actually answers the yard.
-const appetite = t => AIR_FLOOR + Math.round(dustAbout(t) / AIR_PER_DUST);
+const appetite = () => AIR_FLOOR + Math.round(dustAbout() / AIR_PER_DUST);
 
 export function stepAir() {
   const t = now();
-  const want = Math.min(AIR_CAP, appetite(t));
+  const want = Math.min(AIR_CAP, appetite());
   const wind = windAt(t) * AIR_LEAN;      // the yard's wind, in the pixels dust travels in
 
   // how far the field has to slide to stay put: the camera moved, and each band
@@ -330,17 +330,17 @@ export function airReport() {
     if (m.b.front) front++;
     kinds[m.kind]++;
   }
-  return { n: AIR.length, under, front, kinds, want: appetite(now()) };
+  return { n: AIR.length, under, front, kinds, want: appetite() };
 }
 
 
-// roughly how much dust is lying about, refreshed a few times a second: this
-// only sets how many motes drift in the air, and counting a full pit every
-// frame would cost more than the whole rest of the game
-export function dustAbout(now) {
-  if (now - S.dustSeenAt > 400) {
-    S.dustSeen = count(floor) + count(pit);
-    S.dustSeenAt = now;
-  }
-  return S.dustSeen;
+// How much dust is lying about. This only sets how many motes drift in the air.
+//
+// It used to walk both grids -- a hundred and sixty thousand cells -- every four
+// hundred milliseconds, which is a millisecond-and-a-bit spike four times a
+// second for ever. Both plots keep a live count of their occupied cells now
+// (see grid.js `put` and verify.js rule 7), so the question is two field reads
+// and there is nothing left to refresh.
+export function dustAbout() {
+  return (floor.n || 0) + (pit.n || 0);
 }

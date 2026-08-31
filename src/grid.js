@@ -120,6 +120,15 @@ export const resetSettleWork = () => { work = 0; };
 // in the pile takes a cell and is not dust, so the hole filled up one grain
 // before the counter said it had, the heap over the mouth never unlocked, and
 // the crew stood at the lip throwing dust at a brim that would not take it.
+//
+// The yard floor keeps one for the same reason from the other end: "how much
+// dust is lying about" was two full-grid walks -- a hundred and sixty thousand
+// cells -- four times a second, for a number nothing needed to the grain. What
+// makes a second copy of a fact safe is not care at the handful of places that
+// write cells behind `put`'s back but the alarm that catches them when they are
+// missed: every one of those says so out loud (`recount`, or the reset in
+// `fillFlat` below), and verify.js rule 7 walks both grids once a second and
+// fails on the frame a ledger and its cells disagree.
 export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
@@ -299,6 +308,7 @@ export function settleSome(b, budget) {
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
+  if (b.n != null) b.n = 0;                // and the ledger went with them
   wakeGrid(b);                             // the cells went, and not through `put`
   if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);

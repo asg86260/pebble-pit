@@ -15,7 +15,7 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
 import { S, BLANK, floor, pit } from './state.js';
-import { at, put, addGrain } from './grid.js';
+import { at, put, addGrain, recount } from './grid.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
@@ -129,6 +129,7 @@ export const fullSites = () => {
 
 export const clearFloor = () => {
   floor.grid.fill(0);
+  recount(floor);                          // the cells went, and not through `put`
   floor.painter.repaint();
   S.dirty = true;
 };

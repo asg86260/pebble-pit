@@ -152,7 +152,9 @@ group('a plot loaded from a save is looked at again', async () => {
   // cells, behind the sand's back, and in mid-air rather than on the ground.
   const put = 40;
   for (let i = 0; i < put; i++) floor.grid[(floor.rows - 6) * floor.cols + 200 + i] = 3;
-  grid.wakeGrid(floor);                    // which is what the loader says for real
+  // which is what the loader says for real: cells written behind `put`'s back
+  // leave two things to repair, the sand and the ledger, and `recount` is both
+  grid.recount(floor);
   run(10);
 
   let hanging = 0;
