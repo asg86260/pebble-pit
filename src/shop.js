@@ -7,7 +7,7 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds } from './upgrades.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -62,7 +62,7 @@ function shape(list, sections) {
       // a different board. Folding the finished rows away used to do nothing at
       // all for exactly that reason: the switch flipped, the label changed, and
       // this said "same rows as last time" and never rebuilt them.
-      return u && u.show() && !(S.hideDone && maxed(u));
+      return u && u.show() && !(S.hideDone && folds(u));
     });
     if (rows.length) out.push(sect.title, ...rows);
   }
@@ -141,7 +141,7 @@ function build(el, list, sections, empty) {
       // and, if asked, without the ones that are finished. A section with
       // nothing left in it goes with them -- a heading over an empty space is
       // worse than the rows were.
-      .filter(u => !(S.hideDone && maxed(u)));
+      .filter(u => !(S.hideDone && folds(u)));
     if (!rows.length) continue;
 
     if (!(lone && sect.title === title)) {
