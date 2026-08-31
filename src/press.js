@@ -100,13 +100,49 @@ function vignette(ctx, w, h, a) {
 }
 
 // One pass over the finished frame, on the frame's own canvas.
+//
+// Both looks are static: the two amounts are constants and neither depends on
+// anything in the yard, so neither is worked out over the frame any more. They
+// are laid down once onto a sheet the size of the canvas -- rebuilt only when
+// the window changes size -- and the sheet is dropped over the picture as one
+// image.
+//
+// This is the one line in the draw that is pure fill rate: it touches every
+// device pixel whatever the game is doing, so it is the line a phone changes
+// most. Shading a radial gradient and tiling a pattern over the whole canvas is
+// several times the cost of blitting an image over it -- on the software raster
+// of the headless shell, at 480,000 pixels, it is the difference between 4.3 ms
+// of rasterized frame and 0.3. `DEVICE_PIXELS` in config.js caps the canvas at
+// nine million, so that is the worst this ever has to do, and there is no
+// switch to turn the look off: the cap is how this game has always answered a
+// device with more pixels than it can hold.
+//
+// The one thing it is not is bit-identical, and that is worth writing down. Two
+// black layers blended into the frame one after the other round to eight bits
+// twice; the same two mixed into a sheet and blended once round differently. A
+// tenth of the pixels come out one step of 255 away, two at the very most,
+// which is inside the rounding of a filter whose whole amplitude is fourteen
+// steps. Nothing the yard draws is touched -- this is the last pass, and it is a
+// look laid over the picture rather than any part of it.
+let sheet = null, sheetKey = '';
+
 export function press(src, ctx) {
   if (!anyOn()) return;
   const w = src.width, h = src.height;
+  const key = `${w}x${h}`;
+  if (sheetKey !== key) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const cx = c.getContext('2d');
+    if (amount.scanlines > 0) scanlines(cx, w, h, amount.scanlines);
+    if (amount.vignette > 0) vignette(cx, w, h, amount.vignette);
+    sheet = c;
+    sheetKey = key;
+  }
   ctx.save();
   ctx.setTransform(1, 0, 0, 1, 0, 0);          // device pixels: these are all screen effects
   ctx.globalAlpha = 1;
-  if (amount.scanlines > 0) scanlines(ctx, w, h, amount.scanlines);
-  if (amount.vignette > 0) vignette(ctx, w, h, amount.vignette);
+  ctx.drawImage(sheet, 0, 0);
   ctx.restore();
 }
