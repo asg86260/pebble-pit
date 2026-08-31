@@ -127,7 +127,7 @@ never drawn.
 
 These have not misbehaved yet. They are the same shape as the five that did.
 
-### 1. The pit still has its own way out — HIGH
+### 1. The pit still has its own way out (fixed) — was HIGH
 
 `downTheHole` in crew.js is a five-state machine with its own ladder discipline,
 its own `w.side`, and its own crossing rule. It now sits beside a routing system
@@ -136,7 +136,14 @@ links table. Two systems, one job, and the pit's copy is the one that will drift
 
 **Fix:** delete it; the pit becomes two links and a way, which it already is.
 
-### 2. Two climbers, one cached foot — HIGH
+**Done.** The states, the `w.side` and the crossing rule are gone. The hole is
+`ways().hole` with the strip past the far wall as `ways().past`, joined by the
+two ladder links that were already in the table, and `downTheHole` is now the
+body asking for a route and walking it plus the swing at the heap — the digging
+stayed, because digging is work and not getting about. `marooned` went with it:
+a body on the far ground comes home because home is a place a route reaches.
+
+### 2. Two climbers, one cached foot (fixed) — was HIGH
 
 `climbTo` (crew.js) eases feet toward a surface and caches the answer in
 `w.foot`. `climbToward` (route.js) does the same thing without the cache. They
@@ -145,7 +152,12 @@ is exactly the kind of hand-kept agreement this whole review is about.
 
 **Fix:** one climber, owned by the surface system, with the cache inside it.
 
-### 3. Feet cannot keep up with a sheer face — MEDIUM
+**Done.** `climbToward` is gone and `climbTo` lives in route.js, which is the
+surface system, with `w.foot` and `w.footAt` kept inside it. crew.js imports it.
+The line in `stepRoute` that used to write `w.foot` back after every frame of
+every walk is gone with it, because there is nothing left to hold level.
+
+### 3. Feet cannot keep up with a sheer face (fixed) — was MEDIUM
 
 Measured after the change: a body walking into a vertical rock face is briefly up
 to **24px inside it** (it was 120px). `climbTo` eases at the walking pace and a
@@ -154,6 +166,24 @@ half, which carries any slope up to about sixty degrees and cannot carry a wall.
 **Fix:** a wall is not a slope. Either a body stops at the foot of one and climbs
 it as a climb, or a face steeper than the ease can carry is not walkable and the
 route goes round. Both are one rule in one place; neither is a constant.
+
+**Done.** The first of the two, in `climbTo`: the feet lead and the body
+follows. If the ground it has just walked on to is higher than the feet can
+reach this frame then it did not get there — the step along is given back, and
+it walks on in the frame its feet arrive. One line, no slope named, no constant
+added; what the feet can reach is `step`, which everything above it already
+decided. A stop rather than a slowing, on purpose, so the walk does not depend
+on how far behind the feet are and come out a different length at thirty frames
+a second than at sixty.
+
+What is left is not lag. Measured over `test/route.test.mjs`'s gang at work, the
+worst a body is under the columns it is standing across is 8px, and all 8 of it
+is the miner's own bob and lunge driving it into a swing — on that worst frame
+its feet sat exactly on their target. The 22px this used to read was the check
+measuring against the single column under a body's midpoint while a miner stands
+on the column it is striking, which is a spike beside it and not a face it is
+buried in. The check asks the honest question now, the same one `deepest` in
+verify.js asks, and its mark is 12 rather than 30.
 
 ### 4. The crew loop is one 600-line `for` (fixed) — was HIGH
 
@@ -196,7 +226,7 @@ layer was the one thing reading `dir` for behaviour and it is not a facing: it i
 `w.mineDir`, remembered between frames and turned round at the ends of the row,
 the same way `jigDir` belongs to the dance.
 
-### 6. Adding a tunable knob takes four edits — MEDIUM
+### 6. Adding a tunable knob takes four edits (fixed) — was MEDIUM
 
 config.js is ~1900 lines. A knob needs: the `export let`, a row in the dev-panel
 list, a `case` in the getter switch, and a `case` in the setter switch. Four
@@ -205,6 +235,13 @@ value.
 
 **Fix:** one table per knob (`{ key, label, min, max, step, value }`), and the
 getter and setter read it. The three duplicate lists collapse into the table.
+
+**Done.** `TUNABLE` in config.js is that table, one row a knob, each carrying its
+own `get`/`set` pair — so the pile limits, which are fields of an object rather
+than bindings, are the same row as everything else. `tuned` and `tune` read the
+table by key through `KNOB`, and asking for a knob with no row throws instead of
+coming back `undefined` and writing the value into whatever the switch fell
+through to. A knob is one row now, and the dev panel is the table walked.
 
 ### 7. Muck and poop are two arrays with one set of operations (fixed) — was MEDIUM
 
@@ -234,7 +271,7 @@ bit *this session*: two new checks failed with `__surface is not a function`,
 which had nothing to do with what they were checking. Now one `HANDLES` table,
 spread by both.
 
-### 10. The browser suite is one 3,874-line file — MEDIUM
+### 10. The browser suite is one 3,874-line file (fixed) — was MEDIUM
 
 `src/selftest.js` is the largest file in the project and holds every browser
 check. Running one thing means `--only <substring>`. The node tier is 22 small
@@ -242,10 +279,21 @@ files and is much better to work in.
 
 **Fix:** the node tier already shows the shape. Split by subject.
 
-### 11. `report.js` snapshot is a single ~5KB line — LOW
+**Done.** `src/selftest.js` is 132 lines — the runner and nothing else — and the
+checks are fifteen files in `src/selftest/`, one a subject: the boards, the
+crew, the dust, the house, input, the kit, the lab, the opening, the places, the
+sky, the stations, the view, the wind, carrying and the casino. The same shape
+the node tier already had.
+
+### 11. `report.js` snapshot is a single ~5KB line (fixed) — was LOW
 
 Adding a field is easy; reading the file is not, and neither is a diff of it.
 Cosmetic, but it is the file every check reads through.
+
+**Done.** The snapshot is stanzas now, each a few related readings under a line
+saying what they are about — the settlement, the screen, the bank round the
+rock, the boulder and its bench, the view, the air, the crew. A new field goes
+in the stanza it belongs to and a diff names the stanza it changed.
 
 ---
 

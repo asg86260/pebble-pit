@@ -9,7 +9,6 @@
 //   ceiling(c)                           optional: how high a column may stand
 //   onPut(c, r)                          optional: told about every cell written
 //   repose                               optional: heaps stand up instead of spreading flat
-//   spillsInto(x), spillsAt, spill(x, y, v)   optional: where a heap topples over an edge
 //   awake, awakeOf, awakeN, awakeList    which columns are still moving; see below
 //
 // The four `awake*` fields are this file's own bookkeeping and nothing outside
@@ -266,13 +265,6 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
       const first = (c + r) & 1 ? -1 : 1;   // alternate bias so piles stay even
       for (const d of [first, -first]) {
         const n = c + d;
-        // A heap against an edge topples over it. It has to be piled up to do
-        // it: a thin scatter just rests against the wall.
-        if (b.spill && d > 0 && r >= b.spillsAt && n < b.cols && b.spillsInto(b.x + n * b.p)) {
-          put(b, c, r, 0);
-          b.spill(b.x + n * b.p, bottomY(b) - (r + 1) * b.p, v);
-          break;
-        }
         if (!inside(b, n, r - 1) || (skip && skip(n))) continue;
         if (!roomFor(b, n, r - 1)) continue;          // that column may not stand that high
         // where heaps stand up, a grain only slides if there is a real drop

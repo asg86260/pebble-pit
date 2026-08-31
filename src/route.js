@@ -36,7 +36,7 @@ import { groundAt, rockLeft } from './world.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { surfaceY, colOf } from './grid.js';
 import { dugTopY, quarryFace } from './quarry.js';
-import { pitTop, pitLadder, NEAR, FAR } from './smog.js';
+import { pitTop, pitLadder, NEAR, FAR } from './pit.js';
 import { frames } from './clock.js';
 
 // --- the surface --------------------------------------------------------------
@@ -176,8 +176,8 @@ export function solidNear(x, reach = 40, all = ways()) {
 // What a body actually stands on, given that it is three cells wide and the
 // ground is not level. The highest surface under any part of it -- so a body at
 // the foot of a bank stands on the bank rather than sinking its uphill half into
-// it. It is the rule `pitStand` had for the pit and the climber had for the rock,
-// which are now one rule for one surface.
+// it. The pit had its own copy of this rule and the climber on the rock had
+// another; they are one rule for one surface now, and the copies are gone.
 export function standTop(leftX, at = groundTop, width = WORKER) {
   let top = Infinity;
   for (let x = leftX; x < leftX + width; x += P) top = Math.min(top, at(x));

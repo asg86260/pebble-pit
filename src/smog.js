@@ -40,8 +40,8 @@ import { windAt, give } from './wind.js';
 import { spawnChip } from './dust.js';
 import { rockTopY, boulderAlive } from './rock.js';
 import { rockLeft, overPitMouth } from './world.js';
-import { surfaceY, colOf, shadeNear } from './grid.js';
-import { pitDepth } from './pit.js';
+import { shadeNear } from './grid.js';
+import { pitTop } from './pit.js';
 import { dugTopY } from './quarry.js';
 import { rand } from './rng.js';
 // Counted here rather than imported from `scrubhouse.js`, which is the same sum
@@ -1638,72 +1638,6 @@ export function nearestMuck(wx, taken, hand) {
   // fallback that exists to stop a body standing still could send it somewhere
   // it cannot work.
   return nearestMuck(wx, null, hand);
-}
-
-// The ladders into the hole: one down each wall, and the dust in the bottom
-// between them.
-//
-// The crew used to reach the layer in the pit from the lip, arm out over the
-// mouth. It read as a fudge -- somebody shovelling a thing eight cells away and
-// two deep without going near it -- and every other hole in this yard is one you
-// go down: the quarry has a ladder in its near corner and the crew climb it hand
-// over hand.
-//
-// Two of them, because the hole has two sides and there is ground beyond it. A
-// single ladder in the near wall made the pit a dead end: everything past it was
-// somewhere the crew could see muck lying and never reach, since the lip clamp
-// pins them this side of the mouth. With a ladder in each wall the pit stops
-// being a wall and becomes a way through -- down one side, across the top of the
-// pile, and up the other.
-export const NEAR = -1, FAR = 1;
-
-// which wall a place is nearest, for a body deciding which way to go down
-export const pitSide = wx => (wx > pit.x + pit.w / 2 ? FAR : NEAR);
-
-export function pitLadder(side) {
-  const x = side === FAR ? pit.x + pit.w - P : pit.x + P;
-  return { x, top: S.groundY - WORKER, foot: pitTop(x) - WORKER };
-}
-
-// past the far wall entirely: ground the crew can only get to through the hole
-export const pastPit = wx => wx > pit.x + pit.w;
-
-// whether there is anything out there worth being out there for
-export function muckPastPit() {
-  const m = muckCols();
-  for (let c = 0; c < m.length; c++)
-    if (m[c] && pastPit(c * P + P / 2)) return true;
-  return false;
-}
-
-// The top of whatever is in the hole at a place: the dust, or the floor when it
-// is empty. What a body in the pit stands on, and what the muck lies on.
-//
-// `surfaceY` answers a different question -- where the *next* grain down this
-// column would come to rest -- and that is one cell above the dust already
-// there. Read as a surface it put everything a cell too high: the layer hung
-// over the pile with daylight under it, and the crew walked the hole a cell off
-// the ground the way they walk the yard a cell off the ground, which is to say
-// not at all. One cell down is the top of the pile itself.
-export function pitTop(wx) {
-  const c = colOf(pit, wx);
-  if (c < 0 || c >= pit.cols) return S.groundY + pitDepth();
-  return surfaceY(pit, c) + pit.p;
-}
-
-// What a body standing in the hole stands on: the highest the pile gets under
-// any part of it, not whatever its middle happens to be over.
-//
-// A body is three cells wide and the pile is not level -- it heaps under the lip
-// and runs away downhill, and while it is being filled it is whatever shape the
-// tipping left. Standing on the middle column put the uphill half of the body
-// inside the pile: it read as walking through the heap rather than over it. It
-// is the same rule a core rests by -- see `supportY` in core.js -- and the same
-// rule anything wide standing on something uneven has to follow.
-export function pitStand(leftX, width = WORKER) {
-  let top = Infinity;
-  for (let x = leftX; x < leftX + width; x += pit.p) top = Math.min(top, pitTop(x));
-  return Math.min(top, pitTop(leftX + width - 1));
 }
 
 export const muckLeft = () => tally().all;

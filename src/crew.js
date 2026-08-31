@@ -1451,6 +1451,12 @@ export function drop(w) {
     // been shaken out by now, see `shakeHeld`; this is the remainder.
     w.spill = w.carry || 0;
     w.carry = 0;
+    // and the shades of it go with the count. `load` says what colour each
+    // grain in a pair of hands is, so it is not a separate thing that happens
+    // to be near the count -- it is the count, written out. Left standing here
+    // it was a body holding nothing and still naming a shade for it, which is
+    // the one shape of untidiness that eventually gets read.
+    w.load = [];
     if (w.trained) {
       w.hatOff = { kind: w.trained, of: w.kitOf };
       w.trained = false;
