@@ -637,9 +637,18 @@ const MOVES = {
       // a wall to the dance exactly as the edge of the patch is: the body turns
       // and paces the other way, rather than being walked into a place the dodge
       // then has to drag it out of.
+      //
+      // ...and the mark comes to this side of the wall with it. A body whose
+      // mark lay through the zone was ordered toward it by the drift rule above
+      // and flipped straight back by the wall, every frame, going nowhere -- a
+      // square bobbing on the spot for the whole of the fall, which is the
+      // vibration this dance was twice rewritten to kill. With the mark re-taken
+      // where it stands, the body paces its own side like anybody else.
       const next = w.x + w.jigDir * JIG_PACE * dt;
-      if (zone && next + WORKER > zone.from && next < zone.to) w.jigDir = -w.jigDir;
-      else w.x = next;
+      if (zone && next + WORKER > zone.from && next < zone.to) {
+        w.jigDir = -w.jigDir;
+        w.jigAt = w.x;
+      } else w.x = next;
       w.y = w.foot - Math.round(swing) * P;
     }
   },
@@ -672,6 +681,10 @@ function jig(w, now, zone) {
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
     w.jigAt = w.x + (rand() - 0.5) * JIG_SPREAD * 2;
+    // and never on the ground the next rock is coming down on: a mark in the
+    // zone is an order to dance under the rock, which the wall in `step` then
+    // countermands every frame. The body dances where it stands instead.
+    if (zone && w.jigAt + WORKER > zone.from && w.jigAt < zone.to) w.jigAt = w.x;
     w.move = MOVE_KEYS[Math.floor(rand() * MOVE_KEYS.length)];
     w.moveFrom = w.x;
     w.moveTil = 0;
@@ -2336,6 +2349,22 @@ function takeMess(w, c) {
   const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
   const to = patch == null ? null : workSpot(patch);
   if (to == null) return false;
+  // A mess under the coming rock, or the far side of it, is not fetched through
+  // the fall. The walk never asked about the zone, so a body sent at one ground
+  // against the zone's wall -- stepping in, shoved out by the duck, stepping in
+  // -- and juddered on the line for the whole of the fall. Every hauler errand
+  // already answers this with the dance (see `across` and `heldUp` below), and
+  // a shovel is an errand like any other: the body joins in and picks the mess
+  // back up when the ground is open again. The claim is kept -- nobody else can
+  // walk there either.
+  if (S.rockFall > 0 && c.zone &&
+      ((to + WORKER > c.zone.from && to < c.zone.to) || across(c.zone, w.x, to))) {
+    heldUp(w, c.zone, now);
+    return true;
+  }
+  // and the dance is put away when the shovel comes back out, the same tidy-up
+  // the miners and the haulers do, so the hop is not carried to the mess
+  if (w.jigAt != null) { stopJig(w); w.say = null; }
   if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
   unbook(w);
   // Out of the house first. A mess is the one thing that calls a body back

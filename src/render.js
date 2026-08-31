@@ -32,7 +32,7 @@ import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
 import { ramX, rockShare, sandTopY } from './rock.js';
-import { beltFrom, beltTo, beltReach, beltPost, beltY } from './dust.js';
+import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
@@ -3267,7 +3267,13 @@ export function drawBelt() {
   // is the *band* moving and nothing else -- it used to stand in for the load as
   // well, back when the load was thrown over the top of it in one arc and never
   // touched it. What is actually being carried is drawn below, as grains.
-  const t = stroke('belt', 900);
+  //
+  // Not `stroke`: that reads `workedAt`, which is stamped by *bites*, and the
+  // belt has hardly bitten since the rock's spoil started landing on the band
+  // straight off the shovel -- so the marks stood still under moving loads.
+  // The band runs whenever it is manned, on, and has somewhere to put things
+  // down, which is exactly the gate `stepBelt` keeps.
+  const t = beltRunning(now()) && !pitFull() ? (now() % 900) / 900 : 0;
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
     ctx.fillRect(x, y, P, P);

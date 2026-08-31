@@ -119,6 +119,54 @@ group('the crew get out from under the next rock', async () => {
   ];
 });
 
+// And while they wait for it, they dance -- travel and all. A body whose dance
+// mark lay through the drop zone was ordered toward it by the drift rule and
+// flipped back by the zone's wall every frame, going nowhere: a square bobbing
+// on the spot for the whole of the fall. The mark is re-taken on the body's own
+// side now, so the gang pace their patches like anybody else.
+group('the crew dance rather than vibrate while the next rock falls', async () => {
+  window.__crew(4, 0);
+  quickCrew();
+  window.__jump(4);
+  haveRock();
+  run(6);
+  window.__next();
+  // Frame by frame, as the groups above do -- a coarse step walks straight over
+  // the fall -- and across the whole beat, celebration and fall alike: the zone
+  // is drawn the moment the rock is off, so a mark through it pinned a body
+  // just as hard while the sky was still empty.
+  //
+  // Only ground outside the zone counts toward a body's patch. The duck drags
+  // anybody inside it out at the start of the fall, and that march is travel --
+  // just not the travel this check is about.
+  const seen = new Map();
+  let sampled = 0;
+  for (let i = 0; i < 1200; i++) {
+    run(1 / 60);
+    const s = state();
+    if (!s.dancing && s.rockFall <= 0) break;
+    sampled++;
+    s.workerPos.forEach((w, idx) => {
+      if (w[0] !== 'm') return;
+      const x = +w.split(':')[1].split(',')[0];
+      if (s.dropZone && x + WORKER > s.dropZone[0] && x < s.dropZone[1]) return;
+      if (!seen.has(idx)) seen.set(idx, { lo: x, hi: x });
+      const t = seen.get(idx);
+      t.lo = Math.min(t.lo, x); t.hi = Math.max(t.hi, x);
+    });
+  }
+  window.__crew(0, 0);
+  const ranges = [...seen.values()].map(t => t.hi - t.lo).sort((a, b) => b - a);
+  return [
+    ok(sampled > 240, 'there was a stretch of the beat to watch', `${sampled} frames of it`),
+    ok(ranges.length >= 3, 'with a gang on the ground under it', `${ranges.length} miners`),
+    ok(ranges[0] > P * 4, 'and the dance travels rather than bobbing on the spot',
+       `widest patch ${ranges[0]}px, want > ${P * 4}`),
+    ok(ranges.filter(r => r > P * 2).length >= 2,
+       'for more of the gang than one', ranges.map(r => `${r}px`).join(' '))
+  ];
+});
+
 group('the rock stands on the ground', async () => {
   haveRock();                                // a rock still in the air stands on nothing
   const s = state();

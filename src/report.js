@@ -182,6 +182,10 @@ export const snapshot = () => ({
   shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)],
   dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()),
   dancing: clockNow() < S.danceUntil,
+  // How many bodies are actually in the dance -- holding a mark. `dancing` is
+  // the yard's mood; this is who has joined in, and a fall where it stays at
+  // nought is a crew grinding at the zone's wall instead of celebrating.
+  jigging: S.workers.filter(w => w.jigAt != null).length,
 
   // The view: how far in, and how much of the world it covers.
   zoom: +S.zoom.toFixed(3),

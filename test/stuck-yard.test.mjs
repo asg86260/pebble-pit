@@ -22,6 +22,34 @@
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
 
+// On this same yard -- deep in mess, so every free hand is on muck duty -- the
+// crew spent every fall vibrating instead of dancing. The muck walk never asked
+// about the drop zone, so a body sent at a mess under or across the coming rock
+// stepped in and was shoved out by the duck, every frame, juddering on the line
+// for the whole of the fall. `takeMess` sends them to the dance instead now, the
+// same answer every hauler errand already gave.
+group('the crew dance through the fall instead of grinding at the zone', async () => {
+  localStorage.setItem('boulder-clicker/v4',
+    readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
+  yard.restore();
+  window.__next();                             // the rock goes; the beat starts
+  // frame by frame -- the fall is a couple of seconds and a coarse step walks
+  // straight over it
+  for (let i = 0; i < 1200 && state().rockFall <= 0; i++) run(1 / 60);
+  let most = 0, frames = 0;
+  for (let i = 0; i < 600 && state().rockFall > 0; i++) {
+    run(1 / 60);
+    frames++;
+    most = Math.max(most, state().jigging);
+  }
+  window.__crew(0, 0);
+  return [
+    ok(frames > 20, 'there was a fall to watch', `${frames} frames of it`),
+    ok(most >= 4, 'and a real crowd joins the dance under it',
+       `${most} bodies at the height of it`)
+  ];
+}, 20250830);
+
 group('the stuck yard comes unstuck', async () => {
   localStorage.setItem('boulder-clicker/v4',
     readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
