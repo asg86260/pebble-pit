@@ -44,7 +44,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `persist.js` | reading and writing the game | must know every new field on `S` |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
 | `save.js` | the localStorage key and its guard | rarely |
-| `selftest.js` | `__test()` in the console | grows with every feature |
+| `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
 
 ## Adding things
 
@@ -98,7 +98,7 @@ can see.
 4. a hire row via `crew({...})` in `upgrades.js`, and an unlock row priced in cores
 5. a `draw` in `render.js`, in painting order, and a step in `main.js`
 6. its fields in `persist.js` — nothing warns you if you forget
-7. checks in `selftest.js`
+7. checks in `selftest/`, in the file for the subject
 
 Sites are placed by their distance from the rock, so adding one moves nothing
 else. Unlocking one should `lookAt()` it: it is several cores and a row in a
