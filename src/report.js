@@ -40,7 +40,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport } from './house.js';
-import { pot, spinning, stakeOf, chipName, potAt } from './casino.js';
+import { pot, spinning, pouring, stakeOf, chipName, potAt } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
@@ -253,6 +253,8 @@ export const snapshot = () => ({
   casinoBoardOpen: S.casinoBoardOpen,
   pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() },
   spinning: spinning(),
+  // the beat before the spin: the stake is still coming down out of the sky
+  pouring: pouring(),
   tableAir: S.tableAir.length,
   hand: S.hand && { won: S.hand.won, n: S.hand.n },
   potAt: Math.round(potAt().x),

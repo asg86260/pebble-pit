@@ -41,6 +41,7 @@ import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
+import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
 import { sendBirds, BIRDS } from './weather.js';
@@ -458,6 +459,10 @@ export const openLab = (open = true) => { S.labOpen = open; buildShop(); S.dirty
 // dev: the shed, without paying for it -- for a look at what the crew do with it
 export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
 
+// dev: the table, without the twenty cores it costs -- for a check about the
+// wheel, which is not a check about how the building gets built
+export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S.dirty = true; };
+
 // a piece of research finished, without the worker-seconds: a check about what a
 // finished piece unlocks is not a check about how long it takes
 export const finishResearch = key => {
@@ -544,9 +549,13 @@ export const allRows = () => everyRow().map(u => ({
 // written against it would have passed by asserting nothing at all. They are the
 // boards the machines' own rows live on, so it is fixed before there is a
 // machine to get it wrong.
+// The casino's rows are in here too, for the same reason the station boards
+// were added: a check that wants to put a chip down should put it down through
+// the row that puts it down, prices and rules and dead states and all.
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
                         ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
-                        ...QUARRY_UPGRADES, ...FARM_UPGRADES];
+                        ...QUARRY_UPGRADES, ...FARM_UPGRADES,
+                        ...CASINO_UPGRADES];
 
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);
@@ -818,7 +827,7 @@ export const HANDLES = {
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __wizardHat: wizardHat,
-  __loo: openLoo, __brew: brewWizard,
+  __loo: openLoo, __brew: brewWizard, __casino: openCasino,
   __muckOverPit: muckOverPit, __look: look,
   // getting about: the surface under a place, the ways there are, and how a
   // given body would get somewhere

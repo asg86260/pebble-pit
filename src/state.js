@@ -165,6 +165,10 @@ export const S = {
   spinAt: 0,              // when the wheel was set going
   spinFrom: 0, spinTo: 0, // and the mark it is turning from and to
   spinUntil: 0,           // and until when it is being spun in earnest
+  // A chip is down and the stake is still raining on to the table. The wheel is
+  // owed a spin and does not start it until the heap has stopped moving, so this
+  // is the beat between the gesture and the wheel. See `pouring` in casino.js.
+  pouring: false,
   tableAir: [],           // the table's grains in the air: arriving, leaving, or on their way to the hole
   paying: null,           // { cur, left } -- a pot on its way across the yard to the pit
   spinWon: false,         // what it is about to land on, decided when it starts

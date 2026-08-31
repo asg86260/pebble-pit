@@ -278,6 +278,11 @@ export function persist() {
     muck: S.muck || [],
     poop: S.poop || [],
     pot: S.pot && { ...S.pot },
+    // A pot that was still pouring when the tab shut is a bet that was made. The
+    // sand itself is not saved -- the table's grid never is -- so what comes back
+    // is the pot on the board and the pour starting again from the sky, and the
+    // wheel goes round when it has landed, exactly as it would have.
+    pouring: !!S.pouring,
     chip: S.chip,
     mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
@@ -379,6 +384,7 @@ export function restore() {
     S.labOpen = false;
     S.casinoOpen = false;
     S.pot = null;
+    S.pouring = false;
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
   S.plotTone = [];
@@ -566,7 +572,10 @@ export function restore() {
   S.spinUntil = 0;
   S.tableAir = [];
   S.paying = null;
-  S.paying = null;
+  // A bet made is a bet made: a pot caught mid-pour comes back mid-pour, the
+  // sand falls again out of an empty table, and the spin it was owed is still
+  // owed. A pot that had already been spun for comes back a pot and nothing more.
+  S.pouring = S.casinoOpen && !!S.pot && !!s.pouring;
   S.chip = Math.max(0, +s.chip || 0);
   S.hand = null;                 // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
@@ -721,6 +730,7 @@ export function reset(fresh = true) {
   seedSmog();
   S.casinoBoardOpen = false;
   S.pot = null;
+  S.pouring = false;
   S.spinUntil = 0;
   S.tableAir = [];
   S.falling = [];

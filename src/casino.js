@@ -27,6 +27,15 @@
 // out, which turns slowly while there is a pot sitting on the table and is spun
 // in earnest while a ride is being settled. Everything you need to read is the
 // wheel and two rows.
+//
+// **The wheel waits for the sand.** Putting the chip down is still one gesture,
+// but a stake is not a number leaving a counter -- it is a pot pouring out of
+// the sky on to the ground beside the building, and it takes a second and a half
+// to get there. A wheel that was already spinning while the thing it was
+// spinning for was still in the air was spinning for nothing that was there yet.
+// So the chip goes down, the sand comes down, and the wheel turns its idle turn
+// until the last grain of it is lying still -- and only then does it go round in
+// earnest. See `pouring` and `settledInPile`.
 
 import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_TURNS,
          CASINO_WHEEL, CASINO_KNOCK,
@@ -47,8 +56,21 @@ export const pot = () => S.pot ? S.pot.n : 0;
 
 // A spin is being settled: the wheel is going and nothing you press does
 // anything until it stops. It is a second and a bit of nothing you can do, which
-// is exactly what a wheel is for.
+// is exactly what a wheel is for. The chip going down starts a beat earlier than
+// this -- see `pouring` -- and the whole of the two is `busy`.
 export const spinning = () => now() < S.spinUntil;
+
+// The chip is down, the spin is owed, and the sand is still on its way. This is
+// not a wait dressed up as one -- it is the pot arriving, which is the thing the
+// spin is about, and it ends on the frame the last grain of it comes to rest.
+// Nothing here is on a clock: see `settledInPile`.
+export const pouring = () => !!S.pouring;
+
+// A hand is under way, either half of it: the sand is coming or the wheel is
+// going. Between the chip going down and the wheel stopping there is nothing you
+// can press, which is exactly what it was before -- the wait simply starts at
+// the chip now instead of a second and a half later.
+export const busy = () => pouring() || spinning();
 
 // --- the chip -----------------------------------------------------------------
 // How much goes down is chosen, not worked out for you. Four chips, and the last
@@ -76,10 +98,15 @@ export function pickChip(d) {
 // not take *stays on the table* until it will, the same as a core the hole
 // refuses waits on the ground by the lip. Nothing here is ever lost to a rule
 // about sand, and a full hole is a reason to dig rather than a hand you lose.
-export const canBank = () => !!S.pot && !spinning() && !S.paying && pitRoom() >= pot();
+export const canBank = () => !!S.pot && !busy() && !S.paying && pitRoom() >= pot();
 
 export const canStake = cur =>
-  S.casinoOpen && !S.pot && !spinning() && !S.paying && stakeOf(cur) > 0 && purseOf(cur) >= stakeOf(cur);
+  S.casinoOpen && !S.pot && !busy() && !S.paying && stakeOf(cur) > 0 && purseOf(cur) >= stakeOf(cur);
+
+// And putting the same pot back on. A pot that is still pouring is a pot you
+// have already bet, so neither of the two decisions is open while it comes down:
+// the pour is part of the spin, not a window before it.
+export const canRide = () => !!S.pot && !busy() && !S.paying;
 
 // The chip goes down and the wheel goes round -- one gesture, not two. Putting
 // something on the table and then having to press a second thing to find out
@@ -91,7 +118,18 @@ export function stake(cur) {
   else if (cur === 'shard') { S.shards -= n; takeCoreCells(n, SHARD_CELL); }
   else if (cur === 'spore') { S.spores -= n; takeCoreCells(n, SPORE_CELL); }
   S.pot = { cur, stake: n, n };
-  spin();
+  pour();
+}
+
+// The chip is down. What happens now is that the pot rains down out of the sky
+// on to the ground beside the building -- see `trickleIn` -- and the wheel is
+// promised but not yet turning. `stepCasino` starts it the moment the heap is
+// lying still.
+function pour() {
+  S.hand = null;                                 // the last one is old news now
+  S.pouring = true;
+  S.dirty = true;
+  buildShop();
 }
 
 // --- taking it, or not --------------------------------------------------------
@@ -150,7 +188,7 @@ function payOutStep(dt) {
 
 // Put the whole of it back on. Same wheel, same even money, and the pot is twice
 // what it was or it is nothing.
-export const ride = () => { if (S.pot && !spinning()) spin(); };
+export const ride = () => { if (canRide()) pour(); };
 
 // What it lands on is decided now and shown in a second: a wheel that decided
 // when it stopped would be a wheel you could watch for a tell, and the spin is
@@ -190,6 +228,11 @@ function spin() {
 // down to a stop, which is the shape every wheel has and the reason a spin is
 // worth watching: the last half-turn is the slow one, and by then you can read
 // which way it is going to go.
+// While the stake is pouring in there is a pot on the table, so this is the
+// second branch below: the slow idle turn. That is the honest thing for it to be
+// doing -- the wheel is not deciding anything yet, and a wheel sitting dead
+// still while sand rains down beside it would read as a wheel that had missed
+// the chip going down.
 function wheelAt(dt) {
   if (!spinning()) {
     if (S.spinUntil) return S.spinTo;            // exactly on its mark
@@ -270,6 +313,25 @@ const IN_AIR = 24000;
 // how many more to send. Without that the trickle keeps issuing sand for sand
 // that is already in the air, and the heap ends up a handful over the pot.
 const airborne = () => S.tableAir.reduce((n, k) => n + (k.lands ? 1 : 0), 0);
+
+// **The dust is settled in its pile**, which is what the wheel waits on and is
+// three facts about the ground rather than a length of time:
+//
+//   nothing left to send    the heap holds what the pot says -- or as much of it
+//                           as the ground will take, which is what `tableWant`
+//                           already works out for a pot bigger than the far end
+//                           of the yard
+//   nothing in the air      every grain that was sent has landed
+//   nothing still moving    and the heap itself has stopped shuffling: the grid
+//                           puts a column to sleep the moment a pass over it
+//                           moves nothing, so a heap that has found its angle
+//                           has no awake columns at all (see grid.js)
+//
+// The last of those is the one that makes this an event and not a timer. A pot
+// of ten settles in a blink and a pot of twenty thousand takes as long as it
+// takes, and neither is a number written down anywhere.
+export const settledInPile = () =>
+  !S.paying && airborne() === 0 && table.n >= tableWant() && !table.awakeN;
 
 function trickleIn(dt, cur) {
   const want = tableWant();
@@ -405,6 +467,10 @@ export function stepSparks(dt) {
 export function stepCasino(dt) {
   if (!S.casinoOpen) return;
   stepSparks(dt);
+  // The wheel waits for the pot. A chip that is down is a spin that is owed, and
+  // it is paid on the frame the last grain of the stake comes to rest -- not
+  // after a second of nothing, and not while there is still sand in the air.
+  if (S.pouring && settledInPile()) { S.pouring = false; spin(); }
   const fast = spinning();
   S.wheel = wheelAt(dt);
   if (!fast && S.spinUntil) {                    // it has just come to rest
@@ -460,7 +526,7 @@ export const CASINO_UPGRADES = [
     more: () => pickChip(1),
     lo: () => S.chip <= 0,
     hi: () => S.chip >= CASINO_CHIPS.length - 1,
-    show: () => S.casinoOpen && !S.pot && !spinning() && !S.paying
+    show: () => S.casinoOpen && !S.pot && !busy() && !S.paying
   },
   // A stake is written like a price -- a mark and a number, this much out of
   // your hands, now -- but it is not a purchase and it does not go through the
@@ -476,15 +542,15 @@ export const CASINO_UPGRADES = [
     buy: () => stake(t.cur),
     // A row for a currency you have never seen is a row naming a thing you have
     // not met, which is the one rule every board in this game keeps.
-    show: () => S.casinoOpen && !S.pot && !spinning() && !S.paying && seen(t.cur)
+    show: () => S.casinoOpen && !S.pot && !busy() && !S.paying && seen(t.cur)
   })),
   {
     key: 'bank',
     name: 'bank it',
     price: () => `${MARKOF(S.pot?.cur)} ${pot()}`,
     cost: () => 0,
-    // the wheel is going, or the hole would not take it: either way the pot
-    // stays where it is
+    // the sand is still coming down, the wheel is going, or the hole would not
+    // take it: either way the pot stays where it is
     dead: () => !canBank(),
     buy: bank,
     show: () => S.casinoOpen && !!S.pot
@@ -498,7 +564,9 @@ export const CASINO_UPGRADES = [
     //
     price: () => `${MARKOF(S.pot?.cur)} ${pot() * 2}`,
     cost: () => 0,
-    dead: spinning,
+    // the sand is still coming down, or the wheel is going: either way the
+    // decision has been made and there is nothing left to press
+    dead: () => !canRide(),
     buy: ride,
     show: () => S.casinoOpen && !!S.pot
   }

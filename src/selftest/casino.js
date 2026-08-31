@@ -40,7 +40,9 @@ export const TESTS = [
     const stake = state().stakes.dust;
     row('stakedust').click();
     const down = state();
-    run(4);        // the wheel takes its time now, and is meant to
+    // The whole hand: the stake pours down, and only then does the wheel go
+    // round. Neither half is on a clock this check can count off.
+    runUntil(() => !state().pouring && !state().spinning, 40);
     buildShopFromTest();
     const settled = state();
     const potRows = settled.pot ? rows() : [];
@@ -51,7 +53,7 @@ export const TESTS = [
     // flying across the works to the hole. A check that reads the counter while
     // half of it is still in the air is a check reading a number mid-throw.
     const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
-                                       !state().spinning, 30);
+                                       !state().pouring && !state().spinning, 30);
     let won = null, lost = null;
     for (let i = 0; i < 40 && !(won && lost); i++) {
       if (state().pot) { row('bank').click(); quiet(); buildShopFromTest(); }
@@ -79,7 +81,9 @@ export const TESTS = [
          'the chips run from ten to everything you have', chips.join(',')),
       ok(down.stored === held - stake,
          'a stake comes out of your hands', `${held} - ${stake} -> ${down.stored}`),
-      ok(down.spinning, 'and putting it down is the spin: one gesture, not two'),
+      ok(down.pot && down.pouring && !down.spinning,
+         'and putting it down is the spin: one gesture, not two -- but the wheel '
+         + 'waits for the sand it is spinning for'),
       ok(!settled.pot || potRows.join(',') === 'bank,ride',
          'a table with a pot on it offers two decisions and no stakes',
          potRows.join(',')),
@@ -114,10 +118,12 @@ export const TESTS = [
     row('stakedust').click();
     const t0 = state();
     run(0.6);
-    const early = state();
+    const early = state();                       // still raining down
     run(1.2);
     const late = state();
-    run(3);
+    runUntil(() => state().spinning, 30);
+    const going = state();
+    runUntil(() => !state().spinning, 30);
     const done = state();
 
     // and again until it comes off, to see the heap and the shower
@@ -126,16 +132,20 @@ export const TESTS = [
       buildShopFromTest();
       if (state().pot) { row('bank').click(); run(0.5); buildShopFromTest(); }
       row('stakedust').click();
-      run(4);
+      runUntil(() => !state().pouring && !state().spinning, 40);
       buildShopFromTest();
       if (state().pot) win = state();
     }
     newRun();
     await sleep(300);
     return [
-      ok(t0.spinning, 'the wheel is going the moment the chip goes down'),
-      ok(early.wheel !== late.wheel, 'and it is actually turning',
+      ok(t0.pouring && !t0.spinning,
+         'the chip going down starts the pot falling, not the wheel'),
+      ok(early.wheel !== late.wheel, 'and the wheel keeps its idle turn while it comes down',
          `${early.wheel} -> ${late.wheel}`),
+      ok(going.tableAir === 0 && !going.pouring,
+         'it goes round in earnest once the last grain is lying still',
+         `${going.table} down, ${going.tableAir} in the air`),
       ok(!done.spinning, 'and it comes to rest on its own'),
       ok(win && win.pot && win.pot.on > 0 && win.potAt > win.casinoX,
          'what is on the table is a heap on the ground beside the building',
@@ -168,7 +178,10 @@ export const TESTS = [
     row('stakedust').click();
     run(0.5);                                   // the first of it is still falling
     const arriving = state();
-    run(8);                                     // and all of it has landed by now
+    // and the hand plays itself out: the pot comes down, the wheel goes round
+    // when it has, and the heap walks to whatever it left on the table
+    runUntil(() => !state().pouring && !state().spinning && state().tableAir === 0 &&
+                   state().table === (state().pot ? state().pot.on : 0), 40);
     const settled = state();
     const on = settled.pot ? settled.pot.on : 0;
 
@@ -209,7 +222,7 @@ export const TESTS = [
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
     const quiet = () => runUntil(() => state().tableAir === 0 && !state().paying &&
-                                       !state().spinning, 30);
+                                       !state().pouring && !state().spinning, 30);
 
     dial().querySelector('.more').click(); buildShopFromTest();
     let win = null;

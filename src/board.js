@@ -7,7 +7,7 @@ import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
-import { CASINO_UPGRADES, spinning } from './casino.js';
+import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
@@ -760,12 +760,16 @@ function fillPurse() {
   if (resized) remeasure();
 }
 
-// A spin in progress hushes the board wherever it is standing. It is not closed
+// A hand in progress hushes the board wherever it is standing. It is not closed
 // -- nothing has been decided, and it is the same board when it comes back --
 // it is out of the way of the one thing in this game you are meant to watch.
+//
+// From the chip going down, not from the wheel starting: the pot pouring on to
+// the ground is the front half of the same gesture, and a board that stayed up
+// through it would be a board offering rows for a bet already made.
 let hushed = false;
 function hush() {
-  const want = spinning();
+  const want = busy();
   if (want === hushed) return;
   hushed = want;
   panelEl.classList.toggle('hushed', want);

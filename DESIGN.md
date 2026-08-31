@@ -219,6 +219,17 @@ here is a bad bet and no run of them is a good one. **When to stop is the game**
 decision in it, nothing about the odds will make it for you, and it is the only thing in this yard
 you can actually lose.
 
+**The wheel waits for the sand.** Putting the chip down is still one gesture, but a stake is not a
+number leaving a counter — it is a pot raining out of the sky on to the ground beside the building,
+and it takes as long to get there as it takes. So the chip goes down, the sand comes down, and the
+wheel goes round in earnest only once the last grain of it is lying still. It keeps its slow idle
+turn through the pour, because it has not decided anything yet and a wheel sitting dead still would
+read as one that missed the chip. **The wait is an event, not a clock**: the pot has stopped arriving
+when there is nothing left to send, nothing in the air, and no column of the heap still moving —
+which is a fact about the ground, so ◾ 10 settles in a blink and an all-in takes as long as an
+all-in takes. And the two decisions are shut for the whole of it, front half included: a pot still
+pouring is a bet already made, so it can be neither doubled up nor taken back off the table.
+
 **A spin is the one moment in this game you are meant to sit and watch**, so it is given the room to
 be one: the wheel comes off its mark and drags itself down to a stop over two and a half seconds,
 and the last half-turn is the slow one — by then you can read which way it is going to go. The stop
@@ -251,7 +262,7 @@ and `addGrain` already looks outward, so a big enough pot flows round the buildi
 
 | | |
 |---|---|
-| the stake going down | trickles out of the sky, grain by grain, and piles up while the wheel turns |
+| the stake going down | trickles out of the sky, grain by grain, and piles up — and the wheel waits for it |
 | a win | the pot doubles and the extra keeps raining in until the heap *is* the new number |
 | a loss | every grain lifts off the heap and fades out on its way up — it is *leaving*, not blinking off |
 | banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
@@ -260,8 +271,9 @@ Nothing is added at one end and nothing arrives that did not set off. The one pl
 literally true is a pot bigger than that stretch of ground can hold: the plot takes what it takes and
 the rest stays a number on the board, which is the same rule the hole keeps.
 
-**The board hushes while the wheel is going.** It stands over the building the whole thing happens
-in, so it gets out of the light and comes back when it has landed. It is not closed — nothing has
+**The board hushes for the whole hand** — from the chip going down, not from the wheel starting,
+because the pot pouring on to the ground is the front half of the same gesture. It stands over the
+building the whole thing happens in, so it gets out of the light and comes back when it has landed. It is not closed — nothing has
 been decided, and it is the same board when it returns.
 
 **A settled hand says which way it went** — a tick or a cross in a box standing over the building
