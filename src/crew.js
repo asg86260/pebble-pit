@@ -399,9 +399,39 @@ function settle(w) {
   w.carry = carry;
   w.load = load;
   w.hasCore = core;
+  // And it is not part way through anything any more.
+  //
+  // `Object.assign` writes the new job's fields over the old ones and cannot
+  // touch a field the new job's factory has never heard of -- so every scrap of
+  // a half-finished errand belonging to the *old* job rides along, invisibly,
+  // for the rest of that body's life. Three of them were cleared here already
+  // (the legs of a walk); the rest were not, and one of them was live.
+  //
+  // A hauler part way down the hole carries `inPit`, and `inPit` is the flag the
+  // hauler's own branch reads *before* everything else to decide it is standing
+  // on the pile rather than on the yard. Put that body on the plots and it walks
+  // about the yard for as long as you like with the flag still set, and nothing
+  // shows. Put it back on carrying, and the first line of the hauler drops it on
+  // to a pile eight hundred pixels away: three hundred pixels straight down into
+  // solid ground, outside the hole entirely. Nobody would have found that by
+  // looking -- the two halves of it are minutes apart -- and verify.js reported
+  // it on the frame, with the seed, the first time the invariants were run.
+  //
+  // So the whole of the journey goes, not the walk alone: where it was headed,
+  // which way it was on, which patch it had spoken for, and how far its feet had
+  // eased up the slope it was climbing.
   w.legs = null;
   w.walkTo = null;
   w.walking = false;
+  w.route = null;
+  w.routeTo = null;
+  w.routeWay = null;
+  w.inPit = null;
+  w.side = null;
+  w.farSide = false;
+  w.muckAt = null;
+  w.foot = null;
+  w.footAt = null;
 }
 
 // --- down the hole, and out the other side ---------------------------------------
@@ -815,7 +845,19 @@ function arrive(w) {
   // travels with it, because what a body is wearing is a fact about the kit and
   // not about the job it happens to be on this second
   if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
-  if (w.leg === 'wear') { w.trained = true; w.kitOf = w.wanting; w.wanting = null; }
+  // ...and only if there is still one lying there to pick up. A walk to a stand
+  // is a walk, and the yard can change while it is being made: the station's
+  // count can go to nought behind a body already half way there -- a machine
+  // spending the hats, the school's number set back -- and this line used to put
+  // one on its head anyway. A helmet out of nothing, worn for the two seconds it
+  // took `stepKit` to notice and send the body back with it. Nobody would ever
+  // have seen it; verify.js saw it on the frame, twice, in two unrelated groups.
+  // `spareKit` is what is on the stand right now, which is the same question the
+  // errand asked before it set off.
+  if (w.leg === 'wear') {
+    if (spareKit(w.wanting) > 0) { w.trained = true; w.kitOf = w.wanting; }
+    w.wanting = null;
+  }
   // Somebody has walked to a lever and is standing at it. This is the only place
   // in the game a machine starts or stops, which is the point of the walk.
   if (w.leg === 'lever') throwLever(w.throwing);

@@ -8,7 +8,7 @@
 // rather than about one body's behaviour, which is what makes them hold for
 // bodies nobody has written yet.
 
-import { group, ok, state, run } from './helpers.mjs';
+import { group, ok, state, run, runUntil } from './helpers.mjs';
 
 const detail = () => state().crewDetail.map(d => {
   const [t, goal, x, c, k, p, w, y] = d.split('|');
@@ -46,6 +46,19 @@ group('a hole has exactly one way out, and it is the ladder', async () => {
   ];
 });
 
+// A yard with every reason a body has to leave the cut in a hurry, one after
+// another: digging, a mess up top to be dropped for, a rock coming down to dance
+// for. Each of those used to be its own path with its own idea of how to get out,
+// and each of them used to walk somebody through the wall.
+//
+// There is nothing to assert here any more, and that is the point. This group
+// used to build the yard and then watch it: forty seconds of settling and three
+// twelve-second stretches sampled a frame at a time, comparing every quarrier's
+// depth against the last frame's and reporting a crossing that did not happen at
+// the ladder. That watch is now `verifyWorld` (see src/verify.js), and it runs on
+// every frame of every group in the tier rather than on the seventy-six seconds
+// this one could afford -- so what is left of the group is the interesting yard,
+// built quickly and handed to the watcher that is already running.
 group('nobody leaves the cut through the wall', async () => {
   window.__reset();
   window.__crew(2, 3, 4, 0);
@@ -53,40 +66,20 @@ group('nobody leaves the cut through the wall', async () => {
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__loo();
   window.__assign('janitors', 1);
-  run(40);
-
-  const gy = groundY();
-  const bad = [];
-  // Sampled a frame at a time: a crossing takes one frame, and a loop that steps
-  // a second at a go steps clean over every one of them and reports a yard where
-  // nothing ever happened.
-  const watch = (secs, tag) => {
-    let prev = detail();
-    for (let i = 0; i < secs * 60; i++) {
-      run(1 / 60);
-      const now = detail();
-      const face = state().quarryFaceX;
-      for (let n = 0; n < Math.min(prev.length, now.length); n++) {
-        const a = prev[n], b = now[n];
-        if (a.t !== 'q' || b.t !== 'q') continue;         // the crew is rebuilt: skip a swap
-        const was = a.y + 18 > gy + 1, is = b.y + 18 > gy + 1;
-        if (was !== is && Math.abs(b.x - face) > 12)
-          bad.push(`${tag} ${was ? 'out' : 'in'} at ${b.x}, ladder at ${Math.round(face)}`);
-      }
-      prev = now;
-    }
-  };
-
-  // Every reason a body has to be somewhere else, one after another. Each of
-  // these used to be its own path with its own idea of how to get out.
-  watch(12, 'digging');
+  // Waited for rather than slept through: what the group is after is the crew
+  // actually being down there, and how long the walk takes is somebody else's
+  // check. It used to be forty seconds flat, which is the walk plus a margin for
+  // the worst yard the chance could build.
+  runUntil(() => state().underground > 0, 40);
+  run(3);                                         // digging
   window.__muckSet(c => (c % 3 === 0 ? 3 : 0));   // a mess up top to be dropped for
-  watch(12, 'mess');
+  run(3);
   window.__next();                                // a rock coming down to dance for
-  watch(12, 'rock');
+  run(3);
 
-  return [ok(bad.length === 0, 'in and out of the cut only ever at the ladder',
-             bad.slice(0, 4).join(' / '))];
+  const down = state().underground;
+  return [ok(down > 0, 'and there was somebody down there to do it wrong',
+             `${down} in the cut`)];
 });
 
 group('a heap is passed in front of, the rock is walked over', async () => {
@@ -133,31 +126,28 @@ group('the hill is a workplace, not a road', async () => {
   // pixels, because the flanks come down to the ground line and a body at the
   // very toe of the rock is standing on both.
   const UP = 6;
-  // And how far into the face a body up on it is allowed to be. Feet follow the
-  // surface at the pace of the walk and a half again (see CLIMB_SLOPE), so a
-  // body that has just met a sheer step is briefly inside it while it climbs.
-  // A body and a half, measured at 24px worst case. This is a floor under the
-  // regression rather than a target.
-  const DEEP = 30;
 
+  // What is left here is the shortest-path property, and only that: who climbs
+  // the hill and who walks past it. Being *inside* the hill, and being under the
+  // yard in front of it, were both counted in this loop too and are now rules
+  // checked on every frame of every group in the tier (rules 1 and 2 in
+  // src/verify.js), which is watching this run as well. Two of the six checks
+  // below went with them, and the loop is half as long, because what is left is
+  // a property a shorter look proves just as well: a hauler either takes the
+  // crest as a shortcut or it does not.
   const climbed = new Set();       // who was ever up on the hill
-  let crossed = 0, ramped = 0, deep = 0, sunk = 0, worst = 0, worstFlat = 0;
-  const why = [];
-  for (let i = 0; i < 1800; i++) {
+  let crossed = 0, ramped = 0, worstFlat = 0;
+  for (let i = 0; i < 900; i++) {
     run(1 / 60);
     for (const b of detail()) {
       const mid = b.x + 9, feet = b.y + 18;
       if (mid < left || mid > right) continue;
       const surf = window.__surface(mid);
       if (surf > gy - 6) continue;                  // no rock left in this column
-      if (feet > gy + 1) { sunk++; continue; }      // nobody is under the yard here
+      if (feet > gy + 1) continue;                  // under the yard: verify.js has it
       if (feet < gy - UP) {
-        // Up on the hill. Whoever it is, it is there because its work is there,
-        // and it is standing on the face rather than inside it.
+        // Up on the hill, and it is there because its work is there.
         climbed.add(b.t);
-        const into = feet - surf;
-        worst = Math.max(worst, into);
-        if (into > DEEP) { deep++; if (why.length < 4) why.push(`${b.t} ${Math.round(into)}px in at ${b.x}`); }
         // A hauler has no business on the hill in this yard: the mess is all on
         // bare ground and the rock's pile is off the footprint. One up there is
         // one that took the crest as a shortcut.
@@ -189,12 +179,7 @@ group('the hill is a workplace, not a road', async () => {
     ok(ramped === 0, 'a hauler crossing the hill walks in front of it, not over it',
        `${ramped} frames up on the crest`),
     ok(worstFlat <= 1, 'and it stays on the ground line the whole way across',
-       `worst ${Math.round(worstFlat)}px off the line`),
-    // Neither of the two ways buries anybody: not in the rock, and not in the
-    // ground the rock is standing on.
-    ok(deep === 0, 'nobody up on the hill is ever buried in it',
-       `${deep} frames deeper than a body, worst ${Math.round(worst)}px${why.length ? ` -- ${why.join(' / ')}` : ''}`),
-    ok(sunk === 0, 'and nobody in front of it is ever under the yard', `${sunk} frames`)
+       `worst ${Math.round(worstFlat)}px off the line`)
   ];
 });
 

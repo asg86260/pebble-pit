@@ -84,9 +84,14 @@ group('the shed is offered once the yard is in a state', async () => {
 // A body at NaN is a body nowhere -- it vanishes off the yard, and asking the
 // view to follow it takes you to an empty white corner of the world.
 //
-// It is checked for the whole crew rather than for the janitor, because the
-// cause was a per-trade habit -- some factories handed out a rhythm and some did
-// not -- and the next trade to be given an idle would have found the same hole.
+// Both halves of that -- a body without a rhythm, and a body at a position that
+// is not a number -- are rule 6 in src/verify.js now, checked on every frame of
+// every group in the tier rather than on the forty seconds this one bought. So
+// this group no longer watches: it builds the one thing the watcher cannot build
+// for itself, which is a yard with every trade in it at once. That was always
+// the load-bearing part -- the cause was a per-trade habit, some factories
+// handing out a rhythm and some not -- and it is why the group is here rather
+// than in a file about one job.
 group('every body has a rhythm, and none of them ends up nowhere', async () => {
   window.__reset();
   openSites();
@@ -95,26 +100,12 @@ group('every body has a rhythm, and none of them ends up nowhere', async () => {
   window.__loo();
   window.__assign('janitors', 1);
   window.__air({ muck: 40 });
-  run(3);
+  run(6);
 
-  const bodies = () => yard.S.workers;
-  const noPhase = [];
-  let lost = null;
-  for (let i = 0; i < 40; i++) {
-    run(1);
-    for (const w of bodies()) {
-      if (!Number.isFinite(w.ph)) noPhase.push(`${w.type}:${w.name}`);
-      if (!Number.isFinite(w.x) || !Number.isFinite(w.y)) {
-        lost = lost || `${w.type}:${w.name} at ${w.x},${w.y}`;
-      }
-    }
-  }
-  const types = [...new Set(bodies().map(w => w.type))];
+  const types = [...new Set(yard.S.workers.map(w => w.type))];
   window.__crew(0, 0, 0);
   return [
-    ok(types.length >= 4, 'a yard with several trades in it', types.join(',')),
-    ok(noPhase.length === 0, 'every body has a sway of its own',
-       [...new Set(noPhase)].join(', ') || 'all of them do'),
-    ok(!lost, 'and nobody is at a position that is not a number', lost || 'nobody')
+    ok(types.length >= 4, 'a yard with several trades in it, all of them moving',
+       types.join(','))
   ];
 });

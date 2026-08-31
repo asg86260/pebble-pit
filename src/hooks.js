@@ -47,6 +47,7 @@ import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
 import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
+import { verifyWorld, resetVerify } from './verify.js';
 
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
@@ -276,6 +277,20 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
 // walking the length of the world, which proves nothing the walking tests do
 // not already prove and costs half a minute a time.
 // look somewhere, for a screenshot or a check that wants to see the far end
+// --- the rules, watched from the inside ---------------------------------------
+// Whether `fast` checks the world's rules after every frame it turns. Off, and
+// off for good, unless somebody asks: play never asks, nothing in main.js
+// reaches this, and the browser suite does not set it either. The node tier
+// turns it on for every group (see test/helpers.mjs), which is what makes every
+// check in it a watcher for every rule in verify.js.
+//
+// It is a flag rather than a wrapper because `fast` is the one door every check
+// runs the yard through, and a rule that is only checked when somebody
+// remembered to wrap the call is a rule that is checked in the files that never
+// broke it.
+let verifying = false;
+export const setVerify = (on = true) => { verifying = !!on; resetVerify(); return verifying; };
+
 // Run the yard forward without waiting for it. Everything that asks the time
 // asks the clock, so this is the same game running, just with the handle turned
 // by hand: a check that wants to watch a worker walk two thousand pixels runs
@@ -296,6 +311,11 @@ export const fast = (seconds = 1, hz = 60) => {
     if (S.paused) continue;
     advance(ms);
     step();
+    // and then the rules, if anybody has asked for them. See verify.js: this one
+    // line is what turns every check in the suite into a watcher for every rule
+    // there, and it throws on the frame a rule breaks rather than at the end of
+    // the run, so the report names the frame instead of the scenario.
+    if (verifying) verifyWorld();
   }
   S.dirty = true;
   return frames;
@@ -746,7 +766,7 @@ export const HANDLES = {
   __preview: preview, __next: next, __drop: drop,
   __birds: birds, __crew: crew, __school: school,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
-  __levels: levels, __fast: fast, __air: setAir, __coldSky: coldSky,
+  __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __machine: machineSet, __fullSites: fullSites,

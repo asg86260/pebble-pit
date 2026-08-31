@@ -39,12 +39,17 @@ group('a star is a rock like any other', async () => {
 
 group('no hat, no flying', async () => {
   window.__meteor();
-  // a body on the job with nothing on its head. The tower has made no hats, so
-  // there is nowhere for it to have got one.
-  window.__crew(0, 1);
+  // A body on the job with nothing on its head. The tower has made no hats, so
+  // there is nowhere for it to have got one -- and `__crew` hands out a hat with
+  // the job, so the hats are taken away again straight afterwards.
+  //
+  // The counts used to be poked on to S here instead, which left one body in the
+  // yard and two on the books: the wizard the group is about was never built at
+  // all, so "it does not leave the ground" was true of nobody. verify.js noticed
+  // on the first frame. Asking `__crew` for the body and then emptying the shelf
+  // is the same yard the group meant, with somebody actually standing in it.
+  window.__crew(0, 1, 0, 0, 0, 1);
   yard.S.wizardHats = 0;
-  yard.S.wizards = 1;
-  yard.S.crew = 1;
   window.__build();
   run(6);
   const bare = state();

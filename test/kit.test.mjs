@@ -98,7 +98,14 @@ group('kit finds its way home however the walk is interrupted', async () => {
     window.__muckSet(c => (c % 5 === 0 ? 2 : 0));
     run(3);
   }
-  run(30);                                  // and time to put everything straight
+  // and time to put everything straight. It used to be thirty seconds, which was
+  // a margin big enough to cover the worst yard the chance could build; the run
+  // is repeatable now (see SEED in helpers.mjs) and the books are checked on
+  // every frame of it besides -- a station wearing more than it has ever owned
+  // is rule 3 in src/verify.js -- so what is left here is the one thing that is
+  // genuinely a scenario and not an invariant: after the churn, the hats have
+  // walked home to the right stations.
+  run(12);
 
   const strays = detail().filter(b => b.kit !== '-' && b.kit !== b.t);
   const over = roster().filter(r => r.hats < r.worn);

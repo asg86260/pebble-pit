@@ -52,6 +52,17 @@ export const SEED = 20250830;
 export function group(name, fn, seed = SEED) {
   test(name, async () => {
     window.__seed(seed);
+    // And the rules are watched for the whole of it. Every group in this tier
+    // now checks every invariant in src/verify.js on every frame it runs,
+    // whatever the group itself was written to look at -- so a body that goes
+    // through a wall is reported by whichever check happened to be running when
+    // it did, naming the frame and the seed, rather than by the one group that
+    // was built to go looking for it.
+    //
+    // Right after the seed, and for the same reason the seed is here: it is a
+    // property of the run and not of what the run is about, so no group has to
+    // remember to ask for it.
+    window.__verify(true);
     const checks = (await fn()) || [];
     const bad = checks.filter(c => !c.pass);
     assert.equal(bad.length, 0,
