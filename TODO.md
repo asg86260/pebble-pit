@@ -1,7 +1,7 @@
 # Still to do
 
-Three items left from `feedback.md` / `feedback2.md`, plus one piece of
-housekeeping. Items 1 (dust into the cut) and 3 (dust leniency) are done and
+Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
+jitter regression (item 5) and one piece of housekeeping. Items 1 (dust into the cut) and 3 (dust leniency) are done and
 kept below for the record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
@@ -148,6 +148,56 @@ motes use, so the band and the balloon cannot disagree.
 **The hard parts, in order:** how a body boards it without teleporting; what
 becomes of the existing scrubbing house and its saved state; how it wires into
 the pile-full mark. Build it in stages that each leave the game playable.
+
+---
+
+## 5. Workers jitter on the rock's flank during a muck clear-up
+
+**Status:** diagnosed to one commit and one mechanism; the obvious fixes are
+measured and both trade it for a worse regression. Needs one more question
+answered before it can land.
+
+**The symptom.** During and after a rain, bodies shovelling the hill bounce at
+its flank -- ease up a few pixels a frame, snap down 8-10px, repeat, about three
+times a second. Measured with a climb-then-drop counter (ease up >= 2px, then
+down >= 12px from the high point): ~26 cycles/min before the offending commit,
+~195-264 after, ~560 with the ram running.
+
+**The commit.** `bed9ba5` ("A claim on a mess keeps its elbows out, to the very
+last cell"). Bisected: 26 cycles/min at `bed9ba5~1`, 195 at `bed9ba5`.
+
+**The mechanism.** That commit made a body releasing a finished muck column
+`return false` for one frame ("a finished column is let go and the next one
+picked a FRAME later"), so that the re-pick happens against a claim book that no
+longer carries the body's own elbows. But `return false` hands the body back to
+its *own job* for that frame, and the job re-plants and re-aims it -- on the
+rock that is `plant`/`standOn`/target logic snapping y -- and next frame muck
+duty takes it back. Once per swept column, several columns a second across a
+gang, is the jitter.
+
+**Two fixes tried, both measured, both rejected.**
+1. *Hold the body in muck duty for the release frame* (`return true`): jitter
+   drops to 16/min -- and the janitors' clearing rate collapses. The sky-house
+   check "a yard with the post staffed is a yard being kept up with" goes from
+   15 poop left (HEAD) to 95.
+2. *Re-pick in the same breath, scrubbing only the body's own elbows from the
+   frame's book*: jitter 18/min -- same collapse, 82 left. Every other body's
+   claim was preserved exactly, so the slowdown is not about spacing.
+
+**The open question, which is the blocker:** why does the one-frame fallthrough
+to the body's own job *double* the janitors' clearing rate in that check? The
+janitor's own step (`janitorWork`) only loiters -- it sweeps nothing -- so the
+dropout frame should cost, not pay. Until that is understood, any fix that
+removes the dropout frame will fail the same check for the same unknown reason.
+Suspect: some second cleaning path runs only when `takeMess` yields, or the
+elbow bookkeeping interacts with `elbowMuck`'s spacing in a way the claim book
+does not show. Answer that first; the fix will then be a few lines in
+`takeMess` (src/crew.js, the release branch).
+
+**Repro.** Seed 20250830; open sites, loo, 2 miners + 2 haulers + 2 janitors;
+relay 3 cells of muck across the rock's columns every 5s; count climb-then-drop
+cycles over 60s of frames. The counter and the scenario are five lines each --
+they lived in a scratch script, not the repo.
 
 ---
 
