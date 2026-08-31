@@ -41,7 +41,7 @@ import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
 import { fmt, STATIONS, stationFoot, hasOffer } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands } from './roster.js';
-import { wearing, HAT_TALL } from './kit.js';
+import { wearing, HAT_TALL, KIT_MARK } from './kit.js';
 import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
@@ -2514,7 +2514,15 @@ function drawOffers() {
 export function drawDroppedHats() {
   for (const w of S.workers) {
     if (!w.hatOff || w.hatOff.x == null) continue;
-    drawHat(Math.round(w.hatOff.x), Math.round(w.hatOff.y), w.hatOff.kind);
+    const x = Math.round(w.hatOff.x), y = Math.round(w.hatOff.y);
+    // Drawn as the thing it IS, derived from whose kit it is -- `kind` used to
+    // carry a boolean and everything knocked off drew as the helmet fallback,
+    // so a cart lying on the ground was a little hat. A cart is the box and
+    // its wheel, tumbling and lying exactly as it stands at the lip's stand;
+    // everything else is its own hat shape.
+    const mark = KIT_MARK[w.hatOff.of] || 'helmet';
+    if (mark === 'cart') drawCartBox(x, y - CART_H - P);
+    else drawHat(x, y, mark);
   }
 }
 

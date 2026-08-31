@@ -1574,7 +1574,12 @@ function shedLoad(w, dx) {
 // surface, rock outline included, where it lies until the body comes round.
 function flingHat(w, dx) {
   if (w.hatOff) return;                     // one head, one hat, one arc
-  w.hatOff = { kind: w.trained, of: w.kitOf, rest: false,
+  // `of` is the whole identity -- which station's kit this is -- and the mark
+  // to draw is derived from it, the way it is everywhere else. `kind` used to
+  // store `w.trained`, which has been a boolean since the kit table: every
+  // dropped thing drew as the helmet fallback, and a knocked-off CART lying on
+  // the ground as a little hat was the visible half of that.
+  w.hatOff = { of: w.kitOf, rest: false,
                x: w.x, y: w.y - P,
                vx: Math.max(-HURL_MAX, Math.min(HURL_MAX, dx * SHAKE_FLING * 2 + bell())),
                vy: -SHAKE_LIFT * 1.4 + bell() * 0.4 };
@@ -2892,7 +2897,7 @@ const STAGES = [
       w.route = null;
       return true;
     }
-    w.trained = w.hatOff.kind;
+    w.trained = true;
     w.kitOf = w.hatOff.of;
     w.hatOff = null;
     retask(w, w.type);
