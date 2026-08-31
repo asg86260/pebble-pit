@@ -967,38 +967,69 @@ function stepDrops() {
 }
 
 // --- the layer -----------------------------------------------------------------------
-// One depth per column of the world. This is the whole of what the rain leaves:
-// what is buried, what is in the way and what there is to shift are all read off
-// it, so nothing anywhere can disagree with what you are looking at.
-export function muckCols() {
-  if (!S.muck || S.muck.length !== floor.cols) {
-    const was = S.muck || [];
-    S.muck = new Array(floor.cols).fill(0);
-    for (let i = 0; i < Math.min(was.length, floor.cols); i++) S.muck[i] = was[i] || 0;
+// One layer, one depth per column, and each column's mess knows what kind it is.
+// This is the whole of what lies on the ground: what is buried, what is in the
+// way and what there is to shift are all read off it, so nothing anywhere can
+// disagree with what you are looking at.
+//
+// Two kinds, and they are not the same job. What the sky drops is weather: it
+// lands on everybody's yard and everybody clears it. What a body leaves is a
+// body's own, and shovelling that is a post -- see `capOf`, and the janitor.
+// That difference is one word in the table below and nothing else. It used to be
+// two arrays with one set of operations written twice over them and the
+// ownership rule spelt out by hand at each of the places that cared, which is
+// how `muckFor` and `yardMuck` came to disagree about poop and send a quarrier
+// up and down a ladder for as long as anybody watched.
+//
+// So: one row per kind, holding everything anybody asks about one. Add a row and
+// it rains down, slumps, slides off loose ground, gets shovelled by whoever is
+// allowed to shovel it and is counted in the yard's own account of itself,
+// without a second copy of any of that.
+//
+//   theirs  somebody's own mess rather than the weather's, so only the body
+//           whose post it is may shift it. See `mayShift`.
+//
+// The kind's name is also where it lives in the save, because a layer that is
+// written down under a different name from the one it is asked about is exactly
+// the sort of second copy this table exists to stop.
+export const MESS = {
+  muck: { theirs: false },
+  poop: { theirs: true }
+};
+
+// In the order the world works them: the weather first, which is what falls
+// first and what everybody clears.
+const KINDS = Object.keys(MESS);
+
+// One column array per kind, kept the length of the world.
+function cols(kind) {
+  if (!S[kind] || S[kind].length !== floor.cols) {
+    const was = S[kind] || [];
+    S[kind] = new Array(floor.cols).fill(0);
+    for (let i = 0; i < Math.min(was.length, floor.cols); i++) S[kind][i] = was[i] || 0;
   }
-  return S.muck;
+  return S[kind];
 }
 
-// And what the crew leave, which is a different stack in the same shape.
-//
-// Two kinds of mess, and they are not the same job. What the sky drops is
-// weather: it lands on everybody's yard and everybody clears it. What a body
-// leaves is a body's own, and shovelling that is a post -- see `capOf`, and the
-// janitor. Kept apart rather than distinguished by a flag on a number, because
-// nearly everything that asks about muck wants one or the other and would have
-// had to say which every time.
-export function poopCols() {
-  if (!S.poop || S.poop.length !== floor.cols) {
-    const was = S.poop || [];
-    S.poop = new Array(floor.cols).fill(0);
-    for (let i = 0; i < Math.min(was.length, floor.cols); i++) S.poop[i] = was[i] || 0;
-  }
-  return S.poop;
-}
+// The two questions the rest of the game asks, still under their old names
+// because they are still the right questions -- what has changed is that there
+// is one place that answers them. They hand back the layer itself, so a check
+// laying mess by hand writes to the same cells the yard reads.
+export const muckCols = () => cols('muck');
+export const poopCols = () => cols('poop');
+
+// Whether a given pair of hands may shift a given kind. The whole of the
+// ownership rule, asked of the kind rather than re-derived at every call site.
+const mayShift = (hand, kind) => !MESS[kind].theirs || !!(hand && hand.type === 'janitor');
+
+// What this pair of hands may shift, in the order it works it: its own post
+// first, since that is the job it was put on, and the weather after.
+const shiftable = hand => KINDS.filter(k => mayShift(hand, k))
+  .sort((a, b) => (MESS[b].theirs ? 1 : 0) - (MESS[a].theirs ? 1 : 0));
 
 // what is standing in a column, of whatever kind: for heights, for drawing, and
 // for anything that only wants to know whether the ground is clear
-export const messAt = c => (muckCols()[c] || 0) + (poopCols()[c] || 0);
+export const messAt = c => KINDS.reduce((n, k) => n + (cols(k)[c] || 0), 0);
 
 export const colAt = wx => Math.floor(wx / P);
 const inRange = (c, from, to) => c >= colAt(from) && c <= colAt(to);
@@ -1120,7 +1151,7 @@ export const workSpot = wx => footing(wx) === SOLID ? wx : (solidNear(wx) ?? wx)
 export function dropMuckAt(wx, n, kind = 'muck') {
   const at = cleanSpotNear(wx);
   if (at == null) return false;
-  const m = kind === 'poop' ? poopCols() : muckCols();
+  const m = cols(kind);
   const c = colAt(at);
   // A unit at a time, each into the lowest column nearby, which is what makes a
   // heap rather than a pillar.
@@ -1154,7 +1185,8 @@ export function dropMuckAt(wx, n, kind = 'muck') {
 // grid.js -- and the mess is drawn out of the same cells, so it should stand at
 // the same angle.
 export function slumpMess() {
-  for (const m of [muckCols(), poopCols()]) {
+  for (const kind of KINDS) {
+    const m = cols(kind);
     for (let c = 0; c < m.length; c++) {
       const h = m[c] || 0;
       if (h < 2) continue;
@@ -1183,7 +1215,8 @@ export function slumpMess() {
 // and a loop that walked the whole yard looking for solid ground for every dirty
 // column would be the most expensive thing in the file.
 function slideOffLoose() {
-  for (const m of [muckCols(), poopCols()]) {
+  for (const kind of KINDS) {
+    const m = cols(kind);
     for (let c = 0; c < m.length; c++) {
       if (!m[c]) continue;
       const x = c * P + P / 2;
@@ -1226,11 +1259,11 @@ function slideOffLoose() {
 // arrives with several seconds of effort saved up and takes a trench out of it
 // on the first frame.
 export function sweepMuckAt(wx, n, hand) {
-  // A janitor clears both stacks and takes what a body left first, since that is
-  // the job it was put on. Everybody else clears the weather and steps over the
-  // rest.
-  const own = hand && hand.type === 'janitor';
-  const stacks = own ? [poopCols(), muckCols()] : [muckCols()];
+  // What this pair of hands may shift, and in what order -- a janitor clears
+  // both stacks and takes what a body left first, since that is the job it was
+  // put on, and everybody else clears the weather and steps over the rest. The
+  // rule is not written here: it is read off the kinds. See `shiftable`.
+  const stacks = shiftable(hand).map(k => cols(k));
   const home = colAt(wx);
   const hold = hand || loose;
   hold.owed = Math.min(1, (hold.owed || 0) + n);
@@ -1259,41 +1292,57 @@ export function sweepMuckAt(wx, n, hand) {
 const loose = { owed: 0 };
 
 // --- the frame's answers, worked out once -------------------------------------
-// Is there a mess, and where is the nearest of it. Every body in the crew asks
-// both on every frame, and the honest answer to either is a walk over every
-// column in the world. Done per body per frame that is a million comparisons a
-// second and three throwaway objects per column -- a yard that stutters for the
-// sake of a number that cannot have changed since the body before it asked.
+// How much mess is out there, and how much of it is on ground a shovel can be
+// swung on. Every body in the crew asks on every frame, and the honest answer is
+// a walk over every column in the world asking `onSite` about each -- which asks
+// the footing, which builds the ways. Done per body per frame that is a yard
+// that stutters for the sake of a number that cannot have changed since the body
+// before it asked.
 //
-// So it is worked out once at the top of the frame and read from there. Nothing
-// inside a frame changes it: muck is only added by rain and only taken by work,
-// and both of those happen here.
-let siteAt = null;
-let poopTotal = 0;          // how much of the mess is what a body left
-let yardPoop = 0;           // ...and how much of that is off the sites
-let yardLeft = 0;
-let allLeft = 0;
+// So it is worked out once a frame. Not by a `refresh()` somebody has to
+// remember to call at the right moment and null at the right moment -- that is a
+// cache whose lifetime nobody can see, and it left `siteAt` sitting here for
+// months, assigned on every frame and read by nothing. It is a memo, keyed on
+// the things it is an answer about: the frame, and the layer's own arrays. A new
+// frame, or a layer rebuilt under it by a reseeding or a wider world, and the
+// walk happens again; anything else reads the answer. Nothing has to be told.
+//
+// Frame-grained on purpose. The crew are stepped before the sky is, so every
+// body in a pass has always seen the same figure, and a number that moved under
+// the crew mid-pass would mean the first body to ask cleared the mess out from
+// under the sixth.
+let tallied = null;
 
-function refresh() {
-  siteAt = [rockCols(), quarryCols(), plotCols()].filter(Boolean);
-  const m = muckCols(), poo = poopCols();
+function tally() {
+  const stacks = KINDS.map(k => cols(k));
+  if (tallied && tallied.tick === S.tick && stacks.every((s, i) => s === tallied.stacks[i]))
+    return tallied;
+  // Per kind, and the same sum again over only the ground a body can work --
+  // which is the pair of numbers `muckFor` and `yardMuckFor` are two ranges of.
+  const by = {}, yardBy = {};
+  for (const k of KINDS) by[k] = yardBy[k] = 0;
   let all = 0, yard = 0;
-  poopTotal = 0;
-  yardPoop = 0;
-  for (let c = 0; c < m.length; c++) {
-    poopTotal += poo[c] || 0;
-    if (!onSite(c)) yardPoop += poo[c] || 0;
-    const v = (m[c] || 0) + (poo[c] || 0);
-    if (!v) continue;
+  for (let c = 0; c < stacks[0].length; c++) {
+    let v = 0;
+    for (const s of stacks) v += s[c] || 0;
+    if (!v) continue;              // and `onSite` is never asked about bare ground
+    const off = !onSite(c);
+    for (let i = 0; i < KINDS.length; i++) {
+      const n = stacks[i][c] || 0;
+      by[KINDS[i]] += n;
+      if (off) yardBy[KINDS[i]] += n;
+    }
     all += v;
-    if (!onSite(c)) yard += v;
+    if (off) yard += v;
   }
-  allLeft = all;
   // Once the yard has been left in a state it has been: the row that sells the
   // shed hangs off this, and a row that appeared and then vanished again because
-  // somebody happened to tidy up would be the game changing its mind.
-  if (poopTotal >= LOO_MUCK * 5) S.seenMess = true;
-  yardLeft = yard;
+  // somebody happened to tidy up would be the game changing its mind. What
+  // counts towards it is what the crew left, asked of the kinds rather than
+  // named here.
+  const theirs = KINDS.reduce((n, k) => (MESS[k].theirs ? n + by[k] : n), 0);
+  if (theirs >= LOO_MUCK * 5) S.seenMess = true;
+  return (tallied = { tick: S.tick, stacks, all, yard, by, yardBy });
 }
 
 // Ground a shovel cannot be swung on, because there is nowhere to stand. It is
@@ -1338,8 +1387,10 @@ export function nearestMuck(wx, taken, hand) {
   // What this pair of hands is allowed to shift. Weather is everybody's; what a
   // body left is the janitor's -- so a hauler walking to the nearest mess must
   // not be sent to a column that is nothing but the other kind, or it walks
-  // there, finds nothing it may touch, and stands over it.
-  const own = hand && hand.type === 'janitor';
+  // there, finds nothing it may touch, and stands over it. The rule is the
+  // kinds' own -- see `shiftable` -- so a claim can never be made on ground the
+  // shovel would then refuse.
+  const mine = shiftable(hand).map(k => cols(k));
   // And what this pair of hands can stand on. Muck really does lie over the
   // mouth of the pit -- `muckTop` sends it down to `pitTop` -- but the only body
   // that knows how to get down there is a hauler, which has `downTheHole`. Every
@@ -1354,8 +1405,8 @@ export function nearestMuck(wx, taken, hand) {
   // It tests `overPitMouth`, the same predicate the hauler's own pit branch
   // tests, so the two sides cannot drift apart.
   const canDescend = hand && hand.type === 'hauler';
-  const m = muckCols(), poo = poopCols();
-  const here = c => (m[c] || 0) + (own ? poo[c] || 0 : 0);
+  const m = muckCols();
+  const here = c => { let n = 0; for (const s of mine) n += s[c] || 0; return n; };
   const home = colAt(wx);
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
@@ -1448,9 +1499,9 @@ export function pitStand(leftX, width = WORKER) {
   return Math.min(top, pitTop(leftX + width - 1));
 }
 
-export const muckLeft = () => allLeft;
+export const muckLeft = () => tally().all;
 // how much of it is what a body left, which is the janitor's alone
-export const poopLeft = () => poopTotal;
+export const poopLeft = () => tally().by.poop;
 // and what a given pair of hands may actually shift, which is the number that
 // decides whether it is worth walking over there
 //
@@ -1467,19 +1518,24 @@ export const poopLeft = () => poopTotal;
 // in, and did that for as long as you watched. That is the reported "quarry
 // workers are getting stuck on the ladder": not a ladder fault at all, but two
 // spellings of one question.
-const mineToShift = (w, total, poop) => (w && w.type === 'janitor' ? total : total - poop);
-export const muckFor = w => mineToShift(w, allLeft, poopTotal);
+//
+// And it is not written at all any more, in the sense of being a subtraction
+// somebody chose: it is the sum of the kinds this pair of hands may shift, which
+// is the same sentence `sweepMuckAt` and `nearestMuck` work from. Add a kind to
+// `MESS` and all three of them count it or hold it back on the strength of one
+// word in the table.
+const mineToShift = (w, sums) => shiftable(w).reduce((n, k) => n + sums[k], 0);
+export const muckFor = w => mineToShift(w, tally().by);
 // the same question, asked only of the ground that is not a site
-export const yardMuckFor = w => mineToShift(w, yardLeft, yardPoop);
+export const yardMuckFor = w => mineToShift(w, tally().yardBy);
 // the raw number, for the yard's own account of itself -- a report wants what is
 // out there, not what one pair of hands is allowed to touch
-export const yardMuck = () => yardLeft;
+export const yardMuck = () => tally().yard;
 export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0;
 
 // --- one frame ---------------------------------------------------------------------
 export function stepSmog(dt) {
   const secs = dt / 1000;
-  refresh();                        // what the crew will ask about, asked once
   stepPuffs(secs);
   // The draught, or the sky letting go of it again. The house takes motes; it
   // used to take motes *and* dock the number by what the fan was worth, which is
@@ -1643,7 +1699,7 @@ export function smogReport() {
            muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },
-           poop: poopTotal,
+           poop: poopLeft(),
            ...airReadout() };
 }
 
@@ -1653,8 +1709,6 @@ export function seedSmog() {
   filled = 0;
   oldest = 0;
   mark = { at: 0, rate: 0 };
-  siteAt = null;
-  yardLeft = allLeft = 0;
   SKY.length = 0;
   DROPS.length = 0;
   S.muck = [];
