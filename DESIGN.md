@@ -1051,6 +1051,57 @@ you are choosing who to hire and where to put them; by the end you are watching 
 itself and deciding what the lab should make faster. There is no finish line, and nothing is
 taken away to make you start again.
 
+## The shields (design, not built)
+
+The story so far has one engine and it turns one way: rocks land on people, and everything the
+yard does about it happens after the fact. You dig. In the whole run nobody has yet done the
+obvious thing, which is to look up. That is the arc: **the yard tries to stop the next one.**
+Three tries, spread across the run, and the first two fail — not for story reasons alone. The
+rocks are the game's entire income, and a wall that worked in the mid-game would starve the yard
+that built it. The failures are load-bearing.
+
+**A shield failing is a beat, never a bill.** No fail state is a pillar, and a thing you saved
+up for being smashed reads as punishment unless the game goes out of its way to say otherwise.
+So it does, twice over: nobody is ever under a shield when it goes — the footprint is kept clear
+of bodies the way it already is for a landing — and the wreck comes most of the way home, flung
+out along the heap in the same arc a miner's spoil takes and mined back as ordinary dust. What
+you paid for was the finding out, and the finding out is the story.
+
+**The props.** The first try is timber: a frame of legs and a flat lid stood over the dig,
+bought on the bench for dust and raised by the crew plank by plank — walked out, climbed, and
+built, because every body walks. It stands there long enough to be believed in. Then the next
+rock comes through it as if it were not there, the planks go out over the heap, and the yard is
+back to digging before the dust settles. The lesson is cheap and the game makes sure it is:
+this one is priced to sting for a minute, not an hour.
+
+**The arch.** The second try is stone — a proper arch over the landing spot, cut white out of
+the quarry and priced in the quarry's own shards, because it is built of the quarry's own coin.
+And it nearly works. **The arch catches one.** The rock comes down, the arch takes it, and for
+a held beat the yard has won — long enough for every body on the ground to stop and look up,
+which is a thing the crew has never once done at a falling rock. Then the crack runs, and the
+arch comes down with the rock on top of it, and the arch's stone lands minable alongside
+everything else. The lesson is the game's own color rule said out loud: everything of the
+ground is grey and goes back to the ground. Rock cannot hold rock. Stacking the yard higher is
+still the yard.
+
+**The dome.** The third try is the tower's, and it is the first shield not made out of the
+thing it is stopping. A spell on the spire, priced in cores — the tower is raised for cores,
+and cores open what you don't have, which by then is the one thing left: the sky staying shut.
+Cast, it pours the same purple the hats are made with, rings off the spire that close over the
+landing spot — the rule holds, what magic emits is purple and says so. And the choreography is
+the opening played back the right way round: the last of the rock goes, the one underneath is
+stood there on the bare ground saying the same dots they have said all game, the next rock
+comes down the way it always has — **and this time it stops.** Held overhead on the dome, the
+first falling thing in the game to touch nothing, while the mate walks out from under its
+shadow. Two squares stand together on the ground passing dots back and forth, and every so
+often one of them says the other thing. Then the dome lets the rock down gently on the empty
+spot, and the yard goes back to work.
+
+Every rock after lands the same way — caught, held a breath, set down. The drumbeat is kept,
+because the drumbeat is the income; the threat is retired, because the story is over. This is
+how the first line of this document and the section above it are both true at once: **the
+story ends on purpose. The yard does not.**
+
 ## Not doing
 
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
