@@ -7,6 +7,7 @@
 //   { x, y, cols, rows, p, grid }        where and how big, and the cells
 //   blocked(c)                           optional: columns dust may not settle in
 //   ceiling(c)                           optional: how high a column may stand
+//   fixed(c, r)                          optional: a cell that never moves
 //   onPut(c, r)                          optional: told about every cell written
 //   repose                               optional: heaps stand up instead of spreading flat
 //   awake, awakeOf, awakeN, awakeList    which columns are still moving; see below
@@ -286,6 +287,15 @@ export function settle(b, skip = b.blocked, from = 0, to = b.cols) {
     for (let k = 0; k < wide; k++) {
       const c = cols[k];
       if (!at(b, c, r)) continue;
+      // A cell that is not dust at all, and is never going anywhere: the
+      // quarry keeps the rock still waiting to come out of the cut in the same
+      // grid the fallen dust lies in (see `cut` in state.js), and it supports
+      // whatever is above it exactly the way any occupied cell does -- it just
+      // must never itself be read as a grain with somewhere to fall or slide.
+      // Without this a rock cell one column shallower than its neighbour would
+      // slump sideways into the neighbour's already-open air, which is a piece
+      // of undug ground migrating to a column nobody has swung at yet.
+      if (b.fixed && b.fixed(c, r)) continue;
       const v = at(b, c, r);
       if (!at(b, c, r - 1)) { put(b, c, r, 0); put(b, c, r - 1, v); continue; }
       const first = (c + r) & 1 ? -1 : 1;   // alternate bias so piles stay even

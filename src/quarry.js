@@ -12,11 +12,14 @@ import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
 import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
-         CLIMB_PACE, SHARD_CELL, someFind } from './config.js';
+         CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
-import { S, quarry } from './state.js';
+import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
+import { at, put, wakeGrid, isDust, surfaceY } from './grid.js';
+import { makePainter } from './painter.js';
+import { ROCK_CELL } from './config.js';
 import { mult } from './lab.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { now } from './clock.js';
@@ -161,6 +164,129 @@ export function quarryFloor(x = null) {
   return dugTopY(x);
 }
 
+// --- the cut's own sand ---------------------------------------------------------
+// The dust that falls down the cut's mouth needs somewhere to lie, and the
+// column heights above are not it: they say how far down the rock has been
+// taken, not what is sitting on the floor that leaves. So the cut gets a grid
+// of its own, the way the pit has one -- see `cut` in state.js for why every
+// field is declared up front.
+//
+// The rock still to come out is *in* the grid, as `ROCK_CELL`: it fills every
+// column from the very floor of the plot up to the line the dig has actually
+// reached (see config.js). A grain lands on top of whatever rock is still
+// there and falls no further than that -- the same `at`/`put` the dust already
+// answers to -- and the moment a swing takes a cell of rock out from under it,
+// the ordinary sand rules carry it down one more row on their own. Nothing
+// here has to know that a quarry exists.
+//
+// Sized once, at the deepest the cut can ever be worked to (`QUARRY_BENCH_MAX`
+// benches), rather than grown a row at a time as benches are bought: a bench
+// bought mid-dig only ever adds *more permanent floor* under a column's current
+// target, it never moves a row index a grain is already resting in, so nothing
+// has to be re-packed when it happens.
+function cutRows() {
+  return Math.round((QUARRY_H + (QUARRY_BENCH_MAX - QUARRY_BENCH0) * QUARRY_DEEPEN) / P);
+}
+
+// Build the cut's grid, or leave it alone if it is already the right shape.
+// Called once from `settleIntoWorld`, after `quarry.x`/`quarry.w` are laid out
+// -- a resize of the window moves neither, so this only ever does real work
+// once a run.
+export function wireCut() {
+  cut.x = quarry.x;
+  cut.cols = Math.max(0, Math.round(quarry.w / P));
+  cut.rows = cutRows();
+  cut.y = S.groundY;
+  const want = cut.cols * cut.rows;
+  if (cut.grid && cut.grid.length === want) {
+    if (cut.painter) cut.painter.repaint();
+    return;
+  }
+  cut.grid = new Uint8Array(want);
+  cut.n = 0;
+  cut.rock = 0;
+  cut.fixed = (c, r) => at(cut, c, r) === ROCK_CELL;
+  cut.painter = makePainter(cut);
+  cut.onPut = cut.painter.mark;
+  layCut();
+}
+
+// Lay fresh rock into every column, up to however far it has (not) been dug --
+// the whole plot on an empty quarry, nothing at all on one worked all the way
+// out. It is what a fresh cut looks like from the first frame, and what
+// `fillQuarry` puts back once a dig is spent.
+export function layCut() {
+  if (!cut.grid) return;
+  const cells = quarryCells();
+  for (let c = 0; c < cut.cols; c++) {
+    const top = cut.rows - 1 - (cells[c] || 0);
+    for (let r = 0; r <= top && r < cut.rows; r++) {
+      if (at(cut, c, r) !== ROCK_CELL) { put(cut, c, r, ROCK_CELL); cut.rock++; }
+    }
+  }
+}
+
+// Take one cell of rock out of column c, the shallowest one still standing --
+// which is exactly the cell `dugTopY` moves past. Whatever dust is sitting
+// above it is not touched here at all: it simply has nothing under it on the
+// next pass, and `settle` takes it from there.
+export function digCell(c) {
+  const cells = quarryCells();
+  if (cut.grid) {
+    const r = cut.rows - 1 - cells[c];
+    if (r >= 0 && r < cut.rows && at(cut, c, r) === ROCK_CELL) {
+      put(cut, c, r, 0);
+      cut.rock = Math.max(0, cut.rock - 1);
+    }
+  }
+  cells[c]++;
+  S.quarryTotal = (S.quarryTotal || 0) + 1;
+}
+
+// Whatever fell down the cut comes back up with the ground, thrown out at the
+// mouth exactly the way a shard is: every pixel is worth one dust, and closing
+// the fill over it instead would be a hole that destroys what a dig did not
+// spend. Called before the columns are zeroed, so there is still a floor under
+// what is being lifted off it.
+function tipCut() {
+  if (!cut.grid) return;
+  for (let c = 0; c < cut.cols; c++) {
+    for (let r = cut.rows - 1; r >= 0; r--) {
+      const v = at(cut, c, r);
+      if (!v || !isDust(v)) continue;
+      put(cut, c, r, 0);
+      const x = cut.x + c * P + P / 2;
+      const y = cut.y + (cut.rows - 1 - r) * P;
+      tossOut(x, y, v);
+    }
+  }
+}
+
+// The top of the cut at x: the dust lying there if there is any, the rock
+// under it otherwise. `dugTopY` alone is what a quarrier's feet answered to
+// before this grid existed, and it is still the honest floor of a column with
+// nothing on it -- but a column with dust on it stands taller than that, and a
+// body or a route asking "what is underfoot here" wants the dust's own top, not
+// the rock two feet under it. See `stepQuarrier` and `ways` in route.js.
+export function cutTop(x) {
+  const c = colOfX(x);
+  if (!cut.grid || c < 0 || c >= cut.cols) return dugTopY(x);
+  return surfaceY(cut, c) + cut.p;
+}
+
+// Back to a fresh cut: no dust, and the rock refilled to whatever the dig
+// depth is at the time it is called. Used when a save comes in, since the dig
+// depth it names has already been restored by the time this runs -- see
+// `restore` in persist.js -- and by a full reset of the game.
+export function resetCut() {
+  if (!cut.grid) return;
+  cut.grid.fill(0);
+  cut.n = 0;
+  cut.rock = 0;
+  wakeGrid(cut);
+  layCut();
+}
+
 // the stretch of floor a quarrier may work: between the toes of the two walls
 export const quarryBand = () => {
   const c = quarryShape();
@@ -194,13 +320,13 @@ function seatX(w) {
 // sized for a face at head height, and the floor of a worked cut is a good
 // forty cells under the rim -- so the whole seam landed back on the floor it
 // came out of and the quarry filled up with its own shards.
-function tossOut(x, y) {
+function tossOut(x, y, what = someFind(SHARD_CELL)) {
   const p = pileOf('quarry');
   const near = p ? p.from : quarry.x + quarry.w + P * 4;
   const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 20;
   const land = Math.min(far, near + Math.abs(bell()) * (far - near) * 0.5);
   const v = aim(x, y, land, P);
-  spawnChip(x, y, v.vx, v.vy, someFind(SHARD_CELL), land);
+  spawnChip(x, y, v.vx, v.vy, what, land);
 }
 
 // one quarrier, one frame
@@ -301,8 +427,10 @@ export function stepQuarrier(w, now) {
   }
 
   // It stands on the ground as it is now: the floor under a quarrier is the
-  // bottom of the column it has dug, so the body goes down with its own work.
-  w.y = dugTopY(w.x + WORKER / 2) - WORKER + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
+  // bottom of the column it has dug, or the top of whatever dust has fallen in
+  // on top of that -- see `cutTop`. The body goes down with its own work and
+  // rides up on anything that piles up under its feet.
+  w.y = cutTop(w.x + WORKER / 2) - WORKER + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
   w.lunge *= 0.82;
 
   // Nowhere to put a seam, so nothing to do but stand on the dirt. See break.js.
@@ -372,8 +500,7 @@ export function stepQuarrier(w, now) {
   // What is still in the ground, counted before this swing takes a cell out of
   // it, so the cell being dug is one of the ones the stone could be in.
   const left = cellsLeft();
-  cells[c]++;
-  S.quarryTotal = (S.quarryTotal || 0) + 1;
+  digCell(c);
   w.cell = null;                               // done with that one: it picks another
   findShards(w, left);
   // Digging raises dust, and none of it reaches the sky. This used to foul once
@@ -560,8 +687,17 @@ export function nextQuarryCell(x, self = null) {
 
 // and the ground fills back in behind them
 export function fillQuarry() {
+  // Whatever fell down the cut comes back up with the ground, thrown out at the
+  // mouth. The other answer was available -- the fill closes over it and it is
+  // gone -- and it is the wrong one for this game: every pixel is worth one
+  // dust, the hole is the only thing that destroys nothing, and a yard that eats
+  // a load because a dig happened to finish is a yard where the counter and the
+  // picture say different things. So the stone comes in underneath and what was
+  // lying on it is pushed up and out, by the same throw the seam leaves by.
+  tipCut();
   const cells = quarryCells();
   for (let c = 0; c < cells.length; c++) cells[c] = 0;
+  layCut();                                    // and the ground is back in the plot
   // Fresh ground with the next dig's stone already in it. It is set here rather
   // than when somebody first swings because the amount depends on how deep the
   // cut is, and a bench bought halfway down a dig should pay from the next one
@@ -728,8 +864,7 @@ defineMachine('jaw', {
     const c = nextQuarryCell(jawX() + P, tender);
     if (c == null || c < 0) return false;
     const left = cellsLeft();
-    cells[c]++;
-    S.quarryTotal = (S.quarryTotal || 0) + 1;
+    digCell(c);
     // The find is credited to whoever is standing at it. A machine has no
     // record of its own -- the crew list counts people -- and the tender is the
     // one who brought it up, which is what `quarried` has always meant.

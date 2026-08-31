@@ -23,6 +23,11 @@ const canvas = document.getElementById('c');
 // not on it: spoil heaps in front of its foot and the crew walk past it, which
 // is what a hill at the back of a yard looks like.
 export const overPitMouth = x => x + P > pit.x && x < pit.x + pit.w;
+// The mouth of the quarry, the same shape of question for the other hole in
+// the ground: is a grain over open air here rather than over anything it could
+// come to rest on. Asked while the quarry is shut too -- there is no mouth to
+// be over then, and the columns simply never match.
+export const overCutMouth = x => S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w;
 // The rock is anchored by its middle, so an odd width would put this edge half
 // a cell off the grid -- and half a cell is a fraction of a device pixel, which
 // the canvas draws as a hairline down every seam. Snapped, so a rock loaded from
@@ -337,7 +342,6 @@ export const blocked = c => {
   // question rather than a one-line fix -- and it wants an answer about WHICH
   // strip is meant before anybody changes them.
   if (pastApron(x) < 0) return true;
-  if (S.quarryOpen && x + P > quarry.x && x < quarry.x + quarry.w) return true;
   if (overPitMouth(x)) return true;
   return false;
 };

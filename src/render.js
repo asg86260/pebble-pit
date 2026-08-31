@@ -9,7 +9,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
@@ -123,6 +123,15 @@ export function drawQuarry() {
 
   drawLadder();
   ctx.fillStyle = '#000';
+}
+
+// The dust that has fallen into the cut, over the blank white the quarry's own
+// dig just painted. Blitted from its own scratch canvas exactly the way the
+// pit is -- see `drawPit` -- and drawn after `drawQuarry` for the same reason
+// `drawJaw` is: the quarry's white columns would otherwise erase it.
+export function drawCut() {
+  if (!S.quarryOpen || !cut.grid) return;
+  cut.painter.paint(ctx, cut.x, cut.y, cut.cols * P, cut.rows * P);
 }
 
 // The ladder in the near corner, head a cell proud of the rim the way a
@@ -2794,6 +2803,7 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
+  drawCut();                 // the dust lying in it, after the quarry for the same reason
   drawJaw();                 // after the quarry, or its white columns erase it
   drawBridge();              // and the way across it
   drawHoist();               // which the hoist stands on

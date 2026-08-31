@@ -1,6 +1,6 @@
 # Still to do
 
-Four items left from `feedback.md` / `feedback2.md`, plus one piece of
+Three items left from `feedback.md` / `feedback2.md`, plus one piece of
 housekeeping. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
@@ -8,36 +8,56 @@ into, and what is blocking it — so none of this has to be re-derived.
 
 ---
 
-## 1. Dust should fall into the quarry, and be fetched from it
+## 1. Dust should fall into the quarry, and be fetched from it — DONE
 
-**Status:** real, not started. The biggest of the four.
+**Status:** done. The cut has its own sand grid, wired into the mouth, the
+ladder, the drawing, the save and the reports.
 
-**What is actually wrong.** The cut is not a space a grain can occupy. It is
-modelled as a depth-per-column dig, not as a plot of sand, so there is no cell
-inside it for dust to sit in — which is why `blocked()` has to bar the mouth
-outright (a grain over an opening is a grain lying on nothing), and why the
-hauler's search is written against the one ground grid there is.
+**What it turned out to be, against the plan above.** A `ceiling` could not
+say "no dust below the dig line" — a ceiling counts rows up from the bottom of
+the *plot*, and the bottom of the plot is the deepest the cut will ever go, so
+a ceiling would let dust stand at the bottom of a hole nobody had dug and hang
+rock over it. So the rock still to come out is *in* the grid instead, as cells
+(`ROCK_CELL`, config.js): every column starts full of it from the plot's own
+floor up to wherever the dig has reached, a swing removes exactly the one cell
+under it, and the ordinary sand rules do the rest — dust that was resting on
+top simply has nothing under it on the next pass. `src/grid.js` gained one
+optional hook for it, `fixed(c, r)`, so `settle` never reads a piece of
+standing rock as a grain with somewhere to fall or slide into a shallower
+neighbour's open air.
 
-**The plan.** Give the cut its own sand grid, the way the pit has one, and let
-the existing machinery find it:
-
-- `src/state.js`, beside `pit`: `export const cut = { x, y, cols, rows, p: P,
-  grid: null, painter: null, n: 0 }`.
-- Size it in the layout pass beside the other sites: `cut.x = quarry.x`,
-  `cut.cols = quarry.w / P`, `cut.rows = quarryDepth() / P`, `cut.y = S.groundY`.
-- Cap each column by how deep that column has actually been dug —
-  `cut.ceiling = c => max(0, (dugTopY(...) - S.groundY) / P)` — so dust cannot
-  sit in rock nobody has taken out yet.
-- Then the hauler search and `pileAt`-style lookups need to see the cut as
-  somewhere dust can be, and the fetch trip has to go **down the ladder**.
-  Nobody teleports: the walk down is a real walk, the same as `downTheHole`
-  is for the pit.
-
-**Watch for.** `downTheHole` is written around a hauler's `claim`/`booked`/
-`carry` fields; the quarry version wants the same shape rather than a second
-way of doing it. And whatever is added must respect the pit-mouth rule already
-in `nearestMuck` — only a body that can descend may claim a column it cannot
-stand on.
+- `cut` in state.js: sized once at the deepest the cut can ever be worked to
+  (`QUARRY_BENCH_MAX` benches), not grown a row at a time — a bench bought
+  mid-dig only adds more permanent floor under a column's *current* target, it
+  never moves a row a grain is already resting in.
+- `quarry.js`: `wireCut` builds it, `layCut`/`digCell`/`tipCut`/`resetCut`
+  keep the rock level with `quarryCells`, `cutTop` is the surface a body or a
+  route reads (the dust's own top, not the bare rock under it — `stepQuarrier`
+  and `ways().cut.at` in route.js both read it now).
+- `game.js`'s chip loop intercepts a chip over the open mouth (`overCutMouth`,
+  world.js) the way it already did for the pit; `blocked()` lost the one
+  clause that used to bar the mouth outright. The one edge case — a chip still
+  in the air the instant `fillQuarry` refills the whole column solid — falls
+  back to landing on the ordinary ground rather than being lost.
+- `crew.js`: a hauler routes down the one ladder for a claim on the cut's own
+  dust, `downTheCut` mirroring `downTheHole`'s shape (a route rather than a
+  walk, `claim`/`booked`/`carry` rather than a second bookkeeping scheme), and
+  a claim is per-column via `cutTaken` the same way muck's is. Only a hauler
+  ever calls `nearestCutDust`, which is what satisfies `nearestMuck`'s rule
+  that only a body able to descend may claim a column it cannot stand on.
+- Drawn (`drawCut` in render.js, after `drawQuarry`'s white fill), saved and
+  restored (`persist.js`, the same run-length pattern as the floor, paired
+  with `quarryCells` — which was never saved before this and now is, since an
+  unsaved dig depth made a saved cut meaningless), reported (`cutDust` in
+  report.js), verified (rule 7 in verify.js now watches the cut's ledger too;
+  rules 1 and 2 needed nothing, being written generically against `ways()`
+  already). Two dev hooks, `__digCut` and `__pileCut`, for tests and the
+  console.
+- `test/cut-dust.test.mjs`: a chip over the mouth lands in the cut and not a
+  pile; a hauler is seen on the cut's own way and banks a load; `fillQuarry`
+  loses nothing, even when a few grains miss the quarry's own pile strip and
+  land elsewhere on the ground; no grain ever sits at or below rock still
+  standing; a closed quarry works exactly as it always did.
 
 ---
 

@@ -14,8 +14,9 @@
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ROCK_GANG } from './config.js';
-import { S, BLANK, floor, pit } from './state.js';
+import { S, BLANK, floor, pit, cut } from './state.js';
 import { at, put, addGrain, recount } from './grid.js';
+import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt } from './pit.js';
@@ -594,6 +595,22 @@ export const pitProfile = (n = 20) => {
 // Kept as a no-op because the panel and a check or two still say the word.
 export const dig = () => {};
 
+// dev: dig the cut out by n cells a column, evenly, so a check can put a body
+// (or a grain) at the bottom of a working quarry without hiring a gang and
+// waiting on the swing. Goes through `digCell`, the same function a quarrier's
+// own swing calls, so the rock in the cut's grid comes out with it.
+export const digCut = (n = 1) => {
+  const cells = quarryCells();
+  for (let c = 0; c < cells.length; c++)
+    for (let i = 0; i < n && cells[c] < quarryTarget(c); i++) digCell(c);
+  S.dirty = true;
+  return dugShare();
+};
+
+// dev: drop dust straight into the cut, the way a chip falling through the
+// mouth would, without waiting on a throw to land.
+export const pileCut = (x, n = 1) => { for (let i = 0; i < n; i++) addGrain(cut, x); S.dirty = true; };
+
 // One swing of the player's own, through the very call `input.js` makes when you
 // click the hill. It exists so a check can prove the thing DESIGN.md says twice
 // -- that a machine on the rock replaces the crew's hands and never yours -- by
@@ -793,6 +810,7 @@ export const HANDLES = {
   __lab: openLab, __research: finishResearch, __grant: grant,
   __spend: spendDust, __press: press,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
+  __digCut: digCut, __pileCut: pileCut,
   __tip: tip, __give: give,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,

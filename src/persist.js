@@ -5,11 +5,12 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0 } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
-import { S, floor, pit, sky } from './state.js';
+import { S, floor, pit, cut, sky } from './state.js';
+import { resetCut } from './quarry.js';
 import { freshMachines, MACHINES } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
@@ -206,6 +207,11 @@ export function persist() {
     quarriers: S.quarriers,
     quarryPaceLevel: S.quarryPaceLevel,
     benchLevel: S.benchLevel,
+    // How far each column of the cut has been dug, so the sand it carries
+    // (below) is being read against the same floor it was lying on when it was
+    // written. Nought everywhere and no `cut` at all come to the same thing on
+    // the way back in -- see `restore`.
+    quarryCells: S.quarryCells ? Array.from(S.quarryCells) : null,
     spores: S.spores,
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
@@ -281,7 +287,11 @@ export function persist() {
     gh: S.gh,
     boulderNo: S.boulderNo,
     floor: { cols: floor.cols, rows: floor.rows, cells: gridStr(floor) },
-    pit: pitToSave()
+    pit: pitToSave(),
+    // The cut's own sand, kept the same way the floor's is: a shape and a
+    // run-length string. It only means anything alongside `quarryCells`
+    // above, so the two are written and read together.
+    cut: cut.grid ? { cols: cut.cols, rows: cut.rows, cells: gridStr(cut) } : null
   });
 }
 
@@ -470,6 +480,11 @@ export function restore() {
   S.seenShard = !!s.seenShard || S.shards > 0;
   S.quarryOpen = !!(s.quarryOpen ?? s.caveOpen);
   S.quarryPaceLevel = s.quarryPaceLevel ?? s.cavePaceLevel ?? 0;
+  // How far each column had been dug. A save from before this was kept, or one
+  // whose array is the wrong shape for the quarry this run has, comes back to
+  // nought everywhere -- an unbroken floor, exactly what `resetCut` below then
+  // lays fresh rock to match.
+  S.quarryCells = Array.isArray(s.quarryCells) ? s.quarryCells.map(v => +v || 0) : null;
   S.spores = s.spores || 0;
   S.seenSpore = !!s.seenSpore || S.spores > 0;
   S.farmOpen = !!s.farmOpen;
@@ -567,6 +582,22 @@ export function restore() {
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   seedPitCores();
+  // The cut's own sand: rock laid fresh to the depth just restored above, then
+  // the dust that was lying on it overlaid -- but only if the save's cut is
+  // the exact shape this quarry's grid is. A save from before the cut kept
+  // sand, or one whose grid no longer matches (the depth it names having
+  // failed to restore, or the game's own shape of the plot having moved on),
+  // arrives with nothing lying in it: `resetCut` alone is a fresh, unbroken
+  // floor at the depth `S.quarryCells` says, which is exactly what an empty
+  // cut is.
+  resetCut();
+  if (cut.grid && s.cut && s.cut.cols === cut.cols && s.cut.rows === cut.rows &&
+      gridFill(cut, s.cut.cells)) {
+    recount(cut);
+    cut.rock = 0;
+    for (const v of cut.grid) if (v === ROCK_CELL) cut.rock++;
+    if (cut.painter) cut.painter.repaint();
+  }
   S.coreBuried = boulderAlive() || !(s.coreLoose || S.heldCore);
 }
 
@@ -642,6 +673,7 @@ export function reset(fresh = true) {
   S.quarriers = 0;
   S.quarryPaceLevel = 0;
   S.benchLevel = 0;
+  S.quarryCells = null;
   S.machines = freshMachines();     // a new yard has no machines in it
   S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
   S.spores = 0;
@@ -703,6 +735,7 @@ export function reset(fresh = true) {
   recount(pit);
   floor.painter.repaint();
   pit.painter.repaint();
+  resetCut();                              // fresh rock, nought dug, nothing lying in it
   S.boulderNo = 1;
   S.introDone = false;
   S.reunionDone = false;
