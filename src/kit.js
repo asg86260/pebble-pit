@@ -61,6 +61,14 @@ export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers
                         farmhand: 'farmhands', labber: 'labbers',
                         scrubber: 'scrubbers', janitor: 'janitors', wizard: 'wizards' };
 
+// And back again: what to put a body on so that it is doing a given job. The
+// same table read the other way about, because there is now one move that needs
+// it -- somebody picking a knocked-off hat up off the ground takes the job with
+// it, and the job is what the hat says. A second hand-written list of the same
+// eight pairs is the exact bug this file exists to stop.
+export const TYPE_OF = Object.fromEntries(
+  Object.entries(JOB_OF).map(([type, job]) => [job, type]));
+
 // Whether a job has kit at all -- somewhere its hats come from. What every
 // consumer below is really asking before it counts, draws, fetches or checks.
 export const hasKit = job => !!(KIT[job] && (KIT[job].trade || KIT[job].stock));
