@@ -6,11 +6,12 @@
 // lists the sizes a grain may be drawn at -- adding finer ones lets the pile
 // settle to them as it fills, keeping every grain and only losing resolution.
 
-import { PIT_W_MAX,
+import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, PACK_SPARKS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome, wakeGrid } from './grid.js';
+import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
+         surfaceY, colOf } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
@@ -30,6 +31,53 @@ import { rand } from './rng.js';
 // wagging the dog.
 export const pitWidth = () => PIT_W_MAX;
 export const pitDepth = () => PIT_H;
+
+// --- the shape of it, for anybody who has to walk it -------------------------
+// Where the top of the pile is and where the rungs are. It is geometry of the
+// hole, so it lives with the hole.
+//
+// It used to live in smog.js, because the muck layer was the first thing that
+// needed to know how deep the pile was and the answer got written where it was
+// first asked for. Which left `route.js` -- the file that says where a body may
+// walk -- importing the pit's ladders out of the file about the sky. Nobody
+// reading either of them would look there.
+//
+// The ladders into the hole: one down each wall, and the dust in the bottom
+// between them.
+//
+// The crew used to reach the layer in the pit from the lip, arm out over the
+// mouth. It read as a fudge -- somebody shovelling a thing eight cells away and
+// two deep without going near it -- and every other hole in this yard is one you
+// go down: the quarry has a ladder in its near corner and the crew climb it hand
+// over hand.
+//
+// Two of them, because the hole has two sides and there is ground beyond it. A
+// single ladder in the near wall made the pit a dead end: everything past it was
+// somewhere the crew could see muck lying and never reach, since the lip clamp
+// pins them this side of the mouth. With a ladder in each wall the pit stops
+// being a wall and becomes a way through -- down one side, across the top of the
+// pile, and up the other.
+export const NEAR = -1, FAR = 1;
+
+export function pitLadder(side) {
+  const x = side === FAR ? pit.x + pit.w - P : pit.x + P;
+  return { x, top: S.groundY - WORKER, foot: pitTop(x) - WORKER };
+}
+
+// The top of whatever is in the hole at a place: the dust, or the floor when it
+// is empty. What a body in the pit stands on, and what the muck lies on.
+//
+// `surfaceY` answers a different question -- where the *next* grain down this
+// column would come to rest -- and that is one cell above the dust already
+// there. Read as a surface it put everything a cell too high: the layer hung
+// over the pile with daylight under it, and the crew walked the hole a cell off
+// the ground the way they walk the yard a cell off the ground, which is to say
+// not at all. One cell down is the top of the pile itself.
+export function pitTop(wx) {
+  const c = colOf(pit, wx);
+  if (c < 0 || c >= pit.cols) return S.groundY + pitDepth();
+  return surfaceY(pit, c) + pit.p;
+}
 
 // Where the plot sits and how many cells it is. The near lip never moves: a dig
 // takes the far wall out and the floor down, so nothing you can already see

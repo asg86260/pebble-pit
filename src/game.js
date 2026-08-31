@@ -52,11 +52,11 @@ export function wireGround() {
   floor.blocked = blocked;
   floor.ceiling = bankCeiling;             // and lean away from the rock rather than against it
   floor.repose = true;                     // heaps on the ground stand up
-  // Nothing topples over the lip on its own any more. Dust may not stand deep
-  // enough beside the ledge to do it: a heap that could tip itself in banked the
-  // whole yard for free and put the haulers out of work, which is the one thing
-  // the ground must never do. `grid.js` still has the hooks; nothing uses them.
-  //   floor.spillsInto = overPitMouth; floor.spillsAt = 4; floor.spill = ...
+  // Nothing topples over the lip on its own. Dust may not stand deep enough
+  // beside the ledge to do it: a heap that could tip itself in banked the whole
+  // yard for free and put the haulers out of work, which is the one thing the
+  // ground must never do. The hooks that used to allow it are gone from grid.js
+  // as well -- a branch nothing takes is a branch nothing keeps honest.
 }
 
 // Laying out the world moves things; this is what each site does about it. The

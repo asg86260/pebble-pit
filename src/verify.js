@@ -184,20 +184,30 @@ export function verifyWorld() {
 
     // --- rule 5: a load is a real load -----------------------------------------
     // `carry` is how many grains are in a body's arms and `load` is what shade
-    // each of them is, and the two are kept together: a grain is pushed on to
-    // `load` and then counted on to `carry`, and a grain shaken out is popped
-    // and then counted off. So there is always at least a shade for every grain.
+    // each of them is, and they are not two things kept level with each other:
+    // they are one thing counted and the same thing written out. A grain is
+    // pushed on to `load` and counted on to `carry`; a grain shaken out is
+    // popped and counted off; a load put down empties both. **So a body with a
+    // load array has exactly as many shades in it as it has grains.**
     //
-    // The other way about is *not* an invariant, and deliberately not asserted:
-    // a body shaken until it lets go has `carry` zeroed and its `load` array
-    // left standing (see the spill in `shakeHeld`), so a stale shade or two can
-    // outlive the grains it named. Nothing ever reads past `carry`, so that is
-    // untidy rather than wrong.
+    // This used to be asserted one way only -- never fewer shades than grains --
+    // with the other way written off as untidy but harmless, because the one
+    // place that broke it was the spill in `drop`: a body shaken until it let go
+    // had its `carry` zeroed and its `load` left standing. Nothing read past
+    // `carry`, so nothing showed. But "nothing reads past the count" is a
+    // promise about every reader there will ever be, and the fix was one line at
+    // the source. The count and the shades leave together now, so the rule can
+    // be the equality it always meant, and a stale shade is a failure rather
+    // than a shrug.
+    //
+    // A body that has never held anything has no `load` at all -- the factories
+    // hand out `carry: 0` and nothing else -- and that is not a violation of
+    // anything. The rule is about a load array that exists.
     const carry = w.carry || 0;
     if (!Number.isInteger(carry) || carry < 0)
       fail('a body is carrying a number that is not a count', `${who(w)} carries ${w.carry}`);
-    if (Array.isArray(w.load) && carry > w.load.length)
-      fail('a body is carrying more than it has shades for',
+    if (Array.isArray(w.load) && carry !== w.load.length)
+      fail('a body\'s load and its count disagree',
            `${who(w)} carries ${carry} with ${w.load.length} in the load`);
 
     // --- rule 3b: a hat is a hat off the table ----------------------------------

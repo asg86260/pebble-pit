@@ -218,6 +218,23 @@ group('the way over the hill is the hill that is left', async () => {
   // so there are two ways this can go wrong: a body sunk into a face it has not
   // climbed yet, and a body jumping to the new surface the frame a swing lands.
   // Both are measured, a frame at a time, because both take one frame.
+  //
+  // Burial is measured against the *lowest* of the three columns a body stands
+  // across, which is the same question `deepest` in src/verify.js asks and for
+  // the same reason. It used to be measured against the single column under the
+  // body's midpoint, and that read 20px on a gang at work while the climber had
+  // in fact arrived -- `w.foot` sat exactly on its target on the worst frame of
+  // the run. What the 20 was, was a miner standing on the column it is striking
+  // (which is what a body working a face does, see `rockTopY(colAtX(...))` in
+  // crew.js) with a two-cell spike left standing beside it, and the midpoint
+  // happening to land on the spike. A body is not buried in a column it is
+  // stood next to. Below even the lowest of them and there is nothing under any
+  // part of it, which is the only thing burial can honestly mean.
+  const under = x => {
+    let low = -Infinity;
+    for (let p = x; p < x + 18; p += cell) low = Math.max(low, window.__surface(p));
+    return Math.max(low, window.__surface(x + 17));
+  };
   let into = 0, jump = 0;
   let prev = detail();
   for (let i = 0; i < 600; i++) {
@@ -226,7 +243,7 @@ group('the way over the hill is the hill that is left', async () => {
     for (let k = 0; k < now.length; k++) {
       const b = now[k], mid = b.x + 9, feet = b.y + 18;
       if (mid < foot || mid > foot + cols * cell || feet > gy - 6) continue;
-      into = Math.max(into, feet - window.__surface(mid));
+      into = Math.max(into, feet - under(b.x));
       if (prev[k] && prev[k].t === b.t) jump = Math.max(jump, Math.abs(b.y - prev[k].y));
     }
     prev = now;
@@ -248,10 +265,13 @@ group('the way over the hill is the hill that is left', async () => {
        'and the far flank just clear of the rightmost',
        `${JSON.stringify(flanks.map(l => l.x))} against ${hi === null ? '-' : foot + (hi + 1) * cell}`),
     // And the walk over it tracks the outline as the outline changes, craters
-    // and steps included, without anybody clipping through a spike of it. A body
-    // and a half, measured at 23px, and the same floor-under-the-regression the
-    // group above uses.
-    ok(into <= 30, 'and nobody on it is ever buried in the shape it is left with',
+    // and steps included, without anybody dropping through it. Measured at 8px
+    // against the columns a body is actually standing on, and all 8 of it is
+    // the miner's own bob and lunge -- a swing drives it down as much as
+    // `P * 1.4` (see the miner's branch in crew.js) and it comes back up. So
+    // the mark is that, with room for the bob on top of it, and anything over
+    // it is a body genuinely under the rock rather than leaning into a swing.
+    ok(into <= 12, 'and nobody on it is ever buried in the shape it is left with',
        `worst ${Math.round(into)}px into the face`),
     // A cell a frame is what `climbTo` allows, and the bob and the swing ride on
     // top of that. Anything much over it is a body being put on the new surface
