@@ -7,7 +7,7 @@
 // went through -- so the checks are about the books and about the table, which
 // are the two places the drawing and the errand both read from.
 
-import { group, ok, state, run, yard } from './helpers.mjs';
+import { group, ok, state, run, yard, WORKER } from './helpers.mjs';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
 
 const detail = () => state().crewDetail.map(d => {
@@ -27,19 +27,31 @@ group('the kit table is the only list of hats there is', async () => {
   const noMark = jobs.filter(j => !KIT_MARK[j]);
   const fetched = KIT_JOBS.slice().sort();
   const traded = Object.keys(TRADE_OF).sort();
+  // Exactly one source per row: a hat is bought a trade at a time, or it comes
+  // with a building. Neither is a hat from nowhere; both is two counts of the
+  // same thing.
+  const sources = jobs.filter(j => !!KIT[j].trade === !!KIT[j].stock);
 
   return [
     ok(noMark.length === 0, 'every hat in the table has a shape', noMark.join(' ')),
-    // One list, not two that have to be kept level. A job is fetched for exactly
-    // when there is something to fetch, which is the same fact as having a trade.
-    ok(fetched.join() === traded.join(),
-       'and the jobs that send somebody for a hat are the jobs that sell one',
-       `${fetched.join(' ')} against ${traded.join(' ')}`),
-    // The janitor's cap: in the same table as the rest, marked as the one kind
-    // nobody buys, so no code anywhere has to know its name.
-    ok(!!KIT.janitors && KIT.janitors.innate && !boughtKit('janitors'),
-       'and a hat that is the job rather than a doubling on it says so in the table',
-       JSON.stringify(KIT.janitors))
+    ok(sources.length === 0,
+       'and says where its hats come from, exactly once -- a trade or a stock',
+       sources.join(' ')),
+    // Every row is fetched: a hat is somewhere and a body walks to it. That is
+    // NOT the same list as the hats the school sells, and it used to be -- the
+    // janitor's cap was worn rather than fetched, so the two questions had one
+    // answer and one of them was being asked in the other's name.
+    ok(fetched.join() === jobs.slice().sort().join(),
+       'every hat in the table is one somebody walks over and picks up',
+       `${fetched.join(' ')} against ${jobs.join(' ')}`),
+    ok(traded.join() === jobs.filter(j => j !== 'janitors').sort().join(),
+       'and the ones the school sells are all of them but the cap',
+       traded.join(' ')),
+    // The cap: the same table, the same errand, the same stand -- and no trade,
+    // because the closet has them rather than sells them.
+    ok(!!KIT.janitors && !boughtKit('janitors') && typeof KIT.janitors.stock === 'function',
+       'the cap is stock the closet keeps, not a trade the school sells',
+       JSON.stringify(Object.keys(KIT.janitors)))
   ];
 });
 
@@ -158,5 +170,76 @@ group('a dropped body keeps the hat it is wearing', async () => {
     ok(bare === 0, 'the hat never came off on the way', `${bare} bare frames`),
     ok(aimedAtStand === 0, 'and it never aimed a single step at the stand',
        `${aimedAtStand} frames walking to it`)
+  ];
+});
+
+// The one hat in the yard nobody buys, walked for like all the rest.
+//
+// The cap used to be `innate`: put a body on sweeping and it was wearing one, in
+// the same frame, wherever it happened to be standing. Which is the thing this
+// whole file is against -- a hat that arrives without a walk belongs to no
+// station, and there is nothing to take off it either. The closet keeps the caps
+// now, one for every post it opens, on a stand outside its door.
+group('the closet keeps the caps, and a janitor walks over for one', async () => {
+  window.__reset();
+  window.__crew(0, 3);                       // three bodies, all on carrying
+  window.__air({ haze: 0, muck: 0 });
+  window.__loo(true);
+  run(1);
+
+  const { kitX } = await import('../src/world.js');
+  const stand = kitX('janitors');
+  const loo = () => roster().find(r => r.job === 'janitors');
+
+  const shut = loo();                        // the shed open, nobody on the post
+
+  window.__assign('janitors', 1);
+  const put = loo();
+  const w = yard.S.workers.find(o => o.type === 'janitor');
+  const from = w.x;
+
+  // Watched frame by frame, because the whole of the change is in the walk. It
+  // must set off bare, aim at the stand, and get there on its own legs.
+  let bareFrames = 0, aimed = 0, reached = 0;
+  for (let i = 0; i < 60 * 40 && !w.trained; i++) {
+    run(1 / 60);
+    if (!w.trained) bareFrames++;
+    if (w.walking && w.walkTo != null && Math.abs(w.walkTo - stand) < 6) aimed++;
+    if (Math.abs(w.x - stand) < WORKER) reached++;
+  }
+  const capped = loo();
+  const got = { at: w.x, trained: w.trained, of: w.kitOf };
+  run(4);                                   // and back to the closet with it on
+
+  // Off the job again: the cap is not its own, so it goes back on the stand --
+  // and it goes back the way it came, on foot.
+  window.__assign('janitors', -1);
+  run(20);
+  const home = loo();
+  const strays = detail().filter(b => b.kit !== '-' && b.kit !== b.t);
+
+  return [
+    ok(shut.hats === 2 && shut.worn === 0 && shut.spareKit === 2,
+       'the shed opens with both caps out on the stand and nobody in them',
+       `${shut.worn} of ${shut.hats} worn`),
+    ok(put.n === 1 && put.worn === 0,
+       'and a body put on the post starts bare-headed',
+       `${put.worn} worn the frame it was assigned`),
+    ok(bareFrames > 30, 'it is bare for the whole of a real walk, not a frame or two',
+       `${bareFrames} frames`),
+    ok(aimed > 0, 'which it spends walking to the stand outside the closet',
+       `${aimed} frames aimed at ${Math.round(stand)}`),
+    ok(reached > 0 && Math.abs(from - stand) > WORKER * 2,
+       'from wherever it was standing to where the caps are',
+       `${Math.round(from)} -> ${Math.round(stand)}`),
+    ok(got.trained && got.of === 'janitors' && Math.abs(got.at - stand) < WORKER * 2,
+       'it puts the cap on at the stand and nowhere else',
+       `${got.of} at ${Math.round(got.at)}, stand at ${Math.round(stand)}`),
+    ok(capped.worn === 1 && capped.spareKit === 1,
+       'so the closet has one cap out and one still waiting',
+       `${capped.worn} worn, ${capped.spareKit} waiting`),
+    ok(home.worn === 0 && home.spareKit === 2 && strays.length === 0,
+       'and taken off the job it walks the cap home again',
+       `${home.worn} worn, ${home.spareKit} waiting, strays ${JSON.stringify(strays)}`)
   ];
 });

@@ -206,12 +206,18 @@ export const idle = () => spareHands();
 // Both live in kit.js now, with the shape of the hat and the rest of what a hat
 // is, and are passed straight through here: the shop asks about a trade, and a
 // trade is a fact about a hat.
-import { TRADE_OF, JOB_OF } from './kit.js';
+import { TRADE_OF, JOB_OF, stockOf, hasKit } from './kit.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
-export const hats = job => S[TRADE_OF[job]] || 0;
+//
+// Where those hats came from is the kit table's business and not the shop's:
+// most stations buy theirs a trade at a time, the closet simply has its caps,
+// and `stockOf` is the one place that knows the difference. Everything from here
+// down -- `spareKit`, `kitFull`, the errand, the stand, the roster's second line
+// -- is written against this number and cannot tell the two apart.
+export const hats = stockOf;
 // Counted off `kitOf` -- whose kit it is -- and not off the job the body is on.
 // Those two agree except for the length of a walk back, and reading the job was
 // how a helmet came to be counted twice: a body moved from the rock to carrying
@@ -259,10 +265,16 @@ const capOfBare = job =>
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
   //
-  // Two of them, because unlike the shed jobs this one is not a room with a
-  // bench in it: it is the whole yard, and a yard the length of this one is more
-  // ground than one pair of hands can keep up with.
-  job === 'janitors' ? (S.outhouseOpen ? 2 : 0) :
+  // More than one of them, because unlike the shed jobs this one is not a room
+  // with a bench in it: it is the whole yard, and a yard the length of this one
+  // is more ground than one pair of hands can keep up with.
+  //
+  // How many is `LOO_POSTS`, and the closet hangs a cap on its stand for each --
+  // which is why this reads the kit table rather than the number itself. A post
+  // and the cap that goes with it are one thing the shed opens, and two places
+  // counting it separately is exactly how you get a body sent to a job with
+  // nothing on the stand to pick up.
+  job === 'janitors' ? hats('janitors') :
   // One body per hat, and the tower makes them one at a time. This is the only
   // station in the yard whose floor plan is a thing you buy rather than a thing
   // you build: there is as much room in the sky as there are people who can get
@@ -324,10 +336,7 @@ export const handsOf = job =>
 // twice the pace at a cell, twice the tending on a plot, twice the load at the
 // lip. So a fully-hatted complement is worth twice a bare one, and that is the
 // gang a machine actually has to beat.
-export const kitFull = job => {
-  const trade = TRADE_OF[job];
-  return !!trade && hats(job) >= handsOf(job);
-};
+export const kitFull = job => hasKit(job) && hats(job) >= handsOf(job);
 
 // What one pair of hands at this station is worth, counting the kit on its head.
 //
