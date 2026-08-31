@@ -203,6 +203,10 @@ driver is the flat per-frame sim cost, not the scenarios.
 
 ## 5. The draw side (estimates marked)
 
+**Superseded by section 7, which measured it.** Two of the estimates below
+were wrong, and they are left standing because which ones were wrong is the
+point of keeping them.
+
 Measured in the real page (headless shell, software canvas, 800×600) off the
 `beat` EMA main.js already keeps: on the busy yard, **step 2.5 ms, draw 0.51 ms,
 hud 0.06 ms** — and with all four machines on and a 5,670-mote sky, **step
@@ -250,3 +254,173 @@ step/draw/hud and keeps the five-second worst.
   part of `stepAir` was always the count it triggers (item 3 above), not the
   motes.
 - **hud.** 0.06 ms in the page. It is throttled already and it shows.
+
+## 7. The draw
+
+Section 5 above was written off the `beat` EMA and a read of the code, and it
+guessed. This is the same page measured properly, at 35d4a4b, with the sim
+already down to a tenth of a millisecond — which is what makes the draw the long
+pole and worth a section of its own.
+
+**The glass.** Headless shell, software canvas, 800×600 CSS at dpr 1 and zoom
+0.833: 480,000 device pixels. That matters, because a third of what is below is
+fill rate rather than arithmetic, and fill rate is the number a phone changes.
+The four yards, all off seed 7, each built in one synchronous burst so the clock
+never moves under it:
+
+- **quiet** — a new game, one body, nothing on the ground.
+- **busy** — `__crew(4,4,3,3)`, full sites, currencies granted, ten seconds settled.
+- **sky** — the same with all four machines on and forty-five seconds more, ~4,000 motes.
+- **cores** — a new game whose pile actually holds four cores and the other three
+  finds, restored through a save so the cells are really in it. This is the late
+  counter, and it is the yard the other three do not show.
+
+**The instrument.** Old and new drawing alternated *inside one page's frame
+loop* — six segments of 300 frames a side, the minimum of each side kept. Two
+separate sessions on a machine running five other agents disagree with
+themselves by a fifth; interleaved, the yard drifts under both sides equally and
+the comparison holds. The numbers are `beat.draw`, the frame's own reading,
+which is the instrument section 5 used and the one a phone will have.
+
+| yard | before | after | |
+|---|---:|---:|---:|
+| quiet | 0.306 | 0.086 | −72% |
+| busy 14-body | 0.467 | 0.299 | −36% |
+| 14 + four machines, ~4,000 motes | 0.534 | 0.346 | −35% |
+| four finds in the pile | 0.460 | 0.253 | −45% |
+
+Every pixel of every one of those frames is unchanged, and the proof is not an
+eyeball. Both paths live in the page at once behind a flag, and a check draws
+the same yard old, new and old again and hashes all 480,000 pixels of each: the
+third draw says the picture is repeatable at all, and the second says it is the
+same one. Identical on all four yards, for all four changes.
+
+### 7.1 Where the draw went
+
+Per function, from `performance.now` around every call in `draw()` (throwaway,
+reverted). Chrome clamps its clock to 100 µs, so a single frame says nothing;
+over 600 frames the rounding is a fair coin and the mean is honest. The
+sixty-odd clock reads add about 0.07 ms across the whole row, so read the shares
+rather than the total. Busy yard unless marked.
+
+| section | µs/frame | what it is |
+|---|---:|---|
+| the rock | 101 | ≤840 `fillRect`s, one a cell |
+| `drawCount` | 87 | the counter card |
+| `drawAir` + `drawAirNear` | 87 | 420 motes, nine filter passes |
+| `drawPit` | 28–115 | the pile's blit, plus a search for cores |
+| `drawSmog` | 45 (sky) | ~4,000 motes, bucketed and culled |
+| `drawRoster` + its counts | 28 | who is where, and their numbers |
+| `drawOffers` | 24 | a filled diamond a station |
+| `drawWorkers` | 20 | fourteen bodies |
+| `drawHouses` | 19 | the settlement |
+| `drawGrid` (the whole floor) | 10 | one `drawImage` |
+| `press` | 3–5 | two fullscreen fills |
+| the other forty calls | ~25 | ≤2 µs each |
+
+Two of section 5's guesses were wrong, and the biggest suspicion was misplaced:
+
+- **The sand grids are not a cost and were never going to be.** painter.js
+  already does the whole job — changed rows into a 1px-per-cell scratch canvas,
+  one `drawImage` a frame. The floor's 120,000 cells cost 0.010 ms. There is no
+  offscreen to build and no dirty-region machinery to borrow off the awake
+  columns; it is done.
+- **The rock was not "~0.1 ms software; fine".** It was 0.10–0.12 ms and the
+  largest single thing in the frame — half of a quiet yard's whole draw.
+- **There is no idle frame to skip.** `S.dirty` is the *save* flag, not a
+  drawing one, and there is nothing for it to gate: clouds, birds, air, the sky
+  and every machine's phase are read off the clock, so a frame that skipped the
+  paint would stop the weather. The full clear and repaint is right.
+
+### 7.2 What was done
+
+Four changes, all in render.js, each a contained mechanism.
+
+| | yard it shows on | before | after |
+|---|---|---:|---:|
+| the rock, a run at a time | quiet | 0.123 | 0.014 |
+| the counter's marks, kept | cores | 0.045 | 0.005 |
+| the counter's numbers, remembered | cores | 0.041 | ~0 |
+| the cores in the pile, remembered | cores | 0.100 | ~0 |
+
+**The rock, a run at a time.** Shade is depth, and depth runs in bands *across* a
+row — a row of a rock is three or four runs of one tone, not forty cells of it.
+So a run goes down as one `fillRect` instead of forty, and the tone of a
+thickness is looked up once a frame instead of worked out per cell. Eight
+hundred calls and eight hundred `cellPos` allocations become a few dozen calls
+and none. Measured on the rock alone, 673 cells: 79 µs → 8 µs, against 5 µs for
+walking the grid and drawing nothing at all — so what is left is the walk. An
+offscreen canvas blitted at 0.7 µs was measured too and not taken: it costs
+88 µs to build, the rock changes on every swing, and eight microseconds is
+already under everything else in the frame.
+
+**The counter's marks, kept.** A core is an arc with a stroke round it, a spore a
+hexagon, a spark an eight-point star, and a filled path costs a hundred times a
+`fillRect`. A late yard draws all four every frame and none of them has changed
+since the last one was found. The column now lives on a canvas of its own, laid
+down whole, and is drawn again only when the card moves or grows or gains a row.
+
+It is *drawn* there rather than copied off the frame, and that is the whole of
+the care in it. The first attempt lifted the finished strip off the main canvas
+with `drawImage(canvas, …)`, which is a readback: 0.45 ms in a browser with no
+card under it, so every camera move — every frame the card's place changes — was
+a worse hitch than the thing being fixed. Drawing into the strip instead needed
+`drawMark` to take the canvas it draws on, which it now does. Two things keep it
+exact: the strip is laid down at whole device pixels and drawn at the same
+offset in device pixels, so every mark keeps the fraction of a pixel it would
+have been drawn on and nothing is resampled at any device ratio; and it is
+filled with the card's own white first, so an opaque strip lands on flat white
+and there is no blending to round differently. The digits' column is left out of
+it — that is the part that moves — and so is the card's edge, whose outermost
+pixels are shared with whatever the yard is doing behind them.
+
+**The counter's numbers, remembered.** `fmt` is `toLocaleString`, and
+`toLocaleString` is eight microseconds a call. The card asks it for the same five
+numbers sixty times a second: 41 µs a frame, which was the entire remaining cost
+of the card once the marks were kept. A dozen-entry map, cleared rather than
+grown when it fills, because while a count is running to a new value every frame
+is a new number.
+
+**The cores in the pile, remembered.** `drawPitCores` looked in all 43,000 cells
+of the hole every frame to find at most a handful — 0.10 ms, and the largest
+thing left once the rock and the counter were done. Two facts make it cheap. The
+counter knows how many there are to find: the pile holds exactly what you hold
+(`seedPitCores`), and every way of spending one takes its cell out in the same
+breath as the count, so nought means do not look. And a core that has not moved
+is still where it was, so the cells it was last found in are checked first —
+`S.cores` reads instead of 43,000, and if every one of them still holds a core
+then those are all of them, in the order a fresh search would have found them.
+Anything else — a core settling a row, one spent, one arriving — fails the check
+and the pile is searched again that frame.
+
+Note what the busy and machine yards above do *not* show: their currencies come
+from the dev grant, which raises the count without putting cells in the pile, so
+the search comes up short and runs again every frame. No played yard is ever in
+that state. The fourth yard is the one that is.
+
+### 7.3 What is left on the draw side
+
+In cost order, and the top two are not in this file's hands:
+
+1. **`drawAir` / `drawAirNear`, 0.087 ms busy — air.js.** Nine filter passes over
+   420 motes to keep the fill style still, and then 420 small `fillRect`s. The
+   passes are cheap; the rects are fill rate, and fill rate is what a phone
+   changes. If it has to come down, the shape is one path per band-and-kind
+   rather than one rect a mote — the same lesson `drawSmog`'s own comment
+   already records.
+2. **`drawSmog`, 0.045 ms with 4,000 motes — smog.js.** Already bucketed and
+   culled, and cheap for what it is. The Map, the key strings and the point
+   arrays it builds per frame are the only fat on it.
+3. **`drawOffers`, 0.024 ms busy.** A path-filled diamond a station, every frame,
+   and they do not move while the yard does not. The counter's mark canvas is
+   the pattern if it ever matters; it does not yet.
+4. **`press`, 0.003–0.005 ms.** Two fullscreen fills over 480,000 pixels. At a
+   phone's pixel count this is the line above that grows fastest, and it is a
+   look rather than a picture of the yard — the first thing to put a switch on
+   if a device cannot hold sixty.
+
+And the honest limit of all of it: this is 480,000 pixels. A phone at dpr 3 is
+several times that, and everything in 7.1 that is fill rate rather than
+arithmetic — the air, the press, the grids' blits — grows with it while the rock,
+the counter and the pile do not. The `beat` readout in the dev panel is still
+the instrument for that, and it still wants a phone to hand.
