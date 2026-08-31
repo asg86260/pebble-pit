@@ -251,6 +251,18 @@ export const MUCK_SWEEP = 3.5;       // grains a second a spare pair of hands sh
 // stone.
 export const MUCK_SWING = Math.round(1000 / MUCK_SWEEP);
 
+// How a swing settles. Whoever swings sets a body's lunge to 1 and this eases it
+// back to nothing over about a fifth of a second.
+//
+// It used to be eased inside each work branch that happened to remember, which
+// meant every branch that did not -- a janitor walking from one patch of muck to
+// the next, a body on a route, anybody a stage took the frame off -- carried the
+// last swing's lunge pinned at full for the whole of it. A janitor read as a body
+// stamped a cell into the ground, dragged along at that depth, and popped back up
+// when it arrived. It is one number now, eased once a frame for everybody in
+// `updateWorkers`, so a swing settles wherever the body spends the next frame.
+export const LUNGE_EASE = 0.84;
+
 // The scrubbing house: a place with nobody in it does nothing at all.
 // The front of the scrubbing house, in cells. These live here rather than in the
 // drawing because the drawing is not the only thing that depends on them: the

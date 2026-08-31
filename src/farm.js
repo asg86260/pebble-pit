@@ -186,7 +186,6 @@ export function stepFarmhand(w, now, dt, c = null) {
   // It works the plot rather than standing to attention beside it: it stoops over
   // it on its own rhythm and shifts its weight between times. Whether the farm
   // is producing and whether it looks tended are two different questions.
-  w.lunge *= 0.84;
   if (now >= w.stoopAt) {
     w.lunge = 1;
     w.stoopAt = now + TEND_STOOP * (0.75 + rand() * 0.6);

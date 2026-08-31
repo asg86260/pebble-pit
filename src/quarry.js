@@ -485,7 +485,6 @@ export function stepQuarrier(w, now, ctx = null) {
   // on top of that -- see `cutTop`. The body goes down with its own work and
   // rides up on anything that piles up under its feet.
   w.y = cutTop(w.x + WORKER / 2) - WORKER + Math.sin(now / 1000 * w.sp + w.ph) * 1.3;
-  w.lunge *= 0.82;
 
   // Nowhere to put a seam, so nothing to do but stand on the dirt. See break.js.
   //

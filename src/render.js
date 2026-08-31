@@ -2737,11 +2737,18 @@ export function drawIntro() {
 //   lunge  which way a swing throws the body: down into the work for anybody on
 //          the ground, up for a wizard, whose work is above it. 0 for the bodies
 //          that do not swing at all.
+//   lean   ...or forward instead, into the way it is facing, for a body whose
+//          swing is a push rather than a stoop. A janitor plants its feet on a
+//          whole cell and shovels without going anywhere, so a lunge on its y was
+//          the only thing about it that moved: a square dropping a cell and
+//          rising again, four times a second, on the spot -- which reads as a
+//          body bobbing, not as a body working. It shoves the shovel out in
+//          front of it instead, which is what the swing actually is.
 //   load   how what it is carrying is drawn. A quarrier brings up one thing at a
 //          time and it rides over its head as that thing; everybody else stacks
 //          grains, in the cart if there is one.
 const LOOK = {
-  janitor:  { lunge:  1 },
+  janitor:  { lunge:  0, lean: 1 },
   labber:   { lunge:  1 },
   farmhand: { lunge:  1 },
   quarrier: { lunge:  1, load: 'shard' },
@@ -2751,14 +2758,20 @@ const LOOK = {
 };
 const PLAIN = { lunge: 0 };
 
+// How far a lean throws a body, in cells. Half of what a stoop drops it: an
+// eighteen-pixel square shoved a whole cell sideways reads as a body stepping,
+// not as a body reaching.
+const LEAN = 0.5;
+
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home
     if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
     const look = LOOK[w.type] || PLAIN;
-    const x = Math.round(w.x);
-    const y = Math.round(w.y + (w.lunge || 0) * look.lunge * P);
+    const throwOn = w.lunge || 0;
+    const x = Math.round(w.x + throwOn * (look.lean || 0) * (w.face || 1) * P * LEAN);
+    const y = Math.round(w.y + throwOn * look.lunge * P);
 
     // A cart is kit like any other, so it is drawn off what the body is holding
     // rather than off what the books say it is. Somebody walking a cart back to

@@ -230,7 +230,6 @@ export function stepWizard(w, now) {
   const r = orbitR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
   w.x = sky.x + Math.cos(a) * r - WORKER / 2;
   w.y = sky.y + Math.sin(a) * r - WORKER / 2;
-  w.lunge = (w.lunge || 0) * 0.82;
 
   // Nothing there to work: they are making one. Everybody in the ring pours
   // into the middle for as long as they are up here -- see `summon` -- and the
