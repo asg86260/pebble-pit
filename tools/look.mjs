@@ -78,10 +78,9 @@ const SCENES = {
   // the sites it needs and leaves the hole room to take what the belt brings.
   belt: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
          window.__grant({sparks:999, shards:999, spores:999}); ${LIP}
-         window.__buy('ram'); window.__buy('belt'); window.__fast(8);
+         window.__buy('ram'); window.__buy('belt');
+         window.__jump(4); window.__fast(12);
          window.__clearFloor();
-         (s => { for (let i = 0; i < 2400; i++)
-                   window.__pile(s.pitX - 1500 + (i % 240) * 6, 1); })(window.__state());
          window.__look(window.__state().pitX - 620);`,
 
   // The two marks that hang under a station: the stopped triangle and the offer

@@ -1230,11 +1230,25 @@ of the yard in one arc, over the top of a band it never touched, and what you sa
 travelling along the band was a white pattern painted on it. Delete the belt,
 leave a catapult, and not a number changes.
 
+**The band is a surface, and that is the way onto it.** Anything thrown across it
+comes down on it and is carried, exactly the way anything thrown across the yard
+comes down on the yard -- so the rock's spoil goes straight from the miner's
+shovel onto the belt and the ground between the rock and the hole never sees it.
+That is what a belt from the rock to the hole *is*. Without it the machine did the
+job the long way round: every grain fell to the floor, sat there, and was picked
+back up and lifted five cells onto a band that had been directly over it the whole
+time. What the belt will not take out of the air is a throw over another station's
+strip -- the same rule the bite keeps, and for the same reason: the cut's stone
+and the farm's crop belong in their own piles.
+
 So a grain the belt picks up is a **load** -- `{ x, y, s }` in `S.belt` -- and a
 load is not a chip. A chip is thrown once and left to gravity; a load is carried,
-and the machine decides where it goes next on every frame. It has two legs: the
-scoop takes it from wherever it lay to the band, and then the band runs it to the
-head. The lift is a *climb*, not a throw, and that is forced rather than chosen --
+and the machine decides where it goes next on every frame. A load that landed on the band is already on it and simply
+rides. A load the belt had to pick up off the ground has two legs: the scoop takes
+it from wherever it lay to the band, and then the band runs it to the head. The
+scoop is the exception now rather than the only way on -- there is dust lying
+about from before the belt was bought, and dust that misses it. The lift is a
+*climb*, not a throw, and that is forced rather than chosen --
 the heap between the rock and the hole is routinely deeper than the belt is tall,
 and a grain tossed at the band from inside a heap lands back on the heap. It also
 means the scoop reaches *down* to a grain lying on top of a heap above the band,

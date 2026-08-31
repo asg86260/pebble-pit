@@ -135,6 +135,53 @@ export function loadBelt(x, y, shade) {
   S.dirty = true;
 }
 
+// Whether the band is actually running: bought, switched on, and with somebody
+// standing at it this moment. `mannedAt` is stamped by `stepMachines`, which is
+// the one place that knows. Both the ride and the catch ask this, because a
+// stopped band must neither move what is on it nor take anything new.
+export function beltRunning(now) {
+  const m = machine('belt');
+  return !!(m && m.bought && m.on && now - (m.mannedAt || 0) <= 250);
+}
+
+// --- landing on it ---------------------------------------------------------------
+// The band is a **surface**. Anything thrown across it comes down on it and is
+// carried, exactly the way anything thrown across the ground comes down on the
+// ground -- which means the rock's spoil goes straight onto the belt from the
+// miner's shovel and never touches the yard at all.
+//
+// That is the whole point of a belt from the rock to the hole, and without it
+// the machine was doing the job the long way round: every grain fell to the
+// floor, sat there, and was then picked back up and lifted five cells to a band
+// that had been directly over it the whole time. The scoop is still there and
+// still needed -- there is dust lying about the yard from before the belt was
+// bought, and dust that misses it -- but it is the exception now rather than the
+// only way on.
+//
+// `f` is the frame, so the crossing can be tested exactly: a chip lands on the
+// band when its underside reaches the band's top having been above it a frame
+// ago. Tested that way rather than against a tolerance, because a fast chip
+// covers more than a cell in a frame and a slow one covers a fraction of it, and
+// any fixed band of slack is wrong for one of them.
+export function catchBelt(ch, now, f) {
+  if (ch.vy <= 0) return false;                       // still going up: it has landed on nothing
+  if (!beltRunning(now)) return false;
+  const y = beltY();
+  const under = ch.y + P, was = under - ch.vy * f;
+  if (was > y || under < y) return false;             // did not cross the band this frame
+  if (ch.x + P <= beltFrom() || ch.x >= beltReach()) return false;
+  // And not over another station's strip. The same rule the bite keeps, for the
+  // same reason: the cut's stone and the farm's crop are carried by hand to
+  // their own piles and belong there, and a belt that took them out of the air
+  // over those piles would be stealing rather than hauling.
+  const c = colOf(floor, ch.x);
+  const reg = floor.region ? floor.region(c) : null;
+  if (reg !== null && reg !== 'rock') return false;
+  S.belt.push({ x: ch.x, y: bandY(), s: ch.s });
+  S.dirty = true;
+  return true;
+}
+
 // One frame of the band. It runs while the belt is on and manned -- `mannedAt`
 // is stamped by `stepMachines`, which is the one place that knows whether
 // anybody is standing at it -- so a belt whose tender wanders off stops with its
@@ -146,8 +193,7 @@ export function loadBelt(x, y, shade) {
 // air over the yard.
 export function stepBelt(now, f) {
   if (!S.belt || !S.belt.length) return;
-  const m = machine('belt');
-  if (!m || !m.bought || !m.on || now - (m.mannedAt || 0) > 250) return;
+  if (!beltRunning(now)) return;
   const top = bandY(), head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];

@@ -24,7 +24,7 @@ import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { wireCut } from './quarry.js';
-import { spawnChip, spawnSpoil, stepBelt } from './dust.js';
+import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
@@ -208,6 +208,16 @@ export function step() {
       ch.x = pit.x + pit.w - P;
       ch.vx = 0;
     }
+
+    // Onto the belt's band, which is a surface like the ground is a surface --
+    // the rock's spoil comes down on it straight off the shovel and never
+    // touches the yard. See `catchBelt`, which owns every condition; this is a
+    // landing like the three below it and is written in the same shape.
+    //
+    // Ahead of the hole and the cut, because the head of the belt hangs out over
+    // the mouth of the hole and a grain crossing the band above the lip would
+    // otherwise be taken by the hole from under it.
+    if (catchBelt(ch, now, f)) { S.chips.splice(i, 1); continue; }
 
     // down the shaft: the pit collects whatever falls through its mouth
     // `>=`, to match what the ground asks a line below. With `>` a chip that

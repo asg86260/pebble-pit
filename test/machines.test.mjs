@@ -7,7 +7,7 @@
 // them back, and that a machine left running by one check cannot silently
 // rewrite what the next one is allowed to mean.
 
-import { yard, group, ok, state, run, runUntil, quickCrew, openSites, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER } from './helpers.mjs';
 
 // The two boards nobody could buy from.
 //
@@ -1247,6 +1247,46 @@ group('a grain rides the belt rather than being thrown over it', async () => {
     ok(after.stored > before.stored, 'and the hole has it', `${before.stored} -> ${after.stored}`),
     ok(after.floor < before.floor, 'and the ground has not',
        `${before.floor} -> ${after.floor}`)
+  ];
+});
+
+// And it does not have to be picked up off the ground at all. The band is a
+// surface: the rock's spoil comes down on it straight off the shovel and the
+// yard between the rock and the hole never sees it.
+//
+// Before this, the belt did the job the long way round -- every grain fell to
+// the floor, sat there, and was picked back up and lifted five cells onto a band
+// that had been directly over it the whole time.
+group("the rock's spoil lands on the belt and never touches the ground", async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(2, 2);
+  window.__machine('ram', { bought: true, on: true });
+  window.__machine('belt', { bought: true, on: true });
+  haveRock();
+  run(8);                                     // both machines up and manned
+  window.__clearFloor();
+
+  // Now watch the yard while the ram works it. The floor is the assertion: a
+  // grain that lands on the ground and is picked back up would show here.
+  let worst = 0, sawBand = 0;
+  for (let i = 0; i < 40; i++) {
+    run(0.2);
+    const s = state();
+    if (s.floor > worst) worst = s.floor;
+    if (s.belt > sawBand) sawBand = s.belt;
+  }
+  const after = state();
+  window.__crew(0, 0);
+  return [
+    ok(sawBand > 0, 'the spoil is on the band', `${sawBand} loads at once`),
+    ok(after.stored > 0, 'and it reaches the hole', `${after.stored} banked`),
+    // A little slack: a grain the belt cannot claim -- outside the run, or over
+    // another station's strip -- still falls to the ground and is fair game for
+    // the scoop, which is what the scoop is still for.
+    ok(worst < 40, 'and next to none of it ever lies on the ground',
+       `${worst} grains on the floor at the worst of it`)
   ];
 });
 
