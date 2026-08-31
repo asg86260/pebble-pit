@@ -29,6 +29,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { yard, state, run } from './helpers.mjs';
+import { persist, restore } from '../src/persist.js';
+import { load, save } from '../src/save.js';
+import { seedRng, seed, rngState } from '../src/rng.js';
 
 // FNV-1a over whatever we hand it. A hash rather than the string itself because
 // the string is a few thousand characters of worker positions and grain counts,
@@ -120,4 +123,76 @@ test('and the yard says which run it is', () => {
   window.__seed(SEED + 7);
   assert.equal(state().seed, SEED + 7);
   assert.equal(yard.state().workers, 1);   // and it really did start again
+});
+
+
+// --- and a run put down is the same run when it is picked up -----------------
+//
+// Everything above is about a run started twice from the same seed. These are
+// about the other half of the same claim: a game closed halfway through and
+// opened again is still the *same* run, rather than a second one wearing its
+// name.
+//
+// The save is what has to carry that, and a seed on its own does not. A seed
+// says where a run began; a game an hour in has taken hundreds of thousands of
+// draws since, and restoring only the seed would start the stream over -- the
+// yard going on from where it stood, with the chance of its own first minute.
+// So the generator's one word of state is written down beside the seed. See
+// rngState in src/rng.js and what persist.js does with it.
+
+const writeSave = () => { yard.S.dirty = true; persist(); };
+
+test('the save says which run it is and where the chance had got to', () => {
+  window.__seed(SEED);
+  run(5);
+  const at = rngState();
+  writeSave();
+  const sv = load();
+  assert.equal(sv.runSeed, SEED, 'the save did not name the run');
+  assert.equal(sv.rngState, at,
+    'the save named the run but not where it had got to, so a reload would ' +
+    'start the whole stream again.');
+});
+
+// And the reload is governed by that word rather than by whatever the page
+// happened to be drawing from. Read the same save twice onto two completely
+// different streams and ask where the chance stands afterwards: it has to be
+// the same place both times, because the save said where it stood. Without the
+// state coming off the save the answer is worked out from whatever the page was
+// already on, and the two part company -- which is a run that forks every time
+// it is opened.
+test('and a reload carries on the run rather than forking a new one', () => {
+  window.__seed(SEED);
+  run(5);
+  writeSave();
+
+  const openOn = before => { seedRng(before); restore(); return rngState(); };
+  const a = openOn(1);
+  const b = openOn(999999);
+
+  assert.equal(b, a,
+    'where the chance stood after a reload depended on what the page was ' +
+    'drawing from before it, so the save is not saying where the run had got ' +
+    'to. See setRngState in src/rng.js and what restore() does with it.');
+});
+
+// A save written before a run had a name still opens, and gets one. It carries
+// neither number, and what it must not do is refuse to load or come back named
+// after nothing: the generator seeds itself from entropy when the page loads
+// (see rng.js), so such a game keeps the stream it is already on and is simply
+// told what that is called.
+test('a save from before a run had a name still opens, and is given one', () => {
+  window.__seed(SEED);
+  run(2);
+  writeSave();
+  const sv = load();
+  delete sv.runSeed;
+  delete sv.rngState;
+  save(sv);
+
+  seedRng(777);
+  restore();
+  assert.equal(state().runSeed, 777,
+    'an old save came back without a name, or under somebody else name');
+  assert.equal(seed(), 777, 'and it should not have disturbed the stream it found');
 });

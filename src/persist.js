@@ -22,6 +22,7 @@ import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } fr
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
+import { seed, reseed, rngState, setRngState } from './rng.js';
 
 // A full pit is a million cells, which is a million characters written to
 // localStorage every second if you store it a digit at a time. A pile is nearly
@@ -159,6 +160,12 @@ export function persist() {
   if (!S.dirty) return;
   S.dirty = false;
   save({
+    // Which run this is, and how far into it the chance has got. The seed alone
+    // would start the stream over on every reload -- the same run's name on a
+    // different run -- so the generator's one word of state goes with it. See
+    // rng.js.
+    runSeed: S.runSeed,
+    rngState: rngState(),
     stored: S.stored,
     banked: S.banked,
     carryLevel: S.carryLevel,
@@ -291,6 +298,18 @@ export function restoreGrid(b, s) {
 
 export function restore() {
   const s = load();
+  // The run's name and where its chance had got to, before anything below draws
+  // on it -- restoring the sky, dealing the pit's speckle and standing the crew
+  // back up all take draws, and they should be the draws the save was going to
+  // take next.
+  //
+  // A save written before any of this existed has neither, and must not be made
+  // to crash over it: the generator seeded itself from entropy when the module
+  // loaded (see rng.js), so such a game simply keeps that stream and is told
+  // what it is called. It is a run with a name from now on, which is all the
+  // migration there is.
+  S.runSeed = Number.isFinite(s?.runSeed) ? s.runSeed >>> 0 : seed();
+  if (Number.isFinite(s?.rngState)) setRngState(s.rngState);
   S.boulderNo = s?.boulderNo || 1;
   if (!s || !gridFromString(s.boulder, s.gw, s.gh) || typeof s.stored !== 'number') {
     // A game that has never been played does not start with a rock. It starts
@@ -564,8 +583,18 @@ function restoreCrew(who) {
   }
 }
 
-export function reset() {
+// A new game, and a new run.
+//
+// `fresh` is what tells the two apart. A player starting over gets a seed of
+// their own, drawn here before a single grain is laid down, because everything
+// below this line draws on the chance and a yard built before its seed was set
+// is a yard that seed does not describe. A run started from a seed on purpose --
+// `seedGame` in hooks.js, which is how every check in both tiers begins -- comes
+// through here with `fresh` false and keeps the number it was given: reseeding
+// under it would throw the seed away in the act of honoring it.
+export function reset(fresh = true) {
   clear();
+  S.runSeed = fresh ? reseed() : seed();
   // Including what the hole had been pressed to. This is not the same field as
   // the grain it is *at* -- the grain follows from the pile being rebuilt, and
   // reset does rebuild it -- and leaving the paid-for permission behind meant a

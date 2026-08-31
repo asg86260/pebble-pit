@@ -150,6 +150,18 @@ line('', box => {
   button(box, 'reset the game', () => window.__reset());
 });
 
+// Which run this is. Read-only on purpose: a seed is a fact about a whole run
+// and not a setting -- typing a new one into the yard already standing would
+// give a game that is half one run and half another (see `seedGame` in
+// hooks.js). It is here because the number is otherwise invisible, and it is
+// worth being able to say which yard you were looking at when something went
+// wrong in it. A new game draws a new one; a reload comes back to this one.
+line('this run', box => {
+  const out = document.createElement('b');
+  out.dataset.seed = '1';
+  box.appendChild(out);
+});
+
 // What the yard is actually running at, on the machine it is actually running
 // on. This exists because the question cannot be answered anywhere else: the
 // headless shell the checks run in has no graphics card, so every frame it
@@ -221,6 +233,7 @@ function refresh() {
     const px = Math.round(innerWidth * S.dpr) * Math.round(innerHeight * S.dpr);
     n.textContent = `${meter.fps} fps  ${(px / 1e6).toFixed(1)}M px  ${SKY.length} in the sky`;
   }
+  for (const n of el.querySelectorAll('[data-seed]')) n.textContent = S.runSeed >>> 0;
   for (const n of el.querySelectorAll('[data-crew]')) n.textContent = S[n.dataset.crew];
   for (const n of el.querySelectorAll('[data-rock]')) n.textContent = S.boulderNo;
 }

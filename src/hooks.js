@@ -375,7 +375,18 @@ export const abandon = () => { S.research = null; buildShop(); S.dirty = true; }
 // dev: back to a game nobody has played. The opening is skipped unless it is
 // the thing being looked at: five seconds of two squares talking in front of
 // every check in the suite is five seconds of nothing being checked.
-export const newGame = (intro = false) => { resetGame(); if (!intro) skipIntro(); };
+// `fresh` says whether this is a new *run* as well as a new game, and here it is
+// off. That is not an oversight. A player's reset draws a seed of its own -- it
+// is a new run, and `reset` in persist.js does it for the button in the yard --
+// but this is the hook, and the hook is what a check calls in the middle of a
+// seeded run. A group that resets twice and compares the two halves is asking
+// for the same yard both times; drawing a fresh seed under it hands it two
+// different ones and there is nothing it can conclude. So a reset through here
+// clears the game and keeps the run.
+export const newGame = (intro = false, fresh = false) => {
+  resetGame(fresh);
+  if (!intro) skipIntro();
+};
 
 // Say which run this is, and start it.
 //
@@ -401,6 +412,12 @@ export const seedGame = n => {
   for (const k of Object.keys(BLANK)) S[k] = structuredClone(BLANK[k]);
   resize(settleIntoWorld);
   newGame();
+  // Where the view is left is deliberately not settled here. Restoring BLANK
+  // puts the camera back to nought, which is right for a yard nobody is looking
+  // at -- the node tier draws nothing and never asks -- but wrong for a page,
+  // where the last line of main.js's boot opens the view on the rock. That line
+  // belongs to the page rather than to the game, so the browser suite does it
+  // for itself (see `newRun` in selftest.js) and this stays the game booting.
   return seed();
 };
 

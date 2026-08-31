@@ -61,6 +61,25 @@ export function seedRng(n) {
 // it names can be had again.
 export const seed = () => current;
 
+// A run of its own, out of the platform's entropy. This is what "a new game"
+// means down here: `reset` in persist.js calls it before it builds anything, and
+// writes the number it gets back into `S.runSeed`, so the yard a player is
+// looking at is a yard that can be named and had again. A run started from a
+// seed on purpose -- `seedGame` in hooks.js -- goes nowhere near this.
+export const reseed = () => seedRng(entropy());
+
+// The generator's state, rather than the seed it started from.
+//
+// A seed alone does not describe where a run has got to: it describes where the
+// run began, and a game saved an hour in has taken some hundreds of thousands of
+// draws since. Restoring the seed would start the whole stream again, which is
+// not continuing a run -- it is beginning a second one that happens to share a
+// name. Mulberry32 is one 32-bit word, so the whole of "where the chance has got
+// to" fits in a number the save can carry, and a reload picks the stream up
+// exactly where the tab was closed.
+export const rngState = () => state >>> 0;
+export const setRngState = n => { state = n >>> 0; return state; };
+
 // The draw itself, in the shape everything already expects: a number in [0, 1).
 export function rand() {
   state = (state + 0x6D2B79F5) | 0;

@@ -24,6 +24,50 @@
 let SLEPT = 0, SLEEPS = 0, STEPPED = 0, FRAMES = 0, RUNS = 0;
 const sleep = ms => { SLEPT += ms; SLEEPS++; return new Promise(r => setTimeout(r, ms)); };
 
+// The seed every group in this suite starts from.
+//
+// It is the same idea as SEED in test/helpers.mjs, and for the same reason: the
+// yard's chance comes out of one generator (src/rng.js), which seeds itself from
+// the clock and the platform's entropy on load, so a check that ran a busy yard
+// and then measured it was measuring a different yard every run. Up here that
+// showed itself as one check -- the wind group -- that failed on a busy machine
+// and passed on the next go, which is the kind of failure nobody can bisect and
+// everybody learns to re-run.
+//
+// So every group starts from a number instead. There is nothing special about
+// the number; it is only a name for a run, and it is the node tier's number so
+// that a group that moves between the two tiers keeps its yard.
+//
+// This tier cannot be as exact as the node one and does not pretend to be: the
+// page is drawing real frames of its own the whole time, and a check that sleeps
+// for a board to slide has let some unknown number of them go by. What the seed
+// buys here is that every run starts in the same place -- the same chance and,
+// because `__seed` restarts the clock too, the same point in the wind's swing --
+// rather than somewhere new each time.
+const SEED = 20250830;
+
+// A group's starting yard: the seed, and then the rules watched for the whole of
+// it. Both are properties of the run rather than of what the run is about, so
+// no group has to remember to ask for either.
+//
+// It is `__seed` rather than `__reset` because seeding and clearing are one act
+// (see `seedGame` in hooks.js): a seed handed to a yard that is already standing
+// gives a run that is half one seed and half another and cannot be had again.
+//
+// And the view where the page opens it. `__seed` puts every field of the game
+// back to what state.js declares, camera included, which leaves it at nought --
+// the far left-hand end of the world, with the rock three thousand pixels off
+// the right of the window. The game is right to do that and the node tier never
+// notices, because nothing there looks through a camera. A page does: the last
+// line of main.js's boot opens the view on the rock, and a suite that resets the
+// game without it is a suite checking what four of its groups can see from the
+// wrong end of the yard.
+const newRun = () => {
+  window.__seed(SEED);
+  window.__verify(true);
+  window.__look(window.__state().openCamX);
+};
+
 // A frame of the page, rather than a stretch of the wall clock.
 //
 // Waiting for the browser is not the same as waiting for the game. The game's
@@ -433,7 +477,7 @@ const TESTS = [
   // now -- and what proves it is measured rather than merely wide enough is that
   // making a name longer makes the column wider.
   ['a longer name widens the column instead of running out of it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 900, spores: 900 });
@@ -484,7 +528,7 @@ const TESTS = [
   // to fit a column that could not hold it, and a row with no ladder dropped the
   // half-line the pips sit on.
   ['every row on a board is the same height as every other', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 900, spores: 900 });
@@ -524,7 +568,7 @@ const TESTS = [
   // same row as one holding neither, and has to go and count both piles to find
   // out which half to go and fix.
   ['a bill you can half afford says which half', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(3000);                       // dust enough, stone not
     window.__grant({ cores: 1, shards: 2, spores: 0 });
@@ -561,7 +605,7 @@ const TESTS = [
   // number -- so it is in the bill with the coins, under a clock, and the row
   // itself says everything about itself.
   ['what a thing costs in waiting is priced with the rest of it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
@@ -610,7 +654,7 @@ const TESTS = [
   // offering. Measured in the pixels it is really drawn in, because a mark the
   // yard does not actually paint is a mark nobody sees.
   ['an arrow under a station says it has something for you', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(3, 2, 1, 1);
     window.__school(true);
@@ -649,7 +693,7 @@ const TESTS = [
     await sleep(300);
 
     window.__crew(0, 0);
-    window.__reset();
+    newRun();
     return [
       ok(broke.has === false, 'a board with nothing you can buy offers nothing'),
       ok(broke.ink === 0, 'and there is no arrow under it', `${broke.ink} px`),
@@ -668,7 +712,7 @@ const TESTS = [
   // the quarry's board on the way past. What you point at is the ground that is
   // missing.
   ['the quarry is opened by its hole, not by the bridge over it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9 });
@@ -700,7 +744,7 @@ const TESTS = [
   // which is right while the cursor is drifting. A click is not drifting: it is
   // somebody deciding to do something else, and the sheet in the corner is over.
   ['a press on the yard puts an open board away', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9 });
@@ -738,7 +782,7 @@ const TESTS = [
   // a different question from the thing that builds it -- so it said "same rows
   // as last time" for ever.
   ['hiding the finished ladders takes them off the board', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(99999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
@@ -779,7 +823,7 @@ const TESTS = [
   // open the row that sells the closet, and never appeared anywhere: which looks
   // exactly like somebody going round and tidying it away.
   ['what the crew leave is drawn where they left it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(3, 2);
     window.__tune('LOO_EVERY', 3000);
@@ -803,7 +847,7 @@ const TESTS = [
 
     window.__tune('LOO_EVERY', 600000);
     window.__crew(0, 0);
-    window.__reset();
+    newRun();
     return [
       ok(s.smog.poop > 0, 'the crew have left something', `${s.smog.poop} cells`),
       ok(s.smog.muck.all === s.smog.poop,
@@ -819,7 +863,7 @@ const TESTS = [
   // so a dot centred on the cell sits half a line below the words it belongs to,
   // pointing at the gap under them.
   ['the new-row dot is level with the name it marks', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(400);
     run(20);
@@ -852,7 +896,7 @@ const TESTS = [
   }],
 
   ['no row on any board sits on top of itself', async () => {
-    window.__reset();
+    newRun();
     await settle();
     // enough of everything that every row on every board is showing
     window.__crew(4, 3);
@@ -1014,7 +1058,7 @@ const TESTS = [
   // in this yard the pointer goes through without touching anything, and a field
   // that takes no notice of a hand through it is a picture of dust.
   ['the cursor leaves a draught in the dust', async () => {
-    window.__reset();
+    newRun();
     await settle();
     run(3);
     const quiet = state();
@@ -1070,7 +1114,7 @@ const TESTS = [
   // pixels a second, outward in both directions at once, and that is deliberate
   // -- see `spreadAt` -- but it is not the wind and would drown it here.
   ['the dust and the smoke lean on one wind', async () => {
-    window.__reset();
+    newRun();
     window.__air({ haze: 700 });
     await settle();
     run(3);
@@ -1135,7 +1179,20 @@ const TESTS = [
         downwind += s.mean * Math.sign(is.wind);
         if (a.way === s.way) together++;
       }
-      run(1.3);                        // and on to a different part of the gust
+      // and on to a different part of the gust. Four seconds rather than the
+      // one-and-a-third this used to take, because a third of a minute is what
+      // "a different part" actually costs: WIND_MS is a time constant and not a
+      // period, so the slower of the two swings the wind is made of comes round
+      // once every nine seconds times two pi -- the best part of a minute. Eight
+      // readings a second and a bit apart sample a fifth of one swing, and which
+      // fifth they get depends on where the clock started. That was invisible
+      // while the clock started wherever the page happened to load; with a
+      // seeded run it starts at nought every time, and the fifth it lands on is
+      // one where the two swings pull against each other and the whole thing
+      // moves by nine hundredths. Widening the sweep asks the question the check
+      // means to ask -- does the wind get somewhere it was not -- rather than
+      // asking it of whichever twelve seconds we happened to be handed.
+      run(4);
     }
 
     return [
@@ -1169,8 +1226,9 @@ const TESTS = [
       ok(bothWays > 0 && downwind > 0,
          'and the smoke leans the way the dust does: one wind, not two',
          `${downwind.toFixed(2)}px downwind over ${bothWays} readings`),
-      // A wind with no lull in it is a fan. Over eight seconds of a nine-second
-      // swing it has to have got somewhere it was not.
+      // A wind with no lull in it is a fan. Over half a minute -- most of the
+      // way round the slower of its two swings -- it has to have got somewhere
+      // it was not.
       ok(Math.max(...winds) - Math.min(...winds) > 0.1,
          'and the wind itself gusts rather than blowing at one steady rate',
          `${Math.min(...winds).toFixed(2)} to ${Math.max(...winds).toFixed(2)}`)
@@ -1183,7 +1241,7 @@ const TESTS = [
   // dust is thrown with, and waggling one about earns it a moment of not
   // knowing which way is up.
   ['a body is thrown rather than dropped, and shaking one makes it dizzy', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     run(2);
@@ -1270,7 +1328,7 @@ const TESTS = [
   // it but swing, and the rarest thing in the game went on doors. Dust buys the
   // yard now, and a core buys the one thing nothing else can.
   ['a core buys the tower and nothing else', async () => {
-    window.__reset();
+    newRun();
     await settle();
     // Four rocks of yard first: the first core is in the fifth.
     const early = [];
@@ -1286,7 +1344,7 @@ const TESTS = [
     const gotOne = runUntil(() => !!state().coreItem, 30);
 
     // and the yard is bought in dust
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 3, shards: 2000, spores: 2000 });
@@ -1351,7 +1409,7 @@ const TESTS = [
   // bottom there is a seam: a handful all at once, thrown up over the rim, then
   // the climb out and the hole falls in behind them.
   ['a cut gives its stone up while it is being dug, then falls in', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(0, 0, 2);
     run(2);
@@ -1399,7 +1457,7 @@ const TESTS = [
   // more hands and a bigger mess, and the shovelling has something to do that
   // did not come out of the weather.
   ['a body stops now and then, and somebody clears up after it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(4, 0);                       // miners only: nobody to shovel it yet
     window.__air({ haze: 0, muck: 0 });
@@ -1454,7 +1512,7 @@ const TESTS = [
   // together each found work on the spot it arrived on, and the mess was cleared
   // by one lump you could not count the bodies in.
   ['the crew spread out to shovel rather than clearing it as one lump', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(0, 6);
     window.__clearFloor();
@@ -1498,7 +1556,7 @@ const TESTS = [
   // haulers that were walking in step all stop on the same pixel, and what you
   // see is one body twitching rather than a crew waiting for a rock to land.
   ['a rock in the air is danced through, not stood through', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 5);
     window.__clearFloor();
@@ -1592,7 +1650,7 @@ const TESTS = [
   // that comes out of ground you were not standing on. The lab and the school
   // are buildings you walk to for exactly this reason.
   ['the quarry and the plots are bought where they are', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__grant({ cores: 30, shards: 900, spores: 900 });
@@ -2446,7 +2504,7 @@ const TESTS = [
     const rows = () => [...shop().querySelectorAll('button')].map(b => b.dataset.key);
     const has = k => rows().includes(k);
 
-    window.__reset();
+    newRun();
     await settle();
     const fresh = rows();
 
@@ -2491,7 +2549,7 @@ const TESTS = [
   // another plot -- and a bench and a plot are each a place for one body, so the
   // thing the site's own currency buys first is room for somebody to work it.
   ['the quarry and the farm grow on what they give up', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__levels({ benchLevel: 0, plotLevel: 0 });
     S_open();
@@ -2542,7 +2600,7 @@ const TESTS = [
   // buy does something for ever after; this takes what you have and hands some
   // of it back, and the whole of it is a decision you keep making.
   ['the casino takes a stake and pays a pot', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__grant({ cores: 20 });
     window.__give(20000);
@@ -2601,7 +2659,7 @@ const TESTS = [
         won = { net: state().stored - b, said: hand && hand.won };
       } else lost = { net: state().stored - b, said: hand && hand.won === false };
     }
-    window.__reset();
+    newRun();
     await sleep(300);
     return [
       ok(open.casinoOpen, 'cores build it, out past the lab',
@@ -2628,7 +2686,7 @@ const TESTS = [
   // board gets out of the light, the wheel takes its time, and what is on the
   // table is a heap on the ground rather than a number on a row.
   ['a spin is something to watch', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__grant({ cores: 20 });
     window.__give(20000);
@@ -2662,7 +2720,7 @@ const TESTS = [
       buildShopFromTest();
       if (state().pot) win = state();
     }
-    window.__reset();
+    newRun();
     await sleep(300);
     return [
       ok(t0.spinning, 'the wheel is going the moment the chip goes down'),
@@ -2683,7 +2741,7 @@ const TESTS = [
   // whatever was staked, settled by the same code the yard and the hole use. A
   // thousand on the table is a thousand grains lying there.
   ['the pot is a real pile, grain for grain', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__grant({ cores: 20 });
     window.__give(30000);
@@ -2709,7 +2767,7 @@ const TESTS = [
     const leaving = state();
     run(4);
     const gone = state();
-    window.__reset();
+    newRun();
     await sleep(300);
     return [
       ok(arriving.table < stake && arriving.table + arriving.tableAir > 0,
@@ -2729,7 +2787,7 @@ const TESTS = [
   // whole of it going over -- and every grain that leaves the heap is a grain
   // the hole counts when it lands.
   ['banking flies the pot to the hole, grain for grain', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__grant({ cores: 20 });
     window.__give(30000);
@@ -2761,7 +2819,7 @@ const TESTS = [
     const flying = state();
     quiet();
     const landed = state();
-    window.__reset();
+    newRun();
     await sleep(300);
     return [
       ok(!!win && on > 0, 'there is a pot to take', `${on}`),
@@ -2782,7 +2840,7 @@ const TESTS = [
   // tidying up after you, and making you go and undo it before anything can
   // happen is a chore rather than a decision.
   ['a body put in the lab stays in it, work or no work', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__lab(true);
     window.__crew(0, 3, 0, 0, 2);                // two of the five in the lab
@@ -2818,7 +2876,7 @@ const TESTS = [
   // catching -- and a body is eighteen pixels walking about on top of the dust
   // you are trying to sweep.
   ['a body can be picked up, and walks back to work', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__clearFloor();
@@ -2879,7 +2937,7 @@ const TESTS = [
   // not walk: the commute that gets a body home from the far end of the yard is
   // exactly the wrong thing when you have just set it on its own rock.
   ['a body dropped on its own station gets straight back to it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(1, 0);
     window.__clearFloor();
@@ -2911,7 +2969,7 @@ const TESTS = [
   // A body put down on the rock should be standing on the rock, not standing on
   // the ground under it and then appearing on top a frame later.
   ['a body dropped on the rock lands on the rock and climbs from there', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(1, 1);
     window.__give(400);
@@ -2983,7 +3041,7 @@ const TESTS = [
   // the shop describing something the houses were already doing. You put the
   // next one up where it goes up.
   ['another house is bought where the houses are', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(100000);
@@ -3022,7 +3080,7 @@ const TESTS = [
   // The house is the one board that sells nothing. Standing at it lists who
   // lives there, where each of them is right now, and what each has done.
   ['the house lists who lives there', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     run(60);
@@ -3088,7 +3146,7 @@ const TESTS = [
   // sheet has no business still standing beside a board that is no longer about
   // it.
   ['reading another row puts the submenu away', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     run(60);
@@ -3152,7 +3210,7 @@ const TESTS = [
   // unusable, since reading it is the only thing it is for.
   // Picking a name is the end of reading the list.
   ['picking a name takes the view to them and folds the list away', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(6, 2);
     window.__give(40000);
@@ -3179,7 +3237,7 @@ const TESTS = [
   // there with strength under your hand -- what closes it is a row that opens a
   // place, because the view is already on its way there.
   ['buying a rung leaves the board up, opening a place takes it away', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(200000);
@@ -3202,7 +3260,7 @@ const TESTS = [
     }
     const door = await press('unlockfarm');
     await hoverAway();
-    window.__reset();
+    newRun();
     return [
       ok(rungs.length >= 3, 'there were rungs to buy', rungs.map(r => r[0]).join(', ')),
       ok(rungs.every(r => r[1]), 'and the board is still up after every one',
@@ -3217,7 +3275,7 @@ const TESTS = [
   // of names open every single time, which is a sheet doubling in width under a
   // cursor that was aiming at something else.
   ['walking up to the block does not open the settlement on the way', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9 });
@@ -3263,7 +3321,7 @@ const TESTS = [
   }],
 
   ['hovering a name does not close the list it is on', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(6, 2);
     window.__give(40000);
@@ -3292,7 +3350,7 @@ const TESTS = [
   }],
 
   ['you can get to the names without a ruler', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(6, 2);
     window.__give(40000);
@@ -3332,7 +3390,7 @@ const TESTS = [
   }],
 
   ['a note stands clear of the board it belongs to', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(4, 2);
     window.__give(40000);
@@ -3381,7 +3439,7 @@ const TESTS = [
   }],
 
   ['the submenu finds room however narrow the window is', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(3, 2);
     run(60);
@@ -3423,7 +3481,7 @@ const TESTS = [
   }],
 
   ['the crew is a submenu of the house board', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     run(60);
@@ -3509,7 +3567,7 @@ const TESTS = [
   // longer the height it is. It has to measure itself again, or the sheet
   // stands where a board of some other size would have stood.
   ['a board that gains or loses a row is seated by its new size', async () => {
-    window.__reset();
+    newRun();
     await settle();
     await hoverBench();
     window.__give(400);
@@ -3538,7 +3596,7 @@ const TESTS = [
   // down once, and the lab has to have been told to watch the sky, before the
   // yard will sell you anything to do about it.
   ['the scrubbing house is offered after the rain and the readout', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
@@ -3587,7 +3645,7 @@ const TESTS = [
   // a board of things you press, so the only way to say it is not one of them is
   // to give up everything that says it is.
   ['the pollution reading is not a button', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
@@ -3636,7 +3694,7 @@ const TESTS = [
   // Space stops the clock. Not a flag every system checks -- the clock simply
   // does not advance, so nothing in the yard can tell the difference.
   ['space holds the whole yard still', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     run(20);
@@ -3670,7 +3728,7 @@ const TESTS = [
   // for a row in the far corner of the sheet and the diagonal used to take you
   // out of the station's patch of ground before it took you into the board.
   ['the board does not shut on the way to it', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(400);
@@ -3730,7 +3788,7 @@ const TESTS = [
   // the way a button on a page does. Half the things on screen do something when
   // you click them, and without this none of them say so.
   ['the cursor says what a thing will do', async () => {
-    window.__reset();
+    newRun();
     await settle();
     window.__crew(2, 2);
     window.__give(400);
@@ -3764,7 +3822,7 @@ const TESTS = [
     const full = state();
     const warn = at(full.pitX - 30, full.groundY - 42);
     window.__crew(0, 0);
-    window.__reset();
+    newRun();
     await sleep(300);
     return [
       ok(sky === 'crosshair' && rock === 'crosshair',
@@ -3819,7 +3877,7 @@ export async function runTests(filter = '', shard = null, opts = {}) {
   const onErr = e => errs.push(String(e.message || e));
   addEventListener('error', onErr);
 
-  window.__reset();                                            // known state
+  newRun();                                            // known state
   await sleep(600);
 
   const results = [];
@@ -3838,7 +3896,7 @@ export async function runTests(filter = '', shard = null, opts = {}) {
   const wanted = shard ? all.slice(shard.i * per, (shard.i + 1) * per) : all;
   for (const [name, fn] of wanted) {
     let checks;
-    if (solo) { window.__reset(); await settle(0.5); }
+    if (solo) { newRun(); await settle(0.5); }
     const t0 = performance.now();
     try {
       checks = await fn();

@@ -305,6 +305,12 @@ export const S = {
   resetArmed: 0,          // the reset button wants a second click
 
   // --- housekeeping ---
+  // Which run this is. A run owns its seed: one is drawn when a new game starts
+  // (see `reset` in persist.js), it is written down with the save, and it comes
+  // back with it -- so the yard you are looking at has a name, and a yard worth
+  // telling somebody about can be handed over. The chance itself is in rng.js;
+  // this is only the number it was started from.
+  runSeed: 0,
   dirty: false,           // something changed worth saving
   lastFrame: 0,           // for the length of the last frame
   dustSeen: 0, dustSeenAt: 0,   // a cached count, for how many motes drift about
