@@ -7,7 +7,7 @@
 // went through -- so the checks are about the books and about the table, which
 // are the two places the drawing and the errand both read from.
 
-import { group, ok, state, run } from './helpers.mjs';
+import { group, ok, state, run, yard } from './helpers.mjs';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
 
 const detail = () => state().crewDetail.map(d => {
@@ -116,5 +116,47 @@ group('kit finds its way home however the walk is interrupted', async () => {
     ok(strays.length === 0,
        'and after the churn nobody is wearing kit for a job they are not on',
        JSON.stringify(strays))
+  ];
+});
+
+group('a dropped body keeps the hat it is wearing', async () => {
+  window.__reset();
+  window.__crew(2, 0, 0, 0);
+  window.__school({ breakers: 2 });
+  run(10);                                   // hats fetched, gang at work
+
+  // Pick a trained miner up and put it down a long way from the rock -- the
+  // player's own gesture, driven through the real lift/drop rather than by
+  // poking fields, so the retask that follows is the retask a drop causes.
+  const { lift, drop } = await import('../src/crew.js');
+  const w = yard.S.workers.find(o => o.type === 'miner' && o.trained);
+  lift(w);
+  w.x -= 600;                                // carried well off the station
+  w.y -= 120;
+  drop(w);
+
+  // Walk the whole trip back, sampling every frame: the bug was not the
+  // destination -- it always ended up at work in a hat -- it was the DETOUR.
+  // A body already wearing the rock's own kit has no business at the stand:
+  // it must stay trained the whole way (never lay its hat down), and never
+  // arrive at the stand's x while it is walking.
+  const kitAt = (await import('../src/world.js')).kitX('miners');
+  // Sampled by DESTINATION, not by position: the stand sits between the drop
+  // point and the rock, so an honest walk passes its x -- what it must never do
+  // is aim at it.
+  let bare = 0, aimedAtStand = 0;
+  for (let i = 0; i < 60 * 30 && (w.walking || w.falling); i++) {
+    run(1 / 60);
+    if (!w.trained) bare++;
+    if (w.walking && w.walkTo != null && Math.abs(w.walkTo - kitAt) < 6) aimedAtStand++;
+  }
+  run(2);
+
+  return [
+    ok(w.trained && w.kitOf === 'miners', 'it is back at work in its own hat',
+       `trained ${w.trained}, kitOf ${w.kitOf}`),
+    ok(bare === 0, 'the hat never came off on the way', `${bare} bare frames`),
+    ok(aimedAtStand === 0, 'and it never aimed a single step at the stand',
+       `${aimedAtStand} frames walking to it`)
   ];
 });

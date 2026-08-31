@@ -1184,7 +1184,14 @@ function retask(w, type) {
   // body is anywhere near its new job. `kitOf` rather than the old job: those
   // are the same thing every time except when a body is retasked twice in a row
   // and is still holding the first station's kit.
-  if (w.trained && kitX(w.kitOf) !== null) legs.push({ to: kitX(w.kitOf), do: 'drop' });
+  //
+  // Unless the new job IS the hat's own station. A body picked up and put down
+  // is retasked onto the job it was already on, and it used to walk to the
+  // stand, lay its own kit down, walk to work bare, and be sent straight back
+  // for the very hat it had put there -- three trips to end up exactly as it
+  // began. Kit that is already right stays on the head it is on.
+  if (w.trained && w.kitOf !== job && kitX(w.kitOf) !== null)
+    legs.push({ to: kitX(w.kitOf), do: 'drop' });
   // Then the new station's stand, if there is anything on it -- *before* the
   // work, not after. Walking to the middle of the rock, then back down to the
   // stand, then up the hill again is three trips to do one thing, and it is the
