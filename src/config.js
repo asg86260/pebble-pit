@@ -1317,17 +1317,16 @@ export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
 // out from here. The honest form of this number is whatever a node check that
 // runs a machine against a real gang of five says it should be.
 export let MACHINE_GAIN = 1.5;
-// And how much dirtier a machine is than the hands it replaced, per unit of work
-// -- not per minute. This is the compounding that makes the number so easy to
-// get wrong: a machine is *also* fifteen times as quick, so at three times the
-// dirt per unit it was forty-five times the smoke of the gang it replaced, and
-// the sky went from a slow brown to pinned in about a minute. Well under two is
-// plenty when the thing is working that much harder. The
-// station's own work fouls at 1x where it happened, because it goes through the
-// station's own function; the runner adds the remaining (MACHINE_FOUL - 1) from
-// the machine's stack, in one place. That is what the stack is for, and it is
-// why this is not three trebled constants at four call sites.
-export let MACHINE_FOUL = 1.6;
+// Soot off the stack, per unit of the station's work -- not per minute. A
+// machine is the sky's only producer (`foul` refuses everything else), so this
+// one dial *is* the pollution rate, and the compounding is what makes it so
+// easy to get wrong: a machine is also many times as quick as the hands it
+// replaced, so at 1.6 per unit the sky went from a slow brown to pinned in a
+// couple of minutes of jaw, and the smoke was the whole game. Well under one:
+// an engine that smokes, at a pace the scrubbing house and the rain can argue
+// with. The runner charges it in one place, off the stack -- see `stepMachines`
+// -- which is why this is not three trebled constants at four call sites.
+export let MACHINE_FOUL = 0.4;
 // The rock's complement, which is the one a machine cannot read off the station.
 // `capOf('miners')` is `Infinity` and rightly so -- a rock is as long as it is,
 // and there is no floor plan to run out of. But the ram still has to be worth
@@ -1884,7 +1883,7 @@ export const TUNABLE = [
     get: () => CUT_DIG_MS, set: v => { CUT_DIG_MS = v; } },
   { key: 'MACHINE_GAIN', label: 'a machine is worth', min: 0.5, max: 6, step: 0.1,
     get: () => MACHINE_GAIN, set: v => { MACHINE_GAIN = v; } },
-  { key: 'MACHINE_FOUL', label: 'a machine is dirtier by', min: 1, max: 12, step: 0.5,
+  { key: 'MACHINE_FOUL', label: 'soot a machine unit', min: 0, max: 12, step: 0.1,
     get: () => MACHINE_FOUL, set: v => { MACHINE_FOUL = v; } },
   { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05,
     get: () => CUT_STEP, set: v => { CUT_STEP = v; } },

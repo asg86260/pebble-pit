@@ -221,7 +221,8 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     // stations that have one standing, which is none of them for most of a run.
     const on = machineOn(p.job);
     if (on !== null && drawRun) {
-      drawRun(b.run, on, asked(JOB_MACHINE[p.job]));
+      const key = JOB_MACHINE[p.job];
+      drawRun(b.run, on, asked(key), key);
     }
 
     drawBody(b.badge.x, b.badge.y);
