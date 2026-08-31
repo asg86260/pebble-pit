@@ -148,7 +148,6 @@ export function stepWizard(w, now) {
     const d = (w.spot ?? underMeteor()) - w.x;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.1, Math.abs(d));
-      w.dir = Math.sign(d);
       w.y = walkY(w.x + WORKER / 2);
     }
     return;
@@ -161,7 +160,6 @@ export function stepWizard(w, now) {
     const d = (w.spot ?? underMeteor()) - w.x;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.6, Math.abs(d));
-      w.dir = Math.sign(d);
       w.y = walkY(w.x + WORKER / 2);
       return;
     }
@@ -199,7 +197,6 @@ export function stepWizard(w, now) {
     const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy) || 1;
     w.x += (dx / d) * Math.min(WIZ_RISE, d);
     w.y += (dy / d) * Math.min(WIZ_RISE, d);
-    if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
     w.next = Math.max(w.next, now + wizMs() / 2);   // no throwing while travelling
     // and it takes its place on the ring from where it got there, so there is
     // nothing to travel round to
@@ -217,7 +214,6 @@ export function stepWizard(w, now) {
     // along the ring to its own place on it, never through the middle
     w.x += (dx / d) * Math.min(WIZ_RISE, d);
     w.y += (dy / d) * Math.min(WIZ_RISE, d);
-    if (Math.abs(dx) > 1) w.dir = Math.sign(dx);
     return;
   }
 
@@ -234,7 +230,6 @@ export function stepWizard(w, now) {
   const r = orbitR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
   w.x = sky.x + Math.cos(a) * r - WORKER / 2;
   w.y = sky.y + Math.sin(a) * r - WORKER / 2;
-  w.dir = Math.cos(a) > 0 ? -1 : 1;                // facing what it is circling
   w.lunge = (w.lunge || 0) * 0.82;
 
   // Nothing there to work: they are making one. Everybody in the ring pours

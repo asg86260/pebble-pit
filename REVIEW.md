@@ -155,7 +155,7 @@ half, which carries any slope up to about sixty degrees and cannot carry a wall.
 it as a climb, or a face steeper than the ease can carry is not walkable and the
 route goes round. Both are one rule in one place; neither is a constant.
 
-### 4. The crew loop is one 600-line `for` — HIGH
+### 4. The crew loop is one 600-line `for` (fixed) — was HIGH
 
 One loop over every worker, with per-type branches whose *order* is load-bearing.
 The file's own comments document this: the tender check "used to sit below all of
@@ -168,7 +168,17 @@ order — held, falling, dizzy, kit, relieved, held-up-by-a-rock, mess, work —
 a job is one row with one `work` function. The order becomes a list you can read
 instead of a property of where you happened to paste a branch.
 
-### 5. Facing is state nothing draws — MEDIUM
+**Done.** `updateWorkers` is forty-six lines: it works out the frame, then walks
+every body down `STAGES` until one of them says it has used the frame up, and
+falls through to `JOBS[type].work`. The order is a numbered list in a comment
+with a paragraph each saying why that stage sits where it does, and both
+ordering bugs are quoted in it as the reason the list exists. The per-type mess
+rules are rows — `mess.when`, `mess.back`, and a `late` flag for the hauler,
+whose mess can be at the bottom of the hole and so has to be decided with the
+rest of its errands. So are the dance (`held`) and the lab's shut door
+(`shutIn`).
+
+### 5. Facing is state nothing draws (fixed) — was MEDIUM
 
 `w.face` and `w.dir` are set in eight places and drawn in exactly one (which way
 a cart trails). Any behaviour built on facing is invisible, and one already was.
@@ -176,6 +186,15 @@ a cart trails). Any behaviour built on facing is invisible, and one already was.
 **Fix:** either give a body a drawable front, or delete the field and let the
 cart read its direction of travel. Keeping unrenderable state is how the spin
 happened.
+
+**Done.** `w.dir` is gone and `w.face` has one writer: `faceTravel`, at the end
+of `updateWorkers`, which compares where every body is against where it was when
+the frame began. Nobody who is about to move sets it any more — not the routes,
+not the commute, not the shovel, not the dance, not the tender, not the pair
+turning to look at each other on a smoke break. The miner's heading along the
+layer was the one thing reading `dir` for behaviour and it is not a facing: it is
+`w.mineDir`, remembered between frames and turned round at the ends of the row,
+the same way `jigDir` belongs to the dance.
 
 ### 6. Adding a tunable knob takes four edits — MEDIUM
 

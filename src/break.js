@@ -80,10 +80,11 @@ function begin(w, now) {
   w.brk = { kind: k.key, until, next: now, turn: true, with: other || null };
   if (other) {
     other.brk = { kind: 'talk', until, next: now, turn: false, with: w };
-    // they turn to face each other, which is the half of a conversation that
-    // reads from across the yard
-    w.face = Math.sign(other.x - w.x) || 1;
-    other.face = -w.face;
+    // Which way they are standing is not set here. Nothing on a body draws a
+    // front -- see `MOVES` in crew.js -- and the one thing facing does draw, the
+    // side a cart trails on, is measured off the ground the body last covered.
+    // A pair turning to look at each other was two more writers on a field
+    // nobody could see the effect of.
   }
 }
 
