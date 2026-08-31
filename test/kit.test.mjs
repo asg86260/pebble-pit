@@ -9,6 +9,7 @@
 
 import { group, ok, state, run, yard, WORKER } from './helpers.mjs';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
+import { DIZZY_MS } from '../src/config.js';
 
 const detail = () => state().crewDetail.map(d => {
   const [t, goal, x, c, k, p, w] = d.split('|');
@@ -241,5 +242,104 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
     ok(home.worn === 0 && home.spareKit === 2 && strays.length === 0,
        'and taken off the job it walks the cap home again',
        `${home.worn} worn, ${home.spareKit} waiting, strays ${JSON.stringify(strays)}`)
+  ];
+});
+
+// --- a hat on the ground is anybody's ------------------------------------------
+// The hat is the job. A helmet knocked off a head belongs to the rock and not to
+// the head it came off, so it lies there as the rock's helmet: the nearest body
+// entitled to wear one goes and gets it, and if that body was carrying dust a
+// moment ago it is a miner from the second it puts the helmet on. Its owner gets
+// whatever the books have left for it.
+
+group('a knocked-off hat is up for grabs while its owner sees stars', async () => {
+  window.__reset();
+  window.__crew(2, 0);                        // two on the rock...
+  window.__school({ breakers: 1 });           // ...and one helmet between them
+  run(8);
+
+  const S = yard.S;
+  const owner = S.workers.find(o => o.trained && o.kitOf === 'miners');
+  const mate = S.workers.find(o => o.type === 'miner' && o !== owner);
+  const shook = window.__shake(S.workers.indexOf(owner));
+  // Watched frame by frame while the owner is still on the floor: the claim is
+  // the whole of the change and it is over in a second, because the mate is
+  // standing on the rock a step from where the helmet landed.
+  let claimed = 0, tookIt = 0;
+  for (let i = 0; i < 60 * 2; i++) {
+    run(1 / 60);
+    if (S.workers.some(o => o.claimHat === owner)) claimed++;
+    if (mate.trained && owner.dizzyUntil) tookIt++;
+  }
+
+  run(DIZZY_MS / 1000 + 8);                   // stars clear, everybody settles
+  const rock = roster().find(r => r.job === 'miners');
+
+  return [
+    ok(!!owner && !!mate && shook.hatOff, 'one of the two was wearing it, and it came off',
+       JSON.stringify(shook)),
+    // The whole of the change: it is not the owner's hat any more the moment it
+    // is on the floor, and the owner is in no state to argue about it.
+    ok(claimed > 0, 'somebody else walks for it while the owner is on the floor',
+       `${claimed} frames claimed`),
+    ok(tookIt > 0, 'and has it on before the stars have cleared',
+       `${tookIt} frames worn while the owner was still seeing them`),
+    ok(mate.trained && mate.kitOf === 'miners', 'and is wearing it at the end',
+       `${mate.type} ${mate.kitOf}`),
+    ok(!owner.trained && owner.type === 'miner',
+       'while the one it came off works the rock bare-headed',
+       `${owner.type} trained ${owner.trained}`),
+    // Nobody has moved job: the hat stayed at the station it belongs to and so
+    // did both bodies.
+    ok(S.miners === 2 && S.workers.length === 2 && rock.worn === 1 && rock.hats === 1,
+       'one helmet, one head, and the rock still has two of them',
+       `${S.miners} miners, ${rock.worn}/${rock.hats} worn`)
+  ];
+});
+
+group('a hauler that picks the helmet up is a miner, and the swap is one body', async () => {
+  window.__reset();
+  window.__crew(1, 1);                        // one on the rock, one carrying
+  window.__school({ breakers: 1 });
+  run(8);
+
+  const S = yard.S;
+  const { lift, drop } = await import('../src/crew.js');
+  const owner = S.workers.find(o => o.trained && o.kitOf === 'miners');
+  const carter = S.workers.find(o => o.type === 'hauler');
+  window.__shake(S.workers.indexOf(owner));
+  run(0.5);                                   // the hat comes to rest
+
+  // And the owner is carried off across the yard before it can come round, so
+  // that the walk back is a real walk and the race is a race. This is the
+  // player's own gesture -- picked up and put down somewhere else -- and the hat
+  // stays where it fell.
+  const hatAt = owner.hatOff && owner.hatOff.x;
+  lift(owner);
+  owner.x -= 600;
+  owner.y -= 120;
+  drop(owner);
+
+  run(DIZZY_MS / 1000 + 20);
+
+  const wearer = S.workers.find(o => o.trained && o.kitOf === 'miners');
+  const rock = roster().find(r => r.job === 'miners');
+
+  return [
+    ok(hatAt != null, 'the helmet was lying in the yard', `${hatAt}`),
+    ok(wearer === carter && carter.type === 'miner',
+       'the body that was carrying dust walked over, put it on, and is a miner',
+       `${carter.type}, kit ${carter.kitOf}`),
+    // The other half of it. The hat is the job, so losing it loses the job: the
+    // rock has no second helmet, and the body it was taken off goes carrying.
+    ok(owner.type === 'hauler' && !owner.trained,
+       'and the one it was taken off is carrying dust instead',
+       `${owner.type} trained ${owner.trained}`),
+    // One shake, one swap. The counts are exactly what they were.
+    ok(S.miners === 1 && S.crew === 2 && S.workers.length === 2,
+       'the yard has the same crew doing the same jobs, in different hats',
+       `${S.miners} miners of ${S.crew}, ${S.workers.length} bodies`),
+    ok(rock.worn === 1 && rock.hats === 1, 'and the one helmet is on one head',
+       `${rock.worn}/${rock.hats}`)
   ];
 });
