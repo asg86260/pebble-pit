@@ -204,31 +204,18 @@ export function foul(grains, x, y, kind = 'dust') {
     // nothing, a hundred cells from anything that could have made it, and being
     // dragged off to the house before you had worked out where it came from.
     // A thick plume is what a busy yard looks like; it is not a thing to hide.
-    SKY.push({
-      up: true,
-      // the same look a mote in the band has, because it is going to be one --
-      // see `look`
-      ...look(kind),
-      x: x + (rand() - 0.5) * P * 2,
-      y,
-      vy: -(0.55 + rand() * 0.5),
-      // its share of the wind on the way up, a sixth either way. It was a sway
-      // before -- its own sine on its own phase -- so a column of puffs off one
-      // swing wove through itself on the way up like a shoal rather than being
-      // carried off the way the day is going.
-      give: give(rand(), SMOG_GIVE),
-      fade: 1,
-      // What put it up. Carried to the top of the climb and handed to the mote,
-      // which is the whole of how a dirty sky says which part of the works is
-      // dirtying it. It was being dropped here, so every mote in the sky came out
-      // as the default grey however it was made.
-      kind,
-      // Where it started and which way it leans. A plume widens with height --
-      // every puff leaning on the same shared sway sent the lot up as one straight
-      // cylinder, which reads as a pipe rather than as smoke.
-      y0: y,
-      lean: (rand() - 0.5) * 2
-    });
+    // Made by the band's own maker, because it is going to be a mote in the band
+    // and the object is never replaced -- see `skyMote` for why one shape
+    // matters. The look, the kind and the share of the wind all come from there;
+    // what a climbing one has of its own is the climb.
+    const p = skyMote(x + (rand() - 0.5) * P * 2, y, kind);
+    p.up = true;
+    p.vy = -(0.55 + rand() * 0.5);
+    // Where it started and which way it leans. A plume widens with height --
+    // every puff leaning on the same shared sway sent the lot up as one straight
+    // cylinder, which reads as a pipe rather than as smoke.
+    p.lean = (rand() - 0.5) * 2;
+    SKY.push(p);
   }
 }
 
@@ -280,11 +267,33 @@ const look = (kind = 'dust') => ({
 // A mote is a place in the band, a share of the wind, and -- for its first few
 // seconds -- where it came in. It arrives at the spot the puff got to and eases
 // out to its place among the others, which is what joining a haze looks like.
+//
+// **There is one shape of mote and this is it**, climbing or settled, and every
+// field either kind will ever have is named here even where it means nothing
+// yet. This is not tidiness. A speck that goes up is *the same object* that
+// comes to rest -- that is the whole design of the plume, see `settleHere` --
+// and the way that was done was to hand it four new fields on arrival and
+// `delete` two others. A `delete` puts the object into dictionary mode for the
+// rest of its life, so every settled mote in the sky was a hash table, and
+// `place` reads eleven fields off every one of them sixty times a second: with a
+// full band that is three million dictionary lookups a second, and it was more
+// than half of what the frame cost. Growing a mote's shape late costs more than
+// the whole of what the missing fields save -- the same lesson the grids learned
+// about their `awake` flags, see grid.js.
 const skyMote = (x, y, kind = 'dust') => ({
   kind,
   up: false,                            // arrived: this one is in the band
   ...look(kind),
-  slot: slots++,
+  ...nextSlot(),
+  // The climb, which is over for a mote made here and is the whole of a mote
+  // made by `foul`: how fast it is rising, where it started, and which way it
+  // leans on the way up. See `stepPuffs`.
+  vy: 0,
+  y0: y,
+  lean: 0,
+  // What a hand through the smoke and a fan on the other side of the yard have
+  // bent it out of place by. Both ease back to nought and both start there.
+  px: 0, py: 0, sx: 0, sy: 0,
   // its share of the wind, a sixth either way. This was a phase to bob on, and
   // a band of motes each bobbing on its own was a haze that shimmered where it
   // stood -- movement everywhere and no direction anywhere.
@@ -399,15 +408,19 @@ function settleHere(m) {
   // colour or weight on arriving would be a speck you watched climb and then
   // saw replaced by another one.
   
-  m.slot = slots++;
+  Object.assign(m, nextSlot());
   m.roam = 0;
   m.age = 0;
   m.fromX = m.x;
   m.fromY = m.y;
   m.fade = 1;                     // it never went out, so it has nothing to come back from
+  // The climb, over. Set back rather than deleted: these two used to be
+  // `delete`d here, which is the one operation that turns an object into a
+  // dictionary for good, and it was being done to every mote in the sky on the
+  // frame it arrived. See `skyMote`.
   m.vy = 0;
-  delete m.lean;
-  delete m.y0;
+  m.lean = 0;
+  m.y0 = m.y;
 }
 
 // --- the draught, in the smoke -------------------------------------------------
@@ -438,6 +451,7 @@ export function stirSmoke(wx, wy, dx, dy) {
     const k = blow * (1 - d / PLUME_STIR_R) ** 2;
     m.sx = capUp((m.sx || 0) + ux * k);
     m.sy = capUp((m.sy || 0) + uy * k);
+    dragged = true;                    // a hand through a plume leaves the same offsets
     moved++;
   }
 
@@ -488,10 +502,19 @@ const DOWN = 0.7548776662466927;        // and the plastic number, for the other
 
 let slots = 0;                          // handed out, never reused, never reset
 
-// where a slot sits, before it is allowed to wander
-function slotAt(k) {
-  return { u: (k * ACROSS) % 1, v: (k * DOWN) % 1 };
-}
+// Where a slot sits, before it is allowed to wander -- worked out once, when the
+// slot is handed over, and carried on the mote from then on.
+//
+// It used to be a function of the number, called from `place` for every mote on
+// every frame, and it returned an object to say so. That is two multiplications,
+// two remainders and a fresh object per mote per frame: with a full band in the
+// sky it was a third of a million allocations a second to re-derive four numbers
+// that cannot change, because a mote's slot never changes. `lane` goes with
+// them for the same reason.
+const nextSlot = () => {
+  const k = slots++;
+  return { slot: k, su: (k * ACROSS) % 1, sv: (k * DOWN) % 1, lane: k % SWAY_LANES };
+};
 
 // How wide a stretch of sky a mote of a given age is spread over. It starts at
 // almost nothing and opens slowly, for as long as the mote is up there.
@@ -510,16 +533,24 @@ function slotAt(k) {
 // what you see and not what smoke does.
 const spreadAt = age => Math.min(SMOG_SPREAD_MAX, SMOG_SPREAD_MIN + age * SMOG_SPREAD_RATE);
 
-// Where a mote sits: within its stretch, and anywhere down the band. Its place in
-// both is fixed the moment it arrives -- what changes is how wide the stretch is.
-function homeOf(m, span) {
-  const s = slotAt(m.slot);
-  const top = bandTop(), deep = bandLow() - top;
-  let x = m.fromX + (s.u - 0.5) * spreadAt(m.age);
-  x %= span;
+// Where a mote sits across the band: within its stretch, wrapped into the world.
+// Its place is fixed the moment it arrives -- what changes is how wide the
+// stretch is. The place *down* the band is `top + m.sv * deep`, which is one
+// multiply and is done inline in `place` off numbers hoisted for the frame.
+function homeX(m, span, spread) {
+  let x = (m.fromX + (m.su - 0.5) * spread) % span;
   if (x < 0) x += span;
-  return { x, y: top + s.v * deep };
+  return x;
 }
+
+// The age past which a mote's own clock stops moving it.
+//
+// Two things read `age`: the stretch it is spread within, which stops opening at
+// `SMOG_SPREAD_MAX`, and the ease down into the band, which is finished at
+// `SMOG_SINK`. Past the later of the two, another second of age changes nothing
+// about where the mote is drawn -- so the arithmetic that works those two out,
+// and the accumulation that feeds them, are all dead weight. See `place`.
+const AGE_STILL = Math.max(SMOG_SINK, (SMOG_SPREAD_MAX - SMOG_SPREAD_MIN) / SMOG_SPREAD_RATE);
 
 // One frame of the sky. Every mote is put where its slot says, carried along by
 // the wind and lifted a little by it -- the same wind, the same instant, for all
@@ -554,50 +585,91 @@ function swayNow(t) {
   }
 }
 
+// One frame of the settled sky, and the one loop in this game that is run
+// thousands of times a frame in a yard that has been going a while.
+//
+// **A settled mote has no state to step.** That is the whole shape of this. Its
+// place is `anchor + f(t)` -- the spot it came in at, plus the stretch its slot
+// gives it, plus the band's own sway, all of which are either fixed for the life
+// of the mote or shared by the whole band for the frame. So the per-mote work
+// here is not a simulation step, it is an evaluation, and everything in it that
+// does not vary per mote is worked out once above the loop: the wind, the sway
+// lanes, the top and depth of the band, the drift for the frame.
+//
+// **And past a certain age even the evaluation stops changing.** Two things read
+// a mote's own clock, and both of them finish -- the stretch stops opening at
+// `SMOG_SPREAD_MAX`, the sink is over at `SMOG_SINK`. Past `AGE_STILL` a mote is
+// a fixed anchor under a shared wind: no age to accumulate, no stretch to work
+// out, no easing curve, no fade, nothing left of it but the anchor and this
+// frame's shared numbers. That is what the lategame sky is made of, and it is
+// the branch below.
+//
+// What is *not* claimed is that such a mote is free. It still has a position
+// written every frame, because the band sways and the whole sky creeps on the
+// wind, and every reader in the game -- the rain, the house's draught, the
+// recycler, the pointer, the drawing -- reads that position out of the mote. A
+// sky that stored anchors and evaluated on demand would be free, and it would
+// mean teaching six other places to ask a function instead of reading a field.
 function place(secs) {
   const span = Math.max(P, S.worldW || 0);
   const w = windAt(now());
   swayNow(now() / 1000);
+  // The band, this frame: where the top of it is and how deep it goes. Read off
+  // the camera, so it is one pair of numbers for the whole sky and not a pair of
+  // calls per mote.
+  const top = bandTop(), deep = bandLow() - top;
+  // The bodily creep along the sky, which is the one thing up here that adds up
+  // rather than easing back. It used to be a fixed rate: the whole haze slid
+  // slowly to the right for the entire run, whatever the wind was doing, which
+  // meant the sky's largest movement was the one movement in the yard that took
+  // no notice of the weather. It is the wind's now, sign and all -- so a bank
+  // stalls in a lull and comes back on the return gust. Shared but for each
+  // mote's own share of the wind.
+  const creep = secs * SMOG_DRIFT * 60 * w;
+  // What the wind does to the height is lift: a gust getting under a bank of
+  // haze raises it a few pixels and it settles back as the gust dies. Off the
+  // same number as everything else in the air, so the band never rises on a wind
+  // the dust is not in.
+  const gust = Math.abs(w);
+  const fadeBy = secs / (PUFF_FADE / 1000);
+  const unstir = Math.max(0, 1 - SMOKE_STIR_EASE * secs);
+
   for (const m of SKY) {
     if (m.up) continue;             // still climbing: `stepPuffs` has it
-    m.age += secs;
-    if (m.fade < 1) m.fade = Math.min(1, m.fade + secs / (PUFF_FADE / 1000));
-    // The bodily creep along the sky, which is the one thing up here that adds
-    // up rather than easing back. It used to be a fixed rate: the whole haze
-    // slid slowly to the right for the entire run, whatever the wind was doing,
-    // which meant the sky's largest movement was the one movement in the yard
-    // that took no notice of the weather. It is the wind's now, sign and all --
-    // so a bank stalls in a lull and comes back on the return gust.
-    m.roam += (secs * SMOG_DRIFT * 60 * w * m.give) / span;
+    m.roam += (creep * m.give) / span;
+    const hy = top + m.sv * deep;
 
-    const home = homeOf(m, span);
-    // Down into the band over a few seconds. This one is a settle rather than a
-    // dispersal: a mote arrives at the underside of the band, because that is
-    // where the climb ends, and the band is a hundred pixels deep -- so easing it
-    // to its height is a short, slow, obvious sinking-in rather than a jump from
-    // the edge to the middle.
-    const k = Math.min(1, m.age / SMOG_SINK);
-    const e = k * k * (3 - 2 * k);
-    const y = m.fromY + (home.y - m.fromY) * e;
-
-    // and whatever the cursor bent it out of place by, easing back to nought
-    if (m.px || m.py) {
-      const keep = Math.max(0, 1 - SMOKE_STIR_EASE * secs);
-      m.px *= keep;
-      m.py *= keep;
-      if (Math.abs(m.px) < 0.05) m.px = 0;
-      if (Math.abs(m.py) < 0.05) m.py = 0;
+    let x, y;
+    if (m.age >= AGE_STILL && m.fade >= 1 && !m.px && !m.py) {
+      // At rest: the stretch is as wide as it gets and the sink is long over, so
+      // the age never has to move again and neither does anything worked off it.
+      x = homeX(m, span, SMOG_SPREAD_MAX);
+      y = m.fromY + (hy - m.fromY);              // the ease is finished: e is 1
+    } else {
+      m.age += secs;
+      if (m.fade < 1) m.fade = Math.min(1, m.fade + fadeBy);
+      x = homeX(m, span, spreadAt(m.age));
+      // Down into the band over a few seconds. This one is a settle rather than
+      // a dispersal: a mote arrives at the underside of the band, because that
+      // is where the climb ends, and the band is a hundred pixels deep -- so
+      // easing it to its height is a short, slow, obvious sinking-in rather than
+      // a jump from the edge to the middle.
+      const k = Math.min(1, m.age / SMOG_SINK);
+      const e = k * k * (3 - 2 * k);
+      y = m.fromY + (hy - m.fromY) * e;
+      // and whatever the cursor bent it out of place by, easing back to nought
+      if (m.px || m.py) {
+        m.px *= unstir;
+        m.py *= unstir;
+        if (Math.abs(m.px) < 0.05) m.px = 0;
+        if (Math.abs(m.py) < 0.05) m.py = 0;
+      }
     }
 
-    // Sideways is the drift above -- carried, not offset. What the wind does
-    // here is lift: a gust getting under a bank of haze raises it a few pixels
-    // and it settles back as the gust dies. Off the same number as everything
-    // else in the air, so the band never rises on a wind the dust is not in.
     // and its lane's drift for this frame, which is the whole of the band's own
     // movement: one lookup, no arithmetic per mote worth speaking of.
-    const lane = m.slot % SWAY_LANES;
-    m.x = (home.x + m.roam * span) % span + (m.px || 0) + SWAY_DX[lane];
-    m.y = y - Math.abs(w) * m.give * SMOG_LIFT + (m.py || 0) + SWAY_DY[lane];
+    m.x = (x + m.roam * span) % span + (m.px || 0) + SWAY_DX[m.lane];
+    m.y = y - gust * m.give * SMOG_LIFT + (m.py || 0) + SWAY_DY[m.lane];
 
     // and however far the draught has dragged this one so far. It is carried on
     // the mote and added here, because a settled mote has no position of its
@@ -719,6 +791,22 @@ function breathe(secs) {
   if (DRAUGHT.length) S.dirty = true;
 }
 
+// Whether anything up there is carrying a draught offset at all.
+//
+// `unpull` is called on every frame the house is not scrubbing, which is nearly
+// all of them, and its whole job is to find motes with an `sx` or an `sy` -- two
+// fields that are zero on every mote in a sky no fan has ever pulled on. A full
+// band is five or six thousand of them, so that is a walk of the entire sky, six
+// thousand pairs of reads, to discover nothing, sixty times a second, for a
+// building most yards have not bought yet.
+//
+// One flag answers it. It is set wherever an offset is written -- `pull`, and
+// the plume half of `stirSmoke` -- and cleared by the pass that zeroes them all.
+// Generous in the same direction the awake columns are: a flag left standing
+// costs one wasted walk, and the other way round would be motes stuck with an
+// offset the fan is no longer holding them at.
+let dragged = false;
+
 function pull(secs) {
   const to = intake();
   const power = scrubRate() / fanPull();       // bodies inside
@@ -770,6 +858,7 @@ function pull(secs) {
       // the whole sky down on to the underside of the band and what was left was
       // a wire running the width of the world.
       m.sx = (m.sx || 0) + Math.sign(dx) * Math.min(step, over);
+      dragged = true;
       continue;
     }
     // Over the house: down the last of it, on a curve. The drop is weighted by
@@ -786,6 +875,7 @@ function pull(secs) {
     const quick = 1 + in_;
     m.sx = (m.sx || 0) + Math.sign(dx) * Math.min(step * quick * (1 - in_ * 0.5), over);
     m.sy = (m.sy || 0) + Math.sign(dy) * Math.min(step * quick * in_ * in_ * 2.4, Math.abs(dy));
+    dragged = true;
   }
 }
 
@@ -841,6 +931,8 @@ function swallow() {
 // `place`. A speck released over the house is a speck that was there, and it
 // floats up from there.
 function unpull() {
+  if (!dragged) return;                // nothing up there has been pulled on
+  dragged = false;
   const span = Math.max(P, S.worldW || 0);
   for (const m of SKY) {
     if (!m.sx && !m.sy) continue;
@@ -850,8 +942,7 @@ function unpull() {
     // leaves a starting point that puts it back on the same pixel. It spreads
     // out again from there, which is the stream over the roof loosening into
     // band as it rises rather than snapping into place.
-    const s0 = slotAt(m.slot);
-    const back = m.roam * span + (s0.u - 0.5) * spreadAt(0);
+    const back = m.roam * span + (m.su - 0.5) * spreadAt(0);
     m.fromX = ((((m.x - back) % span) + span) % span);
     m.fromY = m.y;
     m.age = 0;

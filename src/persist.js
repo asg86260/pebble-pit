@@ -289,6 +289,7 @@ export function restoreGrid(b, s) {
   if (!s) return;
   b.grid.fill(0);
   if (s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
+    if (b.n != null) recount(b);           // written run by run, not put
     if (b.painter) b.painter.repaint();
     return;
   }
@@ -698,6 +699,7 @@ export function reset(fresh = true) {
   resetRates();
   floor.grid.fill(0);
   pit.grid.fill(0);
+  recount(floor);                          // both ledgers, both emptied behind `put`
   recount(pit);
   floor.painter.repaint();
   pit.painter.repaint();

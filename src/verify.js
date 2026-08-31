@@ -42,7 +42,7 @@
 // reaches the flag -- so a rule added here costs a player nothing.
 
 import { WORKER } from './config.js';
-import { S, pit } from './state.js';
+import { S, pit, floor } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, WORKINGS } from './route.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF } from './kit.js';
@@ -130,8 +130,9 @@ const everOwned = new Map();
 const OUTSIDE = WORKER * 8;
 
 // The ledgers are the one rule here that cannot be answered without walking the
-// cells, and the pit is sixty thousand of them. Asked every frame it would cost
-// more than the frame does. So it is asked once a second, which is soon enough:
+// cells, and the pit is sixty thousand of them and the yard floor twice that.
+// Asked every frame it would cost more than the frame does. So it is asked once
+// a second, which is soon enough:
 // `put` is the only thing that moves the count, a `put` that does not is a bug
 // in `put` and not in a caller, and a bug in `put` is wrong on every frame after
 // the first rather than on one unlucky one.
@@ -311,14 +312,24 @@ export function verifyWorld() {
   }
 
   // --- rule 7: the ledgers --------------------------------------------------------
-  // The pit keeps a running count of its occupied cells so that "is there room in
-  // the hole" does not walk sixty thousand of them thousands of times a frame. A
-  // running count is a second copy of a fact, and a second copy drifts: this is
-  // the only thing in the game that would ever notice. `floor` keeps no count --
-  // `b.n` is undefined there -- so there is nothing to check.
-  if (pit.grid && pit.n != null && S.tick % LEDGER_EVERY === 0) {
-    const real = count(pit);
-    if (pit.n !== real)
-      fail('the hole has lost count of itself', `ledger says ${pit.n}, the cells say ${real}`);
+  // The hole and the yard floor each keep a running count of their occupied
+  // cells, so that "is there room in the hole" and "how much dust is lying
+  // about" are field reads rather than walks of sixty and a hundred and twenty
+  // thousand cells. A running count is a second copy of a fact, and a second
+  // copy drifts: this is the only thing in the game that would ever notice.
+  //
+  // Which is the whole reason the floor is allowed one at all. It was left
+  // without deliberately -- a second copy drifts -- and what makes it safe now
+  // is not care taken at the six places that write those cells wholesale
+  // (`fillFlat`, `resizeGrid`, `gridFill` through `restoreGrid`, `clearFloor`,
+  // the reset in persist.js) but this line, which catches it if any of them is
+  // ever missed or a seventh is added.
+  if (S.tick % LEDGER_EVERY === 0) {
+    for (const [name, b] of [['the hole', pit], ['the yard', floor]]) {
+      if (!b.grid || b.n == null) continue;
+      const real = count(b);
+      if (b.n !== real)
+        fail(`${name} has lost count of itself`, `ledger says ${b.n}, the cells say ${real}`);
+    }
   }
 }
