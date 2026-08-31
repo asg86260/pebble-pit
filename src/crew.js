@@ -21,7 +21,7 @@ import { pitRoom } from './pit.js';
 import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate } from './upgrades.js';
 import { KIT_JOBS } from './kit.js';
 import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop,
-         ways, climbTo, plant, inWorking } from './route.js';
+         ways, climbTo, plant, inWorking, footing, solidNear, SOLID } from './route.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
@@ -1592,7 +1592,20 @@ export function stepHat(w) {
   h.x += h.vx * f;
   h.y += h.vy * f;
   const floor = standTop(h.x, rockTop);     // the ground, or the hill's outline
-  if (h.y >= floor) { h.y = floor; h.x = Math.round(h.x); h.rest = true; }
+  if (h.y >= floor) {
+    // It rests where somebody can STAND to pick it up. A cart flung over the
+    // mouth of the hole would otherwise lie on the opening's own line -- fresh
+    // air with a surface reading -- and its owner would walk to the lip and
+    // push against the clamp for the rest of the run. The same slide the mess
+    // makes off loose ground: to the nearest solid footing, and only then down.
+    if (footing(h.x) !== SOLID) {
+      const at = solidNear(h.x, 200);
+      if (at != null) { h.x = at; h.y = standTop(h.x, rockTop); }
+    }
+    h.y = Math.min(h.y, standTop(h.x, rockTop));
+    h.x = Math.round(h.x);
+    h.rest = true;
+  }
   S.dirty = true;
 }
 
@@ -1618,7 +1631,13 @@ export function shakeHeld(w, dx) {
       // other, and you should see it go.
       if (w.trained) flingHat(w, dx);
     }
-    if (w.carry > 0) shedLoad(w, dx);
+    // Nothing comes loose until the shaking is half established. Grains used to
+    // fly from the very first change of direction, so an ordinary jostle while
+    // carrying somebody about already cost them dust; now the first few turns
+    // are just a body being waved, and only a shaking that is clearly becoming
+    // one starts to shed. Half of SHAKE_TURNS, derived, so tuning the knob
+    // moves both thresholds together.
+    if (w.carry > 0 && w.shook > SHAKE_TURNS / 2) shedLoad(w, dx);
   }
   w.lastDir = dir;
 }
@@ -2864,8 +2883,13 @@ const STAGES = [
     if (!w.hatOff.rest) return true;
     const d = w.hatOff.x - w.x;
     if (Math.abs(d) > P) {
-      w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-      w.y = stand(w);
+      // A route, not a bare walk. The body may have been shaken into the hole
+      // and the hat may lie on the far ground -- a straight walk toward its x
+      // pushes against the lip clamp or a wall forever, while a route goes up
+      // the ladder like everything else in this yard goes anywhere.
+      if (!keepTo(w, w.hatOff.x, wayOver(w.hatOff.x))) { w.hatOff.x = solidNear(w.x, 200) ?? w.x; return true; }
+      if (stepRoute(w, commutePace())) return true;
+      w.route = null;
       return true;
     }
     w.trained = w.hatOff.kind;

@@ -1017,7 +1017,13 @@ export const HURL_DRAG = 0.995;  // air against it on the way
 
 // Shaking one about. Back and forth over a short window is a shake rather than a
 // throw, and what it earns is a moment of not knowing which way is up.
-export const SHAKE_TURNS = 4;      // changes of direction that count as a shaking
+// Changes of direction that count as a shaking. Four was a quick waggle --
+// easy to do by accident while just carrying somebody about -- and everything
+// the body owned came off for it. Eight is a deliberate, sustained rattling:
+// you have to mean it. Nothing at all comes loose until the shaking is half
+// established (see `shedLoad`'s gate), so the first few turns cost nothing.
+// A knob, because how hard "shaken" should be is a matter of feel.
+export let SHAKE_TURNS = 8;
 export const SHAKE_WINDOW = 700;   // inside this long, in ms
 export const SHAKE_SHED = 2;       // grains shaken loose at every change of direction
 // What a shaken-loose grain leaves the hands with. It falls -- it is a chip like
@@ -1879,6 +1885,8 @@ export const TUNABLE = [
     get: () => DANCE_MS, set: v => { DANCE_MS = v; } },
   { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1,
     get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } },
+  { key: 'SHAKE_TURNS', label: 'a shaking is', min: 2, max: 16, step: 1,
+    get: () => SHAKE_TURNS, set: v => { SHAKE_TURNS = v; } },
   // The piles are fields of one object rather than bindings of their own, so
   // their pairs read and write a field. Same row, same door.
   { key: 'PILE_LIMIT.rock', label: 'rock pile holds', min: 50, max: 3000, step: 50,
