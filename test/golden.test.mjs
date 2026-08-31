@@ -196,3 +196,50 @@ test('a save from before a run had a name still opens, and is given one', () => 
     'an old save came back without a name, or under somebody else name');
   assert.equal(seed(), 777, 'and it should not have disturbed the stream it found');
 });
+
+
+// --- and it opens where you left it ------------------------------------------
+//
+// Scrolling the yard is the one piece of "where I am" the player sets by hand,
+// and a reload used to throw it away and march the view back to the rock. So
+// the view goes in the save beside everything else, and comes back off it as
+// `S.camWas` -- read once, at boot, by main.js. See the comment there.
+
+test('the save says where the view was left', () => {
+  window.__seed(SEED);
+  run(2);
+  const at = window.__look(state().worldW * 0.5);
+  writeSave();
+  assert.equal(load().camX, at,
+    'the save does not carry the view, so a reload cannot put it back.');
+});
+
+test('and a reload hands that spot back for the view to open on', () => {
+  window.__seed(SEED);
+  run(2);
+  const at = window.__look(state().worldW * 0.5);
+  writeSave();
+
+  window.__look(0);                          // the view somewhere else entirely
+  restore();
+  assert.equal(yard.S.camWas, at,
+    'the spot came off the save wrong, so booting on it would put the view ' +
+    'somewhere nobody left it.');
+});
+
+// And a save from before the view was written down opens on the rock rather
+// than at nought -- which is the left-hand end of the world, and not a place
+// anybody was looking. `null` is what tells main.js to fall back.
+test('a save from before the view was kept opens on the rock', () => {
+  window.__seed(SEED);
+  run(2);
+  writeSave();
+  const sv = load();
+  delete sv.camX;
+  save(sv);
+
+  window.__look(0);
+  restore();
+  assert.equal(yard.S.camWas, null,
+    'an old save came back claiming to know where the view was.');
+});

@@ -79,6 +79,26 @@ export const rungOf = u => (u.rung ? u.rung() : 0);
 export const rungsOf = u => (u.rungs ? u.rungs() : RUNGS);
 export const maxed = u => !!u.rung && rungOf(u) >= rungsOf(u);
 
+// Whether a finished row may be folded off its board by "finished: hidden".
+//
+// Nearly all of them may, which is the whole point of the switch: a rate you
+// have taken to its floor has nothing left to say and is in the way of the rows
+// that do. A kit row is the exception and says so with `keep`.
+//
+// The argument is the school board's own, and it was written down long before
+// there was a switch that could take it away: a row in this game says what
+// buying it *gives* you and what it costs, and never what you already have --
+// which leaves the kit rows as the only place in the game to read how many
+// helmets are on the rock, and that is the whole question at the school. Fold a
+// finished kit row away and the board loses the fact it exists to carry, right
+// at the moment the fact becomes final.
+//
+// It became reachable when the kit got a ceiling. Before that these rows had no
+// ladder, so `maxed` was never true of them and the switch could never see them
+// -- and a three-rung ladder is finished quickly, so what the player sees is a
+// row they have just bought vanishing under their hand.
+export const folds = u => maxed(u) && !u.keep;
+
 // Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
 // is this" is one question with one answer wherever it is asked.
 const mineGap = swing(MINE_BASE, MINE_FLOOR, RUNGS);

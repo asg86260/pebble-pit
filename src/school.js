@@ -106,6 +106,11 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   // player: a finished set reads "done" and stays on the board saying so.
   rung: () => taught(t),
   rungs: () => KIT_MAX,
+  // and it stays on the board when it is finished, even with the finished rows
+  // folded away. See `folds`: this row is the only place the game says how much
+  // kit the station owns, and that is the one thing you come to this board to
+  // find out.
+  keep: true,
   cost: () => tradeCost(t),
   currency: 'shard',
   buy: () => train(t),

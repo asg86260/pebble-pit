@@ -422,7 +422,9 @@ function pan(dx) {
   const was = S.camX;
   S.camX += dx;
   clampCam();
-  if (S.camX !== was && S.boardOpen) placeBoard();
+  if (S.camX === was) return;
+  S.dirty = true;                          // where you are looking is worth writing down
+  if (S.boardOpen) placeBoard();
 }
 
 canvas.addEventListener('wheel', e => {

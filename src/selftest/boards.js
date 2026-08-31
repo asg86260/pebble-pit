@@ -399,6 +399,58 @@ export const TESTS = [
     ];
   }],
 
+  // ...but a finished *kit* row stays. It is the exception to the switch above
+  // and the only one, and it is here because it broke the day the kit got a
+  // ceiling: these rows had never had a ladder, so `maxed` was never true of
+  // them and the fold could not see them. Three rungs is quickly done, so what
+  // the player saw was the row they had just bought vanishing under their hand.
+  //
+  // The reason it stays is the board's own: every row in this game says what
+  // buying it *gives* you and never what you have, which leaves this row as the
+  // only place to read how many helmets are on the rock -- and that is the whole
+  // question at the school. Folding it away deletes the fact at the moment the
+  // fact becomes final.
+  ['a finished kit row stays on the board when the finished rows are hidden', async () => {
+    newRun();
+    await settle();
+    window.__grant({ shards: 9000 });
+    window.__school({ open: true });
+    window.__board('school');
+    await sleep(400);
+
+    // Bought the way a player buys it: the row is pressed until it will not be
+    // pressed again. Setting the count through a hook would prove nothing about
+    // the thing that goes wrong, which is what the board does on the purchase.
+    const row = () => [...document.querySelectorAll('#schoolshop button[data-key]')]
+      .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
+    let presses = 0;
+    for (let i = 0; i < 6; i++) {
+      const b = row();
+      if (!b || b.disabled) break;
+      b.click();
+      presses++;
+      await sleep(120);
+    }
+    const bought = state().breakers;
+
+    const hide = document.getElementById('hidedone');
+    hide.click();
+    await sleep(400);
+    const still = row();
+    const says = still && still.textContent.includes('done');
+    hide.click();
+    await sleep(400);
+    window.__board(null);
+
+    return [
+      ok(presses === 3 && bought === 3, 'the row is pressed until the set is full',
+         `${presses} presses -> ${bought} breakers`),
+      ok(!!still, 'and the finished row is still on the board with them hidden',
+         still ? 'there' : 'GONE'),
+      ok(says, 'saying it is done', still ? still.textContent.trim() : 'no row')
+    ];
+  }],
+
   // What the crew leave is on the screen while it lies there.
   //
   // The yard keeps two stacks -- what the weather drops, which everybody clears,
