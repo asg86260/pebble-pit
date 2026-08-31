@@ -1,7 +1,7 @@
 // The wind: the draught the cursor leaves in the dust, and the one swing the
 // dust and the smoke both lean on.
 //
-// 2 groups, in the order they have always run in --
+// 3 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
 import { newRun, settle, state, ok, point, run } from './kit.js';
@@ -185,6 +185,80 @@ export const TESTS = [
       ok(Math.max(...winds) - Math.min(...winds) > 0.1,
          'and the wind itself gusts rather than blowing at one steady rate',
          `${Math.min(...winds).toFixed(2)} to ${Math.max(...winds).toFixed(2)}`)
+    ];
+  }],
+
+  // And the same hand in the smoke overhead.
+  //
+  // The push itself is checked in the node yard, which calls `stirSmoke` with
+  // four numbers. What is not checked there is the plumbing that hands it those
+  // numbers, and that is the part with something to get wrong: the dust is
+  // stirred in *screen* pixels and the smoke in *world* ones, off two different
+  // readings of the same pointer event (see `input.js`), so a check that never
+  // goes through a real event cannot tell the two apart. This one dispatches
+  // `pointermove` at the canvas and then looks at the band.
+  //
+  // The hand goes round a circuit rather than back and forth: a return stroke
+  // along the same line drags the smoke back where it came from, so the run home
+  // is taken well below the band, outside the draught's reach.
+  ['a hand through the smoke drags the band along', async () => {
+    newRun();
+    window.__air({ haze: 700 });
+    await settle();
+    run(3);                                   // and the band comes to rest
+
+    // Park the hand somewhere else first and let the sky forget it. Whatever ran
+    // before this left the pointer somewhere, and the move *to* the start of the
+    // circuit is itself a sweep across the window.
+    point('pointermove', 700, 500, 0);
+    point('pointermove', 700, 500, 0);
+    run(1);
+
+    const s = state();
+    const was = window.__skyX();              // world x, unrounded: the push is a pixel
+
+    const LEFT = 200, RIGHT = 560, HIGH = 42, LOW = 300;
+    for (let lap = 0; lap < 3; lap++) {
+      for (let x = LEFT; x <= RIGHT; x += 20) point('pointermove', x, HIGH, 0);
+      for (let y = HIGH; y <= LOW; y += 20) point('pointermove', RIGHT, y, 0);
+      for (let x = RIGHT; x >= LEFT; x -= 20) point('pointermove', x, LOW, 0);
+      for (let y = LOW; y >= HIGH; y -= 20) point('pointermove', LEFT, y, 0);
+    }
+
+    // The offsets are laid on a mote and taken up when it is next stepped, so
+    // one frame -- and one only. A settled mote drifts about a tenth of a pixel
+    // a frame on the sway and the wind, and that is the noise this is measured
+    // against.
+    run(1 / 60);
+    const now = window.__skyX();
+    const y = window.__skyXY();               // for the height, which __skyX does not carry
+
+    const wx0 = s.camX + LEFT / s.zoom, wx1 = s.camX + RIGHT / s.zoom;
+    const at = s.camY + HIGH / s.zoom;        // the line the hand was drawn along
+    const near = [], far = [];
+    for (let i = 0; i < was.length; i++) {
+      const off = Math.hypot(Math.max(0, Math.max(wx0 - was[i], was[i] - wx1)),
+                             s.camY + y[i][1] - at);
+      const moved = Math.abs(now[i] - was[i]);
+      if (off < 50) near.push(moved);
+      else if (off > 300) far.push(moved);
+    }
+    const mean = a => a.length ? a.reduce((x, v) => x + v, 0) / a.length : 0;
+    const most = a => a.length ? Math.max(...a) : 0;
+
+    return [
+      ok(near.length >= 20 && far.length >= 200,
+         'there is a band up there, some of it under the hand and some well clear',
+         `${near.length} under the hand, ${far.length} away from it`),
+      ok(mean(near) > 0.3, 'the smoke the hand went through is dragged along',
+         `${mean(near).toFixed(3)}px a mote`),
+      // Three world pixels is SMOKE_STIR_CAP: a hand is a draught, not a shove.
+      ok(most(near) <= 3, 'and no further than the draught is ever allowed to carry one',
+         `${most(near).toFixed(3)}px at the most`),
+      ok(most(far) < 0.2, 'while the far end of the band stands where it was',
+         `${most(far).toFixed(3)}px at the most`),
+      ok(mean(near) > mean(far) * 4, 'so the draught is where the hand went, not over the whole sky',
+         `${mean(near).toFixed(3)}px against ${mean(far).toFixed(3)}px`)
     ];
   }],
 ];

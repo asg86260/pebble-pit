@@ -415,29 +415,123 @@ from the dev grant, which raises the count without putting cells in the pile, so
 the search comes up short and runs again every frame. No played yard is ever in
 that state. The fourth yard is the one that is.
 
-### 7.3 What is left on the draw side
+### 7.3 The instrument reads two different things
 
-In cost order, and the top two are not in this file's hands:
+Everything in 7.1 and 7.2 is `performance.now` around a call, and it took two
+sections to notice what that number is. Canvas2D in Chrome is *deferred*: a
+`fillRect` records a command and returns, and the pixels are shaded later. So a
+clock around a draw call measures how long it took to write the commands down,
+and says nothing at all about how long it takes to paint them.
 
-1. **`drawAir` / `drawAirNear`, 0.087 ms busy — air.js.** Nine filter passes over
-   420 motes to keep the fill style still, and then 420 small `fillRect`s. The
-   passes are cheap; the rects are fill rate, and fill rate is what a phone
-   changes. If it has to come down, the shape is one path per band-and-kind
-   rather than one rect a mote — the same lesson `drawSmog`'s own comment
-   already records.
-2. **`drawSmog`, 0.045 ms with 4,000 motes — smog.js.** Already bucketed and
+For everything above that was the right number, because everything above was
+arithmetic — a search through 43,000 cells, eight hundred allocations,
+`toLocaleString` sixty times a second — and arithmetic is all on the recording
+side. It is the wrong number for anything that is fill rate, which is exactly
+what section 7.1 said the remaining items were.
+
+So the two things left were measured twice: once as before, and once with a
+1×1 `getImageData` inside the timed stretch, which forces the whole backlog of
+commands to be painted before the clock is read. That second reading is a
+rasterized frame, and on this glass — 800×600 CSS, dpr 1, zoom 0.833, 480,000
+device pixels, software raster in the headless shell — a busy frame costs 4.84 ms
+to paint against the 0.30 ms it costs to record. The recorded number is the one
+a phone's own `beat` readout will show; the painted number is the one that
+decides whether the phone holds sixty. Both are below.
+
+### 7.4 The air, the press, and the one that was not worth it
+
+**The air, one path a band-and-kind — air.js.** `drawAir` and `drawAirNear` made
+nine passes over the whole field to pick out the motes of one band and one kind,
+three and a half thousand steps to draw four hundred squares, and then a
+`fillRect` each. It is one pass now, dropping every mote into the bucket it
+belongs to, and one `fill` a bucket — with the buckets refilled rather than
+rebuilt, since the field is the same four hundred motes frame after frame. The
+band-then-kind order is untouched, which is what keeps the depth: a near green
+mote still goes down over a far grey one.
+
+Both calls together, minimum of eight segments of 200, interleaved:
+
+| yard | motes | before | after | |
+|---|---:|---:|---:|---:|
+| quiet | 95 | 0.0345 | 0.0065 | −81% |
+| busy 14-body | 307 | 0.126 | 0.020 | −84% |
+| 14 + four machines | 314 | 0.111 | 0.020 | −82% |
+| the field at its cap | 420 | 0.149 | 0.028 | −81% |
+
+Rasterized, the same busy field reads 0.11 → 0.07 ms: most of what came off was
+the walk rather than the paint, which is what the shape of the fix predicts.
+
+Every pixel is the same, on the quiet, busy, machine and capped-field yards, old
+/ new / old, hashing all 480,000. The hash was shown to be live on the air
+specifically first — emptying the field changes it and putting the field back
+restores it — because a proof that cannot fail is not a proof.
+
+Note *why* it can be batched at all: every tint in `AIR_TINTS` is opaque. A path
+holding two overlapping squares of one opaque color puts down exactly what two
+overlapping fills would. That is not true of a translucent one, and it is not
+true of the offers below.
+
+**The press, laid down once — press.js.** Two fullscreen fills, a tiled pattern
+and an eight-stop radial gradient, over every device pixel, every frame, for a
+look that never changes: the two amounts are constants and neither reads
+anything in the yard. So both are now shaded once onto a sheet the size of the
+canvas, rebuilt only on a resize, and dropped over the finished picture as one
+image.
+
+Recorded, this is invisible and slightly *worse* — 0.0005 ms to write two fills
+down, 0.001 to write a `drawImage`. Painted, at 480,000 pixels:
+
+| | rasterized frame | the pass itself |
+|---|---:|---:|
+| both fills, as it was | 4.84 | 4.32 |
+| scanlines alone | 1.84 | 1.33 |
+| the vignette alone | 3.49 | 2.98 |
+| the sheet | 0.80 | 0.30 |
+
+That is the whole of section 7.1's remaining fill rate, and it was reading as
+"0.003–0.005 ms, the cheapest line in the table" because the clock was on the
+wrong side of the deferral.
+
+This is the one change in section 7 that is **not** bit-identical, and it cannot
+be: two black layers blended into the frame one after the other round to eight
+bits twice, and the same two mixed into a sheet and blended once round
+differently. 137,419 of 1,440,000 color channels come out one step of 255 away,
+two at the very most, on a filter whose whole amplitude is fourteen steps.
+Nothing the yard draws is touched — this is the last pass over a finished frame,
+and it is a look laid over the picture rather than any part of it. Caching only
+the vignette, to keep the scanlines exact, was tried: it is no more exact (the
+same rounding, on more pixels) and 2.11 ms against 0.80.
+
+Gating the look off on a small device was considered and is against the grain:
+`DEVICE_PIXELS` in config.js already caps the canvas at nine million and scales
+`S.dpr` down to hold it (world.js `resize`), so the cap — not a switch — is how
+this game has always answered a device with more pixels than it can paint. Nine
+million is nineteen times the glass measured here, and it is the worst this pass
+will ever be asked to do.
+
+**`drawOffers`, measured and left alone.** Five diamonds a frame, and section 7.1
+put them at 0.024 ms. Measured on their own they are 0.006, and drawing all five
+into one path and filling once saves 0.0007 — under a tenth of the smallest
+thing worth a mechanism, let alone a mark canvas with an invalidation rule to get
+wrong. It is also not pixel-identical: several subpaths filled in one call are
+antialiased differently at the edges from the same shapes filled one at a time,
+which is worth knowing on its own, because it is the reason the air could be
+batched and this could not have been done the same way for anything translucent.
+
+### 7.5 What is left on the draw side
+
+1. **`drawSmog`, 0.045 ms with 4,000 motes — smog.js.** Already bucketed and
    culled, and cheap for what it is. The Map, the key strings and the point
-   arrays it builds per frame are the only fat on it.
-3. **`drawOffers`, 0.024 ms busy.** A path-filled diamond a station, every frame,
-   and they do not move while the yard does not. The counter's mark canvas is
-   the pattern if it ever matters; it does not yet.
-4. **`press`, 0.003–0.005 ms.** Two fullscreen fills over 480,000 pixels. At a
-   phone's pixel count this is the line above that grows fastest, and it is a
-   look rather than a picture of the yard — the first thing to put a switch on
-   if a device cannot hold sixty.
+   arrays it builds per frame are the only fat on it. If it is ever worth doing,
+   the air's buckets above are the shape.
+2. **Nothing else measures.** Below `drawSmog` the largest line in 7.1 is the
+   roster at 0.028 ms, and everything under it is a handful of microseconds.
 
-And the honest limit of all of it: this is 480,000 pixels. A phone at dpr 3 is
-several times that, and everything in 7.1 that is fill rate rather than
-arithmetic — the air, the press, the grids' blits — grows with it while the rock,
-the counter and the pile do not. The `beat` readout in the dev panel is still
-the instrument for that, and it still wants a phone to hand.
+And the honest limit of all of it: this is 480,000 pixels, and the two readings
+in 7.3 diverge by a factor of sixteen on it. Everything that is arithmetic — the
+rock, the counter, the pile, the air's walk — is fixed whatever the device. What
+is fill rate grows with the pixel count up to the nine-million cap, which is
+nineteen times this glass: the press's 0.30 ms goes with it, and so does
+whatever share of the remaining 0.50 is paint rather than arithmetic. The `beat`
+readout in the dev panel reads the recording side only, so it will not show any
+of that; a phone to hand still would.

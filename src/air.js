@@ -298,21 +298,52 @@ export function drawAirNear() {
   paint(true);
 }
 
+// Band by band, and within a band one color at a time -- but as one path a
+// band-and-kind rather than one call a mote.
+//
+// Depth is what the bands are for, so the pass order is by band and then by
+// kind: a near green mote is drawn over a far grey one, not under it. That
+// order is kept exactly. What is not kept is the walk: this used to be nine
+// passes over the whole field to pick out the motes of one band and one kind,
+// three and a half thousand steps to draw four hundred squares, and then four
+// hundred separate `fillRect`s. It is one pass now -- every mote dropped into
+// the bucket it belongs to -- and one `fill` a bucket.
+//
+// A bucket is a plain array of coordinates that is refilled every frame rather
+// than rebuilt, because the field is the same four hundred motes frame after
+// frame and the only thing that changes is where they are. Every tint is opaque
+// (see AIR_TINTS), so a path holding two overlapping squares of one color puts
+// down exactly what two overlapping fills would have: the batching is invisible,
+// and that is checked by hashing the frame.
+const KI = { dust: 0, shard: 1, spore: 2 };
+const BUCKET = AIR_BANDS.map(() => AIR_KINDS.map(() => ({ n: 0, xy: new Float64Array(AIR_CAP * 2) })));
+
 function paint(front) {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
-  // Band by band, and within a band one colour at a time: the fill style is the
-  // expensive thing to change, so it is set nine times a frame rather than once
-  // a mote. Depth is still what the bands are for -- the pass order is by band,
-  // so a near green mote is drawn over a far grey one, not under it.
+  for (let i = 0; i < AIR_BANDS.length; i++)
+    for (let k = 0; k < AIR_KINDS.length; k++) BUCKET[i][k].n = 0;
+
+  for (const m of AIR) {
+    const i = AIR_BANDS.indexOf(m.b);
+    if (AIR_BANDS[i].front !== front) continue;
+    const b = BUCKET[i][KI[m.kind]];
+    b.xy[b.n * 2] = Math.round(m.x);
+    b.xy[b.n * 2 + 1] = Math.round(m.y);
+    b.n++;
+  }
+
   for (let i = 0; i < AIR_BANDS.length; i++) {
-    const b = AIR_BANDS[i];
-    if (b.front !== front) continue;
-    for (const kind of AIR_KINDS) {
-      ctx.fillStyle = AIR_TINTS[kind][i];
-      for (const m of AIR) {
-        if (m.b !== b || m.kind !== kind) continue;
-        ctx.fillRect(Math.round(m.x), Math.round(m.y), b.size, b.size);
-      }
+    const band = AIR_BANDS[i];
+    if (band.front !== front) continue;
+    for (let k = 0; k < AIR_KINDS.length; k++) {
+      const b = BUCKET[i][k];
+      if (!b.n) continue;
+      // the fill style is the expensive thing to change, and it is set once a
+      // bucket -- and not at all for a bucket with nothing in it
+      ctx.fillStyle = AIR_TINTS[AIR_KINDS[k]][i];
+      ctx.beginPath();
+      for (let j = 0; j < b.n; j++) ctx.rect(b.xy[j * 2], b.xy[j * 2 + 1], band.size, band.size);
+      ctx.fill();
     }
   }
   ctx.fillStyle = '#000';
