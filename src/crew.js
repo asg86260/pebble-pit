@@ -1950,66 +1950,77 @@ function takeMess(w, c) {
     w.resting = false;
     w.idleAt = null;
   }
-  const d = to - WORKER / 2 - w.x;
-  // Where its feet go while it is doing this: on the way the *mess* is on, all
-  // the way there.
+  // Getting there, which is a route and not a walk.
   //
-  // This used to ask where the body's middle was: over the rock's footprint,
-  // stand on the rock; anywhere else, stand on the ground. Two things wrong
-  // with that, and the second one is the reason this whole file stopped
-  // asking questions of an x. A pixel of sway at the foot of the hill put the
-  // body's middle on and off the footprint from one frame to the next, so it
-  // flicked between the crest and the yard as the two branches took turns.
-  // And a body whose mess was away on the far side of the yard climbed the
-  // hill and came down it again on the way past, for no reason but that its
-  // route lay over the footprint -- the hill as a road, in the one walk in
-  // this file that does not go through route.js.
+  // The mess is a place, and a place is on a way (see `wayOver` in route.js):
+  // muck on the face is on the hill, muck out on the yard is on the yard. What
+  // this did with that was plant the feet on the *mess's* way for the whole
+  // trip and step the body's x towards it by hand -- and that is right only
+  // while the body is already on that way.
   //
-  // The mess is a place, and a place is on a way (see `wayOver` in route.js).
-  // Muck on the face is on the hill, so the walk to it climbs a flank and goes
-  // up -- the same climb the gang working the rock make. Muck out on the yard
-  // is on the yard, so the walk to it stays on the ground line for its whole
-  // length, footprint or no footprint. Either way it is climbed to rather than
-  // assigned, so nobody appears at the top of anything.
-  const on = wayOver(to - WORKER / 2);
-  const foot = () => climbTo(w, feetOn(on, w.x));
-  // walk to it, then shovel: it is somewhere you go, not something that
-  // happens wherever you are standing
-  if (Math.abs(d) > P * 2) {
-    w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
-    w.y = foot();
-  } else {
-    // Arrived: it stands still and shovels. It used to keep walking the last
-    // two cells in towards the exact column it had claimed while the elbow
-    // pushed it back out again -- a body sliding on the spot for as long as
-    // there was muck in front of it.
-    //
-    // And it shovels the way a miner mines: it plants its feet, swings, and a
-    // cell comes off. The muck was being poured away at a *rate* with the
-    // lunge pinned at full every frame, which reads as a shape vibrating over
-    // a heap that melts -- a progress bar wearing a hat. Same throughput, one
-    // cell to a swing, so there is something to watch and something to count.
-    //
-    // Its feet land on a whole cell and stay on it between swings. Pinning it
-    // outright was tried and is wrong: the elbow that keeps a gang from
-    // standing in each other needs to be able to move a body, and a gang that
-    // cannot be spaced out bunches onto one spot and clears a yard slower than
-    // it did before. Snapping is enough -- what read as sliding was a body
-    // creeping a fraction of a pixel a frame with its lunge pinned at full.
-    w.x = Math.round(w.x / P) * P;
-    w.y = foot();
-    w.lunge *= 0.84;
-    if (now >= (w.sweepAt || 0)) {
-      sweepMuckAt(w.x + WORKER / 2, 1, w);
-      w.lunge = 1;
-      w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
-    }
-    // and not shoulder to shoulder with the next one. A yard under muck
-    // has something to shovel wherever you stand, so a gang that arrived
-    // together would each find work on the spot they arrived on and clear
-    // the whole mess as one lump you cannot count.
-    elbowMuck(w);
+  // A janitor up on the crest, having just cleared a patch off the face, with
+  // its next patch out on the yard, is not. It started easing its feet down to
+  // the ground line while it was still standing over the middle of the hill,
+  // and walked the length of the footprint sixty pixels inside solid rock.
+  // Rule 2 in verify.js caught it -- buried, and still buried a second later,
+  // so not a climb lagging behind but a body standing in the hill.
+  //
+  // Two ways make a route. That is the whole of what the ladders taught this
+  // file: getting from a place on one way to a place on another is what
+  // `keepTo` and `stepRoute` are for, and every hand-written copy of it walks
+  // bodies through something. It is the same going `downTheHole` makes on the
+  // same errand when the mess is in the bottom of the hole. It is also what
+  // keeps the hill a workplace rather than a road, without anybody being told:
+  // a route from one end of the yard to the other runs along the flat in front
+  // of the hill because that is the shorter way, and a route to a patch on the
+  // face climbs a flank because there is no other way onto it.
+  const at = to - WORKER / 2;
+  const all = ways();
+  const on = wayOver(at, all);
+  // Still on the way. A couple of cells short is arrived -- the same slack
+  // `downTheHole` allows -- but only from the right way: standing at the mess's
+  // x at the height of the yard, under a heap that is up on the hill, is being
+  // there in one coordinate out of two.
+  if (Math.abs(at - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
+    // Nowhere a route reaches: it gives the patch up rather than standing there
+    // holding a claim on it. `mess.back` puts the body back on its own goal and
+    // it looks again next frame.
+    if (!keepTo(w, at, on)) return false;
+    if (stepRoute(w, commutePace())) return true;
+    w.route = null;
+    return true;
   }
+  w.route = null;
+  // Arrived: it stands still and shovels. It used to keep walking the last
+  // two cells in towards the exact column it had claimed while the elbow
+  // pushed it back out again -- a body sliding on the spot for as long as
+  // there was muck in front of it.
+  //
+  // And it shovels the way a miner mines: it plants its feet, swings, and a
+  // cell comes off. The muck was being poured away at a *rate* with the
+  // lunge pinned at full every frame, which reads as a shape vibrating over
+  // a heap that melts -- a progress bar wearing a hat. Same throughput, one
+  // cell to a swing, so there is something to watch and something to count.
+  //
+  // Its feet land on a whole cell and stay on it between swings. Pinning it
+  // outright was tried and is wrong: the elbow that keeps a gang from
+  // standing in each other needs to be able to move a body, and a gang that
+  // cannot be spaced out bunches onto one spot and clears a yard slower than
+  // it did before. Snapping is enough -- what read as sliding was a body
+  // creeping a fraction of a pixel a frame with its lunge pinned at full.
+  w.x = Math.round(w.x / P) * P;
+  w.y = climbTo(w, feetOn(on, w.x));
+  w.lunge *= 0.84;
+  if (now >= (w.sweepAt || 0)) {
+    sweepMuckAt(w.x + WORKER / 2, 1, w);
+    w.lunge = 1;
+    w.sweepAt = now + swingFor(w) * (0.85 + rand() * 0.3);
+  }
+  // and not shoulder to shoulder with the next one. A yard under muck
+  // has something to shovel wherever you stand, so a gang that arrived
+  // together would each find work on the spot they arrived on and clear
+  // the whole mess as one lump you cannot count.
+  elbowMuck(w);
   return true;
 }
 
