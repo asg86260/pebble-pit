@@ -189,16 +189,125 @@ export function rockTopY(c) {
 
 // the surface the crew stand on, kept per column so nobody walks it every frame
 export function refreshRockTops() {
+  const was = S.rockTops || [];
   S.rockTops = new Array(S.gw).fill(-1);
   for (let c = 0; c < S.gw; c++) {
     for (let y = 0; y < S.gh; y++) if (S.boulder[y][c]) { S.rockTops[c] = y; break; }
   }
+  // A column the gang have just taken all the way down is not a surface any
+  // more, and whatever was lying on it has to go somewhere. It goes on the
+  // heap, thrown, like everything else that leaves this hill: the alternative
+  // is dust hanging in the air over a hole in the rock.
+  for (let c = 0; c < S.gw && c < was.length; c++) {
+    if (was[c] >= 0 && S.rockTops[c] < 0) tipSand(c);
+  }
+}
+
+// --- what is lying on the rock -------------------------------------------------
+// The hill does not block dust any more. A chip that comes down over the crest
+// lands ON it and lies there until a miner throws it onto the heap, which is the
+// same bargain every other piece of ground in this yard has.
+//
+// Two ways to say that were on the table and this is the second one.
+//
+// The mess layer already lies on the rock -- `muckFloor` sends a muck column
+// down onto `rockTopY` -- and a kind in the MESS table would have arrived with
+// slumping, drawing, saving and shovelling all written. But every one of those
+// answers the wrong question for dust. A mess is worth nothing and this is worth
+// exactly one dust a pixel; a mess is SWEPT out of existence and this must be
+// THROWN, conserved, onto a heap; a mess has a depth and no shade, and a grain
+// off a deep rock is a different colour from a grain off a shallow one. Beyond
+// the sink, `muckLeft`, `buried`, `yardMuck`, the rain and the janitor's whole
+// post would each have acquired a member that answers wrongly to it -- the yard
+// would report itself filthy because somebody dropped a grain on the hill.
+//
+// So it is its own layer, and it lives beside `S.rockTops` because it is the
+// same shape as `S.rockTops`: one entry per rock column, moving with the rock,
+// rebuilt when the rock is. One array of shades per column, bottom-first --
+// shades and not a count, because the colour of a grain is the depth it was cut
+// from and throwing back a different one would be quietly making dust up.
+export function rockSand() {
+  if (!S.rockSand || S.rockSand.length !== S.gw) {
+    const was = S.rockSand || [];
+    S.rockSand = new Array(S.gw);
+    for (let c = 0; c < S.gw; c++) S.rockSand[c] = Array.isArray(was[c]) ? was[c] : [];
+  }
+  return S.rockSand;
+}
+
+// how many grains are lying in a column, and what is on top of the stack
+export const sandDeep = c => (rockSand()[c] || []).length;
+export const sandTop = c => { const s = rockSand()[c]; return s.length ? s[s.length - 1] : 0; };
+
+// World y of the top grain in a column -- where a grain there is drawn, and
+// where a throw of it starts from. A column with nothing in it answers with the
+// rock's own top, which is where the next grain down it would come to rest.
+export const sandTopY = c => rockTopY(c) - sandDeep(c) * P;
+
+// How far out of line a column may stand before a grain rolls off it. Two cells,
+// which is what a heap on a hill looks like rather than a spike on one.
+const SAND_ANGLE = 2;
+
+// Somewhere for a falling grain to come to rest, if the place it is falling on
+// is the rock. False means this is not rock and the grain is somebody else's
+// problem -- off the footprint, or in a column the gang have mined away.
+export function restOnRock(x, shade) {
+  if (!boulderAlive()) return false;
+  const c = Math.floor((x - rockLeft()) / P);
+  // Written this way round on purpose: a place that is not a number is not a
+  // column of this rock either, and `c < 0 || c >= S.gw` lets a NaN straight
+  // through both halves and on into the array.
+  if (!(c >= 0 && c < S.gw) || S.rockTops[c] < 0) return false;
+  const sand = rockSand();
+  // It rolls off a shoulder rather than standing up on one: whichever of the
+  // three columns is lowest takes it, the same rule `repose` keeps for a heap on
+  // the ground. Lower is a *bigger* y.
+  let best = c;
+  for (const n of [c - 1, c + 1]) {
+    if (n < 0 || n >= S.gw || S.rockTops[n] < 0) continue;
+    if (sandTopY(n) > sandTopY(best) + SAND_ANGLE * P) best = n;
+  }
+  sand[best].push(shade);
+  S.dirty = true;
+  return true;
+}
+
+// Lift the top grain off a column, or 0 for a bare one. This is the only way
+// anything leaves the layer, and every caller throws what it gets.
+export function takeSand(c) {
+  const s = rockSand()[c];
+  return s && s.length ? s.pop() : 0;
+}
+
+// Everything in one column onto the rock's heap, thrown. Used when the ground
+// under it stops being ground: a column mined through, a rock replaced.
+function tipSand(c) {
+  const s = S.rockSand && S.rockSand[c];
+  if (!s || !s.length) return;
+  const x = rockLeft() + c * P + P / 2;
+  while (s.length) spawnSpoil(x, rockTopY(c) - s.length * P, s.pop());
+  S.dirty = true;
+}
+
+// And the whole hill's worth, for a rock that is about to be replaced by
+// another. The apron sweep does the same thing for the ground the foot is going
+// to land on; this is the ground on top of the one that is going.
+export function tipRockSand() {
+  if (!S.rockSand) return;
+  for (let c = 0; c < S.rockSand.length; c++) tipSand(c);
 }
 
 // A heightfield, not a disc: a broad hill with crags along its crest, sitting
 // flat on the ground. Cells hold remaining thickness, deepest at the base and
 // through the middle, thinning towards the skyline.
 export function makeBoulder(fromSky = false) {
+  // Whatever was lying on the last rock goes on the heap before this one is
+  // built, while there is still a hill under it to say where it was. A rock
+  // being replaced is the other half of `clearApron`: that one deals with the
+  // ground the new foot is coming down on, this one with the ground the old top
+  // was. Neither destroys a grain.
+  tipRockSand();
+  S.rockSand = null;
   const size = rockSize();
   S.gw = size.w;
   S.gh = size.h;
@@ -272,6 +381,20 @@ export function clearApron() {
     }
   }
 }
+
+
+// The rock's surface, as a patch the one tidying rule can work -- see tidy.js.
+// A miner between swings picks the nearest grain lying on the hill and throws it
+// onto the rock's own heap, which is the same throw its spoil takes.
+export const rockPatch = () => ({
+  key: 'rock',
+  cols: S.gw,
+  colOf: x => Math.floor((x - rockLeft()) / P),
+  xOf: c => rockLeft() + c * P + P / 2,
+  peek: sandTop,
+  take: takeSand,
+  yOf: sandTopY
+});
 
 
 export function gridToString() {

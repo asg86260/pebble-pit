@@ -408,6 +408,9 @@ export const snapshot = () => ({
   // And the dust lying in the cut, fallen down the mouth and not yet fetched.
   cutDust: countDust(cut),
 
+  // And what has come down on top of the rock and not yet been thrown off it.
+  rockDust: (S.rockSand || []).reduce((n, a) => n + (a ? a.length : 0), 0),
+
   // The crew, counted, and the roster board that moves them about.
   crew: S.crew,
   idle: idle(),

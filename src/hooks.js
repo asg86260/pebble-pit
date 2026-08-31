@@ -18,7 +18,7 @@ import { S, BLANK, floor, pit, cut } from './state.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
-import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
+import { makeBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
@@ -611,6 +611,16 @@ export const digCut = (n = 1) => {
 // mouth would, without waiting on a throw to land.
 export const pileCut = (x, n = 1) => { for (let i = 0; i < n; i++) addGrain(cut, x); S.dirty = true; };
 
+// dev: lay dust straight on the hill, the way a chip coming down over the crest
+// does, without waiting on the throw. The rock is ground now -- see `rockSand`
+// in rock.js -- and this is how a check or a scene puts something on it.
+export const pileRock = (x, n = 1) => {
+  let put = 0;
+  for (let i = 0; i < n; i++) if (restOnRock(x, 3 + (i % 3))) put++;
+  S.dirty = true;
+  return put;
+};
+
 // One swing of the player's own, through the very call `input.js` makes when you
 // click the hill. It exists so a check can prove the thing DESIGN.md says twice
 // -- that a machine on the rock replaces the crew's hands and never yours -- by
@@ -812,7 +822,7 @@ export const HANDLES = {
   __lab: openLab, __research: finishResearch, __grant: grant,
   __spend: spendDust, __press: press,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
-  __digCut: digCut, __pileCut: pileCut,
+  __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,

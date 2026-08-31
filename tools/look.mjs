@@ -74,6 +74,15 @@ const SCENES = {
             (window.__state().rockLeftX);
           window.__fast(4); window.__look(window.__state().rockLeftX - 340);`,
 
+  // Dust lying on the hill itself, which is ground now: grains dropped over the
+  // crest come to rest on the mined outline and lie there until a miner throws
+  // them on the heap. Nobody is mining in this one, so it stays put to be looked
+  // at.
+  crest: `window.__reset(); window.__jump(6); window.__fast(2);
+          (s => { for (let c = 6; c < s.gw - 6; c++) window.__pileRock(s.rockLeftX + c * 6 + 3, 3); })
+            (window.__state());
+          window.__fast(1); window.__look(window.__state().rockLeftX - 180);`,
+
   // A core, for the glow around it. It is the one thing in the yard drawn from a
   // snapped middle rather than a corner, so it is the one thing where being half
   // a cell out shows.

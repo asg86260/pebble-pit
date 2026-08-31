@@ -13,12 +13,14 @@ import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, 
   from './config.js';
 import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
-import { S, farm } from './state.js';
-import { walkY, plotCount, resite } from './world.js';
+import { S, farm, floor } from './state.js';
+import { walkY, plotCount, resite, pileAt } from './world.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull } from './upgrades.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
+import { at, put, topRow, colOf, bottomY } from './grid.js';
+import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
 
 // how long one plot takes to come on, at this level of tending
@@ -85,6 +87,44 @@ function tend(w, dt) {
   }
 }
 
+// The strip the plots stand on, as a patch the one tidying rule can work -- see
+// tidy.js. A farmhand keeping the row picks up whatever has been dropped along
+// it and throws it on the farm's own heap.
+//
+// Its own ground and no more: the columns the plots stand on, and never a
+// column that is already somebody's heap. The farm's heap is a few cells to the
+// right of the last plot, and a hand that tidied *that* would spend all day
+// lifting the crop it had just thrown there and throwing it again.
+//
+// The book it is handed is the haulers' own book of floor claims, so a hand and
+// a hauler can never set off for the same column.
+export const farmPatch = () => ({
+  key: 'farm',
+  cols: floor.cols,
+  colOf: x => colOf(floor, x),
+  xOf: c => floor.x + c * P + P / 2,
+  peek: c => {
+    const x = floor.x + c * P;
+    // A furrow's width either end of the row. `farm.w` is measured stalk to
+    // stalk -- the first plot stands on its left edge and the last on its right
+    // -- and a hand stands beside a plot rather than on it, so the ground the
+    // row is worked from runs a little past both. Read to the pixel it was
+    // exactly one grain per farm short: the one lying at the last plot's own
+    // foot, which nobody's ground contained.
+    if (x + P <= farm.x - FARM_GAP || x >= farm.x + farm.w + FARM_GAP || pileAt(x)) return 0;
+    const r = topRow(floor, c);
+    return r < 0 ? 0 : at(floor, c, r);
+  },
+  take: c => {
+    const r = topRow(floor, c);
+    if (r < 0) return 0;
+    const v = at(floor, c, r);
+    put(floor, c, r, 0);
+    return v;
+  },
+  yOf: c => bottomY(floor) - (topRow(floor, c) + 1) * P
+});
+
 // the plot most worth walking to: the one furthest along that nobody else has
 function pickPlot(w) {
   let best = -1, most = -1;
@@ -107,7 +147,7 @@ function cut(i, x) {
 }
 
 // one farmhand, one frame
-export function stepFarmhand(w, now, dt) {
+export function stepFarmhand(w, now, dt, c = null) {
   plantPlots();
   // a plot that is not there any more -- a save from a wider plot -- is not a
   // plot anybody can stand at
@@ -143,6 +183,11 @@ export function stepFarmhand(w, now, dt) {
   // at the tip of the stalk and stays there: it is a thing that grew, and it
   // should be seen to have grown before anybody takes it away.
   tend(w, dt);
+  // and it picks up after itself while it works. Tending is a share of the
+  // frame's own time and goes in whatever the hands are doing with themselves
+  // -- see `tend` -- so this costs the row nothing: what it costs is the
+  // stooping, which is time a hand standing at a plot has anyway.
+  tidyStep(w, farmPatch(), c && c.taken, now);
   if (S.plots[i] < 1) return;
 
   // then it is taken off, from exactly where it grew. The wait is the same

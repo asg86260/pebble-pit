@@ -20,8 +20,8 @@ import { S, floor, pit, cut, quarry, bench } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles } from './world.js';
-import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js';
+import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
+import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil } from './dust.js';
@@ -44,6 +44,18 @@ import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { tidyBoards } from './board.js';
 import { stepScrub } from './scrubhouse.js';
+// A chip coming down over the hill, and whether the hill has taken it. The
+// height test is here rather than in `restOnRock` because it is the chip loop's
+// own question -- has this thing reached the surface yet -- and every other
+// place that puts a grain on the rock has no chip to ask it of.
+function restOnRockAt(x, y, shade) {
+  if (!boulderAlive()) return false;
+  const c = Math.floor((x - rockLeft()) / P);
+  if (c < 0 || c >= S.gw || S.rockTops[c] < 0) return false;
+  if (y + P < sandTopY(c)) return false;
+  return restOnRock(x, shade);
+}
+
 // The ground is the ground because of these: the grid module knows none of it.
 // A new plot of sand somewhere else is another few lines like this, not another
 // copy of the sand rules.
@@ -263,6 +275,24 @@ export function step() {
     const c = Math.max(0, Math.min(floor.cols - 1, colOf(floor, ch.x)));
     const arrived = ch.land == null || ch.y >= S.groundY - P ||
                     (ch.vx > 0 ? ch.x >= ch.land : ch.x <= ch.land);
+
+    // And on the rock, which is a surface like any other now. The hill used to
+    // be barred ground -- a grain over the crest had nowhere to be, so it walked
+    // out from under the footprint and appeared in the heap beside it, eighty
+    // columns from where it was dropped. It comes to rest on the outline as it
+    // has actually been mined, and lies there until a miner throws it on the
+    // heap: see `restOnRock` in rock.js.
+    //
+    // Behind `arrived`, which is what keeps this from catching the spoil coming
+    // off the face: a thrown grain is aimed past the hill and is not arrived
+    // while it is still over it. Only something coming down on the rock without
+    // anywhere else to be -- a chip over the crest, a shaken body's spill --
+    // stops here.
+    if (ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s)) {
+      S.chips.splice(i, 1);
+      S.dirty = true;
+      continue;
+    }
     if (ch.vy > 0 && arrived && ch.y >= surfaceY(floor, c)) {
       // One rule for everything that lands: a shard keeps to the piles exactly as
       // a grain of dust does, because as far as the ground is concerned it is one.

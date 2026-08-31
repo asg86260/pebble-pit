@@ -31,7 +31,7 @@ import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
-import { ramX, rockShare } from './rock.js';
+import { ramX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltY } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt } from './farm.js';
@@ -2090,6 +2090,27 @@ export function drawCoreAt(x, y, capAtGround) {
   drawCircle(cx, cy, CORE_SIZE / 2 - 2);
 }
 
+// What is lying on the hill. Drawn straight after the rock and before the chips,
+// so a grain on the crest is in front of the rock it is resting on and behind
+// anything still in the air over it.
+//
+// Every grain through `drawMark`, which is what a chip in the air and a mark on
+// the ground both go through: what lands up here is dust, or a spore, or a
+// shard, and it has to look like the thing it is. There are never many of them
+// -- a miner throws them off between swings -- so a call each costs nothing.
+function drawRockSand() {
+  if (!boulderAlive() || !S.rockSand) return;
+  const left = rockLeft();
+  for (let c = 0; c < S.rockSand.length; c++) {
+    const s = S.rockSand[c];
+    if (!s || !s.length) continue;
+    const top = sandTopY(c);
+    for (let k = 0; k < s.length; k++)
+      drawMark(s[k], left + c * P + P / 2, top + (s.length - 1 - k) * P + P / 2);
+  }
+  ctx.fillStyle = '#000';
+}
+
 // Buried in the rock: drawn first so the boulder covers it until you dig it out.
 //
 // Which is only true once the boulder is *there*. A rock still coming down out
@@ -2853,6 +2874,8 @@ export function draw() {
       x = e;
     }
   }
+
+  drawRockSand();          // and whatever has come down on top of it
 
   ctx.fillStyle = '#000';
 
