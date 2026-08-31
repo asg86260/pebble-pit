@@ -8,11 +8,11 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
-        TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT } from './config.js';
+        TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
-import { boulderAlive, depthOf, cellPos } from './rock.js';
+import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
@@ -235,73 +235,78 @@ export function drawFarm() {
 // else with room to spare wants. Out in the yard there is no room to spare: a
 // find is a solid cell of its own colour, exactly as the painter draws it in a
 // pile, because that is the only thing that tiles.
-export function drawMark(v, x, y, size = MARK_SIZE, glyph = false) {
+//
+// `g` is the canvas it goes on, and it is the frame's unless somebody says
+// otherwise. The counter keeps its column of marks on a canvas of its own -- see
+// `drawCount` -- and a mark that could only ever be drawn on the frame would
+// have to be copied off it afterwards, which means reading the frame back.
+export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
   if (isDust(v)) {                             // a grain of dust is a grain: one cell
-    ctx.fillStyle = shadeOf(v);
-    ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    g.fillStyle = shadeOf(v);
+    g.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
     return;
   }
   const tones = FIND_COLOR[findKind(v)];
   if (!glyph && tones) {
-    ctx.fillStyle = tones[v - findKind(v)];
-    ctx.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
-    ctx.fillStyle = '#000';
+    g.fillStyle = tones[v - findKind(v)];
+    g.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    g.fillStyle = '#000';
     return;
   }
   // No backing square. It was there to keep two of these readable when they
   // overlapped, and they cannot overlap any more: a resting one stands in a slot
   // of its own. A white box behind a triangle is a white box on the ground.
   const h = size / 2;
-  ctx.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
+  g.fillStyle = tones ? tones[Math.min(2, v - findKind(v))] : '#000';
   const kind = findKind(v) || v;
   if (v === CORE_CELL) {
     const lw = Math.max(1, size / 4);
-    ctx.beginPath();
-    ctx.arc(x, y, Math.max(0.5, h - lw / 2), 0, Math.PI * 2);
-    ctx.fillStyle = '#fff';
-    ctx.fill();
-    ctx.lineWidth = lw;
-    ctx.strokeStyle = '#000';
-    ctx.stroke();
+    g.beginPath();
+    g.arc(x, y, Math.max(0.5, h - lw / 2), 0, Math.PI * 2);
+    g.fillStyle = '#fff';
+    g.fill();
+    g.lineWidth = lw;
+    g.strokeStyle = '#000';
+    g.stroke();
   } else if (kind === SHARD_CELL) {
-    ctx.beginPath();
-    ctx.moveTo(x, y - h);
-    ctx.lineTo(x + h, y + h);
-    ctx.lineTo(x - h, y + h);
-    ctx.closePath();
-    ctx.fill();
+    g.beginPath();
+    g.moveTo(x, y - h);
+    g.lineTo(x + h, y + h);
+    g.lineTo(x - h, y + h);
+    g.closePath();
+    g.fill();
   } else if (kind === SPORE_CELL) {
     const k = h * 0.866;                       // flat-topped, so it fills the width
-    ctx.beginPath();
-    ctx.moveTo(x - h, y);
-    ctx.lineTo(x - h / 2, y - k);
-    ctx.lineTo(x + h / 2, y - k);
-    ctx.lineTo(x + h, y);
-    ctx.lineTo(x + h / 2, y + k);
-    ctx.lineTo(x - h / 2, y + k);
-    ctx.closePath();
-    ctx.fill();
+    g.beginPath();
+    g.moveTo(x - h, y);
+    g.lineTo(x - h / 2, y - k);
+    g.lineTo(x + h / 2, y - k);
+    g.lineTo(x + h, y);
+    g.lineTo(x + h / 2, y + k);
+    g.lineTo(x - h / 2, y + k);
+    g.closePath();
+    g.fill();
   } else if (kind === SPARK_CELL) {
     // A spark: four points, longer than they are wide. The quarry is a triangle and
     // the plots are a hexagon -- both of them things with sides -- so this one is
     // a thing with no sides at all, which is what it looked like coming down.
-    ctx.beginPath();
-    ctx.moveTo(x, y - h);
-    ctx.lineTo(x + h / 3, y - h / 3);
-    ctx.lineTo(x + h, y);
-    ctx.lineTo(x + h / 3, y + h / 3);
-    ctx.lineTo(x, y + h);
-    ctx.lineTo(x - h / 3, y + h / 3);
-    ctx.lineTo(x - h, y);
-    ctx.lineTo(x - h / 3, y - h / 3);
-    ctx.closePath();
-    ctx.fill();
+    g.beginPath();
+    g.moveTo(x, y - h);
+    g.lineTo(x + h / 3, y - h / 3);
+    g.lineTo(x + h, y);
+    g.lineTo(x + h / 3, y + h / 3);
+    g.lineTo(x, y + h);
+    g.lineTo(x - h / 3, y + h / 3);
+    g.lineTo(x - h, y);
+    g.lineTo(x - h / 3, y - h / 3);
+    g.closePath();
+    g.fill();
   } else {
     const t = size / 3;
-    ctx.fillRect(x - t / 2, y - h, t, size);
-    ctx.fillRect(x - h, y - t / 2, size, t);
+    g.fillRect(x - t / 2, y - h, t, size);
+    g.fillRect(x - h, y - t / 2, size, t);
   }
-  ctx.fillStyle = '#000';
+  g.fillStyle = '#000';
 }
 
 // The thing in the sky is a star, and a small one: a dead black crust with fire
@@ -2120,6 +2125,24 @@ export function drawPaid() {
 const MARK = 9;          // a mark on the counter, in screen pixels
 const ROW = 19;          // and the gap between one row and the next
 
+// the marks down the left of the counter, lifted off the card and put back
+let markCan = null, markKey = '';
+
+// The counter's numbers, remembered.
+//
+// `fmt` is `toLocaleString`, and `toLocaleString` is eight microseconds a call --
+// once the marks are kept it is the entire remaining cost of the card, 0.04 ms a
+// frame. The card asks it for the same five numbers sixty times a second, and a
+// count that has not moved is the string it was last frame. Cleared rather than
+// grown when it fills: the numbers worth keeping are the ones on the card now,
+// and while a count is running to a new value every frame is a new number.
+const said = new Map();
+function digits(n) {
+  let s = said.get(n);
+  if (s === undefined) { if (said.size > 32) said.clear(); said.set(n, s = fmt(n)); }
+  return s;
+}
+
 export function drawCount() {
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.font = '13px ui-monospace, "Courier New", monospace';
@@ -2128,7 +2151,7 @@ export function drawCount() {
   // The dust count is the widest thing on it and it grows a digit at a time, so
   // the room it needs is measured rather than guessed: a counter that clips its
   // own number at seven figures is a counter that fails exactly when it matters.
-  const dust = fmt(Math.round(S.shownStored));
+  const dust = digits(Math.round(S.shownStored));
   const wide = MARK * 2 + ctx.measureText(dust).width + 10;
   const x = Math.max(10, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
   const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - 10);
@@ -2137,9 +2160,9 @@ export function drawCount() {
   // is drawn because the card behind it has to be the size of all of it.
   const lines = [{ cell: null, text: dust }];
   if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(S.cores) });
-  if (S.seenShard) lines.push({ cell: SHARD_CELL, text: fmt(S.shards) });
-  if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: fmt(S.spores) });
-  if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: fmt(S.sparks) });
+  if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(S.shards) });
+  if (S.seenSpore) lines.push({ cell: SPORE_CELL, text: digits(S.spores) });
+  if (S.seenSpark) lines.push({ cell: SPARK_CELL, text: digits(S.sparks) });
 
   // The card.
   //
@@ -2164,18 +2187,74 @@ export function drawCount() {
   // on the half pixel, so a two-wide edge lands on two whole ones
   ctx.strokeRect(box.x + 1, box.y + 1, box.w - 2, box.h - 2);
 
-  // a grain of dust, then the count of it
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x, y - MARK, MARK, MARK);
-  ctx.fillText(dust, x + MARK * 2, y);
+  // The column of marks down the left of the card, kept rather than redrawn.
+  //
+  // The digits are cheap, and they are the part that moves. The marks are
+  // neither: a core is an arc with a stroke round it, a spore is a hexagon and a
+  // spark is an eight-point star, and a filled path costs a hundred times what a
+  // fillRect does. A late yard shows all four, and drawing four shapes that had
+  // not changed since the last one was found cost 0.08 ms a frame -- a fifth of
+  // the whole draw on a busy yard, spent on a picture nothing had touched.
+  //
+  // So the column is kept on a canvas of its own and laid down whole, and drawn
+  // again only when the card moves or grows or gains a row. It is *drawn* there
+  // rather than copied off the frame: reading the frame back is half a
+  // millisecond in a browser with no card under it, which would turn every
+  // camera move into a hitch -- the very thing this is meant to take out.
+  //
+  // Two things make the strip exactly the pixels it replaces. It is laid down at
+  // whole device pixels, and it is drawn at the same offset in device pixels, so
+  // every mark keeps the fraction of a pixel it would have been drawn on and
+  // nothing is resampled at any device ratio. And it is filled with the card's
+  // own white first, so an opaque strip goes down over flat white and there is no
+  // blending to round differently. The digits' column is left out of it -- that
+  // is the part that moves -- and so is the card's edge, whose outermost pixels
+  // are shared with whatever the yard is doing behind them.
+  const d = S.dpr;
+  const cx0 = Math.floor((box.x + 4) * d), cy0 = Math.floor((box.y + 4) * d);
+  const cw = Math.ceil(MARK * 2 * d), ch = Math.ceil((box.h - 8) * d);
+  // A card with nothing on it but a grain of dust has nothing worth keeping: a
+  // fillRect is cheaper than any picture of one, and an early yard is all there
+  // is until the first core comes up.
+  const key = lines.length > 1 &&
+              `${cx0},${cy0},${cw},${ch},${x},${y},${lines.map(l => l.cell).join('.')}`;
+  if (!key) {
+    markKey = '';
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, y - MARK, MARK, MARK);
+  } else {
+    if (markKey !== key) {
+      markCan = markCan || document.createElement('canvas');
+      if (markCan.width !== cw || markCan.height !== ch) { markCan.width = cw; markCan.height = ch; }
+      const g = markCan.getContext('2d');
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = '#fff';
+      g.fillRect(0, 0, cw, ch);
+      g.setTransform(d, 0, 0, d, -cx0, -cy0);   // the card's own place, so nothing shifts
+      // a grain of dust, and then one mark for every other kind, each shown only
+      // once you have seen one
+      g.fillStyle = '#000';
+      g.fillRect(x, y - MARK, MARK, MARK);
+      let at = y;
+      for (const l of lines) {
+        if (!l.cell) continue;                 // the dust is drawn above
+        at -= ROW;
+        drawMark(l.cell, x + MARK / 2, at - MARK / 2, MARK, true, g);
+      }
+      markKey = key;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(markCan, cx0, cy0);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
 
-  // then one row for every other kind, each shown only once you have seen one
+  // and the counts themselves, which are the part that moves
+  ctx.fillStyle = '#000';
+  ctx.fillText(dust, x + MARK * 2, y);
   let row = y;
   for (const l of lines) {
-    if (!l.cell) continue;                     // the dust is drawn above
+    if (!l.cell) continue;
     row -= ROW;
-    drawMark(l.cell, x + MARK / 2, row - MARK / 2, MARK, true);
-    ctx.fillStyle = '#000';
     ctx.fillText(l.text, x + MARK * 2, row);
   }
 }
@@ -2682,6 +2761,10 @@ export function drawWorkers() {
 }
 
 
+// the tone of every thickness a rock cell can hold, filled in once a frame
+// rather than worked out per cell. See the rock's pass in `draw`.
+const TONE = [];
+
 export function draw() {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.fillStyle = '#fff';                       // the page is painted, not assumed
@@ -2730,16 +2813,34 @@ export function draw() {
   drawSmoke();
   ctx.fillStyle = '#000';
 
+  // The rock, a run at a time rather than a cell at a time.
+  //
+  // A rock is up to forty cells across and twenty deep, and this used to be
+  // eight hundred separate `fillRect`s with a `cellPos` object allocated for
+  // each one -- the most expensive thing in the whole frame, and by some way:
+  // measured at 0.12 ms on a yard with nothing else in it.
+  //
+  // But shade *is* depth, and depth runs in bands across a row. A row of a rock
+  // is three or four runs of one tone, not forty cells of it, so each run goes
+  // down as one `fillRect` and the whole rock is a few dozen calls. The tone of
+  // a thickness is looked up once a frame rather than worked out per cell for
+  // the same reason: neither `depthShade` nor `shadeOf` knows anything a table
+  // of seven entries does not.
   const deep = depthOf();
-  let shade = 0;
+  for (let v = 0; v <= MAX_DEPTH; v++) TONE[v] = shadeOf(depthShade(v, deep));
+  const left = rockLeft(), foot = rockFootY();
+  let shade = null;
   for (let y = 0; y < S.gh; y++) {
-    for (let x = 0; x < S.gw; x++) {
-      const v = S.boulder[y][x];
-      if (!v) continue;
-      const band = depthShade(v, deep);
-      if (band !== shade) { shade = band; ctx.fillStyle = shadeOf(band); }
-      const { px, py } = cellPos(x, y);
-      ctx.fillRect(px, py, P, P);
+    const row = S.boulder[y], py = foot - (S.gh - y) * P;
+    let x = 0;
+    while (x < S.gw) {
+      if (!row[x]) { x++; continue; }
+      const tone = TONE[row[x]];
+      let e = x + 1;
+      while (e < S.gw && row[e] && TONE[row[e]] === tone) e++;
+      if (tone !== shade) { shade = tone; ctx.fillStyle = tone; }
+      ctx.fillRect(left + x * P, py, (e - x) * P, P);
+      x = e;
     }
   }
 
@@ -2851,21 +2952,60 @@ export function drawPit() {
 // pale. You put it in the hole and it vanished. So the mark is the size of the
 // thing, not the size of its cell, and the dust behind it is covered the way it
 // is behind a core lying in the yard.
+//
+// Where the cores in the pile were last found.
+//
+// The hole is six hundred cells by seventy-one, and looking in every one of them
+// for a core is forty-three thousand reads a frame to find, at most a handful --
+// 0.1 ms a frame, and the largest single thing left in the draw once the rock
+// and the counter were dealt with.
+//
+// Two facts make it cheap. The counter knows how many there are to find: the
+// pile holds exactly what you hold (`seedPitCores`), and every way of spending
+// one takes its cell out in the same breath as the count, so the pile never has
+// more cores in it than `S.cores` says -- nought means there is nothing to look
+// for, and finding the last one means there is nothing left to look for. And a
+// core that has not moved is still where it was, so the cells it was found in
+// are checked first: `S.cores` reads instead of forty-three thousand. If every
+// one of them still holds a core then those are all of them, in the order a
+// fresh search would have found them, because there cannot be a further one.
+// Anything else -- a core settling a row, one spent, one arriving -- fails the
+// check and the pile is searched again that frame. A search that did not find
+// as many as the counter claims is not evidence of anything: a list shorter than
+// the count fails the very first test next frame, so the pile is looked through
+// again. That is the shape a dev hook's granted core leaves behind, and the
+// answer to it is to look again rather than to trust a short list.
+let coreCells = [];
+
 export function drawPitCores() {
-  const pad = CORE_SIZE / 2 + 1;
-  for (let r = 0; r < pit.rows; r++) {
-    for (let c = 0; c < pit.cols; c++) {
-      // only cores: everything else in the pile is painted with the dust
-      if (at(pit, c, r) !== CORE_CELL) continue;
-      const x = pit.x + c * pit.p, y = bottomY(pit) - (r + 1) * pit.p;
-      const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
-      const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
-      // It does not stop giving off whatever it gives off because you put it
-      // somewhere. A hole with a few of them in it is a hole with a few of them
-      // in it, and the counter is not the only place that should say so.
-      drawCoreGlow(cx, cy);
-      drawMark(CORE_CELL, cx, cy, CORE_SIZE, true);
+  const want = S.cores;
+  if (!want) return;
+  let kept = coreCells.length === want * 2;
+  for (let i = 0; kept && i < coreCells.length; i += 2)
+    kept = coreCells[i] < pit.cols && coreCells[i + 1] < pit.rows &&
+           at(pit, coreCells[i], coreCells[i + 1]) === CORE_CELL;   // a re-dug hole is a new one
+  if (!kept) {
+    coreCells = [];
+    let left = want;
+    for (let r = 0; r < pit.rows && left; r++) {
+      for (let c = 0; c < pit.cols && left; c++) {
+        // only cores: everything else in the pile is painted with the dust
+        if (at(pit, c, r) !== CORE_CELL) continue;
+        coreCells.push(c, r);
+        left--;
+      }
     }
+  }
+  const pad = CORE_SIZE / 2 + 1;
+  for (let i = 0; i < coreCells.length; i += 2) {
+    const x = pit.x + coreCells[i] * pit.p, y = bottomY(pit) - (coreCells[i + 1] + 1) * pit.p;
+    const cx = Math.min(Math.max(x + pit.p / 2, pit.x + pad), pit.x + pit.w - pad);
+    const cy = Math.min(Math.max(y + pit.p / 2, pit.y + pad), bottomY(pit) - pad);
+    // It does not stop giving off whatever it gives off because you put it
+    // somewhere. A hole with a few of them in it is a hole with a few of them
+    // in it, and the counter is not the only place that should say so.
+    drawCoreGlow(cx, cy);
+    drawMark(CORE_CELL, cx, cy, CORE_SIZE, true);
   }
   ctx.fillStyle = '#000';
 }
