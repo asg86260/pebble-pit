@@ -20,7 +20,7 @@ import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from 
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull } from './pit.js';
 import { spawnChip } from './dust.js';
-import { SKY, pitTop as muckTopAt , fillSky, poopCols } from './smog.js';
+import { SKY, pitTop as muckTopAt , fillSky, poopCols, moteX, moteY, clearSky } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -429,7 +429,7 @@ export const seedGame = n => {
 // module holding it came back empty, while the save on disk is untouched. The
 // node yard keeps one module alive for a whole file, so without this a check
 // about restoring the sky passes on motes that were simply never cleared.
-export const coldSky = () => { SKY.length = 0; };
+export const coldSky = () => clearSky();
 
 export const reload = () => { S.dirty = true; persist(); restore(); buildShop(); S.dirty = true; };
 
@@ -650,7 +650,7 @@ export const give = (n, shade = 4) => {
 // drop one of something where you like, for a check that wants to watch it land
 // the sky, set where you want it: a rain is two hours of honest mining away, and
 // a check should not have to do two hours of honest mining
-export const skyX = () => SKY.map(m => m.x);
+export const skyX = () => SKY.map(moteX);
 
 // What the climbing half of the sky is drawn at. There is no fading between a
 // puff and a mote any more -- they are one object -- so this is a check that it
@@ -690,7 +690,7 @@ export const dustOverPit = () => {
 
 export const skyJoin = () => SKY.map(m => +(m.eased ?? 1).toFixed(2));
 
-export const skyXY = () => SKY.map(m => [Math.round(m.x), Math.round(m.y - S.camY)]);
+export const skyXY = () => SKY.map(m => [Math.round(moteX(m)), Math.round(moteY(m) - S.camY)]);
 
 // how much of the layer is lying over the mouth of the hole, which is the part
 // nobody can walk onto

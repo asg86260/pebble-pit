@@ -24,6 +24,9 @@ been done about it, measured the same way on the same three yards.
 | 14 + all four machines, ~6,600-mote sky | 0.501 | 0.232 |
 | the same, over a sky restored from a save (~9,500 motes) | 4.98 | 2.80 |
 
+The last row is older than the rest of it: the anchor rework in item 2 below
+takes a restored sky nearly to nothing, and carries its own measurements.
+
 - **1, `refresh()`** — gone with the mess-layer rework at 415f36c. There is no
   `refresh` any more: `tally()` skips bare ground and memoizes on the tick.
 - **3, `dustAbout()`** — done. `floor` keeps a ledger the way the pit does, and
@@ -50,13 +53,27 @@ been done about it, measured the same way on the same three yards.
   because rain recycles a machine yard's band long before a mote is 405 seconds
   old.
 
-What is still true, and is the honest limit of item 2: a settled mote is cheap
-but not free. Its position is written every frame because the band sways and the
-whole sky creeps on the wind, and six other places — the rain, the draught, the
-recycler, the pointer, the readouts, the drawing — read that position out of the
-mote as a field. A sky that stored anchors and let the drawing evaluate
-`anchor + f(t)` on the motes actually on screen would be free. That is the
-redesign; it is not done.
+  A settled mote is now **free**, which is the rest of item 2 and was written
+  down here as the redesign that had not been done. Its position is not written
+  at all: it is `anchor + f(t)`, where the anchor is the spot it came in at plus
+  its slot's share of a stretch, and `f(t)` is the band's sway lane, the sky's
+  creep on the wind, the lift, and the top and depth of the band — five numbers
+  worked out once a frame and shared by the whole sky. The six places that read
+  a mote's position as a field — the rain, the draught, the recycler, the
+  pointer, the readouts, the drawing — ask `moteX`/`moteY` instead, and the
+  drawing asks only for the motes its own cull leaves on the screen. A mote that
+  has finished arriving comes off a list of the ones being stepped, so `place`
+  does not iterate it either; it goes back on the list, at exactly the pixel it
+  was being drawn at, if a hand or the house takes hold of it.
+
+  Measured the same way, min of ten 150-frame segments, each yard in its own
+  process: `stepSmog` over a still band of 6,646 motes went 0.162 → 0.012
+  ms/frame, and over 3,958 motes 0.098 → 0.007. The whole frame on a
+  6,646-mote yard went 0.257 → 0.090. The machine yard is unchanged
+  (~0.20 both ways) and that is the honest limit of it: `AGE_STILL` is 405
+  seconds, and rain recycles a working band long before a mote is that old, so
+  in a yard with four machines on almost nothing ever reaches rest. The saving
+  is the lategame and restored sky, which is where the cost was.
 
 ## 1. The frame budget
 

@@ -24,7 +24,7 @@ import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
+import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER } from './sprites.js';
 import { leverBox } from './crew.js';
@@ -975,12 +975,19 @@ export function drawSmog() {
   const runs = new Map();
   const warm = [], cool = [];
   for (const m of SKY) {
-    if (!onScreen(m.x)) continue;
-    const x = Math.round(m.x), y = Math.round(m.y);
-    const off = Math.max(-1, Math.min(1, (m.x - mid) / half)) * HAZE_CA;
+    // Where it is, asked of the sky rather than read off the mote: a settled
+    // mote is not written to every frame any more -- see `moteX` in smog.js.
+    // The cull comes first and it is a cull on x alone, so the height and the
+    // fringe are only worked out for what is actually on the glass -- four
+    // motes in five never get that far.
+    const mx = moteX(m);
+    if (!onScreen(mx)) continue;
+    const my = moteY(m);
+    const x = Math.round(mx), y = Math.round(my);
+    const off = Math.max(-1, Math.min(1, (mx - mid) / half)) * HAZE_CA;
     if (Math.abs(off) >= CA_FLOOR) {
-      warm.push(Math.round(m.x - off), y);
-      cool.push(Math.round(m.x + off), y);
+      warm.push(Math.round(mx - off), y);
+      cool.push(Math.round(mx + off), y);
     }
     // its kind's palette, and its own tone out of that palette. Both are fixed
     // on the mote, so a speck does not shimmer between colours frame to frame.
