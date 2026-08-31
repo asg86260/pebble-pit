@@ -417,7 +417,7 @@ export const seedGame = n => {
   // at -- the node tier draws nothing and never asks -- but wrong for a page,
   // where the last line of main.js's boot opens the view on the rock. That line
   // belongs to the page rather than to the game, so the browser suite does it
-  // for itself (see `newRun` in selftest.js) and this stays the game booting.
+  // for itself (see `newRun` in selftest/kit.js) and this stays the game booting.
   return seed();
 };
 

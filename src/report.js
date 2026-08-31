@@ -105,6 +105,23 @@ export function strandedDust() {
   return { left, under };
 }
 
+// One machine's account of itself: whether it has been bought, whether it is
+// running, and the hands, kit and rate behind it. `machine()` returns nothing
+// for a machine that is not in the yard yet, so the whole thing is nothing.
+//
+// It reads as a field of the snapshot below, and it was one -- a five-hundred
+// character line of nested arrows. It is only up here to be readable.
+const machineReport = m => (r => r && ({
+  bought: !!r.bought, on: !!r.on, ask: r.ask ? !!r.ask.on : null, was: r.was | 0,
+  driven: !!r.driven, working: !!r.working, workedAt: r.workedAt | 0,
+  job: m.job, kitFull: kitFull(m.job), kit: hats(m.job),
+  leverX: (x => x == null ? null : Math.round(x))(leverX(m.key)),
+  // the body on its way to throw the lever, if anybody is
+  goer: (g => g ? g.name : null)(S.workers.find(o => o.throwing === m.key)),
+  hands: handsOf(m.job), rate: +machineRate(m.job).toFixed(2),
+  cap: (c => c === Infinity ? null : c)(capOf(m.job))
+}))(machine(m.key));
+
 // Every number the yard has to say about itself, in one object.
 export const snapshot = () => ({
   // Which run this is. Every wobble in the yard was worked out from this number
@@ -115,7 +132,50 @@ export const snapshot = () => ({
   // seeded check and is the one a player's yard can be named by: it is written
   // down with the save and comes back with it. See `runSeed` in state.js.
   runSeed: S.runSeed,
-  houses: houseReport(), paid: S.paid.length, dpr: S.dpr, W: S.W, H: S.H, cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4), apronDust: apronReport().inApron, apronClear: apronReport().inApron === 0, heapAtRock: apronReport().tallest, bankCrest: apronReport().crest, dustLeftOfRock: strandedDust().left, dustUnderRock: strandedDust().under, rockX: Math.round(S.cx), rockLeftX: rockLeft(), rockY: Math.round(S.cy), benchX: Math.round(bench.x), benchY: Math.round(bench.y), benchW: bench.w, rockW: S.gw * P, rockH: S.gh * P, rockFoot: rockFootY(), rockFall: Math.round(S.rockFall), shake: +S.shake.toFixed(2), shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)], dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()), dancing: clockNow() < S.danceUntil, zoom: +S.zoom.toFixed(3), viewW: Math.round(S.viewW), viewH: Math.round(S.viewH), air: AIR.length,
+
+  // The settlement: the blocks put up, and every row that has been paid for.
+  houses: houseReport(),
+  paid: S.paid.length,
+
+  // The screen, and whether a cell lands on a whole device pixel on it.
+  dpr: S.dpr,
+  W: S.W,
+  H: S.H,
+  cellDevicePx: +(P * S.zoom * S.dpr).toFixed(4),
+
+  // The dust banked around the rock: what is in the apron, how high the bank
+  // stands, and what has ended up somewhere nobody can shovel it.
+  apronDust: apronReport().inApron,
+  apronClear: apronReport().inApron === 0,
+  heapAtRock: apronReport().tallest,
+  bankCrest: apronReport().crest,
+  dustLeftOfRock: strandedDust().left,
+  dustUnderRock: strandedDust().under,
+
+  // The boulder, the bench beside it, and the shake when it is struck.
+  rockX: Math.round(S.cx),
+  rockLeftX: rockLeft(),
+  rockY: Math.round(S.cy),
+  benchX: Math.round(bench.x),
+  benchY: Math.round(bench.y),
+  benchW: bench.w,
+  rockW: S.gw * P,
+  rockH: S.gh * P,
+  rockFoot: rockFootY(),
+  rockFall: Math.round(S.rockFall),
+  shake: +S.shake.toFixed(2),
+  shakeOff: [Math.round(S.shakeX), Math.round(S.shakeY)],
+  dropZone: (z => z && [Math.round(z.from), Math.round(z.to)])(dropZone()),
+  dancing: clockNow() < S.danceUntil,
+
+  // The view: how far in, and how much of the world it covers.
+  zoom: +S.zoom.toFixed(3),
+  viewW: Math.round(S.viewW),
+  viewH: Math.round(S.viewH),
+
+  // The air: the motes, the draught the cursor leaves in them, and the one wind
+  // the whole yard leans on.
+  air: AIR.length,
   // how many motes are still carrying a draught the cursor left in them, and how
   // far the strongest of them is being carried
   airStirred: AIR.filter(m => m.sx || m.sy).length,
@@ -128,13 +188,293 @@ export const snapshot = () => ({
   // pixels, as `airPos` is, most of the field reads as standing perfectly still.
   wind: +windAt(clockNow()).toFixed(3),
   airX: AIR.slice(0, 80).map(m => +m.x.toFixed(2)),
-  airUnder: airReport().under, airFront: airReport().front, airKinds: airReport().kinds, airWant: airReport().want, sky: skyReport(), camY: Math.round(S.camY), worldH: S.worldH, shown: Math.round(S.shownStored), pitX: pit.x, pitW: pit.w, pitRows: pit.rows, pitHoleRows: pitDepth() / pit.p, pitDepth: pitDepth(), pitFullDepth: PIT_H, pitGrain: pit.p, pitStep: S.pitStep, pitFine: S.pitFine || 0, groundY: S.groundY, camX: Math.round(S.camX), worldW: S.worldW, pitCapacity: pitCapacity(), pitFull: pitFull(), dustPastPit: dustPastPit(), stored: S.stored, held: S.held, cores: S.cores, shards: S.shards, seenShard: S.seenShard, quarryOpen: S.quarryOpen, labOpen: S.labOpen, intro: S.intro, introDone: S.introDone, reunionDone: S.reunionDone, pair: S.pair.length, buried: S.buried, buriedVisible: buriedVisible(), casinoOpen: S.casinoOpen, casinoBoardOpen: S.casinoBoardOpen, pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() }, spinning: spinning(), tableAir: S.tableAir.length, hand: S.hand && { won: S.hand.won, n: S.hand.n }, potAt: Math.round(potAt().x), table: table.n, paying: S.paying && S.paying.left, chip: chipName(), stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') }, skyShown: S.skyShown, labbers: S.labbers, smoke: S.smoke.filter(p => !p.house && !p.cig && !p.mach).length, machSmoke: S.smoke.filter(p => p.mach).length, cigSmoke: S.smoke.filter(p => p.cig).length, houseSmoke: S.smoke.filter(p => p.house).length, shutters: [...S.shutters].sort((a, b) => a - b), research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) }, research2: S.research2 && { ...S.research2, need: workFor(S.research2.key) }, labRooms: labRooms(), labKitLevel: S.labKitLevel || 0, labPace: +labPace().toFixed(3), labDone: S.labDone, boardOpen: S.boardOpen, labBoardOpen: S.labBoardOpen, schoolBoardOpen: S.schoolBoardOpen, houseBoardOpen: S.houseBoardOpen, crewListOpen: S.crewListOpen, scrubBoardOpen: S.scrubBoardOpen, quarryBoardOpen: S.quarryBoardOpen, farmBoardOpen: S.farmBoardOpen, towerBoardOpen: S.towerBoardOpen, towerOpen: S.towerOpen, towerX: Math.round(tower.x), outhouseOpen: S.outhouseOpen, outhouseX: Math.round(outhouse.x), offers: STATIONS.filter(k => hasOffer(k)), stands: Object.fromEntries(STATIONS.map(k => [k, (r => r && { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) })(standRect(k))]).filter(([, v]) => v)), inLoo: S.workers.filter(w => w.inLoo).length, meteorOpen: S.meteorOpen, meteor: sky.n, bolts: BOLTS.length, summon: +(S.summon || 0).toFixed(3), trail: SPARKLE.length, meteorCore: skyLeft(2), meteorRind: skyLeft(1), meteorX: Math.round(sky.x), meteorY: Math.round(sky.y), sparks: S.sparks, seenSpark: S.seenSpark, wizardHats: S.wizardHats, wizards: S.wizards, spells: [...(S.spells || [])], wizSpeed: S.wizSpeedLevel || 0, wizPower: S.wizPowerLevel || 0, wizMs: Math.round(wizMs()), wizBite: wizBite(), janitors: S.janitors, brewing: S.brewAt > 0, aloft: S.workers.filter(w => w.aloft).length, wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)), smog: smogReport(), smogBand: (SMOG_TOP + SMOG_BAND) * P, scrubX: Math.round(scrub.x), pointed: S.workers.filter(w => w.pointed > clockNow()).map(w => w.name), follows: S.follow ? S.follow.name : null, followOff: S.follow ? Math.round(S.camX + S.viewW / 2 - (S.follow.x + WORKER / 2)) : null, mult: { ...S.mult }, rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) }, labX: Math.round(lab.x), casinoX: Math.round(casino.x), wheel: +S.wheel.toFixed(2), finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
-                                    [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
+  airUnder: airReport().under,
+  airFront: airReport().front,
+  airKinds: airReport().kinds,
+  airWant: airReport().want,
+  sky: skyReport(),
+
+  // Where the view sits in a world of this size, and how much of it is on screen.
+  camY: Math.round(S.camY),
+  worldH: S.worldH,
+  shown: Math.round(S.shownStored),
+
+  // The pit: its shape, how deep the dust in it stands, and what it holds.
+  pitX: pit.x,
+  pitW: pit.w,
+  pitRows: pit.rows,
+  pitHoleRows: pitDepth() / pit.p,
+  pitDepth: pitDepth(),
+  pitFullDepth: PIT_H,
+  pitGrain: pit.p,
+  pitStep: S.pitStep,
+  pitFine: S.pitFine || 0,
+  groundY: S.groundY,
+  camX: Math.round(S.camX),
+  worldW: S.worldW,
+  pitCapacity: pitCapacity(),
+  pitFull: pitFull(),
+  dustPastPit: dustPastPit(),
+  stored: S.stored,
+  held: S.held,
+
+  // Cores and shards, banked and loose.
+  cores: S.cores,
+  shards: S.shards,
+  seenShard: S.seenShard,
+
+  // What has been opened, and how far through the opening story the yard is.
+  quarryOpen: S.quarryOpen,
+  labOpen: S.labOpen,
+  intro: S.intro,
+  introDone: S.introDone,
+  reunionDone: S.reunionDone,
+  pair: S.pair.length,
+  buried: S.buried,
+  buriedVisible: buriedVisible(),
+
+  // The casino: the stake, the spin, and the pot.
+  casinoOpen: S.casinoOpen,
+  casinoBoardOpen: S.casinoBoardOpen,
+  pot: S.pot && { cur: S.pot.cur, stake: S.pot.stake, on: pot() },
+  spinning: spinning(),
+  tableAir: S.tableAir.length,
+  hand: S.hand && { won: S.hand.won, n: S.hand.n },
+  potAt: Math.round(potAt().x),
+  table: table.n,
+  paying: S.paying && S.paying.left,
+  chip: chipName(),
+  stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') },
+
+  // The lab, and every kind of smoke over the yard.
+  skyShown: S.skyShown,
+  labbers: S.labbers,
+  smoke: S.smoke.filter(p => !p.house && !p.cig && !p.mach).length,
+  machSmoke: S.smoke.filter(p => p.mach).length,
+  cigSmoke: S.smoke.filter(p => p.cig).length,
+  houseSmoke: S.smoke.filter(p => p.house).length,
+  shutters: [...S.shutters].sort((a, b) => a - b),
+  research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) },
+  research2: S.research2 && { ...S.research2, need: workFor(S.research2.key) },
+  labRooms: labRooms(),
+  labKitLevel: S.labKitLevel || 0,
+  labPace: +labPace().toFixed(3),
+  labDone: S.labDone,
+
+  // The boards: which one is up, what each has to offer, and where you stand to
+  // open it.
+  boardOpen: S.boardOpen,
+  labBoardOpen: S.labBoardOpen,
+  schoolBoardOpen: S.schoolBoardOpen,
+  houseBoardOpen: S.houseBoardOpen,
+  crewListOpen: S.crewListOpen,
+  scrubBoardOpen: S.scrubBoardOpen,
+  quarryBoardOpen: S.quarryBoardOpen,
+  farmBoardOpen: S.farmBoardOpen,
+  towerBoardOpen: S.towerBoardOpen,
+  towerOpen: S.towerOpen,
+  towerX: Math.round(tower.x),
+  outhouseOpen: S.outhouseOpen,
+  outhouseX: Math.round(outhouse.x),
+  offers: STATIONS.filter(k => hasOffer(k)),
+  stands: Object.fromEntries(STATIONS.map(k => [k, (r => r && { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) })(standRect(k))]).filter(([, v]) => v)),
+  inLoo: S.workers.filter(w => w.inLoo).length,
+
+  // The meteor: what is still up there, and what it throws off on the way down.
+  meteorOpen: S.meteorOpen,
+  meteor: sky.n,
+  bolts: BOLTS.length,
+  summon: +(S.summon || 0).toFixed(3),
+  trail: SPARKLE.length,
+  meteorCore: skyLeft(2),
+  meteorRind: skyLeft(1),
+  meteorX: Math.round(sky.x),
+  meteorY: Math.round(sky.y),
+  sparks: S.sparks,
+  seenSpark: S.seenSpark,
+
+  // The wizards: how many, how fast, and what they are brewing.
+  wizardHats: S.wizardHats,
+  wizards: S.wizards,
+  spells: [...(S.spells || [])],
+  wizSpeed: S.wizSpeedLevel || 0,
+  wizPower: S.wizPowerLevel || 0,
+  wizMs: Math.round(wizMs()),
+  wizBite: wizBite(),
+  janitors: S.janitors,
+  brewing: S.brewAt > 0,
+  aloft: S.workers.filter(w => w.aloft).length,
+  wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)),
+
+  // The smog, and the house that scrubs it.
+  smog: smogReport(),
+  smogBand: (SMOG_TOP + SMOG_BAND) * P,
+  scrubX: Math.round(scrub.x),
+
+  // The cursor: what it is over, and what is following it.
+  pointed: S.workers.filter(w => w.pointed > clockNow()).map(w => w.name),
+  follows: S.follow ? S.follow.name : null,
+  followOff: S.follow ? Math.round(S.camX + S.viewW / 2 - (S.follow.x + WORKER / 2)) : null,
+
+  // What research has bought, and where the buildings stand.
+  mult: { ...S.mult },
+  rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) },
+  labX: Math.round(lab.x),
+  casinoX: Math.round(casino.x),
+  wheel: +S.wheel.toFixed(2),
+
+  // What is lying on the floor waiting to be found.
+  finds: S.floorMarks.map(m => ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard',
+    [SPORE_CELL]: 'spore' })[findKind(m.v) || m.v]),
   // reported by the cell they are in, not the middle of the mark drawn on it
   findAll: S.floorMarks.map(m =>
     `${Math.round(m.x - P / 2)},${Math.round(S.groundY - m.y - P / 2)}`),
   findCells: S.floorMarks.map(m => ({ v: m.v, x: Math.round(m.x - P / 2),
     kind: ({ [CORE_CELL]: 'core', [SHARD_CELL]: 'shard', [SPORE_CELL]: 'spore'
-           })[findKind(m.v) || m.v] })),
+    })[findKind(m.v) || m.v] })),
+
+  // Who is walking somewhere, and how fast a hauler goes.
   commuting: S.workers.filter(w => w.walking).map(w => `${w.type[0]}|${Math.round(w.x)}>${Math.round(w.walkTo)}`),
-  haulPace: +haulSpeed().toFixed(2), quarriers: S.quarriers, quarryX: Math.round(quarry.x), quarryW: quarry.w, bridge: bridgeSpan(), deckWalk: [-70, -40, -10, 0, quarry.w / 2, quarry.w, quarry.w + 10, quarry.w + 40, quarry.w + 70].map(d => Math.round(groundAt(quarry.x + d))), quarryFaceX: Math.round(quarryFace()), ladder: (l => ({ x: Math.round(l.x), top: Math.round(l.top), foot: Math.round(l.foot) }))(ladder()), benches: benches(), benchLevel: S.benchLevel, quarryDug: +dugShare().toFixed(3), quarryTotal: S.quarryTotal || 0, quarryDone: quarryDone(), seam: seamShards(), quarryOwed: S.quarryOwed || 0, machines: Object.fromEntries(MACHINES.map(m => [m.key, (r => r && ({ bought: !!r.bought, on: !!r.on, ask: r.ask ? !!r.ask.on : null, was: r.was | 0, driven: !!r.driven, working: !!r.working, workedAt: r.workedAt | 0, job: m.job, kitFull: kitFull(m.job), kit: hats(m.job), leverX: (x => x == null ? null : Math.round(x))(leverX(m.key)), goer: (g => g ? g.name : null)(S.workers.find(o => o.throwing === m.key)), hands: handsOf(m.job), rate: +machineRate(m.job).toFixed(2), cap: (c => c === Infinity ? null : c)(capOf(m.job)) }))(machine(m.key))])),  quarryH: quarry.h, quarryShape: (c => ({ from: c.from, to: c.to, deep: c.deep, steps: c.floor.map(f => (c.deep - f.y) / P), rims: c.outline.filter(([, y]) => y === S.groundY).length, corners: c.outline.length }))(quarryShape()), spores: S.spores, seenSpore: S.seenSpore, farmOpen: S.farmOpen, farmhands: S.farmhands, farmX: Math.round(farm.x), farmW: farm.w, plotCount: plotCount(), plotLevel: S.plotLevel, plots: S.plots.map(b => +b.toFixed(2)), plotTone: [...S.plotTone], underground: S.workers.filter(w => w.type === 'quarrier' && w.y > S.groundY).length, boulderNo: S.boulderNo, depth: depthOf(), gw: S.gw, gh: S.gh, rock: S.boulder.flat().reduce((a, b) => a + b, 0), seenCore: S.seenCore, seenBench: S.seenBench, seenSects: [...S.seenSects], benchMark: benchMark(), pitGrains: count(pit), pitDust: countDust(pit), crew: S.crew, idle: idle(), roster: rosterReport(), openCamX: Math.round(openingCamX()), heldCore: S.heldCore, coreHome: (h => ({ x: Math.round(h.x), y: Math.round(h.y) }))(coreHome()), coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest }, pickLevel: S.pickLevel, minerPickLevel: S.minerPickLevel, carryLevel: S.carryLevel, speedLevel: S.speedLevel, autoMine: S.autoMine, miners: S.miners, haulers: S.haulers, minerSpeedLevel: S.minerSpeedLevel, haulCarryLevel: S.haulCarryLevel, haulPaceLevel: S.haulPaceLevel, haulCap: haulCap(), claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim), floorX: floor.x, pitFree: pitFree(), booked: S.workers.reduce((n, w) => n + (w.booked || 0), 0), carried: S.workers.reduce((n, w) => n + (w.carry || 0), 0), pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2), commute: +commutePace().toFixed(2) }, minerMs: minerMs(), workers: S.workers.length, workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`), crewNames: S.workers.map(w => `${w.name}|${w.type[0]}|${Math.round((w.lived||0)/1000)}s|m${w.mined||0}|q${w.quarried||0}|g${w.farmed||0}|s${w.stored||0}`).join(' '), crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}|p${wayAt(w.x, w.y).key}|w${w.trained ? (w.kitOf || '?')[0] : '-'}|y${Math.round(w.y)}`), mining: S.mining, paused: S.paused, saying: S.workers.filter(w => w.say).length, moves: [...new Set(S.workers.map(w => w.move).filter(Boolean))].sort(), falling: S.workers.filter(w => w.falling).length, lifted: (w => w && w.name)(lifted()) || null, dragging: S.dragging, mouse: S.mouse, capacity: capacity(), mineMs: mineMs(), pxPerSec: +mineRate().toFixed(2), floor: count(floor), yardFull: !!S.pileFull.rock, pileCount: { ...S.pileCount }, pileFull: { ...S.pileFull }, pileLimit: { ...PILE_LIMIT }, schoolOpen: S.schoolOpen, schoolX: Math.round(school.x), breakers: S.breakers, carters: S.carters, blasters: S.blasters, growers: S.growers, trained: S.workers.filter(w => w.trained).map(w => w.type[0]).sort().join(''), pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key), piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })), floorGrains: S.floorGrains, dustAtQuarry: dustAtQuarry(), pit: count(pit), chips: S.chips.length, chipShades: S.chips.slice(0, 8).map(c => c.s), chipX: S.chips.slice(0, 8).map(c => Math.round(c.x)), breaks: breakReport(), resting: S.workers.filter(w => w.resting).length });
+  haulPace: +haulSpeed().toFixed(2),
+
+  // The quarry: who is in it, how far down it is dug, and what it owes.
+  quarriers: S.quarriers,
+  quarryX: Math.round(quarry.x),
+  quarryW: quarry.w,
+  bridge: bridgeSpan(),
+  deckWalk: [-70, -40, -10, 0, quarry.w / 2, quarry.w, quarry.w + 10, quarry.w + 40, quarry.w + 70].map(d => Math.round(groundAt(quarry.x + d))),
+  quarryFaceX: Math.round(quarryFace()),
+  ladder: (l => ({ x: Math.round(l.x), top: Math.round(l.top), foot: Math.round(l.foot) }))(ladder()),
+  benches: benches(),
+  benchLevel: S.benchLevel,
+  quarryDug: +dugShare().toFixed(3),
+  quarryTotal: S.quarryTotal || 0,
+  quarryDone: quarryDone(),
+  seam: seamShards(),
+  quarryOwed: S.quarryOwed || 0,
+
+  // Every machine, by key.
+  machines: Object.fromEntries(MACHINES.map(m => [m.key, machineReport(m)])),
+
+  // The quarry's shape, cut by cut.
+  quarryH: quarry.h,
+  quarryShape: (c => ({ from: c.from, to: c.to, deep: c.deep, steps: c.floor.map(f => (c.deep - f.y) / P), rims: c.outline.filter(([, y]) => y === S.groundY).length, corners: c.outline.length }))(quarryShape()),
+
+  // The farm and the plots.
+  spores: S.spores,
+  seenSpore: S.seenSpore,
+  farmOpen: S.farmOpen,
+  farmhands: S.farmhands,
+  farmX: Math.round(farm.x),
+  farmW: farm.w,
+  plotCount: plotCount(),
+  plotLevel: S.plotLevel,
+  plots: S.plots.map(b => +b.toFixed(2)),
+  plotTone: [...S.plotTone],
+
+  // The rock being worked: which one, how deep, and how much is left.
+  underground: S.workers.filter(w => w.type === 'quarrier' && w.y > S.groundY).length,
+  boulderNo: S.boulderNo,
+  depth: depthOf(),
+  gw: S.gw,
+  gh: S.gh,
+  rock: S.boulder.flat().reduce((a, b) => a + b, 0),
+
+  // What the player has been shown at least once.
+  seenCore: S.seenCore,
+  seenBench: S.seenBench,
+  seenSects: [...S.seenSects],
+  benchMark: benchMark(),
+
+  // The dust in the pit, grain by grain.
+  pitGrains: count(pit),
+  pitDust: countDust(pit),
+
+  // The crew, counted, and the roster board that moves them about.
+  crew: S.crew,
+  idle: idle(),
+  roster: rosterReport(),
+  openCamX: Math.round(openingCamX()),
+
+  // The core: carried, loose, or home.
+  heldCore: S.heldCore,
+  coreHome: (h => ({ x: Math.round(h.x), y: Math.round(h.y) }))(coreHome()),
+  coreItem: S.coreItem && { x: Math.round(S.coreItem.x), y: Math.round(S.coreItem.y), rest: S.coreItem.rest },
+
+  // The upgrades, by rung.
+  pickLevel: S.pickLevel,
+  minerPickLevel: S.minerPickLevel,
+  carryLevel: S.carryLevel,
+  speedLevel: S.speedLevel,
+  autoMine: S.autoMine,
+  miners: S.miners,
+  haulers: S.haulers,
+  minerSpeedLevel: S.minerSpeedLevel,
+  haulCarryLevel: S.haulCarryLevel,
+  haulPaceLevel: S.haulPaceLevel,
+  haulCap: haulCap(),
+
+  // The shovelling: who has claimed which stretch of floor, and what they are
+  // carrying.
+  claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim),
+  floorX: floor.x,
+  pitFree: pitFree(),
+  booked: S.workers.reduce((n, w) => n + (w.booked || 0), 0),
+  carried: S.workers.reduce((n, w) => n + (w.carry || 0), 0),
+  pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2), commute: +commutePace().toFixed(2) },
+  minerMs: minerMs(),
+
+  // The bodies themselves: where they are, what they are saying, and what is
+  // being dragged.
+  workers: S.workers.length,
+  workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
+  crewNames: S.workers.map(w => `${w.name}|${w.type[0]}|${Math.round((w.lived||0)/1000)}s|m${w.mined||0}|q${w.quarried||0}|g${w.farmed||0}|s${w.stored||0}`).join(' '),
+  crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}|p${wayAt(w.x, w.y).key}|w${w.trained ? (w.kitOf || '?')[0] : '-'}|y${Math.round(w.y)}`),
+  mining: S.mining,
+  paused: S.paused,
+  saying: S.workers.filter(w => w.say).length,
+  moves: [...new Set(S.workers.map(w => w.move).filter(Boolean))].sort(),
+  falling: S.workers.filter(w => w.falling).length,
+  lifted: (w => w && w.name)(lifted()) || null,
+  dragging: S.dragging,
+  mouse: S.mouse,
+
+  // The rates a body works at.
+  capacity: capacity(),
+  mineMs: mineMs(),
+  pxPerSec: +mineRate().toFixed(2),
+
+  // The yard's floor and the piles standing on it.
+  floor: count(floor),
+  yardFull: !!S.pileFull.rock,
+  pileCount: { ...S.pileCount },
+  pileFull: { ...S.pileFull },
+  pileLimit: { ...PILE_LIMIT },
+
+  // The school, and who has been trained.
+  schoolOpen: S.schoolOpen,
+  schoolX: Math.round(school.x),
+  breakers: S.breakers,
+  carters: S.carters,
+  blasters: S.blasters,
+  growers: S.growers,
+  trained: S.workers.filter(w => w.trained).map(w => w.type[0]).sort().join(''),
+
+  // The piles as they are drawn.
+  pileMarks: S.piles.filter(p => S.pileFull[p.key]).map(p => p.key),
+  piles: S.piles.map(p => ({ key: p.key, from: Math.round(p.from), to: Math.round(p.to) })),
+
+  // Grains, counted where they lie.
+  floorGrains: S.floorGrains,
+  dustAtQuarry: dustAtQuarry(),
+  pit: count(pit),
+
+  // The casino chips in flight.
+  chips: S.chips.length,
+  chipShades: S.chips.slice(0, 8).map(c => c.s),
+  chipX: S.chips.slice(0, 8).map(c => Math.round(c.x)),
+
+  // Who is on a break.
+  breaks: breakReport(),
+  resting: S.workers.filter(w => w.resting).length
+});
