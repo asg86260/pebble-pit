@@ -8,6 +8,8 @@
 
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
+import { specOf } from '../src/machines.js';
+import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
 //
@@ -154,6 +156,67 @@ group('the ram advances into the hill as it eats it', async () => {
     ok(standoff[0] > P * RAM_REACH,
        'which leaves the arm real daylight to cross -- a stroke you can see',
        `${standoff[0]}px, reach ${RAM_REACH} cells`)
+  ];
+});
+
+// The smoke and the dirt leave by the chimney, and the chimney is where the
+// picture says it is.
+//
+// These were two different places. The puff came off a table in the drawing; the
+// fouling went up from `at + P` -- the machine's left-hand edge, halfway up it --
+// so the yard drew a stack smoking in one spot and put the soot into the sky in
+// another. Both read the machine's own `stack` now.
+//
+// Asserted against the *sprite* rather than against a remembered column, because
+// the way this broke is instructive: the tractor was mirrored, its exhaust moved
+// from one end of the picture to the other, and a literal offset went on
+// pointing at the fender. So the claim is the one that survives a redraw --
+// whatever cell the smoke comes out of, there is pipe drawn in it.
+group('a machine smokes out of its own chimney, whichever way it faces', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0, 0, 1);
+  window.__machine('ram', { bought: true });
+  window.__machine('tiller', { bought: true });
+
+  // Which cell of the sprite's top row the stack sits over, as a column index.
+  const colOf = (key, sprite) => {
+    const sp = specOf(key);
+    return Math.round((sp.stack().x - sp.at()) / P);
+  };
+  const onPipe = (rows, c, flip) => {
+    const col = flip ? spriteW(rows) - 1 - c : c;
+    return rows[0][col] === '#';
+  };
+
+  const ramCol = colOf('ram', RAM);
+  const ramTop = Math.round(specOf('ram').stack().y);
+
+  // Up the row, then back down it: the tractor turns round at the end and its
+  // exhaust goes with it.
+  yard.S.tillerAt = 0.4;                     // first half of the run: facing up
+  const upCol = colOf('tiller', TILLER);
+  yard.S.tillerAt = 1.4;                     // second half: turned round
+  const backCol = colOf('tiller', TILLER);
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(onPipe(RAM, ramCol, false),
+       "the ram's smoke comes out of a cell that has pipe drawn in it",
+       `column ${ramCol} of "${RAM[0]}"`),
+    ok(ramTop === Math.round(state().groundY - spriteH(RAM) * P),
+       'and off the top of it, not out of its side',
+       `${ramTop} vs ${Math.round(state().groundY - spriteH(RAM) * P)}`),
+    ok(onPipe(TILLER, upCol, false),
+       'the tractor going up the row smokes out of its exhaust',
+       `column ${upCol} of "${TILLER[0]}"`),
+    ok(onPipe(TILLER, backCol, true),
+       '...and so does the tractor coming back down it, mirrored with the picture',
+       `column ${backCol} mirrored in "${TILLER[0]}"`),
+    ok(upCol !== backCol,
+       'which are not the same cell -- the pipe moved when the tractor turned',
+       `${upCol} vs ${backCol}`)
   ];
 });
 

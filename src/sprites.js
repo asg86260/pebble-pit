@@ -43,6 +43,17 @@ export function drawSprite(ctx, rows, x, y, o = {}) {
   ctx.fillStyle = '#000';
 }
 
+// Which column the chimney is in, read off the picture rather than written down
+// beside it.
+//
+// Every engine here is drawn with its stack standing proud of the body, so the
+// top row of the sprite holds the chimney and nothing else -- and the first cell
+// in that row is therefore the pipe. Which means the one thing nobody has to
+// remember when a machine is redrawn, or mirrored, is where its smoke comes out.
+// The tractor was mirrored once already and its exhaust moved from one end of
+// the picture to the other; a literal would have gone on pointing at the fender.
+export const stackCol = rows => Math.max(0, rows[0].search(/[^. ]/));
+
 // How wide and tall a shape is, in cells -- for anything that needs to sit a
 // sprite against something else.
 export const spriteW = rows => Math.max(...rows.map(r => r.length));

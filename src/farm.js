@@ -18,6 +18,7 @@ import { walkY, plotCount, resite, pileAt } from './world.js';
 import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
+import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
@@ -357,6 +358,14 @@ defineMachine('tiller', {
   type: 'farmhand',
   at: tillerAt,
   y: () => walkY(tillerAt() + WORKER / 2) - P,
+  // The top of the exhaust. Mirrored with the tractor, because the tractor turns
+  // round at the end of the row and its pipe goes with it.
+  stack: () => {
+    const x = Math.round(tillerAt());
+    const c = tillerWay() < 0 ? spriteW(TILLER) - 1 - stackCol(TILLER) : stackCol(TILLER);
+    return { x: x + c * P,
+             y: Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P - spriteH(TILLER) * P };
+  },
   // A unit of the farm's work is a slice of tending, so the beat is short and
   // the bite is small -- the plot comes on by the same fraction a hand would
   // have brought it on in that time, times what the machine is worth.

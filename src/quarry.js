@@ -894,6 +894,11 @@ defineMachine('jaw', {
   type: 'quarrier',
   at: jawX,
   y: jawY,
+  // The top of its chimney. The jaw's stack is not part of its picture -- it is
+  // drawn beside it, because the smoke has to know where the top is and the
+  // sprite would have to grow two rows it never uses. So the column is named
+  // here, once, and the drawing reads it back rather than keeping its own copy.
+  stack: () => ({ x: jawX() + (spriteW(JAW[0]) - 2) * P, y: jawY() - P * 2 }),
   // Where the *body* stands, which is not where the machine is. The jaw is on
   // the floor of the cut; its tender works the hoist on the deck at the head of
   // the ladder, which is also where the lever is. A tender posted down the hole

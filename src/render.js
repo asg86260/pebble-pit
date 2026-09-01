@@ -25,7 +25,7 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
-import { machine, MACHINES } from './machines.js';
+import { machine, MACHINES, specOf } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
@@ -3129,12 +3129,14 @@ const built = key => { const m = machine(key); return !!(m && m.bought); };
 // front, opening and shutting on its own beat. It stands on the ground as the
 // ground is now -- see `jawY`, which reads `dugTopY` -- so when the quarry falls
 // back in the jaw comes up with it, the way a quarrier's feet do.
-// Where the jaw's stack stands and where the hoist's rope runs, in cells off the
-// sprite's own left edge. Both are facts about the pictures above, so both are
-// read off them rather than written down a second time here -- the offsets that
-// used to be literals were the reason growing a machine meant hunting its
-// chimney afterwards.
-const jawStackCol = () => spriteW(JAW[0]) - 2;
+// Where the hoist's rope runs, in cells off the sprite's own left edge -- a fact
+// about the picture above, so it is read off it rather than written down a
+// second time here.
+//
+// The jaw's chimney used to be worked out here too. It is the machine's own
+// `stack` now, registered with it in quarry.js, because the smoke and the dirt
+// both have to leave from it and a third opinion in the drawing is a third thing
+// to keep in step.
 const ropeCol = () => HOIST[spriteH(HOIST) - 1].indexOf('.');
 
 export function drawJaw() {
@@ -3149,7 +3151,11 @@ export function drawJaw() {
   // the back, so it stands over the engine end rather than over the mouth --
   // read off the sprite's width so it stays there if the jaw is ever redrawn.
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + jawStackCol() * P, y - P * 2, P, P * 2);
+  const st = specOf('jaw') && specOf('jaw').stack();
+  if (st) {
+    const sy = Math.round(st.y / P) * P;
+    ctx.fillRect(Math.round(st.x / P) * P, sy, P, y - sy);
+  }
 }
 
 // The hoist: an upright frame on the deck over the mouth of the cut, a white
@@ -3417,24 +3423,31 @@ export function drawRunSwitch(box, key) {
 // Only a machine that is actually running smokes, and `stepMachines` is what
 // decides that. A stack puffing over an idle machine would be the drawing
 // claiming something the yard denies.
-const STACKS = {
-  jaw:    () => ({ x: jawX() + jawStackCol() * P, y: jawY() - P * 2 }),
-  ram:    () => ({ x: ramX() + P * 2, y: S.groundY - P * spriteH(RAM) }),
-  tiller: () => ({ x: tillerAt() + tCol(7) * P,
-                   y: walkY(tillerAt() + WORKER / 2) + WORKER - P * spriteH(TILLER) }),
-  // At the lip end, over the last leg that has ground under it -- not at the
-  // head, which hangs out over the hole.
-  belt:   () => ({ x: beltPost(), y: beltY() - P * 3 })
-};
+// A puff off a machine's stack. It is the same smoke the lab's chimney makes and
+// the same list, flagged `mach` so that the lab's own count -- which means
+// something specific, that research is being worked on -- is not muddled by it.
+//
+// Only a machine that is actually running smokes, and `stepMachines` is what
+// decides that. A stack puffing over an idle machine would be the drawing
+// claiming something the yard denies.
+//
+// Where each stack is, is the station's own business and is registered with the
+// machine -- see `defineMachine`. This used to be a table here, which meant the
+// drawing had one opinion about where the chimney was and `stepMachines` had
+// another about where the dirt went up, and the two disagreed for as long as
+// nobody put them side by side.
 
 export function stepMachineSmoke(now) {
-  for (const key of Object.keys(STACKS)) {
+  for (const m0 of MACHINES) {
+    const key = m0.key;
     const m = machine(key);
     if (!m || !m.bought) continue;
     if (now - (m.workedAt || 0) > MACHINE_IDLE_MS) continue;   // idle, unmanned, or stood down
     if (now < (m.puffAt || 0)) continue;
     m.puffAt = now + MACHINE_PUFF_MS * (0.6 + rand() * 0.8);
-    const at = STACKS[key]();
+    const spec = specOf(key);
+    if (!spec || !spec.stack) continue;
+    const at = spec.stack();
     puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach' });
   }
 }

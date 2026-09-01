@@ -1296,8 +1296,17 @@ export function stepMachines(now) {
     // engine puts up wherever it stands, and it is the one thing in the sky that
     // is nobody's resource. So the station's own fouling is switched off while a
     // machine drives it and the whole amount comes off the stack in one colour.
+    //
+    // Off the top of the stack, which is where the smoke you can see comes from.
+    // It used to go up from `at + P` at the machine's own waist -- the left-hand
+    // end of the engine, halfway up it -- so the yard drew a chimney puffing at
+    // one place and put the dirt into the sky at another. Both read the machine's
+    // own `stack` now, which is the station's to answer and nobody else's.
     const dirt = MACHINE_FOUL * did;
-    if (dirt > 0) foul(dirt, at + P, spec.y ? spec.y() : walkY(at), 'mach');
+    if (dirt > 0) {
+      const s = spec.stack ? spec.stack() : { x: at + P, y: spec.y ? spec.y() : walkY(at) };
+      foul(dirt, s.x, s.y, 'mach');
+    }
     S.dirty = true;
   }
 }

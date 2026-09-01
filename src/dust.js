@@ -234,6 +234,9 @@ defineMachine('belt', {
   at: beltFrom,
   y: beltY,
   tendAt: beltPost,
+  // At the lip end, over the last leg that has ground under it -- not at the
+  // head, which hangs out over the hole.
+  stack: () => ({ x: beltPost(), y: beltY() - P * 3 }),
   // A grain moved takes the same time a hauler's scoop does, divided by what the
   // belt is worth. `scoopMs` carries the lip's own ladders, so everything bought
   // for carrying still applies to the machine that replaced it.

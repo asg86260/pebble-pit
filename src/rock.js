@@ -12,7 +12,7 @@ import {
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor, bench } from './state.js';
-import { spriteW, spriteH, RAM } from './sprites.js';
+import { spriteW, spriteH, stackCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -570,6 +570,10 @@ defineMachine('ram', {
   type: 'miner',
   at: ramX,
   y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
+  // The top of its chimney: where the smoke leaves and, therefore, where the
+  // dirt enters the sky. Both read this, so they cannot come from two places.
+  stack: () => ({ x: ramX() + stackCol(RAM) * P,
+                  y: S.groundY - spriteH(RAM) * P }),
   // Where the body stands. The yard side of the machine, clear of the apron --
   // the ground right against the face is where the next boulder lands, and a
   // tender posted in it would be stood on. Without a `tendAt` the runner looked for a miner
