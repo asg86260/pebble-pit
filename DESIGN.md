@@ -2519,14 +2519,26 @@ a range worth reading:
    the darker shades, so the sky goes on getting worse after it has run out of
    room to get fuller.
 
-**It clumps, and it drifts.** Per-cell noise on its own is television static —
-evenly wrong in a way nothing in the air ever looks. So the threshold field is a
-couple of octaves of value noise rather than a flat hash, which pulls the cells
-into soft patches with thin places between them, and the field is *sampled*
-against a slowly moving offset driven by the same two slow swings the wind
-already runs on. The cells stay on the lattice and stay crisp; the haze slides
-through them. That is also what keeps the sky from being a still picture without
-a single entity in it to step.
+**It scatters, and it drifts.** The threshold is an independent hash per cell,
+so painted cells fall evenly over the whole sky the way the band's own specks do,
+and raising the level simply puts more of them up. **Haze is specks.** The first
+cut carried the field on two octaves of value noise, which pulled the cells into
+soft grey patches — and patches are cloud: the moment specks organise into shapes
+the sky stops reading as dirt in the air and starts reading as weather with
+edges. A little of the octaves is kept, and only a little, so the sky is not
+perfectly even, which nothing in the air is.
+
+What makes a scatter read as haze rather than as television static is **the
+weight of one cell**. A speck has to be faint enough that what you see is the
+crowd of them and never any one square — the band already knew this and drew its
+motes at about a fifth of an ink apiece. So coverage carries the level and each
+cell stays light enough to be air. Turn a single cell up and the same field is
+salt and pepper; it is the one number in here with no margin in it.
+
+The field is *sampled* against a slowly moving offset driven by the same two slow
+swings the wind already runs on. The cells stay on the lattice and stay crisp;
+the haze slides through them. That is also what keeps the sky from being a still
+picture without a single entity in it to step.
 
 **How much and what from, kept apart.** Density is the level. Color is the mix —
 which palette the painted cells are drawn from, blue-grey through to soot, the

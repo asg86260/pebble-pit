@@ -108,8 +108,22 @@ const FIELD = new Float32Array(HAZE_NOISE_W * HAZE_NOISE_H);
   let lo = Infinity, hi = -Infinity;
   for (let r = 0; r < HAZE_NOISE_H; r++) {
     for (let c = 0; c < HAZE_NOISE_W; c++) {
-      const v = octave(c, r, HAZE_COARSE, 0) * HAZE_CLUMP
-              + octave(c, r, HAZE_FINE, 7919) * (1 - HAZE_CLUMP);
+      // Two fields, mixed. **The grain is the one that matters**: an independent
+      // hash per cell, so painted cells scatter evenly over the whole sky the
+      // way the band's own specks do, and raising the level simply puts more of
+      // them up. That is what haze looks like -- a lot of separate specks, more
+      // of them when it is worse.
+      //
+      // The clump is the two octaves of value noise, and it is turned nearly all
+      // the way down for a reason worth writing here rather than losing in a
+      // config file: with the clump carrying the field, the sky drew as soft
+      // grey blobs. Blobs are cloud. Haze is not made of shapes -- it is made of
+      // specks, and the moment the specks organise into patches the sky stops
+      // reading as dirt in the air and starts reading as weather with edges.
+      const grain = hash(c + 5, r + 11);
+      const clump = octave(c, r, HAZE_COARSE, 0) * 0.6
+                  + octave(c, r, HAZE_FINE, 7919) * 0.4;
+      const v = grain * (1 - HAZE_CLUMP) + clump * HAZE_CLUMP;
       FIELD[r * HAZE_NOISE_W + c] = v;
       if (v < lo) lo = v;
       if (v > hi) hi = v;

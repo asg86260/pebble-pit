@@ -185,7 +185,11 @@ export const HAZE_NOISE_H = 64;
 // sky gets a seam ruled across it. Powers of two, so they always do.
 export const HAZE_COARSE = 16;
 export const HAZE_FINE = 8;
-export let HAZE_CLUMP = 0.80;        // and how much of the field is the coarse one
+// How much the field clumps, against how much it is an even scatter of separate
+// specks. Nearly nothing, and that is the whole character of the sky: haze is
+// specks, and a field that organises them into patches draws cloud instead. A
+// little is kept so the sky is not perfectly even, which nothing in the air is.
+export let HAZE_CLUMP = 0.12;        // and how much of the field is the coarse one
 // Cells a second the field creeps through the sky, at full wind. Slow: at a
 // tenth of a cell a second you never catch it moving and the sky is never quite
 // the sky it was a minute ago, which is the whole job.
@@ -194,25 +198,21 @@ export let HAZE_DRIFT = 0.11;
 // gets is heavy rather than closed, so there are always thin places to see the
 // clouds through, and a sky that shut over would be buying pressure the
 // pollution rate already applies with interest.
-export let HAZE_GAIN = 0.80;
+export let HAZE_GAIN = 0.86;
 // The depth of field over which a painted cell reaches full weight. Small, so
 // coverage is most of the reading at a clean sky and weight takes over at a bad
 // one; large, and the whole sky steps from pale to dark together.
-export let HAZE_FADE = 0.18;
+export let HAZE_FADE = 0.26;
 // The darkest a single cell is ever drawn. Kept apart from render.js's own
 // HAZE_INK, which is the band's: the two are different pictures of the same
 // sky and they will want different weights while both are on screen.
-export let HAZE_CELL_INK = 0.46;
-// A twentieth either side, so a painted sky is smoke of different thicknesses
-// rather than a screen of identical squares -- and no more than that.
-//
-// It was a fifth, and a fifth is salt and pepper. At a full sky nearly every
-// cell is painted and nearly every one of them is at full weight, so whatever
-// jitter is left is the *only* thing still varying and the sky reads as grain
-// laid over the clumps: which is the exact complaint the band it replaces was
-// built to answer. At a heavy sky the variation has to come from the field, or
-// there is no picture up there but noise.
-export let HAZE_GIVE = 0.05;
+export let HAZE_CELL_INK = 0.24;
+// A fifth either side, so a painted sky is specks of different thicknesses
+// rather than a screen of identical squares. The band does exactly this to its
+// own motes and calls it texture rather than confetti; the same reasoning holds
+// here, and it holds because the ink below is low. Jitter on a heavy cell is
+// salt and pepper; jitter on a faint one is smoke.
+export let HAZE_GIVE = 0.20;
 // How far the field's own values are pulled in towards the middle. At full
 // spread the thin places between patches stay bare until the sky is nearly
 // full, so a middling sky reads as fog banks with clean air between them rather

@@ -330,9 +330,12 @@ is the ledger and `syncMix` keeps it level with `S.haze`, which the band still
 owns. The three faults worth remembering, all found by eye: a noise octave whose
 y period did not divide the field's height, so it did not tile and drew fat bands
 of haze with clean air ruled between them; ink scaled for the band's thousands of
-overlapping motes, which left the first third of the range invisible; and a fifth
-of per-cell jitter, which reads as film grain at a full sky — the exact complaint
-this replaces. At a heavy sky the variation has to come from the field.
+overlapping motes, which left the first third of the range invisible; and —
+the one that took a second pass over the whole look — **carrying the field on
+value noise at all.** Octaves pull specks into soft grey patches, and patches are
+cloud. Haze is specks: an independent hash per cell, scattered evenly, each one
+faint enough that what you see is the crowd and never any one square. Coverage
+carries the level. Turn a single cell up and the same field is salt and pepper.
 
 Still to do: cut the band; the polish pass (metered wisps into the throat, colored from the mix); the
 record. The hard parts, in order: the field reading as haze rather than as a
