@@ -274,6 +274,10 @@ export const buy = async key => {
   const b = shop().querySelector(`button[data-key="${key}"]`);
   if (!b || b.disabled) return false;
   b.click();
+  // Everything past the press is built now, the bench's own rows included --
+  // see works.js. This tier is about the page, not the yard, so the work is
+  // finished on the spot rather than staffed and waited for.
+  window.__finish();
   await sleep(150);
   return true;
 };

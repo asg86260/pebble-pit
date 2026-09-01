@@ -7,7 +7,7 @@
 // what keeps the rock worth digging for the whole run. See "The ladder" in
 // DESIGN.md.
 
-import { group, ok, state, yard, openSites } from './helpers.mjs';
+import { group, ok, state, yard, openSites, buyBuilt } from './helpers.mjs';
 
 import { RUNGS, MINE_FLOOR } from '../src/config.js';
 import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
@@ -39,7 +39,7 @@ group('a ladder has an end, and says where you are on it', async () => {
   const seen = [];
   for (let i = 0; i < 12; i++) {
     seen.push(strength.rung());
-    window.__buy('carry');
+    buyBuilt('carry');
   }
   const top = strength.rung();
   const cost0 = window.__upgrades().find(u => u.key === 'carry');
@@ -61,9 +61,9 @@ group('a rate ladder ends exactly on the floor it always had', async () => {
   window.__grant({ shards: 40000, spores: 40000 });
   // the swing row is not offered until the swinging is automatic, which is the
   // row above it on the same board
-  window.__buy('auto');
+  buyBuilt('auto');
   const before = state().mineMs;
-  for (let i = 0; i < 10; i++) window.__buy('speed');
+  for (let i = 0; i < 10; i++) buyBuilt('speed');
   const after = state();
   return [
     ok(before > after.mineMs, 'the swing gets faster', `${before}ms -> ${after.mineMs}ms`),
@@ -80,11 +80,11 @@ group('above the first tier a rung costs its own coin and dust', async () => {
   window.__crew(1, 0);
   window.__grant({ shards: 500, spores: 500 });   // no dust at all
   const poor = state();
-  const gotNothing = window.__buy('pick');
+  const gotNothing = buyBuilt('pick');
   const stillPoor = state();
 
   window.__give(50000);
-  const gotIt = window.__buy('pick');
+  const gotIt = buyBuilt('pick');
   const rich = state();
   return [
     ok(poor.shards >= 100, 'there is blue to spend', `${poor.shards}`),

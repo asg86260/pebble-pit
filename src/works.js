@@ -19,7 +19,7 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S } from './state.js';
+import { S, bench } from './state.js';
 import { WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 
 // Where a row's work stands, and therefore whose hands do it.
@@ -39,10 +39,27 @@ export const SITE_JOB = {
   farm: 'farmhands',
   scrub: 'scrubbers',
   tower: 'wizards',
-  yard: 'builders'
+  yard: 'builders',
+  // The bench's own ladders, fitted at the bench: the one site where what is
+  // being built is not a place but a thing about somebody.
+  bench: 'builders'
 };
 
 export const SITES = Object.keys(SITE_JOB);
+// The sites with no gang of their own, worked by whoever is spare -- and by
+// whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
+export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
+export const busyBuilderSites = () => BUILDER_SITES.filter(site => busyAt(site));
+
+// Where a site's work stands, for a body walking to it. A row that opens a
+// place says where its place will be; the bench is the bench; the rest have
+// nowhere in particular and a body already in the yard is at work where it is.
+export const siteX = site => {
+  const w = workAt(site);
+  if (!w) return null;
+  if (w.at != null) return w.at;
+  return site === 'bench' ? bench.x + bench.w / 2 : null;
+};
 
 // How many pairs of hands are at a site this frame. crew.js sets it; until it
 // does, nothing is anywhere -- which is the right answer for a check that has

@@ -380,7 +380,7 @@ export const TESTS = [
     window.__give(99999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
     run(20);
-    for (let i = 0; i < 9; i++) { window.__buy('carry'); window.__buy('pick'); }
+    for (let i = 0; i < 9; i++) { window.__buy('carry'); window.__finish(); window.__buy('pick'); window.__finish(); }
     window.__build();
     window.__board('bench');
     await sleep(400);

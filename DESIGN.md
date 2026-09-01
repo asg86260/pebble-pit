@@ -3012,3 +3012,77 @@ fixing. The first three are done; the rest are written down and left.
 6. **`cost:` shadowing `bill:`.** Several rows carry both, the `cost` there for
    "anything that asks in one coin". Two prices on one row is one of them going
    stale.
+
+## The bench takes time too (built)
+
+"Time is a price" stopped at the bench's own ladders on the argument that the
+opening should not begin with a wait. That argument was about a *clock* -- eight
+seconds of nothing happening on the first row you ever read. It is a weaker
+argument against *somebody walking over and doing it*, which is the opposite of
+nothing happening: it is the first thing in the game that shows you the crew
+work for you. So the bench joins the rest.
+
+**Every row on the bench is built, and it is built at the bench.** Strength,
+hold to mine, your swing, the pickaxes, the crew's strength and speed, the
+harness and the boots: `kind: 'rung'`, and a new site, `bench`. The buildings
+and the machines sold from the bench keep `site: 'yard'` -- a lab is built where
+the lab will stand, not on a workbench.
+
+**Who does it: whoever is spare, and they walk to the bench.** The bench has no
+gang of its own, so like the school and the yard it is a builders' site. That
+means the builders now serve *three* sites rather than one, which is the one
+piece of new machinery this needs:
+
+- `S.builders` is `min(spare, BUILD_GANG × busy builder sites)` -- three per
+  site at most, never the whole yard.
+- A builder is *assigned* a site when it is made or freed (round-robin over the
+  busy builder sites), walks to it, and stands there. When its site's work
+  lands it takes the next busy site or goes back to carrying. A builder is
+  counted at exactly one site, so a hat being taught and a rung being fitted
+  do not share the same pair of hands.
+- `S.works[site].at` is where they walk: the bench's own x for the bench.
+
+**One work at a time on the bench.** It is the same rule every site has, and it
+is what stops the opening from being "queue five rungs and walk away": you buy
+strength, somebody walks over and fits it, and *then* you buy swing. The board
+greys the other rows meanwhile with their ordinary prices, so the reading is
+"the bench is busy", not "you cannot afford this".
+
+**How long.** Bench rungs are rungs: 8 worker-seconds, times 1.35 a rung. With
+one body that is eight seconds plus the walk. The walk is deliberately part of
+it -- see "No teleporting" -- and the first body in the game lives next door to
+the bench, so the first wait is about ten seconds of watching somebody come and
+do something. That is the opening the game wanted anyway.
+
+**Nobody spare: the nearest body comes and does it.** Carrying first -- a
+hauler is spare by definition -- and if there is nobody carrying, the body
+standing nearest the site is *lent*: taken off its count, walked over, and given
+back to its station the moment the site has nothing left to build. One body a
+site, never a gang -- borrowing is what keeps a purchase from stalling, not a
+way to staff a build off the rock. The row never says "nobody on it" at a
+builders' site, because there is always somebody; the price of that is a miner
+away from the rock for ten seconds, which is a price you can see being paid.
+
+This is the builders' rule and not the bench's alone: the yard and the school
+are builders' sites too, and one rule for three places beats one rule each.
+The four sites with a gang of their own keep the lab's rule -- an empty cut
+builds nothing -- because their work *is* the gang's, and lending a miner to
+the quarry would be the yard deciding who works where.
+
+**The opening still cannot deadlock**, and now for two reasons: the story's one
+body is carrying, and even if it were not, it would be the nearest.
+
+**What it shows.** The lab's bar, over the bench, while a builder is at it. The
+builder stands at the bench the way a labber stands at the door -- no hammering
+mime; the bar is the work. The bench's own mark (`benchMark`) does not flag a
+row while the bench is busy, which it already knows how to do.
+
+**What it is not on.** The casino, still.
+
+### What changes in the checks
+
+Every check that buys a bench rung and reads the effect on the next line: a
+handful in `test/` (`ladder`, `pit`, `machines` via `__levels`, `boards`) and
+more in `src/selftest/`. Same two fixes as last time -- `buyBuilt` where the
+mechanic is the point, `__finish()` where the page is -- plus `__crew(0, n)`
+to have hands spare.

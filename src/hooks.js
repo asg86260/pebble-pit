@@ -158,6 +158,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
     if (r) { r.bought = false; r.tookKit = false; }
   }
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
+  S.lent = [];                    // and nobody is on loan: these counts are the whole crew
   if (wz > 0) openMeteor();
   // The quarry and the plot only hold so many, so a hook asked for four down the
   // quarry gets a quarry with four benches in it rather than two of the four

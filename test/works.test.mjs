@@ -177,25 +177,83 @@ group('a half-built thing survives the tab being shut', async () => {
   ];
 });
 
-// The bench's own ladders are the opening of the game and stay instant: a game
-// that begins by making you wait for the first row you ever read begins badly.
-group('the bench own ladders are still had on the press', async () => {
+// The bench's own ladders are built too, at the bench, by whoever is spare:
+// the one body the story hands you is carrying, so the first purchase in the
+// game is somebody walking over and fitting it. See "The bench takes time too".
+group('a bench rung is fitted at the bench by a spare body', async () => {
   window.__reset();
-  window.__crew(1, 1);
+  window.__crew(0, 1);                       // one body, carrying
   window.__grant({ dust: 90000 });
   run(2);
 
-  // the row's own price climbs a rung, which is the one thing the board reports
-  const rung = () => window.__rows().find(r => r.key === 'carry')?.bill?.[0]?.[1] ?? 0;
-  const was = rung();
-  const bought = window.__buy('carry');
-  const now = rung();
+  const price = () => window.__rows().find(r => r.key === 'carry')?.bill?.[0]?.[1] ?? 0;
+  const was = price();
+  const started = window.__buy('carry');
+  const work = on('carry');
+  const walked = runUntil(() => state().works?.bench?.hands > 0, 60);
+  const atX = state().crewDetail?.length ? state().builders : 0;
+  const landed = runUntil(() => price() > was, 60);
 
   return [
-    ok(bought, 'strength can be bought'),
-    ok(Object.values(works()).length === 0,
-       'and nothing is being built for it', JSON.stringify(works())),
-    ok(now > was, 'it is simply had', `${was} -> ${now}`)
+    ok(started, 'strength can be bought'),
+    ok(!!work && work.done === 0, 'and it is a work on the bench, not yet had',
+       JSON.stringify(work)),
+    ok(walked, 'the spare body walks to the bench and stands there'),
+    ok(landed, 'and fits it'),
+    ok(Object.values(works()).length === 0, 'and then goes back to carrying',
+       JSON.stringify(works()))
+  ];
+});
+
+// Nobody spare: the nearest body is lent. It comes off its station's count,
+// does the work, and is given back -- one body, never a gang, and never at a
+// site that has a gang of its own.
+group('with nobody spare, the nearest body is lent and given back', async () => {
+  window.__reset();
+  window.__crew(3, 0);                       // three on the rock, nobody carrying
+  window.__grant({ dust: 90000 });
+  run(2);
+
+  const miners0 = state().miners;
+  window.__buy('carry');
+  run(0.2);
+  const lent = state();
+  const landed = runUntil(() => Object.values(works()).length === 0, 90);
+  run(1);
+  const back = state();
+
+  return [
+    ok(lent.miners === miners0 - 1 && lent.builders === 1,
+       'one miner comes off the rock to do it',
+       `${miners0} -> ${lent.miners} miners, ${lent.builders} building`),
+    ok(lent.lent.length === 1 && lent.lent[0] === 'miners',
+       'and the rock is owed a body', JSON.stringify(lent.lent)),
+    ok(landed, 'the rung is fitted'),
+    ok(back.miners === miners0 && back.builders === 0 && back.lent.length === 0,
+       'and the miner is back on the rock, the debt cleared',
+       `${back.miners} miners, ${back.builders} building, owed ${JSON.stringify(back.lent)}`)
+  ];
+});
+
+// ...but a site with a gang of its own is not lent to. An empty cut builds
+// nothing, however many bodies are standing about elsewhere.
+group('a station site is never lent a body', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(3, 0);                       // three on the rock, none in the cut
+  window.__grant({ shards: 900, spores: 900, dust: 90000 });
+  run(2);
+
+  const miners0 = state().miners;
+  window.__buy('quarrybench');
+  run(20);
+  const s = state();
+
+  return [
+    ok(s.miners === miners0 && s.lent.length === 0,
+       'the rock keeps its gang', `${s.miners} miners, owed ${JSON.stringify(s.lent)}`),
+    ok(s.works?.quarry && s.works.quarry.done === 0,
+       'and the cut has done nothing', JSON.stringify(s.works?.quarry))
   ];
 });
 

@@ -13,7 +13,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
-import { SITE_JOB, setHands, setStaff, workAt } from './works.js';
+import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX } from './works.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
@@ -333,17 +333,37 @@ function newJanitor() {
 // real price rather than a slider. See `rebalance` in upgrades.js, which is the
 // one place the count is set.
 function newBuilder() {
-  const x = buildStationX() ?? S.cx;
-  return { type: 'builder', goal: 'to', x, y: walkY(x + WORKER / 2) };
+  const { x } = hireSpot();
+  return { type: 'builder', goal: 'to', site: null, x, y: walkY(x + WORKER / 2) };
+}
+
+// Which site a builder is on. Three places can want one at once -- the bench,
+// the yard and the school -- and a body is at exactly one of them, so each
+// builder is given a site and counted there. It keeps the one it has while
+// that site is busy; when the work lands it takes the busiest-short site next,
+// or is stood down by `rebalance` if there is none.
+function siteFor(w) {
+  const busy = busyBuilderSites();
+  if (w.site && busy.includes(w.site)) return w.site;
+  let pick = null, fewest = Infinity;
+  for (const site of busy) {
+    const n = S.workers.filter(o => o.type === 'builder' && o.site === site).length;
+    if (n < fewest) { fewest = n; pick = site; }
+  }
+  w.site = pick;
+  return pick;
 }
 
 // Where the work is. A row that opens a place knows where its place will stand
-// and says so; the two machines on the bench do not, because a ram is on the
-// rock and a belt is the length of the yard, and a body already standing in the
-// yard is standing at both. Those get no walk and are at work where they are.
-function buildStationX() {
-  const w = workAt('yard');
-  return w && w.at != null ? w.at - WORKER / 2 : null;
+// and says so, and the bench is the bench; the two machines on the bench do
+// not, because a ram is on the rock and a belt is the length of the yard, and a
+// body already standing in the yard is standing at both. Those get no walk and
+// are at work where they are.
+function buildStationX(w) {
+  const site = siteFor(w);
+  if (!site) return null;
+  const x = siteX(site);
+  return x == null ? null : x - WORKER / 2;
 }
 
 // A builder walks to the site and stands there. There is nothing to watch after
@@ -351,7 +371,7 @@ function buildStationX() {
 // same signal the lab has always used, and a mime of hammering would be the one
 // piece of animation in this yard that is about nothing.
 export function stepBuilder(w) {
-  const to = buildStationX();
+  const to = buildStationX(w);
   w.y = walkY(w.x + WORKER / 2);
   if (to === null) { w.goal = 'at'; return; }    // at work wherever it stands
   const d = to - w.x;
@@ -381,7 +401,10 @@ const ARRIVED = {
 
 setHands(site => {
   const at = ARRIVED[SITE_JOB[site]];
-  return at ? S.workers.filter(at).length : 0;
+  if (!at) return 0;
+  // A builder is at *its* site and no other: three sites can be busy at once
+  // and a body at the bench is not putting up the lab.
+  return S.workers.filter(w => at(w) && (w.type !== 'builder' || w.site === site)).length;
 });
 
 // A build starting turns spare hands into builders and a build landing turns
@@ -422,9 +445,9 @@ function handStationX(type) {
   // pixels above that, but the walk is to here: the going up is the job, not the
   // commute.
   if (type === 'wizard') return underMeteor();
-  // Whatever the yard is putting up, which moves as often as the yard puts up
-  // something else -- and is nowhere at all when it is not.
-  if (type === 'builder') return buildStationX();
+  // A builder has no station to be walked to: it picks a site of its own and
+  // walks itself there, see `stepBuilder`.
+  if (type === 'builder') return null;
   return null;
 }
 
@@ -442,6 +465,9 @@ function settle(w) {
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
   Object.assign(w, fresh);
+  // and it is nobody's loan any more: whatever it was lent for, it is on a job
+  // of its own now, and the next borrowing starts from scratch
+  delete w.lend;
   w.trained = hat;
   w.kitOf = of;
   w.carry = carry;
@@ -1750,7 +1776,11 @@ export function syncWorkers() {
   // wherever it came from, and losing a load to a reshuffle would break that.
   const room = { ...want };                 // want, counted down as bodies are kept
   const keep = [], stood = [];
-  for (const w of S.workers) (room[w.type]-- > 0 ? keep : stood).push(w);
+  // A body lent to a build is the one its station gives up -- `rebalance` picked
+  // it for being nearest -- so it is considered last and therefore stood down
+  // first. Everybody else keeps their order.
+  const ordered = [...S.workers.filter(w => !w.lend), ...S.workers.filter(w => w.lend)];
+  for (const w of ordered) (room[w.type]-- > 0 ? keep : stood).push(w);
   for (const w of stood) {
     for (let i = 0; i < (w.carry || 0); i++)
       spawnChip(w.x + WORKER / 2, S.groundY - WORKER, bell() * 0.5, -1.2, w.load?.[i] || 1);

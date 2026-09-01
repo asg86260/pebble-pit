@@ -30,7 +30,8 @@ import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
-import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows } from './works.js';
+import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
+         busyBuilderSites, siteX } from './works.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -555,13 +556,61 @@ export function rebalance() {
   //
   // Never the whole yard: a build that swallowed every idle body would stop the
   // dust moving altogether, and what this is meant to be is a share of the
-  // yard's attention rather than all of it. See BUILD_GANG.
-  S.builders = busyAt('yard') ? Math.min(BUILD_GANG, Math.max(0, spareHands())) : 0;
+  // yard's attention rather than all of it. See BUILD_GANG -- that many a site,
+  // because the bench, the yard and the school are three places and a body at
+  // one of them is not at the other two.
+  const sites = busyBuilderSites();
+  const gang = BUILD_GANG * sites.length;
+  // Nobody spare: the nearest body comes and does it. Carrying first -- a
+  // hauler is spare by definition and is already counted -- and if there is
+  // nobody carrying, the body standing nearest the site is *lent*: taken off
+  // its count, which makes it spare, and given back the moment there is nothing
+  // left to build. One a site and never a gang: borrowing is what keeps a
+  // purchase from stalling, not a way to staff a build off the rock. What it
+  // costs is a miner away from the rock for ten seconds, which you can see.
+  //
+  // The four sites with a gang of their own keep the lab's rule instead -- an
+  // empty cut builds nothing -- because their work *is* the gang's.
+  S.lent = S.lent || [];
+  for (let short = sites.length - Math.max(0, spareHands()); short > 0; short--) {
+    const w = nearestLendable(sites);
+    if (!w) break;
+    const job = JOB_OF[w.type];
+    w.lend = true;                       // stood down first, see syncWorkers
+    S[job]--;
+    S.lent.push(job);
+  }
+  // ...and given back. Whatever job was borrowed from gets its count back the
+  // frame the last builders' site clears, and `syncWorkers` walks a body home
+  // to it -- if there is still room there: a bench dug out from under a
+  // borrowed quarrier is a body back on carrying, which is what it would have
+  // been anyway.
+  if (!sites.length && S.lent.length) {
+    for (const job of S.lent) if (roomAt(job) > 0) S[job]++;
+    S.lent = [];
+  }
+  S.builders = sites.length ? Math.min(gang, Math.max(0, spareHands())) : 0;
   // Carrying is the job nobody is assigned to: it is what a body does when it is
   // on nothing, so the haulers are whatever is left over -- less whoever is over
   // at the site putting something up. The carts are the lip's kit and are
   // counted with the rest of it, not held out of this.
   S.haulers = Math.max(0, spareHands() - S.builders);
+}
+
+// The body on a station standing nearest any of the sites that want one, and
+// not already spoken for. Station bodies only: a hauler is spare already and a
+// builder is the thing being looked for.
+function nearestLendable(sites) {
+  const xs = sites.map(siteX).filter(x => x != null);
+  let best = null, dist = Infinity;
+  for (const w of S.workers) {
+    const job = JOB_OF[w.type];
+    if (!job || !JOBS.includes(job) || w.lend) continue;
+    if (S[job] < 1) continue;
+    const d = xs.length ? Math.min(...xs.map(x => Math.abs(w.x - x))) : 0;
+    if (d < dist) { dist = d; best = w; }
+  }
+  return best;
 }
 
 export function hire() {
@@ -674,6 +723,10 @@ const CAVE = site({
 export const UPGRADES = [
   {
     key: 'carry',
+    // Fitted at the bench, by whoever walks over to do it. The bench's own
+    // ladders were the one part of the game still had on the press; see "The
+    // bench takes time too" in DESIGN.md for why they are not any more.
+    kind: 'rung', site: 'bench',
     // The same word the crew's row uses, because it is the same thing: how much
     // a pair of hands lifts in one go. Yours were called "carry" and theirs
     // "load", which is two names for one idea and a player having to learn both.
@@ -734,6 +787,7 @@ export const UPGRADES = [
   },
   {
     key: 'auto',
+    kind: 'rung', site: 'bench',
     name: 'hold to mine',
     cost: () => 25,
     buy: () => { S.autoMine = true; },
@@ -741,6 +795,7 @@ export const UPGRADES = [
   },
   {
     key: 'speed',
+    kind: 'rung', site: 'bench',
     name: 'swing',
     unit: 'px/s',
     pct: true,
@@ -765,6 +820,7 @@ export const UPGRADES = [
   // Yours is a tool, and a tool is cut stone: shards.
   {
     key: 'pick',
+    kind: 'rung', site: 'bench',
     // And the same again for the tool. What you swing and what a miner swings do
     // exactly the same job, so they are the same row under two headings rather
     // than "pick" here and "upgrade pickaxe" over there.
@@ -787,6 +843,7 @@ export const UPGRADES = [
   // two currencies a job each instead of one of them doing all the work.
   {
     key: 'minerpick',
+    kind: 'rung', site: 'bench',
     // What you are buying is the tool, not the number the tool moves. The row
     // said "miner bite", which is the effect described in the game's own jargon
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
@@ -802,6 +859,7 @@ export const UPGRADES = [
   },
   {
     key: 'minerspeed',
+    kind: 'rung', site: 'bench',
     // Two words do the work of every rate on these boards now: a **swing** is a
     // pick hitting rock, and **speed** is how often anything else happens. Each
     // one means one thing, and a row under "the rock" saying "miner" was saying
@@ -818,6 +876,7 @@ export const UPGRADES = [
   },
   {
     key: 'haulcarry',
+    kind: 'rung', site: 'bench',
     // The heading over these rows already says "the crew", so the rows do not
     // need to say "worker" as well -- and what a body can pick up in one go is
     // its strength rather than its load, which is the thing it is carrying.
@@ -843,6 +902,7 @@ export const UPGRADES = [
   // and say so -- they are gear, which is what blue is for.
   {
     key: 'harness',
+    kind: 'rung', site: 'bench',
     name: 'harness',
     unit: 'px',
     rung: () => S.harnessLevel,
@@ -857,6 +917,7 @@ export const UPGRADES = [
   },
   {
     key: 'boots',
+    kind: 'rung', site: 'bench',
     name: 'boots',
     unit: 'px/s',
     pct: true,
@@ -870,6 +931,7 @@ export const UPGRADES = [
   },
   {
     key: 'haulpace',
+    kind: 'rung', site: 'bench',
     name: 'speed',
     unit: 'px/s',
     pct: true,

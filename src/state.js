@@ -149,6 +149,7 @@ export const S = {
   // bench. See works.js.
   works: {},              // site -> { key, done, of, at } in worker-seconds
   builders: 0,            // spare hands putting up whatever the yard is building
+  lent: [],               // and the jobs a body was borrowed from to be one, to give back
 
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
