@@ -19,7 +19,7 @@
 // like anything else lying about.
 
 import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
-         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE } from './config.js';
+         WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, CHUTE_FALL } from './config.js';
 import { frames } from './clock.js';
 import { S, sky } from './state.js';
 import { STEP } from './lab.js';
@@ -114,8 +114,18 @@ function trail(w, now) {
 export function floatDown(w) {
   const foot = walkY(w.x + WORKER / 2);
   w.aloft = w.y < foot;
-  if (w.y >= foot) { w.y = foot; w.floating = false; w.aloft = false; return true; }
-  w.y = Math.min(foot, w.y + WIZ_RISE * 1.6 * frames());   // pixels a frame
+  // The canopy goes with the landing, along with everything else that says this
+  // body is in the sky. A parachute left on a body standing on the ground is a
+  // parachute drawn over somebody shovelling.
+  if (w.y >= foot) {
+    w.y = foot; w.floating = false; w.aloft = false; w.chute = false;
+    return true;
+  }
+  // Under a canopy it comes down slower, because that is what a canopy is for.
+  // A body stepping out of a balloon and dropping at a wizard's pace is a body
+  // being lowered on a wire.
+  const pace = w.chute ? CHUTE_FALL : WIZ_RISE * 1.6;
+  w.y = Math.min(foot, w.y + pace * frames());   // pixels a frame
   return false;
 }
 

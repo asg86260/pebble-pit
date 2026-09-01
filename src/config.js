@@ -601,6 +601,21 @@ export let BALLOON_WIND = 0.45;
 // And its own slow swing on top, so two craft on the same wind are still not
 // doing the same thing.
 export let BALLOON_SWING = 0.22;
+// Pixels a frame a craft climbs when it is going home the only way it goes home:
+// up and out of the window. Brisk -- this is a thing leaving, not a thing
+// drifting -- but slow enough to be watched going.
+export const BALLOON_LEAVE = 1.15;
+// Pixels a frame a body under a canopy comes down at. Slower than a wizard
+// floats, because a canopy is a thing that slows you: a body stepping out of a
+// balloon and arriving at the same pace as one being lowered on a wire is a
+// parachute doing nothing.
+export const CHUTE_FALL = 0.55;
+export const CHUTE_W = P * 10;       // and how wide the canopy over it is
+export const CHUTE_H = P * 4;
+// How far over the head the canopy rides. Close in, it read as a lamp on a post
+// rather than as a thing holding a body up: what says parachute is the daylight
+// between the two, with the lines crossing it.
+export const CHUTE_GAP = P * 6;
 // Where the lanes are, as a share of the sky's own depth. The first craft rides
 // high and each one after it a little lower, so a fleet crosses rather than
 // passing through itself.

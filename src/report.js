@@ -465,6 +465,9 @@ export const snapshot = () => ({
     for (let c = 0; c < m.length; c++) if (m[c]) out.push([c, m[c]]);
     return out;
   })(),
+  // Anybody currently under a canopy, having stepped out of a balloon. A count
+  // and their heights, so a check can watch one actually come down.
+  chutes: S.workers.filter(w => w.chute).map(w => Math.round(w.y)),
   // The bodies on the scrubbers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
   // a basket. `berth` is -1 for the house and the craft's index otherwise.

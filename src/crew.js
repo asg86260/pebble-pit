@@ -27,6 +27,7 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
+import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_ELBOW,
@@ -1502,6 +1503,10 @@ function retask(w, type) {
   // second, which for a body that took the best part of a minute to go up reads
   // as the hat being switched off. It comes down the way it went up.
   if (w.aloft && type !== 'wizard') w.floating = true;
+  // ...and a body taken out of a balloon goes over the side under a canopy. It
+  // is already floating by the line above; this is what says there is a
+  // parachute over it, and it lets go of the craft so the craft can leave.
+  bailOut(w);
   w.type = type;
   w.fetching = null;
   w.wanting = null;

@@ -107,6 +107,40 @@ group('nobody gets into a balloon without walking to it', async () => {
   ];
 });
 
+group('taken off the job, the rider steps out and the craft leaves', async () => {
+  rich();
+  window.__buy('balloon');
+  window.__air({ scrubbers: 2 });
+  runUntil(() => state().craft[0] && state().craft[0].up, 60);
+  const flying = state().craft[0];
+
+  // Off the scrubbers while it is up. Nobody rides a balloon home: the body goes
+  // over the side under a canopy and the craft goes up and out of the window.
+  window.__air({ scrubbers: 0 });
+  const opened = runUntil(() => (state().chutes || []).length > 0, 10);
+  const first = (state().chutes || [])[0];
+  const rose = runUntil(() => state().craft[0].y < flying.y - 100, 20);
+  const climbing = state().craft[0].y;
+
+  // ...and it turns up again at its mast, moored, with nothing remembered about
+  // the trip.
+  const home = runUntil(() => state().craft[0].lift === 0, 60);
+  const back = state().craft[0];
+
+  // and the canopy comes down and is put away
+  const landed = runUntil(() => (state().chutes || []).length === 0, 60);
+
+  window.__air({ scrubbers: 0 });
+  return [
+    ok(opened, 'the rider steps out under a canopy', `at y ${first}`),
+    ok(rose, 'and the craft goes up rather than coming home across the yard',
+       `${flying.y} -> ${climbing}`),
+    ok(home && back.lift === 0, 'and turns up again moored at its mast',
+       `lift ${back.lift}, x ${back.x}`),
+    ok(landed, 'and the canopy is put away when its feet are down')
+  ];
+});
+
 group('a craft comes back and is let go of when the job ends', async () => {
   rich();
   window.__buy('balloon');

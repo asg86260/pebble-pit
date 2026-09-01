@@ -26,7 +26,7 @@ import { P, WORKER, FARM_WALK, BALLOON_RUNGS, BALLOON_DUST, BALLOON_RATE,
          BALLOON_PACE, BALLOON_LIFT, BALLOON_W, BALLOON_H, BALLOON_BASKET,
          BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
          BALLOON_FILTER_W, BALLOON_FILTER_H,
-         BALLOON_BOB, BALLOON_WIND, BALLOON_SWING } from './config.js';
+         BALLOON_BOB, BALLOON_WIND, BALLOON_SWING, BALLOON_LEAVE } from './config.js';
 import { S, scrub } from './state.js';
 import { frames, now } from './clock.js';
 import { bandTop, bandLow } from './smog.js';
@@ -66,7 +66,7 @@ export const craftCost = () => Math.round(BALLOON_DUST * Math.pow(BALLOON_RATE, 
 // is the same one every other station gives when you buy the room before the
 // body: a balloon tied to a post, visibly doing nothing.
 export function buyCraft() {
-  CRAFT.push({ x: mastX(), dir: CRAFT.length % 2 ? -1 : 1, lift: 0 });
+  CRAFT.push({ x: mastX(), dir: CRAFT.length % 2 ? -1 : 1, lift: 0, rise: 0, leaving: false });
   S.dirty = true;
 }
 
@@ -115,7 +115,7 @@ export function craftY(i) {
   // `lift`, so a balloon on the ground does not bob -- a thing tied down and
   // loaded does not float, and one that did would look like it was about to be
   // stepped into by somebody chasing it.
-  const up = laneY(i) + bobOf(i) * c.lift;
+  const up = laneY(i) + bobOf(i) * c.lift - (c.rise || 0);
   return down + (up - down) * c.lift;
 }
 
@@ -180,6 +180,24 @@ export function berthFor(w) {
   // wandering off: `capOf` should not have let it be assigned at all, and a body
   // with nowhere to be is a body to put somewhere obvious.
   return (w.berth = -1);
+}
+
+// **Over the side.** A rider taken off the scrubbers does not ride the craft
+// home; it steps out and comes down under a canopy, and the balloon goes up
+// without it.
+//
+// Called from `retask`, which is the one place a body's job is taken away from
+// it, and *after* that has already set `floating` -- so `aloft` is deliberately
+// left standing here. A body under a parachute is still in the sky, and clearing
+// it would hand the body straight back to the fall rule, which is the thing
+// `aloft` exists to keep away from it. `floatDown` clears all three when its feet
+// are down.
+export function bailOut(w) {
+  if (w.craft == null) return;
+  w.chute = true;
+  w.craft = null;
+  w.berth = null;
+  if (w.goal === 'aloft') w.goal = 'to';
 }
 
 // Out of the basket, but still on the scrubbers: it keeps its berth and goes
@@ -248,6 +266,34 @@ export function stepBalloons() {
   for (let i = 0; i < CRAFT.length; i++) {
     const c = CRAFT[i];
     const want = crewed(i) ? 1 : 0;
+
+    // **A craft that has lost its rider in the air does not come home.** It goes
+    // up, out of the top of the window, and turns up again moored at the mast --
+    // which is what a balloon nobody is flying does, and it is a far better
+    // picture than a bag drifting back across the yard on its own and settling
+    // itself neatly on a post.
+    //
+    // Only from properly up. One still climbing off the mast has not gone
+    // anywhere and simply settles back down, which is what "the body changed its
+    // mind on the way over" ought to look like.
+    if (want === 1) c.leaving = false;
+    else if (c.lift > 0.999) c.leaving = true;
+
+    if (c.leaving) {
+      c.rise += BALLOON_LEAVE * f;
+      c.x += c.dir * BALLOON_PACE * paceOf(i) * f;
+      // Gone: over the top of the window and out of it, envelope and all. It
+      // comes back at its mast with nothing remembered about the trip -- which
+      // is a jump, and the one place in this game a jump is honest, because
+      // there is nobody who could be looking at it.
+      if (craftY(i) + BALLOON_H + BALLOON_FILTER_H + BALLOON_BASKET < S.camY) {
+        c.x = mastX();
+        c.lift = 0;
+        c.rise = 0;
+        c.leaving = false;
+      }
+      continue;
+    }
 
     // Up when somebody is aboard, down when they are not, and eased either way.
     // A craft that snapped between the mast and its lane would be a thing that
@@ -345,7 +391,11 @@ export function craftLoad(list) {
     CRAFT.push({
       x: Number.isFinite(c.x) ? c.x : mastX(),
       dir: c.dir < 0 ? -1 : 1,
-      lift: Math.max(0, Math.min(1, c.lift || 0))
+      lift: Math.max(0, Math.min(1, c.lift || 0)),
+      // A craft caught mid-departure comes back moored rather than half way out
+      // of the window. There is nothing worth saving about a trip whose whole
+      // point is that it ends off screen.
+      rise: 0, leaving: false
     });
   }
 }

@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE_FROM, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_H, CHUTE_GAP,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -1495,6 +1495,34 @@ export function drawBalloons() {
     ctx.fillRect(Math.round(bl) + P, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
     ctx.fillRect(Math.round(bl) + bw - P * 2, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
     ctx.fillRect(Math.round(bl), by - P * 2, bw, P * 2);
+  }
+}
+
+// The canopy over a body that has stepped out of a balloon. Drawn with the craft
+// rather than with the crew, because it is a piece of the balloon's story: it is
+// what the yard shows you instead of a body being switched off in mid-air.
+//
+// A dome and two lines, and the dome is rows of cells like the envelope above it
+// -- one is a small version of the other, which is the point. The body itself is
+// drawn by the crew pass as usual; nothing here touches it.
+export function drawChutes() {
+  for (const w of S.workers) {
+    if (!w.chute) continue;
+    const cx = Math.round(w.x + WORKER / 2);
+    const capBot = Math.round(w.y) - CHUTE_GAP;     // well clear of the head
+    const rows = Math.round(CHUTE_H / P);
+    ctx.fillStyle = '#000';
+    for (let n = 0; n < rows; n++) {
+      // widest at the hem and closing towards the crown, which is a canopy the
+      // right way up -- the envelope's own curve turned over
+      const t = n / Math.max(1, rows - 1);
+      const cells = Math.max(2, Math.round((CHUTE_W / P) * (0.45 + t * 0.55)));
+      const runW = cells * P;
+      ctx.fillRect(Math.round(cx - runW / 2), capBot - CHUTE_H + n * P, runW, P);
+    }
+    // the two lines down to the shoulders
+    ctx.fillRect(cx - Math.round(CHUTE_W / 2 / P) * P + P, capBot, P, CHUTE_GAP);
+    ctx.fillRect(cx + Math.round(CHUTE_W / 2 / P) * P - P * 2, capBot, P, CHUTE_GAP);
   }
 }
 
@@ -3022,6 +3050,7 @@ export function draw() {
   drawPuffs();             // what the crew are putting up there right now
   drawSmog();              // and what it has gathered into up there
   drawBalloons();          // and the craft crossing it
+  drawChutes();            // and anybody who has stepped out of one
   drawRain();              // and whatever is coming down out of it, or going into the house
   drawPointed();           // and an arrow over whoever you just asked for by name
   drawCursor();
