@@ -817,7 +817,7 @@ export const QUARRY_UPGRADES = [
     // The last thing the cut ever sells, and it does not appear until the hole is
     // as deep as it will ever go. See `canBuy`.
     key: 'jaw',
-    name: 'the jaw',
+    name: 'the drill',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
     show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
