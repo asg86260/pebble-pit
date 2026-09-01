@@ -317,6 +317,26 @@ function newJanitor() {
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
 function stationX(type) {
+  const base = handStationX(type);
+  if (base === null) return null;              // carrying: already at work anywhere
+  // A station with a machine standing on it is worked *from the machine*, not
+  // from the ground the hands used to work. Without this a body put on the rock
+  // walks to the middle of the hill, climbs it, and is then walked straight back
+  // down to the ram it was always going to end up on -- which is the same three
+  // trips to do one thing that `retask` goes out of its way to avoid for the kit
+  // stand, and is just as plainly wrong to watch.
+  const key = JOB_MACHINE[JOB_OF[type]];
+  const r = key && machine(key);
+  if (r && r.bought) {
+    const spec = specOf(key);
+    if (spec) return postOf(spec, base);
+  }
+  return base;
+}
+
+// Where the job is done by hand, which is where a body goes when there is no
+// machine standing on it.
+function handStationX(type) {
   if (type === 'miner') return S.cx - WORKER / 2;
   if (type === 'quarrier') return quarryFace();
   if (type === 'farmhand') return plotX(0);
