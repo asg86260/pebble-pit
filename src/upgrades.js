@@ -158,6 +158,12 @@ export const purse = money =>
   S.stored;
 
 // units are the marks themselves: a grain of dust, a grain a second
+//
+// Only the ones the yard has a coin for. A unit measured in something you cannot
+// hold -- work at the bench, motes through the fan, bolts off a wand -- is
+// written out in the words the row already names it by. See `gainText`: this
+// table says what a unit is *drawn* as, not which units exist, and a row naming
+// one that is not in here used to have the lookup itself put on the board.
 export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
@@ -192,7 +198,12 @@ export const gainText = u => {
   if (!u.from) return '';
   const a = Number(u.from()), b = Number(u.to());
   if (!isFinite(a) || !isFinite(b)) return '';
-  const mark = u.unit ? ' ' + UNITS[u.unit] : '';
+  // The mark if the yard has one for it, and the row's own word if it has not.
+  // Four rows name a unit no coin stands for -- the lab's work, the fan's motes,
+  // the tower's bolts and the cells one takes off a star -- and what the board
+  // printed for all four was the failed lookup: "better instruments, +25%
+  // undefined". A missing mark is a unit to write out, not a row to break.
+  const mark = u.unit ? ' ' + (UNITS[u.unit] || u.unit) : '';
   // A count says what it is now and what it would be. "+1" tells you what the
   // row does and nothing about whether it is worth it: going from one to two is
   // doubling what you can carry, and going from eleven to twelve is not, and the
