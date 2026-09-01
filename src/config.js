@@ -872,21 +872,25 @@ export const CASINO_CHIPS = [10, 100, 1000, 'all'];
 // So past the first band the heap is a *reading* of the pot rather than a count
 // of it, on a ladder written down here rather than worked out per hand: a
 // tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
-// marks so nothing jumps and a double is always about three hundred more grains
-// on the ground.
+// marks so nothing jumps and a double is always about forty-five more grains on
+// the ground -- a fifth of the first band, which is the smallest step that still
+// reads as more sand.
 //
-//   1 - 1,000    the pot itself, one for one
-//   10,000       2,000        1,000,000     4,000
-//   100,000      3,000        10,000,000+   5,000, and that is the brim
+//   1 - 100      the pot itself, one for one
+//   1,000        250          100,000       550
+//   10,000       400          1,000,000+    700, and that is the brim
 //
-// The brim is five thousand because that is a heap you can take in at a glance
-// and settle in a frame; the fourteen thousand this stretch of ground would
-// physically take is neither. See `shownFor` in casino.js -- and note that what
+// The brim is seven hundred because that is a heap the size of the building it
+// stands beside -- 276 by 120 pixels against a block of 156 by 72 -- and the
+// thing a heap has to do from the far end of the yard is read as a heap rather
+// than as the weather. The fourteen thousand grains this stretch of ground would
+// physically take is a wall; five thousand was still twice the height of the
+// roof. See `shownFor` in casino.js -- and note that what
 // is approximate is the size of the heap and nothing else: the row says the
 // exact pot, banking credits the exact pot, and the hole fills with it.
-export const CASINO_PILE_ONE = 1000;   // the largest pot still drawn one for one
-export const CASINO_PILE_BAND = 1000;  // grains a tenfold pot adds past it
-export const CASINO_PILE_BRIM = 5000;  // and the most that ever lies there
+export const CASINO_PILE_ONE = 100;   // the largest pot still drawn one for one
+export const CASINO_PILE_BAND = 150;  // grains a tenfold pot adds past it
+export const CASINO_PILE_BRIM = 700;  // and the most that ever lies there
 // How long a settled hand stands over the building saying which way it went. A
 // wheel that stopped and told you nothing is a wheel you have to have been
 // watching, and the yard already has a mark for news you missed -- the lab's

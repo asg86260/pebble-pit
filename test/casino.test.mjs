@@ -148,7 +148,7 @@ group('a save mid-pour comes back mid-pour', async () => {
 //
 // The ladder itself, worked out the way DESIGN.md writes it. A check that read
 // the game's own function for the answer would agree with anything.
-const band = n => n <= 1000 ? n : Math.min(5000, Math.round(1000 + 1000 * Math.log10(n / 1000)));
+const band = n => n <= 100 ? n : Math.min(700, Math.round(100 + 150 * Math.log10(n / 100)));
 
 group('the heap past the first band is a reading of the pot', async () => {
   atTheTable(2);                                 // the thousand chip
@@ -188,7 +188,7 @@ group('the heap past the first band is a reading of the pot', async () => {
        `${band(on)} of ${on}`),
     ok(rested && settled.table === settled.tableWant, 'the heap settles to it',
        `${settled.table} of ${settled.tableWant}`),
-    ok(air <= 5000 + 200, 'and nothing near the old cloud is ever in the air at once',
+    ok(air <= 700 + 200, 'and nothing near the old cloud is ever in the air at once',
        `${air} at the worst`),
     ok(flying.paying === on, 'banking still sets off with the whole pot',
        `${flying.paying} of ${on}`),
@@ -205,7 +205,7 @@ group('the heap past the first band is a reading of the pot', async () => {
 // reads the function through the one number the yard reports.
 group('the ladder is the one written down', async () => {
   atTheTable(0);
-  const rungs = [10, 100, 1000, 2000, 10000, 100000, 1000000, 10000000, 100000000];
+  const rungs = [10, 100, 200, 1000, 10000, 100000, 1000000, 10000000, 100000000];
   const said = [];
   for (const n of rungs) {
     yard.S.pot = { cur: 'dust', stake: n, n };
@@ -216,9 +216,9 @@ group('the ladder is the one written down', async () => {
     ok(said.every((v, i) => v === band(rungs[i])),
        'every rung reads as the ladder says it should',
        said.map((v, i) => `${rungs[i]}->${v}`).join(' ')),
-    ok(said[said.length - 1] === 5000, 'and it stops at the brim', `${said[said.length - 1]}`),
-    ok(said[0] === 10 && said[2] === 1000,
-       'while everything up to a thousand is still one grain a unit',
-       `${said[0]}, ${said[2]}`)
+    ok(said[said.length - 1] === 700, 'and it stops at the brim', `${said[said.length - 1]}`),
+    ok(said[0] === 10 && said[1] === 100,
+       'while everything up to a hundred is still one grain a unit',
+       `${said[0]}, ${said[1]}`)
   ];
 });

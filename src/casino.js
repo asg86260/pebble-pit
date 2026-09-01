@@ -286,7 +286,15 @@ const underCasino = c => {
 // of the window instead of out along the ground -- which is the one thing about
 // a pile you are meant to be able to read at a glance. Capped, it does what a
 // heap against a wall does: it reaches its height and then walks sideways.
-const TABLE_HIGH = 44;               // cells, well inside the sky you can see
+//
+// It is set against the building rather than against the sky: the casino is
+// twelve cells tall, and a heap of sand standing three and a half times the
+// height of the house it belongs to is not a heap beside a building, it is a
+// dune with a shed at the bottom of it. Twenty cells clears the roof by a third
+// and no more. The ceiling on its own does not make a heap smaller -- it trades
+// height for width one for one -- so it is the bands that keep the footprint
+// down and this that keeps the shape honest.
+const TABLE_HIGH = 20;               // cells: the building's own height and a third
 
 export function wireTable() {
   if (!table.painter) table.painter = makePainter(table);
@@ -344,7 +352,8 @@ export const tableWant = () => Math.min(shownFor(pot()), table.capped ?? Infinit
 // the air at once, with the rest put straight into the plot, and it was a lie of
 // exactly the kind this game does not tell: the heap arriving has to be the heap
 // arriving. It stays a backstop, and the bands have put it out of reach for good
-// -- the brim is five thousand and this is twenty-four, so no hand ever fills it.
+// -- the brim is seven hundred and this is twenty-four thousand, so no hand ever
+// comes near it.
 const TRICKLE_MS = 1500;
 const IN_AIR = 24000;
 
