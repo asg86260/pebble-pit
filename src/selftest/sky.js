@@ -21,8 +21,11 @@ export const TESTS = [
     const clean = has();
 
     // it has rained, and nobody has looked into why
-    window.__air({ haze: state().smog.at + 1 });
-    runUntil(() => state().smog.rains > 0, 30);
+    // To the brim rather than a hair over the line: a sky at the line only
+    // *might* rain now -- the yard takes a look every few seconds and rolls for
+    // it -- and a sky at the brim is certain to break at the next look.
+    window.__air({ haze: state().smog.cap });
+    runUntil(() => state().smog.rains > 0, 60);
     run(20);
     const rained = has();
 
@@ -64,8 +67,11 @@ export const TESTS = [
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
     window.__lab(true);
-    window.__air({ haze: state().smog.at + 1 });
-    runUntil(() => state().smog.rains > 0, 30);
+    // To the brim rather than a hair over the line: a sky at the line only
+    // *might* rain now -- the yard takes a look every few seconds and rolls for
+    // it -- and a sky at the brim is certain to break at the next look.
+    window.__air({ haze: state().smog.cap });
+    runUntil(() => state().smog.rains > 0, 60);
     run(20);
     window.__research('labair');
     // ...and a machine running, which is the third thing the house waits on now.

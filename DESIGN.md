@@ -1714,6 +1714,21 @@ eye level with the rock, and the band follows the window so what is up there sta
 It comes down as **individual cells**, falling under gravity out of the clouds, the same way every
 other grain in this game falls — not a curtain drawn over the window.
 
+**It is sampled, not triggered.** A sky over the line does not come down on the frame it crosses it.
+The yard takes a look at what is overhead every few seconds and *rolls* for it: nothing at all under
+the line, about one in eight the moment it crosses, climbing to a certainty at the brim. A filthy sky
+is a thing that is going to rain rather than a thing that rains at a number — which is the difference
+between weather and a progress bar with a cloud drawn on it. It used to be a comparison, and a
+comparison is a stopwatch: the same figure every time, and a player who had read it once could stand
+under a full band counting frames to the drop.
+
+**And a minute of dry between showers.** A shower takes down the sky it broke on and nothing else, and
+the works go on fouling all the way through it — so a busy yard came out of one downpour with the band
+already back over the line and started the next on the following frame. Two rains with a frame between
+them is one rain that stuttered, and no amount of shovelling gets ahead of it. This is the one clock
+in the weather, and it is a floor rather than a schedule: it says when a shower *may* break, never when
+it must.
+
 **The rain has no clock, and what falls is the sky itself.** A mote drops out of the band, comes down
 under gravity and lands as muck — the same mote you watched climb off a swing a minute ago. The
 banks overhead thin as it goes because there is visibly less of them left up there, and the rain
@@ -1860,6 +1875,17 @@ and it comes sooner the bigger the crew — a bigger works fouls faster, so the 
 gets worse as you *grow* rather than a timer running underneath you. Fouling was a third of that
 rate for a while, which put the first rain an hour and a half out: a cost nobody meets is not a
 cost.
+
+**...but not every couple of minutes.** A yard with all three machines going and nobody in the house
+put a full sky up every two and a half minutes, which is a downpour before the crew have finished
+shovelling the last one: the mess never came off the ground because the weather never let it. What
+was wrong there was the *pace* of the cycle and not the balance inside it, so the whole air cycle was
+halved rather than the sky being made cheaper — fouling and the house's draught came down together,
+and the recycler's and the filters' rates came down with them so the house gives back exactly the
+dust a second it always did. Fouling against scrubbing is the number that decides whether the house
+is worth buying, and it is untouched. The same yard now rains about every five and a half minutes,
+which is long enough for the shovels to win and short enough to still be the bill for ignoring the
+house.
 
 ### The scrubbing house
 

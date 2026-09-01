@@ -142,7 +142,19 @@ export const PART_MS = 2600;      // the rock again, and the view letting go
 // *industry* does. Hand labour should barely mark it. What this buys is room for
 // the machinery to be the dirty thing, which is the shape the whole system was
 // written for -- see "the air" in DESIGN.md.
-export let SMOG_PER_DUST = 0.16;
+// Halved again, and this time the house was halved with it. A yard with all
+// three machines going put a full sky up every two and a half minutes, which is
+// a downpour before the crew have finished shovelling the last one -- the mess
+// never came off the ground because the weather never let it. What was wrong was
+// the *pace* of the whole cycle and not the balance inside it, so the fix is to
+// slow the cycle rather than to make the sky cheaper: this and SCRUB_PULL came
+// down together, and RECYCLE_PER and SCRUB_PER_MUCK came down with them so the
+// house gives back the same dust a second it always did. Fouling against
+// scrubbing is the number that decides whether the house is worth buying, and it
+// is exactly what it was -- see "the air" in DESIGN.md. What changed is that the
+// sky now takes twice as long to fill, and a rain is a thing that happens to you
+// every several minutes instead of every couple.
+export let SMOG_PER_DUST = 0.08;
 export const QUARRY_FOUL = 2;        // a shard out of the quarry is a hole full of it
 export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // The sky has to get properly filthy before it comes down. It used to break at
@@ -153,6 +165,36 @@ export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 // darkens, keeps darkening, and *then* it rains.
 export const SMOG_RAIN_AT = 3200;    // and this many of them up there brings it down
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
+
+// --- when it breaks -----------------------------------------------------------
+// A sky over the line does not come down on the frame it crosses it. The yard
+// takes a *sample* of what is overhead every few seconds and asks whether it
+// rains, and the answer is a roll rather than a comparison -- so two skies that
+// crossed the line at the same moment do not break at the same moment, and you
+// cannot stand under a full band counting frames to the drop.
+//
+// It was a comparison, and what a comparison gives you is a stopwatch: the haze
+// hit a fixed number and it rained, every time, at the same number, which made
+// the weather a progress bar with a cloud drawn on it. It is a threat now. A
+// filthy sky means it is *likely* to rain, and how likely is how filthy.
+export const SMOG_SAMPLE = 5;        // seconds between one look at the sky and the next
+// The chance a sample brings it down with the sky just over the line. About one
+// in eight, so a yard that has just crossed waits the better part of a minute on
+// average -- and it is an average and not a wait, so sometimes it opens on you
+// straight away.
+export const SMOG_RAIN_ODDS = 0.12;
+// ...and the odds climb the further over the line it is, reaching certainty at
+// the brim. A sky held at the cap is going to rain on the next look, which is
+// what keeps the ceiling from being a place a yard can park under for ever.
+// The floor under all of it: a minute of dry between one shower and the next.
+//
+// Without it the yard rained on itself. A shower takes down the sky it broke on
+// and nothing else -- everything the works put up while it was falling is still
+// there when it stops -- so a long shower over a busy yard ended with the band
+// already back over the line and the next one started on the following frame.
+// Two rains with a frame between them is one rain that stuttered, and no amount
+// of shovelling gets ahead of it. Weather has gaps in it.
+export const RAIN_GAP = 60;          // seconds of dry before another may break
 // The sky is motes, not banks: there is nothing here that says how many clouds
 // there are or what shape they are, because nobody draws one. What is up there is
 // however the motes have arranged themselves.
@@ -275,7 +317,11 @@ export const LUNGE_EASE = 0.84;
 export const SCRUB_CHUTE = 5;        // cells the recycler arm reaches out from the wall
 export const SCRUB_ARM = 3;          // courses of daylight kept under it: a body is three
 
-export const SCRUB_PULL = 19.5;      // motes a second, per body in it -- the same 3.56
+// Halved along with SMOG_PER_DUST, and for its sake: the whole air cycle runs at
+// half the pace it did, so the house takes half as many specks a second out of a
+// sky that is being filled half as fast. What it is worth against the yard is
+// untouched, which is the only number here that decides anything.
+export const SCRUB_PULL = 9.75;      // motes a second, per body in it -- the same 3.56, halved
 // The draught the house makes while it is manned. It is not a hand picking
 // specks out of the band any more: the fan pulls on the whole sky, hardest near
 // the mouth and fainter the further out you are, so the haze leans towards the
@@ -324,7 +370,10 @@ export const SCRUB_REACH = 1.1;      // seconds a caught mote takes to come in, 
 export const SCRUB_CATCH = 260;
 // What the house puts out of the back before the recycler is fitted: the filters
 // have to be emptied somewhere, and the crew shovel it like any other mess.
-export const SCRUB_PER_MUCK = 90;   // motes caught per load out of the back -- per mote
+// Halved with the draught above, so a load still comes out of the back at the
+// rate it always did: half the specks a second through a filter that fills on
+// half as many of them is the same filter, emptied just as often.
+export const SCRUB_PER_MUCK = 45;   // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 // The house's own ladder, and the reason it needs one now.
 //
@@ -337,7 +386,10 @@ export const FAN_COST = 18;          // shards for the first rung
 export const FAN_RATE = 1.75;        // and how much steeper each one gets
 export const RECYCLE_SHARDS = 24;    // and what turns catching into keeping
 export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary dust, give or take one
-export const RECYCLE_PER = 28;      // motes caught per grain of dust it gives back -- per mote
+// And halved for the same reason: the recycler hands back the same dust a second
+// it did before the cycle slowed. Slowing the sky is not meant to be a quiet cut
+// to a thing you bought.
+export const RECYCLE_PER = 14;      // motes caught per grain of dust it gives back -- per mote
 
 export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower
