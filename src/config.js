@@ -586,6 +586,13 @@ export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a
 export const BALLOON_LANE_TOP = 0.18;
 export const BALLOON_LANE_GAP = 0.16;
 export const BALLOON_EDGE = 6;       // cells it turns short of either end of the world
+// The craft's own draught. Radial and short: a balloon is *in* the sky, so what
+// is near it comes to it and everything else is left alone -- there is no long
+// sideways river to avoid, which is the whole reason the house's numbers are as
+// complicated as they are.
+export const BALLOON_NEAR = 190;     // how far its draught reaches
+export const BALLOON_GRIP = 24;      // and how close a speck has to be to go in
+export const BALLOON_DRAG = 46;      // pixels a second it draws them at
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go

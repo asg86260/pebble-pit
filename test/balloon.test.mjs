@@ -127,3 +127,41 @@ group('a craft comes back and is let go of when the job ends', async () => {
     ok(stuck === 0, 'and nobody is left in the sky', `${stuck} still aloft`)
   ];
 });
+
+group('a craft takes the sky in where it is, and drops it under itself', async () => {
+  rich();
+  window.__clearFloor();
+  window.__buy('balloon');
+  // The house shut and the craft crewed. `capOf` fills the house's berth first,
+  // so three on the scrubbers is one indoors and two aloft -- but there is only
+  // one craft here, so it is one indoors and one up. What isolates the craft is
+  // not the staffing, it is *where the muck lands*: the house's own spout is a
+  // fixed lip on its left wall and the craft is halfway across the yard.
+  window.__air({ haze: 2200, muck: 0, scrubbers: 2 });
+  runUntil(() => state().craft[0] && state().craft[0].up, 60);
+  const lit = state();
+
+  // Held topped up, so what is being measured is the craft working rather than
+  // the craft running out of sky -- and no rain, which would drop muck of its
+  // own all over the answer.
+  for (let i = 0; i < 14; i++) { window.__air({ haze: 2200 }); run(3); }
+  const done = state();
+
+  const scrubX = state().scrubX;
+  const far = (done.muckAt || []).filter(([c]) => c * 6 > scrubX + 400);
+  const flew = Math.abs(done.craft[0].x - lit.craft[0].x);
+
+  window.__air({ haze: 0, muck: 0, scrubbers: 0 });
+  window.__clearFloor();
+  return [
+    ok(done.smog.recycled >= 0 && (done.muckAt || []).length > 0,
+       'a crewed craft brings the sky down and it lands as muck',
+       `${(done.muckAt || []).length} columns with muck in them`),
+    ok(flew > 100, 'while crossing the yard', `moved ${Math.round(flew)}px`),
+    // The claim the whole feature rests on: the sink is the ground the craft is
+    // over, not a heap on the house's own strip.
+    ok(far.length > 0,
+       'and it comes down well away from the house, under wherever the craft was',
+       `${far.length} columns more than 400px past the house`)
+  ];
+});

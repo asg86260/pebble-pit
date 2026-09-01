@@ -43,7 +43,7 @@ import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './c
 import { buriedVisible } from './intro.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
-import { smogReport } from './smog.js';
+import { smogReport, muckCols } from './smog.js';
 import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
@@ -456,6 +456,15 @@ export const snapshot = () => ({
 
   // The bodies themselves: where they are, what they are saying, and what is
   // being dragged.
+  // Where the muck actually is, in columns, so a check can ask *where* a thing
+  // came down rather than only how much of it there is. The balloon's whole
+  // claim is about where.
+  muckAt: (() => {
+    const m = muckCols();
+    const out = [];
+    for (let c = 0; c < m.length; c++) if (m[c]) out.push([c, m[c]]);
+    return out;
+  })(),
   // The bodies on the scrubbers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
   // a basket. `berth` is -1 for the house and the craft's index otherwise.

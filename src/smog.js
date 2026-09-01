@@ -28,9 +28,11 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
+         BALLOON_NEAR, BALLOON_GRIP, BALLOON_DRAG,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
          SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
+import { CRAFT, craftMouth, craftY, working } from './balloon.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now, frames } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
@@ -1068,13 +1070,76 @@ function pull(secs) {
 // machine that already did its whole job, so the upgrade read as optional; now
 // it is the thing that turns a pile of muck out the back into dust worth
 // carrying, which is a reason to save for it.
-function swallow() {
+// --- what the craft take -------------------------------------------------------------
+// The balloons' own draught, and it is a far simpler thing than the house's.
+//
+// `pull` above is elaborate on purpose: the house's mouth is on the ground and
+// the sky is overhead, so the draught has to run *along* the sky and turn down
+// only once a speck is nearly over the throat -- otherwise the whole band slides
+// into one diagonal river running the length of the yard at chimney height.
+//
+// A craft has none of that problem. It is *in* the sky. What is near it comes to
+// it and goes in, radially, and the shape of the sky is undisturbed everywhere
+// else. That is less code than the house's version, not more, and it is the one
+// place this feature is genuinely easier than the thing it sits beside.
+//
+// Each craft has its own gullet, for the same reason the house does: a rate below
+// one a frame cannot be spent a frame at a time without being rounded away to
+// nothing, and a craft that has been drifting over clear air must not bank a
+// gulp to spend the moment it reaches something.
+const gullets = [];
+
+function pullCraft(secs) {
+  for (let i = 0; i < CRAFT.length; i++) {
+    if (!working(i)) { gullets[i] = 0; continue; }
+    const to = craftMouth(i);
+    // What one crewed mouth is worth. The fan is a number the *station* owns, so
+    // a bigger fan is a bigger draught at every mouth the station has -- the
+    // house's throat and every basket alike. It says "a bigger fan" on the row,
+    // not "a bigger fan on the house".
+    const rate = fanPull();
+    gullets[i] = Math.min((gullets[i] || 0) + rate * secs, rate);
+
+    for (let k = SKY.length - 1; k >= 0; k--) {
+      const m = SKY[k];
+      // Nothing is taken on the way up, the same rule the house keeps: a speck
+      // still climbing out of a swing is not the sky yet, and a craft reaching
+      // into a plume is catching smoke a foot off the thing that made it.
+      if (m.up) continue;
+      const dx = to.x - moteX(m), dy = to.y - moteY(m);
+      const d = Math.hypot(dx, dy);
+      if (!Number.isFinite(d) || d > BALLOON_NEAR) continue;
+
+      if (d < BALLOON_GRIP) {
+        if (gullets[i] < 1) break;         // full for this moment; the rest wait
+        gullets[i] -= 1;
+        dropped(SKY.splice(k, 1)[0]);
+        swallow(i);
+        continue;
+      }
+      // In, on a straight line, quickening as it closes -- the way the last of
+      // anything being drawn in does.
+      const in_ = 1 - d / BALLOON_NEAR;
+      const step = BALLOON_DRAG * secs * (0.4 + in_ * 1.6);
+      m.sx += (dx / d) * Math.min(step, Math.abs(dx));
+      m.sy += (dy / d) * Math.min(step, Math.abs(dy));
+      dragged = true;
+    }
+  }
+}
+
+function swallow(craft = null) {
   drew += 1;                       // counted at the mouth -- see `sampleAir`
+  // Where it comes down. The house has a spout on its wall; a craft has the air
+  // under its basket, wherever that is at the time -- which is the whole idea.
+  // The sink stops being one heap on one strip and becomes the ground the crew
+  // are walking anyway.
+  const at = craft == null ? outlet().x : CRAFT[craft].x;
   if (!S.recycler) {
     S.scrubMuck = (S.scrubMuck || 0) + 1;
     while (S.scrubMuck >= SCRUB_PER_MUCK) {
       S.scrubMuck -= SCRUB_PER_MUCK;
-      dropMuckAt(outlet().x, SCRUB_MUCK);
+      dropMuckAt(at, SCRUB_MUCK);
     }
     return;
   }
@@ -1084,7 +1149,10 @@ function swallow() {
   while (S.scrubBank >= 1) {
     S.scrubBank -= 1;
     S.recycled++;
-    const out = outlet();
+    // ...and from under the basket when a craft caught it, which is a place in
+    // the air rather than a lip on a wall: the grain falls from where the craft
+    // is, and the ordinary chip physics does the rest.
+    const out = craft == null ? outlet() : { x: CRAFT[craft].x, y: craftY(craft) };
     // and it drops out of the spout rather than being thrown out of it: the arm
     // points down, so the grain goes down
     // and no two grains quite the same shade. It paid out on RECYCLE_TONE flat,
@@ -1828,6 +1896,9 @@ export function stepSmog(dt) {
   // the same dirt subtracted twice.
   if (scrubbing()) { pull(secs); breathe(secs); }
   else { unpull(); DRAUGHT.length = 0; }
+  // The craft take their own, wherever they happen to be. After the house, so a
+  // mote in the throat is the house's rather than being fought over.
+  pullCraft(secs);
   // The number is worked out from the sky before anything asks whether it should
   // be raining, because the answer to that question has to be about what is
   // actually overhead.
