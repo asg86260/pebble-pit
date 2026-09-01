@@ -21,8 +21,11 @@ export const TESTS = [
     const clean = has();
 
     // it has rained, and nobody has looked into why
-    window.__air({ haze: state().smog.at + 1 });
-    runUntil(() => state().smog.rains > 0, 30);
+    // To the brim rather than a hair over the line: a sky at the line only
+    // *might* rain now -- the yard takes a look every few seconds and rolls for
+    // it -- and a sky at the brim is certain to break at the next look.
+    window.__air({ haze: state().smog.cap });
+    runUntil(() => state().smog.rains > 0, 60);
     run(20);
     const rained = has();
 
@@ -37,10 +40,10 @@ export const TESTS = [
     // answer in the same part of the game, which is what the smoke curve in
     // DESIGN.md is arranging.
     window.__fullSites();
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     const both = has();
     const air = state().smog;
-    window.__machine('jaw', { on: false, bought: false });
+    window.__machine('jaw', { bought: false });
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
@@ -64,8 +67,11 @@ export const TESTS = [
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
     window.__lab(true);
-    window.__air({ haze: state().smog.at + 1 });
-    runUntil(() => state().smog.rains > 0, 30);
+    // To the brim rather than a hair over the line: a sky at the line only
+    // *might* rain now -- the yard takes a look every few seconds and rolls for
+    // it -- and a sky at the brim is certain to break at the next look.
+    window.__air({ haze: state().smog.cap });
+    runUntil(() => state().smog.rains > 0, 60);
     run(20);
     window.__research('labair');
     // ...and a machine running, which is the third thing the house waits on now.
@@ -73,7 +79,7 @@ export const TESTS = [
     // per unit of work, and the house is the bill for the thing you switched on
     // rather than a cure sold ahead of the disease.
     window.__fullSites();
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     buildShopFromTest();
     shop().querySelector('[data-key="unlockscrub"]').click();
     buildShopFromTest();

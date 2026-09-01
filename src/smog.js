@@ -23,6 +23,7 @@
 
 import { footing, solidNear, SOLID } from './route.js';
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
+         SMOG_SAMPLE, SMOG_RAIN_ODDS, RAIN_GAP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
@@ -1727,6 +1728,50 @@ export const yardMuckFor = w => mineToShift(w, tally().yardBy);
 export const yardMuck = () => tally().yard;
 export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0;
 
+// --- whether it rains ----------------------------------------------------------------
+// The sky is looked at every few seconds and asked, not compared against a line
+// every frame. What a sample gives is a chance, and the chance is how filthy it
+// is: nothing at all under the line, about one in eight the moment it crosses,
+// and a certainty at the brim.
+//
+// So a full sky is a thing that is *going* to rain rather than a thing that
+// rains at a number, and the yard cannot be played by the arithmetic -- you
+// watch it darken and you get on with the shovels.
+export function rainOdds() {
+  if (S.haze < SMOG_RAIN_AT) return 0;
+  const over = (S.haze - SMOG_RAIN_AT) / Math.max(1, SMOG_CAP - SMOG_RAIN_AT);
+  return Math.min(1, SMOG_RAIN_ODDS + Math.max(0, over) * (1 - SMOG_RAIN_ODDS));
+}
+
+// Seconds since the last shower stopped, and how long it is since the sky was
+// last looked at. Both are facts about a run rather than about a save -- a game
+// picked up again is a dry yard, and it may rain on you when it likes.
+let dryFor = Infinity, sinceLook = 0;
+
+export const dryTime = () => dryFor;
+
+// One frame of that question. It is asked every frame and answered on the frames
+// a sample falls due, so the roll happens at the sampling rate however fast the
+// machine underneath is running.
+function breaks(secs) {
+  if (raining()) { dryFor = 0; sinceLook = 0; return false; }
+  dryFor += secs;
+  sinceLook += secs;
+  if (sinceLook < SMOG_SAMPLE) return false;
+  sinceLook = 0;
+  // A minute of dry, whatever is overhead. See RAIN_GAP: a shower rains the sky
+  // it broke on and the works go on fouling underneath it, so without this floor
+  // a busy yard came out of one downpour straight into the next.
+  if (dryFor < RAIN_GAP) return false;
+  // The odds first, and the roll only if there are any. A clean sky is not a
+  // one-in-nothing chance that happens to lose: it is not a question, and asking
+  // it anyway would take a number off the yard's one generator every few seconds
+  // for the whole of a game -- so every seeded run in the yard, weather or not,
+  // would come out differently for the sake of a coin that was never flipped.
+  const odds = rainOdds();
+  return odds > 0 && rand() < odds;
+}
+
 // --- one frame ---------------------------------------------------------------------
 export function stepSmog(dt) {
   const secs = dt / 1000;
@@ -1742,7 +1787,7 @@ export function stepSmog(dt) {
   reckon();
   // A shower starts over from the first spot every time -- the ramp is a fact
   // about this one, not a clock that carries on between them.
-  if (S.haze >= SMOG_RAIN_AT && !raining()) {
+  if (breaks(secs)) {
     S.raining = true; S.rains++; S.rainFor = 0;
     // Everything settled up there right now belongs to this shower. Anything
     // that arrives after this frame does not, and will still be there when it
@@ -1827,11 +1872,20 @@ export function airReadout() {
   return {
     haze: Math.round(S.haze),
     at: SMOG_RAIN_AT,
+    // The brim as well as the line. A sky at the line only *might* rain; a sky
+    // at the brim is going to, on the next look -- which is the difference the
+    // sampling makes, and the number a check winds to when it wants weather.
+    cap: SMOG_CAP,
     share: Math.min(1, S.haze / SMOG_RAIN_AT),
     fouling: +(fouling() * 60).toFixed(1),
     scrubbing: +(scrubbed() * 60).toFixed(1),
     // blank when the house is winning, which is the number worth playing for
-    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000)
+    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000),
+    // What a look at the sky would say right now, and how long it has been dry.
+    // The board shows how far off the line is; these are the two numbers behind
+    // the fact that reaching it is not the same as it raining.
+    odds: +rainOdds().toFixed(3),
+    dryFor: dryFor === Infinity ? null : +dryFor.toFixed(1)
   };
 }
 
@@ -1917,6 +1971,10 @@ export function smogReport() {
 
 export function seedSmog() {
   made = 0;
+  // A new yard has been dry for ever: the first shower waits on the sky and on
+  // nothing else.
+  dryFor = Infinity;
+  sinceLook = 0;
   net.fill(0);
   filled = 0;
   oldest = 0;

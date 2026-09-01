@@ -12,7 +12,7 @@
 // cannot put it back and nothing else was going to. Saying it out loud in each
 // group costs one line and makes the file read in any order.
 
-import { yard, group, ok, state, run, runUntil, haveRock, openSites } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, haveRock, openSites, makeItRain } from './helpers.mjs';
 import { tuned } from '../src/config.js';
 
 // What a jaw is worth when nobody has wound it down -- read once, at load, before
@@ -41,7 +41,7 @@ group('the sky reads as one rate, and it can go negative', async () => {
   // round, not the balance between a jaw and a houseful of bodies.
   woundJaw();
   window.__crew(4, 4, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__lab(true);
   window.__research('labair');
   // Long enough for the cut to be working at its steady rate. The rock fouled
@@ -154,7 +154,7 @@ group('what the readout says is what is overhead', async () => {
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
   run(20);
   const early = state().smog;
@@ -165,10 +165,12 @@ group('what the readout says is what is overhead', async () => {
   healJaw();
 
   return [
-    // Eighty rather than two hundred: a yard of bodies doing ordinary work barely
-    // marks the sky now (see SMOG_PER_DUST), and what this group is actually
-    // about is whether the number and the band agree -- not how big either is.
-    ok(later.haze > 80, 'the yard has had time to make a sky worth checking',
+    // Forty rather than eighty rather than two hundred: a yard of bodies doing
+    // ordinary work barely marks the sky (see SMOG_PER_DUST), and the whole air
+    // cycle runs at half the pace it used to besides. What this group is
+    // actually about is whether the number and the band agree -- not how big
+    // either of them is.
+    ok(later.haze > 40, 'the yard has had time to make a sky worth checking',
        `${Math.round(later.haze)} haze`),
     // Nought, not "nearly nought". The number is worked out from the specks now
     // rather than kept beside them, so there is no room for a gap at all -- and
@@ -202,10 +204,11 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
-  window.__air({ haze: state().smog.at + 30 });     // a sky over the line
-  const wet = runUntil(() => state().smog.raining, 10);
+  // A sky at the brim, which is the one that is certain to break at the next
+  // look: over the line is a chance now, not an event. See `makeItRain`.
+  const wet = makeItRain();
 
   // watched all the way through, because what went wrong before went wrong
   // between two frames: a shower that stops and starts is a shower nobody sees
@@ -257,7 +260,7 @@ group('a speck off a swing is the speck in the band', async () => {
   openSites();
   window.__fullSites();
   window.__crew(2, 0, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
   run(3);
   const climbing = () => yard.smogSky().filter(m => m.up);

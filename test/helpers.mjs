@@ -125,3 +125,17 @@ export const quarryFloorAt = x => quarryFloor(x);
 
 export const P = 6;               // a cell, for the piles
 export const WORKER = 18;         // a worker square, for tolerances
+
+// Weather, on demand. A sky over the line does not come down on the frame it
+// crosses it any more -- the yard takes a look at what is overhead every few
+// seconds and rolls for it, and how likely the roll is is how filthy the sky is
+// (see `rainOdds` in smog.js). So a check that wants a shower asks for the one
+// sky that is certain to break -- the brim -- and then waits for the look,
+// rather than winding to a number and reading the next frame.
+//
+// It also waits out the minute of dry a second shower owes the first: two rains
+// in a row is two rains, not one that stuttered. See RAIN_GAP.
+export function makeItRain(limit = 90) {
+  window.__air({ haze: state().smog.cap });
+  return runUntil(() => state().smog.raining, limit);
+}

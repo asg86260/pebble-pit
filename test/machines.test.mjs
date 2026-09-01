@@ -58,6 +58,55 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
   ];
 });
 
+// There is no switch, and this is what stands in its place.
+//
+// A machine is stopped by taking its tender off and started by putting one back,
+// through the very `-` and `+` the station already has. That is not a smaller
+// version of the lever it replaced -- it is the yard's oldest rule doing the job
+// on its own: a station idles until somebody is actually standing there, so an
+// unmanned machine produces nothing and smokes nothing without anything being
+// written to make it so.
+//
+// Asserted on `workedAt`, which is stamped by bites, rather than on a flag: a
+// flag could be set by anything, and what is actually claimed here is that the
+// machine stopped *doing work*.
+group('a machine is stopped by taking its tender off', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 5);
+  window.__fullSites();
+  window.__grant({ spores: 999, shards: 999, sparks: 999 });
+  window.__tip(90000);
+  window.__buy('jaw');
+  window.__fast(12);
+  const running = state();
+
+  // Off, through the roster's own button and not a hook that reaches past it.
+  window.__assign('quarriers', -1);
+  window.__fast(10);
+  const off = state();
+
+  window.__assign('quarriers', 1);
+  window.__fast(10);
+  const back = state();
+  window.__crew(0, 0, 0);
+  return [
+    ok(running.machines.jaw.bought, 'the jaw is bought and standing'),
+    ok(running.quarriers === 1, 'with one body tending it', `${running.quarriers}`),
+    ok(running.machines.jaw.workedAt > 0, 'and it is getting work done',
+       `workedAt ${running.machines.jaw.workedAt}`),
+    ok(off.quarriers === 0, 'the tender is taken off from the roster', `${off.quarriers}`),
+    ok(off.machines.jaw.workedAt === running.machines.jaw.workedAt,
+       'and the machine stops dead: not one more bite with nobody there',
+       `${running.machines.jaw.workedAt} -> ${off.machines.jaw.workedAt}`),
+    ok(back.quarriers === 1, 'a body put back on walks to it again', `${back.quarriers}`),
+    ok(back.machines.jaw.workedAt > off.machines.jaw.workedAt,
+       'and it works again, with nothing to switch',
+       `${off.machines.jaw.workedAt} -> ${back.machines.jaw.workedAt}`)
+  ];
+});
+
 // The rule the whole feature stands on.
 group('a machine at a station leaves room for one body', async () => {
   window.__reset();
@@ -68,57 +117,23 @@ group('a machine at a station leaves room for one body', async () => {
   const before = state();
   const cutBefore = before.quarriers, haulBefore = before.haulers;
 
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   const on = state();
   const cut = on.roster.find(r => r.job === 'quarriers');
-
-  window.__machine('jaw', { on: false });
-  const off = state();
 
   window.__crew(0, 0, 0);
   return [
     ok(cutBefore === 5, 'five hands at the cut to begin with', `${cutBefore}`),
-    ok(on.quarriers === 1, 'a running machine leaves one body at the station',
+    ok(on.quarriers === 1, 'a machine leaves one body at the station',
        `${cutBefore} -> ${on.quarriers}`),
     ok(cut && cut.cap === 1, 'and the roster says so', `cap ${cut && cut.cap}`),
     ok(cut && cut.hands === 5, 'while the complement it stands in for is still five',
        `hands ${cut && cut.hands}`),
     // Nobody is deleted. The four go back to the one job nobody is assigned to.
-    ok(on.crew === before.crew, 'nobody is deleted by switching it on',
+    ok(on.crew === before.crew, 'nobody is deleted by standing one up',
        `${before.crew} -> ${on.crew}`),
     ok(on.haulers === haulBefore + 4, 'the four it displaced carry dust instead',
-       `${haulBefore} -> ${on.haulers}`),
-    ok(off.quarriers === 5,
-       'and switching it off walks the whole gang back to the cut',
-       `${on.quarriers} -> ${off.quarriers}`)
-  ];
-});
-
-// `rebalance` only ever clamped down: it walks the surplus to carrying and
-// nothing walks them home. Without a way back, every "off" would cost five
-// clicks on the roster and nobody would throw the lever twice.
-group('throwing a machine off puts its gang back', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 0, 5);
-  window.__fullSites();
-  window.__machine('jaw', { bought: true, on: true });
-  const capped = state();
-
-  window.__machine('jaw', { on: false });
-  const back = state();
-  window.__crew(0, 0, 0);
-  return [
-    ok(capped.quarriers === 1, 'one body while it runs', `${capped.quarriers}`),
-    ok(back.quarriers === 5, 'and the whole gang back when the lever goes off',
-       `${capped.quarriers} -> ${back.quarriers}`),
-    // On the bodies, not on `S.crew`: the ledger total is a number `restaff`
-    // never touches, so asserting it unchanged could not have failed however
-    // badly the gang was put back.
-    ok(back.miners + back.quarriers + back.farmhands + back.haulers === back.crew,
-       'without conjuring anybody: every body is on exactly one job',
-       `${back.quarriers} cut + ${back.haulers} carrying of ${back.crew}`)
+       `${haulBefore} -> ${on.haulers}`)
   ];
 });
 
@@ -133,12 +148,10 @@ group('the ram is the case the old clamp list would have missed', async () => {
   window.__crew(6, 0);                       // six on the rock, which has no cap
   const before = state();
 
-  window.__machine('ram', { bought: true, on: true });
+  window.__machine('ram', { bought: true });
   const on = state();
   const rock = on.roster.find(r => r.job === 'miners');
 
-  window.__machine('ram', { on: false });
-  const off = state();
   window.__crew(0, 0);
   return [
     ok(before.miners === 6, 'six on the rock, more than any station holds',
@@ -147,9 +160,7 @@ group('the ram is the case the old clamp list would have missed', async () => {
        'and the rock has no floor plan to run out of'),
     ok(on.miners === 1, 'the ram leaves one body on it too', `${before.miners} -> ${on.miners}`),
     ok(rock && rock.hands === 5, "and stands in for the rock's notional gang of five",
-       `hands ${rock && rock.hands}`),
-    ok(off.miners === 6, 'and the gang comes back off the lever',
-       `${on.miners} -> ${off.miners}`)
+       `hands ${rock && rock.hands}`)
   ];
 });
 
@@ -204,8 +215,8 @@ group('a machine cannot leak from one check into the next', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 5);
-  window.__machine('jaw', { bought: true, on: true });
-  const left = state().machines.jaw.on;
+  window.__machine('jaw', { bought: true });
+  const left = state().machines.jaw.bought;
 
   // ...and now whatever runs next asks for a staffed cut, exactly as it would.
   window.__crew(0, 0, 3);
@@ -213,8 +224,8 @@ group('a machine cannot leak from one check into the next', async () => {
   const after = state();
   window.__crew(0, 0, 0);
   return [
-    ok(left, 'a check leaves a machine running'),
-    ok(!after.machines.jaw.on, 'and the next __crew stops it', 'still on'),
+    ok(left, 'a check leaves a machine standing'),
+    ok(!after.machines.jaw.bought, 'and the next __crew takes it away', 'still there'),
     ok(after.quarriers === 3, 'so the cut it asked for is the cut it gets',
        `${after.quarriers} of 3`)
   ];
@@ -226,14 +237,13 @@ group('what a machine remembers across a reload', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 5);
-  window.__machine('jaw', { bought: true, on: true });
-  window.__machine('tiller', { bought: true, on: false });
+  window.__machine('jaw', { bought: true });
   const before = state().machines;
 
-  // The gang is put back at the cut *in the save*, which is the state an honest
-  // lever-on actually writes: `throwLever` sets `on` and the rebalance happens on
-  // a later frame, so a tab closed in between saves five quarriers alongside a
-  // running jaw. The load is the only thing that can fix it.
+  // The gang is put back at the cut *in the save*, which is a state the yard can
+  // genuinely write: `buyMachine` sets the latch and the rebalance happens on a
+  // later frame, so a tab closed in between saves five quarriers alongside a
+  // standing jaw. The load is the only thing that can fix it.
   yard.S.quarriers = 5;
   yard.S.haulers = 0;
 
@@ -246,157 +256,13 @@ group('what a machine remembers across a reload', async () => {
   const s = state();
   window.__crew(0, 0, 0);
   return [
-    ok(after.jaw.bought && after.jaw.on, 'a bought, running machine comes back both',
-       JSON.stringify(after.jaw)),
-    ok(after.tiller.bought && !after.tiller.on,
-       'and one that was bought and idle comes back idle', JSON.stringify(after.tiller)),
+    ok(after.jaw.bought, 'a bought machine comes back bought', JSON.stringify(after.jaw)),
     ok(!after.ram.bought, 'one nobody bought is still unbought'),
-    ok(after.jaw.was === 5,
-       'and the complement it displaced comes back with it, or there is no way home',
-       `was ${after.jaw.was}`),
     ok(s.quarriers === 1,
        'the cap is applied on the way in, not after the gang has been placed',
        `${s.quarriers} at the cut, cap ${s.roster.find(r => r.job === 'quarriers').cap}`),
     ok(s.haulers === 4, 'and the four it displaced are carrying dust',
        `${s.haulers} carrying`)
-  ];
-});
-
-// --- the lever ------------------------------------------------------------------
-// Nothing in this yard happens without hands, and a switch that flipped the
-// moment you clicked it would be the one thing in the game that did. So the
-// lever is asked for, and somebody walks over and throws it.
-//
-// Every check below goes through `__lever`, never `__machine`: the hook that
-// sets the facts outright would pass all of this while asserting nothing at all
-// about the walk, which is the whole of what a lever is.
-group('a lever is thrown by somebody who walked to it', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 2, 1);                    // a tender and two spare pairs of hands
-  window.__machine('jaw', { bought: true, on: false });
-  const at = state().machines.jaw.leverX;
-
-  // Everybody put well away from the lever, so the walk is a real one.
-  for (const w of yard.S.workers) w.x = at + 420;
-  run(0.2);
-
-  const asked = window.__lever('jaw', true);
-  run(0.3);
-  const early = state();                     // still walking: it cannot be on yet
-  const got = runUntil(() => state().machines.jaw.on, 40);
-  const on = state();
-
-  window.__crew(0, 0, 0);
-  return [
-    ok(asked, 'the ask is taken'),
-    ok(!early.machines.jaw.on, 'and the machine is not on while somebody is still walking',
-       `on=${early.machines.jaw.on}`),
-    ok(early.machines.jaw.goer, 'somebody has set off for it',
-       `${early.machines.jaw.goer}`),
-    ok(early.machines.jaw.ask === true, 'and the ask stands until they arrive'),
-    ok(got && on.machines.jaw.on, 'it goes on when they get there'),
-    ok(on.machines.jaw.ask === null, 'and the ask is spent', `${on.machines.jaw.ask}`)
-  ];
-});
-
-// The tender is usually standing at the machine, so off costs no walk worth
-// noticing. That is a consequence of where it is, not a guarantee the code makes.
-group('off is quick because the walk is short', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 1, 5);
-  window.__machine('jaw', { bought: true, on: true });
-  runUntil(() => {
-    const q = yard.S.workers.find(o => o.type === 'quarrier');
-    return q && !q.walking;
-  }, 40);
-  const before = state();
-
-  window.__lever('jaw', false);
-  const quick = runUntil(() => !state().machines.jaw.on, 12);
-  const off = state();
-  window.__crew(0, 0, 0);
-  return [
-    ok(before.machines.jaw.on, 'it is running to begin with'),
-    ok(quick, 'and a body is near enough to stop it without a journey'),
-    ok(!off.machines.jaw.on, 'so it stops'),
-    ok(off.quarriers === 5, 'and the gang it displaced comes back',
-       `${before.quarriers} -> ${off.quarriers}`)
-  ];
-});
-
-// An ask outlives a yard with nobody free: it is answered when somebody is.
-//
-// The bodies are held in the player's hand rather than taken off the books,
-// because `__crew` stops every machine and drops every ask -- deliberately, so a
-// machine cannot leak from one check into the next -- and a yard with nobody in
-// it is therefore a yard with no ask in it either. A body being carried about is
-// the honest version of "nobody free": the worker pass skips it entirely, which
-// is exactly what makes it durable enough to hold for a window.
-group('an ask nobody can answer stands until somebody can', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 1);
-  window.__machine('jaw', { bought: true, on: false });
-  run(0.5);
-  for (const w of yard.S.workers) w.lifted = true;
-
-  window.__lever('jaw', true);
-  run(4);
-  const stuck = state();
-
-  for (const w of yard.S.workers) w.lifted = false;
-  const got = runUntil(() => state().machines.jaw.on, 60);
-  window.__crew(0, 0, 0);
-  return [
-    ok(stuck.machines.jaw.ask === true, 'the ask stands with nobody able to go',
-       `${stuck.machines.jaw.ask}`),
-    ok(!stuck.machines.jaw.on, 'and nothing has happened'),
-    ok(!stuck.machines.jaw.goer, 'and nobody has set off', `${stuck.machines.jaw.goer}`),
-    ok(got, 'and it is answered the moment somebody can go')
-  ];
-});
-
-// Picking up the body that was on its way.
-//
-// The dispatcher sends one walker per lever, or the whole yard files across to
-// the same switch. That claim has to be given up when the walk is: a lever
-// claimed for ever by a pair of hands now in the player's is a machine that
-// never starts and never says why.
-group('picking up the walker hands the lever back', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 3, 1);
-  window.__machine('jaw', { bought: true, on: false });
-  const at = state().machines.jaw.leverX;
-  for (const w of yard.S.workers) w.x = at + 420;
-  run(0.2);
-
-  window.__lever('jaw', true);
-  runUntil(() => state().machines.jaw.goer, 20);
-  const walker = yard.S.workers.find(o => o.throwing === 'jaw');
-  const name = walker && walker.name;
-  yard.lift ? yard.lift(walker) : (walker.lifted = true, walker.throwing = null,
-                                   walker.legs = null, walker.walking = false);
-
-  const got = runUntil(() => state().machines.jaw.on, 60);
-  // The one who threw it is still walking *back* to its own station, and still
-  // holds the claim while it does -- which is right: the errand is the walk out
-  // and the walk home, the same shape as fetching a hat.
-  const home = runUntil(() => state().machines.jaw.goer === null, 40);
-  const on = state();
-  window.__crew(0, 0, 0);
-  return [
-    ok(name, 'somebody sets off for the lever', `${name}`),
-    ok(got, 'and picking them up does not strand the ask'),
-    ok(on.machines.jaw.on, 'somebody else finishes the errand'),
-    ok(home, 'and the claim is given up when they get back to their own work',
-       `${on.machines.jaw.goer}`)
   ];
 });
 
@@ -410,7 +276,7 @@ group('a manned jaw digs, and an unmanned one does not', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 1);                    // one tender, which is all it holds
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__clearFloor();
   runUntil(() => {
     const q = yard.S.workers.find(o => o.type === 'quarrier');
@@ -428,15 +294,15 @@ group('a manned jaw digs, and an unmanned one does not', async () => {
   const alone = state().quarryTotal - b0;
 
   for (const w of yard.S.workers) w.lifted = false;
-  // Read before `__crew`, which stops every machine on purpose.
-  const still = state().machines.jaw.on;
+  // Read before `__crew`, which takes every machine away on purpose.
+  const still = state().machines.jaw.bought;
   window.__crew(0, 0, 0);
   return [
     ok(worked > 0, 'a machine with somebody standing at it takes the ground out',
        `${worked} cells`),
     ok(alone === 0, 'and one with nobody at it does nothing at all',
        `${alone} cells with nobody standing there`),
-    ok(still, 'and it stopped without the lever having moved -- it is idle, not off')
+    ok(still, 'and it is still standing there -- idle, not gone, and nothing was switched')
   ];
 });
 
@@ -454,7 +320,7 @@ group('a jaw pays a dig exactly what a gang would', async () => {
   // sample -- so the fall-ins get miscounted and the sum comes out one short.
   // What is being checked is the arithmetic of the payout, not the speed of it.
   window.__tune('MACHINE_GAIN', 0.15);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__clearFloor();
   run(4);
 
@@ -500,7 +366,7 @@ group('a full pile stops the jaw like it stops a gang', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 1);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__clearFloor();
   run(4);
 
@@ -537,7 +403,7 @@ group('a machine is dirtier per unit of work than the hands were', async () => {
     window.__fullSites();
     window.__tune('MACHINE_FOUL', foulDial);
     window.__crew(0, 0, 1);
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     window.__clearFloor();
     window.__air({ haze: 0, muck: 0 });
     // Wait for the tender to actually be at the machine. A window that is spent
@@ -573,7 +439,7 @@ group('the tiller crawls the row and brings the plots in', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 0, 1);                 // one tender at the farm
-  window.__machine('tiller', { bought: true, on: true });
+  window.__machine('tiller', { bought: true });
   window.__clearFloor();
   run(6);
 
@@ -641,7 +507,7 @@ group('the ram works the rock, measured against not having one', async () => {
   const byHand = window10();
 
   window.__jump(3);
-  window.__machine('ram', { bought: true, on: true });
+  window.__machine('ram', { bought: true });
   run(4);
   const byMachine = window10();
   const worked = state().machines.ram.workedAt > 0;
@@ -667,7 +533,7 @@ group('a tender does no hand work of its own', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__clearFloor();
   run(6);
 
@@ -681,37 +547,6 @@ group('a tender does no hand work of its own', async () => {
   ];
 });
 
-// Two machines at once, and both gangs back. The restaff latch holds one
-// station at a time, and two levers thrown together used to be a way to lose a
-// gang -- nothing in the file ever ran more than one machine.
-group('two machines can be thrown off without losing a gang', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 1, 5, 7);
-  window.__fullSites();
-  const before = state();
-
-  window.__machine('jaw', { bought: true, on: true });
-  window.__machine('tiller', { bought: true, on: true });
-  const both = state();
-
-  window.__machine('jaw', { on: false });
-  window.__machine('tiller', { on: false });
-  const back = state();
-  window.__crew(0, 0, 0);
-  return [
-    ok(both.quarriers === 1 && both.farmhands === 1,
-       'two machines running leave one body each',
-       `${both.quarriers} cut, ${both.farmhands} farm`),
-    ok(back.quarriers === before.quarriers,
-       'and the cut gets its gang back', `${before.quarriers} -> ${back.quarriers}`),
-    ok(back.farmhands === before.farmhands,
-       'and so does the farm', `${before.farmhands} -> ${back.farmhands}`),
-    ok(back.crew === before.crew, 'with the same crew throughout', `${back.crew}`)
-  ];
-});
-
 // The dial has to actually do something. It did not: a beat floor of one frame
 // meant every machine at every setting delivered the same rate, and turning
 // MACHINE_GAIN up changed nothing at all.
@@ -722,7 +557,7 @@ group('turning the gain up actually makes a machine quicker', async () => {
     window.__fullSites();
     window.__tune('MACHINE_GAIN', gain);
     window.__crew(0, 0, 1);
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     window.__clearFloor();
     runUntil(() => state().quarryTotal > 0, 40);
     const c0 = state().quarryTotal;
@@ -749,7 +584,7 @@ group('a jaw fills the cut in behind itself, for ever', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 0, 1);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__clearFloor();
   run(4);
 
@@ -791,7 +626,7 @@ group('the ram replaces the miners and never your own cursor', async () => {
 
   // ...and what it takes with the ram running beside you. The crew's hands have
   // been stood down and replaced; yours have not.
-  window.__machine('ram', { bought: true, on: true });
+  window.__machine('ram', { bought: true });
   run(1);
   const withRam = window.__swing(6);
 
@@ -857,6 +692,9 @@ group('a machine is paid for in three coins at once', async () => {
   const before = state();
   const rich = window.__buy('ram');
   const after = state();
+  // Read before `__crew`, which takes every machine away on purpose -- and an
+  // unbought machine puts its row straight back on the board.
+  const gone = !window.__rows().some(r => r.key === 'ram' && r.shown);
 
   window.__crew(0, 0, 0);
   return [
@@ -868,8 +706,7 @@ group('a machine is paid for in three coins at once', async () => {
        `${before.sparks} -> ${after.sparks}`),
     ok(after.shards < before.shards, 'and shards', `${before.shards} -> ${after.shards}`),
     ok(after.spores < before.spores, 'and spores', `${before.spores} -> ${after.spores}`),
-    ok(!window.__rows().some(r => r.key === 'ram' && r.shown),
-       'and the row comes off the board once it is bought')
+    ok(gone, 'and the row comes off the board once it is bought')
   ];
 });
 
@@ -898,70 +735,6 @@ group('a machine is never priced in what its own station makes', async () => {
        ram.join(',')),
     ok(!till.includes('spore'), 'the tiller works the plots, so not in spores',
        till.join(','))
-  ];
-});
-
-// Buying one starts it -- by sending somebody to throw the lever, like anything
-// else. A machine that arrived already running would be the one thing in the
-// yard that happened without hands; one that arrived off would read as a
-// purchase that did nothing.
-group('buying a machine sends somebody to start it', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 2, 5);
-  window.__fullSites();
-  window.__grant({ sparks: 999, spores: 999 });
-  window.__tip(9000);
-  run(1);
-
-  window.__buy('jaw');
-  const justBought = state();
-  const on = runUntil(() => state().machines.jaw.on, 60);
-  const after = state();
-  window.__crew(0, 0, 0);
-  return [
-    ok(justBought.machines.jaw.bought, 'it is bought'),
-    ok(!justBought.machines.jaw.on, 'and not yet running: somebody has to go and start it'),
-    ok(justBought.machines.jaw.ask === true, 'the ask is standing', 
-       `${justBought.machines.jaw.ask}`),
-    ok(on && after.machines.jaw.on, 'and it runs once they get there'),
-    ok(after.quarriers === 1, 'and the cut is down to its tender',
-       `${justBought.quarriers} -> ${after.quarriers}`)
-  ];
-});
-
-// The lever has to exist *in the yard*, not only in a dev hook. A machine you
-// can buy and never switch off is a one-way door, and for most of this build
-// that is exactly what it was: the mechanism was written, and nothing drew a
-// lever or hit-tested one.
-group('the machine is switched from the station roster', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 2, 5);
-  window.__fullSites();
-  window.__machine('jaw', { bought: true, on: true });
-  run(2);
-
-  const post = state().roster.find(r => r.job === 'quarriers');
-  const on = state().machines.jaw.on;
-
-  // Pressed where it is drawn, through the same hit test the pointer uses.
-  const hit = window.__clickLever('jaw');
-  const asked = state().machines.jaw.ask;
-  const off = runUntil(() => !state().machines.jaw.on, 60);
-
-  window.__crew(0, 0, 0);
-  return [
-    ok(post && post.machine !== null && post.run,
-       'a station with a machine standing has a switch on its roster',
-       JSON.stringify(post && post.run)),
-    ok(on, 'and it is running to begin with'),
-    ok(hit, 'the switch answers a press where it is drawn'),
-    ok(asked === false, 'which asks for it to go off rather than flipping it',
-       `${asked}`),
-    ok(off, 'and somebody walks over and throws it')
   ];
 });
 
@@ -1022,7 +795,7 @@ group('a jaw out-digs the kitted gang it stood down', async () => {
   const hatted = state().crewDetail.length;
 
   // The same yard, the same crew, with the jaw running instead.
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   run(6);
   const byMachine = (() => {
     const before = state().quarryTotal;
@@ -1101,7 +874,7 @@ group('the belt carries dust to the hole without anybody walking it', async () =
   openSites();
   window.__fullSites();
   window.__crew(0, 1);                       // one body, and it tends the belt
-  window.__machine('belt', { bought: true, on: true });
+  window.__machine('belt', { bought: true });
   window.__clearFloor();
   run(4);
 
@@ -1125,63 +898,8 @@ group('the belt carries dust to the hole without anybody walking it', async () =
   ];
 });
 
-// The belt has no lever, and buying one is the whole of switching it on.
-//
-// This is the check the feature shipped without, and the bug it hid: every belt
-// check reached in through `__machine` and set `on` itself, so nothing ever
-// bought one the way a player does. Done that way, the purchase raised an ask
-// that `stepLevers` could never answer -- `leverX` had no post for a machine
-// that stands across the whole yard -- and the switch drawn on the carrying
-// roster could not be pressed, carrying being a fixed post. So the belt was
-// bought, paid for, took the carters' carts, and never ran.
-group('a belt bought is a belt running, with no lever to throw', async () => {
-  window.__reset();
-  openSites();
-  window.__fullSites();
-  window.__crew(0, 3);
-  window.__grant({ sparks: 999, shards: 999, spores: 999 });
-  window.__school({ carters: 6 });
-  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
-
-  const bought = window.__buy('belt');
-  const atOnce = state().machines.belt;
-  // and it stays on: nothing walks over to it, and nothing turns it off again
-  run(6);
-  const later = state().machines.belt;
-
-  // No switch on the carrying roster, and nothing to click if you go looking.
-  const clicked = window.__clickLever('belt');
-  const asked = window.__lever('belt', false);
-  run(4);
-  const after = state().machines.belt;
-
-  // And it carries, bought this way, with nobody having touched a lever.
-  window.__clearFloor();
-  const s0 = state();
-  for (let i = 0; i < 200; i++) window.__pile(s0.pitX - 300 + (i % 30) * 6, 3);
-  run(1);
-  const before = state();
-  run(14);
-  const moved = state();
-  window.__crew(0, 0);
-  return [
-    ok(bought, 'the row is affordable and buys'),
-    ok(atOnce.on, 'and it is running the instant it is bought', `on ${atOnce.on}`),
-    ok(!atOnce.ask, 'with no ask left standing for nobody to answer',
-       JSON.stringify(atOnce.ask)),
-    ok(later.on, 'and still running six seconds later'),
-    ok(!clicked && !asked, 'there is no switch to press and no lever to ask for',
-       `clicked ${clicked}, asked ${asked}`),
-    ok(after.on, 'so it cannot be stopped by asking'),
-    ok(moved.stored > before.stored && moved.floor < before.floor,
-       'and it carries the ground to the hole, bought the way a player buys it',
-       `${before.floor} -> ${moved.floor} on the ground, ` +
-       `${before.stored} -> ${moved.stored} in the hole`)
-  ];
-});
-
 // A belt survives a reload running, because there is no lever to have left off.
-group('a belt comes back running', async () => {
+group('a belt comes back bought', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -1194,8 +912,8 @@ group('a belt comes back running', async () => {
   const back = state().machines.belt;
   window.__crew(0, 0);
   return [
-    ok(back.bought && back.on, 'bought and running after a reload',
-       `bought ${back.bought}, on ${back.on}`)
+    ok(back.bought, 'bought after a reload -- and bought is all there is to be',
+       `bought ${back.bought}`)
   ];
 });
 
@@ -1210,7 +928,7 @@ group('a grain rides the belt rather than being thrown over it', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 1);
-  window.__machine('belt', { bought: true, on: true });
+  window.__machine('belt', { bought: true });
   window.__clearFloor();
   run(4);
 
@@ -1264,8 +982,8 @@ group('a full hole stops the band, and the ram works on', async () => {
   openSites();
   window.__fullSites();
   window.__crew(2, 2);
-  window.__machine('ram', { bought: true, on: true });
-  window.__machine('belt', { bought: true, on: true });
+  window.__machine('ram', { bought: true });
+  window.__machine('belt', { bought: true });
   haveRock();
   window.__clearFloor();
   run(2);
@@ -1313,8 +1031,8 @@ group("the rock's spoil lands on the belt and never touches the ground", async (
   openSites();
   window.__fullSites();
   window.__crew(2, 2);
-  window.__machine('ram', { bought: true, on: true });
-  window.__machine('belt', { bought: true, on: true });
+  window.__machine('ram', { bought: true });
+  window.__machine('belt', { bought: true });
   haveRock();
   run(8);                                     // both machines up and manned
   window.__clearFloor();
@@ -1350,7 +1068,7 @@ group('the last load off a swept yard still reaches the hole', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 1);
-  window.__machine('belt', { bought: true, on: true });
+  window.__machine('belt', { bought: true });
   window.__clearFloor();
   run(4);
   const s0 = state();

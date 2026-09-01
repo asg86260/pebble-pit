@@ -130,9 +130,15 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
   const rainAt = hz => {
     window.__reset();
     window.__crew(0, 0);
-    // over the line a shower starts at, which is SMOG_RAIN_AT
-    window.__air({ haze: 4000, muck: 0 });
-    for (let i = 0; i < 40 && !state().smog.raining; i++) window.__fast(1, hz);
+    // To the brim, which is the one sky certain to break at the next look: over
+    // the line is only a chance now (see `rainOdds` in smog.js).
+    window.__air({ haze: state().smog.cap, muck: 0 });
+    // Frame by frame rather than a second at a time. The shower is measured from
+    // the frame it starts on, and a coarse wait leaves it up to a second into its
+    // own ramp before the measuring begins -- so the two clocks would be reading
+    // different parts of the same shower and calling the difference a frame-rate
+    // fault.
+    for (let i = 0; i < 40 * hz && !state().smog.raining; i++) window.__fast(1 / hz, hz);
     window.__fast(8, hz);
     return Math.round(state().smog.muck.all);
   };
