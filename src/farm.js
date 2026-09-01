@@ -18,6 +18,8 @@ import { walkY, plotCount, resite, pileAt } from './world.js';
 import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
+import { tuneRow } from './machines.js';
+import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { mult } from './lab.js';
 import { spawnSpoil } from './dust.js';
@@ -279,10 +281,15 @@ export const FARM_UPGRADES = [
     // and stays on the board once it is finished, saying so. See `quarrypace`.
     show: () => S.farmOpen
   }
+,
+
+  // The tiller's ladder, on the farm's board, and endless like the rest.
+  tuneRow('tiller', 'gear up the tiller',
+          () => `the tiller works ${MACHINE_TUNE}x faster, again`)
 ];
 
 export const FARM_SECTIONS = [
-  { title: 'the farm', keys: ['farmplot', 'tend', 'tiller'] }
+  { title: 'the farm', keys: ['farmplot', 'tend', 'tiller', 'tunetiller'] }
 ];
 
 

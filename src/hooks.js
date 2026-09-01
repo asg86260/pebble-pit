@@ -19,7 +19,8 @@ import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
 import { makeBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
-import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt } from './pit.js';
+import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
+         pitCapacity, inHole } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
@@ -144,6 +145,7 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // check never asked for walked off to a building that was not even open, and
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
+  S.rifters = 0;
   S.janitors = 0;
   // And every machine goes back in the box. This is the same trap as the
   // scrubbers above, one level worse: a machine left standing by whatever ran
@@ -303,6 +305,7 @@ export const setAir = (o = {}) => {
   if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }
+  if (o.rifters != null) { S.rifters = o.rifters; rebalance(); syncWorkers(); }
   if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);
   if (o.rains != null) S.rains = o.rains;
@@ -451,6 +454,31 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // hole by hand first -- and a dev hook that knows three of the four counters
   // is a hook you have to remember the exception to.
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
+  // And dust, which is now the fifth counter and the one every row asks for --
+  // see `billOf` in upgrades.js. The note above about knowing three of the four
+  // applies twice over: a check granting shards to buy a shard row got a row it
+  // still could not afford, and failed as "the row did nothing".
+  //
+  // Through `give` rather than by adding to `S.stored`, because dust is the one
+  // currency that is a *pile* and not a number: the counter and the grains in
+  // the hole are the same fact, and a handout that moved one without the other
+  // would be the game's central rule broken by its own dev hook.
+  //
+  // And whatever the hole will not take goes through the rift, exactly where it
+  // goes in play. Without this a hook asked for two hundred thousand dust handed
+  // over 37,566 of it and no word about the rest -- the hole is the ceiling on
+  // the *pile*, and it stopped being the ceiling on what you own the day the
+  // rift was torn. A check about an endless ladder needs more dust than a hole
+  // holds, which is the whole point of the ladder.
+  if (o.dust) {
+    // Only as many grains as the hole could possibly take are offered to it:
+    // `give` banks one at a time, so handing it a million is a million tries for
+    // a hole that stopped taking any after thirty-seven thousand.
+    const room = Math.max(0, pitCapacity() - inHole());
+    const got = room > 0 ? give(Math.min(o.dust, room)) : 0;
+    const over = o.dust - got;
+    if (over > 0) { S.riftOpen = true; S.rift = (S.rift || 0) + over; S.stored += over; }
+  }
   buildShop(); S.dirty = true;
 };
 
@@ -545,15 +573,6 @@ export const buyRowByKey = key => {
   return rungOf(u) > was
       || (u.from && u.from() !== from)
       || (showed && !u.show());
-};
-
-// Press the pile, through the row on the board rather than around it: the price
-// is taken, the row's own rules about whether it may be bought at all apply, and
-// what a check exercises is the thing a player clicks.
-export const press = () => {
-  const row = UPGRADES.find(u => u.key === 'packpile');
-  if (row) buyRow(row);
-  return { grain: pit.p, step: S.pitStep, paid: S.pitFine || 0, sparks: S.sparks };
 };
 
 // what the pile actually looks like, sampled across the hole: dust arrives at
@@ -800,7 +819,7 @@ export const HANDLES = {
   __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection,
   __lab: openLab, __research: finishResearch, __grant: grant,
-  __spend: spendDust, __press: press,
+  __spend: spendDust,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give,

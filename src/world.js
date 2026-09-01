@@ -13,7 +13,8 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
+import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
 
@@ -74,6 +75,7 @@ export function resite() {
 export function atStation(job, x) {
   if (job === 'labbers') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
   if (job === 'scrubbers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
+  if (job === 'rifters') return S.riftOpen && x > rift.x - P * 6 && x < rift.x + rift.w + P * 6;
   if (job === 'farmhands') return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
   if (job === 'quarriers') return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
   if (job === 'miners') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
@@ -544,6 +546,11 @@ export function resize(after) {
   // among the places that dig -- and the walk out to it is the last of the
   // walks, which is what the cores have bought all the way along.
   seat(scrub, 'scrub', SCRUB_H);
+
+  // The rift, which is not seated with the rest: it does not stand among the
+  // buildings at all. It is past the far wall of the hole, in ground that was
+  // already there -- see `seatRift`.
+  seatRift();
 
   // The last thing on the ground. Everything the cores open lies further out
   // than the last, and the one place that makes nothing is the longest walk.

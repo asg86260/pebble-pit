@@ -9,7 +9,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_ROWS, CHUTE_GAP,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
@@ -21,6 +21,7 @@ import { pitDepth, pitFull } from './pit.js';
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
+import { inRift } from './rift.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
@@ -2313,11 +2314,55 @@ export function drawCore() {
 
 export function drawPaid() {
   let shade = 0;
-  for (const m of S.paid) {
-    if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
-    ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
+  // Both streams off the top of the pile: the one arcing to the bench because
+  // you bought something, and the one arcing into the rift because it swallowed.
+  // Drawn by one loop for the same reason `liftTo` lifts them by one loop --
+  // they are the same event with two destinations, and two copies of this would
+  // be two things to keep looking alike.
+  for (const list of [S.paid, S.gulped]) {
+    for (const m of list) {
+      if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
+      ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
+    }
   }
   ctx.fillStyle = '#000';
+}
+
+// The rift: a hole in the air past the far wall of the pit.
+//
+// Everything in this yard is black cells on white paper, so the honest drawing
+// of an absence is the paper's opposite -- a solid black lens standing on the
+// ground, widest at its middle, with nothing inside it because there is nothing
+// inside it. It is the only thing in the game that is a shape rather than an
+// object: no walls, no roof, no machine on the front.
+//
+// **Shut, it is an outline.** With nobody standing at it the rift is a ring of
+// cells around empty paper, and it swallows nothing. That is the scrubbing
+// house's rule drawn rather than written -- an empty house is visibly a shed --
+// and it is what stops the rift reading as a magic box that works for free. Put
+// a body there and the shape fills in.
+export function drawRift() {
+  if (!S.riftOpen) return;
+  const { x, y, w, h } = rift;
+  const across = Math.round(w / P), down = Math.round(h / P);
+  const open = inRift() > 0;
+  const mid = (across - 1) / 2;
+
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < down; r++) {
+    // A lens: nothing at the very top and bottom, widest across the middle. The
+    // half-width is worked out from the row rather than written down as a table,
+    // so the shape follows RIFT_W and RIFT_H if either ever moves.
+    const half = Math.round(mid * Math.sin(Math.PI * (r + 0.5) / down));
+    if (half < 1) continue;
+    const left = x + Math.round(mid - half) * P;
+    const wide = (half * 2 + 1) * P;
+    if (open) { ctx.fillRect(left, y + r * P, wide, P); continue; }
+    // Shut: just the two edge cells of the row, which is the outline of the same
+    // lens with the paper showing through it.
+    ctx.fillRect(left, y + r * P, P, P);
+    ctx.fillRect(left + wide - P, y + r * P, P, P);
+  }
 }
 
 
@@ -3034,6 +3079,7 @@ export function draw() {
   drawLab();
   drawCasino();
   drawScrub();
+  drawRift();                // the hole in the air past the far wall of the pit
   drawTower();
   drawOuthouse();
   drawPotPile();    // what is on the table, as a heap on the ground

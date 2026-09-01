@@ -7,7 +7,7 @@
 
 import {
   CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
-  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST,
+  HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST
@@ -16,14 +16,16 @@ import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
-import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
-import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
+import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse, rift } from './state.js';
+import { spend, takeCoreCells, pitCapacity } from './pit.js';
+import { riftRate, riftUpCost } from './rift.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE } from './machines.js';
+import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
-         SPELL_DRIVE, SPELL_THRIFT } from './config.js';
+         SPELL_DRIVE, SPELL_THRIFT, RIFT_BILL, RIFT_RATE, DUST_PER_SPARK,
+         MACHINE_TUNE } from './config.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
@@ -234,7 +236,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'rifters', 'janitors', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -323,6 +325,12 @@ const capOfBare = job =>
   // second mouth rather than a second pair of hands at the same one, so it is a
   // place to be and it takes a body of its own. See balloon.js.
   job === 'scrubbers' ? 1 + craftCount() :
+  // And one at the rift, for the third time and the same reason. There is
+  // nothing to do there: the body holds the hole in the air open by standing at
+  // it. A second pair of hands on a thing that swallows by itself would be a way
+  // of buying a faster rift, and what buys a faster rift is widening it. Unlike
+  // the house it has nothing to sell that adds a second place, so it is one.
+  job === 'rifters' ? (S.riftOpen ? 1 : 0) :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
@@ -462,6 +470,11 @@ export const kitMult = job => gangWorth(job) / handsOf(job);
 export const machineRate = job =>
   gangWorth(job) * MACHINE_GAIN
   * (machineFor(job)?.driven ? 2 : 1)
+  // Every rung of the machine's own endless ladder. One multiplier, here, for
+  // all four of them -- see `tuneGain` in machines.js: every machine's rate runs
+  // through this one function, so a ladder is a number in a record rather than
+  // four rate functions to keep in step.
+  * tuneGain(JOB_MACHINE[job])
   // and the tower's, if the yard has been enchanted
   * (spelled('drive') ? SPELL_DRIVE : 1);
 
@@ -870,8 +883,11 @@ export const UPGRADES = [
   {
     key: 'unlockschool',
     name: 'build the training grounds',
-    cost: () => SCHOOL_COST,
-    currency: 'shard',
+    // Priced in what the quarry gives, and in dust, because every row is priced
+    // in dust -- see the note on the machine bills in config.js. This was the
+    // one row in the game that asked for no dust at all.
+    bill: () => [['shard', SCHOOL_COST], ['dust', SCHOOL_DUST]],
+    cost: () => SCHOOL_DUST,
     buy: () => { S.schoolOpen = true; lookAt(school.x + school.w / 2); },
     show: () => S.seenShard && !S.schoolOpen
   },
@@ -998,19 +1014,49 @@ export const UPGRADES = [
   // first frame -- see pit.js: what you could hold used to be what you had dug,
   // which made a hole in the ground the ceiling on every other price in the game.
   //
-  // What you can buy is how *finely* it holds it, which is a different thing:
-  // the hole stays the hole and the dust in it gets smaller. It is the one row
-  // on this board bought with red, and the only one where a wizard does
-  // something to the ground.
+  // What it used to sell was how *finely* the hole held it -- red bought a
+  // smaller grain, so the same hole took four times as much and then nine. That
+  // row is cut. It made the pile a grey slab and bought back 0.09 ms a frame,
+  // which is to say nothing, and capacity was the wrong thing to sell in the
+  // first place. What stands here instead is the rift: the overflow goes
+  // somewhere else entirely, and what you buy is how fast it goes.
+  // The ram's ladder and the belt's, on the boards their machines stand on --
+  // the rock and the crew. Neither has a station board of its own, the rock
+  // being the rock and carrying being what everybody does. Endless, like the
+  // other two: see `tuneRow` in machines.js.
+  tuneRow('ram', 'drive the ram harder',
+          () => `the ram strikes ${MACHINE_TUNE}x harder, again`),
+  tuneRow('belt', 'speed the belt',
+          () => `the belt runs ${MACHINE_TUNE}x faster, again`),
+
+  // --- the rift -------------------------------------------------------------
+  // What the hole overflows into, and how fast. The rest of it -- where it
+  // stands, who holds it open, what it swallows -- is in rift.js.
   {
-    key: 'packpile',
-    name: 'press the pile',
-    note: () => `the hole holds ${packGain()} times as much, in the same hole`,
-    cost: () => packCost(),
-    currency: 'spark',
-    buy: () => { packPit(); lookAt(pit.x + pit.w / 2); },
-    // Once there is red to spend it on and there is a finer grain left to go to.
-    show: () => S.seenSpark && canPack()
+    key: 'rift',
+    name: 'tear a rift',
+    note: () => 'the hole stops being the ceiling: what will not fit goes through',
+    bill: () => RIFT_BILL,
+    buy: () => { S.riftOpen = true; lookAt(rift.x + rift.w / 2); },
+    // Once there is red to spend on it and the hole has actually turned dust
+    // away. Offering a cure for a full pit to somebody who has never filled one
+    // is the scrubbing house's mistake -- the disease is the advertisement, and
+    // here the disease is a hauler standing at the lip holding a load it cannot
+    // put down. Not a threshold on how much has been banked: see `bankDust`.
+    show: () => S.seenSpark && !S.riftOpen && S.seenFullPit
+  },
+  {
+    key: 'riftrate',
+    name: 'widen the rift',
+    unit: 'dust/s',
+    // No `rung`, and that is the point rather than an omission. `rungOf` calls a
+    // row with no rung "not a ladder at all -- a building, a one-off, a job --
+    // and never finished", which is exactly what this is. Five pips over the one
+    // row in the game that must not end would be the board promising an end.
+    note: () => `it swallows ${Math.round(riftRate() * RIFT_RATE)} a second instead of ${Math.round(riftRate())}`,
+    bill: () => [['spark', riftUpCost()], ['dust', riftUpCost() * 60]],
+    buy: () => { S.riftLevel = (S.riftLevel || 0) + 1; },
+    show: () => !!S.riftOpen
   },
 
   CAVE
@@ -1020,8 +1066,8 @@ export const UPGRADES = [
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
-  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt'] },
-  { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram'] },
+  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'] },
+  { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram', 'tuneram'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
@@ -1030,7 +1076,7 @@ export const SECTIONS = [
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] },
-  { title: 'the hole', keys: ['packpile'] }
+  { title: 'the hole', keys: ['rift', 'riftrate'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built
@@ -1083,12 +1129,46 @@ function take(money, n) {
   else if (money === 'spark') { S.sparks -= n; takeCoreCells(n, SPARK_CELL); }
 }
 
+// What the coins of the grounds are worth in dust.
+//
+// Every row in this game is priced in dust as well as in whatever else it asks
+// for, and this is what makes that true rather than sixteen numbers typed into
+// sixteen rows. A row says what it costs in its own coin -- shards at the
+// school, spores at the quarry, red at the tower -- and the dust half is worked
+// out from that here.
+//
+// Sixty to the spark is the line the machines were already sitting on: the
+// tiller exactly, the jaw within a rounding. The rest are set against it by how
+// hard the thing is to come by, and a core -- of which there are nine in the
+// game -- is worth the most of anything.
+//
+// It is a `let` and a row in TUNABLE for the same reason the rates are: this is
+// the exchange rate of the whole economy, and the way to find it is to push it
+// while watching the yard rather than to reason about it.
+export const DUST_PER = { spark: DUST_PER_SPARK, shard: 40, spore: 40, core: 500 };
+
 // What a row costs, as a currency and an amount each. Almost every row in the
 // game is priced in one thing and says so with `cost` and `currency`; the tower
-// is priced in all four at once and says so with `bill`. One shape here means
-// the affording, the paying and the drawing all read a price the same way
-// whichever kind it is.
-export const billOf = u => u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
+// is priced in all four at once and says so with `bill`.
+//
+// And then the dust, which every row carries.
+//
+// It is added here rather than written into each row because a rule sixteen
+// rows have to remember is a rule the seventeenth will forget -- and it was
+// forgotten: the lab, the school, the scrubbing house and the quarry sold
+// fifteen rows between them and not one of them asked for a grain. Which is
+// what left the pile with nowhere to go. A row that genuinely wants a different
+// number says so by naming dust itself, and what it names is what it costs.
+//
+// `time` is on the tower's hat and is not a coin: it buys nothing here, and a
+// row priced in nothing but time stays priced in nothing but time.
+export const billOf = u => {
+  const bill = u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
+  if (bill.some(([money]) => money === 'dust')) return bill;
+  let dust = 0;
+  for (const [money, n] of bill) dust += (DUST_PER[money] || 0) * n;
+  return dust > 0 ? [...bill, ['dust', Math.round(dust)]] : bill;
+};
 
 // A price, in the words that price is said in. Coins are counted; time is read
 // off a clock, and a hundred and twenty thousand of anything is not a thing

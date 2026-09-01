@@ -10,7 +10,10 @@ import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onSc
 export const TESTS = [
   ['the school is a place you walk to', async () => {
     window.__crew(2, 2, 2, 2);
-    window.__grant({ shards: 30 });
+    // Dust as well as stone: every row in the game is priced in both now -- see
+    // `billOf` in upgrades.js -- and the training grounds was the one row that
+    // used to ask for stone alone.
+    window.__grant({ shards: 30, dust: 5000 });
     const shut = state();
     const row = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockschool');
@@ -265,7 +268,11 @@ export const TESTS = [
 
     // nothing in the purse: the school sells kit and cannot sell you any
     const broke = { has: state().offers.includes('school'), ink: ink('school') };
-    window.__grant({ shards: 900 });
+    // Stone AND dust. Every row in the game is priced in both -- see `billOf` in
+    // upgrades.js -- so "money in the purse" stopped meaning one coin, and a
+    // check that filled only half the purse was still a check about a yard that
+    // could not afford anything.
+    window.__grant({ shards: 900, dust: 30000 });
     await sleep(300);
     const rich = { has: state().offers.includes('school'), ink: ink('school') };
 
@@ -413,7 +420,7 @@ export const TESTS = [
   ['a finished kit row stays on the board when the finished rows are hidden', async () => {
     newRun();
     await settle();
-    window.__grant({ shards: 9000 });
+    window.__grant({ shards: 9000, dust: 60000 });
     window.__school({ open: true });
     window.__board('school');
     await sleep(400);

@@ -75,7 +75,8 @@ export const KIT = {
 // answered without the kit importing the shop and the shop importing the kit.
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', janitor: 'janitors', wizard: 'wizards' };
+                        scrubber: 'scrubbers', rifter: 'rifters',
+                        janitor: 'janitors', wizard: 'wizards' };
 
 // And back again: what to put a body on so that it is doing a given job. The
 // same table read the other way about, because there is now one move that needs

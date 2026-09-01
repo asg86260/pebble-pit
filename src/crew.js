@@ -27,6 +27,7 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
+import { newRifter, riftMouth } from './rift.js';
 import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
@@ -280,10 +281,10 @@ export function mainlyAt(w) {
 // The order jobs are filled in, and how a body for one is made from nothing.
 // Carrying comes last so that a spare body goes to a station that is short of
 // one before it goes back to sweeping the yard.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'janitor', 'wizard', 'hauler'];
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'rifter', 'janitor', 'wizard', 'hauler'];
 const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-               labber: newLabber, scrubber: newScrubber, janitor: newJanitor,
-               wizard: newWizard, hauler: newHauler };
+               labber: newLabber, scrubber: newScrubber, rifter: newRifter,
+               janitor: newJanitor, wizard: newWizard, hauler: newHauler };
 
 // Every body gets a rhythm of its own, whatever trade it is.
 //
@@ -343,6 +344,10 @@ function handStationX(type) {
   if (type === 'farmhand') return plotX(0);
   if (type === 'labber') return labDoor() - WORKER / 2;
   if (type === 'scrubber') return scrubDoor() - WORKER / 2;
+  // The rift stands past the far wall of the hole, so this is the one station
+  // whose x is on the other side of the pit. Getting there is a route and not a
+  // walk -- see `stepRifter`.
+  if (type === 'rifter') return riftMouth() - WORKER / 2;
   if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
   // pixels above that, but the walk is to here: the going up is the job, not the
@@ -465,6 +470,44 @@ function downTheHole(w, to) {
     w.lunge = 1;
     w.sweepAt = t + swingFor(w) * (0.85 + rand() * 0.3);
   }
+}
+
+// --- out to the rift ----------------------------------------------------------
+// The one station on the far side of the hole.
+//
+// Every other body in this yard walks to its station along the ground, and
+// `stepScrubber` is four lines because the scrubbing house stands on flat earth.
+// The rift does not: it is past the far wall of the pit, on the strip of ground
+// that `ways()` calls `past`, and that strip is joined to the world through the
+// pit's two ladders and nothing else. A body sent there by adding to its `x`
+// would walk out over the mouth on thin air, which is the oldest bug in this
+// game and the reason `wayAt` exists.
+//
+// So it asks for a route and walks it, exactly as `downTheHole` does. Nothing
+// here says "ladder" or "across": the ladders are the only edges out of the
+// hole, so a body that gets to the far strip at all gets there down one, over
+// the pile and up the other -- and it is a proper walk of the whole length of
+// the yard, which is what a station you reach only at the end of the game should
+// cost to get to.
+function stepRifter(w) {
+  const all = ways();
+  const at = riftMouth() - WORKER / 2;
+  const on = wayOver(at, all);
+  // A couple of cells short is arrived, the same slack every other errand allows,
+  // so a body settling in is not walked a pixel at a time for ever.
+  if (Math.abs(at - w.x) > P * 2 || wayAt(w.x, w.y, all).key !== on.key) {
+    w.goal = 'to';                                 // still crossing: the rift is shut
+    if (!keepTo(w, at, on)) return;
+    if (stepRoute(w, commutePace())) return;
+    w.route = null;
+    return;
+  }
+  // Standing at it. `goal` is what `atRift` reads, and it is what turns the
+  // swallowing on -- being *assigned* to the rift is not being at it.
+  w.route = null;
+  w.goal = 'in';
+  w.x = at;
+  w.y = feetOn(on, w.x);
 }
 
 // --- down the ladder, for a load of the cut's own dust -------------------------
@@ -715,6 +758,11 @@ const MOVES = {
   spin: {
     beat: 1.2,
     beats: [2, 3],
+    // How far this move carries the body off its mark at a given beat. Only the
+    // spin travels, and naming it here means the duck can take it back off when
+    // it re-anchors -- see `jig`. Without that the anchor swallows the offset and
+    // hands it back all at once when the duck lets go.
+    dx: beat => Math.sin(beat * Math.PI * 2) * P,
     at: (w, swing, dt, zone, beat) => {
       const to = w.moveFrom + Math.sin(beat * Math.PI * 2) * P;
       if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
@@ -922,7 +970,28 @@ function heldUp(w, zone, now) {
   // So the marks come with it. A body that has been moved dances where it has
   // been put, and there is nothing left to pull it back.
   if (duck(w, zone)) {
-    w.jigAt = w.moveFrom = w.x;        // and it dances from where it was put
+    w.jigAt = w.x;                     // and it dances from where it was put
+    // ...on the mark the move is turning about, which is NOT where the body is.
+    //
+    // `w.x` here is the mark PLUS whatever the move has added this frame -- the
+    // spin is `moveFrom + sin(beat) * P`, and that sine is not nought at the
+    // instant a rock happens to fall. Anchoring on `w.x` swallowed the offset
+    // every ducked frame, invisibly, because the duck was walking the body
+    // anyway; the frame the duck let go, the offset was real again and the body
+    // stepped the whole of it sideways. Measured at 5.52px in the middle of a
+    // spin, against a bar of three.
+    //
+    // Which is why `dance.test.mjs` passed: its own seed came in at 2.90, three
+    // per cent under the bar. Seeds 1 and 3 fail it on the tree as it stands, so
+    // the fault was always there and the check was lucky.
+    //
+    // Taking the offset back off leaves the move running. Restarting the beat
+    // instead -- which was the first fix -- holds it at nought for the whole
+    // fall, and a body that does not hop while a rock is coming down is a body
+    // standing through the celebration: `stations.js` in the browser suite says
+    // so in as many words.
+    const m = MOVES[w.move];
+    w.moveFrom = w.x - (m && m.dx ? m.dx((now - w.moveAt) / beatMs(w, m)) : 0);
     w.y = stand(w);
   }
 }
@@ -1623,7 +1692,8 @@ export function syncWorkers() {
   // ever walking to it.
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers,
-                 scrubber: S.scrubbers, janitor: S.janitors, wizard: S.wizards };
+                 scrubber: S.scrubbers, rifter: S.rifters,
+                 janitor: S.janitors, wizard: S.wizards };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
@@ -3196,6 +3266,8 @@ const JOBS = {
   // The same sentence the wizard's entry makes, for the same reason: nothing in
   // the pipeline applies to a body that is not on the ground.
   scrubber: { work: stepScrubber, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
+
+  rifter: { work: stepRifter },
 
   janitor: {
     work: janitorWork,

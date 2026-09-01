@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
+import { S, quarry, farm, lab, scrub, sky, outhouse, rift } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
@@ -45,6 +45,11 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 export const POSTS = [
   { key: 'scrubjob', job: 'scrubbers',
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
+  // The rift, at the far end of everything. A post like any other: it is the one
+  // body holding the thing open, and taking it off is a decision you can make
+  // whenever you like -- at the cost of the hole filling up again.
+  { key: 'riftjob', job: 'rifters',
+    at: () => rift.x + rift.w / 2, show: () => S.riftOpen },
   { key: 'labjob', job: 'labbers',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   // The shed does not clean anything. What it buys is somebody whose job the

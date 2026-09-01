@@ -956,6 +956,11 @@ export const LAB_FLUE = 4;       // courses of it standing against the sky, abov
 // all of it: the quarry starts giving them up long before the lab is a thing you
 // could afford, and a currency you cannot spend reads as scenery.
 export const SCHOOL_COST = 4;    // shards to build it
+// and the dust beside them. Every row in this game is priced in dust; the
+// training grounds was the one that was not. It is the first building offered
+// after the quarry opens, so the number is small enough to be a nod to the pile
+// rather than a gate in front of the place that teaches everybody.
+export const SCHOOL_DUST = 300;
 // And what a trade costs once it is up. A helmet was two shards, which is about
 // four minutes of one body in the quarry: cheap enough that kitting the whole yard
 // out was something you did on the way past rather than something you saved for.
@@ -1112,24 +1117,51 @@ export const PIT_HEAP = 150;
 // end to the very top and stops dead, which is a wall rather than a pile.
 export const PIT_HEAP_SLOPE = 0.12;   // rows of surplus lost per column along
 export const PIT_W_MAX = 3600;   // and this wide, six hundred cells of it
-// What a grain in the pile is drawn at. A grain is always one dust; adding finer
-// sizes here lets the pile settle to them as it fills, which is how the hole
-// could be made to hold a million. For now it stays one size: dust in the pit
-// looks like dust everywhere else, and the hole fully dug out holds 27,600.
-// Three sizes, and the hole only settles to a finer one when somebody has paid
-// for it -- see `packPit`. A grain is a whole number of pixels because
-// everything in this game is: six, then three, then two. Each step is the same
-// dust in a smaller grain, so the hole holds the square of what the grain shrank
-// by -- four times at three pixels, and nine at two.
+// What a grain in the pile is drawn at. **One size, for ever.**
 //
-// This is what red is for. The core of the star comes down as sparks, and what
-// they buy is a wizard pressing the pile: the one thing in the yard that is
-// plainly magic acting on the one thing in the yard that is plainly dirt. The
-// paint store is still coming and is a secondary effect of the same resource.
-export const PIT_GRAINS = [P, 3, 2];
-// what each pressing costs, in sparks, in the order they are bought
-export const PACK_SPARKS = [40, 140];
+// It listed three for a while -- six pixels, then three, then two -- and red
+// bought the steps down: the same dust in smaller pieces, so the hole held four
+// times as much and then nine. The machinery worked exactly as designed and the
+// design was wrong. At two pixels the pile stops reading as dust at all; it is a
+// flat grey slab with a diagonal top, and buying a bigger number by making every
+// grain invisible is buying the number and throwing away the thing.
+//
+// It did not even pay for itself. Measured on a pressed hole with two hundred
+// thousand dust in it, the whole pile costs 0.09 ms a frame to settle and draw
+// against a budget of 16.7 -- so the finer grain was never bought back in speed
+// either. It spent the rarest currency in the game to make the yard uglier.
+//
+// What holds the overflow now is **the rift**, where dust costs nothing to keep
+// because nothing about it is drawn. The hole holds what the hole holds, at full
+// size: 37,566 grains, and every one of them looks like dust. See `## The rift`
+// in DESIGN.md.
+export const PIT_GRAINS = [P];
 export const PIT_PAD = 18;       // cells of ground past its far edge, so you can see the end
+
+// --- the rift ----------------------------------------------------------------
+// The hole in the air past the far wall of the pit: what the hole in the ground
+// overflows into. See src/rift.js and `## The rift` in DESIGN.md.
+//
+// It stands inside PIT_PAD above rather than past it, because the world's width
+// is measured off the pit and the floor's column count off the world -- a wider
+// world is a different `floor.cols`, and that invalidates the saved ground in
+// every save anybody has. Fifteen cells of the eighteen.
+export const RIFT_W = P * 15;
+export const RIFT_H = P * 16;
+// What tearing one costs. Red, because it is the one plainly magic thing acting
+// on the one plainly dirt thing, and dust like every other row in the game.
+export const RIFT_BILL = [['spark', 120], ['dust', 20000]];
+// Grains a second a fresh rift swallows, and what each widening multiplies that
+// by. Twelve a second is under a well-run yard's income on purpose: the rift
+// arrives behind the works and you buy it forward, so the row means something
+// the day you build it.
+export const RIFT_RATE0 = 12;
+export const RIFT_RATE = 1.6;
+// And what a widening costs, in red, growing the same way. The dust half is the
+// sixty-to-the-spark line every other price in the game sits on -- see DUST_PER
+// in upgrades.js.
+export const RIFT_RATE_COST = 25;
+export const RIFT_RATE_UP = 1.5;
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
 // how many device pixels we are willing to fill a frame, before backing the
 // resolution off. A phone at three to one is about three million.
@@ -1574,6 +1606,20 @@ export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
 // out from here. The honest form of this number is whatever a node check that
 // runs a machine against a real gang of five says it should be.
 export let MACHINE_GAIN = 1.5;
+// And what one tuning of a machine multiplies its rate by, what the first one
+// costs in red, and how fast that price climbs. See `tuneRow` in machines.js.
+//
+// The ladder never ends, so the price has to be the wall rather than the rung
+// count: 1.55 a rung against a gain of 1.3 means each one buys less than the
+// last, which is what stops an endless row from running away with the game --
+// and what makes it a sink deep enough to swallow an endgame's dust.
+export const MACHINE_TUNE = 1.3;
+export const MACHINE_TUNE_COST = 30;
+export const MACHINE_TUNE_UP = 1.55;
+// Dust to the spark, the line every price in this game sits on. `DUST_PER` in
+// upgrades.js is the full table; this is the one entry that is also needed here,
+// where a bill is built and upgrades.js cannot be reached without closing a ring.
+export const DUST_PER_SPARK = 60;
 // Soot off the stack, per unit of the station's work -- not per minute. A
 // machine is the sky's only producer (`foul` refuses everything else), so this
 // one dial *is* the pollution rate, and the compounding is what makes it so
@@ -1658,14 +1704,30 @@ export const PUFF_SPREAD = 0.8;      // how far apart they start, in cells
 // The tower has been the only such row in the game; these are the first that are
 // priced in sparks at all, which means they are also the first exercise
 // `takeCoreCells` has ever had.
+// And every one of them carries dust, because every price in this game does.
+//
+// Dust is the one coin the whole yard makes, so a row that does not ask for any
+// is a row the pile has no part in -- and the pile is what the game is about.
+// The rule is not a preference about prices: it is what gives the dust in the
+// hole somewhere to go, which is the difference between a heap you spend and a
+// heap you look at. See `every bill carries dust` in test/bills.test.mjs, which
+// is what stops the next row added from quietly skipping it.
+//
+// The two that did skip it were the ram and the belt. They were priced in the
+// coins of the grounds and in red, which reads well and left the two most
+// expensive things in the game costing nothing out of the pile.
+//
+// Sixty dust to the spark is the line the three that already had dust were
+// sitting on -- the tiller exactly, the jaw within a rounding -- so the two
+// being fixed are put on the same line rather than given a number apiece.
 export const JAW_BILL    = [['spark', 30], ['dust', 2000], ['spore', 25]];
-export const RAM_BILL    = [['spark', 50], ['shard', 40], ['spore', 30]];
+export const RAM_BILL    = [['spark', 50], ['dust', 3000], ['shard', 40], ['spore', 30]];
 export const TILLER_BILL = [['spark', 20], ['dust', 1200], ['shard', 18]];
 // The belt is the one machine not priced away from its own station's coin,
 // because carrying does not *have* a coin: a hauler makes nothing, it moves what
 // everybody else made. So it is priced in all three grounds, which is the truest
 // thing a price can say about a thing the whole yard uses.
-export const BELT_BILL = [['spark', 40], ['shard', 30], ['spore', 30]];
+export const BELT_BILL = [['spark', 40], ['dust', 2400], ['shard', 30], ['spore', 30]];
 // The rock's notional gang was five; the lip's is what a full crew of carriers
 // looks like, which is rather more -- carrying is the job everybody falls back
 // to, so at any moment most of the yard is doing it.

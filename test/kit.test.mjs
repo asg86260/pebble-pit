@@ -354,7 +354,7 @@ group('a hauler that picks the helmet up is a miner, and the swap is one body', 
 // because the ceiling being asked about is the row's own.
 group('the carts have no ceiling, and the helmets do', async () => {
   window.__reset();
-  window.__grant({ shards: 100000 });
+  window.__grant({ shards: 100000, dust: 40000 });
   window.__school({ open: true });
 
   for (let i = 0; i < 6; i++) window.__buy('carter');

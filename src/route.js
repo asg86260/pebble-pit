@@ -324,6 +324,27 @@ export function wayAt(x, y, all = ways()) {
     const under = standTop(x, on.at);
     const mid = on.at(x + WORKER / 2);
     if (Math.min(Math.abs(feet - under), Math.abs(feet - mid)) <= P * 2) return on;
+    // And a body whose feet are BELOW the pile is IN it, which is the hole's
+    // way and not the yard's.
+    //
+    // The line under this one is written for the other side of the same
+    // question: a body at a ladder head with the pile far below, feet well
+    // ABOVE the surface, which really is standing on the yard at the lip. Feet
+    // well UNDER it is not that body at all -- it is one the sand has closed
+    // over -- and answering "the yard" for it hands back a way whose own span
+    // (`yard.to = pit.x`) does not contain the body. Everything downstream then
+    // inherits that: the router plans a walk home along a yard floor that stops
+    // at the near wall, so the route runs through the length of the pile;
+    // `feetOn` gives the ground line, so the body is planted inside the heap
+    // every frame; and `climbTo` sees a one-pixel rise instead of a wall of
+    // sand, so nothing ever lifts it out. The body walks on the spot, buried,
+    // for ever.
+    //
+    // Unreachable while the hole could not fill: an empty hole puts the pile far
+    // below everything over the mouth, so only the ladder-head case existed. A
+    // full hole heaps above the ground line, and a full hole is where an endgame
+    // yard lives -- see `## The rift` in DESIGN.md.
+    if (feet > Math.max(under, mid)) return on;
   }
   return on === all.hole ? all.yard : on;
 }
@@ -621,6 +642,35 @@ export function plant(w, y) {
 }
 
 export function climbTo(w, want) {
+  // Sand does not let you stand inside it.
+  //
+  // Everything below is a *climb*: feet lead, body follows, the step is given
+  // back until they arrive. Right for rock, wrong for a body the pile has closed
+  // over -- the ease will not carry a sheer face and sand is sheer, so it stands
+  // at the foot of a wall of its own heap for ever, walking on the spot inside
+  // it. Being buried is not a climb; the pile puts the body out on top of itself.
+  //
+  // Only a body with no route. One that HAS a route is going somewhere on
+  // purpose -- down a ladder, over the heap, into the hole -- and its height is
+  // that route's business. Written without this guard it shoved every descending
+  // body back up the rungs it was climbing down, every frame, and left one
+  // farmhand a hundred and twenty-nine pixels inside the pile: the cure making a
+  // worse case of the disease.
+  //
+  // Half a cell a frame, not a snap -- half a cell is the bar `dance.test.mjs`
+  // holds every move to, so a body lifted out while the yard is dancing is still
+  // under it, and a body jumping its own height is the one thing this yard does
+  // not do.
+  if (pit.grid && pit.cols && !(w.route && w.route.length)) {
+    const mid = w.x + WORKER / 2;
+    if (mid > pit.x && mid < pit.x + pit.w && pitTop(mid) < w.y) {
+      const out = Math.max(pitTop(mid) - WORKER, w.y - P / 2 * frames());
+      w.foot = out;
+      w.footAt = w.x;
+      return out;
+    }
+  }
+
   // From where the body actually is. Seeding this with the target instead is a
   // body that arrives at the foot of the rock and is suddenly on top of it --
   // which is the one thing climbing was put in to stop.

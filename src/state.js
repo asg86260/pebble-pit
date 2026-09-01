@@ -84,6 +84,7 @@ export const S = {
   chips: [],              // knocked loose, still flying
   belt: [],               // riding the belt, between the ground and the hole
   paid: [],               // flying out of the pit to the bench, on the way to being spent
+  gulped: [],             // and out of the pit into the rift, on the way out of this dimension
   motes: [],              // the load drifting round the cursor
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
@@ -93,8 +94,17 @@ export const S = {
   banked: 0,              // and every grain ever put in it, which only goes up
   shownStored: 0,         // the counter chases the real number
   tweenFrom: 0, tweenTo: 0, tweenAt: 0, tweenMs: 300,
-  pitStep: 0,             // how many times the pile has settled to a finer grain
-  pitFine: 0,             // and how many of those settlings have been paid for
+
+  // --- the rift ---
+  // Dust that is not here. The hole holds what the hole holds, at full size, for
+  // ever; everything banked past that stands in another dimension and costs
+  // nothing to keep, because nothing about it is drawn. `stored` is still all the
+  // dust you own -- see `inHole` in pit.js, and `## The rift` in DESIGN.md.
+  seenFullPit: false,     // the hole has turned a grain away at least once
+  riftOpen: false,        // the rift is bought
+  rift: 0,                // and how many grains are through it
+  riftLevel: 0,           // how fast it swallows: an endless ladder, not a capacity
+  rifters: 0,             // and the one body holding it open
   hideDone: false,        // whether finished ladders are folded off the boards
 
   // --- cores ---
@@ -223,7 +233,7 @@ export const S = {
   quarryTotal: 0,
   // The three machines, keyed. One object rather than nine flat fields on S,
   // because it is four places to remember when the save format moves instead of
-  // thirty-six -- and the note in `reset()` about `S.pitFine` is what forgetting
+  // thirty-six -- and the note in `reset()` about the rift is what forgetting
   // one of thirty-six looks like afterwards. See machines.js for the shape.
   machines: null,
   // A machine whose lever has just been thrown wants its gang back, and that
@@ -398,6 +408,9 @@ export const casino = { x: 0, y: 0, w: 0, h: 0 };
 // The scrubbing house: the one building whose job is to undo something the rest
 // of the yard is doing.
 export const scrub = { x: 0, y: 0, w: 0, h: 0 };
+// The rift stands past the far wall of the hole -- a plot like any other, even
+// though what it is is an absence. See src/rift.js.
+export const rift = { x: 0, y: 0, w: 0, h: 0 };
 // The tower: the far end of the walk, and the only thing a core buys.
 export const tower = { x: 0, y: 0, w: 0, h: 0 };
 // The outhouse, out among the rooms the crew live in.

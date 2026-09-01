@@ -27,6 +27,7 @@
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
 import { scrubRate } from '../src/smog.js';
+import { inScrub } from '../src/scrubhouse.js';
 import { SMOG_PER_MOTE } from '../src/config.js';
 
 // The yard from the field, which is the only honest place to ask this: a fresh
@@ -37,10 +38,74 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   localStorage.setItem('boulder-clicker/v4',
     readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
   yard.restore();
+  // Every machine set explicitly, on AND off. This used to only switch the
+  // listed ones ON, which left whatever the save already had running -- and this
+  // save has the belt. So `cleared()`'s "the machines off, so what this measures
+  // is the house alone" was never true: the belt went on fouling underneath the
+  // measurement, the sky climbed to SMOG_RAIN_AT, and the run that cleared
+  // slowest was the one that RAINED. That rain then read as the house's work --
+  // 989 haze "cleared" with no fan against 428 with a full one, which says a fan
+  // makes the sky worse.
+  //
+  // The check passed while the belt happened not to reach the line inside thirty
+  // seconds. Same shape of luck as the dance's seed: a premise that was never
+  // enforced, holding by accident.
   for (const k of machines) window.__machine(k, { bought: true, on: true });
+  // And when the caller asks for NO machines, that has to mean none -- including
+  // the ones the save arrived with. This save has the belt.
+  //
+  // `cleared()` says "the machines off, so what this measures is the house
+  // alone", and it was not true: switching the listed machines on left the
+  // belt running, it went on fouling underneath the measurement, the sky climbed
+  // to SMOG_RAIN_AT, and the run that cleared slowest was the one that RAINED.
+  // The rain then read as the house's work -- 989 haze "cleared" with no fan
+  // against 428 with a full one, which says a fan makes the sky worse.
+  //
+  // The check passed for as long as the belt happened not to reach the line
+  // inside thirty seconds. Same shape as the dance's seed: a premise nothing
+  // enforced, holding by luck.
+  //
+  // Only in the empty case. The runs that want machines want the yard the save
+  // came with, and quietly switching its belt off would re-tune every balance
+  // below rather than fix anything.
+  if (!machines.length)
+    for (const m of ['jaw', 'ram', 'tiller', 'belt']) window.__machine(m, { bought: false });
   yard.S.fanLevel = fan;
+  // Room in the hole.
+  //
+  // This save came from a yard whose pit was nearly full, and it was written on
+  // a pressed pile -- 1200 columns of three-pixel grains. The press is cut, so
+  // that profile no longer fits this plot and `rehomeDust` puts the dust back:
+  // the hole comes back FULL, at full size, with the remainder in the rift.
+  //
+  // It used to arrive empty. `pitFromSave` refused the mismatched profile and
+  // `restore` then cleared the grid and left the counter alone, so this fixture
+  // silently loaded a yard with a hundred thousand dust on the counter and
+  // nothing in the hole -- which happened to give the crew somewhere to put
+  // things, which is why this check ever passed. A full hole stops the works:
+  // the haulers stand down holding their loads, so the machines idle and the
+  // sky stops being filled.
+  //
+  // What this file measures is the house against the machines, so it buys the
+  // room outright rather than measuring a jammed yard.
+  window.__spend(20000);
   window.__air({ haze: 1800, muck: 0, scrubbers: 1, recycler: true, open: true });
-  run(3);                                   // the body walks in and the draught comes on
+  // Wait for the body to actually be IN the house, rather than assuming three
+  // seconds of walking is enough.
+  //
+  // It was three seconds, and that made every reading below partly a measurement
+  // of a walk. The house does nothing at all until somebody is through the door
+  // -- `inScrub`, not `S.scrubbers`, which counts everybody it has been given
+  // including one still crossing the yard -- so a run that started before the
+  // body arrived spent part of its thirty seconds measuring an empty shed. On a
+  // busy yard the walk is longer than three seconds and the same setting came
+  // out at 140 haze cleared on one arrangement and 984 on another, which is
+  // noise several times the size of the thing being measured.
+  //
+  // The check passed for as long as the walk happened to fit. Same fault as the
+  // dance's seed, and the same cure: wait for the state the measurement is
+  // about instead of guessing how long it takes to arrive.
+  runUntil(() => inScrub() > 0, 60);
 };
 
 // How much sky one setting of the fan takes down in half a minute, with nothing

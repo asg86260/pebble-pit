@@ -28,6 +28,7 @@
 // line. Geometry is derived, never remembered.
 
 import { S } from './state.js';
+import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from './config.js';
 
 // The three of them, and the job each one stands in for. The job is the link to
 // everything else: it is what `capOf` answers about, what `handsOf` reads, and
@@ -76,7 +77,7 @@ export const kitDisplaced = job => {
 // A machine's record. One shape, three of them, and it is a keyed object rather
 // than nine flat fields on S for a reason worth writing down: it is four places
 // to remember when the save format moves instead of thirty-six, and the note in
-// `reset()` about `S.pitFine` records exactly the bug that forgetting one gives
+// `reset()` about the rift records exactly the bug that forgetting one gives
 // you.
 //
 // `bought`, `on` and `was` are facts about the yard. `ask` is a request that has
@@ -94,7 +95,11 @@ const fresh = () => ({
   // Declared, and false, and unused until a star's core can be turned into a
   // heart. When that lands it multiplies exactly one number -- see `machineRate`
   // -- rather than arriving as a second feature wearing this one's coat.
-  driven: false
+  driven: false,
+  // How many times this machine has been tuned. An endless ladder: see
+  // `tuneGain` below, and `## The rift` / `## Economy` in DESIGN.md for why the
+  // yard needs one row that never runs out.
+  tune: 0
 });
 
 export const freshMachines = () => Object.fromEntries(MACHINES.map(m => [m.key, fresh()]));
@@ -117,6 +122,46 @@ export const machineFor = job => {
   const m = k && machine(k);
   return m && m.bought ? m : null;
 };
+
+// --- tuning one --------------------------------------------------------------
+// The machines were the one thing in this yard you bought and then never
+// thought about again. Every ladder in the game belonged to hands -- pick,
+// swing, carry, harness, boots -- and a machine ran at the rate it was born at
+// for ever, which made the biggest purchase in the game the end of a line
+// rather than the start of one.
+//
+// So each of them has a ladder of its own, and the ladders **never end**. That
+// is what makes them the yard's dust sink: every rung costs red and dust, the
+// price grows on every rung, and there is always another. A finite ladder has a
+// finite total cost and would put the surplus back exactly where it was.
+//
+// It is one multiplier on `machineRate` in upgrades.js and nothing else. Every
+// machine's rate already runs through that one function, so a rung is a number
+// in a record rather than four rate functions to keep in step -- and a fifth
+// machine gets a ladder by existing.
+export const tuneOf = key => machine(key)?.tune || 0;
+export const tuneGain = key => Math.pow(MACHINE_TUNE, tuneOf(key));
+export const tuneCost = key => Math.round(MACHINE_TUNE_COST * Math.pow(MACHINE_TUNE_UP, tuneOf(key)));
+
+// The row, built once for all of them. A machine's ladder is the machine's, so
+// the row lives on the board of the place the machine stands -- the jaw's at the
+// quarry, the tiller's at the farm -- which is the rule the boards were supposed
+// to have had all along.
+//
+// No `rung`, deliberately: `rungOf` calls a row without one "not a ladder at all
+// ... and never finished", and never finished is the whole point. Pips over this
+// would be the board drawing an end onto the one row that has none.
+export const tuneRow = (key, name, note) => ({
+  key: 'tune' + key,
+  name,
+  unit: 'x',
+  note,
+  bill: () => [['spark', tuneCost(key)], ['dust', tuneCost(key) * DUST_PER_SPARK]],
+  buy: () => { const m = machine(key); if (m) m.tune = (m.tune || 0) + 1; },
+  // Only once the machine is actually standing. A ladder for a thing you have
+  // not bought is a row about nothing.
+  show: () => !!machine(key)?.bought
+});
 
 export const running = key => {
   const m = machine(key);

@@ -521,6 +521,28 @@ assigning one is worth doing. Nothing still grows with nobody on the farm at all
 Each has exactly one job. Dust is the only one you can also *see* — it is the pile in the pit,
 and the pile is the dust rather than a picture of it.
 
+**Every row is priced in dust as well.** Whatever else a row asks for — shards at the school, spores
+at the quarry, cores for a place, red for a machine — it asks for dust too, and the dust half is
+worked out from the rest through one exchange table (`DUST_PER` in upgrades.js) rather than typed
+into each row.
+
+It is a rule and not a preference, because the alternative was tried by default and did not hold:
+fifteen rows across the lab, the school, the scrubbing house and the quarry were priced in a single
+coin apiece and asked for no dust at all, and the two most expensive things in the game — the ram
+and the belt — were among them. Which is how the pile came to have nowhere to go. A heap you cannot
+spend is a heap you look at, and this game is about a heap you spend.
+
+It is added in `billOf` rather than written into the rows, because a rule fifteen rows have to
+remember is a rule the sixteenth forgets. A row that genuinely wants a different number names dust
+itself, and what it names is what it costs. `test/bills.test.mjs` is what stops the next row from
+skipping it.
+
+One rule gives way to it. A machine is never priced in **what its own station makes** — the jaw not
+in shards, the tiller not in spores — so that a machine is never just a bigger version of the
+station that pays for it. That still holds for a station's own special coin. It does not hold for
+dust, because once dust is the price of everything it has stopped being the rock's coin and become
+the one the whole yard shares, and every station's output ends in the same hole regardless.
+
 Sweep radius is fixed at 3 cells — it was an upgrade and got cut; widening the brush changed
 nothing you could feel, because carry capacity is the real limit on a sweep.
 
@@ -1284,8 +1306,11 @@ reason to finish a star rather than abandon it half-mined.
 **Sparks are the multiplier.** Every ladder is five rungs of ground and two of
 red: the ground can take a stat as far as the ground goes, and past that it costs
 something that fell out of the sky. This is what red is *for* in the long run --
-the pit press is already this shape, and the paint store below spends the same
-red on something that is not a multiplier at all.
+and what it buys has settled since this was written. Red is **the machines'
+currency**: it buys every machine in the yard and then every rung of the endless
+ladders on them, and it opens the rift and buys its throughput. The pit press
+used to be the example here and is cut. The paint store below spends the same red
+on something that is not a multiplier at all.
 
 ### The smoke comes on in two steps
 
@@ -1330,6 +1355,34 @@ few thousand dust.
 
 Four of them: **the jaw** on the cut, **the ram** on the rock, **the tiller** on
 the plots, and **the belt** from the rock to the hole.
+
+**Each has a ladder of its own, and the ladders never end.** This was the hole in
+the middle of the game: every ladder in it belonged to *hands* -- pick, swing,
+carry, harness, boots -- and a machine ran at the rate it was born at for ever.
+So the largest purchase in the game was the end of a line rather than the start
+of one, and past it there was nothing left to spend on at all. That is where the
+dust surplus came from, and it is why no amount of storage was ever going to fix
+it: the problem was never where to *put* the dust, it was that there was nothing
+to do with it.
+
+Red buys them, and dust like every other row. The rungs live on the board of the
+building the machine stands in -- the jaw's at the quarry, the tiller's at the
+farm, the ram's under `the rock` and the belt's under `the crew` -- which is the
+rule the boards were always supposed to follow.
+
+**Endless is load-bearing, not decoration.** A five-rung ladder has a finite
+total cost, and a finite total cost puts the surplus straight back where it was.
+What stops an endless one running away with the game is that the price climbs
+faster than the gain: a rung is worth ×1.3 and costs ×1.55 of the last, so each
+one buys less than the one before it and the ladder is a slope rather than a
+lever. By the tenth rung a single rung costs more dust than the hole can hold --
+which is where the two halves of this meet, because a ladder like that is only
+climbable by a yard with a rift under it.
+
+It is **one multiplier** in `machineRate` and nothing else. Every machine's rate
+already ran through that one function, so a rung is a number in the machine's own
+record rather than four rate functions to keep in step, and a fifth machine gets
+a ladder by existing.
 
 The belt is the odd one out and is worth saying why. The other three work a
 face; it works the *ground between* two places, picking loose dust off the floor
@@ -1555,8 +1608,8 @@ uneasiness about the row: three currencies on one row is unlike anything else in
 the game, and *everything but this station's own coin* is a better reason for
 that than "it is expensive".
 
-All three together are a hundred sparks, against a pit press at forty and then a
-hundred and forty. They are the first rows in the game priced in sparks at all,
+All three together are a hundred sparks. (They were weighed against a pit press at
+forty and then a hundred and forty, which is cut -- see **The rift**.) They are the first rows in the game priced in sparks at all,
 which makes them the first exercise `take('spark')` has ever had -- its comment
 has said "nothing is priced in sparks yet" since the day red was banked.
 
@@ -2103,9 +2156,10 @@ So every dust purchase is a choice between arriving sooner and being further alo
 Every pixel is worth exactly one, wherever it came from. Shade is how deep the rock looked, not
 what it pays. That rule is why the lab sells rates and never yields.
 
-*(There was a target of a million dust. It is parked, not cancelled: `PIT_GRAINS` in config.js
-still holds the machinery that would let the pile settle to a finer grain and hold one. See
-**The pit**.)*
+*(There was a target of a million dust. It is met, and not by a finer grain: what is banked past
+what the hole can show stands in the rift, and a million is a number the rift holds without
+drawing a pixel. `PIT_GRAINS` is one size now and the press that sold the finer ones is cut — it
+made the pile a grey slab and bought back 0.09 ms a frame. See **The rift**.)*
 
 ## The suite
 
@@ -2280,14 +2334,17 @@ loses. The pile always shows as much of the hole as will fit in it: 655 grains i
 start with, 37,566 in the hole fully dug out. It stops there, and so does the counter, which is the
 whole of the pressure to dig.
 
-A million does not fit at this grain, and the goal is parked for now. The machinery to get
-there is still in place: `PIT_GRAINS` lists the sizes a grain may be drawn at, and adding
-finer ones lets the pile **settle** to them as it fills — every grain kept, each column shared
-out across the finer columns standing where it did, so the profile survives and only the
-resolution changes. At one pixel a grain the same hole holds 1,000,224. The arithmetic is
-unforgiving: a million grains needs a million pixels of hole, and since the depth is pinned
-to the window it can only be bought sideways — 2px grains would need a pit seven screens wide,
-3px seventeen. That is the trade whenever the goal comes back.
+A million does not fit at this grain and never will, and that is settled rather than parked.
+`PIT_GRAINS` is **one size**. It used to list finer ones and the press sold them: the pile would
+**settle** to a smaller grain as it filled, every grain kept, each column shared out across the
+finer columns standing where it did, so the profile survived and only the resolution changed. At
+one pixel a grain this hole holds 1,000,224.
+
+It is cut, because the arithmetic was never the objection — the *look* was. At two pixels the pile
+is not dust any more, it is a grey slab, and buying a million grains by making every one of them
+invisible is buying the number and throwing away the thing. What is banked past what the hole can
+show goes to **the rift** instead, where it costs nothing to keep because nothing about it is
+drawn. The hole holds what the hole holds, at full size, for ever.
 
 **A core in the pile is drawn at the size a core is**, not at the size of the cell it holds. It is
 one grain as far as the sand is concerned — it heaps and settles like any other — but a cell is six
@@ -2348,6 +2405,99 @@ deep, and a full yard sent the rest rolling in rather than piling up mid-air. Be
 banked the whole yard for free and left the haulers with nothing to do. Throwing dust over the edge
 is still a real tactic — a flick sends it through the air, and anything that crosses the mouth
 falls in.
+
+## The rift
+
+**The problem.** The hole holds 37,566 grains and an endgame yard banks that in minutes. Everything
+past it is dust the game refuses to take: the haulers stand down, a bar stands on the lip, and the
+works stops being worth watching at exactly the point you have built it up enough to want to watch
+it.
+
+Three cures were tried on paper before this one, and each of them was the same mistake wearing a
+different hat — **making the hole hold more**:
+
+- **The press** (built, and now cut). Red bought a finer grain: the same dust in smaller pieces, so
+  the hole held four times as much and then nine. It worked, and what it cost was the thing the pit
+  is for. At two pixels the pile stops reading as dust at all — it is a flat grey slab with a
+  diagonal top, no speckle, no grains, no charm. It also bought nothing back: measured on a pressed
+  hole with 202,000 dust in it, the whole pile costs **0.09 ms a frame** to settle and draw, against
+  a 16.7 ms budget. So the press spent the rarest currency in the game to make the yard uglier and
+  hold a number that should never have been the constraint.
+- **A bigger hole.** Depth is pinned to the window, so room can only be bought sideways, and the
+  world is already 3600 across. Doubling the width doubles the capacity and scales the whole yard
+  down a step on any narrow window. It buys 75,000 and costs the silhouette.
+- **A drain that eats the surplus.** Honest, and it answers the wrong question: it makes the
+  overflow *stop existing*. What the yard wants at that point is not to lose dust faster.
+
+The arithmetic under all three is unforgiving and worth writing down plainly. **One grain is one
+dust and a grain is six pixels**, so 202,000 dust needs 202,000 cells of pile — about 7.2M px² —
+and the hole is 1.5M. No arrangement of this hole shows that much dust at full size. Something in
+the premise has to give, and the premise nobody had questioned is that **the pit is where the dust
+is kept**.
+
+### The cure
+
+It is not. The pit is the **working floor** — the thing you watch, where grains land and heap and
+settle and are lifted out to pay for things. What you have *banked* is a different question, and
+late in the game it gets a different answer: **a rift, and the grains are somewhere else.**
+
+A hole in the air at the far end of the pit, past the heap. Grains stream off the top of the pile,
+arc into it and are gone — the same gesture `spend` already makes when you pay for something, which
+is deliberate: the yard has one way of showing dust leaving the pile and this is it. They are not
+destroyed and the counter does not move. They are in another dimension, and the rift says how many.
+
+**Why this is not the press again.** The press paid in *resolution* and you could see the bill. The
+rift pays in *location*: every grain still in this dimension is a full-size, six-pixel, speckled
+grain, drawn exactly as it always was. The pile keeps its charm at every stage of the game, and it
+gets something it has never had — it **moves**. Today's endgame pile is permanently full, which is
+one unchanging picture; a pile that drains and refills is a working yard.
+
+**It costs nothing to draw**, because nothing in it is drawn. This is the one place in the game
+where storage is free, and it is free for a reason a player can see: it is not here.
+
+### What it does not break
+
+**The counter and the picture still agree.** DESIGN.md's oldest rule about the pile is that the
+number and the picture never say different things, and the rift keeps it by *narrowing what the
+picture is about*: the pile shows everything in the hole, the rift's own reading shows everything
+in the rift, and the counter is the two together. That is a fact you can read off the screen, not a
+fudge. The pile is still the dust — all of the dust that is here.
+
+**Somebody holds it open.** A wizard stands at the rift and it swallows; nobody there and it is
+shut, the pile backs up, and the hole fills the way it does today. The yard's two oldest rules
+survive it — nobody teleports, and a station idles until somebody is actually standing there — and
+they are what stop this from being a magic box that gets something for nothing. The cost of
+unbounded storage is **a body not on the rock**, which is the same bargain every other station in
+this yard makes, and it is a decision you can take back whenever you like.
+
+**Nothing gets into the pit without being carried or thrown**, still. The rift is not a second place
+for a hauler to walk to and it never appears in anybody's errand. Everything is carried to the pit
+exactly as it always was; the rift is what the *pit* does with its overflow. One destination for the
+crew, one rule to keep.
+
+### What you buy
+
+Red, and dust — like every row in the game. Then **an endless ladder on how fast it swallows**, not
+on how much it holds.
+
+Capacity is unbounded from the moment it is built, and that is the point rather than an oversight: a
+magic hole with a number written on it is the pit again, and the whole lesson of the press is that
+capacity is the wrong thing to sell. What you are buying is whether the rift keeps up with your
+income. A yard that has outgrown its rift fills the hole and stops, exactly as it does today — so
+the pressure is real, it is about throughput, and the answer to it is a ladder that never ends.
+
+That is the shape the game has been asking for since the beginning. The pit was once bought a dig at
+a time and it was taken away for making a hole in the ground the ceiling on everything else; the
+press replaced it and made the pile ugly. The rift is the third attempt at the same job and the
+first one that sells **rate** rather than **room**.
+
+### A save from before it
+
+A save holding more than the hole can show comes back as a full pile — up to 37,566 grains — with
+the remainder standing in the rift. Nothing is clamped and nothing is destroyed. A player who had
+pressed their pile twice and banked 202,000 opens the new build to a hole full of proper six-pixel
+dust and a rift holding the other 165,000, which is the state the game would have put them in had
+the rift existed all along.
 
 ## The air
 
