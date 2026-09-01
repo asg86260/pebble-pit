@@ -1,13 +1,13 @@
 // The machines: the record, the capacity rule, and the way back.
 //
-// Nothing here runs a machine yet -- there is no drawing, no beat and no lever
-// to throw. What is checked is the part everything else stands on: that a
-// station being worked by a machine holds one body, that the gang it displaced
-// is walked to carrying rather than deleted, that throwing the lever off gets
-// them back, and that a machine left running by one check cannot silently
-// rewrite what the next one is allowed to mean.
+// What is checked is the part everything else stands on: that a station being
+// worked by a machine holds one body, that the gang it displaced is walked to
+// carrying rather than deleted, that taking its tender off stops it, and that a
+// machine left standing by one check cannot silently rewrite what the next one
+// is allowed to mean.
 
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER } from './helpers.mjs';
+import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 
 // The two boards nobody could buy from.
 //
@@ -104,6 +104,56 @@ group('a machine is stopped by taking its tender off', async () => {
     ok(back.machines.jaw.workedAt > off.machines.jaw.workedAt,
        'and it works again, with nothing to switch',
        `${off.machines.jaw.workedAt} -> ${back.machines.jaw.workedAt}`)
+  ];
+});
+
+// The ram eats its way into the hill, and you can see it happen.
+//
+// It used to be parked off `rockLeft()` -- the far edge of the grid, which does
+// not move while a boulder is taken apart -- so the machine stood in exactly one
+// spot for the whole of a rock and the only thing that said it was working was
+// the smoke. Measured off the *face* instead, it advances into the ground it has
+// cleared.
+//
+// The second half matters as much as the first: the standoff is constant. A ram
+// that drifted away from the face, or into it, would be a machine striking air
+// or standing inside the stone.
+group('the ram advances into the hill as it eats it', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(1, 0);                       // one body, which is all it holds
+  window.__machine('ram', { bought: true });
+  window.__clearFloor();                     // or the rock's pile fills and it stands down
+  window.__jump(3);
+  // Long enough for the tender to walk to the machine and for it to start
+  // biting. Without the walk there is nobody standing there and an unmanned
+  // machine does nothing, which would make this pass for the wrong reason.
+  runUntil(() => (state().machines.ram.workedAt | 0) > 0, 40);
+
+  const seen = [];
+  for (let i = 0; i < 12; i++) { run(0.25); window.__clearFloor(); seen.push([rockFaceX(), ramX()]); }
+
+  const face = seen.map(s => s[0]), ram = seen.map(s => s[1]);
+  const moved = face[face.length - 1] - face[0];
+  const backwards = face.some((f, i) => i > 0 && f < face[i - 1]);
+  const standoff = seen.map(s => s[0] - s[1]);
+  const held = standoff.every(d => d === standoff[0]);
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(moved > 0, 'the face gives ground as the machine works it',
+       `${face[0]} -> ${face[face.length - 1]}`),
+    ok(!backwards, 'and never takes any back -- the hill is only ever eaten',
+       face.join(' ')),
+    ok(ram[ram.length - 1] > ram[0],
+       'and the ram walks in after it rather than standing still',
+       `${ram[0]} -> ${ram[ram.length - 1]}`),
+    ok(held, 'holding exactly its own standoff the whole way',
+       `${standoff.join(' ')}`),
+    ok(standoff[0] > P * RAM_REACH,
+       'which leaves the arm real daylight to cross -- a stroke you can see',
+       `${standoff[0]}px, reach ${RAM_REACH} cells`)
   ];
 });
 
