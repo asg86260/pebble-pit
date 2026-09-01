@@ -1546,9 +1546,30 @@ export function drawChutes() {
       const runW = cells * P;
       ctx.fillRect(Math.round(cx - runW / 2), capBot - CHUTE_H + n * P, runW, P);
     }
-    // the two lines down to the shoulders
-    ctx.fillRect(cx - Math.round(CHUTE_W / 2 / P) * P + P, capBot, P, CHUTE_GAP);
-    ctx.fillRect(cx + Math.round(CHUTE_W / 2 / P) * P - P * 2, capBot, P, CHUTE_GAP);
+    // **The lines, and they end on the body.**
+    //
+    // They used to drop straight down from the hem for a fixed length and stop,
+    // which put two verticals in the air beside a falling worker and attached
+    // them to nothing. A canopy holds a body up; if the lines do not reach it,
+    // what is drawn is a canopy and a coincidence.
+    //
+    // So each one runs from its corner of the hem to a shoulder, as a staircase
+    // of cells -- a cell per row, stepped across as it descends. Everything in
+    // this yard is cells, and a true diagonal here would be the one smooth line
+    // in the game.
+    const shoulder = Math.round(w.y) + P;              // just under the head
+    const hem = Math.round(CHUTE_W / 2 / P) * P;
+    for (const side of [-1, 1]) {
+      const fromX = cx + side * (hem - P);
+      const toX = side < 0 ? Math.round(w.x) : Math.round(w.x + WORKER - P);
+      const drop = Math.max(P, shoulder - capBot);
+      const steps = Math.max(1, Math.round(drop / P));
+      for (let n = 0; n < steps; n++) {
+        const k = n / steps;
+        const x = Math.round((fromX + (toX - fromX) * k) / P) * P;
+        ctx.fillRect(x, capBot + n * P, P, P);
+      }
+    }
   }
 }
 

@@ -637,11 +637,13 @@ export let BALLOON_SWING = 0.22;
 // up and out of the window. Brisk -- this is a thing leaving, not a thing
 // drifting -- but slow enough to be watched going.
 export const BALLOON_LEAVE = 1.15;
-// Pixels a frame a body under a canopy comes down at. Slower than a wizard
-// floats, because a canopy is a thing that slows you: a body stepping out of a
-// balloon and arriving at the same pace as one being lowered on a wire is a
-// parachute doing nothing.
-export const CHUTE_FALL = 0.55;
+// Pixels a frame a body under a canopy comes down at.
+//
+// Still slower than it would fall -- that is what a canopy is for -- but not by
+// as much as it was. A body drifting down from the top of the sky at half a
+// pixel a frame is on screen for the best part of a minute, which is a long time
+// to watch somebody not arrive. It is a descent, not a hover.
+export const CHUTE_FALL = 0.95;
 export const CHUTE_W = P * 10;       // and how wide the canopy over it is
 export const CHUTE_H = P * 4;
 // How far over the head the canopy rides. Close in, it read as a lamp on a post
