@@ -166,6 +166,67 @@ export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 export const SMOG_RAIN_AT = 3200;    // and this many of them up there brings it down
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
 
+// --- the sky as a field of cells ---------------------------------------------
+// What the haze is drawn as, now that the level is a number rather than a count
+// of specks. See `hazefield.js`, and DESIGN.md "The sky is one number".
+//
+// The two sizes are the threshold field's own, in cells. It tiles, so it wants
+// to be wide enough that the repeat is not a thing you can pick out across a
+// window: two hundred and fifty-six cells is fifteen hundred world pixels, which
+// is wider than the view.
+export const HAZE_NOISE_W = 256;
+export const HAZE_NOISE_H = 64;
+// Its two octaves, in **cells per patch**. The coarse one is what makes the haze
+// clump; the fine one only breaks up the edges of those clumps, because a field
+// of nothing but big blobs reads as cloud and one of nothing but small ones
+// reads as static -- both evenly wrong.
+//
+// Both have to divide the field's width and height, or it does not tile and the
+// sky gets a seam ruled across it. Powers of two, so they always do.
+export const HAZE_COARSE = 16;
+export const HAZE_FINE = 8;
+export let HAZE_CLUMP = 0.80;        // and how much of the field is the coarse one
+// Cells a second the field creeps through the sky, at full wind. Slow: at a
+// tenth of a cell a second you never catch it moving and the sky is never quite
+// the sky it was a minute ago, which is the whole job.
+export let HAZE_DRIFT = 0.11;
+// How much of the field a full sky paints. Not all of it -- the worst it ever
+// gets is heavy rather than closed, so there are always thin places to see the
+// clouds through, and a sky that shut over would be buying pressure the
+// pollution rate already applies with interest.
+export let HAZE_GAIN = 0.80;
+// The depth of field over which a painted cell reaches full weight. Small, so
+// coverage is most of the reading at a clean sky and weight takes over at a bad
+// one; large, and the whole sky steps from pale to dark together.
+export let HAZE_FADE = 0.18;
+// The darkest a single cell is ever drawn. Kept apart from render.js's own
+// HAZE_INK, which is the band's: the two are different pictures of the same
+// sky and they will want different weights while both are on screen.
+export let HAZE_CELL_INK = 0.46;
+// A twentieth either side, so a painted sky is smoke of different thicknesses
+// rather than a screen of identical squares -- and no more than that.
+//
+// It was a fifth, and a fifth is salt and pepper. At a full sky nearly every
+// cell is painted and nearly every one of them is at full weight, so whatever
+// jitter is left is the *only* thing still varying and the sky reads as grain
+// laid over the clumps: which is the exact complaint the band it replaces was
+// built to answer. At a heavy sky the variation has to come from the field, or
+// there is no picture up there but noise.
+export let HAZE_GIVE = 0.05;
+// How far the field's own values are pulled in towards the middle. At full
+// spread the thin places between patches stay bare until the sky is nearly
+// full, so a middling sky reads as fog banks with clean air between them rather
+// than as a yard under haze. Pulled in, the clumps mostly decide *how heavy* a
+// part of the sky is rather than whether there is anything there at all -- which
+// is the whole ask: the whole sky carries the level.
+export let HAZE_CONTRAST = 0.74;
+// And the curve from the level to the density. Straight, the first third of the
+// range is invisible: a sky at a fifth of the cap paints a fifth of the field,
+// all of it at the faintest weight the screen can honestly show. Bent, the sky
+// starts saying something early and has somewhere left to go at the top.
+export let HAZE_CURVE = 0.65;
+export const HAZE_SKY_GAP = 2;       // cells of clear air kept above the ground line
+
 // --- when it breaks -----------------------------------------------------------
 // A sky over the line does not come down on the frame it crosses it. The yard
 // takes a *sample* of what is overhead every few seconds and asks whether it

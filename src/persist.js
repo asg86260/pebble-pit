@@ -7,7 +7,7 @@
 
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL } from './config.js';
 import { load, save, clear } from './save.js';
-import { seedSmog, skyFromSave } from './smog.js';
+import { seedSmog, skyFromSave, freshMix } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { resetCut } from './quarry.js';
@@ -280,6 +280,9 @@ export function persist() {
     recycler: S.recycler,
     seenAir: S.seenAir,
     haze: Math.round(S.haze),
+    // What that haze is made of. Rounded like the level it sums to, and written
+    // as a plain object so a kind added later is a key rather than a format.
+    hazeMix: S.hazeMix,
     rains: S.rains,
     recycled: S.recycled,
     muck: S.muck || [],
@@ -565,6 +568,10 @@ export function restore() {
   S.recycler = !!s.recycler;
   S.seenAir = !!s.seenAir;
   S.haze = s.haze || 0;
+  // A save from before the mix existed has a level and no ledger; `syncMix`
+  // seeds it as soot on the next frame, which is what the only thing allowed to
+  // foul this sky actually puts up. See `foul`.
+  S.hazeMix = s.hazeMix ? { ...freshMix(), ...s.hazeMix } : null;
   S.rains = s.rains || 0;
   S.recycled = s.recycled || 0;
   S.scrubBank = 0;
@@ -748,6 +755,7 @@ export function reset(fresh = true) {
   S.recycler = false;
   S.seenAir = false;
   S.haze = 0;
+  S.hazeMix = freshMix();
   S.raining = false;
   S.rainFor = 0;
   S.rains = 0;

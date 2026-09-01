@@ -39,6 +39,11 @@ const RICH = `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
 const LIP = `window.__levels({haulCarryLevel:5, haulPaceLevel:5, harnessLevel:5,
   bootsLevel:5}); window.__school({carters:6});`;
 
+// A yard to look at a sky over: the works standing, the band switched off, and
+// the camera on the middle of it. The level itself is set per scene.
+const HAZE = `${RICH} window.__band(false);
+  window.__look(window.__state().rockLeftX - 300);`;
+
 const SCENES = {
   // Bodies, wearing everything the school sells, standing where you can see them.
   crew: `window.__reset(); window.__crew(3,2,2,2);
@@ -124,7 +129,19 @@ const SCENES = {
         window.__look(window.__state().outhouseX - 260);`,
 
   // A board, open, with everything on it.
-  boards: `${RICH} window.__board('tower');`
+  boards: `${RICH} window.__board('tower');`,
+
+  // The sky as a field of cells -- see hazefield.js. Four levels of the same
+  // yard, with the band switched off, because the whole question this stage
+  // exists to answer is what the field looks like on its own.
+  //
+  // `hazeboth` is the pair on one screen, which is the other half of the
+  // question: whether the new reading says the same thing as the old one.
+  haze0:  `${HAZE} window.__air({haze: 0});`,
+  haze1:  `${HAZE} window.__air({haze: 900});`,
+  haze2:  `${HAZE} window.__air({haze: 2100});`,
+  haze3:  `${HAZE} window.__air({haze: 4200});`,
+  hazeboth: `${RICH} window.__air({haze: 2100}); window.__look(window.__state().rockLeftX - 300);`
 };
 
 const args = process.argv.slice(2);

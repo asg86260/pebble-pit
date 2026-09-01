@@ -22,6 +22,8 @@ import { makeBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from '
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
+import { setBand } from './render.js';
+import { hazeDensity, hazeCreep } from './hazefield.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
@@ -794,6 +796,11 @@ export const HANDLES = {
   __birds: birds, __crew: crew, __school: school,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
+  __band: setBand,
+  // The field, as the two numbers it is drawn from. Nothing here is state --
+  // the field is scenery -- but a check that cannot ask how much of the sky is
+  // painted has to read pixels to find out.
+  __hazeField: () => ({ density: hazeDensity(), creep: hazeCreep() }),
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __machine: machineSet, __fullSites: fullSites,

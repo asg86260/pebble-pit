@@ -42,6 +42,7 @@ import { canAfford, mineMs, restaff, staffSheds } from './upgrades.js';
 import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
+import { stepHaze } from './hazefield.js';
 import { tidyBoards } from './board.js';
 import { stepScrub } from './scrubhouse.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
@@ -164,6 +165,7 @@ export function step() {
   stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
   stepSmog(dt);                               // and the sky, which is filling up
+  stepHaze(dt / 1000);                        // and the field's own slow creep through it
   sampleAir(now);
   if (S.dragging) catchAir(S.mouse.x, S.mouse.y);   // swinging does not catch its own spray
 
