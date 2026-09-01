@@ -103,7 +103,17 @@ group('the board counts what the mouth swallows', async () => {
   // An empty sky and a fan five rungs up: the rating is high and there is
   // nothing up there to take, so a board quoting the rating says the house is
   // winning by a mile while it stands there doing nothing.
-  fromTheField(5);
+  //
+  // **The machines off**, or the sky is not empty and the premise is gone. They
+  // used to be able to stay on: the house had to drag a speck across the yard to
+  // its throat, which took the best part of a second and a half, so four seconds
+  // after the sky was cleared almost nothing had arrived. A mouth takes its
+  // share of the sky the moment the speck has settled now -- see `eat` -- so a
+  // fouling yard is a yard with something to take, and the house honestly reads
+  // as scrubbing it. What this group is about is the board quoting what was
+  // *swallowed* rather than what the fan is rated at, and that needs a sky with
+  // nothing in it.
+  fromTheField(5, []);
   window.__air({ haze: 0 });
   run(4);
   const idle = state().smog;

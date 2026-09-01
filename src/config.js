@@ -378,13 +378,16 @@ export const SCRUB_PULL = 29.25;     // motes a second, per body in it -- per mo
 //
 // It quickens close to the mouth, where the last of a journey is a thing being
 // swallowed rather than carried.
-export const SCRUB_DRAG = 34;
-export const SCRUB_NEAR = 300;      // and within this much of the mouth it turns down and quickens
-// and how many it can have in the air at once, so the stream reads as a stream
-// rather than as the whole band arriving in a lump
-// Where the draught stops being a pull and becomes a swallow: a speck this near
-// the mouth is in it.
-export const SCRUB_GRIP = 22;
+// How far the house's throat reaches into the air over it. Nothing is dragged
+// any more -- see `eat` in smog.js -- so this is the air the throat is counted
+// as being in rather than a distance anything is pulled across.
+//
+// It replaces SCRUB_DRAG, SCRUB_NEAR and SCRUB_GRIP, which were the speed a
+// speck was hauled at, the width of the zone it turned down in, and how close it
+// had to get to go in. All three described a draught that moved the sky, and the
+// sky is not moved.
+// (No reach: a mouth takes its share of the whole sky, not the yard of it over
+// its own roof. See `eat` in smog.js for why a reach was the wrong rule.)
 // The draught you can see even when there is nothing in the air to be pulled.
 //
 // A fan with a clean sky over it was a building doing nothing: the suction is
@@ -580,19 +583,32 @@ export const BALLOON_LIFT = 0.010;   // and how fast it rises off the mast, in l
 export const BALLOON_W = P * 7;      // the envelope
 export const BALLOON_H = P * 9;
 export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a body gets into
+// The filter, slung between the envelope and the basket. Wider than the neck
+// above it and than the basket below, so it reads as the works of the thing
+// rather than as part of either: the air goes in the top and what is caught
+// falls out of the bottom.
+export const BALLOON_FILTER_W = P * 9;
+export const BALLOON_FILTER_H = P * 4;
 // Where the lanes are, as a share of the sky's own depth. The first craft rides
 // high and each one after it a little lower, so a fleet crosses rather than
 // passing through itself.
-export const BALLOON_LANE_TOP = 0.18;
+// The first craft's lane, as a share of the sky's depth -- measured to the
+// *basket*, which is the bottom of the thing. Everything else hangs above it:
+// four cells of basket, four of filter and nine of envelope, which is a hundred
+// pixels of craft over the number set here. At a fifth of the way down the crown
+// was off the top of the window.
+export const BALLOON_LANE_TOP = 0.36;
 export const BALLOON_LANE_GAP = 0.16;
 export const BALLOON_EDGE = 6;       // cells it turns short of either end of the world
 // The craft's own draught. Radial and short: a balloon is *in* the sky, so what
 // is near it comes to it and everything else is left alone -- there is no long
 // sideways river to avoid, which is the whole reason the house's numbers are as
 // complicated as they are.
-export const BALLOON_NEAR = 190;     // how far its draught reaches
-export const BALLOON_GRIP = 24;      // and how close a speck has to be to go in
-export const BALLOON_DRAG = 46;      // pixels a second it draws them at
+// How far a craft's mouth reaches into the air around it. Nothing is dragged --
+// see `eat` in smog.js -- so this is simply the air the filter is counted as
+// being in, and the specks inside it are the ones it takes.
+// (No reach here either, for the same reason -- see `eat` in smog.js.)
+export const BALLOON_WISP_FROM = 90;  // and how far out the cells drawn in come from
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go

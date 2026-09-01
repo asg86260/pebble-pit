@@ -45,7 +45,8 @@ import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
-import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET } from './balloon.js';
+import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET,
+         BALLOON_FILTER_W, BALLOON_FILTER_H } from './balloon.js';
 import { now } from './clock.js';
 import { press } from './press.js';
 import { rand } from './rng.js';
@@ -1424,10 +1425,10 @@ export function towerBarAt() {
 // is eased between the two by `lift`. Nothing here is remembered, so a balloon
 // cannot end up drawn over a house that has been re-sited under it.
 //
-// On the lattice, like every solid thing in the yard. The craft's `x` is *not*
-// snapped -- it drifts in whole pixels, the way the tractor rolls -- so the
-// envelope is rounded to a cell here at the moment of drawing rather than the
-// number itself being rounded, which would make the drift a stutter.
+// **The filter is the point of the drawing.** A bag with a basket under it is a
+// balloon; what makes this one read as a *scrubber* is the works slung between
+// the two -- a vented box the air goes into at the top and what is caught falls
+// out of the bottom. Without it the craft is a nice picture of the wrong thing.
 export function drawBalloons() {
   if (!S.scrubOpen) return;
   for (let i = 0; i < CRAFT.length; i++) {
@@ -1435,13 +1436,14 @@ export function drawBalloons() {
     // Whole pixels, and *not* the lattice. Everything standing on the ground in
     // this yard is snapped to a cell; a balloon is not standing on anything, and
     // snapping it would turn a slow drift into a six-pixel stutter -- the same
-    // reason the tractor rolls on pixels. So the cells it is built out of are
-    // cell-sized and sit wherever the craft has got to.
+    // reason the tractor rolls on pixels.
     const bx = Math.round(c.x);
     const by = Math.round(craftY(i));
     const w = BALLOON_W, h = BALLOON_H;
+    const fw = BALLOON_FILTER_W, fh = BALLOON_FILTER_H;
+    const ftop = by - BALLOON_BASKET - fh;     // the filter's own top
+    const top = ftop - h;                      // and the crown of the envelope
     const left = bx - w / 2;
-    const top = by - BALLOON_BASKET - h;
 
     ctx.fillStyle = '#000';
     // The tether, while it is anywhere near the mast: a balloon tied to a post
@@ -1449,27 +1451,43 @@ export function drawBalloons() {
     if (c.lift < 0.98) {
       const mast = Math.round(mastX());
       const foot = walkY(c.x);
-      ctx.fillRect(mast, top + h, P, Math.max(0, foot - (top + h)));
+      ctx.fillRect(mast, by, P, Math.max(0, foot - by));
     }
 
-    // The envelope: a bag, wider in the middle and closing to the neck. Drawn as
-    // rows rather than as an oval, because everything in this yard is cells and a
-    // curve here would be the one smooth edge in the game.
+    // The envelope: a bag, widest a third of the way down and closing to a neck.
+    // Drawn as rows rather than as an oval, because everything in this yard is
+    // cells and a curve here would be the one smooth edge in the game.
     const rows = Math.round(h / P);
     for (let n = 0; n < rows; n++) {
-      const t = n / (rows - 1);                 // nought at the crown, one at the neck
-      // widest a third of the way down, closing to a two-cell neck
+      const t = n / (rows - 1);
       const bulge = Math.sin(Math.min(1, t * 1.15) * Math.PI * 0.92);
       const cells = Math.max(2, Math.round((w / P) * (0.42 + bulge * 0.58)));
       const runW = cells * P;
       ctx.fillRect(Math.round(left + (w - runW) / 2), top + n * P, runW, P);
     }
 
-    // The basket, hanging under it on two lines.
-    const bw = P * 3, bl = bx - P;
-    ctx.fillRect(bl + P, top + h, P, BALLOON_BASKET - P * 2);
-    ctx.fillRect(bl + bw - P * 2, top + h, P, BALLOON_BASKET - P * 2);
-    ctx.fillRect(bl, by - P * 2, bw, P * 2);
+    // The lines from the envelope down to the filter's shoulders, so the works
+    // hangs off the bag rather than being stuck to it.
+    const fl = Math.round(bx - fw / 2);
+    ctx.fillRect(fl + P, ftop - P, P, P);
+    ctx.fillRect(fl + fw - P * 2, ftop - P, P, P);
+
+    // The filter: a box with its middle course vented. The vents are what say it
+    // is a filter rather than a crate -- a solid block that size under a balloon
+    // reads as cargo.
+    ctx.fillRect(fl, ftop, fw, P);                       // the intake lip, solid
+    for (let cx = 0; cx < Math.round(fw / P); cx++) {
+      // every other cell open across the middle, and the ends always closed
+      const open = cx > 0 && cx < Math.round(fw / P) - 1 && cx % 2 === 1;
+      if (!open) ctx.fillRect(fl + cx * P, ftop + P, P, P);
+    }
+    ctx.fillRect(fl, ftop + P * 2, fw, fh - P * 2);       // and the sump under it
+
+    // The basket, hanging under the works on two lines.
+    const bw = P * 3, bl = bx - P * 1.5;
+    ctx.fillRect(Math.round(bl) + P, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
+    ctx.fillRect(Math.round(bl) + bw - P * 2, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
+    ctx.fillRect(Math.round(bl), by - P * 2, bw, P * 2);
   }
 }
 

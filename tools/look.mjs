@@ -139,6 +139,11 @@ const SCENES = {
 
   // The scrubbing house with a balloon over it: one moored at the mast with
   // nobody in it, and one crewed and out over the yard.
+  // The house working: a filthy sky over it, a body inside, and no river of haze
+  // leaning towards the roof -- what a mouth looks like now is a few cells drawn
+  // in over the hood, and nothing in the sky is moved at all.
+  scrubbing: `${RICH} window.__air({open:true, haze:2600, scrubbers:1}); window.__fast(25);
+              window.__look(window.__state().scrubX - 300);`,
   moored: `${RICH} window.__air({open:true}); window.__fast(2);
            window.__buy('balloon'); window.__fast(2);
            window.__look(window.__state().scrubX - 220);`,

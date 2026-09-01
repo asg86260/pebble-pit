@@ -24,7 +24,8 @@
 
 import { P, WORKER, FARM_WALK, BALLOON_RUNGS, BALLOON_DUST, BALLOON_RATE,
          BALLOON_PACE, BALLOON_LIFT, BALLOON_W, BALLOON_H, BALLOON_BASKET,
-         BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE } from './config.js';
+         BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
+         BALLOON_FILTER_W, BALLOON_FILTER_H } from './config.js';
 import { S, scrub } from './state.js';
 import { frames } from './clock.js';
 import { bandTop, bandLow } from './smog.js';
@@ -112,9 +113,20 @@ export function craftY(i) {
   return down + (up - down) * c.lift;
 }
 
-// The mouth: the underside of the envelope, which is what the sky is taken in
-// at and what muck is dropped out of.
-export const craftMouth = i => ({ x: CRAFT[i].x, y: craftY(i) + BALLOON_BASKET * 0.5 });
+// The filter: the box slung between the envelope and the basket, and the whole
+// of what makes a balloon read as a thing that cleans rather than a thing that
+// floats.
+//
+// A bag with a basket under it is a balloon. What says *scrubber* is the works
+// hanging in between -- a vented housing the air is drawn into at the top and
+// what is caught falls out of the bottom. So the craft's mouth is the filter's
+// intake and its drop is the filter's underside, and those are two different
+// places on the same box rather than one point standing for both.
+export const filterTop = i => craftY(i) - BALLOON_BASKET - BALLOON_FILTER_H;
+export const craftMouth = i => ({ x: CRAFT[i].x, y: filterTop(i) });
+// ...and where what it catches leaves it: the lip under the box, so a grain
+// falls out of the bottom of the works rather than out of the middle of the air.
+export const craftDrop = i => ({ x: CRAFT[i].x, y: craftY(i) - BALLOON_BASKET });
 
 // --- who is in it ---------------------------------------------------------------------
 // A fact about the body, not about the craft.
@@ -235,7 +247,7 @@ export function stepRider(w, berth) {
     const c = CRAFT[berth];
     if (!c) { w.goal = 'to'; w.craft = null; w.aloft = false; return false; }
     w.x = c.x - WORKER / 2;
-    w.y = craftY(berth) - WORKER + BALLOON_BASKET;
+    w.y = craftY(berth) - WORKER;
     return true;
   }
 
@@ -303,4 +315,4 @@ export const CRAFT_ROW = {
   show: () => S.scrubOpen && CRAFT.length < BALLOON_RUNGS
 };
 
-export { BALLOON_W, BALLOON_H, BALLOON_BASKET };
+export { BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_W, BALLOON_FILTER_H };
