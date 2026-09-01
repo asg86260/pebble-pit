@@ -2316,6 +2316,11 @@ went.
 
 ## The scrubber balloon (design, not built)
 
+**Revised by "The sky is one number" below, which deletes the haze band this was
+written against.** The craft, the mooring, the drop rule and the fleet rung all
+stand; the reason it moves does not. Read that section's "The balloon, after
+this" with this one.
+
 The scrubbing house answers a bad sky by dragging the sky down to itself. That works, and it has a
 cost, and the cost is the shape of the problem: everything the house catches comes down in one place
 — a heap out the back that fouls the one strip of ground the house stands on, and clogs it.
@@ -2437,6 +2442,184 @@ before the body.
 **The hard parts, in order:** the boarding, which the mooring answers; the pull, which has to leave
 the house's own draught working exactly as it does today while a second kind of mouth reads the same
 sky; and the drawing, which is the first thing in the yard with no ground under it.
+
+## The sky is one number (design, not built)
+
+**Supersedes both "The air" sections above, which describe the band this replaces.**
+
+### What is actually wrong
+
+The pollution in this game is a scalar and always has been. `S.haze` is what the
+board reads, what the rain threshold compares against, what `cloudR` sizes the
+cloud off, what the report prints and what the save writes down. Nothing anywhere
+asks where a mote is.
+
+Except that the band is where the number is *kept*: `reckon()` sets
+`S.haze = SKY.length * SMOG_PER_MOTE` and `motesWanted()` converts straight back,
+and there is a debug field called `owed` whose whole job is to watch the two
+drift apart. So the yard maintains a field of several thousand particles, with
+slots and spread and sway and creep, in order to store one number — and then
+converts it back to the number before anybody reads it.
+
+That is why it reads as noise. Every bit of detail in the band is detail carrying
+no information: the bunching over a working drill, the drifting, the widening
+with age. None of it is a fact the game will ever consult. And the one thing the
+player genuinely needs from the sky — *how bad is it* — is the one thing the band
+cannot say, because there is no tint. You read your pollution level by counting
+faint specks through a scrolling window, which is the single thing the eye is
+worst at.
+
+The scrubbing house then inherits the same problem from the other end. Its
+draught is elaborate — a sideways drag along the band, a turn down only near the
+throat, a gullet metering what goes in — and every line of that exists to solve
+problems created by having particles to move. Delete the particles and the
+problems go with them.
+
+### The model
+
+**One ledger, and the sky is a picture of it.**
+
+- `S.hazeMix` is the ledger: how much of the level came from each kind of work —
+  `{ dust, shard, spore, mach }`, the kinds `foul` already takes.
+- `S.haze` is its sum, recomputed whenever the ledger moves, exactly the way
+  `reckon` recomputes it today. Every existing reader is untouched: the board,
+  the rain, the cloud, the report and the save all go on asking `S.haze` and go
+  on getting the same answer.
+- Fouling **adds to one kind**. Draining — scrubbing, rain — takes from every
+  kind **in proportion**, so the mix's shape only ever changes through work. A
+  yard that has been running the drill all morning stays blue in the sky until
+  something other than the drill dirties it.
+
+There is no natural decay, and that is deliberate rather than an omission: the
+balance target is a sky that is beatable only if you invest in beating it, and a
+level that quietly drains on its own is an investment the yard makes for you.
+
+### What you see
+
+**The whole sky carries the level.** A wash over the sky, from the top of the
+window down to the ground line — over the clouds and the birds, under the works,
+so the yard itself stays clean and readable no matter how filthy the air is.
+
+- **How much** is its strength, off `S.haze` against the cap.
+- **What from** is its color, off the mix: blue-grey for a yard living on the
+  cut, brown and sooty for one living on its machines, and the weighted blend of
+  the two for one living on both. The per-kind palettes already exist — `look`
+  has carried them since the band did.
+- **It is a gradient, not a filter.** Heaviest along the top of the window and
+  thinning towards the ground line, so it reads as smoke lying over the yard
+  rather than as a color correction applied to the game. It also keeps the tint
+  out of the way of the one place the player is actually looking.
+
+The clouds have to give up the rule that keeps them out of the smoke — with the
+whole sky tinted there is nowhere under it to sit — so `band()` in weather.js
+takes a top of its own instead of reading `SMOG_TOP + SMOG_BAND`. A pale cloud
+seen through your own haze is the correct picture now rather than the confusing
+one: the haze is nearer than the weather, and it is in the way of it.
+
+### The plumes stay
+
+This is the half of the band worth keeping, and it is worth being explicit that
+it survives.
+
+`foul(grains, x, y, kind)` keeps its signature and now does two things: it adds
+to the ledger, and it throws a **short-lived plume** at the place it happened —
+a handful of motes that rise, spread and fade to nothing over a few seconds.
+
+The plume is the visible cause. It is what ties the swing you are watching to the
+sky overhead, and without it the connection is a line in this document and
+nothing you could see. What it is *not*, any more, is the bookkeeping: it carries
+no ledger, nothing reads its position, and it is gone long before anything asks
+about the level. It rises, it fades, and what it was joins the general haze —
+which is what smoke does.
+
+So what is deleted is the **persistent field**, not the particles: the slots, the
+spread that opens with age, the sway lanes, the creep along the sky, `place`,
+`fillTo`, `fillSky`, `skyFromSave`, the wake/active bookkeeping, and every
+constant that describes a band.
+
+### The scrubbing house
+
+**The rate does not change and neither does the pacing.** `scrubRate()` is still
+bodies times `fanPull()`. Instead of swallowing motes at that rate it drains the
+ledger at that rate, proportionally across the kinds, and each unit drained is
+one caught mote as far as `S.scrubMuck` and `S.scrubBank` are concerned — so muck
+out the back and dust out of the chute arrive on exactly the clock they arrive on
+today. `clogged()` is untouched.
+
+`pull`, `unpull`, `DRAUGHT`, the gullet, `SCRUB_DRAG`, `SCRUB_NEAR`,
+`SCRUB_GRIP`, `SCRUB_REACH` and `SCRUB_CATCH` all go. The fan finally means the
+plain thing it says on the row — it multiplies the drain — rather than being a
+number that had to be traced through three lines of draught geometry to find out
+whether it did anything at all. It did not, once, for months.
+
+**And the front of it gets the polish pass.** The bellows already says the house
+is working and how hard; what it does not say is *what* it is working on. So a
+scrubbing house mints **wisps**: short-lived specks in the sky above and around
+it, colored from the mix, that fly down into the throat and vanish.
+
+They carry no ledger either. But they are **metered by the real rate** — the
+count minted per second is `scrubRate()`, so an unstaffed house mints none, a
+clogged house mints none, and a house with a fifth-rung fan visibly pulls
+harder. They cannot lie about whether the house is working or how hard, which is
+the same bargain the machines' stack puffs already make. That is the difference
+between an animation that asserts something and one that reports it.
+
+### The rain
+
+A shower still rains the sky that was overhead when it broke, and still leaves
+muck; it simply does not need a field of particles to be made of.
+
+When one breaks it takes a **budget** — the level at that moment — and then
+spends it: drops spawn across the view on the same squared ramp they use today,
+each one spending its share, and the tint drains as they fall. The shower is over
+when the budget is spent, whatever the works have added in the meantime. The
+`doomed`/`S.rains` marking that keeps a shower from feeding on its own smoke is
+deleted, because a budget snapshotted at the break does that job in one number.
+
+Everything downstream is unchanged: `stepDrops`, the landing, `RAIN_MARK`,
+`MUCK_MAX`, the muck the crew have to shovel.
+
+### The balloon, after this
+
+The balloon design above was an answer to a lumpy band — a craft that cleaned the
+patch of sky it was under. There are no patches now, so that reason is gone and
+it should not be quoted as though it survived.
+
+What survives is the rest of it, and it is enough:
+
+- It is **another crewed mouth** on the same ledger, at `fanPull()` like the
+  house, so the fleet rung means what it said.
+- Its **drop rule is the good part and does not depend on the band**: what it
+  catches comes down under it, anywhere over the yard, so its muck spreads over
+  ground the crew were walking instead of heaping on a strip. The
+  column-beneath clog rule survives with it, unchanged.
+- Its cruising height comes off the window rather than off `bandTop`/`bandLow`,
+  which no longer exist.
+- The wisps fly into its intake too, so a crewed craft visibly works.
+- And there is a new reason for it that is not a rationalization: **a sky that is
+  a wash wants something moving in it.** The close-up dust in `air.js` keeps the
+  yard alive; the sky above the ground line has clouds that barely move and
+  birds now and then. A balloon crossing it is the only worked thing up there.
+
+### Build it in stages that each leave the game playable
+
+1. **The number becomes the sky.** `S.hazeMix` as the ledger with `S.haze` summed
+   off it, and the wash drawn — strength, weighted hue, gradient. **The band goes
+   on running underneath, untouched.** So both readings are on screen at once and
+   the new one can be judged against the old before anything is deleted.
+2. **Cut the band.** The persistent field and its constants go; `foul` becomes a
+   plume plus a ledger entry; the house drains the ledger instead of swallowing;
+   the rain moves to a budget; the clouds get a top of their own.
+3. **The polish pass.** Metered wisps into the throat, colored from the mix.
+4. **The record.** The report's numbers, the verify rules, the tests, the two
+   "The air" sections above rewritten as one, and this section rewritten as
+   built.
+
+**The hard parts, in order:** the wash — a full-sky tint is the first thing this
+game has ever drawn behind everything, and getting it to read as weather rather
+than as a filter is the whole feature; the rain budget, which has to keep beats
+that were emergent before; and the plume's lifetime, which is the one number that
+decides whether the cause of the pollution is still legible.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

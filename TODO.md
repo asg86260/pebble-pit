@@ -1,9 +1,14 @@
 # Still to do
 
 Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
-jitter regression (item 5), the shield story arc (item 6), and one piece of
-housekeeping. Items 1 (dust into the cut) and 3 (dust leniency) are done and
-kept below for the record. Everything else in both files is done and on main.
+jitter regression (item 5), the shield story arc (item 6), the sky rework
+(item 7) and one piece of housekeeping. Items 1 (dust into the cut) and 3 (dust
+leniency) are done and kept below for the record. Everything else in both files
+is done and on main.
+
+**Item 7 comes before item 4.** The balloon was designed against a haze band
+that item 7 deletes, so building it first would be building against a sky that
+is on its way out.
 
 Each entry says what the thing actually is, what was found when it was looked
 into, and what is blocking it — so none of this has to be re-derived.
@@ -133,7 +138,9 @@ shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ## 4. The scrubber balloon
 
-**Status:** designed and agreed, not built. See DESIGN.md, "The scrubber balloon
+**Status:** designed and agreed, **blocked on item 7**, which deletes the
+haze band this was written against. The craft, the mooring, the drop rule and
+the fleet rung all stand; the reason it moves does not. See DESIGN.md, "The scrubber balloon
 (design, not built)", which is the whole of it. The three calls that shape the
 work have been made, and they are recorded here so they are not re-litigated:
 
@@ -260,6 +267,57 @@ new structures into the pile-full mark and per-cell variation as given.
 
 ---
 
+## 7. The sky is one number
+
+**Status:** designed and agreed, not built. Takes precedence over item 4 — it
+deletes the band that item was written against. See DESIGN.md, "The sky is one
+number (design, not built)".
+
+**What is wrong.** `S.haze` is the only thing anything reads — the board, the
+rain threshold, `cloudR`, the report, the save — and nothing anywhere asks where
+a mote is. The band exists to *store* that one number: `reckon()` sets
+`S.haze = SKY.length * SMOG_PER_MOTE`, `motesWanted()` converts back, and `owed`
+in the debug readout watches the two drift. So the detail in the band carries no
+information, which is why it reads as noise; and the one thing the sky needs to
+say — how bad is it — it cannot say, because there is no tint and the level is
+read by counting specks through a scrolling window.
+
+**The three calls that shape the work, so they are not re-litigated:**
+
+- **The rain stays**, drawn from the level: a shower takes a budget when it
+  breaks and spends it, and the tint drains as the drops fall. Same beats,
+  authored rather than emergent. `stepDrops` and everything downstream is
+  untouched.
+- **The sky remembers what dirtied it.** `S.hazeMix` per kind is the ledger,
+  `S.haze` is its sum, fouling adds to one kind and draining takes from all of
+  them in proportion — so a drill-fed yard has a blue sky and a machine-fed one
+  goes brown.
+- **The balloon survives** as a second drifting mouth: same ledger, same
+  `fanPull()`, and its drop-under-itself rule and column-beneath clog rule stand
+  as written. What it loses is the reason it moves; what it gains is being the
+  only worked thing in a sky that is otherwise a wash.
+
+**What is kept, and it is the half worth keeping:** the plumes. `foul` still
+throws a handful of motes at the place it happened, they rise and fade over a
+few seconds, and what they were joins the general haze. They carry no ledger.
+What is deleted is the *persistent field* — slots, spread, sway, creep, `place`,
+`fillTo`, `fillSky`, `skyFromSave`, `pull`, `unpull`, the gullet and every
+constant describing a band.
+
+**What does not change:** `scrubRate()`, the muck and dust pacing out of the
+house, `clogged()`, and every reader of `S.haze`. The house drains the ledger at
+the rate it already quotes, and each unit drained is one caught mote as far as
+`S.scrubMuck` and `S.scrubBank` are concerned.
+
+Four stages: the wash drawn with the band still running underneath, so the two
+readings can be judged side by side; cut the band; the polish pass (metered
+wisps into the throat, colored from the mix); the record. The hard parts, in
+order: the wash reading as weather rather than as a filter, the rain budget
+keeping beats that were emergent, and the plume's lifetime.
+
+---
+
+"""
 ## Housekeeping: two tests fail at random
 
 Neither is a game bug, but they are why the suite looks untrustworthy — and an
