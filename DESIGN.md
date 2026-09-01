@@ -1898,11 +1898,43 @@ The answer is a building with somebody in it. An empty one is a shed — visibly
 in its slots — and it does nothing at all. Put a body in it and it starts pulling the clouds apart:
 a thread of cells runs out of the nearest cloud and down the funnel in its top, which is the only
 building in the yard that takes something in above the ground, and a plunger starts working in the
-first of the four slots. More bodies pull harder, and each of them is another pump running.
+first of the four slots.
 
-So the cost of clean air is **bodies not on the rock**, and that is a decision you can take back
-whenever you like — the same bargain every other station makes. An upgrade that quietly cleaned the
-sky would have been a number you buy once and never think about again.
+It is **one body**, not a queue — `capOf` has said so since it was built: a shed with a fan in it is
+a place to stand, not a floor plan, and a second pair of hands on a machine that runs itself is a
+way of buying a faster sky rather than a place to be. So the cost of clean air is **a body not on the
+rock**, and that is a decision you can take back whenever you like — the same bargain every other
+station makes.
+
+Which makes the **fan** the whole of how the sink grows, and that is a load-bearing job. The machines
+out-foul a bare house several times over and never stop, so a yard that buys its third machine has
+bought a sky it cannot get back down again until it starts up the ladder. Ignore the house and it
+rains on you; buy into it and it stops. That is the shape:
+
+| running | what the sky settles at |
+| --- | --- |
+| three machines, nobody in the house | **2188** haze — under the line, and it rains |
+| one body, no fan | **1800** — better, still losing ground |
+| one body, two rungs | **713** |
+| one body, the full ladder | **241** — held, and worth having paid for |
+
+Two faults had to come out before any of that was true, and both are the same fault: **a number
+standing in for a thing.**
+
+- The fan **did nothing at all**. `pull` took its draught strength as `scrubRate() / fanPull()`, and
+  `scrubRate()` is bodies × `fanPull()` — so the fan cancelled out of the one line that moves a mote
+  and what was left was the count of bodies, which is one, for ever. Five rungs and three hundred and
+  sixty-nine shards bought a draught identical to the one you started with. It is taken against
+  `SCRUB_PULL` now, so a bigger fan is a stronger pull on the sky.
+- What the house **took** was not what it was **rated at**. Whatever the draught happened to sweep
+  into the throat was swallowed, which is a question about the shape of the sky rather than about the
+  machine, and it came to roughly twice the rating — so a bare house held three machines on its own
+  and the ladder was spare change. The rating is the rate now, counted down at the mouth as motes go
+  in.
+
+An upgrade that quietly cleaned the sky would have been a number you buy once and never think about
+again — but an upgrade that quietly did *nothing* is worse, because you bought it and the board
+thanked you for it.
 
 Then the **recycler** replaces the filters, and what the same crew catch comes back as dust. Same
 building, same bodies, and the tax has become a wage. It shows as a **chute at the foot** — a mouth
@@ -1918,6 +1950,15 @@ about. Not a number going up: every grain in this game is a grain somebody has t
 **One number, on the scrubbing house's board: the pollution rate.** What the yard puts into the sky
 less what the house takes out, a minute. Positive and the sky is filling, negative and it is
 emptying, and that is the whole of it.
+
+**Both halves of it are counted, not quoted.** The scrubbing column used to show `scrubRate()` — what
+the fan is *rated* at, in motes a second — beside a fouling figure in haze a second. A mote is
+`SMOG_PER_MOTE` of haze, so the house's side read about twice what it was worth; it went on quoting
+the full figure while the house stood clogged, or while the sky was too thin to have anything within
+reach of the draught; and the arrow that comes off the difference therefore pointed the wrong way.
+You could buy the whole ladder, watch the reading go green, and drown. It counts motes at the mouth
+now, as they go down the throat, in haze a second — the same unit as the fouling beside it, which is
+what makes the difference between them mean anything.
 
 It was four numbers for a while — how much is up there against the threshold, the two rates apart,
 and a countdown to the next rain. Each was true and only one was a decision. How much is up there is
