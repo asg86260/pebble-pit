@@ -26,8 +26,10 @@ export const TESTS = [
     window.__give(500000);
     buildShopFromTest();
     shop().querySelector('[data-key="unlockfarm"]')?.click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
     shop().querySelector('[data-key="unlockquarry"]')?.click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
     const bench = [...shop().querySelectorAll('[data-key]')].map(b => b.dataset.key);
 
@@ -39,6 +41,7 @@ export const TESTS = [
     const deeper = document.querySelector('#quarryshop [data-key="quarrybench"]');
     const wasBenches = state().benches;
     deeper?.click();
+    window.__finish();  // the cut has to actually dig it; the page is what this is about
     const nowBenches = state().benches;
 
     // and out to the plots

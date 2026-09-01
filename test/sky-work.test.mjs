@@ -6,7 +6,7 @@
 // that pays dust and a core that pays sparks, somebody who walks and climbs to
 // get there, and a hat without which none of it happens at all.
 
-import { group, ok, state, run, runUntil, yard, openSites, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, openSites, P, WORKER, buyBuilt } from './helpers.mjs';
 
 const wizards = () => state().workerPos.filter(p => p[0] === 'w');
 const wizardY = () => state().wizardY;
@@ -428,9 +428,11 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // the lab are all up.
   openSites();
   window.__lab(true);
-  window.__crew(0, 0);
+  // Hands spare to put it up: a building past the bench is built by the yard,
+  // and a yard with nobody in it builds nothing. See works.js.
+  window.__crew(0, 3);
   window.__build();
-  const raised = window.__buy('unlocktower');
+  const raised = buyBuilt('unlocktower');
   const tower = state();
 
   // the tower's own row, pressed the way a player presses it

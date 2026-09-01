@@ -130,9 +130,15 @@ export const TESTS = [
     // The price cells are written by the board's own refresh, not by building the
     // rows, so they are empty until something fills them in.
     refreshShopFromTest();
+    // The coins on a row, and only the coins. Every row past the bench carries a
+    // clock in its bill as well now -- how long a thing takes is part of what it
+    // costs, see works.js -- and what this group is about is which *coins* buy a
+    // place.
+    const coins = el => [...el.querySelectorAll('.cost i')].map(i => i.className)
+                          .filter(c => c !== 'clock');
     const row = k => shop().querySelector(`[data-key="${k}"]`);
     const door = row('unlockfarm');           // the first one the yard offers
-    const dustPrice = door && [...door.querySelectorAll('.cost i')].map(i => i.className);
+    const dustPrice = door && coins(door);
 
     // And *then* the ground standing, which is what the tower waits on: its row
     // is the end of the chain now -- what a finished yard buys -- so the plots,
@@ -147,8 +153,9 @@ export const TESTS = [
     // the tower takes a core and a thousand dust, and takes them together
     const cores0 = state().cores;
     const tower = row('unlocktower');
-    const marks = tower && [...tower.querySelectorAll('.cost i')].map(i => i.className);
+    const marks = tower && coins(tower);
     tower?.click();
+    window.__finish();      // and the yard puts it up -- see works.js
     const built = state();
 
     window.__crew(0, 0);

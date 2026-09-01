@@ -15,9 +15,10 @@ import { WORKER, FARM_WALK, SCRUB_DUST, RECYCLE_SHARDS, SCRUB_PUMP, SCRUB_FOLDS,
 import { fanPull } from './smog.js';
 import { S, scrub } from './state.js';
 import { walkY } from './world.js';
-import { idle, assign } from './upgrades.js';
+import { idle, assign, rungCost } from './upgrades.js';
 import { airRows, airSection } from './airboard.js';
 import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
+import { registerRows } from './works.js';
 
 export function newScrubber() {
   return { type: 'scrubber', goal: 'to', x: scrub.x, y: 0 };
@@ -97,13 +98,17 @@ export const SCRUB_UPGRADES = [
     // several times over and never stop. Without a ladder of its own it stops
     // being an answer at exactly the point the yard is worth having one.
     key: 'fan',
+    kind: 'rung', site: 'scrub',
     name: 'a bigger fan',
     unit: 'motes/s',
     pct: true,
     rung: () => S.fanLevel,
     from: () => fanPull(),
     to: () => fanPull() * 1.25,
-    cost: () => Math.round(FAN_COST * Math.pow(FAN_RATE, S.fanLevel)),
+    // On the ordinary rung curve. It climbed three quarters again a rung on its
+    // own steeper rate, which is the arithmetic of a row meant to be bought for
+    // ever on a ladder that ends at five.
+    cost: () => rungCost(FAN_COST, S.fanLevel),
     currency: 'shard',
     buy: () => { S.fanLevel++; },
     show: () => S.scrubOpen && S.fanLevel < RUNGS
@@ -125,6 +130,9 @@ export const SCRUB_UPGRADES = [
   CRAFT_ROW,
   {
     key: 'recycler',
+    // A fitting the house's own body puts in, which is the house not scrubbing
+    // while it happens.
+    kind: 'place', site: 'scrub',
     name: 'recycler',
     // What it is for. A row that says "recycler" and nothing else is a row you
     // have to buy to find out about.
@@ -145,3 +153,7 @@ export const SCRUB_SECTIONS = [
 // Dust, like every other building. It was cores back when a core was what a
 // building cost; a core buys the one thing nothing else can.
 export const scrubCost = () => SCRUB_DUST;
+
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(SCRUB_UPGRADES);

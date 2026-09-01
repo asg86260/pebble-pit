@@ -143,6 +143,13 @@ export const S = {
   plots: [],               // how far along each plot is, 0..1
   plotTone: [],            // and the spore standing ripe on it, if there is one
 
+  // --- what the yard is in the middle of building ---
+  // One work per site, and it only moves while somebody is standing there. Same
+  // rule the lab has had since the day it opened, applied to every row past the
+  // bench. See works.js.
+  works: {},              // site -> { key, done, of, at } in worker-seconds
+  builders: 0,            // spare hands putting up whatever the yard is building
+
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
   // moves while somebody is in there

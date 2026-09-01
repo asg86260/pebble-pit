@@ -82,6 +82,7 @@ export const TESTS = [
     window.__machine('jaw', { bought: true });
     buildShopFromTest();
     shop().querySelector('[data-key="unlockscrub"]').click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
 
     const row = document.getElementById('scrubshop').querySelector('[data-key="airrate"]');

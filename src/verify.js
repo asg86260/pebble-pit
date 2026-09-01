@@ -57,7 +57,12 @@ import { seed } from './rng.js';
 const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
                         scrubber: 'scrubbers',
-                        janitor: 'janitors', wizard: 'wizards' };
+                        janitor: 'janitors', wizard: 'wizards',
+                        // Building is not on the roster -- nobody is put on it --
+                        // but it is a count `syncWorkers` builds bodies from, and
+                        // a count this list leaves out is bodies in the yard the
+                        // books do not have. Which is this rule, exactly.
+                        builder: 'builders' };
 
 // How far below the surface of the way it is on a body may be, and for how long.
 //

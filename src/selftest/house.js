@@ -204,10 +204,16 @@ export const TESTS = [
     ];
   }],
 
-  // A rung is not the end of the visit. You buy speed, and the board is still
-  // there with strength under your hand -- what closes it is a row that opens a
-  // place, because the view is already on its way there.
-  ['buying a rung leaves the board up, opening a place takes it away', async () => {
+  // A rung is not the end of the visit: you buy speed, and the board is still
+  // there with strength under your hand. Every press leaves it up.
+  //
+  // A place used to be the exception: its row sent the view to what you had just
+  // bought, and the sheet would have been sitting over it. Nothing appears on
+  // the press any more -- everything past the bench is built, see works.js -- so
+  // there is nothing for the board to be in the way of, and it stays up with the
+  // row on it greyed and its clock counting down. Which is the better answer to
+  // "did that do anything" than the board vanishing ever was.
+  ['buying anything leaves the board up, rung or place', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
@@ -229,14 +235,15 @@ export const TESTS = [
       const up = await press(key);
       if (up !== null) rungs.push([key, up]);
     }
-    const door = await press('unlockfarm');
+    const ordered = await press('unlockfarm');
     await hoverAway();
     newRun();
     return [
       ok(rungs.length >= 3, 'there were rungs to buy', rungs.map(r => r[0]).join(', ')),
       ok(rungs.every(r => r[1]), 'and the board is still up after every one',
          rungs.filter(r => !r[1]).map(r => r[0]).join(', ') || 'all of them'),
-      ok(door === false, 'while breaking the ground puts it away', `${door}`)
+      ok(ordered === true, 'and ordering a place leaves it up as well',
+         `${ordered}`)
     ];
   }],
 

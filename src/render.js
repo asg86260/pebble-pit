@@ -11,6 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
+import { SITES, workAt, progressAt } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
@@ -2074,8 +2075,16 @@ const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 export function drawLabBar() {
   if (!S.labOpen || !S.research) return;
   const at = labMarkAt();
+  bar(at.x, at.y, progress());
+}
+
+// One bar, drawn wherever something is being worked through. The lab has had
+// this picture since the day it opened and it is the right one for every site
+// that builds: a thing filling a cell at a time, over the place it is happening,
+// that stops dead while nobody is standing there.
+function bar(cx, cy, at) {
   const w = P * 14, h = P * 3;
-  const x = at.x - w / 2, y = at.y - h / 2;
+  const x = cx - w / 2, y = cy - h / 2;
 
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w, h);
@@ -2085,8 +2094,38 @@ export function drawLabBar() {
 
   ctx.fillStyle = '#000';
   const room = w - P * 2;
-  const done = Math.round(room * progress() / P) * P;
+  const done = Math.round(room * at / P) * P;
   if (done > 0) ctx.fillRect(x + P, y + P, done, h - P * 2);
+}
+
+// Where a site's bar hangs. Over the place the work is happening, which for the
+// yard is wherever the thing is going to stand -- a row that opens a place knows
+// where its place will be and says so, and the two machines on the bench do not,
+// so theirs hangs over the rock the yard is built round.
+const SITE_AT = {
+  // The cut and the plots are holes and flat ground rather than buildings, so
+  // their bars hang clear of the rim and the furrows rather than a roof -- a bar
+  // sat on the quarry mouth reads as part of the ramp.
+  quarry: () => ({ x: quarry.x + quarry.w / 2, y: quarry.y - P * 24 }),
+  farm: () => ({ x: farm.x + farm.w / 2, y: farm.y - P * 22 }),
+  scrub: () => ({ x: scrub.x + scrub.w / 2, y: scrub.y - P * 8 }),
+  tower: () => ({ x: tower.x + tower.w / 2, y: tower.y - P * 8 }),
+  yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 })
+};
+
+// What the yard is in the middle of building, said on the ground rather than
+// only on a board you had to walk over and open. The same argument the lab's bar
+// makes: a build runs while you are somewhere else entirely, and it stops the
+// moment the last body walks off -- which is the whole mechanic, and it should
+// be a thing you can see rather than a thing a menu tells you.
+export function drawWorkBars() {
+  for (const site of SITES) {
+    if (!workAt(site)) continue;
+    const where = SITE_AT[site];
+    if (!where) continue;
+    const at = where();
+    bar(Math.round(at.x / P) * P, Math.round(at.y / P) * P, progressAt(site));
+  }
 }
 
 export function drawLabMark() {
@@ -3131,6 +3170,7 @@ export function draw() {
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
+  drawWorkBars();          // and whatever else the yard is putting up
   drawDraught();           // the air going into the scrubbing house
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower

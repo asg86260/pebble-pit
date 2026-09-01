@@ -7,7 +7,7 @@
 // carter's load rather than a single grain, so the band can be tuned to keep up
 // with the ram at all.
 
-import { yard, group, ok, state, run, runUntil, openSites, haveRock } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, openSites, haveRock, buyBuilt } from './helpers.mjs';
 import { specOf } from '../src/machines.js';
 import { haulCap } from '../src/upgrades.js';
 import { beltFrom } from '../src/dust.js';
@@ -20,7 +20,7 @@ function rammed() {
   window.__crew(5, 4);
   window.__grant({ sparks: 9999, shards: 999, spores: 999 });
   window.__tip(90000);
-  window.__buy('ram');
+  buyBuilt('ram');                                // bought, and put up by the hands at the site
   window.__fast(12);                              // the gang shifts, the tender arrives
 }
 

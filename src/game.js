@@ -31,6 +31,7 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
+import { stepWorks } from './works.js';
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';
@@ -151,6 +152,7 @@ export function step() {
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on
+  stepWorks(dt);                              // and whatever the yard is building
   stepMachineSmoke(now);                      // and the stacks over the machines
   stepSmoke(now, dt);                         // which the chimney says out loud
   stepCasino(dt);                             // and the wheel, if there is anything on the table

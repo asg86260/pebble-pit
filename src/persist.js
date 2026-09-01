@@ -11,6 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
+import { SITES, rowFor } from './works.js';
 import { resetCut } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
@@ -278,6 +279,13 @@ export function persist() {
     // the bench has been *paid for*, and closing the tab on one used to lose the
     // dust, the stone and the crop with it.
     brewLeft: Math.max(0, S.brewAt - clockNow()),
+    // What the yard was in the middle of building. Paid for and part done, so
+    // closing the tab on one would lose the coin and the labour both -- the same
+    // argument the hat above makes. Worker-seconds rather than a deadline, which
+    // is what makes it safe to write down at all: `now()` starts wherever the
+    // page started, so an absolute time saved in one session is a meaningless
+    // number in the next.
+    works: S.works,
     wizards: S.wizards,
     scrubbers: S.scrubbers,
     // The craft the house has sold. Two numbers and an eased height apiece; the
@@ -564,6 +572,17 @@ export function restore() {
   S.wizardHats = s.wizardHats || 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   S.brewAt = s.brewLeft > 0 ? clockNow() + s.brewLeft : 0;
+  // and whatever was being built. Only the sites this build knows about and only
+  // rows it still has: a save from a version with a row this one has dropped
+  // would otherwise hold a work that can never finish, at a site that is then
+  // busy for ever.
+  S.works = {};
+  for (const site of SITES) {
+    const w = s.works?.[site];
+    if (w && w.key && rowFor(w.key) && w.of > 0)
+      S.works[site] = { key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
+                        of: w.of, at: w.at ?? null };
+  }
   if (S.meteorOpen) {
     makeMeteor();
     // and the cells as they were left, if the save is of this shape of sky
@@ -779,6 +798,8 @@ export function reset(fresh = true) {
   S.wizardHats = 0;
   S.wizards = 0;
   S.brewAt = 0;
+  S.works = {};
+  S.builders = 0;
   sky.cells = null;
   sky.n = 0;
   S.scrubbers = 0;

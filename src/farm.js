@@ -17,7 +17,7 @@ import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
 import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
-import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
+import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
@@ -26,6 +26,7 @@ import { spawnSpoil } from './dust.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
+import { registerRows } from './works.js';
 
 // how long one plot takes to come on, at this level of tending
 // Five rungs from the base to the floor, the fifth rung being the floor itself
@@ -233,6 +234,8 @@ export function stepFarmhand(w, now, dt, c = null) {
 export const FARM_UPGRADES = [
   {
     key: 'farmplot',
+    // A place, broken by the hands that work the row. See works.js.
+    kind: 'place', site: 'farm',
     // Breaking ground is what it takes; a plot is what you get.
     name: 'new plot',
     from: () => plotCount(),
@@ -257,6 +260,7 @@ export const FARM_UPGRADES = [
   {
     // The last thing the plots ever sell, once every furrow is broken.
     key: 'tiller',
+    kind: 'machine', site: 'farm',
     name: 'the tiller',
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
@@ -265,6 +269,7 @@ export const FARM_UPGRADES = [
   },
   {
     key: 'tend',
+    kind: 'rung', site: 'farm',
     // "tending" was the truest word for it -- a farmhand tends a plot and this is
     // how fast -- and it was the odd one out on a board where every other rate
     // says speed. One word meaning one thing beats five words each meaning it
@@ -275,7 +280,12 @@ export const FARM_UPGRADES = [
     from: () => tendRate(),
     to: () => tendRate(S.tendLevel + 1),
     rung: () => S.tendLevel,
-    cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.tendLevel)),
+    // Its own price on the ordinary rung curve, rather than the plot's. The two
+    // used to share `PLOT_COST` and `PLOT_RATE` between them, so breaking a
+    // furrow and buying a rung of tending speed cost the same at every level --
+    // a coincidence, not a decision. Dust either way: the plots are tier one and
+    // the rock has been making dust since the first swing.
+    cost: () => rungCost(120, S.tendLevel),
     currency: 'dust',
     buy: () => S.tendLevel++,
     // and stays on the board once it is finished, saying so. See `quarrypace`.
@@ -430,3 +440,7 @@ defineMachine('tiller', {
     return true;
   }
 });
+
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(FARM_UPGRADES);

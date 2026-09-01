@@ -3,13 +3,13 @@
 // the thing standing between you and every spark in the game could only be made
 // faster by hiring another body and buying it a hat.
 
-import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
 
 group('the tower sells casting speed and heavier bolts', async () => {
   window.__reset();
   openSites();
   window.__crew(0, 0, 0, 0, 0, 2);           // two wizards, which opens the sky
-  window.__grant({ sparks: 999, shards: 400, spores: 400 });
+  window.__grant({ sparks: 999, shards: 400, spores: 400, dust: 40000 });
   window.__tip(20000);
   run(3);
 
@@ -17,8 +17,10 @@ group('the tower sells casting speed and heavier bolts', async () => {
   const before = state();
   const offered = rows();
 
-  const fast = window.__buy('wizspeed');
-  const hard = window.__buy('wizpower');
+  // Both are rungs past the bench, so both are built rather than had: the two
+  // wizards standing at the tower are what finishes them. See works.js.
+  const fast = buyBuilt('wizspeed');
+  const hard = buyBuilt('wizpower');
   const after = state();
 
   window.__crew(0, 0);

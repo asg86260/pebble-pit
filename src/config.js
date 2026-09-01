@@ -2393,3 +2393,31 @@ export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SL
 // picture made of whole black pixels -- so both numbers are small on purpose,
 // and the look is the pair of them rather than either one.
 export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };
+
+// --- what a thing takes to build ---------------------------------------------
+// Time is a price like the rest of them, and past the bench every row pays it.
+// See works.js and DESIGN.md, "Time is a price".
+//
+// Worker-seconds, not seconds: read a figure here as "how long with one pair of
+// hands on it", and three quarriers in the cut take a bench out in a third of
+// it. One table off the kind of thing a row sells, rather than a number written
+// on each of thirteen rows -- a constant a case is the bug and not the fix, and
+// thirteen of them is thirteen things to keep in step with a ladder that grows a
+// sixth rung tomorrow.
+export const WORK_BASE = {
+  rung: 8,          // one step up a ladder
+  place: 30,        // a bench in the cut, a furrow, a hat off the stand
+  building: 90,     // the lab, the school, the closet, the tower
+  machine: 180      // the ram, the belt, the jaw, the tiller
+};
+// and it climbs with the rung the way the price does, so the first bench in the
+// cut is half a minute and the fifth is nearer two
+export const WORK_STEP = 1.35;
+// a body does one second of building a second -- the lab's own figure, because
+// it is the same kind of work and a second rate for it would be two numbers
+// meaning one thing
+export const BUILD_EFFORT = 1;
+// The most spare hands that go on one build. Not the whole yard: a build that
+// swallowed every idle body would stop the dust moving altogether, and what this
+// is meant to be is a *share* of the yard's attention rather than all of it.
+export const BUILD_GANG = 3;

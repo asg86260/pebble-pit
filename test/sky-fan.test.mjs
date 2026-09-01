@@ -25,7 +25,7 @@
 // and the number on the board is a measurement rather than a quotation.
 
 import { readFileSync } from 'node:fs';
-import { yard, group, ok, state, run, runUntil } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
 import { scrubRate } from '../src/smog.js';
 import { inScrub } from '../src/scrubhouse.js';
 import { SMOG_PER_MOTE } from '../src/config.js';
@@ -295,9 +295,11 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
   window.__tip(90000);
   window.__air({ haze: 0, muck: 0 });
-  window.__buy('ram');
-  window.__buy('jaw');
-  window.__buy('tiller');
+  // Each machine is built rather than had -- see works.js -- so the yard has to
+  // put them up before there is anything smoking.
+  buyBuilt('ram');
+  buyBuilt('jaw');
+  buyBuilt('tiller');
   run(40);                                   // a yard properly at work, and smoking
 
   let fading = 0, going = 0, seen = 0;

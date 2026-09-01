@@ -2835,3 +2835,180 @@ without being told.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
+
+## Time is a price (built)
+
+Everything past the bench was bought the way you buy anything in a menu -- watch
+a number climb, press once, and the thing is simply *there*. The yard had no idea
+anything had been built. Two rows in the whole game knew better: the lab's
+research, which somebody has to stand there and do, and the tower's hat, which
+takes two minutes -- and both of them are the most interesting purchases in the
+game for exactly that reason. The waiting is what makes the choice a choice.
+While the cut is going down a bench it is not doing anything else, and you had to
+decide that was the thing worth the yard's time.
+
+**So time is a price like the rest of them, on every row past the bench.** The
+machinery for saying so was already here and had been since the tower: `MARK.time`
+is a clock, `priceText` writes it as `2 min` rather than 120,000 of something,
+`purse('time')` is `Infinity` because you cannot be short of it, and `buy` skips
+it when it takes payment. One row used all of that. Every row past the bench uses
+it now.
+
+### The shape
+
+A row says what kind of thing it sells and where it is built:
+
+```js
+kind: 'place', site: 'quarry',   // kind: rung | place | building | machine
+```
+
+and nothing else about the row changes. `buy` does not apply the effect any more.
+It takes the coin -- all of it, now, because what you are waiting on is the
+labour and not the bill -- and puts a **work in progress** on the site:
+
+```js
+S.works[site] = { key, done, of, at }        // worker-seconds
+```
+
+`done` climbs by one second a second **for every pair of hands actually standing
+at the site**, and when it reaches `of` the row's own `buy` runs for real. So a
+row still describes one thing and still does it in one function, and the waiting
+is not written into thirteen of them. The rows hand themselves to `registerRows`
+at the bottom of each board's file, which is how a work coming back out of a save
+-- a key and two numbers, because a function is not a thing you can write down --
+knows what to do when it lands.
+
+**It is worker-seconds and not a clock.** An empty cut builds nothing however
+long you leave it. That is the same sentence the lab has said since the day it
+opened and the same sentence the machines say about their tenders, and it is what
+makes the wait a decision rather than a delay: a station building its own upgrade
+is a station not producing while it does.
+
+**Who works it.** Four sites have a gang of their own, and the work is theirs:
+
+| site | whose hands |
+|---|---|
+| quarry | the quarriers in the cut |
+| farm | the hands on the row |
+| scrub | whoever is in the house |
+| tower | the wizards |
+| yard | **the builders** |
+
+The school and everything on the bench have no gang, because the thing being
+built is not standing there yet. Those go to the yard, and the yard's spare hands
+walk over and put it up.
+
+**The builders are not a job on the roster and never will be.** You do not decide
+to have builders -- you decide to build something, and the hands that had nothing
+else on go and do it, which is what "spare" already meant. The count is derived
+in `rebalance` and goes back to nought the moment the thing is standing. It is
+capped at `BUILD_GANG`: a build that swallowed every idle body would stop the dust
+moving altogether, and what this is meant to be is a share of the yard's attention
+rather than all of it. What it costs you is the dust they are not carrying.
+
+**One work per site.** The cut builds one thing at a time; so do the plots, the
+school, the scrubbing house and the tower. A queue you fire and forget is not a
+decision, and the lab has had this rule since the day it opened -- one piece per
+bench, and the second bench is a purchase.
+
+**Stored as what is left, never as a deadline.** `now()` starts wherever the page
+started, so an absolute time saved in one session is a meaningless number in the
+next. Worker-seconds have no such problem, which is what makes them safe to write
+down at all -- and `brewLeft` in persist.js was already the pattern.
+
+### How long
+
+Time is a price, so it scales the way a price scales -- off the kind of thing and
+the rung, from one table (`WORK_BASE`), not hand-tuned per row:
+
+| kind | what it is | with one pair of hands |
+|---|---|---|
+| rung | one step up a ladder, and a hat off the school's stand | 8s |
+| place | a bench in the cut, a furrow, the recycler | 30s |
+| building | the lab, the school, the closet, the casino, the tower, the two sites | 90s |
+| machine | the ram, the belt, the jaw, the tiller | 180s |
+
+A rung climbs with the ladder the way its price does (`WORK_STEP`, a third again
+a rung). A place, a building and a machine are flat: a bench is a bench whether it
+is the second or the fifth. Read every figure as "with one pair of hands on it":
+five quarriers take a bench out in a fifth of that, which is what a gang is for.
+
+**The school's rows are rungs, not places.** A hat is a thing somebody is shown
+how to wear rather than a building, and the carts have no ceiling -- a set of six
+at a building's pace would be twenty minutes of standing about for a purchase
+whose whole character is that you make it again.
+
+### What it is *not* on
+
+**The bench's own ladders stay instant.** Your strength, hold to mine, your
+swing, the crew's first strength and speed: these are the opening of the game,
+and a game that begins by making you wait eight seconds for the first row you
+ever read is a game that begins badly. The bench's *buildings* and *machines* do
+take time -- they are the biggest purchases in the game and the ones whose
+instantness read worst, a whole lab appearing in a frame.
+
+**The casino is not on it at all.** A stake is not a purchase and a wheel you
+have to wait for is not a wheel.
+
+**The lab keeps its own worker-seconds.** It had a time price before any of this
+and it is a better one than a site's: the body has to be *inside*. Nothing here
+replaces it, and the lab's rows carry no `kind`.
+
+### What it shows
+
+The bill grows a clock beside the coins, counting down what is left **at the rate
+the site is actually going** -- so putting two more bodies in the cut halves the
+number you are looking at. With nobody on it the clock shows the one-body figure
+rather than "never": a row saying never reads as broken, and the honest thing to
+tell you is how long it would take if you put somebody on it, which is the
+decision the number is there to inform. The row itself is greyed and says
+**building**, or **nobody on it** when the site is empty -- and a row whose site
+is putting up something else is greyed with its ordinary price, because "the cut
+is busy" is not the same information as "you cannot afford it".
+
+And the *site* says so, because this game draws what it does: the same bar the lab
+has always had, hanging over the place the work is happening, filling a cell at a
+time and stopping dead the moment the last body walks off. `benchMark` no longer
+flags a row whose site is busy -- a mark on the bench promising a row you cannot
+press is the bench telling you to walk over for nothing.
+
+## The balance pass (three of six built)
+
+Six things the survey of every board turned up, in the order they are worth
+fixing. The first three are done; the rest are written down and left.
+
+1. **The lab's four multipliers climbed 1.9 a rung.** *(fixed)* Every other ladder in the
+   game climbs about 1.6 -- `rungCost`, and "half again a rung, six times across
+   the whole of it" in "The ladder" above. The lab is the row that stands between
+   you and every other multiplier, and it is the steepest thing on any board. It
+   uses `rungCost` like everything else now, and takes dust with its stone --
+   `labkit` was on a rate of its own (`BENCH_KIT_RATE`, four fifths again a rung)
+   and is on the same curve as everything else.
+
+2. **Tier-two-and-up rows are priced in their coin *and* dust.** *(fixed)* "The
+   ladder" says so and the bench's gear rows do it -- the pickaxes, the harness,
+   the boots all take their coin and a pile of dust, which is what keeps the rock
+   worth digging for the whole run. The quarry's two rows, the farm's two, the
+   lab's four and the scrubbing house's fan were single-coin, so the rock
+   stopped mattering the moment the cut opened. Done systemically rather than
+   row by row: `billOf` puts dust on every row from a rate per coin
+   (`DUST_PER`), and a row naming dust itself is opting out of that rule --
+   so none of these do.
+
+3. **A place and a rate rung were priced identically.** *(fixed)* `quarrybench` and
+   `quarrypace` are both `BENCH_COST x BENCH_RATE^level`; `farmplot` and `tend`
+   are both `PLOT_COST x PLOT_RATE^level`. A furrow and a rung of tending speed
+   costing the same at every level is a coincidence, not a decision.
+
+4. **`BENCH_COST` says "shards for the first of them" and the row spends
+   spores.** Stale comment on a live number.
+
+5. **Red does not do what red is for.** Tier six is "the last two rungs of every
+   ladder, and the machines themselves". The machines take sparks; `packpile` and
+   the wizard's own two ladders take sparks; every other ladder in the game is
+   five rungs of ground and stops. The last-two-rungs half of the tier is
+   unbuilt. Bigger than this pass -- flagged, not folded in.
+
+6. **`cost:` shadowing `bill:`.** Several rows carry both, the `cost` there for
+   "anything that asks in one coin". Two prices on one row is one of them going
+   stale.

@@ -15,6 +15,7 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
+import { workOn, workAt, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
@@ -482,6 +483,29 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
 
 export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = true; };
 
+// dev: whatever the yard is in the middle of building, standing this instant.
+//
+// Everything past the bench is built rather than had (see works.js), and a
+// *scene* is a picture of a yard rather than a run of one -- `tools/look.mjs`
+// wants the jaw on the floor of the cut, not six minutes of quarriers digging
+// towards it. A check about what a purchase does must still buy it and wait,
+// which is what `buyBuilt` in the checks is for; this is the shortcut, and it is
+// deliberately a separate word so the two can never be confused.
+export const finishWorks = () => {
+  const done = [];
+  for (const site of SITES) {
+    const w = workAt(site);
+    if (!w) continue;
+    done.push(w.key);
+    // Through the ordinary runner, so a finished work does exactly what a
+    // finished work does: the row's own `buy`, the mark, and the yard re-staffed.
+    w.done = w.of;
+  }
+  stepWorks(0);
+  buildShop(); S.dirty = true;
+  return done;
+};
+
 // The rows themselves, for a check about what a row *is* rather than about what
 // the board looks like: how far up its ladder it is, whether it is finished, and
 // whether pressing it does anything.
@@ -567,10 +591,16 @@ export const buyRowByKey = key => {
   const was = rungOf(u);
   const from = u.from ? u.from() : null;
   const showed = u.show();
+  // ...and a fourth, since everything past the bench is built rather than had:
+  // paying starts a work and nothing else moves until it lands, so the press
+  // that started it has plainly done something. Without this a check that buys a
+  // bench is told nothing happened, on the frame the cut started digging it.
+  const wasOn = !!workOn(u.key);
   buyRow(u);
   return rungOf(u) > was
       || (u.from && u.from() !== from)
-      || (showed && !u.show());
+      || (showed && !u.show())
+      || (!wasOn && !!workOn(u.key));
 };
 
 // what the pile actually looks like, sampled across the hole: dust arrives at
@@ -820,7 +850,7 @@ export const HANDLES = {
   __spend: spendDust,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
-  __tip: tip, __give: give,
+  __tip: tip, __give: give, __finish: finishWorks,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,

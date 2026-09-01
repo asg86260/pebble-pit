@@ -82,6 +82,22 @@ export const haveRock = () => runUntil(() => {
   return s.rock > 0 && !s.rockFall && !s.dancing;
 }, 30);
 
+// Buying something past the bench is the start of a wait rather than the end of
+// one: the coin goes, and the yard has to build the thing. So a check that wants
+// the thing has to let the yard build it -- with somebody standing at the site,
+// because an empty site builds nothing however long you leave it.
+//
+// It is deliberately the long way round. A hook that set the level would prove
+// nothing about how a player gets there, and what these checks are about is what
+// a purchase actually does.
+export function buyBuilt(key, limit = 120) {
+  if (!window.__buy(key)) return false;
+  const going = () => Object.values(state().works || {}).some(w => w.key === key);
+  if (!going()) return true;                   // nothing to build: it landed
+  runUntil(() => !going(), limit);
+  return !going();
+}
+
 // the quarry and the plots, opened without paying for them
 export function openSites() {
   window.__crew(0, 0, 1, 1);      // opens both places
