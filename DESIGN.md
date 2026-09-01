@@ -2441,10 +2441,11 @@ It is not. The pit is the **working floor** — the thing you watch, where grain
 settle and are lifted out to pay for things. What you have *banked* is a different question, and
 late in the game it gets a different answer: **a rift, and the grains are somewhere else.**
 
-A hole in the air at the far end of the pit, past the heap. Grains stream off the top of the pile,
-arc into it and are gone — the same gesture `spend` already makes when you pay for something, which
-is deliberate: the yard has one way of showing dust leaving the pile and this is it. They are not
-destroyed and the counter does not move. They are in another dimension, and the rift says how many.
+A black hole hanging in the pit (it stood past the far wall at first; see the endgame pass for why
+it moved). Grains lift off the top of the pile, go round it and are gone — the same lift off the pile
+`spend` makes when you pay for something, which is deliberate: the yard has one way of taking dust
+out of the pile and this is it. They are not destroyed and the counter does not move. They are in
+another dimension, and the rift says how many.
 
 **Why this is not the press again.** The press paid in *resolution* and you could see the bill. The
 rift pays in *location*: every grain still in this dimension is a full-size, six-pixel, speckled
@@ -2463,12 +2464,11 @@ picture is about*: the pile shows everything in the hole, the rift's own reading
 in the rift, and the counter is the two together. That is a fact you can read off the screen, not a
 fudge. The pile is still the dust — all of the dust that is here.
 
-**Somebody holds it open.** A wizard stands at the rift and it swallows; nobody there and it is
-shut, the pile backs up, and the hole fills the way it does today. The yard's two oldest rules
-survive it — nobody teleports, and a station idles until somebody is actually standing there — and
-they are what stop this from being a magic box that gets something for nothing. The cost of
-unbounded storage is **a body not on the rock**, which is the same bargain every other station in
-this yard makes, and it is a decision you can take back whenever you like.
+**Nobody holds it open** (changed by the endgame pass, below). It was a station once: a body stood
+at it or it was shut. The body arrived once and stood there for ever, two windows off screen, so
+the bargain was a row you bought and forgot. Torn is open. What it costs is red to summon and an
+endless ladder on the rate, and the two oldest rules survive because no body ever moved the grains
+and the rift is not a station — it is what the hole does with its overflow.
 
 **Nothing gets into the pit without being carried or thrown**, still. The rift is not a second place
 for a hauler to walk to and it never appears in anybody's errand. Everything is carried to the pit
@@ -2615,7 +2615,7 @@ line at all. The clog was written to stop the house spraying its own walk with i
 own filters, so counting the sky's muck in it is arguably wrong; but changing that
 is a balance decision rather than a fix. See TODO.
 
-## The endgame pass (design, not built)
+## The endgame pass (built)
 
 Five things go wrong together once the ram is fully driven, and they are one
 story: the rock is worked faster than anything downstream of it was written for.
@@ -2766,18 +2766,72 @@ center; `stepRifter`, `newRifter`, `atRift`, `inRift` go. `rift-migrate` and
 and the pile mark and tooltip on the near lip -- `the hole is full` -- still stand
 when it is, because a losing rift is exactly a hole that fills.
 
-### Calls to make before building
+### 6. It is summoned from the tower
 
-1. **The belt's unit.** A hauler's load a beat (`haulCap()`, recommended) --
-   derived, and the reason it keeps up is the same reason the carters do. The
-   alternative is capping the ram to the belt, which sells a ladder that does
-   nothing past the cap.
-2. **Where the disc hangs.** In the pit at the near end (recommended, the only
-   place it is on screen); in the middle of the hole; or where it stands now, only
-   passive.
-3. **The break's chips.** If measurement says the landing's thrown grains are the
-   spike, spread the throw over a quarter of a second. Confirm that is acceptable
-   before it is done, since it changes what a landing looks like.
+Not bought at the bench. It is the one plainly magic thing done to the one
+plainly dirt thing, and the tower is where the yard's magic comes from, so it is
+called down from there -- `summon a black hole`, on the tower's board under its
+own heading, offered once the tower stands, there is red to spend, and the hole
+has actually turned dust away. Its ladder, `widen the black hole`, sits beside
+it for the same reason the wizards' ladders do: what a board is about is what
+stands on it. The bench's `the hole` section is gone with them.
+
+### What was decided, and what the measurement said
+
+The calls: the belt's unit is a carter's load; the disc hangs in the pit at the
+near end; the landing's throw may be spread if it is the spike. It was not.
+
+**Measured before anything was changed**, with `tools/node/break-perf.mjs`: the
+node yard with every machine standing, the ram at `tune` 12 with the drive
+heart, the belt at the same, the tower up and the rift fourteen widenings up --
+thirty seconds, seeded, each frame timed, main and this branch run on the same
+scene one after the other on a quiet machine (two runs each, the worse shown).
+On a busy one the same script shows forty-millisecond frames on *both*, which
+is the machine and not the yard -- PERF.md's rule about minimums holds.
+
+| frame          | before  | after   |
+|----------------|--------:|--------:|
+| median         | 0.47 ms | 0.30 ms |
+| 90th           | 1.73 ms | 1.07 ms |
+| 99th           | 4.38 ms | 2.03 ms |
+| worst          | 7.53 ms | 3.66 ms |
+| a rock landing | ~0.9 ms | ~0.6 ms |
+| a rock breaking| ~1.4 ms | ~1.2 ms |
+
+The break was never the spike. The landing and the break are a millisecond
+each. The worst frames were mid-rock, with three or four hundred chips in the
+air and two thousand loads on the belt, and the profile put the cost in one
+place the reading of the code had not: **a chip landing on a strip that has
+reached its ceiling**. `addGrain` looked for a column with room by walking
+outward, both ways, asking `full` of every column -- and `full` walks that
+column's rows -- for as far as the grid goes. Six hundred columns of ninety
+rows, per grain, on frames a driven ram was landing fifty of them. The region
+rule already said the grain may only settle on the strip it landed on; the
+search now stops at the strip's edge on each side, which is a few dozen
+columns instead of the world. The rest of the list, in the order the profile
+gave it: `boulderAlive` was a twelfth of the frame and is a read of `rockTops`
+now (`clearBoulder` is the one way to zero the grid, so the tops cannot go
+stale); `quarryShape` built a template-string key on every call and compares
+four numbers instead; `clearApron` visits the footprint's columns and not the
+floor's; the counted bite takes the ram's eight `refreshRockTops` a frame to
+one and the belt's eight walks of the run to one; and the rift's swallow, which
+asked `countDust` of the whole hole every frame it ran -- a fifth of the
+simulation once the ladder was up -- reads a dust ledger the grid keeps beside
+its cell ledger (`b.d`, kept by `put` and `recount`, watched by verify.js rule
+7 the way `n` is). `wakeGrid(floor)` on a new rock and the landing's thrown
+grains were measured and left alone: a millisecond, not a spike.
+
+**One consequence worth naming.** A machine fouls per beat, and a beat of the
+belt is now a load rather than a grain, so the belt fouls per load: up to
+sixteen times less smoke per grain moved at the top of the carry ladder. That
+is the rule -- the stack smokes for the work done -- applied to a unit that was
+wrong before, not a change to the rule, and it is the belt alone; the ram's
+beat is what it was.
+
+**A save with a rifter in it** comes back with that body as a carter where it
+stood, on the strip past the far wall, and it walks home over the ladders it
+came by. Nobody teleports and nobody is lost; `rebalance` counts the spare hand
+without being told.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

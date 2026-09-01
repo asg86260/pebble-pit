@@ -384,11 +384,14 @@ the thing that happened to be true in a fixed window.
 
 ---
 
-## 9. The endgame pass — designed, not built
+## 9. The endgame pass — DONE
 
-**Status:** designed (`## The endgame pass` in DESIGN.md), waiting on three
-calls: the belt's unit, where the black hole hangs, and whether a landing's
-thrown grains may be spread over a few frames. Asked 2026-09-01.
+**Status:** built, 2026-09-01. `## The endgame pass` in DESIGN.md carries the
+measurements and the two calls that went the other way from the design: the
+spike was chips landing on a full strip, not the break, and the black hole is
+summoned from the tower rather than bought at the bench. Covered by
+`test/endgame.test.mjs` and the rewritten `test/rift.test.mjs`; the driven-ram
+yard is measured by `tools/node/break-perf.mjs`.
 
 **What it is.** Five faults with one cause — the driven ram outruns everything
 downstream. The ram works a falling rock (`ready` never reads `S.rockFall`);

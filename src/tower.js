@@ -13,11 +13,14 @@
 
 import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './lab.js';
-import { S } from './state.js';
+import { S, rift } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
-         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS } from './config.js';
+         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
+         RIFT_BILL, RIFT_RATE } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
+import { lookAt } from './world.js';
+import { riftRate, riftUpCost } from './rift.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 
@@ -137,9 +140,49 @@ export const TOWER_UPGRADES = [
   }
 ];
 
+// --- the black hole ------------------------------------------------------------
+// The rift, summoned. It used to be a row on the bench under `the hole`, which
+// sold it as a purchase: pay, and the hole in the ground has a hole in the air
+// beside it. It is the one plainly magic thing done to the one plainly dirt
+// thing, and the tower is where the yard's magic comes from -- so it is called
+// down from here, once the pit has been a problem, the way the first star was.
+// Its ladder sits beside it for the same reason the wizards' do: what a board
+// is about is what stands on it. What it is and what it swallows is in rift.js.
+TOWER_UPGRADES.push(
+  {
+    key: 'rift',
+    name: 'summon a black hole',
+    note: () => 'a hole in the pit that swallows what will not fit: the hole stops being the ceiling',
+    bill: () => RIFT_BILL,
+    buy: () => { S.riftOpen = true; lookAt(rift.x + rift.w / 2); },
+    // Once the tower stands, there is red to spend, and the hole has actually
+    // turned dust away. Offering a cure for a full pit to somebody who has never
+    // filled one is the scrubbing house's mistake -- the disease is the
+    // advertisement, and here the disease is a hauler standing at the lip
+    // holding a load it cannot put down. Not a threshold on how much has been
+    // banked: see `bankDust`.
+    show: () => S.towerOpen && S.seenSpark && S.seenFullPit && !S.riftOpen
+  },
+  {
+    key: 'riftrate',
+    name: 'widen the black hole',
+    unit: 'dust/s',
+    // No `rung`, and that is the point rather than an omission. `rungOf` calls a
+    // row with no rung "not a ladder at all -- a building, a one-off, a job --
+    // and never finished", which is exactly what this is. Five pips over the one
+    // row in the game that must not end would be the board promising an end.
+    note: () => `it swallows ${Math.round(riftRate() * RIFT_RATE)} a second instead of ${Math.round(riftRate())}`,
+    bill: () => [['spark', riftUpCost()], ['dust', riftUpCost() * 60]],
+    buy: () => { S.riftLevel = (S.riftLevel || 0) + 1; },
+    show: () => S.towerOpen && !!S.riftOpen
+  }
+);
+
 export const TOWER_SECTIONS = [
   { title: 'the tower', keys: ['wizard', 'wizspeed', 'wizpower'] },
   // And what the tower does for the rest of the yard, which is the only thing on
   // any board that is about somewhere else entirely.
-  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) }
+  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
+  // And the one it does to the hole.
+  { title: 'the black hole', keys: ['rift', 'riftrate'] }
 ];

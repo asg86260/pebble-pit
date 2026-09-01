@@ -535,3 +535,31 @@ nineteen times this glass: the press's 0.30 ms goes with it, and so does
 whatever share of the remaining 0.50 is paint rather than arithmetic. The `beat`
 readout in the dev panel reads the recording side only, so it will not show any
 of that; a phone to hand still would.
+
+## 4. The endgame yard (2026-09-01)
+
+Every machine standing, the ram twelve rungs up its ladder with the drive
+heart, the belt the same, the tower up, the rift fourteen widenings up. Measured
+with `tools/node/break-perf.mjs`, which steps the node yard a frame at a time
+and times each one; `YARD=file:///.../tools/node/yard.mjs` points it at another
+checkout so a before and an after are the same seeded scene. Thirty seconds,
+two runs each, the worse shown, quiet machine.
+
+| frame   | before  | after   |
+|---------|--------:|--------:|
+| median  | 0.47 ms | 0.30 ms |
+| 90th    | 1.73 ms | 1.07 ms |
+| 99th    | 4.38 ms | 2.03 ms |
+| worst   | 7.53 ms | 3.66 ms |
+
+What it was, in the order the profile gave it, is written up under `## The
+endgame pass` in DESIGN.md: a chip landing on a strip at its ceiling searched
+the whole floor for a column with room (the spike); `boulderAlive` scanned the
+rock grid for every caller every frame; `quarryShape` built a string key per
+call; the machines were called once per beat rather than once per frame; and
+the rift counted the hole's dust by walking it. The break itself was a
+millisecond and was left alone.
+
+On a machine running other things the same script shows frames of forty
+milliseconds on both checkouts. That is the machine. The rule in section 0 --
+take the minimum, not the mean -- is what makes the table above worth anything.

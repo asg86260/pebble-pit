@@ -132,6 +132,11 @@ export const resetSettleWork = () => { work = 0; };
 export const put = (b, c, r, v) => {
   const i = r * b.cols + c;
   if (b.n != null) b.n += (v ? 1 : 0) - (b.grid[i] ? 1 : 0);
+  // And the dust alone, beside it. The rift asks how much dust is in the hole
+  // every frame it swallows, and `countDust` is a walk of forty thousand cells
+  // -- measured, a fifth of the endgame's whole simulation. Kept the same way
+  // `n` is and watched by the same rule.
+  if (b.d != null) b.d += (isDust(v) ? 1 : 0) - (isDust(b.grid[i]) ? 1 : 0);
   b.grid[i] = v;
   wake(b, c);                              // and this is the one place sand starts moving
   if (b.onPut) b.onPut(c, r);
@@ -143,12 +148,16 @@ export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
 // after anything that writes the cells wholesale rather than through `put`
-export const recount = b => { b.n = count(b); wakeGrid(b); };
+export const recount = b => { b.n = count(b); b.d = countDust(b); wakeGrid(b); };
 export const countDust = b => {
   let n = 0;
   for (const v of b.grid) if (isDust(v)) n++;
   return n;
 };
+// The dust in a grid, off the ledger when it keeps one and by walking when it
+// does not. What the hot paths ask; `countDust` stays the walk, which is what
+// a check and verify.js rule 7 want -- the truth, not the copy of it.
+export const dustIn = b => b.d != null ? b.d : countDust(b);
 
 // world y where a grain falling down column c would come to rest
 export function surfaceY(b, c) {
@@ -239,12 +248,28 @@ export function addGrain(b, x, skip = b.blocked, shade = 1, free = false) {
     // `BARRED_REACH` says, and it is the one limit that search does have.
     const out = barred(col);
     const from = out || !b.region ? null : b.region(col);
-    const ok = c => !full(c) && (from === null || b.region(c) === from);
     const reach = out ? BARRED_REACH : b.cols;
-    let alt = -1;
-    for (let d = 1; d <= reach && d < b.cols; d++) {
-      if (col - d >= 0 && ok(col - d)) { alt = col - d; break; }
-      if (col + d < b.cols && ok(col + d)) { alt = col + d; break; }
+    // The region is asked *before* the column is, and a side that has left the
+    // region is not looked at again. `full` walks the rows of a column, and a
+    // grain landing on a heaped strip used to ask it of every column in the
+    // world on both sides -- six hundred columns of ninety rows, per grain, on
+    // the frames a driven ram was landing fifty of them. Measured, that walk was
+    // the whole of the endgame's frame spike: nothing about the break, just
+    // spoil coming down on a strip that was already at its ceiling. The strip is
+    // the only ground the grain may settle on, so the strip is the whole search.
+    const inRegion = c => from === null || b.region(c) === from;
+    let alt = -1, left = true, right = true;
+    for (let d = 1; d <= reach && d < b.cols && (left || right); d++) {
+      if (left) {
+        const c = col - d;
+        if (c < 0 || !inRegion(c)) left = false;
+        else if (!full(c)) { alt = c; break; }
+      }
+      if (right) {
+        const c = col + d;
+        if (c >= b.cols || !inRegion(c)) right = false;
+        else if (!full(c)) { alt = c; break; }
+      }
     }
     col = alt;
   }
@@ -336,7 +361,8 @@ export function settleSome(b, budget) {
 // re-pack n grains into a grid from the bottom up, ignoring shape
 export function fillFlat(b, n) {
   b.grid.fill(0);
-  if (b.n != null) b.n = 0;                // and the ledger went with them
+  if (b.n != null) b.n = 0;                // and the ledgers went with them
+  if (b.d != null) b.d = 0;
   wakeGrid(b);                             // the cells went, and not through `put`
   if (b.painter) b.painter.repaint();
   n = Math.min(n, b.cols * b.rows);

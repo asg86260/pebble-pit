@@ -189,9 +189,21 @@ group('the board counts what the mouth swallows', async () => {
   // fouling column is only half a board.
   fromTheField(2);
   run(20);
-  const before = state().smog.haze;
-  run(30);
-  const s = state().smog;
+  // Over a stretch with no rain in it. A shower takes the whole sky down at
+  // once and is not what either column is about, and whether one falls inside
+  // any given thirty seconds is the seed's business: the premise held by luck
+  // until a change elsewhere moved the seeded run and a rain landed in the
+  // window. So the window is one in which the count of rains did not move,
+  // tried a few times over -- a shower ends clean, and the next stretch is an
+  // ordinary sky again.
+  let before = 0, s = null, dry = false;
+  for (let tries = 0; tries < 4 && !dry; tries++) {
+    const rains = yard.S.rains;
+    before = state().smog.haze;
+    run(30);
+    s = state().smog;
+    dry = yard.S.rains === rains;
+  }
   const fell = (before - s.haze) / 30;         // how the sky actually went
   const said = (s.scrubbing - s.fouling) / 60; // and what the board said it would
   return [
@@ -202,6 +214,7 @@ group('the board counts what the mouth swallows', async () => {
     // stretch, and what the board's two columns said it would do. In the same
     // unit they agree; in the old ones the board was out by about a factor of
     // two and pointing the wrong way.
+    ok(dry, 'measured over a stretch with no rain in it'),
     ok(Math.abs(said - fell) < Math.max(2, Math.abs(fell) * 0.4),
        'and the two columns are the same kind of thing, so the difference is the truth',
        `board says ${said.toFixed(1)}, sky did ${fell.toFixed(1)} haze/s`)

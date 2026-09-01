@@ -15,15 +15,15 @@
 // `step` is called by whoever is turning the handle: sixty times a second by the
 // frame loop in the shell, or as fast as it will go by a check.
 
-import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT } from './config.js';
-import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
+import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, RIFT_TURNS, RIFT_ORBIT_FRAMES } from './config.js';
+import { S, floor, pit, cut, quarry, bench } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
 import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
-import { stepRift, riftMouth } from './rift.js';
+import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
@@ -165,10 +165,10 @@ export function step() {
   stepSparkle(dt);                            // and the magic they leave in the air
   stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
-  // And the rift swallows, if it is torn and somebody is standing at it. It
-  // takes grains off the top of the pile without taking them off you -- see
-  // `swallow` in pit.js -- so this is the one thing in the yard that empties the
-  // hole and leaves the counter where it was.
+  // And the rift swallows, if it is torn. It takes grains off the top of the
+  // pile without taking them off you -- see `swallow` in pit.js -- so this is
+  // the one thing in the yard that empties the hole and leaves the counter where
+  // it was.
   stepRift(dt);
   stepSmog(dt);                               // and the sky, which is filling up
   stepBalloons();                             // and the craft crossing it
@@ -378,13 +378,42 @@ export function surveyFloor() {
 // draws them.
 export function stepPaid() {
   fly(S.paid, bench.x + bench.w / 2, bench.y - P * 2);
-  // And the stream going the other way, into the rift. Same arc, same easing,
-  // different end: one way of showing dust leaving the pile, two destinations --
-  // which is the same economy `liftTo` makes in pit.js, and for the same reason.
-  // Paying and swallowing look alike on purpose: both are grains coming off the
-  // top of the pile and going somewhere, and the only difference a player needs
-  // to read is *where*.
-  fly(S.gulped, riftMouth(), rift.y + rift.h * 0.4);
+  // And the ones going into the rift, which do not arc anywhere: they rise off
+  // the top of the pile to the ring round the disc, go round it on a tightening
+  // spiral, and are gone at the middle. Same lift off the pile as paying --
+  // `liftTo` in pit.js makes both lists -- and a different journey, because the
+  // one thing a player needs to read about a swallowed grain is that it went
+  // *in*, not that it went somewhere.
+  orbit(S.gulped);
+}
+
+// A grain's whole orbit is one number, `t`, from nought at the pile to one at
+// the middle of the disc. The angle runs on with it and the radius comes in
+// with it, so the path is a spiral; the first stretch of it blends from where
+// the grain left the pile to where it joins the ring, so it is seen to rise off
+// the top rather than appear on the ring. Every grain has its own angle to join
+// at and its own way round, from `lift`, so the ring is a ring and not a queue.
+function orbit(list) {
+  const f = frames();
+  const c = riftCenter(), R = riftRadius();
+  const rate = 1 / RIFT_ORBIT_FRAMES;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const m = list[i];
+    m.t += rate * f;
+    if (m.t >= 1) { list.splice(i, 1); continue; }
+    if (m.t <= 0) continue;
+    const t = m.t;
+    const a = m.a0 + m.spin * t * RIFT_TURNS * Math.PI * 2;
+    // Out past the rim for most of the way round, then a dive: cubed, so the
+    // radius barely moves until late and the ring reads as a ring rather than
+    // a cloud. It ends well inside the rim, which is under the disc.
+    const r = R * (1.35 - 0.95 * t * t * t);
+    const ox = c.x + Math.cos(a) * r, oy = c.y + Math.sin(a) * r;
+    const join = Math.min(1, t / 0.2);            // the rise off the pile
+    const e = join * join * (3 - 2 * join);
+    m.x = m.x0 + (ox - m.x0) * e;
+    m.y = m.y0 + (oy - m.y0) * e;
+  }
 }
 
 function fly(list, tx, ty) {

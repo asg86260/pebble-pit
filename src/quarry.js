@@ -117,9 +117,16 @@ export function newQuarrier() {
 // same numbers that draw it are the ones that put their feet down.
 let shape = null, shapeKey = '';
 
+// Four numbers compared, not a string built. The key was a template string
+// made on every call, and this is called once per quarrier per frame and once
+// per route -- measured, building the string was a twentieth of the driven
+// yard's whole frame, for a shape that changes a handful of times a run.
+let keyX = NaN, keyW = NaN, keyH = NaN, keyG = NaN;
+
 export function quarryShape() {
+  if (shape && keyX === quarry.x && keyW === quarry.w && keyH === quarry.h && keyG === S.groundY) return shape;
   const key = `${quarry.x}|${quarry.w}|${quarry.h}|${S.groundY}`;
-  if (shape && shapeKey === key) return shape;
+  keyX = quarry.x; keyW = quarry.w; keyH = quarry.h; keyG = S.groundY;
 
   const snap = v => Math.round(v / P) * P;
   const deep = snap(S.groundY + quarry.h);

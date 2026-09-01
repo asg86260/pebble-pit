@@ -1,11 +1,11 @@
-// The rift: the hole in the air at the far end of the pit, and the wizard who
-// holds it open.
+// The rift: the black hole hanging in the pit, and what it swallows.
 //
 // The hole in the ground holds 37,566 grains at full size and an endgame yard
 // banks that in minutes. What is banked past it does not sit in the hole and it
 // is not thrown away: it goes through here, into another dimension, where it
-// costs nothing to keep because nothing about it is drawn. See `## The rift` in
-// DESIGN.md for why this rather than a finer grain, a wider hole, or a drain.
+// costs nothing to keep because nothing about it is drawn. See `## The rift`
+// and `## The endgame pass` in DESIGN.md for why this rather than a finer
+// grain, a wider hole, or a drain.
 //
 // The arithmetic that forces it, in one line: one grain is one dust and a grain
 // is six pixels, so two hundred thousand dust needs 7.2M px² of pile and the
@@ -13,66 +13,52 @@
 // that had to give was that the pit is where the dust is *kept* -- it is not, it
 // is the working floor, and this is the bank.
 //
-// What is here is a place on the ground, the body standing at it, and its two
-// rows. What actually moves the grains is `swallow` in pit.js, which is the same
-// lift-off-the-top that paying uses: one way of taking dust out of the pile,
-// two destinations.
+// **Nobody holds it open.** It used to be a station: a lens on the ground past
+// the far wall, shut until a body had walked the whole length of the hole to
+// stand at it, and the bargain was a body not on the rock. The bargain stopped
+// paying -- the body arrived once and stood there for ever, two windows off
+// screen, and a decision nobody ever takes back is not a decision. Torn is
+// open. What it costs is what it already cost: red to tear it, and an endless
+// ladder of red and dust on how fast it swallows. The yard's two oldest rules
+// survive that, because no body was ever what moved the grains, and the rift
+// is not a station -- it is what the hole does with its overflow, and the hole
+// has never been staffed either.
+//
+// What is here is where it hangs, and its two rows. What actually moves the
+// grains is `swallow` in pit.js, which is the same lift-off-the-top that paying
+// uses: one way of taking dust out of the pile, two destinations.
 
-import { P, RIFT_W, RIFT_H,
+import { P, RIFT_W, RIFT_H, RIFT_IN,
          RIFT_RATE, RIFT_RATE0, RIFT_RATE_COST, RIFT_RATE_UP } from './config.js';
 import { S, pit, rift } from './state.js';
-import { swallow } from './pit.js';
+import { swallow, pitDepth } from './pit.js';
 
-// --- where it stands ---------------------------------------------------------
-// Past the far wall of the pit, in the pad of ground that was already there.
+// --- where it hangs ------------------------------------------------------------
+// In the hole, over the pile, at the near end: its middle a few cells in from
+// the near lip, halfway down the depth of the hole. That is where the haulers
+// tip in, where the belt's head drops, and where the counter stands -- the one
+// end of the pit that is on screen. It stood past the far wall once, and nobody
+// saw it: the endgame's dust was a stream arcing off the edge of the window
+// while the pit itself sat there, one unchanging full pile.
 //
-// Deliberately *inside* `PIT_PAD` rather than past it. The world's width is
-// measured off the pit (`S.worldW = pit.x + PIT_W_MAX + PIT_PAD * P`), the
-// floor's column count is measured off the world, and a changed column count
-// invalidates every saved floor grid in existence -- see the note over
-// `placeSites` in world.js. Adding a building by making the world wider would
-// have quietly thrown away the ground out of every save anybody had. There were
-// eighteen cells of pad and the rift wants fifteen of them.
-//
-// And it is the right place for it on its own merits: it is the last thing on
-// the longest walk, past the whole length of the hole, which is what a thing you
-// reach only at the end of the game should cost to get to.
+// `PIT_PAD` is untouched. The world's width is measured off the pit and the
+// floor's column count off the world, and a changed column count invalidates
+// every saved floor grid in existence -- see the note over `placeSites` in
+// world.js. The disc hangs in ground the pit already owns.
 export function seatRift() {
   rift.w = RIFT_W;
   rift.h = RIFT_H;
-  rift.x = pit.x + pit.w + P * 2;
-  rift.y = S.groundY - RIFT_H;
+  rift.x = pit.x + P * RIFT_IN;
+  rift.y = S.groundY + Math.round((pitDepth() - RIFT_H) / 2 / P) * P;
 }
 
-// The mouth of it, and whether a given body is standing at it. A rift is not a
-// building with a door -- there is nothing to go inside -- so a body works it by
-// standing at the middle of the plot, the way the tower's wizards stand at the
-// tower.
+// The middle of it: where the orbit tightens to, and where a grain is gone.
 export const riftMouth = () => rift.x + rift.w * 0.5;
+export const riftCenter = () => ({ x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 });
+export const riftRadius = () => rift.w * 0.5;
 
-export function newRifter() {
-  return { type: 'rifter', goal: 'to', x: rift.x, y: 0 };
-}
-
-export const atRift = w => w.type === 'rifter' && w.goal === 'in';
-
-// How many are actually standing there. Not `S.rifters`, which counts everybody
-// the rift has been *given* -- one of them may still be walking the length of
-// the hole to get there, and nothing goes through until somebody has arrived.
-// The same distinction `inScrub` makes, and for the same reason: this yard does
-// not teleport anybody, so being assigned to a place and being at it are two
-// facts and the machinery must read the second one.
-export const inRift = () => S.workers.filter(atRift).length;
-
-// Whether it is actually swallowing: built, and somebody standing at it.
-//
-// An unstaffed rift is shut. That is the whole of what stops this from being a
-// magic box that gets something for nothing -- the cost of unbounded storage is
-// a body not on the rock, which is the same bargain the scrubbing house and
-// every other station in this yard makes, and it is a decision you can take back
-// whenever you like. Take the wizard off and the hole fills up exactly as it did
-// before there was a rift at all.
-export const riftOpen = () => !!S.riftOpen && inRift() > 0;
+// Whether it is swallowing: torn. There is nothing else to it.
+export const riftOpen = () => !!S.riftOpen;
 
 // --- how fast ----------------------------------------------------------------
 // Grains a second. An endless ladder, and endless is the point rather than an
@@ -100,7 +86,7 @@ export const riftUpCost = () => Math.round(RIFT_RATE_COST * Math.pow(RIFT_RATE_U
 let owed = 0;
 
 export function stepRift(dt) {
-  if (!riftOpen()) { owed = 0; return 0; }    // shut: nothing is owed from while it was
+  if (!riftOpen()) { owed = 0; return 0; }    // not torn: nothing is owed
   owed += riftRate() * dt / 1000;
   const whole = Math.floor(owed);
   if (whole < 1) return 0;

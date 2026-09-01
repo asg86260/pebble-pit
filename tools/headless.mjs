@@ -128,7 +128,12 @@ if (shot) {
   // no amount of squinting at a full-width shot settles whether it is sitting
   // straight. The capture can scale a clip for us, so it does.
   const z = Number(process.env.ZOOM || 0);
-  const clip = z > 1 ? (() => {
+  // `CLIP=x,y,w,h` names the window rectangle to blow up instead of the middle:
+  // the pit is at the bottom of the window and a look at anything in it is a
+  // look at the sky when cropped to the centre.
+  const at = process.env.CLIP ? process.env.CLIP.split(',').map(Number) : null;
+  const clip = at && at.length === 4 ? { x: at[0], y: at[1], width: at[2], height: at[3], scale: z > 1 ? z : 1 }
+             : z > 1 ? (() => {
     const [w, h] = (process.env.WINDOW || '800,600').split(',').map(Number);
     return { x: w / 2 - w / z / 2, y: h / 2 - h / z / 2, width: w / z, height: h / z, scale: z };
   })() : undefined;

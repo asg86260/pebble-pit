@@ -8,7 +8,7 @@ import { rockEdge, pileOf } from './world.js';
 import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
-import { scoopMs } from './upgrades.js';
+import { scoopMs, haulCap } from './upgrades.js';
 import { pitFull } from './pit.js';
 import { rand } from './rng.js';
 
@@ -242,15 +242,28 @@ defineMachine('belt', {
   // for carrying still applies to the machine that replaced it.
   ms: rate => scoopMs() / Math.max(0.01, rate),
   ready: () => !pitFull(),
-  bite: tender => {
-    // The nearest loose grain along the run. Never out of a station's strip:
+  // A beat lifts a *load*, not a grain: `haulCap()` of them, the same number a
+  // carter carries in one trip, because the belt is the whole of what a hauler
+  // does minus the walking and a hauler does not carry one grain. It was one a
+  // beat, and at the beats cap every machine shares that pinned the band at
+  // eight grains a frame against the ram's forty-eight cells -- a deficit no
+  // rung of either ladder could close, so the rock's strip filled, the ram
+  // stood down, the band cleared a handful, and the ram refilled it in two
+  // frames. The unit comes off the carry ladder the belt already sits beside
+  // on the board rather than being a number of its own.
+  //
+  // `n` beats' worth in one walk of the run, answered in beats.
+  bite: (tender, n = 1) => {
+    // The nearest loose grains along the run. Never out of a station's strip:
     // those heaps belong to their stations and are carried by hand -- the belt
     // is for what is lying on the open ground between the rock and the hole,
     // which is where the rock's spoil lands and where a machine's output piles
     // up while it waits for somebody.
     const from = beltFrom(), to = beltReach();
     const c0 = colOf(floor, from), c1 = colOf(floor, to);
-    for (let c = c0; c <= c1; c++) {
+    const load = Math.max(1, haulCap());
+    let want = Math.max(1, Math.floor(n)) * load, got = 0;
+    for (let c = c0; c <= c1 && got < want; c++) {
       // The rock's own spoil and the bare ground between here and the lip. Not
       // another station's heap: the cut's stone and the farm's crop are carried
       // by hand to their own piles and belong there, and a belt that swept them
@@ -260,7 +273,7 @@ defineMachine('belt', {
       // buries the yard in, and it is the pile the haulers were built to empty.
       const reg = floor.region ? floor.region(c) : null;
       if (reg !== null && reg !== 'rock') continue;
-      for (let r = floor.rows - 1; r >= 0; r--) {
+      for (let r = floor.rows - 1; r >= 0 && got < want; r--) {
         const v = at(floor, c, r);
         if (!v) continue;
         put(floor, c, r, 0);
@@ -275,10 +288,11 @@ defineMachine('belt', {
         const y = bottomY(floor) - (r + 1) * P;
         loadBelt(x, y, v);
         if (tender) tender.stored = (tender.stored || 0) + 1;
-        S.dirty = true;
-        return true;
+        got++;
       }
     }
-    return false;
+    if (!got) return 0;
+    S.dirty = true;
+    return got / load;
   }
 });

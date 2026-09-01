@@ -46,7 +46,7 @@ import { S, pit, floor, cut } from './state.js';
 import { P } from './config.js';
 import { ways, wayAt, WORKINGS } from './route.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
-import { count } from './grid.js';
+import { count, countDust } from './grid.js';
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 
@@ -56,7 +56,7 @@ import { seed } from './rng.js';
 // rule 4 is here to catch.
 const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', rifter: 'rifters',
+                        scrubber: 'scrubbers',
                         janitor: 'janitors', wizard: 'wizards' };
 
 // How far below the surface of the way it is on a body may be, and for how long.
@@ -344,6 +344,12 @@ export function verifyWorld() {
       const real = count(b);
       if (b.n !== real)
         fail(`${name} has lost count of itself`, `ledger says ${b.n}, the cells say ${real}`);
+      // and the dust ledger beside it, which the rift swallows against
+      if (b.d != null) {
+        const dust = countDust(b);
+        if (b.d !== dust)
+          fail(`${name} has lost count of its dust`, `ledger says ${b.d}, the cells say ${dust}`);
+      }
     }
   }
 }

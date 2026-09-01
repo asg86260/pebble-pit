@@ -10,7 +10,7 @@ import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
-import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
+import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
@@ -304,6 +304,10 @@ function lift(n, leaving) {
           t: -rand() * 0.5,           // they leave in a stream, not a block
           rate: 0.012 + rand() * 0.01,
           lift: 60 + rand() * 90,     // how high it arcs on the way
+          // and, for the ones going into the rift, where on the ring they join
+          // it and which way round they go -- see `orbit` in game.js
+          a0: rand() * Math.PI * 2,
+          spin: rand() < 0.5 ? -1 : 1,
           s: v
         });
       }
@@ -319,7 +323,7 @@ function lift(n, leaving) {
 // getting right: `swallow` used to ask this way and then be asked again inside,
 // which was three walks of forty thousand cells every frame the rift ran, to
 // move a dozen grains.
-const liftTo = (target, leaving) => lift(countDust(pit) - target, leaving);
+const liftTo = (target, leaving) => lift(dustIn(pit) - target, leaving);
 
 // paying comes out of the hole: grains are lifted off the top until the pile is
 // worth no more than the counter says.
@@ -348,7 +352,7 @@ export function spend(cost) {
 // coming *in*, and the rift is where the overflow goes. The way to see your
 // dust again is to spend it.
 export function swallow(n) {
-  const take = Math.max(0, Math.min(Math.floor(n), countDust(pit)));
+  const take = Math.max(0, Math.min(Math.floor(n), dustIn(pit)));
   if (!take) return 0;
   S.rift = (S.rift || 0) + take;
   lift(take, S.gulped);

@@ -18,7 +18,7 @@ import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite } from './world.js';
 import { startIntro } from './intro.js';
-import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
+import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance } from './upgrades.js';
@@ -280,7 +280,6 @@ export function persist() {
     brewLeft: Math.max(0, S.brewAt - clockNow()),
     wizards: S.wizards,
     scrubbers: S.scrubbers,
-    rifters: S.rifters,
     // The craft the house has sold. Two numbers and an eased height apiece; the
     // lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
@@ -357,7 +356,7 @@ export function restore() {
     // A game that has never been played does not start with a rock. It starts
     // with two people, and the rock is what happens to them -- see intro.js.
     makeBoulder();
-    S.boulder = S.boulder.map(row => row.map(() => 0));
+    clearBoulder();
     S.coreBuried = false;
     startIntro();
     S.stored = 0;
@@ -575,7 +574,6 @@ export function restore() {
     S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
   S.scrubbers = s.scrubbers || 0;
-  S.rifters = s.rifters || 0;
   craftLoad(s.craft);
   S.janitors = s.janitors || 0;
   S.harnessLevel = s.harnessLevel || 0;
@@ -676,7 +674,14 @@ function restoreCrew(who) {
   if (!Array.isArray(who)) return;
   for (const k of who) {
     if (!k.type) continue;
-    const made = FACTORY(k.type);
+    // A body that was holding the rift open, from a save written when it needed
+    // holding. Nobody teleports and nobody is lost: it comes back as a carter,
+    // where it stood -- on the strip past the far wall -- and walks home over
+    // the ladders the way it got there. Carrying is what a body does when it is
+    // on nothing, which is what a job that no longer exists leaves it on, and
+    // `rebalance` counts the spare hands as carters without being told.
+    const type = k.type === 'rifter' ? 'hauler' : k.type;
+    const made = FACTORY(type);
     if (!made.type) continue;                  // a trade this build does not have
     S.workers.push(wearRecord(Object.assign(made, newRecord()), k));
   }
@@ -777,7 +782,6 @@ export function reset(fresh = true) {
   sky.cells = null;
   sky.n = 0;
   S.scrubbers = 0;
-  S.rifters = 0;
   clearCraft();
   S.janitors = 0;
   S.introThrew = 0;
@@ -819,7 +823,7 @@ export function reset(fresh = true) {
   S.reunionDone = false;
   S.buried = false;
   makeBoulder();
-  S.boulder = S.boulder.map(row => row.map(() => 0));
+  clearBoulder();
   S.coreBuried = false;
   startIntro();                    // a reset is a game that has never been played
   buildShop();

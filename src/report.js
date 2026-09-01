@@ -416,6 +416,10 @@ export const snapshot = () => ({
   rift: S.rift || 0,
   riftOpen: !!S.riftOpen,
   riftLevel: S.riftLevel || 0,
+  // and how many grains are in the air on their way into it, with the first
+  // few of them, so a check can see the orbit rather than only the count
+  gulped: (S.gulped || []).length,
+  gulpedAt: (S.gulped || []).slice(0, 4).map(m => ({ t: +m.t.toFixed(2), x: Math.round(m.x), y: Math.round(m.y) })),
 
   // And the dust lying in the cut, fallen down the mouth and not yet fetched.
   cutDust: countDust(cut),

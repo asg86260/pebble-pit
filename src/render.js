@@ -21,7 +21,6 @@ import { pitDepth, pitFull } from './pit.js';
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
-import { inRift } from './rift.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
@@ -2293,57 +2292,61 @@ export function drawCore() {
   else if (S.coreItem) drawCoreAt(S.coreItem.x, S.coreItem.y);
 }
 
-export function drawPaid() {
+// The grains in the air on the way out of the pile, drawn as whatever they are.
+const drawLeaving = list => {
   let shade = 0;
-  // Both streams off the top of the pile: the one arcing to the bench because
-  // you bought something, and the one arcing into the rift because it swallowed.
-  // Drawn by one loop for the same reason `liftTo` lifts them by one loop --
-  // they are the same event with two destinations, and two copies of this would
-  // be two things to keep looking alike.
-  for (const list of [S.paid, S.gulped]) {
-    for (const m of list) {
-      if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
-      ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
-    }
+  for (const m of list) {
+    if (m.s !== shade) { shade = m.s; ctx.fillStyle = shadeOf(m.s); }
+    ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
   }
   ctx.fillStyle = '#000';
-}
+};
 
-// The rift: a hole in the air past the far wall of the pit.
+// The stream arcing off the top of the pile to the bench, because you bought
+// something. The other stream off the pile -- the one going into the rift -- is
+// drawn by `drawRift`, under the disc, so a grain that has spiralled inside the
+// rim is gone behind it rather than drawn over it.
+export function drawPaid() { drawLeaving(S.paid); }
+
+// The rift: a black hole hanging in the pit, over the pile, with the dust it is
+// swallowing going round it.
 //
 // Everything in this yard is black cells on white paper, so the honest drawing
-// of an absence is the paper's opposite -- a solid black lens standing on the
-// ground, widest at its middle, with nothing inside it because there is nothing
-// inside it. It is the only thing in the game that is a shape rather than an
-// object: no walls, no roof, no machine on the front.
+// of an absence is the paper's opposite -- a solid black disc, with nothing
+// inside it because there is nothing inside it. It is the only thing in the
+// game that is a shape rather than an object: no walls, no roof, no machine on
+// the front. And it is always filled in, because it is always open: nobody
+// holds it, so there is no shut to draw.
 //
-// **Shut, it is an outline.** With nobody standing at it the rift is a ring of
-// cells around empty paper, and it swallows nothing. That is the scrubbing
-// house's rule drawn rather than written -- an empty house is visibly a shed --
-// and it is what stops the rift reading as a magic box that works for free. Put
-// a body there and the shape fills in.
+// The ring comes first and the disc over it. The orbit runs from outside the
+// rim in to the middle, so the last of every grain's path is under the disc --
+// which is what going *in* looks like, and it costs nothing: the grains are the
+// `gulped` list that was always drawn, and a disc is fewer rectangles than the
+// lens was.
 export function drawRift() {
   if (!S.riftOpen) return;
+  drawLeaving(S.gulped);
   const { x, y, w, h } = rift;
   const across = Math.round(w / P), down = Math.round(h / P);
-  const open = inRift() > 0;
-  const mid = (across - 1) / 2;
-
-  ctx.fillStyle = '#000';
-  for (let r = 0; r < down; r++) {
-    // A lens: nothing at the very top and bottom, widest across the middle. The
-    // half-width is worked out from the row rather than written down as a table,
-    // so the shape follows RIFT_W and RIFT_H if either ever moves.
-    const half = Math.round(mid * Math.sin(Math.PI * (r + 0.5) / down));
-    if (half < 1) continue;
-    const left = x + Math.round(mid - half) * P;
-    const wide = (half * 2 + 1) * P;
-    if (open) { ctx.fillRect(left, y + r * P, wide, P); continue; }
-    // Shut: just the two edge cells of the row, which is the outline of the same
-    // lens with the paper showing through it.
-    ctx.fillRect(left, y + r * P, P, P);
-    ctx.fillRect(left + wide - P, y + r * P, P, P);
-  }
+  const mid = (across - 1) / 2, midR = (down - 1) / 2;
+  // A disc: the half-width of each row off the circle, worked out from the row
+  // rather than written down as a table, so the shape follows RIFT_W and RIFT_H
+  // if either ever moves. Drawn twice: a cell wider in paper first, then the
+  // black. Over a full pile a black disc on grey speckle is a blob painted on
+  // the pile; with a cell of paper round it, it is a hole *in* the pile, and a
+  // grain crossing that margin on its way in is seen going.
+  const disc = (grow, style) => {
+    ctx.fillStyle = style;
+    for (let r = -grow; r < down + grow; r++) {
+      const dy = (r - midR) / (midR + 0.5 + grow);
+      const half = Math.floor((mid + grow) * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
+      if (half < 0) continue;
+      const left = x + Math.round(mid - half) * P;
+      ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
+    }
+  };
+  disc(1, '#fff');
+  disc(0, '#000');
 }
 
 
@@ -3060,7 +3063,6 @@ export function draw() {
   drawLab();
   drawCasino();
   drawScrub();
-  drawRift();                // the hole in the air past the far wall of the pit
   drawTower();
   drawOuthouse();
   drawPotPile();    // what is on the table, as a heap on the ground
@@ -3121,6 +3123,7 @@ export function draw() {
   drawGrid(floor);
   drawPit();
   drawMuck();              // and whatever the last rain left on top of the lot
+  drawRift();              // the black hole in the pit, over the pile it is eating
 
   drawPitOutline();
 

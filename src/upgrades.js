@@ -16,15 +16,14 @@ import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
-import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse, rift } from './state.js';
+import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
-import { riftRate, riftUpCost } from './rift.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
-         SPELL_DRIVE, SPELL_THRIFT, RIFT_BILL, RIFT_RATE, DUST_PER_SPARK,
+         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
          MACHINE_TUNE } from './config.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
@@ -236,7 +235,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'rifters', 'janitors', 'wizards'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -325,12 +324,6 @@ const capOfBare = job =>
   // second mouth rather than a second pair of hands at the same one, so it is a
   // place to be and it takes a body of its own. See balloon.js.
   job === 'scrubbers' ? 1 + craftCount() :
-  // And one at the rift, for the third time and the same reason. There is
-  // nothing to do there: the body holds the hole in the air open by standing at
-  // it. A second pair of hands on a thing that swallows by itself would be a way
-  // of buying a faster rift, and what buys a faster rift is widening it. Unlike
-  // the house it has nothing to sell that adds a second place, so it is one.
-  job === 'rifters' ? (S.riftOpen ? 1 : 0) :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
@@ -1029,35 +1022,9 @@ export const UPGRADES = [
   tuneRow('belt', 'speed the belt',
           () => `the belt runs ${MACHINE_TUNE}x faster, again`),
 
-  // --- the rift -------------------------------------------------------------
-  // What the hole overflows into, and how fast. The rest of it -- where it
-  // stands, who holds it open, what it swallows -- is in rift.js.
-  {
-    key: 'rift',
-    name: 'tear a rift',
-    note: () => 'the hole stops being the ceiling: what will not fit goes through',
-    bill: () => RIFT_BILL,
-    buy: () => { S.riftOpen = true; lookAt(rift.x + rift.w / 2); },
-    // Once there is red to spend on it and the hole has actually turned dust
-    // away. Offering a cure for a full pit to somebody who has never filled one
-    // is the scrubbing house's mistake -- the disease is the advertisement, and
-    // here the disease is a hauler standing at the lip holding a load it cannot
-    // put down. Not a threshold on how much has been banked: see `bankDust`.
-    show: () => S.seenSpark && !S.riftOpen && S.seenFullPit
-  },
-  {
-    key: 'riftrate',
-    name: 'widen the rift',
-    unit: 'dust/s',
-    // No `rung`, and that is the point rather than an omission. `rungOf` calls a
-    // row with no rung "not a ladder at all -- a building, a one-off, a job --
-    // and never finished", which is exactly what this is. Five pips over the one
-    // row in the game that must not end would be the board promising an end.
-    note: () => `it swallows ${Math.round(riftRate() * RIFT_RATE)} a second instead of ${Math.round(riftRate())}`,
-    bill: () => [['spark', riftUpCost()], ['dust', riftUpCost() * 60]],
-    buy: () => { S.riftLevel = (S.riftLevel || 0) + 1; },
-    show: () => !!S.riftOpen
-  },
+  // The rift -- the black hole in the pit -- is not sold here. It is summoned
+  // from the tower, and its ladder is on the tower's board with it: see
+  // `TOWER_UPGRADES` in tower.js, and `## The endgame pass` in DESIGN.md.
 
   CAVE
 ];
@@ -1075,8 +1042,7 @@ export const SECTIONS = [
   { title: 'the outhouse', keys: ['unlockouthouse'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
-  { title: 'the scrubbing house', keys: ['unlockscrub'] },
-  { title: 'the hole', keys: ['rift', 'riftrate'] }
+  { title: 'the scrubbing house', keys: ['unlockscrub'] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

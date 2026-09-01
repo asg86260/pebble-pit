@@ -1136,12 +1136,17 @@ export const PIT_PAD = 18;       // cells of ground past its far edge, so you ca
 // The hole in the air past the far wall of the pit: what the hole in the ground
 // overflows into. See src/rift.js and `## The rift` in DESIGN.md.
 //
-// It stands inside PIT_PAD above rather than past it, because the world's width
-// is measured off the pit and the floor's column count off the world -- a wider
-// world is a different `floor.cols`, and that invalidates the saved ground in
-// every save anybody has. Fifteen cells of the eighteen.
+// A black disc hanging in the hole at the near end, over the pile: fifteen cells
+// across, its near edge RIFT_IN cells in from the near lip. It used to be a lens
+// on the ground past the far wall, which is two windows off screen -- see
+// `seatRift`.
 export const RIFT_W = P * 15;
-export const RIFT_H = P * 16;
+export const RIFT_H = P * 15;
+export const RIFT_IN = 4;
+// How the swallowed grains go: how many turns round the disc a grain makes on
+// its way in, and how long the whole orbit takes, in frames at sixty.
+export const RIFT_TURNS = 1.6;
+export const RIFT_ORBIT_FRAMES = 110;
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];

@@ -104,7 +104,6 @@ export const S = {
   riftOpen: false,        // the rift is bought
   rift: 0,                // and how many grains are through it
   riftLevel: 0,           // how fast it swallows: an endless ladder, not a capacity
-  rifters: 0,             // and the one body holding it open
   hideDone: false,        // whether finished ladders are folded off the boards
 
   // --- cores ---

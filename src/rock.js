@@ -388,7 +388,11 @@ export function makeBoulder(fromSky = false) {
 // nothing is lost: every grain lifted here is one grain put back in the air.
 export function clearApron() {
   if (!floor.grid) return;
-  for (let c = 0; c < floor.cols; c++) {
+  // Only the footprint's columns are visited. It used to walk every column of
+  // the floor asking `pastRock` of each to find the twenty-odd under the rock.
+  const c0 = Math.max(0, colOf(floor, rockLeft()) - 1);
+  const c1 = Math.min(floor.cols - 1, colOf(floor, rockLeft() + S.gw * P) + 1);
+  for (let c = c0; c <= c1; c++) {
     const x = floor.x + c * P;
     if (pastRock(x) >= 0) continue;
     for (let r = 0; r < floor.rows; r++) {
@@ -439,17 +443,43 @@ export function gridFromString(s, w, h) {
 // the rock is anchored by its foot, not its middle: it grows upwards and outwards
 export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S.gh - y) * P });
 
+// Whether there is any rock left. Read off `rockTops`, which `refreshRockTops`
+// keeps for every column after every swing, rather than by walking the grid: it
+// used to scan every cell of a forty-by-twenty hill, and it is asked every frame
+// by the ram, by `stepCore`, by every miner, by every route and by the drawing.
+// Measured on the driven-ram yard it was a twelfth of the whole simulation.
+//
+// Which makes it a rule that nothing zeroes `S.boulder` without going through
+// `refreshRockTops` -- see `clearBoulder`, which is the one way to do that.
 export function boulderAlive() {
-  for (const row of S.boulder) for (const v of row) if (v) return true;
+  const tops = S.rockTops;
+  if (!tops) return false;
+  for (let c = 0; c < tops.length; c++) if (tops[c] >= 0) return true;
   return false;
 }
+
+// The rock, gone: every cell to nought, and the tops with it. A dev hook and the
+// two fresh-game paths used to zero the grid by hand and leave `rockTops`
+// saying there was a hill, which `boulderAlive` now believes.
+export function clearBoulder() {
+  S.boulder = S.boulder.map(row => row.map(() => 0));
+  refreshRockTops();
+}
+
+// The rock is there *and on the ground*. One question, asked by your own hand
+// (`overBoulder`) and by the ram's `ready`, so the two cannot drift apart: the
+// machine used to read `boulderAlive` alone, which is true the instant a new
+// hill is built, and hammered the rock the whole way down from the sky. The
+// miners already duck out from under a falling rock (`dancing`, crew.js); this
+// is the same rule for anything that works the face without walking to it.
+export const rockDown = () => boulderAlive() && !(S.rockFall > 0);
 
 // the boulder's whole footprint, so clicking a chipped-out gap still chips
 // on the rock if there is rock close by: chipped-out gaps still count, but the
 // empty air below it does not, so falling dust can be caught there
 // the rock's whole footprint takes a swing, so clicking its general area works
 export function overBoulder(mx, my) {
-  if (!boulderAlive() || S.rockFall > 0) return false;   // nothing to swing at yet
+  if (!rockDown()) return false;                         // nothing to swing at yet
   const left = rockLeft();
   const foot = rockFootY();
   return mx > left && mx < left + S.gw * P && my > foot - S.gh * P && my < foot;
@@ -506,7 +536,8 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
   }
   near.sort((a, b) => a.d - b.d);
 
-  for (const cell of near.slice(0, want)) {
+  const took = Math.min(want, near.length);
+  for (const cell of near.slice(0, took)) {
     const left = S.boulder[cell.y][cell.x];
     const shade = depthShade(left, depthOf());   // how deep it looked, for colour
     S.boulder[cell.y][cell.x] = left - 1;
@@ -527,6 +558,9 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
   // at the rock any more.
   S.dirty = true;
   refreshRockTops();
+  // How many cells actually came off, so a machine can credit what it took
+  // rather than what it asked for.
+  return took;
 }
 
 
@@ -607,8 +641,16 @@ defineMachine('ram', {
   // and never took a bite.
   tendAt: () => ramX() - WORKER - P,
   ms: rate => minerMs() / Math.max(0.01, rate),
-  ready: () => !S.pileFull.rock && boulderAlive(),
-  bite: tender => {
+  // Not while the rock is still coming down. `rockDown` is what your own hand
+  // reads too; with `boulderAlive` alone here the ram struck a hill that was
+  // still six hundred pixels up, and the runner holds the beat clock while
+  // `ready` is false, so the landing is not followed by a burst of owed beats.
+  ready: () => !S.pileFull.rock && rockDown(),
+  // `n` beats of work in one strike: see `stepMachines`, which hands a machine
+  // everything it is owed this frame at once rather than once per beat. For the
+  // ram that is one `knockOff` of `n` bites and therefore one `refreshRockTops`
+  // rather than eight of them a frame.
+  bite: (tender, n = 1) => {
     // Where the arm lands: the near shoulder of the hill, at about the height a
     // body would be swinging at. `knockOff` finds the cell from there exactly as
     // it does for a miner or for the player's own pointer.
@@ -625,13 +667,16 @@ defineMachine('ram', {
     const x = rockLeft() + col * P + P / 2;
     const y = rockTopY(col) + P * 2;
     const bite = minerBite();
-    knockOff(x, y, bite);
+    const took = knockOff(x, y, bite * n) || 0;
+    if (!took) return 0;
     // Credited what it took, not one a strike -- `mined` counts cells off the
     // hill everywhere else it is written, and a machine that counted strikes
     // would read as a fifth of the work on the crew list.
-    if (tender) tender.mined = (tender.mined || 0) + bite;
+    if (tender) tender.mined = (tender.mined || 0) + took;
     S.dirty = true;
-    return true;
+    // And what it answers is beats' worth, so the stack smokes for the work
+    // done and not the number of calls it took.
+    return took / bite;
   }
 });
 

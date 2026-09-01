@@ -18,7 +18,7 @@ import { S, BLANK, floor, pit, cut } from './state.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
-import { makeBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
+import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
          pitCapacity, inHole } from './pit.js';
 import { spawnChip } from './dust.js';
@@ -121,7 +121,7 @@ export const preview = n => {
            approxRock: Math.round(size.w * size.h * 0.5 * d * 0.55) };
 };
 
-export const next = () => { S.boulder = S.boulder.map(row => row.map(() => 0)); S.chips = []; };
+export const next = () => { clearBoulder(); S.chips = []; };
 
 export const drop = () => { dropCore(); S.dirty = true; };
 
@@ -145,7 +145,6 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // check never asked for walked off to a building that was not even open, and
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
-  S.rifters = 0;
   S.janitors = 0;
   // And every machine goes back in the box. This is the same trap as the
   // scrubbers above, one level worse: a machine left standing by whatever ran
@@ -305,7 +304,6 @@ export const setAir = (o = {}) => {
   if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
   if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }
-  if (o.rifters != null) { S.rifters = o.rifters; rebalance(); syncWorkers(); }
   if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);
   if (o.rains != null) S.rains = o.rains;

@@ -137,6 +137,26 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
+  // The rift: the black hole hanging in the near end of the pit, the pile it is
+  // eating under it, and the ring of grains going round it on their way in.
+  // The hole is filled past the brim first so the rift has something to eat.
+  // Widened before the dust goes in: a widening is paid in dust, and paid out
+  // of the very pile the scene is about.
+  rift: `${RICH} window.__meteor(); window.__give(60000); window.__buy('rift');
+         for (let i = 0; i < 6; i++) window.__buy('riftrate');
+         window.__give(12000);
+         window.__fast(4); window.__look(window.__state().pitX + 70 - window.innerWidth / 2);`,
+
+  // The endgame yard: every machine standing, the ram driven up its ladder, the
+  // belt running, the rift torn. What the pass in DESIGN.md is about.
+  endgame: `${RICH} ${LIP} window.__buy('jaw'); window.__buy('tiller');
+         window.__buy('ram'); window.__buy('belt'); window.__jump(30);
+         window.__machine('ram', {driven:true}); window.__tune && 0;
+         for (let i = 0; i < 12; i++) { window.__buy('tuneram'); window.__buy('tunebelt'); }
+         window.__meteor(); window.__give(60000); window.__buy('rift');
+         for (let i = 0; i < 14; i++) window.__buy('riftrate');
+         window.__fast(20); window.__look(window.__state().pitX - 700);`,
+
   // The scrubbing house with a balloon over it: one moored at the mast with
   // nobody in it, and one crewed and out over the yard.
   // The house working: a filthy sky over it, a body inside, and no river of haze
