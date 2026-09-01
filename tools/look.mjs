@@ -58,10 +58,10 @@ const SCENES = {
          window.__look(window.__state().rockLeftX - 420);`,
 
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
-  quarry: `${RICH} window.__buy('jaw'); window.__look(window.__state().quarryX - 220);`,
+  quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
   // The plots, and the tractor crossing them.
-  farm: `${RICH} window.__buy('tiller'); window.__look(window.__state().farmX - 200);`,
+  farm: `${RICH} window.__buy('tiller'); window.__finish(); window.__look(window.__state().farmX - 200);`,
 
   // One hand on the whole row. This is the shot the row is *for*: a single body
   // stooping over one plot with the other six visibly coming on behind it,
@@ -71,12 +71,12 @@ const SCENES = {
            window.__look(window.__state().farmX - 200);`,
 
   // The hill, and the ram driving into it.
-  rock: `${RICH} window.__buy('ram'); window.__jump(6);
+  rock: `${RICH} window.__buy('ram'); window.__finish(); window.__jump(6);
          window.__look(window.__state().rockLeftX - 200);`,
 
   // Everything at once, every machine running, for the shape of the whole thing.
-  yard: `${RICH} ${LIP} window.__buy('jaw'); window.__buy('tiller');
-         window.__buy('ram'); window.__buy('belt'); window.__fast(6);
+  yard: `${RICH} ${LIP} window.__buy('jaw'); window.__finish(); window.__buy('tiller'); window.__finish();
+         window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish(); window.__fast(6);
          window.__look(window.__state().pitX - 400);`,
 
   // The belt, which is the one machine that is long rather than tall: a run of
@@ -89,7 +89,7 @@ const SCENES = {
   // the sites it needs and leaves the hole room to take what the belt brings.
   belt: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
          window.__grant({sparks:999, shards:999, spores:999}); ${LIP}
-         window.__buy('ram'); window.__buy('belt');
+         window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish();
          window.__jump(4); window.__fast(12);
          window.__clearFloor();
          window.__look(window.__state().pitX - 620);`,
@@ -136,6 +136,16 @@ const SCENES = {
 
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
+
+  // Something being built. Everything past the bench is worked through by the
+  // hands at the site now (see works.js), so a purchase has a middle: a bar over
+  // the place, filling while the gang is there and stopped while it is not.
+  building: `${RICH} window.__buy('jaw'); window.__fast(9);
+             window.__look(window.__state().quarryX - 260);`,
+  // ...and how the row reads while it is going on: greyed, saying what it is
+  // doing, with the clock in its bill counting down what is left.
+  buildboard: `${RICH} window.__buy('jaw'); window.__fast(4);
+               window.__board('quarry');`,
 
   // The scrubbing house with a balloon over it: one moored at the mast with
   // nobody in it, and one crewed and out over the yard.

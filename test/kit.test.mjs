@@ -7,7 +7,7 @@
 // went through -- so the checks are about the books and about the table, which
 // are the two places the drawing and the errand both read from.
 
-import { group, ok, state, run, yard, WORKER } from './helpers.mjs';
+import { group, ok, state, run, yard, WORKER, buyBuilt } from './helpers.mjs';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
 import { DIZZY_MS } from '../src/config.js';
 
@@ -356,9 +356,12 @@ group('the carts have no ceiling, and the helmets do', async () => {
   window.__reset();
   window.__grant({ shards: 100000, dust: 40000 });
   window.__school({ open: true });
+  // Somebody to teach them. A hat past the bench is a thing the yard's spare
+  // hands see to, and a yard with nobody spare teaches nobody. See works.js.
+  window.__crew(0, 3);
 
-  for (let i = 0; i < 6; i++) window.__buy('carter');
-  for (let i = 0; i < 6; i++) window.__buy('breaker');
+  for (let i = 0; i < 6; i++) buyBuilt('carter');
+  for (let i = 0; i < 6; i++) buyBuilt('breaker');
   const s = state();
   const shown = window.__rows().filter(r => r.shown).map(r => r.key);
   return [

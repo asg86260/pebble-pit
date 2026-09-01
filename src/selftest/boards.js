@@ -18,6 +18,7 @@ export const TESTS = [
     const row = [...shop().querySelectorAll('[data-key]')]
       .find(r => r.dataset.key === 'unlockschool');
     row?.click();
+    window.__finish();      // the school is a building, and the yard puts it up
     const open = state();
     const rows = [...document.getElementById('schoolshop').querySelectorAll('[data-key]')]
       .map(r => r.dataset.key);
@@ -205,6 +206,7 @@ export const TESTS = [
     run(30);
     window.__build();
     window.__buy('unlocktower');
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     window.__build();
     window.__board('tower');
     await sleep(500);
@@ -435,6 +437,10 @@ export const TESTS = [
       const b = row();
       if (!b || b.disabled) break;
       b.click();
+      // A hat is taught rather than handed over -- see works.js -- and the row
+      // is greyed until it has been. This group is about what the *board* does
+      // with a finished row, so it takes the shortcut.
+      window.__finish();
       presses++;
       await sleep(120);
     }

@@ -14,13 +14,14 @@
 
 import { S, lab } from './state.js';
 import { puff } from './puff.js';
-import { assign, idle, rebalance } from './upgrades.js';
+import { assign, idle, rebalance, rungCost } from './upgrades.js';
 import { walkY } from './world.js';
 import { now } from './clock.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
          BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
 import { rand } from './rng.js';
+import { registerRows } from './works.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -273,7 +274,10 @@ export const LAB_UPGRADES = [
     rung: () => S.labKitLevel,
     from: () => labPace(),
     to: () => labPace() * STEP,
-    cost: () => Math.round(BENCH_KIT_COST * Math.pow(BENCH_KIT_RATE, S.labKitLevel)),
+    // `rungCost` like every other ladder in the game. It used to climb four
+    // fifths again a rung on a rate of its own, which is the arithmetic of a row
+    // meant to be bought for ever -- and this ladder ends at five.
+    cost: () => rungCost(BENCH_KIT_COST, S.labKitLevel),
     currency: 'shard',
     buy: () => { S.labKitLevel++; },
     show: () => S.labOpen && S.labKitLevel < RUNGS
@@ -305,7 +309,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('swing'),
     from: () => mult('swing'),
     to: () => mult('swing') * STEP,
-    cost: () => Math.round(3 * Math.pow(1.9, levelOf('swing'))),
+    cost: () => rungCost(3, levelOf('swing')),
     currency: 'shard',
     buy: () => begin('labswing'),
     // A finished ladder stays on the board saying so, like every other one.
@@ -318,7 +322,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('haul'),
     from: () => mult('haul'),
     to: () => mult('haul') * STEP,
-    cost: () => Math.round(4 * Math.pow(1.9, levelOf('haul'))),
+    cost: () => rungCost(4, levelOf('haul')),
     currency: 'shard',
     buy: () => begin('labhaul'),
     // A finished ladder stays on the board saying so, like every other one.
@@ -331,7 +335,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('quarry'),
     from: () => mult('quarry'),
     to: () => mult('quarry') * STEP,
-    cost: () => Math.round(3 * Math.pow(1.9, levelOf('quarry'))),
+    cost: () => rungCost(3, levelOf('quarry')),
     currency: 'spore',
     buy: () => begin('labcave'),
     // A finished ladder stays on the board saying so, like every other one.
@@ -362,7 +366,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('tend'),
     from: () => mult('tend'),
     to: () => mult('tend') * STEP,
-    cost: () => Math.round(4 * Math.pow(1.9, levelOf('tend'))),
+    cost: () => rungCost(4, levelOf('tend')),
     currency: 'spore',
     buy: () => begin('labtend'),
     // A finished ladder stays on the board saying so, like every other one.
@@ -417,4 +421,6 @@ export function sampleRates(now) {
 
 const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });
 
-
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(LAB_UPGRADES);

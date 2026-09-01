@@ -6,7 +6,7 @@
 // machine left standing by one check cannot silently rewrite what the next one
 // is allowed to mean.
 
-import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
@@ -21,16 +21,19 @@ import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 group('a station board can be bought from at all', async () => {
   window.__reset();
   openSites();
+  // Somebody at each place. A row past the bench is a thing the station's own
+  // gang builds, and an empty cut takes no bench out however long you leave it.
+  window.__crew(0, 0, 2, 2);
   // `__grant` has no dust in it -- dust is banked, not granted -- and the farm's
   // rows are priced in it now.
   window.__grant({ shards: 400, spores: 400 });
   window.__tip(9000);
   const before = state().benches;
-  const bought = window.__buy('quarrybench');
+  const bought = buyBuilt('quarrybench');
   const after = state().benches;
 
   const plots0 = state().plotCount;
-  const grew = window.__buy('farmplot');
+  const grew = buyBuilt('farmplot');
   const plots1 = state().plotCount;
   return [
     ok(bought, 'the quarry board answers when a row on it is bought'),
@@ -80,7 +83,7 @@ group('a machine is stopped by taking its tender off', async () => {
   window.__fullSites();
   window.__grant({ spores: 999, shards: 999, sparks: 999 });
   window.__tip(90000);
-  window.__buy('jaw');
+  buyBuilt('jaw');
   window.__fast(12);
   const running = state();
 
@@ -238,7 +241,7 @@ group('a body put on a station with a machine goes to the machine, not up the hi
   window.__crew(0, 3);                        // three spare hands, none on the rock
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
-  window.__buy('ram');
+  buyBuilt('ram');
   window.__jump(6);
   run(2);
   window.__clearFloor();
@@ -838,18 +841,19 @@ group('a machine is not for sale until every slot is bought', async () => {
 group('a machine is paid for in three coins at once', async () => {
   window.__reset();
   openSites();
+  window.__crew(0, 3);                             // hands spare to put it up
   window.__fullSites();
   window.__tip(9000);
   run(1);
 
   // Every coin but one: the row is there and refuses.
   window.__grant({ sparks: 999, spores: 999 });     // no shards
-  const poor = window.__buy('ram');
+  const poor = buyBuilt('ram');
   const stillThere = window.__rows().some(r => r.key === 'ram' && r.shown);
 
   window.__grant({ shards: 999 });
   const before = state();
-  const rich = window.__buy('ram');
+  const rich = buyBuilt('ram');
   const after = state();
   // Read before `__crew`, which takes every machine away on purpose -- and an
   // unbought machine puts its row straight back on the board.
@@ -891,11 +895,14 @@ group('a machine is never priced in the coin its own station makes', async () =>
   window.__tip(9000);
   const bill = key => {
     const r = window.__rows().find(x => x.key === key);
-    return r ? r.bill.map(b => b[0]) : [];
+    return r ? r.bill.map(b => b[0]).filter(c => c !== 'time') : [];
   };
   const jaw = bill('jaw'), ram = bill('ram'), till = bill('tiller');
   return [
     ok(jaw.length === 3 && ram.length === 4 && till.length === 3,
+       // Coins, not the clock. Every machine is built rather than had, so every
+       // bill carries a time as well -- see works.js -- and what this is about
+       // is that no one pile of anything buys a machine on its own.
        'each is priced in three coins, and the ram in four',
        `jaw ${jaw}, ram ${ram}, tiller ${till}`),
     ok(jaw.includes('spark') && ram.includes('spark') && till.includes('spark'),
@@ -1011,7 +1018,7 @@ group('buying a machine takes the specialists with it', async () => {
   run(2);
   const before = state();
 
-  window.__buy('jaw');
+  buyBuilt('jaw');
   run(1);
   const bought = state();
   // the hats are handed in over the next few seconds, by the bodies wearing them
@@ -1080,7 +1087,7 @@ group('a belt comes back bought', async () => {
   window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 20000 });
   window.__school({ carters: 6 });
   window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
-  window.__buy('belt');
+  buyBuilt('belt');
   window.__reload();
   const back = state().machines.belt;
   window.__crew(0, 0);
@@ -1293,7 +1300,7 @@ group('the school stops selling kit for a station a machine has taken', async ()
   window.__reset();
   openSites();
   window.__fullSites();
-  window.__crew(0, 0, 0, 5);
+  window.__crew(0, 3, 0, 5);                        // three of them spare, to build it
   window.__fullSites();
   window.__grant({ sparks: 999, shards: 999, spores: 999 });
   window.__tip(90000);
@@ -1301,7 +1308,7 @@ group('the school stops selling kit for a station a machine has taken', async ()
   const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
 
   const before = shown();
-  window.__buy('ram');
+  buyBuilt('ram');
   const after = shown();
   window.__crew(0, 0, 0, 0);
   return [
@@ -1329,7 +1336,7 @@ group('the carters outlast the belt', async () => {
   window.__tip(20000);
   const had = state().carters;
 
-  window.__buy('belt');
+  buyBuilt('belt');
   run(6);
   const after = state();
   const shown = window.__rows().filter(r => r.shown).map(r => r.key);

@@ -18,6 +18,7 @@ import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
 import { S, floor, pit, cut, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
+import { SITES, workAt, handsAt } from './works.js';
 import { BOLTS, SPARKLE } from './meteor.js';
 
 // how much of the meteor is still up there, rind or core
@@ -325,6 +326,15 @@ export const snapshot = () => ({
   wizBite: wizBite(),
   janitors: S.janitors,
   brewing: S.brewAt > 0,
+
+  // What the yard is in the middle of building, site by site: the row, how much
+  // of the work is in, and how much it takes. A check that buys something past
+  // the bench has to be able to see that it *started*, and then watch it land.
+  works: Object.fromEntries(SITES.map(site => [site, workAt(site)
+    ? { key: workAt(site).key, done: +workAt(site).done.toFixed(2), of: workAt(site).of,
+        hands: handsAt(site) }
+    : null]).filter(([, w]) => w)),
+  builders: S.builders || 0,
   aloft: S.workers.filter(w => w.aloft).length,
   wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)),
 

@@ -19,6 +19,7 @@ export const TESTS = [
     buildShopFromTest();
     const before = document.querySelector('#shop button[data-key="unlockcasino"]');
     before.click();
+    window.__finish();  // the casino is a building, and the yard puts it up
     buildShopFromTest();
     const open = state();
 
@@ -108,6 +109,7 @@ export const TESTS = [
     window.__lab(true);
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
     // stand at it, so there is a board in the way to get out of the way
     const s0 = state();
@@ -169,6 +171,7 @@ export const TESTS = [
     window.__lab(true);
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');
@@ -222,6 +225,7 @@ export const TESTS = [
     window.__lab(true);
     buildShopFromTest();
     document.querySelector('#shop button[data-key="unlockcasino"]').click();
+    window.__finish();  // everything past the bench is built now; this is the page's business, not the yard's
     buildShopFromTest();
     const row = k => document.getElementById('casinoshop').querySelector(`button[data-key="${k}"]`);
     const dial = () => document.getElementById('casinoshop').querySelector('[data-dial="chip"]');

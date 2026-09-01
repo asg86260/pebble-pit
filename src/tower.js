@@ -20,6 +20,7 @@ import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
+import { registerRows } from './works.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -77,6 +78,7 @@ export const TOWER_UPGRADES = [
     // thing standing between you and every spark in the game could only be made
     // faster by hiring another body and buying it a hat.
     key: 'wizspeed',
+    kind: 'rung', site: 'tower',
     name: 'quicker casting',
     unit: 'bolts/min',
     pct: true,
@@ -93,6 +95,7 @@ export const TOWER_UPGRADES = [
     // apart in patches, so a stronger bolt spreads outward from where it hit
     // rather than punching a deeper hole.
     key: 'wizpower',
+    kind: 'rung', site: 'tower',
     name: 'heavier bolts',
     unit: 'cells/bolt',
     rung: () => S.wizPowerLevel,
@@ -143,3 +146,7 @@ export const TOWER_SECTIONS = [
   // any board that is about somewhere else entirely.
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) }
 ];
+
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(TOWER_UPGRADES);

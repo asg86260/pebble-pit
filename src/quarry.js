@@ -27,11 +27,12 @@ import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
-import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
+import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
+import { registerRows } from './works.js';
 
 // how long a trip takes, at this pace
 // A ladder with an end on it, like every other rate in the game -- five rungs
@@ -797,6 +798,10 @@ export function cellMs() {
 export const QUARRY_UPGRADES = [
   {
     key: 'quarrybench',
+    // A place, and the cut's own gang takes it out. While the quarriers are
+    // cutting the next bench they are not bringing stone up, which is the whole
+    // of what the wait costs -- see works.js.
+    kind: 'place', site: 'quarry',
     // What the row says is what you are doing, not what it leaves behind. "Take
     // out a bench" is the quarryman's word for it and the shape you can see in
     // the wall afterwards -- but the thing you are buying is the hole going
@@ -819,6 +824,7 @@ export const QUARRY_UPGRADES = [
     // The last thing the cut ever sells, and it does not appear until the hole is
     // as deep as it will ever go. See `canBuy`.
     key: 'jaw',
+    kind: 'machine', site: 'quarry',
     name: 'the drill',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
@@ -827,6 +833,7 @@ export const QUARRY_UPGRADES = [
   },
   {
     key: 'quarrypace',
+    kind: 'rung', site: 'quarry',
     // It was "quarry lamps" -- the fiction being that you work faster when you
     // can see. A nice thought and a bad row: nothing else on these boards is
     // named after the *reason* it works, and a lamp is not a thing this game
@@ -837,7 +844,12 @@ export const QUARRY_UPGRADES = [
     from: () => quarryRate(),
     to: () => quarryRate(S.quarryPaceLevel + 1),
     rung: () => S.quarryPaceLevel,
-    cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.quarryPaceLevel)),
+    // A rung of its own, on its own price. It used to be `BENCH_COST` on
+    // `BENCH_RATE` -- the very numbers the row above it uses -- so a bench in
+    // the wall and a rung of speed cost exactly the same at every level, which
+    // is a coincidence rather than a decision. A rung is a rung now: `rungCost`,
+    // like every other ladder in the game, and its own first price.
+    cost: () => rungCost(4, S.quarryPaceLevel),
     currency: 'spore',
     buy: () => S.quarryPaceLevel++,
     // It stays on the board once it is finished, saying "done" -- it used to
@@ -1001,3 +1013,7 @@ defineMachine('jaw', {
     return true;
   }
 });
+
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(QUARRY_UPGRADES);

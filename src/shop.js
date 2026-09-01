@@ -7,7 +7,8 @@
 
 import { S } from './state.js';
 import { showTipAt } from './board.js';
-import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds } from './upgrades.js';
+import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, siteBusy } from './upgrades.js';
+import { takesTime, stalled } from './works.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -335,6 +336,30 @@ export function refresh(el, list, headcount) {
       sayHTML(price, mine ? '' : bill);
       grey(row, true);
       continue;
+    }
+
+    // A row past the bench is a thing the yard has to build, and while it is
+    // building the row says so where the numbers go -- the same shape the lab
+    // has used for research since the day it opened. The clock in its bill is
+    // counting down what is left at the rate the site is actually going, so the
+    // price cell is left standing rather than blanked: it is the one number you
+    // came to the board to read.
+    //
+    // And a row whose site is putting up something *else* is greyed with its
+    // ordinary price. One work per site is the rule -- see works.js -- and "the
+    // cut is busy" is not the same information as "you cannot afford it".
+    if (takesTime(u)) {
+      const mine = building(u);
+      if (mine || siteBusy(u)) {
+        say(what, u.name);
+        // Nobody standing there is the one thing that stops it, and it is a
+        // thing you can act on: an empty cut builds nothing however long you
+        // leave it, and the roster under the cut is where you fix that.
+        sayHTML(gain, mine ? (stalled(u.site) ? 'nobody on it' : 'building') : '');
+        sayHTML(price, bill);
+        grey(row, true);
+        continue;
+      }
     }
 
     // and a dot on anything that has not been on a board you have looked at

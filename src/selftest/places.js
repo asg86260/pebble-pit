@@ -79,6 +79,7 @@ export const TESTS = [
     const deep = state().quarryH, wide = state().farmW;
     document.querySelector('#quarryshop button[data-key="quarrybench"]').click();
     document.querySelector('#farmshop button[data-key="farmplot"]').click();
+    window.__finish();  // the cut has to actually dig it; the page is what this is about
     const grown = state();
     window.__assign('quarriers', 1);
     window.__assign('farmhands', 1);

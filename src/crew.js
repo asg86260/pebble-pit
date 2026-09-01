@@ -9,10 +9,11 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
-        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE } from './config.js';
+        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE, FARM_WALK } from './config.js';
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
+import { SITE_JOB, setHands, setStaff, workAt } from './works.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
@@ -281,10 +282,12 @@ export function mainlyAt(w) {
 // The order jobs are filled in, and how a body for one is made from nothing.
 // Carrying comes last so that a spare body goes to a station that is short of
 // one before it goes back to sweeping the yard.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'rifter', 'janitor', 'wizard', 'hauler'];
+// Builders come before carrying, like every other job: a spare body goes to the
+// thing the yard is in the middle of building before it goes back to sweeping.
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'rifter', 'janitor', 'wizard', 'builder', 'hauler'];
 const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
                labber: newLabber, scrubber: newScrubber, rifter: newRifter,
-               janitor: newJanitor, wizard: newWizard, hauler: newHauler };
+               janitor: newJanitor, wizard: newWizard, builder: newBuilder, hauler: newHauler };
 
 // Every body gets a rhythm of its own, whatever trade it is.
 //
@@ -315,6 +318,77 @@ export const FACTORY = type => ({
 function newJanitor() {
   return { type: 'janitor', goal: 'to', x: outhouse.x, y: 0 };
 }
+
+// --- the builders -------------------------------------------------------------
+// Spare hands putting up whatever the yard is building.
+//
+// Four of the five sites have a gang of their own and their own work is theirs
+// -- the quarriers take out the next bench, the farmhands break the next furrow.
+// The school and everything on the bench have nobody, because the thing being
+// built is not standing there yet, so the yard's idle hands walk over and do it.
+//
+// It is not a job on the roster and never will be. You do not decide to have
+// builders: you decide to build something, and the hands that had nothing else
+// on go and do it -- which is exactly what "spare" already meant. What it costs
+// is the dust they are not carrying while they are over there, and that is a
+// real price rather than a slider. See `rebalance` in upgrades.js, which is the
+// one place the count is set.
+function newBuilder() {
+  const x = buildStationX() ?? S.cx;
+  return { type: 'builder', goal: 'to', x, y: walkY(x + WORKER / 2) };
+}
+
+// Where the work is. A row that opens a place knows where its place will stand
+// and says so; the two machines on the bench do not, because a ram is on the
+// rock and a belt is the length of the yard, and a body already standing in the
+// yard is standing at both. Those get no walk and are at work where they are.
+function buildStationX() {
+  const w = workAt('yard');
+  return w && w.at != null ? w.at - WORKER / 2 : null;
+}
+
+// A builder walks to the site and stands there. There is nothing to watch after
+// that on purpose -- what a building going up looks like is the bar over it, the
+// same signal the lab has always used, and a mime of hammering would be the one
+// piece of animation in this yard that is about nothing.
+export function stepBuilder(w) {
+  const to = buildStationX();
+  w.y = walkY(w.x + WORKER / 2);
+  if (to === null) { w.goal = 'at'; return; }    // at work wherever it stands
+  const d = to - w.x;
+  if (Math.abs(d) < 1) { w.goal = 'at'; return; }
+  w.goal = 'to';
+  w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+}
+
+// --- who is actually at a site ------------------------------------------------
+// The one question works.js cannot answer for itself, registered here the same
+// way the machines register what only the stations know: a count is not a body,
+// and a station idles until somebody is *actually standing there*.
+//
+// Arrived, not assigned. `S.quarriers` counts everybody the cut has been given
+// and one of them may still be crossing the yard, and a bench that came out
+// while its gang was halfway down the ladder would be the building claiming
+// something the crew deny.
+const ARRIVED = {
+  quarriers: w => w.type === 'quarrier' && w.goal !== 'to',
+  farmhands: w => w.type === 'farmhand' && w.goal !== 'to',
+  scrubbers: w => w.type === 'scrubber' && w.goal === 'in',
+  // A wizard's work is four hundred pixels up and the walk is to the ground
+  // under it; either way it is at the tower, which is the only thing this asks.
+  wizards: w => w.type === 'wizard',
+  builders: w => w.type === 'builder' && w.goal === 'at'
+};
+
+setHands(site => {
+  const at = ARRIVED[SITE_JOB[site]];
+  return at ? S.workers.filter(at).length : 0;
+});
+
+// A build starting turns spare hands into builders and a build landing turns
+// them back; both have to be walked out to the yard on the frame it happens.
+setStaff(() => { rebalance(); syncWorkers(); });
+
 
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
@@ -353,6 +427,9 @@ function handStationX(type) {
   // pixels above that, but the walk is to here: the going up is the job, not the
   // commute.
   if (type === 'wizard') return underMeteor();
+  // Whatever the yard is putting up, which moves as often as the yard puts up
+  // something else -- and is nowhere at all when it is not.
+  if (type === 'builder') return buildStationX();
   return null;
 }
 
@@ -1693,7 +1770,8 @@ export function syncWorkers() {
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers,
                  scrubber: S.scrubbers, rifter: S.rifters,
-                 janitor: S.janitors, wizard: S.wizards };
+                 janitor: S.janitors, wizard: S.wizards,
+                 builder: S.builders };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
   // down is usually one that has just been put on something else. Whatever it
   // was carrying goes on the ground at its feet: every pixel is worth one dust
@@ -3268,6 +3346,11 @@ const JOBS = {
   scrubber: { work: stepScrubber, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
 
   rifter: { work: stepRifter },
+
+  // A builder walks to whatever is being put up and stands there. It shovels
+  // like anybody else: a build is not so urgent that the mess can pile up round
+  // it, and the mess is the one errand every body in this yard answers.
+  builder: { work: stepBuilder },
 
   janitor: {
     work: janitorWork,

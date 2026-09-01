@@ -24,6 +24,7 @@ import { stockOf, kitMaxOf } from './kit.js';
 import { kitDisplaced, machineFor } from './machines.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
+import { registerRows } from './works.js';
 
 // Every trade is the same object: a job, the count of that job already trained,
 // and the thing it is twice as good at. One line each -- what differs between a
@@ -102,6 +103,16 @@ const ladder = t => isFinite(ceiling(t));
 
 export const SCHOOL_UPGRADES = TRADES.map(t => ({
   key: t.key,
+  // Teaching somebody a trade takes as long as it takes, and the school has no
+  // gang of its own -- so it is the yard's spare hands that do it, like every
+  // other thing the yard puts up. See works.js.
+  //
+  // A rung rather than a place, and it is the shortest wait in the game on
+  // purpose: a hat is a thing somebody is shown how to wear, not a building, and
+  // the carts have no ceiling -- a set of six at a building's pace would be
+  // twenty minutes of standing about for a purchase whose whole character is
+  // that you make it again.
+  kind: 'rung', site: 'yard',
   name: t.name,
   // What it is for. A row here is one word -- breaker, carter -- and the word is
   // the name of the kit rather than the thing it does, which is fine on a board
@@ -189,3 +200,7 @@ export const kitCount = title => {
   const t = sect && TRADES.find(x => x.key === sect.keys[0]);
   return t ? taught(t) : 0;
 };
+
+// and the yard is told what these rows are, so a work coming back out of a
+// save knows which row it belongs to. See `registerRows` in works.js.
+registerRows(SCHOOL_UPGRADES);

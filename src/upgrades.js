@@ -25,12 +25,13 @@ import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, RIFT_BILL, RIFT_RATE, DUST_PER_SPARK,
-         MACHINE_TUNE } from './config.js';
+         MACHINE_TUNE, BUILD_GANG } from './config.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
+import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows } from './works.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -553,10 +554,21 @@ export function rebalance() {
                    'minerSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'harnessLevel', 'bootsLevel'])
     S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
+  // Building is not a job on the roster and never will be. You do not decide to
+  // have builders -- you decide to build something, and the hands that had
+  // nothing else on go and do it, which is what "spare" already meant. So the
+  // count is derived here rather than set anywhere, and it goes back to nought
+  // the moment the thing is standing.
+  //
+  // Never the whole yard: a build that swallowed every idle body would stop the
+  // dust moving altogether, and what this is meant to be is a share of the
+  // yard's attention rather than all of it. See BUILD_GANG.
+  S.builders = busyAt('yard') ? Math.min(BUILD_GANG, Math.max(0, spareHands())) : 0;
   // Carrying is the job nobody is assigned to: it is what a body does when it is
-  // on nothing, so the haulers are whatever is left over. The carts are the
-  // lip's kit and are counted with the rest of it, not held out of this.
-  S.haulers = Math.max(0, spareHands());
+  // on nothing, so the haulers are whatever is left over -- less whoever is over
+  // at the site putting something up. The carts are the lip's kit and are
+  // counted with the rest of it, not held out of this.
+  S.haulers = Math.max(0, spareHands() - S.builders);
 }
 
 export function hire() {
@@ -630,6 +642,9 @@ export const HOUSE_ROW = {
 // the rock worth digging after it, which every bill above tier one does.
 const site = ({ key, name, cores, dust, open, at, show }) => ({
   key, name,
+  // A place is a building like the rest of them: the yard's spare hands go out
+  // and put it up, and the view does not glide to it until it is standing.
+  kind: 'building', site: 'yard', at,
   bill: () => [['core', cores], ['dust', dust]],
   buy: () => { S[open] = true; lookAt(at()); },
   show
@@ -689,6 +704,7 @@ export const UPGRADES = [
     // than written: a ladder that grew a sixth rung should move this gate with
     // it.
     key: 'ram',
+    kind: 'machine', site: 'yard',
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
@@ -708,6 +724,7 @@ export const UPGRADES = [
     // Gated like the others: every rung of the lip's own gear, and a cart for
     // every pair of hands.
     key: 'belt',
+    kind: 'machine', site: 'yard',
     name: 'the belt',
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
@@ -882,6 +899,7 @@ export const UPGRADES = [
   // starts arriving.
   {
     key: 'unlockschool',
+    kind: 'building', site: 'yard', at: () => school.x + school.w / 2,
     name: 'build the training grounds',
     // Priced in what the quarry gives, and in dust, because every row is priced
     // in dust -- see the note on the machine bills in config.js. This was the
@@ -897,6 +915,7 @@ export const UPGRADES = [
   // have not noticed yet is a row that means nothing.
   {
     key: 'unlockscrub',
+    kind: 'building', site: 'yard', at: () => scrub.x + scrub.w / 2,
     name: 'build the scrubbing house',
     note: () => 'somebody in it pulls the haze back out of the sky, before it falls again',
     cost: () => scrubCost(),
@@ -944,6 +963,7 @@ export const UPGRADES = [
   // `capOf`, which will not let you post one until this is up.
   {
     key: 'unlockouthouse',
+    kind: 'building', site: 'yard', at: () => outhouse.x + outhouse.w / 2,
     name: "build the janitor's closet",
     note: () => 'somewhere to keep a shovel, and somebody to swing it',
     cost: () => OUTHOUSE_DUST,
@@ -964,6 +984,7 @@ export const UPGRADES = [
   // one row. You cannot buy it by being good at one thing.
   {
     key: 'unlocktower',
+    kind: 'building', site: 'yard', at: () => tower.x + tower.w / 2,
     name: 'raise the tower',
     note: () => 'what a core is for',
     bill: () => [['core', TOWER_CORES], ['dust', TOWER_DUST]],
@@ -995,6 +1016,7 @@ export const UPGRADES = [
   },
   {
     key: 'unlockcasino',
+    kind: 'building', site: 'yard', at: () => casino.x + casino.w / 2,
     name: 'build the casino',
     cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
@@ -1002,6 +1024,7 @@ export const UPGRADES = [
   },
   {
     key: 'unlocklab',
+    kind: 'building', site: 'yard', at: () => lab.x + lab.w / 2,
     name: 'build the lab',
     cost: () => LAB_DUST,
     buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
@@ -1062,6 +1085,10 @@ export const UPGRADES = [
   CAVE
 ];
 
+// and the yard is told what these rows are, so a work coming back out of a save
+// knows which one it belongs to. See `registerRows`.
+registerRows(UPGRADES);
+
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
@@ -1091,8 +1118,12 @@ export const openSections = () =>
   })).map(sect => sect.title);
 
 // something on the board you could buy this second
+//
+// ...and actually press. A row whose site is already putting something up is not
+// a thing you can do anything about, and a mark on the bench promising one is
+// the bench telling you to walk over for nothing.
 export const canAfford = () =>
-  UPGRADES.some(u => !u.job && u.show() && canPay(u));
+  UPGRADES.some(u => !u.job && u.show() && canPay(u) && !siteBusy(u));
 
 // a whole heading you have not seen yet -- worth more of a nudge than one more
 // row under a heading you have already read
@@ -1162,13 +1193,32 @@ export const DUST_PER = { spark: DUST_PER_SPARK, shard: 40, spore: 40, core: 500
 //
 // `time` is on the tower's hat and is not a coin: it buys nothing here, and a
 // row priced in nothing but time stays priced in nothing but time.
+//
+// ...and then the time, for anything past the bench. A row that has to be built
+// says so in its bill under a clock, beside the coins, and reads the same way
+// they do -- how long a thing takes is part of what it costs, and a note you
+// have to open a second sheet to read is not a price. While it is being built
+// the clock counts down what is left of it, at the rate the site is actually
+// going. Appended here for the same reason the dust is: a new row past the
+// bench gets its clock by saying what kind of thing it is and nothing else.
 export const billOf = u => {
-  const bill = u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
-  if (bill.some(([money]) => money === 'dust')) return bill;
-  let dust = 0;
-  for (const [money, n] of bill) dust += (DUST_PER[money] || 0) * n;
-  return dust > 0 ? [...bill, ['dust', Math.round(dust)]] : bill;
+  let bill = u.bill ? u.bill() : [[u.currency || 'dust', u.cost()]];
+  if (!bill.some(([money]) => money === 'dust')) {
+    let dust = 0;
+    for (const [money, n] of bill) dust += (DUST_PER[money] || 0) * n;
+    if (dust > 0) bill = [...bill, ['dust', Math.round(dust)]];
+  }
+  if (!takesTime(u)) return bill;
+  const on = workOn(u.key);
+  return [...bill, ['time', on ? leftAt(u.site) : workFor(u) * 1000]];
 };
+
+// Whether the yard is in the middle of building this row, and whether the site
+// it would be built at is busy with something else. The board reads both: the
+// first is "this one is under way", the second is "the cut is doing something
+// else first", and they are not the same row to a player.
+export const building = u => takesTime(u) && !!workOn(u.key);
+export const siteBusy = u => takesTime(u) && busyAt(u.site);
 
 // A price, in the words that price is said in. Coins are counted; time is read
 // off a clock, and a hundred and twenty thousand of anything is not a thing
@@ -1189,11 +1239,19 @@ export function buy(u) {
   // hat on the go -- takes nothing and does nothing. Without this the money went
   // and the row shrugged.
   if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return;
+  // and not while the site is already putting something up. One work per site is
+  // the whole of what makes the waiting a decision -- see works.js.
+  if (siteBusy(u)) return;
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
 
-  u.buy();
+  // Past the bench, paying does not buy the thing: it starts the yard building
+  // it, and the row's own `buy` runs when somebody has finished the work. The
+  // coin is taken either way and taken now -- what you are waiting on is the
+  // labour, not the bill.
+  if (takesTime(u)) start(u.site, u, u.at?.());
+  else u.buy();
   S.dirty = true;
   buildShop();
 }

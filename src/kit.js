@@ -76,7 +76,14 @@ export const KIT = {
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
                         scrubber: 'scrubbers', rifter: 'rifters',
-                        janitor: 'janitors', wizard: 'wizards' };
+                        janitor: 'janitors', wizard: 'wizards',
+                        // Building is not a job on the roster -- you do not put
+                        // anybody on it, the spare hands go and do it -- but it
+                        // is a thing a body in this yard can be, and every rule
+                        // that asks what a body is doing has to have an answer.
+                        // It owns no kit, which is what keeps it out of
+                        // everything below.
+                        builder: 'builders' };
 
 // And back again: what to put a body on so that it is doing a given job. The
 // same table read the other way about, because there is now one move that needs
