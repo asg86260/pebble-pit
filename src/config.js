@@ -283,6 +283,21 @@ export const SMOG_GIVE = 0.15;       // how far one mote may differ from the nex
 export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is carried
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
+// How far a puff climbs before it joins the sky, in world pixels off the place
+// it was made, give or take PUFF_CLIMB_GIVE either way.
+//
+// It used to climb until it reached **its own slot's height**, and slots are
+// spread over the whole sky -- so a speck that drew a slot near the top of the
+// window climbed the whole window to get there, at the speed of a thing coming
+// off a swing. Most of the plume behaved and a few motes flew. A puff is smoke
+// leaving a stack: it goes up a little way and is then part of the air, and
+// where in the air it belongs is the settle's business, not the climb's.
+//
+// The rest of the journey is not lost, it is handed over: `settleHere` eases the
+// mote from where the climb ended to its slot over SMOG_SINK, which is a slow
+// diffusing rather than a speck making a run for the top of the screen.
+export const PUFF_CLIMB = P * 13;
+export const PUFF_CLIMB_GIVE = P * 5;
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as
@@ -1578,6 +1593,23 @@ export const MACHINE_MAX_BEATS = 8;
 export const MACHINE_IDLE_MS = 600;
 export const MACHINE_PUFF_MS = 1500;
 export const MACHINE_PUFF_S = 1.15;
+// A machine's stack smokes its own way: lower and shorter than a chimney does.
+//
+// Everything that smokes used to share SMOKE_RISE and SMOKE_LIFE, which is right
+// for the lab's chimney and the crew's hearth and a cigarette -- one wisp over
+// one roof, and it may take its time. A working yard has three stacks going at
+// once, in the middle of everything, and a trail that climbs at the chimney's
+// pace for the chimney's two and a half seconds becomes a streak halfway up the
+// window: which is a machine drawing more attention to itself than the crew
+// under it.
+//
+// So it goes up about half as fast and is gone in under two thirds of the time.
+// The trail that leaves the stack is about a third the length it was: still
+// plainly a machine smoking -- which the whole pollution story leans on -- and
+// no longer a streak drawing the eye off the yard and up to the top of the
+// window.
+export const MACHINE_PUFF_RISE = 0.22;
+export const MACHINE_PUFF_LIFE = 1.5;
 
 // A puff is a handful of motes let go together, not one square.
 //

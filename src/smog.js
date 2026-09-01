@@ -27,7 +27,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
-         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
+         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, PUFF_CLIMB, PUFF_CLIMB_GIVE, SMOG_TINTS,
          BALLOON_WISP_FROM,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
          SMOG_GO_MS, GOING_CAP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
@@ -274,6 +274,9 @@ export function foul(grains, x, y, kind = 'dust') {
     // every puff leaning on the same shared sway sent the lot up as one straight
     // cylinder, which reads as a pipe rather than as smoke.
     p.lean = (rand() - 0.5) * 2;
+    // how far it goes up before it is sky, its own for each speck so a plume
+    // frays at the top rather than ending on a ruled line
+    p.climb = PUFF_CLIMB + (rand() - 0.5) * 2 * PUFF_CLIMB_GIVE;
     enter(p);
   }
 }
@@ -349,6 +352,9 @@ const skyMote = (x, y, kind = 'dust') => ({
   // leans on the way up. See `stepPuffs`.
   vy: 0,
   y0: y,
+  // how far above `y0` this one climbs before it is part of the sky; nought for
+  // anything that was never a puff
+  climb: 0,
   lean: 0,
   // What a hand through the smoke and a fan on the other side of the yard have
   // bent it out of place by. Both ease back to nought and both start there.
@@ -401,12 +407,7 @@ function spread(list, n) {
 // is thick and thin; this only says how many of them there are.
 const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 
-// The height a mote lives at: its slot's own place down the sky. One line, and
-// it is what `moteY` reads too -- see there.
-const slotY = (m, top, deep) => top + m.sv * deep;
-
 function stepPuffs(secs) {
-  const top = bandTop(), deep = bandLow() - top;
   const w = windAt(now());          // one wind, asked once, for the whole plume
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
@@ -445,19 +446,22 @@ function stepPuffs(secs) {
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
 
-    // **A puff climbs to its own height, not to the underside of a strip.**
+    // **A puff climbs a little way and is then part of the air.**
     //
-    // This used to stop at `bandLow()` -- the bottom of the thirteen-cell band --
-    // which was the same height for every speck because the band was a strip. The
-    // sky is the whole window now, and its underside is just above the ground, so
-    // that test would have every puff arriving on the frame it was born and no
-    // speck would ever be seen to climb.
+    // This tested the underside of a thirteen-cell strip once, and then -- when
+    // the sky became the whole window -- the speck's own slot height, so that
+    // every puff climbed to the place it was going to live. Both are the same
+    // mistake at different sizes: they make the climb responsible for getting
+    // the mote all the way home. Slots are spread over the whole sky, so a speck
+    // that drew one near the top climbed the entire window to reach it, at the
+    // speed of a thing coming off a swing. Most of the plume behaved and a few
+    // motes flew.
     //
-    // So a puff rises until it reaches the place it is going to live, which is
-    // its slot's own share of the sky. Some go a little way and some go all the
-    // way up, and the plume off a swing thins out over the whole height of the
-    // window instead of stacking against a ceiling.
-    if (p.y > slotY(p, top, deep)) continue;
+    // A short rise off the place it was made, and then it settles wherever it
+    // has got to. Nothing about the journey is lost: `settleHere` hands it to
+    // the band, which eases it from here to its slot over SMOG_SINK -- a slow
+    // diffusion instead of a run for the top of the screen.
+    if (p.y > p.y0 - p.climb) continue;
     // Arrived, and the wind up there has it.
     //
     // It joins the band somewhere along the sky rather than directly over the

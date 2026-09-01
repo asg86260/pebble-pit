@@ -34,7 +34,7 @@ import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
-import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
+import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -3540,6 +3540,7 @@ export function stepMachineSmoke(now) {
     const spec = specOf(key);
     if (!spec || !spec.stack) continue;
     const at = spec.stack();
-    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach' });
+    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach',
+                       rise: MACHINE_PUFF_RISE, life: MACHINE_PUFF_LIFE });
   }
 }
