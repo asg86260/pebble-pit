@@ -176,6 +176,7 @@ export const TESTS = [
     dial().querySelector('.more').click(); buildShopFromTest();     // a hundred, so the heap is worth looking at
     const stake = state().stakes.dust;
     row('stakedust').click();
+    const down = state();                       // the chip is down, nothing has landed
     run(0.5);                                   // the first of it is still falling
     const arriving = state();
     // and the hand plays itself out: the pot comes down, the wheel goes round
@@ -197,10 +198,11 @@ export const TESTS = [
          'it arrives a grain at a time rather than appearing',
          `${arriving.table} of ${stake} down, ${arriving.tableAir} still falling`),
       ok(arriving.tableAir > 0, 'trickling out of the sky', `${arriving.tableAir} in the air`),
-      ok(settled.table === settled.tableWant && settled.tableWant === on,
-         'and it is the pot, grain for grain -- a pot this size is under the '
-         + 'first band, so the heap is the number itself',
-         `${settled.table} grains, ${on} on the table`),
+      ok(down.tableWant === stake, 'a stake at the first band is the pot itself, one for one',
+         `${down.tableWant} grains for ${stake}`),
+      ok(settled.table === settled.tableWant,
+         'and it is the heap the pot asks for, grain for grain',
+         `${settled.table} grains of ${settled.tableWant}, ${on} on the table`),
       ok(leaving.tableAir > 0 || gone.table === 0,
          'and when it goes it lifts off rather than blinking out'),
       ok(gone.table === 0, 'until the ground is bare again', `${gone.table} left`)
