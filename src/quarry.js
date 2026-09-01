@@ -28,6 +28,8 @@ import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
 import { SPELL_LUCK } from './config.js';
 import { rebalance, kitFull, commutePace, swing } from './upgrades.js';
+import { tuneRow } from './machines.js';
+import { MACHINE_TUNE } from './config.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 
@@ -843,12 +845,18 @@ export const QUARRY_UPGRADES = [
     // would not admit to.
     show: () => S.quarryOpen
   }
+,
+
+  // The jaw's own ladder, on the jaw's own board. It never ends -- see `tuneRow`
+  // in machines.js: the machines are where an endgame's dust goes.
+  tuneRow('jaw', 'sharpen the jaw',
+          () => `the jaw bites ${MACHINE_TUNE}x harder, again`)
 ];
 
 // One heading. The quarry is one place and everything on this board is about the
 // same hole, so a second would be a heading for the sake of having two.
 export const QUARRY_SECTIONS = [
-  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'jaw'] }
+  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'jaw', 'tunejaw'] }
 ];
 
 

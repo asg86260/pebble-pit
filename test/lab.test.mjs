@@ -11,7 +11,7 @@ group('the lab can be made quicker at what it does', async () => {
   openSites();
   window.__lab(true);
   window.__crew(0, 2);
-  window.__grant({ shards: 400, spores: 400, cores: 9 });
+  window.__grant({ shards: 400, spores: 400, cores: 9, dust: 30000 });
   run(2);
 
   const at = () => state().research && state().research.at;
@@ -46,7 +46,7 @@ group('a second bench is a second thing looked into', async () => {
   openSites();
   window.__lab(true);
   window.__crew(0, 3);
-  window.__grant({ shards: 400, spores: 400, cores: 99 });
+  window.__grant({ shards: 400, spores: 400, cores: 99, dust: 30000 });
   run(2);
 
   const one = state();

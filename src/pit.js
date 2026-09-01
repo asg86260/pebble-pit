@@ -7,7 +7,7 @@
 // settle to them as it fills, keeping every grain and only losing resolution.
 
 import { P, WORKER, PIT_W_MAX,
-        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, PACK_SPARKS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
+        PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
 import { S, pit } from './state.js';
 import { at, put, addGrain, count, countDust, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
@@ -114,12 +114,14 @@ function regridPit() {
 // One dig, bought at the bench: the far wall goes out and the floor goes down.
 // The world is not laid out again -- it never depended on how far the hole had
 // got, only on how far it can ever get -- so this is the plot and nothing else.
-// its painter, made fresh whenever the grid underneath changes shape
-export function setPitGrain(step) {
-  S.pitStep = Math.max(0, Math.min(PIT_GRAINS.length - 1, step));
-  pit.p = PIT_GRAINS[S.pitStep];
+// The grain the pile is drawn at, which is one size and takes no argument. It
+// used to take a step down a list and the press bought the steps; the list is
+// one long now, so this is "build the plot at the size a grain is" and nothing
+// else. Its painter is made fresh, the scratch canvas being the grid's size.
+export function setPitGrain() {
+  pit.p = PIT_GRAINS[0];
   shapePit();
-  pit.grid = null;                       // a new grain is a new pile, not a resize
+  pit.grid = null;                       // a fresh plot, not a resize
   pit.gridCols = 0;
   regridPit();
   if (pit.ceiling) wirePit();            // the ceiling and the room are the new shape's
@@ -195,10 +197,18 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // from here on, and the pile shows exactly what you are holding. False means
 // the hole would not take it, and whatever was carrying it still has it.
 export function bankDust(x, shade = 1) {
-  if (!addGrain(pit, x, null, shade)) {
-    refinePit();                           // full: settle finer and carry on
-    if (!addGrain(pit, x, null, shade)) return false;
-  }
+  // A hole with no room turns the grain away and whatever was carrying it keeps
+  // it. It used to settle the pile finer and try again; there is no finer now.
+  // What makes room is the rift swallowing, which happens on its own clock.
+  //
+  // And the refusal is remembered, because it is what the rift is an answer to.
+  // The row that sells one is offered the first time the hole says no and not
+  // before -- the scrubbing house's rule, which is that a cure sold before the
+  // disease is a cure for a number. It was a threshold on `banked` for an hour
+  // and the threshold was unreachable: `banked` after filling the hole to the
+  // brim is 37,566, and the number written down was fifty thousand, so the row
+  // could not appear in a game that had done the exact thing it is about.
+  if (!addGrain(pit, x, null, shade)) { S.seenFullPit = true; return false; }
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left
@@ -246,111 +256,47 @@ export function measurePit() {
 
 export const pitCapacity = () => pit.cap || pit.cols * pit.rows;
 
-// Settle the pile to the next grain down. Every grain is kept: each column of
-// the old pile is shared out across the finer columns that stand where it did,
-// so the profile survives and only the resolution changes. With one grain size
-// configured there is nowhere finer to go, and a full pit simply stays full --
-// the count keeps rising, the picture does not.
-export function refinePit() {
-  if (S.pitStep >= PIT_GRAINS.length - 1) return;    // already as fine as it gets
-  // and no finer than has been paid for. A hole that quietly packed itself the
-  // moment it filled would be a hole with no ceiling, and the ceiling is the
-  // point: what a full pit means is that the yard has outgrown it, and the
-  // answer to that is something you go and get rather than something that
-  // happens to you. See `packPit`.
-  if (S.pitStep >= (S.pitFine || 0)) return;
-
-  const oldP = pit.p, oldCols = pit.cols, oldRows = pit.rows, oldGrid = pit.grid;
-  S.pitStep++;
-  pit.p = PIT_GRAINS[S.pitStep];
-  shapePit();
-  pit.grid = new Uint8Array(pit.cols * pit.rows);
-  pit.gridCols = pit.cols;
-  pit.gridRows = pit.rows;
-  pit.n = 0;                             // and it is filled a `put` at a time below
-  pit.painter = makePainter(pit);
-  pit.onPut = pit.painter.mark;
-
-  // Where each old column lands. The ratio is not always a whole number (three
-  // pixels to two is one and a half), so a column's span is taken from the
-  // boundaries rather than assumed: spans of one and two alternate, and every
-  // finer column is claimed exactly once. Nothing is dropped on the floor.
-  const k = oldP / pit.p;
-  const edge = c => Math.min(pit.cols, Math.floor(c * k));
-
-  for (let c = 0; c < oldCols; c++) {
-    const stack = [];
-    for (let r = 0; r < oldRows; r++) {
-      const v = oldGrid[r * oldCols + c];
-      if (isDust(v)) stack.push(v);                // the rest are re-seeded after
-    }
-    if (!stack.length) continue;
-
-    const a = edge(c);
-    const span = Math.max(1, edge(c + 1) - a);
-    for (let i = 0; i < stack.length; i++) {
-      const nc = a + (i % span);
-      const nr = (i - i % span) / span;
-      if (nc < pit.cols && nr < pit.rows) put(pit, nc, nr, stack[i]);
-    }
-  }
-  seedPitCores();
-  pit.painter.repaint();
-  S.dirty = true;
-}
-
-// Sparks, pressing the pile.
+// A full hole simply stays full.
 //
-// The machinery for this was written when the hole was built and then pinned
-// shut at one grain size -- `refinePit` shares every grain of the old pile out
-// across the finer columns standing where it did, so the profile survives and
-// only the resolution changes. What was missing was a reason: a pile that packs
-// itself when it is full has no ceiling, and something has to be spent.
+// There used to be somewhere for it to go: `refinePit` settled the whole pile to
+// a finer grain, sharing each column out across the finer columns standing where
+// it did so the profile survived and only the resolution changed, and the press
+// sold the steps. Both are cut -- see PIT_GRAINS in config.js. The hole is one
+// size, and what overflows it goes through the rift instead.
+
+
+// --- what is here, and what is somewhere else ---------------------------------
+// The counter is all the dust you own. The pile is all the dust that is *here*.
+// Late in the game those stop being the same number, because the rift holds the
+// rest of it in another dimension -- see `## The rift` in DESIGN.md.
 //
-// So the red out of the star's core buys it, and it happens the moment it is
-// bought rather than the next time the hole fills. You watch the pile settle
-// into itself and the room appear, which is the whole of what you paid for.
-export function packPit() {
-  if (!canPack()) return false;
-  S.pitFine = (S.pitFine || 0) + 1;
-  refinePit();
-  measurePit();
-  buildShop();
-  S.dirty = true;
-  return true;
-}
+// Which is not the counter and the picture disagreeing, the thing this game does
+// not do. It is the picture answering a narrower question than the counter, and
+// saying so: the pile shows what is in the hole, the rift's own reading shows
+// what is in the rift, and the two of them add up to the counter. Before the
+// rift is built `S.rift` is nought and this is the number it always was.
+export const inHole = () => Math.max(0, S.stored - (S.rift || 0));
 
-// whether there is a finer grain left to buy at all
-export const canPack = () => (S.pitFine || 0) < PIT_GRAINS.length - 1;
-// and what the next one costs
-export const packCost = () => PACK_SPARKS[Math.min(S.pitFine || 0, PACK_SPARKS.length - 1)];
-// What it buys, said as a multiple of what the hole holds now. A grain half the
-// width holds four of itself in the same square of ground, so this is the ratio
-// squared and it is worked out rather than written down -- change PIT_GRAINS and
-// the row on the board says the right thing without anybody editing it.
-export function packGain() {
-  const now = PIT_GRAINS[S.pitStep] || PIT_GRAINS[0];
-  const next = PIT_GRAINS[Math.min(PIT_GRAINS.length - 1, (S.pitStep || 0) + 1)];
-  return Math.round((now / next) ** 2 * 10) / 10;
-}
+// And what the pile is allowed to show of it, which is what the hole will take.
+const pileTarget = () => Math.min(inHole(), pitCapacity());
 
-// paying comes out of the hole: grains are lifted off the top until the pile is
-// worth no more than the counter says
-// The pile always shows as much of the hole as will fit in it: one grain one
-// dust, up to the brim. Spending lifts grains off the top until it says the
-// right thing again -- which is a straight subtraction while there is room, and
-// nothing at all while the pit is over the brim and the pile is already short.
-export function spend(cost) {
-  S.stored -= cost;
-  let left = countDust(pit) - Math.min(S.stored, pitCapacity());
+// Lift `n` grains off the top of the pile, handing each one to `leaving` so it
+// can be drawn on its way out.
+//
+// Two things take grains back out of the hole -- paying for something, and the
+// rift swallowing -- and they differ only in where the grains go and what that
+// looks like. One walk, two destinations: writing the second one as its own copy
+// of this loop is how the two of them drift apart.
+function lift(n, leaving) {
+  let left = n;
   for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
     for (let c = 0; c < pit.cols && left > 0; c++) {
       const v = at(pit, c, r);
       if (!isDust(v)) continue;
       put(pit, c, r, 0);
       left--;
-      if (S.paid.length < 200) {               // a few hundred is plenty to read
-        S.paid.push({
+      if (leaving && leaving.length < 200) {   // a few hundred is plenty to read
+        leaving.push({
           x0: pit.x + c * pit.p,
           y0: bottomY(pit) - (r + 1) * pit.p,
           x: pit.x + c * pit.p,
@@ -363,8 +309,101 @@ export function spend(cost) {
       }
     }
   }
+  S.dirty = true;
 }
 
+// The same, said as a ceiling rather than a count. Paying knows what the pile
+// ought to end up holding; the rift knows how many grains it is taking.
+//
+// `countDust` walks the whole plot, so which of the two a caller wants is worth
+// getting right: `swallow` used to ask this way and then be asked again inside,
+// which was three walks of forty thousand cells every frame the rift ran, to
+// move a dozen grains.
+const liftTo = (target, leaving) => lift(countDust(pit) - target, leaving);
+
+// paying comes out of the hole: grains are lifted off the top until the pile is
+// worth no more than the counter says.
+//
+// Out of the hole first and the rift only after it is empty. What you pay with
+// should be what you are looking at -- the stream of grains arcing out of the
+// pile to the bench is the whole of what a purchase looks like in this yard --
+// and a payment taken invisibly out of another dimension while a full pile sat
+// there untouched would be a purchase with no picture at all.
+export function spend(cost) {
+  S.stored -= cost;
+  // Spent past everything in the hole, the rest comes out of the rift. It can
+  // only ever come *down* to the counter: the rift never holds more than you own.
+  if ((S.rift || 0) > S.stored) S.rift = Math.max(0, S.stored);
+  liftTo(pileTarget(), S.paid);
+}
+
+// The rift swallowing: grains off the top of the pile and into another
+// dimension. The counter does not move -- nothing has been spent and nothing has
+// been lost, it is only somewhere else -- so this is the one thing in the game
+// that takes dust out of the pile without taking it off you.
+//
+// It takes and it does not give back. A rift that handed grains out again
+// whenever the hole had room would spend the endgame cycling dust in and out of
+// the mouth for no reason anybody could act on; what the hole is for is what is
+// coming *in*, and the rift is where the overflow goes. The way to see your
+// dust again is to spend it.
+export function swallow(n) {
+  const take = Math.max(0, Math.min(Math.floor(n), countDust(pit)));
+  if (!take) return 0;
+  S.rift = (S.rift || 0) + take;
+  lift(take, S.gulped);
+  return take;
+}
+
+
+// Put the dust where it belongs, wherever it was before.
+//
+// Called after a save is read. Two things can be wrong at that point and they
+// have the same cure:
+//
+//   the pile is short  -- the saved pile did not fit this hole and was thrown
+//                         away. `pitFromSave` bails when the plot it was written
+//                         from is a different shape, which is exactly what a save
+//                         made on a pressed pile is: 1800 columns of two-pixel
+//                         grains arriving at a hole 600 columns wide. The hole
+//                         was then left EMPTY with the counter still reading two
+//                         hundred thousand -- the number and the picture saying
+//                         different things, which is the one thing this game does
+//                         not do, sitting in the reload path all along.
+//
+//   the pile is over   -- more dust is owned than this hole can show. That is not
+//                         an error and never was: it is what the rift is for.
+//
+// So: fill the hole to what it will take, and everything past that goes through
+// the rift. Nothing is clamped and nothing is destroyed. A player who pressed
+// their pile twice and banked two hundred thousand opens the new build to a hole
+// full of proper six-pixel dust and a rift holding the rest.
+export function rehomeDust() {
+  if (!pit.grid) return;
+  const want = Math.min(inHole(), pitCapacity());
+
+  // Short: fill along, a column at a time. Along rather than at random, because
+  // a grain offered to a random column is refused once that column is full and
+  // a hole nearly full turns nearly every offer away.
+  let have = countDust(pit), col = 0;
+  while (have < want && col < pit.cols) {
+    if (addGrain(pit, pit.x + col * pit.p + pit.p / 2, null, 1 + Math.floor(rand() * 4))) have++;
+    else col++;
+  }
+
+  // Over: whatever the hole would not take is through the rift, and a save that
+  // needs one has one. It is not a purchase in that case -- it is where the dust
+  // already was, under a name the old build did not have for it.
+  const over = inHole() - have;
+  if (over > 0) {
+    S.rift = (S.rift || 0) + over;
+    S.riftOpen = true;
+  }
+  // And anything left over the target comes off the top, which is the ordinary
+  // case of a hole that shrank.
+  if (have > want) liftTo(want, null);
+  S.dirty = true;
+}
 
 // The pile shows exactly what you still hold, of everything that is not dust:
 // top up after a resize or a reload, and take them back out when they are spent.

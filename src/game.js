@@ -16,13 +16,14 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT } from './config.js';
-import { S, floor, pit, cut, quarry, bench } from './state.js';
+import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
 import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
+import { stepRift, riftMouth } from './rift.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
@@ -81,7 +82,7 @@ export function settleIntoWorld() {
   wireCut();                               // the cut's own sand, sized off the quarry
   wireTable();                             // the ground the pot piles up on
   resizeGrid(floor);
-  if (!pit.grid) setPitGrain(S.pitStep);   // the pit never changes with the window
+  if (!pit.grid) setPitGrain();            // the pit never changes with the window
   seedAir();
   seedWeather();       // and a sky that is already full of cloud
 }
@@ -163,6 +164,11 @@ export function step() {
   stepSparkle(dt);                            // and the magic they leave in the air
   stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
+  // And the rift swallows, if it is torn and somebody is standing at it. It
+  // takes grains off the top of the pile without taking them off you -- see
+  // `swallow` in pit.js -- so this is the one thing in the yard that empties the
+  // hole and leaves the counter where it was.
+  stepRift(dt);
   stepSmog(dt);                               // and the sky, which is filling up
   sampleAir(now);
   if (S.dragging) catchAir(S.mouse.x, S.mouse.y);   // swinging does not catch its own spray
@@ -369,12 +375,22 @@ export function surveyFloor() {
 // where along that arc each of them is. It moves them; `drawPaid` in the shell
 // draws them.
 export function stepPaid() {
-  const tx = bench.x + bench.w / 2, ty = bench.y - P * 2;
+  fly(S.paid, bench.x + bench.w / 2, bench.y - P * 2);
+  // And the stream going the other way, into the rift. Same arc, same easing,
+  // different end: one way of showing dust leaving the pile, two destinations --
+  // which is the same economy `liftTo` makes in pit.js, and for the same reason.
+  // Paying and swallowing look alike on purpose: both are grains coming off the
+  // top of the pile and going somewhere, and the only difference a player needs
+  // to read is *where*.
+  fly(S.gulped, riftMouth(), rift.y + rift.h * 0.4);
+}
+
+function fly(list, tx, ty) {
   const f = frames();                            // the flight is a rate a frame
-  for (let i = S.paid.length - 1; i >= 0; i--) {
-    const m = S.paid[i];
+  for (let i = list.length - 1; i >= 0; i--) {
+    const m = list[i];
     m.t += m.rate * f;
-    if (m.t >= 1) { S.paid.splice(i, 1); continue; }
+    if (m.t >= 1) { list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 
     const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out

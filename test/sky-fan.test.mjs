@@ -39,6 +39,24 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   yard.restore();
   for (const k of machines) window.__machine(k, { bought: true, on: true });
   yard.S.fanLevel = fan;
+  // Room in the hole.
+  //
+  // This save came from a yard whose pit was nearly full, and it was written on
+  // a pressed pile -- 1200 columns of three-pixel grains. The press is cut, so
+  // that profile no longer fits this plot and `rehomeDust` puts the dust back:
+  // the hole comes back FULL, at full size, with the remainder in the rift.
+  //
+  // It used to arrive empty. `pitFromSave` refused the mismatched profile and
+  // `restore` then cleared the grid and left the counter alone, so this fixture
+  // silently loaded a yard with a hundred thousand dust on the counter and
+  // nothing in the hole -- which happened to give the crew somewhere to put
+  // things, which is why this check ever passed. A full hole stops the works:
+  // the haulers stand down holding their loads, so the machines idle and the
+  // sky stops being filled.
+  //
+  // What this file measures is the house against the machines, so it buys the
+  // room outright rather than measuring a jammed yard.
+  window.__spend(20000);
   window.__air({ haze: 1800, muck: 0, scrubbers: 1, recycler: true, open: true });
   run(3);                                   // the body walks in and the draught comes on
 };

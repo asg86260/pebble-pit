@@ -225,8 +225,6 @@ export const snapshot = () => ({
   pitDepth: pitDepth(),
   pitFullDepth: PIT_H,
   pitGrain: pit.p,
-  pitStep: S.pitStep,
-  pitFine: S.pitFine || 0,
   groundY: S.groundY,
   camX: Math.round(S.camX),
   worldW: S.worldW,
@@ -409,6 +407,11 @@ export const snapshot = () => ({
   // The dust in the pit, grain by grain.
   pitGrains: count(pit),
   pitDust: countDust(pit),
+  // And the dust that is not in the pit, because it is not in this dimension.
+  // `stored` is the two of them together -- see `inHole` in pit.js.
+  rift: S.rift || 0,
+  riftOpen: !!S.riftOpen,
+  riftLevel: S.riftLevel || 0,
 
   // And the dust lying in the cut, fallen down the mouth and not yet fetched.
   cutDust: countDust(cut),

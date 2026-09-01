@@ -18,7 +18,7 @@ import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
 import { resite } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
-import { setPitGrain, seedPitCores } from './pit.js';
+import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
@@ -177,8 +177,14 @@ export function persist() {
     seenBench: S.seenBench,
     seenSects: S.seenSects,
     seenRows: S.seenRows,
-    pitStep: S.pitStep,
-    pitFine: S.pitFine,
+    // The rift, and what is standing in it. This is the one part of the pile
+    // that is not in the pile: `stored` counts it, the hole does not hold it,
+    // and losing this line on the way out would be the difference between a
+    // player's dust being somewhere else and being gone.
+    seenFullPit: S.seenFullPit,
+    riftOpen: S.riftOpen,
+    rift: S.rift,
+    riftLevel: S.riftLevel,
     // Where the view is. Scrolling the yard is how you look at any of this, and
     // a reload that dumped you back at the rock threw away the one piece of
     // where-you-were the player sets by hand. Rounded because a pixel of a
@@ -252,7 +258,8 @@ export function persist() {
     // from the counts on the way in.
     machines: Object.fromEntries(MACHINES.map(m => {
       const r = (S.machines && S.machines[m.key]) || {};
-      return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit }];
+      return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit,
+                       tune: r.tune || 0 }];
     })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
@@ -272,6 +279,7 @@ export function persist() {
     brewLeft: Math.max(0, S.brewAt - clockNow()),
     wizards: S.wizards,
     scrubbers: S.scrubbers,
+    rifters: S.rifters,
     janitors: S.janitors,
     harnessLevel: S.harnessLevel,
     bootsLevel: S.bootsLevel,
@@ -360,8 +368,10 @@ export function restore() {
     S.seenBench = false;
     S.seenSects = [];
     S.seenRows = [];
-    S.pitStep = 0;
-    S.pitFine = 0;
+    S.seenFullPit = false;
+    S.riftOpen = false;
+    S.rift = 0;
+    S.riftLevel = 0;
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
@@ -421,15 +431,14 @@ export function restore() {
   // shape it came out of.
   // A save from before the hole was something you dug has one already: it was
   // the whole thing from the first frame, and it keeps it.
-  // Nothing to restore: the hole is the whole hole from the first frame, and a
-  // save from when it was dug out a purchase at a time simply arrives in one.
-  // What was paid for comes back before the grain does: `refinePit` will not go
-  // finer than `pitFine` allows, and a save that restored the grain without the
-  // permission would be a hole that quietly coarsened again the first time
-  // anything asked it to settle.
-  S.pitFine = s.pitFine || 0;
+  // Nothing to restore about the shape of it: the hole is the whole hole from
+  // the first frame, and one grain size for ever. A save from when it was dug
+  // out a purchase at a time arrives in one, and a save from when the press sold
+  // a finer grain arrives at six pixels -- its `pitStep` and `pitFine` are read
+  // by nobody now, and the pile it wrote at three pixels or two will not fit
+  // this plot. `rehomeDust` below is what puts that dust back where it goes.
   S.hideDone = !!s.hideDone;
-  setPitGrain(s.pitStep || 0);
+  setPitGrain();
   S.pickLevel = s.pickLevel || 0;
   if (s.coreLoose) {
     S.coreItem = s.core
@@ -489,6 +498,10 @@ export function restore() {
     // bought and could no longer start, the switch for it having been taken out
     // of the game.
     rec.driven = !!r.driven;
+    // How far up its own ladder it is. An endless ladder is a number that only
+    // goes up, so losing it on a reload is losing everything ever spent on the
+    // biggest sink in the game.
+    rec.tune = Math.max(0, Math.round(+r.tune || 0));
     // A machine bought before this was written took a full set and has no
     // record of it. It is bought, so it did.
     // And a machine that does not take kit never took any, whatever the save
@@ -558,6 +571,7 @@ export function restore() {
     S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
   S.scrubbers = s.scrubbers || 0;
+  S.rifters = s.rifters || 0;
   S.janitors = s.janitors || 0;
   S.harnessLevel = s.harnessLevel || 0;
   S.bootsLevel = s.bootsLevel || 0;
@@ -617,6 +631,18 @@ export function restore() {
   if (!S.introDone) startIntro();
   restoreGrid(floor, s.floor);
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
+  // What is here and what is somewhere else. The rift comes back before the dust
+  // is put away, because how much of it belongs in the hole depends on how much
+  // of it is already through the rift.
+  //
+  // Clamped to the counter on the way in: a rift holding more than you own would
+  // leave `inHole` reading nought against a pile that plainly has dust in it, and
+  // a saved number is not something to trust over the one it has to agree with.
+  S.seenFullPit = !!s.seenFullPit;
+  S.riftOpen = !!s.riftOpen;
+  S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
+  S.riftLevel = Math.max(0, Math.round(+s.riftLevel || 0));
+  rehomeDust();
   seedPitCores();
   // The cut's own sand: rock laid fresh to the depth just restored above, then
   // the dust that was lying on it overlaid -- but only if the save's cut is
@@ -667,7 +693,12 @@ export function reset(fresh = true) {
   // the grain it is *at* -- the grain follows from the pile being rebuilt, and
   // reset does rebuild it -- and leaving the paid-for permission behind meant a
   // brand new yard came with the star's red already spent on it.
-  S.pitFine = 0;
+  // The rift: a new yard has no hole in the air in it, and nothing standing on
+  // the other side of one.
+  S.seenFullPit = false;
+  S.riftOpen = false;
+  S.rift = 0;
+  S.riftLevel = 0;
   S.paused = false;                // a new game is not a held one
   showPanel(null, true);           // nor one with the last game's board still up
   // the curtains are somebody's, and there is nobody here now
@@ -676,6 +707,7 @@ export function reset(fresh = true) {
   S.chips = [];
   S.belt = [];                       // and what was riding the belt, for the same reason
   S.paid = [];
+  S.gulped = [];
   S.stored = 0;
   S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;
@@ -689,7 +721,7 @@ export function reset(fresh = true) {
   S.seenBench = false;
   S.seenSects = [];
   S.seenRows = [];
-  setPitGrain(0);
+  setPitGrain();
   S.pickLevel = 0;
   S.coreItem = null;
   S.heldCore = false;
@@ -740,6 +772,7 @@ export function reset(fresh = true) {
   sky.cells = null;
   sky.n = 0;
   S.scrubbers = 0;
+  S.rifters = 0;
   S.janitors = 0;
   S.introThrew = 0;
   S.harnessLevel = 0;

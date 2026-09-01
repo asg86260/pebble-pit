@@ -56,7 +56,8 @@ import { seed } from './rng.js';
 // rule 4 is here to catch.
 const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', janitor: 'janitors', wizard: 'wizards' };
+                        scrubber: 'scrubbers', rifter: 'rifters',
+                        janitor: 'janitors', wizard: 'wizards' };
 
 // How far below the surface of the way it is on a body may be, and for how long.
 //

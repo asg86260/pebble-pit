@@ -14,7 +14,10 @@ export const TESTS = [
     await settle();
     window.__lab(true);
     window.__crew(0, 3, 0, 0, 2);                // two of the five in the lab
-    window.__grant({ shards: 50 });
+    // Stone and dust: `labswing` is priced in both, like every row -- see
+    // `billOf` in upgrades.js -- so a purse with only stone in it cannot start
+    // the piece this check is about.
+    window.__grant({ shards: 50, dust: 20000 });
     run(3);
     const staffed = state();
     run(40);                                     // long enough for them to drift off

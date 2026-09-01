@@ -148,7 +148,10 @@ group('a full pit still saves and reloads', async () => {
     ok(raw.length < 200 * 1024, 'the save stays small', `${Math.round(raw.length / 1024)}KB`),
     ok(j.stored === s.stored, 'the hole is saved', `${j?.stored}`),
     ok(typeof j.pit?.heights === 'string', 'the pile is saved as its profile'),
-    ok(j.pitStep === 0, 'and the grain it is drawn at', `${j?.pitStep}`),
+    // The rift travels with it, and it is the one part of what you own that the
+    // pile cannot be read back from: lose this line and a player's dust is not
+    // somewhere else, it is gone.
+    ok(j.rift === s.rift, 'and what is standing in the rift', `${j?.rift}`),
     ok(j.pitLevel === s.pitLevel, 'and how far the hole has been dug', `${j?.pitLevel}`)
   ];
 });

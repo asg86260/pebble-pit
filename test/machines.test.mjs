@@ -823,9 +823,21 @@ group('a machine is paid for in three coins at once', async () => {
   ];
 });
 
-// No machine is priced in what its own station makes. One rule, three prices:
-// a machine is paid for by the rest of the yard.
-group('a machine is never priced in what its own station makes', async () => {
+// No machine is priced in what its own station makes -- in the station's OWN
+// COIN. One rule, and the reason for it is that a machine paid for out of the
+// thing it makes is just a bigger version of the station that bought it.
+//
+// The rule was written when dust was the rock's coin the way shards are the
+// quarry's, and it has been narrowed since: every row in the game is priced in
+// dust now (see `billOf` in upgrades.js and the Economy section of DESIGN.md),
+// so the ram carries dust like everything else. That is not the rock paying for
+// its own machine -- once dust is the price of everything it has stopped being
+// any one station's coin and become the one the whole yard shares, and the
+// quarry's and the farm's output ends up in the same hole as the rock's.
+//
+// What the rule still forbids is the special coins, and those are what it
+// checks: no shards on the jaw, no spores on the tiller.
+group('a machine is never priced in the coin its own station makes', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -837,15 +849,17 @@ group('a machine is never priced in what its own station makes', async () => {
   };
   const jaw = bill('jaw'), ram = bill('ram'), till = bill('tiller');
   return [
-    ok(jaw.length === 3 && ram.length === 3 && till.length === 3,
-       'each is priced in three coins',
+    ok(jaw.length === 3 && ram.length === 4 && till.length === 3,
+       'each is priced in three coins, and the ram in four',
        `jaw ${jaw}, ram ${ram}, tiller ${till}`),
     ok(jaw.includes('spark') && ram.includes('spark') && till.includes('spark'),
        'every one of them in sparks, which is what makes them the last thing'),
+    // And every one of them in dust, like every other row in the game.
+    ok(jaw.includes('dust') && ram.includes('dust') && till.includes('dust'),
+       'and every one of them in dust, which every row is priced in',
+       `jaw ${jaw}, ram ${ram}, tiller ${till}`),
     ok(!jaw.includes('shard'), 'the jaw works the cut, so it is not priced in shards',
        jaw.join(',')),
-    ok(!ram.includes('dust'), 'the ram works the rock, so it is not priced in dust',
-       ram.join(',')),
     ok(!till.includes('spore'), 'the tiller works the plots, so not in spores',
        till.join(','))
   ];
@@ -1017,7 +1031,7 @@ group('a belt comes back bought', async () => {
   openSites();
   window.__fullSites();
   window.__crew(0, 3);
-  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__grant({ sparks: 999, shards: 999, spores: 999, dust: 20000 });
   window.__school({ carters: 6 });
   window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
   window.__buy('belt');
