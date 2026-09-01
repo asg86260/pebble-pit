@@ -2776,6 +2776,46 @@ has actually turned dust away. Its ladder, `widen the black hole`, sits beside
 it for the same reason the wizards' ladders do: what a board is about is what
 stands on it. The bench's `the hole` section is gone with them.
 
+### 7. The hole holds everything (design, not built)
+
+**What it is now.** The rift swallows dust and nothing else. `lift` steps over
+any cell that is not dust, so a shard, a spore, a spark or a core banked in the
+hole sits in the pile for ever, and the pile is where those are *kept*: the
+counters say what you own, and `seedPitCores` puts exactly that many cells in
+the hole. A hole the rift keeps empty of dust is a hole with a scatter of finds
+lying on its floor and a black disc over them, which reads as a black hole that
+is fussy about what it eats.
+
+**The rule.** One capacity, one queue, one rift. A grain is a grain whatever
+it is: the rift lifts whatever is on top at its rate, dust or find, and what it
+takes is counted by kind in `S.riftHeld` -- cores, shards, spores, sparks --
+beside `S.rift` for the dust. The counters do not move, because nothing is
+spent and nothing is lost; the pile shows what is in the hole, which is now
+the counter *less* what is through the rift, so `seedPitCores` targets
+`S[kind] - S.riftHeld[kind]` and the picture and the number still agree by
+construction. The counter card is unchanged: it reads what you own, and what
+you own is the two places together, exactly as it is for dust.
+
+**Paying.** Out of the hole first and the rift only after it is empty, the same
+rule dust already keeps. `takeCoreCells` lifts what the pile has; whatever it
+could not find is taken off `riftHeld` instead. A purchase still has its picture
+whenever there is one to draw.
+
+**A core too.** It is the rarest thing in the game and it is drawn at the size
+a core is, with its glow, and it goes into the black hole like everything else.
+A rule with four kinds and an exception for the fifth is the hole "that holds
+everything except the four things it does not hold" the pit section already
+threw out once. The core's glow was the argument for keeping it visible in the
+pile; a black hole is where a thing that glows goes to stop being seen, and
+that is the right picture for the endgame.
+
+**Saved** as four numbers beside `rift`, clamped to the counters on the way in
+the way `rift` is clamped to `stored`; a save from before has nought through
+and every find still in the pile, which is what it had. The mark and tooltip on
+the lip are untouched. `rift.test.mjs` gains a group: a find banked in a hole
+the rift is eating goes through, the counter holds, and it is spent out of the
+rift once the pile has none.
+
 ### What was decided, and what the measurement said
 
 The calls: the belt's unit is a carter's load; the disc hangs in the pit at the

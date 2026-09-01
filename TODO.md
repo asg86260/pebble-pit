@@ -407,3 +407,10 @@ hauler's load; measured perf fixes on the break path with a PERF.md table; the
 rifter job removed (torn is open, saves restaff the body to carrying); and the
 rift as a black disc hanging in the pit at the near end with the `gulped`
 grains orbiting into it.
+
+## 10. The hole holds everything — designed, not built
+
+**Status:** designed (`### 7. The hole holds everything` under the endgame
+pass in DESIGN.md), 2026-09-01, waiting on sign-off. The rift swallows every
+kind of cell, counted by kind in `S.riftHeld`; the pile shows the counter less
+what is through; paying takes from the pile first and the rift after.
