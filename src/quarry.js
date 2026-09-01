@@ -847,10 +847,14 @@ export const QUARRY_UPGRADES = [
   }
 ,
 
-  // The jaw's own ladder, on the jaw's own board. It never ends -- see `tuneRow`
-  // in machines.js: the machines are where an endgame's dust goes.
-  tuneRow('jaw', 'sharpen the jaw',
-          () => `the jaw bites ${MACHINE_TUNE}x harder, again`)
+  // The drill's own ladder, on the quarry's own board. It never ends -- see
+  // `tuneRow` in machines.js: the machines are where an endgame's dust goes.
+  //
+  // Keyed 'jaw', which is what the machine was called before it became a drill
+  // and is still what every save has in it. The key is the machine's; the words
+  // are what anybody reads. See the note over `MACHINES` in machines.js.
+  tuneRow('jaw', 'sharpen the drill',
+          () => `the drill bites ${MACHINE_TUNE}x harder, again`)
 ];
 
 // One heading. The quarry is one place and everything on this board is about the
