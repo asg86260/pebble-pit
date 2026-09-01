@@ -3274,8 +3274,8 @@ export function drawTiller() {
   // The hubs, off the picture: the middle of each white ring, so a redrawn
   // tractor turns its own wheels rather than the ones the old one had -- and
   // mirrored with the picture, so they stay inside the tyres when it turns round.
-  for (const [wx, wy, r] of [[x + tCol(6) * P, y0 + P * 5, 1],
-                             [x + tCol(1) * P, y0 + P * 5, 0]]) {
+  for (const [wx, wy, r] of [[x + tCol(3) * P, y0 + P * 5, 1],
+                             [x + tCol(8) * P, y0 + P * 5, 0]]) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(Math.round((wx + Math.cos(a) * r * P) / P) * P,
                  Math.round((wy + Math.sin(a) * r * P) / P) * P, P, P);
@@ -3296,7 +3296,7 @@ export const tillerSeat = () => ({
   // Three cells wide, so a mirrored seat starts three cells further back than
   // the mirror of its own left edge -- `tCol` answers about a cell, and a body
   // is not a cell.
-  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(6) - 2 : 6) * P,
+  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(1) - 2 : 1) * P,
   y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P
      - P * (spriteH(TILLER) - 1)
 });
@@ -3415,7 +3415,7 @@ export function drawRunSwitch(box, key) {
 const STACKS = {
   jaw:    () => ({ x: jawX() + jawStackCol() * P, y: jawY() - P * 2 }),
   ram:    () => ({ x: ramX() + P * 2, y: S.groundY - P * spriteH(RAM) }),
-  tiller: () => ({ x: tillerAt() + tCol(2) * P,
+  tiller: () => ({ x: tillerAt() + tCol(7) * P,
                    y: walkY(tillerAt() + WORKER / 2) + WORKER - P * spriteH(TILLER) }),
   // At the lip end, over the last leg that has ground under it -- not at the
   // head, which hangs out over the hole.
