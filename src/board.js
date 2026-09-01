@@ -12,7 +12,7 @@ import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { TOWER_UPGRADES } from './tower.js';
-import { refresh, markRowsSeen, buildCrew, buildCrewList, tookRows } from './shop.js';
+import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, tookRows } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -635,6 +635,7 @@ function settle(want) {
   // wrong the first time: the next open measured a board that already had its
   // words in. Which is why it read as a bug that fixed itself.
   fill(want);
+  sayHideDone();          // and the switch under it, before anything is measured
   fillPurse();
   seatFlyout(panelEl, anchor(want));
   remeasure();
@@ -760,6 +761,45 @@ function fillPurse() {
   if (resized) remeasure();
 }
 
+// The switch that folds finished ladders away. It says which way it is pointing
+// rather than what it would do -- a button reading "hide finished" while they
+// are already hidden is a button that has lied about the state of the board.
+//
+// It lives here, under the pages rather than on one of them, because what it is
+// about is whichever board is open, and that is this file's one piece of
+// knowledge. It used to be a button on the bench's page, which made a preference
+// that folds rows on all nine boards reachable from exactly one of them: the
+// lab, the school and the rest hid their finished ladders only if you walked
+// back to the bench first and knew the switch standing there meant them too.
+const hideEl = document.getElementById('hidedone');
+
+// It stands on every board rather than only on the ones with something finished
+// on them. A control that comes and goes is a control you cannot learn where to
+// find, and it would come and go under your hand: a ladder reaches its top the
+// moment you buy the last rung, which is exactly when the switch would appear
+// and move the board out from under the cursor that had just pressed something.
+//
+// Said rather than written every frame -- `hud` asks on each of them, and a
+// board that had its words rewritten sixty times a second is a board the browser
+// keeps laying out for nothing.
+let said = null;
+export function sayHideDone() {
+  if (S.hideDone === said) return;
+  said = S.hideDone;
+  hideEl.textContent = S.hideDone ? 'finished: hidden' : 'finished: shown';
+  hideEl.classList.toggle('on', S.hideDone);
+}
+
+hideEl.addEventListener('click', () => {
+  S.hideDone = !S.hideDone;
+  // Every board, not the open one: the preference is the yard's, and a board
+  // that only rebuilt when you walked up to it would fold its rows away under
+  // your eyes on arrival.
+  buildShop();
+  sayHideDone();
+  S.dirty = true;
+});
+
 // A hand in progress hushes the board wherever it is standing. It is not closed
 // -- nothing has been decided, and it is the same board when it comes back --
 // it is out of the way of the one thing in this game you are meant to watch.
@@ -780,6 +820,10 @@ export function hud() {
   tweenCount(now());
   fillPurse();
   fill(at);
+  // and the switch under it, which is read from state rather than kept in step
+  // with it: a save restored after this file loaded used to leave the button
+  // saying "shown" over a board with its finished rows already folded away.
+  sayHideDone();
   // A row bought out of the list, or a body hired into it, leaves the sheet a
   // different height than the one it is seated by. The rows are filled in by
   // `fill` just above, so by here there is a whole board to measure.

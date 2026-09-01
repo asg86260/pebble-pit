@@ -9,7 +9,6 @@ import { S, bench } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
-import { buildShop } from './shop.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
@@ -293,22 +292,6 @@ addEventListener('blur', () => {
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
 
-
-// The switch that folds finished ladders away. It says which way it is pointing
-// rather than what it would do -- a button reading "hide finished" while they
-// are already hidden is a button that has lied about the state of the board.
-const hideEl = document.getElementById('hidedone');
-export function sayHideDone() {
-  hideEl.textContent = S.hideDone ? 'finished: hidden' : 'finished: shown';
-  hideEl.classList.toggle('on', S.hideDone);
-}
-hideEl.addEventListener('click', () => {
-  S.hideDone = !S.hideDone;
-  sayHideDone();
-  buildShop();
-  S.dirty = true;
-});
-sayHideDone();
 
 export function disarmReset() {
   S.resetArmed = 0;
