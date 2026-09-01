@@ -783,6 +783,30 @@ export const CASINO_WHEEL = 0.35;    // radians a second it idles round at
 // for you as a share of your holdings is a stake nobody chose. `all` is the one
 // that is not a number, and it is the one the whole thing is for.
 export const CASINO_CHIPS = [10, 100, 1000, 'all'];
+// How much sand a pot puts on the ground -- which is one grain a unit right up
+// until the numbers stop being numbers. The pot doubles on every ride, so eleven
+// wins off a thousand is two million, and two million grains is a plot the width
+// of the yard filled solid and twenty-four thousand squares in the air: the sand
+// stops being the picture and becomes the cost of drawing it.
+//
+// So past the first band the heap is a *reading* of the pot rather than a count
+// of it, on a ladder written down here rather than worked out per hand: a
+// tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
+// marks so nothing jumps and a double is always about three hundred more grains
+// on the ground.
+//
+//   1 - 1,000    the pot itself, one for one
+//   10,000       2,000        1,000,000     4,000
+//   100,000      3,000        10,000,000+   5,000, and that is the brim
+//
+// The brim is five thousand because that is a heap you can take in at a glance
+// and settle in a frame; the fourteen thousand this stretch of ground would
+// physically take is neither. See `shownFor` in casino.js -- and note that what
+// is approximate is the size of the heap and nothing else: the row says the
+// exact pot, banking credits the exact pot, and the hole fills with it.
+export const CASINO_PILE_ONE = 1000;   // the largest pot still drawn one for one
+export const CASINO_PILE_BAND = 1000;  // grains a tenfold pot adds past it
+export const CASINO_PILE_BRIM = 5000;  // and the most that ever lies there
 // How long a settled hand stands over the building saying which way it went. A
 // wheel that stopped and told you nothing is a wheel you have to have been
 // watching, and the yard already has a mark for news you missed -- the lab's

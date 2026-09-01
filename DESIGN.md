@@ -303,8 +303,15 @@ is approximate is the size of the heap on the table and nothing else.
 whatever that stretch of ground would take, and the rest "stays a number on the board" — so a pot
 past about fourteen thousand already showed you a heap that was not the pot, at the worst possible
 cost, and did it by filling the yard rather than by saying so. A band is the same admission made in
-advance, at a size that draws. `table.capped` goes with it: the brim is decided before the sand is
-sent rather than discovered when the ground refuses a grain.
+advance, at a size that draws. The brim is decided before the sand is sent rather than discovered
+when the ground refuses a grain; `table.capped` stays as a backstop, because the wheel waits on the
+heap reaching the number and a ground that refused a grain with no way to say so would be a wheel
+that never went round -- but at five thousand grains on a stretch that takes fourteen, nothing
+reaches it.
+
+Measured on a two-million pot, which is eleven wins off the thousand chip: the heap went from 8,536
+grains to 4,301, the cloud in the air from 24,000 squares to 2,197, and the worst frame in the pour
+from 1,817 ms to 49 ms.
 
 **Nothing about the hand changes.** The wheel still waits for the last grain to come to rest, a loss
 still lifts the whole heap off and fades it out, banking still throws every grain that is there over
