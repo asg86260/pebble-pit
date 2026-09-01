@@ -133,22 +133,24 @@ shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ## 4. The scrubber balloon
 
-**Status:** designed, not built. Last, because it is the largest.
+**Status:** designed and agreed, not built. See DESIGN.md, "The scrubber balloon
+(design, not built)", which is the whole of it. The three calls that shape the
+work have been made, and they are recorded here so they are not re-litigated:
 
-A balloon that rides the haze band instead of a shed that drags the haze to it:
-a worker boards it, it takes haze in and drops muck below, a recycler upgrade
-turns that to dust, and several can be deployed for a faster sky.
+- **The house stays**, and the balloon is a thing it sells. The throat, the fan,
+  the recycler, the board and the walk to the door are all untouched; the
+  purchase adds a second kind of mouth. This is what makes the save migration a
+  non-problem.
+- **What it catches comes down under it**, anywhere over the yard, rather than on
+  a strip. The sink becomes the whole ground.
+- **More craft is a rung on the house's own board**, raising the scrubbers' cap
+  by one a rung.
 
-**Shape of it.** A new `src/balloon.js` owning the craft; `smog.js` keeps owning
-the air. A balloon is a station that *moves*: `{ x, y, dir, riding }` in
-`S.balloons` — an array of craft, not a count — with `x` in world pixels, moved
-in **whole pixels** and never snapped to the lattice, exactly as the tractor is.
-Its cruising height is derived from the same `bandTop()`/`bandLow()` pair the
-motes use, so the band and the balloon cannot disagree.
-
-**The hard parts, in order:** how a body boards it without teleporting; what
-becomes of the existing scrubbing house and its saved state; how it wires into
-the pile-full mark. Build it in stages that each leave the game playable.
+Four stages, each leaving the game playable: one craft end to end; the recycler
+and the clog; the fleet; the record. The hard parts, in order: the boarding
+(answered by mooring the basket on the ground), the pull (the house's own
+draught must go on working exactly as it does today), and the drawing (the first
+thing in the yard with no ground under it).
 
 ---
 

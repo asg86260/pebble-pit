@@ -2314,5 +2314,129 @@ Motes live in **screen pixels, not world ones**: they are weather, not scenery. 
 in the world spends nearly all of the game outside the window, which is exactly where the old ones
 went.
 
+## The scrubber balloon (design, not built)
+
+The scrubbing house answers a bad sky by dragging the sky down to itself. That works, and it has a
+cost, and the cost is the shape of the problem: everything the house catches comes down in one place
+— a heap out the back that fouls the one strip of ground the house stands on, and clogs it.
+
+A balloon answers the same sky the other way round. It goes *up into it*, takes it in where it is,
+and drops what it catches wherever it happens to be. The sink stops being a heap and becomes the
+whole yard, which is a different bargain rather than a better one: no strip fills, but the muck is
+spread over ground the crew were walking anyway, and the craft is only ever cleaning the patch of
+sky it is actually under.
+
+**The house stays.** The balloon is a thing the house sells, not a thing that replaces it. The
+throat still hangs off the roof and still pulls; the fan and the recycler are still fitted at the
+house and still say what they say; the board is still the house's board; and a body put on the
+scrubbers still walks to the same door. What the purchase adds is a second kind of mouth. That is
+worth stating plainly because the alternative — tearing the house out — buys a cleaner concept at
+the price of migrating every save, rehoming the board, and inventing a place to board from, and
+none of those are the feature.
+
+### The craft
+
+A balloon is a **station that moves**. It is the first one in the yard, and everything odd about it
+follows from that single fact.
+
+- It lives in `src/balloon.js`. `smog.js` goes on owning the air; this file owns the craft. The one
+  thing the two must agree on is the height of the band, so the craft's cruising height is derived
+  from the same `bandTop()`/`bandLow()` pair the motes use rather than from a constant of its own.
+- `S.balloons` is an **array of craft**, not a count, from the first one — so the fleet is more
+  entries rather than a rewrite. A craft is `{ x, dir }` and nothing else: `x` in world pixels,
+  moved in **whole pixels** and never snapped to the lattice, exactly as the tractor is.
+- Its **lane** — which of the band's heights it cruises at — is its index, not a stored number. Two
+  craft at the same height pass through each other; two craft in their own lanes cross, which is
+  what a sky with two balloons in it looks like.
+- Who is aboard is a fact about the **body**, not about the craft. `w.craft` is the index it is
+  riding, the way `goal: 'in'` is how the house says the same thing, so there is one place to
+  forget rather than two that can disagree.
+
+### Getting aboard
+
+Nothing in this yard arrives anywhere it did not walk to, and a body stepping into the sky is the
+most tempting place in the game to break that.
+
+So **a balloon moors with its basket on the ground**, beside the house, tethered to a mast over the
+roof. A body assigned to a craft walks to the mast on its feet — the same walk it already makes to
+the door — steps into the basket at ground level, and the craft *then* rises to its lane. There is
+no climb and no lift, because there is nothing to climb: the thing came down to be got into. Coming
+off is the same in reverse — the craft flies home, settles, and the body steps out and walks away.
+
+A craft with nobody in it stays moored. It does not cruise, it does not pull, and it is visibly a
+balloon tied to a post — the same reading an empty scrubbing house has always given, and for the
+same reason.
+
+### What it does up there
+
+It cruises the band between the ends of the yard, turning at each end. While it is crewed and
+airborne it takes motes in **radially**, within its own grip, and that is the whole of the rule.
+
+The house's `pull` is elaborate on purpose: its mouth is on the ground and the band is overhead, so
+the draught has to run *along* the band and only turn down once a speck is nearly over the throat,
+or the whole sky slides into one diagonal river through the middle of town. A balloon has none of
+that problem. It is already in the band. Nearby motes come to it and go in, and the shape of the sky
+is undisturbed everywhere else — which is less code than the house's version, not more.
+
+It takes at the rate the board quotes: `fanPull()` motes a second, per crewed mouth, counted down as
+they go in, with its own gullet so a craft drifting over a clear patch cannot bank a gulp. The fan
+rung is one number the station owns, so it raises every mouth the station has — a bigger fan on the
+house is a bigger fan on the craft.
+
+### What comes down
+
+Whatever the house does with a mote, a craft does — the difference is only where.
+
+- **Without the recycler**, it drops muck, out from under the basket, at whatever column it is over
+  at the time.
+- **With the recycler**, it drops dust instead, as an ordinary chip falling from the basket, taking
+  the ordinary chip physics — which already knows what to do about the quarry's mouth and the pit.
+
+The counters stay where they are (`S.scrubMuck`, `S.scrubBank`): a whole load's worth of motes is a
+whole load's worth wherever it was caught, and the craft that fills the counter is the craft it comes
+out of. Per-craft banks would be four more numbers to save for a pacing nobody could tell apart.
+
+### Clogging
+
+The house clogs because its strip fills. A craft has no strip, so it clogs on **the column beneath
+it right now**: over ground already deep in muck it cannot drop, so it does not take in either, and
+it keeps flying. It clears itself by moving on.
+
+That is a softer rule than the house's and it is the right one for a thing that moves. A craft can
+never deadlock — there is always somewhere else to be — but a yard that is uniformly filthy stalls
+every craft at once, so the pressure to keep the ground clear is real and it arrives as the sky
+stopping getting better rather than as a machine that has switched off.
+
+**The mark.** Every other stopped station in this yard says so with the pile-full mark. A craft has
+no pile to mark, so the mark goes on the **mast**, and it goes up when every craft is stalled —
+which is the same sentence the mark always says: this station has stopped, and here is why.
+
+### The fleet
+
+More craft is a **rung on the house's own board** — a finite ladder, in dust, each rung one more
+balloon — and it raises the scrubbers' cap by one. One number, one ladder, on the board of the
+building that owns it, which is what the rule in TODO item 2 asks for.
+
+Bodies fill the house first and then the craft in order, so the berth a body walks to is decided
+before it sets off and does not change under it. A rung bought with nobody spare is a balloon tied
+to the mast, and that is the same honest picture every other station gives when you buy the room
+before the body.
+
+### Build it in stages that each leave the game playable
+
+1. **One craft, end to end.** The array with one entry in it, the purchase, the walk to the mast and
+   the boarding, the patrol, the radial pull, muck out from under the basket, the drawing, save and
+   restore. Complete and playable for a single balloon; the house is untouched throughout.
+2. **The recycler and the clog.** Dust from the basket when the recycler is fitted; the
+   column-beneath rule and the stall it reads as; the mark on the mast.
+3. **The fleet.** The rung, the cap, the lanes, the staffing order, and aiming each mote at the
+   nearest crewed craft rather than at the one.
+4. **The record.** The report's numbers, the verify rules that watch the craft's own ledger, the
+   tests, and this section rewritten as built.
+
+**The hard parts, in order:** the boarding, which the mooring answers; the pull, which has to leave
+the house's own draught working exactly as it does today while a second kind of mouth reads the same
+sky; and the drawing, which is the first thing in the yard with no ground under it.
+
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
