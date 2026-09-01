@@ -309,11 +309,25 @@ house, `clogged()`, and every reader of `S.haze`. The house drains the ledger at
 the rate it already quotes, and each unit drained is one caught mote as far as
 `S.scrubMuck` and `S.scrubBank` are concerned.
 
-Four stages: the wash drawn with the band still running underneath, so the two
-readings can be judged side by side; cut the band; the polish pass (metered
-wisps into the throat, colored from the mix); the record. The hard parts, in
-order: the wash reading as weather rather than as a filter, the rain budget
-keeping beats that were emergent, and the plume's lifetime.
+**The sky stays cells.** Not a tint and not a gradient — the art rule at the top
+of DESIGN.md forbids both, and a wash would have been the first gradient in the
+game. Each sky cell has a threshold hashed off its own coordinates, over a couple
+of octaves of noise so they clump, and a cell is painted when its threshold falls
+under the current density. Rising pollution *adds* cells without disturbing the
+ones already painted, so the sky thickens rather than shimmers; past saturation
+the painted cells step down through the darker shades, so it goes on getting
+worse after it has run out of room to get fuller. The field is sampled against a
+slowly drifting offset off the wind's own swings, so it moves with no entity in
+it. It stops at the ground line — the yard reads the same at any level — and
+stops short of solid. No local clearing around a working station: the level is
+global, so the picture is.
+
+Four stages: the field drawn with the band still running underneath, so the two
+readings can be judged side by side — look at it before anything is cut; cut the
+band; the polish pass (metered wisps into the throat, colored from the mix); the
+record. The hard parts, in order: the field reading as haze rather than as a
+dither pattern, which is a matter of noise and drift and is judged by eye; the
+rain budget keeping beats that were emergent; and the plume's lifetime.
 
 ---
 

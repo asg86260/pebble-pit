@@ -2496,25 +2496,66 @@ level that quietly drains on its own is an investment the yard makes for you.
 
 ### What you see
 
-**The whole sky carries the level.** A wash over the sky, from the top of the
-window down to the ground line — over the clouds and the birds, under the works,
-so the yard itself stays clean and readable no matter how filthy the air is.
+**The sky is still cells, and the level decides how many of them.** Not a tint
+and not a gradient: the sky goes on being drawn the way everything in this game
+is drawn, in cells on the lattice in the shades of the palette, and what rising
+pollution does is *fill it in*.
 
-- **How much** is its strength, off `S.haze` against the cap.
-- **What from** is its color, off the mix: blue-grey for a yard living on the
-  cut, brown and sooty for one living on its machines, and the weighted blend of
-  the two for one living on both. The per-kind palettes already exist — `look`
-  has carried them since the band did.
-- **It is a gradient, not a filter.** Heaviest along the top of the window and
-  thinning towards the ground line, so it reads as smoke lying over the yard
-  rather than as a color correction applied to the game. It also keeps the tint
-  out of the way of the one place the player is actually looking.
+**A cell is painted when its own threshold falls under the current density.**
+Every cell of the sky has a fixed threshold hashed off its own coordinates, so
+the order they come in never changes. Raise the density and cells are **added**;
+lower it and they are taken away in the reverse order — and the ones already
+painted stay painted throughout. That is the whole trick, and it is the
+difference between a sky that thickens and a sky that shimmers: reshuffling the
+field each frame, or each time the number moves, reads as static no matter how
+correct the count is.
 
-The clouds have to give up the rule that keeps them out of the smoke — with the
-whole sky tinted there is nowhere under it to sit — so `band()` in weather.js
+It carries the level on **two axes off the one number**, which is what gives it
+a range worth reading:
+
+1. **Coverage** first — a clean sky is a scatter of pale cells with daylight all
+   through it, and it fills in as the level rises.
+2. **Weight** second — as coverage saturates, painted cells step down through
+   the darker shades, so the sky goes on getting worse after it has run out of
+   room to get fuller.
+
+**It clumps, and it drifts.** Per-cell noise on its own is television static —
+evenly wrong in a way nothing in the air ever looks. So the threshold field is a
+couple of octaves of value noise rather than a flat hash, which pulls the cells
+into soft patches with thin places between them, and the field is *sampled*
+against a slowly moving offset driven by the same two slow swings the wind
+already runs on. The cells stay on the lattice and stay crisp; the haze slides
+through them. That is also what keeps the sky from being a still picture without
+a single entity in it to step.
+
+**How much and what from, kept apart.** Density is the level. Color is the mix —
+which palette the painted cells are drawn from, blue-grey through to soot, the
+same per-kind shades `look` has carried since the band did. So the sky says both
+things at once and neither one is doing the other's job.
+
+**It stops at the ground line, and it stops short of solid.** Cells fill the sky
+above the works and no further, so the yard is exactly as readable at a filthy
+sky as at a clean one — the sky is unmistakably the thing that got dirty, and
+nothing the player is reading has to be read through it. And the worst it ever
+gets is heavy rather than closed: most cells painted, in the darkest shades,
+obviously filthy, with the clouds still visible behind it. The reading tops out
+well before the sky becomes an obstacle, because a sky that closed over would be
+buying pressure the pollution rate already applies with interest.
+
+The clouds give up the rule that keeps them out of the smoke — with the whole
+sky carrying haze there is nowhere under it to sit — so `band()` in weather.js
 takes a top of its own instead of reading `SMOG_TOP + SMOG_BAND`. A pale cloud
 seen through your own haze is the correct picture now rather than the confusing
 one: the haze is nearer than the weather, and it is in the way of it.
+
+**No local clearing, anywhere.** A crewed scrubber does not thin the cells around
+it and neither does a balloon. The level is one number for the whole yard, so the
+field thins everywhere at once, evenly, and a halo following a working station
+would be showing local cleaning that is not happening — the same kind of lie as
+the fan that quoted a rate it did not apply. What a working house shows instead
+is the wisps, which are metered by the rate and so cannot say anything untrue
+about it.
+
 
 ### The plumes stay
 
@@ -2596,17 +2637,20 @@ What survives is the rest of it, and it is enough:
 - Its cruising height comes off the window rather than off `bandTop`/`bandLow`,
   which no longer exist.
 - The wisps fly into its intake too, so a crewed craft visibly works.
-- And there is a new reason for it that is not a rationalization: **a sky that is
-  a wash wants something moving in it.** The close-up dust in `air.js` keeps the
-  yard alive; the sky above the ground line has clouds that barely move and
-  birds now and then. A balloon crossing it is the only worked thing up there.
+- And there is a new reason for it that is not a rationalization: **nothing
+  *works* up there.** The field drifts and the close-up dust in `air.js` keeps
+  the yard alive, but the sky above the ground line holds clouds that barely
+  move and birds now and then, and not one thing anybody put there on purpose. A
+  balloon crossing it is the only worked thing in the sky.
 
 ### Build it in stages that each leave the game playable
 
 1. **The number becomes the sky.** `S.hazeMix` as the ledger with `S.haze` summed
-   off it, and the wash drawn — strength, weighted hue, gradient. **The band goes
-   on running underneath, untouched.** So both readings are on screen at once and
-   the new one can be judged against the old before anything is deleted.
+   off it, and the field drawn — the hashed thresholds, the two octaves, the
+   drifting sample, coverage then weight, colored off the mix. **The band goes on
+   running underneath, untouched.** So both readings are on screen at once and
+   the new one can be judged against the old before anything is deleted. Look at
+   it before anything is cut; this is the stage the whole rework turns on.
 2. **Cut the band.** The persistent field and its constants go; `foul` becomes a
    plume plus a ledger entry; the house drains the ledger instead of swallowing;
    the rain moves to a budget; the clouds get a top of their own.
@@ -2615,11 +2659,17 @@ What survives is the rest of it, and it is enough:
    "The air" sections above rewritten as one, and this section rewritten as
    built.
 
-**The hard parts, in order:** the wash — a full-sky tint is the first thing this
-game has ever drawn behind everything, and getting it to read as weather rather
-than as a filter is the whole feature; the rain budget, which has to keep beats
-that were emergent before; and the plume's lifetime, which is the one number that
+**The hard parts, in order:** the field — getting cells on a lattice to read as
+haze rather than as a dither pattern is the whole feature, and it is a matter of
+the noise, the clumping and the drift rather than of the arithmetic, so it is
+judged by eye and not by a check; the rain budget, which has to keep beats that
+were emergent before; and the plume's lifetime, which is the one number that
 decides whether the cause of the pollution is still legible.
+
+**One thing this gets for free that the wash would have fought:** the art rule
+at the top of this document — flat shapes, no textures, no gradients. A tint over
+the sky would have been the first gradient in the game and would have read as one.
+A field of cells is what everything else here already is.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
