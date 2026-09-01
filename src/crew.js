@@ -757,6 +757,11 @@ const MOVES = {
   spin: {
     beat: 1.2,
     beats: [2, 3],
+    // How far this move carries the body off its mark at a given beat. Only the
+    // spin travels, and naming it here means the duck can take it back off when
+    // it re-anchors -- see `jig`. Without that the anchor swallows the offset and
+    // hands it back all at once when the duck lets go.
+    dx: beat => Math.sin(beat * Math.PI * 2) * P,
     at: (w, swing, dt, zone, beat) => {
       const to = w.moveFrom + Math.sin(beat * Math.PI * 2) * P;
       if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
@@ -964,7 +969,28 @@ function heldUp(w, zone, now) {
   // So the marks come with it. A body that has been moved dances where it has
   // been put, and there is nothing left to pull it back.
   if (duck(w, zone)) {
-    w.jigAt = w.moveFrom = w.x;        // and it dances from where it was put
+    w.jigAt = w.x;                     // and it dances from where it was put
+    // ...on the mark the move is turning about, which is NOT where the body is.
+    //
+    // `w.x` here is the mark PLUS whatever the move has added this frame -- the
+    // spin is `moveFrom + sin(beat) * P`, and that sine is not nought at the
+    // instant a rock happens to fall. Anchoring on `w.x` swallowed the offset
+    // every ducked frame, invisibly, because the duck was walking the body
+    // anyway; the frame the duck let go, the offset was real again and the body
+    // stepped the whole of it sideways. Measured at 5.52px in the middle of a
+    // spin, against a bar of three.
+    //
+    // Which is why `dance.test.mjs` passed: its own seed came in at 2.90, three
+    // per cent under the bar. Seeds 1 and 3 fail it on the tree as it stands, so
+    // the fault was always there and the check was lucky.
+    //
+    // Taking the offset back off leaves the move running. Restarting the beat
+    // instead -- which was the first fix -- holds it at nought for the whole
+    // fall, and a body that does not hop while a rock is coming down is a body
+    // standing through the celebration: `stations.js` in the browser suite says
+    // so in as many words.
+    const m = MOVES[w.move];
+    w.moveFrom = w.x - (m && m.dx ? m.dx((now - w.moveAt) / beatMs(w, m)) : 0);
     w.y = stand(w);
   }
 }
