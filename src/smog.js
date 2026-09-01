@@ -22,8 +22,8 @@
 // dust on the ground.
 
 import { footing, solidNear, SOLID } from './route.js';
-import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
-         SMOG_SAMPLE, SMOG_RAIN_ODDS, RAIN_GAP,
+import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_RAIN_BEND, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
+         SMOG_SAMPLE, RAIN_GAP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
@@ -1810,16 +1810,39 @@ export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0
 // --- whether it rains ----------------------------------------------------------------
 // The sky is looked at every few seconds and asked, not compared against a line
 // every frame. What a sample gives is a chance, and the chance is how filthy it
-// is: nothing at all under the line, about one in eight the moment it crosses,
-// and a certainty at the brim.
+// is.
 //
 // So a full sky is a thing that is *going* to rain rather than a thing that
 // rains at a number, and the yard cannot be played by the arithmetic -- you
 // watch it darken and you get on with the shovels.
+//
+// **There is no line any more.** It used to be nothing at all under
+// `SMOG_RAIN_AT` and a chance ramping from there to the brim, and the reason
+// written down for that line was a good one: the rain used to arrive while the
+// sky was still a scatter of specks, so the thing it was supposed to be a
+// consequence of was never on screen long enough to be read as a cause.
+//
+// That reason belonged to a sky you could not read. The field says how filthy it
+// is at every level now -- see hazefield.js -- so a shower at a middling sky has
+// something visible behind it, and the line was buying nothing but a cliff. What
+// is left is one curve: how often it rains *is* how dirty the sky is, all the way
+// down.
+//
+// Bent hard rather than straight, which is what keeps a lightly dirty yard from
+// being rained on. The chance is the share of the cap raised to `SMOG_RAIN_BEND`,
+// so it falls away far faster than the sky clears: a quarter-full sky is a
+// shower every several minutes, a half-full one every couple, and a brimming one
+// rains as soon as `RAIN_GAP` lets it.
+//
+// And **nought at nought**, exactly. A clean sky is not a one-in-a-million chance
+// that happens to lose: it is not a question. That is not only fair, it is what
+// keeps `breaks` from taking a number off the yard's one generator every few
+// seconds for the whole of a game -- see the note there, and why every seeded run
+// would otherwise diverge over a coin that was never flipped.
 export function rainOdds() {
-  if (S.haze < SMOG_RAIN_AT) return 0;
-  const over = (S.haze - SMOG_RAIN_AT) / Math.max(1, SMOG_CAP - SMOG_RAIN_AT);
-  return Math.min(1, SMOG_RAIN_ODDS + Math.max(0, over) * (1 - SMOG_RAIN_ODDS));
+  if (!(S.haze > 0)) return 0;
+  const share = Math.min(1, S.haze / SMOG_CAP);
+  return Math.min(1, Math.pow(share, SMOG_RAIN_BEND));
 }
 
 // Seconds since the last shower stopped, and how long it is since the sky was
@@ -1953,16 +1976,29 @@ export function airReadout() {
     // What that haze is made of, in shares of one. The level says how much and
     // this says what from; see `hazeShares`.
     mix: hazeShares(),
+    // Kept for the cloud, which still sizes itself against it, and for anything
+    // that wants a name for "properly filthy". It is no longer a line the rain
+    // waits behind -- see `rainOdds`, which is one curve all the way down.
     at: SMOG_RAIN_AT,
-    // The brim as well as the line. A sky at the line only *might* rain; a sky
-    // at the brim is going to, on the next look -- which is the difference the
-    // sampling makes, and the number a check winds to when it wants weather.
+    // The brim: a sky at the brim rains as soon as the dry gap lets it, which is
+    // the number a check winds to when it wants weather.
     cap: SMOG_CAP,
-    share: Math.min(1, S.haze / SMOG_RAIN_AT),
+    // How full the sky is, against the brim rather than against the old line --
+    // so it is the same nought-to-one the field's own density is drawn from, and
+    // it can no longer read as one while the sky still has a quarter to go.
+    share: Math.min(1, S.haze / SMOG_CAP),
     fouling: +(fouling() * 60).toFixed(1),
     scrubbing: +(scrubbed() * 60).toFixed(1),
-    // blank when the house is winning, which is the number worth playing for
-    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000),
+    // How long until the sky is at the brim, at the rate it is filling. Blank
+    // when the house is winning, which is the number worth playing for.
+    //
+    // It used to count down to `SMOG_RAIN_AT`, and that was a countdown to the
+    // rain because the rain could not happen before it. It can now, at odds that
+    // rise the whole way, so this is a countdown to the *worst* the sky gets
+    // rather than to the next shower -- there is no such thing as the next
+    // shower any more, only how likely one is. See `odds`, just below, which is
+    // the honest answer to that question.
+    dueMs: net <= 0 ? null : Math.round(((SMOG_CAP - S.haze) / net) * 1000),
     // What a look at the sky would say right now, and how long it has been dry.
     // The board shows how far off the line is; these are the two numbers behind
     // the fact that reaching it is not the same as it raining.

@@ -141,6 +141,11 @@ const SCENES = {
   haze1:  `${HAZE} window.__air({haze: 900});`,
   haze2:  `${HAZE} window.__air({haze: 2100});`,
   haze3:  `${HAZE} window.__air({haze: 4200});`,
+  // The same sky at two moments, to see whether it is actually moving. A still
+  // cannot show motion; a pair of them can, and the difference between these two
+  // is what three seconds of drift and rise comes to.
+  hazemove0: `${HAZE} window.__air({haze: 2100});`,
+  hazemove1: `${HAZE} window.__air({haze: 2100}); window.__fast(3);`,
   hazeboth: `${RICH} window.__air({haze: 2100}); window.__look(window.__state().rockLeftX - 300);`
 };
 

@@ -189,11 +189,42 @@ export const HAZE_FINE = 8;
 // specks. Nearly nothing, and that is the whole character of the sky: haze is
 // specks, and a field that organises them into patches draws cloud instead. A
 // little is kept so the sky is not perfectly even, which nothing in the air is.
-export let HAZE_CLUMP = 0.12;        // and how much of the field is the coarse one
+// Nothing, by default. Haze is specks; a field that organises them into patches
+// draws cloud. It is on the panel because a sky with some weather in it is a
+// thing somebody may want, not because the sky needs any.
+//
+// It is applied *after* the high-pass that makes the field blue -- see
+// `buildField` -- because it is the one piece of low frequency that is wanted on
+// purpose, and high-passing it would take it straight back out.
+export let HAZE_CLUMP = 0.0;
 // Cells a second the field creeps through the sky, at full wind. Slow: at a
 // tenth of a cell a second you never catch it moving and the sky is never quite
 // the sky it was a minute ago, which is the whole job.
-export let HAZE_DRIFT = 0.11;
+// Cells a second the field creeps sideways, at full wind. It was a fifteenth of
+// this and the sky was a photograph: at a tenth of a cell a second the haze
+// moves one cell every nine seconds, which is a thing you can measure and not a
+// thing you can see. The band learnt the same lesson about its own sway and
+// wrote it down at SWAY_PACE.
+//
+// There is a ceiling as well as a floor, and it is not far above this. The field
+// steps in whole cells, so the drift rate *is* how often the sky jumps: much
+// past two cells a second and two layers stepping out of phase stop reading as
+// haze drifting and start reading as haze boiling. This and HAZE_RISE are both
+// on the tunable panel, because where between those two a sky looks right is not
+// a thing a check or a screenshot can answer -- only watching it can.
+export let HAZE_DRIFT = 1.6;
+// And cells a second it rises, always, wind or no wind. This is the one that
+// keeps the sky from ever being a still picture: the sideways creep is the
+// wind's and the wind crosses zero, and a haze that stops dead every time it
+// does is a texture rather than weather. Smoke goes up whatever the air is
+// doing.
+export let HAZE_RISE = 0.6;
+// What the far layer's pace is against the near one's. Every cell reads both
+// layers and averages them, so a cell fades between two drifting fields rather
+// than belonging to one of them -- which is what makes the sky billow instead of
+// slide, and, because averaging two fields has less variance than either, comes
+// out more even than a single layer rather than less.
+export let HAZE_FAR = 0.45;
 // How much of the field a full sky paints. Not all of it -- the worst it ever
 // gets is heavy rather than closed, so there are always thin places to see the
 // clouds through, and a sky that shut over would be buying pressure the
@@ -219,7 +250,7 @@ export let HAZE_GIVE = 0.20;
 // than as a yard under haze. Pulled in, the clumps mostly decide *how heavy* a
 // part of the sky is rather than whether there is anything there at all -- which
 // is the whole ask: the whole sky carries the level.
-export let HAZE_CONTRAST = 0.74;
+export let HAZE_CONTRAST = 1.0;
 // And the curve from the level to the density. Straight, the first third of the
 // range is invisible: a sky at a fifth of the cap paints a fifth of the field,
 // all of it at the faintest weight the screen can honestly show. Bent, the sky
@@ -243,7 +274,20 @@ export const SMOG_SAMPLE = 5;        // seconds between one look at the sky and 
 // in eight, so a yard that has just crossed waits the better part of a minute on
 // average -- and it is an average and not a wait, so sometimes it opens on you
 // straight away.
-export const SMOG_RAIN_ODDS = 0.12;
+// Unused since the rain became a curve rather than a line: it was the chance at
+// the moment the sky crossed SMOG_RAIN_AT, and there is no crossing now. Kept
+// out of the file rather than kept as a number nothing reads.
+// export const SMOG_RAIN_ODDS = 0.12;
+// How hard the rain's odds bend against how full the sky is. The chance is the
+// share of the cap raised to this, so a lightly dirty yard is very nearly never
+// rained on and a filthy one is rained on constantly -- one curve, no line.
+//
+// Worth knowing what the numbers come out at, because this is the whole of the
+// weather's pacing. Against a five-second sample and a minute's dry between
+// showers: a quarter-full sky is about one shower in nine or ten minutes, a
+// half-full one about one in two, three-quarters about one a minute, and a
+// brimming one rains the moment RAIN_GAP lets it.
+export let SMOG_RAIN_BEND = 3.5;
 // ...and the odds climb the further over the line it is, reaching certainty at
 // the brim. A sky held at the cap is going to rain on the next look, which is
 // what keeps the ceiling from being a place a yard can park under for ever.
@@ -1999,6 +2043,21 @@ export const TUNABLE = [
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1,
     get: () => HAZE_CA, set: v => { HAZE_CA = v; } },
+  // The field's own. All five are judged by eye and by nothing else -- what a
+  // sky looks like is not a thing a check can be asked -- so they are on the
+  // panel where they can be dialled while looking at it.
+  { key: 'HAZE_DRIFT', label: 'haze drift', min: 0, max: 8, step: 0.1,
+    get: () => HAZE_DRIFT, set: v => { HAZE_DRIFT = v; } },
+  { key: 'HAZE_RISE', label: 'haze rise', min: 0, max: 4, step: 0.05,
+    get: () => HAZE_RISE, set: v => { HAZE_RISE = v; } },
+  { key: 'HAZE_CELL_INK', label: 'haze cell weight', min: 0.02, max: 0.8, step: 0.01,
+    get: () => HAZE_CELL_INK, set: v => { HAZE_CELL_INK = v; } },
+  { key: 'HAZE_GAIN', label: 'haze at the brim', min: 0.2, max: 1, step: 0.02,
+    get: () => HAZE_GAIN, set: v => { HAZE_GAIN = v; } },
+  { key: 'HAZE_CLUMP', label: 'haze clumping', min: 0, max: 1, step: 0.02,
+    get: () => HAZE_CLUMP, set: v => { HAZE_CLUMP = v; } },
+  { key: 'SMOG_RAIN_BEND', label: 'rain bend', min: 1, max: 8, step: 0.1,
+    get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000,
     get: () => LOO_EVERY, set: v => { LOO_EVERY = v; } },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05,

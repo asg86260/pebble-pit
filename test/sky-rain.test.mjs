@@ -17,20 +17,27 @@ import { group, ok, state, run, runUntil, makeItRain } from './helpers.mjs';
 group('a full sky is a threat rather than a stopwatch', async () => {
   run(0.4);
   window.__crew(0, 0);
-  // Over the line, and left alone for a second. Nothing is asked of the sky
-  // between one look and the next, so the frame it crosses on is not the frame
-  // it breaks on.
+  // Properly filthy, and left alone for a second. Nothing is asked of the sky
+  // between one look and the next, so the frame it reaches a number on is not
+  // the frame it breaks on -- which is the point, and is what survives the line
+  // going away.
   window.__air({ haze: state().smog.at + 1, muck: 0 });
   run(1);
   const crossed = state().smog;
 
-  // What the odds are worth, read off the yard rather than worked out here: a
-  // clean sky is not a question at all, a sky at the line is a chance, and a sky
-  // at the brim is a certainty.
-  window.__air({ haze: Math.round(state().smog.at / 2) });
+  // What the odds are worth, read off the yard rather than worked out here.
+  //
+  // There is no line any more -- see `rainOdds`. How often it rains *is* how
+  // dirty the sky is, all the way down: nought at a clean sky exactly, a small
+  // chance at a middling one, and a certainty at the brim. What used to be
+  // asserted here is that anything under `at` was not a question at all, and
+  // that was the cliff this replaces.
+  window.__air({ haze: 0 });
   const clean = state().smog.odds;
-  window.__air({ haze: state().smog.at + 1 });
-  const line = state().smog.odds;
+  window.__air({ haze: Math.round(state().smog.cap / 4) });
+  const light = state().smog.odds;
+  window.__air({ haze: Math.round(state().smog.cap / 2) });
+  const half = state().smog.odds;
   window.__air({ haze: state().smog.cap });
   const brim = state().smog.odds;
 
@@ -38,11 +45,19 @@ group('a full sky is a threat rather than a stopwatch', async () => {
   const came = makeItRain();
   window.__air({ haze: 0, muck: 0 });
   return [
-    ok(!crossed.raining, 'crossing the line is not the same as it raining',
+    ok(!crossed.raining, 'reaching a filthy sky is not the same as it raining',
        `${Math.round(crossed.haze)} haze, dry`),
-    ok(clean === 0, 'a sky under the line is not a question', `${clean}`),
-    ok(line > 0 && line < 1, 'a sky at the line is a chance', `${line}`),
+    ok(clean === 0, 'a clean sky is not a question at all', `${clean}`),
+    ok(light > 0 && light < half, 'a lightly dirty sky is a small chance',
+       `${light} against ${half} at half`),
+    ok(half > 0 && half < brim, 'and a filthier one is a bigger chance',
+       `${half}`),
     ok(brim === 1, 'and a sky at the brim is a certainty', `${brim}`),
+    // The bend is the whole of the pacing: it has to fall away far faster than
+    // the sky clears, or a middling yard is rained on constantly. Quarter-full
+    // must be a small fraction of half-full, not half of it.
+    ok(light < half / 4, 'and the odds fall away far faster than the sky does',
+       `${light} against ${half}`),
     ok(came, 'and a sky that is certain to break, breaks')
   ];
 });
