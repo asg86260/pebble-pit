@@ -246,6 +246,11 @@ export const SMOG_GO_MS = 420;
 // a couple of hundred specks a second; the cap is generous against that and
 // exists so a pathological rate cannot grow a list nobody bounded.
 export const GOING_CAP = 400;
+// How quickly a fading speck's own drift eases off, and how hard the wind leans
+// one that a mouth has just taken. Both small: it is finishing a movement, not
+// starting one.
+export const GOING_EASE = 1.1;
+export const SMOG_GO_LEAN = 0.30;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
 // How deep the band is, as a floor under it rather than a depth: the haze fills
 // the sky from SMOG_TOP down to this many cells above the ground line.
@@ -283,21 +288,25 @@ export const SMOG_GIVE = 0.15;       // how far one mote may differ from the nex
 export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is carried
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
-// How far a puff climbs before it joins the sky, in world pixels off the place
-// it was made, give or take PUFF_CLIMB_GIVE either way.
+// How fast a puff climbs, in world pixels a frame, and how much one may differ
+// from the next.
 //
-// It used to climb until it reached **its own slot's height**, and slots are
-// spread over the whole sky -- so a speck that drew a slot near the top of the
-// window climbed the whole window to get there, at the speed of a thing coming
-// off a swing. Most of the plume behaved and a few motes flew. A puff is smoke
-// leaving a stack: it goes up a little way and is then part of the air, and
-// where in the air it belongs is the settle's business, not the climb's.
+// This is the number that decides whether a plume reads as smoke or as sparks,
+// and it is the one that was actually at fault when specks were seen streaking
+// up the window. It was 0.55 with half again on top -- so the quickest speck went
+// nearly twice the pace of the slowest, left it behind, and drew the eye
+// straight up. Slower, and much closer together: the plume rises as a body.
 //
-// The rest of the journey is not lost, it is handed over: `settleHere` eases the
-// mote from where the climb ended to its slot over SMOG_SINK, which is a slow
-// diffusing rather than a speck making a run for the top of the screen.
-export const PUFF_CLIMB = P * 13;
-export const PUFF_CLIMB_GIVE = P * 5;
+// A mote climbs all the way to the height it is going to live at -- see
+// `stepPuffs` -- so this also sets how long one is in the air on the way up.
+// About half the sky is the average trip, which at this pace is eight seconds or
+// so; a speck bound for the very top takes twice that, and takes it calmly.
+// Measured by the size of the climbing population, which at a steady rate is the
+// birth rate times the length of the climb: about three hundred and thirty
+// specks on their way up over a yard running three machines.
+export const PUFF_UP = 0.40;
+export const PUFF_UP_GIVE = 0.14;
+export const PUFF_UP_FLOOR = 0.20;   // and the crawl it never slows below
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as

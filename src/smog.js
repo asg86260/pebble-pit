@@ -27,10 +27,10 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
-         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, PUFF_CLIMB, PUFF_CLIMB_GIVE, SMOG_TINTS,
+         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, PUFF_UP, PUFF_UP_GIVE, PUFF_UP_FLOOR, SMOG_TINTS,
          BALLOON_WISP_FROM,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         SMOG_GO_MS, GOING_CAP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
+         SMOG_GO_MS, GOING_CAP, GOING_EASE, SMOG_GO_LEAN, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { CRAFT, craftMouth, craftDrop, working } from './balloon.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
@@ -269,14 +269,17 @@ export function foul(grains, x, y, kind = 'dust') {
     // what a climbing one has of its own is the climb.
     const p = skyMote(x + (rand() - 0.5) * P * 2, y, kind);
     p.up = true;
-    p.vy = -(0.55 + rand() * 0.5);
+    // How fast it goes up, and it is the one number that decides whether a plume
+    // reads as smoke or as sparks. It was more than twice this and spread twice
+    // as wide, so the quickest specks left the slowest behind and drew the eye
+    // straight up the window. Slower and closer together: the plume rises as a
+    // body, and a speck bound for the top of the sky takes its time getting
+    // there instead of making a run for it.
+    p.vy = -(PUFF_UP + rand() * PUFF_UP_GIVE);
     // Where it started and which way it leans. A plume widens with height --
     // every puff leaning on the same shared sway sent the lot up as one straight
     // cylinder, which reads as a pipe rather than as smoke.
     p.lean = (rand() - 0.5) * 2;
-    // how far it goes up before it is sky, its own for each speck so a plume
-    // frays at the top rather than ending on a ruled line
-    p.climb = PUFF_CLIMB + (rand() - 0.5) * 2 * PUFF_CLIMB_GIVE;
     enter(p);
   }
 }
@@ -352,9 +355,6 @@ const skyMote = (x, y, kind = 'dust') => ({
   // leans on the way up. See `stepPuffs`.
   vy: 0,
   y0: y,
-  // how far above `y0` this one climbs before it is part of the sky; nought for
-  // anything that was never a puff
-  climb: 0,
   lean: 0,
   // What a hand through the smoke and a fan on the other side of the yard have
   // bent it out of place by. Both ease back to nought and both start there.
@@ -407,7 +407,12 @@ function spread(list, n) {
 // is thick and thin; this only says how many of them there are.
 const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 
+// The height a mote lives at: its slot's own place down the sky. One line, and
+// it is what `moteY` reads too -- see there.
+const slotY = (m, top, deep) => top + m.sv * deep;
+
 function stepPuffs(secs) {
+  const top = bandTop(), deep = bandLow() - top;
   const w = windAt(now());          // one wind, asked once, for the whole plume
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
@@ -444,24 +449,31 @@ function stepPuffs(secs) {
     }
     // It slows on the way up, but it always gets there: a puff that ran out of
     // push halfway and hung about would be a swing that never reached the sky.
-    p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
+    // It eases off as it goes, but never below a crawl -- a puff that ran out of
+    // push halfway and hung about would be a swing that never reached the sky.
+    p.vy = Math.min(p.vy * (1 - secs * 0.12), -PUFF_UP_FLOOR);
 
-    // **A puff climbs a little way and is then part of the air.**
+    // **A puff climbs to the height it is going to live at, and stops there.**
     //
-    // This tested the underside of a thirteen-cell strip once, and then -- when
-    // the sky became the whole window -- the speck's own slot height, so that
-    // every puff climbed to the place it was going to live. Both are the same
-    // mistake at different sizes: they make the climb responsible for getting
-    // the mote all the way home. Slots are spread over the whole sky, so a speck
-    // that drew one near the top climbed the entire window to reach it, at the
-    // speed of a thing coming off a swing. Most of the plume behaved and a few
-    // motes flew.
+    // Which is where this started, and the round trip is worth writing down. It
+    // was the underside of a thirteen-cell strip; then the sky became the whole
+    // window and it became the speck's own slot height; then a few specks were
+    // seen streaking upward and it became a short fixed rise off the stack.
     //
-    // A short rise off the place it was made, and then it settles wherever it
-    // has got to. Nothing about the journey is lost: `settleHere` hands it to
-    // the band, which eases it from here to its slot over SMOG_SINK -- a slow
-    // diffusion instead of a run for the top of the screen.
-    if (p.y > p.y0 - p.climb) continue;
+    // That last one was wrong, and wrong in a way that looked like a fix. Cutting
+    // the climb short does not stop a mote going up -- it hands the rest of the
+    // journey to `settleHere`, which eases it from where the climb stopped to its
+    // slot over SMOG_SINK. So the speck still crossed the sky; it just did the
+    // last half of it as a slow glide instead of a climb, which is exactly the
+    // "haze flying up to settle" that came back.
+    //
+    // A mote climbs to its slot, so the settle has nothing left to do vertically
+    // and there is no second journey to see. The streaking was never the
+    // distance -- it was the *pace*, and that is fixed where it is set, in
+    // `foul`. On average a speck rises about half the sky, because that is where
+    // the middle of the sky is; the spread either side of that is what fills the
+    // window rather than making a band of it.
+    if (p.y > slotY(p, top, deep)) continue;
     // Arrived, and the wind up there has it.
     //
     // It joins the band somewhere along the sky rather than directly over the
@@ -519,7 +531,11 @@ function settleHere(m) {
   // speck never went out and so had nothing to come back from, which was true
   // when it arrived where it had climbed to, and is not true now.
   if (GOING.length < GOING_CAP) {
-    GOING.push({ x: m.x, y: m.y, kind: m.kind, tone: m.tone, ink: m.ink, t: 1 });
+    // still climbing, and still leaning the way it was leaning: what is left
+    // behind at the top of a climb is smoke thinning as it goes, not a speck
+    // parked in the air.
+    GOING.push({ x: m.x, y: m.y, kind: m.kind, tone: m.tone, ink: m.ink, t: 1,
+                 vx: m.lean * PLUME_LEAN * 2, vy: m.vy });
   }
   m.fade = 0;
   // The climb, over. Set back rather than deleted: these two used to be
@@ -1062,8 +1078,11 @@ function eat(owe, pay, craft) {
     // Out of the sky now -- the level is the count, so it drops on this frame --
     // and a picture of it left behind to fade. See `GOING`.
     if (GOING.length < GOING_CAP) {
+      // and it goes on drifting on the wind while it thins, because that is what
+      // it was doing a moment ago and nothing up here stops.
       GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind,
-                   tone: m.tone, ink: m.ink, t: 1 });
+                   tone: m.tone, ink: m.ink, t: 1,
+                   vx: windAt(now()) * SMOG_GO_LEAN * m.give, vy: 0 });
     }
     dropped(m);
     SKY.splice(sweep, 1);
@@ -1230,14 +1249,29 @@ function pour(secs) {
   if (!SKY.some(doomed)) S.raining = false;
 }
 
-// One frame of the fading. Nothing moves -- a speck being taken is not a speck
-// going anywhere, and the one thing this yard has already learnt about the
-// scrubbing is that moving the sky about to show it working is too much to look
-// at. It thins where it is and it is gone.
+// One frame of the fading, and **it keeps whatever motion it had.**
+//
+// These were parked where the speck stood, on the reasoning that a speck being
+// taken is not a speck going anywhere -- which is true of the taking and wrong
+// about the picture. What you saw was a mote crossing the sky, or climbing out
+// of a stack, coming to a dead stop and only then thinning out. Nothing in the
+// air stops. A thing that halts and fades reads as the frame going wrong rather
+// than as smoke going.
+//
+// So it carries its own drift and eases off as it goes, the way everything else
+// up here does. It is still not being *pulled* anywhere -- see `eat`, and the
+// whole argument about not moving the sky to show a mouth working. It simply
+// finishes the movement it was already making.
 function stepGoing(secs) {
   const by = secs / (SMOG_GO_MS / 1000);
+  const slow = Math.max(0, 1 - GOING_EASE * secs);
+  const f = secs * 60;
   for (let i = GOING.length - 1; i >= 0; i--) {
     const g = GOING[i];
+    g.x += (g.vx || 0) * f;
+    g.y += (g.vy || 0) * f;
+    g.vx *= slow;
+    g.vy *= slow;
     g.t -= by;
     if (g.t <= 0) GOING.splice(i, 1);
   }
