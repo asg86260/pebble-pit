@@ -1446,9 +1446,16 @@ export function drawBalloons() {
     const left = bx - w / 2;
 
     ctx.fillStyle = '#000';
-    // The tether, while it is anywhere near the mast: a balloon tied to a post
-    // is the whole of what an uncrewed one has to say for itself.
-    if (c.lift < 0.98) {
+    // The tether, and **only while the craft is actually tied down.**
+    //
+    // It used to be drawn the whole way up, which made the rope the loudest thing
+    // about a launch: a black line growing out of the ground for two seconds,
+    // stretching to follow the balloon, then vanishing. A rope that pays out
+    // behind a rising balloon is a rope that is not holding it, and drawing one
+    // says the opposite of what is happening. What a mooring line is for is
+    // saying "this thing is not going anywhere", so it is there while that is
+    // true and gone the instant it is not.
+    if (c.lift < 0.02) {
       const mast = Math.round(mastX());
       const foot = walkY(c.x);
       ctx.fillRect(mast, by, P, Math.max(0, foot - by));

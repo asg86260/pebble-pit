@@ -589,6 +589,18 @@ export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a
 // falls out of the bottom.
 export const BALLOON_FILTER_W = P * 9;
 export const BALLOON_FILTER_H = P * 4;
+// How far off its lane a craft floats on its own breath, in pixels either way.
+// A balloon holding one height exactly is a balloon on a rail; this is what the
+// yard's own two-swings-against-each-other trick buys, and it is derived off the
+// clock so there is nothing to save. See `bobOf`.
+export const BALLOON_BOB = P * 3;
+// What the wind does to its pace: a share either way, so it runs with the
+// weather and labours against it. The same number the haze's own creep is on, so
+// a gust that leans the sky leans the thing flying through it.
+export let BALLOON_WIND = 0.45;
+// And its own slow swing on top, so two craft on the same wind are still not
+// doing the same thing.
+export let BALLOON_SWING = 0.22;
 // Where the lanes are, as a share of the sky's own depth. The first craft rides
 // high and each one after it a little lower, so a fleet crosses rather than
 // passing through itself.

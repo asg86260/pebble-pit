@@ -25,11 +25,13 @@
 import { P, WORKER, FARM_WALK, BALLOON_RUNGS, BALLOON_DUST, BALLOON_RATE,
          BALLOON_PACE, BALLOON_LIFT, BALLOON_W, BALLOON_H, BALLOON_BASKET,
          BALLOON_LANE_TOP, BALLOON_LANE_GAP, BALLOON_EDGE,
-         BALLOON_FILTER_W, BALLOON_FILTER_H } from './config.js';
+         BALLOON_FILTER_W, BALLOON_FILTER_H,
+         BALLOON_BOB, BALLOON_WIND, BALLOON_SWING } from './config.js';
 import { S, scrub } from './state.js';
-import { frames } from './clock.js';
+import { frames, now } from './clock.js';
 import { bandTop, bandLow } from './smog.js';
 import { walkY, yardLeft } from './world.js';
+import { windAt } from './wind.js';
 
 // --- the craft ----------------------------------------------------------------------
 // An array of craft, not a count, from the very first one. A fleet is more
@@ -109,7 +111,11 @@ export function craftY(i) {
   const c = CRAFT[i];
   if (!c) return 0;
   const down = walkY(c.x) - BALLOON_BASKET;      // basket on the ground at the mast
-  const up = laneY(i);
+  // The lane, plus whatever the craft's own slow breath is doing to it. Scaled by
+  // `lift`, so a balloon on the ground does not bob -- a thing tied down and
+  // loaded does not float, and one that did would look like it was about to be
+  // stepped into by somebody chasing it.
+  const up = laneY(i) + bobOf(i) * c.lift;
   return down + (up - down) * c.lift;
 }
 
@@ -192,6 +198,50 @@ export function leaveBerth(w) {
   if (w.goal === 'aloft') { w.goal = 'to'; w.aloft = false; }
 }
 
+// --- the wander ------------------------------------------------------------------
+// What keeps a craft from reading as a thing on rails.
+//
+// A balloon crossing the yard at a fixed pace on a fixed line is a tram. What it
+// is *supposed* to be is a bag of air being carried about by the same weather
+// everything else in this sky answers to -- so it leans on the wind, it rises and
+// settles on its own slow breath, and it never quite repeats.
+//
+// **Derived, never stored.** All of it comes off the clock and the craft's own
+// index, so there is nothing here to save, nothing to restore, and nothing that
+// can come back out of a save disagreeing with where the thing is drawn. The
+// same rule the machines keep about their geometry.
+//
+// Two swings pulling against each other rather than one, and their periods do
+// not divide into each other -- which is the trick the wind itself uses, and the
+// reason it never settles into a beat you could count. One sine is a pendulum
+// and you can see it coming.
+const BOB_A = 7.9, BOB_B = 11.3;      // seconds, and deliberately not a ratio
+
+// Each craft gets its own place in both swings, off the golden ratio, so no two
+// of them ever rise and fall together.
+const phase = i => i * 0.6180339887498949 * Math.PI * 2;
+
+// How far off its lane a craft is floating, this instant.
+export function bobOf(i) {
+  const t = now() / 1000, p = phase(i);
+  return (Math.sin(t / BOB_A * Math.PI * 2 + p) * 0.62
+        + Math.sin(t / BOB_B * Math.PI * 2 + p * 1.7) * 0.38) * BALLOON_BOB;
+}
+
+// And what the wind is doing to its pace. With the weather it runs on; against
+// it it labours -- the same number the sky's own creep and the band's sway are
+// driven by, so a gust that leans the haze leans the balloon carrying it.
+//
+// Never to a standstill and never backwards: a craft that stopped dead in a lull
+// would look broken rather than becalmed, and one blown back the way it came
+// would be a thing with no engine, which is not what this is. It is a balloon
+// with a fan in it.
+const paceOf = i => {
+  const w = windAt(now());
+  const own = Math.sin(now() / 1000 / BOB_B * Math.PI * 2 + phase(i));
+  return Math.max(0.35, 1 + w * BALLOON_WIND * CRAFT[i].dir + own * BALLOON_SWING);
+};
+
 // --- one frame ------------------------------------------------------------------------
 export function stepBalloons() {
   const f = frames();
@@ -217,7 +267,8 @@ export function stepBalloons() {
       continue;
     }
 
-    // Up, and crossing.
+    // Up, and crossing -- at whatever pace the weather and its own swing are
+    // giving it this instant, rather than at a fixed one. See `paceOf`.
     //
     // The pace is kept *fractional* here and rounded at the moment of drawing.
     // Rounding it here instead is the obvious thing and it stops the craft dead:
@@ -225,7 +276,7 @@ export function stepBalloons() {
     // every single frame, so the balloon rose, reached its lane and then hung
     // there for ever. A thing that moves less than a pixel a frame has to
     // remember the part of the pixel it has moved.
-    c.x += c.dir * BALLOON_PACE * f;
+    c.x += c.dir * BALLOON_PACE * paceOf(i) * f;
     const from = yardLeft() + BALLOON_EDGE * P;
     const to = Math.max(from + P, (S.worldW || 0) - BALLOON_EDGE * P);
     if (c.x <= from) { c.x = from; c.dir = 1; }
