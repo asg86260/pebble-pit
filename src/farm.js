@@ -334,6 +334,19 @@ export const tillerRun = () => {
   return k < 1 ? k : 2 - k;
 };
 
+// Which way it is pointing: 1 up the row, -1 back down it.
+//
+// Read off the same clock the position is, never stored. A tractor at the far
+// end of the row turns round and comes back, and it does not reverse the whole
+// way -- every other body in this yard faces where it is going, and the one that
+// crosses the most ground was the one that did not. The run is a saw wave, so
+// the direction is simply which half of it we are in, and the turn happens at
+// exactly the frame the travel does.
+export const tillerWay = () => {
+  if (plotCount() < 2) return 1;              // standing still: it faces the row
+  return ((S.tillerAt || 0) % 2) < 1 ? 1 : -1;
+};
+
 const tillerPlot = () => {
   const n = plotCount();
   return Math.max(0, Math.min(n - 1, Math.round(tillerRun() * (n - 1))));

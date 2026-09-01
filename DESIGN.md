@@ -1499,13 +1499,49 @@ deleted when you buy one, they are the fallback. Throwing it is a job, not a
 setting: you ask, and the nearest free body walks over and does it, the way a
 janitor walks to a mess. Nothing in this yard happens without hands.
 
-**The lever is a thing in the yard, drawn on the machine and clicked there** --
-not a row on a board. `buy()` returns immediately for any row carrying a `job` or
-a `dial`, and a lever is neither a purchase nor a `+`/`-` stepper; and the ram
-has no board of its own to put it on. It is hit-tested beside the roster's
-buttons, with a tooltip that says why nothing happened when there is no free body
-to send. Same argument that moved the quarry's rows onto the quarry board: a
-decision about a place is made at the place.
+**The lever is a switch on the station's roster, not a row on a board and not a
+post in the yard.** `buy()` returns immediately for any row carrying a `job` or a
+`dial`, and a lever is neither a purchase nor a `+`/`-` stepper; and the ram has
+no board of its own to put it on. Drawn small enough to stand in a pixel yard it
+read as a fencepost, one more black shape among the hundred that do nothing --
+and the question it asks, *are these hands working this station or is the
+machine*, is the same question the count above it answers about how many hands.
+So it is a strip under that count, hit-tested beside the roster's buttons, with a
+tooltip that says why nothing happened when there is no free body to send.
+
+**And it is a slide switch, because a checkbox is a question with no question
+written on it.** A plate with a slot knocked white out of it, a knob riding in
+the slot, and the machine's own mark standing at the far end. The knob at the far
+end is the machine working the station; at the near end, the hands; and *halfway*
+while somebody is still walking over to throw it, which is the honest picture of
+an ask that has not been answered yet. Nothing about it has to be learned: the
+knob slides towards the picture of the machine.
+
+**A switch stands on ground somebody could walk to.** Every roster does, bar one:
+the quarry's, which is driven up into the sky because its own ground is a hole.
+Counts can hang anywhere -- they are numbers. A switch cannot, and hung over the
+mouth it landed square in the middle of the jaw and the hoist, a control drawn on
+top of the very machine it is about. So the quarry's count stays over the cut and
+its switch stands on the flat a few cells past the lip, off the hole's own right
+edge so it follows the hole when the hole moves.
+
+**A machine is about three bodies wide.** They were drawn at five cells by four,
+which is two thirds the height of one of the bodies the machine had just put out
+of a job -- so the thing you saved the whole ladder for arrived looking like a
+crate somebody had left lying about, and the tiller in particular was lost among
+its own plants. Every machine is now roughly ten cells across, which is the
+smallest a thing can be here and still read as *plant* rather than as an object.
+Nothing about their positions was retuned to suit: the offsets that place a
+chimney, a rope, a wheel or a driver's seat are read off the pictures, so a
+machine redrawn again brings its own furniture with it.
+
+**And the tractor faces where it is going.** It is the only machine that travels,
+and it was the only thing in the yard that travelled backwards half the time --
+bonnet trailing, chimney at the wrong end, driver riding the front axle up the
+row. Its direction is read off the same saw wave its position is, so it turns
+round on exactly the frame the travel does, and the wheels, the seat and the
+chimney mirror with the picture rather than each keeping their own idea of which
+end is the front.
 
 **Off is quick because the walk is short, not because of a guarantee.** An
 earlier draft claimed a running machine always has its tender standing at it, so

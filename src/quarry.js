@@ -15,6 +15,7 @@ import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWI
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
+import { spriteW, spriteH, JAW } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
@@ -880,9 +881,13 @@ export const QUARRY_SECTIONS = [
 // thing is taken.
 export const jawX = () => {
   const c = quarryShape();
-  return Math.round(((c.from + c.to) / 2 - P * 2) / P) * P;
+  // Half its own width off the middle, read off the picture: a machine centred
+  // by a literal is a machine that walks sideways the day it is redrawn.
+  return Math.round(((c.from + c.to) / 2 - P * Math.round(spriteW(JAW[0]) / 2)) / P) * P;
 };
-export const jawY = () => dugTopY(jawX() + P) - P * 3;
+// Standing on the floor as the floor is now, its bottom row sunk a cell into it
+// the way a body's feet are.
+export const jawY = () => dugTopY(jawX() + P) - P * (spriteH(JAW[0]) - 1);
 
 defineMachine('jaw', {
   job: 'quarriers',

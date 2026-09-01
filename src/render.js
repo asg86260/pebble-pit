@@ -26,7 +26,7 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, asked } from './machines.js';
-import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER } from './sprites.js';
+import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
@@ -34,7 +34,7 @@ import { jawX, jawY } from './quarry.js';
 import { ramX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
-import { tillerAt } from './farm.js';
+import { tillerAt, tillerWay } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
@@ -3130,6 +3130,14 @@ const built = key => { const m = machine(key); return !!(m && m.bought); };
 // front, opening and shutting on its own beat. It stands on the ground as the
 // ground is now -- see `jawY`, which reads `dugTopY` -- so when the quarry falls
 // back in the jaw comes up with it, the way a quarrier's feet do.
+// Where the jaw's stack stands and where the hoist's rope runs, in cells off the
+// sprite's own left edge. Both are facts about the pictures above, so both are
+// read off them rather than written down a second time here -- the offsets that
+// used to be literals were the reason growing a machine meant hunting its
+// chimney afterwards.
+const jawStackCol = () => spriteW(JAW[0]) - 2;
+const ropeCol = () => HOIST[spriteH(HOIST) - 1].indexOf('.');
+
 export function drawJaw() {
   if (!S.quarryOpen || !built('jaw')) return;
   const x = Math.round(jawX() / P) * P;
@@ -3138,9 +3146,11 @@ export function drawJaw() {
   // not the same shape shifted, so it is drawn as a different picture.
   drawSprite(ctx, JAW[stroke('jaw') < 0.5 ? 0 : 1], x, y);
   // the stack, which is not part of the machine's own picture because the smoke
-  // comes off the top of it and wants to know where that is
+  // comes off the top of it and wants to know where that is. Two cells in from
+  // the back, so it stands over the engine end rather than over the mouth --
+  // read off the sprite's width so it stays there if the jaw is ever redrawn.
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + P * 4, y - P * 2, P, P * 2);
+  ctx.fillRect(x + jawStackCol() * P, y - P * 2, P, P * 2);
 }
 
 // The hoist: an upright frame on the deck over the mouth of the cut, a white
@@ -3149,8 +3159,10 @@ export function drawJaw() {
 // resited.
 export function drawHoist() {
   if (!S.quarryOpen || !built('jaw')) return;
+  // Centred over the mouth: the frame's rope channel lands on the middle of the
+  // jaw's own mouth, which is where a skip coming up out of the cut belongs.
   const x = Math.round((jawX() + P) / P) * P;
-  const top = Math.round((S.groundY - P * 8) / P) * P;
+  const top = Math.round((S.groundY - P * (spriteH(HOIST) + 1)) / P) * P;
   drawSprite(ctx, HOIST, x, top);
 
   // The line down to the jaw, and the skip riding it. Not part of the frame's
@@ -3159,12 +3171,13 @@ export function drawHoist() {
   const jy = jawY();
   const from = top + spriteH(HOIST) * P;
   ctx.fillStyle = '#000';
-  if (jy > from) ctx.fillRect(x + P, from, P, jy - from);
+  const rope = x + ropeCol() * P;
+  if (jy > from) ctx.fillRect(rope, from, P, jy - from);
   const drop = Math.round((jy - from) / P);
   const t = stroke('jaw', 2200);
   const ride = Math.round(Math.abs(1 - t * 2) * Math.max(0, drop));
   ctx.fillStyle = '#fff';
-  ctx.fillRect(x + P, from + ride * P, P, P);
+  ctx.fillRect(rope, from + ride * P, P, P);
   ctx.fillStyle = '#000';
 }
 
@@ -3172,6 +3185,11 @@ export function drawHoist() {
 // face and strikes. One white slot for the piston, and the arm is the thing that
 // moves -- it is the only machine whose working end is somewhere other than
 // where its body stands, which is the whole of why it can be there at all.
+// How many rows of the ram's picture are stack rather than engine -- the rows
+// above the solid body, counted off the sprite, so the arm still comes out of
+// the middle of the engine if the chimney is ever made taller.
+const BONNET = RAM.findIndex(r => !r.includes('.'));
+
 export function drawRam() {
   if (!built('ram')) return;
   const x = Math.round(ramX() / P) * P;
@@ -3191,19 +3209,24 @@ export function drawRam() {
               : t < 0.18 ? Math.round(rest + (gap - rest) * (t / 0.18))
               : t < 0.34 ? gap
               : Math.max(2, Math.round(gap - (gap - rest) * ((t - 0.34) / 0.66)));
+  // Out of the middle of the body's height, not off a row counted from its top:
+  // the arm is the machine's *centre line*, and a literal there is a literal to
+  // fix by hand every time the engine grows a row.
+  const mid = Math.round((H - BONNET) / 2) + BONNET;      // the body's middle row
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + W * P, y + P * 2, P * reach, P * 2);
-  ctx.fillRect(x + W * P + (reach - 1) * P, y + P, P * 2, P * 4);   // the head
+  ctx.fillRect(x + W * P, y + (mid - 1) * P, P * reach, P * 2);
+  ctx.fillRect(x + W * P + (reach - 1) * P, y + (mid - 2) * P, P * 2, P * 4);   // the head
 
   // How far through this boulder it is. The hill is the one workplace whose
   // progress has no shape you can read from beside the machine.
   const share = rockShare();
   if (share > 0) {
     const wide = Math.max(1, Math.round((W - 2) * share));
+    const bar = y + (H - 2) * P;                          // the last row inside the body
     ctx.fillStyle = '#fff';
-    ctx.fillRect(x + P, y + P * 4, (W - 2) * P, P);
+    ctx.fillRect(x + P, bar, (W - 2) * P, P);
     ctx.fillStyle = '#000';
-    ctx.fillRect(x + P, y + P * 4, wide * P, P);
+    ctx.fillRect(x + P, bar, wide * P, P);
   }
 }
 
@@ -3221,6 +3244,12 @@ export function drawRam() {
 //
 // The ground line is where a body's feet are: `walkY` is the top of a body
 // standing there, not the surface under it.
+// A column of the tractor's picture, in cells off its left edge, mirrored when
+// it is facing the other way. One place that knows how the flip works, so the
+// wheels, the seat and the chimney cannot disagree with the sprite about which
+// end is the front.
+const tCol = c => tillerWay() < 0 ? spriteW(TILLER) - 1 - c : c;
+
 export function drawTiller() {
   if (!S.farmOpen || !built('tiller')) return;
   // Whole pixels, not whole cells. The tractor *crosses the farm*, and snapped
@@ -3230,14 +3259,24 @@ export function drawTiller() {
   // grid is what things are *made of*, not what they travel on.
   const x = Math.round(tillerAt());
   const g = Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P;
-  drawSprite(ctx, TILLER, x, g - spriteH(TILLER) * P);
+  // Facing where it is going, like everything else that walks in this yard. It
+  // is the only machine that travels, and it was the one thing that travelled
+  // backwards half the time -- bonnet trailing, exhaust at the wrong end, driver
+  // riding the front axle up the row. `flip` is the same mirror a body gets.
+  const back = tillerWay() < 0;
+  drawSprite(ctx, TILLER, x, g - spriteH(TILLER) * P, { flip: back });
 
   // The spokes turning. Two cells, moving round the wheels the picture already
   // has -- which at this size is the whole of what a turning wheel looks like.
   const t = stroke('tiller', 700);
-  const a = t * Math.PI * 2;
+  // Turning the way it is travelling, or the wheels drive it the other way.
+  const a = t * Math.PI * 2 * (back ? -1 : 1);
   const y0 = g - spriteH(TILLER) * P;
-  for (const [wx, wy, r] of [[x + P * 5, y0 + P * 4, 1], [x + P, y0 + P * 4, 0]]) {
+  // The hubs, off the picture: the middle of each white ring, so a redrawn
+  // tractor turns its own wheels rather than the ones the old one had -- and
+  // mirrored with the picture, so they stay inside the tyres when it turns round.
+  for (const [wx, wy, r] of [[x + tCol(6) * P, y0 + P * 5, 1],
+                             [x + tCol(1) * P, y0 + P * 5, 0]]) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(Math.round((wx + Math.cos(a) * r * P) / P) * P,
                  Math.round((wy + Math.sin(a) * r * P) / P) * P, P, P);
@@ -3251,16 +3290,18 @@ export function drawTiller() {
 export const tillerSeat = () => ({
   // Read the same way the tractor is drawn -- whole pixels -- or the seat and
   // the machine disagree by up to a cell and the driver rides beside it.
-  x: Math.round(tillerAt()) + P * 4,
-  y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P - P * 5 - WORKER
+  //
+  // On the deck over the back axle, in front of the rear fender: three cells of
+  // open air in the picture, and a body is three cells wide, so the driver fills
+  // the seat rather than perching on the edge of it.
+  // Three cells wide, so a mirrored seat starts three cells further back than
+  // the mirror of its own left edge -- `tCol` answers about a cell, and a body
+  // is not a cell.
+  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(6) - 2 : 6) * P,
+  y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P
+     - P * (spriteH(TILLER) - 1)
 });
 
-// The lever. A stand with an arm on it, and the arm's angle says what the lever
-// has been *asked* for rather than what the machine is doing -- so throwing it
-// reads as thrown immediately, while somebody is still walking over, instead of
-// looking like nothing happened for the length of a commute.
-//
-// That distinction is the whole of why `asked()` exists.
 // The belt: a run of trestles from the rock to the lip with a band over them, and
 // the band moves. It is the only machine that is *long* rather than tall, which
 // is what makes it read as a different kind of thing at a glance -- the other
@@ -3301,39 +3342,69 @@ export function drawBelt() {
 
 // The machine's switch, drawn on the roster under the headcount.
 //
-// A picture of the machine, and a checkbox: ticked, the machine works the
-// station; clear, the hands do. It used to be a pair of marks -- a worker
-// square and a machine block, each solid or outline, with a pending dot between
-// them -- which is four drawings for a yes-or-no question, and it read as one.
-// The checkbox shows what has been *asked* for rather than what the machine is
-// doing, so a click reads as a click immediately while somebody is still
-// walking over to throw the lever -- the same promise `asked()` has always
-// carried, and the whole of why it exists.
-export function drawRunSwitch(box, on, pending, key) {
-  // The very shape that stands in the yard, not a smaller cousin of it: the
-  // icon's whole job is "that thing", and the thing is its own best picture.
-  const icon = { jaw: JAW[0], ram: RAM, tiller: TILLER }[key];
-  // Six cells of checkbox on a four-cell strip, centred, because a four-cell
-  // box with a cell of border has a two-by-two heart -- so a ticked one was
-  // border touching tick, which is a solid block, which is not a checkbox.
-  // The cell of air between the two is what makes the state readable.
-  const w = P * 6;
-  const by = box.y + Math.round((box.h - w) / P / 2) * P;
-  const ih = icon ? spriteH(icon) * P : 0;
-  const bx = box.x + (icon ? (spriteW(icon) + 2) * P : 0);
-  // A cell of clear air behind the pair, because the quarry's strip hangs over
-  // the mouth of the cut: a black sprite drawn on the black of the benches is
-  // no drawing at all. Everywhere else the ground behind is white already and
-  // this paints nothing anyone can see.
+// It is a **slide switch**: a black plate with a slot knocked white out of it
+// and a knob riding in the slot, and the machine's own mark standing at the
+// right-hand end of it. The knob is at the far end when the machine is working
+// the station, at the near end when the hands are, and *halfway between* while
+// somebody is walking over to throw the lever.
+//
+// It was a checkbox before, and the trouble with a checkbox is that it is a
+// question and its answer at the same time -- a small square with a smaller
+// square in it -- and the question was never written anywhere. What is on and
+// what is off is a convention you have to be told. A knob that slides *towards*
+// the picture of the machine tells you: the further over it is, the more the
+// machine is doing, and at the other end it is doing nothing and the hands have
+// their station back. Nothing about it has to be learned.
+//
+// The middle position is the honest half of it. Throwing a lever in this yard is
+// a request -- somebody has to walk over -- and a switch that snapped straight
+// to the far end was claiming the walk had already happened. Halfway says what
+// is actually true: asked, and on its way. A click still moves it at once, which
+// is the whole of what the old drawing was trying to protect.
+export function drawRunSwitch(box, on, want, key) {
+  const mark = MACHINE_MARK[key];
+  const H = 4;                                   // the plate, in cells
+  const mw = mark ? spriteW(mark) : 0;
+  // The plate takes what the mark leaves, so the pair of them fill the strip
+  // exactly -- the roster's own width, not a width picked to look right once.
+  const W = Math.max(6, Math.round(box.w / P) - mw - 1);
+  const y = box.y + Math.round((box.h - P * H) / P / 2) * P;
+
+  // A cell of clear air behind the whole strip. Most rosters stand on bare white
+  // ground and this paints nothing anyone can see; the ones that do not -- a
+  // switch with a pile or a wall behind it -- would otherwise be black drawn on
+  // black, which is no drawing at all.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(box.x - P, by - P, bx + w - box.x + P * 2, w + P * 2);
-  if (icon) drawSprite(ctx, icon, box.x, by + w - ih);   // feet on the same line
+  ctx.fillRect(box.x - P, y - P, (W + mw + 1) * P + P * 2, P * (H + 2));
+
+  // The plate, and the slot cut out of it.
   ctx.fillStyle = '#000';
-  ctx.fillRect(bx, by, w, P);
-  ctx.fillRect(bx, by + w - P, w, P);
-  ctx.fillRect(bx, by, P, w);
-  ctx.fillRect(bx + w - P, by, P, w);
-  if (pending) ctx.fillRect(bx + P * 2, by + P * 2, P * 2, P * 2);
+  ctx.fillRect(box.x, y, W * P, P * H);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(box.x + P, y + P, (W - 2) * P, P * (H - 2));
+
+  // The knob, three cells of it, at one end of its travel or halfway along.
+  // `on` is what the machine is doing and `want` is what it has been asked for:
+  // the two agree except while somebody is walking, which is exactly the case
+  // the middle is for.
+  const KNOB = 3;
+  const run = W - 2 - KNOB;                      // cells of travel in the slot
+  const at = on === want ? (want ? run : 0) : Math.round(run / 2);
+  const kx = box.x + P + at * P;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(kx, y + P, KNOB * P, P * (H - 2));
+  // A dimple in the top of it, which is the one cell that keeps the knob a
+  // separate object from the plate. At either end of its travel the two are
+  // touching, and without this the whole end of the switch reads as one black
+  // block -- a plate somebody had filled in rather than a knob run up against
+  // the stop.
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(kx + P, y + P, P, P);
+  ctx.fillStyle = '#000';
+
+  // And what it is a switch *for*, standing at the end the knob runs towards.
+  if (mark) drawSprite(ctx, mark, box.x + (W + 1) * P,
+                       y + P * H - spriteH(mark) * P);   // feet on the plate's line
 }
 
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and
@@ -3344,9 +3415,10 @@ export function drawRunSwitch(box, on, pending, key) {
 // decides that. A stack puffing over an idle machine would be the drawing
 // claiming something the yard denies.
 const STACKS = {
-  jaw:    () => ({ x: jawX() + P * 3, y: jawY() - P * 2 }),
-  ram:    () => ({ x: ramX() + P, y: S.groundY - P * 6 }),
-  tiller: () => ({ x: tillerAt() + P, y: walkY(tillerAt() + WORKER / 2) + WORKER - P * 4 }),
+  jaw:    () => ({ x: jawX() + jawStackCol() * P, y: jawY() - P * 2 }),
+  ram:    () => ({ x: ramX() + P * 2, y: S.groundY - P * spriteH(RAM) }),
+  tiller: () => ({ x: tillerAt() + tCol(2) * P,
+                   y: walkY(tillerAt() + WORKER / 2) + WORKER - P * spriteH(TILLER) }),
   // At the lip end, over the last leg that has ground under it -- not at the
   // head, which hangs out over the hole.
   belt:   () => ({ x: beltPost(), y: beltY() - P * 3 })

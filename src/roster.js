@@ -62,6 +62,16 @@ export const POSTS = [
     // mouth instead: the one station whose own ground is not somewhere a
     // roster can go, so it goes in the sky above it.
     above: () => P * 13,
+    // ...and the switch does not go up there with it. A roster in the sky is a
+    // count in the sky, which is only a number and can hang anywhere; a switch
+    // is a thing you walk up to and throw, and hung over the mouth it landed in
+    // the middle of the jaw and the hoist -- a control drawn on top of the very
+    // machine it is about, which is the one place it cannot be read.
+    //
+    // There is ordinary ground a few cells past the lip, so it stands on it.
+    // Off the quarry's own right edge, so it follows the hole when the hole is
+    // resited, and clear of the rim by the width of the strip itself.
+    runAt: () => quarry.x + quarry.w + WIDE / 2 + P * 3,
     kit: true },
   // The sky. Its roster stands on the ground under the meteor -- the work is a
   // long way over it, but the buttons belong where the body walks to, and a
@@ -97,6 +107,23 @@ export function postAt(p) {
 // It sits under the headcount rather than beside it because it is a *part* of
 // that number, not another number: of the four on the rock, two are breakers.
 // Beside it, the two read as separate crews.
+// Where the switch stands. Under the count, at the bottom of the strip, on every
+// post that keeps its roster on the ground -- and at the post's own `runAt`,
+// down at the ordinary roster depth, on one that does not.
+//
+// Written here rather than as a second case in the quarry, because "the switch
+// goes under the count unless the count is not somewhere a switch can go" is a
+// rule about rosters, and a rule about rosters lives with the rest of them.
+function runBox(p, left, y) {
+  const h = BTN;
+  if (p.runAt) {
+    const x = Math.round(p.runAt() / P) * P;
+    return { x: Math.round((x - WIDE / 2) / P) * P,
+             y: Math.round((S.groundY + P * 14) / P) * P, w: WIDE, h };
+  }
+  return { x: left, y: y + WORKER + P * 2 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
+}
+
 function boxes(p) {
   const { x, y } = postAt(p);
   const left = x - WIDE / 2;
@@ -119,8 +146,11 @@ function boxes(p) {
     // is "is this station worked by hands or by the machine", which is the same
     // question the counter above it answers about *how many* hands, so it
     // belongs there: one strip per station, saying who is doing the work.
-    run: { x: left, y: y + WORKER + P * 2 + (p.kit ? WORKER + P * 2 : 0),
-           w: WIDE, h: BTN }
+    //
+    // Unless the post has said otherwise, which one of them has: a roster driven
+    // up into the sky by a hole in the ground takes its counts with it, and
+    // leaves its switch on ground somebody can stand on. See `runAt`.
+    run: runBox(p, left, y)
   };
 }
 

@@ -12,6 +12,7 @@ import {
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor, bench } from './state.js';
+import { spriteW, spriteH, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -530,13 +531,17 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
 // face would be inside the next rock. It stands clear of the apron and reaches:
 // `rockLeft()` less its own width and a cell of daylight. The arm is long, which
 // is what an arm is for.
-export const ramX = () => Math.round((rockLeft() - ROCK_CLEAR - P * 5) / P) * P;
+// Its right shoulder stands two cells inside the clear line, however wide the
+// engine is drawn -- so growing the machine grows it *backwards*, into the empty
+// ground behind it, rather than forwards into the apron the next boulder lands on.
+export const ramX = () =>
+  Math.round((rockLeft() - ROCK_CLEAR - P * (spriteW(RAM) - 2)) / P) * P;
 
 defineMachine('ram', {
   job: 'miners',
   type: 'miner',
   at: ramX,
-  y: () => S.groundY - P * 4,
+  y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
   // Where the body stands. The yard side of the machine, clear of the apron --
   // the ground right against the face is where the next boulder lands, and a
   // tender posted in it would be stood on. Without a `tendAt` the runner looked for a miner
