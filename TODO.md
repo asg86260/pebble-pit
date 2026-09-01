@@ -269,7 +269,8 @@ new structures into the pile-full mark and per-cell variation as given.
 
 ## 7. The sky is one number
 
-**Status:** designed and agreed, not built. Takes precedence over item 4 — it
+**Status:** stage 1 built and on the branch (`70bc541`); stages 2-4 to go. Takes
+precedence over item 4 — it
 deletes the band that item was written against. See DESIGN.md, "The sky is one
 number (design, not built)".
 
@@ -322,9 +323,18 @@ it. It stops at the ground line — the yard reads the same at any level — and
 stops short of solid. No local clearing around a working station: the level is
 global, so the picture is.
 
-Four stages: the field drawn with the band still running underneath, so the two
-readings can be judged side by side — look at it before anything is cut; cut the
-band; the polish pass (metered wisps into the throat, colored from the mix); the
+Four stages. **Stage 1 is done:** `src/hazefield.js` draws the field, the band
+still runs underneath it, `window.__band(false)` takes the band off to judge the
+field alone, and `node tools/look.mjs haze1,haze2,haze3` is the look. `S.hazeMix`
+is the ledger and `syncMix` keeps it level with `S.haze`, which the band still
+owns. The three faults worth remembering, all found by eye: a noise octave whose
+y period did not divide the field's height, so it did not tile and drew fat bands
+of haze with clean air ruled between them; ink scaled for the band's thousands of
+overlapping motes, which left the first third of the range invisible; and a fifth
+of per-cell jitter, which reads as film grain at a full sky — the exact complaint
+this replaces. At a heavy sky the variation has to come from the field.
+
+Still to do: cut the band; the polish pass (metered wisps into the throat, colored from the mix); the
 record. The hard parts, in order: the field reading as haze rather than as a
 dither pattern, which is a matter of noise and drift and is judged by eye; the
 rain budget keeping beats that were emergent; and the plume's lifetime.
