@@ -238,6 +238,19 @@ export const RAIN_GAP = 60;          // seconds of dry before another may break
 // the house, the same dust out of the recycler and the same length of shower.
 // The only thing that changes is how much sky one speck stands for.
 export const SMOG_PER_MOTE = 0.16;
+// How long a speck takes to fade once a mouth has taken it. Long enough to be a
+// fade rather than a flicker, short enough that it is gone before you have
+// looked at it: what this is for is the *absence* of popping, not an effect.
+export const SMOG_GO_MS = 420;
+// And a ceiling on how many can be fading at once. Four mouths at a full fan is
+// a couple of hundred specks a second; the cap is generous against that and
+// exists so a pathological rate cannot grow a list nobody bounded.
+export const GOING_CAP = 400;
+// How quickly a fading speck's own drift eases off, and how hard the wind leans
+// one that a mouth has just taken. Both small: it is finishing a movement, not
+// starting one.
+export const GOING_EASE = 1.1;
+export const SMOG_GO_LEAN = 0.30;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
 // How deep the band is, as a floor under it rather than a depth: the haze fills
 // the sky from SMOG_TOP down to this many cells above the ground line.
@@ -275,6 +288,25 @@ export const SMOG_GIVE = 0.15;       // how far one mote may differ from the nex
 export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is carried
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
+// How fast a puff climbs, in world pixels a frame, and how much one may differ
+// from the next.
+//
+// This is the number that decides whether a plume reads as smoke or as sparks,
+// and it is the one that was actually at fault when specks were seen streaking
+// up the window. It was 0.55 with half again on top -- so the quickest speck went
+// nearly twice the pace of the slowest, left it behind, and drew the eye
+// straight up. Slower, and much closer together: the plume rises as a body.
+//
+// A mote climbs all the way to the height it is going to live at -- see
+// `stepPuffs` -- so this also sets how long one is in the air on the way up.
+// About half the sky is the average trip, which at this pace is eight seconds or
+// so; a speck bound for the very top takes twice that, and takes it calmly.
+// Measured by the size of the climbing population, which at a steady rate is the
+// birth rate times the length of the climb: about three hundred and thirty
+// specks on their way up over a yard running three machines.
+export const PUFF_UP = 0.40;
+export const PUFF_UP_GIVE = 0.14;
+export const PUFF_UP_FLOOR = 0.20;   // and the crawl it never slows below
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as
@@ -378,13 +410,16 @@ export const SCRUB_PULL = 29.25;     // motes a second, per body in it -- per mo
 //
 // It quickens close to the mouth, where the last of a journey is a thing being
 // swallowed rather than carried.
-export const SCRUB_DRAG = 34;
-export const SCRUB_NEAR = 300;      // and within this much of the mouth it turns down and quickens
-// and how many it can have in the air at once, so the stream reads as a stream
-// rather than as the whole band arriving in a lump
-// Where the draught stops being a pull and becomes a swallow: a speck this near
-// the mouth is in it.
-export const SCRUB_GRIP = 22;
+// How far the house's throat reaches into the air over it. Nothing is dragged
+// any more -- see `eat` in smog.js -- so this is the air the throat is counted
+// as being in rather than a distance anything is pulled across.
+//
+// It replaces SCRUB_DRAG, SCRUB_NEAR and SCRUB_GRIP, which were the speed a
+// speck was hauled at, the width of the zone it turned down in, and how close it
+// had to get to go in. All three described a draught that moved the sky, and the
+// sky is not moved.
+// (No reach: a mouth takes its share of the whole sky, not the yard of it over
+// its own roof. See `eat` in smog.js for why a reach was the wrong rule.)
 // The draught you can see even when there is nothing in the air to be pulled.
 //
 // A fan with a clean sky over it was a building doing nothing: the suction is
@@ -564,6 +599,77 @@ export const QUARRY_CORES = 2;     // and the cut, once the plots are feeding it
 export const FARM_DUST = 600;      // the plots, and the first real bill
 export const QUARRY_DUST = 1800;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
+
+// --- the scrubber balloon ------------------------------------------------------
+// A craft the scrubbing house sells: it rides the sky, takes it in where it is,
+// and drops what it catches under itself. See DESIGN.md, "The scrubber balloon",
+// and src/balloon.js.
+export const BALLOON_RUNGS = 3;      // a finite ladder, like every other one
+export const BALLOON_DUST = 1200;    // what the first one costs
+export const BALLOON_RATE = 1.9;     // and how much steeper each one gets
+// World pixels a frame it crosses the yard at. Slower than a body walks: it is a
+// thing drifting on the air rather than a thing going somewhere, and a balloon
+// that outpaced the crew underneath it would read as a vehicle.
+export const BALLOON_PACE = 0.42;
+export const BALLOON_LIFT = 0.010;   // and how fast it rises off the mast, in lift a frame
+export const BALLOON_W = P * 7;      // the envelope
+export const BALLOON_H = P * 9;
+export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a body gets into
+// The filter, slung between the envelope and the basket. Wider than the neck
+// above it and than the basket below, so it reads as the works of the thing
+// rather than as part of either: the air goes in the top and what is caught
+// falls out of the bottom.
+export const BALLOON_FILTER_W = P * 9;
+export const BALLOON_FILTER_H = P * 4;
+// How far off its lane a craft floats on its own breath, in pixels either way.
+// A balloon holding one height exactly is a balloon on a rail; this is what the
+// yard's own two-swings-against-each-other trick buys, and it is derived off the
+// clock so there is nothing to save. See `bobOf`.
+export const BALLOON_BOB = P * 3;
+// What the wind does to its pace: a share either way, so it runs with the
+// weather and labours against it. The same number the haze's own creep is on, so
+// a gust that leans the sky leans the thing flying through it.
+export let BALLOON_WIND = 0.45;
+// And its own slow swing on top, so two craft on the same wind are still not
+// doing the same thing.
+export let BALLOON_SWING = 0.22;
+// Pixels a frame a craft climbs when it is going home the only way it goes home:
+// up and out of the window. Brisk -- this is a thing leaving, not a thing
+// drifting -- but slow enough to be watched going.
+export const BALLOON_LEAVE = 1.15;
+// Pixels a frame a body under a canopy comes down at.
+//
+// Still slower than it would fall -- that is what a canopy is for -- but not by
+// as much as it was. A body drifting down from the top of the sky at half a
+// pixel a frame is on screen for the best part of a minute, which is a long time
+// to watch somebody not arrive. It is a descent, not a hover.
+export const CHUTE_FALL = 0.95;
+export const CHUTE_W = P * 10;       // and how wide the canopy over it is
+export const CHUTE_H = P * 4;
+// How far over the head the canopy rides. Close in, it read as a lamp on a post
+// rather than as a thing holding a body up: what says parachute is the daylight
+// between the two, with the lines crossing it.
+export const CHUTE_GAP = P * 6;
+// Where the lanes are, as a share of the sky's own depth. The first craft rides
+// high and each one after it a little lower, so a fleet crosses rather than
+// passing through itself.
+// The first craft's lane, as a share of the sky's depth -- measured to the
+// *basket*, which is the bottom of the thing. Everything else hangs above it:
+// four cells of basket, four of filter and nine of envelope, which is a hundred
+// pixels of craft over the number set here. At a fifth of the way down the crown
+// was off the top of the window.
+export const BALLOON_LANE_TOP = 0.36;
+export const BALLOON_LANE_GAP = 0.16;
+export const BALLOON_EDGE = 6;       // cells it turns short of either end of the world
+// The craft's own draught. Radial and short: a balloon is *in* the sky, so what
+// is near it comes to it and everything else is left alone -- there is no long
+// sideways river to avoid, which is the whole reason the house's numbers are as
+// complicated as they are.
+// How far a craft's mouth reaches into the air around it. Nothing is dragged --
+// see `eat` in smog.js -- so this is simply the air the filter is counted as
+// being in, and the specks inside it are the ones it takes.
+// (No reach here either, for the same reason -- see `eat` in smog.js.)
+export const BALLOON_WISP_FROM = 90;  // and how far out the cells drawn in come from
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
@@ -792,21 +898,25 @@ export const CASINO_CHIPS = [10, 100, 1000, 'all'];
 // So past the first band the heap is a *reading* of the pot rather than a count
 // of it, on a ladder written down here rather than worked out per hand: a
 // tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
-// marks so nothing jumps and a double is always about three hundred more grains
-// on the ground.
+// marks so nothing jumps and a double is always about forty-five more grains on
+// the ground -- a fifth of the first band, which is the smallest step that still
+// reads as more sand.
 //
-//   1 - 1,000    the pot itself, one for one
-//   10,000       2,000        1,000,000     4,000
-//   100,000      3,000        10,000,000+   5,000, and that is the brim
+//   1 - 100      the pot itself, one for one
+//   1,000        250          100,000       550
+//   10,000       400          1,000,000+    700, and that is the brim
 //
-// The brim is five thousand because that is a heap you can take in at a glance
-// and settle in a frame; the fourteen thousand this stretch of ground would
-// physically take is neither. See `shownFor` in casino.js -- and note that what
+// The brim is seven hundred because that is a heap the size of the building it
+// stands beside -- 276 by 120 pixels against a block of 156 by 72 -- and the
+// thing a heap has to do from the far end of the yard is read as a heap rather
+// than as the weather. The fourteen thousand grains this stretch of ground would
+// physically take is a wall; five thousand was still twice the height of the
+// roof. See `shownFor` in casino.js -- and note that what
 // is approximate is the size of the heap and nothing else: the row says the
 // exact pot, banking credits the exact pot, and the hole fills with it.
-export const CASINO_PILE_ONE = 1000;   // the largest pot still drawn one for one
-export const CASINO_PILE_BAND = 1000;  // grains a tenfold pot adds past it
-export const CASINO_PILE_BRIM = 5000;  // and the most that ever lies there
+export const CASINO_PILE_ONE = 100;   // the largest pot still drawn one for one
+export const CASINO_PILE_BAND = 150;  // grains a tenfold pot adds past it
+export const CASINO_PILE_BRIM = 700;  // and the most that ever lies there
 // How long a settled hand stands over the building saying which way it went. A
 // wheel that stopped and told you nothing is a wheel you have to have been
 // watching, and the yard already has a mark for news you missed -- the lab's
@@ -1540,6 +1650,23 @@ export const MACHINE_MAX_BEATS = 8;
 export const MACHINE_IDLE_MS = 600;
 export const MACHINE_PUFF_MS = 1500;
 export const MACHINE_PUFF_S = 1.15;
+// A machine's stack smokes its own way: lower and shorter than a chimney does.
+//
+// Everything that smokes used to share SMOKE_RISE and SMOKE_LIFE, which is right
+// for the lab's chimney and the crew's hearth and a cigarette -- one wisp over
+// one roof, and it may take its time. A working yard has three stacks going at
+// once, in the middle of everything, and a trail that climbs at the chimney's
+// pace for the chimney's two and a half seconds becomes a streak halfway up the
+// window: which is a machine drawing more attention to itself than the crew
+// under it.
+//
+// So it goes up about half as fast and is gone in under two thirds of the time.
+// The trail that leaves the stack is about a third the length it was: still
+// plainly a machine smoking -- which the whole pollution story leans on -- and
+// no longer a streak drawing the eye off the yard and up to the top of the
+// window.
+export const MACHINE_PUFF_RISE = 0.22;
+export const MACHINE_PUFF_LIFE = 1.5;
 
 // A puff is a handful of motes let go together, not one square.
 //

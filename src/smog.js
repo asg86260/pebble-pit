@@ -27,10 +27,12 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
-         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
+         SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, PUFF_UP, PUFF_UP_GIVE, PUFF_UP_FLOOR, SMOG_TINTS,
+         BALLOON_WISP_FROM,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         SCRUB_DRAG, SCRUB_NEAR, SCRUB_GRIP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
+         SMOG_GO_MS, GOING_CAP, GOING_EASE, SMOG_GO_LEAN, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
+import { CRAFT, craftMouth, craftDrop, working } from './balloon.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
 import { now, frames } from './clock.js';
 // The same wind the dust leans on, off the same clock. Smoke and dust hanging
@@ -93,6 +95,22 @@ export const climbing = () => { let n = 0; for (const m of SKY) if (m.up) n++; r
 // On their way down, as muck. A sky mote becomes one of these when it rains.
 export const DROPS = [];
 
+// Specks on their way out: taken by a mouth, and fading where they stood.
+//
+// A mote used to be spliced out of the sky on the frame it was swallowed, which
+// is a cell blinking off. At one mouth that is a speck a frame popping somewhere
+// in the window; at four it is a sky that crackles. Nothing else in this game
+// disappears -- muck is carried, dust is banked, a rock is broken up -- and the
+// haze should not either.
+//
+// **A separate list, and not a flag on the mote.** The haze *is* the specks --
+// `reckon` is one line and it counts `SKY` -- so a fading mote left in the sky
+// would still be counted as pollution that is not there any more, and the board
+// would lag the truth by the length of the fade. It leaves the sky at once and
+// what fades is a picture of it: position, colour and weight copied off the mote
+// as it goes, because the mote itself is gone.
+export const GOING = [];
+
 // Nothing on its way into the house has a list of its own: the sky is what goes
 // in, dragged there by the draught. See `pull`.
 
@@ -112,8 +130,11 @@ export const DROPS = [];
 // clean gap under the sky and a short one with the haze in the dirt. Floored
 // against the top, so a window too short to hold both still gives the band
 // somewhere to be.
-const bandTop = () => S.camY + SMOG_TOP * P;
-const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
+// Exported, because the balloon has to agree with the air about where the sky
+// is: a craft with a cruising height of its own would ride above the haze on a
+// tall window and in the dirt on a short one. See `laneY` in balloon.js.
+export const bandTop = () => S.camY + SMOG_TOP * P;
+export const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;
 // Bodies actually through the door, not bodies assigned to it. Somebody put on
@@ -248,7 +269,13 @@ export function foul(grains, x, y, kind = 'dust') {
     // what a climbing one has of its own is the climb.
     const p = skyMote(x + (rand() - 0.5) * P * 2, y, kind);
     p.up = true;
-    p.vy = -(0.55 + rand() * 0.5);
+    // How fast it goes up, and it is the one number that decides whether a plume
+    // reads as smoke or as sparks. It was more than twice this and spread twice
+    // as wide, so the quickest specks left the slowest behind and drew the eye
+    // straight up the window. Slower and closer together: the plume rises as a
+    // body, and a speck bound for the top of the sky takes its time getting
+    // there instead of making a run for it.
+    p.vy = -(PUFF_UP + rand() * PUFF_UP_GIVE);
     // Where it started and which way it leans. A plume widens with height --
     // every puff leaning on the same shared sway sent the lot up as one straight
     // cylinder, which reads as a pipe rather than as smoke.
@@ -422,20 +449,30 @@ function stepPuffs(secs) {
     }
     // It slows on the way up, but it always gets there: a puff that ran out of
     // push halfway and hung about would be a swing that never reached the sky.
-    p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
+    // It eases off as it goes, but never below a crawl -- a puff that ran out of
+    // push halfway and hung about would be a swing that never reached the sky.
+    p.vy = Math.min(p.vy * (1 - secs * 0.12), -PUFF_UP_FLOOR);
 
-    // **A puff climbs to its own height, not to the underside of a strip.**
+    // **A puff climbs to the height it is going to live at, and stops there.**
     //
-    // This used to stop at `bandLow()` -- the bottom of the thirteen-cell band --
-    // which was the same height for every speck because the band was a strip. The
-    // sky is the whole window now, and its underside is just above the ground, so
-    // that test would have every puff arriving on the frame it was born and no
-    // speck would ever be seen to climb.
+    // Which is where this started, and the round trip is worth writing down. It
+    // was the underside of a thirteen-cell strip; then the sky became the whole
+    // window and it became the speck's own slot height; then a few specks were
+    // seen streaking upward and it became a short fixed rise off the stack.
     //
-    // So a puff rises until it reaches the place it is going to live, which is
-    // its slot's own share of the sky. Some go a little way and some go all the
-    // way up, and the plume off a swing thins out over the whole height of the
-    // window instead of stacking against a ceiling.
+    // That last one was wrong, and wrong in a way that looked like a fix. Cutting
+    // the climb short does not stop a mote going up -- it hands the rest of the
+    // journey to `settleHere`, which eases it from where the climb stopped to its
+    // slot over SMOG_SINK. So the speck still crossed the sky; it just did the
+    // last half of it as a slow glide instead of a climb, which is exactly the
+    // "haze flying up to settle" that came back.
+    //
+    // A mote climbs to its slot, so the settle has nothing left to do vertically
+    // and there is no second journey to see. The streaking was never the
+    // distance -- it was the *pace*, and that is fixed where it is set, in
+    // `foul`. On average a speck rises about half the sky, because that is where
+    // the middle of the sky is; the spread either side of that is what fills the
+    // window rather than making a band of it.
     if (p.y > slotY(p, top, deep)) continue;
     // Arrived, and the wind up there has it.
     //
@@ -480,7 +517,27 @@ function settleHere(m) {
   m.age = 0;
   m.fromX = m.x;
   m.fromY = m.y;
-  m.fade = 1;                     // it never went out, so it has nothing to come back from
+  // **It comes up to weight rather than appearing at it**, and a picture of it is
+  // left behind at the top of the climb to thin out.
+  //
+  // A puff joins the sky wherever the air up there has taken it, which is the
+  // whole argument a few lines up in `stepPuffs` and is right -- a mote that
+  // stayed over the place it rose from makes the sky a mound sitting on the
+  // rock. But that arrival is a *jump*: the speck you have been watching climb
+  // is over the works on one frame and half the world away on the next. It read
+  // as the plume popping out of existence at the top.
+  //
+  // So it is a cross-fade. This used to say `m.fade = 1` on the reasoning that a
+  // speck never went out and so had nothing to come back from, which was true
+  // when it arrived where it had climbed to, and is not true now.
+  if (GOING.length < GOING_CAP) {
+    // still climbing, and still leaning the way it was leaning: what is left
+    // behind at the top of a climb is smoke thinning as it goes, not a speck
+    // parked in the air.
+    GOING.push({ x: m.x, y: m.y, kind: m.kind, tone: m.tone, ink: m.ink, t: 1,
+                 vx: m.lean * PLUME_LEAN * 2, vy: m.vy });
+  }
+  m.fade = 0;
   // The climb, over. Set back rather than deleted: these two used to be
   // `delete`d here, which is the one operation that turns an object into a
   // dictionary for good, and it was being done to every mote in the sky on the
@@ -518,7 +575,6 @@ export function stirSmoke(wx, wy, dx, dy) {
     const k = blow * (1 - d / PLUME_STIR_R) ** 2;
     m.sx = capUp((m.sx || 0) + ux * k);
     m.sy = capUp((m.sy || 0) + uy * k);
-    dragged = true;                    // a hand through a plume leaves the same offsets
     moved++;
   }
 
@@ -904,174 +960,176 @@ export const cloudR = () => Math.round(Math.min(1, S.haze / SMOG_RAIN_AT) * 42);
 export const DRAUGHT = [];
 
 function breathe(secs) {
-  const to = intake();
-  // The same draught the sky is pulled on -- see `pull`. A bigger fan makes more
-  // of it, so what you can see round the hood is what is happening to the band.
-  const power = scrubRate() / SCRUB_PULL;
+  breatheAt(intake(), scrubRate() / SCRUB_PULL, secs, DRAUGHT_FROM);
+}
+
+// A few cells drawn in to a mouth, and nothing more than that.
+//
+// **This is the whole of what a working mouth looks like now.** The sky itself is
+// not touched -- see `eat` -- so what says a house or a craft is doing anything
+// is this: a handful of specks converging on it and gone at the lip. Metered by
+// the real rate, so an unstaffed mouth makes none, a clogged one makes none, and
+// a fifth-rung fan visibly pulls harder. It cannot say anything untrue about how
+// hard the thing is working, which is the same bargain the machines' stack puffs
+// make.
+//
+// Shared by the house and the craft: a mouth is a mouth, and the only things
+// that differ are where it is and how far out its specks come from.
+function breatheAt(to, power, secs, from) {
+  if (power <= 0) return;
   let n = DRAUGHT_PER_S * power * secs;
   while (n > 0) {
     if (n < 1 && rand() > n) break;
     n -= 1;
-    // in from anywhere round the hood, though mostly from above it: what a fan
+    // in from anywhere round the mouth, though mostly from above it: what a fan
     // facing the sky pulls on is the sky
     const a = -Math.PI / 2 + (rand() - 0.5) * Math.PI * 1.4;
-    const d = DRAUGHT_FROM * (0.5 + rand() * 0.5);
-    DRAUGHT.push({ x: to.x + Math.cos(a) * d, y: to.y + Math.sin(a) * d, t: 0 });
+    const d = from * (0.5 + rand() * 0.5);
+    DRAUGHT.push({ x: to.x + Math.cos(a) * d, y: to.y + Math.sin(a) * d, t: 0,
+                   tx: to.x, ty: to.y, from });
   }
   for (let i = DRAUGHT.length - 1; i >= 0; i--) {
     const k = DRAUGHT[i];
-    const dx = to.x - k.x, dy = to.y - k.y;
+    const dx = k.tx - k.x, dy = k.ty - k.y;
     const d = Math.hypot(dx, dy) || 1;
     // it gathers pace as it goes, the way the haze does, and is gone at the mouth
-    const step = DRAUGHT_PACE * secs * (1 + (1 - Math.min(1, d / DRAUGHT_FROM)));
+    const step = DRAUGHT_PACE * secs * (1 + (1 - Math.min(1, d / k.from)));
     if (d < P * 2) { DRAUGHT.splice(i, 1); continue; }
     k.x += (dx / d) * step;
     k.y += (dy / d) * step;
-    k.t = 1 - d / DRAUGHT_FROM;
+    k.t = 1 - d / k.from;
   }
   if (DRAUGHT.length) S.dirty = true;
 }
 
 // Whether anything up there is carrying a draught offset at all.
 //
-// `unpull` is called on every frame the house is not scrubbing, which is nearly
-// all of them, and its whole job is to find motes with an `sx` or an `sy` -- two
-// fields that are zero on every mote in a sky no fan has ever pulled on. A full
-// band is five or six thousand of them, so that is a walk of the entire sky, six
-// thousand pairs of reads, to discover nothing, sixty times a second, for a
-// building most yards have not bought yet.
-//
-// One flag answers it. It is set wherever an offset is written -- `pull`, and
-// the plume half of `stirSmoke` -- and cleared by the pass that zeroes them all.
-// Generous in the same direction the awake columns are: a flag left standing
-// costs one wasted walk, and the other way round would be motes stuck with an
-// offset the fan is no longer holding them at.
-let dragged = false;
+
 
 // What the throat has not swallowed yet, in whole motes. The house's rate is a
 // rate, and a rate below one a frame cannot be spent a frame at a time without
 // being rounded away to nothing, so what is left over is carried.
 let gullet = 0;
 
+// Where the walk starts, kept between frames. The sky is tens of thousands of
+// specks and a mouth wants half of one a frame, so the list is walked from
+// wherever it got to last time rather than from the top: starting at nought
+// every frame would take the same few hundred specks over and over and leave the
+// far end of the sky untouched for ever.
+let sweep = 0;
+
+// The house takes the sky in, and **it does not drag it about to do so.**
+//
+// This used to pull: every speck within `SCRUB_NEAR` of the throat was moved,
+// every frame, sideways along the sky and then down the last of it -- a whole
+// quarter of the band leaning towards one building. It was a fair picture of a
+// fan and it was far too much to look at, because what moved was not the dozen
+// specks actually being eaten but every speck in reach of the thing eating them.
+//
+// So nothing in the sky is moved at all. The house takes the specks it is rated
+// to take, from the air around it, and they are gone -- and what you *see* is
+// `breathe`: a few cells drawn in over the hood, metered by the same rate, which
+// is a picture of a draught rather than the whole sky being bent into one.
+//
+// It is still local. A mouth eats the air it is in, so the sky thins where the
+// works is cleaning it and fills back in as the band drifts and spreads -- which
+// is the honest reading, and it is honest precisely because the specks *are* the
+// sky. Nothing here pretends.
 function pull(secs) {
-  const to = intake();
-  // What the fan is worth, as a draught rather than as a number on a board.
-  //
-  // This read `scrubRate() / fanPull()`, which is the count of bodies inside --
-  // and `capOf` has held that at one since the house was built, so the draught
-  // was the same draught at every rung of the ladder. The fan multiplied the
-  // rate the board *quoted* and cancelled straight back out of the one line that
-  // actually moves a mote, so five rungs of it changed nothing overhead and the
-  // reading went green while the sky went on filling. Against `SCRUB_PULL`
-  // instead, so a bigger fan is a stronger pull on the sky, which is what it
-  // says on the row.
-  const power = scrubRate() / SCRUB_PULL;
-  // and what it may take this frame, never more than a second's worth banked up
-  // -- so a house that has been standing over a clear sky does not swallow a
-  // whole second of band in one gulp the moment one drifts over it.
   gullet = Math.min(gullet + scrubRate() * secs, scrubRate());
+  eat(() => gullet, n => { gullet = n; }, null);
+}
 
-  for (let i = SKY.length - 1; i >= 0; i--) {
-    const m = SKY[i];
-
-    // Nothing is taken on the way up. A house that reached into the plumes was a
-    // house catching smoke a foot off the swing that made it -- and the sky over
-    // the yard is what it is for. A speck joins the band, and *then* it is the
-    // house's business.
-    if (m.up) continue;
-
-    // Every speck is aimed at its own cell of the mouth rather than at one
-    // pixel of it. All of them steering for the same number arrived in single
-    // file: a one-cell thread hanging from the band to the roof, which is a
-    // pipe, not a draught. Spread over the width of the throat -- off the slot,
-    // so a mote keeps the same lane for its whole journey in.
-    const aim = to.x + ((m.slot % 5) - 2) * P;
-    // Asked of the sky rather than read off the mote: a mote at rest is placed
-    // by `moteX` and not written to. The draught's own offsets are part of what
-    // that answers with, so a mote being dragged never has to be stepped.
-    const dx = aim - moteX(m), dy = to.y - moteY(m);
-    const d = Math.hypot(dx, dy);
-    // A speck whose place cannot be worked out is left alone rather than treated
-    // as being in the mouth. `|| 1` used to stand here and it turned exactly that
-    // case into a pixel away.
-    if (!Number.isFinite(d)) continue;
-
-    // In -- as fast as the fan is rated to take it, and no faster.
-    //
-    // Whatever reached the mouth used to be swallowed, which made the rating on
-    // the upgrade row a decoration: what the house actually took was however
-    // many specks the draught happened to sweep into the throat, and that is a
-    // question about the shape of the sky and the width of the near zone. It
-    // came to roughly twice the rating, so one body with no fan held three
-    // machines on its own and the whole ladder was spare change. The rate is the
-    // rate now: `SCRUB_PULL` motes a second per body, times whatever fan has
-    // been fitted, counted down as they go in.
-    if (d < SCRUB_GRIP) {
-      if (gullet < 1) continue;              // full for this moment; it waits at the mouth
-      gullet -= 1;
-      dropped(SKY.splice(i, 1)[0]);
-      swallow();
-      continue;
+// One mouth, taking what it is owed out of the sky.
+//
+// **From anywhere, and that is the point.** A mouth used to be given a reach and
+// took only what was inside it, which is a fair picture of a fan and a bad rule:
+// what a mouth can take then depends on how much sky happens to be floating near
+// it, so the same house cleared its rating on one yard and a fortieth of it on
+// another. The board quotes a rate. A rate that the shape of the sky can quietly
+// veto is a number that lies.
+//
+// So the sky is one sky and a mouth takes its share of it, wherever those specks
+// are. That is also the thing itself: a scrubbing house cleans *the air*, slowly
+// and evenly, rather than the particular yard of it over its own roof -- the
+// haze is a level, and what a mouth does is bring the level down. The specks it
+// takes are picked off a rolling sweep, so it is the whole sky that thins rather
+// than one part of it wearing out.
+//
+// `owe`/`pay` rather than a number in and out, so the caller keeps its own
+// gullet: a house and three balloons each have their own, and one of them going
+// hungry must not spend another's.
+function eat(owe, pay, craft) {
+  if (owe() < 1 || !SKY.length) return;
+  let left = owe();
+  // Bounded, so a mouth cannot walk the whole sky in a frame looking for one
+  // speck. With tens of thousands of them and four mouths that walk *is* the
+  // frame -- and it buys nothing, because every speck it steps over is a speck
+  // it could have taken.
+  const look = Math.min(SKY.length, 400);
+  for (let n = 0; n < look && left >= 1; n++) {
+    sweep = SKY.length ? (sweep + 1) % SKY.length : 0;
+    const m = SKY[sweep];
+    // Nothing is taken on the way up. A mouth that reached into the plumes would
+    // be catching smoke a foot off the swing that made it, and the sky over the
+    // yard is what it is for.
+    if (!m || m.up) continue;
+    left -= 1;
+    // Out of the sky now -- the level is the count, so it drops on this frame --
+    // and a picture of it left behind to fade. See `GOING`.
+    if (GOING.length < GOING_CAP) {
+      // and it goes on drifting on the wind while it thins, because that is what
+      // it was doing a moment ago and nothing up here stops.
+      GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind,
+                   tone: m.tone, ink: m.ink, t: 1,
+                   vx: windAt(now()) * SMOG_GO_LEAN * m.give, vy: 0 });
     }
+    dropped(m);
+    SKY.splice(sweep, 1);
+    if (sweep >= SKY.length) sweep = 0;
+    swallow(craft);
+  }
+  pay(left);
+}
 
-    // The draught, and it runs *along the band* until it is over the house.
-    //
-    // Straight at the mouth from wherever it was, the whole sky slid down into
-    // one long diagonal river running the length of the yard at chimney height:
-    // the band stopped being a band, and the pollution took a low road through
-    // the middle of the town to get to the fan. Smoke over a works does not do
-    // that. It drifts along up there and goes down the throat when it is over
-    // the throat.
-    //
-    // So the pull is sideways while it is still out over the yard, and turns
-    // down only once the speck is near enough the house to be coming in. The
-    // band keeps its shape and thins towards the house, which is what a fan
-    // pulling on a still sky actually looks like.
-    const step = SCRUB_DRAG * power * secs;
-    const over = Math.abs(dx);
-    if (over > SCRUB_NEAR) {
-      // Sideways, and only sideways. A speck keeps the height it settled at, so
-      // the band keeps its depth as it slides: a sinking term as well pressed
-      // the whole sky down on to the underside of the band and what was left was
-      // a wire running the width of the world.
-      m.sx += Math.sign(dx) * Math.min(step, over);
-      dragged = true;
-      continue;
-    }
-    // Over the house: down the last of it, on a curve. The drop is weighted by
-    // how nearly overhead the speck is -- nothing at the edge of the near zone,
-    // all of it directly over the mouth -- so a speck comes along the band,
-    // tips, and falls down the throat rather than cutting the corner on a
-    // straight diagonal. The pull quickens as it closes, the way the last of
-    // anything being sucked in does.
-    // and the turn is eased rather than cornered: the sideways part fades out as
-    // the down part comes in, over a zone wide enough to be a bend you can see.
-    // Squared, so the first of the descent is gentle and the last of it is a
-    // drop -- a right angle at the top of the throat read as a pipe.
-    const in_ = 1 - over / SCRUB_NEAR;
-    const quick = 1 + in_;
-    m.sx += Math.sign(dx) * Math.min(step * quick * (1 - in_ * 0.5), over);
-    m.sy += Math.sign(dy) * Math.min(step * quick * in_ * in_ * 2.4, Math.abs(dy));
-    dragged = true;
+// --- what the craft take -------------------------------------------------------------
+// The same mouth, in the sky rather than on the ground, and it drags the air
+// about no more than the house does -- see `eat` and the note above it. A craft
+// takes the specks it is rated to take out of the air it is flying through, and
+// what you see is a few cells drawn into its filter.
+//
+// Each craft has its own gullet, for the reason the house has one: a rate below
+// one a frame is rounded away to nothing if it is spent a frame at a time, and a
+// craft that has drifted over clear air must not bank a gulp to spend the moment
+// it reaches something.
+const gullets = [];
+
+function pullCraft(secs) {
+  for (let i = 0; i < CRAFT.length; i++) {
+    if (!working(i)) { gullets[i] = 0; continue; }
+    // What one crewed mouth is worth. The fan is a number the *station* owns, so
+    // a bigger fan is a bigger draught at every mouth the station has -- the
+    // house's throat and every filter alike. It says "a bigger fan" on the row,
+    // not "a bigger fan on the house".
+    const rate = fanPull();
+    gullets[i] = Math.min((gullets[i] || 0) + rate * secs, rate);
+    eat(() => gullets[i], n => { gullets[i] = n; }, i);
+    breatheAt(craftMouth(i), rate / SCRUB_PULL, secs, BALLOON_WISP_FROM);
   }
 }
 
-// What the house does with one, once it has it. Without the recycler it comes
-// out of the back as muck on the ground and the crew have to shovel it: a house
-// that made a bad sky simply vanish was a building you bought once and then
-// forgot, and the only cost of running it was the body standing in it.
-//
-// That is also what the recycler is *for*. It was a strict bonus on top of a
-// machine that already did its whole job, so the upgrade read as optional; now
-// it is the thing that turns a pile of muck out the back into dust worth
-// carrying, which is a reason to save for it.
-function swallow() {
+function swallow(craft = null) {
   drew += 1;                       // counted at the mouth -- see `sampleAir`
+  // Where it comes down. The house has a spout on its wall; a craft has the air
+  // under its basket, wherever that is at the time -- which is the whole idea.
+  // The sink stops being one heap on one strip and becomes the ground the crew
+  // are walking anyway.
+  const at = craft == null ? outlet().x : craftDrop(craft).x;
   if (!S.recycler) {
     S.scrubMuck = (S.scrubMuck || 0) + 1;
     while (S.scrubMuck >= SCRUB_PER_MUCK) {
       S.scrubMuck -= SCRUB_PER_MUCK;
-      dropMuckAt(outlet().x, SCRUB_MUCK);
+      dropMuckAt(at, SCRUB_MUCK);
     }
     return;
   }
@@ -1081,7 +1139,10 @@ function swallow() {
   while (S.scrubBank >= 1) {
     S.scrubBank -= 1;
     S.recycled++;
-    const out = outlet();
+    // ...and from under the basket when a craft caught it, which is a place in
+    // the air rather than a lip on a wall: the grain falls from where the craft
+    // is, and the ordinary chip physics does the rest.
+    const out = craft == null ? outlet() : craftDrop(craft);
     // and it drops out of the spout rather than being thrown out of it: the arm
     // points down, so the grain goes down
     // and no two grains quite the same shade. It paid out on RECYCLE_TONE flat,
@@ -1093,45 +1154,11 @@ function swallow() {
   }
 }
 
-// And the sky letting go the moment the fan stops.
-//
-// The offsets used to ease back to nought, which slid every speck home along the
-// line it had been dragged in on: a body steps out of the house and the whole
-// stream over the roof flies back out across the yard, at the speed it came in
-// and in the wrong direction. Nothing in the air does that. What smoke does when
-// the draught under it stops is stay where it is and drift back up into the rest
-// of the smoke.
-//
-// So the pull is not undone, it is *kept*: the sideways part is folded into the
-// mote's own creep along the sky, which is the number that says where it is, and
-// the height is handed to the settle the band already has -- the same easing a
-// mote uses when it first arrives, from wherever it is now up to its place. See
-// `place`. A speck released over the house is a speck that was there, and it
-// floats up from there.
-function unpull() {
-  if (!dragged) return;                // nothing up there has been pulled on
-  dragged = false;
-  const span = Math.max(P, S.worldW || 0);
-  for (const m of SKY) {
-    if (!m.sx && !m.sy) continue;
-    // where it stands now, said in the terms the band uses. A mote's place is
-    // `fromX`, plus its creep along the sky, plus its slot's share of a stretch
-    // that opens with age -- so backing all three out of where it actually is
-    // leaves a starting point that puts it back on the same pixel. It spreads
-    // out again from there, which is the stream over the roof loosening into
-    // band as it rises rather than snapping into place.
-    const back = roamOf(m) * span + (m.su - 0.5) * spreadAt(0);
-    const x = moteX(m), y = moteY(m);
-    m.fromX = ((((x - back) % span) + span) % span);
-    m.fromY = y;
-    m.age = 0;
-    m.sx = 0;
-    m.sy = 0;
-    // It has an arrival to make again, so it goes back on the stepped list --
-    // from exactly where it was, which is what `wake` is for.
-    wake(m);
-  }
-}
+// Nothing lets go of the sky any more, because nothing takes hold of it. The
+// draught used to bend every speck within reach of the throat and `unpull` was
+// what handed them back when the fan stopped -- carefully, folding the sideways
+// part into the mote's own creep so the stream over the roof loosened rather
+// than flying home. All of that went with the dragging; see `eat`.
 
 // --- the rain ----------------------------------------------------------------------
 // No clock. It runs until the sky is empty, because what falls *is* the sky: a
@@ -1220,6 +1247,35 @@ function pour(secs) {
   // the outside.
   // Over when the sky it broke on is gone, whatever has arrived since.
   if (!SKY.some(doomed)) S.raining = false;
+}
+
+// One frame of the fading, and **it keeps whatever motion it had.**
+//
+// These were parked where the speck stood, on the reasoning that a speck being
+// taken is not a speck going anywhere -- which is true of the taking and wrong
+// about the picture. What you saw was a mote crossing the sky, or climbing out
+// of a stack, coming to a dead stop and only then thinning out. Nothing in the
+// air stops. A thing that halts and fades reads as the frame going wrong rather
+// than as smoke going.
+//
+// So it carries its own drift and eases off as it goes, the way everything else
+// up here does. It is still not being *pulled* anywhere -- see `eat`, and the
+// whole argument about not moving the sky to show a mouth working. It simply
+// finishes the movement it was already making.
+function stepGoing(secs) {
+  const by = secs / (SMOG_GO_MS / 1000);
+  const slow = Math.max(0, 1 - GOING_EASE * secs);
+  const f = secs * 60;
+  for (let i = GOING.length - 1; i >= 0; i--) {
+    const g = GOING[i];
+    g.x += (g.vx || 0) * f;
+    g.y += (g.vy || 0) * f;
+    g.vx *= slow;
+    g.vy *= slow;
+    g.t -= by;
+    if (g.t <= 0) GOING.splice(i, 1);
+  }
+  if (GOING.length) S.dirty = true;
 }
 
 function stepDrops() {
@@ -1824,7 +1880,10 @@ export function stepSmog(dt) {
   // used to take motes *and* dock the number by what the fan was worth, which is
   // the same dirt subtracted twice.
   if (scrubbing()) { pull(secs); breathe(secs); }
-  else { unpull(); DRAUGHT.length = 0; }
+  else { DRAUGHT.length = 0; }
+  // The craft take their own, wherever they happen to be. After the house, so a
+  // mote in the throat is the house's rather than being fought over.
+  pullCraft(secs);
   // The number is worked out from the sky before anything asks whether it should
   // be raining, because the answer to that question has to be about what is
   // actually overhead.
@@ -1840,6 +1899,7 @@ export function stepSmog(dt) {
   }
   if (raining()) pour(secs);
   place(secs);
+  stepGoing(secs);
   stepDrops();
 }
 

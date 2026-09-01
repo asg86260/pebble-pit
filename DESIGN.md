@@ -253,7 +253,7 @@ reads against a black building on its own.
 
 **What is on the table is a real plot of sand.** Not a drawing of a heap sized to look about right —
 one grain, one of whatever was staked, settled by the same code the yard and the hole use, on its
-own plot of ground either side of the building. A thousand on the table is a thousand grains lying
+own plot of ground either side of the building. A hundred on the table is a hundred grains lying
 there and doubling it is visibly twice the sand. It goes down beside the building and walks **left**
 past it as it fills, because that is where the empty ground is; the casino's own footprint is barred
 and `addGrain` already looks outward, so a big enough pot flows round the building on its own.
@@ -267,30 +267,41 @@ and `addGrain` already looks outward, so a big enough pot flows round the buildi
 | a loss | every grain lifts off the heap and fades out on its way up — it is *leaving*, not blinking off |
 | banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
 
-**So past a thousand the heap is a reading of the pot rather than a count of it**, on a ladder of
+**So past a hundred the heap is a reading of the pot rather than a count of it**, on a ladder of
 bands written down here rather than worked out per hand:
 
-| on the table | grains lying there |
-|---|---|
-| 1 to 1,000 | the pot itself, one for one |
-| 10,000 | 2,000 |
-| 100,000 | 3,000 |
-| 1,000,000 | 4,000 |
-| 10,000,000 and up | 5,000, and that is the brim |
+| on the table | grains lying there | and how big that is |
+|---|---|---|
+| 1 to 100 | the pot itself, one for one | 108 × 66px at the top of it |
+| 1,000 | 250 | 120 × 120px |
+| 10,000 | 400 | 162 × 120px |
+| 100,000 | 550 | 222 × 120px |
+| 1,000,000 and up | 700, and that is the brim | 276 × 120px |
 
-Between two marks it runs on the log of the pot, so nothing jumps: `shown = 1000 + 1000 ×
-log10(pot / 1000)`, clamped at the brim. Every band is a tenfold pot for a thousand more grains,
-which is what a log scale is for — a double always puts about three hundred more grains on the
+Between two marks it runs on the log of the pot, so nothing jumps: `shown = 100 + 150 ×
+log10(pot / 100)`, clamped at the brim. Every band is a tenfold pot for a hundred and fifty more
+grains, which is what a log scale is for — a double always puts about forty-five more grains on the
 ground, so a win is always visibly more sand, and the heap never grows faster than the ground can
-hold or the eye can read. The brim is five thousand grains because that is a heap you can take in at
-a glance and settle in a frame; the fourteen thousand the ground would physically take is neither.
+hold or the eye can read.
+
+**The brim is the size of the building.** That is the whole of how it was picked: the casino is 156
+by 72 pixels, the biggest heap in the game is 276 by 120, and a heap you read from the far end of
+the yard has to be a heap standing next to a shed rather than a dune with a shed at the bottom of
+it. The first go at this brimmed at five thousand grains, which drew 354 by 264 — three and a half
+times the height of the roof, and still reading as weather rather than as sand.
+
+**The heap's own ceiling comes down with it**, from forty-four cells to twenty (`TABLE_HIGH`). A
+ceiling does not make a heap smaller on its own — it trades height for width one for one, and the
+same thousand grains under a fourteen-cell ceiling is a 480px smear instead of a 234px mound — so
+the bands are what keep the footprint down and the ceiling is what keeps the shape honest: twenty
+cells clears the roof by a third and stops there.
 
 **What broke the old rule is the far end.** The pot doubles on every ride, so eleven wins off a
 thousand is two million, and two million grains is two million grains — a plot the width of the yard
 filled solid, twenty-four thousand squares in the air at once, and a frame rate that says the wheel
 has hung rather than that you are winning. The sand stopped being the picture and became the cost of
-drawing it. Everything up to a thousand is untouched: a stake of ten is ten grains, a hundred is a
-hundred, doubling either is visibly twice the sand, and that is the whole of the early table.
+drawing it. The bottom of the ladder is untouched: a stake of ten is ten grains, the hundred chip is
+a hundred, doubling either is visibly twice the sand, and that is the whole of the early table.
 
 **A grain past the first band is worth its band.** One flying square carries `pot / shown` of
 whatever was staked. That is the one number in this building that is not one, and it is confined to
@@ -306,12 +317,12 @@ cost, and did it by filling the yard rather than by saying so. A band is the sam
 advance, at a size that draws. The brim is decided before the sand is sent rather than discovered
 when the ground refuses a grain; `table.capped` stays as a backstop, because the wheel waits on the
 heap reaching the number and a ground that refused a grain with no way to say so would be a wheel
-that never went round -- but at five thousand grains on a stretch that takes fourteen, nothing
-reaches it.
+that never went round — but at seven hundred grains on a stretch that takes fourteen thousand,
+nothing reaches it.
 
 Measured on a two-million pot, which is eleven wins off the thousand chip: the heap went from 8,536
-grains to 4,301, the cloud in the air from 24,000 squares to 2,197, and the worst frame in the pour
-from 1,817 ms to 49 ms.
+grains to 700, the cloud in the air from 24,000 squares to 386, and the worst frame in the pour from
+1,817 ms to 1.7 ms.
 
 **Nothing about the hand changes.** The wheel still waits for the last grain to come to rest, a loss
 still lifts the whole heap off and fades it out, banking still throws every grain that is there over

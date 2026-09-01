@@ -8,6 +8,7 @@
 import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
+import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { resetCut } from './quarry.js';
@@ -280,6 +281,9 @@ export function persist() {
     wizards: S.wizards,
     scrubbers: S.scrubbers,
     rifters: S.rifters,
+    // The craft the house has sold. Two numbers and an eased height apiece; the
+    // lane is the index and who is aboard is a fact about the body.
+    craft: craftSave(),
     janitors: S.janitors,
     harnessLevel: S.harnessLevel,
     bootsLevel: S.bootsLevel,
@@ -572,6 +576,7 @@ export function restore() {
   }
   S.scrubbers = s.scrubbers || 0;
   S.rifters = s.rifters || 0;
+  craftLoad(s.craft);
   S.janitors = s.janitors || 0;
   S.harnessLevel = s.harnessLevel || 0;
   S.bootsLevel = s.bootsLevel || 0;
@@ -773,6 +778,7 @@ export function reset(fresh = true) {
   sky.n = 0;
   S.scrubbers = 0;
   S.rifters = 0;
+  clearCraft();
   S.janitors = 0;
   S.introThrew = 0;
   S.harnessLevel = 0;

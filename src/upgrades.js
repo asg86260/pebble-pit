@@ -14,6 +14,7 @@ import {
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
+import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse, rift } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
@@ -319,11 +320,16 @@ const capOfBare = job =>
   // recycler and the machine, not a queue inside the shed.
   //
   // This is also the argument for the machines, word for word. See `capOf`.
-  job === 'scrubbers' ? 1 :
+  // One in the house -- and one in each balloon it has sold. The shed argument
+  // above is about the *shed*: a second body at one fan is a queue. A craft is a
+  // second mouth rather than a second pair of hands at the same one, so it is a
+  // place to be and it takes a body of its own. See balloon.js.
+  job === 'scrubbers' ? 1 + craftCount() :
   // And one at the rift, for the third time and the same reason. There is
   // nothing to do there: the body holds the hole in the air open by standing at
   // it. A second pair of hands on a thing that swallows by itself would be a way
-  // of buying a faster rift, and what buys a faster rift is widening it.
+  // of buying a faster rift, and what buys a faster rift is widening it. Unlike
+  // the house it has nothing to sell that adds a second place, so it is one.
   job === 'rifters' ? (S.riftOpen ? 1 : 0) :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see

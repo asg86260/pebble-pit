@@ -168,7 +168,17 @@ group('the board counts what the mouth swallows', async () => {
   // An empty sky and a fan five rungs up: the rating is high and there is
   // nothing up there to take, so a board quoting the rating says the house is
   // winning by a mile while it stands there doing nothing.
-  fromTheField(5);
+  //
+  // **The machines off**, or the sky is not empty and the premise is gone. They
+  // used to be able to stay on: the house had to drag a speck across the yard to
+  // its throat, which took the best part of a second and a half, so four seconds
+  // after the sky was cleared almost nothing had arrived. A mouth takes its
+  // share of the sky the moment the speck has settled now -- see `eat` -- so a
+  // fouling yard is a yard with something to take, and the house honestly reads
+  // as scrubbing it. What this group is about is the board quoting what was
+  // *swallowed* rather than what the fan is rated at, and that needs a sky with
+  // nothing in it.
+  fromTheField(5, []);
   window.__air({ haze: 0 });
   run(4);
   const idle = state().smog;
@@ -220,5 +230,81 @@ group('three machines are more than a bare fan can hold, and less than a full on
        `${bare.toFixed(1)} haze/s, and climbing`),
     ok(full < 0, 'and the full ladder holds them',
        `${full.toFixed(1)} haze/s`)
+  ];
+});
+
+// What a swallowed speck does on its way out. Nothing else in this game
+// disappears -- muck is carried, dust is banked, a rock is broken up -- and a
+// cell blinking off is the one thing the sky was still doing.
+group('a speck a mouth takes fades rather than popping', async () => {
+  window.__reset();
+  window.__crew(0, 3);
+  window.__clearFloor();
+  window.__air({ open: true, haze: 2000, muck: 0, scrubbers: 1 });
+  run(25);
+  const working = state();
+
+  // The level is the count of the sky, so a fading speck must already be out of
+  // it: the board cannot be made to lag the truth by the length of a fade.
+  const rated = scrubRate() * SMOG_PER_MOTE * 60;
+  const said = working.smog.scrubbing;
+
+  window.__air({ scrubbers: 0 });
+  run(3);
+  const stopped = state();
+
+  window.__air({ haze: 0, muck: 0, open: false });
+  window.__clearFloor();
+  return [
+    ok(working.going > 0, 'a working mouth always has a few specks on the way out',
+       `${working.going} fading`),
+    // The fade is short, so what is in flight at any moment is the rate times its
+    // length and no more. A number far above that is a list nobody is emptying.
+    ok(working.going < 60, 'and only a few: the fade is short',
+       `${working.going} against a rate of ${Math.round(rated / 60)} a second`),
+    ok(Math.abs(said - rated) < Math.max(20, rated * 0.25),
+       'and the board still reads the rate, so nothing is counted twice',
+       `board ${said}/min against a rating of ${rated.toFixed(0)}/min`),
+    ok(stopped.going === 0, 'and they are all gone shortly after the mouth stops',
+       `${stopped.going} left`)
+  ];
+});
+
+// And the other end of a speck's life: arriving. A puff joins the sky wherever
+// the air up there has taken it rather than over the works it rose from -- which
+// is right, and is a jump. Without a fade at both ends it read as the plume
+// popping out of existence at the top of its climb.
+group('a speck arriving in the sky comes up to weight rather than appearing at it',
+  async () => {
+  window.__reset();
+  window.__crew(3, 3, 3, 3);
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__tip(90000);
+  window.__air({ haze: 0, muck: 0 });
+  window.__buy('ram');
+  window.__buy('jaw');
+  window.__buy('tiller');
+  run(40);                                   // a yard properly at work, and smoking
+
+  let fading = 0, going = 0, seen = 0;
+  for (let i = 0; i < 5; i++) {
+    run(0.5);
+    const f = window.__skyFades();
+    fading += f.filter(v => v < 0.95).length;
+    going += state().going;
+    seen += f.length;
+  }
+
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(seen > 0, 'the works put a sky up', `${seen} specks sampled`),
+    // Coming up to weight at the far end of the jump...
+    ok(fading > 0, 'and specks are always arriving, part way up to full weight',
+       `${fading} mid-fade over five samples`),
+    // ...and thinning out at the near end of it, which is what stops the plume
+    // reading as popping.
+    ok(going > 0, 'while what they left behind at the top of the climb thins out',
+       `${going} fading out`)
   ];
 });

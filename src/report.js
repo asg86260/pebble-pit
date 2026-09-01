@@ -43,10 +43,11 @@ import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './c
 import { buriedVisible } from './intro.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
-import { smogReport } from './smog.js';
+import { smogReport, muckCols, GOING } from './smog.js';
 import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
+import { CRAFT, craftY, crewed, working } from './balloon.js';
 import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
 
@@ -458,6 +459,29 @@ export const snapshot = () => ({
 
   // The bodies themselves: where they are, what they are saying, and what is
   // being dragged.
+  // Where the muck actually is, in columns, so a check can ask *where* a thing
+  // came down rather than only how much of it there is. The balloon's whole
+  // claim is about where.
+  muckAt: (() => {
+    const m = muckCols();
+    const out = [];
+    for (let c = 0; c < m.length; c++) if (m[c]) out.push([c, m[c]]);
+    return out;
+  })(),
+  // Anybody currently under a canopy, having stepped out of a balloon. A count
+  // and their heights, so a check can watch one actually come down.
+  // Specks a mouth has taken that are still fading where they stood. Not haze --
+  // they left the sky on the frame they were swallowed -- so this is a count of
+  // a picture, and it is here so a check can tell a fade from a pop.
+  going: GOING.length,
+  chutes: S.workers.filter(w => w.chute).map(w => Math.round(w.y)),
+  // The bodies on the scrubbers, which is the one station whose people are in
+  // two quite different places: through a door, or several hundred pixels up in
+  // a basket. `berth` is -1 for the house and the craft's index otherwise.
+  scrubCrew: S.workers.filter(w => w.type === 'scrubber').map(w => ({
+    name: w.name, x: Math.round(w.x), y: Math.round(w.y),
+    berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
+  })),
   workers: S.workers.length,
   workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
   crewNames: S.workers.map(w => `${w.name}|${w.type[0]}|${Math.round((w.lived||0)/1000)}s|m${w.mined||0}|q${w.quarried||0}|g${w.farmed||0}|s${w.stored||0}`).join(' '),
@@ -478,6 +502,14 @@ export const snapshot = () => ({
 
   // The yard's floor and the piles standing on it.
   floor: count(floor),
+  // The craft the scrubbing house has sold: where each one is, how far up, and
+  // whether anybody is in it. `up` is the one worth reading -- a crewed craft
+  // still climbing off the mast is not working yet, the same rule the house has
+  // always run on.
+  craft: CRAFT.map((c, i) => ({
+    x: Math.round(c.x), dir: c.dir, lift: +c.lift.toFixed(3),
+    y: Math.round(craftY(i)), crewed: crewed(i), up: working(i)
+  })),
   yardFull: !!S.pileFull.rock,
   pileCount: { ...S.pileCount },
   pileFull: { ...S.pileFull },

@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE_FROM, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK,
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_H, CHUTE_GAP,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -25,7 +25,7 @@ import { inRift } from './rift.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
+import { SKY, DROPS, DRAUGHT, GOING, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, specOf } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, DRILL, BIT, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { walkY } from './world.js';
@@ -35,7 +35,7 @@ import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
-import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_IDLE_MS } from './config.js';
+import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -46,6 +46,8 @@ import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
+import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET,
+         BALLOON_FILTER_W, BALLOON_FILTER_H } from './balloon.js';
 import { now } from './clock.js';
 import { press } from './press.js';
 import { rand } from './rng.js';
@@ -979,7 +981,7 @@ const CA_COOL = '#1f9ad0';         // and the cyan one
 // changes -- the same squares land in the same places -- and there are a dozen
 // calls where there were thousands.
 export function drawSmog() {
-  if (!SKY.length) return;
+  if (!SKY.length && !GOING.length) return;
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
 
@@ -1007,12 +1009,38 @@ export function drawSmog() {
     // on the mote, so a speck does not shimmer between colours frame to frame.
     const shades = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
     const tint = shades[(m.tone ?? 0) % shades.length];
-    // to the nearest twentieth, so the weights fall into a handful of buckets
-    const step = Math.round((m.ink ?? 1) * 20) / 20;
+    // to the nearest twentieth, so the weights fall into a handful of buckets --
+    // and times whatever the mote's own fade is, which is how a speck arriving in
+    // the band comes up to weight instead of appearing at it.
+    //
+    // `fade` was stepped, was used to decide when a mote could stop being
+    // stepped, and was handed out to the hooks -- and was never once drawn. So a
+    // speck reaching the top of its climb, where it joins the sky at whatever
+    // place along the world the air up there has taken it, simply appeared over
+    // there at full weight and vanished from over the works. See `settleHere`.
+    const step = Math.round((m.ink ?? 1) * (m.fade ?? 1) * 20) / 20;
+    if (!step) continue;
     const key = tint + '|' + step;
     let run = runs.get(key);
     if (!run) runs.set(key, run = { tint, ink: step, at: [] });
     run.at.push(x, y);
+  }
+
+  // ...and the ones a mouth has taken, thinning where they stood. Same buckets,
+  // same fills: a fading speck is the same speck at a lighter weight, so it goes
+  // down the same path as everything else rather than needing a pass of its own.
+  // No fringe on them -- the chromatic edge is a thing about the sky's depth, and
+  // one of these is on its way out of it.
+  for (const g of GOING) {
+    if (!onScreen(g.x)) continue;
+    const shades = SMOG_TINTS[g.kind] || SMOG_TINTS.dust;
+    const tint = shades[(g.tone ?? 0) % shades.length];
+    const step = Math.round((g.ink ?? 1) * g.t * 20) / 20;
+    if (!step) continue;
+    const key = tint + '|' + step;
+    let run = runs.get(key);
+    if (!run) runs.set(key, run = { tint, ink: step, at: [] });
+    run.at.push(Math.round(g.x), Math.round(g.y));
   }
 
   // A rect at a time, and not one path with two thousand rectangles in it.
@@ -1415,6 +1443,135 @@ export function drawTowerBar() {
 export function towerBarAt() {
   return { x: Math.round((tower.x + P * TOWER_SHAFT / 2) / P) * P,
            y: Math.round((tower.y - P * 8) / P) * P };
+}
+
+// The craft the scrubbing house sells, one per lane. See balloon.js.
+//
+// Everything about where it is comes off the craft's own geometry -- the mast is
+// the house's door, the lane is off the sky's own top and bottom, and the height
+// is eased between the two by `lift`. Nothing here is remembered, so a balloon
+// cannot end up drawn over a house that has been re-sited under it.
+//
+// **The filter is the point of the drawing.** A bag with a basket under it is a
+// balloon; what makes this one read as a *scrubber* is the works slung between
+// the two -- a vented box the air goes into at the top and what is caught falls
+// out of the bottom. Without it the craft is a nice picture of the wrong thing.
+export function drawBalloons() {
+  if (!S.scrubOpen) return;
+  for (let i = 0; i < CRAFT.length; i++) {
+    const c = CRAFT[i];
+    // Whole pixels, and *not* the lattice. Everything standing on the ground in
+    // this yard is snapped to a cell; a balloon is not standing on anything, and
+    // snapping it would turn a slow drift into a six-pixel stutter -- the same
+    // reason the tractor rolls on pixels.
+    const bx = Math.round(c.x);
+    const by = Math.round(craftY(i));
+    const w = BALLOON_W, h = BALLOON_H;
+    const fw = BALLOON_FILTER_W, fh = BALLOON_FILTER_H;
+    const ftop = by - BALLOON_BASKET - fh;     // the filter's own top
+    const top = ftop - h;                      // and the crown of the envelope
+    const left = bx - w / 2;
+
+    ctx.fillStyle = '#000';
+    // The tether, and **only while the craft is actually tied down.**
+    //
+    // It used to be drawn the whole way up, which made the rope the loudest thing
+    // about a launch: a black line growing out of the ground for two seconds,
+    // stretching to follow the balloon, then vanishing. A rope that pays out
+    // behind a rising balloon is a rope that is not holding it, and drawing one
+    // says the opposite of what is happening. What a mooring line is for is
+    // saying "this thing is not going anywhere", so it is there while that is
+    // true and gone the instant it is not.
+    if (c.lift < 0.02) {
+      const mast = Math.round(mastX());
+      const foot = walkY(c.x);
+      ctx.fillRect(mast, by, P, Math.max(0, foot - by));
+    }
+
+    // The envelope: a bag, widest a third of the way down and closing to a neck.
+    // Drawn as rows rather than as an oval, because everything in this yard is
+    // cells and a curve here would be the one smooth edge in the game.
+    const rows = Math.round(h / P);
+    for (let n = 0; n < rows; n++) {
+      const t = n / (rows - 1);
+      const bulge = Math.sin(Math.min(1, t * 1.15) * Math.PI * 0.92);
+      const cells = Math.max(2, Math.round((w / P) * (0.42 + bulge * 0.58)));
+      const runW = cells * P;
+      ctx.fillRect(Math.round(left + (w - runW) / 2), top + n * P, runW, P);
+    }
+
+    // The lines from the envelope down to the filter's shoulders, so the works
+    // hangs off the bag rather than being stuck to it.
+    const fl = Math.round(bx - fw / 2);
+    ctx.fillRect(fl + P, ftop - P, P, P);
+    ctx.fillRect(fl + fw - P * 2, ftop - P, P, P);
+
+    // The filter: a box with its middle course vented. The vents are what say it
+    // is a filter rather than a crate -- a solid block that size under a balloon
+    // reads as cargo.
+    ctx.fillRect(fl, ftop, fw, P);                       // the intake lip, solid
+    for (let cx = 0; cx < Math.round(fw / P); cx++) {
+      // every other cell open across the middle, and the ends always closed
+      const open = cx > 0 && cx < Math.round(fw / P) - 1 && cx % 2 === 1;
+      if (!open) ctx.fillRect(fl + cx * P, ftop + P, P, P);
+    }
+    ctx.fillRect(fl, ftop + P * 2, fw, fh - P * 2);       // and the sump under it
+
+    // The basket, hanging under the works on two lines.
+    const bw = P * 3, bl = bx - P * 1.5;
+    ctx.fillRect(Math.round(bl) + P, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
+    ctx.fillRect(Math.round(bl) + bw - P * 2, by - BALLOON_BASKET, P, BALLOON_BASKET - P * 2);
+    ctx.fillRect(Math.round(bl), by - P * 2, bw, P * 2);
+  }
+}
+
+// The canopy over a body that has stepped out of a balloon. Drawn with the craft
+// rather than with the crew, because it is a piece of the balloon's story: it is
+// what the yard shows you instead of a body being switched off in mid-air.
+//
+// A dome and two lines, and the dome is rows of cells like the envelope above it
+// -- one is a small version of the other, which is the point. The body itself is
+// drawn by the crew pass as usual; nothing here touches it.
+export function drawChutes() {
+  for (const w of S.workers) {
+    if (!w.chute) continue;
+    const cx = Math.round(w.x + WORKER / 2);
+    const capBot = Math.round(w.y) - CHUTE_GAP;     // well clear of the head
+    const rows = Math.round(CHUTE_H / P);
+    ctx.fillStyle = '#000';
+    for (let n = 0; n < rows; n++) {
+      // widest at the hem and closing towards the crown, which is a canopy the
+      // right way up -- the envelope's own curve turned over
+      const t = n / Math.max(1, rows - 1);
+      const cells = Math.max(2, Math.round((CHUTE_W / P) * (0.45 + t * 0.55)));
+      const runW = cells * P;
+      ctx.fillRect(Math.round(cx - runW / 2), capBot - CHUTE_H + n * P, runW, P);
+    }
+    // **The lines, and they end on the body.**
+    //
+    // They used to drop straight down from the hem for a fixed length and stop,
+    // which put two verticals in the air beside a falling worker and attached
+    // them to nothing. A canopy holds a body up; if the lines do not reach it,
+    // what is drawn is a canopy and a coincidence.
+    //
+    // So each one runs from its corner of the hem to a shoulder, as a staircase
+    // of cells -- a cell per row, stepped across as it descends. Everything in
+    // this yard is cells, and a true diagonal here would be the one smooth line
+    // in the game.
+    const shoulder = Math.round(w.y) + P;              // just under the head
+    const hem = Math.round(CHUTE_W / 2 / P) * P;
+    for (const side of [-1, 1]) {
+      const fromX = cx + side * (hem - P);
+      const toX = side < 0 ? Math.round(w.x) : Math.round(w.x + WORKER - P);
+      const drop = Math.max(P, shoulder - capBot);
+      const steps = Math.max(1, Math.round(drop / P));
+      for (let n = 0; n < steps; n++) {
+        const k = n / steps;
+        const x = Math.round((fromX + (toX - fromX) * k) / P) * P;
+        ctx.fillRect(x, capBot + n * P, P, P);
+      }
+    }
+  }
 }
 
 export function drawScrub() {
@@ -2985,6 +3142,8 @@ export function draw() {
   drawSays();              // and what any of them stood about is saying
   drawPuffs();             // what the crew are putting up there right now
   drawSmog();              // and what it has gathered into up there
+  drawBalloons();          // and the craft crossing it
+  drawChutes();            // and anybody who has stepped out of one
   drawRain();              // and whatever is coming down out of it, or going into the house
   drawPointed();           // and an arrow over whoever you just asked for by name
   drawCursor();
@@ -3448,6 +3607,7 @@ export function stepMachineSmoke(now) {
     const spec = specOf(key);
     if (!spec || !spec.stack) continue;
     const at = spec.stack();
-    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach' });
+    puff(at.x, at.y, { s: MACHINE_PUFF_S, n: 4, flag: 'mach',
+                       rise: MACHINE_PUFF_RISE, life: MACHINE_PUFF_LIFE });
   }
 }

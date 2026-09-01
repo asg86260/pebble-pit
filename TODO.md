@@ -4,10 +4,11 @@ Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
 jitter regression (item 5), the shield story arc (item 6), a balance call the
 sky work turned up (item 8) and one piece of housekeeping. Item 7 is done.
 
-**The balloon (item 4) is unblocked.** It was designed against a haze band that
-the sky rework was going to delete; the band survived and has the whole sky now,
-so the balloon's design stands exactly as written -- including the reason it
-moves, which the field would have taken away. Items 1 (dust into the cut) and 3 (dust leniency) are done and
+**The balloon (item 4) is flying.** It was designed against a haze band the sky
+rework was going to delete; the band survived and has the whole sky now, so the
+design stood as written -- including the reason the craft moves, which the field
+would have taken away. What is left of it is the clog, the fleet's aiming and
+the board's reading. Items 1 (dust into the cut) and 3 (dust leniency) are done and
 kept below for the record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
@@ -136,24 +137,60 @@ shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ---
 
-## 4. The scrubber balloon
+## 4. The scrubber balloon — the craft is built; the clog and the fleet are not
 
-**Status:** designed, not built. Last, because it is the largest.
+**Status:** stage 1 and part of the fleet stage are on main. A balloon is bought
+on the scrubbing house's board, moored with its basket on the ground beside its
+mast, boarded on foot, and once crewed it rises, crosses the sky, takes the air
+in where it is and drops what it catches under itself. The house is untouched.
+See DESIGN.md, "The scrubber balloon", and `src/balloon.js`.
 
-A balloon that rides the haze band instead of a shed that drags the haze to it:
-a worker boards it, it takes haze in and drops muck below, a recycler upgrade
-turns that to dust, and several can be deployed for a faster sky.
+**Built:** `CRAFT` as an array from the first craft; the rung on the house's
+board (a finite ladder, `BALLOON_RUNGS`); `capOf('scrubbers')` at one plus the
+craft; the berth claim; the walk to the mast and the boarding; the patrol; the
+radial draught with its own gullet per craft; the drop under the basket, muck or
+recycled dust; the drawing; save and restore; `test/balloon.test.mjs`.
 
-**Shape of it.** A new `src/balloon.js` owning the craft; `smog.js` keeps owning
-the air. A balloon is a station that *moves*: `{ x, y, dir, riding }` in
-`S.balloons` — an array of craft, not a count — with `x` in world pixels, moved
-in **whole pixels** and never snapped to the lattice, exactly as the tractor is.
-Its cruising height is derived from the same `bandTop()`/`bandLow()` pair the
-motes use, so the band and the balloon cannot disagree.
+**Three things it got wrong first**, each a rule the yard already had and that
+had been written down rather than obeyed:
 
-**The hard parts, in order:** how a body boards it without teleporting; what
-becomes of the existing scrubbing house and its saved state; how it wires into
-the pile-full mark. Build it in stages that each leave the game playable.
+1. **A berth has to be a claim, not a place in the roster.** The roster's order
+   is not stable, so the house's berth went to whichever scrubber sorted first
+   that frame — and when that was the one already in a balloon, it was pulled
+   straight back out of it.
+2. **A rider is `aloft`.** The fall rule runs early in the crew pipeline, and a
+   body several hundred pixels up with nothing under it is exactly what it is
+   looking for: it settled the rider back on the ground every time, so the craft
+   rose, lost its rider, sank, and did it again. `aloft` is how the wizard escapes
+   the same rule; the scrubber wanted a `shutIn` as well, because a basket is a
+   door.
+3. **A thing moving less than a pixel a frame has to keep the fraction.**
+   Rounding the craft's `x` every frame at four tenths of a pixel rounds it back
+   where it started, for ever. The `x` is fractional now and the rounding happens
+   at the moment of drawing — to a whole pixel, and not to the lattice.
+
+**Still to do:**
+
+- **The clog.** A craft drops wherever it is and nothing stops it, so it cannot
+  yet be made to stop by a filthy yard the way every other station can. The
+  design's rule is that a craft clogs on the column beneath it and clears itself
+  by moving on, with the pile-full mark going on the mast when every craft is
+  stalled. Worth settling item 8 first: the two are the same question about what
+  a station's clog is *about*.
+- **The fleet, properly.** The rung and the cap are in, and a second craft is
+  bought and staffed — but the lanes have not been looked at with two in the sky,
+  and nothing aims a mote at the *nearest* craft: each craft walks the whole sky
+  list on its own. Fine for one, wasteful for three.
+- **The reading.** Nothing on the board says whether a craft is up, crewed or
+  still tied to its mast, so the one thing you can do about a balloon — put
+  somebody in it — has no reading next to it the way every other station's does.
+
+  The pollution arrow itself is already right, and worth knowing why: `drew` is
+  counted **at the mouth**, inside `swallow`, so a craft's catch lands in it
+  exactly as the house's does. That is the payoff from the fix written up in
+  DESIGN.md under "The air" — the scrubbing figure used to be *quoted* from
+  `scrubRate()`, and had it still been quoted, every balloon in the yard would
+  have been invisible to the one number the player steers by.
 
 ---
 

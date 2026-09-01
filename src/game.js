@@ -43,6 +43,7 @@ import { canAfford, mineMs, restaff, staffSheds } from './upgrades.js';
 import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
+import { stepBalloons } from './balloon.js';
 import { tidyBoards } from './board.js';
 import { stepScrub } from './scrubhouse.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
@@ -170,6 +171,7 @@ export function step() {
   // hole and leaves the counter where it was.
   stepRift(dt);
   stepSmog(dt);                               // and the sky, which is filling up
+  stepBalloons();                             // and the craft crossing it
   sampleAir(now);
   if (S.dragging) catchAir(S.mouse.x, S.mouse.y);   // swinging does not catch its own spray
 

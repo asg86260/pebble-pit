@@ -245,9 +245,9 @@ export function stepSmoke(now, dt) {
   for (let i = S.smoke.length - 1; i >= 0; i--) {
     const p = S.smoke[i];
     p.t += dt / 1000;
-    p.y -= SMOKE_RISE;
+    p.y -= p.rise ?? SMOKE_RISE;
     p.x += p.drift;
-    if (p.t > SMOKE_LIFE) S.smoke.splice(i, 1);
+    if (p.t > (p.life ?? SMOKE_LIFE)) S.smoke.splice(i, 1);
   }
 }
 

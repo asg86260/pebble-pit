@@ -31,6 +31,17 @@ export function puff(x, y, o = {}) {
       drift: (o.drift || 0) + (rand() - 0.5) * 0.25,
       s: (o.s || 1) * (0.75 + rand() * 0.5),
       t: rand() * 0.15,               // and not all at the same age -- seconds
+      // How fast this one goes up and how long it lasts, both its own.
+      //
+      // They were one pair of numbers for everything that smokes here, which is
+      // right for the lab's chimney and the crew's hearth and a cigarette --
+      // they are all a wisp over a roof. A machine's stack is not: there are
+      // three of them going at once in a working yard, right where the crew are,
+      // and a trail that climbs for the same two and a half seconds turns into a
+      // streak halfway up the window. So a caller may say, and only the machines
+      // do. See MACHINE_PUFF_RISE.
+      rise: o.rise,
+      life: o.life,
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }

@@ -17,6 +17,7 @@ import { S, scrub } from './state.js';
 import { walkY } from './world.js';
 import { idle, assign } from './upgrades.js';
 import { airRows, airSection } from './airboard.js';
+import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
 
 export function newScrubber() {
   return { type: 'scrubber', goal: 'to', x: scrub.x, y: 0 };
@@ -74,6 +75,16 @@ export function stepScrub(dt) {
 export function stepScrubber(w) {
   if (w.goal === 'in') return;                   // through the door, out of sight
 
+  // Some of them are not going into the house at all. A body whose berth is a
+  // craft walks to the mast instead and gets into a basket standing on the
+  // ground -- see `stepRider`, which is the whole of the boarding.
+  const berth = berthFor(w);
+  if (berth >= 0) { stepRider(w, berth); return; }
+  // ...and one that has come off a craft is going back to the door, so whatever
+  // it was riding is let go of here rather than left on the body to be believed
+  // by something else later.
+  if (w.craft != null) dismount(w);
+
   w.y = walkY(w.x + WORKER / 2);
   const d = scrubDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
@@ -109,6 +120,9 @@ export const SCRUB_UPGRADES = [
   // go in here is the one thing anybody does about that number, and a reading you
   // can act on belongs where you act on it.
   ...airRows(),
+  // The craft the house sells. A ladder on the board of the building that owns
+  // the number, which is what a rung is for; see balloon.js.
+  CRAFT_ROW,
   {
     key: 'recycler',
     name: 'recycler',
@@ -124,7 +138,7 @@ export const SCRUB_UPGRADES = [
 
 export const SCRUB_SECTIONS = [
   airSection(),
-  { title: 'the works', keys: ['fan', 'recycler'] }
+  { title: 'the works', keys: ['fan', 'balloon', 'recycler'] }
 ];
 
 // what it costs to put the place up at all

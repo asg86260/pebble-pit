@@ -28,6 +28,7 @@ import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
 import { newRifter, riftMouth } from './rift.js';
+import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_ELBOW,
@@ -1571,6 +1572,10 @@ function retask(w, type) {
   // second, which for a body that took the best part of a minute to go up reads
   // as the hat being switched off. It comes down the way it went up.
   if (w.aloft && type !== 'wizard') w.floating = true;
+  // ...and a body taken out of a balloon goes over the side under a canopy. It
+  // is already floating by the line above; this is what says there is a
+  // parachute over it, and it lets go of the craft so the craft can leave.
+  bailOut(w);
   w.type = type;
   w.fetching = null;
   w.wanting = null;
@@ -3246,7 +3251,21 @@ const JOBS = {
   // smoking, which is the building claiming something the crew deny.
   labber: { work: stepLabber, shutIn: w => w.goal === 'in' },
 
-  scrubber: { work: stepScrubber },
+  // A scrubber is behind a door, and a balloon is a door too.
+  //
+  // The house's body has always been out of the yard's reach once it is through
+  // the door -- it simply had no `shutIn` to say so, because `goal === 'in'`
+  // also means "not drawn" and nothing outside was reaching for it anyway. A
+  // body in a *craft* is a different case and needs saying out loud: it is
+  // standing in a basket several hundred pixels up, and every rule in the
+  // pipeline below -- the fall, the lip, the muck errand, the re-plant on to the
+  // ground it is supposedly standing on -- would take it back. What that looked
+  // like was a balloon that rose a few pixels, lost its rider to the yard, sank,
+  // and picked it up again: the rider was aloft on six frames in a hundred.
+  //
+  // The same sentence the wizard's entry makes, for the same reason: nothing in
+  // the pipeline applies to a body that is not on the ground.
+  scrubber: { work: stepScrubber, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
 
   rifter: { work: stepRifter },
 
