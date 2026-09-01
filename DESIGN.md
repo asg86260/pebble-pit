@@ -2615,5 +2615,169 @@ line at all. The clog was written to stop the house spraying its own walk with i
 own filters, so counting the sky's muck in it is arguably wrong; but changing that
 is a balance decision rather than a fix. See TODO.
 
+## The endgame pass (design, not built)
+
+Five things go wrong together once the ram is fully driven, and they are one
+story: the rock is worked faster than anything downstream of it was written for.
+Measured on the code rather than the yard, a ram at `tune` 5 with the drive heart
+and the spell is at the `MACHINE_MAX_BEATS` ceiling every frame -- eight beats of
+six cells, forty-eight chips a frame, about 2,900 a second -- and the belt, at the
+same ceiling, lifts eight grains a frame. Nothing about the ram is wrong. What is
+wrong is that every machine's overflow is capped by the same constant, and the
+rift is a station with a body in it that stands two windows off screen.
+
+### 1. The ram waits for the ground
+
+**What happens.** `boulderAlive()` is true the instant `makeBoulder` fills the
+grid, so the ram hammers the rock all the way down -- chips thrown off a face
+that is still six hundred pixels up. Your own hand is already refused a falling
+rock (`overBoulder` checks `S.rockFall`), and the miners already duck out from
+under it (`dancing`, crew.js). The machine is the one worker that never went
+through those stages.
+
+**The rule.** One predicate, `rockDown()`: alive *and* `S.rockFall <= 0`. It is
+what `overBoulder` reads, and it is what the ram's `ready` reads. The hand and the
+machine ask the same question of the same function, so they cannot drift apart
+again -- a third thing that works the face reads it too, by existing. The ram's
+beat clock is held (`beatAt = now + 200`, as an unmanned machine's is) rather than
+allowed to run up an owed count while the rock is in the air, so the landing is
+not followed by a burst of eight beats at once.
+
+### 2. A beat's overflow is a bigger bite, not more bites
+
+**What happens.** `stepMachines` turns time owed into beats and runs `bite()`
+once per beat, up to `MACHINE_MAX_BEATS`. Two things follow. Every machine tops
+out at the same eight units a frame, so the belt (one grain a beat) can never be
+tuned to keep up with the ram (six cells a beat), whatever either ladder says --
+a 6:1 deficit no purchase can close, and the rock's pile fills, and the ram stops,
+and the pile is cleared by a handful, and the ram refills it in two frames. That
+oscillation is most of what the endgame *feels* like. And each of the eight bites
+does its own full `refreshRockTops()` pass over the rock grid, so the ram's cost
+is eight scans a frame for one frame's work.
+
+**The rule.** A bite takes a *count*. `bite(tender, n)` does `n` units of the
+station's own work in one call -- `knockOff(x, y, minerBite() * n)` for the ram,
+`n` grains off the ground for the belt, `n` furrows for the tiller, `n` cells for
+the drill -- and the runner calls it once a frame with everything owed. The
+beats cap stays, as a cap on *units* rather than calls, so the frame budget is
+unchanged; what changes is that the belt's unit is now what a hauler's is. **The
+belt lifts a load a beat, not a grain**: `haulCap()` grains, the same number the
+carters carry, because the belt is "the whole of what a hauler does, minus the
+walking" and a hauler does not carry one grain. That is the systemic fix rather
+than a constant: the belt's throughput is derived from the carry ladder it already
+sits beside on the board, and both machines are measured in the station's own
+units.
+
+At the top of both ladders the belt then keeps up with the ram by the same margin
+their rates already say it should, and the pile-full stop on the rock becomes what
+it was written to be -- the yard finding its level -- rather than a flicker.
+
+### 3. The spike at the break
+
+**What happens**, ranked by the code:
+
+1. `clearApron()` on landing walks every column of the floor -- about sixty
+   thousand cell reads -- to find the twenty-odd columns under the footprint,
+   and throws a chip for every grain buried there.
+2. `makeBoulder` calls `tipRockSand()`, a chip per grain lying on the old hill,
+   and `refreshPiles()`, which ends in `wakeGrid(floor)` -- every column of the
+   ground marked awake, so the next several frames are full settling passes.
+3. `boulderAlive()` scans the whole rock grid, and is asked every frame by the
+   ram's `ready`, by `stepCore`, by every miner and by the drawing.
+4. The chip loop itself: ~2,900 spawns a second under a driven ram, every one a
+   live body in `S.chips` until it lands.
+
+**The rule.** Measure before and after, the way PERF.md does: the node yard,
+`__crew`, a driven ram, `--cpu-prof` over the same seeded frames, and a frame-time
+table in PERF.md. Then, in order: `clearApron` walks the footprint's columns and
+not the floor's; `refreshPiles` wakes the columns the rock's clearance touches and
+not the world; `boulderAlive` becomes a count kept by `refreshRockTops` (which
+already visits every column) rather than a scan; and item 2 above takes the eight
+`refreshRockTops` passes to one. **Nothing mined is destroyed** still holds: the
+chips thrown by `clearApron` and `tipRockSand` are grains that were lying there
+and every one still flies. If, measured, those two are the spike, the fix is to
+throw them over a few frames rather than one -- a scatter that takes a quarter of
+a second reads as a landing anyway -- and never to drop them.
+
+### 4. The rift does not need holding open
+
+**What it was.** A body stands at it or it is shut. That was the bargain that
+stopped it being a magic box: unbounded storage cost a body not on the rock. The
+bargain has stopped paying. At the far end of the longest walk in the game, past
+the whole hole, the body arrives once and stands for ever; the decision is never
+taken back, because there is nothing to take it back for. It is a job row you
+buy and forget, which is the exact thing the machines' ladders were built to
+remove, and a body two windows off screen holding a thing open is not cause and
+effect anybody can watch.
+
+**The rule.** Torn is open. There is no rifter: the job leaves `JOBS`, the `want`
+map, the roster, the crew board and `capOf`; a save with a rifter in it gets that
+body walked back to carrying through `S.restaff`, exactly as `buyMachine` walks a
+displaced gang. What it costs instead is what it already cost -- red to tear it,
+and an endless ladder of red and dust on how fast it swallows -- and that is
+enough, because rate was always the thing being sold. The two oldest rules
+survive: nobody teleports, since no body was ever what moved the grains; and a
+station idles until somebody is there, which the rift is not -- it is not a
+station, it is what the hole does with its overflow, and the hole has never been
+staffed either.
+
+### 5. The black hole is in the hole
+
+**What it was.** A lens standing on the ground past the far wall, and a stream of
+grains arcing the length of the pit to reach it -- the same arc a purchase makes,
+which was the point. Nobody sees it. The endgame yard's dust is drawn as an arc
+leaving the screen, and the pit itself is one unchanging full pile.
+
+**The rule.** The rift hangs *in the pit*, over the pile, at the near end -- its
+center a few cells in from the near lip, at about half the hole's depth -- where
+the haulers tip in, the belt's head drops, and the counter stands. It is a black
+disc of cells rather than a lens on the ground: the only shape in the game that
+is an absence, drawn as the paper's opposite, and always filled, because it is
+always open. Grains still land in the pile first -- **nothing gets into the pit
+without being carried or thrown**, unchanged -- and the rift lifts them off the
+top at its rate, the same `lift` that paying uses. What changes is where a lifted
+grain goes: not an arc to the far end but **an orbit**. Off the top of the pile
+it rises to the ring, goes round the disc a turn or two on a tightening spiral,
+and is gone at the center. `S.gulped` carries an angle, a radius and a decay
+instead of a target; `fly` gets a second mover for the orbit. Each grain keeps its
+own shade, so the ring is speckled the way the pile is.
+
+**How it reads.** When the rift keeps up, a grain dropped in the hole is lifted the
+frame it lands and the pit is a black disc with a ring of dust turning round it
+and nothing much beneath -- which is the picture asked for, and it is the picture
+of a rift that is *winning*. When income beats the rate, the pile heaps up under
+the disc, and around it, and the ring eats it from the top down: the picture of a
+rift that is losing, and the whole of the pressure to widen it. The counter and
+the picture still agree exactly as before -- the pile shows what is in the hole,
+the rift holds the rest, and the counter is the two together. The ring itself is
+at most a couple of hundred grains in flight (the cap `lift` already has), and it
+is the picture of the *rate*, never a count: a faster rift is a fuller, faster
+ring.
+
+**Cost.** Nothing new is drawn per grain that was not drawn before -- the orbiting
+grains are the `gulped` list that already existed -- and a disc of cells is
+cheaper than the lens. The pile beneath is the same plot it was.
+
+**What is settled by this and worth saying plainly.** `PIT_PAD` stays; the world's
+width is measured off it and every save's floor depends on that. `RIFT_W`/`RIFT_H`
+become the disc's diameter. `seatRift` places it in the pit; `riftMouth` is its
+center; `stepRifter`, `newRifter`, `atRift`, `inRift` go. `rift-migrate` and
+`rift.test.mjs` are rewritten against the passive rift (no `__assign('rifters')`),
+and the pile mark and tooltip on the near lip -- `the hole is full` -- still stand
+when it is, because a losing rift is exactly a hole that fills.
+
+### Calls to make before building
+
+1. **The belt's unit.** A hauler's load a beat (`haulCap()`, recommended) --
+   derived, and the reason it keeps up is the same reason the carters do. The
+   alternative is capping the ram to the belt, which sells a ladder that does
+   nothing past the cap.
+2. **Where the disc hangs.** In the pit at the near end (recommended, the only
+   place it is on screen); in the middle of the hole; or where it stands now, only
+   passive.
+3. **The break's chips.** If measurement says the landing's thrown grains are the
+   spike, spread the throw over a quarter of a second. Confirm that is acceptable
+   before it is done, since it changes what a landing looks like.
+
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

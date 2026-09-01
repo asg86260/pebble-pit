@@ -381,3 +381,26 @@ untrustworthy suite is most of why iterating feels slow.
 
 Both want the same treatment: assert the thing that must be true rather than
 the thing that happened to be true in a fixed window.
+
+---
+
+## 9. The endgame pass — designed, not built
+
+**Status:** designed (`## The endgame pass` in DESIGN.md), waiting on three
+calls: the belt's unit, where the black hole hangs, and whether a landing's
+thrown grains may be spread over a few frames. Asked 2026-09-01.
+
+**What it is.** Five faults with one cause — the driven ram outruns everything
+downstream. The ram works a falling rock (`ready` never reads `S.rockFall`);
+the belt lifts one grain a beat against the ram's six cells and both are pinned
+at `MACHINE_MAX_BEATS`, so the rock's pile flickers full; the break spikes on
+`clearApron`'s full-floor walk, `wakeGrid(floor)` and eight `refreshRockTops`
+a frame; the rift needs a body standing two windows off screen; and the rift's
+picture is an arc leaving the screen instead of the hole itself.
+
+**The shape of the fix.** One `rockDown()` predicate for hand and machine; a
+counted `bite(tender, n)` so overflow is a bigger bite and the belt's unit is a
+hauler's load; measured perf fixes on the break path with a PERF.md table; the
+rifter job removed (torn is open, saves restaff the body to carrying); and the
+rift as a black disc hanging in the pit at the near end with the `gulped`
+grains orbiting into it.
