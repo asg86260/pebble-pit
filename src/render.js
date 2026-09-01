@@ -2111,7 +2111,8 @@ const SITE_AT = {
   farm: () => ({ x: farm.x + farm.w / 2, y: farm.y - P * 22 }),
   scrub: () => ({ x: scrub.x + scrub.w / 2, y: scrub.y - P * 8 }),
   tower: () => ({ x: tower.x + tower.w / 2, y: tower.y - P * 8 }),
-  yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 })
+  yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 }),
+  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 })
 };
 
 // What the yard is in the middle of building, said on the ground rather than

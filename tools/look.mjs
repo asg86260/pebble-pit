@@ -142,6 +142,11 @@ const SCENES = {
   // the place, filling while the gang is there and stopped while it is not.
   building: `${RICH} window.__buy('jaw'); window.__fast(9);
              window.__look(window.__state().quarryX - 260);`,
+  // The bench's own rows are fitted at the bench: one body, carrying, walks
+  // over and stands there under the bar while strength is fitted.
+  fitting: `window.__reset(); window.__crew(0,1); window.__grant({dust:9000});
+            window.__fast(2); window.__buy('carry'); window.__fast(3);
+            window.__look(window.__state().benchX - 300);`,
   // ...and how the row reads while it is going on: greyed, saying what it is
   // doing, with the clock in its bill counting down what is left.
   buildboard: `${RICH} window.__buy('jaw'); window.__fast(4);

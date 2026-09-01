@@ -335,6 +335,7 @@ export const snapshot = () => ({
         hands: handsAt(site) }
     : null]).filter(([, w]) => w)),
   builders: S.builders || 0,
+  lent: [...(S.lent || [])],
   aloft: S.workers.filter(w => w.aloft).length,
   wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)),
 

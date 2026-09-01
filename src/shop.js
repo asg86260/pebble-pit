@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, siteBusy } from './upgrades.js';
-import { takesTime, stalled } from './works.js';
+import { takesTime, stalled, BUILDER_SITES } from './works.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -355,7 +355,12 @@ export function refresh(el, list, headcount) {
         // Nobody standing there is the one thing that stops it, and it is a
         // thing you can act on: an empty cut builds nothing however long you
         // leave it, and the roster under the cut is where you fix that.
-        sayHTML(gain, mine ? (stalled(u.site) ? 'nobody on it' : 'building') : '');
+        // ...except at a builders' site, where there is always somebody: the
+        // nearest body is lent if nobody is spare, and while it is walking over
+        // the row says so rather than claiming the yard has given up.
+        sayHTML(gain, !mine ? '' :
+                !stalled(u.site) ? 'building' :
+                BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
         sayHTML(price, bill);
         grey(row, true);
         continue;

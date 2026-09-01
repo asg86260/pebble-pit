@@ -22,7 +22,7 @@ import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
-import { rebalance } from './upgrades.js';
+import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
@@ -286,6 +286,7 @@ export function persist() {
     // page started, so an absolute time saved in one session is a meaningless
     // number in the next.
     works: S.works,
+    lent: S.lent || [],
     wizards: S.wizards,
     scrubbers: S.scrubbers,
     rifters: S.rifters,
@@ -577,6 +578,7 @@ export function restore() {
   // rows it still has: a save from a version with a row this one has dropped
   // would otherwise hold a work that can never finish, at a site that is then
   // busy for ever.
+  S.lent = Array.isArray(s.lent) ? s.lent.filter(j => JOBS.includes(j)) : [];
   S.works = {};
   for (const site of SITES) {
     const w = s.works?.[site];
@@ -794,6 +796,7 @@ export function reset(fresh = true) {
   S.wizards = 0;
   S.brewAt = 0;
   S.works = {};
+  S.lent = [];
   S.builders = 0;
   sky.cells = null;
   sky.n = 0;

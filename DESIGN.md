@@ -2795,7 +2795,7 @@ fixing. The first three are done; the rest are written down and left.
    "anything that asks in one coin". Two prices on one row is one of them going
    stale.
 
-## The bench takes time too (design, not built)
+## The bench takes time too (built)
 
 "Time is a price" stopped at the bench's own ladders on the argument that the
 opening should not begin with a wait. That argument was about a *clock* -- eight
@@ -2836,22 +2836,30 @@ it -- see "No teleporting" -- and the first body in the game lives next door to
 the bench, so the first wait is about ten seconds of watching somebody come and
 do something. That is the opening the game wanted anyway.
 
-**The opening does not deadlock.** The story hands you one body, and it is
-carrying -- which is spare -- so the first purchase has hands. Later, with
-everybody on a job, a bench row says **nobody on it** and stays that way until
-you free somebody. That is the lab's rule and it is a thing you can act on; a
-purchase that quietly pulled a miner off the rock would be the yard overruling
-the roster.
+**Nobody spare: the nearest body comes and does it.** Carrying first -- a
+hauler is spare by definition -- and if there is nobody carrying, the body
+standing nearest the site is *lent*: taken off its count, walked over, and given
+back to its station the moment the site has nothing left to build. One body a
+site, never a gang -- borrowing is what keeps a purchase from stalling, not a
+way to staff a build off the rock. The row never says "nobody on it" at a
+builders' site, because there is always somebody; the price of that is a miner
+away from the rock for ten seconds, which is a price you can see being paid.
+
+This is the builders' rule and not the bench's alone: the yard and the school
+are builders' sites too, and one rule for three places beats one rule each.
+The four sites with a gang of their own keep the lab's rule -- an empty cut
+builds nothing -- because their work *is* the gang's, and lending a miner to
+the quarry would be the yard deciding who works where.
+
+**The opening still cannot deadlock**, and now for two reasons: the story's one
+body is carrying, and even if it were not, it would be the nearest.
 
 **What it shows.** The lab's bar, over the bench, while a builder is at it. The
 builder stands at the bench the way a labber stands at the door -- no hammering
 mime; the bar is the work. The bench's own mark (`benchMark`) does not flag a
 row while the bench is busy, which it already knows how to do.
 
-**What it is not on.** The casino, still. `press the pile` is the one open
-question: it is sold from the bench but done to the hole by red, not by hands,
-and a wizard's spell fitted at a workbench reads wrong. Proposed: it stays
-instant.
+**What it is not on.** The casino, still.
 
 ### What changes in the checks
 
