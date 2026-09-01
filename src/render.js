@@ -26,10 +26,10 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, specOf } from './machines.js';
-import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER, MACHINE_MARK } from './sprites.js';
+import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, DRILL, BIT, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
-import { jawX, jawY } from './quarry.js';
+import { jawX, jawY, shaftX } from './quarry.js';
 import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
@@ -2847,9 +2847,9 @@ export function draw() {
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
   drawCut();                 // the dust lying in it, after the quarry for the same reason
-  drawJaw();                 // after the quarry, or its white columns erase it
+                 // after the quarry, or its white columns erase it
   drawBridge();              // and the way across it
-  drawHoist();               // which the hoist stands on
+  drawDrill();               // which the drill stands on
   drawFarm();
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
@@ -3125,64 +3125,36 @@ function stroke(key, ms = 900) {
 // large object somebody paid for. It is drawn the same and simply does not move.
 const built = key => { const m = machine(key); return !!(m && m.bought); };
 
-// The jaw: a block on the floor of the cut with a mouth cut white out of its
-// front, opening and shutting on its own beat. It stands on the ground as the
-// ground is now -- see `jawY`, which reads `dugTopY` -- so when the quarry falls
-// back in the jaw comes up with it, the way a quarrier's feet do.
-// Where the hoist's rope runs, in cells off the sprite's own left edge -- a fact
-// about the picture above, so it is read off it rather than written down a
-// second time here.
+// The quarry's drill: a rig on the deck over the mouth, a shaft down the bore,
+// and a triangular bit on the end of it working the floor.
 //
-// The jaw's chimney used to be worked out here too. It is the machine's own
-// `stack` now, registered with it in quarry.js, because the smoke and the dirt
-// both have to leave from it and a third opinion in the drawing is a third thing
-// to keep in step.
-const ropeCol = () => HOIST[spriteH(HOIST) - 1].indexOf('.');
-
-export function drawJaw() {
+// The rig stands on the ground line and does not move. What moves is the bit and
+// the length of the shaft carrying it, and both are derived: the bit sits at
+// `jawY`, which is `dugTopY` down the bore, so as the cut is taken deeper the
+// shaft pays out after it, and when the quarry falls in behind the last body out
+// the bit comes back up with the ground.
+export function drawDrill() {
   if (!S.quarryOpen || !built('jaw')) return;
   const x = Math.round(jawX() / P) * P;
-  const y = Math.round(jawY() / P) * P;
-  // Two pictures, mouth open and mouth shut. A moving part is a different shape,
-  // not the same shape shifted, so it is drawn as a different picture.
-  drawSprite(ctx, JAW[stroke('jaw') < 0.5 ? 0 : 1], x, y);
-  // the stack, which is not part of the machine's own picture because the smoke
-  // comes off the top of it and wants to know where that is. Two cells in from
-  // the back, so it stands over the engine end rather than over the mouth --
-  // read off the sprite's width so it stays there if the jaw is ever redrawn.
-  ctx.fillStyle = '#000';
-  const st = specOf('jaw') && specOf('jaw').stack();
-  if (st) {
-    const sy = Math.round(st.y / P) * P;
-    ctx.fillRect(Math.round(st.x / P) * P, sy, P, y - sy);
-  }
-}
+  const top = Math.round((S.groundY - spriteH(DRILL) * P) / P) * P;   // stood on the deck
+  drawSprite(ctx, DRILL, x, top);
 
-// The hoist: an upright frame on the deck over the mouth of the cut, a white
-// rope line down the middle of it, and a skip that rides the rope. Its x comes
-// off `ladder()` so the rope and the rungs cannot drift apart when the quarry is
-// resited.
-export function drawHoist() {
-  if (!S.quarryOpen || !built('jaw')) return;
-  // Centred over the mouth: the frame's rope channel lands on the middle of the
-  // jaw's own mouth, which is where a skip coming up out of the cut belongs.
-  const x = Math.round((jawX() + P) / P) * P;
-  const top = Math.round((S.groundY - P * (spriteH(HOIST) + 1)) / P) * P;
-  drawSprite(ctx, HOIST, x, top);
+  // The shaft and the bit. Neither is part of the rig's picture, because how far
+  // down they reach is a fact about the game rather than about the shape.
+  const shaft = Math.round(shaftX() / P) * P;
+  const from = top + spriteH(DRILL) * P;
 
-  // The line down to the jaw, and the skip riding it. Not part of the frame's
-  // picture: how far it reaches is how deep the cut has been taken, which is a
-  // fact about the game rather than about the shape.
-  const jy = jawY();
-  const from = top + spriteH(HOIST) * P;
+  // The plunge. It bores *at the floor*, a cell of travel on its own beat -- the
+  // skip this replaces rode the whole depth of the hole, and a cutting head at
+  // the top of its own bore is a drill doing nothing.
+  const t = stroke('jaw', 900);
+  const bite = Math.round(Math.abs(Math.sin(t * Math.PI)) * P);
+  const bitTop = Math.max(from, Math.round(jawY() / P) * P - (spriteH(BIT) - 1) * P + bite);
+
   ctx.fillStyle = '#000';
-  const rope = x + ropeCol() * P;
-  if (jy > from) ctx.fillRect(rope, from, P, jy - from);
-  const drop = Math.round((jy - from) / P);
-  const t = stroke('jaw', 2200);
-  const ride = Math.round(Math.abs(1 - t * 2) * Math.max(0, drop));
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(rope, from + ride * P, P, P);
+  if (bitTop > from) ctx.fillRect(shaft, from, P, bitTop - from);
+  // Centred on the shaft: the point of the triangle is the middle column of it.
+  drawSprite(ctx, BIT, shaft - ((spriteW(BIT) - 1) >> 1) * P, bitTop);
   ctx.fillStyle = '#000';
 }
 

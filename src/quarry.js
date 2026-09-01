@@ -15,7 +15,7 @@ import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWI
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
-import { spriteW, spriteH, JAW } from './sprites.js';
+import { spriteW, spriteH, stackCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
 import { walkY, groundAt, benches, resite, pileOf } from './world.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
@@ -881,13 +881,19 @@ export const QUARRY_SECTIONS = [
 // thing is taken.
 export const jawX = () => {
   const c = quarryShape();
-  // Half its own width off the middle, read off the picture: a machine centred
+  // Half the rig's width off the middle, read off the picture: a machine centred
   // by a literal is a machine that walks sideways the day it is redrawn.
-  return Math.round(((c.from + c.to) / 2 - P * Math.round(spriteW(JAW[0]) / 2)) / P) * P;
+  return Math.round(((c.from + c.to) / 2 - P * Math.round(spriteW(DRILL) / 2)) / P) * P;
 };
-// Standing on the floor as the floor is now, its bottom row sunk a cell into it
-// the way a body's feet are.
-export const jawY = () => dugTopY(jawX() + P) - P * (spriteH(JAW[0]) - 1);
+
+// Which column the shaft comes down: the middle of the rig, and the middle of
+// the bore it is sinking.
+export const shaftX = () => jawX() + ((spriteW(DRILL) - 1) >> 1) * P;
+
+// The floor it is boring, as the floor is now. Derived every frame off
+// `dugTopY`, so when the quarry falls in behind the last body out the bit comes
+// up with the ground exactly the way a quarrier's feet do.
+export const jawY = () => dugTopY(shaftX());
 
 defineMachine('jaw', {
   job: 'quarriers',
@@ -898,7 +904,11 @@ defineMachine('jaw', {
   // drawn beside it, because the smoke has to know where the top is and the
   // sprite would have to grow two rows it never uses. So the column is named
   // here, once, and the drawing reads it back rather than keeping its own copy.
-  stack: () => ({ x: jawX() + (spriteW(JAW[0]) - 2) * P, y: jawY() - P * 2 }),
+  // The top of its chimney. The rig stands on the deck, so its stack is up in
+  // the daylight rather than down the hole -- which is where the smoke of a
+  // drill actually comes from, and where the dirt therefore goes up.
+  stack: () => ({ x: jawX() + stackCol(DRILL) * P,
+                  y: S.groundY - spriteH(DRILL) * P }),
   // Where the *body* stands, which is not where the machine is. The jaw is on
   // the floor of the cut; its tender works the hoist on the deck at the head of
   // the ladder, which is also where the lever is. A tender posted down the hole
@@ -932,7 +942,7 @@ defineMachine('jaw', {
     // The tender is passed through, not `null`. A body keeps its `cell` claim
     // when it takes up tending, and a claim nobody is walking to would keep the
     // machine off that cell for as long as the machine ran.
-    const c = nextQuarryCell(jawX() + P, tender);
+    const c = nextQuarryCell(shaftX(), tender);
     if (c == null || c < 0) return false;
     const left = cellsLeft();
     digCell(c);
@@ -943,7 +953,7 @@ defineMachine('jaw', {
     // so it owes the same shards. What it does *not* share is the sky -- the jaw
     // fouls from its own stack, in `stepMachines`, and a body digging fouls not
     // at all.
-    findShards(tender || { x: jawX(), y: jawY() }, left);
+    findShards(tender || { x: shaftX(), y: jawY() }, left);
     // And the ground comes back in behind it.
     //
     // Worked by hand this happens on the way *out*: the last body up the ladder

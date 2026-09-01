@@ -117,56 +117,40 @@ export const HATS_TIGHT = {
 // beside it -- an arm at a length, a wheel at an angle -- because a moving part
 // is a different shape, not the same shape shifted.
 
-// The jaw, on the floor of the cut. Its mouth opens and shuts, so there are two
-// of it.
+// The quarry's machine: a bore drill standing on the deck over the mouth.
 //
-// Half again the size it was, and that is the whole of the change. A machine in
-// this yard costs a full set of specialists and does the work of all of them, and
-// at five cells by four it was two-thirds the height of one of the bodies it had
-// just put out of a job -- so the thing you had saved up the whole ladder for
-// arrived looking like a crate somebody had left in the hole. Every machine here
-// is now about three bodies wide, which is the smallest a thing can be and still
-// read as *plant* rather than as an object.
-export const JAW = [
-  [
-    '..######',
-    '.#######',
-    'oooo####',
-    'oooo####',
-    'oooo####',
-    '########'
-  ],
-  [
-    '..######',
-    '.#######',
-    '#oo#####',
-    '#oo#####',
-    '#oo#####',
-    '########'
-  ]
+// It was two things and neither read. A block on the floor of the cut with a
+// mouth cut white out of it, and a headframe over the top with a rope down it
+// and a skip riding the rope -- so what you actually saw was a black slab with
+// dots scattered down it, a second black lump in the hole, and one white cell on
+// a line that looked like a hole in the tower rather than a thing being hauled
+// out of it. Three pictures that needed explaining, for one machine.
+//
+// A bore drill needs no explaining, and it is one object: the rig sits on the
+// deck, the shaft goes down the hole, and the bit on the end of it eats the
+// floor. The shaft's length is how deep the cut has been taken, so the one thing
+// the old rope was genuinely good at -- showing the depth -- is kept.
+//
+// The bottom row is open in the middle: that is where the shaft comes through,
+// and the legs stand either side of the bore.
+export const DRILL = [
+  '..#....',
+  '..#....',
+  '#######',
+  '#oooo##',
+  '###.###'
 ];
 
-// The hoist's frame, on the deck over the mouth. The rope and the skip are drawn
-// under it, as long as the hole is deep.
-//
-// A frame, and drawn like one: white knocked out of the whole inside of it with
-// a band of black across the middle and a stub of upright in each half, so it
-// reads as braced steel rather than as a black slab. Filled in, at this height,
-// it was a monolith standing over the cut -- the biggest black shape in the yard,
-// and a picture of nothing.
-//
-// The rope runs down the channel at the bottom, and which column that is, is
-// read off the sprite rather than written down twice -- see `ropeCol`.
-export const HOIST = [
-  '#####',
-  '#ooo#',
-  '#o#o#',
-  '#ooo#',
-  '#####',
-  '#ooo#',
-  '#o#o#',
-  '#ooo#',
-  '#o.o#'
+// The bit: a triangle, point down, boring. Four rows rather than three, because
+// a taper of one row reads as a bar with a nub under it rather than as a point --
+// and the point is the whole of what says *drill*. As wide as the rig, so the
+// bore it sinks is the width of the machine sinking it, and its own picture
+// because it travels down that bore as the floor drops away from it.
+export const BIT = [
+  '#######',
+  '.#####.',
+  '..###..',
+  '...#...'
 ];
 
 // The ram, at the foot of the hill. The arm is drawn separately because its
@@ -224,16 +208,16 @@ export const TILLER = [
 // The arm is the ram: it is the only machine whose working end is somewhere
 // other than where its body stands, and a ram without one is a shed.
 export const MACHINE_MARK = {
-  // A block with a mouth cut white out of its front, and the stack on the back
-  // of it. The stack is not what tells a jaw from a tiller -- all three smoke --
-  // but the yard's jaw has one and this is supposed to be the same machine.
+  // The rig, and the bit under it on its shaft. Small as it is, it is the same
+  // object as the one over the cut: chimney, housing, and a triangle boring.
   jaw: [
-    '....#.',
-    '....#.',
-    '.#####',
-    'ooo###',
-    'ooo###',
-    '######'
+    '.#....',
+    '.#....',
+    '######',
+    '#oo###',
+    '##.###',
+    '.###..',
+    '..#...'
   ],
   // Chimney at the front, square slot, and the arm reaching out to a striking
   // head -- the yard's ram with the middle taken out of it.
