@@ -258,7 +258,7 @@ there and doubling it is visibly twice the sand. It goes down beside the buildin
 past it as it fills, because that is where the empty ground is; the casino's own footprint is barred
 and `addGrain` already looks outward, so a big enough pot flows round the building on its own.
 
-**Everything is one for one, and nothing is a shortcut.**
+**Everything is one for one until the numbers stop being numbers.**
 
 | | |
 |---|---|
@@ -267,9 +267,49 @@ and `addGrain` already looks outward, so a big enough pot flows round the buildi
 | a loss | every grain lifts off the heap and fades out on its way up — it is *leaving*, not blinking off |
 | banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
 
-Nothing is added at one end and nothing arrives that did not set off. The one place this is not
-literally true is a pot bigger than that stretch of ground can hold: the plot takes what it takes and
-the rest stays a number on the board, which is the same rule the hole keeps.
+**So past a thousand the heap is a reading of the pot rather than a count of it**, on a ladder of
+bands written down here rather than worked out per hand:
+
+| on the table | grains lying there |
+|---|---|
+| 1 to 1,000 | the pot itself, one for one |
+| 10,000 | 2,000 |
+| 100,000 | 3,000 |
+| 1,000,000 | 4,000 |
+| 10,000,000 and up | 5,000, and that is the brim |
+
+Between two marks it runs on the log of the pot, so nothing jumps: `shown = 1000 + 1000 ×
+log10(pot / 1000)`, clamped at the brim. Every band is a tenfold pot for a thousand more grains,
+which is what a log scale is for — a double always puts about three hundred more grains on the
+ground, so a win is always visibly more sand, and the heap never grows faster than the ground can
+hold or the eye can read. The brim is five thousand grains because that is a heap you can take in at
+a glance and settle in a frame; the fourteen thousand the ground would physically take is neither.
+
+**What broke the old rule is the far end.** The pot doubles on every ride, so eleven wins off a
+thousand is two million, and two million grains is two million grains — a plot the width of the yard
+filled solid, twenty-four thousand squares in the air at once, and a frame rate that says the wheel
+has hung rather than that you are winning. The sand stopped being the picture and became the cost of
+drawing it. Everything up to a thousand is untouched: a stake of ten is ten grains, a hundred is a
+hundred, doubling either is visibly twice the sand, and that is the whole of the early table.
+
+**A grain past the first band is worth its band.** One flying square carries `pot / shown` of
+whatever was staked. That is the one number in this building that is not one, and it is confined to
+the picture: the row on the board says the exact pot, banking credits the exact pot, and the hole
+fills with the exact pot — a landing grain puts its whole weight into the pile at the point it comes
+down, because the hole's rule is that the pile *is* the dust and that rule outranks this one. What
+is approximate is the size of the heap on the table and nothing else.
+
+**Which is the honest version of what was there before.** The old rule was one for one up to
+whatever that stretch of ground would take, and the rest "stays a number on the board" — so a pot
+past about fourteen thousand already showed you a heap that was not the pot, at the worst possible
+cost, and did it by filling the yard rather than by saying so. A band is the same admission made in
+advance, at a size that draws. `table.capped` goes with it: the brim is decided before the sand is
+sent rather than discovered when the ground refuses a grain.
+
+**Nothing about the hand changes.** The wheel still waits for the last grain to come to rest, a loss
+still lifts the whole heap off and fades it out, banking still throws every grain that is there over
+the works — there are simply five thousand of them at most, whatever the pot says.
+
 
 **The board hushes for the whole hand** — from the chip going down, not from the wheel starting,
 because the pot pouring on to the ground is the front half of the same gesture. It stands over the
