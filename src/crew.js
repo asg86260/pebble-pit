@@ -619,7 +619,7 @@ const MOVES = {
   // that is all height and no ground.
   hop: {
     beat: 1.35,
-    at: (w, swing) => { w.y = w.foot - Math.round(swing * 3) * P; }
+    at: (w, swing) => { w.y = w.foot - swing * 3 * P; }
   },
 
   // Across its patch and back, in whole cells and at a pace you can see, with a
@@ -647,7 +647,7 @@ const MOVES = {
         w.jigDir = -w.jigDir;
         w.jigAt = w.x;
       } else w.x = next;
-      w.y = w.foot - Math.round(swing) * P;
+      w.y = w.foot - swing * P;
     }
   },
 
@@ -659,9 +659,9 @@ const MOVES = {
   spin: {
     beat: 1.6,
     at: (w, swing, dt, zone, beat) => {
-      const to = w.moveFrom + Math.round(Math.sin(beat * Math.PI * 2)) * P;
+      const to = w.moveFrom + Math.sin(beat * Math.PI * 2) * P;
       if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
-      w.y = w.foot - Math.round(swing * 2) * P;
+      w.y = w.foot - swing * 2 * P;
     }
   }
 };
