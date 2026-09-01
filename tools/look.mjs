@@ -145,8 +145,8 @@ const SCENES = {
   scrubbing: `${RICH} window.__air({open:true, haze:2600, scrubbers:1}); window.__fast(25);
               window.__look(window.__state().scrubX - 300);`,
   // A rider stepping out: taken off the scrubbers while it was up, so it is on
-  // its way down under a canopy and the craft is on its way out of the window.
-  chute: `${RICH} window.__air({open:true, haze:1600}); window.__fast(2);
+  // its way down under an umbrella and the craft is on its way out of the window.
+  brolly: `${RICH} window.__air({open:true, haze:1600}); window.__fast(2);
           window.__buy('balloon'); window.__air({scrubbers:2}); window.__fast(35);
           (c => window.__look(c.x - 400))(window.__state().craft[0]);
           window.__air({scrubbers:0}); window.__fast(2.2);`,

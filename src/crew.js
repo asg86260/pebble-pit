@@ -1572,9 +1572,9 @@ function retask(w, type) {
   // second, which for a body that took the best part of a minute to go up reads
   // as the hat being switched off. It comes down the way it went up.
   if (w.aloft && type !== 'wizard') w.floating = true;
-  // ...and a body taken out of a balloon goes over the side under a canopy. It
-  // is already floating by the line above; this is what says there is a
-  // parachute over it, and it lets go of the craft so the craft can leave.
+  // ...and a body taken out of a balloon goes over the side under an umbrella. It
+  // is already floating by the line above; this is what says there is one
+  // up over it, and it lets go of the craft so the craft can leave.
   bailOut(w);
   w.type = type;
   w.fetching = null;

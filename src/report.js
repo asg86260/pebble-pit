@@ -474,7 +474,7 @@ export const snapshot = () => ({
   // they left the sky on the frame they were swallowed -- so this is a count of
   // a picture, and it is here so a check can tell a fade from a pop.
   going: GOING.length,
-  chutes: S.workers.filter(w => w.chute).map(w => Math.round(w.y)),
+  brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
   // The bodies on the scrubbers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
   // a basket. `berth` is -1 for the house and the craft's index otherwise.

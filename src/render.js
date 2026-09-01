@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE_FROM, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_ROWS, CHUTE_INSET, CHUTE_GAP,
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, BROLLY_W, BROLLY_STICK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -1525,82 +1525,52 @@ export function drawBalloons() {
   }
 }
 
-// The canopy over a body that has stepped out of a balloon. Drawn with the craft
-// rather than with the crew, because it is a piece of the balloon's story: it is
-// what the yard shows you instead of a body being switched off in mid-air.
+// The umbrella a body puts up when it steps out of a balloon.
 //
-// It took three goes, and both faults were arithmetic rather than taste:
+// It was a parachute for four goes and never read as one at the size it is
+// played at. A parachute is a hard shape to draw small: what makes it legible is
+// a canopy *and* a spread of rigging, and rigging is thin diagonal lines, which
+// in cells are staircases -- so it came out as a bulb, a lampshade, a mushroom
+// and a funnel in turn. An umbrella is the same joke and one tenth the drawing:
+// a scalloped cap and one straight stick.
 //
-// **The dome was not domed.** Its rows came off `0.45 + 0.55 * sqrt(t)`, which
-// over three rows gives ten cells, twelve, thirteen -- three bars of nearly the
-// same width, which is a lampshade. A canopy is a *half ellipse*: as wide as it
-// is at the hem and half that at the crown, which over four rows is six, ten,
-// twelve, thirteen. That is the difference between a curve and a stack of
-// rectangles, and it is the whole silhouette.
-//
-// **And the rigging was dotted.** One cell was filled per row at an interpolated
-// x, and the two ends of a line are six cells apart over eight rows -- so
-// consecutive rows landed a cell or two apart and what got drawn was a broken
-// trail of squares. A line has to be *connected*: each row fills the whole run
-// from where the last one was to where this one is.
-export function drawChutes() {
+// Drawn with the craft rather than with the crew, because it is a piece of the
+// balloon's story: it is what the yard shows you instead of a body being
+// switched off in mid-air.
+export function drawBrollies() {
   for (const w of S.workers) {
-    if (!w.chute) continue;
-    const cx = Math.round(w.x + WORKER / 2);
-    const hemY = Math.round(w.y) - CHUTE_GAP;       // the underside of the canopy
-    const wide = Math.round(CHUTE_W / P);           // in cells
-    const rows = CHUTE_ROWS;
+    if (!w.brolly) continue;
+    const cx = Math.round((w.x + WORKER / 2 - P / 2) / P) * P;   // the stick's column
+    const hemY = Math.round(w.y) - BROLLY_STICK;                 // where the cap sits
+    const wide = Math.round(BROLLY_W / P);                       // cells across
     ctx.fillStyle = '#000';
 
-    // The dome: a **solid** half ellipse, shallow and wide.
-    //
-    // Solid, because this yard is solid black shapes and a hollow one does not
-    // belong in it -- drawn as a shell with daylight inside, the arc and the
-    // rigging closed into a single rounded outline and what was on screen was a
-    // light bulb. Shallow, because a tall dome is the craft's own envelope.
-    // Three rows against thirteen cells: seven across at the crown, eleven, and
-    // the full thirteen at the hem, which is a wide flat edge with cloth over it.
-    const rowW = [];
-    for (let n = 0; n < rows; n++) {
-      const v = (rows - n - 0.5) / rows;
-      rowW.push(Math.max(2, Math.round(wide * Math.sqrt(Math.max(0, 1 - v * v)))));
-    }
-    const hemCells = rowW[rows - 1];
-    for (let n = 0; n < rows; n++) {
-      const runW = rowW[n] * P;
-      ctx.fillRect(Math.round(cx - runW / 2), hemY - (rows - n) * P, runW, P);
+    // The cap: three rows, and it is the *bottom* one that is widest. Written out
+    // as shares of the width rather than worked out from a curve -- three numbers
+    // are easier to read and to change than the arithmetic that produces them,
+    // and the arithmetic is what got the last four wrong.
+    const rowsOf = [0.45, 0.82, 1];
+    for (let n = 0; n < rowsOf.length; n++) {
+      let cells = Math.max(2, Math.round(wide * rowsOf[n]));
+      if ((cells & 1) !== (wide & 1)) cells++;                   // keep it centred on the stick
+      const runW = cells * P;
+      ctx.fillRect(Math.round(cx + P / 2 - runW / 2), hemY - (rowsOf.length - n) * P, runW, P);
     }
 
-    // The rigging: from the two ends of the hem in to the body, connected the
-    // whole way. It converges on the shoulders rather than hanging past them,
-    // because lines that stop beside a body are lines holding nothing up.
-    // **From the rim, splayed wide** -- and a third line down the middle.
-    //
-    // Pulled in towards the body the two lines stand almost upright and the
-    // whole thing reads as a mushroom on a stem, or a table. What says parachute
-    // is the *triangle*: a wide cap, a small body, and the rigging running the
-    // whole width between them. The centre line is the cue that carries it --
-    // two lines make an outline, three make rigging.
-    const half = Math.max(1, Math.floor(hemCells / 2) - CHUTE_INSET);
-    const shoulder = Math.round(w.y) + P;
-    const drop = Math.max(P, shoulder - hemY);
-    const steps = Math.max(1, Math.round(drop / P));
-    for (const side of [-1, 0, 1]) {
-      const fromX = cx + side * half * P;
-      const toX = side < 0 ? Math.round(w.x)
-                : side > 0 ? Math.round(w.x + WORKER - P)
-                : Math.round((w.x + WORKER / 2 - P / 2) / P) * P;
-      let last = fromX;
-      for (let n = 0; n < steps; n++) {
-        const k = (n + 1) / steps;
-        const x = Math.round((fromX + (toX - fromX) * k) / P) * P;
-        // the run from where the line was to where it now is, so the staircase
-        // has no gaps in it
-        const a = Math.min(last, x), b = Math.max(last, x);
-        ctx.fillRect(a, hemY + n * P, b - a + P, P);
-        last = x;
-      }
-    }
+    // **The scallop.** One row of cells hanging below the hem, every other one --
+    // and this is the whole of what says umbrella rather than mushroom. A cap
+    // with a ruled edge is a toadstool; a cap with a wavy one is cloth on ribs.
+    const hemCells = (() => {
+      let c = Math.max(2, Math.round(wide));
+      if ((c & 1) !== (wide & 1)) c++;
+      return c;
+    })();
+    const left = Math.round(cx + P / 2 - (hemCells * P) / 2);
+    for (let c = 1; c < hemCells - 1; c += 2) ctx.fillRect(left + c * P, hemY, P, P);
+
+    // The stick, straight down the middle to the top of the head. One cell wide,
+    // and the one line in the whole drawing.
+    ctx.fillRect(cx, hemY - P, P, Math.max(P, Math.round(w.y) - hemY + P));
   }
 }
 
@@ -3173,7 +3143,7 @@ export function draw() {
   drawPuffs();             // what the crew are putting up there right now
   drawSmog();              // and what it has gathered into up there
   drawBalloons();          // and the craft crossing it
-  drawChutes();            // and anybody who has stepped out of one
+  drawBrollies();          // and anybody who has stepped out of one
   drawRain();              // and whatever is coming down out of it, or going into the house
   drawPointed();           // and an arrow over whoever you just asked for by name
   drawCursor();

@@ -637,27 +637,20 @@ export let BALLOON_SWING = 0.22;
 // up and out of the window. Brisk -- this is a thing leaving, not a thing
 // drifting -- but slow enough to be watched going.
 export const BALLOON_LEAVE = 1.15;
-// Pixels a frame a body under a canopy comes down at.
+// Pixels a frame a body under an umbrella comes down at.
 //
-// Still slower than it would fall -- that is what a canopy is for -- but not by
-// as much as it was. A body drifting down from the top of the sky at half a
-// pixel a frame is on screen for the best part of a minute, which is a long time
-// to watch somebody not arrive. It is a descent, not a hover.
-export const CHUTE_FALL = 0.95;
-// The canopy: **wide and shallow**, which is the whole of what keeps it from
-// reading as a small balloon. The envelope over a craft is seven cells across
-// and nine deep; this is thirteen across and three deep, so the two silhouettes
-// have nothing in common but being round on top -- which matters, because the
-// one place a canopy ever appears is directly under a balloon.
-export const CHUTE_W = P * 13;
-export const CHUTE_ROWS = 3;         // rows of cells in the dome, as a half ellipse
-export const CHUTE_INSET = 0;        // cells in from the rim the rigging hangs from
-// How far over the head the canopy rides. This is the daylight the rigging
-// crosses, and it is the second half of not looking like a balloon: the open
-// triangle between a wide hem and a small body is the thing that reads as a
-// parachute. Close in, the lines merged into the canopy and what was left was a
-// black blob with a white square under it.
-export const CHUTE_GAP = P * 8;
+// Slower than it would fall -- that is what the umbrella is for -- but not by as
+// much as it was. A body drifting down from the top of the sky at half a pixel a
+// frame is on screen for the best part of a minute, which is a long time to
+// watch somebody not arrive. It is a descent, not a hover.
+export const BROLLY_FALL = 0.95;
+// The cap: wide and shallow. Eleven cells across against the craft's envelope at
+// seven, and three rows deep against its nine, so the two shapes are not each
+// other at different sizes -- which matters, because the one place an umbrella
+// ever appears is directly under a balloon.
+export const BROLLY_W = P * 11;
+// And how far over the head it rides, which is the length of the stick.
+export const BROLLY_STICK = P * 7;
 // Where the lanes are, as a share of the sky's own depth. The first craft rides
 // high and each one after it a little lower, so a fleet crosses rather than
 // passing through itself.

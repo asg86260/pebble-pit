@@ -183,18 +183,18 @@ export function berthFor(w) {
 }
 
 // **Over the side.** A rider taken off the scrubbers does not ride the craft
-// home; it steps out and comes down under a canopy, and the balloon goes up
-// without it.
+// home; it puts an umbrella up, steps out, and the balloon goes
+// up without it.
 //
 // Called from `retask`, which is the one place a body's job is taken away from
 // it, and *after* that has already set `floating` -- so `aloft` is deliberately
-// left standing here. A body under a parachute is still in the sky, and clearing
+// left standing here. A body under an umbrella is still in the sky, and clearing
 // it would hand the body straight back to the fall rule, which is the thing
 // `aloft` exists to keep away from it. `floatDown` clears all three when its feet
 // are down.
 export function bailOut(w) {
   if (w.craft == null) return;
-  w.chute = true;
+  w.brolly = true;
   w.craft = null;
   w.berth = null;
   if (w.goal === 'aloft') w.goal = 'to';
