@@ -15,7 +15,7 @@
 // stretch of yard at thirty and a hundred and twenty and expect the same
 // distance covered.
 
-import { group, ok, state, yard } from './helpers.mjs';
+import { group, ok, state, yard, SEED } from './helpers.mjs';
 
 // how far the crew get in ten seconds, from the same start, at a given rate
 const walkAt = hz => {
@@ -47,7 +47,15 @@ const walkAt = hz => {
 // is what made a real guarantee look shaky.
 group('a walk is a distance over a time, whatever the frame rate', async () => {
   const walk = hz => {
-    window.__reset();
+    // The *seed*, not just a reset, and once per rate rather than once for the
+    // three of them. A reset puts a new game up but leaves the generator where
+    // the last run left it, so the thirty ran off one set of rolls and the
+    // hundred and twenty off another: the body's own amble is a roll, and three
+    // walks at three paces do not measure the frame rate, they measure the dice.
+    // That is what the eight percent of slack below was quietly paying for --
+    // seeded per rate the three come out within a pixel of each other, which is
+    // the claim this check was written to make.
+    window.__seed(SEED);
     window.__crew(1, 0);
     window.__clearFloor();
     window.__place('miner', 400);            // a long way from the rock

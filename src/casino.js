@@ -40,6 +40,7 @@
 import { CASINO_ODDS, CASINO_SPIN_MS, CASINO_SLICES, CASINO_WIN_SLICES, CASINO_TURNS,
          CASINO_WHEEL, CASINO_KNOCK,
          CASINO_WIN_KNOCK, TABLE_LIFE, TABLE_GRAV, CASINO_CHIPS, CASINO_SAY_MS,
+         CASINO_PILE_ONE, CASINO_PILE_BAND, CASINO_PILE_BRIM,
          P, SHADES, SHARD_CELL, SPORE_CELL, someFind } from './config.js';
 import { S, pit, casino, table } from './state.js';
 import { makePainter } from './painter.js';
@@ -145,7 +146,10 @@ function pour() {
 // nothing arrives that did not set off.
 export function bank() {
   if (!canBank()) return;
-  S.paying = { cur: S.pot.cur, left: pot() };
+  // What flies is the heap that is there -- which past the first band is fewer
+  // squares than the pot is units -- and each of them carries its share of the
+  // number. `left` is the pot itself and it is paid out to the grain.
+  S.paying = { cur: S.pot.cur, left: pot(), grains: Math.max(1, table.n) };
   S.pot = null;
   S.hand = null;                                 // taken: there is nothing to report
   S.dirty = true;
@@ -159,9 +163,9 @@ const FLIGHT_MS = 1700;
 
 function payOutStep(dt) {
   const p = S.paying;
-  let n = Math.min(p.left, Math.max(1, Math.ceil(p.left * (dt / TRICKLE_MS))));
+  let n = Math.min(p.grains, Math.max(1, Math.ceil(p.grains * (dt / TRICKLE_MS))));
   const find = potShade(p.cur);
-  while (n-- > 0 && p.left > 0) {
+  while (n-- > 0 && p.grains > 0) {
     let x = potAt().x, y = S.groundY - P, v = find ? someFind(find) : 4;
     const c = topmostColumn();                   // off the heap if there is any left
     if (c >= 0) {
@@ -173,9 +177,16 @@ function payOutStep(dt) {
         put(table, c, r, 0);
       }
     }
-    p.left--;
+    // Its share of the pot, and never less than one: whatever the rounding
+    // leaves over rides on the last grain off the heap, so the hole is paid the
+    // exact pot rather than the exact pot give or take the arithmetic.
+    const worth = p.grains > 1
+      ? Math.max(1, Math.min(p.left - (p.grains - 1), Math.round(p.left / p.grains)))
+      : p.left;
+    p.left -= worth;
+    p.grains--;
     S.tableAir.push({
-      x, y, s: v, t: 0,
+      x, y, s: v, t: 0, worth,
       // Not a ballistic lob: the hole is three thousand pixels away and the arc
       // that gets there under gravity is one that leaves the sky. This is a
       // thrown line with a hump in it, which is what a long throw looks like.
@@ -183,7 +194,7 @@ function payOutStep(dt) {
              y1: S.groundY - P * 2, k: 0, high: P * 30 + rand() * P * 30 }
     });
   }
-  if (p.left < 1) { S.paying = null; S.dirty = true; }
+  if (p.grains < 1 && p.left < 1) { S.paying = null; S.dirty = true; }
 }
 
 // Put the whole of it back on. Same wheel, same even money, and the pot is twice
@@ -245,18 +256,20 @@ function wheelAt(dt) {
 
 // --- the pot, standing on the ground ------------------------------------------
 // What is on the table is a heap beside the building, and it is **the pot**: one
-// grain, one of whatever was staked. Not a drawing of a heap sized to look about
-// right -- a real plot of sand, settled by the same code the yard and the hole
-// use, so a thousand on the table is a thousand grains lying there and doubling
-// it is visibly twice the sand.
+// grain, one of whatever was staked, up to the first band. Not a drawing of a
+// heap sized to look about right -- a real plot of sand, settled by the same code
+// the yard and the hole use, so a thousand on the table is a thousand grains
+// lying there and doubling it is visibly twice the sand. Past a thousand it is
+// still a real plot of sand and still settled the same way, but how much of it
+// there is comes off the ladder in `shownFor` rather than off the counter.
 //
 // It goes down beside the building and walks *left* past it as it fills, because
 // that is where the empty ground is: `addGrain` already looks outward for the
 // nearest column that will take one, and the casino's own footprint is barred,
 // so a big enough pot flows round the building on its own.
 //
-// The plot holds what the ground holds and no more, which is the same rule the
-// hole keeps -- a pile shows what you have, up to the brim.
+// The heap has a brim, and it is a number picked in advance rather than whatever
+// the far end of the yard turned out to take -- see `shownFor`.
 export const potAt = () => ({
   x: Math.round((casino.x + casino.w + P * 6) / P) * P,
   y: Math.round(S.groundY / P) * P
@@ -284,12 +297,40 @@ export function wireTable() {
   resizeGrid(table);
 }
 
-// How much sand should be lying there: the pot, or as much of it as the ground
-// will hold. The plot is wide but it is not endless, and a pot bigger than the
-// far end of the yard can take is the one place here that is not one for one --
-// so it is found out rather than guessed. The first grain the ground refuses
-// sets the mark, and clearing the plot forgets it again.
-export const tableWant = () => Math.min(pot(), table.capped ?? Infinity);
+// --- the bands ----------------------------------------------------------------
+// How much sand a pot puts on the ground. Up to `CASINO_PILE_ONE` it is the pot
+// itself, one grain a unit, which is the whole of the early table and is not
+// going anywhere: ten is ten grains and doubling it is visibly twice the sand.
+//
+// Past that the heap is a *reading* of the pot rather than a count of it. The
+// pot doubles on every ride, so a run of wins runs off the end of the ground and
+// off the end of the frame rate long before it runs out of numbers -- and the
+// old rule had already given up by then, quietly, by filling the yard and then
+// refusing the next grain. A band is the same admission made in advance, at a
+// size that draws: a tenfold pot for `CASINO_PILE_BAND` more grains, on the log
+// of the pot so nothing jumps, and never more than the brim.
+//
+// A double is about three hundred more grains wherever you are on the ladder, so
+// a win is always visibly more sand. See config.js for the ladder itself.
+export const shownFor = n =>
+  n <= CASINO_PILE_ONE ? Math.max(0, Math.floor(n))
+    : Math.min(CASINO_PILE_BRIM,
+               Math.round(CASINO_PILE_ONE +
+                          CASINO_PILE_BAND * Math.log10(n / CASINO_PILE_ONE)));
+
+// What one grain of the heap is worth: one, below the first band, and its share
+// of the pot above it. This is the one number in the building that is not one,
+// and it lives in the picture only -- see `payOutStep`, which pays the hole the
+// exact pot however the rounding falls.
+export const grainWorth = () => pot() / Math.max(1, tableWant());
+
+// How much sand should be lying there: the band, and never more than the ground
+// will actually hold. The brim is well inside what this stretch takes, so the
+// second clause is a backstop rather than the mechanism -- but the wheel waits
+// on the heap reaching this number, so a ground that refused a grain with no way
+// to say so would be a wheel that never went round. The first grain refused sets
+// the mark, and clearing the plot forgets it again.
+export const tableWant = () => Math.min(shownFor(pot()), table.capped ?? Infinity);
 
 // --- the trickle --------------------------------------------------------------
 // Sand does not arrive all at once. It comes down out of the sky and piles up,
@@ -299,13 +340,11 @@ export const tableWant = () => Math.min(pot(), table.capped ?? Infinity);
 // The rate is worked out from how far there is to go, so ten grains trickle and
 // twenty thousand pour, and either is issued over about a second and a half.
 //
-// **Every grain is seen.** There was a cap on how many could be in the air at
-// once, with the rest put straight into the plot, and it was a lie of exactly the
-// kind this game does not tell: the pile is the pot, so the pile arriving has to
-// be the pot arriving. What is left is a backstop far above anything a real hand
-// reaches, so a pot the size of the whole hole cannot make the frame into a
-// slideshow -- and it is the one place here that is not one for one, which is
-// why it is written down.
+// **Every grain of the heap is seen.** There was a cap on how many could be in
+// the air at once, with the rest put straight into the plot, and it was a lie of
+// exactly the kind this game does not tell: the heap arriving has to be the heap
+// arriving. It stays a backstop, and the bands have put it out of reach for good
+// -- the brim is five thousand and this is twenty-four, so no hand ever fills it.
 const TRICKLE_MS = 1500;
 const IN_AIR = 24000;
 
@@ -436,7 +475,10 @@ export function stepSparks(dt) {
       k.x = a.x0 + (a.x1 - a.x0) * a.k;
       k.y = a.y0 + (a.y1 - a.y0) * a.k - Math.sin(a.k * Math.PI) * a.high;
       if (a.k >= 1) {
-        bankDust(a.x1, k.s);
+        // One square off the heap is worth its band, and the hole takes the
+        // whole of it: down there the pile *is* the dust, and that rule outranks
+        // the reading over here.
+        for (let w = k.worth ?? 1; w > 0; w--) if (!bankDust(a.x1, k.s)) break;
         S.tableAir.splice(i, 1);
       }
       continue;

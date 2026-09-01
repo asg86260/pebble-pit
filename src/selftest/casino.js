@@ -181,7 +181,7 @@ export const TESTS = [
     // and the hand plays itself out: the pot comes down, the wheel goes round
     // when it has, and the heap walks to whatever it left on the table
     runUntil(() => !state().pouring && !state().spinning && state().tableAir === 0 &&
-                   state().table === (state().pot ? state().pot.on : 0), 40);
+                   state().table === state().tableWant, 40);
     const settled = state();
     const on = settled.pot ? settled.pot.on : 0;
 
@@ -197,7 +197,9 @@ export const TESTS = [
          'it arrives a grain at a time rather than appearing',
          `${arriving.table} of ${stake} down, ${arriving.tableAir} still falling`),
       ok(arriving.tableAir > 0, 'trickling out of the sky', `${arriving.tableAir} in the air`),
-      ok(settled.table === on, 'and it is the pot, grain for grain',
+      ok(settled.table === settled.tableWant && settled.tableWant === on,
+         'and it is the pot, grain for grain -- a pot this size is under the '
+         + 'first band, so the heap is the number itself',
          `${settled.table} grains, ${on} on the table`),
       ok(leaving.tableAir > 0 || gone.table === 0,
          'and when it goes it lifts off rather than blinking out'),

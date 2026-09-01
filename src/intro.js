@@ -138,7 +138,13 @@ export function maybeReunion(t) {
 // finished -- and the two of them are the buried square, which is drawn anyway,
 // and whoever is nearest to it.
 function meet(t) {
-  S.danceUntil = t + 400;                      // held on, a frame at a time
+  // Held to the end of the meeting, and said once rather than a frame at a time.
+  // The dance reads this to know when the yard stops watching -- a body only
+  // leaves the ground if it can be back down by then -- and a horizon re-armed
+  // four hundred milliseconds ahead every frame is not one anybody can plan a
+  // hop against: the whole crew stayed on the floor for the whole scene. The
+  // meeting has a length, so the hold is that length.
+  S.danceUntil = S.introAt + MEET_MS;
   if (t >= (S.introSaid || 0)) {
     S.introSaid = t + INTRO_BEAT * 1.4;
     S.buriedSay = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };

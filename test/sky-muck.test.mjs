@@ -114,7 +114,7 @@ group('the sky fills up, and gives it back', async () => {
     ok(gathered.clump < 8 && gathered.bins > seeded.bins / 2,
        'and once up there it lies as a haze over everything, not in knots',
        `${seeded.clump} over ${seeded.bins} bins -> ${gathered.clump} over ${gathered.bins}`),
-    ok(wet.rains === 1, 'full, it comes back down', `${wet.rains} rains`),
+    ok(wet.rains >= 1, 'full, it comes back down', `${wet.rains} rains`),
     ok(wet.muck.rock > 0 && wet.muck.yard > 0,
        'as muck, on the rock and over the yard',
        `rock ${wet.muck.rock}, yard ${wet.muck.yard}`),
@@ -135,8 +135,19 @@ group('the sky fills up, and gives it back', async () => {
        `${dried.smog.muck.rock} left`),
     ok(dried.rock < rockWas, 'and then get back to the rock under it',
        `${rockWas} -> ${dried.rock}`),
-    ok(dried.smog.rains === 1, 'and one rain is one rain: it does not keep coming',
-       `${dried.smog.rains}`)
+    // Not "exactly one" any more, and the reason is the rain itself rather than
+    // anything about this group. It used to be impossible to rain under
+    // SMOG_RAIN_AT, so a yard that had just been rained out could not rain again
+    // until the works had put a whole line's worth back up -- which never
+    // happened inside a check. The odds are a curve now and a fair sky is a small
+    // chance rather than none, so a long group may well see a second shower.
+    //
+    // What actually has to be true is that showers do not run into each other,
+    // and that is RAIN_GAP's guarantee -- measured, on its own, by "a minute of
+    // dry between one shower and the next" in sky-rain. Here it is enough that
+    // the yard is not raining constantly.
+    ok(dried.smog.rains <= 3, 'and one rain is one rain: it does not keep coming',
+       `${dried.smog.rains} over the whole group`)
   ];
 });
 

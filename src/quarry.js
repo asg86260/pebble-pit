@@ -15,9 +15,9 @@ import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWI
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
 import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
-import { spriteW, spriteH, stackCol, DRILL } from './sprites.js';
+import { spriteW, spriteH, stackCol, roofRow, seatCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
-import { walkY, groundAt, benches, resite, pileOf } from './world.js';
+import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
@@ -819,7 +819,7 @@ export const QUARRY_UPGRADES = [
     // The last thing the cut ever sells, and it does not appear until the hole is
     // as deep as it will ever go. See `canBuy`.
     key: 'jaw',
-    name: 'the jaw',
+    name: 'the drill',
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
     show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
@@ -894,14 +894,26 @@ export const jawX = () => {
   return Math.round(((c.from + c.to) / 2 - P * Math.round(spriteW(DRILL) / 2)) / P) * P;
 };
 
-// Which column the shaft comes down: the middle of the rig, and the middle of
-// the bore it is sinking.
-export const shaftX = () => jawX() + ((spriteW(DRILL) - 1) >> 1) * P;
+// Where the rig stands: on the bridge deck, which is the only solid ground over
+// a hole. Its feet are the bottom row of the picture.
+export const rigTop = () => Math.round((bridgeSpan().top - spriteH(DRILL) * P) / P) * P;
+
+// Which column the shaft comes down, read off the picture: the gap the legs
+// leave in the bottom row is the bore, and there is only one of them.
+export const shaftX = () => jawX() + DRILL[spriteH(DRILL) - 1].indexOf('.') * P;
 
 // The floor it is boring, as the floor is now. Derived every frame off
 // `dugTopY`, so when the quarry falls in behind the last body out the bit comes
 // up with the ground exactly the way a quarrier's feet do.
 export const jawY = () => dugTopY(shaftX());
+
+// Where the body working it stands: on the rig's roof, at the end away from the
+// chimney. Both read off the picture -- see `roofRow` and `seatCol` -- so the rig
+// carries its operator's footing with it.
+export const drillSeat = () => ({
+  x: jawX() + seatCol(DRILL) * P,
+  y: rigTop() + roofRow(DRILL) * P - WORKER
+});
 
 defineMachine('jaw', {
   job: 'quarriers',
@@ -915,8 +927,10 @@ defineMachine('jaw', {
   // The top of its chimney. The rig stands on the deck, so its stack is up in
   // the daylight rather than down the hole -- which is where the smoke of a
   // drill actually comes from, and where the dirt therefore goes up.
-  stack: () => ({ x: jawX() + stackCol(DRILL) * P,
-                  y: S.groundY - spriteH(DRILL) * P }),
+  stack: () => ({ x: jawX() + stackCol(DRILL) * P, y: rigTop() }),
+  // Up on the roof. A body works this machine from on top of it, so it is put
+  // there rather than walked to a spot beside it -- see `stepTender`.
+  seat: drillSeat,
   // Where the *body* stands, which is not where the machine is. The jaw is on
   // the floor of the cut; its tender works the hoist on the deck at the head of
   // the ladder, which is also where the lever is. A tender posted down the hole

@@ -39,6 +39,17 @@ const RICH = `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
 const LIP = `window.__levels({haulCarryLevel:5, haulPaceLevel:5, harnessLevel:5,
   bootsLevel:5}); window.__school({carters:6});`;
 
+// A sky to look at, at whatever level the scene sets. The camera on the middle
+// of the works, so the yard is in shot under it.
+//
+// Each of these runs eight seconds after setting the level, and that is not
+// padding: `fillSky` mints a wound-up sky at the *top* of the window and the
+// band eases each speck down to its own slot over `SMOG_SINK`. Shot on the next
+// frame, every scene came out heavy at the top and thin at the ground -- a
+// picture of a sky still falling into place, which read exactly like a bug in
+// the thing being looked at.
+const SKYAT = `${RICH} window.__look(window.__state().rockLeftX - 300);`;
+
 const SCENES = {
   // Bodies, wearing everything the school sells, standing where you can see them.
   crew: `window.__reset(); window.__crew(3,2,2,2);
@@ -124,7 +135,14 @@ const SCENES = {
         window.__look(window.__state().outhouseX - 260);`,
 
   // A board, open, with everything on it.
-  boards: `${RICH} window.__board('tower');`
+  boards: `${RICH} window.__board('tower');`,
+
+  // The sky at four levels. The haze has the whole window now rather than a
+  // strip along the top of it -- see DESIGN.md, "The sky is the band".
+  sky0: `${SKYAT} window.__air({haze: 0}); window.__fast(8);`,
+  sky1: `${SKYAT} window.__air({haze: 900}); window.__fast(8);`,
+  sky2: `${SKYAT} window.__air({haze: 2100}); window.__fast(8);`,
+  sky3: `${SKYAT} window.__air({haze: 4200}); window.__fast(8);`
 };
 
 const args = process.argv.slice(2);

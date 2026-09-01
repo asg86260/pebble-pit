@@ -12,7 +12,7 @@ import {
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
 import { S, floor, bench } from './state.js';
-import { spriteW, spriteH, stackCol, RAM } from './sprites.js';
+import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
@@ -124,6 +124,23 @@ export function dropZone() {
 export function dropHeight() {
   const overhead = S.groundY - S.camY;          // ground line to the top of the window
   return Math.max(ROCK_DROP, overhead + ROCK_DROP_CLEAR);
+}
+
+// How long the rock in the air has left, in milliseconds, out of the same three
+// numbers the fall itself is made of: what is left to travel, how fast it is
+// going, and what the drop adds to that each frame. `stepRock` below adds the
+// gravity and then moves, so a fall of n frames covers v*n + g*n*(n+1)/2 -- and
+// this is that solved for n, turned into time at the rate a frame is worth.
+//
+// It is here because the dance asks: the crew are celebrating right up until the
+// next rock lands, and a body that leaves the ground has to know whether it can
+// be back down before the yard has something else to look at. Nobody outside a
+// fall should read this -- it is zero when nothing is coming.
+export function fallMs() {
+  if (S.rockFall <= 0) return 0;
+  const g = DROP_GRAV, v = S.rockFallV + g / 2;
+  const n = (Math.sqrt(v * v + 2 * g * S.rockFall) - v) / g;
+  return n * (1000 / 60);
 }
 
 // One frame of a new rock coming down. It lands, shoves the dust out of the
@@ -570,6 +587,14 @@ defineMachine('ram', {
   type: 'miner',
   at: ramX,
   y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
+  // Up on the roof of the engine, at the end away from the chimney. It stood
+  // *behind* the machine, on the yard side, which is where a body stands to work
+  // a bench -- and a ram is not a bench. A body that has climbed onto the thing
+  // is a body running it.
+  seat: () => ({
+    x: ramX() + seatCol(RAM) * P,
+    y: S.groundY - spriteH(RAM) * P + roofRow(RAM) * P - WORKER
+  }),
   // The top of its chimney: where the smoke leaves and, therefore, where the
   // dirt enters the sky. Both read this, so they cannot come from two places.
   stack: () => ({ x: ramX() + stackCol(RAM) * P,

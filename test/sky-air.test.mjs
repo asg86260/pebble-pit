@@ -50,7 +50,7 @@ group('the thing in the sky is benched', async () => {
 // side of the world and leave an empty one behind.
 // Clouds and smog share the sky, layered rather than mixed: the haze along the
 // very top, the weather below it, and the birds through the middle of it.
-group('the sky has clouds under the haze, and birds now and then', async () => {
+group('the sky has clouds in it, and birds now and then', async () => {
   const before = state().sky;
   run(2);
   window.__look(0);
@@ -66,9 +66,16 @@ group('the sky has clouds under the haze, and birds now and then', async () => {
        `${before.clouds} / ${near.clouds}`),
     ok(near.cloudY.every(y => y >= near.top) && near.cloudY.every(y => y <= near.low),
        'they keep to their own band of sky', `${near.top}..${near.low}`),
-    ok(near.top > state().camY + state().smogBand,
-       'which starts below the haze rather than in it',
-       `${near.top} against a haze ending ${state().camY + state().smogBand}`),
+    // It used to be "below the haze", and there is no below the haze any more:
+    // the haze had a thirteen-cell strip along the top of the window and the
+    // clouds sat in the clear air under it, and the haze has the whole sky now.
+    // What is left of that rule is the part that was ever about the picture --
+    // clouds are weather with nothing to do with the works, so they stay out of
+    // the top of the window where the smoke is thickest, and the haze passes in
+    // front of them rather than them dodging it.
+    ok(near.top > state().camY,
+       'which keeps out of the very top of the window',
+       `${near.top} against a window starting at ${state().camY}`),
     ok(flock.birds >= 2 && flock.birds <= 4, 'birds still come in twos and threes',
        `${flock.birds}`),
     ok(flock.birdY.every(y => y <= flock.low + 20), 'flying no lower than they ever did',

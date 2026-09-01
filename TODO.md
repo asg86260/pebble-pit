@@ -1,8 +1,13 @@
 # Still to do
 
 Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
-jitter regression (item 5), the shield story arc (item 6), and one piece of
-housekeeping. Items 1 (dust into the cut) and 3 (dust leniency) are done and
+jitter regression (item 5), the shield story arc (item 6), a balance call the
+sky work turned up (item 8) and one piece of housekeeping. Item 7 is done.
+
+**The balloon (item 4) is unblocked.** It was designed against a haze band that
+the sky rework was going to delete; the band survived and has the whole sky now,
+so the balloon's design stands exactly as written -- including the reason it
+moves, which the field would have taken away. Items 1 (dust into the cut) and 3 (dust leniency) are done and
 kept below for the record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
@@ -257,6 +262,73 @@ without orphaning the systems that read it (dots, the opening's promise, the
 new structures into the pile-full mark and per-cell variation as given.
 
 ---
+
+## 7. The sky — DONE, with one balance question left
+
+**Status:** built and on main. See DESIGN.md, "The sky is the band (built)".
+
+**What it turned out to be, against the plan.** The plan was to delete the mote
+band and draw the sky as a picture of `S.haze` — a field of thresholds, a cell
+painted when its threshold fell under the density. The accounting argument for
+that was right and the picture was wrong, three times over: value noise pulled
+the cells into grey patches (patches are cloud; haze is not made of shapes); an
+even scatter still blotched, because white noise clumps on its own (0.23 to 0.54
+ink over eight-by-eight blocks of a middling sky, with no clumping term anywhere
+in the code); and when it finally moved it was **nauseating**, which is what
+settled it.
+
+A field steps in whole cells, so the entire sky changes on the same frame,
+together, several times a second. A mote is a *thing* rather than a sample: it
+has its own position, its own slot, its own share of the wind, and it eases. Ten
+thousand specks each moving a fraction of a pixel on their own schedule drifts;
+ten thousand cells re-decided on one frame boils. No tuning gets from one to the
+other, because the difference is not in the numbers.
+
+**So the band stayed, and got the whole sky.** `bandLow()` reads off the ground
+line instead of a depth below the top; a puff climbs to its own slot's height
+rather than to the underside of a strip (otherwise every puff arrives on the
+frame it is born, since the sky's underside is now just above the works); three
+times the specks, with every "per mote" constant tripled alongside so nothing
+about the balance moves; and the clouds get their own ceiling, there being no
+"below the haze" left for them to sit in.
+
+**The rain is a curve**, as asked: the chance is the share of the cap raised to
+`SMOG_RAIN_BEND`, nought at nought exactly, no threshold anywhere. Bent hard at
+five, because rain takes down the whole sky it breaks on and a gentle bend has
+the weather doing the scrubbing house's job for it.
+
+---
+
+## 8. Rain muck clogs the scrubbing house
+
+**Status:** found while building item 7. Real, reachable in play, and not
+decided — it is a balance call rather than a bug, so it is written down rather
+than patched.
+
+`clogged()` (src/smog.js) counts every grain of muck lying near the house —
+`outletMuck()` walks `muckCols()` across the strip — and the rain drops muck all
+over the yard. So a sky bad enough to rain often rains on the house's own
+doorstep and stops it. **The house is the answer to pollution, and the weather
+now switches it off exactly when it is needed most.**
+
+It was nearly unreachable before item 7: rain could not happen at all under
+`SMOG_RAIN_AT`, so only a yard already at the brim could manage it. With the odds
+a curve all the way down, a middling sky rains too.
+
+**For changing it.** The clog was written for one reason and the comment says so:
+the house used to spray its own walk, pouring out for as long as a body stood in
+it, so it was given a strip like every other station and made to stop when the
+strip filled. That is a rule about *what the house makes*. Weather muck is not
+what the house makes.
+
+**Against.** A yard buried in muck stopping its own works is consistent — the
+rock stops, the cut stops, the plots stop — and the house being no exception is
+the simpler rule.
+
+**If it changes**, the fix is in `outletMuck`: count only the house's own
+leavings rather than every grain on the strip. That needs muck to carry where it
+came from, which `MESS` does not record today, so it is a field on the layer
+rather than a one-liner. Decide the rule first.
 
 ## Housekeeping: two tests fail at random
 

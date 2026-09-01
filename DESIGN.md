@@ -258,7 +258,7 @@ there and doubling it is visibly twice the sand. It goes down beside the buildin
 past it as it fills, because that is where the empty ground is; the casino's own footprint is barred
 and `addGrain` already looks outward, so a big enough pot flows round the building on its own.
 
-**Everything is one for one, and nothing is a shortcut.**
+**Everything is one for one until the numbers stop being numbers.**
 
 | | |
 |---|---|
@@ -267,9 +267,56 @@ and `addGrain` already looks outward, so a big enough pot flows round the buildi
 | a loss | every grain lifts off the heap and fades out on its way up — it is *leaving*, not blinking off |
 | banking | the whole heap goes up over the works in a long arc and down into the hole, and the counter moves as each grain lands |
 
-Nothing is added at one end and nothing arrives that did not set off. The one place this is not
-literally true is a pot bigger than that stretch of ground can hold: the plot takes what it takes and
-the rest stays a number on the board, which is the same rule the hole keeps.
+**So past a thousand the heap is a reading of the pot rather than a count of it**, on a ladder of
+bands written down here rather than worked out per hand:
+
+| on the table | grains lying there |
+|---|---|
+| 1 to 1,000 | the pot itself, one for one |
+| 10,000 | 2,000 |
+| 100,000 | 3,000 |
+| 1,000,000 | 4,000 |
+| 10,000,000 and up | 5,000, and that is the brim |
+
+Between two marks it runs on the log of the pot, so nothing jumps: `shown = 1000 + 1000 ×
+log10(pot / 1000)`, clamped at the brim. Every band is a tenfold pot for a thousand more grains,
+which is what a log scale is for — a double always puts about three hundred more grains on the
+ground, so a win is always visibly more sand, and the heap never grows faster than the ground can
+hold or the eye can read. The brim is five thousand grains because that is a heap you can take in at
+a glance and settle in a frame; the fourteen thousand the ground would physically take is neither.
+
+**What broke the old rule is the far end.** The pot doubles on every ride, so eleven wins off a
+thousand is two million, and two million grains is two million grains — a plot the width of the yard
+filled solid, twenty-four thousand squares in the air at once, and a frame rate that says the wheel
+has hung rather than that you are winning. The sand stopped being the picture and became the cost of
+drawing it. Everything up to a thousand is untouched: a stake of ten is ten grains, a hundred is a
+hundred, doubling either is visibly twice the sand, and that is the whole of the early table.
+
+**A grain past the first band is worth its band.** One flying square carries `pot / shown` of
+whatever was staked. That is the one number in this building that is not one, and it is confined to
+the picture: the row on the board says the exact pot, banking credits the exact pot, and the hole
+fills with the exact pot — a landing grain puts its whole weight into the pile at the point it comes
+down, because the hole's rule is that the pile *is* the dust and that rule outranks this one. What
+is approximate is the size of the heap on the table and nothing else.
+
+**Which is the honest version of what was there before.** The old rule was one for one up to
+whatever that stretch of ground would take, and the rest "stays a number on the board" — so a pot
+past about fourteen thousand already showed you a heap that was not the pot, at the worst possible
+cost, and did it by filling the yard rather than by saying so. A band is the same admission made in
+advance, at a size that draws. The brim is decided before the sand is sent rather than discovered
+when the ground refuses a grain; `table.capped` stays as a backstop, because the wheel waits on the
+heap reaching the number and a ground that refused a grain with no way to say so would be a wheel
+that never went round -- but at five thousand grains on a stretch that takes fourteen, nothing
+reaches it.
+
+Measured on a two-million pot, which is eleven wins off the thousand chip: the heap went from 8,536
+grains to 4,301, the cloud in the air from 24,000 squares to 2,197, and the worst frame in the pour
+from 1,817 ms to 49 ms.
+
+**Nothing about the hand changes.** The wheel still waits for the last grain to come to rest, a loss
+still lifts the whole heap off and fades it out, banking still throws every grain that is there over
+the works — there are simply five thousand of them at most, whatever the pot says.
+
 
 **The board hushes for the whole hand** — from the chip going down, not from the wheel starting,
 because the pot pouring on to the ground is the front half of the same gesture. It stands over the
@@ -2463,6 +2510,99 @@ it never sits still and never repeats on a beat you could count.
 Motes live in **screen pixels, not world ones**: they are weather, not scenery. A mote with a place
 in the world spends nearly all of the game outside the window, which is exactly where the old ones
 went.
+
+## The sky is the band (built)
+
+**The section that used to sit here described a dither field drawn from the
+pollution level, and it is gone along with the code: what is below is what is in
+the game.** The "What was tried" part is kept because the reason it failed is not
+guessable from the result, and somebody will otherwise have the same idea again.
+
+### What was tried, and why it was wrong
+
+The pollution in this game is a scalar, and the band appeared to be an expensive
+way of storing it: `reckon` sets `S.haze` from the mote count and `motesWanted`
+converts straight back, and nothing anywhere asks where a mote is. So the sky was
+rebuilt as a picture of that one number — a field of thresholds, a cell painted
+when its threshold fell under the density.
+
+That reasoning was right about the accounting and wrong about the thing on the
+screen, and it took three passes to find out how wrong:
+
+1. **Value noise pulled the cells into soft grey patches.** Patches are cloud.
+   Haze is not made of shapes, and the moment specks organise into shapes the sky
+   stops reading as dirt in the air.
+2. **An even scatter still blotched**, because white noise clumps on its own:
+   over eight-by-eight blocks of a middling sky the ink ran from 0.23 to 0.54,
+   with no clumping term in the code at all. Blue noise fixed the measurement.
+3. **And then it moved, and it was nauseating.** This is the one that matters.
+   A field steps in whole cells, so every cell in the sky changes at the same
+   instant, together, several times a second. It does not matter how even the
+   field is or how faint each cell is: a whole sky flickering in lockstep is not
+   something a person can look at.
+
+The band never had that problem and could never have it, because **a mote is a
+thing rather than a sample**. It has its own position, its own slot, its own
+share of the wind, and it eases. Ten thousand specks each moving a fraction of a
+pixel on their own schedule is a sky that drifts; ten thousand cells all being
+re-decided on the same frame is a sky that boils. No amount of tuning gets from
+one to the other, because the difference is not in the numbers.
+
+### What it is now
+
+**The band, over the whole sky.** Nothing about how a mote behaves has changed.
+The slots, the spread that opens with age, the sway lanes, the creep along the
+sky, the settling, the plume that climbs out of the works and thins into what is
+already up there — all of it is exactly what it was. The only change is how much
+sky it has.
+
+- `bandLow()` is read off **the ground line** rather than as a depth below
+  `bandTop()`, so the haze fills the window from a couple of cells under the top
+  down to a little clear air over the works. A fixed depth would leave a tall
+  window with clean air under the sky and a short one with the haze in the dirt.
+- **A puff climbs to its own height**, not to the underside of a strip. That test
+  used to be one number for every speck because the band *was* a strip; with the
+  sky the whole window its underside is just above the ground, and every puff
+  would have arrived on the frame it was born. So a puff rises until it reaches
+  the place it is going to live, which is its slot's share of the sky. Some go a
+  little way and some go all the way up, and a plume thins out over the whole
+  height of the window instead of stacking against a ceiling.
+- **Three times the specks**, because the same count over four times the height
+  is a quarter of the sky it used to be, which is not a haze. Every number marked
+  "per mote" is multiplied by three with it — what the house's filters fill with,
+  what the recycler hands back, how fast a rain empties the sky, how much dirt one
+  drop carries. Nothing about the balance moves; the only thing that changes is
+  how much sky one speck stands for.
+- **The clouds get their own ceiling.** They used to sit below the haze strip,
+  because a pale cloud drawn through your own smoke tied the weather and the works
+  together in the one place this game keeps them apart. There is no below the haze
+  any more, so the rule goes: a cloud seen through the works' own dirt is the
+  right picture, and `CLOUD_TOP` keeps them out of the top of the window where the
+  smoke is thickest.
+
+### The rain is a curve, not a line
+
+It used to be nothing at all under `SMOG_RAIN_AT` and a roll above it. Now the
+chance is the share of the cap raised to `SMOG_RAIN_BEND`, so **how often it rains
+is how dirty the sky is, all the way down** — and nought at nought exactly, which
+is both right and what keeps `breaks` from spending the seeded generator on a coin
+it never flips.
+
+Bent hard, because this is a balance lever and not a look. Rain takes down the
+whole sky it breaks on, so a gentle bend has the weather doing the scrubbing
+house's job for it — and the house is the thing you are meant to invest in. At
+five: a quarter-full sky is a shower about once in an hour and a half, a half-full
+one about one in three minutes, and a brimming one rains the moment `RAIN_GAP`
+lets it.
+
+**One thing this turned up that is not yet decided.** `clogged()` counts every
+grain of muck lying near the scrubbing house, and the rain drops muck all over the
+yard — so a sky bad enough to rain often rains on the house's own doorstep and
+stops it. The house is the answer to pollution and the weather now switches it
+off. That was nearly unreachable before, because rain could not happen below the
+line at all. The clog was written to stop the house spraying its own walk with its
+own filters, so counting the sky's muck in it is arguably wrong; but changing that
+is a balance decision rather than a fix. See TODO.
 
 ## Open questions
 - Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.

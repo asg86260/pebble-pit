@@ -14,7 +14,7 @@ import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
 import { throwVel } from './hands.js';
-import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock } from './rock.js';
+import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
 import { tidyStep, TIDY_ELBOW } from './tidy.js';
 import { pitRoom } from './pit.js';
@@ -34,7 +34,6 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_
          rockMuck, quarryMuck, plotMuck,
          dropMuckAt, cleanSpotNear, foul } from './smog.js';
 import { doorAt } from './house.js';
-import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
@@ -319,6 +318,26 @@ function newJanitor() {
 // Where each job is done, for a body on its way to it. Carrying has no station:
 // the dust is wherever it fell, so somebody put on it is already at work.
 function stationX(type) {
+  const base = handStationX(type);
+  if (base === null) return null;              // carrying: already at work anywhere
+  // A station with a machine standing on it is worked *from the machine*, not
+  // from the ground the hands used to work. Without this a body put on the rock
+  // walks to the middle of the hill, climbs it, and is then walked straight back
+  // down to the ram it was always going to end up on -- which is the same three
+  // trips to do one thing that `retask` goes out of its way to avoid for the kit
+  // stand, and is just as plainly wrong to watch.
+  const key = JOB_MACHINE[JOB_OF[type]];
+  const r = key && machine(key);
+  if (r && r.bought) {
+    const spec = specOf(key);
+    if (spec) return postOf(spec, base);
+  }
+  return base;
+}
+
+// Where the job is done by hand, which is where a body goes when there is no
+// machine standing on it.
+function handStationX(type) {
   if (type === 'miner') return S.cx - WORKER / 2;
   if (type === 'quarrier') return quarryFace();
   if (type === 'farmhand') return plotX(0);
@@ -652,16 +671,51 @@ function relieve(w, now) {
 // is a table rather than a chain of ifs: a move is a row, the next one is
 // another row, and no row can quietly forget to move.
 //
+// --- and a move is counted in beats, from its own start -----------------------
+// The third rewrite is about the seams rather than the moves. Every move used to
+// be read off the wall clock -- `now / 1000 * rate` -- and every move has its own
+// height: a cell for the step, two for the spin, three for the hop. So the swing
+// a body was on when it swapped moves was whatever the clock happened to be
+// showing, and the height it was swinging through changed at the same instant.
+// The body did not move to the next thing. It *appeared* in it: measured jumps of
+// fifteen pixels of height and five of ground in a single frame, on a body
+// eighteen pixels tall -- three or four of them per body per celebration, plus
+// one entering the dance and one leaving it. That is the glitching, and no amount
+// of tuning the moves themselves would have touched it, because it was never in
+// a move. It was in the joins.
+//
+// So the clock is gone from here. A move is measured from the instant it started
+// and is a whole number of beats long, which fixes both ends of every join at
+// once, because at a whole beat every move is in the same pose:
+//
+//   swing = |sin(beat * PI)| is zero at every whole beat -- the body is on the
+//   ground, and `hop`, `step` and `spin` all draw it at `w.foot` there,
+//   whatever their height.
+//   the spin's travel, sin(beat * 2PI), is zero at every whole beat too -- the
+//   body is on `moveFrom`, which is where the next move is about to start it.
+//
+// A move therefore ends with the body standing on the ground on its mark, and
+// the next one begins from exactly there. Nothing to jump across. It is a
+// property of where the beats are cut, not a number anybody tuned, so a fourth
+// move added to the table below gets it without asking.
+//
 //   beat   how fast this move pulses, as a multiple of DANCE_BEAT. A hop is
-//          quicker than a step, because a step is a longer thing to do.
+//          quicker than a step, because a step is a longer thing to do. Nothing
+//          here may run much over a beat a second: a body crossing its own
+//          height twice a second is not dancing, it is buzzing, and that is the
+//          other half of what was wrong.
+//   beats  how many whole beats of it a body does before it swaps -- the low
+//          and the high of the roll. Beats and not milliseconds, because the
+//          join has to land on one.
 //   at     one frame of it: where the body goes and how high, given the swing
-//          (0..1, the pulse), the length of the frame, and the ground under a
-//          falling rock that it may not wander onto.
+//          (0..1, the pulse), the length of the frame, the ground under a
+//          falling rock that it may not wander onto, and the beat it is on.
 const MOVES = {
   // Straight up and down, and high: three cells at the top of it. The one move
   // that is all height and no ground.
   hop: {
-    beat: 1.35,
+    beat: 1.2,
+    beats: [2, 4],
     at: (w, swing) => { w.y = w.foot - swing * 3 * P; }
   },
 
@@ -671,6 +725,7 @@ const MOVES = {
   // over the yard instead of leaving them stacked where the rock finished.
   step: {
     beat: 0.55,
+    beats: [1, 2],
     at: (w, swing, dt, zone) => {
       const off = w.x - w.jigAt;
       if (Math.abs(off) > JIG_SPREAD) w.jigDir = -Math.sign(off);
@@ -700,7 +755,8 @@ const MOVES = {
   // patch's, so switching into it does not jerk the body back across ground it
   // has just stepped over.
   spin: {
-    beat: 1.6,
+    beat: 1.2,
+    beats: [2, 3],
     at: (w, swing, dt, zone, beat) => {
       const to = w.moveFrom + Math.sin(beat * Math.PI * 2) * P;
       if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
@@ -711,13 +767,48 @@ const MOVES = {
 const MOVE_KEYS = Object.keys(MOVES);
 const JIG_SPREAD = P * 14;         // how far off its mark a body will wander
 
+// How long one beat of a move takes this body, in milliseconds. A body's own
+// tempo is in here: the gang used to be spread across the beat by the slot they
+// held on the rock, which is a number a hauler has not got -- so anybody who had
+// never been on the rock danced on the same tick as everybody who had. Every
+// body rolls its own rate instead, so no two of them are ever quite together and
+// nobody needs a slot to join in.
+const beatMs = (w, move) => 1000 / (DANCE_BEAT * move.beat * (w.jigRate || 1));
+
+// Start a move at a given instant -- which is the instant the last one ended,
+// not the instant this frame began, so the overshoot of a frame is not thrown
+// away and the beats stay flush with each other.
+function startMove(w, at, key) {
+  const [lo, hi] = MOVES[key].beats;
+  w.move = key;
+  w.moveAt = at;
+  w.moveFrom = w.x;
+  w.moveBeats = lo + Math.floor(rand() * (hi - lo + 1));
+}
+
+// When the yard stops watching. Two things hold a dance open and they are asked
+// in order rather than taken the later of: a rock in the air is the nearer end
+// of the two, because the landing is what everybody in the yard turns back to
+// work for -- see the mess walk, which takes its body back the moment the rock
+// is down, and takes it back mid-hop if the dance has not put its feet on the
+// ground first. With nothing in the air it is the five seconds on the clock.
+//
+// Every body reads the same instant, so the gang wind down together rather than
+// one at a time.
+const danceEnd = now =>
+  S.rockFall > 0 ? now + fallMs() : S.danceUntil;
+
 // `zone` is the ground the next rock is coming down on, when there is one. The
 // dance has to know about it, because the dance travels: a body stepping across
 // its patch will walk into the drop zone, the dodge will push it straight back
 // out, and the two of them will hold it against that line at sixty steps a
 // second. That is not a body dancing near a falling rock, it is a body
 // vibrating -- and it is the one thing anybody watching a celebration notices.
-function jig(w, now, zone) {
+//
+// `endsAt` is when the yard stops celebrating, and it is here for the last join
+// of all: a body still in the air when the dance is switched off lands by
+// teleport. It is the same rule as every other join, asked one beat early.
+function jig(w, now, zone, endsAt) {
   // a mark to dance around, taken once, so the gang spread out instead of
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
@@ -726,27 +817,59 @@ function jig(w, now, zone) {
     // zone is an order to dance under the rock, which the wall in `step` then
     // countermands every frame. The body dances where it stands instead.
     if (zone && w.jigAt + WORKER > zone.from && w.jigAt < zone.to) w.jigAt = w.x;
-    w.move = MOVE_KEYS[Math.floor(rand() * MOVE_KEYS.length)];
-    w.moveFrom = w.x;
-    w.moveTil = 0;
     w.jigDir = rand() < 0.5 ? -1 : 1;
-    // Where in the beat this body is. The gang on the rock are dealt a slot
-    // each and used to take it from that, which is fine until somebody who has
-    // never been on the rock joins in: a hauler has no slot, and an undefined
-    // one turned the whole hop into NaN and parked the body off the top of the
-    // world. Anybody can dance now, so the offset belongs to the dance.
-    w.jigPh = rand() * 2;
+    // its own tempo, so the gang are never all on one tick -- see `beatMs`
+    w.jigRate = 0.85 + rand() * 0.3;
+    w.jigBeat = null;                // no beat counted yet, and not winding down
+    w.jigDown = false;
+    startMove(w, now, MOVE_KEYS[Math.floor(rand() * MOVE_KEYS.length)]);
   }
-  // a new move every couple of beats, and never the one it is already doing
-  if (now >= w.moveTil) {
+
+  // The frame this body last danced. `jigAt` says a body has a mark to dance
+  // around, which it keeps hold of through a fall even on the frames something
+  // else is moving it; this says it actually danced, and it is what anybody
+  // measuring the dance should ask.
+  w.jigOn = now;
+
+  let move = MOVES[w.move] || MOVES.hop;
+  let beat = (now - w.moveAt) / beatMs(w, move);
+
+  // Nobody is caught in mid-air by the end of the celebration. A body only goes
+  // up if it can be back down before the yard has something else to look at, and
+  // it is asked at the top of every beat -- which is the only moment it is on the
+  // ground and so the only moment the answer can be acted on without a jump.
+  // Asked at any other moment it would be answered by dropping the body wherever
+  // it happened to be, which is the fifteen-pixel teleport this whole rewrite is
+  // about, moved to the end of the dance.
+  //
+  // What it does then is not stop. It is the same dance with the bounce taken
+  // out: the feet stay down and the ground travel carries on, so a body winds
+  // down rather than being switched off. See `swing` at the bottom.
+  // Asked afresh each beat rather than latched, because the end moves: a rock
+  // lands and the five seconds on the clock are the horizon again, which is
+  // further off than the beat this body is standing out. A body that has stood
+  // one beat out is on the ground, so it can join back in without a jump -- the
+  // same reason it could stand out without one.
+  const whole = Math.floor(beat);
+  if (endsAt != null && whole !== w.jigBeat) {
+    w.jigBeat = whole;
+    w.jigDown = now + beatMs(w, move) > endsAt;
+  }
+
+  // A move ends on a whole beat and the next one starts from that same instant.
+  // Never the one it is already doing.
+  if (beat >= w.moveBeats) {
+    const ended = w.moveAt + w.moveBeats * beatMs(w, move);
+    // The body is on the ground on `moveFrom` at a whole beat, whatever the move
+    // was doing on the way there. Put it there before the next move reads `w.x`
+    // off it, so the join is exact rather than a frame's worth of near enough.
+    if (w.move === 'spin') w.x = w.moveFrom;
+    w.y = w.foot;
     const other = MOVE_KEYS.filter(m => m !== w.move);
-    w.move = other[Math.floor(rand() * other.length)];
-    // Where it starts this one from. A move that works around a fixed point --
-    // the spin -- wants that point to be where the body actually is, or the
-    // first frame of it drags the body back to wherever the patch was centred.
-    w.moveFrom = w.x;
-    w.moveTil = now + (1400 + rand() * 1200);
+    startMove(w, ended, other[Math.floor(rand() * other.length)]);
     w.jigDir = -w.jigDir;
+    move = MOVES[w.move];
+    beat = (now - w.moveAt) / beatMs(w, move);
     // and something over its head, now and then rather than every time: five
     // bodies all shouting at once is noise
     if (rand() < 0.5)
@@ -754,14 +877,10 @@ function jig(w, now, zone) {
   }
   if (w.say && now >= w.say.until) w.say = null;
 
-  // Each move to its own rate, so a gang doing three different things are not
-  // all pulsing on the same tick -- which is what turns five dancers into one
-  // flickering row. The phase is the body's own on top of that, so even two on
-  // the same move are off each other's beat.
-  const move = MOVES[w.move] || MOVES.hop;
-  const beat = now / 1000 * DANCE_BEAT * move.beat
-             + (w.slot != null ? w.slot * 0.5 : w.jigPh);
-  const swing = Math.abs(Math.sin(beat * Math.PI));
+  // The swing is the height, and a body winding down has none: its feet are on
+  // the ground for the rest of the celebration and everything else about the
+  // move goes on as it was.
+  const swing = w.jigDown ? 0 : Math.abs(Math.sin(beat * Math.PI));
   move.at(w, swing, frames(), zone, beat);
 }
 
@@ -770,8 +889,11 @@ function stopJig(w) {
   w.jigAt = null;
   w.move = null;
   w.moveFrom = null;
-  w.moveTil = 0;
-  w.jigPh = 0;
+  w.moveAt = 0;
+  w.moveBeats = 0;
+  w.jigRate = 0;
+  w.jigBeat = null;
+  w.jigDown = false;
 }
 
 // --- held up by a rock --------------------------------------------------------
@@ -799,12 +921,22 @@ function stopJig(w) {
 // So they elbow apart as well, the same quarter-step the idlers already use. Two
 // on the very same pixel have no side to push to, so each takes the way it is
 // already facing in the dance, which is its own coin toss.
+// The shove goes onto the marks as well as onto the body, and that is the whole
+// of what makes it stick. Two of the three moves put the body back on a mark
+// every frame -- the spin on `moveFrom`, the step's drift back toward `jigAt` --
+// so an elbow that moved `w.x` alone was undone before it was drawn: the body
+// was shoved a pixel, snapped back, shoved again, sixty times a second, which is
+// the very juddering the elbow is here to prevent. Move the ground it is
+// dancing on and the body goes with it and stays gone.
 function elbowJig(w) {
   for (const o of S.workers) {
     if (o === w || o.jigAt == null) continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
-    w.x -= Math.sign(d || w.jigDir || 1) * 0.5 * frames();
+    const by = Math.sign(d || w.jigDir || 1) * 0.5 * frames();
+    w.x -= by;
+    w.jigAt -= by;
+    if (w.moveFrom != null) w.moveFrom -= by;
     return;
   }
 }
@@ -813,13 +945,26 @@ function heldUp(w, zone, now) {
   w.resting = false;                   // waiting on a rock is not a break
   w.foot = walkY(w.x + WORKER / 2);
   w.footAt = w.x;
-  jig(w, now, zone);
+  jig(w, now, zone, danceEnd(now));
   elbowJig(w);
-  if (!zone) return;
-  if (w.x + WORKER > zone.from && w.x < zone.to) {
-    const mid = w.x + WORKER / 2;
-    w.x = mid < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
-    w.jigAt = w.x;                     // and it dances from where it was put
+  // Out from under a coming rock on its legs, which is how everybody else in
+  // the yard gets out from under one -- `duck`, at the one pace nobody walks
+  // anywhere else. This used to be a clamp: a body inside the footprint was set
+  // on the edge of it in a single frame, and a new rock is wide, so a body
+  // standing in the middle of one was moved a hundred and seventy pixels
+  // between two frames the instant the rock appeared in the sky.
+  //
+  // Worse than the jump was what came after it. The clamp moved the body and
+  // left the ground it was dancing on where it was, so the spin put it straight
+  // back on its mark the next frame, and the clamp took it out again the frame
+  // after: five pixels one way, five the other, sixty times a second, for the
+  // whole of the fall. That is the vibrating, and it was never in the dance --
+  // it was the dance and the clamp pulling on the same body.
+  //
+  // So the marks come with it. A body that has been moved dances where it has
+  // been put, and there is nothing left to pull it back.
+  if (duck(w, zone)) {
+    w.jigAt = w.moveFrom = w.x;        // and it dances from where it was put
     w.y = stand(w);
   }
 }
@@ -1160,7 +1305,7 @@ function stepTender(w, now) {
   // weather's muck -- chiefly the haulers' job -- lay where it fell. Whoever is
   // nearest the post is the tender this frame; everybody else answers to the
   // yard's ordinary work, exactly as if the machine were not theirs to mind.
-  const post = spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P;
+  const post = postOf(spec, spec.at() - WORKER - P);
   const mine = Math.abs(w.x - post);
   const me = S.workers.indexOf(w);
   for (let i = 0; i < S.workers.length; i++) {
@@ -1195,13 +1340,16 @@ function stepTender(w, now) {
   // would keep every other body off that cell for as long as it stands there.
   w.cell = null;
 
-  // The tiller's tender rides it. Everybody else in this yard stands on the
-  // ground; a tractor has a seat, and somebody walking along beside one all day
-  // is somebody who has forgotten what it is for. It is put in the seat rather
-  // than walked to a spot beside it -- and it still had to *walk over* to get
-  // aboard, which the branch below does.
-  if (key === 'tiller') {
-    const seat = tillerSeat();
+  // Some machines are worked from *inside*. A tractor has a seat and a drill rig
+  // has a cab, and a body walking along beside either of them all day is a body
+  // that has forgotten what the machine is for. Where that place is, is the
+  // machine's own business -- see `seat` on the spec -- so this branch knows
+  // there is such a thing as a seat and nothing about which machines have one.
+  //
+  // It still has to *walk over* and get aboard, which is what the catching-up
+  // half does. Nothing in this yard arrives anywhere it did not walk to.
+  if (spec.seat) {
+    const seat = spec.seat();
     const d = seat.x - w.x;
     if (Math.abs(d) > WORKER * 2) {                // still catching it up
       w.y = walkY(w.x + WORKER / 2);
@@ -1243,6 +1391,19 @@ function stepTender(w, now) {
 // would close that ring. So the stations register what only they can answer and
 // this walks the list.
 
+// Where a machine's tender stands, which is the one question "is this thing
+// manned" turns on.
+//
+// A seat outranks a post. `tendAt` is where a body stands *beside* a machine,
+// and for one it works from on top of -- a tractor's seat, a rig's roof -- the
+// body is nowhere near that spot by design: the ram's roof is sixty-six pixels
+// from its tending post, and `MACHINE_REACH` is fifty-four, so the moment its
+// tender climbed aboard the machine decided nobody was there and stopped dead.
+//
+// One answer, read in both places that ask.
+const postOf = (spec, at) =>
+  spec.seat ? spec.seat().x : (spec.tendAt ? spec.tendAt() : at);
+
 // Somebody of the right trade, standing at the machine and not doing something
 // else. This is the yard's oldest rule rather than a new one -- **a station
 // idles until somebody is actually standing there** -- and it is what makes the
@@ -1258,8 +1419,7 @@ function tenderFor(spec, at) {
     if (w.type !== spec.type) continue;
     if (w.walking || w.inside || w.aloft || inWorking(w) || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
-    const post = spec.tendAt ? spec.tendAt() : at;
-    if (Math.abs(w.x - post) > MACHINE_REACH) continue;
+    if (Math.abs(w.x - postOf(spec, at)) > MACHINE_REACH) continue;
     return w;
   }
   return null;
@@ -2995,11 +3155,15 @@ const JOBS = {
       // ground it was moved off.
       if (duck(w, zone)) {
         plant(w, standOn(S.groundY));
-        if (w.jigAt != null) w.jigAt = w.x;
+        // and the marks come with it, both of them: the mark it wanders around
+        // and the mark the move it is in the middle of turns about. Leaving
+        // `moveFrom` behind is a spin that hauls the body back under the rock a
+        // frame after the duck walked it out.
+        if (w.jigAt != null) { w.jigAt = w.x; w.moveFrom = w.x; }
         return true;
       }
       plant(w, standOn(S.groundY));
-      jig(w, now, zone);
+      jig(w, now, zone, danceEnd(now));
       return true;
     },
     // A mess on the rock comes before the rock. It used to come before nothing

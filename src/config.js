@@ -182,7 +182,23 @@ export const SMOG_SAMPLE = 5;        // seconds between one look at the sky and 
 // in eight, so a yard that has just crossed waits the better part of a minute on
 // average -- and it is an average and not a wait, so sometimes it opens on you
 // straight away.
-export const SMOG_RAIN_ODDS = 0.12;
+// How hard the rain's odds bend against how full the sky is. The chance is the
+// share of the cap raised to this, so a lightly dirty yard is very nearly never
+// rained on and a filthy one is rained on constantly -- one curve, no line.
+//
+// Against a five-second sample and a minute's dry between showers: a
+// quarter-full sky is a shower about once an hour and a half, a half-full one
+// about one in three minutes, three-quarters about one in ninety seconds, and a
+// brimming one rains the moment RAIN_GAP lets it.
+//
+// **This is a balance lever, not a look.** It used to be impossible to rain
+// below SMOG_RAIN_AT at all, so every bit of sky cleared under that line was
+// cleared by the scrubbing house or not at all. Rain takes down the whole sky it
+// breaks on, so a bend that is too gentle has the weather doing the house's job
+// for it -- and the house is meant to be the thing you invest in. Bent this hard,
+// a yard that is losing badly gets rained on and a yard that is merely dirty
+// does not.
+export let SMOG_RAIN_BEND = 5;
 // ...and the odds climb the further over the line it is, reaching certainty at
 // the brim. A sky held at the cap is going to rain on the next look, which is
 // what keeps the ceiling from being a place a yard can park under for ever.
@@ -213,9 +229,30 @@ export const RAIN_GAP = 60;          // seconds of dry before another may break
 // motes rather than haze scales with it -- what the house's filters fill with,
 // what the recycler hands back, how fast a rain empties the sky, and how much
 // dirt one drop carries down -- all marked "per mote" below.
-export const SMOG_PER_MOTE = 0.48;
+//
+// **And three times again**, now that the haze has the whole sky rather than a
+// thirteen-cell strip of it. The same specks spread over four times the height
+// is a quarter of the sky it used to be, which is not a haze; so there are three
+// times as many, and every "per mote" number below is multiplied by three with
+// it. Nothing about the balance moves: the same haze buys the same muck out of
+// the house, the same dust out of the recycler and the same length of shower.
+// The only thing that changes is how much sky one speck stands for.
+export const SMOG_PER_MOTE = 0.16;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
-export const SMOG_BAND = 13;         // and how deep it is: room to bunch up in
+// How deep the band is, as a floor under it rather than a depth: the haze fills
+// the sky from SMOG_TOP down to this many cells above the ground line.
+//
+// It was thirteen cells -- a strip along the top of the window with clean air
+// under it -- and the whole of this change is that it is not a strip any more.
+// The specks, the slots, the spread, the sway, the settling and the plume that
+// feeds them are all exactly what they were; there is simply four times as much
+// sky for them to be in. See DESIGN.md, "The sky is the band".
+export const SMOG_FLOOR = 3;
+// Cells below the top of the window the clouds may start at. Their own number
+// now: they used to sit below the haze strip, and there is no below the haze any
+// more -- see `band` in weather.js.
+export const CLOUD_TOP = 6;
+export const SMOG_BAND = 13;         // kept for the clouds; see CLOUD_TOP
 // How the haze spreads: not by anything travelling, but by the stretch of sky a
 // mote is placed within opening out under it as it ages. A few pixels a second
 // each, which is slow enough that you never catch one moving.
@@ -246,7 +283,7 @@ export const PUFF_FADE = 900;        // how long a mote takes to go out at the t
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
-export const RAIN_PER_S = 975;      // per mote: a sky of more specks takes more of them a second
+export const RAIN_PER_S = 2925;     // per mote: a sky of more specks takes more of them a second
 // How long a shower takes to come on, in seconds. A sky over the line used to
 // open at full rate on the first frame: a clear yard, and then sixteen hundred
 // drops in the air a quarter of a second later, which reads as a bucket tipped
@@ -270,7 +307,7 @@ export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling
 // rather than weather that costs you anything. At a half a full sky lays a few
 // thousand, the crew are on shovels for several minutes after one, and a rain
 // is the thing it was always meant to be: the bill for a dirty sky.
-export const RAIN_MARK = 0.5;
+export const RAIN_MARK = 0.1667;
 export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
@@ -321,7 +358,7 @@ export const SCRUB_ARM = 3;          // courses of daylight kept under it: a bod
 // half the pace it did, so the house takes half as many specks a second out of a
 // sky that is being filled half as fast. What it is worth against the yard is
 // untouched, which is the only number here that decides anything.
-export const SCRUB_PULL = 9.75;      // motes a second, per body in it -- the same 3.56, halved
+export const SCRUB_PULL = 29.25;     // motes a second, per body in it -- per mote
 // The draught the house makes while it is manned. It is not a hand picking
 // specks out of the band any more: the fan pulls on the whole sky, hardest near
 // the mouth and fainter the further out you are, so the haze leans towards the
@@ -373,7 +410,7 @@ export const SCRUB_CATCH = 260;
 // Halved with the draught above, so a load still comes out of the back at the
 // rate it always did: half the specks a second through a filter that fills on
 // half as many of them is the same filter, emptied just as often.
-export const SCRUB_PER_MUCK = 45;   // motes caught per load out of the back -- per mote
+export const SCRUB_PER_MUCK = 135;  // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 // The house's own ladder, and the reason it needs one now.
 //
@@ -389,7 +426,7 @@ export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary 
 // And halved for the same reason: the recycler hands back the same dust a second
 // it did before the cycle slowed. Slowing the sky is not meant to be a quiet cut
 // to a thing you bought.
-export const RECYCLE_PER = 14;      // motes caught per grain of dust it gives back -- per mote
+export const RECYCLE_PER = 42;      // motes caught per grain of dust it gives back -- per mote
 
 export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower
@@ -746,6 +783,30 @@ export const CASINO_WHEEL = 0.35;    // radians a second it idles round at
 // for you as a share of your holdings is a stake nobody chose. `all` is the one
 // that is not a number, and it is the one the whole thing is for.
 export const CASINO_CHIPS = [10, 100, 1000, 'all'];
+// How much sand a pot puts on the ground -- which is one grain a unit right up
+// until the numbers stop being numbers. The pot doubles on every ride, so eleven
+// wins off a thousand is two million, and two million grains is a plot the width
+// of the yard filled solid and twenty-four thousand squares in the air: the sand
+// stops being the picture and becomes the cost of drawing it.
+//
+// So past the first band the heap is a *reading* of the pot rather than a count
+// of it, on a ladder written down here rather than worked out per hand: a
+// tenfold pot for `CASINO_PILE_BAND` more grains, log-interpolated between the
+// marks so nothing jumps and a double is always about three hundred more grains
+// on the ground.
+//
+//   1 - 1,000    the pot itself, one for one
+//   10,000       2,000        1,000,000     4,000
+//   100,000      3,000        10,000,000+   5,000, and that is the brim
+//
+// The brim is five thousand because that is a heap you can take in at a glance
+// and settle in a frame; the fourteen thousand this stretch of ground would
+// physically take is neither. See `shownFor` in casino.js -- and note that what
+// is approximate is the size of the heap and nothing else: the row says the
+// exact pot, banking credits the exact pot, and the hole fills with it.
+export const CASINO_PILE_ONE = 1000;   // the largest pot still drawn one for one
+export const CASINO_PILE_BAND = 1000;  // grains a tenfold pot adds past it
+export const CASINO_PILE_BRIM = 5000;  // and the most that ever lies there
 // How long a settled hand stands over the building saying which way it went. A
 // wheel that stopped and told you nothing is a wheel you have to have been
 // watching, and the yard already has a mark for news you missed -- the lab's
@@ -1332,7 +1393,15 @@ export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
 // -- see MOVES in crew.js. It was 2.6, which is a bounce every three hundred and
 // eighty milliseconds: too quick to read as a body doing something and quick
 // enough to read as a body juddering. A dance you can count is a dance.
-export const DANCE_BEAT = 1.5;
+//
+// Then it was 1.5, and it was still not a dance you could count: the moves take
+// their own multiples of this and the quick ones are over one, so the hop and
+// the spin came out at two and a half a second measured off the running game --
+// a body crossing three cells, which is its own height, and back, twice a
+// second. That is a wing beat, not a celebration. This is the number the crew
+// are actually counted at: the quick moves land a shade over one a second, which
+// is a body jumping for joy, and the step half that.
+export const DANCE_BEAT = 0.9;
 // How fast a dancing body travels, in world pixels a frame at the tuned rate --
 // the same units every other pace in this file is in, so it is comparable with
 // them: a brisk amble, quicker than loitering (IDLE_PACE) and well under a
@@ -1368,7 +1437,7 @@ export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
 export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
 // A stopped crew is not a frozen crew. When the pile is full the miners stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
-// is three hops a second.
+// is a hop a second and goes places.
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
@@ -1992,6 +2061,8 @@ export const TUNABLE = [
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1,
     get: () => HAZE_CA, set: v => { HAZE_CA = v; } },
+  { key: 'SMOG_RAIN_BEND', label: 'rain bend', min: 1, max: 8, step: 0.1,
+    get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000,
     get: () => LOO_EVERY, set: v => { LOO_EVERY = v; } },
   { key: 'HURL', label: 'throw a body', min: 0, max: 2, step: 0.05,

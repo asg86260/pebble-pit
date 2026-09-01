@@ -365,6 +365,21 @@ defineMachine('tiller', {
   type: 'farmhand',
   at: tillerAt,
   y: () => walkY(tillerAt() + WORKER / 2) - P,
+  // Where the driver sits: up on the back of it, over the axle. Everybody else in
+  // this yard stands on the ground; a tractor has a seat, and somebody walking
+  // along beside one all day is somebody who has forgotten what it is for.
+  //
+  // It lived in the drawing until the drill wanted one too -- which meant the
+  // simulation imported the renderer to find out where a body goes. A seat is a
+  // fact about the machine, so it is registered with the machine, and `crew.js`
+  // no longer knows what a tiller is in particular.
+  seat: () => {
+    const x = Math.round(tillerAt());
+    const c = tillerWay() < 0 ? spriteW(TILLER) - 1 - 6 - 2 : 6;
+    return { x: x + c * P,
+             y: Math.round((walkY(x + WORKER / 2) + WORKER) / P) * P
+                - P * (spriteH(TILLER) - 1) };
+  },
   // The top of the exhaust. Mirrored with the tractor, because the tractor turns
   // round at the end of the row and its pipe goes with it.
   stack: () => {

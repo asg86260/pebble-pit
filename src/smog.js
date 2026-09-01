@@ -22,8 +22,8 @@
 // dust on the ground.
 
 import { footing, solidNear, SOLID } from './route.js';
-import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
-         SMOG_SAMPLE, SMOG_RAIN_ODDS, RAIN_GAP,
+import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP, SMOG_FLOOR,
+         SMOG_SAMPLE, SMOG_RAIN_BEND, RAIN_GAP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
@@ -97,8 +97,23 @@ export const DROPS = [];
 // in, dragged there by the draught. See `pull`.
 
 // where the motes settle out: a band across the top of the window
+// The sky the haze lives in: a couple of cells under the top of the window, down
+// to a little clear air over the ground line.
+//
+// It was a thirteen-cell strip along the top with clean air beneath it, and that
+// strip is the whole of what has changed here. Everything that made the band
+// work -- the slots, the spread that opens with age, the sway, the creep, the
+// settling, the plume that climbs into it -- is untouched and applies to the
+// whole sky now, which is exactly what it was always doing, only over four times
+// as much of it.
+//
+// Read off the ground line rather than off a depth, so the haze reaches the
+// works whatever the window is: a fixed depth would leave a tall window with a
+// clean gap under the sky and a short one with the haze in the dirt. Floored
+// against the top, so a window too short to hold both still gives the band
+// somewhere to be.
 const bandTop = () => S.camY + SMOG_TOP * P;
-const bandLow = () => bandTop() + SMOG_BAND * P;
+const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;
 // Bodies actually through the door, not bodies assigned to it. Somebody put on
@@ -365,8 +380,12 @@ function spread(list, n) {
 // is thick and thin; this only says how many of them there are.
 const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 
+// The height a mote lives at: its slot's own place down the sky. One line, and
+// it is what `moteY` reads too -- see there.
+const slotY = (m, top, deep) => top + m.sv * deep;
+
 function stepPuffs(secs) {
-  const low = bandLow();
+  const top = bandTop(), deep = bandLow() - top;
   const w = windAt(now());          // one wind, asked once, for the whole plume
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
@@ -405,7 +424,19 @@ function stepPuffs(secs) {
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
 
-    if (p.y > low) continue;
+    // **A puff climbs to its own height, not to the underside of a strip.**
+    //
+    // This used to stop at `bandLow()` -- the bottom of the thirteen-cell band --
+    // which was the same height for every speck because the band was a strip. The
+    // sky is the whole window now, and its underside is just above the ground, so
+    // that test would have every puff arriving on the frame it was born and no
+    // speck would ever be seen to climb.
+    //
+    // So a puff rises until it reaches the place it is going to live, which is
+    // its slot's own share of the sky. Some go a little way and some go all the
+    // way up, and the plume off a swing thins out over the whole height of the
+    // window instead of stacking against a ceiling.
+    if (p.y > slotY(p, top, deep)) continue;
     // Arrived, and the wind up there has it.
     //
     // It joins the band somewhere along the sky rather than directly over the
@@ -1737,10 +1768,23 @@ export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0
 // So a full sky is a thing that is *going* to rain rather than a thing that
 // rains at a number, and the yard cannot be played by the arithmetic -- you
 // watch it darken and you get on with the shovels.
+// **There is no line.** It used to be nothing at all under `SMOG_RAIN_AT` and a
+// chance ramping from there to the brim. What is left is one curve: how often it
+// rains *is* how dirty the sky is, all the way down.
+//
+// Bent hard rather than straight, which is what keeps a lightly dirty yard from
+// being rained on: the chance is the share of the cap raised to
+// `SMOG_RAIN_BEND`, so it falls away far faster than the sky clears.
+//
+// And **nought at nought**, exactly. A clean sky is not a one-in-a-million
+// chance that happens to lose: it is not a question. That is not only fair, it
+// is what keeps `breaks` from taking a number off the yard's one generator every
+// few seconds for the whole of a game -- see the note there, and why every
+// seeded run would otherwise diverge over a coin that was never flipped.
 export function rainOdds() {
-  if (S.haze < SMOG_RAIN_AT) return 0;
-  const over = (S.haze - SMOG_RAIN_AT) / Math.max(1, SMOG_CAP - SMOG_RAIN_AT);
-  return Math.min(1, SMOG_RAIN_ODDS + Math.max(0, over) * (1 - SMOG_RAIN_ODDS));
+  if (!(S.haze > 0)) return 0;
+  const share = Math.min(1, S.haze / SMOG_CAP);
+  return Math.min(1, Math.pow(share, SMOG_RAIN_BEND));
 }
 
 // Seconds since the last shower stopped, and how long it is since the sky was
@@ -1876,11 +1920,11 @@ export function airReadout() {
     // at the brim is going to, on the next look -- which is the difference the
     // sampling makes, and the number a check winds to when it wants weather.
     cap: SMOG_CAP,
-    share: Math.min(1, S.haze / SMOG_RAIN_AT),
+    share: Math.min(1, S.haze / SMOG_CAP),
     fouling: +(fouling() * 60).toFixed(1),
     scrubbing: +(scrubbed() * 60).toFixed(1),
     // blank when the house is winning, which is the number worth playing for
-    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000),
+    dueMs: net <= 0 ? null : Math.round(((SMOG_CAP - S.haze) / net) * 1000),
     // What a look at the sky would say right now, and how long it has been dry.
     // The board shows how far off the line is; these are the two numbers behind
     // the fact that reaching it is not the same as it raining.

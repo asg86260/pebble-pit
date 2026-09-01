@@ -220,6 +220,52 @@ group('a machine smokes out of its own chimney, whichever way it faces', async (
   ];
 });
 
+// A body put on a station with a machine on it walks to the machine.
+//
+// It walked to the *hand's* spot first. `stationX` answers "where is this job
+// done", and for a miner that is the middle of the hill -- so a body put on the
+// rock climbed the boulder, stood on top of it, and was then walked back down to
+// the ram it was always going to end up on. Three trips to do one thing, which
+// is the very thing `retask` goes out of its way to avoid for the kit stand.
+//
+// Asserted on how high it ever gets rather than on where it ends up, because the
+// end state was always right -- it is the journey that was wrong, and a check on
+// the destination would have passed throughout.
+group('a body put on a station with a machine goes to the machine, not up the hill', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 3);                        // three spare hands, none on the rock
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(90000);
+  window.__buy('ram');
+  window.__jump(6);
+  run(2);
+  window.__clearFloor();
+
+  window.__assign('miners', 1);
+  const g = yard.S.groundY;
+  let highest = 0;
+  for (let i = 0; i < 300; i++) {
+    run(1 / 12);
+    const m = yard.S.workers.find(w => w.type === 'miner');
+    if (m) highest = Math.max(highest, Math.round((g - m.y - WORKER) / P));
+  }
+  // The ram's roof is five cells up. The hill is a great deal more than that, so
+  // anything much above the roof means it went over the boulder to get here.
+  const roof = 5;
+  const men = state().miners;                 // read before the crew is torn down
+  window.__crew(0, 0, 0);
+  return [
+    ok(men === 1, 'the body is on the rock', `${men}`),
+    ok(highest > 0, 'and it did climb onto something -- the machine',
+       `${highest} cells up`),
+    ok(highest <= roof + 1,
+       'but never over the boulder on the way: it never gets above the ram itself',
+       `highest ${highest} cells, the ram's roof is ${roof}`)
+  ];
+});
+
 // The rule the whole feature stands on.
 group('a machine at a station leaves room for one body', async () => {
   window.__reset();

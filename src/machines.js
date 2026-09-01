@@ -1,4 +1,4 @@
-// The machines: the jaw at the cut, the ram at the rock, the tiller at the plots.
+// The machines: the drill at the cut, the ram at the rock, the tiller at the plots.
 //
 // A machine here is not the thing that replaces you. It is a **station**: a body
 // walks to it and works it, the way a body works the scrubbing house, and it is
@@ -34,7 +34,9 @@ import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from
 // everything else: it is what `capOf` answers about, what `handsOf` reads, and
 // what `restaff` puts back.
 export const MACHINES = [
-  { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
+  // Keyed 'jaw' still, which is what it was before it became a drill. The key
+  // is in every save; the name is what anybody actually reads.
+  { key: 'jaw',    job: 'quarriers', name: 'the drill' },
   { key: 'ram',    job: 'miners',    name: 'the ram' },
   { key: 'tiller', job: 'farmhands', name: 'the tiller' },
   // The fourth, and the odd one out twice over: it does not work a face -- it

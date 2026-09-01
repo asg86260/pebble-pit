@@ -13,7 +13,7 @@
 // a shade.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         SMOG_TOP, SMOG_BAND,
+         CLOUD_TOP,
          BIRD_TONE, BIRD_GAP, BIRD_FLOCK, BIRD_SPEED, BIRD_REACH, BIRD_DUST,
          BIRD_BOLT } from './config.js';
 import { S, floor } from './state.js';
@@ -37,7 +37,14 @@ let nextBirds = 0;
 // with the works, and a pale cloud drawn through your own smoke would tie the two
 // together in the one place the game wants them kept apart.
 function band() {
-  const top = S.camY + (SMOG_TOP + SMOG_BAND + 2) * P;
+  // Under the top of the window, and no longer under the haze -- there is no
+  // under it any more. The clouds used to start below `SMOG_TOP + SMOG_BAND`,
+  // because the haze was a strip along the top and a pale cloud drawn through
+  // your own smoke tied the two together in the one place this game wants them
+  // kept apart. The haze has the whole sky now, so that gap does not exist and
+  // the rule has to go: a cloud seen through the works' own dirt is the right
+  // picture rather than the confusing one.
+  const top = S.camY + CLOUD_TOP * P;
   // And deep enough to be a band. Pushing the top down under the haze squeezed
   // what was left against the rock's reserved sky, and four cells of headroom is
   // not somewhere clouds can sit at different heights. They are drawn behind the

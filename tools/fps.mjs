@@ -16,7 +16,12 @@ const SCENES = {
   rain:     `__crew(8,4);__air({haze:2400});__fast(20)`,
   scrub:    `__crew(8,4);__air({haze:2400,open:true,scrubbers:1,recycler:true})`,
   star:     `__crew(6,3);__meteor();__wizardHat(3);__assign&&0;__air({haze:900})`,
-  muck:     `__crew(8,4);__air({muck:300,haze:900})`
+  muck:     `__crew(8,4);__air({muck:300,haze:900})`,
+  // The worst the sky ever is, and the one that matters now the haze has the
+  // whole window: the cap, held. It has to be re-topped -- a brimming sky rains
+  // as soon as the dry gap lets it, so a scene that only sets it once is
+  // measuring an empty sky by the time the count is read.
+  full:     `__crew(8,4);__air({haze:4200});__fast(6);__air({haze:4200})`
 };
 
 const want = process.argv.slice(2).filter(a => SCENES[a]);
