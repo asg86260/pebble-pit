@@ -137,6 +137,15 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
+  // The scrubbing house with a balloon over it: one moored at the mast with
+  // nobody in it, and one crewed and out over the yard.
+  moored: `${RICH} window.__air({open:true}); window.__fast(2);
+           window.__buy('balloon'); window.__fast(2);
+           window.__look(window.__state().scrubX - 220);`,
+  balloon: `${RICH} window.__air({open:true, haze: 1800}); window.__fast(2);
+            window.__buy('balloon'); window.__air({scrubbers:2}); window.__fast(30);
+            window.__look(window.__state().craft[0].x - 380);`,
+
   // The sky at four levels. The haze has the whole window now rather than a
   // strip along the top of it -- see DESIGN.md, "The sky is the band".
   sky0: `${SKYAT} window.__air({haze: 0}); window.__fast(8);`,

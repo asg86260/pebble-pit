@@ -3176,7 +3176,21 @@ const JOBS = {
   // smoking, which is the building claiming something the crew deny.
   labber: { work: stepLabber, shutIn: w => w.goal === 'in' },
 
-  scrubber: { work: stepScrubber },
+  // A scrubber is behind a door, and a balloon is a door too.
+  //
+  // The house's body has always been out of the yard's reach once it is through
+  // the door -- it simply had no `shutIn` to say so, because `goal === 'in'`
+  // also means "not drawn" and nothing outside was reaching for it anyway. A
+  // body in a *craft* is a different case and needs saying out loud: it is
+  // standing in a basket several hundred pixels up, and every rule in the
+  // pipeline below -- the fall, the lip, the muck errand, the re-plant on to the
+  // ground it is supposedly standing on -- would take it back. What that looked
+  // like was a balloon that rose a few pixels, lost its rider to the yard, sank,
+  // and picked it up again: the rider was aloft on six frames in a hundred.
+  //
+  // The same sentence the wizard's entry makes, for the same reason: nothing in
+  // the pipeline applies to a body that is not on the ground.
+  scrubber: { work: stepScrubber, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
 
   janitor: {
     work: janitorWork,

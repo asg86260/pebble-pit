@@ -14,6 +14,7 @@ import {
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
+import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
@@ -317,7 +318,11 @@ const capOfBare = job =>
   // recycler and the machine, not a queue inside the shed.
   //
   // This is also the argument for the machines, word for word. See `capOf`.
-  job === 'scrubbers' ? 1 :
+  // One in the house -- and one in each balloon it has sold. The shed argument
+  // above is about the *shed*: a second body at one fan is a queue. A craft is a
+  // second mouth rather than a second pair of hands at the same one, so it is a
+  // place to be and it takes a body of its own. See balloon.js.
+  job === 'scrubbers' ? 1 + craftCount() :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.

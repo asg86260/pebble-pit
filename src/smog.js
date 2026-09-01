@@ -112,8 +112,11 @@ export const DROPS = [];
 // clean gap under the sky and a short one with the haze in the dirt. Floored
 // against the top, so a window too short to hold both still gives the band
 // somewhere to be.
-const bandTop = () => S.camY + SMOG_TOP * P;
-const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
+// Exported, because the balloon has to agree with the air about where the sky
+// is: a craft with a cruising height of its own would ride above the haze on a
+// tall window and in the dirt on a short one. See `laneY` in balloon.js.
+export const bandTop = () => S.camY + SMOG_TOP * P;
+export const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;
 // Bodies actually through the door, not bodies assigned to it. Somebody put on

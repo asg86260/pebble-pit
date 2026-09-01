@@ -564,6 +564,28 @@ export const QUARRY_CORES = 2;     // and the cut, once the plots are feeding it
 export const FARM_DUST = 600;      // the plots, and the first real bill
 export const QUARRY_DUST = 1800;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
+
+// --- the scrubber balloon ------------------------------------------------------
+// A craft the scrubbing house sells: it rides the sky, takes it in where it is,
+// and drops what it catches under itself. See DESIGN.md, "The scrubber balloon",
+// and src/balloon.js.
+export const BALLOON_RUNGS = 3;      // a finite ladder, like every other one
+export const BALLOON_DUST = 1200;    // what the first one costs
+export const BALLOON_RATE = 1.9;     // and how much steeper each one gets
+// World pixels a frame it crosses the yard at. Slower than a body walks: it is a
+// thing drifting on the air rather than a thing going somewhere, and a balloon
+// that outpaced the crew underneath it would read as a vehicle.
+export const BALLOON_PACE = 0.42;
+export const BALLOON_LIFT = 0.010;   // and how fast it rises off the mast, in lift a frame
+export const BALLOON_W = P * 7;      // the envelope
+export const BALLOON_H = P * 9;
+export const BALLOON_BASKET = P * 4; // and what hangs under it, which is what a body gets into
+// Where the lanes are, as a share of the sky's own depth. The first craft rides
+// high and each one after it a little lower, so a fleet crosses rather than
+// passing through itself.
+export const BALLOON_LANE_TOP = 0.18;
+export const BALLOON_LANE_GAP = 0.16;
+export const BALLOON_EDGE = 6;       // cells it turns short of either end of the world
 export const LAB_DUST = 5000;      // the lab
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
