@@ -139,3 +139,86 @@ group('a save mid-pour comes back mid-pour', async () => {
     ok(!done.pouring && !done.spinning, 'and the hand finishes')
   ];
 });
+
+
+// Past a thousand the heap stops being a count of the pot and becomes a reading
+// of it, on a ladder written down in config.js. The numbers stay exact -- the
+// row, the credit and the hole all say the pot -- and what gets smaller is the
+// sand, which is the only thing here that was ever expensive.
+//
+// The ladder itself, worked out the way DESIGN.md writes it. A check that read
+// the game's own function for the answer would agree with anything.
+const band = n => n <= 1000 ? n : Math.min(5000, Math.round(1000 + 1000 * Math.log10(n / 1000)));
+
+group('the heap past the first band is a reading of the pot', async () => {
+  atTheTable(2);                                 // the thousand chip
+  const stake = state().stakes.dust;
+
+  // Play it until a win, so the pot on the table is two thousand -- which is the
+  // first number in this building that is not drawn one for one.
+  let won = null, air = 0;
+  for (let i = 0; i < 40 && !won; i++) {
+    if (state().pot) { window.__buy('bank'); runUntil(() => !state().paying && state().tableAir === 0, 30); }
+    window.__buy('stakedust');
+    for (let f = 0; f < 3600 && (state().pouring || state().spinning); f++) {
+      run(1 / 60);
+      air = Math.max(air, state().tableAir);
+    }
+    if (state().pot) won = state();
+  }
+
+  // and it settles to the band rather than to the number
+  const rested = runUntil(() => state().table === state().tableWant && !state().tableAir, 30);
+  const settled = state();
+  const on = settled.pot ? settled.pot.on : 0;
+  const held = settled.stored;
+
+  // taking it is still worth exactly what the row said, however few squares fly
+  window.__buy('bank');
+  const flying = state();
+  runUntil(() => !state().paying && state().tableAir === 0, 40);
+  const landed = state();
+
+  return [
+    ok(!!won && on === stake * 2, 'a win off the thousand chip puts two thousand on the table',
+       `${on}`),
+    ok(settled.tableWant === band(on), 'and the heap it asks for is the band, not the pot',
+       `${settled.tableWant} grains for ${on}, band says ${band(on)}`),
+    ok(band(on) < on, 'which is less sand than the pot has units',
+       `${band(on)} of ${on}`),
+    ok(rested && settled.table === settled.tableWant, 'the heap settles to it',
+       `${settled.table} of ${settled.tableWant}`),
+    ok(air <= 5000 + 200, 'and nothing near the old cloud is ever in the air at once',
+       `${air} at the worst`),
+    ok(flying.paying === on, 'banking still sets off with the whole pot',
+       `${flying.paying} of ${on}`),
+    ok(landed.stored === held + on, 'and the hole is paid the pot to the grain',
+       `${held} + ${on} -> ${landed.stored}`),
+    ok(landed.table === 0 && landed.tableAir === 0, 'with nothing left on the ground',
+       `${landed.table} left`)
+  ];
+});
+
+// The ladder itself: every rung of it, against the game's own reading of a pot
+// it is actually holding. The pot is set by playing the table up to it -- there
+// is no way to hold ten million dust in a hole that does not fit it -- so this
+// reads the function through the one number the yard reports.
+group('the ladder is the one written down', async () => {
+  atTheTable(0);
+  const rungs = [10, 100, 1000, 2000, 10000, 100000, 1000000, 10000000, 100000000];
+  const said = [];
+  for (const n of rungs) {
+    yard.S.pot = { cur: 'dust', stake: n, n };
+    said.push(state().tableWant);
+  }
+  yard.S.pot = null;
+  return [
+    ok(said.every((v, i) => v === band(rungs[i])),
+       'every rung reads as the ladder says it should',
+       said.map((v, i) => `${rungs[i]}->${v}`).join(' ')),
+    ok(said[said.length - 1] === 5000, 'and it stops at the brim', `${said[said.length - 1]}`),
+    ok(said[0] === 10 && said[2] === 1000,
+       'while everything up to a thousand is still one grain a unit',
+       `${said[0]}, ${said[2]}`)
+  ];
+});

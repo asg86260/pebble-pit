@@ -39,7 +39,7 @@ import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
 import { houseReport } from './house.js';
-import { pot, spinning, pouring, stakeOf, chipName, potAt } from './casino.js';
+import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './casino.js';
 import { buriedVisible } from './intro.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
@@ -262,6 +262,9 @@ export const snapshot = () => ({
   hand: S.hand && { won: S.hand.won, n: S.hand.n },
   potAt: Math.round(potAt().x),
   table: table.n,
+  // how many grains that pot is meant to put on the ground, which past the first
+  // band is fewer than the pot itself -- see `shownFor` in casino.js
+  tableWant: tableWant(),
   paying: S.paying && S.paying.left,
   chip: chipName(),
   stakes: { dust: stakeOf('dust'), shard: stakeOf('shard'), spore: stakeOf('spore') },
