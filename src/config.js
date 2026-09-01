@@ -650,7 +650,8 @@ export const CHUTE_FALL = 0.95;
 // have nothing in common but being round on top -- which matters, because the
 // one place a canopy ever appears is directly under a balloon.
 export const CHUTE_W = P * 13;
-export const CHUTE_ROWS = 3;         // rows of cells in the dome
+export const CHUTE_ROWS = 3;         // rows of cells in the dome, as a half ellipse
+export const CHUTE_INSET = 0;        // cells in from the rim the rigging hangs from
 // How far over the head the canopy rides. This is the daylight the rigging
 // crosses, and it is the second half of not looking like a balloon: the open
 // triangle between a wide hem and a small body is the thing that reads as a
