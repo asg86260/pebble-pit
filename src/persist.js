@@ -11,7 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { resetCut } from './quarry.js';
-import { freshMachines, MACHINES } from './machines.js';
+import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
@@ -491,7 +491,12 @@ export function restore() {
     rec.driven = !!r.driven;
     // A machine bought before this was written took a full set and has no
     // record of it. It is bought, so it did.
-    rec.tookKit = rec.bought ? (r.tookKit == null ? true : !!r.tookKit) : false;
+    // And a machine that does not take kit never took any, whatever the save
+    // says: the belt was written down as having taken the carts back when every
+    // machine did, and a stale `true` there would have `stripKit` empty the
+    // stand every frame under a row that is still selling carts.
+    rec.tookKit = rec.bought && kitDisplaced(m.job)
+      ? (r.tookKit == null ? true : !!r.tookKit) : false;
   }
   rebalance();
   S.minerSpeedLevel = s.minerSpeedLevel || 0;

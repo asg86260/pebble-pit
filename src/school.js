@@ -21,6 +21,7 @@
 import { S } from './state.js';
 import { TRADE_COST, TRADE_RATE, KIT_MAX } from './config.js';
 import { stockOf } from './kit.js';
+import { kitDisplaced, machineFor } from './machines.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 
@@ -116,7 +117,22 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   buy: () => train(t),
   // and never before the place it belongs to is open: kit for a farm you have
   // not broken the ground for is kit for somewhere that does not exist
-  show: () => S.schoolOpen && OPEN[t.job]()
+  //
+  // ...and never after the machine. A jaw, a ram or a tiller caps its station at
+  // one body and takes the set of hats it was gated behind with it -- see
+  // `buyMachine` -- so a row still offering a fourth blaster is a row selling a
+  // helmet for a face nobody stands at any more. The ladder ends at the machine,
+  // and a board that goes on asking for shards after the thing the shards were
+  // for is the game forgetting what it just sold you.
+  //
+  // The carts are the exception and stay for the rest of the run. Carrying is
+  // not a face: the belt runs between the rock and the hole and nowhere else,
+  // and everything off that line -- the weather's muck, the far heaps, whatever
+  // the yard drops -- is still walked by hand by whoever is not tending it. Kit
+  // for that is worth buying the day the belt goes up and worth buying an hour
+  // later, so the row says so by staying. `kitDisplaced` is the one place that
+  // knows which is which.
+  show: () => S.schoolOpen && OPEN[t.job]() && !(machineFor(t.job) && kitDisplaced(t.job))
 }));
 
 // One heading per place, and the same four the yard already has. "The ground"

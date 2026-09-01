@@ -1402,6 +1402,22 @@ thing in this section: it is a multiple of a kitted station, and there is a chec
 that measures a running jaw against the quarriers working the same cut in the
 same yard.
 
+**And the row comes off the board once the machine is standing.** The set of hats
+is the last thing you buy before the machine and the machine *takes it* -- so a
+training grounds still offering a fourth blaster after the jaw is up is a board
+selling a helmet for a face nobody stands at any more. The ladder ends at the
+machine, and the board has to say so by ending too. One heading at a time: the
+rock's row goes when the ram goes up, the quarry's when the jaw does, the farm's
+when the tiller does.
+
+**The carts are the exception, and stay for the rest of the run.** Carrying is
+not a face. The belt runs between the rock and the hole and nowhere else, and
+everything off that line -- the weather's muck, the far heaps, whatever the yard
+drops where the band cannot reach -- is still walked by hand by whoever is not
+tending it. So the belt takes no carts when it is bought, the carters go on being
+worth what they were, and the carter row is the one thing the school sells
+forever.
+
 ### The kit has a ceiling
 
 **Three of any one trade, and no more** -- `KIT_MAX`. A shorter ladder than the

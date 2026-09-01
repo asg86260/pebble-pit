@@ -1108,3 +1108,70 @@ group('the belt waits for the whole of the lip to be bought out', async () => {
        kitted.filter(k => k === 'belt').join(''))
   ];
 });
+
+// The ladder ends at the machine, and the board says so.
+//
+// The set of hats is the last thing bought before the machine and the machine
+// takes it, so a training grounds still selling a fourth breaker after the ram
+// is up is a row selling a helmet for a face nobody stands at. Checked through
+// the board's own rows rather than the flag underneath, because what is claimed
+// here is what the player can see and press.
+group('the school stops selling kit for a station a machine has taken', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 0, 5);
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__tip(90000);
+  window.__school({ open: true, breakers: 6, carters: 6, blasters: 6, growers: 6 });
+  const shown = () => window.__rows().filter(r => r.shown).map(r => r.key);
+
+  const before = shown();
+  window.__buy('ram');
+  const after = shown();
+  window.__crew(0, 0, 0, 0);
+  return [
+    ok(before.includes('breaker'), 'the rock sells kit while hands work it'),
+    ok(!after.includes('breaker'), 'and stops the moment the ram stands there',
+       after.filter(k => k === 'breaker').join('')),
+    ok(after.includes('blaster'), 'a station with no machine keeps its row')
+  ];
+});
+
+// ...except the carts, which are sold for the rest of the run.
+//
+// Carrying is not a face. The belt runs between the rock and the hole and
+// nowhere else, and everything off that line is still walked by hand by whoever
+// is not tending it -- so the belt takes no carts, the carts stay bought, and
+// the row goes on offering them.
+group('the carters outlast the belt', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 3);
+  window.__grant({ sparks: 999, shards: 999, spores: 999 });
+  window.__school({ open: true, carters: 6 });
+  window.__levels({ haulCarryLevel: 5, haulPaceLevel: 5, harnessLevel: 5, bootsLevel: 5 });
+  window.__tip(20000);
+  const had = state().carters;
+
+  window.__buy('belt');
+  run(6);
+  const after = state();
+  const shown = window.__rows().filter(r => r.shown).map(r => r.key);
+
+  // and it survives the way home, rather than being stripped on the next load
+  window.__reload();
+  const back = state();
+  window.__crew(0, 0);
+  return [
+    ok(after.machines.belt.bought, 'the belt is bought and standing'),
+    ok(after.carters === had, 'and the carts are still at the lip',
+       `${had} -> ${after.carters}`),
+    ok(shown.includes('carter'), 'with the row still selling them',
+       shown.filter(k => k === 'carter').join('')),
+    ok(back.carters === had, 'and they are still there after a reload',
+       `${back.carters}`)
+  ];
+});

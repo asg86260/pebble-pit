@@ -36,14 +36,40 @@ export const MACHINES = [
   { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
   { key: 'ram',    job: 'miners',    name: 'the ram' },
   { key: 'tiller', job: 'farmhands', name: 'the tiller' },
-  // The fourth, and the odd one out: it does not work a face, it works the
-  // *ground between* the rock and the hole -- see the belt's spec in dust.js.
-  { key: 'belt',   job: 'haulers',   name: 'the belt' }
+  // The fourth, and the odd one out twice over: it does not work a face -- it
+  // works the *ground between* the rock and the hole, see the belt's spec in
+  // dust.js -- and it is the one machine that leaves its station's kit alone.
+  //
+  // `takesKit` is what the other three do and the belt does not. A jaw stands in
+  // the cut and a ram at the rock, and once one is there the face it works is
+  // worked by the machine or not at all, so the helmets are spent buying it --
+  // see `buyMachine`. Carrying is not a face. It is what a body does when it is
+  // on nothing, and it goes on everywhere the belt does not reach: the weather's
+  // muck, the far heaps, everything the yard drops away from the run between the
+  // rock and the hole. So the carts stay bought, they stay useful, and the
+  // school goes on selling them -- see `kitDisplaced`, which is what tells the
+  // training grounds which rows to take down.
+  { key: 'belt',   job: 'haulers',   name: 'the belt', takesKit: false }
 ];
 
 // Derived, not written out again: a hand-kept inverse of the table six lines
 // above is a second place to forget.
 export const JOB_MACHINE = Object.fromEntries(MACHINES.map(m => [m.job, m.key]));
+
+// Whether the machine standing in for a job took that station's kit with it.
+//
+// Which is the same question as whether the school should still sell it: kit for
+// a face a machine now works is kit with no head to go under, and a row offering
+// it is a row selling nothing. Everything but the belt says yes -- see the note
+// on `takesKit` in the table above for why carrying is the exception.
+//
+// It answers about the *job* rather than the record, so the one fact serves the
+// purchase, the reload and the board, and a fifth machine is a line in the table
+// rather than a third place to remember.
+export const kitDisplaced = job => {
+  const m = MACHINES.find(x => x.job === job);
+  return !!(m && m.takesKit !== false);
+};
 
 // A machine's record. One shape, three of them, and it is a keyed object rather
 // than nine flat fields on S for a reason worth writing down: it is four places
@@ -174,7 +200,13 @@ export function buyMachine(key) {
   //
   // And it is worth half again what that set of specialists was, which is the
   // whole of why spending them is a trade rather than a loss -- see `machineRate`.
-  m.tookKit = true;
+  //
+  // All of which is about a machine that takes a face off its gang. The belt
+  // takes none, so it takes no carts either: `kitDisplaced` is false for
+  // carrying and the carters keep their kit and keep working the ground the
+  // band never touches.
+  const spec = MACHINES.find(x => x.key === key) || {};
+  m.tookKit = kitDisplaced(spec.job);
   S.dirty = true;
   // And it runs, because it is bought. Nothing has to be thrown and nobody has
   // to walk anywhere to start it -- a machine that arrived switched off would
@@ -185,7 +217,7 @@ export function buyMachine(key) {
   // so the complement has to be walked to carrying in the same breath as the
   // purchase or the whole gang stands at a station that now holds one, for good.
   // `rebalance` only ever clamps down, which is all that is wanted here.
-  S.restaff = { job: (MACHINES.find(x => x.key === key) || {}).job, want: 1 };
+  S.restaff = { job: spec.job, want: 1 };
   S.dirty = true;
 }
 
