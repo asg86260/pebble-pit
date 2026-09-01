@@ -2710,10 +2710,10 @@ the rung, from one table (`WORK_BASE`), not hand-tuned per row:
 | building | the lab, the school, the closet, the casino, the tower, the two sites | 90s |
 | machine | the ram, the belt, the jaw, the tiller | 180s |
 
-...climbing with the rung the way the price does (`WORK_STEP`, half again a third
-a rung), so the first bench in the cut is half a minute and the fifth is nearer
-two. Read every figure as "with one pair of hands on it": five quarriers take a
-bench out in a fifth of that, which is what a gang is for.
+A rung climbs with the ladder the way its price does (`WORK_STEP`, a third again
+a rung). A place, a building and a machine are flat: a bench is a bench whether it
+is the second or the fifth. Read every figure as "with one pair of hands on it":
+five quarriers take a bench out in a fifth of that, which is what a gang is for.
 
 **The school's rows are rungs, not places.** A hat is a thing somebody is shown
 how to wear rather than a building, and the carts have no ceiling -- a set of six

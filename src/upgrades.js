@@ -22,7 +22,7 @@ import { riftRate, riftUpCost } from './rift.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
-import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow } from './machines.js';
+import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, RIFT_BILL, RIFT_RATE, DUST_PER_SPARK,
          MACHINE_TUNE, BUILD_GANG } from './config.js';
@@ -704,7 +704,10 @@ export const UPGRADES = [
     // than written: a ladder that grew a sixth rung should move this gate with
     // it.
     key: 'ram',
-    kind: 'machine', site: 'yard',
+    // Put up where it will stand, which the machine's own spec knows and this
+    // row does not: the builders walk to it rather than building it from
+    // wherever they happened to be.
+    kind: 'machine', site: 'yard', at: () => specOf('ram')?.at(),
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
@@ -724,7 +727,10 @@ export const UPGRADES = [
     // Gated like the others: every rung of the lip's own gear, and a cart for
     // every pair of hands.
     key: 'belt',
-    kind: 'machine', site: 'yard',
+    // Put up where it will stand, which the machine's own spec knows and this
+    // row does not: the builders walk to it rather than building it from
+    // wherever they happened to be.
+    kind: 'machine', site: 'yard', at: () => specOf('belt')?.at(),
     name: 'the belt',
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
