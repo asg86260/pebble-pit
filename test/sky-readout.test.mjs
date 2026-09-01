@@ -41,7 +41,7 @@ group('the sky reads as one rate, and it can go negative', async () => {
   // round, not the balance between a jaw and a houseful of bodies.
   woundJaw();
   window.__crew(4, 4, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   window.__lab(true);
   window.__research('labair');
   // Long enough for the cut to be working at its steady rate. The rock fouled
@@ -154,7 +154,7 @@ group('what the readout says is what is overhead', async () => {
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
   run(20);
   const early = state().smog;
@@ -202,7 +202,7 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
   openSites();
   window.__fullSites();
   window.__crew(3, 3, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
   window.__air({ haze: state().smog.at + 30 });     // a sky over the line
   const wet = runUntil(() => state().smog.raining, 10);
@@ -257,7 +257,7 @@ group('a speck off a swing is the speck in the band', async () => {
   openSites();
   window.__fullSites();
   window.__crew(2, 0, 5);
-  window.__machine('jaw', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
   haveRock();
   run(3);
   const climbing = () => yard.smogSky().filter(m => m.up);

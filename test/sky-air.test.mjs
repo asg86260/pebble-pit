@@ -143,8 +143,8 @@ group('the sky says which part of the works dirtied it', async () => {
   openSites();
   window.__fullSites();
   window.__crew(2, 0, 5, 7);
-  window.__machine('jaw', { bought: true, on: true });
-  window.__machine('tiller', { bought: true, on: true });
+  window.__machine('jaw', { bought: true });
+  window.__machine('tiller', { bought: true });
   window.__air({ haze: 0, muck: 0 });
   // Long enough for a plot to come all the way on and be cut. The quarry fouls
   // per cell dug and starts almost at once; the farm only fouls when a crop is

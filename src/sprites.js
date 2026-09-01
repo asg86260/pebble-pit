@@ -194,11 +194,17 @@ export const TILLER = [
 // The same three at roster size.
 //
 // A machine's own picture is the best possible icon of it right up until the
-// picture is eleven cells wide, and a roster strip is eighteen. So the switch
-// gets a mark: the shape the machine had when it *was* small, which is not a
-// compromise -- it was a good drawing of a jaw, and it still is. The rule is the
-// ordinary one for a mark: enough of the silhouette to tell it from the other
-// two, and nothing else.
+// picture is eleven cells wide and eight tall, and a roster strip is eighteen by
+// four. So the switch gets a mark -- and the one rule a mark has to keep is that
+// it is the *same machine*, smaller. Not a family resemblance: the same
+// silhouette, feature for feature, so that the thing on the strip and the thing
+// standing in the yard are obviously one object.
+//
+// The ram's first mark failed that and it was worth working out why. It had a
+// chimney in the middle where the yard's is at the front, a thin wide slot where
+// the yard's is a square, and -- this is the one that mattered -- no arm at all.
+// The arm is the ram: it is the only machine whose working end is somewhere
+// other than where its body stands, and a ram without one is a shed.
 export const MACHINE_MARK = {
   jaw: [
     '.####',
@@ -206,12 +212,15 @@ export const MACHINE_MARK = {
     'ooo##',
     '#####'
   ],
+  // Chimney at the front, square slot, and the arm reaching out to a striking
+  // head -- the yard's ram with the middle taken out of it.
   ram: [
-    '.##....',
-    '.##....',
-    '#######',
-    '#ooo###',
-    '#######'
+    '.#.......',
+    '.#.......',
+    '######..#',
+    '#oo######',
+    '#oo######',
+    '######..#'
   ],
   tiller: [
     '.#.....',

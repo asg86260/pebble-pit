@@ -16,9 +16,10 @@ import { P, WORKER } from './config.js';
 import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
-import { JOB_MACHINE, machine, askLever, asked, hasLever } from './machines.js';
+import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 import { KIT_MARK } from './kit.js';
+
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
 // hit and hardest to mix up with each other.
@@ -226,12 +227,12 @@ export function rosterHit(x, y) {
     if (inside(hit(b.less), x, y)) { assign(p.job, -1); return true; }
     if (inside(hit(b.more), x, y)) { assign(p.job, 1); return true; }
     if (inside(b.badge, x, y) || inside(b.num, x, y)) return true;   // the count is not a button
-    // ...and the machine's switch, when the station has one standing.
-    if (machineOn(p.job) !== null && inside(hit(b.run), x, y)) {
-      const key = JOB_MACHINE[p.job];
-      askLever(key, !asked(key));
-      return true;
-    }
+    // The machine's mark is not a button either. It used to be a switch; there
+    // is no switch now -- a machine is stopped by taking its tender off, which
+    // is the `-` button two rows up. Swallowing the click anyway, because the
+    // mark is drawn under a station and a click there is not a swing at the
+    // ground.
+    if (machineAt(p.job) && inside(hit(b.run), x, y)) return true;
   }
   return false;
 }
@@ -249,11 +250,9 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
 
     // Who is working this station: the hands or the machine. Only on the
     // stations that have one standing, which is none of them for most of a run.
-    const on = machineOn(p.job);
-    if (on !== null && drawRun) {
-      const key = JOB_MACHINE[p.job];
-      drawRun(b.run, on, asked(key), key);
-    }
+    // What is working this station, when it is not hands. Only on the stations
+    // that have a machine standing, which is none of them for most of a run.
+    if (machineAt(p.job) && drawRun) drawRun(b.run, JOB_MACHINE[p.job]);
 
     drawBody(b.badge.x, b.badge.y);
     // The counter is a bare body, and that is every post but the sky now. It
@@ -351,22 +350,23 @@ export function drawRosterCounts(ctx, screenAt) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
     }
+
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 }
 
 // what the roster is showing and where its buttons are, for the checks
-// Whether this station has a machine standing, and whether it is running -- or
-// `null` when it has none, which is most of them for most of a run.
-export const machineOn = job => {
+// Whether this station has a machine standing at it.
+//
+// It used to answer three things -- no machine, machine off, machine on -- for a
+// switch that no longer exists. A machine is bought or it is not; whether it is
+// *working* is whether anybody is standing at it, which is the count two rows
+// up and is already on the roster in the ordinary way.
+export const machineAt = job => {
   const key = JOB_MACHINE[job];
   const m = key && machine(key);
-  // A machine with no lever gets no switch: the belt is on whenever it is
-  // bought, and a switch that cannot be thrown is worse than no switch at all --
-  // which is exactly what carrying had, since a fixed post takes no clicks.
-  if (!key || !hasLever(key)) return null;
-  return m && m.bought ? !!m.on : null;
+  return !!(m && m.bought);
 };
 
 export function rosterReport() {
@@ -380,10 +380,9 @@ export function rosterReport() {
              // it would hold by hand. Without both, a check cannot tell a capped
              // station from a small one.
              cap: capOf(p.job) === Infinity ? null : capOf(p.job),
-             machine: machineOn(p.job),
-             // Both null on a station with no switch, so the report says one
-             // thing about it rather than two.
-             asked: machineOn(p.job) === null ? null : asked(JOB_MACHINE[p.job]),
+             // Whether a machine stands here. Whether it is *working* is not a
+             // second fact: it is `n`, two fields up.
+             machine: machineAt(p.job),
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
              trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,

@@ -141,7 +141,7 @@ export function loadBelt(x, y, shade) {
 // stopped band must neither move what is on it nor take anything new.
 export function beltRunning(now) {
   const m = machine('belt');
-  return !!(m && m.bought && m.on && now - (m.mannedAt || 0) <= 250);
+  return !!(m && m.bought && now - (m.mannedAt || 0) <= 250);
 }
 
 // --- landing on it ---------------------------------------------------------------

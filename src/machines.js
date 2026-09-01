@@ -15,7 +15,7 @@
 // thing stands, which is read off the station's own functions every frame), the
 // *bite* (one unit of the station's own work, done by calling the station's own
 // code), the *gate* on its shop row, and the *drawing*. Everything else -- the
-// record, the capacity rule, the lever, the errand, the fouling, the stack, the
+// record, the capacity rule, the errand, the fouling, the stack, the
 // walk back to carrying -- lives here once.
 //
 // One prohibition, stated up front because it is what keeps the jaw from being
@@ -36,31 +36,10 @@ export const MACHINES = [
   { key: 'jaw',    job: 'quarriers', name: 'the jaw' },
   { key: 'ram',    job: 'miners',    name: 'the ram' },
   { key: 'tiller', job: 'farmhands', name: 'the tiller' },
-  // The fourth, and the odd one out twice over: it does not work a face -- it
-  // works the *ground between* the rock and the hole, see the belt's spec in
-  // dust.js -- and it has no lever.
-  //
-  // No lever, because there is nothing to point at. The other three stand
-  // somewhere: a jaw is in the cut, a ram is at the rock, a tiller is in the
-  // field, and a switch belongs at the place it is about. A belt is a run of
-  // trestles the width of the yard, so a switch on it would be a switch in the
-  // middle of nowhere -- and carrying is the one roster with no buttons on it,
-  // being the post you never staff by hand, so there was nowhere to put one
-  // there either. It was drawn on the carrying roster and could not be pressed,
-  // and `leverX` had no answer for it, so the ask the purchase raised stood for
-  // ever and the belt you had just paid for never started.
-  //
-  // So: bought is running. It is the one machine you cannot stop, which costs
-  // nothing -- the lever's job is to get a station's gang back and to stop the
-  // smoke, and the belt displaces no gang you would want back and works the
-  // ground rather than a face. And the yard's own rule still holds over it: an
-  // unmanned belt does nothing, so it stops the moment its tender walks off.
-  { key: 'belt',   job: 'haulers',   name: 'the belt', lever: false }
+  // The fourth, and the odd one out: it does not work a face, it works the
+  // *ground between* the rock and the hole -- see the belt's spec in dust.js.
+  { key: 'belt',   job: 'haulers',   name: 'the belt' }
 ];
-
-// Whether a machine has a lever to throw. Read off the table above rather than
-// asked of the key here and there, so there is one place that says which.
-export const hasLever = key => (MACHINES.find(m => m.key === key) || {}).lever !== false;
 
 // Derived, not written out again: a hand-kept inverse of the table six lines
 // above is a second place to forget.
@@ -76,18 +55,6 @@ export const JOB_MACHINE = Object.fromEntries(MACHINES.map(m => [m.job, m.key]))
 // not been walked to yet. The rest are clocks the drawing reads.
 const fresh = () => ({
   bought: false,
-  on: false,
-  // A lever thrown is a *request*, not a change: somebody has to walk over and
-  // do it. This lives on S rather than on the body walking, because no body is
-  // ever persisted -- so a reload drops the walk, and an ask that outlived it
-  // would be an ask nobody was ever going to arrive for.
-  ask: null,
-  // What the station held when the lever went on, so that throwing it off can
-  // put the gang back. `rebalance` only ever clamps *down* -- it walks the
-  // surplus to carrying and nothing walks them home again -- so without this,
-  // every "off" would cost five clicks on the roster and nobody would ever
-  // throw the lever twice.
-  was: 0,
   // It was bought with a full set of specialists, and took them. Kept as a fact
   // on the record rather than read off the station, because the station's hat
   // count is nought afterwards and the machine still has to be worth what that
@@ -120,12 +87,12 @@ export const machine = key => {
 export const machineFor = job => {
   const k = JOB_MACHINE[job];
   const m = k && machine(k);
-  return m && m.bought && m.on ? m : null;
+  return m && m.bought ? m : null;
 };
 
 export const running = key => {
   const m = machine(key);
-  return !!(m && m.bought && m.on);
+  return !!(m && m.bought);
 };
 
 // `handsOf`, `machineRate` and `restaff` live in upgrades.js beside `capOf`,
@@ -134,52 +101,25 @@ export const running = key => {
 // way: `capOf` asks whether a machine is running, and nothing here asks `capOf`
 // anything.
 
-// --- the lever ------------------------------------------------------------------
-// A machine can be shut off, and its station goes straight back to hand work --
-// which is why nothing in `stepQuarrier`, `stepFarmhand` or the miner branch is
-// deleted when a machine is bought. The shovels are the fallback, and the lever
-// picks which of the two is running.
+// --- switching one off -----------------------------------------------------------
+// There is no switch. A machine is stopped by taking its tender off, which is
+// the `-` button the station already has, and started by putting one back.
 //
-// Throwing it is a **job**, not a setting. You ask; the nearest body free to go
-// walks over and does it. Nothing in this yard happens without hands, and a
-// switch that flipped the moment you clicked it would be the one thing in the
-// game that did.
+// This used to be a lever: a thing you clicked, which raised an *ask*, which a
+// body walked over and answered, which flipped an `on` flag, which changed what
+// `capOf` said, which walked the surplus gang to carrying or back again. Five
+// moving parts and a save field, for a question the yard could already answer --
+// because the oldest rule here is that a station idles until somebody is
+// actually standing at it, and an unmanned machine has always produced nothing
+// and smoked nothing. See `runMachine`. The lever was a second way to say the
+// same thing, and the second way to say a thing is the one that gets it wrong.
 //
-// An earlier draft promised that off could be instant, on the grounds that a
-// running machine always has its tender standing at it. That is not true here
-// and should not be made true: `takeMuck` pulls the tender off for a mess on its
-// own site, `stepKit` sends it for a spare hat, `relieve` stops it where it
-// stands, and the player can pick it up and carry it across the yard. Every one
-// of those is a rule the yard already keeps. So there is one mechanism, and its
-// cost simply *happens* to be nil in the common case, because the tender is
-// usually standing right there.
-//
-// What that promise was trying to close -- a yard choking on smoke with nobody
-// free to go and stop it -- is closed better by a rule the yard already has: an
-// unmanned machine produces nothing and smokes nothing. The moment the last body
-// walks away from it, it stops. See `runMachine`.
-export function askLever(which, on) {
-  const m = machine(which);
-  if (!m || !m.bought) return false;
-  if (!hasLever(which)) return false;           // nothing to throw, and it is on
-
-  if (m.on === !!on) { m.ask = null; return false; }   // already the way you want it
-  m.ask = { on: !!on };
-  S.dirty = true;
-  return true;
-}
-
-// The ask is dropped when it is answered, and also when it stops making sense --
-// a machine sold, a save loaded, a check resetting the yard.
-export const clearAsk = which => { const m = machine(which); if (m) m.ask = null; };
-
-// What the lever is set to be, counting an ask that has not been walked to yet.
-// The drawing wants this so a thrown lever can read as *thrown and on its way*
-// rather than as nothing having happened.
-export const asked = which => {
-  const m = machine(which);
-  return m ? (m.ask ? m.ask.on : m.on) : false;
-};
+// What it costs is the hand fallback: a station with a machine standing at it is
+// worked by that machine or it is not worked, and there is no putting five
+// bodies back on the face. That is the right trade. The machine is gated behind
+// every slot and every hat the station can hold, so by the time you have one
+// there is nothing the hands could go back to being better at, and a lever whose
+// off position was strictly worse was a decision nobody made twice anyway.
 
 // --- the runner -----------------------------------------------------------------
 // One beat, three machines, and the station's own work done by the station's own
@@ -232,30 +172,20 @@ export function buyMachine(key) {
   // took their helmets off, which is the truest thing this yard can say about
   // what a machine is.
   //
-  // What it costs is the fallback. See `machineRate` and DESIGN.md: throwing the
-  // lever off now leaves a bare gang rather than a kitted one, so the lever is a
-  // way to stop the smoke and get the bodies back, not a way to swap between two
-  // equally good ways of working.
+  // And it is worth half again what that set of specialists was, which is the
+  // whole of why spending them is a trade rather than a loss -- see `machineRate`.
   m.tookKit = true;
   S.dirty = true;
-  // And it starts. Somebody walks over and throws the lever, which is the same
-  // journey as any other -- a machine that arrived already running would be the
-  // one thing in the yard that did something without hands, and one that arrived
-  // switched off would read as a purchase that did nothing.
+  // And it runs, because it is bought. Nothing has to be thrown and nobody has
+  // to walk anywhere to start it -- a machine that arrived switched off would
+  // read as a purchase that did nothing.
   //
-  // Unless it has no lever, in which case there is nobody to send and nothing to
-  // send them to: it is on, and the bookkeeping the lever would have done on the
-  // way past is done here instead. `rebalance` only ever clamps down, so the
-  // complement the machine displaces has to be recorded and walked to carrying
-  // in the same breath -- see `throwLever`, which this is the leverless half of.
-  if (!hasLever(key)) {
-    m.on = true;
-    const job = (MACHINES.find(x => x.key === key) || {}).job;
-    m.was = S[job] || 0;
-    S.restaff = { job, want: 0 };
-  } else {
-    m.ask = { on: true };
-  }
+  // What it does need is the gang shifted off. `capOf` answers 1 for a station
+  // with a machine standing, and nothing in the yard recomputes that per frame,
+  // so the complement has to be walked to carrying in the same breath as the
+  // purchase or the whole gang stands at a station that now holds one, for good.
+  // `rebalance` only ever clamps down, which is all that is wanted here.
+  S.restaff = { job: (MACHINES.find(x => x.key === key) || {}).job, want: 1 };
   S.dirty = true;
 }
 
@@ -268,28 +198,16 @@ export function buyMachine(key) {
 //
 // The hats matter for the same reason the slots do, only more so. A machine caps
 // its station at one body, so without this gate every helmet you had bought went
-// into a drawer the moment you threw the lever, and the trade ladder stopped
+// into a drawer the moment the machine started, and the trade ladder stopped
 // being worth finishing halfway up. Gated this way round, the specialists are
 // the last thing you buy before the machine and the machine is worth half again
 // what they were -- see `machineRate`, which reads the hats for exactly this
 // reason.
 //
-// Gated on **bought**, never on running: a row that came and went with the lever
-// would rebuild the board every time somebody threw it, dropping the hover and
-// re-firing the new-row mark.
+// Gated on **bought**: a row that came and went with whether the machine happened
+// to be manned would rebuild the board every time its tender wandered off,
+// dropping the hover and re-firing the new-row mark.
 export const canBuy = (key, slotsFull, kitFull) => {
   const m = machine(key);
   return !!m && !m.bought && slotsFull() && kitFull();
 };
-
-
-// --- where the lever is -----------------------------------------------------------
-// One box, read by both the drawing and the hit test. The roster's buttons are
-// laid out this way for the same reason: a control drawn in one place and
-// clicked in another is a control that works until somebody moves it.
-//
-// The x comes from `leverX` in crew.js, which is the one place that knows where
-// each machine's post is. This only decides how big the thing is and how far off
-// the ground it stands.
-export const LEVER_W = 3;                  // cells
-export const LEVER_H = 4;

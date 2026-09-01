@@ -11,7 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { resetCut } from './quarry.js';
-import { freshMachines, MACHINES, hasLever } from './machines.js';
+import { freshMachines, MACHINES } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
 import { at, put, count, fillFlat, isDust, recount, wakeGrid } from './grid.js';
@@ -242,15 +242,17 @@ export function persist() {
     wizPowerLevel: S.wizPowerLevel,
     labRooms: S.labRooms,
     research2: S.research2,
-    // The machines, as facts only. Whether each was bought, whether its lever is
-    // on, and the complement it displaced. The beats, the phases and an ask
-    // somebody was halfway through walking to are not saved: no body is saved
-    // either, so an ask that outlived the reload would be an ask nobody was ever
-    // going to arrive for. It is dropped, and it can be made again.
+    // The machines, as facts only: whether each was bought, whether it is driven,
+    // and whether it took the station's kit. The beats and the phases are not
+    // saved -- they are clocks the drawing reads, and a machine comes back mid
+    // stroke rather than not at all.
+    //
+    // Whether it is *running* is not saved because it is not a fact about the
+    // machine. It is whether anybody is standing at it, and the crew is rebuilt
+    // from the counts on the way in.
     machines: Object.fromEntries(MACHINES.map(m => {
       const r = (S.machines && S.machines[m.key]) || {};
-      return [m.key, { bought: !!r.bought, on: !!r.on, was: r.was | 0,
-                       driven: !!r.driven, tookKit: !!r.tookKit }];
+      return [m.key, { bought: !!r.bought, driven: !!r.driven, tookKit: !!r.tookKit }];
     })),
     // The sky. What is left of the meteor is saved cell by cell -- it is a rock
     // half taken apart, and coming back to a whole one would be a shift's work
@@ -481,12 +483,11 @@ export function restore() {
     const r = (s.machines && s.machines[m.key]) || {};
     const rec = S.machines[m.key];
     rec.bought = !!r.bought;
-    // A lever cannot be on for a machine nobody bought -- and a machine with no
-    // lever is on the moment it is bought, so a save that predates the belt
-    // losing its lever (or one written while its ask was still standing) comes
-    // back running rather than bought-and-stopped for ever.
-    rec.on = !!r.bought && (hasLever(m.key) ? !!r.on : true);
-    rec.was = r.was | 0;
+    // A save written while the levers still existed carries `on` and `was`. Both
+    // are dropped on the way in: a machine is worked by whoever is standing at
+    // it, and a save that came back switched off would be a machine you had
+    // bought and could no longer start, the switch for it having been taken out
+    // of the game.
     rec.driven = !!r.driven;
     // A machine bought before this was written took a full set and has no
     // record of it. It is bought, so it did.

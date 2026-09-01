@@ -37,10 +37,10 @@ export const TESTS = [
     // answer in the same part of the game, which is what the smoke curve in
     // DESIGN.md is arranging.
     window.__fullSites();
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     const both = has();
     const air = state().smog;
-    window.__machine('jaw', { on: false, bought: false });
+    window.__machine('jaw', { bought: false });
     window.__crew(0, 0);
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
@@ -73,7 +73,7 @@ export const TESTS = [
     // per unit of work, and the house is the bill for the thing you switched on
     // rather than a cure sold ahead of the disease.
     window.__fullSites();
-    window.__machine('jaw', { bought: true, on: true });
+    window.__machine('jaw', { bought: true });
     buildShopFromTest();
     shop().querySelector('[data-key="unlockscrub"]').click();
     buildShopFromTest();

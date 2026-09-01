@@ -55,7 +55,7 @@ group('the sky fills up, and gives it back', async () => {
   // fouling behind it is filling the band back up, and neither "next to nothing
   // left overhead" nor "the banks shrink as it falls" stays a fact about the
   // shower.
-  window.__machine('jaw', { on: false, bought: false });
+  window.__machine('jaw', { bought: false });
   // And a moment for what is still climbing to arrive, because a shower claims
   // the sky that is *settled* when it breaks and motes in flight are not.
   run(6);

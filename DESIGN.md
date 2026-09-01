@@ -1387,7 +1387,7 @@ a-half was worth seven and a half. **You paid fifty sparks to make the quarry
 slower.**
 
 Worse, it made the specialists obsolete at a stroke. A machine caps its station
-at one body, so the moment you threw the lever every helmet you had bought went
+at one body, so the moment the machine stood up every helmet you had bought went
 into a drawer, and the trade ladder stopped being worth finishing halfway up.
 
 So the gate is **every slot and every hat**, and the rate is measured against the
@@ -1491,108 +1491,78 @@ differently.
 - **The tiller** is a low frame that crawls the plot line end to end and turns
   the ground behind it. The only machine that travels, which is what makes it
   read as a different thing from across the yard, and its thin trail drifting
-  over the green is the best argument the game makes for the lever.
+  over the green is the prettiest thing the machines do.
 
-**And there is a lever, and somebody has to throw it.** A machine can be shut
-off, and the station goes back to hand work -- which is why the shovels are not
-deleted when you buy one, they are the fallback. Throwing it is a job, not a
-setting: you ask, and the nearest free body walks over and does it, the way a
-janitor walks to a mess. Nothing in this yard happens without hands.
+**And there is no switch.** A machine is stopped by taking its tender off and
+started by putting one back, through the `-` and `+` the station already has.
 
-**The lever is a switch on the station's roster, not a row on a board and not a
-post in the yard.** `buy()` returns immediately for any row carrying a `job` or a
-`dial`, and a lever is neither a purchase nor a `+`/`-` stepper; and the ram has
-no board of its own to put it on. Drawn small enough to stand in a pixel yard it
-read as a fencepost, one more black shape among the hundred that do nothing --
-and the question it asks, *are these hands working this station or is the
-machine*, is the same question the count above it answers about how many hands.
-So it is a strip under that count, hit-tested beside the roster's buttons, with a
-tooltip that says why nothing happened when there is no free body to send.
+This took three drawings and a whole mechanism to arrive at, and the mechanism is
+worth naming so it is not built again. It was a lever: a thing you clicked, which
+raised an *ask*, which a body walked over and answered, which flipped an `on`
+flag, which changed what `capOf` said, which walked the surplus gang to carrying
+or back again. Five moving parts and two save fields. It was drawn first as a
+checkbox -- a question and its answer in one square, with the question written
+nowhere, so which of ticked and clear meant *on* was a convention somebody had to
+be told. Then as a slide switch, drawn inside out: a black knob riding a white
+slot cut into a black plate, so the knob had no contrast against the thing it
+slid in, the only part that visibly moved was the gap, and the whole control read
+as a meter -- and worse, as the station's own meter, a white bar in a black body
+being exactly how the ram draws how far through the boulder it is. Then as a
+lever, which was at least honest about the mechanism.
 
-**And it is a slide switch, because a checkbox is a question with no question
-written on it.** A plate with a slot knocked white out of it, a knob riding in
-the slot, and the machine's own mark standing at the far end. The knob at the far
-end is the machine working the station; at the near end, the hands; and *halfway*
-while somebody is still walking over to throw it, which is the honest picture of
-an ask that has not been answered yet. Nothing about it has to be learned: the
-knob slides towards the picture of the machine.
+All three were answering *is this station worked by the hands or by the machine*,
+and the yard had a better answer to that from the start: **is anybody standing at
+it.** A station idles until somebody is actually there, so an unmanned machine
+produces nothing and smokes nothing without a line being written to make it so --
+and the count directly above the machine's mark is how many bodies are there. The
+lever was a second way to say a thing the yard already said, and the second way to
+say a thing is the one that gets it wrong.
 
-**A switch stands on ground somebody could walk to.** Every roster does, bar one:
-the quarry's, which is driven up into the sky because its own ground is a hole.
-Counts can hang anywhere -- they are numbers. A switch cannot, and hung over the
-mouth it landed square in the middle of the jaw and the hoist, a control drawn on
-top of the very machine it is about. So the quarry's count stays over the cut and
-its switch stands on the flat a few cells past the lip, off the hole's own right
-edge so it follows the hole when the hole moves.
+What it costs is the hand fallback: a station with a machine standing at it is
+worked by that machine or it is not worked, and there is no putting five bodies
+back on the face. That is the right trade. The machine is gated behind every slot
+and every hat the station can hold, and buying it spends the hats, so by the time
+you have one there is nothing the hands could go back to being better at -- a
+lever whose off position was strictly worse was a decision nobody made twice.
 
-**A machine is about three bodies wide.** They were drawn at five cells by four,
-which is two thirds the height of one of the bodies the machine had just put out
-of a job -- so the thing you saved the whole ladder for arrived looking like a
-crate somebody had left lying about, and the tiller in particular was lost among
-its own plants. Every machine is now roughly ten cells across, which is the
-smallest a thing can be here and still read as *plant* rather than as an object.
-Nothing about their positions was retuned to suit: the offsets that place a
-chimney, a rope, a wheel or a driver's seat are read off the pictures, so a
-machine redrawn again brings its own furniture with it.
+**What is left on the roster is a label, not a control.** One strip under the
+headcount with the machine's own mark on it, saying what those hands are working.
+Its one rule is that it must be the *same machine* as the one standing in the
+yard -- the same silhouette, feature for feature, not a family resemblance. The
+ram's first mark failed that and it is the useful example: a chimney in the middle
+where the yard's is at the front, a thin slot where the yard's is a square, and no
+arm at all. The arm is the ram -- it is the only machine whose working end is
+somewhere other than where its body stands -- and a ram without one is a shed.
 
-**And the tractor faces where it is going.** It is the only machine that travels,
-and it was the only thing in the yard that travelled backwards half the time --
-bonnet trailing, chimney at the wrong end, driver riding the front axle up the
-row. Its direction is read off the same saw wave its position is, so it turns
-round on exactly the frame the travel does, and the wheels, the seat and the
-chimney mirror with the picture rather than each keeping their own idea of which
-end is the front.
-
-**Off is quick because the walk is short, not because of a guarantee.** An
-earlier draft claimed a running machine always has its tender standing at it, so
-off could be instant. That is not true of this yard and should not be made true:
-`takeMuck` pulls the tender off for a mess on its own site, `stepKit` sends it
-for a spare hat, `relieve` stops it where it stands, and the player can pick it
-up and carry it away. Every one of those is a rule already kept, and none should
-be waived for a machine. So there is one mechanism -- ask, and the nearest
-eligible body walks over -- whose cost simply happens to be nil in the common
-case, because the tender is usually standing right there.
-
-**What that draft was trying to close is closed better by a rule already in the
-yard: an unmanned machine produces nothing and smokes nothing.** A yard choking
-on its own smoke with nobody to spare cannot get worse, because the moment the
+**The rule that carries all of it: an unmanned machine produces nothing and
+smokes nothing.** A yard choking on its own smoke with nobody to spare cannot
+get worse, because the moment the
 last body walks away from the machine, the machine stops. That is the
 idles-until-somebody-is-standing-there rule, not a new exemption -- and it
 settles the muck case too. Muck on the cut stops the jaw, the tender climbs out
 and shovels it, and the machine picks up when the tender comes back.
 
-**Throwing it off puts the gang back.** `rebalance` only ever clamps *down*: it
-walks the surplus to carrying and nothing walks them home. So a machine records
-the complement it displaced when the lever went on, and throwing it off restores
-up to that many from whoever is idle. It restores a complement; it does not
-conjure bodies. Without this, every "off" would cost five clicks on the roster
-and the lever would be a decision nobody made twice.
-
-**Except the belt, which has none: bought is running.** The other three stand
-somewhere -- a jaw in the cut, a ram at the rock, a tiller in the field -- and a
-switch belongs at the place it is about. A belt is a run of trestles the width of
-the yard, so a switch on it would be a switch in the middle of nowhere; and the
-switch's other home, the station's roster, is no home either, carrying being the
-one post you never staff by hand and so the one roster that takes no clicks. It
-was built with a lever anyway, and the lever was the bug: the purchase raised an
-ask that nothing could ever answer, so a belt you had paid for -- in all three
+**The belt got here first, and was the warning.** Alone of the four it never had
+a lever, because there was nowhere to put one: the other three stand somewhere --
+a jaw in the cut, a ram at the rock, a tiller in the field -- and a switch belongs
+at the place it is about, while a belt is a run of trestles the width of the yard.
+Its other home, the station's roster, was no home either, carrying being the one
+post you never staff by hand and so the one roster that takes no clicks. It was
+built with a lever anyway, and the lever was the bug: the purchase raised an ask
+that nothing could ever answer, so a belt you had paid for -- in all three
 grounds, having handed over the carters' carts for it -- stood there and never
-ran. What the lever is *for* it does not need. It displaces no gang you would
-want back, because carrying is where `rebalance` walks the surplus to anyway, and
-it works the ground rather than a face, so there is no hand fallback to switch to.
-And the safety net is not the lever, it is the older rule: an unmanned belt does
-nothing, so it stops the moment its tender walks off.
+ran. It was made leverless, and nothing was lost, and that should have been the
+whole answer three drawings earlier than it was.
 
-**How live a decision the lever really is, honestly.** A machine is a flat rate
-and a gang is not -- but the cut can never hold more than its five benches and
-the farm never more than its seven plots, and the machine is now measured against
-a *hatted* complement, so the hands can never out-work the jaw or the tiller. The rock is the exception, and
-the only one: `capOf('miners')` is `Infinity`, so a big enough gang really can
-beat the ram, and there the lever is a rate decision for the rest of the run.
-For the other two it is a smoke valve and a way to get the gang back for
-somewhere else, which is worth having and is not the same claim. If the measured
-`MACHINE_GAIN` comes out near 1, all three become live and the sentence can be
-written the strong way; that is a thing to settle with the check, not in prose.
+**What the machine is really worth, honestly.** A machine is a flat rate and a
+gang is not -- but the cut can never hold more than its five benches and the farm
+never more than its seven plots, and the machine is measured against a *hatted*
+complement, so the hands could never out-work the jaw or the tiller anyway. The
+rock is the exception and the only one: `capOf('miners')` is `Infinity`, so a big
+enough gang really could beat the ram. That is the one place where losing the
+hand fallback costs something real, and it is worth naming rather than hiding --
+though it is named against a gang you can no longer assemble, the hats having
+been spent on the machine that displaced them.
 
 It also gives the second half of the game its own economy. A works producing
 twice as much needs somewhere to put it and something to spend it on, which is
@@ -1647,11 +1617,10 @@ body walks over and hands its helmet in, using the kit errand that was already
 there. The specialists trained the machine and then took their hats off, which is
 the truest thing this yard can say about what a machine is.
 
-What that costs is the fallback, and it should be said plainly: throwing the
-lever off now leaves a **bare** gang rather than a kitted one, five hands where
-there were ten. The lever is a way to stop the smoke and get the bodies back for
-somewhere else. It is not a way to swap between two equally good ways of working,
-and it never really was -- see the honest note above.)
+What that costs is the fallback, and it should be said plainly: once the hats are
+spent there is no kitted gang to go back to, and with no switch there is no going
+back at all. The machine is the station's way of working from then on. See the
+honest note above.)
 - Whether the three machines should be reachable in any order, or whether the
   jaw ought to be the one that teaches the idea.
 - Whether the rest of the boards should follow the same rule the machines now
@@ -1661,9 +1630,9 @@ and it never really was -- see the honest note above.)
   the machines'.
 
 *(Two that were open are settled above: a machine fouls three times over per unit
-of work, and a driven machine costs nothing to keep running -- the lever is the
-control, and a fuel bill would be a second meter to watch for no decision the
-lever does not already offer.)*
+of work, and a driven machine costs nothing to keep running -- taking its tender
+off is the control, and a fuel bill would be a second meter to watch for no
+decision that does not already offer.)*
 
 ## The paint store (long term, not built)
 

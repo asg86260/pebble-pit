@@ -31,7 +31,7 @@ import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
 import { makePainter } from './painter.js';
-import { updateWorkers, stepRecords, stepLevers, stepMachines } from './crew.js';
+import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
@@ -142,7 +142,6 @@ export function step() {
   // outside the loop. This is the same reason the yard does its rebuilding
   // between passes rather than inside them.
   if (S.restaff) { const r = S.restaff; S.restaff = null; restaff(r.job, r.want); }
-  stepLevers();                               // and anybody sent to throw one
   // Before `stepSmog`, so the dirt a machine makes this frame is in this frame's
   // sky rather than trailing it by one -- the same ordering the stations' own
   // fouling already has.
