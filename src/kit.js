@@ -21,10 +21,21 @@
 //           time, so the count is what you have bought
 //   stock   or: how many the station simply has, for a hat that comes with the
 //           building rather than off a shelf. See the janitor's cap.
-//   max     and, for a trade, how many of it the station will ever own. The
-//           school's four are capped at `KIT_MAX`; the wizard's point is not,
-//           because it is a licence to fly rather than a doubling, and the tower
-//           brews as many as you have the patience for.
+//   set     and, for a trade, what counts as a *full set* of it -- the number a
+//           machine waits for before it will stand at the station. `KIT_MAX` for
+//           all four the school sells.
+//   max     and how many of it the station will ever own, which is usually the
+//           same number and is the ceiling the board draws pips against. Absent
+//           means no ceiling: the wizard's point, because it is a licence to fly
+//           rather than a doubling and the tower brews as many as you have the
+//           patience for -- and the carter's cart, because carrying is the one
+//           station a machine never takes off you. The belt runs the one line
+//           between the rock and the hole; the muck, the far heaps and whatever
+//           the yard drops off that line are still walked by hand, so there is
+//           always another cart worth buying and the row goes on selling them.
+//           A full set is still three, so the belt is gated where it always was
+//           and everything past the set is you deciding to keep investing in
+//           carrying.
 //   tall    how far it stands above the head, for the count over its stand
 //
 // Every row says where its hats come from, and says it exactly once: `trade` or
@@ -35,10 +46,11 @@ import { P, LOO_POSTS, KIT_MAX } from './config.js';
 import { S } from './state.js';
 
 export const KIT = {
-  miners:    { mark: 'helmet', trade: 'breakers',   tall: P,     max: KIT_MAX },
-  quarriers: { mark: 'lamp',   trade: 'blasters',   tall: P * 2, max: KIT_MAX },
-  farmhands: { mark: 'brim',   trade: 'growers',    tall: P * 2, max: KIT_MAX },
-  haulers:   { mark: 'cart',   trade: 'carters',    tall: 0,     max: KIT_MAX },
+  miners:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
+  quarriers: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
+  farmhands: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
+  // A set of three, and no ceiling over it: see the note on `max` above.
+  haulers:   { mark: 'cart',   trade: 'carters',  tall: 0,     set: KIT_MAX },
   // Not a doubling but a licence: no hat, no flying. See wizard.js.
   wizards:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
   // The one hat nobody buys -- and it used to be the one hat nobody walked for
@@ -98,8 +110,21 @@ export const stockOf = job => {
 };
 
 // And the ceiling itself, for the board that sells them: how many of this
-// station's hats there are to buy, or `Infinity` for the one that has no end.
+// station's hats there are to buy, or `Infinity` for the ones that have no end.
 export const kitMaxOf = job => (KIT[job] && KIT[job].max) || Infinity;
+
+// And what a *full set* is, which is a different question and used to be the
+// same one. The ceiling is the board's business -- how many pips the row draws
+// and when it says `done`. The set is the machine's: how much kit a station has
+// to own before the jaw, the ram, the tiller or the belt will stand at it.
+//
+// They part company at the lip. The cart row has no ceiling, and "every hat this
+// station will ever own" is not a number there -- so gating the belt on the
+// ceiling would gate it on infinity and the belt would never be offered at all.
+// A set is three carts, the same set as everywhere else, and the carts past it
+// are extra rather than owed.
+export const kitSetOf = job =>
+  (KIT[job] && (KIT[job].set || KIT[job].max)) || Infinity;
 
 // The four tables the rest of the game used to keep by hand, now read off the
 // one above. They are still exported under their old names because they are

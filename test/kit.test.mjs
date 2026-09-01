@@ -343,3 +343,28 @@ group('a hauler that picks the helmet up is a miner, and the swap is one body', 
        `${rock.worn}/${rock.hats}`)
   ];
 });
+
+// The one ladder with no end on it.
+//
+// Three of the four trades stop at `KIT_MAX`, because a machine takes those
+// stations over and a fourth helmet would be a helmet for a face nobody stands
+// at. Carrying is never taken over -- the belt runs the one line between the
+// rock and the hole -- so the carts go on being sold, and what says stop is the
+// price rather than a ceiling. Bought through the row, not by setting the count,
+// because the ceiling being asked about is the row's own.
+group('the carts have no ceiling, and the helmets do', async () => {
+  window.__reset();
+  window.__grant({ shards: 100000 });
+  window.__school({ open: true });
+
+  for (let i = 0; i < 6; i++) window.__buy('carter');
+  for (let i = 0; i < 6; i++) window.__buy('breaker');
+  const s = state();
+  const shown = window.__rows().filter(r => r.shown).map(r => r.key);
+  return [
+    ok(s.carters === 6, 'six carts at the lip, and the row went on selling them',
+       `${s.carters}`),
+    ok(s.breakers === 3, 'and the helmets stop at three', `${s.breakers}`),
+    ok(shown.includes('carter'), 'the cart row is still on the board')
+  ];
+});

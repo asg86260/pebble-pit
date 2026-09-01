@@ -245,7 +245,7 @@ export const idle = () => spareHands();
 // Both live in kit.js now, with the shape of the hat and the rest of what a hat
 // is, and are passed straight through here: the shop asks about a trade, and a
 // trade is a fact about a hat.
-import { TRADE_OF, JOB_OF, stockOf, hasKit, kitMaxOf } from './kit.js';
+import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -376,12 +376,16 @@ export const handsOf = job =>
   capOfBare(job);
 
 
-// How much kit a station will ever own: its trade's own ceiling (`KIT_MAX`, for
-// the four the school sells), or its whole complement if it holds fewer hands
-// than that. The second half is what keeps a small station honest -- the
-// closet's two posts are fully kitted at two, and asking it for a third cap
-// would be asking for a cap with no head to go under.
-export const kitCap = job => Math.min(handsOf(job), kitMaxOf(job));
+// What a full set of a station's kit is: its trade's own set (`KIT_MAX`, for the
+// four the school sells), or its whole complement if it holds fewer hands than
+// that. The second half is what keeps a small station honest -- the closet's two
+// posts are fully kitted at two, and asking it for a third cap would be asking
+// for a cap with no head to go under.
+//
+// Read off `kitSetOf` rather than the board's ceiling. The two are the same
+// number everywhere but the lip, where the cart row has no ceiling and a set is
+// still three -- see the note over `kitSetOf`.
+export const kitCap = job => Math.min(handsOf(job), kitSetOf(job));
 
 // Whether a station's kit is complete: every hat it will ever own, bought.
 //

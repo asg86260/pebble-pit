@@ -1418,9 +1418,9 @@ tending it. So the belt takes no carts when it is bought, the carters go on bein
 worth what they were, and the carter row is the one thing the school sells
 forever.
 
-### The kit has a ceiling
+### The kit has a ceiling, and the carts do not
 
-**Three of any one trade, and no more** -- `KIT_MAX`. A shorter ladder than the
+**Three of any one trade, and no more** -- `KIT_MAX`, the carts excepted. A shorter ladder than the
 rest on purpose: kit is the one thing you buy that a *body* has to wear, so its
 ceiling answers "how many of this station's hands are the good ones" rather than
 "how far up is this number". The school's board draws three pips instead of five
@@ -1439,6 +1439,21 @@ further away and breaking another furrow moved the tiller. A set is three now, s
 a set is a set, and the ram, the jaw, the tiller and the belt are things you can
 actually get to. That is the whole point of the ceiling: the shards go somewhere
 with an end on it, and what is on the other side of that end is a machine.
+
+**Except the carts, which have no ceiling at all.** Three of the four stop where
+they start, because the ram, the jaw and the tiller take those stations over and
+a fourth helmet is a helmet for a face nobody stands at. Carrying is never taken
+over: the belt runs the one line between the rock and the hole, and the muck, the
+far heaps and whatever the yard drops off that line are still walked by hand by
+whoever is not tending it. So there is always another cart worth buying, the row
+goes on selling them, and what says stop is the price -- three fifths more a
+cart, which is the limit the other three had before `KIT_MAX` and the right one
+here. A set is still three, so the belt is gated exactly where it always was; the
+carts past the set are you deciding to keep investing in carrying rather than a
+bill the game presents you with. The two numbers this splits `KIT_MAX` into are
+`kitSetOf` -- what a machine waits for -- and `kitMaxOf` -- what the board draws
+pips against. The cart row has the first and not the second, so it shows a count
+and a price where the others show pips and, in the end, `done`.
 
 The ceiling before *this* one was a hat a bench and a hat a plot, from back when
 a hat was a body that had been upgraded. That is still the wrong shape and is not

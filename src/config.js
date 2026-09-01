@@ -1174,6 +1174,13 @@ export const RUNGS = 5;
 // hands the station could hold, which is a bill that grows with the station and
 // a gate that receded as you walked at it. A set is three now, and the ram, the
 // jaw, the tiller and the belt are things you can actually get to.
+//
+// Three of the four stop there as well as start there: the ceiling and the set
+// are one number, because the ram, the jaw and the tiller take those stations
+// over and a fourth helmet would be a helmet for a face nobody stands at. The
+// carts are the exception -- a set is still three, and there is no ceiling over
+// it, because carrying is the one station a machine never takes off you. See
+// `kitSetOf` and `kitMaxOf` in kit.js, which are the two halves this used to be.
 export const KIT_MAX = 3;
 export const WORKER = P * 3;     // worker square size
 

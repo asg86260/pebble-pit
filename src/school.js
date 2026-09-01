@@ -19,8 +19,8 @@
 // people, and they read differently for standing in different places.
 
 import { S } from './state.js';
-import { TRADE_COST, TRADE_RATE, KIT_MAX } from './config.js';
-import { stockOf } from './kit.js';
+import { TRADE_COST, TRADE_RATE } from './config.js';
+import { stockOf, kitMaxOf } from './kit.js';
 import { kitDisplaced, machineFor } from './machines.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -79,7 +79,7 @@ export const tradeCost = t =>
 // What has a number on it is how many helmets the rock will ever have, not how
 // many heads are under them today.
 function train(t) {
-  if (taught(t) >= KIT_MAX) return;
+  if (taught(t) >= ceiling(t)) return;
   S[t.count]++;
   rebalance();
   syncWorkers();
@@ -88,6 +88,17 @@ function train(t) {
 // How many of this trade the station has, read through the kit table so that the
 // board, the price and the ceiling all count the same hats the yard counts.
 const taught = t => stockOf(t.job);
+
+// And how many there are to buy, which is `KIT_MAX` for three of the four and
+// `Infinity` for the carts. The row asks the kit table rather than the constant,
+// so a trade with no end is a missing field in one table and not a branch here.
+const ceiling = t => kitMaxOf(t.job);
+
+// A trade with an end on it is a ladder -- pips under the name, `done` on the
+// last rung. A trade without one is a count: the row says what it has and what
+// the next one costs, and it never finishes. Pips are the wrong picture for a
+// number with no end, and `'○'.repeat(Infinity)` is not a picture at all.
+const ladder = t => isFinite(ceiling(t));
 
 export const SCHOOL_UPGRADES = TRADES.map(t => ({
   key: t.key,
@@ -105,8 +116,15 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   // -- three rungs rather than five, which is why it says how long it is. The
   // pips under the name are the whole of what the ceiling had to be told to the
   // player: a finished set reads "done" and stays on the board saying so.
-  rung: () => taught(t),
-  rungs: () => KIT_MAX,
+  //
+  // The carts have no ceiling, so they have no pips and never read `done`. What
+  // that row shows instead is the count it already showed -- so many now, one
+  // more for this much -- and the price, which climbs three fifths a cart and is
+  // the only thing that ever says stop. That is the shape the other three had
+  // before `KIT_MAX`, and it was the wrong shape *for them*: a station a machine
+  // is going to take over has an end, and the row is what tells you where it is.
+  // Carrying is never taken over, so it never gets an end.
+  ...(ladder(t) ? { rung: () => taught(t), rungs: () => ceiling(t) } : {}),
   // and it stays on the board when it is finished, even with the finished rows
   // folded away. See `folds`: this row is the only place the game says how much
   // kit the station owns, and that is the one thing you come to this board to
