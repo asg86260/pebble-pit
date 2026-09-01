@@ -45,6 +45,7 @@ import { atHome } from './crew.js';
 import { drawHouses } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
+import { drawHaze } from './hazefield.js';
 import { now } from './clock.js';
 import { press } from './press.js';
 import { rand } from './rng.js';
@@ -977,7 +978,18 @@ const CA_COOL = '#1f9ad0';         // and the cyan one
 // go into one path per colour and one fill each. Nothing about the picture
 // changes -- the same squares land in the same places -- and there are a dozen
 // calls where there were thousands.
+// Whether the band is drawn at all.
+//
+// Only ever false from the console and the look tool, and only while the field
+// in `hazefield.js` is being judged against it: both readings are on the same
+// screen on purpose during this stage, and the one question they cannot answer
+// together is what either looks like on its own. See DESIGN.md, "The sky is one
+// number" -- when the band is cut this goes with it.
+let showBand = true;
+export const setBand = v => { showBand = !!v; S.dirty = true; };
+
 export function drawSmog() {
+  if (!showBand) return;
   if (!SKY.length) return;
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
@@ -2938,6 +2950,10 @@ export function draw() {
   drawWorkers();
   drawSays();              // and what any of them stood about is saying
   drawPuffs();             // what the crew are putting up there right now
+  // The sky as a picture of the level -- see hazefield.js. Under the band, so
+  // that while both are standing the new reading can be judged against the old
+  // one on the same screen. The band goes when this is trusted; see DESIGN.md.
+  drawHaze();
   drawSmog();              // and what it has gathered into up there
   drawRain();              // and whatever is coming down out of it, or going into the house
   drawPointed();           // and an arrow over whoever you just asked for by name

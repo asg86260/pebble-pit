@@ -181,6 +181,10 @@ export function foul(grains, x, y, kind = 'dust') {
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   made += add;                     // counted where it is made -- see `sampleAir`
+  // and the ledger of what the sky is made of, which is the one thing here that
+  // is about the kind rather than the amount. `reckon` brings it back to the
+  // level every frame; this is what gives it its shape.
+  foulMix(add, kind);
   // Nothing is added to the number here, and that is the whole of the fix for a
   // sky that rained twice. The haze *is* the motes -- see `reckon` -- so what
   // this does is put motes up, and the number follows them by arithmetic rather
@@ -255,7 +259,82 @@ const MOTE_CAP = Math.round(SMOG_CAP / SMOG_PER_MOTE);
 // One line, called once a frame, and it is the whole of the accounting: there is
 // no second place where haze is added or taken, so there is nothing for the two
 // of them to disagree about.
-const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; };
+const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; syncMix(); };
+
+// --- what the sky is made of ---------------------------------------------------
+// The level says how much is up there. This says what it came out of, and the
+// two are drawn as different things: the field's density is the one and its
+// colour is the other. See `hazefield.js`, and DESIGN.md "The sky is one number".
+//
+// It is a ledger in the same units as `S.haze`, one entry per kind, and it is
+// kept to the same total by `syncMix` rather than being trusted to agree. That
+// is the lesson `foul` already learnt the hard way and wrote down at length: two
+// accounts of one thing, kept alongside each other and hoped to match, do not
+// match -- and what that looked like last time was a sky that rained twice.
+//
+// So the band goes on owning `S.haze` while it is still standing, and this
+// follows it. When the band is cut this becomes the ledger and `S.haze` becomes
+// its sum, which is one line moved rather than a rewrite.
+export const HAZE_KINDS = ['dust', 'shard', 'spore', 'mach'];
+
+export const freshMix = () => ({ dust: 0, shard: 0, spore: 0, mach: 0 });
+
+const mix = () => {
+  if (!S.hazeMix) S.hazeMix = freshMix();
+  return S.hazeMix;
+};
+
+const mixTotal = () => {
+  const m = mix();
+  let n = 0;
+  for (const k of HAZE_KINDS) n += m[k] || 0;
+  return n;
+};
+
+// Something was put up, of a kind. Added to that kind alone -- which is what
+// makes the mix mean anything: a share that moved every time anything at all
+// happened would say the same thing in every yard.
+export function foulMix(amount, kind = 'mach') {
+  if (!(amount > 0)) return;
+  const m = mix();
+  if (!(kind in m)) kind = 'mach';
+  m[kind] += amount;
+}
+
+// And the ledger brought back to whatever the level actually is, in proportion.
+//
+// Every drain in the game -- the house swallowing, a shower pouring, a mote
+// turned away at the cap -- moves `S.haze` and knows nothing about kinds, and it
+// should not have to: what comes out of a mixed sky is a mixed sample of it, and
+// scaling the whole ledger by one ratio is exactly that. The shape survives, the
+// total tracks, and there is one line to move when the ownership flips.
+//
+// The one case worth the guard: a sky with a level and no ledger, which is every
+// save written before this existed. It is seeded as soot rather than split
+// evenly, because a machine is the only thing this game currently lets foul the
+// sky at all -- see `foul`.
+export function syncMix() {
+  const m = mix();
+  const want = Math.max(0, S.haze || 0);
+  const have = mixTotal();
+  if (want <= 0) { for (const k of HAZE_KINDS) m[k] = 0; return; }
+  if (have <= 0) { m.mach = want; return; }
+  const by = want / have;
+  for (const k of HAZE_KINDS) m[k] = (m[k] || 0) * by;
+}
+
+// The mix as shares of one, for whatever is drawing it. Nought when the sky is
+// clean, which the field reads as nothing to draw rather than as an even split
+// of nothing.
+export function hazeShares() {
+  const m = mix();
+  const n = mixTotal();
+  const out = {};
+  if (n <= 0) return out;
+  for (const k of HAZE_KINDS) if (m[k] > 0) out[k] = m[k] / n;
+  return out;
+}
+
 
 // A mote is a slot in the band and a share of the wind. It has no position of
 // its own: where it is is where its slot is, this frame, leaned on by whatever
@@ -1871,6 +1950,9 @@ export function airReadout() {
   const net = fouling() - scrubbed();
   return {
     haze: Math.round(S.haze),
+    // What that haze is made of, in shares of one. The level says how much and
+    // this says what from; see `hazeShares`.
+    mix: hazeShares(),
     at: SMOG_RAIN_AT,
     // The brim as well as the line. A sky at the line only *might* rain; a sky
     // at the brim is going to, on the next look -- which is the difference the
