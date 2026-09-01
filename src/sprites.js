@@ -180,15 +180,22 @@ export const RAM = [
 // wheels rather than one long skirt. The back one is twice the width of the
 // front, which is the one thing about a tractor everybody can see from a field
 // away.
+//
+// It faces *right*, which is what `flip` means everywhere else in the yard: a
+// sprite is drawn as it stands when the thing is going right, and mirrored when
+// it is going left. This one was drawn facing left, so `drawTiller`'s mirror --
+// correct on its own terms -- turned it the wrong way at both ends of the row
+// and the tractor crossed the field backwards the whole time. Mirroring the
+// picture is the fix; the columns off it moved with it.
 export const TILLER = [
-  '..#.......',
-  '..#......#',
-  '..#......#',
-  '..#####..#',
+  '.......#..',
+  '#......#..',
+  '#......#..',
+  '#..#####..',
   '##########',
-  '#oo##oooo#',
-  '#oo##oooo#',
-  '.##..####.'
+  '#oooo##oo#',
+  '#oooo##oo#',
+  '.####..##.'
 ];
 
 // The same three at roster size.
@@ -223,10 +230,10 @@ export const MACHINE_MARK = {
     '######..#'
   ],
   tiller: [
-    '.#.....',
-    '.#..###',
-    '####..#',
+    '.....#.',
+    '###..#.',
+    '#..####',
     '#######',
-    '#o##o##'
+    '##o##o#'
   ]
 };
