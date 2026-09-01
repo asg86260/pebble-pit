@@ -167,3 +167,40 @@ group('three machines are more than a bare fan can hold, and less than a full on
        `${full.toFixed(1)} haze/s`)
   ];
 });
+
+// What a swallowed speck does on its way out. Nothing else in this game
+// disappears -- muck is carried, dust is banked, a rock is broken up -- and a
+// cell blinking off is the one thing the sky was still doing.
+group('a speck a mouth takes fades rather than popping', async () => {
+  window.__reset();
+  window.__crew(0, 3);
+  window.__clearFloor();
+  window.__air({ open: true, haze: 2000, muck: 0, scrubbers: 1 });
+  run(25);
+  const working = state();
+
+  // The level is the count of the sky, so a fading speck must already be out of
+  // it: the board cannot be made to lag the truth by the length of a fade.
+  const rated = scrubRate() * SMOG_PER_MOTE * 60;
+  const said = working.smog.scrubbing;
+
+  window.__air({ scrubbers: 0 });
+  run(3);
+  const stopped = state();
+
+  window.__air({ haze: 0, muck: 0, open: false });
+  window.__clearFloor();
+  return [
+    ok(working.going > 0, 'a working mouth always has a few specks on the way out',
+       `${working.going} fading`),
+    // The fade is short, so what is in flight at any moment is the rate times its
+    // length and no more. A number far above that is a list nobody is emptying.
+    ok(working.going < 60, 'and only a few: the fade is short',
+       `${working.going} against a rate of ${Math.round(rated / 60)} a second`),
+    ok(Math.abs(said - rated) < Math.max(20, rated * 0.25),
+       'and the board still reads the rate, so nothing is counted twice',
+       `board ${said}/min against a rating of ${rated.toFixed(0)}/min`),
+    ok(stopped.going === 0, 'and they are all gone shortly after the mouth stops',
+       `${stopped.going} left`)
+  ];
+});

@@ -24,7 +24,7 @@ import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
-import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
+import { SKY, DROPS, DRAUGHT, GOING, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, specOf } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, DRILL, BIT, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { walkY } from './world.js';
@@ -980,7 +980,7 @@ const CA_COOL = '#1f9ad0';         // and the cyan one
 // changes -- the same squares land in the same places -- and there are a dozen
 // calls where there were thousands.
 export function drawSmog() {
-  if (!SKY.length) return;
+  if (!SKY.length && !GOING.length) return;
   const mid = S.camX + S.viewW / 2;
   const half = Math.max(1, S.viewW / 2);
 
@@ -1014,6 +1014,23 @@ export function drawSmog() {
     let run = runs.get(key);
     if (!run) runs.set(key, run = { tint, ink: step, at: [] });
     run.at.push(x, y);
+  }
+
+  // ...and the ones a mouth has taken, thinning where they stood. Same buckets,
+  // same fills: a fading speck is the same speck at a lighter weight, so it goes
+  // down the same path as everything else rather than needing a pass of its own.
+  // No fringe on them -- the chromatic edge is a thing about the sky's depth, and
+  // one of these is on its way out of it.
+  for (const g of GOING) {
+    if (!onScreen(g.x)) continue;
+    const shades = SMOG_TINTS[g.kind] || SMOG_TINTS.dust;
+    const tint = shades[(g.tone ?? 0) % shades.length];
+    const step = Math.round((g.ink ?? 1) * g.t * 20) / 20;
+    if (!step) continue;
+    const key = tint + '|' + step;
+    let run = runs.get(key);
+    if (!run) runs.set(key, run = { tint, ink: step, at: [] });
+    run.at.push(Math.round(g.x), Math.round(g.y));
   }
 
   // A rect at a time, and not one path with two thousand rectangles in it.

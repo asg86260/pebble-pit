@@ -238,6 +238,14 @@ export const RAIN_GAP = 60;          // seconds of dry before another may break
 // the house, the same dust out of the recycler and the same length of shower.
 // The only thing that changes is how much sky one speck stands for.
 export const SMOG_PER_MOTE = 0.16;
+// How long a speck takes to fade once a mouth has taken it. Long enough to be a
+// fade rather than a flicker, short enough that it is gone before you have
+// looked at it: what this is for is the *absence* of popping, not an effect.
+export const SMOG_GO_MS = 420;
+// And a ceiling on how many can be fading at once. Four mouths at a full fan is
+// a couple of hundred specks a second; the cap is generous against that and
+// exists so a pathological rate cannot grow a list nobody bounded.
+export const GOING_CAP = 400;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
 // How deep the band is, as a floor under it rather than a depth: the haze fills
 // the sky from SMOG_TOP down to this many cells above the ground line.

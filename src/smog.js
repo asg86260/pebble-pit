@@ -30,7 +30,7 @@ import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_T
          SCRUB_PULL, RECYCLE_PER, RECYCLE_TONE, PUFF_FADE, SMOG_TINTS,
          BALLOON_WISP_FROM,
          SCRUB_ARM, SCRUB_CATCH, SCRUB_PER_MUCK, SCRUB_MUCK, SCRUB_CLOG, SCRUB_CHUTE,
-         LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
+         SMOG_GO_MS, GOING_CAP, LOO_MUCK, MESS_SLUMP, MESS_ANGLE,
          DRAUGHT_PER_S, DRAUGHT_FROM, DRAUGHT_PACE, SMOKE_STIR, SMOKE_STIR_R, SMOKE_STIR_CAP, PLUME_STIR, PLUME_STIR_R, PLUME_STIR_CAP, SMOKE_STIR_EASE, PLUME_LEAN } from './config.js';
 import { CRAFT, craftMouth, craftDrop, working } from './balloon.js';
 import { S, floor, pit, quarry, farm, scrub } from './state.js';
@@ -94,6 +94,22 @@ export const climbing = () => { let n = 0; for (const m of SKY) if (m.up) n++; r
 
 // On their way down, as muck. A sky mote becomes one of these when it rains.
 export const DROPS = [];
+
+// Specks on their way out: taken by a mouth, and fading where they stood.
+//
+// A mote used to be spliced out of the sky on the frame it was swallowed, which
+// is a cell blinking off. At one mouth that is a speck a frame popping somewhere
+// in the window; at four it is a sky that crackles. Nothing else in this game
+// disappears -- muck is carried, dust is banked, a rock is broken up -- and the
+// haze should not either.
+//
+// **A separate list, and not a flag on the mote.** The haze *is* the specks --
+// `reckon` is one line and it counts `SKY` -- so a fading mote left in the sky
+// would still be counted as pollution that is not there any more, and the board
+// would lag the truth by the length of the fade. It leaves the sky at once and
+// what fades is a picture of it: position, colour and weight copied off the mote
+// as it goes, because the mote itself is gone.
+export const GOING = [];
 
 // Nothing on its way into the house has a list of its own: the sky is what goes
 // in, dragged there by the draught. See `pull`.
@@ -1023,6 +1039,12 @@ function eat(owe, pay, craft) {
     // yard is what it is for.
     if (!m || m.up) continue;
     left -= 1;
+    // Out of the sky now -- the level is the count, so it drops on this frame --
+    // and a picture of it left behind to fade. See `GOING`.
+    if (GOING.length < GOING_CAP) {
+      GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind,
+                   tone: m.tone, ink: m.ink, t: 1 });
+    }
     dropped(m);
     SKY.splice(sweep, 1);
     if (sweep >= SKY.length) sweep = 0;
@@ -1186,6 +1208,20 @@ function pour(secs) {
   // the outside.
   // Over when the sky it broke on is gone, whatever has arrived since.
   if (!SKY.some(doomed)) S.raining = false;
+}
+
+// One frame of the fading. Nothing moves -- a speck being taken is not a speck
+// going anywhere, and the one thing this yard has already learnt about the
+// scrubbing is that moving the sky about to show it working is too much to look
+// at. It thins where it is and it is gone.
+function stepGoing(secs) {
+  const by = secs / (SMOG_GO_MS / 1000);
+  for (let i = GOING.length - 1; i >= 0; i--) {
+    const g = GOING[i];
+    g.t -= by;
+    if (g.t <= 0) GOING.splice(i, 1);
+  }
+  if (GOING.length) S.dirty = true;
 }
 
 function stepDrops() {
@@ -1809,6 +1845,7 @@ export function stepSmog(dt) {
   }
   if (raining()) pour(secs);
   place(secs);
+  stepGoing(secs);
   stepDrops();
 }
 

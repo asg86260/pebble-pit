@@ -43,7 +43,7 @@ import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './c
 import { buriedVisible } from './intro.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
-import { smogReport, muckCols } from './smog.js';
+import { smogReport, muckCols, GOING } from './smog.js';
 import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
@@ -467,6 +467,10 @@ export const snapshot = () => ({
   })(),
   // Anybody currently under a canopy, having stepped out of a balloon. A count
   // and their heights, so a check can watch one actually come down.
+  // Specks a mouth has taken that are still fading where they stood. Not haze --
+  // they left the sky on the frame they were swallowed -- so this is a count of
+  // a picture, and it is here so a check can tell a fade from a pop.
+  going: GOING.length,
   chutes: S.workers.filter(w => w.chute).map(w => Math.round(w.y)),
   // The bodies on the scrubbers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
