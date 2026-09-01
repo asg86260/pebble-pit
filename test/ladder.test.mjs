@@ -7,10 +7,23 @@
 // what keeps the rock worth digging for the whole run. See "The ladder" in
 // DESIGN.md.
 
-import { group, ok, state, yard } from './helpers.mjs';
+import { group, ok, state, yard, openSites } from './helpers.mjs';
 
 import { RUNGS, MINE_FLOOR } from '../src/config.js';
-import { maxed } from '../src/upgrades.js';
+import { maxed, gainText, UPGRADES } from '../src/upgrades.js';
+import { LAB_UPGRADES } from '../src/lab.js';
+import { SCHOOL_UPGRADES } from '../src/school.js';
+import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { QUARRY_UPGRADES } from '../src/quarry.js';
+import { FARM_UPGRADES } from '../src/farm.js';
+import { TOWER_UPGRADES } from '../src/tower.js';
+import { CASINO_UPGRADES } from '../src/casino.js';
+
+// Every board's rows in one list, for the checks that are about all of them
+// rather than about one ladder.
+const ALL_ROWS = [...UPGRADES, ...LAB_UPGRADES, ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
+                  ...QUARRY_UPGRADES, ...FARM_UPGRADES, ...TOWER_UPGRADES,
+                  ...CASINO_UPGRADES];
 
 const row = key => window.__upgrades().find(u => u.key === key);
 
@@ -82,5 +95,39 @@ group('above the first tier a rung costs its own coin and dust', async () => {
        'blue and dust together do', `${stillPoor.pickLevel} -> ${rich.pickLevel}`),
     ok(rich.shards < stillPoor.shards && rich.stored < 50000,
        'and both were taken', `${stillPoor.shards}->${rich.shards} blue, ${rich.stored} dust`)
+  ];
+});
+
+// What a row says it gives you is a change and the thing that change is measured
+// in, and the marks table holds only the four units the yard has a coin for: a
+// grain of dust, and dust, stone and crop over a clock. A row naming anything
+// else had the failed lookup written on the board -- "better instruments, +25%
+// undefined" -- on four rows across three stations, for as long as those rows
+// had existed.
+//
+// The fix is in `gainText` rather than in those four rows: a unit with no mark
+// of its own is written out in the words the row already names it by. This is
+// the check that says so for every row on every board, including the ones
+// nobody has written yet, which is the only thing that lets `UNITS` stay short.
+group('no row says a unit the board cannot draw', async () => {
+  window.__reset();
+  openSites();
+  window.__lab(true);
+
+  const said = [];
+  const bad = [];
+  for (const u of ALL_ROWS) {
+    const text = gainText(u);
+    said.push(text);
+    // `px` is the game's own name for a grain of dust and is never a word on a
+    // board: a row reading "+30% px/s" is a mark that failed to be looked up as
+    // surely as "undefined" is.
+    if (/undefined|NaN|px/.test(text)) bad.push(`${u.key}: ${text}`);
+  }
+  const spoke = said.filter(Boolean).length;
+  return [
+    ok(spoke > 10, 'there are rows saying what they give', `${spoke} of ${said.length}`),
+    ok(bad.length === 0, 'and none of them says a unit the board cannot draw',
+       bad.join(', ') || 'none')
   ];
 });
