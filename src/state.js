@@ -10,7 +10,7 @@
 // config.js. The two grids and the bench are objects that are mutated in place,
 // so they live here as consts rather than as fields on S.
 
-import { P } from './config.js';
+import { P, LOO_POSTS } from './config.js';
 
 export const S = {
   // --- the window and the view ---
@@ -292,6 +292,7 @@ export const S = {
   quarryBoardOpen: false,
   farmBoardOpen: false,
   outhouseOpen: false,    // there is somewhere to go
+  looPosts: LOO_POSTS,    // how many caps the closet's stand has; `loopost` sells the second
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,

@@ -5,7 +5,7 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
@@ -243,6 +243,7 @@ export function persist() {
     scrubOpen: S.scrubOpen,
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
+    looPosts: S.looPosts,
     labKitLevel: S.labKitLevel,
     fanLevel: S.fanLevel,
     spells: [...(S.spells || [])],
@@ -560,6 +561,10 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
+  // A save from before the second cap existed arrives with two posts already --
+  // it built the closet when that was the whole of what it bought, and nobody
+  // loses a cap they had to a rung that did not exist yet.
+  S.looPosts = s.looPosts ?? 2;
   S.labKitLevel = s.labKitLevel || 0;
   S.fanLevel = s.fanLevel || 0;
   S.spells = Array.isArray(s.spells) ? s.spells.slice() : [];
@@ -792,6 +797,7 @@ export function reset(fresh = true) {
   S.scrubOpen = false;
   S.towerOpen = false;
   S.outhouseOpen = false;
+  S.looPosts = LOO_POSTS;
   S.meteorOpen = false;
   S.summon = 0;
   S.flashAt = 0;

@@ -6,11 +6,11 @@
 // on the board.
 
 import {
-  CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
+  CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
-  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST
+  QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
+  TOWER_CORES, TOWER_DUST, MINER_BITE_MULT
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
@@ -133,7 +133,17 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // that made every miner in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
 export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
-export const minerBite = () => 1 + S.minerPickLevel;    // and what a miner takes
+// What a miner takes, eased across the ladder the same way `swing` eases a
+// rate rather than added a flat pixel a rung. A flat +1 looked tame on the row
+// and was a straight multiple against the base underneath it -- five rungs
+// bought six times the bite, which is a pit filling faster than the crew you
+// actually have could ever carry it away. Eased and capped at `MINER_BITE_MULT`
+// total over the ladder, the early rungs still read as the biggest jump and the
+// last rung lands exactly on the cap instead of wherever the arithmetic put it.
+export const minerBite = (lvl = S.minerPickLevel) => {
+  const k = Math.max(0, Math.min(1, lvl / RUNGS));
+  return 1 + (MINER_BITE_MULT - 1) * (1 - Math.pow(1 - k, 1.6));
+};
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet.
@@ -851,7 +861,7 @@ export const UPGRADES = [
     unit: 'px',
     rung: () => S.minerPickLevel,
     from: () => minerBite(),
-    to: () => minerBite() + 1,
+    to: () => minerBite(S.minerPickLevel + 1),
     bill: () => [['spore', rungCost(5, S.minerPickLevel)], ['dust', rungCost(300, S.minerPickLevel)]],
     cost: () => rungCost(300, S.minerPickLevel),
     buy: () => S.minerPickLevel++,
@@ -1039,6 +1049,21 @@ export const UPGRADES = [
     // was tidied is a yard that has learned what the job is for.
     show: () => !S.outhouseOpen && (S.seenMess || poopLeft() >= LOO_MUCK * 5)
   },
+  // The closet's own second rung. It went up with one post and one cap on the
+  // stand -- ground enough for a single pair of hands, and no more of the yard
+  // than that pair can actually keep up with. This is the second, priced in
+  // shards because the mess is the *rock's* problem before it is anybody
+  // else's: a yard mining hard enough to want a second janitor has already been
+  // to the quarry.
+  {
+    key: 'loopost',
+    kind: 'rung', site: 'bench',
+    name: 'a second cap',
+    cost: () => LOOPOST_SHARDS,
+    currency: 'shard',
+    buy: () => { S.looPosts = 2; rebalance(); },
+    show: () => S.outhouseOpen && (S.looPosts ?? LOO_POSTS) < 2
+  },
   // The one thing a core buys, and the only row in the game with a bill rather
   // than a price. A core out of the rock, the dust the yard makes, the stone the
   // cut gives up and the crop off the plots: everything the operation does, on
@@ -1083,16 +1108,20 @@ export const UPGRADES = [
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
     show: () => S.labOpen && !S.casinoOpen
   },
-  {
-    key: 'unlocklab',
-    kind: 'building', site: 'yard', at: () => lab.x + lab.w / 2,
-    name: 'build the lab',
-    cost: () => LAB_DUST,
-    buy: () => { S.labOpen = true; lookAt(lab.x + lab.w / 2); },
+  // A place like the other three, and priced like one: a core says so, and
+  // dust on top of it like every row in the game. It used to ask for dust
+  // alone, which put "the lab" on the same shelf as a rate upgrade -- see
+  // DESIGN.md's "cores buy places, and only places". Built with `site(...)`
+  // rather than written out by hand, so it gets the same bill shape the quarry
+  // and the farm already have.
+  site({
+    key: 'unlocklab', name: 'build the lab',
+    cores: 2, dust: LAB_DUST, open: 'labOpen',
+    at: () => lab.x + lab.w / 2,
     // Still behind the quarry or the plots: the lab multiplies what a place does, so
     // it means nothing until there is a second place for it to be about.
     show: () => !S.labOpen && (S.seenShard || S.seenSpore)
-  },
+  }),
 
   // The hole is not something you buy any more. It is the whole pit from the
   // first frame -- see pit.js: what you could hold used to be what you had dug,
@@ -1134,7 +1163,7 @@ export const SECTIONS = [
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the casino', keys: ['unlockcasino'] },
-  { title: 'the outhouse', keys: ['unlockouthouse'] },
+  { title: 'the outhouse', keys: ['unlockouthouse', 'loopost'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }
@@ -1259,7 +1288,7 @@ export const siteBusy = u => takesTime(u) && busyAt(u.site);
 // anybody says about two minutes.
 export const priceText = (money, n) =>
   money !== 'time' ? String(n) :
-  n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}s`;
+  n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}`;
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 

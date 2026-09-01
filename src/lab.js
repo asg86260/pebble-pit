@@ -280,7 +280,10 @@ export const LAB_UPGRADES = [
     cost: () => rungCost(BENCH_KIT_COST, S.labKitLevel),
     currency: 'shard',
     buy: () => { S.labKitLevel++; },
-    show: () => S.labOpen && S.labKitLevel < RUNGS
+    // And not before a shard has been seen: a row priced in stone is a row
+    // that reads as broken to a yard that has never dug any -- see the note
+    // over `pick` in upgrades.js, which is the same rule for the same reason.
+    show: () => S.labOpen && S.seenShard && S.labKitLevel < RUNGS
   },
   {
     // A second bench, which is a *place* rather than a rung: it is the only thing
@@ -312,8 +315,10 @@ export const LAB_UPGRADES = [
     cost: () => rungCost(3, levelOf('swing')),
     currency: 'shard',
     buy: () => begin('labswing'),
-    // A finished ladder stays on the board saying so, like every other one.
-    show: () => true
+    // A finished ladder stays on the board saying so, like every other one --
+    // but not before a shard has been seen, or the lab is a board asking for a
+    // currency a fresh yard has never been shown. See A8 in feedback3.md.
+    show: () => S.labOpen && S.seenShard
   },
   {
     key: 'labhaul',
@@ -326,7 +331,7 @@ export const LAB_UPGRADES = [
     currency: 'shard',
     buy: () => begin('labhaul'),
     // A finished ladder stays on the board saying so, like every other one.
-    show: () => true
+    show: () => S.labOpen && S.seenShard
   },
   {
     key: 'labcave',
@@ -338,8 +343,11 @@ export const LAB_UPGRADES = [
     cost: () => rungCost(3, levelOf('quarry')),
     currency: 'spore',
     buy: () => begin('labcave'),
-    // A finished ladder stays on the board saying so, like every other one.
-    show: () => true
+    // A finished ladder stays on the board saying so, like every other one --
+    // but not before the quarry exists to have a speed at all. This was the
+    // reported case: the lab standing before the quarry, selling a row named
+    // for a hole that has not been dug yet. See A8 in feedback3.md.
+    show: () => S.labOpen && S.quarryOpen
   },
   // Not a multiplier: a pair of eyes. Everything else the lab sells makes a
   // number bigger; this makes a number *visible*. The sky fills whether you can
@@ -357,7 +365,7 @@ export const LAB_UPGRADES = [
     cost: () => 9,
     currency: 'spore',
     buy: () => begin('labair'),
-    show: () => !S.seenAir
+    show: () => S.labOpen && !S.seenAir && S.seenSpore
   },
   {
     key: 'labtend',
@@ -369,8 +377,9 @@ export const LAB_UPGRADES = [
     cost: () => rungCost(4, levelOf('tend')),
     currency: 'spore',
     buy: () => begin('labtend'),
-    // A finished ladder stays on the board saying so, like every other one.
-    show: () => true
+    // A finished ladder stays on the board saying so, like every other one --
+    // but not before a spore has been seen. See A8 in feedback3.md.
+    show: () => S.labOpen && S.seenSpore
   }
 ];
 

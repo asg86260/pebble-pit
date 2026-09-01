@@ -67,7 +67,7 @@ export const KIT = {
   // is a helmet's life: it waits on a stand, somebody walks over and puts it on,
   // it walks home when that body is taken off the job, and it falls in the dirt
   // if you pick the body up and shake it.
-  janitors:  { mark: 'cap',    stock: () => S.outhouseOpen ? LOO_POSTS : 0, tall: P }
+  janitors:  { mark: 'cap',    stock: () => S.outhouseOpen ? (S.looPosts ?? LOO_POSTS) : 0, tall: P }
 };
 
 // What job a body is doing, from what it is. Here rather than in upgrades.js so

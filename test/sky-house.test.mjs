@@ -150,7 +150,10 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
     ok(landed.cols > 1 && landed.poop > 0,
        'the closet on its own gathers nothing -- it still lands where they work',
        `${wild.cols} columns shut, ${landed.cols} open with nobody on it`),
-    ok(openPost === 2, 'what it opens is the post', `${openPost} janitors`),
+    // The closet opens with one post now -- `loopost` sells the second, see
+    // A3 in feedback3.md -- so asking for two janitors with nowhere but that
+    // one post gets one.
+    ok(openPost === 1, 'what it opens is the post', `${openPost} janitors`),
     ok(peak > 0, 'and a post does not stop the crew making the mess',
        `${Math.round(peak)} on the ground at the worst of it`),
     ok(cleared && swept.poop === 0, 'but somebody comes round and clears it',
