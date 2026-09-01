@@ -29,7 +29,7 @@ import { machine, MACHINES, specOf } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, DRILL, BIT, RAM, TILLER, MACHINE_MARK } from './sprites.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
-import { jawX, jawY, shaftX } from './quarry.js';
+import { jawX, jawY, shaftX, rigTop } from './quarry.js';
 import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
@@ -3128,7 +3128,7 @@ const built = key => { const m = machine(key); return !!(m && m.bought); };
 // The quarry's drill: a rig on the deck over the mouth, a shaft down the bore,
 // and a triangular bit on the end of it working the floor.
 //
-// The rig stands on the ground line and does not move. What moves is the bit and
+// The rig stands on the bridge deck and does not move. What moves is the bit and
 // the length of the shaft carrying it, and both are derived: the bit sits at
 // `jawY`, which is `dugTopY` down the bore, so as the cut is taken deeper the
 // shaft pays out after it, and when the quarry falls in behind the last body out
@@ -3136,7 +3136,7 @@ const built = key => { const m = machine(key); return !!(m && m.bought); };
 export function drawDrill() {
   if (!S.quarryOpen || !built('jaw')) return;
   const x = Math.round(jawX() / P) * P;
-  const top = Math.round((S.groundY - spriteH(DRILL) * P) / P) * P;   // stood on the deck
+  const top = rigTop();                       // stood on the bridge deck
   drawSprite(ctx, DRILL, x, top);
 
   // The shaft and the bit. Neither is part of the rig's picture, because how far
@@ -3265,24 +3265,6 @@ export function drawTiller() {
   }
   ctx.fillStyle = '#000';
 }
-
-// Where the tender sits: up on the back of it, over the axle, which is where a
-// driver sits. It is the one body in this yard that is not standing on the
-// ground, and that is the point -- it is *driving* rather than tending.
-export const tillerSeat = () => ({
-  // Read the same way the tractor is drawn -- whole pixels -- or the seat and
-  // the machine disagree by up to a cell and the driver rides beside it.
-  //
-  // On the deck over the back axle, in front of the rear fender: three cells of
-  // open air in the picture, and a body is three cells wide, so the driver fills
-  // the seat rather than perching on the edge of it.
-  // Three cells wide, so a mirrored seat starts three cells further back than
-  // the mirror of its own left edge -- `tCol` answers about a cell, and a body
-  // is not a cell.
-  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(1) - 2 : 1) * P,
-  y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P
-     - P * (spriteH(TILLER) - 1)
-});
 
 // The belt: a run of trestles from the rock to the lip with a band over them, and
 // the band moves. It is the only machine that is *long* rather than tall, which

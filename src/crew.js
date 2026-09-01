@@ -33,7 +33,6 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_
          rockMuck, quarryMuck, plotMuck,
          dropMuckAt, cleanSpotNear, foul } from './smog.js';
 import { doorAt } from './house.js';
-import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
@@ -1152,13 +1151,16 @@ function stepTender(w, now) {
   // would keep every other body off that cell for as long as it stands there.
   w.cell = null;
 
-  // The tiller's tender rides it. Everybody else in this yard stands on the
-  // ground; a tractor has a seat, and somebody walking along beside one all day
-  // is somebody who has forgotten what it is for. It is put in the seat rather
-  // than walked to a spot beside it -- and it still had to *walk over* to get
-  // aboard, which the branch below does.
-  if (key === 'tiller') {
-    const seat = tillerSeat();
+  // Some machines are worked from *inside*. A tractor has a seat and a drill rig
+  // has a cab, and a body walking along beside either of them all day is a body
+  // that has forgotten what the machine is for. Where that place is, is the
+  // machine's own business -- see `seat` on the spec -- so this branch knows
+  // there is such a thing as a seat and nothing about which machines have one.
+  //
+  // It still has to *walk over* and get aboard, which is what the catching-up
+  // half does. Nothing in this yard arrives anywhere it did not walk to.
+  if (spec.seat) {
+    const seat = spec.seat();
     const d = seat.x - w.x;
     if (Math.abs(d) > WORKER * 2) {                // still catching it up
       w.y = walkY(w.x + WORKER / 2);

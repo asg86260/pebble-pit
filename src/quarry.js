@@ -17,7 +17,7 @@ import { throughQuarryMuck, yardMuckFor } from './smog.js';
 import { QUARRY_FOUL } from './config.js';
 import { spriteW, spriteH, stackCol, DRILL } from './sprites.js';
 import { S, quarry, cut, floor } from './state.js';
-import { walkY, groundAt, benches, resite, pileOf } from './world.js';
+import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js';
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
@@ -886,9 +886,22 @@ export const jawX = () => {
   return Math.round(((c.from + c.to) / 2 - P * Math.round(spriteW(DRILL) / 2)) / P) * P;
 };
 
-// Which column the shaft comes down: the middle of the rig, and the middle of
-// the bore it is sinking.
-export const shaftX = () => jawX() + ((spriteW(DRILL) - 1) >> 1) * P;
+// Where the rig stands: on the bridge deck, which is the only solid ground over
+// a hole. Its feet are the bottom row of the picture.
+export const rigTop = () => Math.round((bridgeSpan().top - spriteH(DRILL) * P) / P) * P;
+
+// Which column the shaft comes down, read off the picture: the gap the legs
+// leave in the bottom row is the bore, and there is only one of them.
+export const shaftX = () => jawX() + DRILL[spriteH(DRILL) - 1].indexOf('.') * P;
+
+// Where the body working it stands: in the cab, which is the run of open cells
+// on the left of the rig. Read off the picture the same way, so a redrawn rig
+// carries its own cab with it.
+export const drillSeat = () => {
+  const rows = DRILL, top = rigTop();
+  const r = rows.findIndex(row => row.includes('o'));
+  return { x: jawX() + rows[r].indexOf('o') * P, y: top + r * P };
+};
 
 // The floor it is boring, as the floor is now. Derived every frame off
 // `dugTopY`, so when the quarry falls in behind the last body out the bit comes
@@ -907,8 +920,10 @@ defineMachine('jaw', {
   // The top of its chimney. The rig stands on the deck, so its stack is up in
   // the daylight rather than down the hole -- which is where the smoke of a
   // drill actually comes from, and where the dirt therefore goes up.
-  stack: () => ({ x: jawX() + stackCol(DRILL) * P,
-                  y: S.groundY - spriteH(DRILL) * P }),
+  stack: () => ({ x: jawX() + stackCol(DRILL) * P, y: rigTop() }),
+  // The cab. A body works this machine from inside it, so it is put there rather
+  // than walked to a spot beside it -- see `stepTender`.
+  seat: drillSeat,
   // Where the *body* stands, which is not where the machine is. The jaw is on
   // the floor of the cut; its tender works the hoist on the deck at the head of
   // the ladder, which is also where the lever is. A tender posted down the hole

@@ -131,14 +131,26 @@ export const HATS_TIGHT = {
 // floor. The shaft's length is how deep the cut has been taken, so the one thing
 // the old rope was genuinely good at -- showing the depth -- is kept.
 //
-// The bottom row is open in the middle: that is where the shaft comes through,
-// and the legs stand either side of the bore.
+// It stands on the bridge, on the deck laid over the mouth, because that is the
+// only solid thing above a hole -- a rig hanging in the air over the cut was the
+// last thing about this machine that had to be explained away.
+//
+// Three cells of it are open on the left: that is the cab, and the body working
+// the machine stands in it. Everything else in this yard works a station by
+// standing beside it; a rig is a thing you are *inside*, the same way a tractor
+// is a thing you sit on.
+//
+// The gap in the bottom row is where the shaft comes through, and the legs stand
+// either side of the bore. Which column that is, is read off this picture -- see
+// `shaftX` -- as is the chimney, which is the first cell of the top row.
 export const DRILL = [
-  '..#....',
-  '..#....',
-  '#######',
-  '#oooo##',
-  '###.###'
+  '.......#.',
+  '.......#.',
+  '#########',
+  '#ooo#####',
+  '#ooo#####',
+  '#ooo#####',
+  '#####.###'
 ];
 
 // The bit: a triangle, point down, boring. Four rows rather than three, because
