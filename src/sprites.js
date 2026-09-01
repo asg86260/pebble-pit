@@ -213,11 +213,16 @@ export const TILLER = [
 // The arm is the ram: it is the only machine whose working end is somewhere
 // other than where its body stands, and a ram without one is a shed.
 export const MACHINE_MARK = {
+  // A block with a mouth cut white out of its front, and the stack on the back
+  // of it. The stack is not what tells a jaw from a tiller -- all three smoke --
+  // but the yard's jaw has one and this is supposed to be the same machine.
   jaw: [
-    '.####',
-    'ooo##',
-    'ooo##',
-    '#####'
+    '....#.',
+    '....#.',
+    '.#####',
+    'ooo###',
+    'ooo###',
+    '######'
   ],
   // Chimney at the front, square slot, and the arm reaching out to a striking
   // head -- the yard's ram with the middle taken out of it.
@@ -229,11 +234,23 @@ export const MACHINE_MARK = {
     '#oo######',
     '######..#'
   ],
+  // The tractor, reduced feature for feature and facing the way the yard's does:
+  // stack at the front on the right, bonnet sloping back from it, the rear fender
+  // behind the seat on the left, and two wheels of *different* sizes -- a wide
+  // ring at the back and a small one at the front, which is the one thing about a
+  // tractor anybody can see from a field away.
+  //
+  // Both marks this replaces missed the same things. The older one was the
+  // tractor as it was drawn before the machines grew: no fender, both wheels the
+  // same, and a cab step where the bonnet should be. The next was pointed the
+  // right way but kept the equal wheels. A mark has one job, and it is to be the
+  // same machine as the one standing in the yard.
   tiller: [
     '.....#.',
-    '###..#.',
-    '#..####',
+    '#....#.',
+    '#.####.',
     '#######',
-    '##o##o#'
+    '#oo##o#',
+    '.##..#.'
   ]
 };

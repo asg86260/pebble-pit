@@ -63,11 +63,17 @@ export const POSTS = [
     // mouth instead: the one station whose own ground is not somewhere a
     // roster can go, so it goes in the sky above it.
     above: () => P * 13,
-    // ...and the switch does not go up there with it. A roster in the sky is a
-    // count in the sky, which is only a number and can hang anywhere; a switch
-    // is a thing you walk up to and throw, and hung over the mouth it landed in
-    // the middle of the jaw and the hoist -- a control drawn on top of the very
-    // machine it is about, which is the one place it cannot be read.
+    // ...and the machine's mark does not go up there with it. A count in the sky
+    // is only a number and can hang anywhere; the mark is a *picture of the jaw*,
+    // and hung under that count it landed in the middle of the jaw and the hoist
+    // -- a small drawing of the machine on top of the machine, which is the one
+    // place it cannot be read.
+    //
+    // This outlived the reason it was written for. It was put here when the mark
+    // was a switch and the argument was that you walk up to a switch; the switch
+    // is gone and the placement is still right, because what was actually wrong
+    // was never the walking. It was two pictures of the same object in the same
+    // few cells.
     //
     // There is ordinary ground a few cells past the lip, so it stands on it.
     // Off the quarry's own right edge, so it follows the hole when the hole is
@@ -108,12 +114,12 @@ export function postAt(p) {
 // It sits under the headcount rather than beside it because it is a *part* of
 // that number, not another number: of the four on the rock, two are breakers.
 // Beside it, the two read as separate crews.
-// Where the switch stands. Under the count, at the bottom of the strip, on every
-// post that keeps its roster on the ground -- and at the post's own `runAt`,
-// down at the ordinary roster depth, on one that does not.
+// Where the machine's mark stands. Under the count, at the bottom of the strip,
+// on every post that keeps its roster on the ground -- and at the post's own
+// `runAt`, down at the ordinary roster depth, on one that does not.
 //
-// Written here rather than as a second case in the quarry, because "the switch
-// goes under the count unless the count is not somewhere a switch can go" is a
+// Written here rather than as a second case in the quarry, because "the mark
+// goes under the count unless the count is not somewhere a mark can go" is a
 // rule about rosters, and a rule about rosters lives with the rest of them.
 function runBox(p, left, y) {
   const h = BTN;

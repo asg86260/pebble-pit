@@ -30,7 +30,7 @@ import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER
 import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
-import { ramX, rockShare, sandTopY } from './rock.js';
+import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
 import { rockLeft, groundAt } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
@@ -3201,7 +3201,12 @@ export function drawRam() {
   // and what makes the hit read as a hit rather than as a slider going to and
   // fro. At rest it stands half out, so the arm is part of the machine's shape
   // instead of something that only exists while you happen to be watching.
-  const gap = Math.max(2, Math.round((rockLeft() - (x + W * P)) / P) + 1);
+  // How far it has to reach: to the **face**, which is where the rock actually
+  // still is, not to `rockLeft()`, which is where the grid begins and does not
+  // move. Measured rather than taken from `RAM_REACH` so the arm still lands on
+  // the stone in the frames where the two disagree -- the face moves the instant
+  // a column empties, and the machine snaps to the cell grid.
+  const gap = Math.max(2, Math.round((rockFaceX() - (x + W * P)) / P));
   const t = stroke('ram', 900);
   const rest = Math.max(2, Math.round(gap / 2));
   const reach = t === 0 ? rest

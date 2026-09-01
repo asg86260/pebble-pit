@@ -525,17 +525,45 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
 // `knockOff` from `input.js`, which this does not touch. The hill still comes
 // apart under your cursor at exactly the rate it did.
 //
-// Where it stands is the awkward part and worth writing down. `ROCK_CLEAR` keeps
-// the rock's heap standing off the hill, and the boulder grows into the ground
-// in front of it every time a new one comes down -- so a ram parked against the
-// face would be inside the next rock. It stands clear of the apron and reaches:
-// `rockLeft()` less its own width and a cell of daylight. The arm is long, which
-// is what an arm is for.
-// Its right shoulder stands two cells inside the clear line, however wide the
-// engine is drawn -- so growing the machine grows it *backwards*, into the empty
-// ground behind it, rather than forwards into the apron the next boulder lands on.
+// The **face**: the near edge of what is left of the boulder. The hill is eaten
+// from the left, so this walks steadily right across the run of it, and it is
+// the one number the ram's whole geometry hangs off.
+//
+// Derived every frame, never stored. A new boulder refills `rockTops` from
+// column nought, so the face is back at the near end and everything measured
+// from it -- where the machine stands, where its tender stands, how far the arm
+// has to reach -- comes back with it. That is the same rule the jaw keeps about
+// the floor of the cut.
+export const rockFaceX = () => {
+  for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) return rockLeft() + c * P;
+  return rockLeft() + S.gw * P;            // nothing left of it: the far end
+};
+
+// Cells of daylight between the machine's nose and the face -- which is to say,
+// how far the arm actually travels.
+//
+// It used to be three, and two of those were the arm's resting length, so the
+// whole stroke moved it by a single cell. A machine whose only moving part
+// moves six pixels is a machine that reads as broken: you could watch the ram
+// for a minute and never see it do anything. It stands back now and *punches*.
+export const RAM_REACH = 8;
+
+// Where it stands: back from the face by its own width and the arm's travel.
+//
+// **It follows the face.** The ram used to be parked off `rockLeft()`, the far
+// edge of the grid, which does not move while the boulder is eaten -- so the
+// machine sat in one spot for the whole of a rock and the only thing that told
+// you it was working was the smoke. Measured off the face instead, it advances
+// into the ground it has cleared, and its tender walks along with it, and the
+// progress through the hill is a thing you watch happen rather than a bar.
+//
+// Nothing is remembered, so the awkward case takes care of itself: a new
+// boulder puts the face back at the near end and the ram is at its parked spot
+// again. That matters because the boulders grow -- each one reaches further into
+// the ground in front of it -- and a ram that remembered how far it had crawled
+// would be standing inside the next one.
 export const ramX = () =>
-  Math.round((rockLeft() - ROCK_CLEAR - P * (spriteW(RAM) - 2)) / P) * P;
+  Math.round((rockFaceX() - P * (RAM_REACH + spriteW(RAM))) / P) * P;
 
 defineMachine('ram', {
   job: 'miners',
