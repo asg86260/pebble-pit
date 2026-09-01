@@ -19,7 +19,6 @@ import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
-import { leverHit } from './crew.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
@@ -135,7 +134,6 @@ canvas.addEventListener('pointerdown', e => {
   // A lever on a machine, before the ground behind it. It is the only control in
   // the yard that is not on a board, and it has to be caught here or a bought
   // machine can never be switched off by anybody but a dev hook.
-  if (leverHit(p.x, p.y)) return;
   if (rosterHit(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The top, at the nearest high point to where you clicked -- the same place

@@ -33,7 +33,7 @@ import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
-import { machine, MACHINES, askLever, hasLever } from './machines.js';
+import { machine, MACHINES } from './machines.js';
 import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -54,33 +54,17 @@ import { verifyWorld, resetVerify } from './verify.js';
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
 // --- the machines ---------------------------------------------------------------
-// Set a machine's facts outright, for a check that wants one running without
-// spending twenty seconds of simulated yard walking a body to a lever. The
-// lever's *own* check must use `lever` below and never this one, or it asserts
-// nothing about the walk.
+// Set a machine's facts outright, for a check that wants one standing without
+// paying for it first. A check about *buying* one must use `__buy` and never
+// this, or it asserts nothing about the gate or the kit.
 export const machineSet = (which, o = {}) => {
   const m = machine(which);
   if (!m) return null;
-  const was = m.on;
-  // Unbuying implies the lever goes down. `on` without `bought` is a state the
-  // rest of the code is entitled to assume cannot happen -- `machineFor` checks
-  // both, `restore` normalises it away -- and a machine left on after being
-  // unbought would strand the gang it had displaced, with nothing to switch off
-  // to get them back.
-  if (o.bought != null) { m.bought = !!o.bought; if (!m.bought) m.on = false; }
-  if (o.on != null) m.on = !!o.on && m.bought;
+  // Buying and unbuying, and nothing else. There is no `on`: a machine runs when
+  // somebody is standing at it, so a check that wants one stopped takes its
+  // tender off with `__assign` -- through the same button a player would use.
+  if (o.bought != null) m.bought = !!o.bought;
   if (o.driven != null) m.driven = !!o.driven;
-  // A machine with no lever has no off: bought is running. A check that asked
-  // for one bought would otherwise get the state the game itself cannot reach.
-  if (!hasLever(which)) m.on = m.bought;
-  const job = MACHINES.find(x => x.key === which).job;
-  if (m.on && !m.was) m.was = S[job] || 0;
-  if (!m.on) m.ask = null;
-  // Off the same way the lever goes off: the gang it displaced comes back. A
-  // hook that only clamped would let a check watch a machine stop and conclude
-  // that stopping one strands its station, which is the opposite of what the
-  // yard does.
-  if (!m.on && was && m.was) { const want = m.was; m.was = 0; restaff(job, want); }
   rebalance();
   syncWorkers();
   buildShop();
@@ -91,24 +75,6 @@ export const machineSet = (which, o = {}) => {
 // Every station given every slot it will ever have, which is what the machines
 // are gated behind. A check that wants to buy one should not have to know that
 // the numbers are five and seven.
-// The lever, asked for honestly: somebody has to walk over and throw it. The
-// lever's own check must use this and never `machineSet`, or it asserts nothing
-// about the walk -- which is the whole of what the lever is.
-export const lever = (which, on) => askLever(which, !!on);
-
-// Click the lever where it is drawn, through the very hit test the pointer uses.
-// A check that reached for `askLever` directly would prove the mechanism and say
-// nothing about whether there is anything in the yard to click.
-// Press the machine's switch where it is drawn, through the very hit test the
-// pointer uses. There is no lever in the yard any more -- it is a toggle on the
-// station's roster, under the headcount, which is where the question "who is
-// working this station" is already being asked and answered.
-export const clickLever = which => {
-  const post = rosterReport().find(r => JOB_MACHINE[r.job] === which);
-  if (!post || !post.run) return false;
-  return rosterHit(post.run[0], post.run[1]);
-};
-
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
@@ -179,14 +145,15 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // twenty checks further down the suite lost their haulers to it.
   S.scrubbers = 0;
   S.janitors = 0;
-  // And every machine stops. This is the same trap as the scrubbers above, one
-  // level worse: a machine left running by whatever ran before does not merely
-  // move bodies about, it rewrites what the next `__crew(0, 0, 3)` is *allowed*
-  // to mean -- three quarriers asked for, one bench's worth permitted, and two
-  // of them quietly carrying dust while a check swears it staffed the cut.
+  // And every machine goes back in the box. This is the same trap as the
+  // scrubbers above, one level worse: a machine left standing by whatever ran
+  // before does not merely move bodies about, it rewrites what the next
+  // `__crew(0, 0, 3)` is *allowed* to mean -- three quarriers asked for, one
+  // machine's worth permitted, and two of them quietly carrying dust while a
+  // check swears it staffed the cut.
   for (const m of MACHINES) {
     const r = machine(m.key);
-    if (r) { r.on = false; r.ask = null; r.was = 0; }
+    if (r) { r.bought = false; r.tookKit = false; }
   }
   S.labLeft = 0;                  // the lab owes nobody after a wholesale reshuffle
   if (wz > 0) openMeteor();
@@ -830,8 +797,8 @@ export const HANDLES = {
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __machine: machineSet, __fullSites: fullSites,
-  __lever: lever, __swing: swing, __cold: coldReload,
-  __rows: allRows, __boards: boards, __unsection: unsection, __clickLever: clickLever,
+  __swing: swing, __cold: coldReload,
+  __rows: allRows, __boards: boards, __unsection: unsection,
   __lab: openLab, __research: finishResearch, __grant: grant,
   __spend: spendDust, __press: press,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,

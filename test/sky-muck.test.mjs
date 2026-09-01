@@ -1,7 +1,7 @@
 // The sky filling up and giving it back: what the yard puts into the air comes
 // down again as a mess on the ground, and the mess is shifted rather than banked.
 
-import { group, ok, state, run, runUntil } from './helpers.mjs';
+import { group, ok, state, run, runUntil, makeItRain } from './helpers.mjs';
 
 // The air. Mining fills the sky, the sky gives it back as muck, the muck is in
 // the way rather than worth anything, and a house with somebody in it is the
@@ -44,23 +44,25 @@ group('the sky fills up, and gives it back', async () => {
   run(8);
   const full = state().smog;
 
-  // And then over the line by hand. It used to get there on its own: the yard
-  // was mining, mining was the loudest source in the game, and a sky held a hair
-  // under the line crossed it within a second. The rock raises nothing at all
-  // now, so a yard held just short of raining stays just short of raining for
-  // ever, and everything below waits on a shower that never comes.
-  window.__air({ haze: state().smog.at + 40 });
   // And the engine off, and *unbought*, before it rains. A shower rains the sky
   // it broke on and nothing else -- which is the point -- so anything still
   // fouling behind it is filling the band back up, and neither "next to nothing
   // left overhead" nor "the banks shrink as it falls" stays a fact about the
   // shower.
-  window.__machine('jaw', { on: false, bought: false });
+  window.__machine('jaw', { bought: false });
   // And a moment for what is still climbing to arrive, because a shower claims
   // the sky that is *settled* when it breaks and motes in flight are not.
   run(6);
-  window.__air({ haze: state().smog.at + 40 });
-  run(1);
+  // And then over the line by hand. It used to get there on its own: the yard
+  // was mining, mining was the loudest source in the game, and a sky held a hair
+  // under the line crossed it within a second. The rock raises nothing at all
+  // now, so a yard held just short of raining stays just short of raining for
+  // ever, and everything below waits on a shower that never comes.
+  //
+  // To the brim rather than a hair over the line, and then waited out: the line
+  // is where a shower becomes *likely* now, and a check that wants one asks for
+  // the sky that is certain to break. See `makeItRain`.
+  makeItRain();
 
   // Watched all the way down rather than sampled at the ends: the whole claim
   // is that it thins out, and a before and an after cannot tell a fade from a
@@ -154,7 +156,7 @@ group('a mess comes before the dust', async () => {
   window.__crew(1, 5);
   window.__give(500);                          // plenty on the floor to distract them
   run(4);
-  window.__air({ haze: state().smog.at + 1 });
+  makeItRain();
   let peak = 0;
   for (let i = 0; i < 60; i++) { run(0.25); peak = Math.max(peak, state().smog.muck.yard); }
   // Let it stop raining first. The sky has to get properly filthy before it
@@ -187,13 +189,10 @@ group('muck is shifted, not banked', async () => {
   run(4);
   window.__clearFloor();
   const before = state();
-  // over the brim rather than just under it: with nobody on the rock there is
-  // nothing putting the last mote up there
-  window.__air({ haze: before.smog.at + 1 });
-  // A thicker sky is a longer downpour, so it is watched out rather than given a
-  // fixed fourteen seconds -- otherwise what follows measures the weather still
-  // falling rather than the crew shifting it.
-  runUntil(() => state().smog.raining, 30);
+  // To the brim rather than a hair over the line: with nobody on the rock there
+  // is nothing putting the last mote up there, and a sky at the line only might
+  // rain. `makeItRain` waits the shower out of it.
+  makeItRain();
   // Out, and then *down*: the shower ends when the sky it is made of is empty,
   // and at that moment there are still a couple of thousand drops in the air
   // with a second of falling left in them. Read at the moment it stopped

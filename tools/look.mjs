@@ -71,7 +71,7 @@ const SCENES = {
   // The belt, which is the one machine that is long rather than tall: a run of
   // trestles from the rock to the lip, its tender standing at the hole end, and
   // the ground under it being swept into it. Bought and running -- it has no
-  // lever, so there is nothing to throw and nobody walks anywhere to start it.
+  // switch anywhere in the game: a machine runs when somebody is standing at it.
   // Deliberately not built on RICH: that tips ninety thousand dust into the hole,
   // and a full hole stops the belt exactly as it stops a gang, so the scene came
   // out with a stopped-station triangle over an empty band. It gets the coins and

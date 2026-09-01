@@ -25,9 +25,8 @@ import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
-import { machine, MACHINES, asked } from './machines.js';
+import { machine, MACHINES } from './machines.js';
 import { drawSprite, spriteW, spriteH, HATS, HATS_TIGHT, JAW, HOIST, RAM, TILLER, MACHINE_MARK } from './sprites.js';
-import { leverBox } from './crew.js';
 import { walkY } from './world.js';
 import { puff } from './puff.js';
 import { jawX, jawY } from './quarry.js';
@@ -3110,7 +3109,7 @@ export function drawCursor() {
 // closes and stays closed reads as off, which is what it is.
 function stroke(key, ms = 900) {
   const m = machine(key);
-  if (!m || !m.bought || !m.on) return 0;
+  if (!m || !m.bought) return 0;
   // And not while it is standing idle. `on` is the lever; `workedAt` is when it
   // last actually got something done. A machine with nobody at it, or one stood
   // down by a full pile, kept chewing away visibly while producing nothing --
@@ -3275,8 +3274,8 @@ export function drawTiller() {
   // The hubs, off the picture: the middle of each white ring, so a redrawn
   // tractor turns its own wheels rather than the ones the old one had -- and
   // mirrored with the picture, so they stay inside the tyres when it turns round.
-  for (const [wx, wy, r] of [[x + tCol(6) * P, y0 + P * 5, 1],
-                             [x + tCol(1) * P, y0 + P * 5, 0]]) {
+  for (const [wx, wy, r] of [[x + tCol(3) * P, y0 + P * 5, 1],
+                             [x + tCol(8) * P, y0 + P * 5, 0]]) {
     ctx.fillStyle = '#fff';
     ctx.fillRect(Math.round((wx + Math.cos(a) * r * P) / P) * P,
                  Math.round((wy + Math.sin(a) * r * P) / P) * P, P, P);
@@ -3297,7 +3296,7 @@ export const tillerSeat = () => ({
   // Three cells wide, so a mirrored seat starts three cells further back than
   // the mirror of its own left edge -- `tCol` answers about a cell, and a body
   // is not a cell.
-  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(6) - 2 : 6) * P,
+  x: Math.round(tillerAt()) + (tillerWay() < 0 ? tCol(1) - 2 : 1) * P,
   y: Math.round((walkY(tillerAt() + WORKER / 2) + WORKER) / P) * P
      - P * (spriteH(TILLER) - 1)
 });
@@ -3342,69 +3341,68 @@ export function drawBelt() {
 
 // The machine's switch, drawn on the roster under the headcount.
 //
-// It is a **slide switch**: a black plate with a slot knocked white out of it
-// and a knob riding in the slot, and the machine's own mark standing at the
-// right-hand end of it. The knob is at the far end when the machine is working
-// the station, at the near end when the hands are, and *halfway between* while
-// somebody is walking over to throw the lever.
+// It is a **lever**, and after a checkbox and a slide switch that is the one it
+// should always have been -- because a lever is the thing the yard already says
+// it is. Nothing here happens without hands: you throw it, and somebody walks
+// over and does it. Every other drawing was an abstraction of a mechanism the
+// game was at pains to keep concrete.
 //
-// It was a checkbox before, and the trouble with a checkbox is that it is a
-// question and its answer at the same time -- a small square with a smaller
-// square in it -- and the question was never written anywhere. What is on and
-// what is off is a convention you have to be told. A knob that slides *towards*
-// the picture of the machine tells you: the further over it is, the more the
-// machine is doing, and at the other end it is doing nothing and the hands have
-// their station back. Nothing about it has to be learned.
+// A pivot, a rod, a ball on the end. It leans **towards** the machine's mark
+// when the machine is working the station and away from it when the hands are,
+// so which way is which needs no telling: the lever points at what is doing the
+// work.
 //
-// The middle position is the honest half of it. Throwing a lever in this yard is
-// a request -- somebody has to walk over -- and a switch that snapped straight
-// to the far end was claiming the walk had already happened. Halfway says what
-// is actually true: asked, and on its way. A click still moves it at once, which
-// is the whole of what the old drawing was trying to protect.
-export function drawRunSwitch(box, on, want, key) {
+// **Two positions, and no third.** It shows what you have *asked* for. Throwing
+// it is a request that takes a walk to answer, but that is the yard's business
+// and not the switch's -- a control that sat at half-cock until somebody arrived
+// was a control reporting on the crew rather than on itself, and it made a
+// yes-or-no question look like it had three answers.
+//
+// What went before, so it is not tried again. A checkbox is a question and its
+// answer in one square with the question written nowhere, and which of ticked
+// and clear means *on* is a convention somebody has to be told. The slide switch
+// that replaced it was drawn inside out -- a black knob riding a white slot cut
+// into a black plate, so the knob had no contrast against the thing it slid in
+// and the only part that visibly moved was the white gap. It read as a meter,
+// and worse, as *this station's own meter*: a white bar inside a black body is
+// exactly how the ram draws how far through the boulder it is.
+// What is working this station, drawn on the roster under the headcount: the
+// machine's own mark, and nothing else.
+//
+// It is a **label, not a control**, and getting to that took three goes at a
+// control that should never have existed. A checkbox, which is a question and
+// its answer in one square with the question written nowhere. Then a slide
+// switch, drawn inside out -- a black knob riding a white slot cut into a black
+// plate, so the only part that visibly moved was the gap, and the whole thing
+// read as a meter. Then a lever, which was at least honest about the mechanism.
+//
+// All three were answering "is this station worked by the hands or by the
+// machine", and the yard had a better answer to that all along: **is anybody
+// standing at it.** A machine with nobody at it produces nothing and smokes
+// nothing, and the count directly above this mark is how many bodies are there.
+// So the way to stop a machine is the `-` button that stops every other station,
+// and the picture underneath is simply what those hands are working.
+//
+// Which leaves the mark one job, and the rule for it is that it must be the
+// *same machine* as the one standing in the yard -- the same silhouette, feature
+// for feature. See MACHINE_MARK.
+export function drawRunSwitch(box, key) {
   const mark = MACHINE_MARK[key];
-  const H = 4;                                   // the plate, in cells
-  const mw = mark ? spriteW(mark) : 0;
-  // The plate takes what the mark leaves, so the pair of them fill the strip
-  // exactly -- the roster's own width, not a width picked to look right once.
-  const W = Math.max(6, Math.round(box.w / P) - mw - 1);
-  const y = box.y + Math.round((box.h - P * H) / P / 2) * P;
+  if (!mark) return;
+  const w = spriteW(mark), h = spriteH(mark);
+  // Centred on the strip, standing on its bottom line, so it sits under the
+  // count rather than off to one side of it.
+  const x = box.x + Math.round((box.w / P - w) / 2) * P;
+  const y = box.y + box.h - h * P;
 
-  // A cell of clear air behind the whole strip. Most rosters stand on bare white
-  // ground and this paints nothing anyone can see; the ones that do not -- a
-  // switch with a pile or a wall behind it -- would otherwise be black drawn on
-  // black, which is no drawing at all.
+  // A cell of clear air behind it. Most rosters stand on bare white ground and
+  // this paints nothing anyone can see; the ones that do not -- a mark with a
+  // pile or a wall behind it -- would otherwise be black drawn on black, which
+  // is no drawing at all.
   ctx.fillStyle = '#fff';
-  ctx.fillRect(box.x - P, y - P, (W + mw + 1) * P + P * 2, P * (H + 2));
-
-  // The plate, and the slot cut out of it.
+  ctx.fillRect(x - P, y - P, (w + 2) * P, (h + 2) * P);
+  drawSprite(ctx, mark, x, y);
   ctx.fillStyle = '#000';
-  ctx.fillRect(box.x, y, W * P, P * H);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(box.x + P, y + P, (W - 2) * P, P * (H - 2));
-
-  // The knob, three cells of it, at one end of its travel or halfway along.
-  // `on` is what the machine is doing and `want` is what it has been asked for:
-  // the two agree except while somebody is walking, which is exactly the case
-  // the middle is for.
-  const KNOB = 3;
-  const run = W - 2 - KNOB;                      // cells of travel in the slot
-  const at = on === want ? (want ? run : 0) : Math.round(run / 2);
-  const kx = box.x + P + at * P;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(kx, y + P, KNOB * P, P * (H - 2));
-  // A dimple in the top of it, which is the one cell that keeps the knob a
-  // separate object from the plate. At either end of its travel the two are
-  // touching, and without this the whole end of the switch reads as one black
-  // block -- a plate somebody had filled in rather than a knob run up against
-  // the stop.
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(kx + P, y + P, P, P);
-  ctx.fillStyle = '#000';
-
-  // And what it is a switch *for*, standing at the end the knob runs towards.
-  if (mark) drawSprite(ctx, mark, box.x + (W + 1) * P,
-                       y + P * H - spriteH(mark) * P);   // feet on the plate's line
 }
 
 // A puff off a machine's stack. It is the same smoke the lab's chimney makes and
@@ -3417,7 +3415,7 @@ export function drawRunSwitch(box, on, want, key) {
 const STACKS = {
   jaw:    () => ({ x: jawX() + jawStackCol() * P, y: jawY() - P * 2 }),
   ram:    () => ({ x: ramX() + P * 2, y: S.groundY - P * spriteH(RAM) }),
-  tiller: () => ({ x: tillerAt() + tCol(2) * P,
+  tiller: () => ({ x: tillerAt() + tCol(7) * P,
                    y: walkY(tillerAt() + WORKER / 2) + WORKER - P * spriteH(TILLER) }),
   // At the lip end, over the last leg that has ground under it -- not at the
   // head, which hangs out over the hole.
@@ -3427,7 +3425,7 @@ const STACKS = {
 export function stepMachineSmoke(now) {
   for (const key of Object.keys(STACKS)) {
     const m = machine(key);
-    if (!m || !m.bought || !m.on) continue;
+    if (!m || !m.bought) continue;
     if (now - (m.workedAt || 0) > MACHINE_IDLE_MS) continue;   // idle, unmanned, or stood down
     if (now < (m.puffAt || 0)) continue;
     m.puffAt = now + MACHINE_PUFF_MS * (0.6 + rand() * 0.8);

@@ -36,7 +36,7 @@ import { doorAt } from './house.js';
 import { tillerSeat } from './render.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
-import { MACHINES, machine, JOB_MACHINE, specOf, askLever, asked, LEVER_W, LEVER_H } from './machines.js';
+import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
 import { rand } from './rng.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -825,11 +825,10 @@ function arrive(w) {
   if (w.leg === 'grab' && grabHat(w)) { S.dirty = true; return; }
   // Somebody has walked to a lever and is standing at it. This is the only place
   // in the game a machine starts or stops, which is the point of the walk.
-  if (w.leg === 'lever') throwLever(w.throwing);
   S.dirty = true;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
   if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false;
-                          w.route = null; w.throwing = null; return; }
+                          w.route = null; return; }
   settle(w);
 }
 
@@ -1092,123 +1091,6 @@ function stepKit() {
 const swingFor = w =>
   MUCK_SWING / (w.type === 'janitor' && spelled('sweep') ? SPELL_SWEEP : 1);
 
-// --- the levers -----------------------------------------------------------------
-// Where each machine's lever stands. Derived every time it is asked for, never
-// stored: the quarry falls in and is dug out again, the farm is resited when a
-// plot is bought, and a remembered x would be a lever in the wrong field.
-//
-// The jaw's is at the head of the ladder rather than down on the floor of the
-// cut beside the machine itself. That is not a fudge -- it is where the hoist
-// stands, on the deck over the mouth, and a switch for the whole works belongs
-// at the top of the hole rather than at the bottom of it. It also means stopping
-// a jaw is not a climb down a ladder into a hole full of machine.
-export function leverX(key) {
-  if (key === 'jaw') return quarryFace();
-  if (key === 'tiller') return plotX(0);
-  if (key === 'ram') return rockLeft() - WORKER * 2;
-  return null;
-}
-
-// The lever as a thing in the yard: where it stands and how big it is, in world
-// pixels. The drawing and the hit test both read this, so they cannot drift.
-//
-// It is a thing you point at rather than a row on a board, and deliberately:
-// `buy` returns immediately for any row carrying a `job` or a `dial`, and a
-// lever is neither a purchase nor a stepper -- and the ram has no board of its
-// own to put one on anyway. Same argument that moved the quarry's rows onto the
-// quarry board: a decision about a place is made at the place.
-export function leverBox(key) {
-  const x = leverX(key);
-  if (x == null) return null;
-  const m = machine(key);
-  if (!m || !m.bought) return null;
-  const w = P * LEVER_W, h = P * LEVER_H;
-  return { x: Math.round((x + WORKER + P) / P) * P,
-           y: Math.round((walkY(x) + WORKER - h) / P) * P, w, h };
-}
-
-// Somewhere in the yard was clicked. If it was a lever, throw it -- which means
-// asking, and somebody walks over.
-export function leverHit(x, y) {
-  for (const m of MACHINES) {
-    const b = leverBox(m.key);
-    if (!b) continue;
-    if (x < b.x - P || x > b.x + b.w + P || y < b.y - P || y > b.y + b.h + P) continue;
-    const r = machine(m.key);
-    askLever(m.key, !(r.ask ? r.ask.on : r.on));
-    return true;
-  }
-  return false;
-}
-
-// Throw it, now, because somebody is standing at it.
-//
-// `was` is the whole of why a lever is worth throwing twice: `rebalance` only
-// ever clamps *down*, so switching a machine on walks the gang to carrying and
-// nothing walks them home. The complement is recorded here and given back here.
-//
-// It cannot put the bodies back itself. `restaff` calls `syncWorkers`, which
-// replaces `S.workers` -- and this runs inside the loop that is iterating it. So
-// it sets a latch and the frame drains it afterwards. See game.js.
-function throwLever(key) {
-  const m = machine(key);
-  if (!m || !m.bought) return;
-  const want = m.ask ? m.ask.on : !m.on;
-  const job = (MACHINES.find(x => x.key === key) || {}).job;
-  m.ask = null;
-  if (m.on === want) return;
-  m.on = want;
-  // Both directions go through the latch, and that is not symmetry for its own
-  // sake. Switching a machine *on* changes what `capOf` answers, and nothing in
-  // the yard recomputes that per frame -- so a lever thrown on without a
-  // rebalance left the whole gang standing at a station that now holds one, for
-  // good. It was only ever hidden because the checks reached the same state
-  // through `__machine`, which rebalances on the way past.
-  if (want) { m.was = S[job] || 0; S.restaff = { job, want: 0 }; }
-  else { S.restaff = { job, want: m.was }; m.was = 0; }
-  S.dirty = true;
-}
-
-// Somebody to send. Deliberately a wider net than `freeAt`: a lever is not a
-// station's own errand, so anybody not otherwise engaged will do -- and that
-// matters, because the commonest case is a machine whose own station now holds
-// one body and five haulers who used to work there.
-//
-// The filters are the ones a walk cannot survive. A body in a hole or a building
-// is not somewhere a commute can start, one in the air even less so, and one in
-// the player's hand is not going anywhere it chose.
-const freeForLever = at => {
-  let best = null, near = Infinity;
-  for (const o of S.workers) {
-    if (o.walking || o.inside || o.aloft || inWorking(o) || o.carry || o.hasCore) continue;
-    if (o.lifted || o.falling || o.looUntil) continue;
-    const d = Math.abs((o.x + WORKER / 2) - at);
-    if (d < near) { near = d; best = o; }
-  }
-  return best;
-};
-
-// One frame of the levers. An ask stands until somebody answers it: if there is
-// nobody free this frame there will be somebody next frame, and a lever that
-// gave up because the yard was busy would be a lever you had to click twice.
-export function stepLevers() {
-  for (const m of MACHINES) {
-    const r = machine(m.key);
-    if (!r || !r.bought || !r.ask) continue;
-    // Already on its way. One walk per lever, or the whole yard sets off for the
-    // same switch and five of them arrive at a machine that is already running.
-    if (S.workers.some(o => o.walking && !o.lifted && o.throwing === m.key)) continue;
-    const at = leverX(m.key);
-    if (at == null) continue;
-    const w = freeForLever(at);
-    if (!w) continue;                            // nobody free: the ask stands
-    w.throwing = m.key;
-    w.legs = [{ to: at, do: 'lever' },
-              { to: stationX(w.type) ?? w.x, do: 'back' }];
-    nextLeg(w);
-  }
-}
-
 // Tending. One body, standing at the machine that has taken its job over.
 //
 // It is a walk like any other -- the machine is somewhere to be, and getting
@@ -1224,7 +1106,7 @@ function stepTender(w, now) {
   const key = JOB_MACHINE[job];
   if (!key) return false;
   const r = machine(key);
-  if (!r || !r.bought || !r.on) return false;
+  if (!r || !r.bought) return false;
   const spec = specOf(key);
   if (!spec) return false;
 
@@ -1344,7 +1226,7 @@ export function stepMachines(now) {
   for (const m of MACHINES) {
     const r = machine(m.key);
     const spec = specOf(m.key);
-    if (!r || !spec || !r.bought || !r.on) continue;
+    if (!r || !spec || !r.bought) continue;
 
     const at = spec.at();
     r.working = false;                         // until it gets through all of it
@@ -1685,7 +1567,6 @@ export function lift(w) {
   //
   // The *ask* is not cancelled, only the walk. What you asked for is still what
   // you want, and somebody else can go.
-  w.throwing = null;
   w.legs = null;
   w.leg = null;
   w.walking = false;

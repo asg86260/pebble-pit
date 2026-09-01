@@ -18,7 +18,6 @@ import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
 import { S, floor, pit, cut, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
-import { leverX } from './crew.js';
 import { BOLTS, SPARKLE } from './meteor.js';
 
 // how much of the meteor is still up there, rind or core
@@ -127,12 +126,12 @@ export function strandedDust() {
 // It reads as a field of the snapshot below, and it was one -- a five-hundred
 // character line of nested arrows. It is only up here to be readable.
 const machineReport = m => (r => r && ({
-  bought: !!r.bought, on: !!r.on, ask: r.ask ? !!r.ask.on : null, was: r.was | 0,
-  driven: !!r.driven, working: !!r.working, workedAt: r.workedAt | 0,
+  bought: !!r.bought, driven: !!r.driven,
+  working: !!r.working, workedAt: r.workedAt | 0,
   job: m.job, kitFull: kitFull(m.job), kit: hats(m.job),
-  leverX: (x => x == null ? null : Math.round(x))(leverX(m.key)),
-  // the body on its way to throw the lever, if anybody is
-  goer: (g => g ? g.name : null)(S.workers.find(o => o.throwing === m.key)),
+  // Whether it is running is not a field: it is `manned`, which is whether the
+  // station has anybody at it, which is the whole of the rule now.
+  manned: (S[m.job] | 0) > 0,
   hands: handsOf(m.job), rate: +machineRate(m.job).toFixed(2),
   cap: (c => c === Infinity ? null : c)(capOf(m.job))
 }))(machine(m.key));

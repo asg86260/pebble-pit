@@ -23,6 +23,7 @@
 
 import { footing, solidNear, SOLID } from './route.js';
 import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
+         SMOG_SAMPLE, SMOG_RAIN_ODDS, RAIN_GAP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
@@ -873,7 +874,9 @@ export const DRAUGHT = [];
 
 function breathe(secs) {
   const to = intake();
-  const power = scrubRate() / fanPull();
+  // The same draught the sky is pulled on -- see `pull`. A bigger fan makes more
+  // of it, so what you can see round the hood is what is happening to the band.
+  const power = scrubRate() / SCRUB_PULL;
   let n = DRAUGHT_PER_S * power * secs;
   while (n > 0) {
     if (n < 1 && rand() > n) break;
@@ -914,9 +917,28 @@ function breathe(secs) {
 // offset the fan is no longer holding them at.
 let dragged = false;
 
+// What the throat has not swallowed yet, in whole motes. The house's rate is a
+// rate, and a rate below one a frame cannot be spent a frame at a time without
+// being rounded away to nothing, so what is left over is carried.
+let gullet = 0;
+
 function pull(secs) {
   const to = intake();
-  const power = scrubRate() / fanPull();       // bodies inside
+  // What the fan is worth, as a draught rather than as a number on a board.
+  //
+  // This read `scrubRate() / fanPull()`, which is the count of bodies inside --
+  // and `capOf` has held that at one since the house was built, so the draught
+  // was the same draught at every rung of the ladder. The fan multiplied the
+  // rate the board *quoted* and cancelled straight back out of the one line that
+  // actually moves a mote, so five rungs of it changed nothing overhead and the
+  // reading went green while the sky went on filling. Against `SCRUB_PULL`
+  // instead, so a bigger fan is a stronger pull on the sky, which is what it
+  // says on the row.
+  const power = scrubRate() / SCRUB_PULL;
+  // and what it may take this frame, never more than a second's worth banked up
+  // -- so a house that has been standing over a clear sky does not swallow a
+  // whole second of band in one gulp the moment one drifts over it.
+  gullet = Math.min(gullet + scrubRate() * secs, scrubRate());
 
   for (let i = SKY.length - 1; i >= 0; i--) {
     const m = SKY[i];
@@ -943,9 +965,23 @@ function pull(secs) {
     // case into a pixel away.
     if (!Number.isFinite(d)) continue;
 
-    // In. Whatever reaches the mouth is taken -- there is no separate errand and
-    // nothing is picked out.
-    if (d < SCRUB_GRIP) { dropped(SKY.splice(i, 1)[0]); swallow(); continue; }
+    // In -- as fast as the fan is rated to take it, and no faster.
+    //
+    // Whatever reached the mouth used to be swallowed, which made the rating on
+    // the upgrade row a decoration: what the house actually took was however
+    // many specks the draught happened to sweep into the throat, and that is a
+    // question about the shape of the sky and the width of the near zone. It
+    // came to roughly twice the rating, so one body with no fan held three
+    // machines on its own and the whole ladder was spare change. The rate is the
+    // rate now: `SCRUB_PULL` motes a second per body, times whatever fan has
+    // been fitted, counted down as they go in.
+    if (d < SCRUB_GRIP) {
+      if (gullet < 1) continue;              // full for this moment; it waits at the mouth
+      gullet -= 1;
+      dropped(SKY.splice(i, 1)[0]);
+      swallow();
+      continue;
+    }
 
     // The draught, and it runs *along the band* until it is over the house.
     //
@@ -999,6 +1035,7 @@ function pull(secs) {
 // it is the thing that turns a pile of muck out the back into dust worth
 // carrying, which is a reason to save for it.
 function swallow() {
+  drew += 1;                       // counted at the mouth -- see `sampleAir`
   if (!S.recycler) {
     S.scrubMuck = (S.scrubMuck || 0) + 1;
     while (S.scrubMuck >= SCRUB_PER_MUCK) {
@@ -1691,6 +1728,50 @@ export const yardMuckFor = w => mineToShift(w, tally().yardBy);
 export const yardMuck = () => tally().yard;
 export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0;
 
+// --- whether it rains ----------------------------------------------------------------
+// The sky is looked at every few seconds and asked, not compared against a line
+// every frame. What a sample gives is a chance, and the chance is how filthy it
+// is: nothing at all under the line, about one in eight the moment it crosses,
+// and a certainty at the brim.
+//
+// So a full sky is a thing that is *going* to rain rather than a thing that
+// rains at a number, and the yard cannot be played by the arithmetic -- you
+// watch it darken and you get on with the shovels.
+export function rainOdds() {
+  if (S.haze < SMOG_RAIN_AT) return 0;
+  const over = (S.haze - SMOG_RAIN_AT) / Math.max(1, SMOG_CAP - SMOG_RAIN_AT);
+  return Math.min(1, SMOG_RAIN_ODDS + Math.max(0, over) * (1 - SMOG_RAIN_ODDS));
+}
+
+// Seconds since the last shower stopped, and how long it is since the sky was
+// last looked at. Both are facts about a run rather than about a save -- a game
+// picked up again is a dry yard, and it may rain on you when it likes.
+let dryFor = Infinity, sinceLook = 0;
+
+export const dryTime = () => dryFor;
+
+// One frame of that question. It is asked every frame and answered on the frames
+// a sample falls due, so the roll happens at the sampling rate however fast the
+// machine underneath is running.
+function breaks(secs) {
+  if (raining()) { dryFor = 0; sinceLook = 0; return false; }
+  dryFor += secs;
+  sinceLook += secs;
+  if (sinceLook < SMOG_SAMPLE) return false;
+  sinceLook = 0;
+  // A minute of dry, whatever is overhead. See RAIN_GAP: a shower rains the sky
+  // it broke on and the works go on fouling underneath it, so without this floor
+  // a busy yard came out of one downpour straight into the next.
+  if (dryFor < RAIN_GAP) return false;
+  // The odds first, and the roll only if there are any. A clean sky is not a
+  // one-in-nothing chance that happens to lose: it is not a question, and asking
+  // it anyway would take a number off the yard's one generator every few seconds
+  // for the whole of a game -- so every seeded run in the yard, weather or not,
+  // would come out differently for the sake of a coin that was never flipped.
+  const odds = rainOdds();
+  return odds > 0 && rand() < odds;
+}
+
 // --- one frame ---------------------------------------------------------------------
 export function stepSmog(dt) {
   const secs = dt / 1000;
@@ -1706,7 +1787,7 @@ export function stepSmog(dt) {
   reckon();
   // A shower starts over from the first spot every time -- the ramp is a fact
   // about this one, not a clock that carries on between them.
-  if (S.haze >= SMOG_RAIN_AT && !raining()) {
+  if (breaks(secs)) {
     S.raining = true; S.rains++; S.rainFor = 0;
     // Everything settled up there right now belongs to this shower. Anything
     // that arrives after this frame does not, and will still be there when it
@@ -1734,7 +1815,18 @@ export function stepSmog(dt) {
 // Rain can take what it likes out of the sky and the house can take what it likes:
 // neither is production, and this only counts production.
 let made = 0;
-let mark = { at: 0, rate: 0 };
+let mark = { at: 0, rate: 0, drew: 0 };
+
+// And what the house has actually taken, counted the same way: at the mouth, as
+// motes go down the throat. It used to be quoted rather than counted -- the
+// board showed `scrubRate()`, which is what the fan is *rated* at, and a rating
+// is not a measurement. Two things were wrong with it at once. It was in motes a
+// second where the fouling beside it was in haze a second, so the house's column
+// read about twice what it was worth against the yard's; and it went on quoting
+// the full figure while the house stood clogged, or while the sky was too thin
+// to have anything within reach of the draught. A board that says you are
+// winning while the band thickens over your head is worse than no board.
+let drew = 0;
 
 // A minute of them, kept as a ring and averaged.
 //
@@ -1751,10 +1843,15 @@ export function sampleAir(t) {
   if (t - mark.at < 1000) { return; }
   const gone = (t - mark.at) / 1000;
   const rate = mark.at ? made / gone : 0;
-  mark = { at: t, rate };
+  // In haze a second, the same unit the fouling is in, so the two columns on the
+  // board are the same kind of thing and the difference between them means
+  // something.
+  const took = mark.at ? (drew / gone) * SMOG_PER_MOTE : 0;
+  mark = { at: t, rate, drew: took };
   made = 0;
+  drew = 0;
   if (!mark.at) return;
-  net[oldest] = rate - scrubRate();
+  net[oldest] = rate - took;
   oldest = (oldest + 1) % WINDOW;
   filled = Math.min(WINDOW, filled + 1);
 }
@@ -1767,17 +1864,28 @@ export function airTrend() {
   return sum / filled;
 }
 const fouling = () => mark.rate;
+// What the house took out over the last second, not what its fan is rated at.
+const scrubbed = () => mark.drew;
 
 export function airReadout() {
-  const net = fouling() - scrubRate();
+  const net = fouling() - scrubbed();
   return {
     haze: Math.round(S.haze),
     at: SMOG_RAIN_AT,
+    // The brim as well as the line. A sky at the line only *might* rain; a sky
+    // at the brim is going to, on the next look -- which is the difference the
+    // sampling makes, and the number a check winds to when it wants weather.
+    cap: SMOG_CAP,
     share: Math.min(1, S.haze / SMOG_RAIN_AT),
     fouling: +(fouling() * 60).toFixed(1),
-    scrubbing: +(scrubRate() * 60).toFixed(1),
+    scrubbing: +(scrubbed() * 60).toFixed(1),
     // blank when the house is winning, which is the number worth playing for
-    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000)
+    dueMs: net <= 0 ? null : Math.round(((SMOG_RAIN_AT - S.haze) / net) * 1000),
+    // What a look at the sky would say right now, and how long it has been dry.
+    // The board shows how far off the line is; these are the two numbers behind
+    // the fact that reaching it is not the same as it raining.
+    odds: +rainOdds().toFixed(3),
+    dryFor: dryFor === Infinity ? null : +dryFor.toFixed(1)
   };
 }
 
@@ -1863,10 +1971,16 @@ export function smogReport() {
 
 export function seedSmog() {
   made = 0;
+  // A new yard has been dry for ever: the first shower waits on the sky and on
+  // nothing else.
+  dryFor = Infinity;
+  sinceLook = 0;
   net.fill(0);
   filled = 0;
   oldest = 0;
-  mark = { at: 0, rate: 0 };
+  mark = { at: 0, rate: 0, drew: 0 };
+  drew = 0;
+  gullet = 0;
   clearSky();
   // The band's shared creep, back to where a mote made now would read it. It is
   // a fact about a run, like the clock and the seed.
