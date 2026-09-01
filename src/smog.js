@@ -22,8 +22,8 @@
 // dust on the ground.
 
 import { footing, solidNear, SOLID } from './route.js';
-import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_RAIN_BEND, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP,
-         SMOG_SAMPLE, RAIN_GAP,
+import { P, WORKER, SMOG_PER_DUST, SMOG_RAIN_AT, SMOG_CAP, SMOG_PER_MOTE, SMOG_TOP, SMOG_FLOOR,
+         SMOG_SAMPLE, SMOG_RAIN_BEND, RAIN_GAP,
          SMOG_BAND, SMOG_LIFT, SMOG_GIVE, PUFF_LEAN_WIND, SMOG_SINK, SMOG_DRIFT,
          SMOG_SPREAD_MIN, SMOG_SPREAD_MAX, SMOG_SPREAD_RATE,
          SWAY_LANES, SWAY_X, SWAY_Y, SWAY_PACE, RAIN_PER_S, RAIN_RAMP, RAIN_GRAV, RAIN_MARK, MUCK_MAX, MESS_SLIDE,
@@ -97,8 +97,23 @@ export const DROPS = [];
 // in, dragged there by the draught. See `pull`.
 
 // where the motes settle out: a band across the top of the window
+// The sky the haze lives in: a couple of cells under the top of the window, down
+// to a little clear air over the ground line.
+//
+// It was a thirteen-cell strip along the top with clean air beneath it, and that
+// strip is the whole of what has changed here. Everything that made the band
+// work -- the slots, the spread that opens with age, the sway, the creep, the
+// settling, the plume that climbs into it -- is untouched and applies to the
+// whole sky now, which is exactly what it was always doing, only over four times
+// as much of it.
+//
+// Read off the ground line rather than off a depth, so the haze reaches the
+// works whatever the window is: a fixed depth would leave a tall window with a
+// clean gap under the sky and a short one with the haze in the dirt. Floored
+// against the top, so a window too short to hold both still gives the band
+// somewhere to be.
 const bandTop = () => S.camY + SMOG_TOP * P;
-const bandLow = () => bandTop() + SMOG_BAND * P;
+const bandLow = () => Math.max(bandTop() + P * 4, S.groundY - SMOG_FLOOR * P);
 
 export const raining = () => !!S.raining;
 // Bodies actually through the door, not bodies assigned to it. Somebody put on
@@ -181,10 +196,6 @@ export function foul(grains, x, y, kind = 'dust') {
   if (!grains) return;
   const add = grains * SMOG_PER_DUST;
   made += add;                     // counted where it is made -- see `sampleAir`
-  // and the ledger of what the sky is made of, which is the one thing here that
-  // is about the kind rather than the amount. `reckon` brings it back to the
-  // level every frame; this is what gives it its shape.
-  foulMix(add, kind);
   // Nothing is added to the number here, and that is the whole of the fix for a
   // sky that rained twice. The haze *is* the motes -- see `reckon` -- so what
   // this does is put motes up, and the number follows them by arithmetic rather
@@ -259,82 +270,7 @@ const MOTE_CAP = Math.round(SMOG_CAP / SMOG_PER_MOTE);
 // One line, called once a frame, and it is the whole of the accounting: there is
 // no second place where haze is added or taken, so there is nothing for the two
 // of them to disagree about.
-const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; syncMix(); };
-
-// --- what the sky is made of ---------------------------------------------------
-// The level says how much is up there. This says what it came out of, and the
-// two are drawn as different things: the field's density is the one and its
-// colour is the other. See `hazefield.js`, and DESIGN.md "The sky is one number".
-//
-// It is a ledger in the same units as `S.haze`, one entry per kind, and it is
-// kept to the same total by `syncMix` rather than being trusted to agree. That
-// is the lesson `foul` already learnt the hard way and wrote down at length: two
-// accounts of one thing, kept alongside each other and hoped to match, do not
-// match -- and what that looked like last time was a sky that rained twice.
-//
-// So the band goes on owning `S.haze` while it is still standing, and this
-// follows it. When the band is cut this becomes the ledger and `S.haze` becomes
-// its sum, which is one line moved rather than a rewrite.
-export const HAZE_KINDS = ['dust', 'shard', 'spore', 'mach'];
-
-export const freshMix = () => ({ dust: 0, shard: 0, spore: 0, mach: 0 });
-
-const mix = () => {
-  if (!S.hazeMix) S.hazeMix = freshMix();
-  return S.hazeMix;
-};
-
-const mixTotal = () => {
-  const m = mix();
-  let n = 0;
-  for (const k of HAZE_KINDS) n += m[k] || 0;
-  return n;
-};
-
-// Something was put up, of a kind. Added to that kind alone -- which is what
-// makes the mix mean anything: a share that moved every time anything at all
-// happened would say the same thing in every yard.
-export function foulMix(amount, kind = 'mach') {
-  if (!(amount > 0)) return;
-  const m = mix();
-  if (!(kind in m)) kind = 'mach';
-  m[kind] += amount;
-}
-
-// And the ledger brought back to whatever the level actually is, in proportion.
-//
-// Every drain in the game -- the house swallowing, a shower pouring, a mote
-// turned away at the cap -- moves `S.haze` and knows nothing about kinds, and it
-// should not have to: what comes out of a mixed sky is a mixed sample of it, and
-// scaling the whole ledger by one ratio is exactly that. The shape survives, the
-// total tracks, and there is one line to move when the ownership flips.
-//
-// The one case worth the guard: a sky with a level and no ledger, which is every
-// save written before this existed. It is seeded as soot rather than split
-// evenly, because a machine is the only thing this game currently lets foul the
-// sky at all -- see `foul`.
-export function syncMix() {
-  const m = mix();
-  const want = Math.max(0, S.haze || 0);
-  const have = mixTotal();
-  if (want <= 0) { for (const k of HAZE_KINDS) m[k] = 0; return; }
-  if (have <= 0) { m.mach = want; return; }
-  const by = want / have;
-  for (const k of HAZE_KINDS) m[k] = (m[k] || 0) * by;
-}
-
-// The mix as shares of one, for whatever is drawing it. Nought when the sky is
-// clean, which the field reads as nothing to draw rather than as an even split
-// of nothing.
-export function hazeShares() {
-  const m = mix();
-  const n = mixTotal();
-  const out = {};
-  if (n <= 0) return out;
-  for (const k of HAZE_KINDS) if (m[k] > 0) out[k] = m[k] / n;
-  return out;
-}
-
+const reckon = () => { S.haze = SKY.length * SMOG_PER_MOTE; };
 
 // A mote is a slot in the band and a share of the wind. It has no position of
 // its own: where it is is where its slot is, this frame, leaned on by whatever
@@ -444,8 +380,12 @@ function spread(list, n) {
 // is thick and thin; this only says how many of them there are.
 const motesWanted = () => Math.round(S.haze / SMOG_PER_MOTE);
 
+// The height a mote lives at: its slot's own place down the sky. One line, and
+// it is what `moteY` reads too -- see there.
+const slotY = (m, top, deep) => top + m.sv * deep;
+
 function stepPuffs(secs) {
-  const low = bandLow();
+  const top = bandTop(), deep = bandLow() - top;
   const w = windAt(now());          // one wind, asked once, for the whole plume
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
@@ -484,7 +424,19 @@ function stepPuffs(secs) {
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -0.12);
 
-    if (p.y > low) continue;
+    // **A puff climbs to its own height, not to the underside of a strip.**
+    //
+    // This used to stop at `bandLow()` -- the bottom of the thirteen-cell band --
+    // which was the same height for every speck because the band was a strip. The
+    // sky is the whole window now, and its underside is just above the ground, so
+    // that test would have every puff arriving on the frame it was born and no
+    // speck would ever be seen to climb.
+    //
+    // So a puff rises until it reaches the place it is going to live, which is
+    // its slot's own share of the sky. Some go a little way and some go all the
+    // way up, and the plume off a swing thins out over the whole height of the
+    // window instead of stacking against a ceiling.
+    if (p.y > slotY(p, top, deep)) continue;
     // Arrived, and the wind up there has it.
     //
     // It joins the band somewhere along the sky rather than directly over the
@@ -1810,35 +1762,25 @@ export const buried = () => rockMuck() > 0 || quarryMuck() > 0 || plotMuck() > 0
 // --- whether it rains ----------------------------------------------------------------
 // The sky is looked at every few seconds and asked, not compared against a line
 // every frame. What a sample gives is a chance, and the chance is how filthy it
-// is.
+// is: nothing at all under the line, about one in eight the moment it crosses,
+// and a certainty at the brim.
 //
 // So a full sky is a thing that is *going* to rain rather than a thing that
 // rains at a number, and the yard cannot be played by the arithmetic -- you
 // watch it darken and you get on with the shovels.
-//
-// **There is no line any more.** It used to be nothing at all under
-// `SMOG_RAIN_AT` and a chance ramping from there to the brim, and the reason
-// written down for that line was a good one: the rain used to arrive while the
-// sky was still a scatter of specks, so the thing it was supposed to be a
-// consequence of was never on screen long enough to be read as a cause.
-//
-// That reason belonged to a sky you could not read. The field says how filthy it
-// is at every level now -- see hazefield.js -- so a shower at a middling sky has
-// something visible behind it, and the line was buying nothing but a cliff. What
-// is left is one curve: how often it rains *is* how dirty the sky is, all the way
-// down.
+// **There is no line.** It used to be nothing at all under `SMOG_RAIN_AT` and a
+// chance ramping from there to the brim. What is left is one curve: how often it
+// rains *is* how dirty the sky is, all the way down.
 //
 // Bent hard rather than straight, which is what keeps a lightly dirty yard from
-// being rained on. The chance is the share of the cap raised to `SMOG_RAIN_BEND`,
-// so it falls away far faster than the sky clears: a quarter-full sky is a
-// shower every several minutes, a half-full one every couple, and a brimming one
-// rains as soon as `RAIN_GAP` lets it.
+// being rained on: the chance is the share of the cap raised to
+// `SMOG_RAIN_BEND`, so it falls away far faster than the sky clears.
 //
-// And **nought at nought**, exactly. A clean sky is not a one-in-a-million chance
-// that happens to lose: it is not a question. That is not only fair, it is what
-// keeps `breaks` from taking a number off the yard's one generator every few
-// seconds for the whole of a game -- see the note there, and why every seeded run
-// would otherwise diverge over a coin that was never flipped.
+// And **nought at nought**, exactly. A clean sky is not a one-in-a-million
+// chance that happens to lose: it is not a question. That is not only fair, it
+// is what keeps `breaks` from taking a number off the yard's one generator every
+// few seconds for the whole of a game -- see the note there, and why every
+// seeded run would otherwise diverge over a coin that was never flipped.
 export function rainOdds() {
   if (!(S.haze > 0)) return 0;
   const share = Math.min(1, S.haze / SMOG_CAP);
@@ -1973,31 +1915,15 @@ export function airReadout() {
   const net = fouling() - scrubbed();
   return {
     haze: Math.round(S.haze),
-    // What that haze is made of, in shares of one. The level says how much and
-    // this says what from; see `hazeShares`.
-    mix: hazeShares(),
-    // Kept for the cloud, which still sizes itself against it, and for anything
-    // that wants a name for "properly filthy". It is no longer a line the rain
-    // waits behind -- see `rainOdds`, which is one curve all the way down.
     at: SMOG_RAIN_AT,
-    // The brim: a sky at the brim rains as soon as the dry gap lets it, which is
-    // the number a check winds to when it wants weather.
+    // The brim as well as the line. A sky at the line only *might* rain; a sky
+    // at the brim is going to, on the next look -- which is the difference the
+    // sampling makes, and the number a check winds to when it wants weather.
     cap: SMOG_CAP,
-    // How full the sky is, against the brim rather than against the old line --
-    // so it is the same nought-to-one the field's own density is drawn from, and
-    // it can no longer read as one while the sky still has a quarter to go.
     share: Math.min(1, S.haze / SMOG_CAP),
     fouling: +(fouling() * 60).toFixed(1),
     scrubbing: +(scrubbed() * 60).toFixed(1),
-    // How long until the sky is at the brim, at the rate it is filling. Blank
-    // when the house is winning, which is the number worth playing for.
-    //
-    // It used to count down to `SMOG_RAIN_AT`, and that was a countdown to the
-    // rain because the rain could not happen before it. It can now, at odds that
-    // rise the whole way, so this is a countdown to the *worst* the sky gets
-    // rather than to the next shower -- there is no such thing as the next
-    // shower any more, only how likely one is. See `odds`, just below, which is
-    // the honest answer to that question.
+    // blank when the house is winning, which is the number worth playing for
     dueMs: net <= 0 ? null : Math.round(((SMOG_CAP - S.haze) / net) * 1000),
     // What a look at the sky would say right now, and how long it has been dry.
     // The board shows how far off the line is; these are the two numbers behind

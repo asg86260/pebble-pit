@@ -17,10 +17,9 @@ import { group, ok, state, run, runUntil, makeItRain } from './helpers.mjs';
 group('a full sky is a threat rather than a stopwatch', async () => {
   run(0.4);
   window.__crew(0, 0);
-  // Properly filthy, and left alone for a second. Nothing is asked of the sky
-  // between one look and the next, so the frame it reaches a number on is not
-  // the frame it breaks on -- which is the point, and is what survives the line
-  // going away.
+  // Over the line, and left alone for a second. Nothing is asked of the sky
+  // between one look and the next, so the frame it crosses on is not the frame
+  // it breaks on.
   window.__air({ haze: state().smog.at + 1, muck: 0 });
   run(1);
   const crossed = state().smog;
@@ -31,7 +30,7 @@ group('a full sky is a threat rather than a stopwatch', async () => {
   // dirty the sky is, all the way down: nought at a clean sky exactly, a small
   // chance at a middling one, and a certainty at the brim. What used to be
   // asserted here is that anything under `at` was not a question at all, and
-  // that was the cliff this replaces.
+  // that cliff is what this replaces.
   window.__air({ haze: 0 });
   const clean = state().smog.odds;
   window.__air({ haze: Math.round(state().smog.cap / 4) });
@@ -50,12 +49,10 @@ group('a full sky is a threat rather than a stopwatch', async () => {
     ok(clean === 0, 'a clean sky is not a question at all', `${clean}`),
     ok(light > 0 && light < half, 'a lightly dirty sky is a small chance',
        `${light} against ${half} at half`),
-    ok(half > 0 && half < brim, 'and a filthier one is a bigger chance',
-       `${half}`),
+    ok(half > 0 && half < brim, 'and a filthier one is a bigger chance', `${half}`),
     ok(brim === 1, 'and a sky at the brim is a certainty', `${brim}`),
     // The bend is the whole of the pacing: it has to fall away far faster than
-    // the sky clears, or a middling yard is rained on constantly. Quarter-full
-    // must be a small fraction of half-full, not half of it.
+    // the sky clears, or a middling yard is rained on constantly.
     ok(light < half / 4, 'and the odds fall away far faster than the sky does',
        `${light} against ${half}`),
     ok(came, 'and a sky that is certain to break, breaks')

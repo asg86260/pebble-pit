@@ -166,98 +166,6 @@ export const FARM_FOUL = 1;          // and turning a plot over lifts some too
 export const SMOG_RAIN_AT = 3200;    // and this many of them up there brings it down
 export const SMOG_CAP = 4200;        // never more than this in the sky at once
 
-// --- the sky as a field of cells ---------------------------------------------
-// What the haze is drawn as, now that the level is a number rather than a count
-// of specks. See `hazefield.js`, and DESIGN.md "The sky is one number".
-//
-// The two sizes are the threshold field's own, in cells. It tiles, so it wants
-// to be wide enough that the repeat is not a thing you can pick out across a
-// window: two hundred and fifty-six cells is fifteen hundred world pixels, which
-// is wider than the view.
-export const HAZE_NOISE_W = 256;
-export const HAZE_NOISE_H = 64;
-// Its two octaves, in **cells per patch**. The coarse one is what makes the haze
-// clump; the fine one only breaks up the edges of those clumps, because a field
-// of nothing but big blobs reads as cloud and one of nothing but small ones
-// reads as static -- both evenly wrong.
-//
-// Both have to divide the field's width and height, or it does not tile and the
-// sky gets a seam ruled across it. Powers of two, so they always do.
-export const HAZE_COARSE = 16;
-export const HAZE_FINE = 8;
-// How much the field clumps, against how much it is an even scatter of separate
-// specks. Nearly nothing, and that is the whole character of the sky: haze is
-// specks, and a field that organises them into patches draws cloud instead. A
-// little is kept so the sky is not perfectly even, which nothing in the air is.
-// Nothing, by default. Haze is specks; a field that organises them into patches
-// draws cloud. It is on the panel because a sky with some weather in it is a
-// thing somebody may want, not because the sky needs any.
-//
-// It is applied *after* the high-pass that makes the field blue -- see
-// `buildField` -- because it is the one piece of low frequency that is wanted on
-// purpose, and high-passing it would take it straight back out.
-export let HAZE_CLUMP = 0.0;
-// Cells a second the field creeps through the sky, at full wind. Slow: at a
-// tenth of a cell a second you never catch it moving and the sky is never quite
-// the sky it was a minute ago, which is the whole job.
-// Cells a second the field creeps sideways, at full wind. It was a fifteenth of
-// this and the sky was a photograph: at a tenth of a cell a second the haze
-// moves one cell every nine seconds, which is a thing you can measure and not a
-// thing you can see. The band learnt the same lesson about its own sway and
-// wrote it down at SWAY_PACE.
-//
-// There is a ceiling as well as a floor, and it is not far above this. The field
-// steps in whole cells, so the drift rate *is* how often the sky jumps: much
-// past two cells a second and two layers stepping out of phase stop reading as
-// haze drifting and start reading as haze boiling. This and HAZE_RISE are both
-// on the tunable panel, because where between those two a sky looks right is not
-// a thing a check or a screenshot can answer -- only watching it can.
-export let HAZE_DRIFT = 1.6;
-// And cells a second it rises, always, wind or no wind. This is the one that
-// keeps the sky from ever being a still picture: the sideways creep is the
-// wind's and the wind crosses zero, and a haze that stops dead every time it
-// does is a texture rather than weather. Smoke goes up whatever the air is
-// doing.
-export let HAZE_RISE = 0.6;
-// What the far layer's pace is against the near one's. Every cell reads both
-// layers and averages them, so a cell fades between two drifting fields rather
-// than belonging to one of them -- which is what makes the sky billow instead of
-// slide, and, because averaging two fields has less variance than either, comes
-// out more even than a single layer rather than less.
-export let HAZE_FAR = 0.45;
-// How much of the field a full sky paints. Not all of it -- the worst it ever
-// gets is heavy rather than closed, so there are always thin places to see the
-// clouds through, and a sky that shut over would be buying pressure the
-// pollution rate already applies with interest.
-export let HAZE_GAIN = 0.86;
-// The depth of field over which a painted cell reaches full weight. Small, so
-// coverage is most of the reading at a clean sky and weight takes over at a bad
-// one; large, and the whole sky steps from pale to dark together.
-export let HAZE_FADE = 0.26;
-// The darkest a single cell is ever drawn. Kept apart from render.js's own
-// HAZE_INK, which is the band's: the two are different pictures of the same
-// sky and they will want different weights while both are on screen.
-export let HAZE_CELL_INK = 0.24;
-// A fifth either side, so a painted sky is specks of different thicknesses
-// rather than a screen of identical squares. The band does exactly this to its
-// own motes and calls it texture rather than confetti; the same reasoning holds
-// here, and it holds because the ink below is low. Jitter on a heavy cell is
-// salt and pepper; jitter on a faint one is smoke.
-export let HAZE_GIVE = 0.20;
-// How far the field's own values are pulled in towards the middle. At full
-// spread the thin places between patches stay bare until the sky is nearly
-// full, so a middling sky reads as fog banks with clean air between them rather
-// than as a yard under haze. Pulled in, the clumps mostly decide *how heavy* a
-// part of the sky is rather than whether there is anything there at all -- which
-// is the whole ask: the whole sky carries the level.
-export let HAZE_CONTRAST = 1.0;
-// And the curve from the level to the density. Straight, the first third of the
-// range is invisible: a sky at a fifth of the cap paints a fifth of the field,
-// all of it at the faintest weight the screen can honestly show. Bent, the sky
-// starts saying something early and has somewhere left to go at the top.
-export let HAZE_CURVE = 0.65;
-export const HAZE_SKY_GAP = 2;       // cells of clear air kept above the ground line
-
 // --- when it breaks -----------------------------------------------------------
 // A sky over the line does not come down on the frame it crosses it. The yard
 // takes a *sample* of what is overhead every few seconds and asks whether it
@@ -274,20 +182,23 @@ export const SMOG_SAMPLE = 5;        // seconds between one look at the sky and 
 // in eight, so a yard that has just crossed waits the better part of a minute on
 // average -- and it is an average and not a wait, so sometimes it opens on you
 // straight away.
-// Unused since the rain became a curve rather than a line: it was the chance at
-// the moment the sky crossed SMOG_RAIN_AT, and there is no crossing now. Kept
-// out of the file rather than kept as a number nothing reads.
-// export const SMOG_RAIN_ODDS = 0.12;
 // How hard the rain's odds bend against how full the sky is. The chance is the
 // share of the cap raised to this, so a lightly dirty yard is very nearly never
 // rained on and a filthy one is rained on constantly -- one curve, no line.
 //
-// Worth knowing what the numbers come out at, because this is the whole of the
-// weather's pacing. Against a five-second sample and a minute's dry between
-// showers: a quarter-full sky is about one shower in nine or ten minutes, a
-// half-full one about one in two, three-quarters about one a minute, and a
+// Against a five-second sample and a minute's dry between showers: a
+// quarter-full sky is a shower about once an hour and a half, a half-full one
+// about one in three minutes, three-quarters about one in ninety seconds, and a
 // brimming one rains the moment RAIN_GAP lets it.
-export let SMOG_RAIN_BEND = 3.5;
+//
+// **This is a balance lever, not a look.** It used to be impossible to rain
+// below SMOG_RAIN_AT at all, so every bit of sky cleared under that line was
+// cleared by the scrubbing house or not at all. Rain takes down the whole sky it
+// breaks on, so a bend that is too gentle has the weather doing the house's job
+// for it -- and the house is meant to be the thing you invest in. Bent this hard,
+// a yard that is losing badly gets rained on and a yard that is merely dirty
+// does not.
+export let SMOG_RAIN_BEND = 5;
 // ...and the odds climb the further over the line it is, reaching certainty at
 // the brim. A sky held at the cap is going to rain on the next look, which is
 // what keeps the ceiling from being a place a yard can park under for ever.
@@ -318,9 +229,30 @@ export const RAIN_GAP = 60;          // seconds of dry before another may break
 // motes rather than haze scales with it -- what the house's filters fill with,
 // what the recycler hands back, how fast a rain empties the sky, and how much
 // dirt one drop carries down -- all marked "per mote" below.
-export const SMOG_PER_MOTE = 0.48;
+//
+// **And three times again**, now that the haze has the whole sky rather than a
+// thirteen-cell strip of it. The same specks spread over four times the height
+// is a quarter of the sky it used to be, which is not a haze; so there are three
+// times as many, and every "per mote" number below is multiplied by three with
+// it. Nothing about the balance moves: the same haze buys the same muck out of
+// the house, the same dust out of the recycler and the same length of shower.
+// The only thing that changes is how much sky one speck stands for.
+export const SMOG_PER_MOTE = 0.16;
 export const SMOG_TOP = 2;           // cells below the top of the window the band starts
-export const SMOG_BAND = 13;         // and how deep it is: room to bunch up in
+// How deep the band is, as a floor under it rather than a depth: the haze fills
+// the sky from SMOG_TOP down to this many cells above the ground line.
+//
+// It was thirteen cells -- a strip along the top of the window with clean air
+// under it -- and the whole of this change is that it is not a strip any more.
+// The specks, the slots, the spread, the sway, the settling and the plume that
+// feeds them are all exactly what they were; there is simply four times as much
+// sky for them to be in. See DESIGN.md, "The sky is the band".
+export const SMOG_FLOOR = 3;
+// Cells below the top of the window the clouds may start at. Their own number
+// now: they used to sit below the haze strip, and there is no below the haze any
+// more -- see `band` in weather.js.
+export const CLOUD_TOP = 6;
+export const SMOG_BAND = 13;         // kept for the clouds; see CLOUD_TOP
 // How the haze spreads: not by anything travelling, but by the stretch of sky a
 // mote is placed within opening out under it as it ages. A few pixels a second
 // each, which is slow enough that you never catch one moving.
@@ -351,7 +283,7 @@ export const PUFF_FADE = 900;        // how long a mote takes to go out at the t
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
-export const RAIN_PER_S = 975;      // per mote: a sky of more specks takes more of them a second
+export const RAIN_PER_S = 2925;     // per mote: a sky of more specks takes more of them a second
 // How long a shower takes to come on, in seconds. A sky over the line used to
 // open at full rate on the first frame: a clear yard, and then sixteen hundred
 // drops in the air a quarter of a second later, which reads as a bucket tipped
@@ -375,7 +307,7 @@ export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling
 // rather than weather that costs you anything. At a half a full sky lays a few
 // thousand, the crew are on shovels for several minutes after one, and a rain
 // is the thing it was always meant to be: the bill for a dirty sky.
-export const RAIN_MARK = 0.5;
+export const RAIN_MARK = 0.1667;
 export const MUCK_MAX = 6;           // and never stacks deeper than this in a column
 
 // What a spare pair of hands shifts, in cells a second. Clearing is not free and
@@ -426,7 +358,7 @@ export const SCRUB_ARM = 3;          // courses of daylight kept under it: a bod
 // half the pace it did, so the house takes half as many specks a second out of a
 // sky that is being filled half as fast. What it is worth against the yard is
 // untouched, which is the only number here that decides anything.
-export const SCRUB_PULL = 9.75;      // motes a second, per body in it -- the same 3.56, halved
+export const SCRUB_PULL = 29.25;     // motes a second, per body in it -- per mote
 // The draught the house makes while it is manned. It is not a hand picking
 // specks out of the band any more: the fan pulls on the whole sky, hardest near
 // the mouth and fainter the further out you are, so the haze leans towards the
@@ -478,7 +410,7 @@ export const SCRUB_CATCH = 260;
 // Halved with the draught above, so a load still comes out of the back at the
 // rate it always did: half the specks a second through a filter that fills on
 // half as many of them is the same filter, emptied just as often.
-export const SCRUB_PER_MUCK = 45;   // motes caught per load out of the back -- per mote
+export const SCRUB_PER_MUCK = 135;  // motes caught per load out of the back -- per mote
 export const SCRUB_MUCK = 1;        // and how much a load is, in cells deep
 // The house's own ladder, and the reason it needs one now.
 //
@@ -494,7 +426,7 @@ export const RECYCLE_TONE = 4;      // the shade it comes back around: ordinary 
 // And halved for the same reason: the recycler hands back the same dust a second
 // it did before the cycle slowed. Slowing the sky is not meant to be a quiet cut
 // to a thing you bought.
-export const RECYCLE_PER = 14;      // motes caught per grain of dust it gives back -- per mote
+export const RECYCLE_PER = 42;      // motes caught per grain of dust it gives back -- per mote
 
 export const TO_SCRUB = -2586;       // past the lab, at the quiet end of the walk
 // Nineteen cells across and nineteen down, which is the hood and the tower
@@ -2043,19 +1975,6 @@ export const TUNABLE = [
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
   { key: 'HAZE_CA', label: 'haze fringe', min: 0, max: 6, step: 0.1,
     get: () => HAZE_CA, set: v => { HAZE_CA = v; } },
-  // The field's own. All five are judged by eye and by nothing else -- what a
-  // sky looks like is not a thing a check can be asked -- so they are on the
-  // panel where they can be dialled while looking at it.
-  { key: 'HAZE_DRIFT', label: 'haze drift', min: 0, max: 8, step: 0.1,
-    get: () => HAZE_DRIFT, set: v => { HAZE_DRIFT = v; } },
-  { key: 'HAZE_RISE', label: 'haze rise', min: 0, max: 4, step: 0.05,
-    get: () => HAZE_RISE, set: v => { HAZE_RISE = v; } },
-  { key: 'HAZE_CELL_INK', label: 'haze cell weight', min: 0.02, max: 0.8, step: 0.01,
-    get: () => HAZE_CELL_INK, set: v => { HAZE_CELL_INK = v; } },
-  { key: 'HAZE_GAIN', label: 'haze at the brim', min: 0.2, max: 1, step: 0.02,
-    get: () => HAZE_GAIN, set: v => { HAZE_GAIN = v; } },
-  { key: 'HAZE_CLUMP', label: 'haze clumping', min: 0, max: 1, step: 0.02,
-    get: () => HAZE_CLUMP, set: v => { HAZE_CLUMP = v; } },
   { key: 'SMOG_RAIN_BEND', label: 'rain bend', min: 1, max: 8, step: 0.1,
     get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } },
   { key: 'LOO_EVERY', label: 'nature calls', min: 4000, max: 300000, step: 1000,

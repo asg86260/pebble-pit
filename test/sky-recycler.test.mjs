@@ -62,15 +62,34 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
   const on = state();
 
   // it keeps going until its own strip is full, and then it stops
-  const filled = runUntil(() => state().pileFull.scrub, 400);
+  //
+  // Held topped up, which it did not have to be before: the rain is a curve now
+  // and a sky at three thousand comes down every couple of minutes, so a check
+  // that wound the sky once and then waited was watching a house with nothing
+  // left overhead to pull on. Nothing here fouls -- the crew is empty -- so a
+  // shower is the end of the sky unless it is put back.
+  //
+  // The muck is swept with it, and that is not tidiness. `clogged` counts every
+  // grain of muck lying near the house, and the rain drops muck all over the
+  // yard -- so a sky held at three thousand rains on the house's own doorstep
+  // and stops it, and the check came out watching a house shut down by the
+  // weather rather than by its own heap. Which is a real thing about the game
+  // and is written up in TODO; it is not what this group is asking about.
+  let filled = false;
+  for (let i = 0; i < 200 && !filled; i++) {
+    window.__air({ haze: 3000, muck: 0 });
+    run(2);
+    filled = state().pileFull.scrub;
+  }
   const stuck = state();
-  window.__air({ haze: 3000 });               // plenty overhead to be pulling on
-  const was = state().smog.haze;
+  window.__air({ haze: 3000, muck: 0 });      // plenty overhead, and no rain muck on the step
+  const was = state().smog.recycled;
   run(20);
   const held = state();
 
   // and clearing the heap puts it back to work
   window.__clearFloor();
+  window.__air({ haze: 3000, muck: 0 });      // topped up and swept, for the same reasons
   run(8);
   const freed = state();
 
@@ -81,12 +100,21 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
     ok(on.pileCount.scrub > 0, 'what the spout makes lands on its own strip',
        `${on.pileCount.scrub} grains under the chute`),
     ok(filled, 'which fills up', `${stuck.pileCount.scrub} grains`),
-    ok(Math.abs(held.smog.haze - was) < 20,
+    // Asked of what the house has *handed back*, not of the haze overhead.
+    //
+    // It used to watch the level hold still, and that stopped being a fact about
+    // the house the moment the rain became a curve: a sky at three thousand is a
+    // shower every half a minute or so now, so twenty seconds of a clogged house
+    // reads as three thousand of haze going to nought -- and the check failed on
+    // the weather doing exactly what it is supposed to. What the house does is
+    // the number of grains out of its chute, and a clogged one makes none of
+    // them whatever the sky does.
+    ok(held.smog.recycled === was,
        'and a full one stops the house rather than pouring on',
-       `${Math.round(was)} -> ${Math.round(held.smog.haze)} haze`),
-    ok(!freed.pileFull.scrub && freed.smog.haze < held.smog.haze,
+       `${was} grains out of the chute, then ${held.smog.recycled}`),
+    ok(!freed.pileFull.scrub && freed.smog.recycled > held.smog.recycled,
        'and carrying it away starts it again',
-       `${Math.round(held.smog.haze)} -> ${Math.round(freed.smog.haze)}`)
+       `${held.smog.recycled} -> ${freed.smog.recycled} grains`)
   ];
 });
 

@@ -299,16 +299,6 @@ export const S = {
   pumpAt: 0,              // how far into its stroke the bellows is, so an empty house shuts rather than cuts
   recycled: 0,            // and how many whole ones it has given back
   seenAir: false,         // the lab has been told to watch the sky
-  // What the sky is made of, by kind, in the same units as `S.haze`. The level
-  // says how much; this says what from, and the two are kept apart on purpose --
-  // the field's density is one and its colour is the other, so the sky can say
-  // both things at once without either doing the other's job.
-  //
-  // Fouling adds to one kind. Draining -- the house, the rain -- takes from
-  // every kind in proportion, so the mix's *shape* only ever changes through
-  // work: a yard living on its machines stays sooty in the sky until something
-  // else dirties it. See `foulMix` and `syncMix` in smog.js.
-  hazeMix: null,
 
   // What came down and has not been cleared, one depth per column of the world.
   // The layer is the whole record: what is buried, what is in the way and what

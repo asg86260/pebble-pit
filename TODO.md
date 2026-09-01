@@ -1,14 +1,14 @@
 # Still to do
 
 Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
-jitter regression (item 5), the shield story arc (item 6), the sky rework
-(item 7) and one piece of housekeeping. Items 1 (dust into the cut) and 3 (dust
-leniency) are done and kept below for the record. Everything else in both files
-is done and on main.
+jitter regression (item 5), the shield story arc (item 6), a balance call the
+sky work turned up (item 8) and one piece of housekeeping. Item 7 is done.
 
-**Item 7 comes before item 4.** The balloon was designed against a haze band
-that item 7 deletes, so building it first would be building against a sky that
-is on its way out.
+**The balloon (item 4) is unblocked.** It was designed against a haze band that
+the sky rework was going to delete; the band survived and has the whole sky now,
+so the balloon's design stands exactly as written -- including the reason it
+moves, which the field would have taken away. Items 1 (dust into the cut) and 3 (dust leniency) are done and
+kept below for the record. Everything else in both files is done and on main.
 
 Each entry says what the thing actually is, what was found when it was looked
 into, and what is blocking it — so none of this has to be re-derived.
@@ -138,26 +138,22 @@ shovelling it". Confirmed by eye with `node tools/look.mjs apron`.
 
 ## 4. The scrubber balloon
 
-**Status:** designed and agreed, **blocked on item 7**, which deletes the
-haze band this was written against. The craft, the mooring, the drop rule and
-the fleet rung all stand; the reason it moves does not. See DESIGN.md, "The scrubber balloon
-(design, not built)", which is the whole of it. The three calls that shape the
-work have been made, and they are recorded here so they are not re-litigated:
+**Status:** designed, not built. Last, because it is the largest.
 
-- **The house stays**, and the balloon is a thing it sells. The throat, the fan,
-  the recycler, the board and the walk to the door are all untouched; the
-  purchase adds a second kind of mouth. This is what makes the save migration a
-  non-problem.
-- **What it catches comes down under it**, anywhere over the yard, rather than on
-  a strip. The sink becomes the whole ground.
-- **More craft is a rung on the house's own board**, raising the scrubbers' cap
-  by one a rung.
+A balloon that rides the haze band instead of a shed that drags the haze to it:
+a worker boards it, it takes haze in and drops muck below, a recycler upgrade
+turns that to dust, and several can be deployed for a faster sky.
 
-Four stages, each leaving the game playable: one craft end to end; the recycler
-and the clog; the fleet; the record. The hard parts, in order: the boarding
-(answered by mooring the basket on the ground), the pull (the house's own
-draught must go on working exactly as it does today), and the drawing (the first
-thing in the yard with no ground under it).
+**Shape of it.** A new `src/balloon.js` owning the craft; `smog.js` keeps owning
+the air. A balloon is a station that *moves*: `{ x, y, dir, riding }` in
+`S.balloons` — an array of craft, not a count — with `x` in world pixels, moved
+in **whole pixels** and never snapped to the lattice, exactly as the tractor is.
+Its cruising height is derived from the same `bandTop()`/`bandLow()` pair the
+motes use, so the band and the balloon cannot disagree.
+
+**The hard parts, in order:** how a body boards it without teleporting; what
+becomes of the existing scrubbing house and its saved state; how it wires into
+the pile-full mark. Build it in stages that each leave the game playable.
 
 ---
 
@@ -267,84 +263,73 @@ new structures into the pile-full mark and per-cell variation as given.
 
 ---
 
-## 7. The sky is one number
+## 7. The sky — DONE, with one balance question left
 
-**Status:** stage 1 built and on the branch (`70bc541`); stages 2-4 to go. Takes
-precedence over item 4 — it
-deletes the band that item was written against. See DESIGN.md, "The sky is one
-number (design, not built)".
+**Status:** built and on main. See DESIGN.md, "The sky is the band (built)".
 
-**What is wrong.** `S.haze` is the only thing anything reads — the board, the
-rain threshold, `cloudR`, the report, the save — and nothing anywhere asks where
-a mote is. The band exists to *store* that one number: `reckon()` sets
-`S.haze = SKY.length * SMOG_PER_MOTE`, `motesWanted()` converts back, and `owed`
-in the debug readout watches the two drift. So the detail in the band carries no
-information, which is why it reads as noise; and the one thing the sky needs to
-say — how bad is it — it cannot say, because there is no tint and the level is
-read by counting specks through a scrolling window.
+**What it turned out to be, against the plan.** The plan was to delete the mote
+band and draw the sky as a picture of `S.haze` — a field of thresholds, a cell
+painted when its threshold fell under the density. The accounting argument for
+that was right and the picture was wrong, three times over: value noise pulled
+the cells into grey patches (patches are cloud; haze is not made of shapes); an
+even scatter still blotched, because white noise clumps on its own (0.23 to 0.54
+ink over eight-by-eight blocks of a middling sky, with no clumping term anywhere
+in the code); and when it finally moved it was **nauseating**, which is what
+settled it.
 
-**The three calls that shape the work, so they are not re-litigated:**
+A field steps in whole cells, so the entire sky changes on the same frame,
+together, several times a second. A mote is a *thing* rather than a sample: it
+has its own position, its own slot, its own share of the wind, and it eases. Ten
+thousand specks each moving a fraction of a pixel on their own schedule drifts;
+ten thousand cells re-decided on one frame boils. No tuning gets from one to the
+other, because the difference is not in the numbers.
 
-- **The rain stays**, drawn from the level: a shower takes a budget when it
-  breaks and spends it, and the tint drains as the drops fall. Same beats,
-  authored rather than emergent. `stepDrops` and everything downstream is
-  untouched.
-- **The sky remembers what dirtied it.** `S.hazeMix` per kind is the ledger,
-  `S.haze` is its sum, fouling adds to one kind and draining takes from all of
-  them in proportion — so a drill-fed yard has a blue sky and a machine-fed one
-  goes brown.
-- **The balloon survives** as a second drifting mouth: same ledger, same
-  `fanPull()`, and its drop-under-itself rule and column-beneath clog rule stand
-  as written. What it loses is the reason it moves; what it gains is being the
-  only worked thing in a sky that is otherwise a wash.
+**So the band stayed, and got the whole sky.** `bandLow()` reads off the ground
+line instead of a depth below the top; a puff climbs to its own slot's height
+rather than to the underside of a strip (otherwise every puff arrives on the
+frame it is born, since the sky's underside is now just above the works); three
+times the specks, with every "per mote" constant tripled alongside so nothing
+about the balance moves; and the clouds get their own ceiling, there being no
+"below the haze" left for them to sit in.
 
-**What is kept, and it is the half worth keeping:** the plumes. `foul` still
-throws a handful of motes at the place it happened, they rise and fade over a
-few seconds, and what they were joins the general haze. They carry no ledger.
-What is deleted is the *persistent field* — slots, spread, sway, creep, `place`,
-`fillTo`, `fillSky`, `skyFromSave`, `pull`, `unpull`, the gullet and every
-constant describing a band.
-
-**What does not change:** `scrubRate()`, the muck and dust pacing out of the
-house, `clogged()`, and every reader of `S.haze`. The house drains the ledger at
-the rate it already quotes, and each unit drained is one caught mote as far as
-`S.scrubMuck` and `S.scrubBank` are concerned.
-
-**The sky stays cells.** Not a tint and not a gradient — the art rule at the top
-of DESIGN.md forbids both, and a wash would have been the first gradient in the
-game. Each sky cell has a threshold hashed off its own coordinates, over a couple
-of octaves of noise so they clump, and a cell is painted when its threshold falls
-under the current density. Rising pollution *adds* cells without disturbing the
-ones already painted, so the sky thickens rather than shimmers; past saturation
-the painted cells step down through the darker shades, so it goes on getting
-worse after it has run out of room to get fuller. The field is sampled against a
-slowly drifting offset off the wind's own swings, so it moves with no entity in
-it. It stops at the ground line — the yard reads the same at any level — and
-stops short of solid. No local clearing around a working station: the level is
-global, so the picture is.
-
-Four stages. **Stage 1 is done:** `src/hazefield.js` draws the field, the band
-still runs underneath it, `window.__band(false)` takes the band off to judge the
-field alone, and `node tools/look.mjs haze1,haze2,haze3` is the look. `S.hazeMix`
-is the ledger and `syncMix` keeps it level with `S.haze`, which the band still
-owns. The three faults worth remembering, all found by eye: a noise octave whose
-y period did not divide the field's height, so it did not tile and drew fat bands
-of haze with clean air ruled between them; ink scaled for the band's thousands of
-overlapping motes, which left the first third of the range invisible; and —
-the one that took a second pass over the whole look — **carrying the field on
-value noise at all.** Octaves pull specks into soft grey patches, and patches are
-cloud. Haze is specks: an independent hash per cell, scattered evenly, each one
-faint enough that what you see is the crowd and never any one square. Coverage
-carries the level. Turn a single cell up and the same field is salt and pepper.
-
-Still to do: cut the band; the polish pass (metered wisps into the throat, colored from the mix); the
-record. The hard parts, in order: the field reading as haze rather than as a
-dither pattern, which is a matter of noise and drift and is judged by eye; the
-rain budget keeping beats that were emergent; and the plume's lifetime.
+**The rain is a curve**, as asked: the chance is the share of the cap raised to
+`SMOG_RAIN_BEND`, nought at nought exactly, no threshold anywhere. Bent hard at
+five, because rain takes down the whole sky it breaks on and a gentle bend has
+the weather doing the scrubbing house's job for it.
 
 ---
 
-"""
+## 8. Rain muck clogs the scrubbing house
+
+**Status:** found while building item 7. Real, reachable in play, and not
+decided — it is a balance call rather than a bug, so it is written down rather
+than patched.
+
+`clogged()` (src/smog.js) counts every grain of muck lying near the house —
+`outletMuck()` walks `muckCols()` across the strip — and the rain drops muck all
+over the yard. So a sky bad enough to rain often rains on the house's own
+doorstep and stops it. **The house is the answer to pollution, and the weather
+now switches it off exactly when it is needed most.**
+
+It was nearly unreachable before item 7: rain could not happen at all under
+`SMOG_RAIN_AT`, so only a yard already at the brim could manage it. With the odds
+a curve all the way down, a middling sky rains too.
+
+**For changing it.** The clog was written for one reason and the comment says so:
+the house used to spray its own walk, pouring out for as long as a body stood in
+it, so it was given a strip like every other station and made to stop when the
+strip filled. That is a rule about *what the house makes*. Weather muck is not
+what the house makes.
+
+**Against.** A yard buried in muck stopping its own works is consistent — the
+rock stops, the cut stops, the plots stop — and the house being no exception is
+the simpler rule.
+
+**If it changes**, the fix is in `outletMuck`: count only the house's own
+leavings rather than every grain on the strip. That needs muck to carry where it
+came from, which `MESS` does not record today, so it is a field on the layer
+rather than a one-liner. Decide the rule first.
+
 ## Housekeeping: two tests fail at random
 
 Neither is a game bug, but they are why the suite looks untrustworthy — and an
