@@ -7,7 +7,7 @@
 import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE_FROM, SHARD_CELL, SPARK_CELL,
         SPORE_CELL, CORE_SIZE, WORKER, FARM_H, FARM_GATE, TABLE_LIFE, CASINO_SLICES,
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
-        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_H, CHUTE_GAP,
+        RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, CHUTE_W, CHUTE_ROWS, CHUTE_GAP,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
@@ -1528,46 +1528,65 @@ export function drawBalloons() {
 // rather than with the crew, because it is a piece of the balloon's story: it is
 // what the yard shows you instead of a body being switched off in mid-air.
 //
-// A dome and two lines, and the dome is rows of cells like the envelope above it
-// -- one is a small version of the other, which is the point. The body itself is
-// drawn by the crew pass as usual; nothing here touches it.
+// **It has to not look like a balloon**, and the first cut did. A tall rounded
+// cap on a short pair of lines over a small body is the balloon's own silhouette
+// at half the size, and the one place in the game it appears is directly under a
+// balloon. What separates the two is proportion and daylight:
+//
+//   *wide and shallow* against the envelope's tall and round -- a canopy is
+//   twice the width of its own height, and nearly twice the width of the
+//   envelope above it;
+//
+//   *a scalloped hem*, so the bottom edge is fabric rather than a ruled line and
+//   the whole shape stops reading as one solid mass;
+//
+//   *and an open V of rigging*, long enough and spread enough to be read as two
+//   lines with air between them. That triangle is the thing that says parachute.
+//   Short and converging, the lines merged into the canopy and what was left was
+//   a black blob with a white square under it.
 export function drawChutes() {
   for (const w of S.workers) {
     if (!w.chute) continue;
     const cx = Math.round(w.x + WORKER / 2);
-    const capBot = Math.round(w.y) - CHUTE_GAP;     // well clear of the head
-    const rows = Math.round(CHUTE_H / P);
+    const hemY = Math.round(w.y) - CHUTE_GAP;       // the bottom edge of the canopy
     ctx.fillStyle = '#000';
+
+    // The dome, crown first: a shallow arc, widening fast and then levelling, so
+    // the top is a curve rather than a peak. Drawn as rows of cells like the
+    // envelope is -- a curve here would be the one smooth edge in the game.
+    const wide = Math.round(CHUTE_W / P);           // in cells
+    const rows = CHUTE_ROWS;
     for (let n = 0; n < rows; n++) {
-      // widest at the hem and closing towards the crown, which is a canopy the
-      // right way up -- the envelope's own curve turned over
-      const t = n / Math.max(1, rows - 1);
-      const cells = Math.max(2, Math.round((CHUTE_W / P) * (0.45 + t * 0.55)));
+      const t = (n + 1) / rows;                     // nought at the crown, one at the hem
+      const cells = Math.max(2, Math.round(wide * (0.45 + 0.55 * Math.sqrt(t))));
       const runW = cells * P;
-      ctx.fillRect(Math.round(cx - runW / 2), capBot - CHUTE_H + n * P, runW, P);
+      const y = hemY - (rows - n) * P;
+      if (n < rows - 1) {
+        ctx.fillRect(Math.round(cx - runW / 2), y, runW, P);
+        continue;
+      }
+      // The hem, scalloped: every other cell, and the two ends always there so
+      // the rigging has something to hang from. This is the one row that says
+      // the thing is cloth.
+      const left = Math.round(cx - runW / 2);
+      for (let c = 0; c < cells; c++) {
+        if (c !== 0 && c !== cells - 1 && c % 2 === 1) continue;
+        ctx.fillRect(left + c * P, y, P, P);
+      }
     }
-    // **The lines, and they end on the body.**
-    //
-    // They used to drop straight down from the hem for a fixed length and stop,
-    // which put two verticals in the air beside a falling worker and attached
-    // them to nothing. A canopy holds a body up; if the lines do not reach it,
-    // what is drawn is a canopy and a coincidence.
-    //
-    // So each one runs from its corner of the hem to a shoulder, as a staircase
-    // of cells -- a cell per row, stepped across as it descends. Everything in
-    // this yard is cells, and a true diagonal here would be the one smooth line
-    // in the game.
-    const shoulder = Math.round(w.y) + P;              // just under the head
-    const hem = Math.round(CHUTE_W / 2 / P) * P;
+
+    // The rigging: from the two ends of the hem in to the body's shoulders, as a
+    // staircase of cells -- one cell a row, stepped across as it descends.
+    const half = Math.round(wide * (0.45 + 0.55) / 2);
+    const shoulder = Math.round(w.y) + P;
     for (const side of [-1, 1]) {
-      const fromX = cx + side * (hem - P);
+      const fromX = cx + side * half * P;
       const toX = side < 0 ? Math.round(w.x) : Math.round(w.x + WORKER - P);
-      const drop = Math.max(P, shoulder - capBot);
-      const steps = Math.max(1, Math.round(drop / P));
+      const steps = Math.max(1, Math.round((shoulder - hemY) / P));
       for (let n = 0; n < steps; n++) {
         const k = n / steps;
         const x = Math.round((fromX + (toX - fromX) * k) / P) * P;
-        ctx.fillRect(x, capBot + n * P, P, P);
+        ctx.fillRect(x, hemY + n * P, P, P);
       }
     }
   }
