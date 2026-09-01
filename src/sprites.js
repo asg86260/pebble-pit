@@ -54,6 +54,22 @@ export function drawSprite(ctx, rows, x, y, o = {}) {
 // the picture to the other; a literal would have gone on pointing at the fender.
 export const stackCol = rows => Math.max(0, rows[0].search(/[^. ]/));
 
+// Where a body stands when it works a machine from on top of it: the roof, and a
+// spot on the roof clear of the chimney.
+//
+// The roof is the first row of the picture that is solid all the way across --
+// everything above it is chimney and mast, which is a cell or two wide and not a
+// thing anybody stands on. The spot is at whichever end the chimney is not,
+// because the two would otherwise want the same cells: a body is three wide, so
+// it goes three in from the far edge, leaving a cell of margin.
+//
+// Read off the picture, both of them, so a machine that is redrawn -- or
+// mirrored, which has happened once already -- keeps its operator on top of
+// itself and out of its own smoke.
+export const roofRow = rows => Math.max(0, rows.findIndex(r => !r.includes('.')));
+export const seatCol = rows =>
+  stackCol(rows) < spriteW(rows) / 2 ? spriteW(rows) - 4 : 1;
+
 // How wide and tall a shape is, in cells -- for anything that needs to sit a
 // sprite against something else.
 export const spriteW = rows => Math.max(...rows.map(r => r.length));
@@ -135,10 +151,13 @@ export const HATS_TIGHT = {
 // only solid thing above a hole -- a rig hanging in the air over the cut was the
 // last thing about this machine that had to be explained away.
 //
-// Three cells of it are open on the left: that is the cab, and the body working
-// the machine stands in it. Everything else in this yard works a station by
-// standing beside it; a rig is a thing you are *inside*, the same way a tractor
-// is a thing you sit on.
+// The body working it stands on the roof, at the end away from the chimney. It
+// was inside, in a cab knocked out of the left of the housing, and at the size
+// this is actually seen a white square inside a black machine is not a body --
+// it is a window. On top, against the sky, it is a body.
+//
+// The white slot left in the housing is the machine's own, the same as the ram's
+// piston slot: a hole that says engine, not a place anybody is.
 //
 // The gap in the bottom row is where the shaft comes through, and the legs stand
 // either side of the bore. Which column that is, is read off this picture -- see
@@ -149,7 +168,7 @@ export const DRILL = [
   '#########',
   '#ooo#####',
   '#ooo#####',
-  '#ooo#####',
+  '#########',
   '#####.###'
 ];
 

@@ -62,7 +62,12 @@ export const POSTS = [
     // down a bench or two, taking the counter with it. It stands *over* the
     // mouth instead: the one station whose own ground is not somewhere a
     // roster can go, so it goes in the sky above it.
-    above: () => P * 13,
+    // High enough to clear the machine. The rig stands on the bridge deck, four
+    // cells up, and is seven more on top of that with a body standing on its
+    // roof above even that -- so the old thirteen cells put the headcount badge
+    // level with the operator's head, two white squares in a column, and you
+    // could not tell which of them was the man.
+    above: () => P * 18,
     // ...and the machine's mark does not go up there with it. A count in the sky
     // is only a number and can hang anywhere; the mark is a *picture of the jaw*,
     // and hung under that count it landed in the middle of the jaw and the hoist

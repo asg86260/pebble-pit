@@ -1116,7 +1116,7 @@ function stepTender(w, now) {
   // weather's muck -- chiefly the haulers' job -- lay where it fell. Whoever is
   // nearest the post is the tender this frame; everybody else answers to the
   // yard's ordinary work, exactly as if the machine were not theirs to mind.
-  const post = spec.tendAt ? spec.tendAt() : spec.at() - WORKER - P;
+  const post = postOf(spec, spec.at() - WORKER - P);
   const mine = Math.abs(w.x - post);
   const me = S.workers.indexOf(w);
   for (let i = 0; i < S.workers.length; i++) {
@@ -1202,6 +1202,19 @@ function stepTender(w, now) {
 // would close that ring. So the stations register what only they can answer and
 // this walks the list.
 
+// Where a machine's tender stands, which is the one question "is this thing
+// manned" turns on.
+//
+// A seat outranks a post. `tendAt` is where a body stands *beside* a machine,
+// and for one it works from on top of -- a tractor's seat, a rig's roof -- the
+// body is nowhere near that spot by design: the ram's roof is sixty-six pixels
+// from its tending post, and `MACHINE_REACH` is fifty-four, so the moment its
+// tender climbed aboard the machine decided nobody was there and stopped dead.
+//
+// One answer, read in both places that ask.
+const postOf = (spec, at) =>
+  spec.seat ? spec.seat().x : (spec.tendAt ? spec.tendAt() : at);
+
 // Somebody of the right trade, standing at the machine and not doing something
 // else. This is the yard's oldest rule rather than a new one -- **a station
 // idles until somebody is actually standing there** -- and it is what makes the
@@ -1217,8 +1230,7 @@ function tenderFor(spec, at) {
     if (w.type !== spec.type) continue;
     if (w.walking || w.inside || w.aloft || inWorking(w) || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
-    const post = spec.tendAt ? spec.tendAt() : at;
-    if (Math.abs(w.x - post) > MACHINE_REACH) continue;
+    if (Math.abs(w.x - postOf(spec, at)) > MACHINE_REACH) continue;
     return w;
   }
   return null;
