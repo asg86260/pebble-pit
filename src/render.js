@@ -1008,8 +1008,17 @@ export function drawSmog() {
     // on the mote, so a speck does not shimmer between colours frame to frame.
     const shades = SMOG_TINTS[m.kind] || SMOG_TINTS.dust;
     const tint = shades[(m.tone ?? 0) % shades.length];
-    // to the nearest twentieth, so the weights fall into a handful of buckets
-    const step = Math.round((m.ink ?? 1) * 20) / 20;
+    // to the nearest twentieth, so the weights fall into a handful of buckets --
+    // and times whatever the mote's own fade is, which is how a speck arriving in
+    // the band comes up to weight instead of appearing at it.
+    //
+    // `fade` was stepped, was used to decide when a mote could stop being
+    // stepped, and was handed out to the hooks -- and was never once drawn. So a
+    // speck reaching the top of its climb, where it joins the sky at whatever
+    // place along the world the air up there has taken it, simply appeared over
+    // there at full weight and vanished from over the works. See `settleHere`.
+    const step = Math.round((m.ink ?? 1) * (m.fade ?? 1) * 20) / 20;
+    if (!step) continue;
     const key = tint + '|' + step;
     let run = runs.get(key);
     if (!run) runs.set(key, run = { tint, ink: step, at: [] });

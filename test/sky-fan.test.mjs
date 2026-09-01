@@ -204,3 +204,42 @@ group('a speck a mouth takes fades rather than popping', async () => {
        `${stopped.going} left`)
   ];
 });
+
+// And the other end of a speck's life: arriving. A puff joins the sky wherever
+// the air up there has taken it rather than over the works it rose from -- which
+// is right, and is a jump. Without a fade at both ends it read as the plume
+// popping out of existence at the top of its climb.
+group('a speck arriving in the sky comes up to weight rather than appearing at it',
+  async () => {
+  window.__reset();
+  window.__crew(3, 3, 3, 3);
+  window.__fullSites();
+  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__tip(90000);
+  window.__air({ haze: 0, muck: 0 });
+  window.__buy('ram');
+  window.__buy('jaw');
+  window.__buy('tiller');
+  run(40);                                   // a yard properly at work, and smoking
+
+  let fading = 0, going = 0, seen = 0;
+  for (let i = 0; i < 5; i++) {
+    run(0.5);
+    const f = window.__skyFades();
+    fading += f.filter(v => v < 0.95).length;
+    going += state().going;
+    seen += f.length;
+  }
+
+  window.__air({ haze: 0, muck: 0 });
+  return [
+    ok(seen > 0, 'the works put a sky up', `${seen} specks sampled`),
+    // Coming up to weight at the far end of the jump...
+    ok(fading > 0, 'and specks are always arriving, part way up to full weight',
+       `${fading} mid-fade over five samples`),
+    // ...and thinning out at the near end of it, which is what stops the plume
+    // reading as popping.
+    ok(going > 0, 'while what they left behind at the top of the climb thins out',
+       `${going} fading out`)
+  ];
+});

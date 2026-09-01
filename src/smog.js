@@ -501,7 +501,23 @@ function settleHere(m) {
   m.age = 0;
   m.fromX = m.x;
   m.fromY = m.y;
-  m.fade = 1;                     // it never went out, so it has nothing to come back from
+  // **It comes up to weight rather than appearing at it**, and a picture of it is
+  // left behind at the top of the climb to thin out.
+  //
+  // A puff joins the sky wherever the air up there has taken it, which is the
+  // whole argument a few lines up in `stepPuffs` and is right -- a mote that
+  // stayed over the place it rose from makes the sky a mound sitting on the
+  // rock. But that arrival is a *jump*: the speck you have been watching climb
+  // is over the works on one frame and half the world away on the next. It read
+  // as the plume popping out of existence at the top.
+  //
+  // So it is a cross-fade. This used to say `m.fade = 1` on the reasoning that a
+  // speck never went out and so had nothing to come back from, which was true
+  // when it arrived where it had climbed to, and is not true now.
+  if (GOING.length < GOING_CAP) {
+    GOING.push({ x: m.x, y: m.y, kind: m.kind, tone: m.tone, ink: m.ink, t: 1 });
+  }
+  m.fade = 0;
   // The climb, over. Set back rather than deleted: these two used to be
   // `delete`d here, which is the one operation that turns an object into a
   // dictionary for good, and it was being done to every mote in the sky on the
