@@ -1300,7 +1300,15 @@ export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
 // -- see MOVES in crew.js. It was 2.6, which is a bounce every three hundred and
 // eighty milliseconds: too quick to read as a body doing something and quick
 // enough to read as a body juddering. A dance you can count is a dance.
-export const DANCE_BEAT = 1.5;
+//
+// Then it was 1.5, and it was still not a dance you could count: the moves take
+// their own multiples of this and the quick ones are over one, so the hop and
+// the spin came out at two and a half a second measured off the running game --
+// a body crossing three cells, which is its own height, and back, twice a
+// second. That is a wing beat, not a celebration. This is the number the crew
+// are actually counted at: the quick moves land a shade over one a second, which
+// is a body jumping for joy, and the step half that.
+export const DANCE_BEAT = 0.9;
 // How fast a dancing body travels, in world pixels a frame at the tuned rate --
 // the same units every other pace in this file is in, so it is comparable with
 // them: a brisk amble, quicker than loitering (IDLE_PACE) and well under a
@@ -1336,7 +1344,7 @@ export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
 export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
 // A stopped crew is not a frozen crew. When the pile is full the miners stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
-// is three hops a second.
+// is a hop a second and goes places.
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
