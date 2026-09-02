@@ -1495,6 +1495,20 @@ export const MINER_BITE_MULT = 2.2;
 // they fell. It is a station like any other: it piles, and when the pile is full
 // the wizards stop until somebody has carried it away.
 export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260 };
+
+// And what lands on each of those strips, which is the one thing about a heap
+// that nowhere else in the game says out loud. Every other fact about a strip is
+// worked out -- where it is comes off the walk in `placeSites`, how wide it is
+// off `PILE_LIMIT` -- but what a station pays out in was only ever known by the
+// station itself, at the moment it threw. So the ground could not be marked
+// before anything landed on it, which is exactly when a player wants to know
+// whose ground it is.
+//
+// A key with no entry here holds dust, which is what the rock and the scrubbing
+// house pay out and what a new station pays out until it is given a find of its
+// own -- so this is one line to add, not a thing to remember. Cell zero means
+// dust; the painter and `drawMark` both already read it that way.
+export const PILE_HOLDS = { quarry: SHARD_CELL, farm: SPORE_CELL, sky: SPARK_CELL };
 // And what the back of it may leave lying before it stops, with no recycler on:
 // cells of muck over the ground the spout reaches. It is the same rule wearing
 // the other coat -- a house nobody clears up after fills its own yard and jams.

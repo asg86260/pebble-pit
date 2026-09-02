@@ -355,7 +355,11 @@ export function stepRider(w, berth) {
   // the body waits at the mast for.
   const d = mastX() - WORKER / 2 - w.x;
   if (Math.abs(d) >= 1) {
-    w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+    // Times the frame, like the craft above it (see `frames` in clock.js).
+    // The walk to the mast was written before the rest of the file was put on
+    // the clock and was left behind: at thirty hertz a scrubber crossed to its
+    // basket at half speed while the craft it was boarding rose on time.
+    w.x += Math.sign(d) * Math.min(FARM_WALK * frames(), Math.abs(d));
     return true;
   }
   w.x = mastX() - WORKER / 2;

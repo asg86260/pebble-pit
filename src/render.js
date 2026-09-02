@@ -11,6 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
+import { PILE_HOLDS, PILE_LIMIT } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
@@ -642,6 +643,84 @@ export function drawSmoke() {
     ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
     ctx.fillStyle = '#000';
     ctx.fillRect(Math.round(p.x - size / 2), Math.round(p.y - size / 2), size, size);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
+// --- the ground a station pays out on to -------------------------------------
+//
+// Every strip in `S.piles` is ground that belongs to somebody, and until this
+// went in an empty strip was indistinguishable from the bare walk either side of
+// it: there was no way to see where the quarry's stone was going to land, or how
+// much room the farm had left before it jammed. So the ground is marked, the way
+// a plot is marked before anything is built on it -- a peg at each end with its
+// foot turned inwards, a dashed run between them, and the thing that piles here
+// standing in the middle of it.
+//
+// It reads the strips and nothing else. There is no table of positions per
+// station in here and there must never be one: the ends come off `from` and
+// `to`, the middle is halfway between them, and what it holds comes off
+// `PILE_HOLDS`, which defaults to dust. A station added to `SITES` tomorrow gets
+// its pegs with no new code -- which is the whole point, and is the opposite of
+// what the warning marks below used to do (they named two keys and sent
+// everything else to the farm, and two stations spent a while with their signs
+// three thousand pixels from the thing that had stopped).
+const PEG_H = P * 3;                  // how far the corner posts stand off the line
+const PEG_FOOT = P * 2;               // and how far their feet turn in along it
+const DASH_EVERY = P * 4;             // a cell of run, then three of gap
+const GROUND_INK = '#c9c9c9';         // paler than anything built: a marking, not a wall
+
+// How plainly a strip's marks show. Full strength on bare ground, gone by the
+// time the heap is a third of the way up -- by then the pile itself says where
+// the ground is, and a marking still showing through a heap of stone is a
+// marking arguing with it.
+const stripFade = key => {
+  const of = PILE_LIMIT[key] || Infinity;
+  return Math.max(0, 1 - (S.pileCount[key] || 0) / (of / 3));
+};
+
+// What piles here, drawn small over the middle of its own ground.
+//
+// A find gets its own glyph, in its own colour -- the same shape the counter and
+// the crew board use for it -- with `glyph` on, because a solid coloured cell is
+// what a single *grain* looks like, and a strip marked with one grain reads as
+// one grain lying there rather than as ground kept for a heap. Dust has no glyph
+// and does not need one: it is drawn as what a heap of it looks like from a
+// distance, a little mound of cells, in the same grey as the pegs so the whole
+// marking reads as one thing.
+function stripMark(kind, x, y) {
+  if (kind) { drawMark(kind, x, y, P * 4, true); ctx.fillStyle = '#000'; return; }
+  ctx.fillStyle = GROUND_INK;
+  ctx.fillRect(x - P * 1.5, y, P * 3, P);
+  ctx.fillRect(x - P / 2, y - P, P, P);
+  ctx.fillStyle = '#000';
+}
+
+export function drawPileGround() {
+  for (const p of S.piles) {
+    const a = stripFade(p.key);
+    if (a <= 0.02) continue;
+    const y = S.groundY;
+    // Half a cell of the post is below the line and the rest above it, so a peg
+    // reads as driven into the ground rather than resting on it.
+    const top = y - PEG_H;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = GROUND_INK;
+    for (const [x, dir] of [[p.from, 1], [p.to - P, -1]]) {
+      ctx.fillRect(x, top, P, PEG_H + P);
+      ctx.fillRect(dir > 0 ? x : x - PEG_FOOT + P, top, PEG_FOOT, P);
+    }
+    // the run between them, dashed: a solid line would be a fence, and this is
+    // ground you are meant to walk on and heap on
+    for (let x = p.from + DASH_EVERY; x < p.to - P; x += DASH_EVERY)
+      ctx.fillRect(x, y - P, P, P);
+    // and what lands here, standing in the middle of its own ground
+    const mid = Math.round((p.from + p.to) / 2 / P) * P;
+    ctx.globalAlpha = a * 0.8;
+    stripMark(PILE_HOLDS[p.key], mid, y - PEG_H - P * 2);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#000';
   }
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
@@ -3457,6 +3536,7 @@ export function draw() {
   drawHouses(ctx);         // and the crew are drawn later still, so they walk in front of both
   drawRisingHouse();       // the one room still going up, if a hire is under way
 
+  drawPileGround();        // the pegs on the ground each station's heap belongs to
   drawGrid(floor);
   drawPit();
   drawMuck();              // and whatever the last rain left on top of the lot

@@ -18,6 +18,7 @@ import { walkY, plotCount, resite, pileAt } from './world.js';
 import { keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
+import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
@@ -180,7 +181,11 @@ export function stepFarmhand(w, now, dt, c = null) {
       if (keepTo(w, target, ways().yard) && stepRoute(w, commutePace())) return;
       w.route = null;
     }
-    w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+    // Times the frame, like every other pace in the yard (see `frames` in
+    // clock.js). This one was missed when the rest were converted, so a
+    // farmhand on a thirty-hertz machine ambled between plots at half speed
+    // while the tending clock it was walking to kept perfect time.
+    w.x += Math.sign(d) * Math.min(FARM_WALK * frames(), Math.abs(d));
     if (Math.abs(d) < 1) w.goal = 'tend';
     return;
   }

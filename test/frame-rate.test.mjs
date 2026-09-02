@@ -175,3 +175,56 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
        'and the same shower at thirty', `${rainSlow} against ${rainTuned}`)
   ];
 });
+
+// The amble between plots, which was the last per-frame speed in the yard with
+// no `frames()` on it.
+//
+// The two groups above measure a body on a commute, and a commute goes by route
+// at `commutePace`, which was converted with everything else. A farmhand
+// crossing from one plot to the next is not on a commute -- the row is
+// forty-two pixels a plot and the route only comes out past twelve cells -- so
+// it walked at a flat FARM_WALK a frame and nothing above could see it. At
+// thirty it crawled between plots at half speed while the tending clock it was
+// walking to kept perfect time, and a hand on a slow machine spent twice as long
+// walking for it. (The scrubber's walk to the balloon mast, in balloon.js, was
+// the same line and is fixed with it; there is no readout in this tier to
+// measure that one's pace off.)
+//
+// Measured as a pace and not as a distance, and the difference is the whole
+// check: the distance between two plots is the same at any rate, because it is
+// where the plots are. What changes is how long it takes to cover it. So this
+// sums the ground covered while a hand is in its amble and divides by the time
+// it spent there.
+group('and a farmhand ambles between plots at one speed', async () => {
+  const ambleAt = hz => {
+    window.__seed(SEED);
+    window.__fullSites();                     // the whole row, so there is walking to do
+    window.__crew(0, 0, 0, 1);                // one hand, so there is nobody to elbow
+    window.__clearFloor();
+    window.__fast(4, hz);                     // settled on the row before the tape starts
+    const xOf = () => Number(state().workerPos[0].split(':')[1].split(',')[0]);
+    const goalOf = () => state().workerGoals[0].split(':')[1];
+    let prev = xOf(), was = goalOf(), dist = 0, ticks = 0;
+    for (let i = 0; i < 30 * hz; i++) {
+      window.__fast(1 / hz, hz);
+      const x = xOf(), goal = goalOf(), step = Math.abs(x - prev);
+      // Both ends of the step in the amble, and a step short enough that it
+      // cannot be the commute route -- which is on the clock already, and which
+      // averaged in would hide exactly what this is looking for.
+      if (goal === 'to' && was === 'to' && step <= 3) { dist += step; ticks++; }
+      prev = x; was = goal;
+    }
+    return ticks ? Math.round(dist / (ticks / hz)) : 0;
+  };
+  const slow = ambleAt(30), tuned = ambleAt(60), fast = ambleAt(120);
+  // Without the multiplier these come out at 33 / 66 / 133 pixels a second --
+  // exactly the frame rate, which is exactly the fault. With it they are
+  // 65 / 66 / 66, and the pixel of slack is the position readout being rounded
+  // to whole pixels before this ever sees it.
+  return [
+    ok(tuned > 50, 'a hand actually crosses the row', `${tuned}px/s`),
+    ok(Math.abs(slow - tuned) <= 4 && Math.abs(fast - tuned) <= 4,
+       'and at the same pace at thirty and a hundred and twenty',
+       `${slow} / ${tuned} / ${fast} px/s`)
+  ];
+});

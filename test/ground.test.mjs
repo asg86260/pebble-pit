@@ -18,7 +18,7 @@ import { BIRDS, startle } from '../src/weather.js';
 import { yardLeft, bankCeiling, pastRock } from '../src/world.js';
 import { S, floor } from '../src/state.js';
 import { at, put } from '../src/grid.js';
-import { LOOSE_DEEP } from '../src/config.js';
+import { LOOSE_DEEP, PILE_HOLDS, FIND_COLOR } from '../src/config.js';
 
 // How many grains are standing in a column, read straight off the grid. The
 // snapshot counts the yard; these checks are about the shape of one seam, so
@@ -611,5 +611,37 @@ group('a rock landing throws the dust off its footprint rather than shovelling i
     ok(firstCol <= bankCeiling(colOfX(heap.from)) + 1,
        'the first column of that heap is not a wall against the rock',
        `${firstCol} cells, ceiling ${bankCeiling(colOfX(heap.from))}`)
+  ];
+});
+
+// Every strip is marked out on the ground before anything lands on it -- pegs at
+// its two ends and the mark of what piles there in the middle -- and the marking
+// is drawn off the strip itself. There is nothing here that can go wrong with a
+// strip's *position*, because nothing about it is written down twice.
+//
+// What can go wrong is the one thing that is written down: `PILE_HOLDS` says
+// what each strip holds, and a key misspelled in it is a station silently marked
+// as holding dust. That is a wrong drawing with nothing to say it is wrong, so
+// it is checked here rather than looked for on screen. The other direction is
+// deliberately NOT an error: a strip with no entry holds dust, which is what the
+// rock and the scrubbing house pay out and what a new station pays out until
+// somebody gives it a find of its own.
+group('every strip on the ground says whose it is', async () => {
+  // Everything the yard can open, so every strip that can exist does.
+  openSites();
+  window.__meteor();
+  window.__buy('unlockscrub');
+  window.__finish();
+  run(1);
+  const keys = state().piles.map(p => p.key);
+  const named = Object.keys(PILE_HOLDS);
+  const strays = named.filter(k => !keys.includes(k));
+  return [
+    ok(keys.length >= 4, 'the yard lays out its strips', keys.join(' ')),
+    ok(strays.length === 0, 'and nothing in PILE_HOLDS names a strip that does not exist',
+       strays.join(' ')),
+    ok(keys.every(k => PILE_HOLDS[k] === undefined || FIND_COLOR[PILE_HOLDS[k]]),
+       'and everything it does name is a find the game has a colour for',
+       JSON.stringify(named.map(k => `${k}:${PILE_HOLDS[k]}`)))
   ];
 });
