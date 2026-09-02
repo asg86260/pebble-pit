@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { SITES, workAt, progressAt } from './works.js';
+import { SITES, workAt, progressAt, busyAt } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
@@ -33,7 +33,7 @@ import { puff } from './puff.js';
 import { jawX, jawY, shaftX, rigTop } from './quarry.js';
 import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
-import { rockLeft, groundAt } from './world.js';
+import { rockLeft, groundAt, farmShed, quarryShed, plotSlots } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
@@ -188,13 +188,22 @@ export function drawBridge() {
 export function drawFarm() {
   if (!S.farmOpen) return;
 
+  // Laid out at its full width from the first frame -- see C6 in
+  // wave-feedback3.md. `plotSlots` is every furrow the row will ever have;
+  // `S.plots.length` is how many have actually been broken. The fence brackets
+  // the whole row, and a slot past what has been bought draws as a bare post
+  // with nothing turned over in it -- ground waiting to be broken, not ground
+  // that does not exist yet.
+  const slots = plotSlots();
+  const rightX = plotX(slots - 1);
+
   // The farm needs a silhouette or it is just texture on the ground line: a post
   // at either end of the row, with a stub of rail running off it, so the plot
   // reads as somewhere fenced and kept even when nothing is growing. Kept low
   // and thin -- it is there to bracket the plots, not to be the thing you look at.
   const postH = P * 6;
   ctx.fillStyle = '#000';
-  for (const px of [farm.x - FARM_GATE, farm.x + farm.w + FARM_GATE - P]) {
+  for (const px of [farm.x - FARM_GATE, rightX + FARM_GATE - P]) {
     ctx.fillRect(px, S.groundY - postH, P, postH);
     ctx.fillRect(px + (px < farm.x ? P : -P * 2), S.groundY - postH + P * 2, P * 2, P);
   }
@@ -202,8 +211,17 @@ export function drawFarm() {
   // A plot is three cells across and two deep, with the earth turned over in it.
   // Small, but a shape rather than a scratch, and it has something in it even
   // when nobody has been by to tend it.
-  for (let i = 0; i < S.plots.length; i++) {
+  for (let i = 0; i < slots; i++) {
     const x = Math.round(plotX(i) / P) * P;
+
+    if (i >= S.plots.length) {
+      // Not broken yet: a bare post at the furrow's spot, and no furrow -- the
+      // fence knows the row is this wide before a single plot in it is bought.
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x, S.groundY - P * 3, P, P * 3);
+      continue;
+    }
+
     const soil = S.groundY - P * 2;
 
     ctx.fillStyle = '#000';
@@ -224,6 +242,29 @@ export function drawFarm() {
 
     if (grown >= 1) drawMark(S.plotTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
   }
+}
+
+// The farm's and the quarry's own shed, in the black-box-with-a-door style
+// every building here is drawn in -- a mass, and a hole knocked in it for the
+// way in. See C5 in wave-feedback3.md.
+function drawShed(rect) {
+  const { x, y, w, h } = rect;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#fff';
+  const dw = Math.min(P * 2, w - P * 2), dh = Math.min(P * 3, h - P);
+  ctx.fillRect(x + (w - dw) / 2, y + h - dh, dw, dh);
+  ctx.fillStyle = '#000';
+}
+
+export function drawFarmShed() {
+  if (!S.farmOpen) return;
+  drawShed(farmShed());
+}
+
+export function drawQuarryShed() {
+  if (!S.quarryOpen) return;
+  drawShed(quarryShed());
 }
 
 
@@ -2129,6 +2170,96 @@ export function drawWorkBars() {
   }
 }
 
+// --- a busy site looks like a building site -----------------------------------
+// See C3 in wave-feedback3.md. A site under way used to read exactly like an
+// idle one but for a bar floating over it; now it is fenced while the work is
+// on, the way a real hole in the ground is.
+//
+// The footprint of a *station* -- the quarry, the farm, the scrub house, the
+// tower, the bench -- is simply its own rect. The yard is the odd one: it is
+// one slot shared by every building that has no gang of its own (the house,
+// the closet, the school, the lab, the casino, the tower's own unlock), and
+// what is going up there is named by the *row*, not by the site. So the row's
+// key is mapped to the placement table's key -- the same table `placeSites`
+// filled in -- and the rect that comes back is the thing actually being built,
+// not a guess at where the yard's building work happens to stand this week.
+const YARD_ROW_SITE = {
+  house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower'
+};
+
+function siteFoot(site) {
+  if (site === 'quarry') return { x: quarry.x, w: quarry.w };
+  if (site === 'farm') return { x: farm.x, w: farm.w };
+  if (site === 'scrub') return { x: scrub.x, w: scrub.w };
+  if (site === 'tower') return { x: tower.x, w: tower.w };
+  if (site === 'bench') return { x: bench.x, w: bench.w };
+  if (site === 'yard') {
+    const w = workAt('yard');
+    const placed = w && S.placed && S.placed[YARD_ROW_SITE[w.key]];
+    if (placed) return { x: placed.x, w: placed.w };
+    // A yard row this table does not know about yet: a guess centred on where
+    // the row said it would stand, rather than nothing at all.
+    const x = w?.at ?? S.cx;
+    return { x: x - P * 6, w: P * 12 };
+  }
+  return null;
+}
+
+// The one body actually putting the thing up, where there is one -- the yard
+// and the bench have no gang of their own, so `builders` are who is standing at
+// them. A station with a gang (the quarry, the farm) has no single "the
+// builder"; the puff comes off wherever the bar hangs instead, which is the
+// same place the eye is already reading as "the work".
+function builderPos(site) {
+  const w = S.workers.find(o => o.type === 'builder' && o.site === site);
+  if (w) return { x: w.x + WORKER / 2, y: w.y };
+  const at = SITE_AT[site]?.();
+  return at ? { x: at.x, y: S.groundY } : null;
+}
+
+// A striped post: alternating cell-high bands, the black ones doing all the
+// work -- a white band against the page is simply the page.
+function drawBarrierPost(x, y, w, bands) {
+  for (let i = 0; i < bands; i++) {
+    if (i % 2 !== 0) continue;
+    ctx.fillRect(x, y + i * P, w, P);
+  }
+}
+
+// how often a busy site throws up a puff of dust, and when each one last did
+const BUILD_PUFF_MS = 1500;
+const buildPuffAt = {};
+
+export function drawBuildSites() {
+  for (const site of SITES) {
+    if (!busyAt(site)) { delete buildPuffAt[site]; continue; }
+    const foot = siteFoot(site);
+    if (!foot) continue;
+
+    const postW = P * 2, postBands = 5, postH = P * postBands;
+    const left = Math.round(foot.x / P) * P - P * 3 - postW;
+    const right = Math.round((foot.x + foot.w) / P) * P + P * 3;
+    const topY = S.groundY - postH;
+
+    ctx.fillStyle = '#000';
+    drawBarrierPost(left, topY, postW, postBands);
+    drawBarrierPost(right, topY, postW, postBands);
+
+    // the tape, at head height, dashed a cell on and a cell off
+    const tapeY = S.groundY - P * 3;
+    for (let x = left + postW; x < right; x += P * 2)
+      ctx.fillRect(x, tapeY, P, 2);
+
+    const t = now();
+    if (t >= (buildPuffAt[site] || 0)) {
+      buildPuffAt[site] = t + BUILD_PUFF_MS;
+      const pos = builderPos(site);
+      if (pos) puff(pos.x, pos.y - P * 2);
+    }
+  }
+}
+
 export function drawLabMark() {
   if (!S.labOpen || !S.labDone) return;
   const at = labMarkAt();
@@ -3052,7 +3183,13 @@ export function drawWorkers() {
     ctx.fillStyle = '#000';
     if (w.hasCore) {
       const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
-      drawCircle(x + WORKER / 2, y - P * (stack + 2), P * 1.2);
+      const cx = x + WORKER / 2, cy = y - P * (stack + 2);
+      // A carried core is still a core: it gives off the same waves one lying
+      // on the ground does, the way `drawCoreAt` draws both together. Drawn
+      // straight here rather than through `drawCoreAt` because the disc riding
+      // a body is a different size from the one on the ground.
+      drawCoreGlow(cx, cy);
+      drawCircle(cx, cy, P * 1.2);
     }
   }
 }
@@ -3091,11 +3228,13 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
+  drawQuarryShed();          // the shed beside it, holding its board
   drawCut();                 // the dust lying in it, after the quarry for the same reason
                  // after the quarry, or its white columns erase it
   drawBridge();              // and the way across it
   drawDrill();               // which the drill stands on
   drawFarm();
+  drawFarmShed();            // the shed beside it, holding its board
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
   drawBelt();                // the road from the rock to the hole
@@ -3172,6 +3311,7 @@ export function draw() {
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
   drawWorkBars();          // and whatever else the yard is putting up
+  drawBuildSites();        // fenced off and dusty, for as long as it is under way
   drawDraught();           // the air going into the scrubbing house
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower

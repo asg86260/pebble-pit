@@ -30,7 +30,7 @@ const skyLeft = kind => {
 };
 import { at, count, countDust } from './grid.js';
 import { wayAt } from './route.js';
-import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX } from './world.js';
+import { rockLeft, bridgeSpan, groundAt, benches, plotCount, openingCamX, plotSlots, farmShed, quarryShed } from './world.js';
 import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
@@ -380,6 +380,9 @@ export const snapshot = () => ({
   ladder: (l => ({ x: Math.round(l.x), top: Math.round(l.top), foot: Math.round(l.foot) }))(ladder()),
   benches: benches(),
   benchLevel: S.benchLevel,
+  // The two sheds -- see C5. Only meaningful once the station they belong to is
+  // standing, the same as everything else about it.
+  quarryShed: S.quarryOpen ? quarryShed() : null,
   quarryDug: +dugShare().toFixed(3),
   quarryTotal: S.quarryTotal || 0,
   quarryDone: quarryDone(),
@@ -400,7 +403,12 @@ export const snapshot = () => ({
   farmhands: S.farmhands,
   farmX: Math.round(farm.x),
   farmW: farm.w,
+  farmShed: S.farmOpen ? farmShed() : null,
   plotCount: plotCount(),
+  // How wide the row is laid out, whether or not every furrow in it has been
+  // broken -- see C6 in wave-feedback3.md. `plotCount` above is the mechanical
+  // one and keeps meaning "bought"; this is what the fence actually brackets.
+  plotSlots: plotSlots(),
   plotLevel: S.plotLevel,
   plots: S.plots.map(b => +b.toFixed(2)),
   plotTone: [...S.plotTone],

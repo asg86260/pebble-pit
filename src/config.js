@@ -2442,3 +2442,16 @@ export const BUILD_EFFORT = 1;
 // swallowed every idle body would stop the dust moving altogether, and what this
 // is meant to be is a *share* of the yard's attention rather than all of it.
 export const BUILD_GANG = 3;
+
+// --- the farm's and the quarry's own sheds -----------------------------------
+// The two stations with a board and nothing to hold it -- see C5 in
+// wave-feedback3.md. A small shed on the station's left edge, in the same black
+// box and white door every other building here is drawn in. Small on purpose:
+// it is there to give the board something to stand over, not to be the thing
+// you look at.
+export const FARM_SHED_W = P * 6;
+export const FARM_SHED_H = P * 7;
+export const QUARRY_SHED_W = P * 6;
+export const QUARRY_SHED_H = P * 7;
+// bare ground kept between a shed and the working ground it stands beside
+export const SHED_GAP = P * 3;

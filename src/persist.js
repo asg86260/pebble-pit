@@ -11,7 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
-import { SITES, rowFor } from './works.js';
+import { SITES, rowFor, busyBuilderSites } from './works.js';
 import { resetCut } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
@@ -656,6 +656,20 @@ export function restore() {
   resite();                    // the quarry is as deep and the plot as wide as it was
   restoreCrew(s.who);          // the same people, where they were, with what they have done
   syncWorkers();               // and anybody the counts say is missing
+  // A site with no gang of its own -- the yard, the bench -- that was busy when
+  // the tab shut is busy again the moment it comes back: `S.works` is written
+  // above, before the crew even exists. But nobody was sent to it, because the
+  // one thing that turns spare hands into builders is the same thing a fresh
+  // build starting calls, and a reload is not a build starting -- so the site
+  // stood there for ever with nobody at it. See C2 in wave-feedback3.md.
+  //
+  // Only run when there is actually a busy builder site to redispatch to: a
+  // save with nothing on the go has nothing to fix, and `rebalance` recomputes
+  // every job's count from scratch (`spareHands`, which is `S.crew` less every
+  // assigned job) -- a second pass over a roster that a save's own numbers
+  // never quite add up to is a place a body can be lost that has nothing to do
+  // with this bug.
+  if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
   if (!S.introDone) startIntro();
   restoreGrid(floor, s.floor);

@@ -32,6 +32,10 @@ import { mult } from './lab.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
          busyBuilderSites, siteX } from './works.js';
+// The one row this file's owner does not hold: the house is track C's
+// building, and this is the one line of upgrades.js it edits. See C1 in
+// wave-feedback3.md.
+import { nextHouseAt } from './house.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -672,6 +676,11 @@ export function assign(job, d) {
 export const HOUSE_ROW = {
   key: 'house',
   name: 'another house',
+  // A building, like the rest of them past the bench: a room does not appear,
+  // it goes up, with a builder at it -- see C1 in wave-feedback3.md. `at` is
+  // where the next room will stand, which house.js works out the same way it
+  // works out every other room.
+  kind: 'building', site: 'yard', at: () => nextHouseAt(),
   from: () => S.crew,
   to: () => S.crew + 1,
   // One pool pays for every job now, so the curve is gentler than the four
@@ -682,6 +691,12 @@ export const HOUSE_ROW = {
   buy: hire,
   show: () => S.crew > 0
 };
+// Registered on its own, because it lives on the crew board rather than the
+// bench (see crewboard.js) and so is not one of `UPGRADES` below -- but a work
+// coming out of a save is a key and two numbers, and it still has to find its
+// way back to this row's own `buy` when it lands. See `registerRows` in
+// works.js.
+registerRows([HOUSE_ROW]);
 
 // A site is a place, bought once with cores. It comes with nobody in it: who
 // works it is the same question as who works the rock.

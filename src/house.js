@@ -70,8 +70,8 @@ const courseWide = c => Math.max(3, HOUSE_COLS - c);
 // the doorway; the rooms after it are the ones with people in them. So there is
 // one window a body from the very first, and building stays what it was: a hire
 // is a room, and room seventeen stands where room seventeen stands.
-export function cubes() {
-  const n = S.crew > 0 ? S.crew + 1 : 0;
+export function cubes(nOverride) {
+  const n = nOverride != null ? nOverride : (S.crew > 0 ? S.crew + 1 : 0);
   if (n <= 0) return [];                      // nobody hired: there is nothing here
 
   // The left edge of the ground course, and it never moves: it is worked out
@@ -98,6 +98,24 @@ export function cubes() {
 // walk belongs to the crew, and this is only the address.
 export function doorAt() {
   return { x: Math.round((houseCx() - HOUSE_COLS * HOUSE_CUBE / 2) / P) * P + HOUSE_CUBE / 2 };
+}
+
+// Where the *next* hire's room will stand, for a builder to walk to while it is
+// going up. Hiring is a room -- see `cubes` -- so the row that hires somebody
+// asks here rather than picking a spot of its own, and the body doing the
+// building stands exactly where the room is about to appear.
+//
+// Worked out by asking `cubes` for one more than today's count, never by
+// mutating `S.crew` to peek: a peek that forgot to put the count back would be
+// a hire that happened twice. The first hire ever adds two rooms at once -- the
+// doorway and the first room to live in, see the comment on `cubes` -- so the
+// spot offered is the later of the two, which is the one anybody would call
+// "the new room".
+export function nextHouseAt() {
+  const today = S.crew > 0 ? S.crew + 1 : 0;
+  const rooms = cubes(today + (S.crew > 0 ? 1 : 2));
+  const added = rooms[rooms.length - 1];
+  return added ? Math.round((added.x + HOUSE_CUBE / 2) / P) * P : houseCx();
 }
 
 // Where the holes go: the door in the first room built, and one window dead in
