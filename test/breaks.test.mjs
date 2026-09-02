@@ -187,3 +187,51 @@ group('a janitor on his break smokes, every time', async () => {
     ok(cig > 0, 'which puts smoke in the air over him', `${cig} puffs`)
   ];
 });
+
+// The loo clock is an hour of work, and a body in your hand is not working.
+//
+// The clock is a deadline rather than a countdown, so anything that stops a body
+// working has to push the deadline out with it or the body is overdue the moment
+// it starts again. That was fixed for sleeping behind a front door and for the
+// two rooms with doors on them -- and picking somebody up is the same fact
+// arriving by a road the fix did not cover. A body carried across the yard did
+// nothing for the whole trip and was charged for every second of it, so putting
+// one down set it straight off to the closet.
+group('a body held on the cursor is not owing the yard an hour', async () => {
+  window.__reset();
+  window.__crew(2, 0);
+  window.__loo();
+  run(5);
+
+  const w = yard.S.workers[0];
+  const due = () => w.looAt - yard.clock.now();
+  const armed = !!w.looAt;
+  const before = due();
+
+  // ten seconds in the air on the cursor
+  for (let i = 0; i < 34; i++) { w.lifted = true; run(0.3); }
+  const held = due();
+  w.lifted = false;
+
+  // ...and then shaken: let go of, falling, and standing where it lands seeing
+  // stars. Nothing it does through any of that is work either.
+  const wobbled = window.__shake(0);
+  const after0 = due();
+  runUntil(() => !w.falling && !w.dizzyUntil, 20);
+  const after = due();
+
+  window.__crew(0, 0);
+  return [
+    ok(armed, 'the body has a break due at some point'),
+    // Within a frame or two of where it was: what it has already waited still
+    // counts, it simply does not owe for the time it spent off the ground.
+    ok(Math.abs(held - before) < 600,
+       'ten seconds in the hand costs it nothing off its clock',
+       `${Math.round((before - held) / 1000)}s lost`),
+    ok(wobbled && wobbled.dizzyFor > 0, 'and a shaking leaves it seeing stars',
+       JSON.stringify(wobbled)),
+    ok(Math.abs(after - after0) < 1200,
+       'and neither does the fall and the wobble at the end of it',
+       `${Math.round((after0 - after) / 1000)}s lost`)
+  ];
+});

@@ -62,26 +62,54 @@ function element(tag = 'div') {
       };
       walk(el);
       return out;
-    },
-    textContent: ''
+    }
   };
+  // Emptying an element empties it. `el.textContent = ''` is how every board in
+  // this game throws its rows away before building new ones, and here it was a
+  // plain property that set a string and left the children where they were --
+  // so a board rebuilt twice had two boards' worth of rows in it, and a check
+  // asking what was drawn could never see a row *leave*. The words themselves
+  // are kept as they were written rather than gathered from the children: what
+  // reads `textContent` back is a cell that wrote one, and it wants its own.
+  let text = '';
+  Object.defineProperty(el, 'textContent', {
+    get: () => text,
+    set: v => { text = String(v); el.children = []; }
+  });
   // A row on a board is written as one string of markup and then filled in cell
   // by cell -- `row.querySelector('.cost').textContent = price`. So what this has
-  // to do with markup is make a child per opening tag and remember what each one
-  // was called, which is all a row ever asks it. The children come out flat
-  // whatever the nesting said, and nothing minds: a row looks its cells up by
-  // name, and nothing in a check that never draws is looking at the shape.
+  // to do with markup is make an element per tag and remember what each one was
+  // called.
+  //
+  // Nested the way the markup nests, rather than laid out flat. Flat was enough
+  // for as long as every cell was found by class, and it stopped being enough
+  // the day the pips moved *inside* the name: `refresh` reads the two halves of
+  // that cell off `name.firstElementChild` and `.lastElementChild`, and with
+  // every tag a child of the row those two were the wrong elements -- so
+  // filling a board in node threw, and the one tier that can afford to do it
+  // sixty times could not read a single word off a row.
   let html = '';
   Object.defineProperty(el, 'innerHTML', {
     get: () => html,
     set: v => {
       html = String(v);
-      el.children = [...html.matchAll(/<([a-zA-Z]+)([^>]*)>/g)].map(([, tag, attrs]) => {
+      el.children = [];
+      const stack = [el];
+      for (const [, close, tag, attrs] of html.matchAll(/<(\/?)([a-zA-Z]+)([^>]*)>/g)) {
+        if (close) { if (stack.length > 1) stack.pop(); continue; }
         const kid = element(tag);
         kid.className = (attrs.match(/class="([^"]*)"/) || [, ''])[1];
-        return kid;
-      });
+        stack[stack.length - 1].children.push(kid);
+        // A tag that closes itself has no children and nothing to pop it.
+        if (!/\/>\s*$/.test(attrs + '>')) stack.push(kid);
+      }
     }
+  });
+  // The first and last of an element's own children, which is how a row finds
+  // the two halves of a cell it wrote as one string of markup.
+  Object.defineProperties(el, {
+    firstElementChild: { get: () => el.children[0] || null },
+    lastElementChild: { get: () => el.children[el.children.length - 1] || null }
   });
   return el;
 }

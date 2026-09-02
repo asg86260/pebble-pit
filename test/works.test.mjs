@@ -331,3 +331,131 @@ group('the waiting is in the bill, under a clock', async () => {
        left && clock ? `${clock[1]}ms -> ${left[1]}ms` : '')
   ];
 });
+
+// And the board says so afterwards.
+//
+// A work is the one change in this game that nobody's finger causes: you press
+// the row, and the thing it sells arrives seconds later while you are looking at
+// something else. Every board was rebuilt by whoever changed it -- and there is
+// no whoever here, so the row that had just been built stayed on the bench at
+// its old price, pressable, and the row it unlocked was not drawn at all.
+//
+// Read off the board itself rather than off the row list: what the list says is
+// exactly what was right all along. The question is what is on the sheet.
+group('a row that lands rebuilds the board it is on', async () => {
+  window.__reset();
+  const { showPanel, hud } = await import('../src/board.js');
+  window.__crew(4, 0);
+  window.__grant({ shards: 900, spores: 900, cores: 9 });
+  window.__tip(200000);
+
+  const shopEl = document.getElementById('shop');
+  const drawn = () => shopEl.children.filter(c => c.dataset.key).map(c => c.dataset.key);
+  showPanel('bench', true);                  // walked up to the bench
+  hud();
+
+  const before = drawn();
+  const bought = window.__buy('unlockfarm');
+  const landed = runUntil(() => !on('unlockfarm'), 180);
+  hud();                                     // one frame with the board open
+  const after = drawn();
+
+  return [
+    ok(before.includes('unlockfarm'), 'the row is on the bench to start with',
+       before.join(',')),
+    ok(bought && landed, 'it is paid for and the yard builds it',
+       `farm open: ${state().farmOpen}`),
+    ok(!after.includes('unlockfarm'),
+       'and once it is standing the row is off the board', after.join(',')),
+    // The other half of it: what the finished row unlocked is drawn without
+    // anybody pressing anything, which is the case no amount of remembering to
+    // call the builder on a press would ever have covered.
+    ok(after.includes('unlockquarry'),
+       'and what it opened up is drawn in its place', after.join(','))
+  ];
+});
+
+// What a build borrows, it gives back once -- and only if there is a body to
+// give.
+//
+// A loan used to be a job name pushed on to `S.lent` and paid back off that
+// list, with nothing tying either end of it to the body it was about. So a
+// player who moved somebody on to the same job while the loan was out got the
+// count handed back on top of the move: a crew of three, one build, and a rock
+// with four miners on it afterwards. The roster said four for the rest of the
+// run and there was never a fourth body.
+group('a loan is a body, and the roster ends where the player put it', async () => {
+  const start = () => {
+    window.__reset();
+    window.__crew(3, 0);                     // everybody on the rock, nobody spare
+    window.__grant({ shards: 900, spores: 900, cores: 9 });
+    window.__tip(200000);
+    run(2);
+  };
+  const land = () => runUntil(() => !on('unlockschool'), 180);
+
+  start();
+  window.__buy('unlockschool');
+  run(4);
+  const lent = state();
+  window.__assign('miners', 1);               // ...and the player fills the gap
+  const landedUp = land();
+  run(2);
+  const up = state();
+
+  start();
+  window.__buy('unlockschool');
+  run(4);
+  window.__assign('miners', -1);              // ...or takes another one off
+  const landedDown = land();
+  run(2);
+  const down = state();
+
+  return [
+    ok(lent.lent.length === 1 && lent.miners === 2,
+       'a body is borrowed off the rock for the build',
+       `${lent.miners} miners, owed ${JSON.stringify(lent.lent)}`),
+    ok(landedUp && landedDown, 'both builds finish'),
+    ok(up.miners === 3, 'the rock ends with the three the player asked for',
+       `${up.miners} miners out of a crew of ${up.crew}`),
+    ok(up.miners <= up.crew, 'and never with more miners than there are people',
+       `${up.miners} of ${up.crew}`),
+    ok(down.miners === 1, 'and taking one off means one off, not one off and back',
+       `${down.miners} miners`),
+    ok(up.lent.length === 0 && down.lent.length === 0,
+       'with nothing left owed either way',
+       `${JSON.stringify(up.lent)} / ${JSON.stringify(down.lent)}`)
+  ];
+});
+
+// And the debt survives the tab being shut, because it is written on the body.
+//
+// It used to be written in two places -- the list, which was saved, and a flag
+// on the worker, which was not -- so a yard reloaded mid-build came back owing
+// something no worker in it was carrying. The two could only drift.
+group('a loan comes back with the body that owes it', async () => {
+  window.__reset();
+  window.__crew(3, 0);
+  window.__grant({ shards: 900, spores: 900, cores: 9 });
+  window.__tip(200000);
+  run(2);
+
+  window.__buy('unlockschool');
+  run(4);
+  window.__reload();
+  const back = state();
+  window.__assign('miners', 1);
+  const landed = runUntil(() => !on('unlockschool'), 180);
+  run(2);
+  const after = state();
+
+  return [
+    ok(back.lent.length === 1 && back.miners === 2,
+       'the yard comes back still owing the rock a body',
+       `${back.miners} miners, owed ${JSON.stringify(back.lent)}`),
+    ok(landed, 'and the school still goes up'),
+    ok(after.miners === 3 && after.miners <= after.crew,
+       'and the rock ends with the crew it was set to, not one more',
+       `${after.miners} miners out of ${after.crew}`)
+  ];
+});

@@ -22,7 +22,11 @@ import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fall
 import { spawnChip, bell, aim } from './dust.js';
 import { tidyStep, TIDY_ELBOW } from './tidy.js';
 import { pitRoom } from './pit.js';
-import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF, machineRate,
+// `JOBS` is renamed on the way in: this file has a `JOBS` of its own further
+// down -- the table of what each kind of body actually does -- and the roster's
+// list of job names is a different thing with the same name.
+import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF,
+         JOBS as ROSTER_JOBS, machineRate,
          roomAt, rebalance, commutePace } from './upgrades.js';
 import { KIT_JOBS, TYPE_OF } from './kit.js';
 import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop,
@@ -267,9 +271,16 @@ export const newRecord = () => ({
 // cut -- are worked out fresh every frame and are deliberately not saved, and
 // every stepper already copes with finding them gone, because a body can lose a
 // claim mid-play.
+// ...and which job it owes its way back to, if it was borrowed for a build.
+//
+// A loan is a body and it is saved with the body. It used to be a list of job
+// names on its own (`S.lent`), saved while the flag on the body was not -- so a
+// yard reloaded mid-build came back owing a debt that no worker in it was
+// carrying, and the two could only ever drift further apart. See `rebalance` in
+// upgrades.js.
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       'at', 'trained', 'kitOf', 'x', 'y',
-                      'carry', 'load', 'hasCore', 'goal'];
+                      'carry', 'load', 'hasCore', 'goal', 'lentFrom'];
 
 export function keepOf(w) {
   const out = { type: w.type };
@@ -288,7 +299,18 @@ export function wearRecord(w, from) {
 // scrubbing house's, or up in the balloon. One list, because two things ask it
 // -- the celebration (a body that is not here cannot dance in it) and the loo
 // clock below -- and a second copy of it is a second copy to keep in step.
-export const outOfYard = w => !!(w.inside || w.aloft || indoors(w) || inHouse(w));
+//
+// ...and off the ground on the cursor, which is the same fact by a different
+// road. A body you have picked up is not at work: it is in the air, then it is
+// falling, then it is standing where it landed seeing stars, and it does not
+// mine, carry or shovel through any of it. The loo clock is an hour of *work*
+// (see below), and it went on running through all three -- so carrying somebody
+// across the yard and putting them down made them overdue on the spot, which is
+// exactly the bug that was just fixed for a body asleep behind its own door,
+// arriving by a road that fix did not cover.
+export const outOfYard = w =>
+  !!(w.inside || w.aloft || indoors(w) || inHouse(w) ||
+     w.lifted || w.falling || w.dizzyUntil);
 
 // one frame of getting older, and of being somewhere
 export function stepRecords(dt) {
@@ -609,9 +631,16 @@ function settle(w) {
   delete fresh.x;                  // where it is standing is where it walked to
   delete fresh.y;
   Object.assign(w, fresh);
-  // and it is nobody's loan any more: whatever it was lent for, it is on a job
-  // of its own now, and the next borrowing starts from scratch
-  delete w.lend;
+  // and if it has landed on a job of its own, it is nobody's loan any more: the
+  // debt was "this body owes its way back to the rock", and a body standing at a
+  // station on the roster is not owed to anywhere.
+  //
+  // Only for a job on the roster. A borrowed body's very next stop is the build
+  // it was borrowed FOR -- a builder, and then a hauler when the build lands --
+  // and clearing the debt there would clear every debt in the yard about a
+  // frame after it was taken on, which is how `S.lent` came to be the only
+  // record of it. See KEEPS above.
+  if (ROSTER_JOBS.includes(JOB_OF[w.type])) delete w.lentFrom;
   w.trained = hat;
   w.kitOf = of;
   w.carry = carry;
@@ -2079,7 +2108,7 @@ export function syncWorkers() {
   // A body lent to a build is the one its station gives up -- `rebalance` picked
   // it for being nearest -- so it is considered last and therefore stood down
   // first. Everybody else keeps their order.
-  const ordered = [...S.workers.filter(w => !w.lend), ...S.workers.filter(w => w.lend)];
+  const ordered = [...S.workers.filter(w => !w.lentFrom), ...S.workers.filter(w => w.lentFrom)];
   for (const w of ordered) (room[w.type]-- > 0 ? keep : stood).push(w);
   for (const w of stood) {
     for (let i = 0; i < (w.carry || 0); i++)
@@ -2599,6 +2628,10 @@ function elbowIdle(w) {
 // keep them four columns apart (see `nearestMuck`); this is only for the end of
 // a clear-up, when the last patch is claimed by somebody and a second body comes
 // for it anyway.
+//
+// It hands the nudge back rather than moving the body itself, because where a
+// shovelling body stands is snapped to a whole cell and a nudge of a third of a
+// pixel does not survive a snap. See the caller.
 function elbowMuck(w) {
   for (const o of S.workers) {
     if (o === w || o.inside || o.goal !== 'muck' || inWorking(o)) continue;
@@ -2607,8 +2640,6 @@ function elbowMuck(w) {
     // Two on the very same pixel have no side to push to. The tiebreak is where
     // each stands in the crew list, so they alternate and actually come apart --
     // a coin toss they both call the same way leaves them stacked for ever.
-    const tie = S.workers.indexOf(w) % 2 ? 1 : -1;
-    w.x -= Math.sign(d || tie) * 0.35 * frames();
     // Sideways, and nothing else. It used to plant the feet on the ground line
     // after the nudge, which is right for the yard and wrong on the hill: a
     // miner shovelling the crest was dropped the height of the rock on every
@@ -2616,8 +2647,10 @@ function elbowMuck(w) {
     // did not -- the body flickering between the top of the rock and the ground
     // for as long as the two of them were shoulder to shoulder. Height belongs
     // to whoever is doing the job; the elbow only says where along the ground.
-    return;
+    const tie = S.workers.indexOf(w) % 2 ? 1 : -1;
+    return -Math.sign(d || tie) * 0.35 * frames();
   }
+  return 0;
 }
 
 // The nearest column of dust that nobody else has set off for. One column, one
@@ -3011,7 +3044,27 @@ function takeMess(w, c) {
   // cannot be spaced out bunches onto one spot and clears a yard slower than
   // it did before. Snapping is enough -- what read as sliding was a body
   // creeping a fraction of a pixel a frame with its lunge pinned at full.
-  w.x = Math.round(w.x / P) * P;
+  //
+  // The snap is taken off a spot the body keeps in whole pixels of its own,
+  // rather than off `w.x` itself. It was `w.x = Math.round(w.x / P) * P` -- and
+  // the elbow at the bottom of this function then nudged `w.x` by about a third
+  // of a pixel, which the very next frame's round put straight back. The nudge
+  // could never add up to anything, so two bodies that arrived on one column
+  // shovelled through each other for the whole of the clear-up: at the end of a
+  // heap there is nowhere else for the second one to be sent.
+  //
+  // It is the trap balloon.js writes up over its craft: a thing that moves less
+  // than a pixel a frame has to remember the part of a pixel it has moved. So
+  // the fraction lives on `shovelAt` and `w.x` is what that rounds to -- the
+  // feet still land on a whole cell and stay on it between swings, and the elbow
+  // still moves the body, a cell at a time, once it has pushed far enough to be
+  // worth a cell.
+  //
+  // Re-taken whenever the body is not already stood on its own spot, which is
+  // every arrival: it has just walked here, and where it walked to is where it
+  // means to stand.
+  if (w.shovelAt == null || Math.abs(w.shovelAt - w.x) > P) w.shovelAt = w.x;
+  w.x = Math.round(w.shovelAt / P) * P;
   w.y = climbTo(w, feetOn(on, w.x));
   if (now >= (w.sweepAt || 0)) {
     sweepMuckAt(w.x + WORKER / 2, 1, w);
@@ -3022,7 +3075,7 @@ function takeMess(w, c) {
   // has something to shovel wherever you stand, so a gang that arrived
   // together would each find work on the spot they arrived on and clear
   // the whole mess as one lump you cannot count.
-  elbowMuck(w);
+  w.shovelAt += elbowMuck(w);
   return true;
 }
 
