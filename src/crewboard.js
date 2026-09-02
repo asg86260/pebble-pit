@@ -11,18 +11,19 @@
 // you hover it is a shape this game already has, and a second one invented for
 // this would read as a different game's menu.
 
-import { S } from './state.js';
+import { S, floor, pit, outhouse } from './state.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
 import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
-import { follow, atStation } from './world.js';
-import { showCrewList } from './board.js';
+import { follow, atStation, rockLeft } from './world.js';
+import { showCrewList, standRect } from './board.js';
 import { indoors } from './lab.js';
+import { onTheMove } from './air.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
-import { WORKER, SHARD_CELL, SPORE_CELL, findKind } from './config.js';
+import { P, WORKER, SHARD_CELL, SPORE_CELL, findKind } from './config.js';
 
 // The block, as a rectangle to stand near: what is actually built, on a plot
 // that never moves.
@@ -128,6 +129,98 @@ function cargo(w) {
   return out.length ? out.join('  ') : 'nothing';
 }
 
+// --- what it is up to, and where it is going -----------------------------------
+// `favorite` above is what a body has done all day; these two are this second.
+// Both were readable off the yard by watching, and only by watching: the crew
+// all look the same and half of them are walking at any moment, so "why is that
+// one going that way" had no answer short of following it across the yard.
+//
+// A destination is an x -- `routeTo` is a number -- and a number is not an
+// answer to "where is it going". So a place is named the way the yard already
+// names places: the buildings by the same rects that decide where you stand to
+// open their boards, the rest by the ground itself.
+const NAMED = { bench: 'the bench', school: 'the school',
+                casino: 'the casino', tower: 'the tower' };
+
+// The stations a job is *at*, asked with the yard's own question. `atStation`
+// is what says whether a body counts as being at its work, spans and all --
+// the farm is its plots and not just its shed, the quarry is the cut -- so a
+// place named any other way here would disagree with the board about where
+// somebody is standing the moment a plot was bought.
+const JOB_PLACE = [['miners', 'the rock'], ['quarriers', 'the quarry'],
+                   ['farmhands', 'the farm'], ['labbers', 'the lab'],
+                   ['scrubbers', 'the scrubbing house']];
+
+function placeAt(x) {
+  for (const [job, name] of JOB_PLACE) if (atStation(job, x)) return name;
+  for (const key in NAMED) {
+    const r = standRect(key);
+    if (r && x > r.x - P * 6 && x < r.x + r.w + P * 6) return NAMED[key];
+  }
+  if (S.outhouseOpen && x > outhouse.x - P * 4 && x < outhouse.x + outhouse.w + P * 4)
+    return 'the closet';
+  const h = houseRect();
+  if (h.w && x > h.x - P * 4 && x < h.x + h.w + P * 4) return 'the houses';
+  if (x > pit.x - P * 4 && x < pit.x + pit.w + P * 4) return 'the hole';
+  return 'the yard';
+}
+
+// One line a goal. `goal` is the word the yard's own steppers set on a body --
+// there is no second state machine here to fall out of step with them, which is
+// the whole reason this reads off `goal` rather than off a guess made from
+// where the body happens to be standing.
+const NOW = { seek: 'looking for dust', dump: 'tipping a load',
+              muck: 'shovelling up mess', cut: 'working the cut',
+              work: 'working the cut', up: 'climbing out', down: 'climbing down',
+              tend: 'tending a plot', home: 'heading home', idle: 'nothing much',
+              in: 'inside', aloft: 'up in the balloon' };
+
+function doing(w) {
+  // The four that outrank any goal: a body in your hand, in the air, on a break
+  // or through its own front door is not doing its job whatever the stepper
+  // last wrote on it.
+  if (w.lifted) return 'in your hand';
+  if (w.falling) return 'in mid-air';
+  if (w.brk || w.resting) return 'on a break';
+  if (w.inside) return 'at home';
+  if (w.goal === 'to') return 'walking there';
+  // At a site: what is being put up says more than the word "working". The
+  // bench is the one site where the thing being built is not a place.
+  if (w.goal === 'at') return w.site === 'bench' ? 'fitting kit at the bench' : 'building';
+  return NOW[w.goal] || DOES[JOBS_AT[w.type]] || 'working';
+}
+
+// Where the walk ends, when there is something to name. A destination is an x,
+// and every job keeps its own: a route remembers what it was a route to, and
+// the jobs that walk without one (a hauler's day is walking) are heading for
+// the grain they claimed or the lip they tip it over. Read off the fields the
+// steppers already set, so there is no second copy of anybody's plans here to
+// fall out of step with the first.
+function targetOf(w) {
+  if (w.route && w.routeTo != null) return w.routeTo;
+  if (w.goal === 'dump') return pit.x;
+  if (w.goal === 'seek' && w.claim >= 0) return floor.x + w.claim * P;
+  if (w.goal === 'muck' && w.muckAt != null) return w.muckAt;
+  if (w.goal === 'home') return houseRect().x;
+  return w.routeTo ?? null;
+}
+
+// Moving, asked of the yard rather than guessed from a goal: `onTheMove` is the
+// same test the dust makes before it kicks up at somebody's feet. A goal says
+// what a body is trying to do and not whether its feet are going anywhere -- a
+// hauler scooping a column and a hauler crossing the yard to reach it are both
+// 'seek' -- and the card should say "staying put" for the first.
+const walking = w => !w.lifted && !w.falling && onTheMove(w);
+
+const heading = w => {
+  if (!walking(w)) return 'staying put';
+  const to = targetOf(w);
+  // Moving with nothing named to move towards -- a farmhand ambling the last
+  // few cells to the next plot. Saying so beats naming the ground it is
+  // standing on and beats claiming it has stopped.
+  return to == null ? 'on the move' : placeAt(to);
+};
+
 export function card(w) {
   const mins = Math.floor((w.lived || 0) / 60000);
   const does = DOES[mainlyAt(w)] || 'transporting';
@@ -135,6 +228,10 @@ export function card(w) {
     w.name || 'somebody',
     row('age', mins < 1 ? 'new today' : `${mins} min`),
     row('favorite', does),
+    // This second, above the day's tally: what you hover a moving body to
+    // find out is what it is doing now, not what it has done since breakfast.
+    row('doing', doing(w)),
+    row('heading', heading(w)),
     row('mined', tally(w.mined)),
     row('quarried', tally(w.quarried)),
     row('farmed', tally(w.farmed)),
