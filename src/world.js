@@ -11,7 +11,8 @@ import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GRO
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
-        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H } from './config.js';
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
+        FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
@@ -51,6 +52,24 @@ export const rockLeft = () => Math.round((S.cx - (S.gw / 2) * P) / P) * P;
 export const benches = () => Math.min(QUARRY_BENCH_MAX, QUARRY_BENCH0 + S.benchLevel);
 export const quarryDepth = () => QUARRY_H + S.benchLevel * QUARRY_DEEPEN;
 export const plotCount = () => Math.min(FARM_PLOTS_MAX, FARM_PLOTS0 + S.plotLevel);
+// How many plots the row has laid out, whether or not they are broken yet --
+// see C6 in wave-feedback3.md. `plotCount` keeps meaning "bought", because
+// nothing about which plots are *worked* changes; this is only for drawing the
+// row at its full width from the first frame.
+export const plotSlots = () => FARM_PLOTS_MAX;
+
+// The shed each of the two growing sites stands beside, on its own left edge --
+// see C5. Worked out off the station's own anchor rather than off `S.placed`,
+// because that anchor is already the shed's far edge plus the gap: the two
+// numbers cannot come apart.
+export const farmShed = () => ({
+  x: farm.x - SHED_GAP - FARM_SHED_W, y: S.groundY - FARM_SHED_H,
+  w: FARM_SHED_W, h: FARM_SHED_H
+});
+export const quarryShed = () => ({
+  x: quarry.x - SHED_GAP - QUARRY_SHED_W, y: S.groundY - QUARRY_SHED_H,
+  w: QUARRY_SHED_W, h: QUARRY_SHED_H
+});
 
 // A site that has just grown. It is not a relayout: nothing else in the yard
 // moves, and the pile strips are the one thing beside the site itself that has
@@ -136,6 +155,30 @@ export function layPiles() {
 // at boot. Here the near end and the far end are both produced by one cursor
 // walking one way, and an inverted strip is not a thing that can be expressed.
 //
+// The order the walk visits the table in -- see C7 in wave-feedback3.md.
+// Buildings go up in the order they are bought, not a fixed one, so a save
+// that broke the farm's ground before the quarry's sees the farm standing
+// nearer the rock than the quarry does.
+//
+// The bench and the settlement are not part of that: neither is ever bought
+// through a row of its own -- the bench is there from the first frame and the
+// settlement is what hiring has always drawn -- so they keep the fixed order's
+// first two places, always, and `S.buildOrder` only ever reorders what is left.
+// A save with nothing in `S.buildOrder` -- new, or from before this existed --
+// gets the fixed order back exactly, because an empty list bought nothing and
+// leaves everything after the bench and the house in the table's own order.
+function siteOrder() {
+  const rest = SITES.filter(row => row.key !== 'bench' && row.key !== 'house');
+  const bought = (S.buildOrder || []).filter(k => rest.some(row => row.key === k));
+  const waiting = rest.filter(row => !bought.includes(row.key));
+  return [
+    ...SITES.filter(row => row.key === 'bench'),
+    ...SITES.filter(row => row.key === 'house'),
+    ...bought.map(k => rest.find(row => row.key === k)),
+    ...waiting
+  ];
+}
+
 // Returns a map of key -> { x, w } and the strips, in yard order.
 export function placeSites() {
   const snap = v => Math.round(v / P) * P;
@@ -148,7 +191,7 @@ export function placeSites() {
   // thirty pixels out and a rock taller than it was wide.
   let x = snap(S.cx - TO_FIRST_SITE);
 
-  for (const row of SITES) {
+  for (const row of siteOrder()) {
     const w = snap(row.w());
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 

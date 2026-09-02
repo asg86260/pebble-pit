@@ -1,0 +1,177 @@
+// Track A of the wave-3 pass: the numbers a new player meets in the first half
+// hour, and four rows that were simply misfiled. See docs/wave-feedback3.md,
+// "Track A -- economy & fixes" (A1-A8).
+
+import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
+import { priceText, billOf, UPGRADES, minerBite } from '../src/upgrades.js';
+import { LAB_UPGRADES } from '../src/lab.js';
+import { QUARRY_UPGRADES } from '../src/quarry.js';
+import { FARM_UPGRADES } from '../src/farm.js';
+import { SCHOOL_UPGRADES } from '../src/school.js';
+import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { TOWER_UPGRADES } from '../src/tower.js';
+import { CASINO_UPGRADES } from '../src/casino.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, MINER_BITE_MULT, RUNGS } from '../src/config.js';
+
+const roster = () => state().roster;
+
+// --- A1: the second on a bill has no "s" -------------------------------------
+group('a time price drops the s, and keeps the minutes', async () => {
+  window.__reset();
+  return [
+    ok(priceText('time', 45000) === '45', 'forty-five seconds reads as a bare number',
+       priceText('time', 45000)),
+    ok(priceText('time', 12000) === '12', 'the reported case: twelve seconds, not "12s"',
+       priceText('time', 12000)),
+    ok(priceText('time', 125000) === '2 min', 'a longer wait still says minutes',
+       priceText('time', 125000)),
+    ok(priceText('dust', 45) === '45', 'a coin price is untouched', priceText('dust', 45))
+  ];
+});
+
+// --- A2: the janitor's post is the ordinary two lines -------------------------
+// Every other station's post is a headcount and, once it owns kit, a second
+// line under it for the hats. The janitor's post is built off the same table
+// (`POSTS` in roster.js) and drawn by the same function (`drawRoster`) as
+// every other one now -- there is no third field and no extra case for it, so
+// a report of the roster carries exactly the same shape for the loo as for any
+// other kitted post.
+group('the janitor post carries no line the others do not', async () => {
+  window.__reset();
+  window.__loo(true);
+  const loo = roster().find(r => r.job === 'janitors');
+  const mine = roster().find(r => r.job === 'miners');
+  return [
+    ok(!!loo, 'the closet posts a janitor row once it is open'),
+    ok(!!mine, 'and the rock has one to compare it with'),
+    ok(Object.keys(loo).sort().join() === Object.keys(mine).sort().join(),
+       'the two posts report the same fields -- no extra line on the janitor\'s',
+       `${Object.keys(loo).sort().join()} vs ${Object.keys(mine).sort().join()}`)
+  ];
+});
+
+// --- A3: the closet opens with one post; loopost buys the second -------------
+group('the closet starts at one post, and loopost buys the second', async () => {
+  window.__reset();
+  window.__loo(true);
+  window.__crew(0, 2);                          // spare hands to build it
+
+  const one = roster().find(r => r.job === 'janitors');
+  const shownBefore = UPGRADES.find(u => u.key === 'loopost').show();
+
+  window.__grant({ shards: 20 });
+  window.__tip(1000);                           // the bill's dust half, from DUST_PER
+  const bought = buyBuilt('loopost');
+  const two = roster().find(r => r.job === 'janitors');
+  const shownAfter = UPGRADES.find(u => u.key === 'loopost').show();
+
+  return [
+    ok(LOO_POSTS === 1, 'LOO_POSTS itself is one now', LOO_POSTS),
+    ok(one.hats === 1, 'the closet opens with one cap on the stand', one.hats),
+    ok(shownBefore, 'and the second cap is on offer'),
+    ok(bought, 'and it can be bought'),
+    ok(two.hats === 2, 'which puts a second cap on the stand', two.hats),
+    ok(!shownAfter, 'and the row is done once bought')
+  ];
+});
+
+group('a save from before the second cap keeps both', async () => {
+  window.__reset();
+  window.__loo(true);
+  yard.S.dirty = true;
+  yard.persist();
+  const raw = JSON.parse(localStorage.getItem('boulder-clicker/v4'));
+  delete raw.looPosts;                          // the field a pre-wave save never wrote
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(raw));
+  yard.restore();
+
+  return [
+    ok(state().roster.find(r => r.job === 'janitors').hats === 2,
+       'a save with no looPosts arrives with both caps, not one',
+       state().roster.find(r => r.job === 'janitors').hats)
+  ];
+});
+
+// --- A4: worker speed at the start --------------------------------------------
+group('the crew starts quicker: haul base and commute pace are up', async () => {
+  const { HAUL_BASE, COMMUTE_PACE } = await import('../src/config.js');
+  return [
+    ok(HAUL_BASE === 1.8, 'HAUL_BASE is 1.8', HAUL_BASE),
+    ok(COMMUTE_PACE === 4.6, 'COMMUTE_PACE is 4.6', COMMUTE_PACE)
+  ];
+});
+
+// --- A5: the farm's first rows are not free the moment it opens --------------
+group('the farm costs a real stretch of dust to open, not pocket change', async () => {
+  const plotBill = lvl => Math.round(PLOT_COST * Math.pow(PLOT_RATE, lvl));
+  const tendBill = lvl => Math.round(360 * Math.pow(1.6, lvl));
+  return [
+    ok(PLOT_COST === 260, 'PLOT_COST is 260', PLOT_COST),
+    ok(plotBill(0) === 260 && plotBill(1) === 442 && plotBill(2) === 751,
+       'first three plot bills', `${plotBill(0)}, ${plotBill(1)}, ${plotBill(2)}`),
+    ok(tendBill(0) === 360 && tendBill(1) === 576 && tendBill(2) === 922,
+       'first three tending bills', `${tendBill(0)}, ${tendBill(1)}, ${tendBill(2)}`)
+  ];
+});
+
+// --- A6: the miner's pick is capped at 2.2x over five rungs -------------------
+group('the miner pick caps out at 2.2x over the whole ladder', async () => {
+  const b0 = minerBite(0), b3 = minerBite(3), b5 = minerBite(RUNGS);
+  return [
+    ok(Math.abs(b0 - 1) < 1e-9, 'rung 0 is the bare bite', b0),
+    ok(b3 > b0 && b3 < b5, 'rung 3 is between the ends', b3),
+    ok(Math.abs(b5 - MINER_BITE_MULT) < 1e-9,
+       'rung 5 lands exactly on the cap, 2.2x the bare bite', b5)
+  ];
+});
+
+// --- A7: the lab costs a core -------------------------------------------------
+group('the lab is a place, and a place costs a core', async () => {
+  window.__reset();
+  window.__grant({ shards: 400, cores: 5, dust: 30000 });
+  window.__crew(0, 2);
+  const before = state().cores;
+  const built = buyBuilt('unlocklab');
+  const after = state().cores;
+  return [
+    ok(built, 'the lab can still be built'),
+    ok(before - after === 2, 'and it costs two cores, not none', `${before} -> ${after}`)
+  ];
+});
+
+// --- A8: nothing shard-, spore- or quarry-priced shows before its coin -------
+// The reported case: open the lab before the quarry, and the lab's own
+// "quarry speed" row -- and every shard-priced row beside it -- were on the
+// board regardless. Walk every row on every board with only the lab open and
+// nothing else seen, and none of them may ask for a coin that has not been
+// shown yet.
+group('nothing shard-, spore- or quarry-priced shows before its coin has been seen', async () => {
+  window.__reset();
+  window.__lab(true);
+
+  const boards = {
+    bench: UPGRADES, lab: LAB_UPGRADES, quarry: QUARRY_UPGRADES, farm: FARM_UPGRADES,
+    school: SCHOOL_UPGRADES, scrub: SCRUB_UPGRADES, tower: TOWER_UPGRADES, casino: CASINO_UPGRADES
+  };
+  const notSold = u => u.job || u.dial || u.price;
+  const bad = [];
+  let checked = 0;
+  for (const [board, rows] of Object.entries(boards)) {
+    for (const u of rows) {
+      if (notSold(u) || !u.show()) continue;
+      checked++;
+      let bill;
+      try { bill = billOf(u); } catch { continue; }
+      for (const [money] of bill) {
+        if (money === 'shard') bad.push(`${board}/${u.key} shows, priced in shard, before one is seen`);
+        if (money === 'spore') bad.push(`${board}/${u.key} shows, priced in spore, before one is seen`);
+      }
+      if (/quarry/i.test(u.name || '')) bad.push(`${board}/${u.key} (${u.name}) shows before the quarry exists`);
+    }
+  }
+
+  return [
+    ok(checked > 0, 'some rows were reachable to check', checked),
+    ok(bad.length === 0, 'no shard, spore or quarry row is showing early', bad.join('; '))
+  ];
+});

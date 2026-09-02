@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { SITES, workAt, progressAt } from './works.js';
+import { SITES, workAt, progressAt, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
@@ -33,9 +33,10 @@ import { puff } from './puff.js';
 import { jawX, jawY, shaftX, rigTop } from './quarry.js';
 import { ramX, rockFaceX, rockShare, sandTopY } from './rock.js';
 import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dust.js';
-import { rockLeft, groundAt } from './world.js';
+import { rockLeft, groundAt, farmShed, quarryShed, plotSlots, shakeView } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
-import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS } from './config.js';
+import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS,
+         BUILD_SHAKE, HOUSE_CUBE } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -43,7 +44,7 @@ import { fmt, STATIONS, stationFoot, hasOffer } from './board.js';
 import { drawRoster, drawRosterCounts, kitStands } from './roster.js';
 import { wearing, HAT_TALL, KIT_MARK } from './kit.js';
 import { atHome } from './crew.js';
-import { drawHouses } from './house.js';
+import { drawHouses, cubes as houseCubes } from './house.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawClouds, drawBirds } from './weather.js';
 import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET,
@@ -188,13 +189,22 @@ export function drawBridge() {
 export function drawFarm() {
   if (!S.farmOpen) return;
 
+  // Laid out at its full width from the first frame -- see C6 in
+  // wave-feedback3.md. `plotSlots` is every furrow the row will ever have;
+  // `S.plots.length` is how many have actually been broken. The fence brackets
+  // the whole row, and a slot past what has been bought draws as a bare post
+  // with nothing turned over in it -- ground waiting to be broken, not ground
+  // that does not exist yet.
+  const slots = plotSlots();
+  const rightX = plotX(slots - 1);
+
   // The farm needs a silhouette or it is just texture on the ground line: a post
   // at either end of the row, with a stub of rail running off it, so the plot
   // reads as somewhere fenced and kept even when nothing is growing. Kept low
   // and thin -- it is there to bracket the plots, not to be the thing you look at.
   const postH = P * 6;
   ctx.fillStyle = '#000';
-  for (const px of [farm.x - FARM_GATE, farm.x + farm.w + FARM_GATE - P]) {
+  for (const px of [farm.x - FARM_GATE, rightX + FARM_GATE - P]) {
     ctx.fillRect(px, S.groundY - postH, P, postH);
     ctx.fillRect(px + (px < farm.x ? P : -P * 2), S.groundY - postH + P * 2, P * 2, P);
   }
@@ -202,8 +212,17 @@ export function drawFarm() {
   // A plot is three cells across and two deep, with the earth turned over in it.
   // Small, but a shape rather than a scratch, and it has something in it even
   // when nobody has been by to tend it.
-  for (let i = 0; i < S.plots.length; i++) {
+  for (let i = 0; i < slots; i++) {
     const x = Math.round(plotX(i) / P) * P;
+
+    if (i >= S.plots.length) {
+      // Not broken yet: a bare post at the furrow's spot, and no furrow -- the
+      // fence knows the row is this wide before a single plot in it is bought.
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x, S.groundY - P * 3, P, P * 3);
+      continue;
+    }
+
     const soil = S.groundY - P * 2;
 
     ctx.fillStyle = '#000';
@@ -224,6 +243,29 @@ export function drawFarm() {
 
     if (grown >= 1) drawMark(S.plotTone[i] || SPORE_CELL, x + P / 2, top - P / 2);
   }
+}
+
+// The farm's and the quarry's own shed, in the black-box-with-a-door style
+// every building here is drawn in -- a mass, and a hole knocked in it for the
+// way in. See C5 in wave-feedback3.md.
+function drawShed(rect) {
+  const { x, y, w, h } = rect;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#fff';
+  const dw = Math.min(P * 2, w - P * 2), dh = Math.min(P * 3, h - P);
+  ctx.fillRect(x + (w - dw) / 2, y + h - dh, dw, dh);
+  ctx.fillStyle = '#000';
+}
+
+export function drawFarmShed() {
+  if (!S.farmOpen) return;
+  drawShed(farmShed());
+}
+
+export function drawQuarryShed() {
+  if (!S.quarryOpen) return;
+  drawShed(quarryShed());
 }
 
 
@@ -765,25 +807,28 @@ export function overPitMark(mx, my) {
 // the lattice and drew them with a grey fringe -- the same hairline the whole
 // game is arranged to avoid.
 export function drawSchool() {
-  if (!S.schoolOpen) return;
+  const rising = risingPlace() === 'school';
+  if (!S.schoolOpen && !rising) return;
   const { x, y, w, h } = school;
-  const c = (n) => x + P * n;                             // cell n across the front
-  ctx.fillStyle = '#000';
-  ctx.fillRect(c(9), y, P * 2, P * 3);                    // the belfry
-  ctx.fillRect(x, y + P * 3, w, h - P * 3);               // and the block under it
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(c(9), y + P, P * 2, P);                    // the opening it rings out of
-  // Tall and narrow, and there are a lot of them: a row of standing windows is
-  // the one thing a building can do that says people are in there in numbers.
-  for (const n of [2, 4, 6, 13, 15, 17]) ctx.fillRect(c(n), y + P * 4, P, P * 2);
-  // The way in, standing open. Two cells by three before, which was the smallest
-  // door in the yard on the widest building in it -- a twenty-cell front with a
-  // slot in it, and a body three cells across walking up to a hole three cells
-  // tall. It is DOOR_W by DOOR_H now like every other way in, and it is centred
-  // on the same column the belfry is, so the one thing standing out of the roof
-  // and the one thing cut into the wall are on one axis.
-  ctx.fillRect(c(10 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
-  ctx.fillStyle = '#000';
+  withRise(rising, x, S.groundY, w, h, () => {
+    const c = (n) => x + P * n;                             // cell n across the front
+    ctx.fillStyle = '#000';
+    ctx.fillRect(c(9), y, P * 2, P * 3);                    // the belfry
+    ctx.fillRect(x, y + P * 3, w, h - P * 3);               // and the block under it
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(c(9), y + P, P * 2, P);                    // the opening it rings out of
+    // Tall and narrow, and there are a lot of them: a row of standing windows is
+    // the one thing a building can do that says people are in there in numbers.
+    for (const n of [2, 4, 6, 13, 15, 17]) ctx.fillRect(c(n), y + P * 4, P, P * 2);
+    // The way in, standing open. Two cells by three before, which was the smallest
+    // door in the yard on the widest building in it -- a twenty-cell front with a
+    // slot in it, and a body three cells across walking up to a hole three cells
+    // tall. It is DOOR_W by DOOR_H now like every other way in, and it is centred
+    // on the same column the belfry is, so the one thing standing out of the roof
+    // and the one thing cut into the wall are on one axis.
+    ctx.fillRect(c(10 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+    ctx.fillStyle = '#000';
+  });
 }
 
 // The lab: a tall body with one chimney, read against the school's long block and
@@ -804,35 +849,38 @@ export function drawSchool() {
 // a fraction of anything, and nothing is a literal either -- read the front off
 // the cells it is actually made of, so a lab a course taller draws right.
 export function drawLab() {
-  if (!S.labOpen) return;
+  const rising = risingPlace() === 'lab';
+  if (!S.labOpen && !rising) return;
   const { x, y, w, h } = lab;
-  const across = Math.round(w / P);
-  const c = (n) => x + P * n;                              // cell n across the front
-  const r = (n) => y + P * n;                              // and cell n down it
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x, r(LAB_FLUE), w, h - P * LAB_FLUE);       // the body
-  ctx.fillRect(c(2), y, P * 3, P * LAB_FLUE);              // a chimney
-  ctx.fillStyle = '#fff';
-  // The window goes off to one side, because the middle of the front belongs to
-  // the door now: a window over a doorway is a fanlight, which is a detail this
-  // yard is too coarse to draw, and a window beside one is a room with somebody
-  // in it. A clear cell off the jamb of the door and two off the far corner,
-  // because a hole on a building's edge is a bite taken out of the silhouette
-  // rather than a light in a wall.
-  //
-  // Two cells square, which is the window in a room of the crew's house. It was
-  // three, and three cells of white in a wall beside a four-course door is two
-  // holes rather than a wall with things in it. A window is a shared measure
-  // here the same way a door is: one size for a room with somebody in it, and
-  // the school's tall narrow lights, which come in a row and say a crowd.
-  ctx.fillRect(c(across - 4), r(LAB_FLUE + 1), P * 2, P * 2);   // a window
-  // and the way in, DOOR_W by DOOR_H like every other way in, dead in the middle
-  // of the front and standing on the ground. lab.js walks a labber to the middle
-  // of it (labDoor), so the hole in the wall and the place a body disappears at
-  // are one thing rather than two numbers that used to differ by a tenth of the
-  // front -- which put every labber through the window.
-  ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
-  ctx.fillStyle = '#000';
+  withRise(rising, x, S.groundY, w, h, () => {
+    const across = Math.round(w / P);
+    const c = (n) => x + P * n;                              // cell n across the front
+    const r = (n) => y + P * n;                              // and cell n down it
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x, r(LAB_FLUE), w, h - P * LAB_FLUE);       // the body
+    ctx.fillRect(c(2), y, P * 3, P * LAB_FLUE);              // a chimney
+    ctx.fillStyle = '#fff';
+    // The window goes off to one side, because the middle of the front belongs to
+    // the door now: a window over a doorway is a fanlight, which is a detail this
+    // yard is too coarse to draw, and a window beside one is a room with somebody
+    // in it. A clear cell off the jamb of the door and two off the far corner,
+    // because a hole on a building's edge is a bite taken out of the silhouette
+    // rather than a light in a wall.
+    //
+    // Two cells square, which is the window in a room of the crew's house. It was
+    // three, and three cells of white in a wall beside a four-course door is two
+    // holes rather than a wall with things in it. A window is a shared measure
+    // here the same way a door is: one size for a room with somebody in it, and
+    // the school's tall narrow lights, which come in a row and say a crowd.
+    ctx.fillRect(c(across - 4), r(LAB_FLUE + 1), P * 2, P * 2);   // a window
+    // and the way in, DOOR_W by DOOR_H like every other way in, dead in the middle
+    // of the front and standing on the ground. lab.js walks a labber to the middle
+    // of it (labDoor), so the hole in the wall and the place a body disappears at
+    // are one thing rather than two numbers that used to differ by a tenth of the
+    // front -- which put every labber through the window.
+    ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+    ctx.fillStyle = '#000';
+  });
 }
 
 // What the rain left, drawn where it landed: one column of the world at a time,
@@ -1253,46 +1301,49 @@ const CHUTE = SCRUB_CHUTE;
 // magic is working -- what it does is make a thing not happen, and there is no
 // way to draw an absence except by marking the place it would have been.
 export function drawOuthouse() {
-  if (!S.outhouseOpen) return;
+  const rising = risingPlace() === 'outhouse';
+  if (!S.outhouseOpen && !rising) return;
   const { x, y, w, h } = outhouse;
-  const c = n => x + P * n;
-  const r = n => y + P * n;
-  const WIDE = Math.round(w / P);              // 7 across
-  const TALL = Math.round(h / P);              // 10 down
-  const MID = (WIDE - 1) / 2;                  // the middle column: 3 of 0..6
-  const ROOF = 4;
+  withRise(rising, x, S.groundY, w, h, () => {
+    const c = n => x + P * n;
+    const r = n => y + P * n;
+    const WIDE = Math.round(w / P);              // 7 across
+    const TALL = Math.round(h / P);              // 10 down
+    const MID = (WIDE - 1) / 2;                  // the middle column: 3 of 0..6
+    const ROOF = 4;
 
-  // A pitched roof, built out of odd courses about the middle column: three,
-  // five, seven and then nine, the last of them overhanging a cell each side the
-  // way eaves do.
-  //
-  // Every one of those is odd and centred on a whole column, which is the whole
-  // fix: it was a share of the width rounded per course, and 7/2 is 3.5 -- so
-  // both edges of a course rounded the same way and the roof came out a cell
-  // wider on the right than on the left. A symmetrical thing has to be built
-  // out of symmetrical numbers, not rounded into symmetry afterwards.
-  ctx.fillStyle = '#000';
-  for (let i = 0; i < ROOF; i++) {
-    const half = i + 1;                        // 1, 2, 3, 4 -> 3, 5, 7, 9 wide
-    ctx.fillRect(c(MID - half), r(i), P * (half * 2 + 1), P);
-  }
-  ctx.fillRect(x, r(ROOF), w, h - P * ROOF);
+    // A pitched roof, built out of odd courses about the middle column: three,
+    // five, seven and then nine, the last of them overhanging a cell each side the
+    // way eaves do.
+    //
+    // Every one of those is odd and centred on a whole column, which is the whole
+    // fix: it was a share of the width rounded per course, and 7/2 is 3.5 -- so
+    // both edges of a course rounded the same way and the roof came out a cell
+    // wider on the right than on the left. A symmetrical thing has to be built
+    // out of symmetrical numbers, not rounded into symmetry afterwards.
+    ctx.fillStyle = '#000';
+    for (let i = 0; i < ROOF; i++) {
+      const half = i + 1;                        // 1, 2, 3, 4 -> 3, 5, 7, 9 wide
+      ctx.fillRect(c(MID - half), r(i), P * (half * 2 + 1), P);
+    }
+    ctx.fillRect(x, r(ROOF), w, h - P * ROOF);
 
-  // The way in: three cells wide on a seven-cell front, so it stands on whole
-  // columns with two of wall either side of it. It was two cells wide starting
-  // at a *half* column -- the one door in the yard drawn off the lattice, with
-  // the grey fringe down both jambs that comes with it.
-  const DOOR = 3;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(c(MID - (DOOR - 1) / 2), r(TALL - 5), P * DOOR, P * 5);
+    // The way in: three cells wide on a seven-cell front, so it stands on whole
+    // columns with two of wall either side of it. It was two cells wide starting
+    // at a *half* column -- the one door in the yard drawn off the lattice, with
+    // the grey fringe down both jambs that comes with it.
+    const DOOR = 3;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(c(MID - (DOOR - 1) / 2), r(TALL - 5), P * DOOR, P * 5);
 
-  // and the moon cut in the door, three by three about the same column, which is
-  // what says shed rather than shack.
-  const my = r(ROOF + 1);
-  ctx.fillRect(c(MID), my, P * 2, P);
-  ctx.fillRect(c(MID - 1), my + P, P, P);
-  ctx.fillRect(c(MID), my + P * 2, P * 2, P);
-  ctx.fillStyle = '#000';
+    // and the moon cut in the door, three by three about the same column, which is
+    // what says shed rather than shack.
+    const my = r(ROOF + 1);
+    ctx.fillRect(c(MID), my, P * 2, P);
+    ctx.fillRect(c(MID - 1), my + P, P, P);
+    ctx.fillRect(c(MID), my + P * 2, P * 2, P);
+    ctx.fillStyle = '#000';
+  });
 }
 
 // The tower. Everything the crew put up is a shed or a hole; this is neither, so
@@ -1306,53 +1357,56 @@ export function drawOuthouse() {
 // scrubbing house is a black block with a chute, and a tower is a black shaft
 // with a hat on.
 export function drawTower() {
-  if (!S.towerOpen) return;
+  const rising = risingPlace() === 'tower';
+  if (!S.towerOpen && !rising) return;
   const { x, y, w, h } = tower;
-  const c = n => x + P * n;                    // cell n across the front
-  const r = n => y + P * n;                    // and n down from the top
-  const WIDE = Math.round(w / P);              // 13 across
-  const TALL = Math.round(h / P);              // 34 down
-  const SHAFT = TOWER_SHAFT;                   // the main shaft, on the left
-  const TUR = WIDE - SHAFT;                    // and the little one beside it
-  const SPIRE = 7;                             // rows of roof on the main
-  const TUR_ROOF = 4;                          // on the turret
-  const TUR_TOP = 14;                          // how far down the turret starts
+  withRise(rising, x, S.groundY, w, h, () => {
+    const c = n => x + P * n;                    // cell n across the front
+    const r = n => y + P * n;                    // and n down from the top
+    const WIDE = Math.round(w / P);              // 13 across
+    const TALL = Math.round(h / P);              // 34 down
+    const SHAFT = TOWER_SHAFT;                   // the main shaft, on the left
+    const TUR = WIDE - SHAFT;                    // and the little one beside it
+    const SPIRE = 7;                             // rows of roof on the main
+    const TUR_ROOF = 4;                          // on the turret
+    const TUR_TOP = 14;                          // how far down the turret starts
 
-  // A roof that comes to a point, drawn the only way a point can be drawn in
-  // cells: a stack of rows each a little wider than the last.
-  const spire = (cx, cw, top, rows) => {
-    const mid = cx + cw / 2;
-    for (let i = 0; i < rows; i++) {
-      const half = ((i + 1) / rows) * (cw / 2);
-      const from = Math.round(mid - half), to = Math.round(mid + half);
-      ctx.fillRect(c(from), r(top + i), P * Math.max(1, to - from), P);
-    }
-  };
+    // A roof that comes to a point, drawn the only way a point can be drawn in
+    // cells: a stack of rows each a little wider than the last.
+    const spire = (cx, cw, top, rows) => {
+      const mid = cx + cw / 2;
+      for (let i = 0; i < rows; i++) {
+        const half = ((i + 1) / rows) * (cw / 2);
+        const from = Math.round(mid - half), to = Math.round(mid + half);
+        ctx.fillRect(c(from), r(top + i), P * Math.max(1, to - from), P);
+      }
+    };
 
-  ctx.fillStyle = '#000';
-  spire(0, SHAFT, 0, SPIRE);                             // the hat
-  ctx.fillRect(x, r(SPIRE), P * SHAFT, P * (TALL - SPIRE));   // the shaft
-  spire(SHAFT, TUR, TUR_TOP, TUR_ROOF);                  // the little hat
-  ctx.fillRect(c(SHAFT), r(TUR_TOP + TUR_ROOF), P * TUR, P * (TALL - TUR_TOP - TUR_ROOF));
+    ctx.fillStyle = '#000';
+    spire(0, SHAFT, 0, SPIRE);                             // the hat
+    ctx.fillRect(x, r(SPIRE), P * SHAFT, P * (TALL - SPIRE));   // the shaft
+    spire(SHAFT, TUR, TUR_TOP, TUR_ROOF);                  // the little hat
+    ctx.fillRect(c(SHAFT), r(TUR_TOP + TUR_ROOF), P * TUR, P * (TALL - TUR_TOP - TUR_ROOF));
 
-  // A weather vane over the point: one cell up, and one across it. The flick of
-  // the hat that says somebody lives here on purpose.
-  ctx.fillRect(c(SHAFT / 2) - P / 2, r(-2), P, P * 2);
-  ctx.fillRect(c(SHAFT / 2) - P * 1.5, r(-3), P * 3, P);
+    // A weather vane over the point: one cell up, and one across it. The flick of
+    // the hat that says somebody lives here on purpose.
+    ctx.fillRect(c(SHAFT / 2) - P / 2, r(-2), P, P * 2);
+    ctx.fillRect(c(SHAFT / 2) - P * 1.5, r(-3), P * 3, P);
 
-  // The openings, cut white out of it. Tall and narrow like the school's, and
-  // stacked up the shaft rather than in a row: a tower is read by how far up its
-  // windows go.
-  ctx.fillStyle = '#fff';
-  for (const n of [SPIRE + 3, SPIRE + 9, SPIRE + 15])
-    ctx.fillRect(c(3), r(n), P * 2, P * 3);
-  ctx.fillRect(c(SHAFT + 1), r(TUR_TOP + TUR_ROOF + 3), P * 2, P * 2);
-  // a slit in the spire, the way the school's belfry rings out of one
-  ctx.fillRect(c(SHAFT / 2) - P / 2, r(SPIRE - 3), P, P * 2);
-  // and the way in, the same door every other building has
-  ctx.fillRect(c(SHAFT / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
+    // The openings, cut white out of it. Tall and narrow like the school's, and
+    // stacked up the shaft rather than in a row: a tower is read by how far up its
+    // windows go.
+    ctx.fillStyle = '#fff';
+    for (const n of [SPIRE + 3, SPIRE + 9, SPIRE + 15])
+      ctx.fillRect(c(3), r(n), P * 2, P * 3);
+    ctx.fillRect(c(SHAFT + 1), r(TUR_TOP + TUR_ROOF + 3), P * 2, P * 2);
+    // a slit in the spire, the way the school's belfry rings out of one
+    ctx.fillRect(c(SHAFT / 2) - P / 2, r(SPIRE - 3), P, P * 2);
+    // and the way in, the same door every other building has
+    ctx.fillRect(c(SHAFT / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
 
-  ctx.fillStyle = '#000';
+    ctx.fillStyle = '#000';
+  });
 }
 
 // What the tower does while it is making a hat: rings of light going out from
@@ -1575,8 +1629,10 @@ export function drawBrollies() {
 }
 
 export function drawScrub() {
-  if (!S.scrubOpen) return;
+  const rising = risingPlace() === 'scrub';
+  if (!S.scrubOpen && !rising) return;
   const { x, y, w, h } = scrub;
+  withRise(rising, x, S.groundY, w, h, () => {
   const on = inScrub() > 0;
   const across = Math.round(w / P), down = Math.round(h / P);
   const throatMid = (across - 1) / 2;      // the middle column, wanted before the shaft is
@@ -1773,6 +1829,7 @@ export function drawScrub() {
   const armTop = down - SCRUB_ARM - 2;
   ctx.fillRect(end, r(armTop), P * CHUTE, P * 2);
   ctx.fillRect(end, r(armTop + 2), P, P);
+  });
 }
 
 // The casino: a block with one big round hole knocked out of it, and a wheel in
@@ -1929,8 +1986,10 @@ export function drawSparks() {
 }
 
 export function drawCasino() {
-  if (!S.casinoOpen) return;
+  const rising = risingPlace() === 'casino';
+  if (!S.casinoOpen && !rising) return;
   const { x, y, w, h } = casino;
+  withRise(rising, x, S.groundY, w, h, () => {
   ctx.fillStyle = '#000';
   ctx.fillRect(x, y, w, h);                                // the block
 
@@ -2013,6 +2072,7 @@ export function drawCasino() {
   ctx.fillStyle = '#000';
 
   drawSign();
+  });
 }
 
 // Which way the last hand went, standing over the casino for a few seconds.
@@ -2126,6 +2186,217 @@ export function drawWorkBars() {
     if (!where) continue;
     const at = where();
     bar(Math.round(at.x / P) * P, Math.round(at.y / P) * P, progressAt(site));
+  }
+}
+
+// --- a busy site looks like a building site -----------------------------------
+// See C3 in wave-feedback3.md. A site under way used to read exactly like an
+// idle one but for a bar floating over it; now it is fenced while the work is
+// on, the way a real hole in the ground is.
+//
+// The footprint of a *station* -- the quarry, the farm, the scrub house, the
+// tower, the bench -- is simply its own rect. The yard is the odd one: it is
+// one slot shared by every building that has no gang of its own (the house,
+// the closet, the school, the lab, the casino, the tower's own unlock), and
+// what is going up there is named by the *row*, not by the site. So the row's
+// key is mapped to the placement table's key -- the same table `placeSites`
+// filled in -- and the rect that comes back is the thing actually being built,
+// not a guess at where the yard's building work happens to stand this week.
+const YARD_ROW_SITE = {
+  house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower'
+};
+
+// Every room the settlement will have once the one going up lands -- one more
+// than today's count, the same way `nextHouseAt` in house.js asks. `houseFoot`
+// and `risingRoom` (below) both want this and must not disagree about which
+// room is going up, so there is exactly one place that works it out.
+const roomsIncludingRising = () => {
+  const today = S.crew > 0 ? S.crew + 1 : 0;
+  return houseCubes(today + (S.crew > 0 ? 1 : 2));
+};
+
+// The settlement's own footprint, widened by the one room about to be added --
+// see #7, "Wave 3.1" amendment: `S.placed.house` is the ground `placeSites`
+// RESERVED for it at a whole street's width, and every other yard row is
+// right to fence its reserved ground because every other one arrives at its
+// full grown size the day it goes up. The house never does; it grows one room
+// at a time, so fencing the reserved plot fenced a street for two rooms. The
+// tape goes round what is being built, not round the ground it was promised.
+function houseFoot() {
+  const rooms = roomsIncludingRising();
+  if (!rooms.length) return null;
+  const left = Math.min(...rooms.map(r => r.x));
+  const right = Math.max(...rooms.map(r => r.x)) + HOUSE_CUBE;
+  return { x: left, w: right - left };
+}
+
+function siteFoot(site) {
+  if (site === 'quarry') return { x: quarry.x, w: quarry.w };
+  if (site === 'farm') return { x: farm.x, w: farm.w };
+  if (site === 'scrub') return { x: scrub.x, w: scrub.w };
+  if (site === 'tower') return { x: tower.x, w: tower.w };
+  if (site === 'bench') return { x: bench.x, w: bench.w };
+  if (site === 'yard') {
+    const w = workAt('yard');
+    // The house is the one row here that does not arrive at its full grown
+    // size -- see `houseFoot` above.
+    if (w?.key === 'house') { const hf = houseFoot(); if (hf) return hf; }
+    const placed = w && S.placed && S.placed[YARD_ROW_SITE[w.key]];
+    if (placed) return { x: placed.x, w: placed.w };
+    // A yard row this table does not know about yet: a guess centred on where
+    // the row said it would stand, rather than nothing at all.
+    const x = w?.at ?? S.cx;
+    return { x: x - P * 6, w: P * 12 };
+  }
+  return null;
+}
+
+// The one body actually putting the thing up, where there is one -- the yard
+// and the bench have no gang of their own, so `builders` are who is standing at
+// them. A station with a gang (the quarry, the farm) has no single "the
+// builder"; the puff comes off wherever the bar hangs instead, which is the
+// same place the eye is already reading as "the work".
+function builderPos(site) {
+  const w = S.workers.find(o => o.type === 'builder' && o.site === site);
+  if (w) return { x: w.x + WORKER / 2, y: w.y };
+  const at = SITE_AT[site]?.();
+  return at ? { x: at.x, y: S.groundY } : null;
+}
+
+// A striped post: alternating cell-high bands, the black ones doing all the
+// work -- a white band against the page is simply the page.
+function drawBarrierPost(x, y, w, bands) {
+  for (let i = 0; i < bands; i++) {
+    if (i % 2 !== 0) continue;
+    ctx.fillRect(x, y + i * P, w, P);
+  }
+}
+
+// A busy site only looks like a building site when there is a building (or a
+// machine) actually going up on it. A rung worked at the bench (`kind: 'rung'`)
+// is a body standing at a bench that was already there -- nothing is rising out
+// of the ground, so barriers and tape round it would be fencing off thin air.
+// See #2, "Wave 3.1" in wave-feedback3.md.
+const risingKinds = new Set(['building', 'machine']);
+const underConstruction = site => {
+  const w = workAt(site);
+  return !!w && risingKinds.has(rowFor(w.key)?.kind);
+};
+
+// how often a busy site throws up a puff of dust, and when each one last did
+const BUILD_PUFF_MS = 1500;
+const buildPuffAt = {};
+
+export function drawBuildSites() {
+  for (const site of SITES) {
+    if (!underConstruction(site)) { delete buildPuffAt[site]; continue; }
+    const foot = siteFoot(site);
+    if (!foot) continue;
+
+    const postW = P * 2, postBands = 5, postH = P * postBands;
+    const left = Math.round(foot.x / P) * P - P * 3 - postW;
+    const right = Math.round((foot.x + foot.w) / P) * P + P * 3;
+    const topY = S.groundY - postH;
+
+    ctx.fillStyle = '#000';
+    drawBarrierPost(left, topY, postW, postBands);
+    drawBarrierPost(right, topY, postW, postBands);
+
+    // the tape, at head height, dashed a cell on and a cell off
+    const tapeY = S.groundY - P * 3;
+    for (let x = left + postW; x < right; x += P * 2)
+      ctx.fillRect(x, tapeY, P, 2);
+
+    const t = now();
+    if (t >= (buildPuffAt[site] || 0)) {
+      buildPuffAt[site] = t + BUILD_PUFF_MS;
+      const pos = builderPos(site);
+      if (pos) puff(pos.x, pos.y - P * 2);
+    }
+  }
+}
+
+// --- a building rising out of the ground ---------------------------------------
+// #3, "Wave 3.1" in wave-feedback3.md. Everything past the bench builds on the
+// yard's one shared site, so at most one place is ever going up at a time, and
+// this is the one word that says which: the place `OPENS_PLACE` names the work
+// after, or `'house'` for the one row that is not in that table. Only for a
+// `kind: 'building'` work -- a machine fitted here (the ram, the belt) has no
+// rising analogue and stays exactly as sudden as it always was.
+function risingPlace() {
+  const w = workAt('yard');
+  if (!w || rowFor(w.key)?.kind !== 'building') return null;
+  return OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null);
+}
+
+// Clip a building's own draw to the slice of it that has actually gone up,
+// rising from `bottom` -- the ground line for the six stations that stand on
+// it, but a house room's own foot for the settlement, which climbs a course at
+// a time and so is not always standing on the ground itself. The draw itself
+// is unchanged, only masked. `rising` false is the ordinary case (a place
+// already standing) and draws straight through with no clip at all.
+function withRise(rising, x, bottom, w, h, fn) {
+  if (!rising) { fn(); return; }
+  const p = Math.max(0, Math.min(1, progressAt('yard')));
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, bottom - h * p, w, h * p);
+  ctx.clip();
+  fn();
+  ctx.restore();
+}
+
+// The room a hire is currently building, if any -- the one `kind: 'building'`
+// work with no entry in `OPENS_PLACE`, because what it raises is not a place
+// but the next room on a settlement that already exists. `cubes` (house.js) is
+// asked for one room more than the crew has today, the same way `nextHouseAt`
+// does, so the room about to appear is the last one it hands back.
+function risingRoom() {
+  const rooms = roomsIncludingRising();
+  return rooms[rooms.length - 1] || null;
+}
+
+// The next room, going up over `workFor` seconds with a builder at it (C1) --
+// see #3, "Wave 3.1", for making that visible the way every other building's
+// rise is. Drawn in the same black mass as the rest of the settlement, clipped
+// to the work's own progress and rising from its own foot -- a room on the
+// ground rises out of the ground, a room on the third storey rises out of the
+// course under it, which is the only "ground" it has.
+function drawRisingHouse() {
+  if (risingPlace() !== 'house') return;
+  const room = risingRoom();
+  if (!room) return;
+  withRise(true, room.x, room.y + HOUSE_CUBE, HOUSE_CUBE, HOUSE_CUBE, () => {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(room.x, room.y, HOUSE_CUBE, HOUSE_CUBE);
+  });
+}
+
+// The frame a rising place lands, the yard feels it -- a puff over the middle
+// of the roof and a knock on the view, half as hard as a rock coming down (see
+// `BUILD_SHAKE`). Watched here rather than from `stepWorks` in works.js, which
+// has no idea where any of these places actually stand: this file draws every
+// one of them and so is the one place that already knows.
+const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse', 'house'];
+const wasRising = {};
+function stepRiseLandings() {
+  for (const place of RISE_PLACES) {
+    const rising = risingPlace() === place;
+    if (wasRising[place] && !rising) {
+      const rect = place === 'school' ? school : place === 'lab' ? lab
+                 : place === 'tower' ? tower : place === 'casino' ? casino
+                 : place === 'scrub' ? scrub : place === 'outhouse' ? outhouse
+                 : null;
+      if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); }
+      else {
+        // The house: the room that just landed is the last one `cubes` hands
+        // back now that `S.crew` has actually grown.
+        const room = houseCubes()[houseCubes().length - 1];
+        if (room) { puff(room.x + HOUSE_CUBE / 2, room.y); shakeView(BUILD_SHAKE); }
+      }
+    }
+    wasRising[place] = rising;
   }
 }
 
@@ -2998,7 +3269,14 @@ const LOOK = {
   quarrier: { lunge:  1, load: 'shard' },
   wizard:   { lunge: -1 },
   miner:    { lunge:  0 },
-  hauler:   { lunge:  0 }
+  hauler:   { lunge:  0 },
+  // A builder at a busy site hops and lunges at the bottom of each hop -- see
+  // `workJig` in crew.js -- but with no row here it fell through to `PLAIN`,
+  // whose `lunge: 0` threw the lunge away regardless of what `w.lunge` said.
+  // #4, "Wave 3.1": the body was hopping (a player just could not see it),
+  // and this is why the one part of the hop meant to read as effort read as
+  // nothing at all.
+  builder:  { lunge:  1 }
 };
 const PLAIN = { lunge: 0 };
 
@@ -3052,7 +3330,13 @@ export function drawWorkers() {
     ctx.fillStyle = '#000';
     if (w.hasCore) {
       const stack = Math.ceil(Math.min(w.carry, 24) / 2);        // ride above the dust
-      drawCircle(x + WORKER / 2, y - P * (stack + 2), P * 1.2);
+      const cx = x + WORKER / 2, cy = y - P * (stack + 2);
+      // A carried core is still a core: it gives off the same waves one lying
+      // on the ground does, the way `drawCoreAt` draws both together. Drawn
+      // straight here rather than through `drawCoreAt` because the disc riding
+      // a body is a different size from the one on the ground.
+      drawCoreGlow(cx, cy);
+      drawCircle(cx, cy, P * 1.2);
     }
   }
 }
@@ -3091,11 +3375,13 @@ export function draw() {
   drawCoreBehind();
   drawGroundLine();
   drawQuarry();              // a hole in the ground, so it goes down with the ground
+  drawQuarryShed();          // the shed beside it, holding its board
   drawCut();                 // the dust lying in it, after the quarry for the same reason
                  // after the quarry, or its white columns erase it
   drawBridge();              // and the way across it
   drawDrill();               // which the drill stands on
   drawFarm();
+  drawFarmShed();            // the shed beside it, holding its board
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
   drawBelt();                // the road from the rock to the hole
@@ -3159,6 +3445,7 @@ export function draw() {
   // are the yard and the loose stuff is what the yard is full of.
   drawBench();
   drawHouses(ctx);         // and the crew are drawn later still, so they walk in front of both
+  drawRisingHouse();       // the one room still going up, if a hire is under way
 
   drawGrid(floor);
   drawPit();
@@ -3172,6 +3459,8 @@ export function draw() {
   drawPileMarks();         // and a bar over anything that has stopped for a full one
   drawLabBar();            // how far along the lab is, over the lab itself
   drawWorkBars();          // and whatever else the yard is putting up
+  drawBuildSites();        // fenced off and dusty, for as long as it is under way
+  stepRiseLandings();      // a puff and a knock, the frame a rising place lands
   drawDraught();           // the air going into the scrubbing house
   drawTowerWaves();        // the tower pouring, while it is making a hat
   drawTowerBar();          // and how far along the tower's hat is, over the tower

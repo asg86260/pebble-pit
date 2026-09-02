@@ -301,18 +301,37 @@ export const TESTS = [
 
   // The quarry is the hole, and a bridge crosses it: a ramp up, a deck straight
   // over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
-  // the mouth meant aiming at the deck, so walking a hauler over the quarry opened
-  // the quarry's board on the way past. What you point at is the ground that is
-  // missing.
-  ['the quarry is opened by its hole, not by the bridge over it', async () => {
+  // the mouth meant aiming at the deck, so walking a hauler over the quarry
+  // opened the quarry's board on the way past. What you point at is the ground
+  // that is missing.
+  //
+  // The shed beside it is a second way in now (#1, "Wave 3.1") -- the hole
+  // still answers exactly as it did, but the shed also does, which is what
+  // makes it worth hovering: before this it was scenery that did nothing when
+  // you pointed at it despite carrying the sign. `stands.quarry` is the shed
+  // now (see `standAt` in board.js), so the mouth itself is asked for by name
+  // -- `quarryX`/`quarryW` -- rather than through `standRect`.
+  //
+  // The ramp sample moved from forty pixels out to ten. The shed stands only
+  // `SHED_GAP` (three cells) off the mouth, a lot narrower than the ramp's own
+  // eleven-cell run, so at forty pixels out the point this check used to call
+  // "the ramp" is now standing inside the shed itself -- not near it, inside
+  // it, the same pixel `nearQuarryShed` in board.js has to carve its own
+  // padding back from. Ten pixels out is still short of the mouth and clear of
+  // the shed's own footprint. `deckWalk` (report.js) is the same table this
+  // number comes from, so the two cannot drift apart.
+  ['the quarry is opened by its hole, or by the shed beside it, not by the bridge', async () => {
     newRun();
     await settle();
     window.__give(999999);
     window.__grant({ cores: 9 });
     window.__crew(2, 2, 2, 0);
     run(20);
-    const q = state().stands.quarry;
-    window.__look(q.x - 400);
+    const s0 = state();
+    const qx = s0.quarryX, qw = s0.quarryW;
+    const shed = s0.stands.quarry;
+    const rampY = s0.deckWalk[2];             // groundAt(quarryX - 10)
+    window.__look(qx - 400);
     await sleep(300);
     const g = state().groundY;
     const at = async (wx, wy) => {
@@ -321,15 +340,17 @@ export const TESTS = [
       await sleep(300);
       return state().quarryBoardOpen;
     };
-    const deck = await at(q.x + q.w / 2, g - 30);     // straight over the mouth
-    const ramp = await at(q.x - 40, g - 14);          // on the way up to it
-    const hole = await at(q.x + q.w / 2, g + 40);     // and down in the quarry itself
+    const deck = await at(qx + qw / 2, g - 30);              // straight over the mouth
+    const ramp = await at(qx - 10, rampY);                   // on the ramp, just short of the mouth
+    const hole = await at(qx + qw / 2, g + 40);               // and down in the quarry itself
+    const shack = await at(shed.x + shed.w / 2, shed.y + shed.h / 2);   // the shed beside it
     await hoverAway();
     window.__crew(0, 0);
     return [
       ok(deck === false, 'crossing the deck does not open it'),
-      ok(ramp === false, 'nor does walking up the ramp'),
-      ok(hole === true, 'and the hole itself does')
+      ok(ramp === false, 'nor does the ramp up to it'),
+      ok(hole === true, 'and the hole itself still does'),
+      ok(shack === true, 'and now the shed beside it does too')
     ];
   }],
 

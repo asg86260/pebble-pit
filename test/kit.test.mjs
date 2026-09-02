@@ -220,8 +220,10 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
   const strays = detail().filter(b => b.kit !== '-' && b.kit !== b.t);
 
   return [
-    ok(shut.hats === 2 && shut.worn === 0 && shut.spareKit === 2,
-       'the shed opens with both caps out on the stand and nobody in them',
+    // The closet opens with one post now -- `loopost` sells the second, see
+    // A3 in feedback3.md -- so there is one cap on the stand, not two.
+    ok(shut.hats === 1 && shut.worn === 0 && shut.spareKit === 1,
+       'the shed opens with its one cap out on the stand and nobody in it',
        `${shut.worn} of ${shut.hats} worn`),
     ok(put.n === 1 && put.worn === 0,
        'and a body put on the post starts bare-headed',
@@ -236,10 +238,10 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
     ok(got.trained && got.of === 'janitors' && Math.abs(got.at - stand) < WORKER * 2,
        'it puts the cap on at the stand and nowhere else',
        `${got.of} at ${Math.round(got.at)}, stand at ${Math.round(stand)}`),
-    ok(capped.worn === 1 && capped.spareKit === 1,
-       'so the closet has one cap out and one still waiting',
+    ok(capped.worn === 1 && capped.spareKit === 0,
+       'so the closet has its one cap worn and none spare',
        `${capped.worn} worn, ${capped.spareKit} waiting`),
-    ok(home.worn === 0 && home.spareKit === 2 && strays.length === 0,
+    ok(home.worn === 0 && home.spareKit === 1 && strays.length === 0,
        'and taken off the job it walks the cap home again',
        `${home.worn} worn, ${home.spareKit} waiting, strays ${JSON.stringify(strays)}`)
   ];
@@ -299,14 +301,22 @@ group('a knocked-off hat is up for grabs while its owner sees stars', async () =
 
 group('a hauler that picks the helmet up is a miner, and the swap is one body', async () => {
   window.__reset();
-  window.__crew(1, 1);                        // one on the rock, one carrying
+  // Two on carrying rather than one. The owner races whichever hauler claims
+  // its dropped hat the moment its own stars clear, and wins that race if it
+  // is still nearer -- so the whole check depends on *some* hauler getting an
+  // idle beat before then. A4 raised the crew's early pace (see
+  // feedback3.md), which moved a single hauler's load/drop cycle without
+  // moving how long the owner stays dizzy, and could leave the one hauler mid
+  // trip for the whole of the window. A second pair of hands means the race
+  // no longer hangs on one body's phase.
+  window.__crew(1, 2);                        // one on the rock, two carrying
   window.__school({ breakers: 1 });
   run(8);
 
   const S = yard.S;
   const { lift, drop } = await import('../src/crew.js');
   const owner = S.workers.find(o => o.trained && o.kitOf === 'miners');
-  const carter = S.workers.find(o => o.type === 'hauler');
+  const cartersBefore = S.workers.filter(o => o.type === 'hauler');
   window.__shake(S.workers.indexOf(owner));
   run(0.5);                                   // the hat comes to rest
 
@@ -323,11 +333,12 @@ group('a hauler that picks the helmet up is a miner, and the swap is one body', 
   run(DIZZY_MS / 1000 + 20);
 
   const wearer = S.workers.find(o => o.trained && o.kitOf === 'miners');
+  const carter = wearer && cartersBefore.includes(wearer) ? wearer : cartersBefore[0];
   const rock = roster().find(r => r.job === 'miners');
 
   return [
     ok(hatAt != null, 'the helmet was lying in the yard', `${hatAt}`),
-    ok(wearer === carter && carter.type === 'miner',
+    ok(wearer !== owner && cartersBefore.includes(wearer) && wearer.type === 'miner',
        'the body that was carrying dust walked over, put it on, and is a miner',
        `${carter.type}, kit ${carter.kitOf}`),
     // The other half of it. The hat is the job, so losing it loses the job: the
@@ -336,7 +347,7 @@ group('a hauler that picks the helmet up is a miner, and the swap is one body', 
        'and the one it was taken off is carrying dust instead',
        `${owner.type} trained ${owner.trained}`),
     // One shake, one swap. The counts are exactly what they were.
-    ok(S.miners === 1 && S.crew === 2 && S.workers.length === 2,
+    ok(S.miners === 1 && S.crew === 3 && S.workers.length === 3,
        'the yard has the same crew doing the same jobs, in different hats',
        `${S.miners} miners of ${S.crew}, ${S.workers.length} bodies`),
     ok(rock.worn === 1 && rock.hats === 1, 'and the one helmet is on one head',

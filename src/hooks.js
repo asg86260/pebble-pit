@@ -36,7 +36,7 @@ import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take } from './upgrades.js';
+import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -584,7 +584,11 @@ export const allRows = () => everyRow().map(u => ({
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
                         ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
-                        ...CASINO_UPGRADES];
+                        ...CASINO_UPGRADES,
+                        // The house lives on the crew board, not the bench,
+                        // and is otherwise the one row in the game a check
+                        // could not buy the way a player does.
+                        HOUSE_ROW];
 
 export const buyRowByKey = key => {
   const u = everyRow().find(x => x.key === key);

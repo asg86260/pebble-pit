@@ -46,6 +46,18 @@ export const SITE_JOB = {
 };
 
 export const SITES = Object.keys(SITE_JOB);
+
+// Which row opens which place on the ground -- the same keys `SITES` in
+// config.js is laid out by, not the job-sites above. See C7 in
+// wave-feedback3.md: the yard remembers the order these are bought in, so
+// `placeSites` can walk the table in that order instead of a fixed one.
+// Exported so that render.js can tell which place, if any, a `kind: 'building'`
+// work on the yard is actually raising -- see #3, "Wave 3.1".
+export const OPENS_PLACE = {
+  unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
+  unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower'
+};
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
 export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
@@ -96,7 +108,15 @@ export const rowFor = key => ROWS.find(u => u.key === key) || null;
 //
 // Read it as "how long with one pair of hands on it". Three quarriers in the cut
 // take a bench out in a third of the time, which is what a gang is for.
+//
+// A row may carry its own `work: () => seconds` instead of leaning on
+// `WORK_BASE`/`WORK_STEP` -- one hook on the general function, not a special
+// case inside it. See #8, "Wave 3.1" amendment: the house has a rung in all
+// but name (how many rooms already stand) and no rung of its own to read it
+// off, so it supplies the curve itself rather than getting the one flat
+// number every other `kind: 'building'` row shares.
 export const workFor = u =>
+  u.work ? Math.round(u.work()) :
   Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() : 0));
 
 // Whether a row is one the yard has to build at all. A row with no `kind` is
@@ -176,6 +196,12 @@ export function stepWorks(dt) {
     // door and this is not, so the bar over the site has been saying it for the
     // whole of the build.
     rowFor(w.key)?.buy();
+    // And the yard remembers it broke this ground, so the next time the table
+    // is walked -- which is the next reload, not this frame; nothing here
+    // moves anything already standing -- this one stands where it was bought
+    // relative to the rest, not where the fixed table always put it.
+    const opened = OPENS_PLACE[w.key];
+    if (opened && !S.buildOrder.includes(opened)) S.buildOrder = [...S.buildOrder, opened];
     staffHook();
     S.dirty = true;
   }

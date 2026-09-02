@@ -4,16 +4,19 @@
 // else's module. If a new site needs a click, it gets a branch here and its own
 // file for the behaviour.
 
-import { P, MINE_DELAY, WORKER } from './config.js';
-import { S, bench } from './state.js';
+import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
+         FARM_H } from './config.js';
+import { S, bench, floor, pit, table, outhouse, rift } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
+import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
+import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearTower, showPanel, placeBoard, showTip,
-         showTipAt, inSafeZone } from './board.js';
+         showTipAt, inSafeZone, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
          overPitMark, pitMarkAt } from './render.js';
 import { doneName } from './lab.js';
@@ -21,9 +24,13 @@ import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
-import { card } from './crewboard.js';
+import { card, houseRect } from './crewboard.js';
 import { pitFull } from './pit.js';
 import { now } from './clock.js';
+import { MACHINES, running, specOf } from './machines.js';
+import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
+import { plotX } from './farm.js';
+import { riftOpen } from './rift.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -227,7 +234,7 @@ canvas.addEventListener('pointermove', e => {
     // and whatever the cursor is asking about, which is not the same question:
     // a board opens because you walked up to a station, a tooltip opens because
     // you went and looked at a mark
-    askedAbout(S.mouse.x, S.mouse.y);
+    askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);
     setCursor(S.mouse.x, S.mouse.y);
   }
   // somebody on the cursor goes where the cursor goes
@@ -290,6 +297,12 @@ addEventListener('blur', () => {
   if (S.dragging) { S.dragging = false; release(S.mouse.x, S.mouse.y); }
 });
 
+// The cursor leaving the canvas is the cursor leaving everything it could have
+// been asking about, so whatever label was up goes with it -- see D1. Left as
+// a bare clear rather than routed through `askedAbout`: there is no longer a
+// spot in the yard to ask about at all.
+canvas.addEventListener('pointerleave', () => showTipAt(null));
+
 
 export function disarmReset() {
   S.resetArmed = 0;
@@ -309,6 +322,168 @@ resetEl.addEventListener('click', () => {
   reset();
 });
 
+// --- the hover registry ---------------------------------------------------------
+// D1 in wave-feedback3.md (#1): a label for whatever the cursor is over, in a
+// word. `askedAbout` below already has richer tooltips for the handful of
+// things worth more than a word -- a body's whole card, a stopped station's
+// reason -- and those keep winning: a plain label is only shown once none of
+// them has anything to say.
+//
+// One function, asked for a label and nothing else, and nothing about it draws
+// anything -- it is a question about a spot in the yard, so a check can ask it
+// directly with no mouse anywhere near it.
+const inRect = (r, x, y) => !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+
+// The cell a grid is holding at a world point, the same lookup `sweep` in
+// hands.js makes for the brush: a column off `colOf`, a row counted up from
+// the grid's own floor rather than down from its top.
+function cellAt(b, wx, wy) {
+  if (!b.grid) return 0;
+  const c = colOf(b, wx);
+  const r = Math.floor((bottomY(b) - wy) / P);
+  return inside(b, c, r) ? at(b, c, r) : 0;
+}
+
+function cellLabel(v) {
+  if (!v) return null;
+  if (v === CORE_CELL) return 'core';
+  const k = findKind(v);
+  if (k === SHARD_CELL) return 'shard';
+  if (k === SPORE_CELL) return 'spore';
+  if (k === SPARK_CELL) return 'spark';
+  return isDust(v) ? 'dust' : null;
+}
+
+// Every building that has a name on its own board, plus the two that do not
+// (the closet, the rift). `standRect` answers "is it there, and where" for
+// every one of them now -- including the farm and the quarry, whose shed is
+// the whole answer to where you stand, where you click and where the board
+// hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
+const BUILDING_NAME = {
+  bench: 'the bench', lab: 'the lab', school: 'the school', casino: 'the casino',
+  scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
+};
+
+function buildingAt(x, y) {
+  for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
+  if (S.outhouseOpen && inRect(outhouse, x, y)) return 'the closet';
+  if (riftOpen() && inRect(rift, x, y)) return 'the rift';
+  return null;
+}
+
+// A machine has no rect exported anywhere the way a building does, so this is
+// a padded box round the one point every machine already hands `specOf` --
+// generous rather than exact, which is what the spec asks for on anything
+// here with no cheap hit-test today.
+const MACHINE_NAME = { jaw: 'the drill', ram: 'the ram', tiller: 'the tiller', belt: 'the belt' };
+function machineAt(x, y) {
+  for (const m of MACHINES) {
+    if (!running(m.key)) continue;
+    const spec = specOf(m.key);
+    if (!spec) continue;
+    if (Math.abs(x - spec.at()) < P * 6 && Math.abs(y - spec.y()) < P * 8) return MACHINE_NAME[m.key];
+  }
+  return null;
+}
+
+// Muck and poop share one layer of columns (see MESS in smog.js) and stack to
+// one height, so which word applies is which of the two is actually sitting
+// there -- a body's own leavings named first, since that is the one a janitor
+// is sent for and the one worth telling apart from what the weather dropped.
+function messAt(x, y) {
+  const c = colAt(x);
+  const poo = poopCols()[c] || 0, muck = muckCols()[c] || 0;
+  const n = poo + muck;
+  if (!n) return null;
+  const foot = muckFloor(c);
+  if (y < foot - n * P || y > foot) return null;
+  return poo ? 'poop' : 'muck';
+}
+
+// The pot: a heap of real sand in `table` (see casino.js), in the same shape
+// of grid the floor and the hole are. It is asked the same way they are -- a
+// cell under the cursor -- rather than as the whole strip of ground the grid
+// reserves for it, which runs most of the width of the yard and would tag
+// bare ground as the pot as readily as the pile actually sitting on it.
+const potAt = (x, y) => S.casinoOpen && !!cellAt(table, x, y);
+
+// A balloon's box, built the way `drawBalloons` in render.js draws one: the
+// envelope's crown down to the basket, centred on the craft's own x.
+function balloonAt(x, y) {
+  if (!S.scrubOpen) return false;
+  for (let i = 0; i < CRAFT.length; i++) {
+    const by = craftY(i);
+    const top = by - BALLOON_BASKET - BALLOON_FILTER_H - BALLOON_H;
+    const left = CRAFT[i].x - BALLOON_W / 2;
+    if (x >= left && x <= left + BALLOON_W && y >= top && y <= by + P * 2) return true;
+  }
+  return false;
+}
+
+// A plot's crop, once it has actually grown -- the same box `drawFarm` fills
+// with a stalk and a mark, in render.js.
+function cropAt(x, y) {
+  if (!S.farmOpen) return false;
+  for (let i = 0; i < S.plots.length; i++) {
+    if (S.plots[i] < 1) continue;
+    const px = Math.round(plotX(i) / P) * P;
+    const soil = S.groundY - P * 2;
+    const top = soil - Math.round(FARM_H * S.plots[i] / P) * P;
+    if (x >= px - P && x <= px + P * 2 && y >= top - P && y <= soil + P * 2) return true;
+  }
+  return false;
+}
+
+// The one function everything above exists for: what is at a spot, in a word,
+// or nothing. Asked in the order a thing would actually catch your eye first --
+// somebody moving, before the ground under them; a grain in a pile, before the
+// building the pile stands beside; the rock and what is working it, before the
+// weather lying on the ground next to them.
+export function whatIsAt(x, y) {
+  const w = lifted() || workerAt(x, y);
+  if (w) return w.type;
+  if (overCore(x, y)) return 'core';
+  const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
+  if (grain) return grain;
+  if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
+  const building = buildingAt(x, y);
+  if (building) return building;
+  if (overBoulder(x, y)) return 'rock';
+  const machine = machineAt(x, y);
+  if (machine) return machine;
+  if (overBird(x, y)) return 'bird';
+  const mess = messAt(x, y);
+  if (mess) return mess;
+  if (potAt(x, y)) return 'pot';
+  if (balloonAt(x, y)) return 'balloon';
+  if (cropAt(x, y)) return 'food';
+  return null;
+}
+
+// Recomputed every fourth call rather than every one: a label costs a handful
+// of rects and a couple of grid lookups, cheap enough once a frame and not
+// worth paying on every one of however many `pointermove` events a fast mouse
+// fires between two of them. The one it last found stands in the gap, which
+// is also what keeps it from flickering off between polls that would only
+// have found the same thing again.
+let tipTick = 0, tipWas = null;
+function polledWhatIsAt(x, y) {
+  tipTick++;
+  if (tipTick % 4 !== 0) return tipWas;
+  tipWas = whatIsAt(x, y);
+  return tipWas;
+}
+
+const panelEl = document.getElementById('panel');
+// A board's sheet sits on top of the canvas in screen space, not the yard's --
+// so whether the cursor is over it is a question about the page, and asked of
+// it directly. Cheap because it is only asked while a board is actually open.
+function overOpenBoard(cx, cy) {
+  if (panelEl.hidden || cx == null) return false;
+  const r = panelEl.getBoundingClientRect();
+  return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom;
+}
+
 // A stopped station says why, in the one place words are cheap: under the
 // cursor, and only when the cursor goes looking.
 //
@@ -321,7 +496,7 @@ resetEl.addEventListener('click', () => {
 // and what it has shifted. None of it does anything -- there is no number here
 // that feeds a rate -- it is there so that the four on the rock are four people
 // rather than the number four.
-function askedAbout(x, y) {
+function askedAbout(x, y, cx, cy) {
   // Somebody standing under the cursor comes first: they are the only thing in
   // the yard that moves, so a mark they happen to be over is a mark you can
   // still read a moment later.
@@ -347,6 +522,15 @@ function askedAbout(x, y) {
   }
   if (S.labDone && overLabMark(x, y)) {
     showTip(doneName(), labMarkAt());
+    return true;
+  }
+  // Nothing has more to say than a word -- which is `whatIsAt`'s question, not
+  // this one -- unless a board is standing over the same spot on the page, in
+  // which case there is nothing to add to what it is already saying.
+  if (overOpenBoard(cx, cy)) { showTipAt(null); return false; }
+  const label = polledWhatIsAt(x, y);
+  if (label) {
+    showTipAt(label, (x - S.camX) * S.zoom + P * 2, (y - S.camY) * S.zoom - P * 2);
     return true;
   }
   showTip(null);

@@ -1,0 +1,236 @@
+// Wave 3.1: five follow-ups on the buildings, all in the works/render/world
+// area, and three amendments found while building them. See
+// docs/wave-feedback3.md, "Wave 3.1 -- feedback4.md" and the amendments after
+// it.
+//
+// #2 and #3 are drawing -- the construction ornament being restricted to
+// buildings and machines, and a building rising out of the ground -- and are
+// looked at with tools/look.mjs rather than checked here: a green suite
+// cannot see a barrier, and it cannot see a clip either. `draw()` itself is
+// also never called from `fast()` (see hooks.js), so a puff or a shake fired
+// from inside it is not a thing a node check can see fire. This file covers
+// the mechanical halves: where the shed sits as the click/hover/board target
+// (#1), the builder's hop and lunge actually moving a body (#4), the order
+// buildings are recorded in (#5), a builder's walk not dropping a lent miner
+// off the rock (#6, amendment), and the house's own barrier width and build
+// time (#7 and #8, amendments -- #7 is drawing too and is only shot).
+
+import { readFileSync } from 'node:fs';
+import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
+import { nearQuarry, nearFarm, standRect } from '../src/board.js';
+
+const works = () => state().works || {};
+const on = key => Object.values(works()).find(w => w.key === key) || null;
+
+// #1 -- the shed is the board's own anchor for the farm and the quarry now
+// (`standRect` returns it), and a second way to hover/click each of them
+// open. The farm has no bridge to protect, so its shed *replaces* the plots
+// as the target -- the far end of the row no longer answers on its own. The
+// quarry does have one: a plain swap would let `near()`'s padding round the
+// shed reach the near ramp (they stand close together), which is exactly the
+// bridge-crossing bug the hole-only check was written to prevent. So the
+// quarry's hole keeps answering exactly as it did, and the shed is added
+// beside it rather than instead of it -- see `nearQuarry` in board.js.
+group('the farm and the quarry stand at their shed, or still at the quarry’s own hole', async () => {
+  openSites();
+  window.__levels({ plotLevel: 5 });     // a real run of plots to hover over, clear of the shed
+  run(0.5);
+  const s = state();
+  const qs = s.stands.quarry, fs = s.stands.farm;
+
+  return [
+    ok(qs.x === s.quarryShed.x && qs.w === s.quarryShed.w,
+       'standRect(quarry) is the shed', JSON.stringify({ qs, shed: s.quarryShed })),
+    ok(fs.x === s.farmShed.x && fs.w === s.farmShed.w,
+       'standRect(farm) is the shed', JSON.stringify({ fs, shed: s.farmShed })),
+    ok(nearQuarry(qs.x + qs.w / 2, qs.y + qs.h / 2), 'hovering the quarry shed answers'),
+    ok(nearQuarry(s.quarryX + s.quarryW / 2, s.groundY + 20),
+       'and the mouth of the hole still does too'),
+    ok(nearFarm(fs.x + fs.w / 2, fs.y + fs.h / 2), 'hovering the farm shed answers'),
+    ok(s.farmW > 0 && !nearFarm(s.farmX + s.farmW, s.groundY - 5),
+       'but the far end of the run of plots no longer does',
+       `farmX ${s.farmX} + farmW ${s.farmW}`)
+  ];
+});
+
+// #4 -- the builder's work jig, reproduced first: a body building on the yard
+// (not the bench) is filmed for ten seconds and its height is measured. The
+// hop was there all along -- the jig ran and `w.y` moved -- but at one cell
+// (`BUILD_HOP_H`, then 1) it came to six world pixels of travel over ten
+// seconds, and `builder` was missing from render.js's `LOOK` table entirely,
+// so the lunge at the bottom of every hop was thrown away regardless of what
+// `w.lunge` said (`PLAIN.lunge` is 0). Both are fixed: the hop is two cells
+// now, and `builder` carries `lunge: 1`.
+group('a builder on the yard actually hops, visibly, while it works', async () => {
+  window.__reset();
+  window.__crew(0, 1);
+  window.__grant({ dust: 90000 });
+  run(1);
+
+  window.__buy('house');
+  const walked = runUntil(() => (state().works?.yard?.hands || 0) > 0, 60);
+
+  const ys = [], lunged = [];
+  for (let f = 0; f < 600; f++) {
+    run(1 / 60);
+    const w = yard.S.workers.find(o => o.type === 'builder');
+    if (w) { ys.push(w.y); lunged.push(w.lunge === 1); }
+  }
+  const range = ys.length ? Math.max(...ys) - Math.min(...ys) : 0;
+
+  return [
+    ok(walked, 'a spare hand arrives at the site'),
+    ok(ys.length > 500, 'and stays there for the whole of the film', `${ys.length} frames`),
+    ok(range >= 10, 'its height actually varies by more than a couple of pixels',
+       `range ${range}`),
+    ok(lunged.some(Boolean), 'and it lunges at the bottom of a hop',
+       `${lunged.filter(Boolean).length} of ${lunged.length} frames`)
+  ];
+});
+
+// #5 -- reproduced first: farm and quarry cannot actually be bought out of
+// order (`unlockquarry`'s own `show` requires `S.farmOpen`), so that pair
+// can never show the bug either way it is recorded. Two independently-gated
+// places -- the school and the closet -- stand in for them: both orders are
+// bought for real, through the row, and `S.buildOrder` is checked after each.
+// It already comes out right in both directions, because everything past the
+// bench builds on one shared site (`site: 'yard'`) and `siteBusy` refuses a
+// second press while the first is still going -- so at most one `kind:
+// 'building'` work is ever in flight, and recording the order on landing
+// (works.js's `stepWorks`, today) cannot come apart from recording it on
+// purchase. Nothing changed in works.js for this item; the finding is that
+// the reported bug does not reproduce.
+group('two independently-gated buildings land in the order they were bought', async () => {
+  const bothOrders = async order => {
+    window.__reset();
+    window.__crew(2, 2);
+    window.__grant({ dust: 500000, shards: 900 });
+    yard.S.seenShard = true;      // the school's own gate
+    yard.S.seenMess = true;       // the closet's
+    run(1);
+    for (const key of order) {
+      const started = window.__buy(key);
+      if (!started) return { ok: false, order };
+      const landed = runUntil(() => !on(key), 300);
+      if (!landed) return { ok: false, order };
+    }
+    return { ok: true, buildOrder: state().buildOrder };
+  };
+
+  const forward = await bothOrders(['unlockschool', 'unlockouthouse']);
+  const backward = await bothOrders(['unlockouthouse', 'unlockschool']);
+
+  return [
+    ok(forward.ok, 'school then closet: both are bought and built',
+       JSON.stringify(forward)),
+    ok(forward.ok && forward.buildOrder.indexOf('school') <
+       forward.buildOrder.indexOf('outhouse'),
+       'and land in that order', JSON.stringify(forward.buildOrder)),
+    ok(backward.ok, 'closet then school: both are bought and built',
+       JSON.stringify(backward)),
+    ok(backward.ok && backward.buildOrder.indexOf('outhouse') <
+       backward.buildOrder.indexOf('school'),
+       'and land in that order too', JSON.stringify(backward.buildOrder))
+  ];
+});
+
+// #5 continued -- a save from before `buildOrder` existed sees no change.
+group('a save with no build order lays out exactly as it did', async () => {
+  localStorage.setItem('boulder-clicker/v4',
+    readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8'));
+  yard.restore();
+  const s = state();
+
+  return [
+    ok(!s.buildOrder || s.buildOrder.length === 0,
+       'the fixture predates buildOrder', JSON.stringify(s.buildOrder)),
+    // the fixed table's own order: bench and the settlement first, then
+    // school, quarry, farm, lab, scrub, casino, tower -- see siteOrder() in
+    // world.js
+    ok(s.quarryX > s.farmX, 'the cut still stands nearer the rock than the plots',
+       `quarry ${s.quarryX}, farm ${s.farmX}`),
+    ok(s.farmX > s.labX, 'and the plots nearer than the lab',
+       `farm ${s.farmX}, lab ${s.labX}`)
+  ];
+});
+
+// #6, amendment -- a miner lent off the rock to build must walk down it, not
+// drop. Reproduced first, filmed a frame at a time: a miner is put on a tall
+// rock, a bench rung is bought with nobody spare to fit it (so the nearest
+// body -- a miner -- is lent, see "with nobody spare..." in works.test.mjs),
+// and every builder's `y` is watched for the whole walk from the rock to the
+// bench. Before the fix this could drop most of the rock's height in the one
+// frame `wayAt` decided a step off the edge had already carried the body
+// clear of the hill's footprint, because `climbTo` eases toward `stand(w)`
+// with a wall rule facing up and none facing down. `stepBuilder` now routes
+// the walk (`keepTo`/`stepRoute`, the way `stepCommute` does for every other
+// errand) instead of asking "what is under me now" fresh every step.
+group('a miner lent off the rock walks down it, rather than dropping', async () => {
+  window.__reset();
+  window.__jump(6);                    // a tall rock: room for a real drop
+  window.__crew(4, 0);                 // miners only -- nobody spare to lend
+  window.__grant({ dust: 90000 });
+  run(15);                             // let them climb well up the crest
+
+  window.__buy('carry');
+  let prevY = null, maxWalkJump = 0, sawWalking = false;
+  for (let f = 0; f < 400; f++) {
+    run(1 / 60);
+    const b = yard.S.workers.find(w => w.type === 'builder');
+    if (b) {
+      // Only while it is still on its way -- see "goal": arriving at the
+      // bench is a separate step (a body's feet are planted straight on to
+      // the bench's own top edge there, `stepBuilder`'s `if (w.site ===
+      // 'bench')` branch) and it is not what #6 is about.
+      if (prevY != null && b.goal === 'to') {
+        sawWalking = true;
+        maxWalkJump = Math.max(maxWalkJump, Math.abs(b.y - prevY));
+      }
+      prevY = b.y;
+    } else prevY = null;
+  }
+
+  return [
+    ok(sawWalking, 'a miner is lent and actually walks over'),
+    // a cell is P (6 world px); a slope can carry a little more than that in
+    // one frame (see CLIMB_SLOPE in route.js), so the bar is generous rather
+    // than exactly one cell, and still nowhere near a rock's height
+    ok(maxWalkJump <= 12, 'its height never moves more than about a cell, a frame, on the way',
+       `${maxWalkJump}px`)
+  ];
+});
+
+// #8, amendment -- the first houses are quick, and they climb from there.
+// `HOUSE_ROW.work` overrides `workFor`'s flat WORK_BASE.building number with a
+// curve off how many rooms already stand (`S.crew`, clamped at zero). Bought
+// for real through the row each time -- `window.__buy` -- rather than read
+// off the row directly, because what changed is what a purchase actually
+// costs in time.
+group('the first houses are quick, and the ladder climbs from there', async () => {
+  window.__reset();
+  window.__crew(0, 1);
+  window.__grant({ dust: 50000000 });
+  run(1);
+
+  const seconds = [];
+  for (let n = 1; n <= 20; n++) {
+    window.__buy('house');
+    const w = on('house');
+    seconds.push(w ? w.of : null);
+    window.__finish();
+  }
+
+  return [
+    ok(seconds.every(s => s != null), 'every house is a real work on the yard',
+       JSON.stringify(seconds)),
+    ok(seconds[0] === 20, 'the first is twenty seconds, not ninety',
+       `house 1: ${seconds[0]}s`),
+    ok(seconds[4] > seconds[0] && seconds[9] > seconds[4] && seconds[14] > seconds[9],
+       'and each one after climbs past the last',
+       `1:${seconds[0]} 5:${seconds[4]} 10:${seconds[9]} 15:${seconds[14]}`),
+    ok(Math.max(...seconds) <= 180, 'never worse than the machines',
+       JSON.stringify(seconds)),
+    ok(seconds[19] === 180, 'and the ladder has reached its top by the twentieth',
+       `house 20: ${seconds[19]}s`)
+  ];
+});

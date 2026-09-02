@@ -526,14 +526,22 @@ export const TO_CASINO = -3078;
 export const TO_OUTHOUSE = -756;
 export const OUTHOUSE_W = P * 7;
 export const OUTHOUSE_H = P * 10;
-// How many janitors the closet opens a place for -- and, because the caps hang
-// on the stand outside it, how many caps there are. One number for both: a post
-// with no cap to go with it would be a body sent to a job with nothing to pick
-// up. Two, because unlike the shed jobs this one is not a room with a bench in
-// it -- it is the whole yard, and a yard this long is more ground than one pair
-// of hands keeps up with. See `capOf` in upgrades.js and the janitors' row in
-// kit.js, which both read this.
-export const LOO_POSTS = 2;
+// How many janitors the closet opens a place for at the outset -- and, because
+// the caps hang on the stand outside it, how many caps there are to start with.
+// One number for both: a post with no cap to go with it would be a body sent to
+// a job with nothing to pick up.
+//
+// It used to be two from the first day the shed went up, on the argument that
+// one pair of hands is not enough ground for a yard this long to keep up with --
+// which is true, and was also the whole of the closet's story: build it once and
+// it is already finished. One post now, and a second one is `loopost`'s to sell
+// -- a shed that opens small and grows is a shed with something left to buy, the
+// same shape as every other station in the yard. See `capOf` in upgrades.js and
+// the janitors' row in kit.js, which both read `S.looPosts` and fall back to
+// this for a save that has never set it.
+export const LOO_POSTS = 1;
+// What the second post costs: `loopost`, on the bench's own outhouse section.
+export const LOOPOST_SHARDS = 6;
 
 // Far enough past the casino to read as its own place rather than the next unit
 // along: the gaps between the buildings out here run about a hundred and fifty,
@@ -1443,6 +1451,14 @@ export const DOOR_W = 4;         // cells across a way in, everywhere in the yar
 export const DOOR_H = 4;         // and courses tall
 export let MINER_BASE = 1100;  // a hired miner starts slower than your own pick
 export const MINER_FLOOR = 260;  // fastest a miner can swing
+// How much bigger a miner's bite gets over the whole `minerpick` ladder --
+// eased across the rungs the same way `swing` eases a rate, so the early rungs
+// are worth more than the late ones. It used to be a flat +1 a rung, which
+// looks tame on the row but is a straight multiple against the base: five rungs
+// bought six times the bite, and the crew you actually have could never keep up
+// with the pile that made. A cap here is the fix rather than a hand-tuned rung
+// price, because the price was never the thing that was wrong.
+export const MINER_BITE_MULT = 2.2;
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
@@ -1497,7 +1513,7 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 // somebody walking to work, it reads as somebody who has been paused. The whole
 // ladder above it is unchanged -- every multiplier still multiplies this -- so
 // what moved is where the ladder starts, not how far it goes.
-export let HAUL_BASE = 1.4;
+export let HAUL_BASE = 1.8;
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // --- between rocks ----------------------------------------------------------
@@ -1813,7 +1829,12 @@ export let CUT_STEP = 0.6;
 // something that already works rather than the way the place gets built.
 export const FARM_PLOTS0 = 1;     // plots the ground comes with
 export const FARM_PLOTS_MAX = 7;  // and the whole plot, once it is all broken
-export const PLOT_COST = 90;      // dust for the first plot after it
+// Raised from 90: at the old price the first plot was affordable before the
+// farmhand sent to break it had finished walking there, which made "the farm
+// just opened" and "the farm is already growing" the same moment. A dig at the
+// rock should still be ahead of it, so the first plot costs a real stretch of
+// the yard's early dust rather than change already in the pile.
+export const PLOT_COST = 260;      // dust for the first plot after it
 export const PLOT_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one plot and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
@@ -2346,7 +2367,7 @@ export const HOUSE_COLS = 6;
 // the comment above describes: an empty body still walks at this floor rather
 // than at its carrying speed, and a walk still never gets longer for having
 // bought nothing.
-export const COMMUTE_PACE = 3.9;
+export const COMMUTE_PACE = 4.6;
 // Near enough to have arrived. A station is a place rather than a pixel, and a
 // body made to land exactly on one would shuffle on the spot for ever.
 export const COMMUTE_SLOP = P * 2;
@@ -2420,4 +2441,60 @@ export const BUILD_EFFORT = 1;
 // The most spare hands that go on one build. Not the whole yard: a build that
 // swallowed every idle body would stop the dust moving altogether, and what this
 // is meant to be is a *share* of the yard's attention rather than all of it.
-export const BUILD_GANG = 3;
+//
+// One, not three (feedback3.md B1). Three bodies climbing on to the same
+// bench and hopping in place read as a huddle, not a crew at work; one walks
+// over and builds, and the rest stay on the jobs they already had.
+export const BUILD_GANG = 1;
+
+// --- the farm's and the quarry's own sheds -----------------------------------
+// The two stations with a board and nothing to hold it -- see C5 in
+// wave-feedback3.md. A small shed on the station's left edge, in the same black
+// box and white door every other building here is drawn in. Small on purpose:
+// it is there to give the board something to stand over, not to be the thing
+// you look at.
+export const FARM_SHED_W = P * 6;
+export const FARM_SHED_H = P * 7;
+export const QUARRY_SHED_W = P * 6;
+export const QUARRY_SHED_H = P * 7;
+// bare ground kept between a shed and the working ground it stands beside
+export const SHED_GAP = P * 3;
+
+// --- the builders' work jig ---------------------------------------------------
+// B2 in wave-feedback3.md: a builder standing at a busy site does not stand
+// still, it hops -- the same MOVES/jig/startMove machinery the rock's own
+// celebration dance uses, tuned down from a party to a body at work. One hop,
+// up and down, this long -- slower than the dance's own beat (DANCE_BEAT in
+// crew.js's `jig`), because hammering is steadier than celebrating.
+export const BUILD_HOP_MS = 1400;
+// Two cells high, not the dance's three -- see MOVES.hop in crew.js. It was
+// one, which a player never actually saw: #4 in "Wave 3.1" (wave-feedback3.md)
+// filmed a builder for ten seconds and measured six world pixels of travel,
+// which is nothing against a body eighteen pixels tall. Raised until the hop
+// reads as a hop rather than a shiver.
+export const BUILD_HOP_H = 2;
+
+// --- lobbing a core ------------------------------------------------------------
+// B3 in wave-feedback3.md: a core leaving a hauler's hands at the lip is
+// thrown, not dropped -- the same arc every other load in this yard is thrown
+// on (see `aim` in dust.js), sized so the peak clears the lip by about this
+// much rather than by however far the throw happens to travel.
+export const CORE_LOB_H = 90;
+
+// --- a building rising out of the ground ---------------------------------------
+// #3, "Wave 3.1" in wave-feedback3.md: the frame a `kind: 'building'` work
+// lands, the yard feels it the way it feels a rock landing -- half as hard,
+// because a building settling into its footprint is a smaller event than a
+// boulder hitting the floor of the pit. See `SHAKE_LAND` in rock.js, which
+// this is half of.
+export const BUILD_SHAKE = 7.5;
+
+// --- the house's own curve ------------------------------------------------------
+// #8, "Wave 3.1" amendment: the house row has no rung, so `workFor` gave it a
+// flat 90 worker-seconds forever -- a straight ninety-second stand for your
+// very first hire, alone, now that BUILD_GANG is one. It has a rung in all but
+// name: how many rooms already stand. See the `work` override on `HOUSE_ROW`
+// in upgrades.js, and `workFor` in works.js, which reads it.
+export const HOUSE_WORK0 = 20;       // the first house, in worker-seconds
+export const HOUSE_WORK_STEP = 1.16; // and each one after it
+export const HOUSE_WORK_MAX = 180;   // never worse than the machines

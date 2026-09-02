@@ -10,7 +10,7 @@
 // config.js. The two grids and the bench are objects that are mutated in place,
 // so they live here as consts rather than as fields on S.
 
-import { P } from './config.js';
+import { P, LOO_POSTS } from './config.js';
 
 export const S = {
   // --- the window and the view ---
@@ -157,6 +157,14 @@ export const S = {
   builders: 0,            // spare hands putting up whatever the yard is building
   lent: [],               // and the jobs a body was borrowed from to be one, to give back
 
+  // The order the yard's own buildings went up in, site key by site key -- see
+  // C7 in wave-feedback3.md. `placeSites` walks this before it walks the fixed
+  // table, so a save that broke the ground for the farm before the quarry sees
+  // the farm standing nearer the rock. Empty means "nothing bought yet, or a
+  // save from before this existed" -- either way the fixed order, so nothing
+  // already standing moves.
+  buildOrder: [],
+
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
   // moves while somebody is in there
@@ -298,6 +306,7 @@ export const S = {
   quarryBoardOpen: false,
   farmBoardOpen: false,
   outhouseOpen: false,    // there is somewhere to go
+  looPosts: LOO_POSTS,    // how many caps the closet's stand has; `loopost` sells the second
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,

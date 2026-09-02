@@ -5,13 +5,13 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
-import { SITES, rowFor } from './works.js';
+import { SITES, rowFor, busyBuilderSites } from './works.js';
 import { resetCut } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
@@ -247,6 +247,7 @@ export function persist() {
     scrubOpen: S.scrubOpen,
     towerOpen: S.towerOpen,
     outhouseOpen: S.outhouseOpen,
+    looPosts: S.looPosts,
     labKitLevel: S.labKitLevel,
     fanLevel: S.fanLevel,
     spells: [...(S.spells || [])],
@@ -290,6 +291,11 @@ export function persist() {
     // page started, so an absolute time saved in one session is a meaningless
     // number in the next.
     works: S.works,
+    // The order the yard's own buildings were bought in -- see C7 in
+    // wave-feedback3.md. `placeSites` reads this on the way back in, which is
+    // the only time this ever matters: nothing already standing moves for
+    // buying something else later in the same session.
+    buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
     scrubbers: S.scrubbers,
@@ -426,6 +432,7 @@ export function restore() {
     S.casinoOpen = false;
     S.pot = null;
     S.pouring = false;
+    S.buildOrder = [];
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
   S.plotTone = [];
@@ -565,6 +572,10 @@ export function restore() {
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
   S.outhouseOpen = !!s.outhouseOpen;
+  // A save from before the second cap existed arrives with two posts already --
+  // it built the closet when that was the whole of what it bought, and nobody
+  // loses a cap they had to a rung that did not exist yet.
+  S.looPosts = s.looPosts ?? 2;
   S.labKitLevel = s.labKitLevel || 0;
   S.fanLevel = s.fanLevel || 0;
   S.spells = Array.isArray(s.spells) ? s.spells.slice() : [];
@@ -583,6 +594,12 @@ export function restore() {
   // would otherwise hold a work that can never finish, at a site that is then
   // busy for ever.
   S.lent = Array.isArray(s.lent) ? s.lent.filter(j => JOBS.includes(j)) : [];
+  // The order the buildings went up in. A save from before this existed, or
+  // one with nothing in it, comes back empty -- and empty is the fixed order,
+  // so nothing already standing moves. `placeSites` (world.js) is where an
+  // unrecognised key is dropped, not here: it already has to know which keys
+  // are real places, so this file does not need a second copy of that list.
+  S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
   S.works = {};
   for (const site of SITES) {
     const w = s.works?.[site];
@@ -656,6 +673,20 @@ export function restore() {
   resite();                    // the quarry is as deep and the plot as wide as it was
   restoreCrew(s.who);          // the same people, where they were, with what they have done
   syncWorkers();               // and anybody the counts say is missing
+  // A site with no gang of its own -- the yard, the bench -- that was busy when
+  // the tab shut is busy again the moment it comes back: `S.works` is written
+  // above, before the crew even exists. But nobody was sent to it, because the
+  // one thing that turns spare hands into builders is the same thing a fresh
+  // build starting calls, and a reload is not a build starting -- so the site
+  // stood there for ever with nobody at it. See C2 in wave-feedback3.md.
+  //
+  // Only run when there is actually a busy builder site to redispatch to: a
+  // save with nothing on the go has nothing to fix, and `rebalance` recomputes
+  // every job's count from scratch (`spareHands`, which is `S.crew` less every
+  // assigned job) -- a second pass over a roster that a save's own numbers
+  // never quite add up to is a place a body can be lost that has nothing to do
+  // with this bug.
+  if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
   if (!S.introDone) startIntro();
   restoreGrid(floor, s.floor);
@@ -804,6 +835,7 @@ export function reset(fresh = true) {
   S.scrubOpen = false;
   S.towerOpen = false;
   S.outhouseOpen = false;
+  S.looPosts = LOO_POSTS;
   S.meteorOpen = false;
   S.summon = 0;
   S.flashAt = 0;
@@ -813,6 +845,7 @@ export function reset(fresh = true) {
   S.wizards = 0;
   S.brewAt = 0;
   S.works = {};
+  S.buildOrder = [];
   S.lent = [];
   S.builders = 0;
   sky.cells = null;

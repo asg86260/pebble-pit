@@ -285,7 +285,11 @@ export const FARM_UPGRADES = [
     // furrow and buying a rung of tending speed cost the same at every level --
     // a coincidence, not a decision. Dust either way: the plots are tier one and
     // the rock has been making dust since the first swing.
-    cost: () => rungCost(120, S.tendLevel),
+    //
+    // The first rung is three times what it was: at the old price, tending
+    // speed was worth buying before there was a second plot to tend, which is
+    // the farm selling you a rate on a rate of nothing.
+    cost: () => rungCost(360, S.tendLevel),
     currency: 'dust',
     buy: () => S.tendLevel++,
     // and stays on the board once it is finished, saying so. See `quarrypace`.

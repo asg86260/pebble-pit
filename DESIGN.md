@@ -1182,6 +1182,77 @@ because the drumbeat is the income; the threat is retired, because the story is 
 how the first line of this document and the section above it are both true at once: **the
 story ends on purpose. The yard does not.**
 
+## Dust is carried to the site (design, not built)
+
+When you buy a rung, the dust that pays for it leaves the pile and arcs across
+the yard to the bench. It is the one thing in the yard that moves without
+anybody moving it, and it reads that way: a purchase is a number going down
+and a pretty line, where everything else you own is a body walking.
+
+**The ask:** haulers carry it. A purchase becomes a *delivery*. The row is
+pressed, the dust is reserved -- the counter drops, the pile does not -- and
+haulers walk loads from the pit to the site the way they walk loads from the
+rock to the pit. The work starts when the last load lands. That is exactly what
+"Time is a price" already says, extended from *hands* to *materials*: a
+building nobody is carrying dust to does not go up.
+
+**What it costs.** Every purchase is slower by a walk, and that is the point
+and also the risk. An early yard with three haulers would spend half its time
+ferrying eight dust to the bench for a rung that used to be a click. So the
+delivery is for the things that read as *building* something -- **buildings
+and machines** -- and rungs keep the snap they have. A floor rather than a
+kind would also do (nothing under fifty dust is carried), but the kind is the
+honest line: you can watch a shed go up out of dust somebody brought; a swing
+getting quicker has nothing to carry.
+
+**Shape.** A reservation per site, `S.owed[site]`, that haulers treat as a
+claim the way they claim a column of dust -- so the booking, the elbows and the
+"a laden body banks what it has" rules all apply unchanged. `spend` grows a
+second exit: a load lifted into a body's hands rather than into the air. The
+work in `works.js` waits on `owed === 0` before its clock starts. Nothing is
+drawn that is not already drawn: a hauler walking a load is a hauler walking a
+load, and the pile going down at the lip is the pile going down at the lip.
+
+**Not decided:** whether the reservation is taken out of the counter at press
+or at delivery. At press is simpler and is how every other price works; at
+delivery is truer and lets you cancel. Recommend at press.
+
+## Later rungs cost the other grounds (design, not built)
+
+Opening the farm feels pointless. It unlocks one ladder, for bodies you already
+have, priced in a coin only it makes -- so it is an island, and the quarry is
+another, and the rest of the yard never needs either.
+
+**The ask:** past a size, every ladder starts asking for what the other
+grounds make. After ten houses rungs cost food as well as dust; after fifteen
+they cost green and blue too. The stations stop being islands and become
+*suppliers*, and a yard that has not opened the farm at ten houses is stuck on
+every rung until it does -- which is the intended pressure, and the reason the
+farm is worth opening.
+
+**Shape.** It is the dust rule's mirror. `billOf` already adds dust to every
+row from one exchange table (`DUST_PER`) rather than sixteen edits; this is a
+second table, `TIER_COIN = { 10: 'spore', 15: 'shard' }`, keyed on `S.crew`,
+that adds a coin to every *rung* once the crew is that size, at `rungCost /
+DUST_PER[coin]` of it. One table, no per-row edits, and a new tier is a line.
+Places and machines are left alone -- they already cost cores and red, which is
+the same idea said earlier.
+
+**Food is the spore.** A fifth coin is a fifth mark, a fifth pile, a fifth
+ledger and a fifth thing to carry, for a distinction the player never has to
+make: what the farm grows is what the crew eat. The spore's mark is a hexagon
+and it is green; it is already food if you squint, and it should stop being a
+squint.
+
+**The row has to say why.** A rung you cannot afford for want of a coin you
+have never seen must show that coin's mark, greyed, and not simply go dark --
+otherwise the first thing the tenth house does is break the shop with no
+explanation. The scrubbing house's rule: the disease is the advertisement.
+
+**Not decided:** the thresholds. Ten and fifteen are the ask; the right numbers
+are the ones at which a yard that has been playing along has *just* opened
+those stations, and that is a thing to measure on a save rather than pick.
+
 ## Not doing
 
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the

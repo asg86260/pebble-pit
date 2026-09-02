@@ -2,7 +2,8 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino, scrub, quarry, farm, tower } from './state.js';
+import { S, bench, lab, school, casino, scrub, quarry, tower } from './state.js';
+import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
@@ -38,17 +39,25 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
-// The quarry is a hole, so what you stand at is its mouth rather than the whole
-// shaft: a rectangle that reaches to the floor of it would put the board
-// underground, and deeper every time you bought a bench. The plots are flat and
-// need no such care.
-const quarryMouth = { get x() { return quarry.x; }, get y() { return quarry.y; },
-                      get w() { return quarry.w; }, get h() { return 0; } };
-const anchor = which => standAt[which];
-
-const standAt = { bench, lab, school, casino, scrub, farm, tower,
-                  quarry: quarryMouth,
+//
+// The farm and the quarry stand at their shed, not at the station itself -- see
+// #1 in "Wave 3.1" in wave-feedback3.md. The shed (C5) used to be scenery: a
+// small building that gave their board something to hang over while the mouth
+// of the hole and the run of plots were still what you had to point at to open
+// it. That read wrong -- the shed is what looks like the sign, so it is what
+// the hand goes to. It is the whole answer now: the hover target, the click
+// target, and the anchor the board hangs from, for both of them.
+const standAt = { bench, lab, school, casino, scrub, tower,
+                  get quarry() { return quarryShed(); },
+                  get farm() { return farmShed(); },
                   get house() { return houseRect(); } };
+
+// Where the board itself goes up. Split out from `standAt` on principle -- a
+// station could, in general, be stood at somewhere other than where its sheet
+// hangs -- but for every station in the yard today, including the farm and the
+// quarry now, the two questions have the same answer.
+const boardAt = which => standAt[which];
+const anchor = which => boardAt(which);
 // Asked for when it is wanted, not gathered at load time. The quarry and the plots
 // are drawn by files this one already reads, so the imports come round in a ring
 // -- and a table built while the ring is still closing gets whichever of them
@@ -83,10 +92,11 @@ const standing = which =>
   which === 'tower' ? S.towerOpen :
   which === 'house' ? S.crew > 0 : false;
 
-// Where a station's mark goes: the middle of it, on the ground. The quarry is the
-// exception in the one way it always is -- it is a hole, so the middle of it is
-// thin air and the mark would hang over nothing. Its mark stands at the near
-// lip, which is the end you walk up to.
+// Where a station's mark goes: the middle of it, on the ground. Now that the
+// quarry and the farm stand at their shed rather than at the hole or the plots
+// (see #1, "Wave 3.1"), `standAt` is an ordinary rectangle for every station --
+// no more reaching for a hole's near lip, because there is no hole in this
+// table any more.
 // The ground a station stands on, for the checks: where you have to be to open
 // its board is the game's business, not arithmetic written out again in a check.
 export function standRect(which) {
@@ -98,8 +108,7 @@ export function standRect(which) {
 export function stationFoot(which) {
   if (!standing(which)) return null;
   const r = standAt[which];
-  if (!r) return null;
-  return which === 'quarry' ? r.x : r.x + r.w / 2;
+  return r && r.x + r.w / 2;
 }
 
 // Whether a station has anything for you.
@@ -134,21 +143,39 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-// The quarry is the hole, and only the hole.
+// The quarry is the hole, and a bridge crosses it: a ramp up, a deck straight
+// over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
+// the mouth meant aiming at the deck, so a plain `near()` round the hole would
+// open the board on every hauler crossing it -- what you point at is the
+// ground that is missing, padded a cell sideways and no further, because a
+// cell further either way is the ramp.
 //
-// A bridge crosses it -- a ramp up, a deck straight over the mouth, a ramp down
-// -- and the crew walk every foot of that. Aiming at the mouth meant aiming at
-// the deck, which is a thing you cross on the way to somewhere else: walking a
-// hauler over the quarry opened the quarry's board every time. So what you point at is
-// the ground that is missing. Below the line and between the walls, padded a
-// cell sideways and no further, because a cell further either way is the ramp.
+// The shed beside it is a second way in now -- see #1, "Wave 3.1" -- which is
+// what makes it worth hovering at all; before this it was scenery that did
+// nothing when you pointed at it, despite being the thing carrying the sign.
+// It cannot simply replace the hole, though: the shed stands close enough to
+// the near ramp (`SHED_GAP` is a lot narrower than `BRIDGE_RUN`) that both
+// `near()`'s own padding and, at the ramp's near end, the shed's own raw
+// footprint reach on to it. So the ramp side of the shed gets the hole's own
+// one-cell margin instead of `near()`'s generous eight, the far three sides
+// keep the ordinary padding, and the ramp and the deck answer to neither this
+// nor the hole below.
+const nearQuarryShed = (x, y) => {
+  const r = quarryShed();
+  return x > r.x - P * 8 && x < r.x + r.w + P &&
+         y > r.y - P * 8 && y < r.y + r.h + P * 4;
+};
 const hole = () => ({ x: quarry.x, y: S.groundY, w: quarry.w, h: quarry.h });
 export const nearQuarry = (x, y) => {
   if (!S.quarryOpen) return false;
+  if (nearQuarryShed(x, y)) return true;
   const r = hole();
   return x > r.x - P && x < r.x + r.w + P && y > r.y && y < r.y + r.h + P * 2;
 };
-export const nearFarm = (x, y) => S.farmOpen && near(farm, x, y);
+// The farm has no bridge to keep clear of, so its shed is simply the target --
+// see #1, "Wave 3.1" -- in place of the plots, which used to answer for the
+// whole width of the row.
+export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
 export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
 // And the house, once anybody lives in it -- with a tight right edge rather than
 // the usual eight cells.
@@ -161,18 +188,21 @@ export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
 // cells is still comfortably more than nothing, and it leaves the strip between
 // the two of them belonging to neither -- which is what the safe wedge needs.
 const HOUSE_PAD_IN = P * 2;
+// The whole structure, roof included, is the target now -- see D2 in
+// wave-feedback3.md (#21). This used to be a band at the door: the block is
+// the one thing here that grows, and a region drawn round the whole of it used
+// to reach up into the air the boards hang in, so walking to the far corner of
+// the bench's own board could cross the roof and the house would steal the
+// menu. That is a real risk on a very tall settlement, but the ask is the
+// whole building as the target, and `nearHouse` is asked after every other
+// station -- see the `want` cascade in input.js, where the house goes last on
+// purpose -- so a cursor standing inside another station's own patch still
+// answers to that station first.
 export const nearHouse = (x, y) => {
   if (S.crew < 1) return false;
   const r = houseRect();
-  // A band at the door rather than the whole face of the block. The block is the
-  // one thing here that grows: by twenty rooms it is taller than the rock, and a
-  // region drawn round the whole of it reaches up into the air the boards hang
-  // in -- so walking down to the far corner of the bench's board crossed the
-  // roof of the house and the house took the menu. You stand at a door to go in
-  // somewhere. That is all this needs to be.
-  const top = Math.max(r.y, S.groundY - P * 10);
   return x > r.x - P * 8 && x < r.x + r.w + HOUSE_PAD_IN &&
-         y > top && y < S.groundY + P * 4;
+         y > r.y && y < S.groundY + P * 4;
 };
 
 // The board stands on the bench, but it is a real element on a real screen: on a
@@ -259,12 +289,11 @@ function place(el, at) {
   //
   // A board is seated just above the station it belongs to, and then held inside
   // the window -- and a board taller than the room above its station is pushed
-  // back down by that second rule. The quarry feels it first because it is the
-  // one station whose stand-point is the ground line itself (the quarry is a hole,
-  // so what you stand at is its mouth), so its board starts lowest and is the
-  // first to land on the counters. The counters are how you put somebody on the
-  // job the board is about, so covering them with it is the worst thing it could
-  // land on.
+  // back down by that second rule. A short shed feels it first, because its roof
+  // is the lowest anchor point of any station's, so its board starts lowest and
+  // is the first to land on the counters. The counters are how you put somebody
+  // on the job the board is about, so covering them with it is the worst thing
+  // it could land on.
   const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
   // The top clamp takes the board at its tallest. `sized` is what the sheet

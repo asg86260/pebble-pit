@@ -108,36 +108,44 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   runUntil(() => inScrub() > 0, 60);
 };
 
-// How much sky one setting of the fan takes down in half a minute, with nothing
-// allowed to rain: the sky is wound to well under the line and the stretch is
-// short, so what this measures is the house and not the weather.
+// Run a stretch of yard with **no rain in it**, and say whether one was had.
+//
+// Every measurement in this file is a rate, and a shower is not a rate: it takes
+// the whole sky down at once, so a stretch that happens to catch one reads as
+// the house clearing seventeen hundred haze, or as a bare fan holding three
+// machines with room to spare. Three checks here said "with nothing allowed to
+// rain" and not one of them enforced it -- whether a shower lands inside any
+// given window is the seeded generator's business, and the premise held by luck
+// until something moved the run along. Which is the dance's seed again, and the
+// cure is the same: assert the premise instead of hoping for it.
+//
+// A shower ends clean, so the stretch after one is an ordinary sky again and
+// trying again is all it takes. `before` runs first, for whatever the caller has
+// to put back between attempts -- winding the sky up again, mostly, since a
+// house measured on the empty sky a shower leaves has nothing to clear.
+function dryStretch(seconds, measure, before = null, tries = 4) {
+  let out = null, dry = false;
+  for (let i = 0; i < tries && !dry; i++) {
+    if (before) before();
+    const rains = yard.S.rains;
+    out = measure(seconds);
+    dry = yard.S.rains === rains;
+  }
+  return { ...out, dry };
+}
+
+// How much sky one setting of the fan takes down in half a minute.
 function cleared(fan) {
   // The machines off, so what this measures is the house alone. With them
   // running the sky is being filled at the same time it is being emptied, and
   // the difference of two rates is not a measurement of either.
   fromTheField(fan, []);
-  // Over a stretch with **no rain in it**, tried a few times over.
-  //
-  // "Nothing allowed to rain" was the premise and nothing enforced it: a shower
-  // takes the whole sky down at once, so a run that happens to catch one reads
-  // as the house clearing seventeen hundred haze and the fan making the sky
-  // worse. Whether one lands inside any given thirty seconds is the seeded
-  // generator's business, and the premise held by luck until something else
-  // moved the run along -- the same fault, and the same cure, as its sibling
-  // below and as the dance's seed. A shower ends clean, so the stretch after
-  // one is an ordinary sky again.
-  // The sky is wound back up for each attempt: a shower takes it to nothing, and
-  // a second stretch measured on an empty sky is a house with nothing to clear.
-  let before = 0, s = null, dry = false;
-  for (let tries = 0; tries < 4 && !dry; tries++) {
-    window.__air({ haze: 1800 });
-    const rains = yard.S.rains;
-    before = state().smog.haze;
-    run(30);
-    s = state().smog;
-    dry = yard.S.rains === rains;
-  }
-  return { took: before - s.haze, left: s.haze, rate: s.scrubbing / 60, rains: s.rains, dry };
+  return dryStretch(30, secs => {
+    const was = state().smog.haze;
+    run(secs);
+    const s = state().smog;
+    return { took: was - s.haze, left: s.haze, rate: s.scrubbing / 60, rains: s.rains };
+  }, () => window.__air({ haze: 1800 }));
 }
 
 group('a bigger fan is a bigger draught, not a bigger number', async () => {
@@ -216,15 +224,13 @@ group('the board counts what the mouth swallows', async () => {
   // window. So the window is one in which the count of rains did not move,
   // tried a few times over -- a shower ends clean, and the next stretch is an
   // ordinary sky again.
-  let before = 0, s = null, dry = false;
-  for (let tries = 0; tries < 4 && !dry; tries++) {
-    const rains = yard.S.rains;
-    before = state().smog.haze;
-    run(30);
-    s = state().smog;
-    dry = yard.S.rains === rains;
-  }
-  const fell = (before - s.haze) / 30;         // how the sky actually went
+  const run30 = dryStretch(30, secs => {
+    const was = state().smog.haze;
+    run(secs);
+    return { was, s: state().smog };
+  });
+  const { was, s, dry } = run30;
+  const fell = (was - s.haze) / 30;            // how the sky actually went
   const said = (s.scrubbing - s.fouling) / 60; // and what the board said it would
   return [
     ok(idle.scrubbing < 1,
@@ -249,20 +255,26 @@ group('the board counts what the mouth swallows', async () => {
 // whatever the draught swept in was swallowed, so the bare house was already
 // enough and there was nothing to buy it for.
 group('three machines are more than a bare fan can hold, and less than a full one', async () => {
+  // Over a stretch with no shower in it, like everything else here: a rain takes
+  // the sky to nothing and reads as a bare fan holding three machines easily.
   const net = fan => {
     fromTheField(fan);
     run(20);
-    const before = state().smog.haze;
-    run(60);
-    return (state().smog.haze - before) / 60;
+    return dryStretch(60, secs => {
+      const was = state().smog.haze;
+      run(secs);
+      return { rate: (state().smog.haze - was) / secs };
+    });
   };
   const bare = net(0);
   const full = net(5);
   return [
-    ok(bare > 0.5, 'a bare fan loses ground to three machines',
-       `${bare.toFixed(1)} haze/s, and climbing`),
-    ok(full < 0, 'and the full ladder holds them',
-       `${full.toFixed(1)} haze/s`)
+    ok(bare.dry && full.dry, 'both stretches were measured without a shower in them',
+       `bare ${bare.dry}, full ${full.dry}`),
+    ok(bare.rate > 0.5, 'a bare fan loses ground to three machines',
+       `${bare.rate.toFixed(1)} haze/s, and climbing`),
+    ok(full.rate < 0, 'and the full ladder holds them',
+       `${full.rate.toFixed(1)} haze/s`)
   ];
 });
 
