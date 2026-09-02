@@ -7,7 +7,7 @@
 // resumes after a reload, the two sheds hold their ground without eating the
 // plots or the cut, and the farm is laid out at its full width from the start.
 
-import { group, ok, state, run, runUntil, openSites, P } from './helpers.mjs';
+import { group, ok, state, run, runUntil, openSites, P, yard } from './helpers.mjs';
 
 const works = () => state().works || {};
 const on = key => Object.values(works()).find(w => w.key === key) || null;
@@ -132,5 +132,72 @@ group('the sites still lay out left of the rock, sheds and all', async () => {
     ok(s.labX < s.farmX, 'and the lab out past the farm, at the far end',
        `lab at ${Math.round(s.labX)}, farm at ${Math.round(s.farmX)}`),
     ok(s.quarryX + s.quarryW < s.benchX, 'the quarry stands past the bench')
+  ];
+});
+
+// C7 -- buildings placed in the order they are bought. Only started once
+// C1-C6 are green, per the spec.
+group('buying a place records it in the build order', async () => {
+  window.__reset();
+  window.__crew(0, 3);
+  window.__grant({ cores: 10, dust: 90000 });
+  run(1);
+
+  const before = state().buildOrder;
+  window.__buy('unlockfarm');
+  const farmDone = runUntil(() => !on('unlockfarm'), 90);
+  const afterFarm = state();
+  window.__buy('unlockquarry');
+  const quarryDone = runUntil(() => !on('unlockquarry'), 90);
+  const afterQuarry = state();
+
+  return [
+    ok(before.length === 0, 'nothing bought yet, nothing on the list',
+       JSON.stringify(before)),
+    ok(farmDone && afterFarm.buildOrder.includes('farm'),
+       'the farm is on the list once the ground is broken',
+       JSON.stringify(afterFarm.buildOrder)),
+    ok(quarryDone && afterQuarry.buildOrder.includes('quarry'),
+       'and the quarry joins it', JSON.stringify(afterQuarry.buildOrder)),
+    ok(afterQuarry.buildOrder.indexOf('farm') < afterQuarry.buildOrder.indexOf('quarry'),
+       'in the order they were actually bought',
+       JSON.stringify(afterQuarry.buildOrder))
+  ];
+});
+
+// A save with nothing in `S.buildOrder` gets the fixed table back exactly --
+// checked already above, in "the sites are laid out left of the rock, in
+// order" and "the sites still lay out left of the rock, sheds and all". This
+// is the other half: a save that bought out of the fixed order sees the
+// ground laid out to match, on the next time the table is walked.
+group('the ground is laid out to match the order things were bought in', async () => {
+  const before = state();
+
+  // Nothing bought yet: the fixed order, bench and house first and then the
+  // table's own sequence -- school, quarry, farm, lab, scrub, casino, tower.
+  const fixedTowerBehindQuarry = before.quarryX > before.towerX;
+
+  // The tower bought first, ahead of everything else. Set directly rather
+  // than played out through the whole unlock chain -- see C7's own write-up
+  // in works.js for how a real purchase gets here -- because what this group
+  // is about is what `placeSites` does with the order, not how a save came
+  // to have one.
+  yard.S.buildOrder = ['tower'];
+  yard.world.resize(yard.game.settleIntoWorld);
+  const after = state();
+
+  return [
+    ok(fixedTowerBehindQuarry,
+       'before: the tower is the last thing in the fixed table',
+       `tower ${before.towerX}, quarry ${before.quarryX}`),
+    ok(after.towerX > before.towerX,
+       'bought first, it stands nearer the rock than it did',
+       `${before.towerX} -> ${after.towerX}`),
+    ok(after.towerX > after.quarryX,
+       'ahead of every station the order did not name',
+       `tower ${after.towerX}, quarry ${after.quarryX}`),
+    ok(after.benchX > after.towerX && after.benchX > before.benchX - 1,
+       'and the bench is still the nearest thing to the rock, whatever was bought',
+       `bench ${after.benchX}, tower ${after.towerX}`)
   ];
 });

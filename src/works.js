@@ -46,6 +46,16 @@ export const SITE_JOB = {
 };
 
 export const SITES = Object.keys(SITE_JOB);
+
+// Which row opens which place on the ground -- the same keys `SITES` in
+// config.js is laid out by, not the job-sites above. See C7 in
+// wave-feedback3.md: the yard remembers the order these are bought in, so
+// `placeSites` can walk the table in that order instead of a fixed one.
+const OPENS_PLACE = {
+  unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
+  unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower'
+};
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
 export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
@@ -176,6 +186,12 @@ export function stepWorks(dt) {
     // door and this is not, so the bar over the site has been saying it for the
     // whole of the build.
     rowFor(w.key)?.buy();
+    // And the yard remembers it broke this ground, so the next time the table
+    // is walked -- which is the next reload, not this frame; nothing here
+    // moves anything already standing -- this one stands where it was bought
+    // relative to the rest, not where the fixed table always put it.
+    const opened = OPENS_PLACE[w.key];
+    if (opened && !S.buildOrder.includes(opened)) S.buildOrder = [...S.buildOrder, opened];
     staffHook();
     S.dirty = true;
   }

@@ -155,6 +155,30 @@ export function layPiles() {
 // at boot. Here the near end and the far end are both produced by one cursor
 // walking one way, and an inverted strip is not a thing that can be expressed.
 //
+// The order the walk visits the table in -- see C7 in wave-feedback3.md.
+// Buildings go up in the order they are bought, not a fixed one, so a save
+// that broke the farm's ground before the quarry's sees the farm standing
+// nearer the rock than the quarry does.
+//
+// The bench and the settlement are not part of that: neither is ever bought
+// through a row of its own -- the bench is there from the first frame and the
+// settlement is what hiring has always drawn -- so they keep the fixed order's
+// first two places, always, and `S.buildOrder` only ever reorders what is left.
+// A save with nothing in `S.buildOrder` -- new, or from before this existed --
+// gets the fixed order back exactly, because an empty list bought nothing and
+// leaves everything after the bench and the house in the table's own order.
+function siteOrder() {
+  const rest = SITES.filter(row => row.key !== 'bench' && row.key !== 'house');
+  const bought = (S.buildOrder || []).filter(k => rest.some(row => row.key === k));
+  const waiting = rest.filter(row => !bought.includes(row.key));
+  return [
+    ...SITES.filter(row => row.key === 'bench'),
+    ...SITES.filter(row => row.key === 'house'),
+    ...bought.map(k => rest.find(row => row.key === k)),
+    ...waiting
+  ];
+}
+
 // Returns a map of key -> { x, w } and the strips, in yard order.
 export function placeSites() {
   const snap = v => Math.round(v / P) * P;
@@ -167,7 +191,7 @@ export function placeSites() {
   // thirty pixels out and a rock taller than it was wide.
   let x = snap(S.cx - TO_FIRST_SITE);
 
-  for (const row of SITES) {
+  for (const row of siteOrder()) {
     const w = snap(row.w());
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 

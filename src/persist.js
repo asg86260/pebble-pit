@@ -287,6 +287,11 @@ export function persist() {
     // page started, so an absolute time saved in one session is a meaningless
     // number in the next.
     works: S.works,
+    // The order the yard's own buildings were bought in -- see C7 in
+    // wave-feedback3.md. `placeSites` reads this on the way back in, which is
+    // the only time this ever matters: nothing already standing moves for
+    // buying something else later in the same session.
+    buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
     scrubbers: S.scrubbers,
@@ -422,6 +427,7 @@ export function restore() {
     S.casinoOpen = false;
     S.pot = null;
     S.pouring = false;
+    S.buildOrder = [];
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
   S.plotTone = [];
@@ -583,6 +589,12 @@ export function restore() {
   // would otherwise hold a work that can never finish, at a site that is then
   // busy for ever.
   S.lent = Array.isArray(s.lent) ? s.lent.filter(j => JOBS.includes(j)) : [];
+  // The order the buildings went up in. A save from before this existed, or
+  // one with nothing in it, comes back empty -- and empty is the fixed order,
+  // so nothing already standing moves. `placeSites` (world.js) is where an
+  // unrecognised key is dropped, not here: it already has to know which keys
+  // are real places, so this file does not need a second copy of that list.
+  S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
   S.works = {};
   for (const site of SITES) {
     const w = s.works?.[site];
@@ -821,6 +833,7 @@ export function reset(fresh = true) {
   S.wizards = 0;
   S.brewAt = 0;
   S.works = {};
+  S.buildOrder = [];
   S.lent = [];
   S.builders = 0;
   sky.cells = null;

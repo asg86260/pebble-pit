@@ -335,6 +335,9 @@ export const snapshot = () => ({
         hands: handsAt(site) }
     : null]).filter(([, w]) => w)),
   builders: S.builders || 0,
+  // The order the yard's own buildings were bought in -- see C7 in
+  // wave-feedback3.md.
+  buildOrder: [...(S.buildOrder || [])],
   lent: [...(S.lent || [])],
   aloft: S.workers.filter(w => w.aloft).length,
   wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)),

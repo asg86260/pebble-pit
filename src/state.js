@@ -151,6 +151,14 @@ export const S = {
   builders: 0,            // spare hands putting up whatever the yard is building
   lent: [],               // and the jobs a body was borrowed from to be one, to give back
 
+  // The order the yard's own buildings went up in, site key by site key -- see
+  // C7 in wave-feedback3.md. `placeSites` walks this before it walks the fixed
+  // table, so a save that broke the ground for the farm before the quarry sees
+  // the farm standing nearer the rock. Empty means "nothing bought yet, or a
+  // save from before this existed" -- either way the fixed order, so nothing
+  // already standing moves.
+  buildOrder: [],
+
   // --- the lab ---
   // what the lab is working on, if anything: one piece at a time, and it only
   // moves while somebody is in there
