@@ -511,7 +511,16 @@ setHands(site => {
   if (!at) return 0;
   // A builder is at *its* site and no other: three sites can be busy at once
   // and a body at the bench is not putting up the lab.
-  const there = S.workers.filter(w => at(w) && (w.type !== 'builder' || w.site === site)).length;
+  //
+  // ...and a builder standing at a station counts there too, whoever the
+  // station's own gang is. The yard sends spare hands to a station with nobody
+  // in it (see `busyBuilderSites`), and until they counted, the body walked
+  // over, stood at the tower and did nothing: the work it had been sent for was
+  // asking how many WIZARDS were there, and the answer was the nought that had
+  // sent for it.
+  const helping = w => w.type === 'builder' && w.goal === 'at' && w.site === site;
+  const there = S.workers.filter(w => helping(w)
+                                   || (at(w) && (w.type !== 'builder' || w.site === site))).length;
   // One pair of hands on a piece of work, whoever owns the site.
   //
   // `BUILD_GANG` already said this for the yard and the bench -- one spare body

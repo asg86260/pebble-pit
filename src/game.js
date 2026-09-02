@@ -31,7 +31,7 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
 import { stepGrit } from './grit.js';
-import { stepWorks, setGround, setDone } from './works.js';
+import { stepWorks, setGround, setDone, setFoot } from './works.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -42,6 +42,8 @@ import { stepWorks, setGround, setDone } from './works.js';
 setGround(layPiles);
 // and the lab puts a mark up when its own work lands -- see `labFinished`
 setDone(labFinished);
+// and where a station stands, for a body walking over to help at one
+setFoot(stationFoot);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';
@@ -55,7 +57,7 @@ import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
-import { tidyBoards } from './board.js';
+import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is here rather than in `restOnRock` because it is the chip loop's

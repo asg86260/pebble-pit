@@ -89,16 +89,48 @@ export const OPENS_PLACE = {
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
 export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
-export const busyBuilderSites = () => BUILDER_SITES.filter(site => busyAt(site));
 
-// Where a site's work stands, for a body walking to it. A row that opens a
-// place says where its place will be; the bench is the bench; the rest have
-// nowhere in particular and a body already in the yard is at work where it is.
+// Where the yard's spare hands are needed. The two sites that have no gang of
+// their own -- the yard and the bench -- and a station in the one bind it
+// cannot get itself out of.
+//
+// That bind: the work on it is what MAKES its gang, and its gang is empty. The
+// tower's first hat is a wizard, and with only wizards allowed to work at the
+// tower the row could be pressed for ever and never move -- a station waiting
+// on the very body it is trying to make. A row that trains somebody says so
+// (`hires`), so this is a rule about a kind of row rather than a name checked
+// against one station.
+//
+// Deliberately no wider than that. `works.test.mjs` asks, in as many words,
+// that a station site is never lent a body: a cut with no quarriers in it digs
+// nothing, and the yard does not quietly do a station's work for it. The one
+// exception is the work that would otherwise be impossible.
+const bootstrapping = site => {
+  const w = workAt(site);
+  const u = w && rowFor(w.key);
+  return !!u?.hires && !(S[u.hires] > 0);
+};
+
+export const busyBuilderSites = () =>
+  SITES.filter(site => busyAt(site)
+                    && (SITE_JOB[site] === 'builders' || bootstrapping(site)));
+
+// And where a station itself stands, for a body walking to a work that is not a
+// building going up somewhere new. Wired in game.js to the same `stationFoot`
+// the boards use, so a body walks to the place you walk to -- rather than to a
+// second answer kept here that could disagree with it.
+let footHook = () => null;
+export const setFoot = fn => { footHook = fn; };
+
 export const siteX = site => {
   const w = workAt(site);
   if (!w) return null;
   if (w.at != null) return w.at;
-  return site === 'bench' ? bench.x + bench.w / 2 : null;
+  if (site === 'bench') return bench.x + bench.w / 2;
+  // The station's own front. Without this a body sent to help at a station --
+  // the yard's spare hands making the tower's first hat -- had nowhere to walk
+  // to and the work sat there at nought for ever.
+  return footHook(site);
 };
 
 // How many pairs of hands are at a site this frame. crew.js sets it; until it

@@ -36,7 +36,7 @@ import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dus
 import { rockLeft, groundAt, farmShed, quarryShed, plotSlots, shakeView } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS,
-         BUILD_SHAKE, HOUSE_CUBE, GRIT_RISE, GRIT_SPREAD, GRIT_LIFE } from './config.js';
+         BUILD_SHAKE, HOUSE_CUBE } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -51,7 +51,6 @@ import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET,
          BALLOON_FILTER_W, BALLOON_FILTER_H } from './balloon.js';
 import { now } from './clock.js';
 import { press } from './press.js';
-import { spawnGrit } from './grit.js';
 import { rand } from './rng.js';
 
 const canvas = document.getElementById('c');
@@ -2283,29 +2282,17 @@ const underConstruction = site => {
   return !!w && risingKinds.has(rowFor(w.key)?.kind);
 };
 
-// How often the works themselves shed a little dust off the ground, and when
-// each site last did. This is not the hammer -- that throws its own chips, one
-// burst per blow, from wherever the body is standing (see `workJig` in crew.js).
-// This is the site: for as long as anything is going up, the ground along the
-// foot of it is being worked over, and it says so. Slower and softer than a
-// blow, and spread along the whole footprint rather than coming off one body,
-// so the two read as different things happening at the same place.
-// A building site is dusty for as long as it is a building site. This ran at
-// one puff of two motes every quarter of a second, which on a footprint fifty
-// cells wide is a grain here and a grain there -- you had to be told it was
-// happening. Work throws dust up continuously, so this does too: several puffs
-// a second, and how many motes is the footprint's own business rather than one
-// number for a shed and a settlement alike.
-const SITE_DUST_MS = 70;
-// Motes per puff, per cell of frontage. A wide site is a wide dust cloud for
-// the same reason it is a long wall: there is more of it being worked.
-const SITE_DUST_PER_CELL = 0.14;
-const SITE_DUST_MIN = 2, SITE_DUST_MAX = 7;
-const siteDustAt = {};
-
+// The site sheds no dust of its own, and that is deliberate rather than
+// missing. There was a haze along the foot of whatever was going up -- a puff
+// every so often from the ground line, spread across the frontage -- and made
+// heavy enough to see it read as the ground smouldering rather than as work.
+// What says a building site is a building site is the barriers, the tape, the
+// thing rising out of the ground, and the body swinging a hammer at it with
+// chips coming off each blow (see `workJig` in crew.js). Dust with nobody
+// making it was decoration.
 export function drawBuildSites() {
   for (const site of SITES) {
-    if (!underConstruction(site)) { delete siteDustAt[site]; continue; }
+    if (!underConstruction(site)) continue;
     const foot = siteFoot(site);
     if (!foot) continue;
 
@@ -2323,29 +2310,6 @@ export function drawBuildSites() {
     for (let x = left + postW; x < right; x += P * 2)
       ctx.fillRect(x, tapeY, P, 2);
 
-    const t = now();
-    if (t >= (siteDustAt[site] || 0)) {
-      siteDustAt[site] = t + SITE_DUST_MS * (0.7 + rand() * 0.6);
-      // Somewhere along the foot of what is going up, not the middle of it: a
-      // puff that always comes off the same spot reads as a vent rather than as
-      // work. On the ground line, drifting up off it.
-      // Two spots a puff rather than one, so the haze reads as the whole
-      // frontage being worked rather than as one busy corner that moves.
-      // A cell or two off the ground rather than on it, and thrown hard enough
-      // to hang there. A grain is deleted the moment it touches the floor (see
-      // `stepGrit`), so a haze released at the ground line with a gentle lift
-      // was gone in a few frames however often it was released -- six puffs a
-      // second put seven motes in the air, because they were landing as fast as
-      // they were made. Given room to rise, the same six puffs hold a cloud.
-      for (const x of [foot.x + rand() * foot.w, foot.x + rand() * foot.w])
-      spawnGrit(x, S.groundY - P * 2, {
-        n: Math.round(Math.max(SITE_DUST_MIN,
-              Math.min(SITE_DUST_MAX, foot.w / P * SITE_DUST_PER_CELL))),
-        rise: GRIT_RISE * 0.9,      // a haze off the ground, not a thrown chip
-        spread: GRIT_SPREAD * 0.45,
-        life: GRIT_LIFE * 2.4       // and it hangs about longer for being slower
-      });
-    }
   }
 }
 

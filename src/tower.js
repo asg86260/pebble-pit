@@ -44,7 +44,7 @@ export const wizCost = () => {
 // station idles until somebody is actually standing there, and the tower was
 // the one place quietly exempt from it.
 export const brewing = () => !!workOn('wizard');
-export const brewLeft = () => leftAt('yard', 'wizard');
+export const brewLeft = () => leftAt('tower', 'wizard');
 export const brewAt = () => { const w = workOn('wizard'); return w ? progressOf(w) : 0; };
 
 // A minute and a half is a long time to look at a number of milliseconds.
@@ -139,12 +139,15 @@ export const TOWER_UPGRADES = [
     // rest of it, under a clock, and the row does not need a second sheet to
     // open beside it to say one number. While one is being trained the clock
     // counts down what is left of it.
-    // Built by the yard, not by the tower. Every other row here is worked on by
-    // a wizard, and this is the row that *makes* one: with the tower's own gang
-    // on it, the first hat could never be started, because there is nobody up
-    // there until a hat exists. It is the same reason the school's rows are the
-    // yard's work -- the body being trained is not standing there yet.
-    kind: 'building', site: 'yard',
+    // At the tower, where hats come from. The first one is the awkward case --
+    // there is nobody up there until a hat exists -- and it is not answered
+    // here: `busyBuilderSites` sends the yard's spare hands to any station whose
+    // gang is empty, so the first hat is made by whoever is free and every one
+    // after it by the wizards already wearing theirs.
+    kind: 'building', site: 'tower',
+    // ...and this is the row that makes the tower's own gang, which is what
+    // lets the yard lend a hand for the first one. See `busyBuilderSites`.
+    hires: 'wizards',
     // Its own figure rather than the table's, because a hat has always taken a
     // minute and a half and this is not the moment to change what it costs.
     work: () => WIZ_BREW_MS / 1000,
