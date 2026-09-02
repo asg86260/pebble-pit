@@ -151,8 +151,14 @@ export const tuneCost = key => Math.round(MACHINE_TUNE_COST * Math.pow(MACHINE_T
 // No `rung`, deliberately: `rungOf` calls a row without one "not a ladder at all
 // ... and never finished", and never finished is the whole point. Pips over this
 // would be the board drawing an end onto the one row that has none.
-export const tuneRow = (key, name, note) => ({
+// `site` is where the machine stands, because tuning one is work done ON it: a
+// spanner at the drill is a quarrier's afternoon, not a thing that happens the
+// moment you press a button. It is the same site the machine's own row was
+// built at, said again here because a row saying where it is fitted is what
+// every row in this game does.
+export const tuneRow = (key, name, note, site) => ({
   key: 'tune' + key,
+  kind: 'rung', site,
   name,
   unit: 'x',
   note,

@@ -90,9 +90,22 @@ export const haveRock = () => runUntil(() => {
 // It is deliberately the long way round. A hook that set the level would prove
 // nothing about how a player gets there, and what these checks are about is what
 // a purchase actually does.
+// Buy it and have it built, without a crew to build it.
+//
+// `buyBuilt` waits for hands, which is right when the waiting is the subject.
+// Most checks are about what a row *does* -- a rung making a machine quicker, a
+// spell landing on the yard -- and staffing a site for them is a second check
+// about staffing written into the first. This pays for the row the way a player
+// does and then hands the yard the worker-seconds.
+export function buyNow(key) {
+  if (!window.__buy(key)) return false;
+  window.__finish();
+  return true;
+}
+
 export function buyBuilt(key, limit = 120) {
   if (!window.__buy(key)) return false;
-  const going = () => Object.values(state().works || {}).some(w => w.key === key);
+  const going = () => Object.values(state().works || {}).flat().some(w => w && w.key === key);
   if (!going()) return true;                   // nothing to build: it landed
   runUntil(() => !going(), limit);
   return !going();

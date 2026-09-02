@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { SITES, workAt, progressAt, busyAt, rowFor, OPENS_PLACE } from './works.js';
+import { SITES, workAt, worksAt, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
@@ -20,7 +20,7 @@ import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_
 import { pitDepth, pitFull, heldInHole } from './pit.js';
 
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
-import { indoors, progress } from './lab.js';
+import { indoors } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
          FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
@@ -2140,20 +2140,6 @@ export function drawCasinoMark() {
 // a state, and it stays there until somebody opens the lab.
 const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
 
-// A piece of research under way, over the lab: a bar that fills. It reads from
-// across the yard, which a percentage in a menu never did -- the lab works while
-// you are somewhere else entirely, and a number you have to walk over and open a
-// board to see is a number you check once and then forget is running.
-//
-// It fills a cell at a time rather than smoothly, like everything else that
-// moves in this game, and it does not move at all while the lab is empty --
-// which is the mechanic, said by the thing itself instead of by a caption.
-export function drawLabBar() {
-  if (!S.labOpen || !S.research) return;
-  const at = labMarkAt();
-  bar(at.x, at.y, progress());
-}
-
 // One bar, drawn wherever something is being worked through. The lab has had
 // this picture since the day it opened and it is the right one for every site
 // that builds: a thing filling a cell at a time, over the place it is happening,
@@ -2187,7 +2173,11 @@ const SITE_AT = {
   scrub: () => ({ x: scrub.x + scrub.w / 2, y: scrub.y - P * 8 }),
   tower: () => ({ x: tower.x + tower.w / 2, y: tower.y - P * 8 }),
   yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 }),
-  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 })
+  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 }),
+  // The lab's work happens behind a door, so its bar hangs over the roof where
+  // the lab's own bar always hung -- the same picture, drawn by the same code
+  // as every other site's now.
+  lab: () => ({ x: lab.x + lab.w / 2, y: lab.y - P * 6 })
 };
 
 // What the yard is in the middle of building, said on the ground rather than
@@ -2197,11 +2187,16 @@ const SITE_AT = {
 // be a thing you can see rather than a thing a menu tells you.
 export function drawWorkBars() {
   for (const site of SITES) {
-    if (!workAt(site)) continue;
+    const list = worksAt(site);
+    if (!list.length) continue;
     const where = SITE_AT[site];
     if (!where) continue;
     const at = where();
-    bar(Math.round(at.x / P) * P, Math.round(at.y / P) * P, progressAt(site));
+    // One bar a work, stacked upward. A site with room for two -- the lab, with
+    // a second bench -- has two things on the go and two bars to say so; every
+    // other site has one and this is the one, exactly where it always hung.
+    list.forEach((w, i) => bar(Math.round(at.x / P) * P,
+                               Math.round(at.y / P) * P - i * P * 5, progressOf(w)));
   }
 }
 
@@ -3536,7 +3531,6 @@ export function draw() {
   drawPaid();
   drawCore();
   drawPileMarks();         // and a bar over anything that has stopped for a full one
-  drawLabBar();            // how far along the lab is, over the lab itself
   drawWorkBars();          // and whatever else the yard is putting up
   drawBuildSites();        // fenced off and dusty, for as long as it is under way
   drawGrit();              // and the chips off the hammer, in FRONT of the walls

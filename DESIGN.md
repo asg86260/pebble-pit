@@ -3458,3 +3458,72 @@ was told there was none, by a body that could not have touched it. With a yard
 full of idle hands on the muck, the poop a player wants gone could sit under
 somebody else's elbow for ever. B4 said poop is a janitor's alone; the second
 book says so where it counts.
+
+## One shop, one clock, one bar
+
+Everything you can buy in this yard is built by somebody. That was true of
+thirteen rows and quietly untrue of eleven others, and there was no way to tell
+which from a board: the tower's four spells, the black hole and its widening,
+the four machine tunings and the balloon were all had the instant you pressed
+them. The lab and the wizard took time, but through two systems of their own,
+each with its own clock, its own bar and its own save fields.
+
+So: **one abstraction, and a row cannot opt out of it.**
+
+### The rule
+
+A row is one of three things, and the first is nearly all of them.
+
+- **A purchase.** It starts a piece of work at a site. It has a `kind` (which
+  says how long) and a `site` (which says where, and therefore who builds it).
+  Nothing is had the moment you press it.
+- **A bet or a dial.** The casino's stakes, the chip size, the air rate. These
+  set a number or put money down; there is nothing to build and no waiting to
+  make a decision out of.
+- **A job row.** Moves bodies between stations.
+
+Anything else is a mistake, and a check says so by name rather than leaving it
+to be noticed in play: every row in every list must answer to one of the three.
+That is the "inherently" part -- a new row added tomorrow gets a clock and a bar
+by having a `kind`, and gets caught if it does not.
+
+### What works.js grows
+
+Two hooks, both defaulted so every existing site keeps behaving exactly as it
+does today:
+
+- **room** -- how many works a site can have on the go. One, everywhere, except
+  the lab, where it is the number of benches. `S.works[site]` becomes a list,
+  and "one work per site" becomes "as many as the site has room for", which is
+  the same sentence with the number named.
+- **effort** -- worker-seconds a pair of hands puts in per second. One
+  everywhere (`BUILD_EFFORT`), except the lab, where it is `labPace()` -- which
+  is what the `labkit` ladder has always been buying.
+
+### What stops being its own system
+
+**The lab's research.** `S.research` / `S.research2`, `startPiece`, `progress`,
+`drawLabBar` and the two save fields go. A lab row is an ordinary row with a
+`kind` and `site: 'lab'`; the lab is an ordinary site with room for two and an
+effort of its own. What a finished piece does stays where it always was -- in
+the row's own `buy`.
+
+**The wizard's brewing.** `S.brewAt` is a wall clock: a wizard trains while the
+tower stands empty, which no other work in this game does. It becomes a work at
+the tower like the rungs beside it, which means somebody has to be up there.
+That is a real change to how it plays and it is the point: the rule the whole
+yard runs on is that a station idles until somebody is actually standing there.
+
+### The bar
+
+`drawWorkBars` already walks the sites and draws one bar over each. It draws one
+per *work* now, so a lab with two benches shows two, side by side. Nothing else
+draws a progress bar afterwards -- the lab's own is deleted rather than kept in
+step, because two pictures of one fact is how they drift.
+
+### What it costs to play
+
+Eleven rows that were instant now take somebody's time: 5s for a rung, 18s for a
+place, 45s for a building, 90s for a machine, climbing with the rung the way the
+price does. The four tunings are rungs; the spells and the black hole are
+buildings; widening the hole is a rung; the balloon is a machine.

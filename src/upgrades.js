@@ -31,7 +31,7 @@ import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
-import { takesTime, workOn, workFor, leftAt, busyAt, start, registerRows,
+import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows,
          busyBuilderSites, siteX } from './works.js';
 // The one row this file's owner does not hold: the house is track C's
 // building, and this is the one line of upgrades.js it edits. See C1 in
@@ -1163,9 +1163,9 @@ export const UPGRADES = [
   // being the rock and carrying being what everybody does. Endless, like the
   // other two: see `tuneRow` in machines.js.
   tuneRow('ram', 'drive the ram harder',
-          () => `the ram strikes ${MACHINE_TUNE}x harder, again`),
+          () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard'),
   tuneRow('belt', 'speed the belt',
-          () => `the belt runs ${MACHINE_TUNE}x faster, again`),
+          () => `the belt runs ${MACHINE_TUNE}x faster, again`, 'yard'),
 
   // The rift -- the black hole in the pit -- is not sold here. It is summoned
   // from the tower, and its ladder is on the tower's board with it: see
@@ -1297,7 +1297,7 @@ export const billOf = u => {
   }
   if (!takesTime(u)) return bill;
   const on = workOn(u.key);
-  return [...bill, ['time', on ? leftAt(u.site) : workFor(u) * 1000]];
+  return [...bill, ['time', on ? leftAt(u.site, u.key) : workFor(u) * 1000]];
 };
 
 // Whether the yard is in the middle of building this row, and whether the site
@@ -1305,7 +1305,11 @@ export const billOf = u => {
 // first is "this one is under way", the second is "the cut is doing something
 // else first", and they are not the same row to a player.
 export const building = u => takesTime(u) && !!workOn(u.key);
-export const siteBusy = u => takesTime(u) && busyAt(u.site);
+// A row you cannot press because the place it would be built has nothing free.
+// `busyAt` was this question back when every site held one work; a lab with two
+// benches has room for a second piece while the first is still going, and the
+// number of benches is the lab's business rather than a rule in here.
+export const siteBusy = u => takesTime(u) && fullAt(u.site);
 
 // A price, in the words that price is said in. Coins are counted; time is read
 // off a clock, and a hundred and twenty thousand of anything is not a thing

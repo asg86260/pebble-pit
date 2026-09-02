@@ -6,7 +6,7 @@
 // back door proves the state can be set, and nothing about whether you can get
 // there.
 
-import { group, ok, state, run, runUntil } from './helpers.mjs';
+import { group, ok, state, run, runUntil, buyBuilt, buyNow } from './helpers.mjs';
 
 const rich = () => {
   window.__reset();
@@ -20,7 +20,7 @@ const rich = () => {
 group('a balloon is bought at the house and rides the sky', async () => {
   rich();
   const before = state().craft.length;
-  const bought = window.__buy('balloon');
+  const bought = buyNow('balloon');
   run(1);
   const moored = state();
 
@@ -61,7 +61,7 @@ group('a balloon is bought at the house and rides the sky', async () => {
 
 group('nobody gets into a balloon without walking to it', async () => {
   rich();
-  window.__buy('balloon');
+  buyNow('balloon');
   run(1);
   // Where the mast is, and where the body starts: the crew stand about the yard,
   // and the craft is over by the scrubbing house.
@@ -109,7 +109,7 @@ group('nobody gets into a balloon without walking to it', async () => {
 
 group('taken off the job, the rider steps out and the craft leaves', async () => {
   rich();
-  window.__buy('balloon');
+  buyNow('balloon');
   window.__air({ scrubbers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
   const flying = state().craft[0];
@@ -143,7 +143,7 @@ group('taken off the job, the rider steps out and the craft leaves', async () =>
 
 group('a craft comes back and is let go of when the job ends', async () => {
   rich();
-  window.__buy('balloon');
+  buyNow('balloon');
   window.__air({ scrubbers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
 
@@ -165,7 +165,7 @@ group('a craft comes back and is let go of when the job ends', async () => {
 group('a craft takes the sky in where it is, and drops it under itself', async () => {
   rich();
   window.__clearFloor();
-  window.__buy('balloon');
+  buyNow('balloon');
   // The house shut and the craft crewed. `capOf` fills the house's berth first,
   // so three on the scrubbers is one indoors and two aloft -- but there is only
   // one craft here, so it is one indoors and one up. What isolates the craft is

@@ -18,7 +18,7 @@ import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
 import { S, floor, pit, cut, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
-import { SITES, workAt, handsAt } from './works.js';
+import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
 import { BOLTS, SPARKLE } from './meteor.js';
 
 // how much of the meteor is still up there, rind or core
@@ -35,7 +35,7 @@ import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
 import { coreHome } from './core.js';
-import { mult, rates, workFor, progress, labRooms, labPace } from './lab.js';
+import { mult, rates, workFor, onTheGo, labRooms, labPace } from './lab.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
@@ -278,8 +278,12 @@ export const snapshot = () => ({
   grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,
   shutters: [...S.shutters].sort((a, b) => a - b),
-  research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) },
-  research2: S.research2 && { ...S.research2, need: workFor(S.research2.key) },
+  // The lab's pieces, off the works the whole yard uses. Reported under the old
+  // names because what a check asks about is the lab, not where the field lives.
+  research: onTheGo()[0] ? { key: onTheGo()[0].key, done: onTheGo()[0].done,
+                             need: onTheGo()[0].of, at: +progressOf(onTheGo()[0]).toFixed(3) } : null,
+  research2: onTheGo()[1] ? { key: onTheGo()[1].key, done: onTheGo()[1].done,
+                              need: onTheGo()[1].of } : null,
   labRooms: labRooms(),
   labKitLevel: S.labKitLevel || 0,
   labPace: +labPace().toFixed(3),
@@ -326,7 +330,7 @@ export const snapshot = () => ({
   wizMs: Math.round(wizMs()),
   wizBite: wizBite(),
   janitors: S.janitors,
-  brewing: S.brewAt > 0,
+  brewing: !!workOn('wizard'),
 
   // What the yard is in the middle of building, site by site: the row, how much
   // of the work is in, and how much it takes. A check that buys something past

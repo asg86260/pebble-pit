@@ -873,7 +873,7 @@ export const QUARRY_UPGRADES = [
   // and is still what every save has in it. The key is the machine's; the words
   // are what anybody reads. See the note over `MACHINES` in machines.js.
   tuneRow('jaw', 'sharpen the drill',
-          () => `the drill bites ${MACHINE_TUNE}x harder, again`)
+          () => `the drill bites ${MACHINE_TUNE}x harder, again`, 'quarry')
 ];
 
 // One heading. The quarry is one place and everything on this board is about the

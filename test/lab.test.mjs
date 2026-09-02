@@ -4,7 +4,7 @@
 // of research took exactly as long as the first however far into a run you were,
 // and the lab is what stands between you and every other multiplier in the game.
 
-import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
 
 group('the lab can be made quicker at what it does', async () => {
   window.__reset();
@@ -17,7 +17,7 @@ group('the lab can be made quicker at what it does', async () => {
   const at = () => state().research && state().research.at;
   const runFor = () => {
     window.__research(null);
-    window.__buy('labswing');
+    buyBuilt('labswing');
     window.__assign('labbers', 1);
     runUntil(() => state().labbers === 1, 60);
     runUntil(() => state().commuting.length === 0, 60);
@@ -26,7 +26,10 @@ group('the lab can be made quicker at what it does', async () => {
     return (at() || 1) - before;
   };
   const slow = runFor();
-  const bought = window.__buy('labkit');
+  // Built, not just paid for: the lab's own ladder is fitted at the lab now,
+  // which is a piece of work at a bench like everything else it does.
+  window.__research(null);
+  const bought = buyBuilt('labkit');
   const fast = runFor();
 
   window.__crew(0, 0);
@@ -49,22 +52,21 @@ group('a second bench is a second thing looked into', async () => {
   window.__grant({ shards: 400, spores: 400, cores: 99, dust: 30000 });
   run(2);
 
-  const one = state();
-  const roomBefore = one.roster ? null : null;
+  // A bench has to be built before it is a bench. It is a `place` at the lab
+  // now -- eighteen worker-seconds like a bench in the cut or a furrow on the
+  // farm -- so it wants somebody in the room and the room's one bench free,
+  // which is the whole of what a second bench costs: the lab stops looking into
+  // anything while it is being fitted.
+  window.__assign('labbers', 1);
+  runUntil(() => state().labbers === 1, 60);
+  const bought = buyBuilt('labroom');
+
+  // Started, not finished: what this group is about is two pieces being ON the
+  // benches at once, so neither is seen through.
   window.__buy('labswing');
   const first = state();
-  window.__buy('labhaul');                    // no room for it yet
-  const stillOne = state();
-
-  const bought = window.__buy('labroom');
-  // A bench and a body for it: the lab holds one to a bench and neither is
-  // handed out on its own.
+  // and now there is room for a second, where a moment ago there was not
   window.__assign('labbers', 1);
-  window.__assign('labbers', 1);
-  // Two pieces started back to back and read before either can finish. Left to
-  // run, the first one comes off the bench and slides the second up, and what
-  // you are looking at is one piece again -- which is true and is not what this
-  // group is about.
   window.__buy('labhaul');
   runUntil(() => state().labbers === 2, 60);
   const two = state();
@@ -72,8 +74,9 @@ group('a second bench is a second thing looked into', async () => {
   window.__crew(0, 0);
   return [
     ok(!!first.research, 'one piece goes on the bench', JSON.stringify(first.research && first.research.key)),
-    ok(!stillOne.research2, 'and a second has nowhere to go with one bench'),
-    ok(bought, 'the lab sells a second bench'),
+    ok(bought, 'the lab sells a second bench, and it is built rather than had'),
+    ok(!!two.research2, 'and a second piece has somewhere to go once it is',
+       JSON.stringify(two.research2 && two.research2.key)),
     // Read once both bodies are in. A piece can finish while the second walks
     // over, which slides the other up and leaves one on the go -- true, and not
     // what this group is about -- so the pieces are counted off what the lab is

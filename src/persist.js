@@ -11,7 +11,7 @@ import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
-import { SITES, rowFor, busyBuilderSites } from './works.js';
+import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
@@ -234,7 +234,6 @@ export function persist() {
     farmOpen: S.farmOpen,
     farmhands: S.farmhands,
     labbers: S.labbers,
-    research: S.research && { ...S.research },
     labDone: S.labDone,
     labLeft: S.labLeft,
     tendLevel: S.tendLevel,
@@ -254,7 +253,6 @@ export function persist() {
     wizSpeedLevel: S.wizSpeedLevel,
     wizPowerLevel: S.wizPowerLevel,
     labRooms: S.labRooms,
-    research2: S.research2,
     // The machines, as facts only: whether each was bought, whether it is driven,
     // and whether it took the station's kit. The beats and the phases are not
     // saved -- they are clocks the drawing reads, and a machine comes back mid
@@ -283,7 +281,6 @@ export function persist() {
     // saved, because a shower with no beginning is not a shower -- but a hat on
     // the bench has been *paid for*, and closing the tab on one used to lose the
     // dust, the stone and the crop with it.
-    brewLeft: Math.max(0, S.brewAt - clockNow()),
     // What the yard was in the middle of building. Paid for and part done, so
     // closing the tab on one would lose the coin and the labour both -- the same
     // argument the hat above makes. Worker-seconds rather than a deadline, which
@@ -415,7 +412,7 @@ export function restore() {
     S.quarryPaceLevel = 0;
     S.benchLevel = 0;
     S.machines = freshMachines();   // a new yard has no machines in it
-    S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
+    S.labKitLevel = 0; S.labRooms = 1;
   S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0; S.spells = [];
     S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0; S.spells = [];
     S.spores = 0;
@@ -423,7 +420,6 @@ export function restore() {
     S.farmOpen = false;
     S.farmhands = 0;
     S.labbers = 0;
-    S.research = null;
     S.labDone = null;
     S.labLeft = 0;
     S.tendLevel = 0;
@@ -488,7 +484,6 @@ export function restore() {
   S.farmhands = s.farmhands || 0;
   S.labbers = s.labbers || 0;
   // a piece of research keeps whatever the crew already put into it
-  S.research = s.research && s.research.key ? { key: s.research.key, done: +s.research.done || 0 } : null;
   // and one that finished while you were away is still news when you come back
   S.labDone = s.labDone || null;
   // and how many it let out, so a reload does not lose the ones it owes you
@@ -582,13 +577,11 @@ export function restore() {
   S.wizSpeedLevel = s.wizSpeedLevel || 0;
   S.wizPowerLevel = s.wizPowerLevel || 0;
   S.labRooms = Math.max(1, s.labRooms || 1);
-  S.research2 = s.research2 || null;
   S.meteorOpen = !!s.meteorOpen;
   S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizardHats = s.wizardHats || 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
-  S.brewAt = s.brewLeft > 0 ? clockNow() + s.brewLeft : 0;
   // and whatever was being built. Only the sites this build knows about and only
   // rows it still has: a save from a version with a row this one has dropped
   // would otherwise hold a work that can never finish, at a site that is then
@@ -600,12 +593,30 @@ export function restore() {
   // unrecognised key is dropped, not here: it already has to know which keys
   // are real places, so this file does not need a second copy of that list.
   S.buildOrder = Array.isArray(s.buildOrder) ? s.buildOrder.filter(k => typeof k === 'string') : [];
+  // A list a site now, because a site takes as many works as it has room for --
+  // one everywhere, two at a lab with a second bench. A save written before that
+  // holds one object a site, so it is read as a list of one: a yard mid-build
+  // that came back with nothing on the go would have taken the money and left
+  // nothing being built.
   S.works = {};
   for (const site of SITES) {
-    const w = s.works?.[site];
-    if (w && w.key && rowFor(w.key) && w.of > 0)
-      S.works[site] = { key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
-                        of: w.of, at: w.at ?? null };
+    const was = s.works?.[site];
+    const list = Array.isArray(was) ? was : was ? [was] : [];
+    const keep = list
+      .filter(w => w && w.key && rowFor(w.key) && w.of > 0)
+      .map(w => ({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
+                   of: w.of, at: w.at ?? null }));
+    if (keep.length) S.works[site] = keep;
+  }
+  // And the lab's own two fields, from before its research was ordinary work.
+  // A piece that was half looked into comes back half looked into, on the bench
+  // it was on, rather than being quietly dropped with the shards already spent.
+  for (const was of [s.research, s.research2]) {
+    if (!was || !was.key || !rowFor(was.key)) continue;
+    const of = workFor(rowFor(was.key));
+    if (!(of > 0)) continue;
+    (S.works.lab ||= []).push({ key: was.key, done: Math.max(0, Math.min(of, +was.done || 0)),
+                                of, at: null });
   }
   if (S.meteorOpen) {
     makeMeteor();
@@ -818,13 +829,12 @@ export function reset(fresh = true) {
   S.benchLevel = 0;
   S.quarryCells = null;
   S.machines = freshMachines();     // a new yard has no machines in it
-  S.labKitLevel = 0; S.labRooms = 1; S.research2 = null;
+  S.labKitLevel = 0; S.labRooms = 1;
   S.spores = 0;
   S.seenSpore = false;
   S.farmOpen = false;
   S.farmhands = 0;
   S.labbers = 0;
-  S.research = null;
   S.labDone = null;
   S.labLeft = 0;
   S.tendLevel = 0;
@@ -843,7 +853,6 @@ export function reset(fresh = true) {
   S.seenSpark = false;
   S.wizardHats = 0;
   S.wizards = 0;
-  S.brewAt = 0;
   S.works = {};
   S.buildOrder = [];
   S.lent = [];

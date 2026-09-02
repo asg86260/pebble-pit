@@ -80,8 +80,11 @@ group('the tower can enchant the rest of the yard', async () => {
   const beforeRate = state().machines.jaw.rate;
   const beforeSeam = state().seam;
 
-  const drove = window.__buy('spelldrive');
-  const blessed = window.__buy('spellluck');
+  // Laid rather than had: a spell is worked out at the tower now, like the hat
+  // and the rungs beside it, so it wants a wizard up there and the tower's own
+  // time. One at a time, because the tower has room for one.
+  const drove = buyBuilt('spelldrive');
+  const blessed = buyBuilt('spellluck');
   const after = state();
 
   const gone = window.__rows().filter(r => r.shown).map(r => r.key);

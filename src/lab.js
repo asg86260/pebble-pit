@@ -21,7 +21,7 @@ import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
          BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
 import { rand } from './rng.js';
-import { registerRows } from './works.js';
+import { registerRows, registerSite, worksAt, abandonAt } from './works.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -64,10 +64,16 @@ export const labPace = () => LAB_EFFORT * Math.pow(STEP, S.labKitLevel || 0);
 // each -- see `capOf`, which is what actually lets the second body in.
 export const labRooms = () => Math.max(1, S.labRooms || 1);
 
-// The pieces on the go, in order. One field per bench rather than a list,
-// because two is the whole of the upgrade and a list of two is a list you have
-// to remember to keep in step.
-export const onTheGo = () => [S.research, S.research2].filter(Boolean);
+// ...and that is the whole of what the lab has to say about itself. A bench is
+// a place a work can be on the go, and the lab's ladder is how fast the body at
+// it works, and works.js does the rest -- the clock, the bar, the one-per-bench
+// rule, the save. The lab used to run its own building site behind the door:
+// `S.research`, `S.research2`, a start, a step, a progress and a bar, every one
+// of them a second copy of something works.js already had.
+registerSite('lab', { room: labRooms, effort: labPace, started: () => begin() });
+
+// The pieces on the go, in order.
+export const onTheGo = () => worksAt('lab');
 export const roomFree = () => onTheGo().length < labRooms();
 
 const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
@@ -81,25 +87,16 @@ const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 
 //
 // Only the ones the lab itself sent home, and only if they are still spare: a
 // body you have since put on the rock stays on the rock.
-export function begin(key) {
-  if (!roomFree()) return;
-  // and never a rung past the top of its ladder. The board greys a finished row,
-  // but the board is not the only way in here -- a stale save and the dev hooks
-  // both call this straight -- and one guard at the door is cheaper than four.
-  if (FIELD[key] && levelOf(FIELD[key]) >= RUNGS) return;
-  // The first free bench. Two fields rather than a list, because two is the
-  // whole of the upgrade and a list of two is a list to keep in step.
-  const piece = { key, done: 0 };
-  if (!S.research) S.research = piece;
-  else S.research2 = piece;
+export function begin() {
+  // Whoever let themselves out comes back: a body that walked out of an empty
+  // lab did so because there was nothing to do in it, and the moment there is,
+  // the reason it left has gone. Only the ones the lab itself sent home, and
+  // only if they are still spare.
   while (S.labLeft > 0 && idle() > 0) { assign('labbers', 1); S.labLeft--; }
   S.labLeft = 0;
   S.dirty = true;
 }
 
-// how far along it is, 0..1
-export const progress = () =>
-  S.research ? Math.min(1, S.research.done / workFor(S.research.key)) : 0;
 
 // Nothing in the game takes a body off the lab, so a lab that has finished its
 // research is a room of people standing about in it for good. They let
@@ -117,7 +114,7 @@ export const progress = () =>
 // the game's own tidying, and making you go and undo it before anything can
 // happen is a chore rather than a decision.
 function letIdleGo() {
-  if (S.research || !S.workers.some(indoors)) { S.labIdleAt = 0; return; }
+  if (onTheGo().length || !S.workers.some(indoors)) { S.labIdleAt = 0; return; }
   if (!S.labIdleAt) { S.labIdleAt = now(); return; }
   if (now() - S.labIdleAt < LAB_IDLE_MS) return;
   S.labIdleAt = 0;
@@ -134,45 +131,25 @@ function letIdleGo() {
 export function finish(key) {
   // the one piece that is not a multiplier finishes by turning a readout on
   if (key === 'labair') S.seenAir = true;
-  else S.mult[FIELD[key]]++;
-  // Whichever bench it was on, and the second slides up so `research` is always
-  // the one that has been going longest.
-  if (S.research && S.research.key === key) { S.research = S.research2; S.research2 = null; }
-  else if (S.research2 && S.research2.key === key) S.research2 = null;
+  else if (FIELD[key]) S.mult[FIELD[key]]++;
   S.dirty = true;
 }
 
-export function stepLab(dt) {
-  // Nobody is turned out any more. The lab used to empty itself after a while
-  // with nothing to research, which reads as thoughtful and is the building
-  // overruling the roster: you put somebody in, and some time later they were
-  // somewhere else without your having said so. If the bench is idle that is a
-  // thing for you to notice and act on, and the counter under the lab is where
-  // you act on it.
+// What the lab does when one of its works lands, which is not what the row
+// does: the row's own `buy` is the multiplier going up. This is the announcing,
+// and the lab is the one site that needs any -- its work happens behind a door,
+// so the bar everybody else watches was never the news here. Wired in game.js
+// through `setDone`.
+export function labFinished(site, key) {
+  if (site !== 'lab') return;
+  S.labDone = key;                 // a mark over the lab until somebody looks
+  cough();                         // and one last plume off the chimney
+}
 
-  const on = inLab();
-  if (!on) return;
-
-  // One body to a bench, and each piece worked on by the body at its own bench.
-  //
-  // Not `on` bodies against one piece: a second labber used to make the single
-  // piece come twice as fast, which is two people leaning over one bench. With
-  // two benches they look into two things, which is what the second bench is
-  // for -- and with one bench a second body has nowhere to stand anyway, because
-  // `capOf` says so.
-  const going = [S.research, S.research2].filter(Boolean);
-  if (!going.length) return;
-  const each = Math.min(on, going.length);
-  for (let i = 0; i < each; i++) {
-    const r = going[i];
-    r.done += labPace() * (dt / 1000);
-    if (r.done < workFor(r.key)) continue;
-    const key = r.key;             // read before `finish` clears the slot
-    finish(key);
-    S.labDone = key;               // a mark over the lab until somebody looks
-    cough();                       // and one last plume off the chimney
-  }
-  S.dirty = true;
+// One frame of the lab. There is no research stepping in here any more --
+// `stepWorks` does that for every site in the game, the lab included -- so what
+// is left is the room itself: whether anybody is in it, which the smoke reads.
+export function stepLab() {
 }
 
 // The chimney stops the moment the work is done, which is a signal made of
@@ -236,7 +213,7 @@ export const inLab = () => S.workers.filter(indoors).length;
 // where you cannot see them.
 export function stepSmoke(now, dt) {
   const on = inLab();
-  if (S.research && on && now >= S.smokeAt) {
+  if (onTheGo().length && on && now >= S.smokeAt) {
     puff(lab.x + FLUE_MID, lab.y);
     // Longer between puffs than it used to be, because there is a great deal
     // more in each one: the same amount of smoke, arriving as smoke rather than
@@ -279,6 +256,7 @@ export const LAB_UPGRADES = [
     // meant to be bought for ever -- and this ladder ends at five.
     cost: () => rungCost(BENCH_KIT_COST, S.labKitLevel),
     currency: 'shard',
+    kind: 'rung', site: 'lab',
     buy: () => { S.labKitLevel++; },
     // And not before a shard has been seen: a row priced in stone is a row
     // that reads as broken to a yard that has never dug any -- see the note
@@ -297,6 +275,8 @@ export const LAB_UPGRADES = [
     to: () => labRooms() + 1,
     cost: () => LAB_ROOM_COST,
     currency: 'core',
+    // A bench is a place, and it is built where the other one stands.
+    kind: 'place', site: 'lab',
     buy: () => { S.labRooms = 2; rebalance(); },
     show: () => S.labOpen && labRooms() < 2
   },
@@ -314,7 +294,12 @@ export const LAB_UPGRADES = [
     to: () => mult('swing') * STEP,
     cost: () => rungCost(3, levelOf('swing')),
     currency: 'shard',
-    buy: () => begin('labswing'),
+    kind: 'rung', site: 'lab',
+    // What it costs in somebody's time is the piece of research itself --
+    // the same worker-seconds the lab has always asked for, climbing with
+    // the rung the way the price does.
+    work: () => workFor('labswing'),
+    buy: () => finish('labswing'),
     // A finished ladder stays on the board saying so, like every other one --
     // but not before a shard has been seen, or the lab is a board asking for a
     // currency a fresh yard has never been shown. See A8 in feedback3.md.
@@ -329,7 +314,12 @@ export const LAB_UPGRADES = [
     to: () => mult('haul') * STEP,
     cost: () => rungCost(4, levelOf('haul')),
     currency: 'shard',
-    buy: () => begin('labhaul'),
+    kind: 'rung', site: 'lab',
+    // What it costs in somebody's time is the piece of research itself --
+    // the same worker-seconds the lab has always asked for, climbing with
+    // the rung the way the price does.
+    work: () => workFor('labhaul'),
+    buy: () => finish('labhaul'),
     // A finished ladder stays on the board saying so, like every other one.
     show: () => S.labOpen && S.seenShard
   },
@@ -342,7 +332,12 @@ export const LAB_UPGRADES = [
     to: () => mult('quarry') * STEP,
     cost: () => rungCost(3, levelOf('quarry')),
     currency: 'spore',
-    buy: () => begin('labcave'),
+    kind: 'rung', site: 'lab',
+    // What it costs in somebody's time is the piece of research itself --
+    // the same worker-seconds the lab has always asked for, climbing with
+    // the rung the way the price does.
+    work: () => workFor('labcave'),
+    buy: () => finish('labcave'),
     // A finished ladder stays on the board saying so, like every other one --
     // but not before the quarry exists to have a speed at all. This was the
     // reported case: the lab standing before the quarry, selling a row named
@@ -364,7 +359,9 @@ export const LAB_UPGRADES = [
     note: () => 'tells you whether the sky is filling or emptying',
     cost: () => 9,
     currency: 'spore',
-    buy: () => begin('labair'),
+    kind: 'rung', site: 'lab',
+    work: () => workFor('labair'),
+    buy: () => finish('labair'),
     show: () => S.labOpen && !S.seenAir && S.seenSpore
   },
   {
@@ -376,7 +373,12 @@ export const LAB_UPGRADES = [
     to: () => mult('tend') * STEP,
     cost: () => rungCost(4, levelOf('tend')),
     currency: 'spore',
-    buy: () => begin('labtend'),
+    kind: 'rung', site: 'lab',
+    // What it costs in somebody's time is the piece of research itself --
+    // the same worker-seconds the lab has always asked for, climbing with
+    // the rung the way the price does.
+    work: () => workFor('labtend'),
+    buy: () => finish('labtend'),
     // A finished ladder stays on the board saying so, like every other one --
     // but not before a spore has been seen. See A8 in feedback3.md.
     show: () => S.labOpen && S.seenSpore

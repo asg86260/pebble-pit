@@ -10,7 +10,7 @@
 // total cost puts the surplus straight back where it was. Which is why the
 // checks below are as much about the twentieth rung as about the first.
 
-import { group, ok, state, yard } from './helpers.mjs';
+import { group, ok, state, yard, buyBuilt, buyNow } from './helpers.mjs';
 
 // Straight off the module. `yard.upgrades` is the `__upgrades` hook -- the yard
 // spreads `hooks` over its own handles and the two names collide -- so reaching
@@ -72,9 +72,9 @@ group('a rung actually makes the machine faster', async () => {
   stocked();
   const rate = () => machineRate('quarriers');
   const before = rate();
-  window.__buy('tunejaw');
+  buyNow('tunejaw');
   const one = rate();
-  window.__buy('tunejaw');
+  buyNow('tunejaw');
   const two = rate();
   return [
     ok(one > before, 'one rung is a faster jaw',
@@ -102,7 +102,7 @@ group('the ladders never end, and get dearer all the way up', async () => {
   for (let i = 0; i < 25; i++) {
     const r = row('tuneram');
     prices.push((r.bill.find(b => b[0] === 'spark') || [])[1]);
-    window.__buy('tuneram');
+    buyNow('tuneram');
   }
   const last = row('tuneram');
 
@@ -132,7 +132,7 @@ group('the ladders never end, and get dearer all the way up', async () => {
 
 group('how far up a ladder is survives a reload', async () => {
   stocked();
-  for (let i = 0; i < 4; i++) window.__buy('tunejaw');
+  for (let i = 0; i < 4; i++) buyNow('tunejaw');
   const before = yard.S.machines.jaw.tune;
   window.__reload();
   const after = yard.S.machines.jaw.tune;

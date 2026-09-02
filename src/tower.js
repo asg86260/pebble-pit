@@ -23,7 +23,7 @@ import { lookAt } from './world.js';
 import { riftRate, riftUpCost } from './rift.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
-import { registerRows } from './works.js';
+import { registerRows, workOn, leftAt, progressOf } from './works.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -34,9 +34,18 @@ export const wizCost = () => {
 };
 
 // how far through the hat on the go it is, 0..1, for the row to say
-export const brewing = () => S.brewAt > 0;
-export const brewLeft = () => Math.max(0, S.brewAt - now());
-export const brewAt = () => brewing() ? 1 - brewLeft() / WIZ_BREW_MS : 0;
+// Whether a hat is on the go, and how far along it is.
+//
+// It used to be a wall clock -- `S.brewAt`, a deadline -- so a wizard trained
+// itself while the tower stood empty, which nothing else in this yard does. It
+// is an ordinary work at the tower now: somebody has to be up there, the bar
+// over the tower says how far along it is, and the row's clock counts down at
+// the rate it is actually going. The rule the whole game runs on is that a
+// station idles until somebody is actually standing there, and the tower was
+// the one place quietly exempt from it.
+export const brewing = () => !!workOn('wizard');
+export const brewLeft = () => leftAt('yard', 'wizard');
+export const brewAt = () => { const w = workOn('wizard'); return w ? progressOf(w) : 0; };
 
 // A minute and a half is a long time to look at a number of milliseconds.
 const mins = ms => {
@@ -44,9 +53,9 @@ const mins = ms => {
   return s >= 60 ? `${Math.round(s / 60)} min` : `${s}s`;
 };
 
-export function stepTower() {
-  if (!brewing() || now() < S.brewAt) return;
-  S.brewAt = 0;
+// What a finished hat does. Called by the row's own `buy` when the work lands,
+// the same as every other row in the game.
+export function hatMade() {
   S.wizardHats++;
   // The first hat opens the sky -- empty, because a star is a thing wizards make
   // and this is the moment there is one to make it. Whoever wears this hat goes
@@ -70,6 +79,10 @@ export const TOWER_UPGRADES = [
   // somewhere else in the yard -- which is the whole reason they are not rungs.
   ...SPELLS.map(sp => ({
     key: 'spell' + sp.key,
+    // A spell is worked out at the tower like everything else there. It was had
+    // the instant you pressed it -- four rows that changed the whole yard with
+    // no clock on them and nothing to watch.
+    kind: 'building', site: 'tower',
     name: sp.name,
     note: () => sp.note,
     bill: () => [['spark', sp.spark], ['dust', 2500]],
@@ -126,9 +139,17 @@ export const TOWER_UPGRADES = [
     // rest of it, under a clock, and the row does not need a second sheet to
     // open beside it to say one number. While one is being trained the clock
     // counts down what is left of it.
+    // Built by the yard, not by the tower. Every other row here is worked on by
+    // a wizard, and this is the row that *makes* one: with the tower's own gang
+    // on it, the first hat could never be started, because there is nobody up
+    // there until a hat exists. It is the same reason the school's rows are the
+    // yard's work -- the body being trained is not standing there yet.
+    kind: 'building', site: 'yard',
+    // Its own figure rather than the table's, because a hat has always taken a
+    // minute and a half and this is not the moment to change what it costs.
+    work: () => WIZ_BREW_MS / 1000,
     bill: () => { const c = wizCost();
-                  return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores],
-                          ['time', brewing() ? brewLeft() : WIZ_BREW_MS]]; },
+                  return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
     cost: () => wizCost().dust,
     // Paying starts it. What you get for the money is the tower's time, and it
     // takes as long as it takes.
@@ -136,8 +157,7 @@ export const TOWER_UPGRADES = [
     // it, and the waiting is the whole of what makes this row a spell -- so a
     // second buy while one is on the go does nothing, and the row stays up
     // saying how long is left rather than vanishing until it is done.
-    buy: () => { if (!brewing()) S.brewAt = now() + WIZ_BREW_MS; },
-    dead: () => brewing(),
+    buy: hatMade,
     // Once the tower is up, not once the sky is: this row is how the sky opens.
     show: () => S.towerOpen
   }
@@ -154,6 +174,7 @@ export const TOWER_UPGRADES = [
 TOWER_UPGRADES.push(
   {
     key: 'rift',
+    kind: 'building', site: 'tower',
     name: 'summon a black hole',
     note: () => 'a hole in the pit that swallows what will not fit: the hole stops being the ceiling',
     bill: () => RIFT_BILL,
@@ -168,6 +189,7 @@ TOWER_UPGRADES.push(
   },
   {
     key: 'riftrate',
+    kind: 'rung', site: 'tower',
     name: 'widen the black hole',
     unit: 'dust/s',
     // No `rung`, and that is the point rather than an omission. `rungOf` calls a

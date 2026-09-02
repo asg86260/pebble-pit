@@ -29,10 +29,9 @@ import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
-import { stepTower } from './tower.js';
-import { sampleRates, stepLab, stepSmoke } from './lab.js';
+import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
 import { stepGrit } from './grit.js';
-import { stepWorks, setGround } from './works.js';
+import { stepWorks, setGround, setDone } from './works.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -41,6 +40,8 @@ import { stepWorks, setGround } from './works.js';
 // exactly that, and so does a player's click landing a build and the board
 // seating itself off where the building now is.
 setGround(layPiles);
+// and the lab puts a mark up when its own work lands -- see `labFinished`
+setDone(labFinished);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';
@@ -175,7 +176,6 @@ export function step() {
   stepMeteor(now);                            // and the sky, which has a rock in it now
   stepSummon(dt);                             // and whatever the ring is pouring into it
   stepSparkle(dt);                            // and the magic they leave in the air
-  stepTower();                                // and whatever the tower is making
   stepScrub(dt);                              // and the pumps on the scrubbing house
   // And the rift swallows, if it is torn. It takes grains off the top of the
   // pile without taking them off you -- see `swallow` in pit.js -- so this is

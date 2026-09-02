@@ -15,7 +15,7 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
-import { workOn, workAt, stepWorks, SITES } from './works.js';
+import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
@@ -190,7 +190,13 @@ export const openMeteor = () => {
 // without waiting two minutes for one.
 export const brewWizard = () => {
   openMeteor();
-  S.brewAt = clockNow() + WIZ_BREW_MS;
+  S.towerOpen = true;
+  // Put the work on directly rather than through the shop: what this hook is
+  // for is a hat part way along to look at, and making a check bank three
+  // currencies first would be a check about paying rather than about brewing.
+  // The work itself is the real one -- same row, same site, same clock.
+  const u = everyRow().find(r => r.key === 'wizard');
+  if (u && !workOn('wizard')) start(u.site, u, null);
   S.dirty = true;
   return Math.round(WIZ_BREW_MS / 1000);
 };
@@ -198,7 +204,7 @@ export const brewWizard = () => {
 export const wizardHat = (n = 1) => {
   openMeteor();
   S.wizardHats = Math.max(0, S.wizardHats + n);
-  S.brewAt = 0;
+  finishWorks();
   rebalance();
   syncWorkers();
   buildShop();
@@ -346,7 +352,7 @@ export const placeBody = (type, x) => {
 // dev: drop whatever the lab is working on. A group that starts research and
 // walks away leaves every later lab row disabled, which reads as a broken test
 // somewhere else entirely.
-export const abandon = () => { S.research = null; buildShop(); S.dirty = true; };
+export const abandon = () => { abandonAt('lab'); buildShop(); S.dirty = true; };
 
 // back to a new game, for a check that wants a known state
 // dev: back to a game nobody has played. The opening is skipped unless it is
@@ -439,9 +445,15 @@ export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S
 
 // a piece of research finished, without the worker-seconds: a check about what a
 // finished piece unlocks is not a check about how long it takes
+// dev: land a piece of research without the worker-seconds -- or, with no key,
+// clear the bench of whatever is on it. Both go through the works, because the
+// bench a piece is on is works.js's business now and a hook that reached past it
+// would be setting up a yard the game cannot get to.
 export const finishResearch = key => {
-  finish(key);
+  if (key == null) { while (abandonAt('lab')) ; }
+  else { abandonAt('lab', key); finish(key); }
   buildShop();
+  S.dirty = true;
   return { seenAir: S.seenAir, mult: { ...S.mult } };
 };
 
@@ -501,13 +513,16 @@ export const spendDust = n => { spendFromPit(Math.min(n, S.stored)); S.dirty = t
 // deliberately a separate word so the two can never be confused.
 export const finishWorks = () => {
   const done = [];
+  // Every work at every site, not the front one at each: a lab with two benches
+  // has two on the go, and a hook that finished one of them would leave a check
+  // waiting on the other with no way to say so.
   for (const site of SITES) {
-    const w = workAt(site);
-    if (!w) continue;
+    for (const w of worksAt(site)) {
     done.push(w.key);
     // Through the ordinary runner, so a finished work does exactly what a
     // finished work does: the row's own `buy`, the mark, and the yard re-staffed.
     w.done = w.of;
+    }
   }
   stepWorks(0);
   buildShop(); S.dirty = true;

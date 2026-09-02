@@ -6,7 +6,7 @@
 // that pays dust and a core that pays sparks, somebody who walks and climbs to
 // get there, and a hat without which none of it happens at all.
 
-import { group, ok, state, run, runUntil, yard, openSites, P, WORKER, buyBuilt } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, openSites, P, WORKER, buyBuilt, buyNow } from './helpers.mjs';
 
 const wizards = () => state().workerPos.filter(p => p[0] === 'w');
 const wizardY = () => state().wizardY;
@@ -191,6 +191,10 @@ group('the sky holds one body per hat, and they do not stand in each other', asy
 // off exactly these two numbers -- see `drawTowerBar`.
 group('a hat is worked on, and the tower says how far along it is', async () => {
   window.__meteor();
+  // Hands to train one with. A hat is somebody's work now rather than a wall
+  // clock running in an empty yard -- and it is the YARD's work, because the
+  // body being trained is not standing at the tower yet.
+  window.__crew(0, 2);
   const bare = state();
   const secs = window.__brew();
   const started = state();
@@ -348,6 +352,7 @@ group('an empty sky with nobody in it stays empty', async () => {
 // shower is weather, while this is a purchase.
 group('a hat on the go survives a reload', async () => {
   window.__meteor();
+  window.__crew(0, 2);                      // hands to train one with
   const secs = window.__brew();
   run(secs / 3);
   const before = state();
@@ -441,6 +446,7 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // the tower's own row, pressed the way a player presses it
   window.__buy('wizard');
   const brewing = state().brewing;   // the row stays up saying how long is left
+  window.__finish();                 // and the yard's hands see it through
   runUntil(() => state().wizardHats > 0, 240);
   run(0.2);                                    // the frame after, so the yard has caught up
   const hatted = state();

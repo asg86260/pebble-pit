@@ -299,7 +299,7 @@ export const FARM_UPGRADES = [
 
   // The tiller's ladder, on the farm's board, and endless like the rest.
   tuneRow('tiller', 'gear up the tiller',
-          () => `the tiller works ${MACHINE_TUNE}x faster, again`)
+          () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
 ];
 
 export const FARM_SECTIONS = [

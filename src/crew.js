@@ -500,7 +500,10 @@ const ARRIVED = {
   // A wizard's work is four hundred pixels up and the walk is to the ground
   // under it; either way it is at the tower, which is the only thing this asks.
   wizards: w => w.type === 'wizard',
-  builders: w => w.type === 'builder' && w.goal === 'at'
+  builders: w => w.type === 'builder' && w.goal === 'at',
+  // Through the door and at the bench. A labber crossing the yard is not doing
+  // research yet, which is the same rule the scrubbers keep.
+  labbers: w => w.type === 'labber' && w.goal === 'in'
 };
 
 setHands(site => {

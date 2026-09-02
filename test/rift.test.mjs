@@ -8,7 +8,7 @@
 // counter.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, buyBuilt, buyNow } from './helpers.mjs';
 
 // Straight off the modules: `yard.upgrades` is the `__upgrades` hook, and the
 // rift's plot is not among the handles the yard spreads.
@@ -56,7 +56,7 @@ group('the rift is not offered until the hole has been a problem', async () => {
 
 group('a torn rift swallows on its own, and the hole starts draining', async () => {
   readyYard();
-  window.__buy('rift');
+  buyNow('rift');
   const full = state();
 
   // Nobody is sent anywhere. It is torn, so it is open.
@@ -88,7 +88,7 @@ group('a torn rift swallows on its own, and the hole starts draining', async () 
 group('the hole takes dust again once the rift has made room', async () => {
   readyYard();
   const stuck = state();
-  window.__buy('rift');
+  buyNow('rift');
   runUntil(() => state().rift > 500, 120);
 
   // Room in the hole again, so banking works: the crew stop standing down.
@@ -110,7 +110,7 @@ group('the hole takes dust again once the rift has made room', async () => {
 
 group('it hangs in the hole, at the near end, and the grains go round it', async () => {
   readyYard();
-  window.__buy('rift');
+  buyNow('rift');
   run(3);
   const { pit, S } = yard;
   const c = yard.riftMod.riftCenter();
@@ -140,12 +140,12 @@ group('it hangs in the hole, at the near end, and the grains go round it', async
 
 group('widening it is a row that never runs out', async () => {
   readyYard();
-  window.__buy('rift');
+  buyNow('rift');
   window.__grant({ sparks: 99999, dust: 30000 });
 
   const rate = () => yard.riftMod.riftRate();
   const first = rate();
-  for (let i = 0; i < 12; i++) window.__buy('riftrate');
+  for (let i = 0; i < 12; i++) buyNow('riftrate');
   const twelve = rate();
   const row = window.__rows().find(r => r.key === 'riftrate');
 
@@ -195,8 +195,8 @@ group('a save with a rifter in it loses nobody', async () => {
 group('the hole swallows the coins too, and they are still yours', async () => {
   readyYard();
   window.__grant({ shards: 300, spores: 300, cores: 4 });
-  window.__buy('rift');
-  for (let i = 0; i < 6; i++) window.__buy('riftrate');
+  buyNow('rift');
+  for (let i = 0; i < 6; i++) buyNow('riftrate');
   // Measured from *after* the hole is seeded, not from before it. A full hole
   // cannot hold every coin you own, so some are through the rift before a
   // single frame has run -- which is the right answer and not what this group
@@ -228,8 +228,8 @@ group('the hole swallows the coins too, and they are still yours', async () => {
 group('a coin is spent out of the hole first, and the rift after', async () => {
   readyYard();
   window.__grant({ shards: 40 });
-  window.__buy('rift');
-  for (let i = 0; i < 8; i++) window.__buy('riftrate');
+  buyNow('rift');
+  for (let i = 0; i < 8; i++) buyNow('riftrate');
   // Everything through: run until the hole has no shards left in it at all.
   const gone = runUntil(() => yard.pitMod.heldInHole('shards') === 0
                               && state().riftHeld.shards > 0, 200);
