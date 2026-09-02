@@ -249,8 +249,15 @@ export const newRecord = () => ({
 
 // The fields that are *this body* rather than what it is doing this second.
 // Everything else is rebuilt by the factory for whatever job it is on.
+// ...and what is in its hands. A load is not "what it is doing this second": it
+// is dust the yard has already dug and lifted, and a save that dropped it threw
+// it away -- fifteen carters' worth of it, on every reload. What the player saw
+// was the yard standing about: everybody empty-handed at once, with a floor that
+// had already been swept, so there was nothing to fetch until the rock gave up
+// something new. That is the reported stall, and the dust was gone as well.
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
-                      'at', 'trained', 'kitOf', 'x', 'y'];
+                      'at', 'trained', 'kitOf', 'x', 'y',
+                      'carry', 'load', 'hasCore'];
 
 export function keepOf(w) {
   const out = { type: w.type };
