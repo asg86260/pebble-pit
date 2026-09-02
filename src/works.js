@@ -51,7 +51,9 @@ export const SITES = Object.keys(SITE_JOB);
 // config.js is laid out by, not the job-sites above. See C7 in
 // wave-feedback3.md: the yard remembers the order these are bought in, so
 // `placeSites` can walk the table in that order instead of a fixed one.
-const OPENS_PLACE = {
+// Exported so that render.js can tell which place, if any, a `kind: 'building'`
+// work on the yard is actually raising -- see #3, "Wave 3.1".
+export const OPENS_PLACE = {
   unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
   unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower'
@@ -106,7 +108,15 @@ export const rowFor = key => ROWS.find(u => u.key === key) || null;
 //
 // Read it as "how long with one pair of hands on it". Three quarriers in the cut
 // take a bench out in a third of the time, which is what a gang is for.
+//
+// A row may carry its own `work: () => seconds` instead of leaning on
+// `WORK_BASE`/`WORK_STEP` -- one hook on the general function, not a special
+// case inside it. See #8, "Wave 3.1" amendment: the house has a rung in all
+// but name (how many rooms already stand) and no rung of its own to read it
+// off, so it supplies the curve itself rather than getting the one flat
+// number every other `kind: 'building'` row shares.
 export const workFor = u =>
+  u.work ? Math.round(u.work()) :
   Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() : 0));
 
 // Whether a row is one the yard has to build at all. A row with no `kind` is

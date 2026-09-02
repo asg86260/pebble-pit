@@ -385,14 +385,22 @@ export function stepBuilder(w) {
     const d = to - w.x;
     if (Math.abs(d) >= 1) {
       if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
-      // The ground a machine's mount sits over is not always the flat yard --
-      // the ram stands on the rock itself -- so the walk over follows
-      // whatever is actually underfoot (`stand`, the same climb an idling
-      // hauler eases to) rather than pinning the ground line the whole way
-      // and arriving buried in the hill it was walking towards.
-      w.y = stand(w);
       w.goal = 'to';
-      w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+      // Routed, not slid -- see #6, "Wave 3.1" in wave-feedback3.md. This used
+      // to be `w.y = stand(w)` (a fresh climb-toward-wherever-it-is-standing)
+      // followed by a plain step in x, and a miner lent off the rock reads as
+      // ON the rock right up until a step carries it clear of the hill's
+      // footprint -- at which point `wayAt` answers with the yard's own floor
+      // instead, `climbTo`'s target jumps from the rock's height to the
+      // ground's in one call, and `climbTo` has a wall rule facing *up* and
+      // none facing *down*, so most of that drop is taken in the one frame.
+      // Every other errand crosses the hill by a route instead of by asking
+      // "what is under me now" a step at a time (see `stepCommute`), which is
+      // what gets a hauler down a flank without a jump; a builder is no more
+      // special than a hauler crossing the pit.
+      if (!keepTo(w, to, wayOver(to))) return;
+      if (stepRoute(w, FARM_WALK)) return;
+      w.route = null;
       return;
     }
   }
