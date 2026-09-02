@@ -2347,12 +2347,30 @@ export function drawBuildSites() {
 // gone. `drawSmoke` swells its motes by 140% over their life because that is
 // what a wisp does; doing it here is what made the old dust read as a puff of
 // exhaust coming off a joist.
+//
+// Drawn as an INVERSION of whatever is behind it rather than in black, and that
+// is not a flourish -- it is the only thing that makes site dust visible at
+// all. Everything in this yard is a black mass on a white page, and a building
+// going up is the biggest black mass there is. The haze off the works is shed
+// along the foot of the footprint, which is to say inside that mass, so every
+// grain of it was black-on-black: thrown correctly, stepped correctly, faded
+// correctly, and invisible. Moving where it is thrown would only trade the
+// site's dust for the hammer's, which crosses the same wall whenever a builder
+// swings beside one.
+//
+// `difference` against white gives each grain the opposite of its ground: dark
+// over the open page, pale over a wall, mid-grey over the tones between. It
+// costs nothing per mote and needs no test of what is underneath, which is the
+// point -- there is no list of "dark things" to keep in step with.
 export function drawGrit() {
-  ctx.fillStyle = '#000';
+  ctx.save();
+  ctx.globalCompositeOperation = 'difference';
+  ctx.fillStyle = '#fff';
   for (const g of S.grit) {
     ctx.globalAlpha = Math.max(0, 1 - (g.t / g.life) ** 2);
     ctx.fillRect(Math.round(g.x / P) * P, Math.round(g.y / P) * P, P, P);
   }
+  ctx.restore();
   ctx.globalAlpha = 1;
 }
 
