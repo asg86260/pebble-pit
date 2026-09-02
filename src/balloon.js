@@ -407,6 +407,9 @@ export const clearCraft = () => { CRAFT.length = 0; };
 // own station's board.
 export const CRAFT_ROW = {
   key: 'balloon',
+  // Stitched at the scrubbing house by the scrubbers, which is a fan nobody is
+  // minding while they do it.
+  kind: 'place', site: 'scrub',
   name: 'a scrubber balloon',
   note: () => 'rides the sky and drops what it catches under itself',
   rung: () => CRAFT.length,

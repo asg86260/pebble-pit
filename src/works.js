@@ -42,7 +42,12 @@ export const SITE_JOB = {
   yard: 'builders',
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.
-  bench: 'builders'
+  bench: 'builders',
+  // The lab's own two rows -- its instruments and its second bench -- are the
+  // lab's, and the body inside does them between pieces of research. Research
+  // itself is not a work here; it has had worker-seconds of its own since the
+  // day the lab opened.
+  lab: 'labbers'
 };
 
 export const SITES = Object.keys(SITE_JOB);
@@ -96,8 +101,14 @@ export const rowFor = key => ROWS.find(u => u.key === key) || null;
 //
 // Read it as "how long with one pair of hands on it". Three quarriers in the cut
 // take a bench out in a third of the time, which is what a gang is for.
+//
+// A ladder with an end says where it is with `rung`; the two that have no end
+// -- a machine's tuning, the rift -- say so with `level`, because `rung` is what
+// the board draws pips for and pips over an endless row are a promise of an end.
+// Either climbs the wait the same way.
 export const workFor = u =>
-  Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() : 0));
+  Math.round((WORK_BASE[u.kind] || 0)
+             * Math.pow(WORK_STEP, u.rung ? u.rung() : u.level ? u.level() : 0));
 
 // Whether a row is one the yard has to build at all. A row with no `kind` is
 // bought and had -- the bench's own ladders, the casino's decisions, a dial.

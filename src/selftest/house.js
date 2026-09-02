@@ -26,6 +26,10 @@ export const TESTS = [
     const row = document.querySelector('#crewshop button[data-key="house"]');
     row?.click();
     await sleep(60);
+    // A room is built before anybody lives in it -- the press starts a work in
+    // the yard (see works.js) -- and this check is about the board and the block
+    // rather than about the wait, so it is stood up on the spot.
+    window.__finish();
     run(1);
     const after = state();
     window.__crew(0, 0);

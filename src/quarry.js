@@ -865,8 +865,10 @@ export const QUARRY_UPGRADES = [
   // Keyed 'jaw', which is what the machine was called before it became a drill
   // and is still what every save has in it. The key is the machine's; the words
   // are what anybody reads. See the note over `MACHINES` in machines.js.
+  // Sharpened by the gang in the cut, which is a bench they are not taking out
+  // while they do it.
   tuneRow('jaw', 'sharpen the drill',
-          () => `the drill bites ${MACHINE_TUNE}x harder, again`)
+          () => `the drill bites ${MACHINE_TUNE}x harder, again`, 'quarry')
 ];
 
 // One heading. The quarry is one place and everything on this board is about the

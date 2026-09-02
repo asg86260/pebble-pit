@@ -15,6 +15,10 @@ import {
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
+// Only the address of the block, so the hands that put a room up know where to
+// stand. house.js imports nothing of this file's, so this way round is the way
+// round that does not make a circle.
+import { doorAt } from './house.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse, rift } from './state.js';
 import { spend, takeCoreCells, pitCapacity } from './pit.js';
@@ -668,6 +672,9 @@ export function assign(job, d) {
 // could never fire. See intro.js.
 export const HOUSE_ROW = {
   key: 'house',
+  // A room is built before anybody lives in it, by the hands that build
+  // everything else, standing at the block where it goes up.
+  kind: 'building', site: 'yard', at: () => doorAt().x,
   name: 'another house',
   from: () => S.crew,
   to: () => S.crew + 1,
@@ -1125,6 +1132,9 @@ export const UPGRADES = [
   // stands, who holds it open, what it swallows -- is in rift.js.
   {
     key: 'rift',
+    // Torn open by the yard's spare hands, standing where it will hang. It is a
+    // building like the rest of them, however little of it is masonry.
+    kind: 'building', site: 'yard', at: () => rift.x + rift.w / 2,
     name: 'tear a rift',
     note: () => 'the hole stops being the ceiling: what will not fit goes through',
     bill: () => RIFT_BILL,
@@ -1138,6 +1148,11 @@ export const UPGRADES = [
   },
   {
     key: 'riftrate',
+    // Widened the same way it was torn, and the wait climbs with the width --
+    // `level` rather than `rung`, because this ladder has no end and pips over
+    // it would promise one. See `workFor` in works.js.
+    kind: 'rung', site: 'yard', at: () => rift.x + rift.w / 2,
+    level: () => S.riftLevel || 0,
     name: 'widen the rift',
     unit: 'dust/s',
     // No `rung`, and that is the point rather than an omission. `rungOf` calls a

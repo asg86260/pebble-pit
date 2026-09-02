@@ -294,8 +294,10 @@ export const FARM_UPGRADES = [
 ,
 
   // The tiller's ladder, on the farm's board, and endless like the rest.
+  // Geared up by the farmhands themselves, out in the plots, which is a plot not
+  // being tended while they do it.
   tuneRow('tiller', 'gear up the tiller',
-          () => `the tiller works ${MACHINE_TUNE}x faster, again`)
+          () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
 ];
 
 export const FARM_SECTIONS = [

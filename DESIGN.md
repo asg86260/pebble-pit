@@ -2861,6 +2861,32 @@ row while the bench is busy, which it already knows how to do.
 
 **What it is not on.** The casino, still.
 
+### Every priced row is built
+
+Nothing enforced any of the above, so nine rows written since -- the four
+machine tunings, the rift and its widening, the lab's instruments and second
+bench, the four spells, the balloon and the block of houses -- were bought and
+had in the same frame, and nobody noticed until somebody pressed one. The rule
+is a rule now: a check in `test/works.test.mjs` walks every row of every board
+in the game, and anything with a `bill` or a `cost` that is not a dial, a
+readout or a door must name a `kind` in `WORK_BASE` and a `site` in `SITE_JOB`.
+A row added tomorrow either says where it is built or fails the suite.
+
+Two exceptions, both because they already charge the same price by another
+route. The lab's research (`labswing`, `labhaul`, `labcave`, `labtend`,
+`labair`) has been paid for in worker-seconds since the day the lab opened --
+somebody at a bench, an empty lab making no progress -- so making a work of it
+as well would charge it twice. The tower's hat (`wizard`) brews for
+`WIZ_BREW_MS`, said in its own bill under the same clock, one at a time.
+
+Two pieces of machinery came with it. `lab` is a site with a gang of its own
+(`labbers`), because the lab's own two rows are fitted by the body inside
+between pieces of research and nobody else in the yard knows which end of an
+instrument is which -- and being a station site, it is never lent a body. And
+`workFor` reads `level()` where a row has no `rung()`, so the endless ladders --
+the machine tunings, the rift's widening -- escalate their wait the way a rung
+does without the board drawing pips that promise an end.
+
 ### What changes in the checks
 
 Every check that buys a bench rung and reads the effect on the next line: a

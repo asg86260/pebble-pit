@@ -10,7 +10,7 @@
 // total cost puts the surplus straight back where it was. Which is why the
 // checks below are as much about the twentieth rung as about the first.
 
-import { group, ok, state, yard } from './helpers.mjs';
+import { group, ok, state, yard, buyBuilt } from './helpers.mjs';
 
 // Straight off the module. `yard.upgrades` is the `__upgrades` hook -- the yard
 // spreads `hooks` over its own handles and the two names collide -- so reaching
@@ -72,9 +72,11 @@ group('a rung actually makes the machine faster', async () => {
   stocked();
   const rate = () => machineRate('quarriers');
   const before = rate();
-  window.__buy('tunejaw');
+  // Tuning a machine is work like everything else past the bench: the gang whose
+  // machine it is puts the time in. So it is bought and then waited out.
+  buyBuilt('tunejaw');
   const one = rate();
-  window.__buy('tunejaw');
+  buyBuilt('tunejaw');
   const two = rate();
   return [
     ok(one > before, 'one rung is a faster jaw',
@@ -103,6 +105,13 @@ group('the ladders never end, and get dearer all the way up', async () => {
     const r = row('tuneram');
     prices.push((r.bill.find(b => b[0] === 'spark') || [])[1]);
     window.__buy('tuneram');
+    // Pressed like a player and then stood up on the spot. This group is about
+    // the shape of the price curve, and the twenty-fifth rung's wait is hours of
+    // worker-seconds by design -- sitting through it would be checking `workFor`
+    // twenty-five times over. What a wait actually buys has its own checks in
+    // works.test.mjs; `__finish` is the scene-setter and is a separate word for
+    // exactly this reason.
+    window.__finish();
   }
   const last = row('tuneram');
 
@@ -132,7 +141,7 @@ group('the ladders never end, and get dearer all the way up', async () => {
 
 group('how far up a ladder is survives a reload', async () => {
   stocked();
-  for (let i = 0; i < 4; i++) window.__buy('tunejaw');
+  for (let i = 0; i < 4; i++) buyBuilt('tunejaw');
   const before = yard.S.machines.jaw.tune;
   window.__reload();
   const after = yard.S.machines.jaw.tune;

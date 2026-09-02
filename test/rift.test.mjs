@@ -6,12 +6,17 @@
 // far end of the yard* to keep open. A check that flips the flag proves the
 // swallowing works and nothing about the thing that makes it a decision.
 
-import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, buyBuilt } from './helpers.mjs';
 
 // Everything a player would have before this row is offered: red in the bank,
 // dust in the hole, and a hole that has been filled often enough to know why
 // this matters. `__give` fills along rather than throwing at random, so a hole
 // this full actually gets full.
+// Tearing it is a build like everything else past the bench -- the yard's spare
+// hands walk over to where it will hang and open it -- so a check that wants a
+// rift has to let them. See works.js.
+const tearRift = () => buyBuilt('rift');
+
 function readyYard() {
   window.__reset();
   window.__crew(0, 4);
@@ -44,7 +49,7 @@ group('the rift is not offered until the hole has been a problem', async () => {
 
 group('a torn rift does nothing at all until somebody is standing at it', async () => {
   readyYard();
-  window.__buy('rift');
+  tearRift();
   const bought = state();
 
   // Nobody on it. The hole stays exactly as full as it was.
@@ -62,7 +67,7 @@ group('a torn rift does nothing at all until somebody is standing at it', async 
 
 group('a body holds it open, and the hole starts draining', async () => {
   readyYard();
-  window.__buy('rift');
+  tearRift();
   const full = state();
 
   window.__assign('rifters', 1);
@@ -92,7 +97,7 @@ group('a body holds it open, and the hole starts draining', async () => {
 group('the hole takes dust again once the rift has made room', async () => {
   readyYard();
   const stuck = state();
-  window.__buy('rift');
+  tearRift();
   window.__assign('rifters', 1);
   runUntil(() => state().rift > 500, 120);
 
@@ -113,7 +118,7 @@ group('the hole takes dust again once the rift has made room', async () => {
 
 group('taking the body off shuts it', async () => {
   readyYard();
-  window.__buy('rift');
+  tearRift();
   window.__assign('rifters', 1);
   runUntil(() => state().rift > 200, 120);
 
@@ -133,12 +138,12 @@ group('taking the body off shuts it', async () => {
 
 group('widening it is a row that never runs out', async () => {
   readyYard();
-  window.__buy('rift');
+  tearRift();
   window.__grant({ sparks: 99999, dust: 30000 });
 
   const rate = () => yard.riftMod.riftRate();
   const first = rate();
-  for (let i = 0; i < 12; i++) window.__buy('riftrate');
+  for (let i = 0; i < 12; i++) buyBuilt('riftrate');
   const twelve = rate();
   const row = window.__rows().find(r => r.key === 'riftrate');
 

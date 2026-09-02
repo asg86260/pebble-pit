@@ -151,8 +151,13 @@ export const tuneCost = key => Math.round(MACHINE_TUNE_COST * Math.pow(MACHINE_T
 // No `rung`, deliberately: `rungOf` calls a row without one "not a ladder at all
 // ... and never finished", and never finished is the whole point. Pips over this
 // would be the board drawing an end onto the one row that has none.
-export const tuneRow = (key, name, note) => ({
+// `site` is where the tuning is done -- the station the machine stands in, or
+// the yard for the two with no board of their own -- and the wait climbs with
+// the tuning the way the price does. See works.js.
+export const tuneRow = (key, name, note, site = 'yard') => ({
   key: 'tune' + key,
+  kind: 'rung', site, level: () => tuneOf(key),
+  at: () => specOf(key)?.at(),
   name,
   unit: 'x',
   note,

@@ -4,7 +4,7 @@
 // of research took exactly as long as the first however far into a run you were,
 // and the lab is what stands between you and every other multiplier in the game.
 
-import { yard, group, ok, state, run, runUntil, openSites } from './helpers.mjs';
+import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
 
 group('the lab can be made quicker at what it does', async () => {
   window.__reset();
@@ -26,7 +26,9 @@ group('the lab can be made quicker at what it does', async () => {
     return (at() || 1) - before;
   };
   const slow = runFor();
-  const bought = window.__buy('labkit');
+  // Fitted rather than had: the body already at the bench puts them in, between
+  // pieces of research. See works.js.
+  const bought = buyBuilt('labkit');
   const fast = runFor();
 
   window.__crew(0, 0);
@@ -56,7 +58,11 @@ group('a second bench is a second thing looked into', async () => {
   window.__buy('labhaul');                    // no room for it yet
   const stillOne = state();
 
-  const bought = window.__buy('labroom');
+  // A bench is built before it can be worked at, and the lab builds its own --
+  // so somebody has to be in there first. See works.js.
+  window.__assign('labbers', 1);
+  runUntil(() => state().labbers === 1, 60);
+  const bought = buyBuilt('labroom');
   // A bench and a body for it: the lab holds one to a bench and neither is
   // handed out on its own.
   window.__assign('labbers', 1);

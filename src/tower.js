@@ -67,6 +67,9 @@ export const TOWER_UPGRADES = [
   // somewhere else in the yard -- which is the whole reason they are not rungs.
   ...SPELLS.map(sp => ({
     key: 'spell' + sp.key,
+    // An enchantment is laid rather than bought: the wizards stand up there and
+    // work it, and a tower with nobody in it lays nothing.
+    kind: 'place', site: 'tower',
     name: sp.name,
     note: () => sp.note,
     bill: () => [['spark', sp.spark], ['dust', 2500]],

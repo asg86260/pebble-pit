@@ -80,8 +80,10 @@ group('the tower can enchant the rest of the yard', async () => {
   const beforeRate = state().machines.jaw.rate;
   const beforeSeam = state().seam;
 
-  const drove = window.__buy('spelldrive');
-  const blessed = window.__buy('spellluck');
+  // An enchantment is laid rather than bought, and the wizards lay it -- so one
+  // at a time, with the tower's own body working it through. See works.js.
+  const drove = buyBuilt('spelldrive');
+  const blessed = buyBuilt('spellluck');
   const after = state();
 
   const gone = window.__rows().filter(r => r.shown).map(r => r.key);

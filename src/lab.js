@@ -268,6 +268,9 @@ export const LAB_UPGRADES = [
     // other multiplier in the game -- worked at the pace it did on the first day
     // for the whole run.
     key: 'labkit',
+    // Fitted by whoever is in the lab, between pieces of research: nobody else
+    // in the yard knows which end of an instrument is which.
+    kind: 'rung', site: 'lab',
     name: 'better instruments',
     unit: 'work/s',
     pct: true,
@@ -289,6 +292,9 @@ export const LAB_UPGRADES = [
     // leaning over the same bench, which is a queue and is what `capOf` has
     // always refused.
     key: 'labroom',
+    // A bench is a place, and the lab puts it in itself for the same reason it
+    // fits its own instruments.
+    kind: 'place', site: 'lab',
     name: 'a second bench',
     from: () => labRooms(),
     to: () => labRooms() + 1,

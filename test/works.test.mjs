@@ -14,6 +14,19 @@
 // the thing that changed.
 
 import { group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
+// The boards themselves, for the rule at the bottom of this file: a check about
+// every row in the game has to be able to see every row in the game.
+import { UPGRADES } from '../src/upgrades.js';
+import { LAB_UPGRADES } from '../src/lab.js';
+import { SCHOOL_UPGRADES } from '../src/school.js';
+import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { QUARRY_UPGRADES } from '../src/quarry.js';
+import { FARM_UPGRADES } from '../src/farm.js';
+import { TOWER_UPGRADES } from '../src/tower.js';
+import { CASINO_UPGRADES } from '../src/casino.js';
+import { crewRows } from '../src/crewboard.js';
+import { SITE_JOB } from '../src/works.js';
+import { WORK_BASE } from '../src/config.js';
 
 // what the yard is building, site by site
 const works = () => state().works || {};
@@ -283,5 +296,87 @@ group('the waiting is in the bill, under a clock', async () => {
     ok(left && left[1] > 0 && left[1] <= clock[1],
        'and while it is building the clock is what is left of it',
        left && clock ? `${clock[1]}ms -> ${left[1]}ms` : '')
+  ];
+});
+
+// --- and the rule itself ------------------------------------------------------
+// Nothing above this line stops a *new* row being written without a `kind`, and
+// that is exactly how nine of them got through: the tune rows, the rift's two,
+// the lab's own pair, the spells, the balloon and the block of houses were all
+// added without anybody having to think about the yard, and every one of them
+// was bought and had in the same frame. A rule the game means is a rule
+// something checks, so this walks every board in the game and asks it of each
+// row, rather than of the ones somebody remembered.
+group('every priced row on every board is built', async () => {
+  // The two exceptions, and why each is one.
+  //
+  // The lab's research has been paid for in worker-seconds since the day the lab
+  // opened -- somebody standing at a bench, an empty lab making no progress --
+  // which is the same price this feature charges, collected by lab.js instead.
+  // Making a work of it as well would be charging it twice.
+  //
+  // The tower's hat is the other clock the game already had: it brews for
+  // WIZ_BREW_MS, said in its own bill under the same symbol, one at a time and
+  // the row counting down what is left. Same argument.
+  const OWN_CLOCK = ['labswing', 'labhaul', 'labcave', 'labtend', 'labair', 'wizard'];
+
+  const boards = [
+    ['the bench', UPGRADES], ['the lab', LAB_UPGRADES], ['the school', SCHOOL_UPGRADES],
+    ['the scrubbing house', SCRUB_UPGRADES], ['the quarry', QUARRY_UPGRADES],
+    ['the plots', FARM_UPGRADES], ['the tower', TOWER_UPGRADES],
+    ['the casino', CASINO_UPGRADES], ['the houses', crewRows()]
+  ];
+
+  const checks = [];
+  for (const [where, rows] of boards) for (const u of rows) {
+    // A row that is not a purchase is not a build: a job dial, a readout, a door
+    // through to a list, a bet the casino settles where you stand.
+    if (u.job || u.dial || u.read || u.price) continue;
+    if (!(u.bill || u.cost)) continue;
+    if (OWN_CLOCK.includes(u.key)) continue;
+    checks.push(ok(!!u.kind && u.kind in WORK_BASE,
+                   `${where}: ${u.key} says what kind of thing it is`,
+                   `kind ${JSON.stringify(u.kind)}`));
+    checks.push(ok(!!u.site && u.site in SITE_JOB,
+                   `${where}: ${u.key} says where it is built`,
+                   `site ${JSON.stringify(u.site)}`));
+  }
+  return checks;
+});
+
+// And what a `site` with a gang of its own actually buys, on one of the rows
+// that has just been given one. The lab is worked by labbers and by nobody
+// else: the yard does not lend it a body the way it lends the bench one, so an
+// empty lab is a purchase standing there paid for and unbuilt.
+group('the lab fits its own instruments, or nobody does', async () => {
+  window.__reset();
+  openSites();
+  window.__lab(true);
+  window.__grant({ shards: 900, spores: 900, cores: 9, dust: 90000 });
+  window.__crew(0, 3);                       // three spare hands, the lab empty
+  run(2);
+
+  const kit0 = state().labKitLevel;
+  window.__buy('labkit');
+  run(30);
+  const cold = state();
+
+  // and now somebody goes and stands in there
+  window.__crew(0, 0, 0, 0, 1);
+  const landed = runUntil(() => state().labKitLevel > kit0, 120);
+
+  window.__crew(0, 0);
+  return [
+    ok(!!cold.works?.lab, 'the press starts a work in the lab',
+       JSON.stringify(cold.works)),
+    ok(cold.works?.lab && cold.works.lab.done === 0,
+       'and thirty seconds of empty lab fits nothing',
+       cold.works?.lab ? `${cold.works.lab.done} of ${cold.works.lab.of}` : 'gone'),
+    ok(cold.labKitLevel === kit0, 'and the instruments are no better',
+       `${kit0} -> ${cold.labKitLevel}`),
+    ok(!cold.lent?.length, 'and no spare hand is lent to a station',
+       JSON.stringify(cold.lent)),
+    ok(landed, 'a labber in the room is what fits them',
+       `${kit0} -> ${state().labKitLevel}`)
   ];
 });

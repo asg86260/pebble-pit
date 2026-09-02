@@ -391,9 +391,18 @@ export function stepBuilder(w) {
 // while its gang was halfway down the ladder would be the building claiming
 // something the crew deny.
 const ARRIVED = {
-  quarriers: w => w.type === 'quarrier' && w.goal !== 'to',
+  // ...but "walking to it" is a goal and not a place. A quarrier stands at the
+  // head of the ladder saying `to` for as long as the seam is spent, waiting for
+  // it to fill back in -- which is a body standing in the cut with nothing to
+  // dig, and it is the body the cut has for sharpening the drill. So the last
+  // word is where it is: over the quarry's own ground, the same span quarry.js
+  // asks about when it decides whether a body's state agrees with where it is.
+  quarriers: w => w.type === 'quarrier'
+                  && (w.goal !== 'to'
+                      || (w.x + WORKER > quarry.x && w.x < quarry.x + quarry.w)),
   farmhands: w => w.type === 'farmhand' && w.goal !== 'to',
   scrubbers: w => w.type === 'scrubber' && w.goal === 'in',
+  labbers: w => indoors(w),
   // A wizard's work is four hundred pixels up and the walk is to the ground
   // under it; either way it is at the tower, which is the only thing this asks.
   wizards: w => w.type === 'wizard',

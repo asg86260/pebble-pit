@@ -2112,7 +2112,10 @@ const SITE_AT = {
   scrub: () => ({ x: scrub.x + scrub.w / 2, y: scrub.y - P * 8 }),
   tower: () => ({ x: tower.x + tower.w / 2, y: tower.y - P * 8 }),
   yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 }),
-  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 })
+  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 }),
+  // Clear above the research bar, so a lab fitting its own instruments while it
+  // works on something can show both at once rather than one over the other.
+  lab: () => ({ x: lab.x + lab.w / 2, y: lab.y - P * 13 })
 };
 
 // What the yard is in the middle of building, said on the ground rather than
