@@ -412,3 +412,35 @@ Check it at both ends: a fresh yard with two rooms (the barrier hugs the block,
 a couple of cells clear either side) and a settlement of a dozen (it still
 hugs, and does not sit inside the block). A shot of each; a suite cannot see
 this.
+
+### 3.1 amendment — item 8: the first houses are quick, and they get slower
+
+Reported: "reduce the amount of time for the first houses, slowly increasing
+the build times."
+
+Where it is: the `house` row is `kind: 'building'` with **no `rung`**, so
+`workFor` is `WORK_BASE.building * WORK_STEP^0` = a flat **90 worker-seconds
+for every house, for ever** — and since BUILD_GANG is 1 now, that is a
+straight 90 seconds of one body standing there for your very first house.
+Every other timed row climbs with its rung; the house is the one that does
+not, because a house is not on a ladder.
+
+It has a rung in all but name: how many you already have. So give `workFor` an
+override — a row may carry `work: () => seconds`, used in place of the
+`WORK_BASE`/`WORK_STEP` pair — and let the house supply its own curve. One
+hook on the general function, not a special case inside it.
+
+Numbers, at the end of config.js:
+
+    HOUSE_WORK0     = 20     // the first house, in worker-seconds
+    HOUSE_WORK_STEP = 1.16   // and each one after it
+    HOUSE_WORK_MAX  = 180    // never worse than the machines
+
+so the curve runs about: 1st **20s**, 5th **31s**, 10th **66s**, 15th
+**139s**, and flat at 180s from about the 18th. Exponent is the number of
+houses already standing (clamp at zero so the yard's starting crew does not
+push the first one up the curve).
+
+Report the actual seconds for houses 1, 5, 10, 15 and 20 from the code, not
+from this table — if they disagree, the code is right and the table was my
+arithmetic.
