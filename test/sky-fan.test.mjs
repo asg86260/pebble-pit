@@ -224,14 +224,32 @@ group('the board counts what the mouth swallows', async () => {
   // window. So the window is one in which the count of rains did not move,
   // tried a few times over -- a shower ends clean, and the next stretch is an
   // ordinary sky again.
+  // Both sides averaged over the same stretch, which is the only way the
+  // comparison means anything.
+  //
+  // The board's two columns are what happened in the LAST SECOND -- `mark.rate`
+  // and `mark.drew` in smog.js -- and this used to read them once, at the end,
+  // and hold them against half a minute of sky. That is a sample against an
+  // average, and it only agreed while the yard's output was smooth. It is not:
+  // the whole crew stops to celebrate a finished rock, so a fifth of any given
+  // stretch has the machines standing idle, and whether the one second that got
+  // read fell inside one of those was down to where the rhythm happened to land.
+  // Winding the dance up half a beat was enough to fail it, which is a check
+  // about the sampling rather than about the board.
   const run30 = dryStretch(30, secs => {
     const was = state().smog.haze;
-    run(secs);
-    return { was, s: state().smog };
+    const foul = [], scrub = [];
+    for (let i = 0; i < secs; i++) {
+      run(1);
+      foul.push(state().smog.fouling);
+      scrub.push(state().smog.scrubbing);
+    }
+    const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+    return { was, s: state().smog, foul: mean(foul), scrub: mean(scrub) };
   });
-  const { was, s, dry } = run30;
+  const { was, s, foul, scrub, dry } = run30;
   const fell = (was - s.haze) / 30;            // how the sky actually went
-  const said = (s.scrubbing - s.fouling) / 60; // and what the board said it would
+  const said = (scrub - foul) / 60;            // and what the board said it would
   return [
     ok(idle.scrubbing < 1,
        'a fan over a clear sky is not scrubbing anything, whatever it is rated at',

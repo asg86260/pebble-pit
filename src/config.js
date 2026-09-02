@@ -1533,13 +1533,20 @@ export let DANCE_MS = 5000;    // how long the crew celebrate a finished rock
 // second. That is a wing beat, not a celebration. This is the number the crew
 // are actually counted at: the quick moves land a shade over one a second, which
 // is a body jumping for joy, and the step half that.
-export const DANCE_BEAT = 0.9;
+// ...and 0.9 was too slow from the other side: at a beat a second a body hangs
+// at the top of a hop and drifts down out of it, which reads as floating rather
+// than as jumping. People bounce when they are pleased; they do not levitate.
+// Half again as fast puts the quick moves near one and a half a second, still
+// well under the `DANCE_BUZZ` pace that reads as a fault.
+export const DANCE_BEAT = 1.4;
 // How fast a dancing body travels, in world pixels a frame at the tuned rate --
 // the same units every other pace in this file is in, so it is comparable with
 // them: a brisk amble, quicker than loitering (IDLE_PACE) and well under a
 // commute. It used to be six hundredths of a cell a frame with no frame time in
 // it at all, which is a thirtieth of this and got slower the better your screen.
-export const JIG_PACE = 1.5;
+// And the ground it covers keeps up: a body bouncing quicker on the spot while
+// still ambling between marks at the old stroll is two speeds in one animation.
+export const JIG_PACE = 2.3;
 // The pace at which a bouncing body stops reading as pleased with itself and
 // starts reading as faulty. Measured rather than felt: at two and a half
 // crossings of its own height a second the yard looked like it was buzzing,
