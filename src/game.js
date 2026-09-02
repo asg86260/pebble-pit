@@ -31,6 +31,7 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
+import { stepGrit } from './grit.js';
 import { stepWorks, setGround } from './works.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
@@ -163,6 +164,7 @@ export function step() {
   stepWorks(dt);                              // and whatever the yard is building
   stepMachineSmoke(now);                      // and the stacks over the machines
   stepSmoke(now, dt);                         // which the chimney says out loud
+  stepGrit(dt);                               // and the chips off a builder's hammer
   stepCasino(dt);                             // and the wheel, if there is anything on the table
   stepTable(dt);                              // and the pot, arriving or leaving, a grain at a time
   maybeReunion(now);                          // the one beat after the first rock

@@ -275,6 +275,7 @@ export const snapshot = () => ({
   smoke: S.smoke.filter(p => !p.house && !p.cig && !p.mach).length,
   machSmoke: S.smoke.filter(p => p.mach).length,
   cigSmoke: S.smoke.filter(p => p.cig).length,
+  grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,
   shutters: [...S.shutters].sort((a, b) => a - b),
   research: S.research && { ...S.research, need: workFor(S.research.key), at: +progress().toFixed(3) },

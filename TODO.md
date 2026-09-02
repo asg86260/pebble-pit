@@ -367,6 +367,17 @@ leavings rather than every grain on the strip. That needs muck to carry where it
 came from, which `MESS` does not record today, so it is a field on the layer
 rather than a one-liner. Decide the rule first.
 
+## Housekeeping: one test fails every time
+
+`test/sky-readout.test.mjs`, "a speck off a swing is the speck in the band" --
+fails on **every** run, on the assertion "at full weight the whole way: it never
+goes out and comes back". Not a flake and not new: found during the building-site
+pass (2026-09-02) and confirmed to fail identically on `ac1b0b6`'s own `src/`, by
+reverting to it and re-running, so it predates that work and none of it is the
+cause. Nobody has looked at what the check is actually asserting about a speck's
+weight easing; it is written down here rather than fixed because the pass that
+found it was about something else.
+
 ## Housekeeping: two tests fail at random
 
 Neither is a game bug, but they are why the suite looks untrustworthy — and an

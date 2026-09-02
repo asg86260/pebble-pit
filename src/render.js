@@ -36,7 +36,7 @@ import { beltFrom, beltTo, beltReach, beltPost, beltY, beltRunning } from './dus
 import { rockLeft, groundAt, farmShed, quarryShed, plotSlots, shakeView } from './world.js';
 import { tillerAt, tillerWay } from './farm.js';
 import { MACHINE_PUFF_MS, MACHINE_PUFF_S, MACHINE_PUFF_RISE, MACHINE_PUFF_LIFE, MACHINE_IDLE_MS,
-         BUILD_SHAKE, HOUSE_CUBE } from './config.js';
+         BUILD_SHAKE, HOUSE_CUBE, GRIT_RISE, GRIT_SPREAD, GRIT_LIFE } from './config.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
 import { buriedVisible, buriedAt } from './intro.js';
 import { plotX } from './farm.js';
@@ -51,6 +51,7 @@ import { CRAFT, craftY, mastX, BALLOON_W, BALLOON_H, BALLOON_BASKET,
          BALLOON_FILTER_W, BALLOON_FILTER_H } from './balloon.js';
 import { now } from './clock.js';
 import { press } from './press.js';
+import { spawnGrit } from './grit.js';
 import { rand } from './rng.js';
 
 const canvas = document.getElementById('c');
@@ -258,14 +259,28 @@ function drawShed(rect) {
   ctx.fillStyle = '#000';
 }
 
+// Both sheds rise out of the ground while they are being built, like every
+// other building in the yard.
+//
+// They did not, and the reason is worth keeping: #3 of "Wave 3.1" wired the
+// rise into the six places that have a `withRise` call of their own, and the
+// quarry and the farm were not among them because neither is *drawn* as a
+// building -- one is a hole and the other is a row of furrows, and the shed
+// that carries each one's board only arrived in the same wave (C5). So both
+// were in `OPENS_PLACE`, both were rising as far as `risingPlace` was
+// concerned, and nothing anywhere clipped a draw to it: they popped in whole.
 export function drawFarmShed() {
-  if (!S.farmOpen) return;
-  drawShed(farmShed());
+  const rising = risingPlace() === 'farm';
+  if (!S.farmOpen && !rising) return;
+  const r = farmShed();
+  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r));
 }
 
 export function drawQuarryShed() {
-  if (!S.quarryOpen) return;
-  drawShed(quarryShed());
+  const rising = risingPlace() === 'quarry';
+  if (!S.quarryOpen && !rising) return;
+  const r = quarryShed();
+  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r));
 }
 
 
@@ -2252,18 +2267,6 @@ function siteFoot(site) {
   return null;
 }
 
-// The one body actually putting the thing up, where there is one -- the yard
-// and the bench have no gang of their own, so `builders` are who is standing at
-// them. A station with a gang (the quarry, the farm) has no single "the
-// builder"; the puff comes off wherever the bar hangs instead, which is the
-// same place the eye is already reading as "the work".
-function builderPos(site) {
-  const w = S.workers.find(o => o.type === 'builder' && o.site === site);
-  if (w) return { x: w.x + WORKER / 2, y: w.y };
-  const at = SITE_AT[site]?.();
-  return at ? { x: at.x, y: S.groundY } : null;
-}
-
 // A striped post: alternating cell-high bands, the black ones doing all the
 // work -- a white band against the page is simply the page.
 function drawBarrierPost(x, y, w, bands) {
@@ -2284,13 +2287,19 @@ const underConstruction = site => {
   return !!w && risingKinds.has(rowFor(w.key)?.kind);
 };
 
-// how often a busy site throws up a puff of dust, and when each one last did
-const BUILD_PUFF_MS = 1500;
-const buildPuffAt = {};
+// How often the works themselves shed a little dust off the ground, and when
+// each site last did. This is not the hammer -- that throws its own chips, one
+// burst per blow, from wherever the body is standing (see `workJig` in crew.js).
+// This is the site: for as long as anything is going up, the ground along the
+// foot of it is being worked over, and it says so. Slower and softer than a
+// blow, and spread along the whole footprint rather than coming off one body,
+// so the two read as different things happening at the same place.
+const SITE_DUST_MS = 260;
+const siteDustAt = {};
 
 export function drawBuildSites() {
   for (const site of SITES) {
-    if (!underConstruction(site)) { delete buildPuffAt[site]; continue; }
+    if (!underConstruction(site)) { delete siteDustAt[site]; continue; }
     const foot = siteFoot(site);
     if (!foot) continue;
 
@@ -2309,12 +2318,42 @@ export function drawBuildSites() {
       ctx.fillRect(x, tapeY, P, 2);
 
     const t = now();
-    if (t >= (buildPuffAt[site] || 0)) {
-      buildPuffAt[site] = t + BUILD_PUFF_MS;
-      const pos = builderPos(site);
-      if (pos) puff(pos.x, pos.y - P * 2);
+    if (t >= (siteDustAt[site] || 0)) {
+      siteDustAt[site] = t + SITE_DUST_MS * (0.7 + rand() * 0.6);
+      // Somewhere along the foot of what is going up, not the middle of it: a
+      // puff that always comes off the same spot reads as a vent rather than as
+      // work. On the ground line, drifting up off it.
+      const x = foot.x + rand() * foot.w;
+      spawnGrit(x, S.groundY - P, {
+        n: 2,
+        rise: GRIT_RISE * 0.4,      // a haze off the ground, not a thrown chip
+        spread: GRIT_SPREAD * 0.45,
+        life: GRIT_LIFE * 1.6       // and it hangs about longer for being slower
+      });
     }
   }
+}
+
+// The chips off a builder's hammer.
+//
+// Drawn here, after the buildings and the crew, rather than pushed on to
+// `S.smoke` -- which is where this dust used to go, and which is drawn (see
+// `drawSmoke`, called long before `drawHouses`) *behind* every building in the
+// yard. Dust thrown off the front of a wall that renders behind the wall reads
+// as a smudge on the horizon, so it had to come out of the smoke list for the
+// draw order alone, quite apart from behaving nothing like smoke.
+//
+// One cell, no growth, no fade to speak of -- a chip is a chip until it is
+// gone. `drawSmoke` swells its motes by 140% over their life because that is
+// what a wisp does; doing it here is what made the old dust read as a puff of
+// exhaust coming off a joist.
+export function drawGrit() {
+  ctx.fillStyle = '#000';
+  for (const g of S.grit) {
+    ctx.globalAlpha = Math.max(0, 1 - (g.t / g.life) ** 2);
+    ctx.fillRect(Math.round(g.x / P) * P, Math.round(g.y / P) * P, P, P);
+  }
+  ctx.globalAlpha = 1;
 }
 
 // --- a building rising out of the ground ---------------------------------------
@@ -2378,7 +2417,8 @@ function drawRisingHouse() {
 // `BUILD_SHAKE`). Watched here rather than from `stepWorks` in works.js, which
 // has no idea where any of these places actually stand: this file draws every
 // one of them and so is the one place that already knows.
-const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse', 'house'];
+const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse',
+                     'quarry', 'farm', 'house'];
 const wasRising = {};
 function stepRiseLandings() {
   for (const place of RISE_PLACES) {
@@ -2387,6 +2427,7 @@ function stepRiseLandings() {
       const rect = place === 'school' ? school : place === 'lab' ? lab
                  : place === 'tower' ? tower : place === 'casino' ? casino
                  : place === 'scrub' ? scrub : place === 'outhouse' ? outhouse
+                 : place === 'quarry' ? quarryShed() : place === 'farm' ? farmShed()
                  : null;
       if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); }
       else {
@@ -3460,6 +3501,7 @@ export function draw() {
   drawLabBar();            // how far along the lab is, over the lab itself
   drawWorkBars();          // and whatever else the yard is putting up
   drawBuildSites();        // fenced off and dusty, for as long as it is under way
+  drawGrit();              // and the chips off the hammer, in FRONT of the walls
   stepRiseLandings();      // a puff and a knock, the frame a rising place lands
   drawDraught();           // the air going into the scrubbing house
   drawTowerWaves();        // the tower pouring, while it is making a hat

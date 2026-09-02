@@ -86,11 +86,22 @@ group('an empty site builds nothing, and a body starts it moving', async () => {
   ];
 });
 
-// A gang is what a gang is for. `done` climbs one second a second for every pair
-// of hands actually there, so five in the cut take a bench out in a fifth of the
-// time -- and the clock on the row says so, because it is read at the rate the
-// site is actually going rather than at some nominal one.
-group('more hands is less waiting', async () => {
+// Reversed on purpose: one pair of hands to a piece of work, whoever owns the
+// site. See "The building site" in DESIGN.md.
+//
+// `done` used to climb a second a second for EVERY pair of hands standing
+// there, so a cut with five quarriers in it took its next bench out five times
+// as fast and the tower went up at the speed of however many wizards happened
+// to be inside. The same row therefore cost a wildly different amount of time
+// depending on which board it sat on and how the yard was staffed that minute,
+// which is not a difficulty curve -- it is an accident. `BUILD_GANG` had
+// already said one-body-to-a-build for the yard and the bench; this is the
+// same rule reaching the four sites that have a gang of their own.
+//
+// What the gang is still for is the station's actual output: the other four
+// quarriers go on quarrying while the one puts the bench in. They just do not
+// stack up on the one job.
+group('a bench takes the same time however many are in the cut', async () => {
   const dig = hands => {
     window.__reset();
     openSites();
@@ -110,10 +121,11 @@ group('more hands is less waiting', async () => {
   return [
     ok(alone > 0 && gang > 0, 'both of them got the bench out',
        `${alone.toFixed(1)}s alone, ${gang.toFixed(1)}s with four`),
-    // Not "exactly a quarter": the walk down to the face is in both figures and
-    // is the same length whoever is making it. What is claimed is the shape --
-    // four pairs of hands is most of the way to four times quicker.
-    ok(gang < alone / 2, 'and four hands took less than half as long',
+    // The walk down to the face is in both figures and is the same length
+    // whoever makes it, so this is "about the same" rather than "identical" --
+    // but four hands must not buy anything like the fourfold it used to.
+    ok(Math.abs(gang - alone) < Math.max(2, alone * 0.25),
+       'four hands take about as long as one, not a quarter as long',
        `${alone.toFixed(1)}s -> ${gang.toFixed(1)}s`)
   ];
 });

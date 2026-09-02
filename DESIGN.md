@@ -1131,6 +1131,89 @@ you are choosing who to hire and where to put them; by the end you are watching 
 itself and deciding what the lab should make faster. There is no finish line, and nothing is
 taken away to make you start again.
 
+## The building site (built)
+
+A second pass over what a building going up looks like, after the first one
+(#3/#4 of "Wave 3.1") landed the machinery and none of it read. Five separate
+faults, and what they have in common is worth more than any of them: **every
+one of them was invisible rather than wrong**. The jig ran, the clip clipped,
+the dust spawned, the body walked. A drawing that does nothing looks exactly
+like a drawing that is not there, which is why four of the five had already
+been reported as done.
+
+**The hammer.** A builder swung a two-cell hop on a 1400ms beat, on the spot,
+for ever. At any speed that reads as a body *bouncing*, because a fixed rate
+and a fixed place is what a machine does. It is a burst now: a fast swing
+(`BUILD_HAMMER_MS`), three to six of them in a row, a pause, a step along the
+patch, and again. The dip is deliberately *smaller* than the old hop -- the
+engine cannot draw an arm, so the strike is a short drive plus the lunge, and
+height was never what was missing.
+
+**The grit.** Site dust was pushed onto `S.smoke` -- literally the chimney
+system -- so it swelled, drifted and climbed for two and a half seconds like
+smoke, because it was smoke. `grit.js` is its own list: thrown out and up off
+the point of impact, gravity from the first frame, one cell throughout, dead
+in under half a second. Two things feed it, and they are different events: a
+hammer blow throws chips from wherever the body is standing, and the works
+themselves shed a haze off the ground along the whole footprint for as long as
+anything is going up.
+
+**Two bugs inside that, both silent.** `stepGrit` took `dt` for seconds when
+every stepper in this game is handed milliseconds, so each chip aged a thousand
+times too fast and was gone on the next frame -- the list read empty on every
+frame anybody sampled it. And once that was fixed the chips were thrown at a
+fraction of a pixel: they topped out half a cell up, lived and died in the one
+row of pixels directly above the ground line, and were drawn in black against
+the black ground line. Twelve chips in the air, none visible.
+
+**The draw order.** `drawSmoke` runs long before `drawHouses`, so dust thrown
+off the front of a wall rendered *behind* the wall. `drawGrit` is called after
+the buildings and the barriers, which is the only reason the list had to leave
+`S.smoke` even setting aside how differently it behaves.
+
+**Where a builder stands.** `siteX` answers with the middle of the thing being
+built -- the right answer to the question, and the wrong place to put a body.
+Everything here is a black mass on a white page, so a black body standing
+inside a black building is not a body in front of a building; it is nothing.
+The builder was there the whole time, hammering, invisible. It stands off the
+near edge of the footprint now, at the tape, on open ground, and its burst
+walks *away* from the building rather than into it.
+
+**And arrival had to gain slack.** A burst that shifts the body a few cells and
+a walk that re-aims it every frame are a tug of war -- the walk dragged it
+straight back, sixty times a second. Arrival is a patch now, not a pixel. This
+is the same shape as the jitter in TODO.md item 5 and is worth naming twice:
+anything that re-aims a body every frame will fight anything that moves it for
+its own reasons, unless the aim has slack in it.
+
+**The walk.** `stepBuilder` walked on `FARM_WALK` -- a farmhand's pace for
+stepping to the next furrow, 1.1px a frame against `COMMUTE_PACE`'s 4.6 -- for
+a walk clean across the yard. It is the exact bug the comment over
+`commutePace` in upgrades.js was written about, one caller having been missed:
+a station's shuffling speed used for a whole commute. Worse than slow, it never
+asked `commutePace` at all, so the one body the player was watching ignored
+every boots and pace rung they had bought.
+
+**The quarry's shed.** #1 of "Wave 3.1" made the shed a *second* way into the
+board and left the hole answering too, so pointing anywhere at the cut threw a
+shop menu over the thing you were looking at. The shed is the only way in now.
+The tight margin on its ramp side stays -- that part of the old reasoning was
+right, and is what keeps the board off the bridge.
+
+**The rise, for the two that never had one.** #3 of "Wave 3.1" wired the
+rise-out-of-the-ground into the six places with a `withRise` call of their own.
+The quarry and the farm were not among them -- neither is *drawn* as a
+building, and the sheds that carry their boards arrived in the same wave -- so
+both sat in `OPENS_PLACE`, both counted as rising, and nothing clipped a draw
+to it. They popped in whole. They rise now, and land with the same puff and
+knock as everything else.
+
+Covered by `test/build-anim.test.mjs` (the four numbers the eye cannot audit at
+sixty frames a second) and the two rewritten groups in
+`test/wave31-buildings.test.mjs`. Looked at with `node tools/look.mjs build`,
+which is a new scene: bought and deliberately *not* finished, because partway
+through is the only state the rise, the tape and the hammer exist in.
+
 ## The shields (design, not built)
 
 The story so far has one engine and it turns one way: rocks land on people, and everything the
