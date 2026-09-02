@@ -13,7 +13,7 @@ import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { TOWER_UPGRADES } from './tower.js';
-import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, tookRows } from './shop.js';
+import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -851,10 +851,11 @@ export function hud() {
   // with it: a save restored after this file loaded used to leave the button
   // saying "shown" over a board with its finished rows already folded away.
   sayHideDone();
-  // A row bought out of the list, or a body hired into it, leaves the sheet a
-  // different height than the one it is seated by. The rows are filled in by
+  // A row bought out of the list, a body hired into it, or a row that has
+  // started saying something else -- any of the three leaves the sheet a
+  // different size than the one it is seated by. The rows are filled in by
   // `fill` just above, so by here there is a whole board to measure.
-  if (tookRows()) remeasure();
+  if (boardMoved()) remeasure();
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every
