@@ -3317,3 +3317,144 @@ handful in `test/` (`ladder`, `pit`, `machines` via `__levels`, `boards`) and
 more in `src/selftest/`. Same two fixes as last time -- `buyBuilt` where the
 mechanic is the point, `__finish()` where the page is -- plus `__crew(0, n)`
 to have hands spare.
+## The whole yard dances
+
+A rock comes off, the yard celebrates, and bodies judder on the spot instead of
+dancing. This has been rewritten three times and reported again each time, so
+the fix is not another tuning pass on the moves. It is the arrangement around
+them.
+
+### What is actually wrong
+
+Nothing in `MOVES` is broken. Every reported judder has the same shape: **two
+things moving one body on the same frame.**
+
+- the duck walks a body out of the drop zone while the dance's `spin` pulls it
+  back onto `moveFrom` — five pixels one way, five the other, sixty times a
+  second. Patched by dragging the marks along with the duck (`heldUp`,
+  `JOBS.miner.held`), in three places, each with its own re-anchoring rule.
+- `elbowJig` shoves bodies apart, and the same two marks have to be shoved with
+  them or the shove is undone before it is drawn.
+- `step`'s drift back toward `jigAt` fights the zone wall when the mark lies
+  through the zone. Patched by re-taking the mark.
+- a body whose job stepper still runs — a quarrier digging, a farmhand tending,
+  a hauler carrying — is moved by its work and by nothing else, so it stands
+  still while the rest of the yard dances. Half the yard not having noticed.
+
+Every one of those is a patch on a collision that should not be possible. And
+the collisions are possible because **who dances is decided in five places**:
+`JOBS.miner.held`, the hauler's idle branch, `heldUp` from three call sites, and
+the absence of a `held` row on every other job.
+
+### The rule
+
+**While the yard is celebrating, every body stops what it is doing and dances.**
+
+One stage, high in the list, above the commute and the work and the mess:
+
+```
+celebrate  the rock is off. Every body in the yard stops and dances.
+           Nothing below this line runs.
+```
+
+That is the whole of it. `JOBS.*.held` goes; the hauler's idle-branch dance
+goes; `heldUp`'s three call sites go. No job may opt in or out, so no job can
+quietly forget to, and no work stepper can run alongside the dance.
+
+### What that buys
+
+**Nothing else moves a dancing body.** The class of bug is gone by
+construction, not by patching each collision as it is found. There is no clamp,
+no duck and no elbow running against the dance, because none of them run at
+all.
+
+**The mark is taken once and never moved.** Chosen when a body enters the
+dance, clear of the drop zone, and left alone until the celebration is over.
+Every re-anchor rule (`w.jigAt = w.x` in the duck, in the elbow, in the zone
+wall) goes with the thing it was patching.
+
+**The drop zone is settled before the dance starts, not during it.** A body
+standing where the next rock will land walks out — a plain walk, at the duck's
+pace, dancing nothing — and starts dancing when it is clear. Walking and
+dancing are never both happening to one body, which is the collision itself.
+
+**Bodies may overlap.** `elbowJig` goes. The mark spread already scatters a
+gang, and two squares briefly sharing ground is a smaller thing to look at than
+either of them juddering.
+
+### Where it sits in the stages
+
+Below the commute and the loo, above the stations, the work and the mess. The
+top half of that is the fix -- nothing under it can move a dancing body. The
+bottom half is the old `held` row's own reasoning, kept: **a body already on its
+way somewhere finishes the walk.** Put above the commute it stopped bodies
+mid-errand, and a miner sent for its helmet stood down to dance with the hat
+still on the stand -- walking and dancing at once, which is the collision this
+is against, arriving from the other side.
+
+### Who does not dance
+
+A body that is not standing in the yard cannot dance in it, and this list is
+the whole of the exception:
+
+- **in your hand**, **falling**, **floating** down out of the sky — already
+  above the celebrate stage in the order, so they are untouched by it.
+- **seeing stars** — the same, and for the same reason.
+- **indoors**: at home in the shacks, through the lab door, inside the
+  scrubbing house. They are not on screen; they carry on and come out to a
+  celebration that may already be over.
+- **aloft** in the balloon, or on the way to crew one.
+
+Everybody else dances **where they stand**, including a quarrier on the floor
+of the cut and a wizard up the tower — they dance on whatever they are standing
+on, the way a builder already hammers on a bench top.
+
+### What it costs
+
+Work stops for the length of a celebration (`DANCE_MS`, five seconds, plus any
+fall still in the air). Today only the miners stop; the cut, the plots, the lab
+and the carrying all run straight through. So this is a real production pause
+of a few seconds a rock, and every machine stands down with its tender for the
+same few seconds — a station idles when nobody is standing at it, which is the
+yard's own rule and not a new one.
+
+That is the price of the thing being asked for, and it is worth naming out
+loud: a celebration everybody joins is a celebration nobody is working through.
+
+### What changes in the checks
+
+`test/dance.test.mjs` and the browser's `stations.js` both assert on who is
+dancing and who is standing through it. The bar they measure — a body's frame
+to frame jump while dancing — stays; what changes is that they may now demand
+it of every body rather than of the miners.
+
+
+### Three things learned building it
+
+**The footing is taken once, and it is where the body already is.** Read afresh
+every frame -- which is what the old `heldUp` did -- it is a third thing moving
+a dancing body: the dance travels, the yard is not flat, and a body stepping
+over the lip of the hole had its feet moved a whole cell between two frames.
+Measured at 36px on one body, and up to thirty crossings a second on another.
+And it is `w.y`, not a fresh lookup of the surface: the job's own stepper put
+the body there and knows things this does not -- asking the ways instead lifted
+four quarriers out of the cut and stood them on the ground above it.
+
+**The step turns back at a change of ground**, the same way it turns at the drop
+zone, so a body dances on the footing it joined with rather than pacing off the
+edge of it.
+
+**Only a body out under the open sky ducks.** `duck` walks a body sideways with
+no notion of walls; run on a quarrier down the cut it walked it out through the
+side -- the one thing `route.test.mjs` exists to forbid -- and a body below the
+surface is not under the rock in any case.
+
+### One thing it uncovered
+
+Poop and muck share a book of claims, and a hauler shovelling ordinary muck
+reserved the columns either side of its patch. If somebody had left something
+under that reservation, the janitor's own search -- which asks for poop first --
+was told there was none, by a body that could not have touched it. With a yard
+full of idle hands on the muck, the poop a player wants gone could sit under
+somebody else's elbow for ever. B4 said poop is a janitor's alone; the second
+book says so where it counts.

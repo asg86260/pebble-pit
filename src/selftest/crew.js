@@ -373,8 +373,16 @@ export const TESTS = [
     const zone = shots[0].dropZone;
     const clear = !zone || shots.every(s => xs(s).every(x => +x + 18 <= zone[0] || +x >= zone[1]));
 
-    // and it is put away again on the far side
-    for (let i = 0; i < 3600 && state().rockFall > 0; i++) run(1 / 60);
+    // and it is put away again on the far side.
+    //
+    // Waited out to the end of the CELEBRATION, not just of the fall. The two
+    // used to come to the same thing for these bodies -- a hauler with dust to
+    // fetch went back to work the moment the rock was down -- and they no
+    // longer do: the whole yard dances now, for as long as the yard is
+    // celebrating, which outlasts the landing by the rest of the five seconds.
+    // A body still dancing is not a body left standing in the air, which is
+    // what this asks.
+    for (let i = 0; i < 3600 && (state().dancing || state().rockFall > 0); i++) run(1 / 60);
     run(1);
     const after = state();
     window.__crew(0, 0);

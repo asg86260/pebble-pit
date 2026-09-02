@@ -78,9 +78,15 @@ group('nobody leaves the cut through the wall', async () => {
   window.__muckSet(c => (c % 3 === 0 ? 3 : 0));   // a mess up top to be dropped for
   run(3);
   window.__next();                                // a rock coming down to dance for
-  run(3);
-
-  const down = state().underground;
+  // Counted all the way through rather than at the last frame. This is the
+  // group's precondition -- somebody was down there while all of that happened,
+  // so the wall-crossing this guards against had its chance -- and the whole
+  // crew dances for a celebration now, three cells of hop at the top of it. In
+  // a cut this shallow that puts a body's feet over the rim as often as not, so
+  // the last frame is a coin toss about a bob rather than an answer about who
+  // was working down there.
+  let down = 0;
+  for (let f = 0; f < 3 * 60; f++) { run(1 / 60); down = Math.max(down, state().underground); }
   return [ok(down > 0, 'and there was somebody down there to do it wrong',
              `${down} in the cut`)];
 });

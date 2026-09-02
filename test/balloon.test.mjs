@@ -178,19 +178,37 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
   // Held topped up, so what is being measured is the craft working rather than
   // the craft running out of sky -- and no rain, which would drop muck of its
   // own all over the answer.
-  for (let i = 0; i < 14; i++) { window.__air({ haze: 2200 }); run(3); }
-  const done = state();
-
+  //
+  // Watched all the way through rather than read off the last frame. What the
+  // craft puts on the ground is muck, and muck is what the yard's spare hands
+  // shovel: the three idlers here clear it as fast as one balloon can drop it,
+  // so whether any is still lying there at the final frame is a race between
+  // the craft and the crew and not a fact about the craft. Measured that way it
+  // came out at three columns and then at none, on a run where the craft had
+  // plainly worked harder -- more sky caught, five columns of muck laid down
+  // over the same forty seconds and every one of them tidied away again.
+  //
+  // So the columns are collected as they appear. What is being asked is
+  // unchanged: sky goes up, muck comes down, and it comes down under the craft
+  // rather than on the house's own strip.
   const scrubX = state().scrubX;
-  const far = (done.muckAt || []).filter(([c]) => c * 6 > scrubX + 400);
+  const seen = new Map();
+  for (let i = 0; i < 14 * 60 * 3; i++) {
+    if (i % 180 === 0) window.__air({ haze: 2200 });
+    run(1 / 60);
+    for (const [c, n] of state().muckAt || []) seen.set(c, Math.max(seen.get(c) || 0, n));
+  }
+  const done = state();
+  const laid = [...seen.keys()];
+  const far = laid.filter(c => c * 6 > scrubX + 400);
   const flew = Math.abs(done.craft[0].x - lit.craft[0].x);
 
   window.__air({ haze: 0, muck: 0, scrubbers: 0 });
   window.__clearFloor();
   return [
-    ok(done.smog.recycled >= 0 && (done.muckAt || []).length > 0,
+    ok(done.smog.recycled >= 0 && laid.length > 0,
        'a crewed craft brings the sky down and it lands as muck',
-       `${(done.muckAt || []).length} columns with muck in them`),
+       `${laid.length} columns had muck laid in them`),
     ok(flew > 100, 'while crossing the yard', `moved ${Math.round(flew)}px`),
     // The claim the whole feature rests on: the sink is the ground the craft is
     // over, not a heap on the house's own strip.

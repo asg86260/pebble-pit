@@ -78,7 +78,14 @@ export const TESTS = [
     const home = state();
     window.__crew(0, 0);
     return [
-      ok(said.split(String.fromCharCode(10)).length === 7 && said.includes('mining the rock'),
+      // The name, then a row a fact. Named rather than counted: the count was
+      // seven and is nine since the card started saying what a body is doing
+      // this second and where it is going, and a check that has to be edited
+      // every time a row is added is a check that says nothing about any of
+      // them. What must be true is that it is rows and that they are this
+      // body's.
+      ok(said.split(String.fromCharCode(10)).length >= 7 && said.includes('mining the rock')
+         && /^age {7}/m.test(said) && /^doing {5}/m.test(said) && /^heading {3}/m.test(said),
          'hovering one says who it is and what it does, a row at a time',
          JSON.stringify(said)),
       ok(/^mined {5}/m.test(said) && /^quarried {2}/m.test(said) && /^stored {4}/m.test(said),

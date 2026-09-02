@@ -156,6 +156,11 @@ group('the bench rung still finishes at the same rate, swing or no swing', async
 group('a core off the lip is lobbed, not dropped', async () => {
   window.__reset();
   window.__crew(0, 1);
+  // The opening rock is still in the air on the frame after a reset, and the
+  // whole yard stops for one -- see the celebrate stage in crew.js. A body
+  // waiting out a fall is not tipping anything, and this check is about the arc
+  // rather than about who is allowed to throw when. So the fall lands first.
+  runUntil(() => yard.S.rockFall === 0, 5);
   const w = yard.S.workers.find(o => o.type === 'hauler');
 
   // Handed a core and walked right up to the lip, so the very next frame is
@@ -215,7 +220,13 @@ group('a janitor is not starved of its own mess by a crowd on the shared kind', 
   const poopCol = Math.round((outX - 500) / 6);
   window.__poopSet(c => (c === poopCol ? 4 : 0));
 
-  const cleared = runUntil(() => state().smog.poop === 0, 20);
+  // Thirty seconds rather than twenty. The window was set when the miners alone
+  // stopped for a celebration; the whole crew stops now, which is a few per cent
+  // of every body's day, and it moves where sixteen idle hands are standing when
+  // the janitor looks around. The slowest seed measured clears at twenty-five.
+  // What is being asked has not moved -- the poop is cleared rather than left
+  // for ever, which is what B4 is about, and it holds on every seed tried.
+  const cleared = runUntil(() => state().smog.poop === 0, 30);
   window.__crew(0, 0);
 
   return [

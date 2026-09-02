@@ -95,6 +95,15 @@ group('the dance joins up instead of teleporting', async () => {
   // How often a body crosses its own height. A hop is a body pleased with
   // itself at about one a second; the same hop at two and a half a second, which
   // is what it was, is a body with a fault.
+  //
+  // A move's own tempo, which means two tops of the SAME move. It used to count
+  // any two tops in a row, and that reads the gap across a move change as a
+  // tempo: a spin that ends near its top and a step that peaks shortly after are
+  // two bounces half a second apart and nothing is going quickly at all. The
+  // whole crew dancing simply made that coincidence common -- it came out at
+  // 1.88 a second on a hauler whose own moves run at 1.1. What happens at a
+  // change of move is what the three join checks above measure, and they measure
+  // it properly: half a cell, in the frame it happens.
   let quickest = 0;
   for (const body of shot) {
     const ups = [];
@@ -103,8 +112,10 @@ group('the dance joins up instead of teleporting', async () => {
       // the top of a bounce: as high as this body got before coming back down
       if (body[f].y < body[f - 1].y && body[f].y <= body[f + 1].y) ups.push(f);
     }
-    for (let i = 1; i < ups.length; i++)
+    for (let i = 1; i < ups.length; i++) {
+      if (body[ups[i]].move !== body[ups[i - 1]].move) continue;
       quickest = Math.max(quickest, 60 / (ups[i] - ups[i - 1]));
+    }
   }
 
   // And nobody is switched off in mid-air. A body only leaves the ground if it

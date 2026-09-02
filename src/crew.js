@@ -921,9 +921,22 @@ const MOVES = {
       // square bobbing on the spot for the whole of the fall, which is the
       // vibration this dance was twice rewritten to kill. With the mark re-taken
       // where it stands, the body paces its own side like anybody else.
+      //
+      // The other wall is the ground itself. A body dances on the footing it
+      // joined with (see `celebrate`), so the edge of that footing -- the lip of
+      // the hole, the toe of a pile, the wall of the cut -- is a wall to the
+      // dance too. Without it a body paced off its own ground and hung in the
+      // air over the next thing down, or had its feet dragged a cell to meet it.
       const next = w.x + w.jigDir * JIG_PACE * dt;
-      if (zone && next + WORKER > zone.from && next < zone.to) {
+      const offGround = Math.abs(feetOn(wayOver(next + WORKER / 2), next) - w.foot) > 1;
+      if (offGround || (zone && next + WORKER > zone.from && next < zone.to)) {
         w.jigDir = -w.jigDir;
+        // The mark comes to this side of the wall with it. A mark on the far
+        // side is an order to walk into the wall, which the wall countermands
+        // the next frame, and the body paces on the spot for the whole of the
+        // celebration. Moving a mark is not moving a body -- `jigAt` is only
+        // read by the turn rule above -- which is why this one is safe where
+        // the old re-anchoring of `moveFrom` was not.
         w.jigAt = w.x;
       } else w.x = next;
       w.y = w.foot - swing * P;
@@ -1013,6 +1026,18 @@ function jig(w, now, zone, endsAt) {
   // a mark to dance around, taken once, so the gang spread out instead of
   // dancing in the line they happened to finish the rock in
   if (w.jigAt == null) {
+    // The ground this body will dance on, for as long as it dances. Everything
+    // below turns on it: the height of every move is measured off `foot`, and
+    // the step turns back where the footing changes.
+    //
+    // Where the body already is, and not a fresh lookup of the surface. Its own
+    // stepper put it there and knows things this does not -- a quarrier stands
+    // on the floor of the cut, which `surfaceUnder` answered with the yard's
+    // own line, so the first frame of the dance lifted four bodies out of the
+    // cut and stood them on the ground above it. Nothing in here knows better
+    // than the job about where that job stands.
+    w.foot = w.y;
+    w.footAt = w.x;
     w.jigAt = w.x + (rand() - 0.5) * JIG_SPREAD * 2;
     // and never on the ground the next rock is coming down on: a mark in the
     // zone is an order to dance under the rock, which the wall in `step` then
@@ -1228,98 +1253,81 @@ function workJig(w, at) {
 const nextBurst = () =>
   BUILD_HITS_MIN + Math.floor(rand() * (BUILD_HITS_MAX - BUILD_HITS_MIN + 1));
 
-// --- held up by a rock --------------------------------------------------------
-// A rock in the air stops anybody who would have to walk under it to get on with
-// the job, and that part is right: the alternative is being shoved back by the
-// duck every other frame all the way down.
+// --- the celebration ------------------------------------------------------------
+// A rock is off, and every body in the yard stops what it is doing and dances.
+// One function, called from one stage (see `celebrate` in STAGES), and that is
+// the whole arrangement.
 //
-// What was wrong was what they did instead. They stood exactly still for the
-// whole fall -- ten seconds of it -- and because a stopped hauler holds the spot
-// it stopped on, five of them that had been walking in step stood on the same
-// pixel. One body twitching, not a crew waiting.
+// It was five: a `held` row on the miner, an idle branch on the hauler, and
+// three errand call sites that handed a body to the dance when a rock cut
+// across its walk -- with every other job having no row at all, so half the
+// yard went on working through the party. The judder everybody kept seeing was
+// never in the moves. It was two things moving one body on the same frame: the
+// duck walking it out of the drop zone while the spin pulled it back onto its
+// mark; the elbow shoving it apart while the same marks dragged it home; a
+// step drifting toward a mark that lay under the rock while the zone wall
+// flipped it away. Each was patched where it was found -- by dragging the marks
+// along with the duck, in three places, each with its own re-anchoring rule --
+// and each patch left the collision itself in place.
 //
-// The gang on the ground are already celebrating the rock that just came off.
-// Anybody the next one has stopped joins in: the yard has nothing to do for a
-// couple of seconds and may as well look like it is enjoying them.
+// So the collision is what goes. While the yard is celebrating this is the ONLY
+// thing that moves a body, because the stage sits above the commute, the work
+// and the mess and nothing below it runs. No clamp, no elbow, no work stepper.
+// There is nothing left to fight.
 //
-// Clamped out of the footprint on the way through. The dance wanders -- that is
-// the whole point of it -- and under a rock that is coming down is the one place
-// it must not wander to.
-// Nobody dances inside anybody. The dance walks -- that is how it spreads a gang
-// out -- but only one of its three moves goes anywhere, so a body that draws two
-// hops in a row stays exactly where it stopped, and five that stopped on the same
-// pixel stay stacked for as long as the rock takes to come down.
-//
-// So they elbow apart as well, the same quarter-step the idlers already use. Two
-// on the very same pixel have no side to push to, so each takes the way it is
-// already facing in the dance, which is its own coin toss.
-// The shove goes onto the marks as well as onto the body, and that is the whole
-// of what makes it stick. Two of the three moves put the body back on a mark
-// every frame -- the spin on `moveFrom`, the step's drift back toward `jigAt` --
-// so an elbow that moved `w.x` alone was undone before it was drawn: the body
-// was shoved a pixel, snapped back, shoved again, sixty times a second, which is
-// the very juddering the elbow is here to prevent. Move the ground it is
-// dancing on and the body goes with it and stays gone.
-function elbowJig(w) {
-  for (const o of S.workers) {
-    if (o === w || o.jigAt == null) continue;
-    const d = o.x - w.x;
-    if (Math.abs(d) >= ROAM_ELBOW) continue;
-    const by = Math.sign(d || w.jigDir || 1) * 0.5 * frames();
-    w.x -= by;
-    w.jigAt -= by;
-    if (w.moveFrom != null) w.moveFrom -= by;
+// Bodies may now stand in each other for a few seconds. That is a smaller thing
+// to look at than either of them juddering, and the marks are spread wide
+// enough that it is rare.
+function celebrate(w, now, zone) {
+  w.resting = false;                   // a dance is not a break
+  w.idleAt = null;
+  w.lunge = 0;
+
+  // A body that was hammering arrives with a jig already running: the builders'
+  // work jig is this same machinery on a move of its own (`MOVES.build`), and
+  // inheriting it had a builder celebrate at a hammer's beat -- twice the pace
+  // anything here is allowed to move at, which is the definition of the buzzing
+  // this whole arrangement is against. Anything that is not one of the dance's
+  // own moves is put away, and the join below takes fresh marks. Asked of the
+  // move rather than of the job, so a second work jig added later gets it too.
+  if (w.jigAt != null && !MOVE_KEYS.includes(w.move)) stopJig(w);
+  // The footing, taken ONCE when this body joins in and then left alone -- see
+  // the join below, where `jigAt` is taken. Read afresh every frame, as the old
+  // `heldUp` read it, it is a third thing moving a dancing body: the dance
+  // travels, the ground under the yard is not flat, and a body stepping over
+  // the lip of the hole or the toe of a pile had its feet moved a whole cell
+  // between two frames. Measured at 36px on one body in the fixture yard, which
+  // is twice its own height, and at up to thirty crossings a second on another
+  // -- the judder, arriving by a route nobody had looked at because until now
+  // only the gang on the flat yard ever danced.
+  w.footAt = w.x;
+
+  // Out from under a coming rock BEFORE any of the dance runs, and dancing
+  // nothing while it goes. This is the one ordering that matters in here: the
+  // old code ducked and danced the same body on the same frame, which is the
+  // judder itself. A body walks clear, and only then joins in.
+  // ...and only a body out under the open sky. `duck` walks a body sideways
+  // with no notion of walls, which is right on the yard and wrong everywhere
+  // else: a quarrier dancing on the floor of the cut is nowhere near a rock
+  // coming down on the surface, and shoving it toward the edge of the
+  // footprint walked it out through the side of the cut -- the one thing
+  // `route.test.mjs` exists to forbid.
+  if (upTop(w) && duck(w, zone)) {
+    w.jigAt = null;                    // it will take its mark where it ends up
+    w.y = stand(w);
     return;
   }
-}
 
-function heldUp(w, zone, now) {
-  w.resting = false;                   // waiting on a rock is not a break
-  w.foot = walkY(w.x + WORKER / 2);
-  w.footAt = w.x;
+  // And the mark it dances around is never under the rock either. It is taken
+  // once, out here where the body is standing and therefore already clear; a
+  // zone that appears later -- the next rock is announced mid-celebration --
+  // can put it back under one, and then it is pushed to the near edge rather
+  // than re-taken on the body, so the dance carries on from where it is instead
+  // of restarting.
+  if (zone && w.jigAt != null && w.jigAt + WORKER > zone.from && w.jigAt < zone.to)
+    w.jigAt = w.x + WORKER / 2 < (zone.from + zone.to) / 2 ? zone.from - WORKER - P : zone.to + P;
+
   jig(w, now, zone, danceEnd(now));
-  elbowJig(w);
-  // Out from under a coming rock on its legs, which is how everybody else in
-  // the yard gets out from under one -- `duck`, at the one pace nobody walks
-  // anywhere else. This used to be a clamp: a body inside the footprint was set
-  // on the edge of it in a single frame, and a new rock is wide, so a body
-  // standing in the middle of one was moved a hundred and seventy pixels
-  // between two frames the instant the rock appeared in the sky.
-  //
-  // Worse than the jump was what came after it. The clamp moved the body and
-  // left the ground it was dancing on where it was, so the spin put it straight
-  // back on its mark the next frame, and the clamp took it out again the frame
-  // after: five pixels one way, five the other, sixty times a second, for the
-  // whole of the fall. That is the vibrating, and it was never in the dance --
-  // it was the dance and the clamp pulling on the same body.
-  //
-  // So the marks come with it. A body that has been moved dances where it has
-  // been put, and there is nothing left to pull it back.
-  if (duck(w, zone)) {
-    w.jigAt = w.x;                     // and it dances from where it was put
-    // ...on the mark the move is turning about, which is NOT where the body is.
-    //
-    // `w.x` here is the mark PLUS whatever the move has added this frame -- the
-    // spin is `moveFrom + sin(beat) * P`, and that sine is not nought at the
-    // instant a rock happens to fall. Anchoring on `w.x` swallowed the offset
-    // every ducked frame, invisibly, because the duck was walking the body
-    // anyway; the frame the duck let go, the offset was real again and the body
-    // stepped the whole of it sideways. Measured at 5.52px in the middle of a
-    // spin, against a bar of three.
-    //
-    // Which is why `dance.test.mjs` passed: its own seed came in at 2.90, three
-    // per cent under the bar. Seeds 1 and 3 fail it on the tree as it stands, so
-    // the fault was always there and the check was lucky.
-    //
-    // Taking the offset back off leaves the move running. Restarting the beat
-    // instead -- which was the first fix -- holds it at nought for the whole
-    // fall, and a body that does not hop while a rock is coming down is a body
-    // standing through the celebration: `stations.js` in the browser suite says
-    // so in as many words.
-    const m = MOVES[w.move];
-    w.moveFrom = w.x - (m && m.dx ? m.dx((now - w.moveAt) / beatMs(w, m)) : 0);
-    w.y = stand(w);
-  }
 }
 
 // --- the kit walk -------------------------------------------------------------
@@ -2711,25 +2719,28 @@ export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 //      work bare-headed. Directly under `dizzy` because it is the tail of it.
 //   5. **floating** -- drifting down out of the sky. Falls *through* on the frame
 //      its feet land, so a wizard set down carries on with its day.
-//   6. **commute** -- on its way to a job it has been put on, and doing none of it
+//   6. **celebrate** -- a rock is off and the whole yard is dancing. Above the
+//      commute and everything under it, and that position IS the fix: while a
+//      body is dancing, nothing else in this list may move it. The judder that
+//      was reported after three rewrites was never in the moves -- it was the
+//      duck, the elbow and a work stepper all pulling on one body on one frame,
+//      each patched where it was found. Above the lot of them there is nothing
+//      left to pull. Every job dances; no job has a row to forget.
+//   7. **commute** -- on its way to a job it has been put on, and doing none of it
 //      yet. Above everything below because a body walking somewhere is not yet
 //      anywhere: the work, the mess and the loo are all things you do where you
 //      have arrived.
-//   7. **relieve** -- now and then a body has to stop, whatever it was doing.
+//   8. **relieve** -- now and then a body has to stop, whatever it was doing.
 //      Below the commute (you do not stop halfway across the yard) and above the
 //      work (it is the one thing that interrupts work).
-//   8. **tender** -- somebody minding a machine. **Above the stations, and this
+//   9. **tender** -- somebody minding a machine. **Above the stations, and this
 //      is the first ordering bug quoted above.** A miner's branch ends in
 //      `continue` on every path, so a tender check below it was never reached.
-//   9. **shutIn** -- a body behind a closed door stays behind it. Everything
+//  10. **shutIn** -- a body behind a closed door stays behind it. Everything
 //      below this line is a reason to walk somewhere -- a mess, a hat, a rock
 //      coming down -- and none of them should reach through a shut door. It is a
 //      guard rather than a fix to whichever branch was reaching in, because the
 //      thing that is true is about the lab and not about any one of them.
-//  10. **held** -- the rock is off and the gang have the ground to themselves.
-//      Above the mess so that a miner dances rather than fetching a shovel in
-//      the five seconds the yard is celebrating, and below the commute so that a
-//      body already on its way somewhere keeps going.
 //  11. **mess** -- muck on the ground, and somebody whose job it is. Last of the
 //      stages: clearing up beats the work, because the work is not going
 //      anywhere and the mess is in everybody's way. Which mess is whose is the
@@ -2803,7 +2814,7 @@ function nearestPoop(wx, taken) {
 //
 // Returns true if the body is on muck duty and has had its turn this frame.
 function takeMess(w, c) {
-  const { now, taken, muckTaken } = c;
+  const { now, taken, muckTaken, poopTaken } = c;
   // Two kinds of mess, and they are not the same job.
   //
   // What the sky drops is weather. It lands on everybody's yard and everybody
@@ -2838,7 +2849,7 @@ function takeMess(w, c) {
     // -- not shoved by anybody's elbow, simply never the nearest thing going.
     // A janitor looks for its own kind first and only falls back to the shared
     // search when there is genuinely none of it left.
-    const pick = (w.type === 'janitor' ? nearestPoop(w.x + WORKER / 2, muckTaken) : null)
+    const pick = (w.type === 'janitor' ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
       ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
   }
@@ -2880,7 +2891,9 @@ function takeMess(w, c) {
   // walk there either.
   if (S.rockFall > 0 && c.zone &&
       ((to + WORKER > c.zone.from && to < c.zone.to) || across(c.zone, w.x, to))) {
-    heldUp(w, c.zone, now);
+    // The claim is kept -- nobody else can walk there either -- and the body is
+    // left to the celebrate stage, which has already had this frame. Reached
+    // only by a body whose shovel was booked before the rock was announced.
     return true;
   }
   // and the dance is put away when the shovel comes back out, the same tidy-up
@@ -3225,8 +3238,6 @@ function haulerWork(w, c) {
     S.coreTaker = w;
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
     const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-    // held up, and dancing rather than standing there: see heldUp
-    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
     const pace = haulSpeed() * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P * 2) {
@@ -3376,8 +3387,6 @@ function haulerWork(w, c) {
     if (w.claim < 0) { w.goal = w.carry ? 'dump' : 'idle'; return; }
     const col = w.claim;
     const target = floor.x + col * P;
-    // held up, and dancing rather than standing there: see heldUp
-    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
     // hands free, so it moves; a load is what slows it down
     const pace = haulSpeed() * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
@@ -3414,8 +3423,6 @@ function haulerWork(w, c) {
     }
   } else if (w.goal === 'dump') {
     const target = pit.x - WORKER;                 // the lip, where they can stand
-    // held up, and dancing rather than standing there: see heldUp
-    if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
     w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P) {
       // A proper toss off the lip, so it arcs out over the edge -- and it is
@@ -3467,7 +3474,6 @@ function haulerWork(w, c) {
     unbook(w);
     if (w.inside) return;                      // in out of it, and nothing to watch
     const door = hireSpot().x;
-    if (across(zone, w.x, door)) { heldUp(w, zone, now); return; }
     w.x += Math.sign(door - w.x) * Math.min(HOME_WALK * frames(), Math.abs(door - w.x));
     w.y = stand(w);
     if (Math.abs(door - w.x) < 1) { w.inside = true; w.x = door; S.dirty = true; }
@@ -3493,7 +3499,6 @@ function haulerWork(w, c) {
     //
     // Everything the dance needs is here -- it spreads out from where it
     // stands, and it elbows clear of anybody it is standing in.
-    if (dancing(c)) { heldUp(w, zone, now); return; }
 
     // A yard with nothing in it to carry is a yard nobody needs to be stood
     // in. After a good while of it -- staggered, so they trickle off rather
@@ -3517,7 +3522,6 @@ function haulerWork(w, c) {
       if (!w.brk && now >= (w.restUntil || 0)) w.roamTo = strollTo(w);
     } else {
       const d = w.roamTo - w.x;
-      if (across(zone, w.x, w.roamTo)) { w.roamTo = null; heldUp(w, zone, now); return; }
       // its own legs, not everybody's
       const stride = w.x;
       w.x += Math.sign(d) * Math.min(haulSpeed() * ROAM_PACE * (w.amble || 1) * frames(), Math.abs(d));
@@ -3553,8 +3557,6 @@ function haulerWork(w, c) {
 //
 //   work    one frame of the job, when nothing above has claimed the body.
 //   shutIn  when this body is behind a door and nothing outside reaches it.
-//   held    what it does while the rock is off and the yard is celebrating.
-//           Returns true when it has used the frame up.
 //   mess    the shovelling rule, in three parts:
 //             when  is there a mess this body should be on right now
 //             back  where it goes when there is not
@@ -3571,39 +3573,6 @@ function haulerWork(w, c) {
 const JOBS = {
   miner: {
     work: minerWork,
-    // The rock is off. The crew take five on the bare ground. It runs until the
-    // next rock has come down, so nobody is caught mid-hop underneath it.
-    held: (w, c) => {
-      if (!dancing(c)) return false;
-      const { now, zone } = c;
-      w.resting = false;                     // a dance is not a break
-      w.idleAt = null;
-      w.lunge = 0;
-      w.next = now + minerMs();              // nobody swings at nothing
-      // The next rock lands where the last one stood, and the last one is
-      // what they were standing on. So the first thing they do when the job
-      // is off is walk out of its footprint -- and they celebrate from
-      // there, rather than being stood under a rock coming out of the sky.
-      // Everything that puts a miner somewhere other than on the rock has to
-      // say so, or the climb picks up again from wherever it was standing
-      // before -- a body that danced on the bare ground and then went back to
-      // work would jump the whole height of the rock in one frame.
-      // Out of the way first -- and its mark comes with it, so the dance it
-      // goes back to is on the ground it has been moved to rather than the
-      // ground it was moved off.
-      if (duck(w, zone)) {
-        plant(w, standOn(S.groundY));
-        // and the marks come with it, both of them: the mark it wanders around
-        // and the mark the move it is in the middle of turns about. Leaving
-        // `moveFrom` behind is a spin that hauls the body back under the rock a
-        // frame after the duck walked it out.
-        if (w.jigAt != null) { w.jigAt = w.x; w.moveFrom = w.x; }
-        return true;
-      }
-      plant(w, standOn(S.groundY));
-      jig(w, now, zone, danceEnd(now));
-      return true;
-    },
     // A mess on the rock comes before the rock. It used to come before nothing
     // but standing about: a miner picked up a shovel only when its pile was full
     // and there was no swing left to take, and the layer on the rock was not
@@ -3826,6 +3795,44 @@ const STAGES = [
   // and now and then a body has to stop, whatever it was doing
   (w, c) => relieve(w, c.now),
 
+  // The rock is off and the whole yard is celebrating. Above the work, the
+  // stations and the mess, so that nothing else in this list can move a dancing
+  // body -- which is the whole of the fix, and the reason there is one row here
+  // rather than a `held` on every job.
+  //
+  // Below the commute and the loo, which is where the old `held` sat and for
+  // the reason worked out then: a body already on its way somewhere finishes
+  // the walk. Above them it stopped bodies mid-errand -- a miner fetching its
+  // helmet stood down to dance with the hat still on the stand -- and walking
+  // and dancing at once is the collision this whole rewrite is against.
+  //
+  // A body that is not standing in the yard cannot dance in it, and this is the
+  // whole of the exception: through a door, or up in the balloon. The ones in
+  // your hand, falling, seeing stars or floating down are claimed by the stages
+  // above and never reach this line.
+  (w, c) => {
+    if (!dancing(c)) {
+      // The party is over: put the dance away once, here, and let the body have
+      // the rest of its frame back. This is the only place a dance ends now.
+      //
+      // A DANCE, and not whatever else is using the same fields. The builders'
+      // work jig is this machinery on a move of its own and keeps `jigAt` for
+      // as long as the build lasts, so a blanket wipe here reset a hammering
+      // body every frame it was not celebrating -- which is every frame -- and
+      // no builder ever swung. The move says which animation this is; the job
+      // does not, and a second work jig later would be caught by the same test.
+      if (w.jigAt != null && MOVE_KEYS.includes(w.move)) { stopJig(w); w.say = null; }
+      return false;
+    }
+    // ...and a body that belongs to a craft: aloft in it, or on its way to the
+    // mooring to take it up. A balloon halfway through being crewed is the
+    // errand case again -- the walk is finished first -- and a body already in
+    // the basket is no more in the yard than one behind a door.
+    if (w.inside || w.aloft || w.craft || indoors(w) || inHouse(w)) return false;
+    celebrate(w, c.now, c.zone);
+    return true;
+  },
+
   // Every station's tender, *before* the station's own work -- the miner's
   // included. See the first of the two ordering bugs at the top of this section.
   (w, c) => stepTender(w, c.now),
@@ -3838,8 +3845,6 @@ const STAGES = [
     return true;
   },
 
-  // the rock is off and the yard is celebrating
-  (w, c) => jobOf(w).held?.(w, c) === true,
 
   // Muck on the ground and somebody whose job it is -- and, when there is none,
   // the goal the job goes back to.
@@ -3862,6 +3867,19 @@ export function updateWorkers(now, dt) {
   // only thing that has to be true is that two of them starting out on the same
   // frame do not start out for the same cell.
   const muckTaken = new Set();
+  // ...and a second book, for the one mess only a janitor may touch.
+  //
+  // Poop and muck share a book because they share a layer of columns, and that
+  // is right for muck: two bodies must not shovel the same patch. It is wrong
+  // for poop. A hauler idling into the yard's ordinary muck reserves the four
+  // columns either side of its patch, and if a body left something under that
+  // reservation the janitor's own search -- which asks for poop FIRST, and only
+  // falls back to the shared one when there is none to be had -- was told there
+  // was none, by a body that could not have touched it in any case. With a yard
+  // full of idle hands on the muck, the poop the player actually wants gone can
+  // sit under somebody else's elbow for ever. B4 said poop is a janitor's
+  // alone; this is the other half of saying so.
+  const poopTaken = new Set();
 // The columns already spoken for by bodies that are on their way to them --
   // WITH their elbows. `nearestMuck` reserves a body's width either side when a
   // claim is made, but this rebuild used to carry only the claimed column
@@ -3871,7 +3889,12 @@ export function updateWorkers(now, dt) {
   // is a claim with its elbows out, every frame, or it is not a claim.
   for (const w of S.workers) {
     if (w.muckAt == null) continue;
-    for (let k = w.muckAt - MUCK_ELBOW; k <= w.muckAt + MUCK_ELBOW; k++) muckTaken.add(k);
+    for (let k = w.muckAt - MUCK_ELBOW; k <= w.muckAt + MUCK_ELBOW; k++) {
+      muckTaken.add(k);
+      // Only a janitor's claim is an elbow on poop -- nobody else can be going
+      // for any.
+      if (w.type === 'janitor') poopTaken.add(k);
+    }
   }
   // And the same book, kept for the cut's own dust: one column of it, one
   // hauler on their way down the ladder for it.
@@ -3929,7 +3952,7 @@ export function updateWorkers(now, dt) {
   // rock is coming down on, and the books of claims that keep the crew from all
   // setting off for the same cell -- the yard's floor, the mess, the cut's own
   // floor and the surface of the hill.
-  const c = { now, dt, zone, taken, muckTaken, cutTaken, rockTaken };
+  const c = { now, dt, zone, taken, muckTaken, poopTaken, cutTaken, rockTaken };
   for (const w of S.workers) {
     // A swing settles, wherever the body spends this frame. Whoever swings sets
     // the lunge to 1 and nobody eases it themselves -- see `LUNGE_EASE`, and the
