@@ -265,11 +265,29 @@ export function wearRecord(w, from) {
   return w;
 }
 
+// Not in the yard: at home behind its own front door, through the lab's or the
+// scrubbing house's, or up in the balloon. One list, because two things ask it
+// -- the celebration (a body that is not here cannot dance in it) and the loo
+// clock below -- and a second copy of it is a second copy to keep in step.
+export const outOfYard = w => !!(w.inside || w.aloft || indoors(w) || inHouse(w));
+
 // one frame of getting older, and of being somewhere
 export function stepRecords(dt) {
   for (const w of S.workers) {
     if (w.lived == null) Object.assign(w, newRecord());
     w.lived += dt;
+    // The loo clock is an hour of WORK, not an hour of the world.
+    //
+    // It is a deadline -- a moment on the clock -- and it went on sliding into
+    // the past while a body was asleep at home, so it was overdue the instant
+    // the body stepped back out. A shift that knocked off together came back
+    // together and every one of them went on the doorstep, which is what got
+    // reported: they all poop when they come out of the house.
+    //
+    // Held rather than re-armed: what a body has already waited still counts,
+    // so somebody who was nearly due when it went in is nearly due when it
+    // comes out -- it simply does not owe for the hours it spent indoors.
+    if (w.looAt && outOfYard(w)) w.looAt += dt;
     const job = JOB_OF[w.type];
     w.at[job] = (w.at[job] || 0) + dt;
   }
@@ -3840,7 +3858,7 @@ const STAGES = [
     // mooring to take it up. A balloon halfway through being crewed is the
     // errand case again -- the walk is finished first -- and a body already in
     // the basket is no more in the yard than one behind a door.
-    if (w.inside || w.aloft || w.craft || indoors(w) || inHouse(w)) return false;
+    if (outOfYard(w) || w.craft) return false;
     celebrate(w, c.now, c.zone);
     return true;
   },
