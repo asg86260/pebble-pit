@@ -387,3 +387,28 @@ and lips all over the yard.
 Reproduce first, filmed a frame at a time: put a miner on a tall rock, buy
 something that needs a builder, and assert the body's `y` never moves more than
 a cell in one frame between the rock and the bench. That assertion is the test.
+
+### 3.1 amendment — item 7: the house's building site is the reserved plot, not the block
+
+Reported: "the construction for the house is way too wide at the start of the
+game. the construction should hug the width of the existing buildings."
+
+Where it is: `siteFoot('yard')` in render.js looks the work's row up in
+`YARD_ROW_SITE` and returns `S.placed[key]` — the ground **reserved** by
+`placeSites` for that site at its full grown size. For every other yard row
+that is right: a lab is a lab-sized building the day it goes up. The house is
+not. The settlement is a stack of cubes that grows a room at a time
+(`cubes()`/`houseRect()` in crewboard.js), so at the start of a game the block
+is one or two rooms wide against a plot reserved for a whole street — and the
+barriers stand out at the edges of ground nothing is standing on.
+
+Fix: for the `house` row specifically, `siteFoot` returns the block's own rect
+(`houseRect()`), widened by the one room about to be added rather than by the
+whole reserved plot. The other yard rows keep the reserved footprint. The rule
+to write in the comment: **the tape goes round what is being built, not round
+the ground it was promised.**
+
+Check it at both ends: a fresh yard with two rooms (the barrier hugs the block,
+a couple of cells clear either side) and a settlement of a dozen (it still
+hugs, and does not sit inside the block). A shot of each; a suite cannot see
+this.
