@@ -2425,11 +2425,18 @@ export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };
 // on each of thirteen rows -- a constant a case is the bug and not the fix, and
 // thirteen of them is thirteen things to keep in step with a ladder that grows a
 // sixth rung tomorrow.
+//
+// Halved and then some, weighted at the end of the table the opening actually
+// touches. The intro was a slog: with `BUILD_GANG` at one these are wall-clock
+// seconds for your first hire standing alone at a site, and ninety of them
+// before the lab exists is ninety seconds of watching one square hammer. What
+// makes a number here feel long is not its size but what else is going on while
+// it runs, and at the start of a game the answer is nothing.
 export const WORK_BASE = {
-  rung: 8,          // one step up a ladder
-  place: 30,        // a bench in the cut, a furrow, a hat off the stand
-  building: 90,     // the lab, the school, the closet, the tower
-  machine: 180      // the ram, the belt, the jaw, the tiller
+  rung: 5,          // one step up a ladder
+  place: 18,        // a bench in the cut, a furrow, a hat off the stand
+  building: 45,     // the lab, the school, the closet, the tower
+  machine: 90       // the ram, the belt, the jaw, the tiller
 };
 // and it climbs with the rung the way the price does, so the first bench in the
 // cut is half a minute and the fifth is nearer two
@@ -2527,6 +2534,13 @@ export const BUILD_SHAKE = 7.5;
 // very first hire, alone, now that BUILD_GANG is one. It has a rung in all but
 // name: how many rooms already stand. See the `work` override on `HOUSE_ROW`
 // in upgrades.js, and `workFor` in works.js, which reads it.
-export const HOUSE_WORK0 = 20;       // the first house, in worker-seconds
-export const HOUSE_WORK_STEP = 1.16; // and each one after it
-export const HOUSE_WORK_MAX = 180;   // never worse than the machines
+//
+// Cut again, at the near end. Twenty seconds for the very first house is twenty
+// seconds with one body, no second job to cut to and nothing else built -- the
+// longest-feeling twenty seconds in the game. Eight gets the settlement moving
+// while you are still reading the yard. The step is very slightly gentler and
+// the cap a good deal lower, so the ladder still climbs and the top of it is no
+// longer worse than putting up a machine.
+export const HOUSE_WORK0 = 8;        // the first house, in worker-seconds
+export const HOUSE_WORK_STEP = 1.15; // and each one after it
+export const HOUSE_WORK_MAX = 120;   // never worse than the machines

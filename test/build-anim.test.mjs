@@ -131,6 +131,41 @@ group('a builder stands beside what it is building, not inside it', async () => 
   ];
 });
 
+// The bug: the step-along between bursts moved `w.x` by a whole `BUILD_SHIFT`
+// -- four cells -- in the single frame the burst ended. That is a body
+// teleporting, and this yard has one rule it has never broken: every body
+// walks. It was invisible in the picture (four cells at sixty frames a second
+// reads as a body that moved) and unmissable in a measurement, which is the
+// whole argument for measuring travel rather than watching it.
+group('a builder walks between its patches rather than appearing at them', async () => {
+  window.__crew(1, 1);
+  quickCrew();
+  window.__grant({ sparks: 999, shards: 999, spores: 999, cores: 9 });
+  window.__tip(90000);
+  window.__buy('unlockschool');
+  runUntil(() => (S.workers || []).some(w => w.type === 'builder' && w.goal === 'at'), 60);
+
+  // The largest single frame of travel any builder makes, over a long enough
+  // film to contain several whole bursts and the walks between them.
+  let worst = 0;
+  const last = new Map();
+  for (let i = 0; i < 600; i++) {
+    run(1 / 60);
+    for (const w of S.workers) {
+      if (w.type !== 'builder') continue;
+      const was = last.get(w);
+      if (was != null) worst = Math.max(worst, Math.abs(w.x - was));
+      last.set(w, w.x);
+    }
+  }
+  const cap = commutePace() + 1;      // its own pace, plus a pixel of slack
+  return [
+    ok(worst > 0, 'the builder does move between patches', `${worst.toFixed(2)}px`),
+    ok(worst <= cap, 'and never covers more in one frame than it can walk',
+       `worst frame ${worst.toFixed(2)}px, pace ${commutePace().toFixed(2)}px`)
+  ];
+});
+
 // The bug: #1 of "Wave 3.1" made the shed a SECOND way into the quarry's board
 // and left the hole answering as well, so pointing anywhere at the cut -- the
 // ground the crew work, a quarrier on the ladder -- threw a shop menu over the

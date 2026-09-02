@@ -2,7 +2,7 @@
 // behaviour and one about a real bug:
 //
 //   B1  one builder to a job, not three
-//   B2  a builder at a busy site hops rather than stands
+//   B2  a builder at a busy site works rather than stands (a hammer now)
 //   B3  a core banked off the lip is lobbed, not dropped
 //   B4  a janitor is not starved of its own mess by a crowd on the shared kind
 //
@@ -11,7 +11,8 @@
 
 import { group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
 import { yard } from './helpers.mjs';
-import { BUILD_GANG, BUILD_HOP_MS, BUILD_HOP_H, CORE_LOB_H, P, WORKER } from '../src/config.js';
+import { BUILD_GANG, BUILD_HAMMER_MS, BUILD_HAMMER_H, BUILD_HITS_MAX, BUILD_REST_MS,
+         CORE_LOB_H, P, WORKER } from '../src/config.js';
 import { bench } from '../src/state.js';
 
 group('one builder to a bench rung, not a gang of three', async () => {
@@ -29,7 +30,13 @@ group('one builder to a bench rung, not a gang of three', async () => {
   ];
 });
 
-group('a builder at the bench hops rather than stands', async () => {
+// Rewritten with the hammer -- see "The building site" in DESIGN.md. B2's ask
+// was that a builder at a busy site does something rather than standing there,
+// and a hop was the first answer to it; a hop on a fixed beat reads as bouncing,
+// so it swings now. What is still checked is B2's actual point: it climbs ON to
+// the bench (its feet end on the bench's top edge, not the ground), it plainly
+// moves, and it lunges into the work.
+group('a builder at the bench hammers rather than stands', async () => {
   window.__reset();
   window.__crew(0, 3);
   window.__grant({ dust: 90000 });
@@ -43,7 +50,9 @@ group('a builder at the bench hops rather than stands', async () => {
   // top edge, over a few whole hops.
   const grounded = bench.y - WORKER;         // feet planted on the bench's top
   let lo = Infinity, hi = -Infinity, sawLunge = false;
-  const secs = (BUILD_HOP_MS / 1000) * 3;
+  // A whole burst and the pause after it, so the film is guaranteed to contain
+  // several complete swings however the burst length rolls.
+  const secs = (BUILD_HAMMER_MS * (BUILD_HITS_MAX + 1) + BUILD_REST_MS * 2) / 1000;
   for (let f = 0; f < Math.round(secs * 60); f++) {
     run(1 / 60);
     lo = Math.min(lo, b.y);
@@ -58,17 +67,17 @@ group('a builder at the bench hops rather than stands', async () => {
     // is the whole of B2's ask.
     ok(Math.abs(hi - grounded) < 1, 'it lands on the bench, feet on its top edge',
        `${hi} vs ${grounded}`),
-    // A cell high (BUILD_HOP_H), not the dance's three -- and plainly moving:
-    // a body that never left the ground is a body standing still with extra
-    // words around it.
-    ok(hi - lo > P * (BUILD_HOP_H - 0.3) && hi - lo < P * (BUILD_HOP_H + 1.5),
-       'it hops about a cell high, not the dance\'s three',
+    // A hammer's dip (BUILD_HAMMER_H), which is deliberately under a cell and
+    // well under the dance's three -- and plainly moving: a body that never
+    // left the ground is a body standing still with extra words around it.
+    ok(hi - lo > P * BUILD_HAMMER_H * 0.6 && hi - lo < P * (BUILD_HAMMER_H + 1.5),
+       'it drives down about a hammer\'s dip, not a hop',
        `${(hi - lo).toFixed(1)}px of travel`),
-    ok(sawLunge, 'and there is a lunge at the bottom of the hop', `lunge ${b.lunge}`)
+    ok(sawLunge, 'and there is a lunge at the bottom of the swing', `lunge ${b.lunge}`)
   ];
 });
 
-group('the bench rung still finishes at the same rate, hop or no hop', async () => {
+group('the bench rung still finishes at the same rate, swing or no swing', async () => {
   // B2 says the animation costs nothing: `workFor`/`handsAt` never ask where a
   // body's feet are. Proven the direct way -- build the same rung twice, once
   // watched frame by frame (forcing the jig to run every tick) and once fast

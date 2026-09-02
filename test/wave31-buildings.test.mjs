@@ -17,6 +17,7 @@
 
 import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
+import { WORK_BASE } from '../src/config.js';
 import { nearQuarry, nearFarm, standRect } from '../src/board.js';
 
 const works = () => state().works || {};
@@ -80,9 +81,13 @@ group('a builder on the yard hammers, and it reads as work', async () => {
   window.__buy('house');
   const walked = runUntil(() => (state().works?.yard?.hands || 0) > 0, 60);
 
+  // Four seconds, not ten. The first house is eight worker-seconds now, so a
+  // ten-second film outlasts the thing being filmed and the builder is gone
+  // before the end of it -- which reads as "it wandered off" rather than as
+  // "it finished".
   const ys = [], xs = [], lunged = [];
   let gritSeen = 0;
-  for (let f = 0; f < 600; f++) {
+  for (let f = 0; f < 240; f++) {
     run(1 / 60);
     const w = yard.S.workers.find(o => o.type === 'builder');
     if (w) { ys.push(w.y); xs.push(w.x); lunged.push(w.lunge === 1); }
@@ -93,7 +98,7 @@ group('a builder on the yard hammers, and it reads as work', async () => {
 
   return [
     ok(walked, 'a spare hand arrives at the site'),
-    ok(ys.length > 500, 'and stays there for the whole of the film', `${ys.length} frames`),
+    ok(ys.length > 200, 'and stays there for the whole of the film', `${ys.length} frames`),
     ok(range >= 4, 'it drives down into the work and comes back up',
        `range ${range.toFixed(1)}`),
     ok(lunged.some(Boolean), 'and it lunges at the bottom of a swing',
@@ -242,14 +247,19 @@ group('the first houses are quick, and the ladder climbs from there', async () =
   return [
     ok(seconds.every(s => s != null), 'every house is a real work on the yard',
        JSON.stringify(seconds)),
-    ok(seconds[0] === 20, 'the first is twenty seconds, not ninety',
+    // Cut again from twenty. With one pair of hands these are wall-clock
+    // seconds for your first hire standing alone with nothing else built, and
+    // the opening is the one stretch of the game with nothing to cut away to.
+    ok(seconds[0] === 8, 'the first is eight seconds, not twenty and not ninety',
        `house 1: ${seconds[0]}s`),
+    ok(seconds[2] <= 12, 'and the first few are all quick',
+       `houses 1-3: ${seconds.slice(0, 3).join('/')}s`),
     ok(seconds[4] > seconds[0] && seconds[9] > seconds[4] && seconds[14] > seconds[9],
        'and each one after climbs past the last',
        `1:${seconds[0]} 5:${seconds[4]} 10:${seconds[9]} 15:${seconds[14]}`),
-    ok(Math.max(...seconds) <= 180, 'never worse than the machines',
-       JSON.stringify(seconds)),
-    ok(seconds[19] === 180, 'and the ladder has reached its top by the twentieth',
-       `house 20: ${seconds[19]}s`)
+    ok(Math.max(...seconds) <= WORK_BASE.machine + 30,
+       'never much worse than putting up a machine', JSON.stringify(seconds)),
+    ok(seconds[19] >= seconds[14], 'and it is still climbing by the twentieth',
+       `house 15: ${seconds[14]}s, house 20: ${seconds[19]}s`)
   ];
 });

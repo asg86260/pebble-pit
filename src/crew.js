@@ -508,7 +508,23 @@ setHands(site => {
   if (!at) return 0;
   // A builder is at *its* site and no other: three sites can be busy at once
   // and a body at the bench is not putting up the lab.
-  return S.workers.filter(w => at(w) && (w.type !== 'builder' || w.site === site)).length;
+  const there = S.workers.filter(w => at(w) && (w.type !== 'builder' || w.site === site)).length;
+  // One pair of hands on a piece of work, whoever owns the site.
+  //
+  // `BUILD_GANG` already said this for the yard and the bench -- one spare body
+  // is retasked to a build, not three. It did not say it for the four sites
+  // that have a gang of their own: a cut with five quarriers in it took its
+  // next bench out five times as fast, and the tower went up at the speed of
+  // however many wizards happened to be standing in it. So the same row cost a
+  // wildly different amount of time depending on which board it sat on, which
+  // is not a difficulty curve, it is an accident of staffing.
+  //
+  // Capped here rather than in each station because this is the one function
+  // that answers "how many hands are on this", and a cap written four times is
+  // four things to keep in step. The gang is not idle meanwhile -- the others
+  // go on quarrying, farming and scrubbing; what they no longer do is stack up
+  // on the one piece of work.
+  return Math.min(1, there);
 });
 
 // A build starting turns spare hands into builders and a build landing turns
@@ -1079,6 +1095,7 @@ function stopJig(w) {
   w.jigRate = 0;
   w.jigBeat = null;
   w.jigDown = false;
+  w.shiftTo = null;
 }
 
 // --- the builders' work jig ---------------------------------------------------
@@ -1116,9 +1133,24 @@ function workJig(w, at) {
   }
   w.jigOn = at;
 
-  // Between bursts: stood on its feet, not mid-swing. The pause is what makes
-  // a burst read as a burst rather than as a stutter in a steady beat.
-  if (at < (w.restUntil || 0)) { w.y = w.foot; w.lunge = 0; return; }
+  // Between bursts the body WALKS to its next patch. It does not appear there.
+  //
+  // This shifted `w.x` by a whole `BUILD_SHIFT` -- four cells -- in the single
+  // frame the burst ended, which is a body teleporting, and this yard has one
+  // rule it has never broken: every body walks. It was also invisible as a bug
+  // and measurable as one, which is why `tools/node/walk-pace.mjs` reads the
+  // fastest frame of travel rather than an average: a 24px hop in one frame
+  // stood out of that reading instantly and stood out of the picture not at all.
+  if (at < (w.restUntil || 0)) {
+    w.y = w.foot;
+    w.lunge = 0;
+    if (w.shiftTo != null) {
+      const d = w.shiftTo - w.x;
+      const step = Math.min(commutePace() * frames(), Math.abs(d));
+      if (Math.abs(d) < 0.5) w.shiftTo = null; else w.x += Math.sign(d) * step;
+    }
+    return;
+  }
 
   const move = MOVES.build;
   let beat = (at - w.moveAt) / beatMs(w, move);
@@ -1151,7 +1183,8 @@ function workJig(w, at) {
         w.jigDir = -w.jigDir;
         next = w.x + w.jigDir * BUILD_SHIFT;
       }
-      w.x = Math.max(w.jigAt - BUILD_SHIFT_SPAN, Math.min(w.jigAt, next));
+      // Aimed, not applied: the rest window above walks it there.
+      w.shiftTo = Math.max(w.jigAt - BUILD_SHIFT_SPAN, Math.min(w.jigAt, next));
       w.lunge = 0;
       startMove(w, ended + BUILD_REST_MS, 'build');
       return;
