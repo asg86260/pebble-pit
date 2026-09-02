@@ -13,7 +13,7 @@ import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { TOWER_UPGRADES } from './tower.js';
-import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, tookRows } from './shop.js';
+import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, tookRows } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -717,6 +717,14 @@ const headcount = title =>
 // The numbers on whichever board is open. Pulled out of `hud` so that opening a
 // board can fill it before it is measured, rather than a frame after.
 function fill(which) {
+  // The rows first, then the words in them. A board used to be rebuilt only by
+  // whoever had just changed it, and a work landing on its own -- which is how
+  // nearly every row past the bench takes effect now -- has no such whoever:
+  // the row that had just been built stayed on the board at its old price, and
+  // the rows it unlocked were not drawn until something else happened to call
+  // `buildShop`. Asking here costs a handful of `show()` calls on the one board
+  // you are looking at, and no row added after this has to remember anything.
+  buildBoard(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
   // the lab board being open is what reads its news, whether it was already
   // open when the work finished or you walked over because of the mark

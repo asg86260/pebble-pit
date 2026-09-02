@@ -449,20 +449,55 @@ export function buildCrewList() {
   build(crewListEl, crewList(), crewListSections(), 'nobody lives here yet');
 }
 
-export function buildShop() {
-  build(shopEl, UPGRADES, SECTIONS, 'nothing to sell');
+// Every board there is, by the name the panel knows it by. One table rather
+// than eight calls in a row, because it is read two ways now: `buildShop` walks
+// the lot, and the frame loop asks for whichever board is open.
+//
+// Each row is asked for rather than held. farm.js and quarry.js import this file
+// back, so their row lists are still being built when this line runs -- naming
+// them here outright is a reference to a binding that does not exist yet, and
+// the whole game fails to load.
+const BOARDS = {
+  bench:  () => [shopEl, UPGRADES, SECTIONS, 'nothing to sell'],
   // The table is empty between hands, and says so rather than standing blank.
-  build(casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table');
-  build(labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into');
-  build(scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit');
+  casino: () => [casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table'],
+  lab:    () => [labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into'],
+  scrub:  () => [scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit'],
   // The quarry and the plots run out: there is only so far down and only so much
   // ground. A board with nothing left on it says so rather than standing blank.
-  build(quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the quarry is as deep as it goes');
-  build(farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken');
-  build(towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet');
+  quarry: () => [quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
+  farm:   () => [farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken'],
+  tower:  () => [towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
-  build(schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach');
+  school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']
+};
+
+// One board, rebuilt if the set of rows on it has moved. The frame loop calls
+// this for whichever board is open, right before it writes the words in.
+//
+// It is here because a board went stale and nothing noticed. Nearly every row
+// past the bench is a piece of *work* now: the press starts a build, and the row
+// takes effect seconds later when somebody has finished it -- and the only
+// rebuild was on the press. So the farm's row sat on the bench with the farm
+// already standing behind it, priced and pressable, while the quarry's row that
+// the farm had just unlocked was not on the board at all. Every path that
+// changes a board had to remember to say so, and the one path that cannot
+// remember -- a work landing by itself, frames later, with nobody's finger on
+// anything -- is the one that had just been given to thirteen rows at once.
+//
+// So the open board asks, every frame, instead of being told. `build` walks the
+// row list and returns without touching the DOM unless the *set* has changed,
+// which is a dozen `show()` calls and no layout at all. The crew board has been
+// rebuilt this way since it was written, and for the same reason: its list
+// changes length behind your back.
+export function buildBoard(which) {
+  const board = BOARDS[which];
+  if (board) build(...board());
+}
+
+export function buildShop() {
+  for (const which of Object.keys(BOARDS)) buildBoard(which);
 }
 
 

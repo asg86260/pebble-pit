@@ -586,24 +586,44 @@ export function rebalance() {
   //
   // The four sites with a gang of their own keep the lab's rule instead -- an
   // empty cut builds nothing -- because their work *is* the gang's.
-  S.lent = S.lent || [];
+  //
+  // What is owed rides on the body it was borrowed from. It used to be a list of
+  // job names in `S.lent`, pushed on one side of this function and paid back on
+  // the other -- a ledger kept beside the thing it is about, which is a ledger
+  // that can disagree with it, and did twice over. The array was saved and the
+  // flag on the body was not, so a reload came back owing a debt no body in the
+  // yard was carrying. And nothing tied a repayment to a body still being there
+  // to repay: move somebody on to the same job while the loan is out and the
+  // count came back on *top* of the move, so a crew of three ended the build
+  // with four miners on the rock and nothing said.
   for (let short = sites.length - Math.max(0, spareHands()); short > 0; short--) {
     const w = nearestLendable(sites);
     if (!w) break;
     const job = JOB_OF[w.type];
-    w.lend = true;                       // stood down first, see syncWorkers
+    w.lentFrom = job;                    // stood down first, see syncWorkers
     S[job]--;
-    S.lent.push(job);
   }
-  // ...and given back. Whatever job was borrowed from gets its count back the
-  // frame the last builders' site clears, and `syncWorkers` walks a body home
-  // to it -- if there is still room there: a bench dug out from under a
+  // ...and given back. Whatever job a body was borrowed from gets its count back
+  // the frame the last builders' site clears, and `syncWorkers` walks a body
+  // home to it -- if there is still room there: a bench dug out from under a
   // borrowed quarrier is a body back on carrying, which is what it would have
   // been anyway.
-  if (!sites.length && S.lent.length) {
-    for (const job of S.lent) if (roomAt(job) > 0) S[job]++;
-    S.lent = [];
+  //
+  // And only if there is a body spare to be the one going home. A count handed
+  // back that nobody in the yard can stand behind is a roster that reads higher
+  // than the crew, for ever, with the extra miner nowhere to be seen.
+  if (!sites.length) {
+    for (const w of S.workers) {
+      const job = w.lentFrom;
+      if (!job) continue;
+      delete w.lentFrom;
+      if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
+    }
   }
+  // What is out on loan, read off the bodies rather than kept in step with them.
+  // Saves, the roster and the checks all read this; none of them can now read
+  // something the yard does not have.
+  S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   S.builders = sites.length ? Math.min(gang, Math.max(0, spareHands())) : 0;
   // Carrying is the job nobody is assigned to: it is what a body does when it is
   // on nothing, so the haulers are whatever is left over -- less whoever is over
@@ -620,7 +640,7 @@ function nearestLendable(sites) {
   let best = null, dist = Infinity;
   for (const w of S.workers) {
     const job = JOB_OF[w.type];
-    if (!job || !JOBS.includes(job) || w.lend) continue;
+    if (!job || !JOBS.includes(job) || w.lentFrom) continue;
     if (S[job] < 1) continue;
     const d = xs.length ? Math.min(...xs.map(x => Math.abs(w.x - x))) : 0;
     if (d < dist) { dist = d; best = w; }
@@ -636,6 +656,17 @@ export function hire() {
   buildShop();
 }
 
+// A loan taken off a job the player has just re-set is not a loan any more.
+//
+// The roster shows a job's count with whatever is out on loan already taken off
+// it, so a press on those buttons is a decision about the number in front of
+// you. Handing the borrowed body back afterwards, on top of the press, is the
+// yard quietly undoing what you just did -- which is how "+1 miner" ended a
+// build with two more miners than it started with. Forgiven rather than repaid:
+// `rebalance`, on the next line down, borrows again if the build still needs
+// somebody, and it borrows against the count you just set.
+const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) delete w.lentFrom; };
+
 // move one body on to a job, or off it and back to carrying dust
 export function assign(job, d) {
   if (d > 0 && idle() < 1) return;
@@ -643,6 +674,7 @@ export function assign(job, d) {
   if (d < 0 && S[job] < 1) return;
   // and nothing stops one leaving: the hat it was wearing stays at the station.
   S[job] += d;
+  forgive(job);
   rebalance();
   syncWorkers();
   S.dirty = true;

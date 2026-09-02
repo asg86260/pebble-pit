@@ -229,3 +229,69 @@ group('a claim on a mess keeps its elbows out', async () => {
        `closest pair ${worst} columns, elbow ${MUCK_ELBOW}`)
   ];
 });
+
+// The elbow that keeps two shovels apart has to be able to move a body.
+//
+// A body settling on to a heap plants its feet on a whole cell -- otherwise what
+// you see is a shape creeping a fraction of a pixel a frame with its lunge
+// pinned at full, which reads as a progress bar in a hat. That snap was done to
+// the body's own x, and the elbow that parts a pair standing in each other
+// nudges by about a third of a pixel: the round put it straight back, every
+// frame, for as long as the two of them stood there. The nudge could never add
+// up to anything, so two bodies on the last patch of a clear-up shovelled
+// through one another until the heap ran out.
+//
+// The same fractional-rounding trap balloon.js writes up over its craft: a thing
+// that moves less than a pixel a frame has to remember the part of a pixel it
+// has moved.
+group('a shoveller with somebody in its elbow moves off the spot', async () => {
+  window.__reset();
+  window.__crew(0, 2);
+  window.__loo(true);
+  window.__air({ janitors: 3, haze: 0 });
+  window.__clearFloor();
+  run(3);
+
+  // A yard under muck, clear of the pit's mouth -- getting down there is a route
+  // of its own, and this is about standing on the ground beside a heap.
+  const lip = Math.round(state().pitX / P);
+  const heap = () => window.__muckSet(c => (!window.__overPit(c) && c > lip + 5 ? 8 : 0));
+  heap();
+
+  const shovelling = () => yard.S.workers.find(w =>
+    w.type === 'janitor' && w.goal === 'muck' && w.muckAt != null &&
+    !w.route && !w.walking && w.x % P === 0);
+  const came = runUntil(() => { heap(); return !!shovelling(); }, 60);
+  const jan = shovelling();
+  const other = came ? yard.S.workers.find(w => w !== jan) : null;
+  const from = jan ? jan.x : 0;
+
+  // ...and somebody else stood in exactly its place, on the same errand: the end
+  // of a clear-up, where the last patch is claimed and a second body comes for
+  // it anyway.
+  for (let i = 0; i < 40 && other; i++) {
+    heap();
+    other.goal = 'muck';
+    other.x = jan.x;
+    other.y = jan.y;
+    run(0.1);
+  }
+  const moved = jan ? Math.abs(jan.x - from) : 0;
+
+  window.__air({ janitors: 0 });
+  window.__crew(0, 0);
+  return [
+    ok(came && !!other, 'a janitor is stood at a heap with somebody at its elbow'),
+    // Before this was fixed it managed one frame's worth -- a third of a pixel --
+    // and then sat there for ever. A body is eighteen wide, and clear of the
+    // other body is the whole point of the elbow.
+    ok(moved >= WORKER, 'four seconds of elbowing gets it clear of the other one',
+       `${moved.toFixed(2)}px off the spot it started on`),
+    // An elbow and not a walk. The nudge is about a third of a pixel a frame, so
+    // four seconds of it is a stride or two -- a body that had simply set off
+    // somewhere would be several hundred pixels away and would pass the check
+    // above for the wrong reason.
+    ok(moved < 120, 'and it stepped aside rather than walking off',
+       `${moved.toFixed(2)}px`)
+  ];
+});
