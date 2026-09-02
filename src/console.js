@@ -14,7 +14,8 @@ import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
 import { seatBoard, boardFit, showPanel } from './board.js';
-import { barSpot, siteFoot } from './render.js';
+import { barSpot } from './render.js';
+import { siteBox } from './works.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -31,7 +32,7 @@ Object.assign(window, {
 // Where a site's bar hangs and what it hangs over, so a check can ask whether
 // the one is clear of the other rather than reading it off a screenshot.
 window.__barAt = barSpot;
-window.__siteBox = siteFoot;
+window.__siteBox = siteBox;
 
 window.__state = () => ({
   ...snapshot(),

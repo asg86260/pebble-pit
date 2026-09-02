@@ -575,6 +575,28 @@ export function seatSites() {
 
   seat(bench, 'bench', P * 7);
 
+  // The two that are not `seat`-shaped, seated HERE all the same.
+  //
+  // These lived in `resize`, which runs when the window changes size and at no
+  // other time. So the ground could be laid again -- a place bought, the walk
+  // re-ordered -- and every building would move to its new slot except these
+  // two, which stayed where the last resize had left them. A farm bought while
+  // the yard was standing ended up out on its own in the middle of nowhere,
+  // with its reserved ground somewhere else entirely.
+  //
+  // Seating a site is one job and it is this function's.
+  quarry.w = S.placed.quarry.w;
+  quarry.x = S.placed.quarry.x;
+  quarry.y = S.groundY;                 // a hole hangs below the line, not on it
+
+  farm.h = FARM_H;
+  // The farm's *reservation* is its widest future self -- see SITES -- while its
+  // width today is however many plots have been broken. So it stands where the
+  // table put it and grows rightwards into ground already set aside for it,
+  // which is why breaking new ground never shoves the lab along.
+  farm.x = S.placed.farm.x;
+  farm.y = S.groundY;
+
   // the one thing that is not on the ground
   sky.x = S.cx + TO_SKY;
   sky.y = S.groundY - SKY_UP;
@@ -582,6 +604,10 @@ export function seatSites() {
 
   // The school stands on the bare ground between the quarry's spoil and the
   // crew's front doors: where you go to learn a trade is on the way to work.
+  // how deep the quarry has been taken and how many plots have been broken:
+  // facts about the two boxes above, and read straight after they are placed.
+  resite();
+
   seat(school, 'school', SCHOOL_H);
 
   seat(lab, 'lab', LAB_H);
@@ -670,25 +696,6 @@ export function resize(after) {
   const potTo = S.scrubOpen ? Math.min(lab.x, scrub.x) : lab.x;
   table.cols = Math.max(1, Math.floor((potTo - P * 4) / P));
   table.y = S.groundY - table.rows * P;
-
-  // the quarry is a hole in the ground, so it hangs below the line rather than
-  // standing on it
-  quarry.w = S.placed.quarry.w;
-  quarry.x = S.placed.quarry.x;
-  quarry.y = S.groundY;
-
-  // the plots stand on the ground, out past the quarry
-  farm.h = FARM_H;
-  // The farm's *reservation* is its widest future self -- see SITES -- while its
-  // width today is however many plots have been broken. So it stands where the
-  // table put it and grows rightwards into ground already set aside for it,
-  // which is why breaking new ground never shoves the lab along.
-  farm.x = S.placed.farm.x;
-  farm.y = S.groundY;
-
-  // and the two things about them that are not fixed: how deep the quarry has been
-  // taken and how many plots have been broken
-  resite();
 
   // The world is the size of the finished works, not of today's. It is laid out
   // around the hole the pit can ever be, so digging widens the hole and not the

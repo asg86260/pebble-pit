@@ -15,7 +15,7 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
-import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX, handsAt,
+import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX, siteBox, handsAt,
          workAt, OPENS_PLACE } from './works.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
@@ -395,49 +395,24 @@ function siteFor(w) {
   return pick;
 }
 
-// Where the work is. A row that opens a place knows where its place will stand
-// and says so, and the bench is the bench; the two machines on the bench do
-// not, because a ram is on the rock and a belt is the length of the yard, and a
-// body already standing in the yard is standing at both. Those get no walk and
-// are at work where they are.
-// A builder stands BESIDE what it is putting up, not in the middle of it.
+// Where the work is, and how much of it there is to walk along.
 //
-// `siteX` answers with the middle of the thing -- which is the right answer to
-// the question it is asked ("where is this work") and the wrong place to put a
-// body. Everything in this yard is drawn as a black mass on a white page, and
-// a black body standing inside a black building is not a body standing in
-// front of a building: it is nothing at all. The builder was there the whole
-// time, hammering, invisible, which is most of why the animation read as
-// missing however hard it swung.
-//
-// So it stands off the near edge of the footprint, on open ground, where its
-// own silhouette and the grit coming off it have the page to read against. The
-// footprint is `S.placed`'s, the same rect the barriers are drawn round (see
-// `siteFoot` in render.js), so the body stands at the tape rather than at a
-// number picked to look right for one building.
+// One box for every site -- `siteBox` in works.js, the same one the tape is
+// drawn round and the bar hangs over -- so the body, the fence and the sign
+// cannot end up on different ground. They did: the settlement's zone is the
+// rooms it will have once the one going up lands, while the body was placed
+// off a slot looked up separately, which put the hammering away to the left of
+// the fence it was inside.
 function buildStationX(w) {
   const site = siteFor(w);
   if (!site) return null;
-  const x = siteX(site);
-  if (x == null) return null;
-  const foot = buildFoot(site);
-  // Off the left edge, because that is the side the yard's own traffic comes
-  // from; a body on the right of a building stands between it and the next one
-  // along. Half outside the tape, so it reads as working ON the thing rather
-  // than as somebody who happens to be stood nearby.
-  if (foot) return foot.x - WORKER - P;
-  return x - WORKER / 2;
-}
-
-// The ground a site's work covers, where that is known. Only the yard's own
-// slot needs looking up: every other site IS a station, and a body sent to one
-// of those is already standing at the thing rather than in it.
-function buildFoot(site) {
-  if (site !== 'yard') return null;
-  const w = workAt(site);
-  if (!w) return null;
-  const place = OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null);
-  return (place && S.placed && S.placed[place]) || null;
+  const box = siteBox(site);
+  // Nowhere in particular to stand -- the two machines on the bench, a ram on
+  // the rock, a belt the length of the yard -- so it works where it is.
+  if (!box) return siteX(site);
+  // The near end of the zone, a body's width in, which is where a walk to it
+  // ends. The patch below carries it across the rest.
+  return box.x;
 }
 
 // A builder walks to the site and stands there. There is nothing to watch after
@@ -1204,15 +1179,17 @@ function stopJig(w) {
 // anybody stands on to be found by looking at it. Asking the footing is the
 // same question every time.
 function jigSpan(w) {
-  // On the slab, and no further: the near end is the timber's own edge and the
-  // far end is the last place a body's whole width still has something under
-  // it. `jigAt` does not come into it -- a mark taken up near one end would
-  // otherwise pin the patch to a corner of a bench there is room to work along.
-  if (w.site === 'bench') return { from: bench.x, to: bench.x + bench.w - WORKER };
-  // Everywhere else: back along the yard from the mark it arrived on, one side
-  // only, never past the mark. A patch centred on the mark would spend half of
-  // itself inside the footprint, which is the black the stand-off exists to
-  // keep the body out of.
+  // The whole of the ground the work is on, less the body's own width so it
+  // never hangs off the far end. One rule for every site: a bench top, a
+  // building's footprint, the strip of yard a machine is being fitted along.
+  //
+  // It used to be the bench's slab as a special case and, everywhere else, ten
+  // cells back from wherever the body happened to arrive -- which is a patch
+  // about the walk rather than about the thing being built, and on a wide site
+  // it left the builder working one corner of it.
+  const box = siteBox(w.site);
+  if (box && box.w > WORKER) return { from: box.x, to: box.x + box.w - WORKER };
+  // No zone to speak of: back along the yard from the mark it arrived on.
   return { from: w.jigAt - BUILD_SHIFT_SPAN, to: w.jigAt };
 }
 

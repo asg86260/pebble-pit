@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { SITES, workAt, worksAt, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
+import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
@@ -2229,48 +2229,10 @@ const roomsIncludingRising = () => {
   return houseCubes(today + (S.crew > 0 ? 1 : 2));
 };
 
-// The settlement's own footprint, widened by the one room about to be added --
-// see #7, "Wave 3.1" amendment: `S.placed.house` is the ground `placeSites`
-// RESERVED for it at a whole street's width, and every other yard row is
-// right to fence its reserved ground because every other one arrives at its
-// full grown size the day it goes up. The house never does; it grows one room
-// at a time, so fencing the reserved plot fenced a street for two rooms. The
-// tape goes round what is being built, not round the ground it was promised.
-function houseFoot() {
-  const rooms = roomsIncludingRising();
-  if (!rooms.length) return null;
-  const left = Math.min(...rooms.map(r => r.x));
-  const right = Math.max(...rooms.map(r => r.x)) + HOUSE_CUBE;
-  // The top of the block as well as its ends, because the settlement is the one
-  // thing here that grows upward as well as along and anything hung over it has
-  // to know how tall it has got.
-  const top = Math.min(...rooms.map(r => r.y));
-  return { x: left, w: right - left, y: top, h: S.groundY - top };
-}
-
-// The stations that are a thing standing on the ground, as the things
-// themselves. Each already knows where it is and how big it is, and everything
-// hung on a site -- the tape round it, the bar over it -- reads that rather
-// than a number written out again beside it.
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab };
-
-export function siteFoot(site) {
-  const box = SITE_BOX[site];
-  if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
-  if (site === 'yard') {
-    const w = workAt('yard');
-    // The house is the one row here that does not arrive at its full grown
-    // size -- see `houseFoot` above.
-    if (w?.key === 'house') { const hf = houseFoot(); if (hf) return hf; }
-    const placed = w && S.placed && S.placed[YARD_ROW_SITE[w.key]];
-    if (placed) return { x: placed.x, w: placed.w, y: placed.y, h: placed.h };
-    // A yard row this table does not know about yet: a guess centred on where
-    // the row said it would stand, rather than nothing at all.
-    const x = w?.at ?? S.cx;
-    return { x: x - P * 6, w: P * 12 };
-  }
-  return null;
-}
+// The ground a site's work is on comes from works.js now -- one answer for the
+// tape round it, the bar over it and the patch the builder works across. See
+// `siteBox` there.
+const siteFoot = siteBox;
 
 // A striped post: alternating cell-high bands, the black ones doing all the
 // work -- a white band against the page is simply the page.

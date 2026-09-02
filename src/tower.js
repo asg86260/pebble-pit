@@ -141,13 +141,10 @@ export const TOWER_UPGRADES = [
     // counts down what is left of it.
     // At the tower, where hats come from. The first one is the awkward case --
     // there is nobody up there until a hat exists -- and it is not answered
-    // here: `busyBuilderSites` sends the yard's spare hands to any station whose
-    // gang is empty, so the first hat is made by whoever is free and every one
-    // after it by the wizards already wearing theirs.
+    // here: a station standing empty is lent a hand by the yard (see
+    // `busyBuilderSites`), so the first hat is made by whoever is free and every
+    // one after it by the wizards already wearing theirs.
     kind: 'building', site: 'tower',
-    // ...and this is the row that makes the tower's own gang, which is what
-    // lets the yard lend a hand for the first one. See `busyBuilderSites`.
-    hires: 'wizards',
     // Its own figure rather than the table's, because a hat has always taken a
     // minute and a half and this is not the moment to change what it costs.
     work: () => WIZ_BREW_MS / 1000,

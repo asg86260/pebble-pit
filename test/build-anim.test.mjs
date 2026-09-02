@@ -98,7 +98,7 @@ group('a chip is thrown clear of the ground it is thrown at', async () => {
 // here is a black mass on a white page, so a black body inside a black building
 // is not a body in front of a building -- it is nothing at all. The builder was
 // there the whole time, hammering, invisible.
-group('a builder stands beside what it is building, not inside it', async () => {
+group('a builder works across the whole zone it is fencing', async () => {
   // Bought and deliberately left going UP -- `buyBuilt` waits for the thing to
   // land, and a finished building has no builder standing at it to look at.
   window.__crew(1, 1);
@@ -110,26 +110,36 @@ group('a builder stands beside what it is building, not inside it', async () => 
   if (!placed) return [ok(false, 'the school has ground to stand on', 'no placement')];
 
   // Let a body get there and settle into its bursts, then watch the whole patch
-  // it works -- one frame would not catch a shift that walks it into the wall.
+  // it works: a burst is a few blows in one place and a step along, so a single
+  // frame says nothing about the ground it covers.
   runUntil(() => (S.workers || []).some(w => w.type === 'builder' && w.goal === 'at'), 60);
   const xs = [];
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 60 * 12; i++) {
     run(1 / 60);
     for (const w of S.workers) if (w.type === 'builder') xs.push(w.x);
   }
   if (!xs.length) return [ok(false, 'somebody turned up to build it', 'no builder')];
-  const rightmost = Math.max(...xs);
-  const leftmost = Math.min(...xs);
+  const rightmost = Math.max(...xs), leftmost = Math.min(...xs);
+  const covered = rightmost - leftmost;
+
   return [
-    ok(rightmost + WORKER <= placed.x + 1, 'it never works inside the footprint',
-       `body reached ${Math.round(rightmost + WORKER)}, footprint starts ${Math.round(placed.x)}`),
-    // ...and it does not wander off down the yard either, which is the other
-    // way a shift-along burst goes wrong.
-    ok(placed.x - leftmost <= BUILD_SHIFT_SPAN + BUILD_SHIFT + WORKER * 2,
-       'and it stays on the site rather than wandering off',
-       `${Math.round(placed.x - leftmost)}px back from the footprint`)
+    // The zone is the site, and the work happens across it. This used to be the
+    // other way round -- the body stood off the near edge and never crossed the
+    // line -- on the argument that a black body inside a black building cannot
+    // be seen. What is going up is drawn rising out of the ground a course at a
+    // time, so for most of a build there is nothing there to be lost against,
+    // and a hammer that works one corner of a fenced-off site reads as a body
+    // standing near some tape rather than as the site being built.
+    ok(leftmost >= placed.x - WORKER, 'it does not work off the near end of the zone',
+       `body reached ${Math.round(leftmost)}, zone starts ${Math.round(placed.x)}`),
+    ok(rightmost + WORKER <= placed.x + placed.w + WORKER,
+       'nor off the far end',
+       `body reached ${Math.round(rightmost + WORKER)}, zone ends ${Math.round(placed.x + placed.w)}`),
+    ok(covered > placed.w / 3, 'and it works across the zone rather than one corner of it',
+       `${Math.round(covered)}px of ${Math.round(placed.w)}`)
   ];
 });
+
 
 // The bug: the step-along between bursts moved `w.x` by a whole `BUILD_SHIFT`
 // -- four cells -- in the single frame the burst ended. That is a body

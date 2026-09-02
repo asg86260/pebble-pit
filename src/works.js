@@ -19,8 +19,8 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench } from './state.js';
-import { WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
+import { S, bench, quarry, farm, lab, scrub, tower } from './state.js';
+import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 
 // Where a row's work stands, and therefore whose hands do it.
 //
@@ -91,29 +91,23 @@ export const OPENS_PLACE = {
 export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
 
 // Where the yard's spare hands are needed. The two sites that have no gang of
-// their own -- the yard and the bench -- and a station in the one bind it
-// cannot get itself out of.
+// their own -- the yard and the bench -- and any station standing empty.
 //
-// That bind: the work on it is what MAKES its gang, and its gang is empty. The
-// tower's first hat is a wizard, and with only wizards allowed to work at the
-// tower the row could be pressed for ever and never move -- a station waiting
-// on the very body it is trying to make. A row that trains somebody says so
-// (`hires`), so this is a rule about a kind of row rather than a name checked
-// against one station.
+// "Empty" is the whole of the second clause, and it is not about how busy
+// anybody is: it is whether that job has ANYBODY on it. A cut with quarriers in
+// it digs its own bench, however long they take, and the yard does not quietly
+// cover for a gang that is merely busy elsewhere. A cut with nobody in it is a
+// different thing -- there is no gang to do it, ever -- and the purchase would
+// otherwise take your spores and sit there for the rest of the run with nothing
+// to show and nothing said.
 //
-// Deliberately no wider than that. `works.test.mjs` asks, in as many words,
-// that a station site is never lent a body: a cut with no quarriers in it digs
-// nothing, and the yard does not quietly do a station's work for it. The one
-// exception is the work that would otherwise be impossible.
-const bootstrapping = site => {
-  const w = workAt(site);
-  const u = w && rowFor(w.key);
-  return !!u?.hires && !(S[u.hires] > 0);
-};
+// The tower's first hat is the same case rather than a special one: a wizard is
+// what the tower's own gang is made of, so before there is one there is nobody
+// up there, and whoever is spare goes and does it.
+const noGang = site => !(S[SITE_JOB[site]] > 0);
 
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site)
-                    && (SITE_JOB[site] === 'builders' || bootstrapping(site)));
+  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === 'builders' || noGang(site)));
 
 // And where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -196,6 +190,63 @@ export const workFor = u =>
 // bought and had -- the bench's own ladders, the casino's decisions, a dial.
 export const takesTime = u => !!u.kind && workFor(u) > 0;
 
+// --- the ground a site's work is on ---------------------------------------------
+// One answer, and everything that has to know reads it: the barriers and the
+// tape drawn round a build, the bar hung over it, and the patch the builder
+// swings its hammer across.
+//
+// It used to be three answers. `siteFoot` in render.js fenced the ground and
+// widened the settlement by the room about to go up; `buildFoot` in crew.js
+// looked the same slot up in `S.placed` and got the whole reserved street; the
+// bar had a table of its own. So the tape, the body and the bar could each be
+// somewhere different, and on the settlement they were: the builder hammered
+// off to the left of the zone it was fencing.
+//
+// A station IS its own box. The yard's slot is whatever is being put up there,
+// which the row itself names.
+const YARD_ROW_SITE = {
+  house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
+  unlockquarry: 'quarry', unlockfarm: 'farm',
+  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub'
+};
+
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab };
+
+// Every room the settlement will have once the one going up lands -- one more
+// than today's count, the same way `nextHouseAt` in house.js asks.
+const risingRooms = () => {
+  const today = S.crew > 0 ? S.crew + 1 : 0;
+  return houseRooms(today + (S.crew > 0 ? 1 : 2));
+};
+let houseRooms = () => [];
+export const setRooms = fn => { houseRooms = fn; };
+
+export function siteBox(site) {
+  const box = SITE_BOX[site];
+  if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
+  if (site !== 'yard') return null;
+  const w = workAt(site);
+  if (!w) return null;
+  // The settlement is the one thing that does not arrive at its full size: it
+  // grows a room at a time, so the ground it covers is the rooms it will have
+  // once this one lands rather than the street reserved for all of them.
+  if (w.key === 'house') {
+    const rooms = risingRooms();
+    if (rooms.length) {
+      const left = Math.min(...rooms.map(r => r.x));
+      const right = Math.max(...rooms.map(r => r.x)) + HOUSE_CUBE;
+      const top = Math.min(...rooms.map(r => r.y));
+      return { x: left, w: right - left, y: top, h: S.groundY - top };
+    }
+  }
+  const placed = S.placed && S.placed[YARD_ROW_SITE[w.key]];
+  if (placed) return { x: placed.x, w: placed.w, y: placed.y, h: placed.h };
+  // A yard row this table does not know about yet: a guess centred on where the
+  // row said it would stand, rather than nothing at all.
+  const x = w.at ?? S.cx;
+  return { x: x - P * 6, w: P * 12 };
+}
+
 // --- what is on the go --------------------------------------------------------
 // One work per site, and it is not a queue. The cut builds one thing at a time,
 // and so do the plots, the school, the scrubbing house and the tower: a queue
@@ -242,9 +293,32 @@ export const stalled = site => busyAt(site) && handsAt(site) < 1;
 // Start one. Nothing happens if the site already has something on it -- the
 // board greys the row for that reason, but the board is not the only way in
 // here, and one guard at the door is cheaper than thirteen.
+// A place claims its ground in the walk. Idempotent: a place already in the
+// order is left where it is, so the order is the order things were BOUGHT and
+// never shuffles under a yard that is standing.
+function reserve(key) {
+  const opened = OPENS_PLACE[key] || (key === 'house' ? 'house' : null);
+  if (!opened || S.buildOrder.includes(opened)) return;
+  S.buildOrder = [...S.buildOrder, opened];
+  groundHook();
+}
+
 export function start(site, u, at) {
   if (!site || fullAt(site)) return false;
   (S.works[site] ||= []).push({ key: u.key, done: 0, of: workFor(u), at: at ?? null });
+  // The ground is spoken for the moment it is paid for, not when the thing
+  // lands on it.
+  //
+  // The walk is laid out in the order places were bought (`siteOrder` in
+  // world.js), and a place that had been paid for but not finished was not in
+  // that order yet -- so it was laid down at the *end* of the walk, which is
+  // where the barriers went up, where the builder stood, and where the bar
+  // hung. The moment it finished it took its real slot and the whole building
+  // jumped across the yard. The farm was the one you could not miss.
+  //
+  // Reserved here, the zone and the finished building are the same ground by
+  // construction, and there is nothing left to teleport.
+  reserve(u.key);
   SITE_SAYS[site]?.started?.();
   staffHook();
   S.dirty = true;
@@ -312,11 +386,10 @@ export function stepWorks(dt) {
       // table always put it. Laid again HERE, on the frame the order changes:
       // left for the next walk to notice it was left for the next reload, since
       // `layPiles` answers from a cached key and nothing in that key had moved.
-      const opened = OPENS_PLACE[w.key];
-      if (opened && !S.buildOrder.includes(opened)) {
-        S.buildOrder = [...S.buildOrder, opened];
-        groundHook();
-      }
+      // Ordinarily already done, at the moment it was paid for -- see `reserve`
+      // in `start`. Kept for the work that was already on the go when a save
+      // written before that was loaded, which has ground reserved for nobody.
+      reserve(w.key);
       // What just landed, for the yard to say so. The lab has always put a mark
       // up when a piece of research came out from behind its door; every other
       // site has a bar you were watching. Kept here so the announcing is the

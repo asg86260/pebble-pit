@@ -5,10 +5,15 @@
 // place a multiplier lives.
 //
 // Nothing here is bought outright. Paying starts a piece of research; what
-// finishes it is somebody standing in the lab doing the work, and an empty lab
-// makes no progress at all however much you have paid. So the lab competes for
-// the crew with the rock, the quarry and the plots, which is the one real
-// question this game asks: who is doing what. Everything it sells is a rate: a pixel of rock is
+// finishes it is somebody standing in the lab doing the work. So the lab
+// competes for the crew with the rock, the quarry and the plots, which is the
+// one real question this game asks: who is doing what.
+//
+// A lab standing EMPTY is the one exception, and it is not about the lab: a
+// station with nobody at all on its job is lent a hand by the yard, because a
+// purchase that can never start is money taken for nothing said (see
+// `busyBuilderSites` in works.js). Put one labber in and the lab is the
+// labber's again -- the yard does not cover for a gang that is merely busy. Everything it sells is a rate: a pixel of rock is
 // still worth exactly one dust wherever it came from, which is a rule the game
 // keeps, so growth has to come from doing the same work sooner.
 

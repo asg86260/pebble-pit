@@ -31,7 +31,8 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
 import { stepGrit } from './grit.js';
-import { stepWorks, setGround, setDone, setFoot } from './works.js';
+import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
+import { cubes as houseCubes } from './house.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -44,6 +45,8 @@ setGround(layPiles);
 setDone(labFinished);
 // and where a station stands, for a body walking over to help at one
 setFoot(stationFoot);
+// and the settlement's rooms, so a build there is fenced round what will stand
+setRooms(houseCubes);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';

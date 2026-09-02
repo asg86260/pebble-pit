@@ -1540,6 +1540,13 @@ export const DANCE_BEAT = 0.9;
 // commute. It used to be six hundredths of a cell a frame with no frame time in
 // it at all, which is a thirtieth of this and got slower the better your screen.
 export const JIG_PACE = 1.5;
+// The pace at which a bouncing body stops reading as pleased with itself and
+// starts reading as faulty. Measured rather than felt: at two and a half
+// crossings of its own height a second the yard looked like it was buzzing,
+// which is what the first two versions of this dance were. Named here so the
+// check that guards it can move with the tempo instead of pinning a number that
+// was right for one value of `DANCE_BEAT`.
+export const DANCE_BUZZ = 2.5;
 // How far up a new rock starts. It used to be this number flat, and this number
 // is most of the way up a window rather than off the top of one -- so the rock
 // appeared out of nothing in the middle of the sky and fell the second half of

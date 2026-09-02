@@ -59,7 +59,12 @@ group('paying starts the work and does not finish it', async () => {
 group('an empty site builds nothing, and a body starts it moving', async () => {
   window.__reset();
   openSites();
-  window.__crew(0, 3);                       // three spare, nobody in the cut
+  // Nobody at all. The yard lends a hand to a station standing empty -- see
+  // "a station standing empty is lent a body" below -- so an empty CUT is no
+  // longer an empty site; a yard with no bodies in it is. What this group is
+  // about is unchanged and is the whole mechanic: worker-seconds are somebody's
+  // seconds, and a site nobody is standing at does not build itself.
+  window.__crew(0, 0);
   window.__grant({ shards: 900, spores: 900, dust: 90000 });
   run(2);
 
@@ -69,18 +74,15 @@ group('an empty site builds nothing, and a body starts it moving', async () => {
   const cold = on('quarrybench');
   const idle = state().benches;
 
-  // and now somebody goes down there
-  window.__assign('quarriers', 2);
+  // and now there is somebody to do it
+  window.__crew(0, 2);
   const landed = runUntil(() => state().benches > benches, 180);
 
   return [
-    ok(!!cold && cold.done === 0, 'forty seconds of empty cut is no work done',
+    ok(!!cold && cold.done === 0, 'forty seconds of an empty yard is no work done',
        cold ? `${cold.done} of ${cold.of}` : 'the work vanished'),
     ok(idle === benches, 'and no bench', `${benches} -> ${idle}`),
-    ok(landed, 'somebody sent down there is what finishes it'),
-    // The spare hands must not have quietly done it for them. The cut has a gang
-    // of its own and the work is that gang's; the yard's builders are for the
-    // school and the bench, which have nobody standing at them.
+    ok(landed, 'hiring somebody is what finishes it'),
     ok(state().benches === benches + 1, 'and it is the one bench that was paid for',
        `${benches} -> ${state().benches}`)
   ];
@@ -247,12 +249,13 @@ group('with nobody spare, the nearest body is lent and given back', async () => 
   ];
 });
 
-// ...but a site with a gang of its own is not lent to. An empty cut builds
-// nothing, however many bodies are standing about elsewhere.
-group('a station site is never lent a body', async () => {
+// ...but a site with a gang of its own is not lent to. A cut with quarriers in
+// it digs its own bench, however long they take about it, and the yard does not
+// quietly cover for a gang that is merely busy elsewhere.
+group('a station with a gang of its own is never lent a body', async () => {
   window.__reset();
   openSites();
-  window.__crew(3, 0);                       // three on the rock, none in the cut
+  window.__crew(3, 0, 2);                    // three on the rock, two in the cut
   window.__grant({ shards: 900, spores: 900, dust: 90000 });
   run(2);
 
@@ -264,8 +267,39 @@ group('a station site is never lent a body', async () => {
   return [
     ok(s.miners === miners0 && s.lent.length === 0,
        'the rock keeps its gang', `${s.miners} miners, owed ${JSON.stringify(s.lent)}`),
-    ok(s.works?.quarry && s.works.quarry.done === 0,
-       'and the cut has done nothing', JSON.stringify(s.works?.quarry))
+    ok(!s.works?.quarry || s.works.quarry.done > 0,
+       'and the cut digs its own bench', JSON.stringify(s.works?.quarry))
+  ];
+});
+
+// A station standing EMPTY is the other case, and it is not the same one. There
+// is no gang to do it and there never will be until you put somebody there, so
+// a purchase left to that rule takes your spores and sits for the rest of the
+// run with nothing to show and nothing said. The nearest body goes instead --
+// off the rock if that is who is nearest -- exactly as it does for a building.
+group('a station standing empty is lent a body', async () => {
+  window.__reset();
+  openSites();
+  window.__crew(3, 0);                       // three on the rock, NOBODY in the cut
+  window.__grant({ shards: 900, spores: 900, dust: 90000 });
+  run(2);
+
+  const miners0 = state().miners;
+  window.__buy('quarrybench');
+  run(6);
+  const going = state();
+  const done = runUntil(() => !state().works?.quarry, 60);
+  const back = state();
+
+  return [
+    ok(going.lent.length === 1 && going.miners === miners0 - 1,
+       'somebody is taken off the rock for it',
+       `${going.miners} miners, owed ${JSON.stringify(going.lent)}`),
+    ok((going.works?.quarry?.done || 0) > 0, 'and the bench is actually being dug',
+       JSON.stringify(going.works?.quarry)),
+    ok(done, 'it finishes'),
+    ok(back.miners === miners0 && back.lent.length === 0,
+       'and the rock has its body back', `${back.miners} miners`)
   ];
 });
 

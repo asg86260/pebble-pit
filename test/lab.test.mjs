@@ -17,9 +17,15 @@ group('the lab can be made quicker at what it does', async () => {
   const at = () => state().research && state().research.at;
   const runFor = () => {
     window.__research(null);
-    buyBuilt('labswing');
+    // Somebody in the lab BEFORE the piece is started. A lab standing empty is
+    // lent a hand by the yard now (see `busyBuilderSites`), and a lent hand
+    // would see the piece through before this could measure the pace of the
+    // body it is about.
     window.__assign('labbers', 1);
     runUntil(() => state().labbers === 1, 60);
+    // Started, not seen through: what is being measured is how fast the piece
+    // moves, so it has to still be moving.
+    window.__buy('labswing');
     runUntil(() => state().commuting.length === 0, 60);
     const before = at() || 0;
     run(6);
