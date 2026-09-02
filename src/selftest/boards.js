@@ -349,8 +349,15 @@ export const TESTS = [
     return [
       ok(deck === false, 'crossing the deck does not open it'),
       ok(ramp === false, 'nor does the ramp up to it'),
-      ok(hole === true, 'and the hole itself still does'),
-      ok(shack === true, 'and now the shed beside it does too')
+      // The shack is the door, and the only one. This asked for the hole as
+      // well, from when the hole was the target and the shed was being added
+      // beside it; the shed is the station now -- it is where the board hangs,
+      // where you stand to open it, and where its signs hang (see `standAt` in
+      // board.js and `markAnchor` in render.js). A hole in the ground that also
+      // opened a shop was the thing being moved away from, and a check still
+      // asking for it is the old arrangement outliving the change.
+      ok(hole === false, 'the hole itself is a hole, not a shop counter'),
+      ok(shack === true, 'the shed beside it is what opens it')
     ];
   }],
 

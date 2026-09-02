@@ -738,25 +738,26 @@ function marksOn(key) {
 // The middle of a station's row of slots. Everything that hangs under a station
 // is measured from here, so moving a station moves its marks with it.
 export function markAnchor(key) {
-  const box = key === 'quarry' ? quarry
-            : key === 'farm' ? farm
-            : key === 'scrub' ? scrub
-            : null;
+  const box = key === 'scrub' ? scrub : null;
   const strip = S.piles.find(p => p.key === key);
-  // The quarry is a hole, and its marks used to hang off the left-hand lip --
-  // which is the corner the ladder comes up and the busiest few cells in the
-  // yard. They stand on the ground to the *right* of the mouth instead, where
-  // there is nothing else and nothing walks.
-  const x = key === 'quarry' ? quarry.x + quarry.w + SLOT_W
-          : key === 'rock' ? S.cx
+  // A station's signs hang under the station, and for the quarry and the farm
+  // the station is the SHACK. That is where its board hangs and where you stand
+  // to open it (`standAt` in board.js), and a sign about what is on that board
+  // belongs with it -- a diamond out beside a hole is a diamond about nothing
+  // you can walk up to. `stationFoot` is the same answer board.js gives to the
+  // same question, so the two can no longer drift apart: this used to reach
+  // past the mouth of the quarry with a slot's clearance and to the middle of
+  // the plots, both worked out here and neither known to the board.
+  const x = key === 'rock' ? S.cx
           : key === 'sky' ? sky.x
           : box ? box.x + box.w / 2
-          : strip ? (strip.from + strip.to) / 2
-          : (f => f == null ? farm.x + farm.w / 2 : f)(stationFoot(key));
+          : (f => f != null ? f
+                 : strip ? (strip.from + strip.to) / 2
+                 : farm.x + farm.w / 2)(stationFoot(key));
   // Clear of the station itself. The star is four hundred pixels up with no
   // ground under it at all, so its marks hang beneath it where the wizards are;
-  // everything else stands on the floor of the yard, including the quarry now
-  // that its marks are beside the hole rather than over it.
+  // everything else stands on the floor of the yard -- the quarry included,
+  // whose signs are under its shack now rather than out over the hole.
   const y = key === 'sky' ? sky.y + sky.r + P * 9 : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
 }
