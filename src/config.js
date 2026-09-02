@@ -2441,7 +2441,11 @@ export const BUILD_EFFORT = 1;
 // The most spare hands that go on one build. Not the whole yard: a build that
 // swallowed every idle body would stop the dust moving altogether, and what this
 // is meant to be is a *share* of the yard's attention rather than all of it.
-export const BUILD_GANG = 3;
+//
+// One, not three (feedback3.md B1). Three bodies climbing on to the same
+// bench and hopping in place read as a huddle, not a crew at work; one walks
+// over and builds, and the rest stay on the jobs they already had.
+export const BUILD_GANG = 1;
 
 // --- the farm's and the quarry's own sheds -----------------------------------
 // The two stations with a board and nothing to hold it -- see C5 in
@@ -2455,3 +2459,20 @@ export const QUARRY_SHED_W = P * 6;
 export const QUARRY_SHED_H = P * 7;
 // bare ground kept between a shed and the working ground it stands beside
 export const SHED_GAP = P * 3;
+
+// --- the builders' work jig ---------------------------------------------------
+// B2 in wave-feedback3.md: a builder standing at a busy site does not stand
+// still, it hops -- the same MOVES/jig/startMove machinery the rock's own
+// celebration dance uses, tuned down from a party to a body at work. One hop,
+// up and down, this long -- slower than the dance's own beat (DANCE_BEAT in
+// crew.js's `jig`), because hammering is steadier than celebrating.
+export const BUILD_HOP_MS = 1400;
+// a cell high, not the dance's three -- see MOVES.hop in crew.js
+export const BUILD_HOP_H = 1;
+
+// --- lobbing a core ------------------------------------------------------------
+// B3 in wave-feedback3.md: a core leaving a hauler's hands at the lip is
+// thrown, not dropped -- the same arc every other load in this yard is thrown
+// on (see `aim` in dust.js), sized so the peak clears the lip by about this
+// much rather than by however far the throw happens to travel.
+export const CORE_LOB_H = 90;

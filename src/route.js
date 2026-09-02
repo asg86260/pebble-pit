@@ -150,9 +150,22 @@ export const downAWorking = key => WORKINGS.includes(key);
 export function footing(x, all = ways()) {
   // a mouth is not a surface. Whichever way is under this point, its floor is a
   // long way down, and what is at ground level here is fresh air.
+  //
+  // The margin is a whole cell short of the wall, not the wall itself --
+  // `x + P > w.from` rather than `x > w.from` -- because that is the very
+  // margin `overPitMouth`/`overCutMouth` (world.js) draw the same line at, and
+  // this used to draw it a cell later. The two questions are asked by
+  // different code for the same reason `muckFor` and `yardMuck` were: one
+  // decides what a body may stand on, the other what a checked, watching eye
+  // calls "over the mouth" -- and with the lines a cell apart, a stance this
+  // one called solid ground, right at the lip, was already what that one
+  // called open air. A body sent to work from there read as standing on the
+  // ground line with its feet several hundred pixels above a pit with nothing
+  // in it -- not because it was floating, but because "solid" and "over the
+  // mouth" disagreed about where the mouth began.
   for (const key of WORKINGS) {
     const w = all[key];
-    if (w && x > w.from && x < w.to && standTop(x - WORKER / 2, w.at) > S.groundY + P) return NONE;
+    if (w && x + P > w.from && x < w.to && standTop(x - WORKER / 2, w.at) > S.groundY + P) return NONE;
   }
   if (heapAt(x) >= HEAP_DEEP) return LOOSE;
   return SOLID;
