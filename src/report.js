@@ -518,6 +518,9 @@ export const snapshot = () => ({
   })),
   workers: S.workers.length,
   workerPos: S.workers.map(w => `${w.type[0]}:${Math.round(w.x)},${Math.round(w.y)}`),
+  // and what each of them is up to, for a check about the yard settling rather
+  // than about where anybody is standing
+  workerGoals: S.workers.map(w => `${w.type}:${w.goal || '-'}`),
   crewNames: S.workers.map(w => `${w.name}|${w.type[0]}|${Math.round((w.lived||0)/1000)}s|m${w.mined||0}|q${w.quarried||0}|g${w.farmed||0}|s${w.stored||0}`).join(' '),
   crewDetail: S.workers.map(w => `${w.type[0]}|${w.goal || '-'}|${Math.round(w.x)}|c${w.carry || 0}|k${w.claim ?? '-'}|p${wayAt(w.x, w.y).key}|w${w.trained ? (w.kitOf || '?')[0] : '-'}|y${Math.round(w.y)}`),
   mining: S.mining,

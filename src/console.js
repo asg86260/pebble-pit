@@ -14,6 +14,7 @@ import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
 import { seatBoard, boardFit, showPanel } from './board.js';
+import { barSpot, siteFoot } from './render.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
 Object.assign(window, {
@@ -27,6 +28,11 @@ Object.assign(window, {
 // What the checks read. The yard's own account of itself comes from report.js,
 // which both suites share; the two lines added here are facts about the page
 // rather than about the game, and there is no page in the other suite.
+// Where a site's bar hangs and what it hangs over, so a check can ask whether
+// the one is clear of the other rather than reading it off a screenshot.
+window.__barAt = barSpot;
+window.__siteBox = siteFoot;
+
 window.__state = () => ({
   ...snapshot(),
   hushed: document.getElementById('panel').classList.contains('hushed'),

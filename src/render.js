@@ -2163,34 +2163,37 @@ function bar(cx, cy, at) {
 // yard is wherever the thing is going to stand -- a row that opens a place knows
 // where its place will be and says so, and the two machines on the bench do not,
 // so theirs hangs over the rock the yard is built round.
-const SITE_AT = {
-  // The cut and the plots are holes and flat ground rather than buildings, so
-  // their bars hang clear of the rim and the furrows rather than a roof -- a bar
-  // sat on the quarry mouth reads as part of the ramp.
-  quarry: () => ({ x: quarry.x + quarry.w / 2, y: quarry.y - P * 24 }),
-  farm: () => ({ x: farm.x + farm.w / 2, y: farm.y - P * 22 }),
-  scrub: () => ({ x: scrub.x + scrub.w / 2, y: scrub.y - P * 8 }),
-  tower: () => ({ x: tower.x + tower.w / 2, y: tower.y - P * 8 }),
-  yard: () => ({ x: workAt('yard')?.at ?? S.cx, y: S.groundY - P * 20 }),
-  bench: () => ({ x: bench.x + bench.w / 2, y: bench.y - P * 8 }),
-  // The lab's work happens behind a door, so its bar hangs over the roof where
-  // the lab's own bar always hung -- the same picture, drawn by the same code
-  // as every other site's now.
-  lab: () => ({ x: lab.x + lab.w / 2, y: lab.y - P * 6 })
-};
+// Where a site's bar hangs: over the middle of the thing, a little clear of the
+// top of it. Off the site's own box (see `siteFoot`), which is the station's own
+// rect or the ground a build covers -- so a bar cannot end up in the middle of
+// what it is about, and a station that is resited or grows takes its bar with
+// it.
+//
+// This was a table of hand-placed spots, one a site, each with its own offset
+// worked out by eye: twenty-four cells over the quarry, twenty-two over the
+// farm, eight over the tower, twenty over the ground for anything the yard was
+// putting up. Which was fine until a thing was taller than the number somebody
+// had guessed for it -- the settlement grows a course at a time, so its bar
+// ended up inside the building rather than above it. Nothing here is placed by
+// hand any more.
+const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
 
-// What the yard is in the middle of building, said on the ground rather than
-// only on a board you had to walk over and open. The same argument the lab's bar
-// makes: a build runs while you are somewhere else entirely, and it stops the
-// moment the last body walks off -- which is the whole mechanic, and it should
-// be a thing you can see rather than a thing a menu tells you.
+export function barSpot(site) {
+  const box = siteFoot(site);
+  if (!box) return null;
+  // A hole in the ground has no top above the line -- the quarry's box starts at
+  // the ground and goes down -- so the bar hangs off the ground line for those,
+  // which is the top of them as far as anybody looking at the yard is concerned.
+  const top = Math.min(box.y ?? S.groundY, S.groundY);
+  return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
+}
+
 export function drawWorkBars() {
   for (const site of SITES) {
     const list = worksAt(site);
     if (!list.length) continue;
-    const where = SITE_AT[site];
-    if (!where) continue;
-    const at = where();
+    const at = barSpot(site);
+    if (!at) continue;
     // One bar a work, stacked upward. A site with room for two -- the lab, with
     // a second bench -- has two things on the go and two bars to say so; every
     // other site has one and this is the one, exactly where it always hung.
@@ -2238,22 +2241,29 @@ function houseFoot() {
   if (!rooms.length) return null;
   const left = Math.min(...rooms.map(r => r.x));
   const right = Math.max(...rooms.map(r => r.x)) + HOUSE_CUBE;
-  return { x: left, w: right - left };
+  // The top of the block as well as its ends, because the settlement is the one
+  // thing here that grows upward as well as along and anything hung over it has
+  // to know how tall it has got.
+  const top = Math.min(...rooms.map(r => r.y));
+  return { x: left, w: right - left, y: top, h: S.groundY - top };
 }
 
-function siteFoot(site) {
-  if (site === 'quarry') return { x: quarry.x, w: quarry.w };
-  if (site === 'farm') return { x: farm.x, w: farm.w };
-  if (site === 'scrub') return { x: scrub.x, w: scrub.w };
-  if (site === 'tower') return { x: tower.x, w: tower.w };
-  if (site === 'bench') return { x: bench.x, w: bench.w };
+// The stations that are a thing standing on the ground, as the things
+// themselves. Each already knows where it is and how big it is, and everything
+// hung on a site -- the tape round it, the bar over it -- reads that rather
+// than a number written out again beside it.
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab };
+
+export function siteFoot(site) {
+  const box = SITE_BOX[site];
+  if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
   if (site === 'yard') {
     const w = workAt('yard');
     // The house is the one row here that does not arrive at its full grown
     // size -- see `houseFoot` above.
     if (w?.key === 'house') { const hf = houseFoot(); if (hf) return hf; }
     const placed = w && S.placed && S.placed[YARD_ROW_SITE[w.key]];
-    if (placed) return { x: placed.x, w: placed.w };
+    if (placed) return { x: placed.x, w: placed.w, y: placed.y, h: placed.h };
     // A yard row this table does not know about yet: a guess centred on where
     // the row said it would stand, rather than nothing at all.
     const x = w?.at ?? S.cx;
