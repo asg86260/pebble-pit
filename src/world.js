@@ -134,11 +134,31 @@ export const kitX = job =>
 // here, beside the strips, and the ground is laid again when it changes: a new
 // site gets its strip by existing rather than by remembering.
 let laid = null;
+// What the ground depends on, written as one string. Anything that can move a
+// site has to be in here, or the yard keeps a layout that was true a purchase
+// ago -- which is the whole reason this key exists rather than a door
+// remembering to call `refreshPiles` (see the note above).
+//
+// `buildOrder` is in it because the sites are walked in the order they were
+// bought (see `siteOrder`). Without it the ordering worked perfectly and was
+// never *seen*: `S.buildOrder` grew in the right order, `placeSites` read it
+// and handed back the right x for everybody, and nothing ever asked, because
+// the ground had already been laid under the old order and the key had not
+// changed. Buying the lab before the school put the lab exactly where buying
+// it second would have.
+const groundKey = () =>
+  `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}|${(S.buildOrder || []).join(',')}`;
+
 export function layPiles() {
-  const now = `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}`;
+  const now = groundKey();
   if (now === laid) return;
   laid = now;
+  // The strips AND the buildings. `refreshPiles` lays the ground each heap
+  // lies on; the boxes the buildings are drawn from are seated in `relayout`,
+  // and a site that has moved has to move both or the yard draws a school
+  // standing on the lab's ground.
   refreshPiles();
+  seatSites();
 }
 
 // Walk the table and hand every site its ground.
@@ -249,7 +269,7 @@ export function placeSites() {
 }
 
 export function refreshPiles() {
-  laid = `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}`;
+  laid = groundKey();
   S.piles = [
     // The ground under the star, for what the wizards knock off it. Four hundred
     // pixels up is still a station, and what a station makes has to have
@@ -511,6 +531,64 @@ export const walkY = x => Math.min(groundAt(x), S.groundY) - WORKER;
 // --- layout -----------------------------------------------------------------
 // The world is a fixed size and never rearranges: the window is only a view onto
 // it, and a small window scrolls rather than squashing everything together.
+// Where every building stands, off one walk of the SITES table.
+//
+// Lifted out of `resize` so that it can be run again when the walk's ANSWER
+// changes without the window having changed at all -- which is what buying a
+// building does now that the sites are placed in the order they were bought.
+// Left inside `resize`, the ordering worked and was invisible: the boxes kept
+// the places a walk taken before the purchase had given them.
+//
+// Each box still says how TALL it is -- height is a fact about the building,
+// not about the yard -- but where it stands is the table's business, and the
+// strips its heap lies on come off the same pass rather than being worked out
+// afterwards from where the buildings ended up.
+export function seatSites() {
+  const placed = placeSites();
+  S.placed = placed.at;
+  S.strips = placed.strips;
+  const seat = (box, key, h) => {
+    const spot = placed.at[key];
+    box.w = spot.w; box.h = h; box.x = spot.x; box.y = S.groundY - h;
+  };
+
+  seat(bench, 'bench', P * 7);
+
+  // the one thing that is not on the ground
+  sky.x = S.cx + TO_SKY;
+  sky.y = S.groundY - SKY_UP;
+  sky.r = SKY_R;
+
+  // The school stands on the bare ground between the quarry's spoil and the
+  // crew's front doors: where you go to learn a trade is on the way to work.
+  seat(school, 'school', SCHOOL_H);
+
+  seat(lab, 'lab', LAB_H);
+
+  // Past the lab, at the quiet end of the walk. What it does is about the sky
+  // over the whole yard rather than about any one site, so it does not belong
+  // among the places that dig -- and the walk out to it is the last of the
+  // walks, which is what the cores have bought all the way along.
+  seat(scrub, 'scrub', SCRUB_H);
+
+  // The rift, which is not seated with the rest: it does not stand among the
+  // buildings at all. It hangs in the hole, over the pile -- see `seatRift`.
+  seatRift();
+
+  // The last thing on the ground. Everything the cores open lies further out
+  // than the last, and the one place that makes nothing is the longest walk.
+  seat(casino, 'casino', CASINO_H);
+
+  // The outhouse, on the bare strip between the school and the rooms: no pile
+  // claims that ground and it is where the crew already are.
+  seat(outhouse, 'outhouse', OUTHOUSE_H);
+
+  // The far end of everything. It is tall rather than wide, because it is the one
+  // building that goes up rather than along: everything else in this yard is a
+  // shed or a hole, and the thing a core buys should not look like either.
+  seat(tower, 'tower', TOWER_H);
+}
+
 export function resize(after) {
   // the canvas is told its size outright, in its own inline style and in device
   // pixels, so it does not depend on the stylesheet or on measuring anything
@@ -557,54 +635,7 @@ export function resize(after) {
   pit.x = S.cx + TO_LEDGE;
   shapePit();
 
-  // Everything on the ground comes off one walk of the SITES table. Each box
-  // still says how TALL it is -- height is a fact about the building, not about
-  // the yard -- but where it stands is the table's business now, and the strips
-  // its heap lies on are produced by the same pass rather than worked out
-  // afterwards from where the buildings ended up.
-  const placed = placeSites();
-  S.placed = placed.at;
-  S.strips = placed.strips;
-  const seat = (box, key, h) => {
-    const spot = placed.at[key];
-    box.w = spot.w; box.h = h; box.x = spot.x; box.y = S.groundY - h;
-  };
-
-  seat(bench, 'bench', P * 7);
-
-  // the one thing that is not on the ground
-  sky.x = S.cx + TO_SKY;
-  sky.y = S.groundY - SKY_UP;
-  sky.r = SKY_R;
-
-  // The school stands on the bare ground between the quarry's spoil and the
-  // crew's front doors: where you go to learn a trade is on the way to work.
-  seat(school, 'school', SCHOOL_H);
-
-  seat(lab, 'lab', LAB_H);
-
-  // Past the lab, at the quiet end of the walk. What it does is about the sky
-  // over the whole yard rather than about any one site, so it does not belong
-  // among the places that dig -- and the walk out to it is the last of the
-  // walks, which is what the cores have bought all the way along.
-  seat(scrub, 'scrub', SCRUB_H);
-
-  // The rift, which is not seated with the rest: it does not stand among the
-  // buildings at all. It hangs in the hole, over the pile -- see `seatRift`.
-  seatRift();
-
-  // The last thing on the ground. Everything the cores open lies further out
-  // than the last, and the one place that makes nothing is the longest walk.
-  seat(casino, 'casino', CASINO_H);
-
-  // The outhouse, on the bare strip between the school and the rooms: no pile
-  // claims that ground and it is where the crew already are.
-  seat(outhouse, 'outhouse', OUTHOUSE_H);
-
-  // The far end of everything. It is tall rather than wide, because it is the one
-  // building that goes up rather than along: everything else in this yard is a
-  // shed or a hole, and the thing a core buys should not look like either.
-  seat(tower, 'tower', TOWER_H);
+  seatSites();
 
   // And the ground the pot stands on: everything from the left-hand end of the
   // world to the lab, which is both sides of the casino. A heap goes down beside
@@ -621,8 +652,8 @@ export function resize(after) {
 
   // the quarry is a hole in the ground, so it hangs below the line rather than
   // standing on it
-  quarry.w = placed.at.quarry.w;
-  quarry.x = placed.at.quarry.x;
+  quarry.w = S.placed.quarry.w;
+  quarry.x = S.placed.quarry.x;
   quarry.y = S.groundY;
 
   // the plots stand on the ground, out past the quarry
@@ -631,7 +662,7 @@ export function resize(after) {
   // width today is however many plots have been broken. So it stands where the
   // table put it and grows rightwards into ground already set aside for it,
   // which is why breaking new ground never shoves the lab along.
-  farm.x = placed.at.farm.x;
+  farm.x = S.placed.farm.x;
   farm.y = S.groundY;
 
   // and the two things about them that are not fixed: how deep the quarry has been
