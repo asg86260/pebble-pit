@@ -360,3 +360,30 @@ Verification: `node --test test/wave31-buildings.test.mjs`, then
 `node --test test/wave3-buildings.test.mjs test/wave3-tooltips.test.mjs test/works.test.mjs test/sites.test.mjs test/boards.test.mjs test/farm.test.mjs`,
 then the browser tier (base on `ff8b408`: 379/381; the two failures are the
 other agent's). Shots for #3 and #4 with `tools/look.mjs`, read before done.
+
+### 3.1 amendment — item 6: a body sent to build drops to the ground line
+
+Reported: "when a miner goes to work on the bench, he teleports to ground level
+first." Real, and it is the yard's oldest rule broken — nobody teleports.
+
+Where it is: `stepBuilder`'s walking branch (crew.js) does `w.y = stand(w)` on
+every frame of the walk. `stand` is `climbTo(w, surfaceUnder(w))`, and a miner
+that has just been retasked off the hill no longer reads as being *on* the
+hill, so `surfaceUnder` answers with the yard's ground line — a drop of the
+whole height of the rock. `climbTo` has a wall rule facing **up** (a rise
+steeper than a walk is climbed, the step given back) and, deliberately, none
+facing **down**; its ease moves a share of the remaining distance each frame,
+so a hundred-pixel drop is mostly gone in one frame. That reads as a teleport
+because it is one.
+
+Fix it the way the yard fixes every other "get from here to there": a body
+sent to build **routes** off the hill and walks, rather than having the ground
+under it reassigned. `downTheHole`/`keepTo`+`stepRoute` are the pattern; a
+builder is no more special than a hauler crossing the pit. Do NOT fix it by
+adding a downward wall rule to `climbTo` — the comment there records that being
+tried and failing seven checks, because walks legitimately stride down ramps
+and lips all over the yard.
+
+Reproduce first, filmed a frame at a time: put a miner on a tall rock, buy
+something that needs a builder, and assert the body's `y` never moves more than
+a cell in one frame between the rock and the bench. That assertion is the test.
