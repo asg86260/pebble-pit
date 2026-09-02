@@ -1115,6 +1115,33 @@ function stopJig(w) {
 // minutes is a machine; a body that works a patch, moves, and works the next
 // one is somebody building something. Each strike throws its own grit, which
 // is why the dust comes off the blow rather than off a timer of its own.
+// The patch a body works across, in world x. A burst walks the body a few cells
+// along and the next burst a few more, and this is what says how far it may get.
+//
+// It is the GROUND UNDERFOOT that answers, not one number for everybody. A
+// build site has the open yard beside it and the span is whatever reads as
+// working a stretch of it. A bench is twelve cells of timber standing on two
+// legs, and a body allowed the same span walks off the end of it and hammers on
+// thin air -- which is what it did: the patch ran sixty pixels back from the
+// middle of a seventy-two pixel top, so an eighteen pixel body finished a
+// couple of cells clear of the near end.
+//
+// Widening the bench would have fixed the bench and left the next narrow thing
+// anybody stands on to be found by looking at it. Asking the footing is the
+// same question every time.
+function jigSpan(w) {
+  // On the slab, and no further: the near end is the timber's own edge and the
+  // far end is the last place a body's whole width still has something under
+  // it. `jigAt` does not come into it -- a mark taken up near one end would
+  // otherwise pin the patch to a corner of a bench there is room to work along.
+  if (w.site === 'bench') return { from: bench.x, to: bench.x + bench.w - WORKER };
+  // Everywhere else: back along the yard from the mark it arrived on, one side
+  // only, never past the mark. A patch centred on the mark would spend half of
+  // itself inside the footprint, which is the black the stand-off exists to
+  // keep the body out of.
+  return { from: w.jigAt - BUILD_SHIFT_SPAN, to: w.jigAt };
+}
+
 function workJig(w, at) {
   if (w.jigAt == null) {
     w.jigAt = w.x;              // the near end of the patch it is working
@@ -1174,17 +1201,17 @@ function workJig(w, at) {
       w.hits = 0;
       w.hitsWanted = nextBurst();
       w.restUntil = ended + BUILD_REST_MS;
-      // The patch runs from the mark it arrived on to `BUILD_SHIFT_SPAN` back
-      // along the yard -- one side only, never past the mark. A patch centred
-      // on the mark would spend half of itself inside the footprint, which is
-      // the black the stand-off exists to keep the body out of.
+      // The patch is whatever the body is standing on -- see `jigSpan`. It
+      // turns back at either end of it the way the dance's `step` turns at the
+      // edge of its patch.
+      const span = jigSpan(w);
       let next = w.x + w.jigDir * BUILD_SHIFT;
-      if (next > w.jigAt || next < w.jigAt - BUILD_SHIFT_SPAN) {
+      if (next > span.to || next < span.from) {
         w.jigDir = -w.jigDir;
         next = w.x + w.jigDir * BUILD_SHIFT;
       }
       // Aimed, not applied: the rest window above walks it there.
-      w.shiftTo = Math.max(w.jigAt - BUILD_SHIFT_SPAN, Math.min(w.jigAt, next));
+      w.shiftTo = Math.max(span.from, Math.min(span.to, next));
       w.lunge = 0;
       startMove(w, ended + BUILD_REST_MS, 'build');
       return;

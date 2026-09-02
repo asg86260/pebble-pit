@@ -77,6 +77,44 @@ group('a builder at the bench hammers rather than stands', async () => {
   ];
 });
 
+// A body works a patch: a few blows here, a step along, a few more. On the open
+// ground beside a building site the patch is ten cells of yard, which is fine.
+// The bench top is twelve cells of timber on two legs, and the same ten-cell
+// patch walked the body clean off the near end of it to hammer at thin air.
+// The patch is the footing now -- see `jigSpan` in crew.js -- so this asks the
+// only question that matters: over a long spell of work, does any part of the
+// body ever leave the slab?
+group('a builder at the bench stays on the bench top', async () => {
+  window.__reset();
+  window.__crew(0, 3);
+  window.__grant({ dust: 90000 });
+  window.__buy('carry');
+  const builder = () => yard.S.workers.find(w => w.type === 'builder');
+  // Working, not still walking over: the jig is what moves it about, and a body
+  // still crossing the yard is nowhere near the bench to begin with.
+  const arrived = runUntil(() => { const b = builder(); return !!b && b.goal === 'at' && b.jigAt != null; }, 30);
+
+  // Long enough for many bursts, so the film covers the patch end to end rather
+  // than whichever couple of cells the first burst happened to take.
+  let lo = Infinity, hi = -Infinity;
+  for (let f = 0; f < 600; f++) {
+    run(0.1);
+    const b = builder();
+    if (!b || b.jigAt == null) continue;
+    lo = Math.min(lo, b.x);
+    hi = Math.max(hi, b.x + WORKER);
+  }
+  window.__crew(0, 0);
+
+  return [
+    ok(arrived, 'the builder gets on the bench and starts work', `lo ${lo}`),
+    ok(lo >= bench.x, 'no part of it goes off the near end',
+       `${Math.round(bench.x - lo)}px past the left edge`),
+    ok(hi <= bench.x + bench.w, 'nor off the far end',
+       `${Math.round(hi - (bench.x + bench.w))}px past the right edge`)
+  ];
+});
+
 group('the bench rung still finishes at the same rate, swing or no swing', async () => {
   // B2 says the animation costs nothing: `workFor`/`handsAt` never ask where a
   // body's feet are. Proven the direct way -- build the same rung twice, once
