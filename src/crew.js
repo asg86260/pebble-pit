@@ -255,9 +255,21 @@ export const newRecord = () => ({
 // was the yard standing about: everybody empty-handed at once, with a floor that
 // had already been swept, so there was nothing to fetch until the rock gave up
 // something new. That is the reported stall, and the dust was gone as well.
+// ...and what it was in the middle of. `goal` is the yard's own word for that
+// -- the steppers set it and read it every frame -- and without it every body
+// came back rebuilt as `goal: 'to'`, which means "walk to your station" even to
+// somebody already standing on the floor of the cut. A quarrier so restored
+// walked to the head of the ladder and climbed back down a hole it was already
+// in before it could swing again.
+//
+// Safe because a goal names a *state*, not a plan somebody has to remember: the
+// claims that go with one -- a column of dust, a patch of muck, a seat in the
+// cut -- are worked out fresh every frame and are deliberately not saved, and
+// every stepper already copes with finding them gone, because a body can lose a
+// claim mid-play.
 export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       'at', 'trained', 'kitOf', 'x', 'y',
-                      'carry', 'load', 'hasCore'];
+                      'carry', 'load', 'hasCore', 'goal'];
 
 export function keepOf(w) {
   const out = { type: w.type };

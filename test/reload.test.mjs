@@ -46,3 +46,37 @@ group('a refresh does not empty the crew\'s hands', async () => {
        `${dead} of ten seconds with nothing banked`)
   ];
 });
+
+// And the other half of coming back: a body picks up where it was, rather than
+// being handed the one goal a factory-fresh body gets. Everybody used to come
+// back on `goal: 'to'` -- "walk to your station" -- which for a quarrier already
+// standing on the floor of the cut meant walking to the head of the ladder and
+// climbing back down a hole it was already in.
+group('a refresh does not send the gang back down the ladder', async () => {
+  localStorage.setItem('boulder-clicker/v4', player());
+  yard.restore();
+  run(40);                           // down there and digging
+
+  const gang = () => yard.S.workers.filter(w => w.type === 'quarrier');
+  const digging = () => gang().filter(w => w.goal === 'work').length;
+  const wasY = gang().map(w => Math.round(w.y));
+  const wasDigging = digging();
+
+  window.__reload();
+  const stillDigging = digging();
+  const nowY = gang().map(w => Math.round(w.y));
+
+  // and it does not take them a walk to get going again
+  let worst = 0;
+  for (let i = 0; i < 6; i++) { run(1); worst = Math.max(worst, wasDigging - digging()); }
+
+  return [
+    ok(wasDigging > 0, 'the cut was being worked to begin with', `${wasDigging} at the face`),
+    ok(stillDigging === wasDigging, 'and it still is the frame after a reload',
+       `${wasDigging} before, ${stillDigging} after`),
+    ok(nowY.every((y, i) => Math.abs(y - wasY[i]) <= 1), 'nobody was lifted out of the cut',
+       `${wasY.join(',')} -> ${nowY.join(',')}`),
+    ok(worst <= 1, 'and none of them downs tools to walk anywhere',
+       `${worst} stopped digging at once`)
+  ];
+});
