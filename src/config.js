@@ -2467,8 +2467,12 @@ export const SHED_GAP = P * 3;
 // up and down, this long -- slower than the dance's own beat (DANCE_BEAT in
 // crew.js's `jig`), because hammering is steadier than celebrating.
 export const BUILD_HOP_MS = 1400;
-// a cell high, not the dance's three -- see MOVES.hop in crew.js
-export const BUILD_HOP_H = 1;
+// Two cells high, not the dance's three -- see MOVES.hop in crew.js. It was
+// one, which a player never actually saw: #4 in "Wave 3.1" (wave-feedback3.md)
+// filmed a builder for ten seconds and measured six world pixels of travel,
+// which is nothing against a body eighteen pixels tall. Raised until the hop
+// reads as a hop rather than a shiver.
+export const BUILD_HOP_H = 2;
 
 // --- lobbing a core ------------------------------------------------------------
 // B3 in wave-feedback3.md: a core leaving a hauler's hands at the lip is
@@ -2476,3 +2480,21 @@ export const BUILD_HOP_H = 1;
 // on (see `aim` in dust.js), sized so the peak clears the lip by about this
 // much rather than by however far the throw happens to travel.
 export const CORE_LOB_H = 90;
+
+// --- a building rising out of the ground ---------------------------------------
+// #3, "Wave 3.1" in wave-feedback3.md: the frame a `kind: 'building'` work
+// lands, the yard feels it the way it feels a rock landing -- half as hard,
+// because a building settling into its footprint is a smaller event than a
+// boulder hitting the floor of the pit. See `SHAKE_LAND` in rock.js, which
+// this is half of.
+export const BUILD_SHAKE = 7.5;
+
+// --- the house's own curve ------------------------------------------------------
+// #8, "Wave 3.1" amendment: the house row has no rung, so `workFor` gave it a
+// flat 90 worker-seconds forever -- a straight ninety-second stand for your
+// very first hire, alone, now that BUILD_GANG is one. It has a rung in all but
+// name: how many rooms already stand. See the `work` override on `HOUSE_ROW`
+// in upgrades.js, and `workFor` in works.js, which reads it.
+export const HOUSE_WORK0 = 20;       // the first house, in worker-seconds
+export const HOUSE_WORK_STEP = 1.16; // and each one after it
+export const HOUSE_WORK_MAX = 180;   // never worse than the machines

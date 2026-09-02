@@ -333,3 +333,114 @@ pile and a fifth ledger, for a distinction the player never needs to make.
 
 Both spikes go into DESIGN.md as "(design, not built)" sections on sign-off,
 the way the shields and the balloon did.
+
+---
+
+# Wave 3.1 — feedback4.md
+
+**This section is canon. Implement; do not redesign.** Five follow-ups on the
+wave above, all in the buildings/works area. One agent, one track, one branch
+(`wave3b`), based on `main` at `ff8b408` (wave 3 landed).
+
+Owns: `src/render.js`, `src/works.js`, `src/world.js`, `src/board.js`,
+`src/input.js`, `src/crew.js` (the builder's stages only), `src/persist.js`
+(buildOrder only). Additive-only: `src/state.js`, `src/config.js` (end of file).
+Test file: `test/wave31-buildings.test.mjs`. Existing tests may be edited only
+where an item deliberately changes what they assert — list each edit.
+
+| # | item | what to do |
+|---|---|---|
+| 1 | the shacks by the quarry and the farm should be the station's **main target**, not the station itself | D split `standAt` (where you stand to open a board) from `boardAt` (where the sheet stands). Make the shed the *whole* answer for those two stations: hover target, click target, the place a body walks to open it, and the anchor. `standRect('farm')`/`standRect('quarry')` return the shed. Two browser checks used `standRect('quarry')` to find the mouth — update them to ask for the mouth by name, not through `standRect`. (The item says "quarry/lab"; the lab already has its own building and its own door, so read it as the two sheds.) |
+| 2 | bench timed upgrades should **not** get the construction ornament | C3 draws barriers for every `busyAt(site)`. Restrict `drawBuildSites` to works whose row `kind` is `'building'` or `'machine'` — a rung being worked at the bench (`site: 'bench'`, `kind: 'rung'`) shows no posts, no tape, no puff. |
+| 3 | a building under construction **rises out of the ground** as it is built; when it lands, a puff and a screen shake | While `busyAt(site)` for a `kind: 'building'` work, draw the building clipped to `progressAt(site)` of its height, rising from the ground line (`ctx.save(); ctx.beginPath(); ctx.rect(x, groundY - h * p, w, h * p); ctx.clip();` around the building's own draw). Nothing is drawn above the clip. The frame the work lands: one `puff.js` puff at the building's middle-top and a shake — reuse `S.shake`/`shake()` in hooks.js/world.js at half the rock-fall strength (find the constant the rock uses and halve it; add `BUILD_SHAKE` at the end of config.js). Buildings that are already standing are unaffected. |
+| 4 | workers **still** need an animation while a building is constructed | B2 added the builder's hop and claims it runs at yard sites too. The user sees none. Reproduce first: buy a building on a fresh yard, film the builder for 10 s at 1/60, and assert its `y` varies (see `test/dance.test.mjs` for filming). If it does not hop, find why (`stepBuilder`'s `at` gating, `handsAt` at yard sites, the jig being reset by the walk) and fix it. If it does hop but is invisible, the hop is too small — raise `BUILD_HOP_H` to 2 cells and make the lunge visible. Take a shot and read it. |
+| 5 | buildings are **not** in the order they are purchased | C7 reorders only sites in `S.buildOrder`, which is filled as works *land*, and a save from before has none. Reproduce: fresh yard, buy the farm then the quarry, then a second fresh yard, quarry then farm — assert the x-order follows purchase order in both. Then load `test/fixtures/stuck-yard.json` and assert its layout is unchanged. If purchase order is not honored on a fresh yard, the bug is real — likely the order being recorded on *landing* rather than on *purchase*, so two builds started close together land in the fixed order; record it at purchase (`works.start`). |
+
+Verification: `node --test test/wave31-buildings.test.mjs`, then
+`node --test test/wave3-buildings.test.mjs test/wave3-tooltips.test.mjs test/works.test.mjs test/sites.test.mjs test/boards.test.mjs test/farm.test.mjs`,
+then the browser tier (base on `ff8b408`: 379/381; the two failures are the
+other agent's). Shots for #3 and #4 with `tools/look.mjs`, read before done.
+
+### 3.1 amendment — item 6: a body sent to build drops to the ground line
+
+Reported: "when a miner goes to work on the bench, he teleports to ground level
+first." Real, and it is the yard's oldest rule broken — nobody teleports.
+
+Where it is: `stepBuilder`'s walking branch (crew.js) does `w.y = stand(w)` on
+every frame of the walk. `stand` is `climbTo(w, surfaceUnder(w))`, and a miner
+that has just been retasked off the hill no longer reads as being *on* the
+hill, so `surfaceUnder` answers with the yard's ground line — a drop of the
+whole height of the rock. `climbTo` has a wall rule facing **up** (a rise
+steeper than a walk is climbed, the step given back) and, deliberately, none
+facing **down**; its ease moves a share of the remaining distance each frame,
+so a hundred-pixel drop is mostly gone in one frame. That reads as a teleport
+because it is one.
+
+Fix it the way the yard fixes every other "get from here to there": a body
+sent to build **routes** off the hill and walks, rather than having the ground
+under it reassigned. `downTheHole`/`keepTo`+`stepRoute` are the pattern; a
+builder is no more special than a hauler crossing the pit. Do NOT fix it by
+adding a downward wall rule to `climbTo` — the comment there records that being
+tried and failing seven checks, because walks legitimately stride down ramps
+and lips all over the yard.
+
+Reproduce first, filmed a frame at a time: put a miner on a tall rock, buy
+something that needs a builder, and assert the body's `y` never moves more than
+a cell in one frame between the rock and the bench. That assertion is the test.
+
+### 3.1 amendment — item 7: the house's building site is the reserved plot, not the block
+
+Reported: "the construction for the house is way too wide at the start of the
+game. the construction should hug the width of the existing buildings."
+
+Where it is: `siteFoot('yard')` in render.js looks the work's row up in
+`YARD_ROW_SITE` and returns `S.placed[key]` — the ground **reserved** by
+`placeSites` for that site at its full grown size. For every other yard row
+that is right: a lab is a lab-sized building the day it goes up. The house is
+not. The settlement is a stack of cubes that grows a room at a time
+(`cubes()`/`houseRect()` in crewboard.js), so at the start of a game the block
+is one or two rooms wide against a plot reserved for a whole street — and the
+barriers stand out at the edges of ground nothing is standing on.
+
+Fix: for the `house` row specifically, `siteFoot` returns the block's own rect
+(`houseRect()`), widened by the one room about to be added rather than by the
+whole reserved plot. The other yard rows keep the reserved footprint. The rule
+to write in the comment: **the tape goes round what is being built, not round
+the ground it was promised.**
+
+Check it at both ends: a fresh yard with two rooms (the barrier hugs the block,
+a couple of cells clear either side) and a settlement of a dozen (it still
+hugs, and does not sit inside the block). A shot of each; a suite cannot see
+this.
+
+### 3.1 amendment — item 8: the first houses are quick, and they get slower
+
+Reported: "reduce the amount of time for the first houses, slowly increasing
+the build times."
+
+Where it is: the `house` row is `kind: 'building'` with **no `rung`**, so
+`workFor` is `WORK_BASE.building * WORK_STEP^0` = a flat **90 worker-seconds
+for every house, for ever** — and since BUILD_GANG is 1 now, that is a
+straight 90 seconds of one body standing there for your very first house.
+Every other timed row climbs with its rung; the house is the one that does
+not, because a house is not on a ladder.
+
+It has a rung in all but name: how many you already have. So give `workFor` an
+override — a row may carry `work: () => seconds`, used in place of the
+`WORK_BASE`/`WORK_STEP` pair — and let the house supply its own curve. One
+hook on the general function, not a special case inside it.
+
+Numbers, at the end of config.js:
+
+    HOUSE_WORK0     = 20     // the first house, in worker-seconds
+    HOUSE_WORK_STEP = 1.16   // and each one after it
+    HOUSE_WORK_MAX  = 180    // never worse than the machines
+
+so the curve runs about: 1st **20s**, 5th **31s**, 10th **66s**, 15th
+**139s**, and flat at 180s from about the 18th. Exponent is the number of
+houses already standing (clamp at zero so the yard's starting crew does not
+push the first one up the curve).
+
+Report the actual seconds for houses 1, 5, 10, 15 and 20 from the code, not
+from this table — if they disagree, the code is right and the table was my
+arithmetic.

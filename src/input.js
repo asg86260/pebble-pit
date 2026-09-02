@@ -7,7 +7,7 @@
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H } from './config.js';
 import { S, bench, floor, pit, table, outhouse, rift } from './state.js';
-import { clampCam, unfollow, farmShed, quarryShed } from './world.js';
+import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
 import { startle, overBird } from './weather.js';
@@ -356,20 +356,16 @@ function cellLabel(v) {
 
 // Every building that has a name on its own board, plus the two that do not
 // (the closet, the rift). `standRect` answers "is it there, and where" for
-// everything with a board -- everywhere except the farm and the quarry, which
-// is where you *stand* to open the board and not where the board itself is
-// any more. C5 gave those two a shed of their own, and that shed is what the
-// building label points at: `farmShed`/`quarryShed`, straight off world.js,
-// the same rect the board is now anchored to (see `boardAt` in board.js).
+// every one of them now -- including the farm and the quarry, whose shed is
+// the whole answer to where you stand, where you click and where the board
+// hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
 const BUILDING_NAME = {
   bench: 'the bench', lab: 'the lab', school: 'the school', casino: 'the casino',
-  scrub: 'the scrubbing house', tower: 'the tower'
+  scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
 };
 
 function buildingAt(x, y) {
   for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
-  if (S.quarryOpen && inRect(quarryShed(), x, y)) return 'the quarry';
-  if (S.farmOpen && inRect(farmShed(), x, y)) return 'the farm';
   if (S.outhouseOpen && inRect(outhouse, x, y)) return 'the closet';
   if (riftOpen() && inRect(rift, x, y)) return 'the rift';
   return null;

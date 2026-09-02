@@ -24,7 +24,8 @@ import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
-         MACHINE_TUNE, BUILD_GANG } from './config.js';
+         MACHINE_TUNE, BUILD_GANG,
+         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
@@ -681,6 +682,15 @@ export const HOUSE_ROW = {
   // where the next room will stand, which house.js works out the same way it
   // works out every other room.
   kind: 'building', site: 'yard', at: () => nextHouseAt(),
+  // Its own curve, off how many rooms already stand -- see #8, "Wave 3.1"
+  // amendment. It is `kind: 'building'` with no `rung` of its own, so without
+  // this `workFor` gave it one flat number for ever: ninety worker-seconds,
+  // which with BUILD_GANG at one is ninety seconds alone for your very first
+  // hire. `S.crew` is a rung in all but name -- it is exactly the "from" this
+  // row already reports below -- clamped at zero so the crew the intro hands
+  // you does not push the very first bought house up the curve.
+  work: () => Math.min(HOUSE_WORK_MAX,
+    HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew - 1))),
   from: () => S.crew,
   to: () => S.crew + 1,
   // One pool pays for every job now, so the curve is gentler than the four

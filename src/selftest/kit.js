@@ -150,11 +150,11 @@ export async function hoverBench() {
 export async function hoverStation(which, look = true) {
   const r = state().stands[which];
   if (!r) return null;
-  // The quarry is a hole: its middle is thin air and its rect hangs below the
-  // ground line, so you stand at the near lip of it. Everywhere else the middle
-  // of the thing is the thing.
-  const wx = which === 'quarry' ? r.x + P * 2 : r.x + r.w / 2;
-  const wy = which === 'quarry' ? r.y + P * 3 : r.y + r.h / 2;
+  // Every station's stand is an ordinary rectangle now, the quarry and the
+  // farm included -- they stand at their shed rather than at the hole or the
+  // plots (see #1, "Wave 3.1" in wave-feedback3.md), so the middle of the
+  // thing is the thing everywhere.
+  const wx = r.x + r.w / 2, wy = r.y + r.h / 2;
   if (look) { window.__look(wx - 400); await sleep(120); }
   const [x, y] = onScreen(wx, wy);
   point('pointermove', x, y, 0);
