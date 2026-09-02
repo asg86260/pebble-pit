@@ -3,6 +3,7 @@
 
 import { P } from './config.js';
 import { S, bench, lab, school, casino, scrub, quarry, farm, tower } from './state.js';
+import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
 import { LAB_UPGRADES, markLabSeen } from './lab.js';
@@ -44,11 +45,23 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // need no such care.
 const quarryMouth = { get x() { return quarry.x; }, get y() { return quarry.y; },
                       get w() { return quarry.w; }, get h() { return 0; } };
-const anchor = which => standAt[which];
-
 const standAt = { bench, lab, school, casino, scrub, farm, tower,
                   quarry: quarryMouth,
                   get house() { return houseRect(); } };
+
+// Where you have to stand to open a board -- `standAt`, above -- and where the
+// board itself goes up once you are there are two different questions now.
+// The farm and the quarry are the two stations with a shed of their own (C5 in
+// wave-feedback3.md): a small building on their left edge that exists for no
+// other reason than to give their board something to stand over. You still
+// walk up to the plots or the mouth of the hole to open it; the sheet itself
+// stands above the shed, the way every other board stands above the building
+// it belongs to.
+const boardAt = which =>
+  which === 'quarry' ? quarryShed() :
+  which === 'farm' ? farmShed() :
+  standAt[which];
+const anchor = which => boardAt(which);
 // Asked for when it is wanted, not gathered at load time. The quarry and the plots
 // are drawn by files this one already reads, so the imports come round in a ring
 // -- and a table built while the ring is still closing gets whichever of them
@@ -161,18 +174,21 @@ export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
 // cells is still comfortably more than nothing, and it leaves the strip between
 // the two of them belonging to neither -- which is what the safe wedge needs.
 const HOUSE_PAD_IN = P * 2;
+// The whole structure, roof included, is the target now -- see D2 in
+// wave-feedback3.md (#21). This used to be a band at the door: the block is
+// the one thing here that grows, and a region drawn round the whole of it used
+// to reach up into the air the boards hang in, so walking to the far corner of
+// the bench's own board could cross the roof and the house would steal the
+// menu. That is a real risk on a very tall settlement, but the ask is the
+// whole building as the target, and `nearHouse` is asked after every other
+// station -- see the `want` cascade in input.js, where the house goes last on
+// purpose -- so a cursor standing inside another station's own patch still
+// answers to that station first.
 export const nearHouse = (x, y) => {
   if (S.crew < 1) return false;
   const r = houseRect();
-  // A band at the door rather than the whole face of the block. The block is the
-  // one thing here that grows: by twenty rooms it is taller than the rock, and a
-  // region drawn round the whole of it reaches up into the air the boards hang
-  // in -- so walking down to the far corner of the bench's board crossed the
-  // roof of the house and the house took the menu. You stand at a door to go in
-  // somewhere. That is all this needs to be.
-  const top = Math.max(r.y, S.groundY - P * 10);
   return x > r.x - P * 8 && x < r.x + r.w + HOUSE_PAD_IN &&
-         y > top && y < S.groundY + P * 4;
+         y > r.y && y < S.groundY + P * 4;
 };
 
 // The board stands on the bench, but it is a real element on a real screen: on a
