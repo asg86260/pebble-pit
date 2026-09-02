@@ -12,7 +12,7 @@ import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
 import { S, floor, pit, cut, sky } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
-import { resetCut } from './quarry.js';
+import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
 import { makeMeteor } from './meteor.js';
 import { now as clockNow } from './clock.js';
@@ -229,6 +229,15 @@ export function persist() {
     // written. Nought everywhere and no `cut` at all come to the same thing on
     // the way back in -- see `restore`.
     quarryCells: S.quarryCells ? Array.from(S.quarryCells) : null,
+    // ...and how much of this bench's seam is still in the ground. It goes with
+    // `quarryCells` and for the same reason: the depth was written down and the
+    // stone in it was not, so a save read back mid-dig had a part-dug floor and
+    // nothing left to find in it. `findShards` pays out of this number, and the
+    // one line that lays a fresh seam only fires on ground nobody has broken
+    // into (`quarryOwed <= 0 && !dugShare()`), which a part-dug floor is not --
+    // so every swing left in the bench turned up nothing and the dig you were
+    // halfway through paid you nothing at all.
+    quarryOwed: S.quarryOwed,
     spores: S.spores,
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
@@ -321,6 +330,26 @@ export function persist() {
     // is the pot on the board and the pour starting again from the sky, and the
     // wheel goes round when it has landed, exactly as it would have.
     pouring: !!S.pouring,
+    // ...and a pot you have already taken is money, not sand.
+    //
+    // `bank()` empties `S.pot` on the frame you press it and hands the whole of
+    // it to `S.paying`, which the hole is only paid out of as each flying grain
+    // lands. A refresh in the middle of that used to come back on `paying: null`
+    // with the air swept clear, and the pot -- off the table, not yet in the
+    // hole, nowhere at all -- was simply gone. It is the one number in this
+    // building that was not written down, and it was the only one that was
+    // already yours.
+    //
+    // What is written is everything that has not landed yet: what the payout
+    // still owes, plus the worth of every grain still in the air, because a
+    // grain in flight is a grain the hole has not counted. It comes back the way
+    // `pouring` does -- the sand flies again out of an empty table, and the hole
+    // is paid the same pot it was always going to be paid.
+    paying: S.paying && {
+      cur: S.paying.cur,
+      left: S.paying.left + (S.tableAir || []).reduce((n, k) => n + (k.arc ? (k.worth || 0) : 0), 0),
+      grains: S.paying.grains + (S.tableAir || []).filter(k => k.arc).length
+    },
     chip: S.chip,
     mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
@@ -329,6 +358,11 @@ export function persist() {
     gw: S.gw,
     gh: S.gh,
     boulderNo: S.boulderNo,
+    // Whether the rock standing there still owes you its core. It was worked out
+    // again on the way back in rather than written down, and the working out
+    // could only see a core lying on the ground or one on the cursor -- see the
+    // note where it is read.
+    coreBuried: S.coreBuried,
     floor: { cols: floor.cols, rows: floor.rows, cells: gridStr(floor) },
     pit: pitToSave(),
     // The cut's own sand, kept the same way the floor's is: a shape and a
@@ -427,7 +461,9 @@ export function restore() {
     S.labOpen = false;
     S.casinoOpen = false;
     S.pot = null;
+    S.paying = null;
     S.pouring = false;
+    S.quarryOwed = 0;
     S.buildOrder = [];
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
@@ -669,7 +705,31 @@ export function restore() {
   S.pot = s.pot && s.pot.cur ? { cur: s.pot.cur, stake: +s.pot.stake || 0, n: +s.pot.n || 0, at: 0 } : null;
   S.spinUntil = 0;
   S.tableAir = [];
-  S.paying = null;
+  // A pot you have already taken comes back still owed to you.
+  //
+  // Every other field in this building has an argument for what it does on a
+  // reload; this one had none, and what it did was throw the pot away. `bank()`
+  // takes the pot off the table on the frame you press it and pays it into the
+  // hole one landing grain at a time, so between the press and the last grain
+  // the whole of your winnings live in `S.paying` and nowhere else -- and this
+  // line used to be `S.paying = null`.
+  //
+  // Crediting it here instead was the other way to write this, and it is the
+  // wrong one: the pot going over the yard is the *point* of taking it, and a
+  // refresh should not be a way to skip the walk. So the payout comes back a
+  // payout. The table is empty, which `payOutStep` already copes with -- it
+  // throws from the pot's spot when there is no heap left to lift off -- and the
+  // sand flies again, the same way `pouring` below sends a bet's sand down out
+  // of an empty sky.
+  //
+  // The grain count is only how many throws the money is split across, so a save
+  // with a number where there should be none is worth nothing rather than owed
+  // for ever: a payout with nothing left in it is no payout.
+  S.paying = s.paying && s.paying.cur && +s.paying.left >= 1
+    ? { cur: s.paying.cur,
+        left: Math.round(+s.paying.left),
+        grains: Math.max(1, Math.round(+s.paying.grains) || 1) }
+    : null;
   // A bet made is a bet made: a pot caught mid-pour comes back mid-pour, the
   // sand falls again out of an empty table, and the spin it was owed is still
   // owed. A pot that had already been spun for comes back a pot and nothing more.
@@ -737,7 +797,34 @@ export function restore() {
     for (const v of cut.grid) if (v === ROCK_CELL) cut.rock++;
     if (cut.painter) cut.painter.repaint();
   }
-  S.coreBuried = boulderAlive() || !(s.coreLoose || S.heldCore);
+  // What the seam still owes. It is read after the cut, because an old save that
+  // never wrote the number has to be guessed at from how much of the ground is
+  // left -- and there is no ground to measure until `resetCut` and the grid
+  // above have laid it.
+  //
+  // Guessing was all there ever was here, and the guess was nought: the number
+  // was never saved. `findShards` pays out of it and stops dead at nought, and
+  // the one line that lays a fresh seam only fires on ground nobody has broken
+  // into. A save read back mid-dig is neither -- part-dug, owing nothing -- so
+  // the rest of that bench paid the player not one shard, and it only righted
+  // itself when the dig finished and `fillQuarry` laid the next seam.
+  S.quarryOwed = Number.isFinite(+s.quarryOwed)
+    ? Math.max(0, Math.round(+s.quarryOwed))
+    : Math.round(seamShards() * Math.max(0, 1 - dugShare()));
+  // Whether this rock still owes you its core.
+  //
+  // It used to be worked out here rather than read: `boulderAlive() ||
+  // !(s.coreLoose || S.heldCore)`. That asks "is a core lying about, or on the
+  // cursor" -- and those are not the only two places a core can be. One in a
+  // hauler's hands is neither, so a save written with the rock dead and the core
+  // walking to the hole came back saying the rock still owed one, and the next
+  // frame `stepCore` dropped a second: two cores out of one rock.
+  //
+  // So it is written down now, and the guess is only what an old save gets --
+  // widened to count a pair of hands, which is the whole of the bug it missed.
+  S.coreBuried = typeof s.coreBuried === 'boolean'
+    ? s.coreBuried
+    : boulderAlive() || !(s.coreLoose || S.heldCore || S.workers.some(w => w.hasCore));
 }
 
 // The crew, put back. Each body is made by its own factory -- so it has every
