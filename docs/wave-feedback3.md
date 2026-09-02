@@ -333,3 +333,30 @@ pile and a fifth ledger, for a distinction the player never needs to make.
 
 Both spikes go into DESIGN.md as "(design, not built)" sections on sign-off,
 the way the shields and the balloon did.
+
+---
+
+# Wave 3.1 — feedback4.md
+
+**This section is canon. Implement; do not redesign.** Five follow-ups on the
+wave above, all in the buildings/works area. One agent, one track, one branch
+(`wave3b`), based on `main` at `ff8b408` (wave 3 landed).
+
+Owns: `src/render.js`, `src/works.js`, `src/world.js`, `src/board.js`,
+`src/input.js`, `src/crew.js` (the builder's stages only), `src/persist.js`
+(buildOrder only). Additive-only: `src/state.js`, `src/config.js` (end of file).
+Test file: `test/wave31-buildings.test.mjs`. Existing tests may be edited only
+where an item deliberately changes what they assert — list each edit.
+
+| # | item | what to do |
+|---|---|---|
+| 1 | the shacks by the quarry and the farm should be the station's **main target**, not the station itself | D split `standAt` (where you stand to open a board) from `boardAt` (where the sheet stands). Make the shed the *whole* answer for those two stations: hover target, click target, the place a body walks to open it, and the anchor. `standRect('farm')`/`standRect('quarry')` return the shed. Two browser checks used `standRect('quarry')` to find the mouth — update them to ask for the mouth by name, not through `standRect`. (The item says "quarry/lab"; the lab already has its own building and its own door, so read it as the two sheds.) |
+| 2 | bench timed upgrades should **not** get the construction ornament | C3 draws barriers for every `busyAt(site)`. Restrict `drawBuildSites` to works whose row `kind` is `'building'` or `'machine'` — a rung being worked at the bench (`site: 'bench'`, `kind: 'rung'`) shows no posts, no tape, no puff. |
+| 3 | a building under construction **rises out of the ground** as it is built; when it lands, a puff and a screen shake | While `busyAt(site)` for a `kind: 'building'` work, draw the building clipped to `progressAt(site)` of its height, rising from the ground line (`ctx.save(); ctx.beginPath(); ctx.rect(x, groundY - h * p, w, h * p); ctx.clip();` around the building's own draw). Nothing is drawn above the clip. The frame the work lands: one `puff.js` puff at the building's middle-top and a shake — reuse `S.shake`/`shake()` in hooks.js/world.js at half the rock-fall strength (find the constant the rock uses and halve it; add `BUILD_SHAKE` at the end of config.js). Buildings that are already standing are unaffected. |
+| 4 | workers **still** need an animation while a building is constructed | B2 added the builder's hop and claims it runs at yard sites too. The user sees none. Reproduce first: buy a building on a fresh yard, film the builder for 10 s at 1/60, and assert its `y` varies (see `test/dance.test.mjs` for filming). If it does not hop, find why (`stepBuilder`'s `at` gating, `handsAt` at yard sites, the jig being reset by the walk) and fix it. If it does hop but is invisible, the hop is too small — raise `BUILD_HOP_H` to 2 cells and make the lunge visible. Take a shot and read it. |
+| 5 | buildings are **not** in the order they are purchased | C7 reorders only sites in `S.buildOrder`, which is filled as works *land*, and a save from before has none. Reproduce: fresh yard, buy the farm then the quarry, then a second fresh yard, quarry then farm — assert the x-order follows purchase order in both. Then load `test/fixtures/stuck-yard.json` and assert its layout is unchanged. If purchase order is not honored on a fresh yard, the bug is real — likely the order being recorded on *landing* rather than on *purchase*, so two builds started close together land in the fixed order; record it at purchase (`works.start`). |
+
+Verification: `node --test test/wave31-buildings.test.mjs`, then
+`node --test test/wave3-buildings.test.mjs test/wave3-tooltips.test.mjs test/works.test.mjs test/sites.test.mjs test/boards.test.mjs test/farm.test.mjs`,
+then the browser tier (base on `ff8b408`: 379/381; the two failures are the
+other agent's). Shots for #3 and #4 with `tools/look.mjs`, read before done.
