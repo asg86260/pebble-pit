@@ -47,7 +47,7 @@ import { makePainter } from './painter.js';
 import { addGrain, resizeGrid, settleSome, topRow, at, put, bottomY, surfaceY } from './grid.js';
 import { shakeView } from './world.js';
 import { now, frames } from './clock.js';
-import { spend, bankDust, takeCoreCells, pitRoom } from './pit.js';
+import { spend, bankDust, spendHeld, pitRoom } from './pit.js';
 import { buildShop } from './shop.js';
 import { rand } from './rng.js';
 
@@ -116,8 +116,10 @@ export function stake(cur) {
   if (!canStake(cur)) return;
   const n = stakeOf(cur);
   if (cur === 'dust') spend(n);
-  else if (cur === 'shard') { S.shards -= n; takeCoreCells(n, SHARD_CELL); }
-  else if (cur === 'spore') { S.spores -= n; takeCoreCells(n, SPORE_CELL); }
+  // Out of the hole first, and off what the rift holds for the rest: a stake is
+  // spending like any other. See `spendHeld` in pit.js.
+  else if (cur === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
+  else if (cur === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   S.pot = { cur, stake: n, n };
   pour();
 }

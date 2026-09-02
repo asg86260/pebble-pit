@@ -427,6 +427,9 @@ export const snapshot = () => ({
   rift: S.rift || 0,
   riftOpen: !!S.riftOpen,
   riftLevel: S.riftLevel || 0,
+  // and the coins through it, which the counters do not distinguish: what you
+  // own is what is in the hole plus what is in here
+  riftHeld: { ...(S.riftHeld || {}) },
   // and how many grains are in the air on their way into it, with the first
   // few of them, so a check can see the orbit rather than only the count
   gulped: (S.gulped || []).length,

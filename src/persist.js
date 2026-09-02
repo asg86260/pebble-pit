@@ -187,6 +187,10 @@ export function persist() {
     riftOpen: S.riftOpen,
     rift: S.rift,
     riftLevel: S.riftLevel,
+    // and the coins it holds, for the same reason and with the same weight:
+    // four numbers, against a pile that would otherwise have to hold every
+    // shard you ever found for the counter to be true
+    riftHeld: S.riftHeld,
     // Where the view is. Scrolling the yard is how you look at any of this, and
     // a reload that dumped you back at the rock threw away the one piece of
     // where-you-were the player sets by hand. Rounded because a pixel of a
@@ -384,6 +388,7 @@ export function restore() {
     S.riftOpen = false;
     S.rift = 0;
     S.riftLevel = 0;
+    S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
     S.pickLevel = 0;
     S.coreItem = null;
     S.miners = 0;
@@ -666,6 +671,12 @@ export function restore() {
   S.riftOpen = !!s.riftOpen;
   S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
   S.riftLevel = Math.max(0, Math.round(+s.riftLevel || 0));
+  // The coins through it, clamped to their own counters the same way. A save
+  // written before the hole swallowed anything but dust has none of these, and
+  // nought through is exactly what it had: every find still in the pile.
+  S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+  for (const k of ['cores', 'shards', 'spores', 'sparks'])
+    S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
   rehomeDust();
   seedPitCores();
   // The cut's own sand: rock laid fresh to the depth just restored above, then
@@ -730,6 +741,7 @@ export function reset(fresh = true) {
   S.riftOpen = false;
   S.rift = 0;
   S.riftLevel = 0;
+  S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
   S.paused = false;                // a new game is not a held one
   showPanel(null, true);           // nor one with the last game's board still up
   // the curtains are somebody's, and there is nobody here now

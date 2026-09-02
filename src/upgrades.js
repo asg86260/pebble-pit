@@ -17,7 +17,7 @@ import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
-import { spend, takeCoreCells, pitCapacity } from './pit.js';
+import { spend, spendHeld, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
@@ -1181,17 +1181,16 @@ export function markSectionsSeen() {
 // Take one currency out of wherever it is kept. Dust is lifted back out of the
 // pile; everything else is one grain in that pile, so paying lifts that many of
 // them out of it -- the pile always shows exactly what you are holding.
-function take(money, n) {
+export function take(money, n) {
   if (!n) return;
+  // `spendHeld` takes the grains out of the hole first and off what the rift is
+  // holding for whatever the hole did not have -- the same order paying in dust
+  // keeps, and the reason it is one call rather than a subtraction here.
   if (money === 'dust') spend(n);
-  else if (money === 'core') { S.cores -= n; takeCoreCells(n, CORE_CELL); }
-  else if (money === 'shard') { S.shards -= n; takeCoreCells(n, SHARD_CELL); }
-  else if (money === 'spore') { S.spores -= n; takeCoreCells(n, SPORE_CELL); }
-  // Nothing is priced in sparks yet. It is here so that the day something is,
-  // paying for it takes the red grains out of the pile like every other coin --
-  // a currency the pile does not know about would be the one number in this
-  // game that is not a thing you can see lying in the hole.
-  else if (money === 'spark') { S.sparks -= n; takeCoreCells(n, SPARK_CELL); }
+  else if (money === 'core') { S.cores -= n; spendHeld(n, CORE_CELL); }
+  else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
+  else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
+  else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
 }
 
 // What the coins of the grounds are worth in dust.

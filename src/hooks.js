@@ -21,7 +21,7 @@ import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize } from './world.js';
 import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restOnRock } from './rock.js';
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
-         pitCapacity, inHole } from './pit.js';
+         pitCapacity, inHole, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
 import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
@@ -36,7 +36,7 @@ import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
 import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES } from './machines.js';
-import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf } from './upgrades.js';
+import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
@@ -454,6 +454,13 @@ export const grant = (o = {}) => {              // shards and spores, for lookin
   // hole by hand first -- and a dev hook that knows three of the four counters
   // is a hook you have to remember the exception to.
   if (o.sparks) { S.sparks += o.sparks; S.seenSpark = true; }
+  // And the grains that go with them. Every one of these counters is a *pile*
+  // and not a number, exactly as dust is -- the coin you own is the coin lying
+  // in the hole -- so a handout that moved the counter and not the cells was
+  // the game's central rule broken by its own dev hook, for four coins out of
+  // five. `seedPitCores` lays down what the hole will take and sends the rest
+  // through the rift, which is where it would have gone in play.
+  if (o.shards || o.spores || o.cores || o.sparks) seedPitCores();
   // And dust, which is now the fifth counter and the one every row asks for --
   // see `billOf` in upgrades.js. The note above about knowing three of the four
   // applies twice over: a check granting shards to buy a shard row got a row it
@@ -849,6 +856,11 @@ export const HANDLES = {
   __rows: allRows, __boards: boards, __unsection: unsection,
   __lab: openLab, __research: finishResearch, __grant: grant,
   __spend: spendDust,
+  // Pay a price in any coin, through the very function every row's bill goes
+  // through. Not a way of setting a counter: what a check using this is about
+  // is *how* the payment is taken -- out of the hole first, out of the rift
+  // after -- and a hook that subtracted a number would prove none of it.
+  __pay: take,
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give, __finish: finishWorks,

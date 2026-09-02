@@ -116,16 +116,36 @@ function cleared(fan) {
   // running the sky is being filled at the same time it is being emptied, and
   // the difference of two rates is not a measurement of either.
   fromTheField(fan, []);
-  const before = state().smog.haze;
-  run(30);
-  const s = state().smog;
-  return { took: before - s.haze, left: s.haze, rate: s.scrubbing / 60, rains: s.rains };
+  // Over a stretch with **no rain in it**, tried a few times over.
+  //
+  // "Nothing allowed to rain" was the premise and nothing enforced it: a shower
+  // takes the whole sky down at once, so a run that happens to catch one reads
+  // as the house clearing seventeen hundred haze and the fan making the sky
+  // worse. Whether one lands inside any given thirty seconds is the seeded
+  // generator's business, and the premise held by luck until something else
+  // moved the run along -- the same fault, and the same cure, as its sibling
+  // below and as the dance's seed. A shower ends clean, so the stretch after
+  // one is an ordinary sky again.
+  // The sky is wound back up for each attempt: a shower takes it to nothing, and
+  // a second stretch measured on an empty sky is a house with nothing to clear.
+  let before = 0, s = null, dry = false;
+  for (let tries = 0; tries < 4 && !dry; tries++) {
+    window.__air({ haze: 1800 });
+    const rains = yard.S.rains;
+    before = state().smog.haze;
+    run(30);
+    s = state().smog;
+    dry = yard.S.rains === rains;
+  }
+  return { took: before - s.haze, left: s.haze, rate: s.scrubbing / 60, rains: s.rains, dry };
 }
 
 group('a bigger fan is a bigger draught, not a bigger number', async () => {
   const bare = cleared(0);
   const full = cleared(5);
   return [
+    ok(bare.dry && full.dry, 'both stretches were measured without a shower in them',
+       `bare ${bare.dry}, full ${full.dry}`),
     ok(bare.took > 0, 'a house with no fan on it still pulls the sky down',
        `${Math.round(bare.took)} haze in thirty seconds`),
     // The ladder is five rungs of a quarter each -- 1.25^5, a little over three

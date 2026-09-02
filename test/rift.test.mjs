@@ -63,12 +63,16 @@ group('a torn rift swallows on its own, and the hole starts draining', async () 
   run(20);
   const after = state();
 
+  // Everything through it, of whatever kind: the hole swallows a shard exactly
+  // as it swallows a grain, so what is through is the dust plus the coins.
+  const through = s => s.rift + Object.values(s.riftHeld).reduce((a, b) => a + b, 0);
+
   return [
     ok(full.riftOpen, 'the rift is torn', `${full.riftOpen}`),
-    ok(after.rift > 0, 'and grains are going through with nobody standing at it',
-       `${after.rift}`),
-    ok(after.pitDust < full.pitDust, 'so the hole is draining',
-       `${full.pitDust} -> ${after.pitDust}`),
+    ok(through(after) > 0, 'and grains are going through with nobody standing at it',
+       `${through(after)}`),
+    ok(after.pitGrains < full.pitGrains, 'so the hole is draining',
+       `${full.pitGrains} -> ${after.pitGrains}`),
     // The whole point: nothing is spent. The counter does not move.
     ok(after.stored === full.stored,
        'and none of it is spent -- the counter has not moved',
@@ -88,14 +92,16 @@ group('the hole takes dust again once the rift has made room', async () => {
   runUntil(() => state().rift > 500, 120);
 
   // Room in the hole again, so banking works: the crew stop standing down.
-  const room = yard.pitMod.pitCapacity() - state().pitDust;
+  const room = yard.pitMod.pitCapacity() - state().pitGrains;
   const before = state().stored;
   window.__give(400);
   const after = state();
 
   return [
-    ok(stuck.pitDust >= yard.pitMod.pitCapacity() - 200,
-       'the hole was full to start with', `${stuck.pitDust}`),
+    // Grains, not dust: the coins granted above are in the pile too, and every
+    // one of them takes a cell of the same hole.
+    ok(stuck.pitGrains >= yard.pitMod.pitCapacity() - 200,
+       'the hole was full to start with', `${stuck.pitGrains}`),
     ok(room > 0, 'the rift has made room in it', `${room} cells`),
     ok(after.stored > before, 'and dust banks into it again',
        `${before} -> ${after.stored}`)
@@ -178,5 +184,71 @@ group('a save with a rifter in it loses nobody', async () => {
     ok(yard.S.workers.length === n0, 'nobody is lost once it runs',
        `${yard.S.workers.length} against ${n0}`),
     ok(back.riftOpen && back.rift >= 0, 'the rift is still torn', `${back.riftOpen}`)
+  ];
+});
+
+// The hole holds everything, not just dust. A shard, a spore, a spark and a
+// core all go through the black hole the way a grain does -- see `### 7. The
+// hole holds everything` in DESIGN.md. What this checks is the bargain: the
+// counters do not move, the pile shows the counter less what is through, and
+// spending reaches into the rift only once the pile has none.
+group('the hole swallows the coins too, and they are still yours', async () => {
+  readyYard();
+  window.__grant({ shards: 300, spores: 300, cores: 4 });
+  window.__buy('rift');
+  for (let i = 0; i < 6; i++) window.__buy('riftrate');
+  // Measured from *after* the hole is seeded, not from before it. A full hole
+  // cannot hold every coin you own, so some are through the rift before a
+  // single frame has run -- which is the right answer and not what this group
+  // is about. What it is about is the swallowing, so the reading starts here.
+  const before = state();
+
+  // Long enough for the rift to eat well past the coins lying on top.
+  const went = runUntil(() => state().riftHeld.shards > before.riftHeld.shards
+                              && state().riftHeld.spores > before.riftHeld.spores, 120);
+  const after = state();
+  const pile = kind => yard.pitMod.heldInHole(kind);
+
+  return [
+    ok(before.shards === after.shards && before.spores === after.spores,
+       'the counters do not move: nothing is spent and nothing is lost',
+       `shards ${before.shards} -> ${after.shards}, spores ${before.spores} -> ${after.spores}`),
+    ok(went && after.riftHeld.shards > before.riftHeld.shards,
+       'shards go through the black hole',
+       `${before.riftHeld.shards} -> ${after.riftHeld.shards} of ${after.shards}`),
+    ok(after.riftHeld.spores > before.riftHeld.spores, 'and spores',
+       `${before.riftHeld.spores} -> ${after.riftHeld.spores} of ${after.spores}`),
+    // The rule the whole feature stands on, asked of a coin rather than of dust.
+    ok(pile('shards') + after.riftHeld.shards === after.shards,
+       'the pile shows what you own less what is through',
+       `${pile('shards')} + ${after.riftHeld.shards} against ${after.shards}`)
+  ];
+});
+
+group('a coin is spent out of the hole first, and the rift after', async () => {
+  readyYard();
+  window.__grant({ shards: 40 });
+  window.__buy('rift');
+  for (let i = 0; i < 8; i++) window.__buy('riftrate');
+  // Everything through: run until the hole has no shards left in it at all.
+  const gone = runUntil(() => yard.pitMod.heldInHole('shards') === 0
+                              && state().riftHeld.shards > 0, 200);
+  const held = state().riftHeld.shards, owned = state().shards;
+
+  // Spend more than the pile has, which is all of it: it has to come out of the
+  // other dimension, because that is the only place any of it is.
+  window.__pay('shard', 5);
+  const after = state();
+
+  return [
+    ok(gone, 'every shard in the hole has gone through', `${held} through, ${owned} owned`),
+    ok(after.shards === owned - 5, 'the counter comes down by what was spent',
+       `${owned} -> ${after.shards}`),
+    ok(after.riftHeld.shards === held - 5,
+       'and it comes out of the rift, the hole having none',
+       `${held} -> ${after.riftHeld.shards}`),
+    ok(yard.pitMod.heldInHole('shards') + after.riftHeld.shards === after.shards,
+       'the two of them are still the counter',
+       `${yard.pitMod.heldInHole('shards')} + ${after.riftHeld.shards} against ${after.shards}`)
   ];
 });

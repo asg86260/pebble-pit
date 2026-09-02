@@ -408,9 +408,12 @@ rifter job removed (torn is open, saves restaff the body to carrying); and the
 rift as a black disc hanging in the pit at the near end with the `gulped`
 grains orbiting into it.
 
-## 10. The hole holds everything — designed, not built
+## 10. The hole holds everything — DONE
 
-**Status:** designed (`### 7. The hole holds everything` under the endgame
-pass in DESIGN.md), 2026-09-01, waiting on sign-off. The rift swallows every
-kind of cell, counted by kind in `S.riftHeld`; the pile shows the counter less
-what is through; paying takes from the pile first and the rift after.
+**Status:** built, 2026-09-01. The rift swallows every kind of cell, counted by
+kind in `S.riftHeld`; the pile shows the counter less what is through; paying
+takes from the pile first and the rift after. Written up under `### 7. The hole
+holds everything` in DESIGN.md, including the two counter/pile disagreements it
+turned up on the way (the red was never reconciled into the pile at all, and
+`grant` moved four of the five counters without the cells) and the new verify
+rule 8 that would have caught both.

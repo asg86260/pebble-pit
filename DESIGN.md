@@ -2776,7 +2776,7 @@ has actually turned dust away. Its ladder, `widen the black hole`, sits beside
 it for the same reason the wizards' ladders do: what a board is about is what
 stands on it. The bench's `the hole` section is gone with them.
 
-### 7. The hole holds everything (design, not built)
+### 7. The hole holds everything (built)
 
 **What it is now.** The rift swallows dust and nothing else. `lift` steps over
 any cell that is not dust, so a shard, a spore, a spark or a core banked in the
@@ -2812,9 +2812,46 @@ that is the right picture for the endgame.
 **Saved** as four numbers beside `rift`, clamped to the counters on the way in
 the way `rift` is clamped to `stored`; a save from before has nought through
 and every find still in the pile, which is what it had. The mark and tooltip on
-the lip are untouched. `rift.test.mjs` gains a group: a find banked in a hole
-the rift is eating goes through, the counter holds, and it is spent out of the
-rift once the pile has none.
+the lip are untouched. `rift.test.mjs` gains two groups: the coins go through
+and the counters do not move, and a coin is spent out of the hole first and the
+rift after -- the second through `__pay`, which is the very function every row's
+bill goes through rather than a hook that subtracts a number.
+
+**What building it turned up.** Two things, both of them the same fault: a
+counter and a pile that had been allowed to disagree.
+
+- **The red was never in the pile's books.** `HELD` -- the table
+  `seedPitCores` reconciles against -- listed cores, shards and spores and not
+  sparks, because nothing had ever been priced in red when it was written. So a
+  spark went into the hole when it was banked and was never reconciled again,
+  and a reload put the counter back without the grains. It is in the table now,
+  and every coin is reconciled the same way or the pile is showing four of the
+  five things you own.
+- **Granting a coin moved the counter and not the cells.** `grant` did the
+  honest thing for dust -- bank the grains, overflow through the rift -- and
+  simply added to the counter for the other four, which is the game's central
+  rule broken by its own dev hook. It seeds the pile now.
+
+And `seedPitCores` sends through the rift whatever the hole will not take,
+which is the answer `rehomeDust` already gave for dust. Without it an endgame
+hole -- full to the brim -- had nowhere to put a find, and the counter was left
+naming something the yard could not point at.
+
+**A new rule watches it.** verify.js rule 8: for every coin, what is lying in
+the hole plus what is through the rift is what the counter says, checked once a
+second in one walk of the plot. It is the oldest rule about the pile -- the
+number and the picture never say different things -- asked of the four coins
+rather than only of dust, and it caught both faults above the first time it
+ran.
+
+**One knock-on, in the checks rather than the game.** `stuck-yard.json` owns
+24,009 sparks and 9,151 spores that a full hole cannot show, so restoring it now
+sends them through the rift where before they were quietly absent from the pile.
+That shifts the seeded generator along, and a shower landed inside a stretch two
+of the fan checks measure across -- checks whose own premise was "with nothing
+allowed to rain", enforced by nothing. They wind the sky back up and measure
+again until they get a stretch with no shower in it, which is the cure their
+sibling had already been given.
 
 ### What was decided, and what the measurement said
 

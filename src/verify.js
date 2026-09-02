@@ -47,6 +47,14 @@ import { P } from './config.js';
 import { ways, wayAt, WORKINGS } from './route.js';
 import { KIT, KIT_JOBS, TRADE_OF, JOB_OF, stockOf } from './kit.js';
 import { count, countDust } from './grid.js';
+import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind } from './config.js';
+
+// The coins the hole holds, and the counter each one belongs to. The same table
+// `HELD` in pit.js is built from, and it is here rather than imported because
+// this file is the one thing that must not trust the code it is checking.
+const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
+                    [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
+const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
 
@@ -354,6 +362,31 @@ export function verifyWorld() {
         const dust = countDust(b);
         if (b.d !== dust)
           fail(`${name} has lost count of its dust`, `ledger says ${b.d}, the cells say ${dust}`);
+      }
+    }
+
+    // --- rule 8: the coins are in the hole or through the rift ------------------
+    // The oldest rule about the pile is that the number and the picture never say
+    // different things, and the rift keeps it by narrowing what the picture is
+    // about: what you own is what is lying in the hole plus what has gone through.
+    // That holds for every coin the hole takes, not only for dust -- the hole
+    // swallows a shard exactly as it swallows a grain -- so it is checked for
+    // every one of them rather than for the one that happened to be written first.
+    // One walk for all four, not four walks: the hole is forty thousand cells and
+    // this file's own rule is that it costs nothing worth measuring.
+    if (pit.grid) {
+      const held = S.riftHeld || {};
+      const inPile = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+      for (const v of pit.grid) {
+        if (!v) continue;
+        const key = COIN_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
+        if (key) inPile[key]++;
+      }
+      for (const [, key] of COIN_CELLS) {
+        const owned = S[key] || 0, through = held[key] || 0;
+        if (inPile[key] + through !== owned)
+          fail(`the ${key} in the hole and the rift are not what you own`,
+               `${inPile[key]} in the pile + ${through} through = ${inPile[key] + through}, counter ${owned}`);
       }
     }
   }

@@ -287,14 +287,18 @@ const pileTarget = () => Math.min(inHole(), pitCapacity());
 // rift swallowing -- and they differ only in where the grains go and what that
 // looks like. One walk, two destinations: writing the second one as its own copy
 // of this loop is how the two of them drift apart.
-function lift(n, leaving) {
+// `takes` says which cells this lift is about. Paying in dust lifts dust, so
+// that is the default; the rift takes whatever is on top, which is what makes it
+// a hole rather than a sieve -- see `swallow`.
+function lift(n, leaving, takes = isDust, took = null) {
   let left = n;
   for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
     for (let c = 0; c < pit.cols && left > 0; c++) {
       const v = at(pit, c, r);
-      if (!isDust(v)) continue;
+      if (!takes(v)) continue;
       put(pit, c, r, 0);
       left--;
+      if (took) took(v);
       if (leaving && leaving.length < 200) {   // a few hundred is plenty to read
         leaving.push({
           x0: pit.x + c * pit.p,
@@ -351,11 +355,29 @@ export function spend(cost) {
 // the mouth for no reason anybody could act on; what the hole is for is what is
 // coming *in*, and the rift is where the overflow goes. The way to see your
 // dust again is to spend it.
+// It takes **everything**, not only dust. A grain is a grain whatever it is:
+// the shards, the spores, the red and the cores go through it exactly as the
+// dust does, and what it holds of each is counted in `S.riftHeld`. It used to
+// step over anything that was not dust, which left an endgame hole with its
+// dust eaten away to nothing and a scatter of finds lying on the floor under a
+// black disc that would not touch them -- a hole that holds everything except
+// the four things it does not hold, which is the rule the pit threw out once
+// already (see `bankDust`).
+//
+// Nothing is spent and nothing is lost, for a find the same as for dust: the
+// counters do not move, the pile shows the counter less what is through, and
+// the two of them together are still what you own.
 export function swallow(n) {
-  const take = Math.max(0, Math.min(Math.floor(n), dustIn(pit)));
+  const take = Math.max(0, Math.min(Math.floor(n), count(pit)));
   if (!take) return 0;
-  S.rift = (S.rift || 0) + take;
-  lift(take, S.gulped);
+  const held = riftHeld();
+  let dust = 0;
+  lift(take, S.gulped, v => !!v, v => {
+    if (isDust(v)) { dust++; return; }
+    const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
+    if (key) held[key]++;
+  });
+  S.rift = (S.rift || 0) + dust;
   return take;
 }
 
@@ -413,28 +435,68 @@ export function rehomeDust() {
 // top up after a resize or a reload, and take them back out when they are spent.
 // Nothing about where any one of them sits is worth saving, so this is also how
 // they come back from a save.
+//
+// The red is in here, and was not. Nothing was ever priced in sparks, so a
+// spark went into the pile when it was banked and was never reconciled again --
+// which meant a reload put the counter back and the grains did not come with
+// it. Every coin the hole holds is reconciled the same way or the pile is
+// showing four of the five things you own.
 const HELD = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
-              [SPORE_CELL, 'spores']];
+              [SPORE_CELL, 'spores'], [SPARK_CELL, 'sparks']];
+
+// The same table read the other way: which counter a cell belongs to. Derived,
+// so a fifth coin is a line above rather than a second place to forget.
+const HELD_OF = Object.fromEntries(HELD.map(([cell, key]) => [cell, key]));
+
+// What the rift is holding of each, and never undefined: a save from before it
+// existed has none, and every read here would otherwise have to guard.
+export function riftHeld() {
+  if (!S.riftHeld) S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
+  return S.riftHeld;
+}
+
+// How many of a kind are actually in the hole, which is what the pile shows:
+// what you own, less what has gone through the rift. The counter on the card is
+// still the two together -- exactly the split `inHole` makes for dust.
+export const heldInHole = key => Math.max(0, (S[key] || 0) - (riftHeld()[key] || 0));
 
 export function seedPitCores() {
   if (!pit.grid) return;
-  for (const [cell, count] of HELD) {
+  const held = riftHeld();
+  for (const [cell, key] of HELD) {
     let have = 0;
     for (const v of pit.grid) if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) have++;
-    const want = S[count];
+    const want = heldInHole(key);
     for (let i = have; i < want; i++) {
       // near the lip, where the dust is and where you can see them: a dug-out pit
       // runs a long way right, and one out in the empty end is one nobody finds.
       // A hole that has not been dug that far is spread over what there is.
-      addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * Math.min(700, pit.w), null,
-               cell === CORE_CELL ? cell : someFind(cell));
+      if (!addGrain(pit, pit.x + (0.1 + 0.8 * ((i + 0.5) / Math.max(1, want))) * Math.min(700, pit.w), null,
+                    cell === CORE_CELL ? cell : someFind(cell))) break;
+      have++;
+    }
+    // Whatever the hole would not take is through the rift, which is the same
+    // answer `rehomeDust` gives for dust and for the same reason: nothing is
+    // clamped and nothing is destroyed, and a coin the pile cannot show is not
+    // a coin you have stopped owning. An endgame hole is full to the brim, so
+    // without this a find had nowhere to be and the counter was left saying you
+    // held something the yard could not point at.
+    const over = (S[key] || 0) - (held[key] || 0) - have;
+    if (over > 0) {
+      held[key] = (held[key] || 0) + over;
+      S.riftOpen = true;
     }
     if (have > want) takeCoreCells(have - want, cell);
   }
 }
 
-// lift cells of one kind out of the pile, topmost first
+// Lift cells of one kind out of the pile, topmost first, and say how many were
+// actually there. What it could not find is not missing: it is through the rift,
+// and `take` in upgrades.js pays the rest out of there -- out of the hole first
+// and the other dimension only after it is empty, which is the rule paying in
+// dust already keeps.
 export function takeCoreCells(n, cell = CORE_CELL) {
+  let got = 0;
   for (let r = pit.rows - 1; r >= 0 && n > 0; r--) {
     for (let c = 0; c < pit.cols && n > 0; c++) {
       const v = at(pit, c, r);
@@ -442,7 +504,25 @@ export function takeCoreCells(n, cell = CORE_CELL) {
       if (v === cell || (cell !== CORE_CELL && findKind(v) === cell)) {
         put(pit, c, r, 0);
         n--;
+        got++;
       }
     }
   }
+  return got;
+}
+
+// Spending one of the coins the pile holds: the grains come out of the hole
+// where you can see them go, and whatever the hole did not have comes off what
+// the rift is holding. One call, so the two halves cannot be done in one place
+// and forgotten in another -- `take` in upgrades.js and the casino's stake both
+// go through here.
+export function spendHeld(n, cell) {
+  const key = HELD_OF[cell];
+  const got = takeCoreCells(n, cell);
+  const over = n - got;
+  if (over > 0 && key) {
+    const held = riftHeld();
+    held[key] = Math.max(0, (held[key] || 0) - over);
+  }
+  return got;
 }

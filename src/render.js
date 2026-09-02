@@ -17,7 +17,7 @@ import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
-import { pitDepth, pitFull } from './pit.js';
+import { pitDepth, pitFull, heldInHole } from './pit.js';
 
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors, progress } from './lab.js';
@@ -3282,7 +3282,11 @@ export function drawPit() {
 let coreCells = [];
 
 export function drawPitCores() {
-  const want = S.cores;
+  // What is *in the hole*, not what you own: a core through the rift is not in
+  // the pile to be found, and asking for it would fail the kept-cells check
+  // every frame and search the whole hole again looking for something that is
+  // in another dimension.
+  const want = heldInHole('cores');
   if (!want) return;
   let kept = coreCells.length === want * 2;
   for (let i = 0; kept && i < coreCells.length; i += 2)

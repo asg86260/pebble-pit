@@ -102,8 +102,14 @@ export const S = {
   // dust you own -- see `inHole` in pit.js, and `## The rift` in DESIGN.md.
   seenFullPit: false,     // the hole has turned a grain away at least once
   riftOpen: false,        // the rift is bought
-  rift: 0,                // and how many grains are through it
+  rift: 0,                // and how many grains of dust are through it
   riftLevel: 0,           // how fast it swallows: an endless ladder, not a capacity
+  // And what is through it that is not dust. One capacity, one queue, one rift:
+  // a grain is a grain whatever it is, so the hole swallows a shard exactly as
+  // it swallows dust, and this is where those go. Kept by kind rather than as
+  // one total, because each kind is its own counter on the card and the pile
+  // shows the counter *less* what is through -- see `seedPitCores` in pit.js.
+  riftHeld: { cores: 0, shards: 0, spores: 0, sparks: 0 },
   hideDone: false,        // whether finished ladders are folded off the boards
 
   // --- cores ---
