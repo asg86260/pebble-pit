@@ -27,6 +27,16 @@ export const TESTS = [
     row?.click();
     await sleep(60);
     run(1);
+    // Paid, but not built. A house is a timed build now -- C1 in
+    // docs/wave-feedback3.md: the dust goes at the press, a builder walks out to
+    // the block and puts it up over a couple of minutes, and only then is
+    // there a room and somebody to live in it. So the dust reads on this
+    // snapshot and the body and the room read on the next, after the build has
+    // landed. Waited for rather than timed, because how long a build takes is
+    // the works' business and a check that guessed would break the day it was
+    // tuned.
+    const paid = state();
+    for (let i = 0; i < 400 && state().crew <= paid.crew; i++) run(1);
     const after = state();
     window.__crew(0, 0);
     return [
@@ -40,8 +50,10 @@ export const TESTS = [
          'saying where it takes you, like every other count', before.houseRow),
       ok(after.crew === before.crew + 1, 'buying one takes somebody on',
          `${before.crew} -> ${after.crew}`),
-      ok(after.stored < before.stored, 'and it is paid for in dust',
-         `${before.stored} -> ${after.stored}`),
+      ok(paid.stored < before.stored, 'and it is paid for in dust, up front',
+         `${before.stored} -> ${paid.stored}`),
+      ok(paid.crew === before.crew, 'but nobody arrives until it is built',
+         `${before.crew} -> ${paid.crew} a second after paying`),
       ok(after.houses.cubes > before.houses.cubes,
          'and the block has another room standing in it',
          `${before.houses.cubes} -> ${after.houses.cubes}`)
