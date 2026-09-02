@@ -150,6 +150,27 @@ for (const t of TUNABLE) {
 
 line('', box => {
   button(box, 'reset the game', () => window.__reset());
+  // Your whole yard, on the clipboard. A report about something the yard is
+  // doing wrong is only as good as the yard it happened in, and "open the
+  // console and type this" is a thing to get wrong at the end of a sentence
+  // about something else. This is one button: press it, paste it, and whoever
+  // is looking has your game rather than a description of it.
+  button(box, 'copy save', async () => {
+    const raw = localStorage.getItem('boulder-clicker/v4') || '';
+    const say = n => { n.textContent = raw ? 'copied ' + Math.round(raw.length / 1024) + 'kb' : 'nothing saved yet'; };
+    try {
+      await navigator.clipboard.writeText(raw);
+      say(document.querySelector('[data-said]'));
+    } catch {
+      // Not every page is allowed the clipboard. Put it somewhere you can get
+      // at it by hand rather than failing silently.
+      window.__save = raw;
+      document.querySelector('[data-said]').textContent = 'in window.__save';
+    }
+  });
+  const said = document.createElement('b');
+  said.dataset.said = '1';
+  box.appendChild(said);
 });
 
 // Which run this is. Read-only on purpose: a seed is a fact about a whole run
