@@ -187,15 +187,36 @@ export function layPiles() {
 // A save with nothing in `S.buildOrder` -- new, or from before this existed --
 // gets the fixed order back exactly, because an empty list bought nothing and
 // leaves everything after the bench and the house in the table's own order.
+// Three places the order does not touch, and each is pinned for a reason
+// written down somewhere else.
+//
+// The bench and the settlement keep the front of the walk because neither is
+// ever bought through a row of its own -- the bench is there from the first
+// frame and the settlement is what hiring has always drawn -- so there is no
+// purchase to order them by.
+//
+// The casino keeps the BACK of it, and that one is a design decision rather
+// than a mechanical one: "the last thing on the ground, out past the lab. It
+// is the far end of the walk on purpose: it is the one place in the yard that
+// makes nothing, and a place that makes nothing should be a place you went
+// to" (config.js, over TO_CASINO). Ordering by purchase would let somebody
+// who bought it early have it nearest to hand, which is the exact opposite of
+// what it is for. `boards.js` says so too, and said so out loud the first time
+// this was written without the pin.
+const PINNED_FIRST = ['bench', 'house'];
+const PINNED_LAST = ['casino'];
+
 function siteOrder() {
-  const rest = SITES.filter(row => row.key !== 'bench' && row.key !== 'house');
+  const pinned = [...PINNED_FIRST, ...PINNED_LAST];
+  const rest = SITES.filter(row => !pinned.includes(row.key));
   const bought = (S.buildOrder || []).filter(k => rest.some(row => row.key === k));
   const waiting = rest.filter(row => !bought.includes(row.key));
+  const pick = keys => keys.flatMap(k => SITES.filter(row => row.key === k));
   return [
-    ...SITES.filter(row => row.key === 'bench'),
-    ...SITES.filter(row => row.key === 'house'),
+    ...pick(PINNED_FIRST),
     ...bought.map(k => rest.find(row => row.key === k)),
-    ...waiting
+    ...waiting,
+    ...pick(PINNED_LAST)
   ];
 }
 
