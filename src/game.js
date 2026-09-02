@@ -31,7 +31,15 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
 import { sampleRates, stepLab, stepSmoke } from './lab.js';
-import { stepWorks } from './works.js';
+import { stepWorks, setGround } from './works.js';
+
+// The ground is laid the moment the order the yard was bought in changes, and
+// not on the frame after. `layPiles` would catch it next frame -- the order is
+// in its key now -- but a frame late is too late for anything that reads a
+// position in the same tick as the purchase: `__finish` in the checks does
+// exactly that, and so does a player's click landing a build and the board
+// seating itself off where the building now is.
+setGround(layPiles);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir } from './hands.js';

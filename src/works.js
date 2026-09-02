@@ -87,6 +87,13 @@ export const handsAt = site => Math.max(0, handsHook(site) | 0);
 let staffHook = () => {};
 export const setStaff = fn => { staffHook = fn; };
 
+// And who lays the ground when the order the yard was bought in changes. Same
+// shape as `setStaff` and for the same reason: this file knows what happened
+// and nothing about where anything stands, and world.js knows the walk. Wired
+// in game.js, which is the one file that already imports both.
+let groundHook = () => {};
+export const setGround = fn => { groundHook = fn; };
+
 // --- the rows themselves ------------------------------------------------------
 // Which row a work belongs to, so a work coming out of a save -- which is a key
 // and two numbers, because a function is not a thing you can write down -- knows
@@ -196,12 +203,25 @@ export function stepWorks(dt) {
     // door and this is not, so the bar over the site has been saying it for the
     // whole of the build.
     rowFor(w.key)?.buy();
-    // And the yard remembers it broke this ground, so the next time the table
-    // is walked -- which is the next reload, not this frame; nothing here
-    // moves anything already standing -- this one stands where it was bought
-    // relative to the rest, not where the fixed table always put it.
+    // And the yard remembers it broke this ground, so that this place stands
+    // where it was bought relative to the rest rather than where the fixed
+    // table always put it.
+    //
+    // The ground is laid again **here**, on the frame the order changes, and
+    // not left for the next walk to notice. Left to the next walk it was left
+    // for the next *reload*: `layPiles` answers from a cached key and nothing
+    // in that key had moved, so a yard could be played for an hour with the
+    // order recorded perfectly and every building standing where the table
+    // would have put it anyway. Now the key carries the order (see
+    // `groundKey`), which fixes it from the following frame -- and a frame
+    // later is still too late for anything that reads a position in the same
+    // tick as the purchase, which is what `__finish` does and what a check
+    // that buys a building and then walks up to it does.
     const opened = OPENS_PLACE[w.key];
-    if (opened && !S.buildOrder.includes(opened)) S.buildOrder = [...S.buildOrder, opened];
+    if (opened && !S.buildOrder.includes(opened)) {
+      S.buildOrder = [...S.buildOrder, opened];
+      groundHook();
+    }
     staffHook();
     S.dirty = true;
   }
