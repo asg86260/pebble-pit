@@ -56,11 +56,19 @@ export function spawnSpoil(px, py, shade, key = 'rock') {
 // It also works from *below* where it is going, which is what the quarry needs:
 // thrown off the floor of an open cut, the pop has to lift it over the rim
 // before any of the rest applies. That is one number, not another throw.
-export function aim(x, y, land, size) {
+//
+// `rise`, when given, replaces the distance-sized pop with one sized to reach
+// exactly that height above the ground line before it starts down again --
+// see B3 in wave-feedback3.md, where a core lobbed off the lip wants a
+// particular peak (about ninety world pixels) rather than whatever a chip's
+// own travel distance would have picked.
+export function aim(x, y, land, size, rise = null) {
   const target = S.groundY - size;                     // the line it comes down to
   const climb = Math.max(0, y - target);               // how far up before any of that
-  const pop = Math.max(2 + Math.min(4.5, Math.abs(land - x) / 90),
-                       Math.sqrt(2 * GRAV * (climb + P * 8)));
+  const pop = rise != null
+    ? Math.sqrt(2 * GRAV * Math.max(P, rise - (S.groundY - y)))
+    : Math.max(2 + Math.min(4.5, Math.abs(land - x) / 90),
+               Math.sqrt(2 * GRAV * (climb + P * 8)));
   const t = (pop + Math.sqrt(Math.max(0, pop * pop + 2 * GRAV * (target - y)))) / GRAV;
   return { vx: (land - x) / t, vy: -pop };
 }

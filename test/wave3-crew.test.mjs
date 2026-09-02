@@ -1,0 +1,178 @@
+// Track B (crew) -- feedback3.md. Four items, three about a body's own
+// behaviour and one about a real bug:
+//
+//   B1  one builder to a job, not three
+//   B2  a builder at a busy site hops rather than stands
+//   B3  a core banked off the lip is lobbed, not dropped
+//   B4  a janitor is not starved of its own mess by a crowd on the shared kind
+//
+// B5, the mouth-crossing fix, has its own test file (muck-reach.test.mjs) and
+// is not repeated here.
+
+import { group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
+import { yard } from './helpers.mjs';
+import { BUILD_GANG, BUILD_HOP_MS, BUILD_HOP_H, CORE_LOB_H, P, WORKER } from '../src/config.js';
+import { bench } from '../src/state.js';
+
+group('one builder to a bench rung, not a gang of three', async () => {
+  window.__reset();
+  window.__crew(0, 6);                    // six spare hands, all could pile on
+  window.__grant({ dust: 90000 });
+  window.__buy('carry');                  // a bench rung: kind 'rung', site 'bench'
+
+  const buildersAt = () => yard.S.workers.filter(w => w.type === 'builder').length;
+  run(2);                                 // long enough for the crowd to settle
+  return [
+    ok(BUILD_GANG === 1, 'the gang is one body, not three', `${BUILD_GANG}`),
+    ok(buildersAt() <= 1, 'and no more than one is actually made a builder',
+       `${buildersAt()} builders for six spare hands`)
+  ];
+});
+
+group('a builder at the bench hops rather than stands', async () => {
+  window.__reset();
+  window.__crew(0, 3);
+  window.__grant({ dust: 90000 });
+  window.__buy('carry');
+  // Give the one builder time to walk over and arrive.
+  const arrived = runUntil(() =>
+    yard.S.workers.some(w => w.type === 'builder' && w.site === 'bench' && w.goal === 'at'), 30);
+  const b = yard.S.workers.find(w => w.type === 'builder');
+
+  // Filmed a frame at a time: where its feet are, relative to the bench's own
+  // top edge, over a few whole hops.
+  const grounded = bench.y - WORKER;         // feet planted on the bench's top
+  let lo = Infinity, hi = -Infinity, sawLunge = false;
+  const secs = (BUILD_HOP_MS / 1000) * 3;
+  for (let f = 0; f < Math.round(secs * 60); f++) {
+    run(1 / 60);
+    lo = Math.min(lo, b.y);
+    hi = Math.max(hi, b.y);
+    if (b.lunge > 0.9) sawLunge = true;
+  }
+  window.__crew(0, 0);
+
+  return [
+    ok(arrived, 'the one builder gets to the bench', `site ${b.site}, goal ${b.goal}`),
+    // It comes down on the bench's own top edge, not the ground -- climbing on
+    // is the whole of B2's ask.
+    ok(Math.abs(hi - grounded) < 1, 'it lands on the bench, feet on its top edge',
+       `${hi} vs ${grounded}`),
+    // A cell high (BUILD_HOP_H), not the dance's three -- and plainly moving:
+    // a body that never left the ground is a body standing still with extra
+    // words around it.
+    ok(hi - lo > P * (BUILD_HOP_H - 0.3) && hi - lo < P * (BUILD_HOP_H + 1.5),
+       'it hops about a cell high, not the dance\'s three',
+       `${(hi - lo).toFixed(1)}px of travel`),
+    ok(sawLunge, 'and there is a lunge at the bottom of the hop', `lunge ${b.lunge}`)
+  ];
+});
+
+group('the bench rung still finishes at the same rate, hop or no hop', async () => {
+  // B2 says the animation costs nothing: `workFor`/`handsAt` never ask where a
+  // body's feet are. Proven the direct way -- build the same rung twice, once
+  // watched frame by frame (forcing the jig to run every tick) and once fast
+  // -- and check they land in the same span of ticks.
+  const building = () => Object.values(state().works || {}).some(w => w.key === 'carry');
+
+  window.__reset();
+  window.__crew(0, 2);
+  window.__grant({ dust: 90000 });
+  window.__buy('carry');
+  let secsFast = 0;
+  while (building() && secsFast < 240) { run(1); secsFast++; }
+  const doneFast = !building();
+  window.__crew(0, 0);
+
+  window.__reset();
+  window.__crew(0, 2);
+  window.__grant({ dust: 90000 });
+  window.__buy('carry');
+  let framesFramed = 0;
+  while (building() && framesFramed < 240 * 60) { run(1 / 60); framesFramed++; }
+  const doneFramed = !building();
+  const secsFramed = Math.round(framesFramed / 60);
+  window.__crew(0, 0);
+
+  return [
+    ok(doneFast, 'the rung finishes at all, run a second at a time', `${secsFast}s`),
+    ok(doneFramed, 'and finishes watched a frame at a time too', `${secsFramed}s`),
+    // The animation is decorative: `workFor`/`handsAt` never ask where a
+    // body's feet are, so the same rung should take the same span of seconds
+    // whether the jig is ticked once a second or sixty times.
+    ok(Math.abs(secsFast - secsFramed) <= 2,
+       'the same work, watched a second at a time or a frame at a time',
+       `${secsFast}s vs ${secsFramed}s`)
+  ];
+});
+
+group('a core off the lip is lobbed, not dropped', async () => {
+  window.__reset();
+  window.__crew(0, 1);
+  const w = yard.S.workers.find(o => o.type === 'hauler');
+
+  // Handed a core and walked right up to the lip, so the very next frame is
+  // the toss.
+  w.carry = 0; w.load = []; w.hasCore = true; w.goal = 'dump';
+  w.x = yard.pit.x - WORKER - 0.4;
+  yard.S.coreItem = null;
+  yard.S.cores = 0;
+
+  run(1 / 60);
+  const thrown = yard.S.coreItem;
+  const bankedOnRelease = yard.S.cores;
+
+  // The peak of the arc: keep stepping while it climbs (vy negative) and stop
+  // the frame it turns to come back down.
+  let peak = thrown ? thrown.y : null;
+  let frames = 0;
+  while (yard.S.coreItem && yard.S.coreItem.vy < 0 && frames < 600) {
+    run(1 / 60);
+    if (yard.S.coreItem) peak = Math.min(peak, yard.S.coreItem.y);
+    frames++;
+  }
+  const groundY = state().groundY;
+  const landed = runUntil(() => !yard.S.coreItem, 30);
+  window.__crew(0, 0);
+
+  return [
+    ok(!w.hasCore, 'the hands are empty the moment it is thrown', `${w.hasCore}`),
+    ok(!!thrown, 'and something is now in the air', `${thrown}`),
+    ok(bankedOnRelease === 0, 'not banked on the way out of the hand', `${bankedOnRelease}`),
+    // "About ninety": the arc is thrown from hand height, a body's height above
+    // the ground already, so the peak is asked for within a body and a half of
+    // the number rather than to the pixel.
+    ok(peak != null && Math.abs((groundY - peak) - CORE_LOB_H) < WORKER * 1.5,
+       'the arc peaks about ninety world pixels above the lip',
+       `${peak == null ? 'never left the ground' : (groundY - peak).toFixed(0)}px`),
+    ok(landed, 'and it comes down'),
+    ok(state().cores === 1, 'banked when it lands, not before', `${state().cores}`)
+  ];
+});
+
+group('a janitor is not starved of its own mess by a crowd on the shared kind', async () => {
+  // Reproduction: a swarm of haulers with nothing better to do also work
+  // ordinary muck (their own job, when there is no dust to fetch), and with
+  // enough of them the nearest column for anybody's search is always
+  // wherever the crowd has not yet reached -- which drifts away from a
+  // janitor's own patch of poop rather than towards it, because `nearestMuck`
+  // used to treat every kind alike. Poop is the one mess only a janitor may
+  // touch; it should never lose out to muck everybody else can work instead.
+  window.__reset();
+  window.__loo(true);
+  window.__crew(0, 16);
+  window.__air({ janitors: 1, haze: 6, muck: 6 });
+  window.__clearFloor();
+
+  const outX = state().outhouseX;
+  const poopCol = Math.round((outX - 500) / 6);
+  window.__poopSet(c => (c === poopCol ? 4 : 0));
+
+  const cleared = runUntil(() => state().smog.poop === 0, 20);
+  window.__crew(0, 0);
+
+  return [
+    ok(cleared, 'the poop actually gets cleared, not just chased at',
+       `${state().smog.poop} left after twenty seconds`)
+  ];
+});

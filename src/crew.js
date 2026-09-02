@@ -9,11 +9,12 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         MUCK_SWEEP, MUCK_SWING, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK,
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
-        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE, FARM_WALK } from './config.js';
+        SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE, FARM_WALK,
+        BUILD_HOP_MS, BUILD_HOP_H, CORE_LOB_H } from './config.js';
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
-import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX } from './works.js';
+import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX, handsAt } from './works.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
@@ -33,7 +34,7 @@ import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
 import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, workSpot, MUCK_ELBOW,
          rockMuck, quarryMuck, plotMuck,
-         dropMuckAt, cleanSpotNear, foul } from './smog.js';
+         dropMuckAt, cleanSpotNear, foul, poopCols, colAt } from './smog.js';
 import { doorAt } from './house.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
@@ -369,15 +370,50 @@ function buildStationX(w) {
 // A builder walks to the site and stands there. There is nothing to watch after
 // that on purpose -- what a building going up looks like is the bar over it, the
 // same signal the lab has always used, and a mime of hammering would be the one
-// piece of animation in this yard that is about nothing.
+// piece of animation in this yard that is about nothing. Except the one thing
+// this got in the way of watching for -- see B2 in wave-feedback3.md. A
+// builder that has arrived and still has a busy site under it hops rather
+// than stands: on to the bench's own top edge for a `site: 'bench'` work, on
+// the ground beside the footprint for a `site: 'yard'` one, the same
+// `MOVES`/`jig` machinery the rock's own celebration uses. It does no work
+// mid-air -- the swing only ever touches `w.y`, and `workFor`/`handsAt` never
+// ask where a body's feet are, only whether it has arrived -- so the rate a
+// bench goes up at is exactly what it always was.
 export function stepBuilder(w) {
   const to = buildStationX(w);
-  w.y = walkY(w.x + WORKER / 2);
-  if (to === null) { w.goal = 'at'; return; }    // at work wherever it stands
-  const d = to - w.x;
-  if (Math.abs(d) < 1) { w.goal = 'at'; return; }
-  w.goal = 'to';
-  w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+  if (to !== null) {
+    const d = to - w.x;
+    if (Math.abs(d) >= 1) {
+      if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
+      // The ground a machine's mount sits over is not always the flat yard --
+      // the ram stands on the rock itself -- so the walk over follows
+      // whatever is actually underfoot (`stand`, the same climb an idling
+      // hauler eases to) rather than pinning the ground line the whole way
+      // and arriving buried in the hill it was walking towards.
+      w.y = stand(w);
+      w.goal = 'to';
+      w.x += Math.sign(d) * Math.min(FARM_WALK, Math.abs(d));
+      return;
+    }
+  }
+  // Arrived, or nowhere in particular to walk to -- at work where it stands
+  // either way.
+  w.goal = 'at';
+  if (w.site && handsAt(w.site) > 0) {
+    // The bench is a fixed structure, not terrain -- its top edge is always
+    // where a body climbs on to. Everywhere else (the yard's own machines,
+    // some of them mounted on the rock) the resting height is whatever is
+    // actually underfoot, eased the way `stand` eases anybody else -- which
+    // is what let a lone builder, taking three times as long alone as a gang
+    // of three used to, sit parked mid-build with its feet pinned to the
+    // ground line under a rock that stood well above it.
+    if (w.site === 'bench') { w.foot = bench.y - WORKER; w.footAt = w.x; }
+    else climbTo(w, feetOn(wayOver(w.x + WORKER / 2), w.x));
+    workJig(w, now());
+  } else {
+    if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
+    w.y = stand(w);
+  }
 }
 
 // --- who is actually at a site ------------------------------------------------
@@ -830,8 +866,22 @@ const MOVES = {
     }
   }
 };
-const MOVE_KEYS = Object.keys(MOVES);
+const MOVE_KEYS = Object.keys(MOVES);      // the dance's own three -- see below
 const JIG_SPREAD = P * 14;         // how far off its mark a body will wander
+
+// A fourth move, added after `MOVE_KEYS` is taken rather than into the table
+// above, so the rock's own celebration never rolls it by chance -- see B2 in
+// wave-feedback3.md. A builder at a busy site hops on the spot: the same
+// shape as the dance's `hop`, a cell high instead of three and on its own
+// fixed beat instead of the dance's, because a body at work keeps a steadier
+// rhythm than one celebrating. `startMove` and `beatMs` read it out of
+// `MOVES` exactly like any other move; it is only kept off the list the dance
+// draws from.
+MOVES.build = {
+  beat: 1000 / (BUILD_HOP_MS * DANCE_BEAT),
+  beats: [1, 1],
+  at: (w, swing) => { w.y = w.foot - swing * BUILD_HOP_H * P; }
+};
 
 // How long one beat of a move takes this body, in milliseconds. A body's own
 // tempo is in here: the gang used to be spread across the beat by the slot they
@@ -960,6 +1010,42 @@ function stopJig(w) {
   w.jigRate = 0;
   w.jigBeat = null;
   w.jigDown = false;
+}
+
+// --- the builders' work jig ---------------------------------------------------
+// One frame of a builder hopping at a busy site (B2, wave-feedback3.md). It is
+// the dance's own `MOVES`/`startMove` read a different way rather than a
+// second animator: the same beat-and-swing arithmetic `jig` uses, on the one
+// move built for it (`MOVES.build`, above), which never swaps to another and
+// never winds down -- a body at a bench works until the bench is done, not
+// until a clock five seconds out says the party is over.
+//
+// The caller sets `w.foot` first -- the bench's top edge or the ground beside
+// the site, whichever this body is standing on -- the same way `heldUp` sets
+// it before handing off to `jig`.
+function workJig(w, at) {
+  if (w.jigAt == null) {
+    w.jigAt = w.x;              // on the spot: a builder does not wander off
+    w.jigDir = 1;
+    w.jigRate = 1;
+    w.jigBeat = null;
+    w.jigDown = false;
+    startMove(w, at, 'build');
+  }
+  w.jigOn = at;
+  const move = MOVES.build;
+  let beat = (at - w.moveAt) / beatMs(w, move);
+  if (beat >= w.moveBeats) {
+    // Landed, and the next hop starts from here -- the same lunge a shovel's
+    // swing plants at the bottom of its own stroke (see `sweepMuckAt`), so a
+    // building going up reads as being hammered at rather than bounced on.
+    const ended = w.moveAt + w.moveBeats * beatMs(w, move);
+    w.y = w.foot;
+    startMove(w, ended, 'build');
+    beat = (at - w.moveAt) / beatMs(w, move);
+    w.lunge = 1;
+  }
+  move.at(w, Math.abs(Math.sin(beat * Math.PI)));
 }
 
 // --- held up by a rock --------------------------------------------------------
@@ -2502,6 +2588,26 @@ export function topGrain(c) {
   return -1;
 }
 
+// The nearest column of poop to a place, the same search `nearestMuck` runs
+// over every kind at once, kept to the one kind that is a janitor's alone (see
+// B4 in wave-feedback3.md, and `takeMess` below, which is the only caller). A
+// column already spoken for -- by anybody, the same `taken` set `nearestMuck`
+// itself reads and writes -- is skipped and a claim reserves the same elbow on
+// the way out, so the two searches can never both hand out the same ground.
+function nearestPoop(wx, taken) {
+  const p = poopCols();
+  const home = colAt(wx);
+  for (let d = 0; d < p.length; d++) {
+    for (const c of (d ? [home - d, home + d] : [home])) {
+      if (c < 0 || c >= p.length || !p[c]) continue;
+      if (taken && taken.has(c)) continue;
+      if (taken) for (let k = c - MUCK_ELBOW; k <= c + MUCK_ELBOW; k++) taken.add(k);
+      return c * P + P / 2;
+    }
+  }
+  return null;
+}
+
 // --- going and shovelling -------------------------------------------------------
 // One thing a body can be told to do, because several different kinds of body
 // have to be able to do it.
@@ -2541,7 +2647,19 @@ function takeMess(w, c) {
   // its own remnants. One frame of empty hands and the rebuild is clean.
   if (w.muckAt != null && muckAtCol(w.muckAt) <= 0) { w.muckAt = null; return false; }
   if (w.muckAt == null) {
-    const pick = nearestMuck(w.x + WORKER / 2, muckTaken, w);
+    // A janitor's own mess first -- see B4 in wave-feedback3.md. `nearestMuck`
+    // treats every kind alike and hands out whichever column is nearest, which
+    // is fine with one pair of hands on it and is not fine with a yard full of
+    // haulers idling into the shared muck besides: poop is the one mess only a
+    // janitor may touch, and with everybody else free to work everything else,
+    // the nearest column for a janitor's own search kept drifting to wherever
+    // the crowd had not yet reached, and the actual mess a player wants gone
+    // sat for as long as the yard had any ordinary muck left to offer instead
+    // -- not shoved by anybody's elbow, simply never the nearest thing going.
+    // A janitor looks for its own kind first and only falls back to the shared
+    // search when there is genuinely none of it left.
+    const pick = (w.type === 'janitor' ? nearestPoop(w.x + WORKER / 2, muckTaken) : null)
+      ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
   }
   // The patch, and the ground to work it from. They are the same place out on
@@ -2550,8 +2668,28 @@ function takeMess(w, c) {
   // claim is still the muck's own column, so it is held until that column is
   // clear rather than until the ground beside it is.
   const patch = w.muckAt == null ? null : w.muckAt * P + P / 2;
+  if (patch == null) return false;
+  // Ground a shovel can actually be swung from is ground close to the patch --
+  // a body's own width, give or take, the way it already stands a step back
+  // from a heap it cannot walk into. `workSpot` does not know that: asked for a
+  // patch with nothing solid anywhere near it -- muck lying over the open mouth
+  // of an empty pit, where `footing` rightly calls the whole span NONE -- it
+  // widens its search until it finds real ground *somewhere*, however far off,
+  // and hands that back. Taken at face value, that reads as a stance beside the
+  // mess; it is really the nearest dry land, cells away, with the claimed
+  // column left hanging over open air in between. `nearestMuck` lets a hauler
+  // or a janitor be sent at such a column on the understanding that getting
+  // down there is a route, the same one a hauler takes into a filled pit; a
+  // body that instead stood at that far stance and shovelled across the gap
+  // was standing on the ground line with its claim several hundred pixels
+  // below its feet -- the reported "walking through the air over the pit",
+  // reappeared here at the pit's own mouth once the crew started moving fast
+  // enough to reach the lip and stop before anything caught the mismatch. So a
+  // stance too far from its patch to be a stance at all is not one: the claim
+  // is dropped and picked up again next frame, the same way an emptied column
+  // is, rather than worked from arm's length.
   const to = patch == null ? null : workSpot(patch);
-  if (to == null) return false;
+  if (to == null || Math.abs(to - patch) > WORKER) { w.muckAt = null; return false; }
   // A mess under the coming rock, or the far side of it, is not fetched through
   // the fall. The walk never asked about the zone, so a body sent at one ground
   // against the zone's wall -- stepping in, shoved out by the duck, stepping in
@@ -3100,11 +3238,6 @@ function haulerWork(w, c) {
     if (across(zone, w.x, target)) { heldUp(w, zone, now); return; }
     w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P) {
-      if (w.hasCore) {
-        S.coreItem = { x: pit.x + P * 2, y: S.groundY - CORE_SIZE, vx: 1.1, vy: -1.2, rest: false };
-        w.hasCore = false;
-        S.dirty = true;
-      }
       // A proper toss off the lip, so it arcs out over the edge -- and it is
       // aimed at the hole, the same way spoil is aimed at a pile. It used to
       // be a fixed spray, which was fine while the pit ran two windows to the
@@ -3112,6 +3245,20 @@ function haulerWork(w, c) {
       // the far wall and came down on the ground behind it.
       const from = w.x + WORKER / 2, up = S.groundY - WORKER - P;
       const far = pit.x + Math.max(P, pit.w - P * 2);
+      if (w.hasCore) {
+        // Lobbed, not dropped -- see B3 in wave-feedback3.md. Same lip, same
+        // hands, the same landing formula a grain of dust gets a column further
+        // down this function, and the same arc-from-here-to-there `aim` throws
+        // everything else on, just sized to a fixed peak instead of one picked
+        // by distance. It is not banked here: it is caught by `stepCore`,
+        // which only counts it the moment it actually touches the pile, the
+        // same as it always has for a core dropped off the rock.
+        const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+        const v = aim(from, up, land, CORE_SIZE, CORE_LOB_H);
+        S.coreItem = { x: from - CORE_SIZE / 2, y: up, vx: v.vx, vy: v.vy, rest: false };
+        w.hasCore = false;
+        S.dirty = true;
+      }
       for (let i = 0; i < w.carry; i++) {
         // most of it near the lip, where they are standing, tailing away down
         // the hole -- which is the shape the pile has always had

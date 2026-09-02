@@ -145,10 +145,14 @@ group('buying a place records it in the build order', async () => {
 
   const before = state().buildOrder;
   window.__buy('unlockfarm');
-  const farmDone = runUntil(() => !on('unlockfarm'), 90);
+  // B1 (wave-feedback3.md, Track B): BUILD_GANG is one body now, not three,
+  // so a 90-worker-second building is a full 90 seconds for the one builder
+  // on it plus the walk over -- 90 was tight enough with a gang of three to
+  // spare, and is not enough alone.
+  const farmDone = runUntil(() => !on('unlockfarm'), 150);
   const afterFarm = state();
   window.__buy('unlockquarry');
-  const quarryDone = runUntil(() => !on('unlockquarry'), 90);
+  const quarryDone = runUntil(() => !on('unlockquarry'), 150);
   const afterQuarry = state();
 
   return [

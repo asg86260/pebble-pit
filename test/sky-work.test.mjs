@@ -432,7 +432,10 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // and a yard with nobody in it builds nothing. See works.js.
   window.__crew(0, 3);
   window.__build();
-  const raised = buyBuilt('unlocktower');
+  // B1 (wave-feedback3.md, Track B): BUILD_GANG is one body now, not three,
+  // so a 90-worker-second building plus the walk over needs more than the
+  // default limit, which was sized for a gang of three.
+  const raised = buyBuilt('unlocktower', 180);
   const tower = state();
 
   // the tower's own row, pressed the way a player presses it

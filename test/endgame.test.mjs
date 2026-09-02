@@ -20,7 +20,10 @@ function rammed() {
   window.__crew(5, 4);
   window.__grant({ sparks: 9999, shards: 999, spores: 999 });
   window.__tip(90000);
-  buyBuilt('ram');                                // bought, and put up by the hands at the site
+  // B1 (wave-feedback3.md, Track B): BUILD_GANG is one body now, not three,
+  // so the ram's 180 worker-seconds are one lent body's alone rather than
+  // three -- the default `buyBuilt` limit was sized for the old gang.
+  buyBuilt('ram', 220);                           // bought, and put up by the hands at the site
   window.__fast(12);                              // the gang shifts, the tender arrives
 }
 
