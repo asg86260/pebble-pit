@@ -2461,18 +2461,50 @@ export const QUARRY_SHED_H = P * 7;
 export const SHED_GAP = P * 3;
 
 // --- the builders' work jig ---------------------------------------------------
-// B2 in wave-feedback3.md: a builder standing at a busy site does not stand
-// still, it hops -- the same MOVES/jig/startMove machinery the rock's own
-// celebration dance uses, tuned down from a party to a body at work. One hop,
-// up and down, this long -- slower than the dance's own beat (DANCE_BEAT in
-// crew.js's `jig`), because hammering is steadier than celebrating.
-export const BUILD_HOP_MS = 1400;
-// Two cells high, not the dance's three -- see MOVES.hop in crew.js. It was
-// one, which a player never actually saw: #4 in "Wave 3.1" (wave-feedback3.md)
-// filmed a builder for ten seconds and measured six world pixels of travel,
-// which is nothing against a body eighteen pixels tall. Raised until the hop
-// reads as a hop rather than a shiver.
-export const BUILD_HOP_H = 2;
+// B2 in wave-feedback3.md, rewritten: a builder at a busy site swings a hammer.
+//
+// It used to hop -- one slow bounce, up and down, for ever. Two things were
+// wrong with that beyond the speed. A body going up and down on one spot at a
+// steady rate is a body *bouncing*, and bouncing is not working; and the beat
+// was 1400ms, which is a swing you can watch land, get bored of, and watch land
+// again. Work is a burst: a few hits in one place, a shuffle along, a few more.
+//
+// So: a fast swing, `BUILD_HITS_MIN`..`MAX` of them in a row, then a step
+// sideways and another burst. Each landing throws grit (see grit.js) -- one
+// puff per hit, tied to the blow rather than to a timer of its own, which is
+// what makes the dust read as coming *off* the hammer.
+export const BUILD_HAMMER_MS = 300;   // one swing, up and down
+// How high the body rides on the backswing. Low: a hammer swing is an arm, and
+// this engine cannot draw an arm, so the body dips and the lunge (see LOOK in
+// render.js) throws it into the work. A whole body leaping two cells was the
+// old hop, and it read as a bounce however fast it went.
+export const BUILD_HAMMER_H = 0.9;
+// hits in one place before moving along, and how far along it then moves
+export const BUILD_HITS_MIN = 3;
+export const BUILD_HITS_MAX = 6;
+export const BUILD_SHIFT = P * 4;
+// how far either way of its mark a builder will work before turning back
+export const BUILD_SHIFT_SPAN = P * 10;
+// the beat it rests between bursts -- the pause is what makes a burst a burst
+export const BUILD_REST_MS = 420;
+
+// --- grit off a strike ---------------------------------------------------------
+// What a hammer throws up. Not smoke: see the head of grit.js for why these are
+// a separate set of numbers rather than an argument to `puff`.
+export const GRIT_MOTES = 4;      // chips per blow
+// The throw has to clear the ground line or it is not a throw.
+//
+// These were a third of what they are, and the arithmetic is worth keeping
+// because the picture gave nothing away: at 1.5px a frame against this gravity
+// a chip tops out under three pixels up, which is half a cell. Every chip
+// therefore lived and died inside the one row of pixels directly above the
+// ground line -- drawn, correctly, in black, against the black ground line.
+// Twelve of them in the air and not one was visible. A thrown thing needs an
+// arc taller than the thing it is thrown past.
+export const GRIT_SPREAD = 1.2;   // sideways throw, px per frame
+export const GRIT_RISE = 3.2;     // and upward, enough to top out ~3 cells up
+export const GRIT_GRAV = 26;      // px per second per second, pulling them back
+export const GRIT_LIFE = 0.42;    // seconds -- gone before the next blow lands
 
 // --- lobbing a core ------------------------------------------------------------
 // B3 in wave-feedback3.md: a core leaving a hauler's hands at the lip is

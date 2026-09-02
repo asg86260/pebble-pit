@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino, scrub, quarry, tower } from './state.js';
+import { S, bench, lab, school, casino, scrub, tower } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
@@ -143,34 +143,24 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-// The quarry is the hole, and a bridge crosses it: a ramp up, a deck straight
-// over the mouth, a ramp down, and the crew walk every foot of that. Aiming at
-// the mouth meant aiming at the deck, so a plain `near()` round the hole would
-// open the board on every hauler crossing it -- what you point at is the
-// ground that is missing, padded a cell sideways and no further, because a
-// cell further either way is the ramp.
+// The shed beside it is now the *only* way in. #1 of "Wave 3.1" made it a
+// second one and left the hole answering as well, which is the half-measure
+// this replaces: pointing anywhere at the cut -- the ground the crew work, the
+// dust in it, a quarrier on the ladder -- threw a shop menu over the thing you
+// were trying to look at. Every other station in the yard is opened by its
+// building, and the shed is what the quarry's building is. The hole is a hole.
 //
-// The shed beside it is a second way in now -- see #1, "Wave 3.1" -- which is
-// what makes it worth hovering at all; before this it was scenery that did
-// nothing when you pointed at it, despite being the thing carrying the sign.
-// It cannot simply replace the hole, though: the shed stands close enough to
-// the near ramp (`SHED_GAP` is a lot narrower than `BRIDGE_RUN`) that both
-// `near()`'s own padding and, at the ramp's near end, the shed's own raw
-// footprint reach on to it. So the ramp side of the shed gets the hole's own
-// one-cell margin instead of `near()`'s generous eight, the far three sides
-// keep the ordinary padding, and the ramp and the deck answer to neither this
-// nor the hole below.
-const nearQuarryShed = (x, y) => {
+// The ramp side keeps the tight margin all the same. `SHED_GAP` is a lot
+// narrower than `BRIDGE_RUN`, so `near()`'s generous eight cells of padding
+// reaches from the shed on to the near ramp, and a board that opens when you
+// point at the ramp is the same complaint one step to the left. The far three
+// sides keep the ordinary padding; the ramp, the deck and the hole answer to
+// nothing.
+export const nearQuarry = (x, y) => {
+  if (!S.quarryOpen) return false;
   const r = quarryShed();
   return x > r.x - P * 8 && x < r.x + r.w + P &&
          y > r.y - P * 8 && y < r.y + r.h + P * 4;
-};
-const hole = () => ({ x: quarry.x, y: S.groundY, w: quarry.w, h: quarry.h });
-export const nearQuarry = (x, y) => {
-  if (!S.quarryOpen) return false;
-  if (nearQuarryShed(x, y)) return true;
-  const r = hole();
-  return x > r.x - P && x < r.x + r.w + P && y > r.y && y < r.y + r.h + P * 2;
 };
 // The farm has no bridge to keep clear of, so its shed is simply the target --
 // see #1, "Wave 3.1" -- in place of the plots, which used to answer for the

@@ -23,15 +23,16 @@ const works = () => state().works || {};
 const on = key => Object.values(works()).find(w => w.key === key) || null;
 
 // #1 -- the shed is the board's own anchor for the farm and the quarry now
-// (`standRect` returns it), and a second way to hover/click each of them
-// open. The farm has no bridge to protect, so its shed *replaces* the plots
-// as the target -- the far end of the row no longer answers on its own. The
-// quarry does have one: a plain swap would let `near()`'s padding round the
-// shed reach the near ramp (they stand close together), which is exactly the
-// bridge-crossing bug the hole-only check was written to prevent. So the
-// quarry's hole keeps answering exactly as it did, and the shed is added
-// beside it rather than instead of it -- see `nearQuarry` in board.js.
-group('the farm and the quarry stand at their shed, or still at the quarry’s own hole', async () => {
+// (`standRect` returns it), and the way to hover/click each of them open.
+//
+// Updated: the quarry's hole no longer answers either. Leaving it answering
+// was the half-measure this replaces -- pointing anywhere at the cut, at the
+// dust in it, at a quarrier on the ladder, threw a shop menu over the thing you
+// were trying to look at. Every other station in the yard is opened by its
+// building, and the shed is what the quarry's building is. The near ramp is
+// still kept clear by the tight margin on the shed's ramp side, which is the
+// part of the old reasoning that survives -- see `nearQuarry` in board.js.
+group('the farm and the quarry stand at their shed, and only there', async () => {
   openSites();
   window.__levels({ plotLevel: 5 });     // a real run of plots to hover over, clear of the shed
   run(0.5);
@@ -44,8 +45,9 @@ group('the farm and the quarry stand at their shed, or still at the quarry’s o
     ok(fs.x === s.farmShed.x && fs.w === s.farmShed.w,
        'standRect(farm) is the shed', JSON.stringify({ fs, shed: s.farmShed })),
     ok(nearQuarry(qs.x + qs.w / 2, qs.y + qs.h / 2), 'hovering the quarry shed answers'),
-    ok(nearQuarry(s.quarryX + s.quarryW / 2, s.groundY + 20),
-       'and the mouth of the hole still does too'),
+    ok(!nearQuarry(s.quarryX + s.quarryW / 2, s.groundY + 20),
+       'and the mouth of the hole does not',
+       `hole at ${s.quarryX}, shed at ${s.quarryShed.x}`),
     ok(nearFarm(fs.x + fs.w / 2, fs.y + fs.h / 2), 'hovering the farm shed answers'),
     ok(s.farmW > 0 && !nearFarm(s.farmX + s.farmW, s.groundY - 5),
        'but the far end of the run of plots no longer does',
@@ -61,7 +63,15 @@ group('the farm and the quarry stand at their shed, or still at the quarry’s o
 // so the lunge at the bottom of every hop was thrown away regardless of what
 // `w.lunge` said (`PLAIN.lunge` is 0). Both are fixed: the hop is two cells
 // now, and `builder` carries `lunge: 1`.
-group('a builder on the yard actually hops, visibly, while it works', async () => {
+//
+// Rewritten: the hop is a HAMMER now. A body going up and down on one spot at a
+// steady rate reads as bouncing however high it goes, so what is checked here
+// is no longer "does it travel far enough vertically" but the three things that
+// make it read as work -- it drives down and lunges, it throws something off
+// each blow, and it works a patch rather than a pixel. The dip is deliberately
+// SMALLER than the old hop (`BUILD_HAMMER_H`, under a cell), so the old
+// `range >= 10` would now fail for exactly the reason the change was made.
+group('a builder on the yard hammers, and it reads as work', async () => {
   window.__reset();
   window.__crew(0, 1);
   window.__grant({ dust: 90000 });
@@ -70,21 +80,30 @@ group('a builder on the yard actually hops, visibly, while it works', async () =
   window.__buy('house');
   const walked = runUntil(() => (state().works?.yard?.hands || 0) > 0, 60);
 
-  const ys = [], lunged = [];
+  const ys = [], xs = [], lunged = [];
+  let gritSeen = 0;
   for (let f = 0; f < 600; f++) {
     run(1 / 60);
     const w = yard.S.workers.find(o => o.type === 'builder');
-    if (w) { ys.push(w.y); lunged.push(w.lunge === 1); }
+    if (w) { ys.push(w.y); xs.push(w.x); lunged.push(w.lunge === 1); }
+    gritSeen = Math.max(gritSeen, yard.S.grit.length);
   }
   const range = ys.length ? Math.max(...ys) - Math.min(...ys) : 0;
+  const across = xs.length ? Math.max(...xs) - Math.min(...xs) : 0;
 
   return [
     ok(walked, 'a spare hand arrives at the site'),
     ok(ys.length > 500, 'and stays there for the whole of the film', `${ys.length} frames`),
-    ok(range >= 10, 'its height actually varies by more than a couple of pixels',
-       `range ${range}`),
-    ok(lunged.some(Boolean), 'and it lunges at the bottom of a hop',
-       `${lunged.filter(Boolean).length} of ${lunged.length} frames`)
+    ok(range >= 4, 'it drives down into the work and comes back up',
+       `range ${range.toFixed(1)}`),
+    ok(lunged.some(Boolean), 'and it lunges at the bottom of a swing',
+       `${lunged.filter(Boolean).length} of ${lunged.length} frames`),
+    ok(gritSeen > 0, 'and every blow throws grit off the work',
+       `${gritSeen} chips in the air at the busiest`),
+    // A few hits here, a few hits there: the body moves along its patch between
+    // bursts instead of striking the same pixel for the whole build.
+    ok(across > 0, 'and it works a patch rather than one pixel',
+       `${across.toFixed(1)}px across`)
   ];
 });
 

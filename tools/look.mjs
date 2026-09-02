@@ -60,6 +60,21 @@ const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
+  // A building going up: the lab half out of the ground, its barriers and tape
+  // round it, and the builder hammering at it throwing grit off each blow.
+  //
+  // Bought and then deliberately NOT finished -- `__finish` is what every other
+  // scene here calls, and it is the one thing that would skip the whole of what
+  // this scene is for. It is shot partway through instead, which is the only
+  // state the rise, the tape and the hammer exist in.
+  build: `${RICH} window.__buy('unlocklab'); window.__fast(35);
+          window.__look(window.__state().labX - 380);`,
+
+  // The same, later: far enough on that the building is most of the way up, to
+  // see the clip actually moving rather than to trust one frame of it.
+  build2: `${RICH} window.__buy('unlocklab'); window.__fast(70);
+           window.__look(window.__state().labX - 380);`,
+
   // The plots, and the tractor crossing them.
   farm: `${RICH} window.__buy('tiller'); window.__finish(); window.__look(window.__state().farmX - 200);`,
 

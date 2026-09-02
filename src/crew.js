@@ -10,11 +10,13 @@ import { P, WORKER, CORE_SIZE, DANCE_BEAT, JIG_PACE, HAUL_EMPTY, DUCK_PACE, IDLE
         HURL, HURL_MAX, HURL_DRAG, SHAKE_TURNS, SHAKE_WINDOW, DIZZY_MS,
         PILE_LIMIT, MACHINE_FOUL, MACHINE_MAX_BEATS, JANITOR_PROP, IDLE_PACE, IDLE_ROAM, AT_POST, WOBBLE, WOBBLE_BEAT, SHAKE_SHED,
         SHAKE_FLING, SHAKE_SCATTER, SHAKE_LIFT, LUNGE_EASE, FARM_WALK,
-        BUILD_HOP_MS, BUILD_HOP_H, CORE_LOB_H } from './config.js';
+        BUILD_HAMMER_MS, BUILD_HAMMER_H, BUILD_HITS_MIN, BUILD_HITS_MAX,
+        BUILD_SHIFT, BUILD_SHIFT_SPAN, BUILD_REST_MS, CORE_LOB_H } from './config.js';
 import { S, floor, pit, cut, quarry, bench, outhouse } from './state.js';
 import { at, put, colOf, addGrain, topRow, isDust } from './grid.js';
 import { standOn, walkY, rockLeft, yardLeft, kitX, atStation, blocked } from './world.js';
-import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX, handsAt } from './works.js';
+import { SITE_JOB, setHands, setStaff, busyBuilderSites, siteX, handsAt,
+         workAt, OPENS_PLACE } from './works.js';
 import { throwVel } from './hands.js';
 import { boulderAlive, knockOff, rockTopY, dropZone, rockPatch, restOnRock, fallMs } from './rock.js';
 import { spawnChip, bell, aim } from './dust.js';
@@ -39,6 +41,7 @@ import { doorAt } from './house.js';
 import { spelled } from './tower.js';
 import { SPELL_SWEEP } from './config.js';
 import { MACHINES, machine, JOB_MACHINE, specOf } from './machines.js';
+import { spawnGrit } from './grit.js';
 import { rand } from './rng.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
@@ -360,11 +363,44 @@ function siteFor(w) {
 // not, because a ram is on the rock and a belt is the length of the yard, and a
 // body already standing in the yard is standing at both. Those get no walk and
 // are at work where they are.
+// A builder stands BESIDE what it is putting up, not in the middle of it.
+//
+// `siteX` answers with the middle of the thing -- which is the right answer to
+// the question it is asked ("where is this work") and the wrong place to put a
+// body. Everything in this yard is drawn as a black mass on a white page, and
+// a black body standing inside a black building is not a body standing in
+// front of a building: it is nothing at all. The builder was there the whole
+// time, hammering, invisible, which is most of why the animation read as
+// missing however hard it swung.
+//
+// So it stands off the near edge of the footprint, on open ground, where its
+// own silhouette and the grit coming off it have the page to read against. The
+// footprint is `S.placed`'s, the same rect the barriers are drawn round (see
+// `siteFoot` in render.js), so the body stands at the tape rather than at a
+// number picked to look right for one building.
 function buildStationX(w) {
   const site = siteFor(w);
   if (!site) return null;
   const x = siteX(site);
-  return x == null ? null : x - WORKER / 2;
+  if (x == null) return null;
+  const foot = buildFoot(site);
+  // Off the left edge, because that is the side the yard's own traffic comes
+  // from; a body on the right of a building stands between it and the next one
+  // along. Half outside the tape, so it reads as working ON the thing rather
+  // than as somebody who happens to be stood nearby.
+  if (foot) return foot.x - WORKER - P;
+  return x - WORKER / 2;
+}
+
+// The ground a site's work covers, where that is known. Only the yard's own
+// slot needs looking up: every other site IS a station, and a body sent to one
+// of those is already standing at the thing rather than in it.
+function buildFoot(site) {
+  if (site !== 'yard') return null;
+  const w = workAt(site);
+  if (!w) return null;
+  const place = OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null);
+  return (place && S.placed && S.placed[place]) || null;
 }
 
 // A builder walks to the site and stands there. There is nothing to watch after
@@ -383,7 +419,23 @@ export function stepBuilder(w) {
   const to = buildStationX(w);
   if (to !== null) {
     const d = to - w.x;
-    if (Math.abs(d) >= 1) {
+    // Arrived is a patch, not a pixel.
+    //
+    // A builder works a burst, steps along, works the next one (see `workJig`),
+    // which means a body at work is nearly always a little off the exact spot
+    // it walked to. Testing arrival against that one pixel put the walk and the
+    // hammer in a tug of war: the burst shifted the body a few cells, the walk
+    // saw a gap and dragged it straight back, sixty times a second. That is the
+    // same shape as the jitter in TODO.md item 5, and it is worth naming twice
+    // -- anything that re-aims a body every frame will fight anything that
+    // moves it for its own reasons unless the aim has slack in it.
+    //
+    // So the walk brings it to the mark, and thereafter leaves it alone for as
+    // long as it stays within the span it is allowed to work across. Only a
+    // body genuinely somewhere else -- a new site, a body knocked off the rock
+    // -- is walked again.
+    const slack = w.goal === 'at' ? BUILD_SHIFT_SPAN + BUILD_SHIFT * 2 : 1;
+    if (Math.abs(d) >= slack) {
       if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
       w.goal = 'to';
       // Routed, not slid -- see #6, "Wave 3.1" in wave-feedback3.md. This used
@@ -399,7 +451,15 @@ export function stepBuilder(w) {
       // what gets a hauler down a flank without a jump; a builder is no more
       // special than a hauler crossing the pit.
       if (!keepTo(w, to, wayOver(to))) return;
-      if (stepRoute(w, FARM_WALK)) return;
+      // At a trip's pace, like every other errand in the yard. It walked at
+      // FARM_WALK -- a farmhand's pace for stepping to the next furrow, 1.1px
+      // a frame against COMMUTE_PACE's 4.6 -- which is the very bug the
+      // comment over `commutePace` in upgrades.js was written about: a
+      // station's shuffling speed used for a whole commute. A builder crossed
+      // the yard at under a quarter of everybody else's pace and, because it
+      // never asked `commutePace`, ignored every boot and pace rung the player
+      // had bought.
+      if (stepRoute(w, commutePace())) return;
       w.route = null;
       return;
     }
@@ -879,16 +939,17 @@ const JIG_SPREAD = P * 14;         // how far off its mark a body will wander
 
 // A fourth move, added after `MOVE_KEYS` is taken rather than into the table
 // above, so the rock's own celebration never rolls it by chance -- see B2 in
-// wave-feedback3.md. A builder at a busy site hops on the spot: the same
-// shape as the dance's `hop`, a cell high instead of three and on its own
-// fixed beat instead of the dance's, because a body at work keeps a steadier
-// rhythm than one celebrating. `startMove` and `beatMs` read it out of
-// `MOVES` exactly like any other move; it is only kept off the list the dance
-// draws from.
+// wave-feedback3.md and, for the rewrite, the hammer note in config.js.
+//
+// A builder swings a hammer. The body dips and drives rather than leaping: the
+// engine cannot draw an arm, so the strike is a short drop plus the lunge
+// (`LOOK.builder` in render.js) throwing the body into the work. It hopped two
+// cells on a 1400ms beat before, which at any speed reads as a body bouncing
+// on the spot rather than one hitting something.
 MOVES.build = {
-  beat: 1000 / (BUILD_HOP_MS * DANCE_BEAT),
+  beat: 1000 / (BUILD_HAMMER_MS * DANCE_BEAT),
   beats: [1, 1],
-  at: (w, swing) => { w.y = w.foot - swing * BUILD_HOP_H * P; }
+  at: (w, swing) => { w.y = w.foot - swing * BUILD_HAMMER_H * P; }
 };
 
 // How long one beat of a move takes this body, in milliseconds. A body's own
@@ -1021,40 +1082,91 @@ function stopJig(w) {
 }
 
 // --- the builders' work jig ---------------------------------------------------
-// One frame of a builder hopping at a busy site (B2, wave-feedback3.md). It is
-// the dance's own `MOVES`/`startMove` read a different way rather than a
-// second animator: the same beat-and-swing arithmetic `jig` uses, on the one
-// move built for it (`MOVES.build`, above), which never swaps to another and
-// never winds down -- a body at a bench works until the bench is done, not
-// until a clock five seconds out says the party is over.
+// One frame of a builder hammering at a busy site (B2, wave-feedback3.md,
+// rewritten). It is the dance's own `MOVES`/`startMove` read a different way
+// rather than a second animator: the same beat-and-swing arithmetic `jig`
+// uses, on the one move built for it (`MOVES.build`, above), which never swaps
+// to another and never winds down -- a body at a bench works until the bench
+// is done, not until a clock five seconds out says the party is over.
 //
 // The caller sets `w.foot` first -- the bench's top edge or the ground beside
 // the site, whichever this body is standing on -- the same way `heldUp` sets
 // it before handing off to `jig`.
+//
+// The rhythm is a burst, not a metronome: a few hits in one place, a step
+// along, a few more. A body striking the same pixel at a fixed rate for three
+// minutes is a machine; a body that works a patch, moves, and works the next
+// one is somebody building something. Each strike throws its own grit, which
+// is why the dust comes off the blow rather than off a timer of its own.
 function workJig(w, at) {
   if (w.jigAt == null) {
-    w.jigAt = w.x;              // on the spot: a builder does not wander off
-    w.jigDir = 1;
+    w.jigAt = w.x;              // the near end of the patch it is working
+    // Away from the thing being built, not into it. `buildStationX` stands the
+    // body off the footprint's left edge precisely so it is not lost against
+    // the black of the building; a burst that walked the other way put it back
+    // inside within two shifts and undid that.
+    w.jigDir = -1;
     w.jigRate = 1;
     w.jigBeat = null;
     w.jigDown = false;
+    w.hits = 0;
+    w.hitsWanted = nextBurst();
+    w.restUntil = 0;
     startMove(w, at, 'build');
   }
   w.jigOn = at;
+
+  // Between bursts: stood on its feet, not mid-swing. The pause is what makes
+  // a burst read as a burst rather than as a stutter in a steady beat.
+  if (at < (w.restUntil || 0)) { w.y = w.foot; w.lunge = 0; return; }
+
   const move = MOVES.build;
   let beat = (at - w.moveAt) / beatMs(w, move);
   if (beat >= w.moveBeats) {
-    // Landed, and the next hop starts from here -- the same lunge a shovel's
-    // swing plants at the bottom of its own stroke (see `sweepMuckAt`), so a
-    // building going up reads as being hammered at rather than bounced on.
+    // The blow lands. The lunge is the same one a shovel's swing plants at the
+    // bottom of its stroke (see `sweepMuckAt`), so the strike reads as a body
+    // driving into the work rather than settling out of a hop.
     const ended = w.moveAt + w.moveBeats * beatMs(w, move);
     w.y = w.foot;
+    w.lunge = 1;
+    // One puff per hit, off the point of impact -- at the body's feet, which is
+    // where the head of a hammer is if the body is swinging one.
+    // Off the body's waist rather than its feet. A chip leaving at ground level
+    // is a chip drawn on the ground line, which is already black.
+    spawnGrit(w.x + WORKER / 2, w.foot + WORKER / 2);
+    if (++w.hits >= w.hitsWanted) {
+      // Burst done: rest a beat, then take the next patch a step along. It
+      // turns back at the edge of its span the way the dance's `step` turns at
+      // the edge of its patch -- otherwise a long build walks the body clean
+      // off the site it is meant to be putting up.
+      w.hits = 0;
+      w.hitsWanted = nextBurst();
+      w.restUntil = ended + BUILD_REST_MS;
+      // The patch runs from the mark it arrived on to `BUILD_SHIFT_SPAN` back
+      // along the yard -- one side only, never past the mark. A patch centred
+      // on the mark would spend half of itself inside the footprint, which is
+      // the black the stand-off exists to keep the body out of.
+      let next = w.x + w.jigDir * BUILD_SHIFT;
+      if (next > w.jigAt || next < w.jigAt - BUILD_SHIFT_SPAN) {
+        w.jigDir = -w.jigDir;
+        next = w.x + w.jigDir * BUILD_SHIFT;
+      }
+      w.x = Math.max(w.jigAt - BUILD_SHIFT_SPAN, Math.min(w.jigAt, next));
+      w.lunge = 0;
+      startMove(w, ended + BUILD_REST_MS, 'build');
+      return;
+    }
     startMove(w, ended, 'build');
     beat = (at - w.moveAt) / beatMs(w, move);
-    w.lunge = 1;
   }
   move.at(w, Math.abs(Math.sin(beat * Math.PI)));
 }
+
+// How many blows this burst gets. Its own roll every time, so two builders on
+// two sites are never in step and one builder never falls into a rhythm you
+// can predict.
+const nextBurst = () =>
+  BUILD_HITS_MIN + Math.floor(rand() * (BUILD_HITS_MAX - BUILD_HITS_MIN + 1));
 
 // --- held up by a rock --------------------------------------------------------
 // A rock in the air stops anybody who would have to walk under it to get on with
