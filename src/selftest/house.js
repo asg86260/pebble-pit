@@ -552,28 +552,63 @@ export const TESTS = [
     ];
   }],
 
-  // A board is seated by the height it was measured at, and buying something
-  // takes its row off the board -- so the height it was measured at is no
-  // longer the height it is. It has to measure itself again, or the sheet
-  // stands where a board of some other size would have stood.
-  ['a board that gains or loses a row is seated by its new size', async () => {
+  // A board is seated by the size it was measured at, and a board changes size
+  // under you -- so it has to measure itself again, or the sheet stands where a
+  // board of some other size would have stood.
+  //
+  // It changes size two ways, and this used to know about one of them. A row
+  // arriving or leaving is the obvious one. The other is a row that stays put
+  // and starts saying something else: a row past the bench does not hand you the
+  // thing any more, it starts the yard building it -- and from that moment the
+  // row says what is happening where its gain was and carries a clock in its
+  // bill. Same rows, wider board, and nothing said the board had moved.
+  //
+  // This check used to press that row and expect the *set* of rows to change,
+  // and it did -- but only because the board had been standing stale since
+  // before it was opened, and the press was what made it catch up. A board is
+  // built from what the yard is offering this frame now, so the press changes
+  // the words and nothing else, which is the case the seating was getting wrong
+  // underneath the one this was watching.
+  ['a board that changes under you is seated by its new size', async () => {
     newRun();
     await settle();
     await hoverBench();
     window.__give(400);
     run(0.5);
     await sleep(80);
-    const rows = shop().querySelectorAll('[data-key]').length;
+
+    // What is drawn, against what the yard says it is offering. Nothing has been
+    // pressed: a board you have walked up to shows what is on offer, rather than
+    // whatever was on offer the last time somebody happened to rebuild it.
+    const bench = new Set(window.__boards().find(b => b.name === 'bench').keys);
+    const offered = window.__rows().filter(r => r.shown && bench.has(r.key)).map(r => r.key);
+    const drawn = [...shop().querySelectorAll('[data-key]')].map(e => e.dataset.key);
+    const missing = offered.filter(k => !drawn.includes(k));
+    const ghosts = drawn.filter(k => !bench.has(k) || !offered.includes(k));
+    const grew = window.__boardFit();
+
+    // ...and now a row that starts a piece of work. It stays on the board and
+    // says what it is doing, which is a different width of row.
     const row = shop().querySelector('[data-key="auto"]');
     row?.click();
     run(0.5);
     await sleep(80);
+    const said = row?.querySelector('.gain')?.textContent || '';
     const fit = window.__boardFit();
     const r = panel().getBoundingClientRect();
     const left = shop().querySelectorAll('[data-key]').length;
     return [
-      ok(!!row && left !== rows, 'buying a row changes what is on the board',
-         `${rows} -> ${left} rows`),
+      ok(offered.length > 0 && missing.length === 0,
+         'a board draws every row the yard is offering, with nothing pressed',
+         missing.length ? `missing ${missing.join(',')}` : `${drawn.length} rows`),
+      ok(ghosts.length === 0, 'and nothing it is not', ghosts.join(',') || 'none'),
+      ok(Math.abs(grew.h - grew.realH) < 2 && Math.abs(grew.w - grew.realW) < 2,
+         'and it is seated by the size those rows make it',
+         `seated ${grew.w}x${grew.h}, really ${grew.realW}x${grew.realH}`),
+      ok(!!row && left === drawn.length, 'starting a build leaves the row where it is',
+         `${drawn.length} -> ${left} rows`),
+      ok(/on the way|building|nobody on it/.test(said),
+         'and the row says what the yard is doing about it', said || 'nothing'),
       ok(Math.abs(fit.h - fit.realH) < 2 && Math.abs(fit.w - fit.realW) < 2,
          'and the board is seated by the size it is now, not the size it was',
          `seated ${fit.w}x${fit.h}, really ${fit.realW}x${fit.realH}`),

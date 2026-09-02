@@ -88,12 +88,24 @@ const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></
   '<span class="count"></span>' +
   '<button type="button" class="more">+</button></span>';
 
-// Set when the set of rows changed, read once by the board after it has filled
-// them in. A flag rather than a call back into the board: this happens on a
-// purchase or a hire, and what has to happen next is a measurement of a board
-// with its words in, which is the frame loop's business and not this file's.
-let rebuilt = false;
-export const tookRows = () => { const was = rebuilt; rebuilt = false; return was; };
+// Set when the board changed shape under whoever is reading it, and read once by
+// the board after it has filled its rows in. A flag rather than a call back into
+// this file's caller: what has to happen next is a measurement of a board with
+// its words already in, which is the frame loop's business and not this file's.
+//
+// A row arriving or leaving is one way. What a row *says* is the other, and it
+// was missed: a bench row pressed now starts a piece of work, and the row then
+// swaps its gain for "on the way" and its price for a bill with a clock in it.
+// The set of rows is exactly what it was, so nothing said the board had moved --
+// and the sheet stood eighteen pixels narrower than the board it was holding,
+// for as long as the build lasted. It only ever looked right because the press
+// used to rebuild the row set as a side effect of the board being stale.
+//
+// Cheap because `say` and `sayHTML` already refuse to write a cell whose words
+// have not changed: a board nobody is doing anything to writes nothing and is
+// measured never.
+let moved = false;
+export const boardMoved = () => { const was = moved; moved = false; return was; };
 
 // One row per available upgrade, under a heading for whatever it belongs to.
 //
@@ -125,7 +137,7 @@ function build(el, list, sections, empty) {
   // the words in, and a board measured between the two comes out shorter than
   // it will be -- the same trap opening one used to fall into. So the board is
   // told the set changed and measures itself after it has filled the rows in.
-  rebuilt = true;
+  moved = true;
 
   el.textContent = '';
   if (!now) {                              // nothing to show: say so rather than nothing
@@ -256,8 +268,8 @@ function build(el, list, sections, empty) {
 // text node was replaced for every name on the board. Nothing on a shop row
 // changes more than a few times a minute. The board is careful about this in
 // every other place; this is the one that was not.
-const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; } };
-const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; } };
+const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; moved = true; } };
+const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; moved = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 
 export function refresh(el, list, headcount) {
@@ -274,6 +286,7 @@ export function refresh(el, list, headcount) {
       // somebody. The board is careful about this everywhere else; so is this.
       if (row.dataset.count === String(n)) continue;
       row.dataset.count = n;
+      moved = true;                          // a badge is a word, and words have a width
       row.textContent = row.dataset.sect;
       if (n) {
         const badge = document.createElement('span');
