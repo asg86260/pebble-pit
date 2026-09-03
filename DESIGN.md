@@ -1300,6 +1300,33 @@ load, and the pile going down at the lip is the pile going down at the lip.
 or at delivery. At press is simpler and is how every other price works; at
 delivery is truer and lets you cancel. Recommend at press.
 
+### Amendment: it goes to the shop it is spent at, not the bench
+
+*(Raised while designing the apothecary, and it is the general form of the
+above.)* Today a spent resource arcs to **the bench**, wherever the row lives --
+buy a farm rung and the dust flies to the bench, not to the farm. That is
+backwards: the dust is being spent *at the farm*, on the farm's own board, so it
+should travel to the farm. The destination of a spent resource is **the station
+that sells the row**, not one fixed building.
+
+Every station already knows where it is (`site`, and the pile/standoff geometry
+in config.js), and the delivery machinery above is already per-site
+(`S.owed[site]`). So this is not a new system -- it is the carried-to-site
+design with its destination read off the row's `site` instead of hard-coded to
+the bench. A lab row's stone goes to the lab, a quarry rung's spores go to the
+quarry, the apothecary's crop goes to the apothecary.
+
+This is what makes the apothecary read right in particular: the crop a tonic
+costs is *carried into the apothecary* and the doses are *carried out of it*, so
+the building is visibly a place where crop goes in and buffs come out, rather
+than a board that debits a counter. It is the same reason the farm's own rungs
+should pull their dust to the farm -- a shop you can see being paid is a shop,
+and a counter going down is a spreadsheet.
+
+**Scope, same as above.** The things that read as *building* something -- and
+now *brewing* something -- are what get carried; a rate rung keeps its snap. The
+honest line is still the kind, not a floor.
+
 ## Later rungs cost the other grounds (design, not built)
 
 Opening the farm feels pointless. It unlocks one ladder, for bodies you already
@@ -3867,6 +3894,45 @@ it is the one building whose whole job is making other buildings better -- so a
 growing list of tonics is something the game can already hand out, and a tech
 ladder that does not need a new system to hang on.
 
+### The stirrer deals the doses
+
+A brewed tonic is not a number that switches on -- it is **carried to the bodies
+it is for**. The stirrer fills a dose off the pot and walks it out to a worker,
+the way a hauler walks a load: the buff lands on a body when the dose reaches it,
+and not before. So a fresh brew spreads across the yard rather than blinking on
+everywhere at once, and you can see the tonic going round -- which is the whole
+of what makes it a thing that happened rather than a flag that flipped.
+
+This is the same shape as everything else in the yard: no teleporting, a body
+walks. It also makes "how many workers a brew reaches" a real quantity with a
+picture behind it -- the stirrer gets round to so many before the brew is spent
+-- rather than an abstract cap. A body whose dose has worn off is a body the
+stirrer comes back to, so a farm that keeps the pot fed keeps the round going.
+
+### The potion ladders
+
+The apothecary's own board, and unlike the stations it is a building whose rungs
+are all about the *tonics* rather than about a rate of production. Five, and each
+one is a plain lever on what a brew is worth:
+
+| rung | what it lengthens |
+|---|---|
+| **brew speed** | how fast the pot turns crop into a dose |
+| **buff length** | how long a dose lasts on the body it is dealt to |
+| **buff strength** | how much the tonic is worth while it is up |
+| **doses a brew** | how many bodies one brew can be dealt out to |
+| **bodies a brew** | how many workers a single brew reaches before it is spent |
+
+`doses a brew` and `bodies a brew` are close enough that they may be one rung
+rather than two -- a dose is what reaches a body, so "more doses" and "more
+bodies reached" are the same sentence unless a body can hold more than one dose.
+Kept separate here until the brewing model settles; see Open.
+
+These are the tech ladder the lab's recipes feed into: a recipe unlocks a
+tonic, and these rungs make every tonic you know worth more at once. So the lab
+widens the list and the apothecary deepens it, which is the same division of
+labour the lab and the stations already have.
+
 ### Open
 
 - **What the tonics are.** The first ones want to be plain and mid-sized -- the
@@ -3877,3 +3943,5 @@ ladder that does not need a new system to hang on.
   measuring against a real farm rather than picking.
 - **Whether a second pot is a second tonic or a stronger one.** A second tonic is
   the more interesting board and the harder sum.
+- **Whether `doses a brew` and `bodies a brew` are one rung or two**, which is
+  really the question of whether a body can hold more than one dose at a time.
