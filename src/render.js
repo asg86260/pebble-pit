@@ -994,15 +994,15 @@ export function drawLab() {
 // it has a true centre for the steam, and if you move the row the brew sits on,
 // update CAULDRON_BREW_ROW to match (0 is the top row).
 export const CAULDRON = [
-  '.....###.....',
-  '....#...#....',
   '#############',
-  '#ooooooooooo#',
-  '..#########..',
   '.###########.',
+  '#############',
+  '#############',
+  '#############',
+    '#############',
+  '#############',
   '.###########.',
   '..#########..',
-  '..#.......#..',
   '..#.......#..',
 ];
 // The row of CAULDRON the brew sits on -- where the bubbles pop and the steam
