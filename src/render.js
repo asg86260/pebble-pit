@@ -10,7 +10,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, BROLLY_W, BROLLY_STICK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
-import { boiling, atPot, doseFrac } from './apothecary.js';
+import { boiling, atPot, doseFrac, brewFrac } from './apothecary.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { PILE_HOLDS, CRATE_H, CRATED } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
@@ -1002,49 +1002,65 @@ export function drawApothecary() {
       ctx.fillRect(hx + (s ? P : -P), g - P * 3, P, P);
     }
 
-    // The cauldron, right of the herbs. The belly is the widest part -- wider
-    // than the mouth above it -- and that is the whole of what reads as a pot
-    // rather than a table: the old draw had the lip widest and sat there like a
-    // tabletop. A narrow mouth, shoulders widening, a belly bulging past the
-    // mouth, then rounding back in to the legs.
-    const potW = P * 5;                     // five cells across the belly
-    const potX = x + P * 4;                 // clear of the herb bed
-    const rimY = g - P * 6;                 // the mouth sits six cells up
-    ctx.fillRect(potX + P, rimY,           potW - P * 2, P);   // the mouth, narrow
-    ctx.fillRect(potX,     rimY + P,       potW,         P);   // shoulders, widening
-    ctx.fillRect(potX - P, rimY + P * 2,   potW + P * 2, P);   // the belly, bulging widest
-    ctx.fillRect(potX,     rimY + P * 3,   potW,         P);   // rounding back in
-    ctx.fillRect(potX + P, rimY + P * 4,   potW - P * 2, P);   // to the base over the fire
-    // Two legs under the belly, a flame's width apart -- clear of the fire, which
-    // the old draw sat a leg on top of.
+    // The cauldron, right of the herbs. A round-bellied pot: a rim narrower than
+    // the belly, so the belly bulges past it -- which is the whole of what reads
+    // as a pot and not a table -- rounding back in to two feet with the fire
+    // between them. Each row is [y, cells inset from EACH side]; the belly rows
+    // at inset 0 are the widest.
+    const potW = P * 6;                     // six cells across the widest belly
+    const potX = x + P * 3;                 // clear of the herb bed
+    const rimY = g - P * 6;                 // the rim sits six cells up
+    const potMid = potX + potW / 2;
+    for (const [ry, inset] of [[rimY, 1], [rimY + P, 0], [rimY + P * 2, 0],
+                               [rimY + P * 3, 1], [rimY + P * 4, 2]])
+      ctx.fillRect(potX + inset * P, ry, potW - inset * P * 2, P);
+    // Two feet under the belly's lower round, the fire between them.
     ctx.fillRect(potX,             g - P, P, P);
     ctx.fillRect(potX + potW - P,  g - P, P, P);
 
-    // The brew: a clear line of it just inside the mouth.
+    // The brew: liquid sitting in the mouth, framed by the rim on both sides.
     ctx.fillStyle = '#fff';
-    ctx.fillRect(potX + P, rimY + P, potW - P * 2, P);
+    ctx.fillRect(potX + P * 2, rimY, potW - P * 4, P);
     ctx.fillStyle = '#000';
 
     // The fire under the belly: two licks with a cell of gap between them, so it
-    // reads as flame and not the solid foot three adjacent cells made. Uneven
-    // height for a little flicker. Always laid; only the steam says whether the
-    // pot is being worked.
-    for (const [fx, ht] of [[potX + P, 2], [potX + P * 3, 3]])
+    // reads as flame and not a solid foot. Uneven height for a little flicker.
+    // Always laid; only the steam and the bubbles say the pot is being worked.
+    for (const [fx, ht] of [[potX + P * 2, 2], [potX + P * 4, 3]])
       for (let hy = 0; hy < ht; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
 
-    // Steam, when a body is stirring it. Two short wisps off the rim on their own
-    // slow clock, one cell at a time, thinning as they climb -- the fade is the
-    // readout being a picture rather than a lamp. See `boiling`.
+    // A working pot bubbles and steams; an idle one is a cold cauldron. See
+    // `boiling` -- true only while a stirrer is through the door on a batch.
     if (boiling()) {
-      const t = now() / 700;
-      for (let k = 0; k < 2; k++) {
-        const ph = (t + k * 0.5) % 1;
-        const sx = potX + P + Math.round(1.5 + Math.sin((t + k) * 1.6) * 1.2) * P;
-        const sy = rimY - P - Math.round(ph * 3) * P;
-        if (ph < 0.8) ctx.fillRect(sx, sy, P, P);
+      const t = now();
+      // Bubbles rising through the brew and breaking its surface: a black cell
+      // that climbs the mouth on its own phase, so they pop one after another.
+      for (let bcol = 0; bcol < 2; bcol++) {
+        const bx = potX + P * 2 + bcol * P;                  // the two mouth cells
+        const ph = (t / 560 + bcol * 0.5) % 1;
+        if (ph < 0.6) ctx.fillRect(bx, rimY - (ph < 0.3 ? 0 : P), P, P);
+      }
+      // Steam: three wisps off the mouth, climbing and fading out near the top --
+      // one cell at a time, each on its own slow clock, swaying as it rises.
+      for (let k = 0; k < 3; k++) {
+        const ph = (t / 900 + k * 0.33) % 1;
+        if (ph > 0.85) continue;                             // gone near the top
+        const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.2);
+        const sx = potMid + (k - 1) * P + sway * P;
+        const sy = rimY - P * 2 - Math.round(ph * 5) * P;
+        ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
     }
   });
+
+  // The brew's progress bar, over the cauldron -- only up while a batch is going.
+  // Drawn outside `withRise` so it rides above the pot at full size once the
+  // building has finished rising. Uses the yard's one bar, the same the lab and
+  // the tower show.
+  if (S.apothecaryOpen && !rising && brewFrac() > 0) {
+    const potMid = apothecary.x + P * 6;                     // middle of the belly
+    bar(Math.round(potMid / P) * P, S.groundY - P * 9, brewFrac());
+  }
 }
 
 // What the rain left, drawn where it landed: one column of the world at a time,

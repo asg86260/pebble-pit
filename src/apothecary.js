@@ -67,14 +67,26 @@ export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 // action.
 export const tonicVal = t => (t ? t.base * strengthMult() : 0);
 
-// A short line for the submenu / the row: what this tonic does and how much,
-// spelled at the strength it is worth today.
+// A short line for the hover: what this tonic does and how much, spelled at the
+// strength it is worth today.
 export function tonicSays(t) {
   if (!t) return '';
   const v = tonicVal(t);
   if (t.kind === 'work')  return `works ${Math.round(v * 100)}% faster`;
   if (t.kind === 'crit')  return `crit chance +${Math.round(v * 100)} points`;
   if (t.kind === 'carry') return `carries ${Math.round(v * 100)}% more`;
+  return '';
+}
+
+// The compact form for the menu row itself -- the effect in a few characters, so
+// it fits beside the name with the duration and the price. The hover carries the
+// full sentence.
+export function tonicGain(t) {
+  if (!t) return '';
+  const v = tonicVal(t);
+  if (t.kind === 'work')  return `+${Math.round(v * 100)}% work`;
+  if (t.kind === 'crit')  return `+${Math.round(v * 100)} crit`;
+  if (t.kind === 'carry') return `+${Math.round(v * 100)}% carry`;
   return '';
 }
 
@@ -237,6 +249,17 @@ export const setTake = fn => { take = fn; };
 export const boiling = () =>
   stirrers().some((w, i) => w.goal === 'in' && i < S.apothPots && (S.brewAt[i] || 0) > 0);
 
+// How far the most-advanced pot is through its current batch, 0..1 -- what the
+// progress bar over the cauldron reads. Zero when nothing is on the boil, so the
+// bar is only up while a batch is actually going.
+export const brewFrac = () => {
+  if (!boiling()) return 0;
+  const ms = Math.max(1, brewMs());
+  let best = 0;
+  for (const b of (S.brewAt || [])) best = Math.max(best, Math.min(1, (b || 0) / ms));
+  return best;
+};
+
 export function stepApothecary(dt) {
   if (!S.apothecaryOpen) return;
   const list = stirrers();
@@ -285,7 +308,14 @@ export function setPrefer(job) { S.potPrefer = S.potPrefer === job ? null : job;
 const tonicRow = t => ({
   key: `tonic-${t.key}`, pot: true, tonic: t.key,
   name: t.name,
-  note: () => `${BREW_CROP} spore + ${BREW_REAGENT} ${t.reagent} a brew -- ${tonicSays(t)}`,
+  // What the row shows in place of a gain and a price: the effect and how long
+  // it lasts, and the crop-and-reagent a brew costs. The board renders these the
+  // way it renders any row's gain and bill, so a tonic reads at a glance rather
+  // than only on hover. See the pot branch in shop.js.
+  gain: () => `${tonicGain(t)}, ${Math.round(buffMs() / 1000)}s`,
+  brewCost: () => [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]],
+  note: () => `${tonicSays(t)}, and it lasts ${Math.round(buffMs() / 1000)}s. ` +
+              `${BREW_CROP} spore and ${BREW_REAGENT} ${t.reagent} a brew.`,
   on: () => S.potTonic === t.key,
   set: () => setTonic(t.key),
   show: () => S.apothecaryOpen
@@ -306,11 +336,13 @@ const brewRung = ({ key, name, unit, level, from, to, cap = RUNGS }) => ({
 export const APOTHECARY_UPGRADES = [
   ...TONICS.map(tonicRow),
 
-  // The rhythm: keep at it, or a single batch. A dial, spending nothing.
+  // The rhythm: keep the fire going for batch after batch, or let it die once
+  // this one is dealt. A dial, spending nothing. Named "the fire" rather than
+  // "the pot" so it does not echo the section heading a line above it.
   {
     key: 'potkeep', dial: true, site: 'apothecary',
-    name: 'the pot',
-    value: () => (S.potKeep ? 'keep brewing' : 'a one-off'),
+    name: 'the fire',
+    value: () => (S.potKeep ? 'kept burning' : 'out after this'),
     less: () => setKeep(!S.potKeep),
     more: () => setKeep(!S.potKeep),
     lo: () => false, hi: () => false,
@@ -320,7 +352,7 @@ export const APOTHECARY_UPGRADES = [
   // Who the round favors. A dial that walks the jobs the doses can land on.
   {
     key: 'potprefer', dial: true, site: 'apothecary',
-    name: 'doses favor',
+    name: 'doses go to',
     value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
     less: () => setPrefer(stepPrefer(-1)),
     more: () => setPrefer(stepPrefer(1)),
@@ -328,16 +360,16 @@ export const APOTHECARY_UPGRADES = [
     show: () => S.apothecaryOpen
   },
 
-  brewRung({ key: 'brewspeed', name: 'brew speed', unit: 's', level: 'brewLevel',
+  brewRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  brewRung({ key: 'bufflength', name: 'buff length', unit: 's', level: 'lengthLevel',
+  brewRung({ key: 'bufflength', name: 'a longer draught', unit: 's', level: 'lengthLevel',
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  brewRung({ key: 'buffstrength', name: 'buff strength', unit: '%', level: 'strengthLevel',
+  brewRung({ key: 'buffstrength', name: 'a stronger draught', unit: '%', level: 'strengthLevel',
     from: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel) * 100),
     to: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel + 1) * 100) }),
-  brewRung({ key: 'brewdoses', name: 'doses a brew', unit: 'doses', level: 'dosesLevel',
+  brewRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel',
     from: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel)),
     to: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel + 1)) }),
 
@@ -358,7 +390,7 @@ export const APOTHECARY_UPGRADES = [
 export const APOTHECARY_SECTIONS = [
   { title: 'the menu', keys: TONICS.map(t => `tonic-${t.key}`) },
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
-  { title: 'the ladders', keys: ['brewspeed', 'bufflength', 'buffstrength', 'brewdoses'] }
+  { title: 'the craft', keys: ['brewspeed', 'bufflength', 'buffstrength', 'brewdoses'] }
 ];
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is

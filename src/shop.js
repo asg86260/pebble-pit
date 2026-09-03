@@ -345,10 +345,17 @@ export function refresh(el, list, headcount) {
     if (row.dataset.pot) {
       const u = list.find(x => x.key === row.dataset.pot);
       if (!u) continue;
-      // The set tonic is marked on the board -- what the pot is currently on --
-      // and reads "brewing" where a price would be.
+      // A tonic reads like any other row: its effect and how long it lasts where
+      // a gain goes, and the crop-and-reagent a brew costs where a price goes.
+      // The set tonic is highlighted (`on`) and reads "brewing" in place of the
+      // price, so the one the pot is on is plain without hiding what it does.
       row.classList.toggle('on', u.on());
-      say(row.children[1], u.on() ? 'brewing' : '');
+      const [, gain, price] = row.children;
+      say(gain, u.gain ? u.gain() : '');
+      const cost = u.brewCost ? u.brewCost() : [];
+      const bill = cost.map(([m, n]) =>
+        `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
+      sayHTML(price, u.on() ? 'brewing' : bill);
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);

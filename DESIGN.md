@@ -4173,18 +4173,21 @@ The apothecary's own board, and unlike the stations it is a building whose rungs
 are all about the *tonics* rather than about a rate of production. Five, and each
 one is a plain lever on what a brew is worth:
 
-| rung | what it lengthens |
+| rung (as it reads on the board) | what it does |
 |---|---|
-| **brew speed** | how fast the pot turns crop into a dose |
-| **buff length** | how long a dose lasts on the body it is dealt to |
-| **buff strength** | how much the tonic is worth while it is up |
-| **doses a brew** | how many bodies one brew can be dealt out to |
-| **bodies a brew** | how many workers a single brew reaches before it is spent |
+| **a quicker brew** | how fast the pot turns crop into a dose |
+| **a longer draught** | how long a dose lasts on the body it is dealt to |
+| **a stronger draught** | how much the tonic is worth while it is up |
+| **a bigger batch** | how many bodies one brew can be dealt out to |
 
-`doses a brew` and `bodies a brew` are close enough that they may be one rung
-rather than two -- a dose is what reaches a body, so "more doses" and "more
-bodies reached" are the same sentence unless a body can hold more than one dose.
-Kept separate here until the brewing model settles; see Open.
+The board reads in the apothecary's own voice rather than in stat words: "a
+longer draught" and "a stronger draught", not "buff length" and "buff strength".
+Four rungs, not five -- `doses` and `bodies-a-brew` folded into one ("a bigger
+batch"), because a dose is one-body-one-buff and does not stack, so "more doses"
+and "more bodies reached" are the same sentence. The pot's own controls sit
+under "the pot" ("the fire" -- kept burning or out after this -- and "doses go
+to"); the tonics sit under "the menu", each showing its effect, how long it
+lasts, and the crop-and-reagent a brew costs, right on the row.
 
 These are the tech ladder the lab's recipes feed into: a recipe unlocks a
 tonic, and these rungs make every tonic you know worth more at once. So the lab
