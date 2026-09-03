@@ -1041,20 +1041,32 @@ export function drawApothecary() {
     // it is being worked. See `boiling`.
     const t = now();
     if (boiling()) {
-      // The fire beneath: a few *coloured* motes -- warm flecks of flame against
-      // the black iron, the one place the yard breaks its black-and-white (like
-      // the sparks and the star). Fewer than before, and they climb only a little
-      // way up the pot's lower belly and no higher -- the fire licks the pot, it
-      // does not shoot past the rim. Each fleck flickers on its own short cycle.
-      const FIRE = ['#ffcf3f', '#f5851f', '#e8402a'];        // yellow, orange, red embers
-      const fireTop = g - P * 6;                             // as high as a lick ever reaches
-      for (let i = 0; i < 5; i++) {
-        const ph = (t / 240 + i * 0.4) % 1;
-        if (ph > 0.72) continue;                             // dark between flickers
-        const fx = potX + P * (3 + i * 2) + Math.round(Math.sin(t / 150 + i)) * P;
-        const fy = Math.max(fireTop, g - P - Math.round(ph * 4) * P);
-        ctx.fillStyle = FIRE[(i + Math.floor(t / 130)) % FIRE.length];
-        ctx.fillRect(fx, fy, P, P);
+      // The fire beneath: a few coloured flame *tongues*, not scattered flecks --
+      // the one place the yard breaks its black-and-white (like the sparks and the
+      // star). Each tongue is a short run of cells that burns hot yellow at its
+      // foot, through orange, to a red tip that leaps on the clock; the middle one
+      // stands tallest, so the shape reads as a flame. They lick only a little way
+      // up the belly and no higher -- the fire licks the pot, it does not shoot
+      // past the rim.
+      const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
+      const tongues = [[potX + P * 4, 2], [potX + P * 6, 4], [potX + P * 8, 2]];
+      for (let i = 0; i < tongues.length; i++) {
+        const [fx, h] = tongues[i];
+        const hgt = h + (Math.sin(t / 130 + i * 2) > 0.2 ? 1 : 0);   // the tip leaps
+        for (let hy = 0; hy < hgt; hy++) {
+          ctx.fillStyle = hy === 0 ? HOT : hy < hgt - 1 ? MID : TIP;
+          ctx.fillRect(fx, g - P - hy * P, P, P);
+        }
+      }
+      // Embers: a stray spark or two lifting off the fire and winking out, kept
+      // low against the belly so they read as the fire's own sparks.
+      for (let e = 0; e < 3; e++) {
+        const ph = (t / 520 + e * 0.33) % 1;
+        if (ph > 0.6) continue;
+        const ex = potX + P * (4 + e * 2) + Math.round(Math.sin(t / 200 + e)) * P;
+        const ey = g - P * 4 - Math.round(ph * 3) * P;
+        ctx.fillStyle = (e % 2) ? MID : TIP;
+        ctx.fillRect(Math.round(ex / P) * P, ey, P, P);
       }
       // A wisp of smoke off the fire -- a mote or two lifting up the belly and
       // thinning out, kept below the rim so it stays part of the fire rather than
