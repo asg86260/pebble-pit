@@ -3735,6 +3735,35 @@ bigger bite out of the rock, a burst of dust off it, a lump going over the rim
 -- if you cannot tell from looking at the yard that one happened, it has not
 earned its place on a board.
 
+### What a crit looks like: a fountain of dust
+
+**Dust off the spot, straight up, and fanning out as it falls.** That is the
+whole of the effect and it is the same effect at every station -- the rock, the
+face, the plot, wherever the crit landed. A column of grains leaves the work
+upward and spreads into a bell on the way down, and then it does what any grain
+does: arcs, settles, and is hauled off like the rest.
+
+It is **real dust, not a drawn ring.** The pile is the dust and never a picture
+of it, so the burst is the payload -- the grains it throws up are grains you
+keep, banked wherever they come to rest. The machinery is already in the yard:
+`JOLT_GRAINS` throws thirty grains off the banks when a boulder lands, and
+`SHAKE_FLING` / `SHAKE_SCATTER` / `SHAKE_LIFT` are the pop, the spread and the
+upward kick on a shaken body's spill. A crit is that, aimed up, off the cell that
+was worked.
+
+**The moment does not hang.** No pause, no slow-motion, no zoom, and nothing
+stops -- not the body that crit and not the ones around it. The crew do not look
+up, the view does not shake, and the next swing comes on its own clock as if
+nothing had happened. What makes a crit noticeable is the fountain and only the
+fountain: it is loud in the instant and gone by the next, which is the one thing
+that can happen several times a second without wearing on the eye or grinding the
+yard to a halt.
+
+**No screen shake.** The view is thrown for a boulder landing (`SHAKE_LAND`, 15
+px) and for a building going up (`BUILD_SHAKE`, 7.5) -- the two biggest things
+that happen -- and a thing that happens every few seconds cannot borrow their
+voice without drowning them out. The dust is the drama; the camera stays still.
+
 ### It is loudest where the yard is thinnest
 
 Crits are a roll, and rolls average out. One body swinging makes a crit an event;
