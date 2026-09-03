@@ -1041,32 +1041,34 @@ export function drawApothecary() {
     // it is being worked. See `boiling`.
     const t = now();
     if (boiling()) {
-      // The fire beneath: not a solid mark but *motes* -- flecks of flame low
-      // under the belly and smoke drifting up off them. Each fleck lives on its
-      // own short cycle and pops in and out, so the fire flickers and reads as a
-      // bed of embers rather than a black tooth. The pot spans potX..potX+11
-      // cells; the fire sits under its middle.
-      const fireW = CAULDRON[0].length - 4;                  // cells across the fire bed
-      for (let i = 0; i < 9; i++) {
-        // a fleck: a cell that flicks up a row or two off the ground and is gone
-        const ph = (t / 200 + i * 0.37) % 1;
-        if (ph > 0.7) continue;                              // dark between flickers
-        const col = (i * 5 + Math.floor(t / 90 + i)) % fireW;
-        const fx = potX + P * 2 + col * P;
-        const fy = g - P - Math.round(ph * 2) * P;           // low, one or two cells up
+      // The fire beneath: a few *coloured* motes -- warm flecks of flame against
+      // the black iron, the one place the yard breaks its black-and-white (like
+      // the sparks and the star). Fewer than before, and they climb only a little
+      // way up the pot's lower belly and no higher -- the fire licks the pot, it
+      // does not shoot past the rim. Each fleck flickers on its own short cycle.
+      const FIRE = ['#ffcf3f', '#f5851f', '#e8402a'];        // yellow, orange, red embers
+      const fireTop = g - P * 6;                             // as high as a lick ever reaches
+      for (let i = 0; i < 5; i++) {
+        const ph = (t / 240 + i * 0.4) % 1;
+        if (ph > 0.72) continue;                             // dark between flickers
+        const fx = potX + P * (3 + i * 2) + Math.round(Math.sin(t / 150 + i)) * P;
+        const fy = Math.max(fireTop, g - P - Math.round(ph * 4) * P);
+        ctx.fillStyle = FIRE[(i + Math.floor(t / 130)) % FIRE.length];
         ctx.fillRect(fx, fy, P, P);
       }
-      // Smoke: a few motes lifting off the fire, drifting up past the pot and
-      // thinning out -- drawn only through part of each mote's climb so it breaks
-      // up rather than making a solid column.
-      for (let s = 0; s < 4; s++) {
-        const ph = (t / 1000 + s * 0.27) % 1;
-        if (ph > 0.9 || (Math.floor(t / 110 + s) % 3 === 0)) continue;   // gaps as it thins
-        const sway = Math.round(Math.sin(t / 700 + s * 1.3) * 2);
-        const sx = potX + P * (3 + s * 2) + sway * P;
-        const sy = g - P * 2 - Math.round(ph * 11) * P;
+      // A wisp of smoke off the fire -- a mote or two lifting up the belly and
+      // thinning out, kept below the rim so it stays part of the fire rather than
+      // a column climbing the sky.
+      ctx.fillStyle = '#3a3a3a';
+      for (let s = 0; s < 2; s++) {
+        const ph = (t / 900 + s * 0.5) % 1;
+        if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;
+        const sway = Math.round(Math.sin(t / 700 + s * 1.3));
+        const sx = potX + P * (5 + s * 3) + sway * P;
+        const sy = Math.max(topY + P, g - P * 3 - Math.round(ph * 5) * P);
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
+      ctx.fillStyle = '#000';
       // Bubbles rising through the brew and breaking its surface.
       for (let bcol = 0; bcol < 5; bcol++) {
         const bx = potX + P * 3 + bcol * P;
