@@ -152,15 +152,26 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
-  // The rift: the black hole hanging in the near end of the pit, the pile it is
-  // eating under it, and the ring of grains going round it on their way in.
-  // The hole is filled past the brim first so the rift has something to eat.
-  // Widened before the dust goes in: a widening is paid in dust, and paid out
-  // of the very pile the scene is about.
-  rift: `${RICH} window.__meteor(); window.__give(60000); window.__buy('rift');
-         for (let i = 0; i < 6; i++) window.__buy('riftrate');
-         window.__give(12000);
-         window.__fast(4); window.__look(window.__state().pitX + 70 - window.innerWidth / 2);`,
+  // The rift: the black hole standing in the air over the near end of the pit,
+  // the crater it has eaten in the pile under it, and the grains being pulled
+  // round it on their way in. The hole is filled past the brim first so the rift
+  // has something to eat, and widened before the dust goes in: a widening is
+  // paid in dust, and paid out of the very pile the scene is about.
+  // The camera is on the lip, so the ground line the disc breaks is in shot.
+  rift: `${RICH} window.__meteor(); window.__give(60000);
+         window.__levels({riftLevel: 6}); window.__give(12000);
+         window.__fast(4); window.__look(window.__state().pitX - 260);`,
+
+  // The tearing: a hole filled past the brim gives way, and everything in it
+  // goes at once. No `__fast` of its own -- the runner gives every scene a
+  // second before the shot, which lands this one in the middle of the gulp,
+  // which is the part worth looking at.
+  // Not `${RICH}`: its `__tip` fills the hole and tears it during the setup, so
+  // the scene would open on a yard that had already had the moment.
+  tear: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+         window.__grant({sparks:999,shards:999,spores:999,cores:9});
+         window.__meteor(); window.__give(60000); window.__fast(0.5);
+         window.__look(window.__state().pitX - 300);`,
 
   // The endgame yard: every machine standing, the ram driven up its ladder, the
   // belt running, the rift torn. What the pass in DESIGN.md is about.

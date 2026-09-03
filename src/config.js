@@ -1144,17 +1144,73 @@ export const PIT_PAD = 18;       // cells of ground past its far edge, so you ca
 // The hole in the air past the far wall of the pit: what the hole in the ground
 // overflows into. See src/rift.js and `## The rift` in DESIGN.md.
 //
-// A black disc hanging in the hole at the near end, over the pile: fifteen cells
-// across, its near edge RIFT_IN cells in from the near lip. It used to be a lens
-// on the ground past the far wall, which is two windows off screen -- see
-// `seatRift`.
+// A black disc standing in the air over the near end of the hole: fifteen cells
+// across, RIFT_AT of the hole's length in from the near lip and clear of the
+// ground line by RIFT_UP cells, so the whole of it is against the white page.
+// It used to be a lens on the ground past the far wall, which is two windows off
+// screen, and then a disc buried to its middle in the pile, which is a blob
+// painted on the grey -- see `seatRift`.
 export const RIFT_W = P * 15;
 export const RIFT_H = P * 15;
-export const RIFT_IN = 4;
+// A fraction of the hole rather than a count of cells: the hole is 3,600 across
+// and the disc belongs at the end of it that is on screen, whatever that end
+// happens to measure. Far enough in to clear the counter's card, which stands
+// four cells from the lip.
+export const RIFT_AT = 0.05;
+export const RIFT_UP = 3;        // cells of clear air between it and the ground line
+// --- the tearing ---------------------------------------------------------------
+// What happens the moment a hole that cannot take another grain gives way.
+//
+// Not a rift that opens and then starts draining at twelve grains a second: the
+// tearing is the one dramatic thing that ever happens to the pit, and what it
+// does is **empty the hole**. Every grain in it goes, in one long gulp, with the
+// yard rocking under it. It is also the first time anybody sees the thing work,
+// so it has to be the clearest possible statement of what it is for -- after it,
+// the rift's rate is what you live with, and the pressure of the ladder starts
+// from a hole you watched being emptied rather than from a number on a card.
+//
+// Nothing is lost to it, exactly as nothing is lost to any other swallow: the
+// counter does not move, the pile shows what is in the hole and the rift's
+// reading shows the rest.
+export const RIFT_GULP = 1.8;        // seconds the tear takes to empty the hole
+export const RIFT_GULP_SHOW = 1400;  // grains of it in the air at once, while it goes
+export const RIFT_SHAKE = 22;        // and how hard the yard is rocked: the biggest knock there is
+// --- what it does to the air ---------------------------------------------------
+// A hole that only moves something when it happens to be swallowing a grain is a
+// hole that stands still, and a fresh rift swallows twelve a second -- seventeen
+// specks in the air at any moment, which is not something you can see pulling. So
+// it pulls on the dust as well. The dust is already everywhere, it is already
+// moving, and dust going down a hole is the plainest picture of a hole there is.
+//
+// Nothing is counted or lost: a mote drawn into the middle is put back somewhere
+// else in the same breath (see `place` in air.js), so the sky holds exactly as
+// much as the yard has earned. This is weather, not stock.
+//
+// The reach is in disc radii, so it follows RIFT_W wherever that goes. The rest
+// is screen pixels a frame, which is what a mote is measured in.
+export const RIFT_PULL = 1.3;    // how hard it pulls, right at the rim
+export const RIFT_PULL_R = 4.5;  // how far the pull reaches, in radii
+export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather than in
+// What share of the dust it eats is put back at the edge of its own reach rather
+// than anywhere in the yard.
+//
+// Without this the pull only ever *clears* the air around the disc: the motes
+// near it are drawn in, are put back over some pile across the yard, and what is
+// left is a bald patch of sky with a black circle in it -- the picture of a hole
+// that has finished rather than one that is working. Feeding a share of them
+// back at the rim gives it a stream to pull on, which is the thing being drawn.
+//
+// Not all of them, because a hole that recycles everything it eats slowly drags
+// the entire sky into a ring around itself and leaves the rest of the yard
+// clear. At a bit over half, the ring holds what drifts into it and the sky
+// stays the sky.
+export const RIFT_FEED = 0.55;
 // How the swallowed grains go: how many turns round the disc a grain makes on
-// its way in, and how long the whole orbit takes, in frames at sixty.
-export const RIFT_TURNS = 1.6;
-export const RIFT_ORBIT_FRAMES = 110;
+// its way in, and how long the whole orbit takes, in frames at sixty. Both are
+// what the suck is made of -- a grain is dragged round faster the closer it
+// gets, so it wants turns to spend and it wants to be quick about them.
+export const RIFT_TURNS = 2.4;
+export const RIFT_ORBIT_FRAMES = 84;
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];
@@ -1505,9 +1561,25 @@ export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 
 // sides. That is the pit's own rule (`heapCeiling` in pit.js) at a station's
 // scale, which is why it is the same arithmetic rather than a second idea.
 //
-// Three cells: half a body, so a carter can throw into it and you can see over
-// it, and low enough that a full one still reads as a heap rather than a wall.
-export const CRATE_H = P * 3;
+// Five cells. Three read as two pegs with a heap between them rather than as a
+// box -- a crate is a thing with *sides*, and sides you can see over the top of
+// at a glance are not sides. Five is still under a body, so a carter throws into
+// it rather than over a wall, and a full one still reads as a heap standing
+// proud of its box.
+export const CRATE_H = P * 5;
+
+// Which strips stand in a crate, and which are left as bare ground.
+//
+// The rock's is not crated. It is seven hundred grains across -- the whole run
+// of the hill -- and a box that long is not a box, it is a bar laid across the
+// yard with rubble behind it. What comes off the hill is spoil, and spoil at the
+// foot of a cliff should read as a slope of rubble that has fallen there, which
+// is what it did before there were crates and what it goes back to being.
+//
+// One predicate, read by the drawing (`drawPileGround`) and by the rule that
+// says how a strip fills (`bankCeiling`), so a strip cannot end up with a box
+// drawn round it and no sides to fill against, or the other way about.
+export const CRATED = key => key !== 'rock';
 
 // And what lands on each of those strips, which is the one thing about a heap
 // that nowhere else in the game says out loud. Every other fact about a strip is

@@ -12,15 +12,21 @@ group('filling the pit stops at what the hole holds', async () => {
   window.__dig();
   const cap = state().pitCapacity;
   window.__tip(cap * 2);                     // twice what the hole can take
-  run(0.8);
+  // The hole fills, heaps over the mouth, and then gives way -- and the tearing
+  // takes the whole pile with it (see `## The rift`). So how high the pile got
+  // is watched for rather than read at the end: what this group is about is that
+  // the plot holds what it holds on the way up, and that nothing is lost when it
+  // lets go.
+  let peak = 0;
+  for (let i = 0; i < 16; i++) { run(0.05); peak = Math.max(peak, state().pitDust); }
   const s = state();
   return [
     // it does not stop at the brim -- it heaps over the mouth -- but it stops
     // at what the plot will hold, and never gets out onto the ground
-    ok(s.pitDust <= cap, 'the pile stops at what the plot holds',
-       `${s.pitDust} of ${cap}`),
-    ok(s.pitDust > (3600 / s.pitGrain) * (276 / s.pitGrain),
-       'having heaped up over the mouth on the way', `${s.pitDust}`),
+    ok(peak <= cap, 'the pile stops at what the plot holds',
+       `${peak} of ${cap}`),
+    ok(peak > (3600 / s.pitGrain) * (276 / s.pitGrain),
+       'having heaped up over the mouth on the way', `${peak}`),
     // The pile stops; the COUNTER does not. What will not fit goes through the
     // rift, and `stored` less `rift` is what is in the hole -- so the number and
     // the picture still say the same thing, with the rift accounting for the

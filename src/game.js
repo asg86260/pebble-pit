@@ -20,7 +20,7 @@ import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
+import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
@@ -407,15 +407,41 @@ export function stepPaid() {
   // `liftTo` in pit.js makes both lists -- and a different journey, because the
   // one thing a player needs to read about a swallowed grain is that it went
   // *in*, not that it went somewhere.
+  // The hole giving way rocks the yard. The knock is asked for where the tear
+  // happens (pit.js) and spent here, because a shake is the world's business and
+  // pit.js is downstream of the world -- see `shakeView` in world.js.
+  if (S.riftShake) { shakeView(S.riftShake); S.riftShake = 0; }
   orbit(S.gulped);
 }
 
 // A grain's whole orbit is one number, `t`, from nought at the pile to one at
 // the middle of the disc. The angle runs on with it and the radius comes in
 // with it, so the path is a spiral; the first stretch of it blends from where
-// the grain left the pile to where it joins the ring, so it is seen to rise off
-// the top rather than appear on the ring. Every grain has its own angle to join
-// at and its own way round, from `lift`, so the ring is a ring and not a queue.
+// the grain left the pile to where it joins the ring, so it is seen to leave the
+// top rather than appear on the ring. Every grain has its own angle to join at
+// and its own way round, from `lift`, so the ring is a ring and not a queue.
+//
+// **Everything about the shape of it accelerates**, which is the difference
+// between a thing being pulled in and a thing going round. It used to leave the
+// pile on a smoothstep, join a ring well outside the rim, and hold that radius
+// until a cubed dive at the end -- a grain easing off the heap and settling into
+// an orbit somebody had arranged for it. Now:
+//
+// - the lift off the pile is eased *in*, not in and out, so a grain starts slow
+//   where it was lying and is moving when it arrives;
+// - the angle runs on a rising power of `t`, so the closer in it gets the faster
+//   it is dragged round -- the last quarter of the path is a whip, and that is
+//   the whole picture of the thing pulling;
+// - and the radius holds out past the rim for most of the way and then dives,
+//   which is the one thing here that is about being *seen* rather than about
+//   falling. The grains are drawn under the disc, so everything inside the rim
+//   is already gone as far as the picture is concerned; a path that fell
+//   straight in from the pile would spend four fifths of itself behind black.
+//   Out past the rim it is a black speck on white paper, which is where the
+//   pulling can be watched happening.
+//
+// The radius and the angle are the same one number, so none of this is a second
+// clock that can drift: a grain is exactly as far round as it is far in.
 function orbit(list) {
   const f = frames();
   const c = riftCenter(), R = riftRadius();
@@ -426,14 +452,13 @@ function orbit(list) {
     if (m.t >= 1) { list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
     const t = m.t;
-    const a = m.a0 + m.spin * t * RIFT_TURNS * Math.PI * 2;
-    // Out past the rim for most of the way round, then a dive: cubed, so the
-    // radius barely moves until late and the ring reads as a ring rather than
-    // a cloud. It ends well inside the rim, which is under the disc.
-    const r = R * (1.35 - 0.95 * t * t * t);
+    const a = m.a0 + m.spin * Math.pow(t, 1.8) * RIFT_TURNS * Math.PI * 2;
+    // Out past the rim, then a dive that ends at the middle -- which is under
+    // the disc, and gone.
+    const r = R * (1.32 - 1.25 * Math.pow(t, 2.2));
     const ox = c.x + Math.cos(a) * r, oy = c.y + Math.sin(a) * r;
-    const join = Math.min(1, t / 0.2);            // the rise off the pile
-    const e = join * join * (3 - 2 * join);
+    const join = Math.min(1, t / 0.25);           // torn off the pile
+    const e = join * join;
     m.x = m.x0 + (ox - m.x0) * e;
     m.y = m.y0 + (oy - m.y0) * e;
   }

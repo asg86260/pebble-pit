@@ -117,10 +117,17 @@ group('the hole takes dust again once the rift has made room', async () => {
   ];
 });
 
-group('it hangs in the hole, at the near end, and the grains go round it', async () => {
+group('it stands over the near end of the hole, and the grains are pulled in', async () => {
   readyYard();
   window.__rift();
+  // The tearing empties the hole, so a yard three seconds past it has nothing
+  // left to swallow and nothing in the air. What this group is about is the
+  // ordinary swallowing that comes after: so let the gulp finish, fill the hole
+  // again, and widen the rift enough that the stream is a stream.
   run(3);
+  window.__levels({ riftLevel: 8 });
+  window.__give(20000);
+  run(1);
   const { pit, S } = yard;
   const c = yard.riftMod.riftCenter();
   const R = yard.riftMod.riftRadius();
@@ -136,14 +143,86 @@ group('it hangs in the hole, at the near end, and the grains go round it', async
   }
   return [
     ok(rift.x >= pit.x && rift.x + rift.w <= pit.x + pit.w * 0.1,
-       'the disc is in the hole, at the near end',
+       'the disc is over the hole, at the near end',
        `rift ${rift.x}..${rift.x + rift.w}, pit from ${pit.x}`),
-    ok(rift.y > S.groundY && rift.y + rift.h < S.groundY + yard.pitMod.pitDepth(),
-       'and below the ground line, inside the depth of the hole',
+    // Standing in the air rather than sunk in the pile: its middle is above the
+    // ground line and its lower edge below it, so it breaks the line and the top
+    // of it is black against the page. A disc buried in a full hole has no
+    // silhouette at all -- see `seatRift`.
+    ok(c.y < S.groundY, 'its middle stands above the ground line',
+       `middle ${c.y}, ground ${S.groundY}`),
+    ok(rift.y + rift.h < S.groundY, 'and wholly clear of it, hanging in the air',
        `rift y ${rift.y}..${rift.y + rift.h}, ground ${S.groundY}`),
     ok(S.gulped.length > 0, 'there are grains in flight', `${S.gulped.length}`),
     ok(along > 0 && far === 0, 'and every grain past its rise is on the ring or inside it',
        `${inRing} of ${along} on the ring, ${far} astray`)
+  ];
+});
+
+group('the tearing empties the hole, and nothing is lost to it', async () => {
+  window.__reset();
+  window.__crew(0, 4);
+  window.__fullSites();
+  window.__meteor();
+  window.__grant({ sparks: 999 });
+  window.__give(60000);                  // more than the hole holds: it gives way
+  const torn = state();
+  const full = torn.pitGrains;
+
+  // The gulp runs on its own clock and is done inside a couple of seconds. The
+  // haulers keep tipping in while it goes, so what is checked is that the hole
+  // was emptied, not that it is empty to the last grain for ever after.
+  run(3);
+  const after = state();
+
+  return [
+    ok(torn.riftOpen, 'the hole gave way', `${full} grains in it when it did`),
+    ok(full > yard.pitMod.pitCapacity() * 0.5, 'and it was full when it went',
+       `${full} of ${yard.pitMod.pitCapacity()}`),
+    ok(after.pitGrains < full * 0.1, 'the tearing took the pile with it',
+       `${full} -> ${after.pitGrains}`),
+    // The rule the rift has always kept: nothing is spent and nothing is lost.
+    // The counter does not move for a swallow, and the tearing is a swallow.
+    ok(after.stored >= torn.stored, 'and the counter never went down',
+       `${torn.stored} -> ${after.stored}`),
+    ok(after.stored - after.rift === after.pitDust,
+       'the pile is still the counter less what is through',
+       `${after.stored} - ${after.rift} vs ${after.pitDust}`)
+  ];
+});
+
+group('it eats the pile under it, not the whole top of it', async () => {
+  readyYard();
+  window.__rift();
+  const { pit, S } = yard;
+  const { at, topRow } = yard.grid;
+  const mouth = yard.riftMod.riftMouth();
+  const mid = Math.floor((mouth - pit.x) / pit.p);
+
+  // The height of a column, before and after a swallow, and no frames run in
+  // between: what is measured is the walk itself, not the settle that follows
+  // it. Taken straight off `swallow` rather than by waiting for the rift's own
+  // clock, so it is one known number of grains rather than however many a
+  // second of game happened to be worth.
+  const high = c => topRow(pit, c) + 1;
+  const cols = [mid, mid + 4, Math.floor(pit.cols / 2), pit.cols - 3];
+  const before = cols.map(high);
+  const took = yard.pitMod.swallow(3000);
+  const after = cols.map(high);
+  const lost = before.map((h, i) => h - after[i]);
+
+  return [
+    ok(took === 3000, 'the rift took what it was asked for', `${took}`),
+    ok(lost[0] > 0, 'the column under the mouth is lower than it was',
+       `${before[0]} -> ${after[0]}`),
+    ok(lost[0] >= lost[1], 'the hollow is deepest at the mouth',
+       `${lost[0]} under it, ${lost[1]} four columns out`),
+    // And the far end of a six-hundred-column pile is not touched at all, which
+    // is the whole difference: the old walk took the top row end to end and wore
+    // the pile down flat while the disc hung over one column of it.
+    ok(lost[2] === 0 && lost[3] === 0, 'and the far end of the pile is untouched',
+       `${lost[2]} at the middle, ${lost[3]} at the far end`),
+    ok(S.gulped.length > 0, 'and there are grains in flight', `${S.gulped.length}`)
   ];
 });
 

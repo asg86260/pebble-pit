@@ -30,10 +30,23 @@ const upgrades = await import('../../src/upgrades.js');
 const { persist, restore } = await import('../../src/persist.js');
 const clock = await import('../../src/clock.js');
 const { snapshot } = await import('../../src/report.js');
+const { forceCrit } = await import('../../src/crit.js');
 
 export async function newYard({ W = 800, H = 600 } = {}) {
   world.resize(game.settleIntoWorld);
   hooks.newGame();
+
+  // Crits off by default in the node harness. A crit is a roll -- see crit.js --
+  // and a roll is nondeterminism, so a check about anything *other* than crits
+  // reads a yard where the swing spoil and the dig timing wobble under it: a dig
+  // finishes a beat early when a swing pulls the seam forward, a swing's speck
+  // comes off fatter and higher. Every one of those checks is about the thing it
+  // is about and not about crits, so the honest yard for it is the crit-free one.
+  // A check that *is* about crits forces the roll on with `__crit(true)` (or back
+  // to real rolls with `__crit(null)`) and manages its own state -- see
+  // test/crit.test.mjs. Play never touches this: `forceCrit` is test-only and the
+  // game rolls its 10% from the first swing.
+  forceCrit(false);
 
   // The same handles under the same names the browser suite calls them by. A
   // check moved over from there says `window.__crew(3, 2)` and means it: there

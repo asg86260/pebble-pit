@@ -104,6 +104,12 @@ export const S = {
   riftOpen: false,        // the rift is bought
   rift: 0,                // and how many grains of dust are through it
   riftLevel: 0,           // how fast it swallows: an endless ladder, not a capacity
+  // The tearing, while it is happening: seconds of the gulp left to run, and a
+  // knock waiting to be spent on the view. Neither is saved -- an event is a
+  // moment, not a state, and a save reloaded halfway through one should come
+  // back to a yard that has already had it.
+  riftGulp: 0,
+  riftShake: 0,
   // And what is through it that is not dust. One capacity, one queue, one rift:
   // a grain is a grain whatever it is, so the hole swallows a shard exactly as
   // it swallows dust, and this is where those go. Kept by kind rather than as

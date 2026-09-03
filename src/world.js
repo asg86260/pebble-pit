@@ -8,7 +8,7 @@
 import { P, CELL, CRATE_H, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE,
-        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
+        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE, CRATED,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
@@ -507,6 +507,10 @@ export const bankCeiling = c => {
   // ceiling at its edge columns was nought. The sides hold it in now, which is
   // what sides are for. Same rule as the hole: see `heapCeiling` in pit.js.
   const toEnd = Math.min((x + P - p.from) / P, (p.to - (x + P)) / P);
+  // Unless the strip has no crate to fill -- the rock's, which is the width of
+  // the hill. Nothing holds that in, so it is the slope alone and what falls
+  // there heaps where it fell. See `CRATED` in config.js.
+  if (!CRATED(p.key)) return Math.max(0, toEnd) * BANK_SLOPE;
   return CRATE_H / P + Math.max(0, toEnd) * BANK_SLOPE;
 };
 

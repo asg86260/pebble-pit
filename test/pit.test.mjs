@@ -72,8 +72,18 @@ group('a core in the pile does not jam the hole', async () => {
   // `pitFull` blinks, and a check that waits for it and then reads it can catch
   // either. What this group is about is the yard against a hole with no room in
   // it, and that is what the collapse says.
-  runUntil(() => state().riftOpen, 60);
-  run(10);                                     // and a moment to stand down in
+  // The hole at the moment it gave way, read before a single frame of the
+  // tearing has run. `__give` fills the plot and the hole refuses a grain inside
+  // that one call, so this is the brim -- and the brim is all it is now: the
+  // tear takes the whole pile from there (see `## The rift`), so a check that
+  // runs a quarter of a second past it reads a hole a third of the way gone.
+  //
+  // The two facts about a *full* hole -- every cell spoken for, and the heap
+  // over the mouth unlocked on the way -- are only ever true here. Everything
+  // about the yard afterwards is read below, once the gulp is done and the crew
+  // have had a moment.
+  const brim = state();
+  run(10);                                     // the tearing, and a moment to stand down in
   const s = state();
   const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
   // put the yard back: an empty hole and a swept floor, or every check after
@@ -86,22 +96,27 @@ group('a core in the pile does not jam the hole', async () => {
   return [
     ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
        `${s.cores} cores`),
-    ok(s.riftOpen, 'the hole has been filled past what it holds', `${s.pit} of ${s.pitCapacity}`),
+    ok(brim.riftOpen && s.riftOpen, 'the hole has been filled past what it holds',
+       `${brim.pit} of ${brim.pitCapacity}`),
     // Within a whisker of every cell: the rift is swallowing off the top the
     // whole time, so the pile sits a hair under the brim and is topped straight
     // back up. A tolerance rather than a number, because how big the whisker is
     // depends on the rift's rate.
-    ok(s.pit >= s.pitCapacity * 0.99, 'and it really is: every cell the plot allows is spoken for',
-       `${s.pit} cells of ${s.pitCapacity}, ${s.pitDust} of them dust`),
+    ok(brim.pit >= brim.pitCapacity * 0.99, 'and it really was: every cell the plot allows was spoken for',
+       `${brim.pit} cells of ${brim.pitCapacity}, ${brim.pitDust} of them dust`),
     // the heap over the mouth has to have unlocked, or the pile stopped at
     // the brim of the hole and everything above it was never reachable
-    ok(s.pitDust > (s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain) - s.cores,
+    ok(brim.pitDust > (brim.pitW / brim.pitGrain) * (brim.pitDepth / brim.pitGrain) - brim.cores,
        'the heap over the mouth was unlocked on the way',
-       `${s.pitDust} dust, hole holds ${(s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain)}`),
+       `${brim.pitDust} dust, hole holds ${(brim.pitW / brim.pitGrain) * (brim.pitDepth / brim.pitGrain)}`),
     // Laden is fine now, and is the point: a hole that has collapsed always has
     // somewhere to put a load, so a carter walks up and tips it rather than
     // standing at the lip holding it. What must be true is that the books
     // balance -- what is counted, less what is through the rift, is the pile.
+    // And the tearing took it: the hole a player is left with after the moment
+    // is an empty one, which is the whole of what the rift is for.
+    ok(s.pit < brim.pit * 0.1, 'and the tearing emptied it',
+       `${brim.pit} -> ${s.pit}`),
     ok(s.stored - s.rift === s.pitDust,
        'and what is counted, less what is through the rift, is the pile',
        `${s.stored} counted, ${s.rift} through, ${s.pitDust} in the pile`)

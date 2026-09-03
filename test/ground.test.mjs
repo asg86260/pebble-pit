@@ -16,6 +16,7 @@ import { rand } from '../src/rng.js';
 // would be startling a bird nobody can see.
 import { BIRDS, startle } from '../src/weather.js';
 import { yardLeft, bankCeiling, pastRock } from '../src/world.js';
+import { CRATE_H, CRATED } from '../src/config.js';
 import { S, floor } from '../src/state.js';
 import { at, put } from '../src/grid.js';
 import { LOOSE_DEEP, PILE_HOLDS, FIND_COLOR } from '../src/config.js';
@@ -358,8 +359,15 @@ group('a full pile is a heap you can read', async () => {
        'a full one stands at its crest', `${tall(crest)} cells over ${cells}`),
     ok(peak > cells / 4 && peak < cells * 3 / 4,
        'and the crest is in the middle of the strip', `column ${peak} of ${cells}`),
-    ok(crest.every((h, c) => h <= (Math.min(c + 1, cells - 1 - c) * 1.5) + 1),
-       'with nothing standing up as a wall at either end', JSON.stringify(crest))
+    // The strip stands in a crate, and a crate fills flat to the brim of its
+    // sides before anything leans anywhere -- so the envelope is the sides plus
+    // the slope off them, not the slope alone. What this still says is that
+    // nothing stands up as a wall: above the brim it is a heap and only a heap.
+    // The rock's strip has no crate and keeps the bare slope; see `CRATED`.
+    ok(crest.every((h, c) => h <= (CRATED('quarry') ? CRATE_H / P : 0)
+                                  + Math.min(c + 1, cells - 1 - c) * 1.5 + 1),
+       'with nothing standing higher than its sides and the heap off them',
+       JSON.stringify(crest))
   ];
 });
 
