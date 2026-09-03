@@ -5,7 +5,7 @@
 // are placed by their distance from the rock, so adding one is a distance in
 // config.js and a line in `layout` below.
 
-import { P, CELL, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
+import { P, CELL, CRATE_H, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
@@ -497,11 +497,17 @@ export const bankCeiling = c => {
   // bank here rises on, and levels off at the scatter -- which reads as a low
   // ramp out of the foot of the hill and up into the heap beyond it.
   if (!p) return Math.min(LOOSE_DEEP, Math.max(0, pastRock(x)) * BANK_SLOPE);
-  // both ends of a pile are cliffs the sand may not lean on: the station behind
-  // it and the bare ground in front of it. So it rises only as it gets away from
-  // them, which is what stops it standing up as a wall against either.
+  // A strip is a crate, and a crate fills to its brim everywhere before anything
+  // leans anywhere: every column takes the height of the sides, and above that
+  // it slopes away from the ends the way loose stuff does.
+  //
+  // It used to be the slope alone, which meant a heap with nothing at its ends
+  // -- the marked-out ground stood emptiest exactly where it was marked, and a
+  // strip narrower than a few cells could not hold a single grain, because the
+  // ceiling at its edge columns was nought. The sides hold it in now, which is
+  // what sides are for. Same rule as the hole: see `heapCeiling` in pit.js.
   const toEnd = Math.min((x + P - p.from) / P, (p.to - (x + P)) / P);
-  return Math.max(0, toEnd) * BANK_SLOPE;
+  return CRATE_H / P + Math.max(0, toEnd) * BANK_SLOPE;
 };
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it

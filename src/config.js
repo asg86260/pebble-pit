@@ -1496,6 +1496,19 @@ export const MINER_BITE_MULT = 2.2;
 // the wizards stop until somebody has carried it away.
 export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260 };
 
+// How tall the sides of a station's crate stand.
+//
+// A strip used to be bare ground with a heap leaning on it, and a heap that
+// leans has nothing at its ends: the marked-out ground was emptiest exactly
+// where it was marked. A crate holds what is thrown into it -- it fills flat to
+// the brim, corner to corner, and only leans once it is over the top of the
+// sides. That is the pit's own rule (`heapCeiling` in pit.js) at a station's
+// scale, which is why it is the same arithmetic rather than a second idea.
+//
+// Three cells: half a body, so a carter can throw into it and you can see over
+// it, and low enough that a full one still reads as a heap rather than a wall.
+export const CRATE_H = P * 3;
+
 // And what lands on each of those strips, which is the one thing about a heap
 // that nowhere else in the game says out loud. Every other fact about a strip is
 // worked out -- where it is comes off the walk in `placeSites`, how wide it is

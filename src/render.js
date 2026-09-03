@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { PILE_HOLDS, PILE_LIMIT } from './config.js';
+import { PILE_HOLDS, CRATE_H } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
@@ -666,21 +666,9 @@ export function drawSmoke() {
 // what the warning marks below used to do (they named two keys and sent
 // everything else to the farm, and two stations spent a while with their signs
 // three thousand pixels from the thing that had stopped).
-const PEG_H = P * 3;                  // how far the corner posts stand off the line
-const PEG_FOOT = P * 2;               // and how far their feet turn in along it
-const DASH_EVERY = P * 4;             // a cell of run, then three of gap
 const GROUND_INK = '#c9c9c9';         // paler than anything built: a marking, not a wall
 
-// How plainly a strip's marks show. Full strength on bare ground, gone by the
-// time the heap is a third of the way up -- by then the pile itself says where
-// the ground is, and a marking still showing through a heap of stone is a
-// marking arguing with it.
-const stripFade = key => {
-  const of = PILE_LIMIT[key] || Infinity;
-  return Math.max(0, 1 - (S.pileCount[key] || 0) / (of / 3));
-};
-
-// What piles here, drawn small over the middle of its own ground.
+// What piles here, cut into the ground it is kept for.
 //
 // A find gets its own glyph, in its own colour -- the same shape the counter and
 // the crew board use for it -- with `glyph` on, because a solid coloured cell is
@@ -697,29 +685,40 @@ function stripMark(kind, x, y) {
   ctx.fillStyle = '#000';
 }
 
+// The crate a station's output is thrown into.
+//
+// This was pegs and a dashed run -- a surveyor's marking on bare ground, which
+// said "something belongs here" and left you to imagine what. A crate says it
+// outright, in the vocabulary the rest of the yard is written in: the bench, the
+// kit stand and the closet are all THINGS, and a heap of stone that lives in a
+// box is easier to read than a heap of stone that lives on a line.
+//
+// Drawn before the grid, so what is thrown in piles up inside it. The sides hold
+// the pile in rather than overlapping it -- see `bankCeiling` in world.js, where
+// a strip fills to the brim of its sides before anything leans.
 export function drawPileGround() {
   for (const p of S.piles) {
-    const a = stripFade(p.key);
-    if (a <= 0.02) continue;
     const y = S.groundY;
-    // Half a cell of the post is below the line and the rest above it, so a peg
-    // reads as driven into the ground rather than resting on it.
-    const top = y - PEG_H;
-    ctx.globalAlpha = a;
+    // In the yard's own ink, not the pale grey a marking is drawn in. A crate is
+    // furniture -- the same black the bench and the kit stand are drawn in --
+    // and the pegs were pale because they were a note about the ground rather
+    // than a thing standing on it.
+    ctx.fillStyle = '#000';
+    // Two sides, standing on the ground the strip is laid on. A cell thick, so
+    // they read as boards rather than as walls.
+    for (const x of [p.from, p.to - P]) ctx.fillRect(x, y - CRATE_H, P, CRATE_H);
+    // ...and the ground between them, which is the crate's floor rather than
+    // another board: drawn in the pale ink a marking uses, because the rock's
+    // strip is seven hundred grains wide and a black run that long reads as a
+    // bar laid across the yard rather than as something with sides.
     ctx.fillStyle = GROUND_INK;
-    for (const [x, dir] of [[p.from, 1], [p.to - P, -1]]) {
-      ctx.fillRect(x, top, P, PEG_H + P);
-      ctx.fillRect(dir > 0 ? x : x - PEG_FOOT + P, top, PEG_FOOT, P);
-    }
-    // the run between them, dashed: a solid line would be a fence, and this is
-    // ground you are meant to walk on and heap on
-    for (let x = p.from + DASH_EVERY; x < p.to - P; x += DASH_EVERY)
-      ctx.fillRect(x, y - P, P, P);
-    // and what lands here, standing in the middle of its own ground
+    ctx.fillRect(p.from - P, y - P, (p.to - p.from) + P * 2, P);
+    // ...and whose crate it is, cut into the ground under it rather than hung
+    // in the air over it. It stays put as the crate fills: a marking that dimmed
+    // as the strip filled told you least about the strip you could see least of.
     const mid = Math.round((p.from + p.to) / 2 / P) * P;
-    ctx.globalAlpha = a * 0.8;
-    stripMark(PILE_HOLDS[p.key], mid, y - PEG_H - P * 2);
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = GROUND_INK;
+    stripMark(PILE_HOLDS[p.key], mid, y + P * 3);
     ctx.fillStyle = '#000';
   }
   ctx.globalAlpha = 1;

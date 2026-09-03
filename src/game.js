@@ -20,7 +20,7 @@ import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, lookAt } from './world.js';
+import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
@@ -167,12 +167,12 @@ export function step() {
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on
-  // The hole collapsing is the one thing in this game that happens TO you rather
-  // than because you pressed something, so the view goes and looks at it. Once:
-  // `throughRift` raises the flag the first time a grain will not fit, and this
-  // is where it is put down. It is not a stoppage -- the yard carries on behind
-  // the glide, which is the whole point of the collapse.
-  if (S.riftFell) { S.riftFell = false; lookAt(rift.x + rift.w / 2); }
+  // The collapse does NOT take the camera. It was tempting -- it is the one
+  // thing that happens to you rather than because you pressed something -- but
+  // the view is where you put it, and a yard that yanks it away is a yard
+  // interrupting you to show you a thing you did not ask about. It also stole
+  // the frame from anything else pointing the camera, which is how it was
+  // noticed. The hole is there when you next look at it.
   stepWorks(dt);                              // and whatever the yard is building
   stepMachineSmoke(now);                      // and the stacks over the machines
   stepSmoke(now, dt);                         // which the chimney says out loud

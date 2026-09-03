@@ -228,7 +228,6 @@ function throughRift(x, shade) {
   S.seenFullPit = true;
   if (!S.riftOpen) {
     S.riftOpen = true;
-    S.riftFell = true;              // ...and the yard has a moment to look at
   }
   const held = riftHeld();
   if (isDust(shade)) {
