@@ -13,6 +13,21 @@
 
 import { group, ok, state, openSites } from './helpers.mjs';
 
+// The row arrays themselves, for the grammar check at the foot of this file. It
+// reads the static shape of every row -- `kind`, `name`, `unit` -- so it takes
+// them straight from the modules rather than through `__rows`, which reports only
+// what a board draws (key, name, price) and not what a row *is*. These are static
+// definitions, so a direct import is the same table the game builds from; helpers
+// already reaches for `src/quarry.js` this way.
+import { UPGRADES } from '../src/upgrades.js';
+import { LAB_UPGRADES } from '../src/lab.js';
+import { TOWER_UPGRADES } from '../src/tower.js';
+import { SCHOOL_UPGRADES } from '../src/school.js';
+import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
+import { QUARRY_UPGRADES } from '../src/quarry.js';
+import { FARM_UPGRADES } from '../src/farm.js';
+import { CASINO_UPGRADES } from '../src/casino.js';
+
 group('every row on every board has somewhere to be drawn', async () => {
   window.__reset();
   openSites();
@@ -65,5 +80,72 @@ group('a row no section names is still drawn', async () => {
     ok(after.includes('labswing'),
        'and it is still drawn with no section naming it',
        after.filter(k => k.startsWith('lab')).join(','))
+  ];
+});
+
+// The shop speaks one language, and this holds it to the grammar.
+//
+// A player learns what a row is called on one board and expects it to mean the
+// same thing on the next. That only holds if the boards keep to one rule per
+// `kind` -- see "The shop's language" in DESIGN.md -- so this checks the rule
+// rather than the fifty-two rows, and the fifty-third cannot quietly break it.
+//
+// It reads the static shape, not a running yard: no seed, no frames. `group`
+// still wraps it so a fistful of violations reports as a fistful.
+group('the shop keeps to one grammar per kind', async () => {
+  const rows = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
+                ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES];
+
+  // The casino is not a shop -- chips, stake, bank it, spin again are moves at a
+  // table -- so its rows keep their own register on purpose. And `airrate` is a
+  // readout wearing a row (it says "pollution / holding steady" and sells
+  // nothing), exempt until it stops being a row at all. See "What is exempt".
+  const casinoKeys = new Set(CASINO_UPGRADES.map(r => r.key));
+  // `recycler` is typed `place` for a mechanical reason -- the house's own body
+  // walks over to fit it, the same walk a bench costs -- but it is not standing
+  // room for another body, so DESIGN's rename gives it machine language ("the
+  // recycler") over the "another X" the place rule asks for. The kind cannot
+  // move without moving the mechanic, so the row is the one exception to that
+  // rule and is named here rather than left to fail silently.
+  const exempt = k => casinoKeys.has(k) || k === 'airrate' || k === 'recycler';
+
+  // The four tune rows, held to "tune the X" -- one verb for all four, the
+  // flavour carried by the note a line below. They are `kind: 'rung'`, so they
+  // are found by key rather than by kind.
+  const tuneKeys = new Set(['tuneram', 'tunebelt', 'tunetiller', 'tunejaw']);
+
+  const machineBad = [];   // kind 'machine' must be "the X"
+  const placeBad = [];     // kind 'place' must be "another X"
+  const tuneBad = [];      // a tune row must be "tune the X"
+  const unitless = [];     // a rated row (pct) must state a unit
+
+  for (const r of rows) {
+    const name = r.name || '';
+    if (tuneKeys.has(r.key)) {
+      if (!name.startsWith('tune the ')) tuneBad.push(`${r.key}:"${name}"`);
+    } else if (!exempt(r.key)) {
+      if (r.kind === 'machine' && !name.startsWith('the '))
+        machineBad.push(`${r.key}:"${name}"`);
+      if (r.kind === 'place' && !name.startsWith('another '))
+        placeBad.push(`${r.key}:"${name}"`);
+    }
+    // A "+25%" of nothing is the bug this catches: every rated row names its
+    // unit, whatever its kind or board.
+    if (r.pct && !r.unit) unitless.push(r.key);
+  }
+
+  return [
+    ok(machineBad.length === 0,
+       'every machine row is named "the X"',
+       machineBad.join(', ') || 'none'),
+    ok(placeBad.length === 0,
+       'every place row is named "another X"',
+       placeBad.join(', ') || 'none'),
+    ok(tuneBad.length === 0,
+       'every tune row is named "tune the X"',
+       tuneBad.join(', ') || 'none'),
+    ok(unitless.length === 0,
+       'every rated row states a unit, so none render a percent of nothing',
+       unitless.join(', ') || 'none')
   ];
 });

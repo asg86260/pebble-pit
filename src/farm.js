@@ -242,7 +242,9 @@ export const FARM_UPGRADES = [
     // A place, broken by the hands that work the row. See works.js.
     kind: 'place', site: 'farm',
     // Breaking ground is what it takes; a plot is what you get.
-    name: 'new plot',
+    name: 'another plot',
+    // What the from/to is counting, so the gain reads "1 -> 2 plots".
+    unit: 'plots',
     from: () => plotCount(),
     to: () => plotCount() + 1,
     cost: () => Math.round(PLOT_COST * Math.pow(PLOT_RATE, S.plotLevel)),
@@ -303,7 +305,7 @@ export const FARM_UPGRADES = [
 ,
 
   // The tiller's ladder, on the farm's board, and endless like the rest.
-  tuneRow('tiller', 'gear up the tiller',
+  tuneRow('tiller', 'tune the tiller',
           () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
 ];
 

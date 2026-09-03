@@ -99,7 +99,7 @@ export const SCRUB_UPGRADES = [
     // being an answer at exactly the point the yard is worth having one.
     key: 'fan',
     kind: 'rung', site: 'scrub',
-    name: 'a bigger fan',
+    name: 'the fan',
     unit: 'motes/s',
     pct: true,
     rung: () => S.fanLevel,
@@ -133,7 +133,7 @@ export const SCRUB_UPGRADES = [
     // A fitting the house's own body puts in, which is the house not scrubbing
     // while it happens.
     kind: 'place', site: 'scrub',
-    name: 'recycler',
+    name: 'the recycler',
     // What it is for. A row that says "recycler" and nothing else is a row you
     // have to buy to find out about.
     note: () => 'replaces the filters: what it catches comes back as dust',

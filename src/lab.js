@@ -250,7 +250,7 @@ export const LAB_UPGRADES = [
     // other multiplier in the game -- worked at the pace it did on the first day
     // for the whole run.
     key: 'labkit',
-    name: 'better instruments',
+    name: 'instruments',
     unit: 'work/s',
     pct: true,
     rung: () => S.labKitLevel,
@@ -275,7 +275,9 @@ export const LAB_UPGRADES = [
     // leaning over the same bench, which is a queue and is what `capOf` has
     // always refused.
     key: 'labroom',
-    name: 'a second bench',
+    name: 'another bench',
+    // What the from/to is counting, so the gain reads "1 -> 2 benches".
+    unit: 'benches',
     from: () => labRooms(),
     to: () => labRooms() + 1,
     cost: () => LAB_ROOM_COST,
@@ -292,7 +294,9 @@ export const LAB_UPGRADES = [
   // `rebalance`.
   {
     key: 'labswing',
-    name: 'swing speed',
+    name: 'swing',
+    // The same unit the swing rungs on the bench already print -- dust a second.
+    unit: 'px/s',
     pct: true,
     rung: () => levelOf('swing'),
     from: () => mult('swing'),
@@ -312,7 +316,9 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labhaul',
-    name: 'carry speed',
+    name: 'speed',
+    // The same unit the crew's speed rungs already print -- dust a second.
+    unit: 'px/s',
     pct: true,
     rung: () => levelOf('haul'),
     from: () => mult('haul'),
@@ -330,7 +336,9 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labcave',
-    name: 'quarry speed',
+    name: 'speed',
+    // The same unit the quarry's own board prints -- stone a minute.
+    unit: 'trips/min',
     pct: true,
     rung: () => levelOf('quarry'),
     from: () => mult('quarry'),
@@ -371,7 +379,9 @@ export const LAB_UPGRADES = [
   },
   {
     key: 'labtend',
-    name: 'plot speed',
+    name: 'speed',
+    // The same unit the farm's own board prints -- crop a minute.
+    unit: 'plots/min',
     pct: true,
     rung: () => levelOf('tend'),
     from: () => mult('tend'),
@@ -394,8 +404,14 @@ export const LAB_SECTIONS = [
   // The lab's own two, first, because they are about this room rather than about
   // somewhere else in the yard.
   { title: 'the lab', keys: ['labkit', 'labroom'] },
-  { title: 'the work', keys: ['labswing', 'labhaul'] },
-  { title: 'the ground', keys: ['labcave', 'labtend'] },
+  // The rest are grouped by the board each row multiplies, not by theme, so a
+  // labber's row sits under the same heading the bench uses for the same thing.
+  // Without this, labcave and labtend are two rows both called "speed" under one
+  // heading -- the qualifier came off the name so the heading has to do the work.
+  { title: 'the rock', keys: ['labswing'] },
+  { title: 'the crew', keys: ['labhaul'] },
+  { title: 'the quarry', keys: ['labcave'] },
+  { title: 'the farm', keys: ['labtend'] },
   { title: 'the air', keys: ['labair'] }
 ];
 

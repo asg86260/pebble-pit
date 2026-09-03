@@ -809,11 +809,13 @@ export const QUARRY_UPGRADES = [
     // cutting the next bench they are not bringing stone up, which is the whole
     // of what the wait costs -- see works.js.
     kind: 'place', site: 'quarry',
-    // What the row says is what you are doing, not what it leaves behind. "Take
-    // out a bench" is the quarryman's word for it and the shape you can see in
-    // the wall afterwards -- but the thing you are buying is the hole going
-    // further down, and that is what the row should say.
-    name: 'dig deeper',
+    // A place is standing room for one more body: `capOfBare` caps quarriers at
+    // `benches()`, so what you are buying is another quarrier's shovel at the
+    // face, not a bigger yield out of the same hole. The name says who; the cut
+    // a bench deeper is what it leaves behind.
+    name: 'another shovel',
+    // What the from/to is counting, so the gain reads "1 -> 2 shovels".
+    unit: 'shovels',
     from: () => benches(),
     to: () => benches() + 1,
     cost: () => Math.round(BENCH_COST * Math.pow(BENCH_RATE, S.benchLevel)),
@@ -872,7 +874,7 @@ export const QUARRY_UPGRADES = [
   // Keyed 'jaw', which is what the machine was called before it became a drill
   // and is still what every save has in it. The key is the machine's; the words
   // are what anybody reads. See the note over `MACHINES` in machines.js.
-  tuneRow('jaw', 'sharpen the drill',
+  tuneRow('jaw', 'tune the drill',
           () => `the drill bites ${MACHINE_TUNE}x harder, again`, 'quarry')
 ];
 

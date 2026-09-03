@@ -890,8 +890,8 @@ export const UPGRADES = [
     kind: 'rung', site: 'bench',
     // And the same again for the tool. What you swing and what a miner swings do
     // exactly the same job, so they are the same row under two headings rather
-    // than "pick" here and "upgrade pickaxe" over there.
-    name: 'upgrade pickaxe',
+    // than "pick" here and "pickaxe" over there.
+    name: 'pickaxe',
     unit: 'px',
     rung: () => S.pickLevel,
     from: () => pickCount(),
@@ -914,7 +914,7 @@ export const UPGRADES = [
     // What you are buying is the tool, not the number the tool moves. The row
     // said "miner bite", which is the effect described in the game's own jargon
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
-    name: 'upgrade pickaxe',
+    name: 'pickaxe',
     unit: 'px',
     rung: () => S.minerPickLevel,
     from: () => minerBite(),
@@ -1115,7 +1115,7 @@ export const UPGRADES = [
   {
     key: 'loopost',
     kind: 'rung', site: 'bench',
-    name: 'a second cap',
+    name: 'another cap',
     cost: () => LOOPOST_SHARDS,
     currency: 'shard',
     buy: () => { S.looPosts = 2; rebalance(); },
@@ -1194,9 +1194,9 @@ export const UPGRADES = [
   // the rock and the crew. Neither has a station board of its own, the rock
   // being the rock and carrying being what everybody does. Endless, like the
   // other two: see `tuneRow` in machines.js.
-  tuneRow('ram', 'drive the ram harder',
+  tuneRow('ram', 'tune the ram',
           () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard'),
-  tuneRow('belt', 'speed the belt',
+  tuneRow('belt', 'tune the belt',
           () => `the belt runs ${MACHINE_TUNE}x faster, again`, 'yard'),
 
   // The rift -- the black hole in the pit -- is not sold here. It is summoned
