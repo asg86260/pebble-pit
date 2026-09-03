@@ -3751,6 +3751,25 @@ keep, banked wherever they come to rest. The machinery is already in the yard:
 upward kick on a shaken body's spill. A crit is that, aimed up, off the cell that
 was worked.
 
+**A higher arc, and the grains swell through the top of it.** Crit dust does not
+fly like ordinary spoil -- it goes up on a taller arc than anything else in the
+yard, and each grain grows to its fattest at the apex and shrinks back to an
+ordinary grain by the time it lands. A fountain that rises, blooms at the top and
+settles. That is the read-at-a-glance tell that a crit happened and not just a
+big swing: dust in this game is one cell and never bigger, so a grain the size of
+two is a grain that could only have come off a crit.
+
+**The apex is free -- the arc already knows where it is.** A chip is a place and
+a velocity under gravity (`spawnChip` in dust.js), so a grain at the top of its
+flight is the grain whose vertical speed has fallen to nothing, and one just
+launched or about to land is moving fastest. Size is read straight off that --
+biggest where the grain is slowest vertically, back to `P` where it is fastest --
+so there is no apex to store and no per-grain timer: `drawMark` already takes a
+`size`, and the swell is a number worked out from `vy` the same frame it is
+drawn. It also ties the two tells together for nothing: a crit throws higher, so
+the grain hangs longer near its slow apex, so it is both higher *and* fatter, and
+the harder the crit the more of both.
+
 **The moment does not hang.** No pause, no slow-motion, no zoom, and nothing
 stops -- not the body that crit and not the ones around it. The crew do not look
 up, the view does not shake, and the next swing comes on its own clock as if
