@@ -51,20 +51,22 @@ export function drawApothecary() {
     // is empty. The fire, the bubbles and the steam are animation and stay code
     // below; everything static about the pot -- rim, belly, legs, handle -- is in
     // the grid, so the shape is yours to draw and not mine to guess.
-    // The stock shelf on the far left: the tonics you can brew, each a little
-    // vial of its own colour standing on a shelf, so what is on offer reads from
-    // across the yard. A post holds the shelf up; the vials sit on it in the order
-    // TONICS lists them.
-    const shelfY = g - P * 5;
+    // The stock table on the far left, built like the kit stands by the rock: a
+    // slab on two legs, with a little vial of each tonic standing on it in its
+    // own colour, so what is on offer reads from across the yard. The vials sit
+    // on the slab in the order TONICS lists them.
+    const tableY = g - P * 5;
+    const tableW = P * (TONICS.length * 2 + 1);
     ctx.fillStyle = '#000';
-    ctx.fillRect(x + P, shelfY, P * (TONICS.length * 2 + 1), P);   // the shelf
-    ctx.fillRect(x + P, shelfY + P, P, P * 3);                     // a post under its left end
+    ctx.fillRect(x + P, tableY, tableW, P);                       // the slab
+    ctx.fillRect(x + P, tableY + P, P, g - tableY - P);           // the left leg, to the ground
+    ctx.fillRect(x + P + tableW - P, tableY + P, P, g - tableY - P);   // and the right leg
     for (let i = 0; i < TONICS.length; i++) {
       const vx = x + P * (2 + i * 2);
       ctx.fillStyle = '#000';
-      ctx.fillRect(vx, shelfY - P * 3, P, P);                      // cork
+      ctx.fillRect(vx, tableY - P * 3, P, P);                     // cork
       ctx.fillStyle = TONICS[i].color;
-      ctx.fillRect(vx, shelfY - P * 2, P, P * 2);                  // the coloured brew
+      ctx.fillRect(vx, tableY - P * 2, P, P * 2);                 // the coloured brew
     }
     ctx.fillStyle = '#000';
 
