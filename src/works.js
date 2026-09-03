@@ -19,7 +19,7 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench, quarry, farm, lab, scrub, tower } from './state.js';
+import { S, bench, quarry, farm, lab, scrub, tower, apothecary } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 
 // Where a row's work stands, and therefore whose hands do it.
@@ -47,7 +47,11 @@ export const SITE_JOB = {
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
   // row in this file already was.
-  lab: 'labbers'
+  lab: 'labbers',
+  // The apothecary, whose gang is its stirrers. Its rungs are built by its own
+  // hands the way the plots break the next furrow; the brewing itself is an
+  // upkeep stepped in apothecary.js, not a one-shot work here.
+  apothecary: 'stirrers'
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -84,7 +88,8 @@ export const SITES = Object.keys(SITE_JOB);
 export const OPENS_PLACE = {
   unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
-  unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower'
+  unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
+  unlockapothecary: 'apothecary'
 };
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
@@ -207,10 +212,11 @@ export const takesTime = u => !!u.kind && workFor(u) > 0;
 const YARD_ROW_SITE = {
   house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm',
-  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub'
+  unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
+  unlockapothecary: 'apothecary'
 };
 
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab };
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary };
 
 // Every room the settlement will have once the one going up lands -- one more
 // than today's count, the same way `nextHouseAt` in house.js asks.

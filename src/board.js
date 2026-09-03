@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P } from './config.js';
-import { S, bench, lab, school, casino, scrub, tower } from './state.js';
+import { S, bench, lab, apothecary, school, casino, scrub, tower } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
@@ -12,6 +12,7 @@ import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
+import { APOTHECARY_UPGRADES } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved } from './shop.js';
 import { now } from './clock.js';
@@ -26,6 +27,7 @@ const crewListRowsEl = document.getElementById('crewlistrows');
 const scrubShopEl = document.getElementById('scrubshop');
 const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
+const apothShopEl = document.getElementById('apothshop');
 const towerShopEl = document.getElementById('towershop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
@@ -35,6 +37,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
                 scrub: document.getElementById('scrub'),
                 quarry: document.getElementById('quarryboard'),
                 farm: document.getElementById('farmboard'),
+                apothecary: document.getElementById('apothboard'),
                 tower: document.getElementById('towerboard') };
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
@@ -47,7 +50,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // it. That read wrong -- the shed is what looks like the sign, so it is what
 // the hand goes to. It is the whole answer now: the hover target, the click
 // target, and the anchor the board hangs from, for both of them.
-const standAt = { bench, lab, school, casino, scrub, tower,
+const standAt = { bench, lab, apothecary, school, casino, scrub, tower,
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },
                   get house() { return houseRect(); } };
@@ -71,6 +74,7 @@ const listFor = which =>
   which === 'scrub' ? SCRUB_UPGRADES :
   which === 'quarry' ? QUARRY_UPGRADES :
   which === 'farm' ? FARM_UPGRADES :
+  which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
   which === 'house' ? crewRows() : [];
 
@@ -78,7 +82,7 @@ const listFor = which =>
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
-                         'farm', 'tower', 'house'];
+                         'farm', 'apothecary', 'tower', 'house'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -89,6 +93,7 @@ const standing = which =>
   which === 'scrub' ? S.scrubOpen :
   which === 'quarry' ? S.quarryOpen :
   which === 'farm' ? S.farmOpen :
+  which === 'apothecary' ? S.apothecaryOpen :
   which === 'tower' ? S.towerOpen :
   which === 'house' ? S.crew > 0 : false;
 
@@ -130,7 +135,7 @@ export function hasOffer(which) {
   // A row that moves bodies about spends nothing, and a ladder at the top of
   // itself cannot be bought however much you are holding: neither is something
   // you would cross the yard for.
-  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
+  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial && !u.pot &&
                                   !u.price && !maxed(u) && !u.dead?.() && canPay(u));
 }
 
@@ -143,6 +148,7 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
+export const nearApothecary = (x, y) => S.apothecaryOpen && near(apothecary, x, y);
 // The shed beside it is now the *only* way in. #1 of "Wave 3.1" made it a
 // second one and left the hole answering as well, which is the half-measure
 // this replaces: pointing anywhere at the cut -- the ground the crew work, the
@@ -625,6 +631,7 @@ function settle(want) {
   S.scrubBoardOpen = want === 'scrub';
   S.quarryBoardOpen = want === 'quarry';
   S.farmBoardOpen = want === 'farm';
+  S.apothBoardOpen = want === 'apothecary';
   S.towerBoardOpen = want === 'tower';
 
   if (!want) {                                   // fade out where it stands
@@ -714,6 +721,11 @@ const headcount = title =>
   title === 'the quarry' ? S.quarriers :
   title === 'the farm' ? S.farmhands : 0;
 
+// The apothecary's headings count the bodies stirring, on the section that is
+// about the pot -- how many stirrers are in there is the one thing you do about
+// that number, so it belongs where you act on it.
+const apothHeads = title => title === 'the pot' ? S.stirrers : 0;
+
 // The numbers on whichever board is open. Pulled out of `hud` so that opening a
 // board can fill it before it is measured, rather than a frame after.
 function fill(which) {
@@ -736,6 +748,7 @@ function fill(which) {
   if (which === 'scrub') refresh(scrubShopEl, SCRUB_UPGRADES, null);
   if (which === 'quarry') refresh(quarryShopEl, QUARRY_UPGRADES, null);
   if (which === 'farm') refresh(farmShopEl, FARM_UPGRADES, null);
+  if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not

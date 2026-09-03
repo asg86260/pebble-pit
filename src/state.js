@@ -10,7 +10,7 @@
 // config.js. The two grids and the bench are objects that are mutated in place,
 // so they live here as consts rather than as fields on S.
 
-import { P, LOO_POSTS } from './config.js';
+import { P, LOO_POSTS, APOTH_POTS0 } from './config.js';
 
 export const S = {
   // --- the window and the view ---
@@ -311,6 +311,30 @@ export const S = {
   labbers: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 
+  // --- the apothecary, and the pot on the boil ---
+  // A pot the whole yard is under. You set what it brews and it brews that again
+  // and again while it has crop and a stirrer -- an upkeep, not a timer. See
+  // apothecary.js and DESIGN.md, "The apothecary".
+  apothecaryOpen: false,  // the building is up
+  stirrers: 0,            // and this many bodies are stirring pots in it
+  apothPots: APOTH_POTS0, // standing room for stirrers and tonics up at once
+  apothBoardOpen: false,  // its board is open
+  // The pot's standing order: what it is set to, whether it keeps at it, and who
+  // the doses favor. Shared across every pot in the building -- a second pot is
+  // more of the same tonic, more coverage; an independent second tonic is a
+  // follow-up (see the report and DESIGN.md "Open").
+  potTonic: null,         // the tonic key the pot is set to, or null for off
+  potKeep: true,          // keep brewing (an upkeep) or a one-off (a single batch)
+  potPrefer: null,        // the job the round favors first, or null for whoever is passed
+  // Per-pot runtime, indexed by pot: how far a batch has come, and how many
+  // doses are minted and waiting for the stirrer to deal out.
+  brewAt: [],             // worker-milliseconds into the current batch, per pot
+  doseHold: [],           // doses brewed and not yet carried out, per pot
+  brewLevel: 0,           // brew speed: crop into a dose, faster
+  lengthLevel: 0,         // buff length: how long a dose lasts on the body
+  strengthLevel: 0,       // buff strength: what a dose is worth while it is up
+  dosesLevel: 0,          // doses a brew: how many bodies one batch reaches
+
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
   mining: false,
@@ -440,6 +464,9 @@ export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
 export const lab = { x: 0, y: 0, w: 0, h: 0 };
+// The apothecary: a pot on a fire, standing just past the farm whose crop it
+// takes. See apothecary.js.
+export const apothecary = { x: 0, y: 0, w: 0, h: 0 };
 export const casino = { x: 0, y: 0, w: 0, h: 0 };
 // The scrubbing house: the one building whose job is to undo something the rest
 // of the yard is doing.

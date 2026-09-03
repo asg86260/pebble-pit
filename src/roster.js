@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, scrub, sky, outhouse } from './state.js';
+import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
@@ -47,6 +47,9 @@ export const POSTS = [
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
   { key: 'labjob', job: 'labbers',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
+  // One body to a pot, stood under the apothecary it stirs.
+  { key: 'stirjob', job: 'stirrers',
+    at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: 'janitors',

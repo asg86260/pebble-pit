@@ -9,7 +9,8 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         CASINO_KEEP, CASINO_LOSE, CASINO_H, SCRUB_FOLDS,
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, BROLLY_W, BROLLY_STICK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
+import { boiling, atPot, doseFrac } from './apothecary.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { PILE_HOLDS, CRATE_H, CRATED } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
@@ -24,7 +25,7 @@ import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarr
 import { indoors } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS,
-         FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY } from './config.js';
+         FLIES_PER, FLY_EVERY, FLY_ORBIT, FLY_BEAT, STINK_RISE, STINK_LIFE, STINK_EVERY, DOSE_MARK_CELLS } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, GOING, moteX, moteY, muckCols, poopCols, muckFloor } from './smog.js';
 import { machine, MACHINES, specOf } from './machines.js';
@@ -977,6 +978,67 @@ export function drawLab() {
     // front -- which put every labber through the window.
     ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
     ctx.fillStyle = '#000';
+  });
+}
+
+// The apothecary: a cauldron on a fire, a bed of herbs beside it, and steam off
+// the pot when there is a body stirring it. The steam IS the readout -- the
+// lab's chimney rule, word for word -- so a pot with nobody on it stands cold,
+// however much crop is in the yard, and you learn it is up from across the
+// yard the way you learn the lab is being worked. See `boiling` in apothecary.js.
+export function drawApothecary() {
+  const rising = risingPlace() === 'apothecary';
+  if (!S.apothecaryOpen && !rising) return;
+  const { x, y, w, h } = apothecary;
+  withRise(rising, x, S.groundY, w, h, () => {
+    const g = S.groundY;
+    ctx.fillStyle = '#000';
+
+    // The bed of herbs on the left -- two stalks with a leaf apiece, standing off
+    // the ground: the crop, before it is a tonic.
+    for (let s = 0; s < 2; s++) {
+      const hx = x + P * s;
+      ctx.fillRect(hx, g - P * 3, P, P * 3);
+      ctx.fillRect(hx + (s ? P : -P), g - P * 3, P, P);
+    }
+
+    // The cauldron, right of the herbs: a rim that lips out over a belly that
+    // narrows to a rounded bottom, standing on two legs with the fire between
+    // them. Drawn row by row so it is a bowl and not a box.
+    const potW = P * 5;                     // five cells across the belly
+    const potX = x + P * 4;                 // clear of the herb bed
+    const rimY = g - P * 6;                 // the rim sits six cells up
+    ctx.fillRect(potX - P, rimY, potW + P * 2, P);          // the rim, lipping out
+    ctx.fillRect(potX, rimY + P, potW, P * 2);              // the shoulders, full width
+    ctx.fillRect(potX + P, rimY + P * 3, potW - P * 2, P);  // and the base, drawn in a cell
+    ctx.fillRect(potX + P, g - P, P, P);                    // a stubby leg
+    ctx.fillRect(potX + potW - P * 2, g - P, P, P);         // and the other
+
+    // The brew: a clear line of it just under the rim.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(potX + P, rimY + P, potW - P * 2, P);
+    ctx.fillStyle = '#000';
+
+    // The fire under the belly, between the legs -- three flame licks standing on
+    // the ground. Always laid; only the steam says whether it is being worked.
+    for (let f = 0; f < 3; f++) {
+      const fx = potX + P + f * P;
+      ctx.fillRect(fx, g - P, P, P);                        // the base of the lick
+      if (f === 1) ctx.fillRect(fx, g - P * 2, P, P);       // the middle one taller
+    }
+
+    // Steam, when a body is stirring it. Two short wisps off the rim on their own
+    // slow clock, one cell at a time, thinning as they climb -- the fade is the
+    // readout being a picture rather than a lamp. See `boiling`.
+    if (boiling()) {
+      const t = now() / 700;
+      for (let k = 0; k < 2; k++) {
+        const ph = (t + k * 0.5) % 1;
+        const sx = potX + P + Math.round(1.5 + Math.sin((t + k) * 1.6) * 1.2) * P;
+        const sy = rimY - P - Math.round(ph * 3) * P;
+        if (ph < 0.8) ctx.fillRect(sx, sy, P, P);
+      }
+    }
   });
 }
 
@@ -3246,7 +3308,7 @@ export function drawPointed() {
   const t = now();
   for (const w of S.workers) {
     if (!w.pointed || w.pointed < t) continue;
-    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
+    if (underground(w) || indoors(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
     const bob = Math.round(Math.sin(t / 140) * 1.5) * P;
     const x = Math.round(w.x) + WORKER / 2;
     const top = Math.round(w.y) - P * 5 + bob;
@@ -3380,7 +3442,7 @@ const LEAN = 0.5;
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home
-    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
+    if (underground(w) || indoors(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
 
     const look = LOOK[w.type] || PLAIN;
     const throwOn = w.lunge || 0;
@@ -3400,6 +3462,18 @@ export function drawWorkers() {
     // what "hats are always shown" means.
     const hat = wearing(w);
     if (hat && hat !== 'cart') drawHat(x, y, hat);
+
+    // The tonic on the body, drawn in cells like everything else -- no glow, no
+    // gradient. A short bar off the shoulder that stands in fewer cells as the
+    // dose wears off, so a buffed corner of the yard reads at a glance and the
+    // bar shrinking is the dose running out. See `doseFrac` in apothecary.js.
+    const frac = doseFrac(w);
+    if (frac > 0) {
+      const cells = Math.max(1, Math.ceil(frac * DOSE_MARK_CELLS));
+      const mx = x - P;
+      ctx.fillStyle = '#000';
+      for (let k = 0; k < cells; k++) ctx.fillRect(mx, y - P * (k + 1), P, P);
+    }
 
     if (!w.carry && !w.hasCore) continue;
 
@@ -3474,6 +3548,7 @@ export function draw() {
   drawDrill();               // which the drill stands on
   drawFarm();
   drawFarmShed();            // the shed beside it, holding its board
+  drawApothecary();          // the pot on the fire, standing right past the farm
   drawTiller();
   drawRam();                 // before the rock, so the hill stands in front of it
   drawBelt();                // the road from the rock to the hole

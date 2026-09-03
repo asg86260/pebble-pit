@@ -44,6 +44,7 @@ import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
+import { APOTHECARY_UPGRADES, setKeep, setPrefer } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -613,6 +614,7 @@ export const allRows = () => everyRow().map(u => ({
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
                         ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
+                        ...APOTHECARY_UPGRADES,
                         ...CASINO_UPGRADES,
                         // The house lives on the crew board, not the bench,
                         // and is otherwise the one row in the game a check
@@ -906,6 +908,13 @@ export const HANDLES = {
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __rift: openRift, __wizardHat: wizardHat,
   __loo: openLoo, __brew: brewWizard, __casino: openCasino,
+  // Setting the pot the way the board does: clicking a tonic row calls its
+  // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
+  // the same functions the pointer calls, so a check that sets the pot this way
+  // sets it the way a player does.
+  __pot: key => { const u = APOTHECARY_UPGRADES.find(r => r.tonic === key); if (u) u.set(); return !!u; },
+  __potKeep: keep => { setKeep(keep); return true; },
+  __potPrefer: job => { setPrefer(job); return true; },
   __muckOverPit: muckOverPit, __look: look,
   // getting about: the surface under a place, the ways there are, and how a
   // given body would get somewhere

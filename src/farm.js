@@ -25,6 +25,7 @@ import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { mult } from './lab.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
+import { critBoost, workBoost } from './apothecary.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
@@ -157,9 +158,11 @@ function pickPlot(w) {
 // so a crit ADDS: the plot gives up a lump of crop in one cut rather than the
 // single spore, and each extra one is real dust thrown up as a fountain and
 // banked like any other. A crit does not add pollution; nothing here does.
-function cut(i, x) {
+function cut(i, x, w) {
   const tone = S.plotTone[i] || someFind(SPORE_CELL);
-  const crit = critRoll();
+  // A bracing tonic on this hand lifts its crit chance for as long as it is worn
+  // -- nobody else's. See apothecary.js.
+  const crit = critRoll(critBoost(w));
   if (crit > 1) {
     for (let n = 0; n < crit; n++) critToss(x, plotTop(i) - P, tone, 'farm', crit);
   } else {
@@ -220,7 +223,9 @@ export function stepFarmhand(w, now, dt, c = null) {
   // bringing the row on, this plot first. The moment one is ripe a spore forms
   // at the tip of the stalk and stays there: it is a thing that grew, and it
   // should be seen to have grown before anybody takes it away.
-  tend(w, dt);
+  // A hearty stew makes this hand work its own action faster -- the plot comes
+  // on quicker under it, as if the frame gave it more time. See apothecary.js.
+  tend(w, dt * workBoost(w));
   // and it picks up after itself while it works. Tending is a share of the
   // frame's own time and goes in whatever the hands are doing with themselves
   // -- see `tend` -- so this costs the row nothing: what it costs is the
@@ -231,12 +236,12 @@ export function stepFarmhand(w, now, dt, c = null) {
   // then it is taken off, from exactly where it grew. The wait is the same
   // whether it ripened under this body's hands or came on while the body was
   // further down the row.
-  if (!w.quarryAt) w.quarryAt = now + CUT_MS;
+  if (!w.quarryAt) w.quarryAt = now + CUT_MS / workBoost(w);
   if (now < w.quarryAt) return;
   // a smothered plot is dug out before it is picked: the muck is on top of the
   // crop, not beside it
-  if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS; return; }
-  w.farmed = (w.farmed || 0) + cut(i, plotX(i));
+  if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS / workBoost(w); return; }
+  w.farmed = (w.farmed || 0) + cut(i, plotX(i), w);
   w.quarryAt = 0;
   w.plot = pickPlot(w);
   w.goal = 'to';

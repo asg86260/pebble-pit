@@ -10,11 +10,11 @@ import { P, CELL, CRATE_H, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_L
         SITES, TO_FIRST_SITE,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE, CRATED,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
-        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
+        SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
@@ -95,6 +95,7 @@ export function atStation(job, x) {
   if (job === 'labbers') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
   if (job === 'scrubbers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
   if (job === 'farmhands') return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
+  if (job === 'stirrers') return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;
   if (job === 'quarriers') return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
   if (job === 'miners') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
   return true;                     // carrying is done wherever the dust is
@@ -112,6 +113,8 @@ export const kitX = job =>
   // stands a body's width off its plot, which is where a stand four cells out
   // would be standing too
   job === 'farmhands' ? farm.x - P * 18 :
+  // The stirrers' stand outside the pot, clear to the left of the door.
+  job === 'stirrers' ? apothecary.x - P * 6 :
   // The wizards' stand is at the foot of the tower, because the tower is what
   // makes them: a hat on a stand outside the door of the place it was made in.
   job === 'wizards' ? tower.x - P * 8 :
@@ -621,6 +624,10 @@ export function seatSites() {
   seat(school, 'school', SCHOOL_H);
 
   seat(lab, 'lab', LAB_H);
+
+  // The apothecary, standing right after the farm whose crop it takes. A plain
+  // rect like the lab, seated off the same walk.
+  seat(apothecary, 'apothecary', APOTHECARY_H);
 
   // Past the lab, at the quiet end of the walk. What it does is about the sky
   // over the whole yard rather than about any one site, so it does not belong

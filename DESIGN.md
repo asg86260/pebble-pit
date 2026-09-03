@@ -3957,10 +3957,52 @@ That is a feature and it is worth saying out loud: it is the one thing on any
 board that keeps *your own hand* worth using deep into a run, in a game whose
 whole shape is handing the work over to other people.
 
-## The apothecary (design, not built)
+## The apothecary (built)
 
 A pot, a fire, and somebody stirring. The farm's crop goes in and comes out as a
 tonic the whole yard is under.
+
+### Built (notes, 2026-09-03)
+
+Shipped as `src/apothecary.js` plus the usual station wiring (crew, world,
+persist, board, render). What the doc left open, and how it landed:
+
+- **Doses vs bodies is ONE rung.** A dose is one body, one buff -- a fresh dose
+  refreshes the timer rather than stacking -- so "doses a brew" and "bodies a
+  brew" are the same sentence, and they are folded into a single ladder
+  (`doses a brew`, 3 -> 8). Four ladders, not five: brew speed, buff length,
+  buff strength, doses a brew. This is exactly the fold the "Open" section
+  allowed for.
+- **The unlock price is a core + 900 dust** (`APOTHECARY_CORES` /
+  `APOTHECARY_DUST`), the farm's own shape a shade dearer, shown once the plots
+  are broken (`S.farmOpen`).
+- **Crop is spent at brew-start, not carried in by a hauler.** The general
+  "resource carried to the shop it is spent at" machinery (`S.owed[site]`) was
+  found to be *designed, not built* -- there is no `S.owed` in the tree, and the
+  spend still arcs to the bench. So the pot pays for its crop + reagent through
+  the ordinary `take` at the moment a batch begins, and the **doses ARE carried
+  out** by the stirrer, a dose at a time, no teleporting. The carried-*in* half
+  and the general "spent resource goes to the selling station" rule are left as
+  a follow-up (see TODO.md), rather than forcing a new hauling system in under
+  this feature.
+- **The buff reaches the body cleanly** through three per-body readers in
+  `apothecary.js`: `workBoost` (scales the action clock -- wired at the farm cut
+  and the quarry dig), `critBoost` (a per-body chance added to `critRoll` --
+  wired at the farm, the quarry and the wizard) and `carryBoost` (multiplies
+  `load(w)` in crew.js -- every hauler). Coverage note: the +work and +crit
+  tonics reach the gathering stations and the wizard; the miner's swing at the
+  rock is not yet scaled (the rock's crit is shared with your own click, which
+  has no body), so a stew or a bracing tonic dealt to a miner shows in the card
+  and the mark but does not yet quicken the swing. Flagged in TODO.md.
+- **A second pot is more of the same tonic**, not an independent second tonic:
+  `another pot` raises the stirrer cap and adds a brew slot that brews the pot's
+  one setting. The "Open" recommendation of a second *independent* tonic per pot
+  is a follow-up.
+- **The board** is the apothecary's own flyout (like the farm's), a menu of the
+  three tonics you set (not buy), a keep/one-off dial, a preferred-station dial,
+  and the four ladders. The per-tonic effect is shown on hover (one line) rather
+  than in a nested submenu -- with three tonics a hover note is a menu, not a
+  wall; the true submenu is a follow-up if the list grows.
 
 ### It is an upkeep, not a timer
 

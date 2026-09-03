@@ -17,6 +17,7 @@ import { HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
 import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
 import { follow, atStation, rockLeft } from './world.js';
+import { doseName, doseLeftMs, doseLive } from './apothecary.js';
 import { showCrewList, standRect } from './board.js';
 import { indoors } from './lab.js';
 import { onTheMove } from './air.js';
@@ -239,7 +240,11 @@ export function card(w) {
     // Only the ones whose job is carrying. A miner's hands are always empty
     // between swings, and a row that says nothing every time you read it is a
     // row that trains you to stop reading.
-    ...(JOBS_AT[w.type] === 'haulers' ? [row('carrying', cargo(w))] : [])
+    ...(JOBS_AT[w.type] === 'haulers' ? [row('carrying', cargo(w))] : []),
+    // What it is under, and how long it has left. The mark on the body across
+    // the yard says *that* a tonic is on it; this row is where you read the
+    // *what*. Only a body actually under one gets the row -- see the apothecary.
+    ...(doseLive(w) ? [row('under', `${doseName(w)}, ${Math.ceil(doseLeftMs(w) / 1000)}s`)] : [])
   ].join(NL);
 }
 

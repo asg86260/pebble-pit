@@ -151,6 +151,11 @@ canvas {
   cursor: pointer;
 }
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
+/* The tonic the pot is set to, marked on the menu: it reads inverted, the way a
+   chosen thing does, so a glance at the board says what is on the boil. The word
+   "brewing" sits where a price would, filled in by the board. */
+.rows button.pick.on { color: #fff; background: #000; }
+.rows button.pick.on .gain { color: #fff; }
 /* A row you cannot press yet is dimmed by *colour* rather than by opacity, so
    that something inside it can still be darker than it is. Opacity on the row
    multiplies everything under it and there is no way back up from it -- which

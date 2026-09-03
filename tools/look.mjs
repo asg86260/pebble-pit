@@ -78,6 +78,18 @@ const SCENES = {
   // The plots, and the tractor crossing them.
   farm: `${RICH} window.__buy('tiller'); window.__finish(); window.__look(window.__state().farmX - 200);`,
 
+  // The apothecary: the cauldron on its fire, a stirrer at it, and steam off the
+  // pot to say it is on the boil. The farm is opened first (the pot stands right
+  // past it), the pot set to a tonic, and a body put on it -- so the scene is a
+  // pot being worked, which is the only state the steam exists in.
+  apothecary: `window.__reset(); window.__crew(0, 1, 0, 2);
+    window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__pot('stew'); window.__assign('stirrers', 1);
+    window.__fast(16);
+    window.__look(window.__state().apothecaryX - 400);`,
+
   // One hand on the whole row. This is the shot the row is *for*: a single body
   // stooping over one plot with the other six visibly coming on behind it,
   // rather than one stalk and six patches of bare dirt.

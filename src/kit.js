@@ -75,7 +75,7 @@ export const KIT = {
 // answered without the kit importing the shop and the shop importing the kit.
 export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers',
+                        scrubber: 'scrubbers', stirrer: 'stirrers',
                         janitor: 'janitors', wizard: 'wizards',
                         // Building is not a job on the roster -- you do not put
                         // anybody on it, the spare hands go and do it -- but it

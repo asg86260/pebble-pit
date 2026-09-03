@@ -15,7 +15,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
@@ -51,6 +51,7 @@ import { windAt } from './wind.js';
 import { CRAFT, craftY, crewed, working } from './balloon.js';
 import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
+import { boiling as apothBoiling } from './apothecary.js';
 
 // Dust that got past the hole. Everything thrown at the pit is thrown from the
 // near lip, so anything lying on the ground beyond the far wall is a throw that
@@ -361,6 +362,14 @@ export const snapshot = () => ({
   mult: { ...S.mult },
   rates: { stored: Math.round(rates.banked), banked: Math.round(rates.banked), shards: +rates.shards.toFixed(2), spores: +rates.spores.toFixed(2) },
   labX: Math.round(lab.x),
+  apothecaryX: Math.round(apothecary.x),
+  apothecaryOpen: S.apothecaryOpen,
+  boiling: apothBoiling(),
+  stirrers: S.stirrers,
+  potTonic: S.potTonic,
+  potKeep: S.potKeep,
+  potSpent: S.potSpent,
+  apothPots: S.apothPots,
   casinoX: Math.round(casino.x),
   wheel: +S.wheel.toFixed(2),
 

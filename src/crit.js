@@ -49,7 +49,10 @@ export const forceCrit = v => { forced = v; };
 // unit of work is worth this time: `mult` on a crit, 1 otherwise. A station that
 // adds multiplies its output by it; a station that is bounded pulls that many of
 // the units it already owes forward. Neither branch is in here.
-export function critRoll() {
-  const hit = forced != null ? forced : rand() < critChance();
+// `bonus` is extra chance in points, for a body under a bracing tonic -- the
+// apothecary's crit tonic raises this one body's chance without touching the
+// bench ladder everybody shares. Zero for a plain swing and for your own hand.
+export function critRoll(bonus = 0) {
+  const hit = forced != null ? forced : rand() < critChance() + bonus;
   return hit ? critMult() : 1;
 }

@@ -249,6 +249,20 @@ export function persist() {
     labLeft: S.labLeft,
     tendLevel: S.tendLevel,
     plotLevel: S.plotLevel,
+    // the apothecary: the building, its crew, and the pot's standing order
+    apothecaryOpen: S.apothecaryOpen,
+    stirrers: S.stirrers,
+    apothPots: S.apothPots,
+    potTonic: S.potTonic,
+    potKeep: S.potKeep,
+    potPrefer: S.potPrefer,
+    potSpent: S.potSpent,
+    brewAt: S.brewAt,
+    doseHold: S.doseHold,
+    brewLevel: S.brewLevel,
+    lengthLevel: S.lengthLevel,
+    strengthLevel: S.strengthLevel,
+    dosesLevel: S.dosesLevel,
     labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
@@ -463,6 +477,10 @@ export function restore() {
     S.labLeft = 0;
     S.tendLevel = 0;
     S.plotLevel = 0;
+    S.apothecaryOpen = false; S.stirrers = 0; S.apothPots = 1;
+    S.potTonic = null; S.potKeep = true; S.potPrefer = null; S.potSpent = false;
+    S.brewAt = []; S.doseHold = [];
+    S.brewLevel = 0; S.lengthLevel = 0; S.strengthLevel = 0; S.dosesLevel = 0;
     S.labOpen = false;
     S.casinoOpen = false;
     S.pot = null;
@@ -593,6 +611,21 @@ export function restore() {
   S.farmOpen = !!s.farmOpen;
   S.farmhands = s.farmhands || 0;
   S.tendLevel = s.tendLevel || 0;
+  // the apothecary. A save from before it existed comes back with the pot idle
+  // and one pot to a building, which is what a fresh apothecary is.
+  S.apothecaryOpen = !!s.apothecaryOpen;
+  S.stirrers = s.stirrers || 0;
+  S.apothPots = Math.max(1, s.apothPots || 1);
+  S.potTonic = s.potTonic || null;
+  S.potKeep = s.potKeep == null ? true : !!s.potKeep;
+  S.potPrefer = s.potPrefer || null;
+  S.potSpent = !!s.potSpent;
+  S.brewAt = Array.isArray(s.brewAt) ? s.brewAt.map(v => +v || 0) : [];
+  S.doseHold = Array.isArray(s.doseHold) ? s.doseHold.map(v => Math.max(0, Math.round(+v || 0))) : [];
+  S.brewLevel = s.brewLevel || 0;
+  S.lengthLevel = s.lengthLevel || 0;
+  S.strengthLevel = s.strengthLevel || 0;
+  S.dosesLevel = s.dosesLevel || 0;
   S.labOpen = !!s.labOpen;
   // The opening happens once, ever. Coming back to a saved game is coming back
   // to a yard where it already happened.
@@ -936,6 +969,11 @@ export function reset(fresh = true) {
   S.labLeft = 0;
   S.tendLevel = 0;
   S.plotLevel = 0;
+  S.apothecaryOpen = false; S.stirrers = 0; S.apothPots = 1;
+  S.potTonic = null; S.potKeep = true; S.potPrefer = null; S.potSpent = false;
+  S.brewAt = []; S.doseHold = [];
+  S.brewLevel = 0; S.lengthLevel = 0; S.strengthLevel = 0; S.dosesLevel = 0;
+  S.apothBoardOpen = false;
   S.labOpen = false;
   S.labBoardOpen = false;
   S.casinoOpen = false;

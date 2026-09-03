@@ -16,10 +16,11 @@ import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
-import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
+import { S, pit, quarry, farm, lab, apothecary, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, spendHeld, pitCapacity } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY } from './config.js';
+         FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY,
+         APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
@@ -254,7 +255,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'janitors', 'wizards'];
+export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'stirrers', 'janitors', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -322,6 +323,9 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 const capOfBare = job =>
   job === 'quarriers' ? benches() :
   job === 'farmhands' ? plotCount() :
+  // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
+  // apothecary has broken standing room for. A second pot is a second body's.
+  job === 'stirrers' ? S.apothPots :
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
@@ -1212,6 +1216,17 @@ export const UPGRADES = [
     show: () => !S.labOpen && (S.seenShard || S.seenSpore)
   }),
 
+  // The apothecary: a pot on a fire, standing right after the farm whose crop it
+  // takes. It opens once the plots are broken -- it is the reason they are worth
+  // breaking -- and it is priced the farm's way, a core and a little dust, because
+  // it stands early, not late. See DESIGN.md, "The apothecary".
+  site({
+    key: 'unlockapothecary', name: 'build the apothecary',
+    cores: APOTHECARY_CORES, dust: APOTHECARY_DUST, open: 'apothecaryOpen',
+    at: () => apothecary.x + apothecary.w / 2,
+    show: () => !S.apothecaryOpen && S.farmOpen && S.seenSpore
+  }),
+
   // The hole is not something you buy any more. It is the whole pit from the
   // first frame -- see pit.js: what you could hold used to be what you had dug,
   // which made a hole in the ground the ceiling on every other price in the game.
@@ -1254,6 +1269,7 @@ export const SECTIONS = [
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
+  { title: 'the apothecary', keys: ['unlockapothecary'] },
   { title: 'the casino', keys: ['unlockcasino'] },
   { title: 'the outhouse', keys: ['unlockouthouse', 'loopost'] },
   { title: 'the tower', keys: ['unlocktower'] },
@@ -1388,7 +1404,7 @@ export const priceText = (money, n) =>
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
 export function buy(u) {
-  if (u.job || u.dial) return;                   // a job row moves bodies and a dial sets a number
+  if (u.job || u.dial || u.pot) return;   // a tonic is set through `u.set`, not bought                   // a job row moves bodies and a dial sets a number
   // A row with a payout on it instead of a price is not a purchase: nothing is
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.

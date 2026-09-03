@@ -1,5 +1,40 @@
 # Still to do
 
+## The apothecary — BUILT, with three flagged follow-ups (2026-09-03)
+
+The apothecary shipped (`src/apothecary.js` + station wiring; DESIGN.md "The
+apothecary (built)"). The pot is an upkeep, the stirrer brews through the door
+and carries doses out one at a time, the buff lands on the body (a cells-drawn
+mark and a `card(w)` row), the four ladders and the three tonics are in, and it
+saves and reloads. `test/apothecary.test.mjs` is green (9/9). Three things were
+left deliberately, none blocking:
+
+1. **Crop is spent at brew-start, not carried into the building.** The general
+   "a spent resource travels to the shop that sells it" rule (DESIGN.md "it goes
+   to the shop it is spent at") turned out to be *designed, not built* — there
+   is no `S.owed[site]`, and every spend still arcs to the bench (`stepPaid` in
+   game.js, hard-coded to `bench.x`). The doses ARE carried out by the stirrer
+   (no teleport); the carried-*in* half waits on that general machinery. Build
+   `S.owed[site]` once, wire `stepPaid` to the row's `site`, and the apothecary
+   (and every other board) gets carried-in crop for free.
+
+2. **The +work / +crit tonics do not yet quicken a miner's swing at the rock.**
+   `rock.js`'s `hitRock` is shared by your own click and a miner's swing and has
+   no body in hand, so `critBoost`/`workBoost` are wired at the farm, the quarry
+   and the wizard but not the rock. A stew or bracing tonic dealt to a miner
+   shows on the card and the mark but does not speed the swing. Thread the
+   swinging body through `hitRock` (null for a click) to close it.
+
+3. **A second pot brews the same tonic, not an independent one.** `another pot`
+   adds coverage of the one setting; the DESIGN "Open" recommendation of a
+   second independent tonic (two buffs up at once, two preferred stations) is
+   the follow-up. The per-tonic effect submenu is likewise a hover note for now
+   — fine for three tonics, worth a real submenu once the lab's recipe ladder
+   widens the list.
+
+---
+
+
 Three items left from `feedback.md` / `feedback2.md`, plus a diagnosed
 jitter regression (item 5), the shield story arc (item 6), a balance call the
 sky work turned up (item 8) and one piece of housekeeping. Item 7 is done.

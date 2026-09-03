@@ -35,6 +35,7 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
+import { stepStirrer, newStirrer, apothecaryDoor, carryBoost } from './apothecary.js';
 import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
@@ -346,9 +347,9 @@ export function mainlyAt(w) {
 // one before it goes back to sweeping the yard.
 // Builders come before carrying, like every other job: a spare body goes to the
 // thing the yard is in the middle of building before it goes back to sweeping.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'janitor', 'wizard', 'builder', 'hauler'];
+const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'stirrer', 'janitor', 'wizard', 'builder', 'hauler'];
 const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-               labber: newLabber, scrubber: newScrubber,
+               labber: newLabber, scrubber: newScrubber, stirrer: newStirrer,
                janitor: newJanitor, wizard: newWizard, builder: newBuilder, hauler: newHauler };
 
 // Every body gets a rhythm of its own, whatever trade it is.
@@ -531,6 +532,9 @@ const ARRIVED = {
   quarriers: w => w.type === 'quarrier' && w.goal !== 'to',
   farmhands: w => w.type === 'farmhand' && w.goal !== 'to',
   scrubbers: w => w.type === 'scrubber' && w.goal === 'in',
+  // Through the door and stirring. A stirrer out dealing a dose is not at the
+  // pot, so the brew clock pauses -- same rule the lab and the house keep.
+  stirrers: w => w.type === 'stirrer' && w.goal === 'in',
   // A wizard's work is four hundred pixels up and the walk is to the ground
   // under it; either way it is at the tower, which is the only thing this asks.
   wizards: w => w.type === 'wizard',
@@ -606,6 +610,7 @@ function handStationX(type) {
   if (type === 'farmhand') return plotX(0);
   if (type === 'labber') return labDoor() - WORKER / 2;
   if (type === 'scrubber') return scrubDoor() - WORKER / 2;
+  if (type === 'stirrer') return apothecaryDoor() - WORKER / 2;
   if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
   // pixels above that, but the walk is to here: the going up is the job, not the
@@ -2096,7 +2101,7 @@ export function syncWorkers() {
   // ever walking to it.
   const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
                  farmhand: S.farmhands, labber: S.labbers,
-                 scrubber: S.scrubbers,
+                 scrubber: S.scrubbers, stirrer: S.stirrers,
                  janitor: S.janitors, wizard: S.wizards,
                  builder: S.builders };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
@@ -2555,8 +2560,9 @@ const bookings = () => S.workers.reduce((n, o) => n + (o.booked || 0), 0);
 // every way that matters.
 export const pitFree = () => S.riftOpen ? Infinity : pitRoom() - bookings();
 
-// what one body carries in a trip -- a cart holds twice
-const load = w => haulCap() * (w.trained ? 2 : 1);
+// what one body carries in a trip -- a cart holds twice, and a strong brew adds
+// its half on top of that for as long as the dose is worn (see apothecary.js)
+const load = w => Math.round(haulCap() * (w.trained ? 2 : 1) * carryBoost(w));
 
 // what it may still take this trip, and taking one more off it
 const roomOnBoard = w => (w.booked || 0) - (w.took || 0);
@@ -3719,6 +3725,11 @@ const JOBS = {
   // the bench cold for the length of two commutes while the chimney went on
   // smoking, which is the building claiming something the crew deny.
   labber: { work: stepLabber, shutIn: w => w.goal === 'in' },
+
+  // A stirrer at the pot is behind a door like a labber; a stirrer out dealing a
+  // dose is a body walking a load and belongs to the yard again. `shutIn` only
+  // while it is through the door.
+  stirrer: { work: stepStirrer, shutIn: w => w.goal === 'in' },
 
   // A scrubber is behind a door, and a balloon is a door too.
   //

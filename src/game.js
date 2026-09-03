@@ -55,13 +55,18 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
-import { canAfford, mineMs, restaff, staffSheds } from './upgrades.js';
+import { canAfford, mineMs, restaff, staffSheds, take } from './upgrades.js';
+// The pot pays for its crop through the same `take` every price uses; wired here
+// rather than imported into apothecary.js, which would close a ring back to
+// upgrades. See `setTake`.
+setTake(take);
 import { stepMachineSmoke } from './render.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
+import { stepApothecary, setTake } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is here rather than in `restOnRock` because it is the chip loop's
 // own question -- has this thing reached the surface yet -- and every other
@@ -188,6 +193,7 @@ export function step() {
   stepSummon(dt);                             // and whatever the ring is pouring into it
   stepSparkle(dt);                            // and the magic they leave in the air
   stepScrub(dt);                              // and the pumps on the scrubbing house
+  stepApothecary(dt);                         // and the pot on the boil, minting its doses
   // And the rift swallows, if it is torn. It takes grains off the top of the
   // pile without taking them off you -- see `swallow` in pit.js -- so this is
   // the one thing in the yard that empties the hole and leaves the counter where

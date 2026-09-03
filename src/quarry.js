@@ -24,6 +24,7 @@ import { ROCK_CELL } from './config.js';
 import { mult } from './lab.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
+import { critBoost, workBoost } from './apothecary.js';
 import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
@@ -580,7 +581,9 @@ export function stepQuarrier(w, now, ctx = null) {
   // dirt rather than trusting nobody else to ask.
   w.lunge = 1;
   w.swingAt = now + QUARRY_SWING;
-  w.next = now + cellMs() / (w.trained ? 2 : 1) * (0.85 + rand() * 0.3);
+  // A hearty stew quickens this body's own digging -- the next cell comes round
+  // sooner for as long as the dose is worn. See apothecary.js.
+  w.next = now + cellMs() / (w.trained ? 2 : 1) / workBoost(w) * (0.85 + rand() * 0.3);
   S.dirty = true;
 
   if (quarryDone()) S.quarrySpent = true;      // that is the lot: everybody out
@@ -619,7 +622,7 @@ export function findShards(w, left) {
   // and only ever comes down, so a dig with every swing critting still yields
   // exactly `seamShards()`, not a shard more. The crit does not put extra stone
   // in the ground; it brings forward stone that was going to come up anyway.
-  const crit = critRoll();
+  const crit = critRoll(critBoost(w));
   if (crit > 1) found = Math.min(S.quarryOwed, Math.max(found, crit));
   if (!found) return;
   S.quarryOwed -= found;

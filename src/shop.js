@@ -17,6 +17,7 @@ import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
+import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
@@ -29,6 +30,7 @@ const crewListEl = document.getElementById('crewlistrows');
 const scrubEl = document.getElementById('scrubshop');
 const quarryEl = document.getElementById('quarryshop');
 const farmEl = document.getElementById('farmshop');
+const apothEl = document.getElementById('apothshop');
 const towerEl = document.getElementById('towershop');
 
 // What is on the board right now, as a string. If it has not changed there is
@@ -165,6 +167,34 @@ function build(el, list, sections, empty) {
     }
 
     for (const u of rows) {
+      // A tonic on the menu is set, not bought: clicking it puts the pot on that
+      // tonic (or off it, if it was already on), and spends nothing until a batch
+      // is brewed. It keeps the shape of a purchase row so the board lines up, and
+      // says what it does on hover -- the effect submenu, kept to one line while
+      // there are three of them. See apothecary.js.
+      if (u.pot) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.pot = u.key;
+        b.className = 'pick';
+        b.innerHTML = '<span class="name"><i class="what"></i></span>' +
+                      '<span class="gain"></span><span class="cost"></span>';
+        b.querySelector('.what').textContent = u.name;
+        b.addEventListener('click', () => { u.set(); buildShop(); });
+        if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
+        if (u.note) {
+          const say = () => {
+            const r = b.getBoundingClientRect();
+            showTipAt(u.note(), r.right + 8, r.top - 2);
+          };
+          b.addEventListener('pointerenter', say);
+          b.addEventListener('pointermove', say);
+          b.addEventListener('pointerleave', () => showTipAt(null));
+        }
+        el.appendChild(b);
+        continue;
+      }
+
       // A dial is the same shape as a job row -- a setting between two buttons --
       // for a setting that is not a headcount. The casino's chip is the only
       // one: how much goes on the table is chosen, and choosing spends nothing.
@@ -310,6 +340,15 @@ export function refresh(el, list, headcount) {
       grey(row.querySelector('.less'), u.count() < 1);
       say(row.querySelector('.count'), String(u.count()));
       grey(row.querySelector('.more'), u.spare() < 1);
+      continue;
+    }
+    if (row.dataset.pot) {
+      const u = list.find(x => x.key === row.dataset.pot);
+      if (!u) continue;
+      // The set tonic is marked on the board -- what the pot is currently on --
+      // and reads "brewing" where a price would be.
+      row.classList.toggle('on', u.on());
+      say(row.children[1], u.on() ? 'brewing' : '');
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
@@ -480,6 +519,7 @@ const BOARDS = {
   // ground. A board with nothing left on it says so rather than standing blank.
   quarry: () => [quarryEl, QUARRY_UPGRADES, QUARRY_SECTIONS, 'the quarry is as deep as it goes'],
   farm:   () => [farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken'],
+  apothecary: () => [apothEl, APOTHECARY_UPGRADES, APOTHECARY_SECTIONS, 'the pot stands cold'],
   tower:  () => [towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.

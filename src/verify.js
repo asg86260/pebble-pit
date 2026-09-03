@@ -64,7 +64,7 @@ import { seed } from './rng.js';
 // rule 4 is here to catch.
 const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
                         farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers',
+                        scrubber: 'scrubbers', stirrer: 'stirrers',
                         janitor: 'janitors', wizard: 'wizards',
                         // Building is not on the roster -- nobody is put on it --
                         // but it is a count `syncWorkers` builds bodies from, and
