@@ -3988,8 +3988,22 @@ crit ladder for one body at a time -- see "The apothecary".
 
 ## The apothecary (built)
 
-A pot, a fire, and somebody stirring. The farm's crop goes in and comes out as a
-tonic the whole yard is under.
+A pot, a fire, and a keeper who lights it and walks the doses out. The farm's
+crop goes in and comes out as a tonic the whole yard is under.
+
+### The keeper lights it; the pot brews itself (2026-09-03)
+
+The stirrer was split between two jobs it could not do at once: standing at the
+pot to keep the batch advancing, and carrying a finished dose out to a body. The
+batch clock only ran while it stood there, so every trip out to deal a dose
+*stalled the brew*. Changed so a batch is **lit by the keeper standing at the
+pot** (an unkept or bodiless pot still brews nothing -- the work is begun by a
+body that is there, the yard's rule) but, **once lit, cooks on its own clock**
+and does not pause for the keeper's absence. So the keeper lights a batch, walks
+a dose out and deals it, and comes back between deals -- which is when the next
+batch lights. Doses now pile into a **stock** when brewing outpaces dealing (the
+table's count reads that backlog), and adding a second keeper is how you clear it
+faster. `boiling` (the steam) is now "a batch is going", not "a body is stirring".
 
 ### Built (notes, 2026-09-03)
 

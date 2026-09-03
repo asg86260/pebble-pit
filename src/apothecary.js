@@ -181,10 +181,12 @@ function deal(w, target) {
 }
 
 // --- one stirrer, one frame ---------------------------------------------------
-// A stirrer brews at the pot, then carries doses out one at a time. It only
-// counts as brewing while it is through the door (`goal === 'in'`), so the batch
-// clock in `stepApothecary` pauses while it is out dealing -- same pot, same
-// body, the way the design wants.
+// A stirrer keeps one pot: it lights a batch stood at it, then carries doses out
+// one at a time while that batch brews on its own. It comes back to the pot
+// between deals -- to pick up the next ready dose and to light the next batch --
+// so the round is: light it, come out with a dose, deal it, walk back. The batch
+// clock in `stepApothecary` does NOT pause while it is out; the pot cooks whether
+// or not the keeper is stood at it, which is what frees the body to deal.
 export function stepStirrer(w) {
   const idx = potOf(w);
 
@@ -233,10 +235,12 @@ export function stepStirrer(w) {
 }
 
 // --- the pot on the boil ------------------------------------------------------
-// A batch is worker-milliseconds of stirring, and it only advances while a body
-// is at the pot -- an empty pot brews nothing, however long you leave it, which
-// is the lab's chimney rule made into a clock. When a batch lands it mints its
-// doses onto the pile for the stirrer to deal.
+// A batch is lit by the pot's keeper standing at it -- an unkept pot brews
+// nothing, however long you leave it, which is the lab's chimney rule kept for
+// the *start*: the work is begun by a body that is there. Once lit, though, the
+// batch cooks on its own clock and does not need the keeper stood over it, so the
+// keeper is free to carry doses out while it brews. When a batch lands it mints
+// its doses onto the pile for the keeper to deal.
 //
 // Crop is spent when a batch *begins*, which is what makes "it has crop" the
 // thing that gates the brew: a pot with no crop to start on does not start, and
@@ -264,11 +268,13 @@ function spendBrew() {
 let take = () => {};
 export const setTake = fn => { take = fn; };
 
-// Whether a pot is mid-batch with a body on it -- the readout the whole building
-// has, the way the lab smokes and the scrubbing house breathes. Only true while
-// a stirrer is through the door and a batch is actually going.
+// Whether a pot is mid-batch -- the readout the whole building has, the way the
+// lab smokes and the scrubbing house breathes. True while a batch is going on a
+// kept pot, whether or not its keeper is stood at it: once lit, a batch brews on
+// its own (see `stepApothecary`), so the steam is up while it cooks and the
+// keeper is off dealing, not only while it stands and stirs.
 export const boiling = () =>
-  stirrers().some((w, i) => w.goal === 'in' && i < S.apothPots && (S.brewAt[i] || 0) > 0);
+  stirrers().some((w, i) => i < S.apothPots && (S.brewAt[i] || 0) > 0);
 
 // How far the most-advanced pot is through its current batch, 0..1 -- what the
 // progress bar over the cauldron reads. Zero when nothing is on the boil, so the
@@ -288,17 +294,20 @@ export function stepApothecary(dt) {
     if (S.brewAt[i] == null) S.brewAt[i] = 0;
     if (S.doseHold[i] == null) S.doseHold[i] = 0;
     const body = list[i];
-    const brewing = body && body.goal === 'in';
-    if (!brewing || !S.potTonic) continue;
+    if (!body || !S.potTonic) continue;          // no keeper, or the pot is off
 
     // A one-off that has already put its batch up does not start another. Its
     // doses are still on the pile to be dealt; once they are gone the pot idles.
     if (!S.potKeep && S.potSpent) continue;
 
-    if (S.brewAt[i] === 0) {                      // starting a batch
-      if (!canAffordBrew()) continue;            // no crop, no boil
+    if (S.brewAt[i] === 0) {                      // lighting a fresh batch
+      if (body.goal !== 'in') continue;          // the keeper lights it, stood at the pot...
+      if (!canAffordBrew()) continue;            // ...and only if there is crop to start on
       spendBrew();
     }
+    // Once lit, the batch brews on its own -- the keeper is free to walk a dose
+    // out and deal it, and the clock does not pause for its absence. It comes
+    // back between deals, which is when the next batch is lit.
     S.brewAt[i] += dt;
     if (S.brewAt[i] >= brewMs()) {
       S.brewAt[i] = 0;
