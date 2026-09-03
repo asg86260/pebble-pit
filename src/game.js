@@ -16,13 +16,13 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, RIFT_TURNS, RIFT_ORBIT_FRAMES } from './config.js';
-import { S, floor, pit, cut, quarry, bench } from './state.js';
+import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
+import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, lookAt } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
@@ -167,6 +167,12 @@ export function step() {
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to
   stepLab(dt);                                // and whatever the lab is working on
+  // The hole collapsing is the one thing in this game that happens TO you rather
+  // than because you pressed something, so the view goes and looks at it. Once:
+  // `throughRift` raises the flag the first time a grain will not fit, and this
+  // is where it is put down. It is not a stoppage -- the yard carries on behind
+  // the glide, which is the whole point of the collapse.
+  if (S.riftFell) { S.riftFell = false; lookAt(rift.x + rift.w / 2); }
   stepWorks(dt);                              // and whatever the yard is building
   stepMachineSmoke(now);                      // and the stacks over the machines
   stepSmoke(now, dt);                         // which the chimney says out loud
@@ -252,7 +258,7 @@ export function step() {
       // under, the grain comes back out over the lip and lands on the rock's own
       // pile. Nothing that was mined is destroyed by a pit with no room in it,
       // and nothing goes in uncounted.
-      if (pitFull() && isDust(ch.s)) {
+      if (pitRefuses() && isDust(ch.s)) {
         spawnSpoil(ch.x, ch.y, ch.s);
         S.chips.splice(i, 1);
         continue;

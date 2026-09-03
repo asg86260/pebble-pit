@@ -1164,7 +1164,14 @@ group('a grain rides the belt rather than being thrown over it', async () => {
 // on it, takes nothing new out of the air, and the ram works on with its spoil
 // landing on the ground -- where the pile filling is what stands it down, the
 // same mark that stops every other machine.
-group('a full hole stops the band, and the ram works on', async () => {
+// This used to be "a full hole stops the band, and the ram works on": the band
+// held its loads over a hole that would not take them, and the ram carried on
+// burying the yard behind it.
+//
+// A full hole does not stop anything now. It collapses the first time it cannot
+// take a grain, and what will not fit goes through the rift -- so the band tips
+// into it exactly as it did when there was room, and the loads keep moving.
+group('a full hole does not stop the band', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -1179,8 +1186,7 @@ group('a full hole stops the band, and the ram works on', async () => {
   const s0 = state();
   for (let i = 0; i < 80; i++) window.__pile(s0.pitX - 500 + (i % 40) * 6, 3);
   runUntil(() => state().belt > 0, 20);
-  // to the brim and no further: a tip past capacity is a failed bank per grain
-  window.__tip(state().pitCapacity - state().stored + 8);
+  window.__give(999999);                       // past the brim: it tears open
   run(1);
   const full = state();
 
@@ -1188,21 +1194,17 @@ group('a full hole stops the band, and the ram works on', async () => {
   const later = state();
   window.__crew(0, 0);
 
-  const frozen = full.beltX.length && later.beltX.length &&
-                 String(full.beltX) === String(later.beltX);
+  const moved = full.beltX.length && String(full.beltX) !== String(later.beltX);
   return [
-    ok(full.pitFull, 'the hole is full'),
+    ok(full.riftOpen, 'the hole has collapsed', `${full.stored} counted`),
     ok(full.belt > 0, 'with loads still riding the band', `${full.belt} loads`),
-    ok(later.belt >= full.belt, 'none of them is tipped into the full hole',
-       `${full.belt} -> ${later.belt}`),
-    ok(frozen, 'and the band stands still with them on it',
-       `${full.beltX} -> ${later.beltX}`),
-    ok(later.stored <= full.stored, 'the hole takes nothing over the brim',
+    ok(moved, 'the band goes on running', `${full.beltX} -> ${later.beltX}`),
+    ok(later.stored > full.stored, 'and the hole goes on taking what it is given',
        `${full.stored} -> ${later.stored}`),
-    ok(later.rock < full.rock, 'the ram goes on working the rock',
-       `${full.rock} -> ${later.rock}`),
-    ok(later.floor > full.floor, 'and its spoil lands on the ground instead of the band',
-       `${full.floor} -> ${later.floor}`)
+    ok(later.rift > full.rift, 'through the rift, because the pile itself is full',
+       `${full.rift} -> ${later.rift}`),
+    ok(later.rock < full.rock, 'and the ram goes on working the rock',
+       `${full.rock} -> ${later.rock}`)
   ];
 });
 

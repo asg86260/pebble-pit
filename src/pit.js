@@ -188,6 +188,16 @@ export function settlePit() {
 // the same way.
 export const pitFull = () => pit.n >= pitCapacity();
 
+// ...and whether it will actually TURN SOMETHING AWAY, which is a different
+// question and the one everything that carries dust is really asking.
+//
+// A hole at its brim is full. A hole that has collapsed is full and still takes
+// everything, because what will not fit goes through the rift. Machines and
+// bodies were reading `pitFull` and standing down: the belt held its loads over
+// a hole that would have swallowed them, and the ram would not bite. That is the
+// old wall wearing a new name.
+export const pitRefuses = () => pitFull() && !S.riftOpen;
+
 // Grains of dust the hole would still take. What the crew book their trips
 // against: see `pitFree` in crew.js.
 export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
@@ -196,6 +206,48 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 // or a spore is worth one of itself. Either way it is a grain in the pile
 // from here on, and the pile shows exactly what you are holding. False means
 // the hole would not take it, and whatever was carrying it still has it.
+// What happens when the hole has no room left.
+//
+// It used to refuse the grain, and the body carrying it kept it: a hauler stood
+// at the lip holding a load it could not put down, the ones behind it backed up,
+// and the yard stopped. The cure was a purchase -- a black hole summoned from
+// the tower with red you could only get by playing -- so a yard that filled its
+// hole before it could afford one had nothing to do about it. That is a game
+// that stops, and worse, a game that can stop where no amount of playing gets
+// you out: the coin you would spend to fix it is the coin that will not fit.
+//
+// So the hole does not refuse. It COLLAPSES: the first grain it cannot take
+// opens the rift, and that grain goes straight through it. Nothing stops,
+// nothing is lost, and there is no purchase standing between you and playing.
+//
+// Through the rift is not away. `inHole` is what you own less what is through,
+// so the counters do not move and the pile simply shows less of what you have --
+// which is the same account the rift has always kept, arrived at without the
+// hole having to say no first. See `swallow`.
+function throughRift(x, shade) {
+  S.seenFullPit = true;
+  if (!S.riftOpen) {
+    S.riftOpen = true;
+    S.riftFell = true;              // ...and the yard has a moment to look at
+  }
+  const held = riftHeld();
+  if (isDust(shade)) {
+    S.stored++;
+    S.banked++;
+    S.rift = (S.rift || 0) + 1;
+  } else {
+    const kind = findKind(shade);
+    if (shade === CORE_CELL || kind === CORE_CELL) { S.cores++; S.seenCore = true; held.cores++; }
+    else if (kind === SHARD_CELL) { S.shards++; S.seenShard = true; held.shards++; }
+    else if (kind === SPORE_CELL) { S.spores++; S.seenSpore = true; held.spores++; }
+    else if (kind === SPARK_CELL) { S.sparks++; S.seenSpark = true; held.sparks++; }
+    else return false;              // nothing this hole knows how to hold
+    buildShop();
+  }
+  S.dirty = true;
+  return true;
+}
+
 export function bankDust(x, shade = 1) {
   // A hole with no room turns the grain away and whatever was carrying it keeps
   // it. It used to settle the pile finer and try again; there is no finer now.
@@ -208,7 +260,7 @@ export function bankDust(x, shade = 1) {
   // and the threshold was unreachable: `banked` after filling the hole to the
   // brim is 37,566, and the number written down was fifty thousand, so the row
   // could not appear in a game that had done the exact thing it is about.
-  if (!addGrain(pit, x, null, shade)) { S.seenFullPit = true; return false; }
+  if (!addGrain(pit, x, null, shade)) return throughRift(x, shade);
   if (isDust(shade)) {
     S.stored++;                              // every pixel is worth one
     S.banked++;                              // the books count what came in, not what is left

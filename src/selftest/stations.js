@@ -181,8 +181,13 @@ export const TESTS = [
       ok(onMark === 'pile is full', 'the mark over a stopped station says so',
          String(onMark)),
       ok(away === null, 'and only where the mark is', String(away)),
-      ok(s.pitFull && onPit === 'the hole is full',
-         'the hole owes the same explanation, and gives it', String(onPit))
+      // The hole used to carry the same warning. It cannot stop anything any
+      // more -- the first grain it will not take tears it open, and the rest
+      // goes through the rift -- so there is nothing over it to hover and
+      // nothing to explain. A station's pile still stops its gang, which is why
+      // that mark stays.
+      ok(onPit === null, 'and the hole, which cannot stop any more, carries none',
+         String(onPit))
     ];
   }],
 

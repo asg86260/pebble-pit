@@ -2539,7 +2539,21 @@ function fall(w) {
 // could not see, and it let a body set off for a find with a full pit behind it
 // and stand at the lip holding one.
 const bookings = () => S.workers.reduce((n, o) => n + (o.booked || 0), 0);
-export const pitFree = () => pitRoom() - bookings();
+
+// ...and once the hole has collapsed, the room is not the hole's any more.
+//
+// A booking is a promise that there will be somewhere to put this grain down.
+// While the hole could refuse, that promise was worth exactly what the hole had
+// left. A hole that has torn open cannot refuse -- what will not fit goes
+// through the rift (see `throughRift` in pit.js) -- so the promise is always
+// good and the queue is as long as the trip.
+//
+// Without this the collapse fixed the wrong half: nothing was turned away any
+// more, but nobody set off either, because the booking still asked a full hole
+// how much room it had and was told none. Six carters banked fifteen grains in
+// thirty seconds -- the rift's own swallowing rate, and a yard still stopped in
+// every way that matters.
+export const pitFree = () => S.riftOpen ? Infinity : pitRoom() - bookings();
 
 // what one body carries in a trip -- a cart holds twice
 const load = w => haulCap() * (w.trained ? 2 : 1);

@@ -16,10 +16,9 @@ import { STEP } from './lab.js';
 import { S, rift } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         RIFT_BILL, RIFT_RATE } from './config.js';
+         RIFT_RATE } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
-import { lookAt } from './world.js';
 import { riftRate, riftUpCost } from './rift.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
@@ -172,21 +171,19 @@ export const TOWER_UPGRADES = [
 // Its ladder sits beside it for the same reason the wizards' do: what a board
 // is about is what stands on it. What it is and what it swallows is in rift.js.
 TOWER_UPGRADES.push(
-  {
-    key: 'rift',
-    kind: 'building', site: 'tower',
-    name: 'summon a black hole',
-    note: () => 'a hole in the pit that swallows what will not fit: the hole stops being the ceiling',
-    bill: () => RIFT_BILL,
-    buy: () => { S.riftOpen = true; lookAt(rift.x + rift.w / 2); },
-    // Once the tower stands, there is red to spend, and the hole has actually
-    // turned dust away. Offering a cure for a full pit to somebody who has never
-    // filled one is the scrubbing house's mistake -- the disease is the
-    // advertisement, and here the disease is a hauler standing at the lip
-    // holding a load it cannot put down. Not a threshold on how much has been
-    // banked: see `bankDust`.
-    show: () => S.towerOpen && S.seenSpark && S.seenFullPit && !S.riftOpen
-  },
+  // There is no row here that summons the black hole, and that is the point.
+  //
+  // It used to be one: red, dust, and a note about the hole no longer being the
+  // ceiling. The trouble was what it was a cure FOR. A full hole stops the yard
+  // -- a hauler cannot put its load down, so nothing is banked, so nothing is
+  // earned -- and this row was priced in the very coin that had stopped coming
+  // in. A player whose hole filled before they could afford it was stuck, and
+  // playing harder could not get them out.
+  //
+  // So the hole collapses on its own the first time it cannot take a grain (see
+  // `throughRift` in pit.js) and the purchase is gone with the problem. What is
+  // left on this board is the ladder below: the hole is there, and how wide it
+  // is opened is still something to buy.
   {
     key: 'riftrate',
     kind: 'rung', site: 'tower',
@@ -209,7 +206,7 @@ export const TOWER_SECTIONS = [
   // any board that is about somewhere else entirely.
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
   // And the one it does to the hole.
-  { title: 'the black hole', keys: ['rift', 'riftrate'] }
+  { title: 'the black hole', keys: ['riftrate'] }
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a

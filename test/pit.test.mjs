@@ -66,7 +66,13 @@ group('a core in the pile does not jam the hole', async () => {
   // there is no more room, not on the way there. The crew above are still here
   // to keep working against a full hole once it is.
   window.__give(999999);
-  runUntil(() => state().pitFull, 60);
+  // Waited on the COLLAPSE rather than on `pitFull`. Once the hole has torn
+  // open the rift swallows off the top on its own clock, so the pile drops a
+  // grain below the brim and back over it between one frame and the next --
+  // `pitFull` blinks, and a check that waits for it and then reads it can catch
+  // either. What this group is about is the yard against a hole with no room in
+  // it, and that is what the collapse says.
+  runUntil(() => state().riftOpen, 60);
   run(10);                                     // and a moment to stand down in
   const s = state();
   const carrying = s.crewDetail.filter(w => w[0] === 'h' && +w.split('|c')[1].split('|k')[0] > 0);
@@ -80,17 +86,25 @@ group('a core in the pile does not jam the hole', async () => {
   return [
     ok(s.cores > 0, 'a core has been banked, so the pile is not all dust',
        `${s.cores} cores`),
-    ok(s.pitFull, 'the hole reports itself full', `${s.pit} of ${s.pitCapacity}`),
-    ok(s.pit >= s.pitCapacity, 'and it really is: every cell the plot allows is spoken for',
-       `${s.pit} cells, ${s.pitDust} of them dust`),
+    ok(s.riftOpen, 'the hole has been filled past what it holds', `${s.pit} of ${s.pitCapacity}`),
+    // Within a whisker of every cell: the rift is swallowing off the top the
+    // whole time, so the pile sits a hair under the brim and is topped straight
+    // back up. A tolerance rather than a number, because how big the whisker is
+    // depends on the rift's rate.
+    ok(s.pit >= s.pitCapacity * 0.99, 'and it really is: every cell the plot allows is spoken for',
+       `${s.pit} cells of ${s.pitCapacity}, ${s.pitDust} of them dust`),
     // the heap over the mouth has to have unlocked, or the pile stopped at
     // the brim of the hole and everything above it was never reachable
     ok(s.pitDust > (s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain) - s.cores,
        'the heap over the mouth was unlocked on the way',
        `${s.pitDust} dust, hole holds ${(s.pitW / s.pitGrain) * (s.pitDepth / s.pitGrain)}`),
-    ok(carrying.length === 0 || s.stored === s.pitDust,
-       'and nobody is stood at the lip throwing at a brim that will not take it',
-       `${carrying.length} still laden, ${s.stored} counted`)
+    // Laden is fine now, and is the point: a hole that has collapsed always has
+    // somewhere to put a load, so a carter walks up and tips it rather than
+    // standing at the lip holding it. What must be true is that the books
+    // balance -- what is counted, less what is through the rift, is the pile.
+    ok(s.stored - s.rift === s.pitDust,
+       'and what is counted, less what is through the rift, is the pile',
+       `${s.stored} counted, ${s.rift} through, ${s.pitDust} in the pile`)
   ];
 });
 
@@ -151,7 +165,11 @@ group('a full pit still saves and reloads', async () => {
     // The rift travels with it, and it is the one part of what you own that the
     // pile cannot be read back from: lose this line and a player's dust is not
     // somewhere else, it is gone.
-    ok(j.rift === s.rift, 'and what is standing in the rift', `${j?.rift}`),
+    // A hole filled past the brim tears open, so there is something standing in
+    // the rift to travel. Not to the grain: the save is written on its own timer
+    // and the rift swallows every frame, so the two are read a moment apart.
+    ok(j.rift > 0 && Math.abs(j.rift - s.rift) < 200,
+       'and what is standing in the rift', `${j?.rift} saved against ${s.rift}`),
     ok(j.pitLevel === s.pitLevel, 'and how far the hole has been dug', `${j?.pitLevel}`)
   ];
 });
@@ -167,9 +185,13 @@ group('spending a full pit takes it back out', async () => {
   return [
     ok(after.stored === before.stored - Math.floor(before.stored / 2), 'the counter comes down',
        `${before.stored} -> ${after.stored}`),
-    ok(after.pitDust === Math.min(after.stored, after.pitCapacity),
+    // The pile is what you own LESS what is through the rift -- and a hole
+    // tipped past its brim has torn open, so some of this is through. Spending
+    // comes out of the hole first and the rift after (see rift.test.mjs), so
+    // half of a doubly-full hole is the whole visible pile.
+    ok(after.pitDust === Math.min(after.stored - after.rift, after.pitCapacity),
        'and the pile matches what will fit',
-       `${after.pitDust} in the pit, ${after.stored} counted, ${after.pitCapacity} room`),
+       `${after.pitDust} in the pit, ${after.stored} counted, ${after.rift} through`),
     ok(after.paid > 0, 'dust is seen leaving')
   ];
 });

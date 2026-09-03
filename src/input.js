@@ -17,15 +17,13 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearTower, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
-import { overPileMark, pileMarkAt, overLabMark, labMarkAt,
-         overPitMark, pitMarkAt } from './render.js';
+import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
 import { card, houseRect } from './crewboard.js';
-import { pitFull } from './pit.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
 import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
@@ -514,12 +512,6 @@ function askedAbout(x, y, cx, cy) {
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
-  // the hole stops the haulers the way a full pile stops a gang, and it owes
-  // the same explanation
-  if (pitFull() && overPitMark(x, y)) {
-    showTip('the hole is full', pitMarkAt());
-    return true;
-  }
   if (S.labDone && overLabMark(x, y)) {
     showTip(doneName(), labMarkAt());
     return true;
@@ -568,7 +560,6 @@ const CURSORS = [
 // finished asking.
 function overAnyMark(x, y) {
   for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
-  if (pitFull() && overPitMark(x, y)) return true;
   return !!(S.labDone && overLabMark(x, y));
 }
 

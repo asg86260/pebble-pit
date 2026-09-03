@@ -18,7 +18,7 @@ import { boulderAlive, depthOf, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
-import { pitDepth, pitFull, heldInHole } from './pit.js';
+import { pitDepth, pitFull, pitRefuses, heldInHole } from './pit.js';
 
 import { underground, quarryShape, ladder, quarryCells, LADDER_W } from './quarry.js';
 import { indoors } from './lab.js';
@@ -737,7 +737,12 @@ export function drawPileMarks() {
   // why reads as a game that has broken rather than as a hole you have to dig.
   // It stands on the near lip, on the ground the haulers walk to and are not
   // walking to now -- and to the left of it, because the counter is to the right.
-  if (pitFull()) { const at = pitMarkAt(); warning(at.x, at.y); }
+  // No mark over the hole. It used to carry the same warning a stopped station
+  // does -- a triangle and "the hole is full" under the cursor -- because a full
+  // hole stopped the yard and you needed telling why. It cannot stop anything
+  // now: the first grain it will not take tears it open and the rest goes
+  // through the rift (see `throughRift` in pit.js). A warning about a thing that
+  // no longer happens is a warning that teaches you to ignore warnings.
   for (const p of S.piles) {
     if (!S.pileFull[p.key]) continue;
     const at = pileMarkAt(p.key);
@@ -865,18 +870,6 @@ export function overPileMark(key, mx, my) {
   // than the gap now -- hovering the diamond would have asked about the triangle
   // as well, and whichever was tested first would have won.
   return Math.abs(mx - at.x) < SLOT_W / 2 && Math.abs(my - at.y) < P * 4;
-}
-
-// The hole's own mark. Above the ground line rather than below it, because below
-// it is the pile -- and to the left of the lip, because the counter is to the
-// right of it.
-export function pitMarkAt() {
-  return { x: Math.round((pit.x - P * 5) / P) * P, y: S.groundY - P * 7 };
-}
-
-export function overPitMark(mx, my) {
-  const at = pitMarkAt();
-  return Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5;
 }
 
 // The things the sites give up, lying where they came to rest. Each has a body
@@ -3923,7 +3916,7 @@ export function drawBelt() {
   // straight off the shovel -- so the marks stood still under moving loads.
   // The band runs whenever it is manned, on, and has somewhere to put things
   // down, which is exactly the gate `stepBelt` keeps.
-  const t = beltRunning(now()) && !pitFull() ? (now() % 900) / 900 : 0;
+  const t = beltRunning(now()) && !pitRefuses() ? (now() % 900) / 900 : 0;
   ctx.fillStyle = '#fff';
   for (let x = from + Math.round(t * 4) * P; x < to; x += P * 4) {
     ctx.fillRect(x, y, P, P);

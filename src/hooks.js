@@ -176,6 +176,18 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
 // dev: the tower's own two, without paying for either. `openMeteor` is what the
 // row does -- the sky is opened and something is put in it -- and `wizardHat`
 // is the tower finishing one this instant rather than in two minutes.
+// dev: tear the hole open, without filling it first.
+//
+// There is no row that summons one any more -- the hole collapses on its own the
+// first time it cannot take a grain (see `throughRift` in pit.js) -- so a check
+// about what the rift DOES would otherwise have to bank two hundred thousand
+// dust to get one, which is a check about filling a hole.
+export const openRift = () => {
+  S.riftOpen = true;
+  S.seenFullPit = true;
+  S.dirty = true;
+};
+
 export const openMeteor = () => {
   S.towerOpen = true;
   S.meteorOpen = true;
@@ -886,7 +898,7 @@ export const HANDLES = {
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
-  __meteor: openMeteor, __wizardHat: wizardHat,
+  __meteor: openMeteor, __rift: openRift, __wizardHat: wizardHat,
   __loo: openLoo, __brew: brewWizard, __casino: openCasino,
   __muckOverPit: muckOverPit, __look: look,
   // getting about: the surface under a place, the ways there are, and how a

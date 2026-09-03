@@ -66,46 +66,38 @@ group('a stopped crew takes a break, a working one does not', async () => {
 // to the door back on `idle`, the idle branch sent it home again the next
 // frame, and it never took a step -- the whole crew stock still between the
 // pile and the lip with a yard full of dust they could not move.
-group('a crew with nowhere to put anything walks home rather than freezing', async () => {
+// This used to be "a crew with nowhere to put anything walks home rather than
+// freezing", and it was the best that could be done with a yard that had
+// stopped: everybody indoors is at least somewhere, rather than a row of bodies
+// stood still in the middle of the works.
+//
+// There is no such state any more. The hole collapses the first time it cannot
+// take a grain and what will not fit goes through the rift, so there is always
+// somewhere to put a load down. The check is the other way round now: fill the
+// hole past the brim and nobody knocks off at all.
+group('a full hole does not send the crew home any more', async () => {
     run(0.4);
   window.__crew(3, 6);
   window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
-  // The hole is the whole hole from the first frame now, so filling it by
-  // mining is an hour of yard. It is handed over instead: what this check is
-  // about is what the crew do once there is nowhere to put anything, not how
-  // long it takes to get there.
-  window.__give(999999);
-  runUntil(() => state().pitFull, 30);
-  runUntil(() => state().houses.home === 6, 120);
-  const full = state();
-
-  // nobody is left standing about in the middle of the yard
-  const out = () => state().crewDetail.filter(d => d[0] === 'h' && !d.includes('|home|'));
-  const stalled = out();
-
-  // and room in the hole brings them all straight back out. It used to be a dig
-  // that made the room; the hole does not grow any more, so it is dust going out
-  // of it instead -- which is the same fact from the crew's side.
-  window.__spend(4000);
-  // Measured from *after* the room was made, not from the full hole: making the
-  // room is itself dust going out, so the old comparison was asking the crew to
-  // carry back everything that was spent before it counted as carrying at all.
-  const freed = state();
-  runUntil(() => state().houses.home === 0 && state().stored > freed.stored, 60);
-  const dug = state();
+  window.__give(999999);                     // far more than the hole holds
+  runUntil(() => state().riftOpen, 30);
+  const before = state();
+  run(40);                                   // long enough for a stopped yard to empty
+  const after = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(full.pitFull, 'the hole is full', `${full.stored} of ${full.pitCapacity}`),
-    // Seven hundred of them lie about on a seeded run; five hundred is that with
-    // a comfortable margin, and a good deal more than the hundred that would
-    // also have been true of a yard that had barely started mining.
-    ok(full.floorGrains > 500, 'and the yard is not', `${full.floorGrains} lying about`),
-    ok(full.houses.home === 6, 'so every one of them has gone home',
-       `${full.houses.home} in, ${stalled.length} still out`),
-    ok(dug.houses.home === 0, 'and room in it brings them all back out',
-       `${dug.houses.home} still in`),
-    ok(dug.stored > freed.stored, 'carrying again', `${freed.stored} -> ${dug.stored}`)
+    ok(before.riftOpen, 'the hole has collapsed under it',
+       `${before.stored} counted, ${before.pitDust} in the pile`),
+    ok(after.floorGrains > 100, 'with plenty still on the ground to fetch',
+       `${after.floorGrains} lying about`),
+    ok(after.houses.home === 0, 'and not one of them has knocked off',
+       `${after.houses.home} indoors`),
+    ok(after.stored > before.stored, 'the yard is still banking',
+       `${before.stored} -> ${after.stored}`),
+    // ...and it is banking into the rift, which is where a full hole puts it.
+    ok(after.rift > before.rift, 'through the rift, because the pile is full',
+       `${before.rift} -> ${after.rift} through`)
   ];
 });
 

@@ -3527,3 +3527,34 @@ Eleven rows that were instant now take somebody's time: 5s for a rung, 18s for a
 place, 45s for a building, 90s for a machine, climbing with the rung the way the
 price does. The four tunings are rungs; the spells and the black hole are
 buildings; widening the hole is a rung; the balloon is a machine.
+
+## The hole collapses
+
+A full hole used to stop the yard. A hauler cannot put its load down, so nothing
+is banked, so nothing is earned — and the cure was a purchase: a black hole
+summoned from the tower for red. Priced, that is, in the one coin that had
+stopped coming in. A yard that filled its hole before it could afford one was
+stuck, and playing harder could not get it out.
+
+So there is no purchase. **The first grain the hole cannot take tears it open**,
+and that grain goes through. Nothing stops, nothing is lost, and there is nothing
+to buy first.
+
+Through the rift is not away: `inHole` is what you own less what is through, so
+the counters do not move and the pile simply shows less of what you have. It is
+the account the rift always kept, arrived at without the hole having to say no.
+
+Two halves, and the second is the one that matters. Tearing the hole open stops
+it *refusing* grains; it does not on its own make anybody fetch one, because a
+hauler books room before it sets off and the booking asked the hole how much it
+had left. With the hole full the answer was none, so six carters banked fifteen
+grains in thirty seconds — the rift's own swallowing rate, and a yard still
+stopped in every way that matters. A booking is a promise that there will be
+somewhere to put this down; once the hole cannot refuse, the promise is always
+good, so `pitFree` is unbounded from the moment it collapses.
+
+**What it costs.** The pressure of a filling hole is gone, and with it some of
+the reason to buy the belt and more carriers. That was a deliberate trade: a
+mechanic that can end a run is worse than a mechanic that is missed. The rift's
+own ladder stays — how wide it is torn open is still worth buying, because it is
+what drains the pile back down to something you can see.

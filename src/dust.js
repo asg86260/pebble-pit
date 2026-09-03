@@ -9,7 +9,7 @@ import { S, floor, pit } from './state.js';
 import { defineMachine, machine } from './machines.js';
 import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs, haulCap } from './upgrades.js';
-import { pitFull } from './pit.js';
+import { pitFull, pitRefuses } from './pit.js';
 import { rand } from './rng.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
@@ -180,7 +180,7 @@ export function catchBelt(ch, now, f) {
   // that ran for as long as the hole stayed full. Refused here, the spoil falls
   // through to the rock's own pile, and the pile filling is what stands the ram
   // down: the same mark that stops every other machine.
-  if (pitFull()) return false;
+  if (pitRefuses()) return false;
   const y = beltY();
   const under = ch.y + P, was = under - ch.vy * f;
   if (was > y || under < y) return false;             // did not cross the band this frame
@@ -213,7 +213,7 @@ export function stepBelt(now, f) {
   // exactly as it does when its tender walks off. `ready` already refuses new
   // bites on a full hole; this is the other half, without which the loads
   // already riding were tipped into a hole that handed every one straight back.
-  if (pitFull()) return;
+  if (pitRefuses()) return;
   const top = bandY(), head = beltTo();
   for (let i = S.belt.length - 1; i >= 0; i--) {
     const b = S.belt[i];
@@ -249,7 +249,7 @@ defineMachine('belt', {
   // belt is worth. `scoopMs` carries the lip's own ladders, so everything bought
   // for carrying still applies to the machine that replaced it.
   ms: rate => scoopMs() / Math.max(0.01, rate),
-  ready: () => !pitFull(),
+  ready: () => !pitRefuses(),
   // A beat lifts a *load*, not a grain: `haulCap()` of them, the same number a
   // carter carries in one trip, because the belt is the whole of what a hauler
   // does minus the walking and a hauler does not carry one grain. It was one a

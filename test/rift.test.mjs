@@ -29,34 +29,43 @@ function readyYard() {
   window.__give(60000);                 // more than the hole holds; the rest is refused
 }
 
-group('the rift is not offered until the hole has been a problem', async () => {
+group('the hole tears itself open the first time it cannot take a grain', async () => {
   window.__reset();
   window.__crew(0, 2);
   window.__meteor();
   window.__grant({ sparks: 999 });
-  const early = window.__rows().find(r => r.key === 'rift');
+  const early = state();
 
-  // and after the hole has turned a grain away
+  // and now more dust than the hole can hold
   window.__give(60000);
-  const late = window.__rows().find(r => r.key === 'rift');
+  const late = state();
 
   return [
-    ok(early && !early.shown, 'a fresh yard is not sold a cure for a full pit',
-       `shown ${early?.shown}`),
-    ok(late && late.shown, 'and a yard that has filled one is', `shown ${late?.shown}`),
-    ok(TOWER_UPGRADES.some(r => r.key === 'rift') && !UPGRADES.some(r => r.key === 'rift'),
-       'on the tower, where it is summoned from, and not on the bench'),
-    // Red as well: it is the one plainly magic thing in the yard.
-    ok((late?.bill || []).some(b => b[0] === 'spark'), 'it is priced in red',
-       JSON.stringify(late?.bill)),
-    ok((late?.bill || []).some(b => b[0] === 'dust'), 'and in dust, like every row',
-       JSON.stringify(late?.bill))
+    ok(!early.riftOpen, 'a fresh yard has no hole in the air over its hole'),
+    // It used to be a row: red and dust, on the tower, offered the first time the
+    // hole said no. The trouble was what it was a cure FOR -- a full hole stops
+    // the yard earning, so the cure was priced in the coin that had stopped
+    // coming in, and a player who filled the hole first was stuck for good. So
+    // the hole collapses on its own instead and there is nothing to buy.
+    ok(late.riftOpen, 'and a yard that has filled one has torn it open'),
+    ok(!window.__rows().some(r => r.key === 'rift'),
+       'there is no row that sells one, on any board'),
+    // The ladder stays: how wide it is torn is still worth buying.
+    ok(TOWER_UPGRADES.some(r => r.key === 'riftrate'),
+       'but widening it is still a row, and on the tower'),
+    // Nothing is lost to the collapse. What will not fit is through the rift,
+    // and what you own is the pile plus what is through it.
+    ok(late.stored > late.pitDust, 'the dust over the brim is banked, not turned away',
+       `${late.stored} counted, ${late.pitDust} in the pile`),
+    ok(late.stored - late.rift === late.pitDust,
+       'and the books balance: what is counted, less what is through, is the pile',
+       `${late.stored} - ${late.rift} against ${late.pitDust}`)
   ];
 });
 
 group('a torn rift swallows on its own, and the hole starts draining', async () => {
   readyYard();
-  buyNow('rift');
+  window.__rift();
   const full = state();
 
   // Nobody is sent anywhere. It is torn, so it is open.
@@ -88,7 +97,7 @@ group('a torn rift swallows on its own, and the hole starts draining', async () 
 group('the hole takes dust again once the rift has made room', async () => {
   readyYard();
   const stuck = state();
-  buyNow('rift');
+  window.__rift();
   runUntil(() => state().rift > 500, 120);
 
   // Room in the hole again, so banking works: the crew stop standing down.
@@ -110,7 +119,7 @@ group('the hole takes dust again once the rift has made room', async () => {
 
 group('it hangs in the hole, at the near end, and the grains go round it', async () => {
   readyYard();
-  buyNow('rift');
+  window.__rift();
   run(3);
   const { pit, S } = yard;
   const c = yard.riftMod.riftCenter();
@@ -140,7 +149,7 @@ group('it hangs in the hole, at the near end, and the grains go round it', async
 
 group('widening it is a row that never runs out', async () => {
   readyYard();
-  buyNow('rift');
+  window.__rift();
   window.__grant({ sparks: 99999, dust: 30000 });
 
   const rate = () => yard.riftMod.riftRate();
@@ -195,7 +204,7 @@ group('a save with a rifter in it loses nobody', async () => {
 group('the hole swallows the coins too, and they are still yours', async () => {
   readyYard();
   window.__grant({ shards: 300, spores: 300, cores: 4 });
-  buyNow('rift');
+  window.__rift();
   for (let i = 0; i < 6; i++) buyNow('riftrate');
   // Measured from *after* the hole is seeded, not from before it. A full hole
   // cannot hold every coin you own, so some are through the rift before a
@@ -228,7 +237,7 @@ group('the hole swallows the coins too, and they are still yours', async () => {
 group('a coin is spent out of the hole first, and the rift after', async () => {
   readyYard();
   window.__grant({ shards: 40 });
-  buyNow('rift');
+  window.__rift();
   for (let i = 0; i < 8; i++) buyNow('riftrate');
   // Everything through: run until the hole has no shards left in it at all.
   const gone = runUntil(() => yard.pitMod.heldInHole('shards') === 0

@@ -21,11 +21,16 @@ group('filling the pit stops at what the hole holds', async () => {
        `${s.pitDust} of ${cap}`),
     ok(s.pitDust > (3600 / s.pitGrain) * (276 / s.pitGrain),
        'having heaped up over the mouth on the way', `${s.pitDust}`),
-    // The pile is the dust. A counter that went on climbing past a pile that
-    // had stopped would be the number and the picture saying different things.
-    ok(s.stored === s.pitDust, 'and the counter stops with it',
-       `${s.stored} counted, ${s.pitDust} in the pile`),
-    ok(s.pitFull, 'the hole reports itself full'),
+    // The pile stops; the COUNTER does not. What will not fit goes through the
+    // rift, and `stored` less `rift` is what is in the hole -- so the number and
+    // the picture still say the same thing, with the rift accounting for the
+    // difference. This used to read `stored === pitDust`, from when a hole with
+    // no room turned the grain away and the dust was simply not banked.
+    ok(s.stored - s.rift === s.pitDust,
+       'and what is counted, less what is through the rift, is what is in the pile',
+       `${s.stored} counted, ${s.rift} through, ${s.pitDust} in the pile`),
+    ok(s.stored > s.pitDust, 'with the overflow banked rather than turned away',
+       `${s.stored - s.pitDust} through`),
     ok(s.pitGrain === 6, 'the grain does not change under it', `${s.pitGrain}px`)
   ];
 });
@@ -61,64 +66,63 @@ group('nothing is left lying over the mouth of the pit', async () => {
 // A find used to go in over the ceiling on the grounds that it is a thing you
 // went and got. A hole that holds everything except the four things it does
 // not hold is a hole with a rule you cannot see.
-group('a find is counted against the hole like everything else', async () => {
+//
+// And a full hole no longer turns anything away at all: it collapses, and what
+// will not fit goes through the rift -- a find exactly as much as a grain of
+// dust, which is the same rule read the other way round. This group used to say
+// the shard stayed on the ground and nobody went for it, which was true when a
+// full hole was a wall.
+group('a find is banked through the rift when the hole is full', async () => {
     run(0.4);
   window.__crew(0, 6);
   window.__give(200000);                       // the scrape, full
-  runUntil(() => state().pitFull, 60);
+  runUntil(() => state().riftOpen, 60);
   const rockX = state().rockX;
   window.__toss('shard', rockX + 200);
   window.__toss('shard', rockX + 240);
-  runUntil(() => state().finds.length === 2 && state().chips === 0, 30);
-  run(5);                                      // long enough for somebody to set off, if anybody were going to
-  const full = state();
-
-  window.__spend(3);                           // room for three
-  runUntil(() => state().shards === 2, 60);
-  const room = state();
+  const got = runUntil(() => state().shards === 2, 60);
+  const after = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(full.pitFull, 'the hole is full', `${full.stored} in it`),
-    ok(full.shards === 0 && full.finds.length === 2,
-       'a shard on the ground with a full hole behind it stays on the ground',
-       `${full.shards} banked, ${full.finds.length} lying about`),
-    ok(full.carried === 0,
-       'and nobody sets off for one they have nowhere to put',
-       `${full.carried} in hands`),
-    ok(room.shards === 2 && room.finds.length === 0,
-       'make room and they are fetched and banked like anything else',
-       `${room.shards} banked, ${room.finds.length} left`)
+    ok(after.riftOpen, 'the hole has collapsed under all that dust'),
+    ok(got && after.shards === 2, 'both shards are fetched and counted',
+       `${after.shards} banked, ${after.finds.length} lying about`),
+    ok(after.finds.length === 0, 'and nothing is left lying on the ground for want of room',
+       `${after.finds.length} left`),
+    // Through the rift is not away: the counter holds them, and the rift's own
+    // books say how many of them are not in the pile.
+    ok(after.riftHeld.shards <= after.shards,
+       'the rift accounts for whichever of them it took',
+       `${after.riftHeld.shards} of ${after.shards} through`)
   ];
 });
 
 // Same rule, and the case where getting it wrong costs the most: a core is one
 // a rock, for ever, and one the hole swallowed would be a rock done twice.
-group('a core waits on the ground rather than being lost to a full hole', async () => {
+group('a core goes in through the rift like anything else', async () => {
     run(0.4);
   window.__crew(2, 2);
   window.__give(200000);
-  runUntil(() => state().pitFull, 60);
+  runUntil(() => state().riftOpen, 60);
   // onto a rock that actually has a core in it: the first four have none
   window.__jump(5);
   window.__next();                             // the last of the rock goes
   runUntil(() => state().coreItem?.rest, 40);
-  run(5);                                      // and a moment for it to be banked, if a full hole would take it
-  const full = state();
-
-  window.__spend(20);
-  runUntil(() => state().cores === 1, 60);
-  const room = state();
+  const banked = runUntil(() => state().cores === 1, 60);
+  const after = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(full.pitFull && full.cores === 0, 'a full hole banks no core',
-       `${full.cores} cores`),
-    ok(!!full.coreItem, 'and the core is still out there, in plain sight',
-       JSON.stringify(full.coreItem)),
-    ok(room.cores === 1 && !room.coreItem,
-       'dig, and it goes in like anything else',
-       `${room.cores} cores, ${room.coreItem ? 'one still loose' : 'none loose'}`)
+    // A core used to sit on the ground until you dug room for it -- the one
+    // thing the hole would not take and the most expensive thing to be wrong
+    // about. A hole that has collapsed takes it, because it takes everything.
+    ok(banked && after.cores === 1, 'a core is banked with the hole full',
+       `${after.cores} cores`),
+    ok(!after.coreItem, 'and is not left lying about',
+       JSON.stringify(after.coreItem)),
+    ok(after.riftHeld.cores <= after.cores, 'the rift accounts for it if it took it',
+       `${after.riftHeld.cores} of ${after.cores} through`)
   ];
 });
 
@@ -131,39 +135,71 @@ group('a hauler books room in the hole before it fetches', async () => {
     run(0.4);
   window.__crew(0, 8);
   window.__levels({ haulCarryLevel: 4 });
-  window.__give(200000);                       // fill the scrape to the brim
-  runUntil(() => state().pitFull, 60);
+  // Most of the way full, and NOT collapsed: the booking is a promise that
+  // there will be somewhere to put this grain down, and the promise is only
+  // worth anything while the hole can still say no. Once it has torn open there
+  // is always somewhere -- see `pitFree` in crew.js -- and the queue is the
+  // trip rather than the hole.
+  const cap = state().pitCapacity;
+  window.__give(Math.round(cap * 0.98));
+  run(2);
+  const room = state().pitCapacity - state().pitDust;
   const rockX = state().rockX;
-  window.__pile(rockX + 200, 600);             // and a heap nobody can shift
-  // Until the yard has settled into having nowhere to put anything: nobody
-  // holding dust, nobody with room booked. Run on past that and the frames are
-  // spent watching a yard that has already stopped.
-  runUntil(() => state().carried === 0 && state().booked === 0, 60);
-  const full = state();
-
-  // now make room for six, and watch six leave the ground
-  window.__spend(6);
+  window.__pile(rockX + 200, 600);             // more on the ground than the hole can take
   const before = state().stored;
-  runUntil(() => state().stored - before >= 6, 60);
-  run(5);                                      // and a moment for a seventh to arrive, if one is coming
+  runUntil(() => state().stored - before >= room, 60);
+  run(5);                                      // and a moment for one more, if one is coming
   const some = state();
   window.__crew(0, 0);
   window.__clearFloor();
   return [
-    ok(full.pitFull, 'the hole is full', `${full.stored} in it`),
-    ok(full.floorGrains > 500, 'and there is plenty on the ground',
-       `${full.floorGrains} lying about`),
-    ok(full.carried === 0,
-       'so nobody is holding dust with nowhere to put it',
-       `${full.carried} grains in hands`),
-    ok(full.booked === 0, 'and nobody has room booked', `${full.booked} booked`),
-    ok(some.stored - before <= 6,
-       'room for six takes six off the ground, not eight loads',
-       `${some.stored - before} banked`),
+    ok(!some.riftOpen || some.stored - before <= room + 1,
+       'a hole that has not collapsed takes what it has room for and no more',
+       `${some.stored - before} banked into room for ${room}`),
+    ok(some.floorGrains > 100, 'with plenty still on the ground',
+       `${some.floorGrains} lying about`),
     // a booking is the whole trip, and what is in hand is part of it -- so
     // the one number that must never exceed the room is the booking
-    ok(some.booked <= 6 && some.carried <= some.booked,
-       'and never more is spoken for than the hole will take',
+    ok(some.carried <= some.booked,
+       'and never more is carried than is spoken for',
        `${some.carried} carried of ${some.booked} booked`)
+  ];
+});
+
+// The soft-lock, and the whole reason the hole collapses.
+//
+// A full hole used to stop the yard: a hauler cannot put its load down, so
+// nothing is banked, so nothing is earned. The cure was a black hole summoned
+// from the tower for red -- priced in the coin that had stopped coming in, so a
+// yard that filled its hole before it could afford one was stuck for good.
+group('a full hole collapses rather than stopping the yard', async () => {
+  window.__reset();
+  window.__crew(3, 6, 3, 3);
+  window.__fullSites();
+  window.__grant({ sparks: 99, shards: 99, spores: 99, cores: 9 });
+  window.__give(999999);                     // far more than the hole can hold
+  run(20);
+
+  const s0 = state();
+  const a = state();
+  run(30);
+  const b = state();
+  const jobs = {};
+  for (const w of b.workerGoals) jobs[w] = (jobs[w] || 0) + 1;
+  const idle = (jobs['hauler:idle'] || 0) + (jobs['hauler:home'] || 0);
+  const working = Object.entries(jobs)
+    .filter(([k]) => k.startsWith('hauler:') && !k.endsWith('idle') && !k.endsWith('home'))
+    .reduce((n, [, v]) => n + v, 0);
+
+  return [
+    ok(s0.riftOpen, 'the hole tears open on its own rather than waiting to be bought'),
+    ok(s0.stored > s0.pitDust * 2, 'and everything over the brim is still yours',
+       `${s0.stored} counted against ${s0.pitDust} in the pile`),
+    // The yard is what this is about. Before the collapse, thirty seconds of a
+    // full hole banked nothing at all and the carters went home.
+    ok(b.stored > a.stored, 'the yard goes on banking with the hole full',
+       `${b.stored - a.stored} banked in thirty seconds`),
+    ok(working > idle, 'and the carters are working rather than standing about',
+       `${working} working, ${idle} idle or gone home`)
   ];
 });
