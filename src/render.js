@@ -1049,23 +1049,27 @@ export function drawApothecary() {
       // up the belly and no higher -- the fire licks the pot, it does not shoot
       // past the rim.
       const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
-      // A few distinct flame tongues, each standing in ONE place -- they do not
-      // sway side to side, which read as waving rather than burning. The body is
-      // steady (a yellow foot up an orange shaft) and only the TIP licks up and
-      // down: nought to two red cells on an organic clock (two sines at odd
-      // frequencies, so it flickers rather than pulsing on a beat). Thin and
-      // gapped so they read as separate flames, capped below the rim.
-      const tongues = [[potX + P * 4, 2], [potX + P * 6, 3], [potX + P * 8, 2]];
-      for (let i = 0; i < tongues.length; i++) {
-        const [cx, body] = tongues[i];
-        for (let hy = 0; hy < body; hy++) {                  // the steady body
-          ctx.fillStyle = hy === 0 ? HOT : MID;
-          ctx.fillRect(cx, g - P - hy * P, P, P);
+      // The fire is ONE body of flame, not three fingers: a continuous bed of
+      // cells across the foot of the pot whose top edge is jagged and moving. Each
+      // column's height is a sum of sines whose crests *travel* sideways across
+      // the bed over time (`- c * 0.9`), so the flame's silhouette ripples and the
+      // peaks drift the way fire does -- no single tongue swaying, no per-frame
+      // strobe. A centre hump makes it stand tallest in the middle; colour runs
+      // hot yellow at the base through orange to a red top edge. Capped low so it
+      // licks the belly and stays below the rim.
+      const bedL = potX + P * 3, cols = 7;
+      for (let c = 0; c < cols; c++) {
+        const hump = (1 - Math.abs(c - (cols - 1) / 2) / ((cols - 1) / 2)) * 1.6;
+        const wave = Math.sin(t / 300 - c * 0.9) * 1.3       // a crest travelling across
+                   + Math.sin(t / 125 + c * 1.7) * 0.9       // a faster ripple
+                   + Math.sin(t / 47 + c * 3.1) * 0.5;       // the flicker
+        const h = Math.max(0, Math.min(5, Math.round(1.4 + hump + wave)));
+        const fx = bedL + c * P;
+        for (let hy = 0; hy < h; hy++) {
+          const frac = hy / Math.max(1, h);
+          ctx.fillStyle = frac < 0.34 ? HOT : frac < 0.72 ? MID : TIP;
+          ctx.fillRect(fx, g - P - hy * P, P, P);
         }
-        const lick = Math.max(0, Math.round(                 // the tip, licking up and down
-          1 + Math.sin(t / 150 + i * 2.1) * 0.9 + Math.sin(t / 64 + i * 3.7) * 0.7));
-        ctx.fillStyle = TIP;
-        for (let k = 0; k < lick; k++) ctx.fillRect(cx, g - P - (body + k) * P, P, P);
       }
       // Embers: a stray spark or two lifting off the fire and winking out, kept
       // low against the belly so they read as the fire's own sparks.
