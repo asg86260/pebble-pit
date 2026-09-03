@@ -26,6 +26,7 @@ import { STEP } from './lab.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
 import { rand } from './rng.js';
+import { critRoll } from './crit.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -259,8 +260,19 @@ export function stepWizard(w, now) {
   if (S.pileFull.sky) { w.lunge = 0; return; }
 
   if (now >= w.next && w.cell) {
-    fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, wizBite());
-    w.mined = (w.mined || 0) + wizBite();
+    // The star is a bounded job like the dig -- there are only so many cells in
+    // it -- so a crit PULLS FORWARD: the bolt takes a cluster of cells in one
+    // strike rather than its usual bite, spreading outward from where it hit (see
+    // `nearestLive` in meteor.js). It cannot take more than is there, so the star
+    // still comes apart in exactly as many cells as it has; the crit only brings
+    // them off sooner. The tell here is the bolt's own bigger burst off the face,
+    // not the ground fountain the rock and the cut throw -- the star's spoil is
+    // sparks in the sky, on their own arc, and it reads as a patch coming off at
+    // once. See DESIGN.md: the crit rule is one rule, but its dust looks like
+    // whatever the station's own spoil already looks like.
+    const bite = wizBite() * critRoll();
+    fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, bite);
+    w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     w.cell = null;                 // the bolt has it now; pick the next one
     w.next = now + wizMs();

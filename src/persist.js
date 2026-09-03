@@ -198,6 +198,8 @@ export function persist() {
     camX: Math.round(S.camX),
     hideDone: S.hideDone,
     pickLevel: S.pickLevel,
+    critChanceLevel: S.critChanceLevel,
+    critMultLevel: S.critMultLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
     // what the sites have given up and nobody has carried in yet: it was never
@@ -427,6 +429,8 @@ export function restore() {
     S.riftLevel = 0;
     S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
     S.pickLevel = 0;
+    S.critChanceLevel = 0;
+    S.critMultLevel = 0;
     S.coreItem = null;
     S.miners = 0;
     S.haulers = 0;
@@ -496,6 +500,8 @@ export function restore() {
   S.hideDone = !!s.hideDone;
   setPitGrain();
   S.pickLevel = s.pickLevel || 0;
+  S.critChanceLevel = s.critChanceLevel || 0;
+  S.critMultLevel = s.critMultLevel || 0;
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -895,6 +901,8 @@ export function reset(fresh = true) {
   S.seenRows = [];
   setPitGrain();
   S.pickLevel = 0;
+  S.critChanceLevel = 0;
+  S.critMultLevel = 0;
   S.coreItem = null;
   S.heldCore = false;
   S.miners = 0;

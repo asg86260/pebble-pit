@@ -1,0 +1,139 @@
+// Crits: one rule at every station. A unit of work that counts for several --
+// adding output where the job is unbounded, and pulling owed work forward where
+// it is bounded so the total never moves. And the tell that a crit happened is
+// real dust: a fountain that banks like any other grain, never a drawn ring.
+//
+// Deterministic throughout: the roll is forced with `__crit` (true always, false
+// never), and where a real roll is measured the levels are pinned and the run is
+// long, so the number is the mechanic rather than the seed.
+
+import { group, ok, state, run, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { S, floor } from '../src/state.js';
+import { findShards, seamShards } from '../src/quarry.js';
+import { critMult, critChance, critEV } from '../src/crit.js';
+
+// The dust in the world that a crit's fountain ends up as: what is banked on the
+// floor, what is down the hole, and what is still in the air. A crit throws real
+// grains, so the count has to come out where the pixels went in.
+const dustAbout = () =>
+  (floor.n || 0) + state().stored + S.chips.length;
+
+// --- 1. the bounded job: a dig pulls forward, it does not add ------------------
+//
+// The whole point of crits being allowed at the cut: a dig is worth
+// `seamShards()` and a crit takes several of the shards already owed in one
+// swing, so it finishes sooner and yields not a shard more. `findShards` is the
+// one place the dig turns stone up, and it is driven directly here -- one seam,
+// swung out with every swing critting -- because the invariant is about the
+// accounting and nothing else.
+group('a dig with crits forced on yields exactly the seam, never a shard more', async () => {
+  openSites();
+  window.__crit(true);                       // every swing a crit
+
+  const digOut = owed => {
+    S.quarryOwed = owed;
+    const w = { x: state().quarryX + state().quarryW / 2, y: S.groundY + 120, quarried: 0 };
+    // `left` is the scatter denominator, counted down to the certain last cell.
+    // It cannot change the total -- owed only ever comes down -- but it is fed
+    // the way a real dig feeds it so the drive is honest.
+    let left = Math.max(owed, 64), guard = 0;
+    while (S.quarryOwed > 0 && guard++ < 100000) { findShards(w, left); if (left > 1) left--; }
+    return w.quarried;
+  };
+
+  const seam = seamShards();
+  const gotSeam = digOut(seam);              // a full dig, sized to the real seam
+  const gotFat = digOut(47);                 // and a fat one, so pull-forward is exercised hard
+
+  window.__crit(null);
+  return [
+    ok(gotSeam === seam, 'the crit dig yields exactly seamShards()', `${gotSeam} vs ${seam}`),
+    ok(S.quarryOwed === 0, 'and the seam owes nothing after', `${S.quarryOwed}`),
+    ok(gotFat === 47, 'a fat seam is pulled forward whole, not overshot', `${gotFat} vs 47`),
+  ];
+});
+
+// --- 2. the unbounded job: your swing at the rock ADDS -------------------------
+//
+// The rock is bottomless, so a crit is worth `mult` pixels where an ordinary
+// swing is worth one. Measured two ways: forced on against forced off, which is
+// the multiplier laid bare; and a long real-rolled run at known rungs against
+// the expected 1 + chance*(mult - 1).
+group('a crit at the rock adds: one swing worth several pixels', async () => {
+  haveRock();
+  window.__levels({ pickLevel: 0 });         // an ordinary swing is worth one pixel
+
+  // Average pixels a swing takes, over `n` swings the rock always had stone for.
+  const per = (force, n) => {
+    window.__crit(force);
+    let total = 0, got = 0;
+    for (let i = 0; i < n * 4 && got < n; i++) {
+      if (state().rock < 120) { window.__next(); haveRock(); continue; }
+      const took = window.__swing(1);
+      if (took > 0) { total += took; got++; }
+    }
+    return got ? total / got : 0;
+  };
+
+  const off = per(false, 200);
+  const on = per(true, 200);
+
+  // A long real-rolled run at the top of both ladders: chance 25%, mult 6x.
+  window.__levels({ critChanceLevel: 5, critMultLevel: 5 });
+  const ev = per(null, 800);
+  window.__crit(null);
+
+  const m = critMult(0);                      // 3, at level 0, which the forced run used
+  const want = critEV();                      // 1 + 0.25*(6 - 1) = 2.25
+  return [
+    ok(Math.abs(off - 1) < 0.05, 'an ordinary swing takes one pixel', `${off.toFixed(3)}`),
+    ok(Math.abs(on - m) < 0.25, `a forced crit takes ${m}x`, `${on.toFixed(3)} vs ${m}`),
+    ok(Math.abs(ev - want) < 0.35, 'a real run lands near the expected value',
+       `${ev.toFixed(3)} vs ${want.toFixed(3)} (chance ${critChance().toFixed(2)}, mult ${critMult()})`),
+  ];
+});
+
+// --- 3. the tell is real dust ---------------------------------------------------
+//
+// A crit throws a fountain of grains flagged crit, and they are payload: they
+// arc, they land, and they bank like any other dust, wherever the pixels came
+// off. Count in equals count out -- no grain is invented and none is lost.
+group('a crit throws real dust that is flagged, swells, and banks', async () => {
+  haveRock();
+  window.__crew(0, 0);                        // no crew: one swing, and only ours
+  window.__clearFloor();
+  window.__crit(true);
+  run(0.2);
+
+  const before = dustAbout();
+  const rock0 = state().rock;
+  window.__swing(1);                          // one crit swing
+  const removed = rock0 - state().rock;
+
+  // The burst is there and flagged, and it is real dust in the air.
+  const critChips = S.chips.filter(c => c.crit);
+
+  // Watched through the top of the arc: a crit grain slows to near nothing at
+  // its apex, which is where it draws fattest -- a grain the size of two could
+  // only be a crit's. `cv` is its launch speed, the fastest it moves.
+  let swelled = false;
+  for (let i = 0; i < 60; i++) {
+    run(1 / 60);
+    if (S.chips.some(c => c.crit && Math.abs(c.vy) < c.cv * 0.4)) swelled = true;
+  }
+
+  run(3);                                     // let the fountain come down
+  const settled = S.chips.filter(c => c.crit).length;
+  const after = dustAbout();
+  window.__crit(null);
+
+  return [
+    ok(removed > 1, 'the crit swing took several pixels', `${removed}`),
+    ok(critChips.length === removed, 'every pixel became a crit-flagged grain',
+       `${critChips.length} vs ${removed}`),
+    ok(swelled, 'a grain hangs slow near its apex, where it draws fattest'),
+    ok(settled === 0, 'and the fountain has all come down', `${settled} left aloft`),
+    ok(after - before === removed, 'count conserved: the grains banked as dust',
+       `+${after - before} vs ${removed}`),
+  ];
+});

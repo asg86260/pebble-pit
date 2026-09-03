@@ -50,6 +50,40 @@ export function spawnSpoil(px, py, shade, key = 'rock') {
   spawnChip(px, py, v.vx, v.vy, shade, land);
 }
 
+// A crit throws its spoil up as a fountain instead of tossing it onto the heap.
+// It is the same payload -- the very grains the work turned up -- aimed up on a
+// taller arc than anything else in the yard and fanned out across the heap as it
+// falls, so it lands and banks like any other dust (there is no parallel settle
+// path, and there must not be: the pile is the dust). A grain is flagged so the
+// draw loop can swell it through the top of its arc, and carries the speed it
+// left at (`cv`) as the reference for that swell and the crit's power (`cp`) so a
+// harder crit blooms fatter. See `critToss` callers at the rock, the cut and the
+// farm, and the swell in render.js.
+//
+// `power` is the crit's multiplier: a harder crit throws higher, so it hangs
+// longer near its slow apex, so it reads as both higher and fatter for nothing.
+// The arc reuses `aim` with a `rise`, which already knows how to climb out of a
+// hole -- a shard thrown off the floor of the cut clears the rim the same way a
+// quarrier's ordinary toss does, just higher.
+export function critToss(px, py, shade, key = 'rock', power = 3) {
+  const p = pileOf(key);
+  const near = p ? p.from : rockEdge(1);
+  const far = p ? Math.max(near + P, p.to - P * 2) : near + P * 24;
+  // Fanned across the whole width of the heap rather than tailing off along it:
+  // a fountain spreads into a bell on the way down, so where each grain comes
+  // down is spread evenly rather than piled near the work.
+  const land = near + rand() * (far - near);
+  // A peak well above the ground line -- taller than spoil's own pop -- and
+  // taller again with the crit's power. `bell` gives the column its ragged top.
+  const rise = P * (16 + 6 * power) + Math.abs(bell()) * P * 5;
+  const v = aim(px, py, land, P, rise);
+  spawnChip(px, py, v.vx, v.vy, shade, land);
+  const ch = S.chips[S.chips.length - 1];
+  ch.crit = true;
+  ch.cv = Math.abs(v.vy) || 1;   // launch |vy|: the fastest it moves, the swell's floor
+  ch.cp = power;
+}
+
 // The one arc from here to there: the pop is sized to the distance, and the
 // sideways speed follows from how long that pop keeps it in the air.
 //

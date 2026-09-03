@@ -16,7 +16,8 @@ import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js'
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
-import { spawnSpoil, spawnChip } from './dust.js';
+import { spawnSpoil, spawnChip, critToss } from './dust.js';
+import { critRoll } from './crit.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
@@ -525,6 +526,15 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
   want = throughRockMuck(want);
   if (want < 1) { S.dirty = true; return; }
 
+  // The rock is an unbounded job, so a crit ADDS: this swing takes several
+  // pixels' worth off the face at once, and there is no ceiling on how much
+  // stone is in the hill. One roll for the swing, whoever is swinging -- your
+  // click and a miner's both come through here. Its spoil then flies up as a
+  // fountain rather than onto the heap; see the toss below. The rock never fouls
+  // the sky and a crit does not change that -- there is no pollution here to add.
+  const crit = critRoll();
+  if (crit > 1) want *= crit;
+
   const reach = Math.ceil(Math.sqrt(want)) + 1;
   const near = [];
   for (let dy = -reach; dy <= reach; dy++) {
@@ -542,7 +552,8 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
     const shade = depthShade(left, depthOf());   // how deep it looked, for colour
     S.boulder[cell.y][cell.x] = left - 1;
     const { px, py } = cellPos(cell.x, cell.y);
-    spawnSpoil(px, py, shade);
+    if (crit > 1) critToss(px, py, shade, 'rock', crit);
+    else spawnSpoil(px, py, shade);
   }
   // and it goes up from where it came off, not from a counter somewhere
   // Nothing. Taking rock apart does not dirty the sky, by anybody.

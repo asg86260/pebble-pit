@@ -23,6 +23,7 @@ import { makeBoulder, clearBoulder, rockSize, depthOf, knockOff, rockTopY, restO
 import { bankDust, spend as spendFromPit, pitFull, pitTop as muckTopAt,
          pitCapacity, inHole, seedPitCores } from './pit.js';
 import { spawnChip } from './dust.js';
+import { forceCrit } from './crit.js';
 import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
@@ -260,7 +261,8 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
-                   'harnessLevel', 'bootsLevel', 'fanLevel']) {
+                   'harnessLevel', 'bootsLevel', 'fanLevel',
+                   'critChanceLevel', 'critMultLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();
@@ -880,6 +882,10 @@ export const HANDLES = {
   __birds: birds, __crew: crew, __school: school,
   __assign: assign, __build: rebuildBoards, __fill: fillBoard, __tune: tuneOne, __plots: plots,
   __levels: levels, __fast: fast, __verify: setVerify, __air: setAir, __coldSky: coldSky,
+  // Force the crit roll for a check: true always crits, false never, null rolls
+  // for real. A crit is a chance, and a chance a check cannot pin down is a check
+  // that passes or fails on the seed -- see src/crit.js.
+  __crit: forceCrit,
   __toss: toss, __take: takeFromPile, __place: placeBody,
   __abandon: abandon, __reset: newGame, __seed: seedGame, __reload: reload,
   __machine: machineSet, __fullSites: fullSites,

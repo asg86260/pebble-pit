@@ -309,15 +309,19 @@ export function drawQuarryShed() {
 // `drawCount` -- and a mark that could only ever be drawn on the frame would
 // have to be copied off it afterwards, which means reading the frame back.
 export function drawMark(v, x, y, size = MARK_SIZE, glyph = false, g = ctx) {
+  // `size` is a cell everywhere but on a crit's dust, which swells through the
+  // top of its arc and shrinks back by the time it lands -- so the square is
+  // drawn at `size` rather than at a hardcoded cell. The default is `MARK_SIZE`,
+  // which is one cell, so every ordinary grain and find draws exactly as before.
   if (isDust(v)) {                             // a grain of dust is a grain: one cell
     g.fillStyle = shadeOf(v);
-    g.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), Math.round(size), Math.round(size));
     return;
   }
   const tones = FIND_COLOR[findKind(v)];
   if (!glyph && tones) {
     g.fillStyle = tones[v - findKind(v)];
-    g.fillRect(Math.round(x - P / 2), Math.round(y - P / 2), P, P);
+    g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), Math.round(size), Math.round(size));
     g.fillStyle = '#000';
     return;
   }
@@ -3513,8 +3517,22 @@ export function draw() {
 
   ctx.fillStyle = '#000';
 
-  // a chip is a grain in the air, drawn as whatever it is
-  for (const ch of S.chips) drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2);
+  // a chip is a grain in the air, drawn as whatever it is -- and a crit's chip
+  // swells through the top of its arc. The apex is where the grain is slowest
+  // vertically, so the swell is read straight off `vy`: fattest where `|vy|` is
+  // smallest (near nothing at the top), back to one cell where it is fastest
+  // (its launch speed `cv`). No apex is stored and no per-grain timer runs -- it
+  // is a number worked out from `vy` the same frame it is drawn. A harder crit
+  // (`cp`) blooms fatter, which ties the two tells together: it throws higher,
+  // so it hangs longer near the slow apex, so it is both higher and fatter.
+  for (const ch of S.chips) {
+    let size = MARK_SIZE;
+    if (ch.crit) {
+      const slow = 1 - Math.min(1, Math.abs(ch.vy) / ch.cv);   // 0 at launch, 1 at apex
+      size = P * (1 + (0.6 + 0.12 * (ch.cp || 3)) * slow);
+    }
+    drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2, size);
+  }
   ctx.fillStyle = '#000';
 
   // The bench and the settlement go down before the loose stuff, not after.
