@@ -3894,20 +3894,72 @@ it is the one building whose whole job is making other buildings better -- so a
 growing list of tonics is something the game can already hand out, and a tech
 ladder that does not need a new system to hang on.
 
+### The board: choosing what to brew
+
+The apothecary's board is a **menu of the tonics you know**, and it reads
+differently from every other board in the game because you are not buying a
+rung -- you are setting what the pot is making. Each tonic on the menu shows the
+three things you decide against:
+
+- **what it costs** -- the crop a brew takes, in the coin it takes it in;
+- **the brew time** -- how long the pot is at one batch;
+- **the effect**, as a **submenu** -- what the tonic does and how much, opened off
+  the tonic rather than crowding the row, because a menu of a dozen tonics each
+  spelling out its whole effect is a wall of text and a menu of names you can
+  open is a menu.
+
+**A toggle: keep brewing, or a one-off.** The pot is set to a tonic and then set
+to one of two rhythms. *Keep brewing* is the upkeep -- it brews that tonic again
+and again for as long as it has crop and a body, and it is the standing order the
+whole apothecary is built around. *A one-off* is a single batch: brew this once,
+deal it out, and stop. The one-off is for a tonic you want *now* -- a burst of
+crit before a rich boulder -- without committing the farm's whole crop to
+keeping it lit. Same pot, same stirrer; the toggle is only how many times it
+comes round.
+
+**A preferred station.** Somewhere on the apothecary's board you set **who the
+doses go to first** -- a station the round favours. Without it "bodies a brew"
+is a number with nowhere to point: a brew that reaches four workers is worth
+most when you chose *which* four, and the whole reason to brew a quarry tonic is
+to get it onto the quarriers rather than onto whoever the stirrer passed first.
+The preference is a nudge, not a wall -- the stirrer still deals to others once
+the favoured station is covered -- so a small brew lands where it matters and a
+big one spills to the rest of the yard.
+
 ### The stirrer deals the doses
 
 A brewed tonic is not a number that switches on -- it is **carried to the bodies
-it is for**. The stirrer fills a dose off the pot and walks it out to a worker,
-the way a hauler walks a load: the buff lands on a body when the dose reaches it,
-and not before. So a fresh brew spreads across the yard rather than blinking on
-everywhere at once, and you can see the tonic going round -- which is the whole
-of what makes it a thing that happened rather than a flag that flipped.
+it is for**. The stirrer fills a dose off the pot and walks it out to a worker --
+the preferred station first -- the way a hauler walks a load: the buff lands on a
+body when the dose reaches it, and not before. So a fresh brew spreads across the
+yard rather than blinking on everywhere at once, and you can see the tonic going
+round -- which is the whole of what makes it a thing that happened rather than a
+flag that flipped.
 
 This is the same shape as everything else in the yard: no teleporting, a body
 walks. It also makes "how many workers a brew reaches" a real quantity with a
 picture behind it -- the stirrer gets round to so many before the brew is spent
 -- rather than an abstract cap. A body whose dose has worn off is a body the
 stirrer comes back to, so a farm that keeps the pot fed keeps the round going.
+
+### The buff is on the body, and it says so
+
+A dealt tonic is worn, and you can see it is worn -- **twice over, at two
+distances.**
+
+**On the body, across the yard.** A buffed worker carries a mark that says a
+tonic is on it -- drawn in cells like everything else, no glow and no gradient
+(the six-shade rule holds). You do not have to open anything to see that the
+round has reached this corner of the yard: the bodies with the mark are the ones
+the pot is currently keeping up, and the mark fading is the dose wearing off.
+
+**In the stat card, up close.** `card(w)` in crewboard.js is the per-body sheet
+-- name, age, what it is doing, its tallies -- and a body under a tonic gets a
+row there: which tonic, and how long it has left. That is where you read the
+*what*, the way the mark on the body is where you read the *that*. It is one
+more `row(...)` on a card that already lists everything else true about a body,
+so a worker's whole state -- what it does, what it is doing, and what it is under
+-- is in one place.
 
 ### The potion ladders
 
