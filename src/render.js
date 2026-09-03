@@ -1049,10 +1049,18 @@ export function drawApothecary() {
       // up the belly and no higher -- the fire licks the pot, it does not shoot
       // past the rim.
       const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
-      const tongues = [[potX + P * 4, 2], [potX + P * 6, 4], [potX + P * 8, 2]];
-      for (let i = 0; i < tongues.length; i++) {
-        const [fx, h] = tongues[i];
-        const hgt = h + (Math.sin(t / 130 + i * 2) > 0.2 ? 1 : 0);   // the tip leaps
+      // The flame reshapes many times a second so it dances rather than standing
+      // in three fixed fingers. `flick` is a cheap hash -- a different value for
+      // each column every `tick` -- so each column of the fire leaps, drops, and
+      // sometimes goes out for a beat, all on its own. Bases lean taller toward
+      // the middle; the per-tick jump is what makes it fire.
+      const flick = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+      const tick = Math.floor(t / 70);                       // ~14 reshapes a second
+      const bases = [1, 2, 2, 3, 2, 2, 1];                   // the fire's rough envelope
+      for (let i = 0; i < bases.length; i++) {
+        const fx = potX + P * (3 + i);
+        const jump = Math.floor(flick(tick * 1.7 + i * 5.3) * 4);   // 0..3, new each tick
+        const hgt = Math.min(5, bases[i] + jump - 1);        // can drop to nothing or leap high
         for (let hy = 0; hy < hgt; hy++) {
           ctx.fillStyle = hy === 0 ? HOT : hy < hgt - 1 ? MID : TIP;
           ctx.fillRect(fx, g - P - hy * P, P, P);
