@@ -28,15 +28,15 @@
 // grains is `swallow` in pit.js, which is the same lift-off-the-top that paying
 // uses: one way of taking dust out of the pile, two destinations.
 
-import { P, RIFT_W, RIFT_H, RIFT_AT, RIFT_UP,
+import { P, RIFT_W, RIFT_H, RIFT_AT, RIFT_UP, RIFT_GULP, RIFT_GULP_SHOW,
          RIFT_RATE, RIFT_RATE0, RIFT_RATE_COST, RIFT_RATE_UP } from './config.js';
 import { S, pit, rift } from './state.js';
-import { swallow, pitWidth } from './pit.js';
+import { swallow, pitWidth, pitGrains } from './pit.js';
 
 // --- where it hangs ------------------------------------------------------------
-// Over the near end of the hole, and standing in the air rather than sunk in it:
-// its middle RIFT_UP cells above the ground line, so the lower edge of the disc
-// dips into the mouth and the rest of it is against the white page.
+// Over the near end of the hole, and standing in the air rather than in it: the
+// whole disc clear of the ground line by RIFT_UP cells, hanging over the mouth
+// with white page behind all of it.
 //
 // The near end because that is where the haulers tip in, where the belt's head
 // drops and where the counter stands -- the one end of the pit that is on
@@ -48,8 +48,11 @@ import { swallow, pitWidth } from './pit.js';
 // silhouette. Everything in this yard is black on white, so an absence only
 // reads as one against the paper; sunk to its middle in grey speckle it is a
 // blob painted on the pile, which is what the cell of white round it in
-// `drawRift` was already patching. Standing clear of the lip, the thing that is
-// behind it is nothing, which is the truth about it.
+// `drawRift` was already patching. Clear of the ground, the thing behind it is
+// nothing, which is the truth about it -- and the grains it takes have to climb
+// out of the hole and cross open sky to reach it, where they are black specks on
+// white instead of grey specks on a grey pile. Where it stands is most of
+// whether the thing can be seen working at all.
 //
 // `PIT_PAD` is untouched, and so is every column count. The world's width is
 // measured off the pit and the floor's column count off the world, and a changed
@@ -60,7 +63,7 @@ export function seatRift() {
   rift.w = RIFT_W;
   rift.h = RIFT_H;
   rift.x = pit.x + Math.round(pitWidth() * RIFT_AT / P) * P;
-  rift.y = S.groundY - RIFT_UP * P - Math.round(RIFT_H / 2 / P) * P;
+  rift.y = S.groundY - RIFT_H - RIFT_UP * P;
 }
 
 // The middle of it: where the orbit tightens to, and where a grain is gone.
@@ -98,12 +101,43 @@ let owed = 0;
 
 export function stepRift(dt) {
   if (!riftOpen()) { owed = 0; return 0; }    // not torn: nothing is owed
+  if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   owed += riftRate() * dt / 1000;
   const whole = Math.floor(owed);
   if (whole < 1) return 0;
   owed -= whole;
   return swallow(whole);
 }
+
+// The tearing: the hole emptied, over RIFT_GULP seconds, however much is in it.
+//
+// The share is worked out against the time *left* rather than against the whole,
+// so it does not matter what the frame rate is or how much fell in while the
+// gulp was running -- whatever is in the hole when the last frame of it comes
+// round is taken then. The hole is empty at the end of it by construction, which
+// is what makes this an event rather than a fast setting of the rate.
+//
+// It leans on nothing the ordinary swallow does not do, with two exceptions,
+// both of them about being watched. The list of grains in flight is allowed to
+// be long, because the sight of it is the whole point of the moment. And it
+// takes from **everywhere** rather than nearest the mouth: the ordinary rift
+// pulls at what is near it and hollows a crater, which during a tear would empty
+// the end of the hole you are looking at and leave the rest of the pile standing
+// off the side of the window. The hole has given way -- the whole pile goes.
+function gulp(dt) {
+  const was = S.riftGulp;
+  const left = Math.max(0, was - dt / 1000);
+  S.riftGulp = left;
+  owed = 0;
+  const have = pitGrains();
+  if (!have) return 0;
+  const take = left <= 0 ? have : Math.ceil(have * Math.min(1, (was - left) / was));
+  return swallow(take, RIFT_GULP_SHOW, true);
+}
+
+// How long a tear has left to run, nought to one, for anything that wants to
+// draw the moment rather than take part in it.
+export const riftTearing = () => Math.max(0, Math.min(1, (S.riftGulp || 0) / RIFT_GULP));
 
 // The two rows it sells live in upgrades.js with the rest of the bench's, under
 // `the hole` -- the section the press used to stand in, which is the right home

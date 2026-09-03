@@ -11,7 +11,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { PILE_HOLDS, CRATE_H } from './config.js';
+import { PILE_HOLDS, CRATE_H, CRATED } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
 import { bridgeSpan } from './world.js';
 import { boulderAlive, depthOf, rockFootY } from './rock.js';
@@ -704,15 +704,22 @@ export function drawPileGround() {
     // and the pegs were pale because they were a note about the ground rather
     // than a thing standing on it.
     ctx.fillStyle = '#000';
-    // Two sides, standing on the ground the strip is laid on. A cell thick, so
-    // they read as boards rather than as walls.
-    for (const x of [p.from, p.to - P]) ctx.fillRect(x, y - CRATE_H, P, CRATE_H);
-    // ...and the ground between them, which is the crate's floor rather than
-    // another board: drawn in the pale ink a marking uses, because the rock's
-    // strip is seven hundred grains wide and a black run that long reads as a
-    // bar laid across the yard rather than as something with sides.
-    ctx.fillStyle = GROUND_INK;
-    ctx.fillRect(p.from - P, y - P, (p.to - p.from) + P * 2, P);
+    // The box, where there is one. The rock's strip has none: it runs the width
+    // of the hill, and a box that long is a bar laid across the yard rather than
+    // something with sides -- see `CRATED` in config.js, which the rule about how
+    // a strip fills reads from the same place.
+    if (CRATED(p.key)) {
+      // Two sides, standing on the floor. A cell thick, so they read as boards
+      // rather than as walls.
+      for (const x of [p.from, p.to - P]) ctx.fillRect(x, y - CRATE_H, P, CRATE_H);
+      // ...and the floor they stand on, in the same ink as the sides, because a
+      // box is made of one thing. It lies in the ground rather than on it -- the
+      // cell *under* the ground line -- so what is thrown in sits on top of it
+      // instead of standing in it. Drawn pale and level with the first row of
+      // grains, it was a floor nobody ever saw: the first thing thrown covered
+      // it, and a crate whose floor only shows while it is empty is two posts.
+      ctx.fillRect(p.from - P, y, (p.to - p.from) + P * 2, P);
+    }
     // ...and whose crate it is, cut into the ground under it rather than hung
     // in the air over it. It stays put as the crate fills: a marking that dimmed
     // as the strip filled told you least about the strip you could see least of.

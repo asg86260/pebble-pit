@@ -423,6 +423,7 @@ export function restore() {
     S.seenRows = [];
     S.seenFullPit = false;
     S.riftOpen = false;
+    S.riftGulp = 0; S.riftShake = 0;   // an event is not a state: see state.js
     S.rift = 0;
     S.riftLevel = 0;
     S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
@@ -771,6 +772,7 @@ export function restore() {
   // a saved number is not something to trust over the one it has to agree with.
   S.seenFullPit = !!s.seenFullPit;
   S.riftOpen = !!s.riftOpen;
+  S.riftGulp = 0; S.riftShake = 0;     // a save comes back after the tearing, never in it
   S.rift = Math.max(0, Math.min(Math.round(+s.rift || 0), S.stored));
   S.riftLevel = Math.max(0, Math.round(+s.riftLevel || 0));
   // The coins through it, clamped to their own counters the same way. A save

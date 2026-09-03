@@ -162,6 +162,17 @@ const SCENES = {
          window.__levels({riftLevel: 6}); window.__give(12000);
          window.__fast(4); window.__look(window.__state().pitX - 260);`,
 
+  // The tearing: a hole filled past the brim gives way, and everything in it
+  // goes at once. No `__fast` of its own -- the runner gives every scene a
+  // second before the shot, which lands this one in the middle of the gulp,
+  // which is the part worth looking at.
+  // Not `${RICH}`: its `__tip` fills the hole and tears it during the setup, so
+  // the scene would open on a yard that had already had the moment.
+  tear: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+         window.__grant({sparks:999,shards:999,spores:999,cores:9});
+         window.__meteor(); window.__give(60000); window.__fast(0.5);
+         window.__look(window.__state().pitX - 300);`,
+
   // The endgame yard: every machine standing, the ram driven up its ladder, the
   // belt running, the rift torn. What the pass in DESIGN.md is about.
   endgame: `${RICH} ${LIP} window.__buy('jaw'); window.__buy('tiller');

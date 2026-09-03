@@ -8,7 +8,7 @@
 
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-        findKind, someFind } from './config.js';
+        RIFT_GULP, RIFT_SHAKE, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
@@ -227,7 +227,13 @@ export const pitRoom = () => Math.max(0, pitCapacity() - pit.n);
 function throughRift(x, shade) {
   S.seenFullPit = true;
   if (!S.riftOpen) {
+    // The hole gives way. This is the one dramatic thing that ever happens to
+    // the pit: it does not open and then start draining at its rate, it takes
+    // the whole pile, and the yard is rocked while it goes. See `gulp` in
+    // rift.js for the emptying and RIFT_GULP in config.js for why.
     S.riftOpen = true;
+    S.riftGulp = RIFT_GULP;
+    S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
   }
   const held = riftHeld();
   if (isDust(shade)) {
@@ -328,8 +334,18 @@ export const pitCapacity = () => pit.cap || pit.cols * pit.rows;
 // rift is built `S.rift` is nought and this is the number it always was.
 export const inHole = () => Math.max(0, S.stored - (S.rift || 0));
 
+// Every cell in the plot, dust and finds alike -- what the tearing has to get
+// through. `inHole` is the dust account; this is the thing on the screen.
+export const pitGrains = () => count(pit);
+
 // And what the pile is allowed to show of it, which is what the hole will take.
 const pileTarget = () => Math.min(inHole(), pitCapacity());
+
+// How many grains of a lift are ever drawn in flight at once. A few hundred is
+// plenty to read as a stream, and past that they are drawing over each other.
+// The tearing asks for more (`RIFT_GULP_SHOW`), because the sight of it is the
+// entire point of that moment.
+const SHOWN = 200;
 
 // Lift `n` grains off the top of the pile, handing each one to `leaving` so it
 // can be drawn on its way out.
@@ -349,7 +365,7 @@ const pileTarget = () => Math.min(inHole(), pitCapacity());
 // wear six hundred columns down evenly and flat while the disc hung over one of
 // them, pulling nothing. Given a point, the walk goes nearest-that-point first
 // instead; see `nearestSurface`.
-function lift(n, leaving, takes = isDust, took = null, near = null) {
+function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN) {
   let left = n;
 
   // What taking one grain is, wherever the walk found it: out of the plot, off
@@ -358,7 +374,7 @@ function lift(n, leaving, takes = isDust, took = null, near = null) {
     put(pit, c, r, 0);
     left--;
     if (took) took(v);
-    if (leaving && leaving.length < 200) {   // a few hundred is plenty to read
+    if (leaving && leaving.length < show) {
       leaving.push({
         x0: pit.x + c * pit.p,
         y0: bottomY(pit) - (r + 1) * pit.p,
@@ -533,7 +549,12 @@ export function spend(cost) {
 // Nothing is spent and nothing is lost, for a find the same as for dust: the
 // counters do not move, the pile shows the counter less what is through, and
 // the two of them together are still what you own.
-export function swallow(n) {
+// `everywhere` is the tearing's: the hole itself has given way, so the whole
+// pile lifts off at once, top down, from end to end -- not a crater eaten at the
+// mouth while the rest of the pile stands off the side of the window waiting its
+// turn. What the rift does afterwards is pull at what is near it; what the tear
+// does is take the lot.
+export function swallow(n, show, everywhere) {
   const take = Math.max(0, Math.min(Math.floor(n), count(pit)));
   if (!take) return 0;
   const held = riftHeld();
@@ -545,7 +566,7 @@ export function swallow(n) {
     if (isDust(v)) { dust++; return; }
     const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
     if (key) held[key]++;
-  }, { x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 });
+  }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 }, show);
   S.rift = (S.rift || 0) + dust;
   return take;
 }

@@ -20,7 +20,7 @@ import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
-import { stepCamera, stepShake, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
+import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
@@ -407,6 +407,10 @@ export function stepPaid() {
   // `liftTo` in pit.js makes both lists -- and a different journey, because the
   // one thing a player needs to read about a swallowed grain is that it went
   // *in*, not that it went somewhere.
+  // The hole giving way rocks the yard. The knock is asked for where the tear
+  // happens (pit.js) and spent here, because a shake is the world's business and
+  // pit.js is downstream of the world -- see `shakeView` in world.js.
+  if (S.riftShake) { shakeView(S.riftShake); S.riftShake = 0; }
   orbit(S.gulped);
 }
 

@@ -8,3 +8,5 @@ bs*.log
 tmp-*.txt
 *.cpuprofile
 shots/
+
+vite.tmp.log

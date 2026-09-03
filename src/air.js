@@ -11,9 +11,10 @@
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_LEAN, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
-         AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE } from './config.js';
+         AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE,
+         RIFT_PULL, RIFT_PULL_R, RIFT_SPIN, RIFT_FEED } from './config.js';
 import { pitDepth } from './pit.js';
-import { S, floor, pit, quarry, farm } from './state.js';
+import { S, floor, pit, quarry, farm, rift } from './state.js';
 import { at, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
@@ -220,6 +221,7 @@ export function stepAir() {
   // rather than a distance, is raised to that power. See `frames` in clock.js.
   const f = frames();
   const keep = Math.max(0, 1 - AIR_STIR_EASE / 60) ** f;
+  const suck = riftOnGlass();
   for (const m of AIR) {
     // The one wind, times what this band takes of it, times this mote's share.
     // The band is the depth: a far band leans less than a near one on the same
@@ -243,6 +245,11 @@ export function stepAir() {
       if (Math.abs(m.sy) < 0.02) m.sy = 0;
     }
 
+    // and whatever the rift is pulling on it, which is the one force in the air
+    // that is not weather. A mote that reaches the middle is gone and put back
+    // somewhere else, so this frame's work on it is finished.
+    if (suck && intoTheRift(m, suck, f)) continue;
+
     // off the sides it comes back on the other one, which keeps the field even
     // however long the camera pans one way
     if (m.x < -MARGIN) m.x += S.W + MARGIN * 2;
@@ -257,6 +264,68 @@ export function stepAir() {
   }
 
   rememberWalkers();
+}
+
+// --- what the rift does to the air ---------------------------------------------
+// The hole pulls the dust down itself.
+//
+// This is the one thing acting on a mote that is not weather, and it earns the
+// exception: a rift swallowing a dozen grains a second puts about seventeen
+// specks in the air at a time, which is nothing to look at, and a black hole
+// that does not visibly pull is a black circle. The dust is already everywhere
+// and already moving. Turning some of it down the hole costs nothing and is the
+// plainest possible picture of what the thing is.
+//
+// It is honest about the books because there are no books here: a mote is
+// weather, not stock. One drawn into the middle is put back by `place` in the
+// same frame, so the field holds exactly the number the yard has earned, and
+// the haze reads the same whether or not there is a rift under it.
+//
+// Where the disc is on the glass. Motes live in screen pixels and the rift lives
+// in the world, so the world has to be converted once a frame rather than each
+// mote being converted back -- and it is the same transform the yard is drawn
+// with, shake and all, so the pull stays on the disc while the view is rocking.
+function riftOnGlass() {
+  if (!S.riftOpen) return null;
+  const z = S.zoom;
+  return { x: (rift.x + rift.w * 0.5 - S.camX + S.shakeX) * z,
+           y: (rift.y + rift.h * 0.5 - S.camY + S.shakeY) * z,
+           r: rift.w * 0.5 * z };
+}
+
+// Where a mote goes once the rift has had it. Most of them come back at the edge
+// of its reach, which is what gives the pull something to pull on -- see
+// RIFT_FEED in config.js for why most rather than all.
+function reborn(m, s) {
+  if (rand() > RIFT_FEED) return place(m, false);
+  const a = rand() * Math.PI * 2;
+  const r = s.r * RIFT_PULL_R * (0.86 + rand() * 0.14);
+  m.x = s.x + Math.cos(a) * r;
+  m.y = s.y + Math.sin(a) * r;
+  m.kind = kindAt(m.x);
+  return m;
+}
+
+// One mote's share of it. True when the mote was eaten and is somewhere else now.
+//
+// The pull is hardest at the rim and eases to nothing at the edge of its reach,
+// the same shape the cursor's draught uses -- and it is taken in the band's own
+// share, so the far dust is barely troubled and the near dust dives. Part of it
+// goes *round* rather than in: a mote falling straight down a hole is a mote
+// falling, and what makes it read as a hole rather than a drain is that
+// everything near it is turning.
+function intoTheRift(m, s, f) {
+  const dx = s.x - m.x, dy = s.y - m.y;
+  const d = Math.hypot(dx, dy);
+  const reach = s.r * RIFT_PULL_R;
+  if (d > reach) return false;
+  if (d < s.r * 0.45) { reborn(m, s); return true; }     // over the middle: gone
+  const fall = 1 - d / reach;
+  const k = RIFT_PULL * fall * fall * m.b.take * f;
+  const ux = dx / d, uy = dy / d;
+  m.x += ux * k - uy * k * RIFT_SPIN;
+  m.y += uy * k + ux * k * RIFT_SPIN;
+  return false;
 }
 
 // --- the draught off the cursor ------------------------------------------------

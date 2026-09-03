@@ -120,7 +120,14 @@ group('the hole takes dust again once the rift has made room', async () => {
 group('it stands over the near end of the hole, and the grains are pulled in', async () => {
   readyYard();
   window.__rift();
+  // The tearing empties the hole, so a yard three seconds past it has nothing
+  // left to swallow and nothing in the air. What this group is about is the
+  // ordinary swallowing that comes after: so let the gulp finish, fill the hole
+  // again, and widen the rift enough that the stream is a stream.
   run(3);
+  window.__levels({ riftLevel: 8 });
+  window.__give(20000);
+  run(1);
   const { pit, S } = yard;
   const c = yard.riftMod.riftCenter();
   const R = yard.riftMod.riftRadius();
@@ -144,11 +151,43 @@ group('it stands over the near end of the hole, and the grains are pulled in', a
     // silhouette at all -- see `seatRift`.
     ok(c.y < S.groundY, 'its middle stands above the ground line',
        `middle ${c.y}, ground ${S.groundY}`),
-    ok(rift.y + rift.h > S.groundY, 'and its lower edge dips into the mouth',
+    ok(rift.y + rift.h < S.groundY, 'and wholly clear of it, hanging in the air',
        `rift y ${rift.y}..${rift.y + rift.h}, ground ${S.groundY}`),
     ok(S.gulped.length > 0, 'there are grains in flight', `${S.gulped.length}`),
     ok(along > 0 && far === 0, 'and every grain past its rise is on the ring or inside it',
        `${inRing} of ${along} on the ring, ${far} astray`)
+  ];
+});
+
+group('the tearing empties the hole, and nothing is lost to it', async () => {
+  window.__reset();
+  window.__crew(0, 4);
+  window.__fullSites();
+  window.__meteor();
+  window.__grant({ sparks: 999 });
+  window.__give(60000);                  // more than the hole holds: it gives way
+  const torn = state();
+  const full = torn.pitGrains;
+
+  // The gulp runs on its own clock and is done inside a couple of seconds. The
+  // haulers keep tipping in while it goes, so what is checked is that the hole
+  // was emptied, not that it is empty to the last grain for ever after.
+  run(3);
+  const after = state();
+
+  return [
+    ok(torn.riftOpen, 'the hole gave way', `${full} grains in it when it did`),
+    ok(full > yard.pitMod.pitCapacity() * 0.5, 'and it was full when it went',
+       `${full} of ${yard.pitMod.pitCapacity()}`),
+    ok(after.pitGrains < full * 0.1, 'the tearing took the pile with it',
+       `${full} -> ${after.pitGrains}`),
+    // The rule the rift has always kept: nothing is spent and nothing is lost.
+    // The counter does not move for a swallow, and the tearing is a swallow.
+    ok(after.stored >= torn.stored, 'and the counter never went down',
+       `${torn.stored} -> ${after.stored}`),
+    ok(after.stored - after.rift === after.pitDust,
+       'the pile is still the counter less what is through',
+       `${after.stored} - ${after.rift} vs ${after.pitDust}`)
   ];
 });
 

@@ -2560,6 +2560,43 @@ banked the whole yard for free and left the haulers with nothing to do. Throwing
 is still a real tactic — a flick sends it through the air, and anything that crosses the mouth
 falls in.
 
+## The crate
+
+A station's output lands on a marked-out strip of ground. That strip is a **crate**: two sides and a
+floor, in the same black the bench and the kit stand are drawn in, with the station's mark cut into
+the ground beneath it.
+
+It was pegs and a dashed run once — a surveyor's marking, which said "something belongs here" and
+left you to imagine what. The crate says it outright, in the vocabulary the rest of the yard is
+written in: the bench, the kit stand and the closet are all THINGS, and a heap of stone that lives in
+a box reads faster than a heap of stone that lives on a line.
+
+Three things about how it is drawn, each of them a fix for the same failure — that a crate has to
+read as a *box*:
+
+- **The sides are tall.** Three cells read as two pegs with a heap between them. Five is still under
+  a body, so a carter throws into it rather than over a wall, and a full one still stands proud of
+  its box.
+- **It is one colour all round.** The floor used to be drawn in the pale ink a marking uses, level
+  with the first row of grains — so the first thing thrown covered it, and a floor that only shows
+  while the crate is empty is not a floor, it is two posts.
+- **What is thrown in sits on the floor.** The floor lies in the cell *under* the ground line, so the
+  pile rests on top of it instead of standing in it.
+
+**The rock's strip has no crate.** It runs the width of the hill — seven hundred grains — and a box
+that long is not a box, it is a bar laid across the yard with rubble behind it. What comes off the
+hill is spoil, and spoil at the foot of a cliff should read as a slope of rubble that has fallen
+there. One predicate (`CRATED`) says which strips are crated, and both the drawing and the rule about
+how a strip fills read it from that one place — so a strip cannot end up with a box drawn round it
+and no sides to fill against, or the other way about.
+
+**A crate fills flat before it leans.** Every column takes the height of the sides, and only above
+the brim does it slope away from the ends the way loose stuff does. That is the pit's own rule
+(`heapCeiling`) at a station's scale, which is why it is the same arithmetic rather than a second
+idea — and it is what sides are for. Without them a heap had nothing at its ends: the marked-out
+ground stood emptiest exactly where it was marked. An uncrated strip is the slope alone, which is
+what the rock's is.
+
 ## The rift
 
 **The problem.** The hole holds 37,566 grains and an endgame yard banks that in minutes. Everything
@@ -2656,12 +2693,14 @@ two. A black hole you can watch for a minute without seeing it pull is a black c
 **Where it hangs.** Still at the near end of the hole, and now standing in the air over the lip
 rather than sunk in the pile.
 
-- **Above the ground line** is what gives it a silhouette. Everything in this yard is black on white,
-  so an absence only reads as one against the paper; sunk to its middle in grey speckle it is a blob
-  painted on the pile — which is exactly what the ring of white cells around it in `drawRift` was
-  already patching over. Its middle stands `RIFT_UP` cells clear of the line, so the lower edge dips
-  into the mouth and the rest of it is against nothing, which is the truth about it. It also puts the
-  mouth where the grains can be seen arriving: over the lip, not down a hole.
+- **Clear of the ground line** is what gives it a silhouette. Everything in this yard is black on
+  white, so an absence only reads as one against the paper; sunk to its middle in grey speckle it is
+  a blob painted on the pile — which is exactly what the ring of white cells around it in `drawRift`
+  was already patching over. The whole disc now stands `RIFT_UP` cells above the line, with nothing
+  behind any of it, which is the truth about it. It also puts the mouth where the grains can be seen
+  arriving: a grain climbing out of the hole and crossing open sky is a black speck on white, where
+  the same grain crossing a pile was grey on grey. Where it stands is most of whether the thing can
+  be seen working at all.
 - **Near the lip, as a fraction rather than a cell count.** `RIFT_IN` (four cells from the lip)
   becomes `RIFT_AT`, a twentieth of `pitWidth()` — thirty cells in, so it clears the counter's card,
   which stands four cells from the lip and is the one other thing at that end. A fraction because the
@@ -2704,6 +2743,32 @@ rather than sunk in the pile.
    faster it is dragged round. The last quarter of the path is a whip, and that is the picture of the
    thing pulling. Radius and angle are still the same one number, so a grain is exactly as far round
    as it is far in and there is no second clock to drift.
+
+**The tearing is an event.** A hole that gives way and then begins draining at twelve grains a second
+has no moment in it. The tear now **empties the hole**: every grain in it goes, over `RIFT_GULP`
+seconds, with the yard rocked by the biggest knock in the game. It is the first time anybody sees the
+thing work, so it is the clearest possible statement of what it is for, and the ladder's pressure
+starts from a hole you watched being emptied rather than from a number on a card. Nothing is lost to
+it — the counter does not move, exactly as it does not move for any other swallow.
+
+The gulp works out its share against the time *left* rather than against the pile it started with, so
+the hole is empty at the end of it by construction whatever the frame rate is and whatever fell in
+while it ran. It takes from **everywhere** rather than nearest the mouth: nearest-first during a tear
+would eat out the end of the hole you are looking at and leave the rest of the pile standing off the
+side of the window. The hole has given way; the whole pile lifts.
+
+**It pulls on the air, too.** A fresh rift swallows a dozen grains a second, which is about seventeen
+specks in flight at a time — not something you can watch pulling, and a black hole that does not
+visibly pull is a black circle. So the dust in the air near it is drawn in as well: hardest at the
+rim, easing to nothing at the edge of its reach, with part of the pull going *round* rather than in,
+because what makes a hole read as a hole rather than a drain is that everything near it is turning.
+
+Most of what it eats is put back at the edge of its own reach rather than anywhere in the yard, which
+is the part that matters: without it the pull only ever *clears* the sky around the disc and leaves a
+bald patch with a black circle in it — a hole that has finished rather than one that is working.
+Feeding it back gives the pull something to pull on. Not all of it, because a hole that recycles
+everything drags the whole sky into a ring around itself. Nothing is counted or lost either way: a
+mote is weather, not stock, and the field holds exactly the number the yard has earned.
 
 **What it does not touch.** The counter and the picture still agree; nobody holds it open; nothing is
 carried to it; capacity is still unbounded and the ladder is still on rate. The rift is still what
