@@ -414,7 +414,7 @@ export const CRAFT_ROW = {
   // Built at the scrubbing house, where it is moored. A craft is a machine and
   // takes a machine's time; it used to appear in the sky the instant you paid.
   kind: 'machine', site: 'scrub',
-  name: 'a scrubber balloon',
+  name: 'the balloon',
   note: () => 'rides the sky and drops what it catches under itself',
   rung: () => CRAFT.length,
   cost: craftCost,
