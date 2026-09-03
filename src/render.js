@@ -1002,64 +1002,68 @@ export function drawApothecary() {
       ctx.fillRect(hx + (s ? P : -P), g - P * 3, P, P);
     }
 
-    // The cauldron, right of the herbs. A big round-bellied pot drawn row by row
-    // so the sides curve: a flared lip over a pinched neck, shoulders widening to
-    // a belly that bulges wider than anything above it -- which is what reads as a
-    // pot and not a table -- rounding back in to two feet with the fire between.
-    // Each row is [y, cells inset from EACH side]; the belly rows at inset 0 are
-    // the widest.
-    const potW = P * 9;                     // nine cells across the widest belly
-    const potX = x + P * 4;                 // clear of the herb bed
-    const rimY = g - P * 9;                 // the lip sits nine cells up
+    // The witch's cauldron, right of the herbs. A small flared mouth over a fat
+    // round belly that bulges well past it, three splayed legs, a bail handle
+    // arching over, and a fire of flames and logs beneath. `potX` is the left of
+    // the eleven-cell span the widest belly rows fill; `lipY` is the rim.
+    const potW = P * 11;
+    const potX = x + P * 3;                 // clear of the herb bed
+    const lipY = g - P * 8;                 // the wide rim sits eight cells up
     const potMid = potX + potW / 2;
-    for (const [ry, inset] of [[rimY, 2], [rimY + P, 3], [rimY + P * 2, 1],
-                               [rimY + P * 3, 0], [rimY + P * 4, 0], [rimY + P * 5, 1],
-                               [rimY + P * 6, 2], [rimY + P * 7, 3]])
+    // A witch's cauldron is squat -- wider than it is tall -- with a WIDE open
+    // mouth, the belly bulging to its fullest just below the rim, then tapering
+    // to the legs. Each row is [y, cells inset from EACH side]: the rim (1) sits
+    // just in from the widest belly rows (0), and the body rounds down to a
+    // small base (3).
+    for (const [ry, inset] of [[lipY, 1], [lipY + P, 0], [lipY + P * 2, 0],
+                               [lipY + P * 3, 1], [lipY + P * 4, 2], [lipY + P * 5, 3]])
       ctx.fillRect(potX + inset * P, ry, potW - inset * P * 2, P);
-    // A metal band around the belly -- a white line for detail, the way a real
-    // cauldron is hooped.
+    // The open mouth: a wide surface of brew sitting inside the rim, a wall of
+    // iron each side.
     ctx.fillStyle = '#fff';
-    ctx.fillRect(potX + P, rimY + P * 4, potW - P * 2, P);
+    ctx.fillRect(potX + P * 2, lipY, potW - P * 4, P);
     ctx.fillStyle = '#000';
-    // The bail handle, arching over the mouth: two short posts off the lip and a
-    // bar across the top.
-    ctx.fillRect(potX + P * 2,          rimY - P,     P, P);
-    ctx.fillRect(potX + potW - P * 3,   rimY - P,     P, P);
-    ctx.fillRect(potX + P * 2,          rimY - P * 2, potW - P * 4, P);
-    // Two feet under the belly's lower round, the fire between them.
-    ctx.fillRect(potX + P,            g - P, P, P);
-    ctx.fillRect(potX + potW - P * 2, g - P, P, P);
+    // The bail handle: a rounded arc over the wide mouth, posts off the rim
+    // corners stepping up to a bar across the top.
+    ctx.fillRect(potX + P * 2,        lipY - P,     P, P);
+    ctx.fillRect(potX + potW - P * 3, lipY - P,     P, P);
+    ctx.fillRect(potX + P * 3,        lipY - P * 2, potW - P * 6, P);
+    // Three splayed legs under the belly, the outer two kicking out past the
+    // narrow base, so the pot stands like a cauldron and not a barrel.
+    for (const lx of [potX + P * 2, potX + P * 5, potX + potW - P * 3])
+      ctx.fillRect(lx, g - P * 2, P, P * 2);
+    // A log on the ground under it, poking out either side of the fire.
+    ctx.fillRect(potX + P,            g - P, P * 2, P);
+    ctx.fillRect(potX + potW - P * 3, g - P, P * 2, P);
 
-    // The brew: liquid sitting in the mouth, framed by the lip on both sides.
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(potX + P * 3, rimY, potW - P * 6, P);
-    ctx.fillStyle = '#000';
+    // The fire beneath: flames licking up between the legs, uneven and flickering
+    // on the clock so it is a live fire and not a fence. The cauldron is always
+    // over its fire; the steam and the bubbles are the extra that say a batch is
+    // actually on the boil. See `boiling`.
+    const t = now();
+    const flames = [[potX + P * 3, 2], [potX + P * 4, 3], [potX + P * 6, 3], [potX + P * 7, 2]];
+    for (let i = 0; i < flames.length; i++) {
+      const [fx, base] = flames[i];
+      const flick = (Math.sin(t / 220 + i * 1.7) > 0.4) ? 1 : 0;   // a tongue leaps
+      for (let hy = 0; hy < base + flick; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
+    }
 
-    // The fire under the belly: three licks of uneven height with a cell of gap
-    // between each, so it reads as a flame and not a solid foot. Always laid;
-    // only the steam and the bubbles say the pot is being worked.
-    for (const [fx, ht] of [[potX + P * 3, 2], [potX + P * 5, 3], [potX + P * 7, 2]])
-      for (let hy = 0; hy < ht; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
-
-    // A working pot bubbles and steams; an idle one is a cold cauldron. See
-    // `boiling` -- true only while a stirrer is through the door on a batch.
     if (boiling()) {
-      const t = now();
       // Bubbles rising through the brew and breaking its surface: cells that climb
       // the mouth on their own phase, so they pop one after another.
-      for (let bcol = 0; bcol < 3; bcol++) {
+      for (let bcol = 0; bcol < 4; bcol++) {
         const bx = potX + P * 3 + bcol * P;                  // across the brew line
-        const ph = (t / 560 + bcol * 0.33) % 1;
-        if (ph < 0.6) ctx.fillRect(bx, rimY - (ph < 0.3 ? 0 : P), P, P);
+        const ph = (t / 560 + bcol * 0.27) % 1;
+        if (ph < 0.6) ctx.fillRect(bx, lipY - (ph < 0.3 ? 0 : P), P, P);
       }
-      // Steam: four wisps off the mouth, climbing and fading out near the top --
-      // one cell at a time, each on its own slow clock, swaying as it rises.
+      // Steam: wisps off the mouth, climbing and fading out near the top -- one
+      // cell at a time, each on its own slow clock, swaying as it rises.
       for (let k = 0; k < 4; k++) {
         const ph = (t / 900 + k * 0.25) % 1;
         if (ph > 0.85) continue;                             // gone near the top
         const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.5);
         const sx = potMid + (k - 1.5) * P + sway * P;
-        const sy = rimY - P * 3 - Math.round(ph * 6) * P;
+        const sy = lipY - P * 3 - Math.round(ph * 6) * P;
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
     }
@@ -1070,7 +1074,7 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 4 + P * 4.5;           // middle of the belly
+    const potMid = apothecary.x + P * 3 + P * 5.5;           // middle of the belly
     bar(Math.round(potMid / P) * P, S.groundY - P * 13, brewFrac());
   }
 }
