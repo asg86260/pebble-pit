@@ -514,21 +514,6 @@ const LEAN = 0.5;
 // between them. `color` is the tonic's own (see TONICS); `fill` is how full it
 // is, the liquid rising from the foot, so a fresh dose is a full vial and a
 // spent one nearly empty.
-function drawPotion(x, topY, fill = 1, color = '#fff') {
-  x = Math.round(x / P) * P;
-  topY = Math.round(topY / P) * P;
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x + P, topY, P, P);                 // the cork, centered on the neck
-  ctx.fillRect(x, topY + P, P, P * 3);             // the left glass
-  ctx.fillRect(x + P * 2, topY + P, P, P * 3);     // the right glass
-  ctx.fillRect(x + P, topY + P * 3, P, P);         // the rounded foot
-  // the liquid, filling the middle column from the foot up by `fill`
-  const cells = Math.max(1, Math.round(Math.max(0, Math.min(1, fill)) * 2));   // 1..2 cells
-  ctx.fillStyle = color;
-  for (let k = 0; k < cells; k++) ctx.fillRect(x + P, topY + P * 2 - k * P, P, P);
-  ctx.fillStyle = '#000';
-}
-
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home. The
@@ -556,19 +541,39 @@ export function drawWorkers() {
     const hat = wearing(w);
     if (hat && hat !== 'cart') drawHat(x, y, hat);
 
-    // The tonic on the body: the potion itself, floating over the head, so a
-    // buffed body reads as buffed at a glance rather than by a bar that merged
-    // into the black of the worker. Its liquid drops as the dose wears off -- the
-    // flask empties -- which is the readout being a picture, not a lamp. See
-    // `doseFrac` in apothecary.js.
+    // The tonic on the body reads as a haze of its own colour lifting off the
+    // worker -- coloured motes rising and winking out around the head, not a vial
+    // parked overhead. The haze thins as the dose wears off, so a nearly-spent
+    // body gives off only a wisp and a fresh one fizzes. It is the one place a
+    // worker itself carries colour, so a buffed body reads as buffed at a glance.
+    // See `doseFrac`, `doseColor` in apothecary.js.
     const frac = doseFrac(w);
-    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac, doseColor(w));
+    if (frac > 0) {
+      const t = now();
+      ctx.fillStyle = doseColor(w);
+      const motes = Math.max(1, Math.round(frac * 4));
+      for (let m = 0; m < motes; m++) {
+        const ph = (t / 620 + m * 0.37 + (Math.abs(Math.round(w.x)) % 40) / 40) % 1;
+        const mx = x + WORKER / 2 + Math.round(Math.sin(t / 240 + m * 2) * 2) * P;
+        const my = y - P * 2 - Math.round(ph * 5) * P;
+        ctx.fillRect(Math.round(mx / P) * P, my, P, P);
+      }
+      ctx.fillStyle = '#000';
+    }
 
-    // A stirrer carrying a dose holds the vial over its head, the way a hauler
-    // carries dust -- coloured by which tonic it is walking out, so you can see
-    // what is crossing the yard. See `stepStirrer` (`w.carryTonic`).
-    if (w.type === 'stirrer' && w.holding)
-      drawPotion(x + WORKER / 2 - P * 1.5, y - P * 5, 1, tonicColor(w.carryTonic));
+    // A stirrer carrying a dose holds a little vial over its head, the way a
+    // hauler carries dust -- the same small flask that stands on the apothecary
+    // table, coloured by which tonic it is walking out, so you can see what is
+    // crossing the yard. See `stepStirrer` (`w.carryTonic`).
+    if (w.type === 'stirrer' && w.holding) {
+      const vx = Math.round((x + WORKER / 2 - P / 2) / P) * P;
+      const vy = y - P * 5;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(vx, vy, P, P);                              // the cork
+      ctx.fillStyle = tonicColor(w.carryTonic);
+      ctx.fillRect(vx, vy + P, P, P * 2);                      // the coloured brew
+      ctx.fillStyle = '#000';
+    }
 
     if (!w.carry && !w.hasCore) continue;
 

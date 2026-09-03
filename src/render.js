@@ -63,7 +63,7 @@ export { canvas };
 // withRise, bar and the master frame draw); each of these owns one drawn thing
 // and imports those primitives back. Re-exported here so render.js keeps its
 // old public surface for the rest of the game.
-import { drawApothecary } from './render/apothecary.js';
+import { drawApothecary, drawStockCount } from './render/apothecary.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
 import { drawMuck, drawSmog, drawPuffs, drawDraught, drawRain } from './render/smog.js';
 export { drawMuck, drawSmog, drawPuffs, drawDraught, drawRain } from './render/smog.js';
@@ -722,6 +722,7 @@ export function draw() {
                                  y: (wy - S.camY + S.shakeY) * S.zoom });
   drawRosterCounts(ctx, screenAt);
   drawKitCounts(screenAt);       // and how many are waiting on each stand
+  drawStockCount(screenAt);      // and how many doses stand ready on the apothecary table
 
   drawCount();             // last, and in screen pixels: it is read, not looked at
 

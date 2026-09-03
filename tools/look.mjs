@@ -90,6 +90,12 @@ const SCENES = {
     window.__fast(16);
     window.__look(window.__state().apothecaryX - 400);`,
 
+  apothbuff: `window.__reset(); window.__crew(3,2,2,2);
+         window.__school({breakers:3,blasters:2,growers:2,carters:2});
+         window.__loo(); window.__assign('janitors',1); window.__fast(20);
+         window.__dose('miner', 'brace'); window.__dose('janitor', 'strong');
+         window.__look(window.__state().rockLeftX - 420);`,
+
   // One hand on the whole row. This is the shot the row is *for*: a single body
   // stooping over one plot with the other six visibly coming on behind it,
   // rather than one stalk and six patches of bare dirt.

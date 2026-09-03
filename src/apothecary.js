@@ -57,7 +57,8 @@ export const strengthMult = () => ease(STRENGTH0, STRENGTH5, S.strengthLevel) / 
 // shelf, the vial a stirrer carries, and the potion floating over a buffed body
 // all read as the same brew by colour. The one place besides the fire the yard
 // takes colour, and here it carries meaning (which tonic), which is what colour
-// is for. See `tonicColor`, drawPotion and the stock rack in render.js.
+// is for. See `tonicColor`, the buff haze and carried vial in render/crew.js,
+// and the stock table in render/apothecary.js.
 export const TONICS = [
   { key: 'stew',   name: 'a hearty stew',   reagent: 'dust',  kind: 'work',
     base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f' },   // green

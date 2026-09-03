@@ -170,7 +170,7 @@ export function drawApothecary() {
         if (ph > 0.9) continue;
         const sway = Math.round(Math.sin(t / 760 + k * 1.4) * 2);
         const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
-        const sy = brewY - P * 2 - Math.round(ph * 8) * P;
+        const sy = brewY - P * 4 - Math.round(ph * 8) * P;
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
       ctx.fillStyle = '#000';
@@ -185,4 +185,29 @@ export function drawApothecary() {
     const potMid = apothecary.x + P * 10 + Math.round(CAULDRON[0].length / 2) * P;
     bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 6) * P, brewFrac());
   }
+}
+
+// How many finished doses are standing in stock, written over the vial of the
+// tonic the pot is set to -- the table shows *what* is on offer, this says *how
+// many* of it are ready to be carried out. Drawn in screen pixels next to the
+// kit-stand counts (the same read-it, don't-look-at-it band), off `doseHold`,
+// which is the doses brewed but not yet walked to a body. Doses take whichever
+// tonic the pot is on, so the count sits over that one vial and the others,
+// holding nothing, show nothing.
+export function drawStockCount(screenAt) {
+  if (!S.apothecaryOpen) return;
+  const total = (S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
+  if (total <= 0) return;
+  const i = TONICS.findIndex(t => t.key === S.potTonic);
+  if (i < 0) return;
+  const vx = apothecary.x + P * (2 + i * 2) + P / 2;   // over the active tonic's vial
+  const vy = S.groundY - P * 5 - P * 5;                // a clear space above the cork
+  const at = screenAt(vx, vy);
+  ctx.font = '13px ui-monospace, "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000';
+  ctx.fillText(String(total), Math.round(at.x), Math.round(at.y));
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
 }
