@@ -1022,7 +1022,7 @@ export function drawApothecary() {
     // is empty. The fire, the bubbles and the steam are animation and stay code
     // below; everything static about the pot -- rim, belly, legs, handle -- is in
     // the grid, so the shape is yours to draw and not mine to guess.
-    const potX = x + P * 2;
+    const potX = x + P * 5;                 // the pot sits right, leaving the left for the stirrer
     const topY = g - CAULDRON.length * P;
     drawSprite(ctx, CAULDRON, potX, topY);
 
@@ -1041,13 +1041,31 @@ export function drawApothecary() {
     // it is being worked. See `boiling`.
     const t = now();
     if (boiling()) {
-      // The fire beneath: flames licking up under the pot, uneven and flickering
-      // on the clock so it reads as a live fire and not a fence.
-      const flames = [[potX + P * 4, 2], [potX + P * 5, 3], [potX + P * 7, 3], [potX + P * 8, 2]];
-      for (let i = 0; i < flames.length; i++) {
-        const [fx, base] = flames[i];
-        const flick = (Math.sin(t / 220 + i * 1.7) > 0.4) ? 1 : 0;   // a tongue leaps
-        for (let hy = 0; hy < base + flick; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
+      // The fire beneath: not a solid mark but *motes* -- flecks of flame low
+      // under the belly and smoke drifting up off them. Each fleck lives on its
+      // own short cycle and pops in and out, so the fire flickers and reads as a
+      // bed of embers rather than a black tooth. The pot spans potX..potX+11
+      // cells; the fire sits under its middle.
+      const fireW = CAULDRON[0].length - 4;                  // cells across the fire bed
+      for (let i = 0; i < 9; i++) {
+        // a fleck: a cell that flicks up a row or two off the ground and is gone
+        const ph = (t / 200 + i * 0.37) % 1;
+        if (ph > 0.7) continue;                              // dark between flickers
+        const col = (i * 5 + Math.floor(t / 90 + i)) % fireW;
+        const fx = potX + P * 2 + col * P;
+        const fy = g - P - Math.round(ph * 2) * P;           // low, one or two cells up
+        ctx.fillRect(fx, fy, P, P);
+      }
+      // Smoke: a few motes lifting off the fire, drifting up past the pot and
+      // thinning out -- drawn only through part of each mote's climb so it breaks
+      // up rather than making a solid column.
+      for (let s = 0; s < 4; s++) {
+        const ph = (t / 1000 + s * 0.27) % 1;
+        if (ph > 0.9 || (Math.floor(t / 110 + s) % 3 === 0)) continue;   // gaps as it thins
+        const sway = Math.round(Math.sin(t / 700 + s * 1.3) * 2);
+        const sx = potX + P * (3 + s * 2) + sway * P;
+        const sy = g - P * 2 - Math.round(ph * 11) * P;
+        ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
       // Bubbles rising through the brew and breaking its surface.
       for (let bcol = 0; bcol < 5; bcol++) {
@@ -1072,7 +1090,7 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 2 + Math.round(CAULDRON[0].length / 2) * P;
+    const potMid = apothecary.x + P * 5 + Math.round(CAULDRON[0].length / 2) * P;
     bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
   }
 }
@@ -3455,6 +3473,7 @@ const LOOK = {
   janitor:  { lunge:  0, lean: 1 },
   labber:   { lunge:  1 },
   farmhand: { lunge:  1 },
+  stirrer:  { lunge:  1, lean: 1 },   // stoops and leans toward the pot as it stirs
   quarrier: { lunge:  1, load: 'shard' },
   wizard:   { lunge: -1 },
   miner:    { lunge:  0 },
@@ -3494,8 +3513,11 @@ function drawPotion(x, topY, fill = 1) {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    // out of sight: in the lab, down the quarry, in the outhouse, or home
-    if (underground(w) || indoors(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
+    // out of sight: in the lab, down the quarry, in the outhouse, or home. The
+    // stirrer is NOT hidden -- it stands at the pot's left and stirs in plain
+    // sight, so `atPot` is not a reason to skip it here (it still gates the
+    // brew clock and the count in apothecary.js).
+    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
     const look = LOOK[w.type] || PLAIN;
     const throwOn = w.lunge || 0;
