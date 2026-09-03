@@ -257,6 +257,25 @@ canvas {
 .rows button .gain { opacity: .75; }
 .rows button .cost { grid-column: 3 / -1; text-align: right; opacity: .7; }
 
+/* The row's description, in its own line under the name-gain-price line rather
+   than in a box on hover -- a menu you can read without a mouse and without
+   waiting. It spans the whole width so it wraps as prose, sits dim under the
+   row it explains, and a row with nothing to say has no such line. */
+.rows .note {
+  grid-column: 1 / -1;
+  opacity: .5;
+  font-size: .82em;
+  line-height: 1.3;
+  margin-top: .1em;
+  white-space: normal;
+  max-width: 46ch;
+}
+/* On an inverted row -- one under the cursor, or the tonic the pot is set to --
+   the words go white with the rest of the row, so the description stays readable
+   on the black rather than turning to ink on ink. */
+.rows button:hover:not(:disabled) .note,
+.rows button.pick.on .note { color: #fff; opacity: .6; }
+
 /* The count and its two buttons, held in the one cell that a price would fill,
    so that a row which moves bodies and a row which spends dust are the same
    shape and can share the sheet's columns. */

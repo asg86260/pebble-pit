@@ -371,8 +371,8 @@ export const APOTHECARY_UPGRADES = [
   // "the pot" so it does not echo the section heading a line above it.
   {
     key: 'potkeep', dial: true, site: 'apothecary',
-    name: 'the fire',
-    value: () => (S.potKeep ? 'kept burning' : 'out after this'),
+    name: 'keep brewing',
+    value: () => (S.potKeep ? 'batch after batch' : 'just this one'),
     less: () => setKeep(!S.potKeep),
     more: () => setKeep(!S.potKeep),
     lo: () => false, hi: () => false,
@@ -384,6 +384,8 @@ export const APOTHECARY_UPGRADES = [
     key: 'potprefer', dial: true, site: 'apothecary',
     name: 'doses go to',
     value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
+    note: () => 'The keeper hands a dose to this station first; if none want ' +
+                'one, to whoever is nearest the pot.',
     less: () => setPrefer(stepPrefer(-1)),
     more: () => setPrefer(stepPrefer(1)),
     lo: () => false, hi: () => false,
@@ -393,10 +395,10 @@ export const APOTHECARY_UPGRADES = [
   brewRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  brewRung({ key: 'bufflength', name: 'quality', unit: 's', level: 'lengthLevel',
+  brewRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel',
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  brewRung({ key: 'buffstrength', name: 'potency', unit: '%', level: 'strengthLevel',
+  brewRung({ key: 'buffstrength', name: 'a stronger dose', unit: '%', level: 'strengthLevel',
     from: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel) * 100),
     to: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel + 1) * 100) }),
   brewRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel',

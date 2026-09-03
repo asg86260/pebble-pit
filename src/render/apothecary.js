@@ -183,7 +183,12 @@ export function drawApothecary() {
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
     const potMid = apothecary.x + P * 10 + Math.round(CAULDRON[0].length / 2) * P;
-    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 6) * P, brewFrac());
+    // The pot's own bar hangs low, a couple of cells over the cauldron -- clear
+    // of the site's build/upgrade bar, which floats higher (four cells over the
+    // building's top, in `barSpot`). The two used to sit three cells apart and,
+    // three cells tall each, touched; the pot's bar low and the building's high
+    // is also the truer reading -- one is the brew, the other the building.
+    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
   }
 }
 

@@ -178,19 +178,11 @@ function build(el, list, sections, empty) {
         b.dataset.pot = u.key;
         b.className = 'pick';
         b.innerHTML = '<span class="name"><i class="what"></i></span>' +
-                      '<span class="gain"></span><span class="cost"></span>';
+                      '<span class="gain"></span><span class="cost"></span>' +
+                      (u.note ? '<span class="note"></span>' : '');
         b.querySelector('.what').textContent = u.name;
         b.addEventListener('click', () => { u.set(); buildShop(); });
         if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
-        if (u.note) {
-          const say = () => {
-            const r = b.getBoundingClientRect();
-            showTipAt(u.note(), r.right + 8, r.top - 2);
-          };
-          b.addEventListener('pointerenter', say);
-          b.addEventListener('pointermove', say);
-          b.addEventListener('pointerleave', () => showTipAt(null));
-        }
         el.appendChild(b);
         continue;
       }
@@ -202,7 +194,7 @@ function build(el, list, sections, empty) {
         const row = document.createElement('div');
         row.className = 'job';
         row.dataset.dial = u.key;
-        row.innerHTML = STEPPER;
+        row.innerHTML = STEPPER + (u.note ? '<span class="note"></span>' : '');
         row.querySelector('.what').textContent = u.name;
         row.querySelector('.less').addEventListener('click', () => u.less());
         row.querySelector('.more').addEventListener('click', () => u.more());
@@ -235,7 +227,8 @@ function build(el, list, sections, empty) {
       // they were placed after the price -- and a price of two coins is two
       // lines tall, which pushed the pips down past the words they belong to.
       b.innerHTML = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
-                    '<span class="gain"></span><span class="cost"></span>';
+                    '<span class="gain"></span><span class="cost"></span>' +
+                    (u.note && !inSubmenu ? '<span class="note"></span>' : '');
       // A readout is not a purchase. It keeps the shape of a row so the board
       // still lines up, and gives up everything that says "press me": the class
       // takes the cursor and the hover off in the stylesheet, and there is no
@@ -275,7 +268,12 @@ function build(el, list, sections, empty) {
       // list, and hovering a body to read it shut the sheet it was written on.
       if (u.over) b.addEventListener('pointerenter', () => u.over());
       else if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
-      if (u.note) {
+      // A board row wears its description inline (see the `.note` line above and
+      // `sayNote`); the crew submenu keeps the hover, because a roster of a dozen
+      // bodies is long enough without a line of prose under each -- and it is a
+      // list you read, not a shop of things you buy. So the tip stays here, for
+      // the submenu only.
+      if (inSubmenu && u.note) {
         const say = () => {
           const r = b.getBoundingClientRect();
           showTipAt(u.note(), r.right + 8, r.top - 2);
@@ -301,6 +299,11 @@ function build(el, list, sections, empty) {
 const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; moved = true; } };
 const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; moved = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
+// A row's description, in place of the hover it used to carry -- written into the
+// `.note` line the builder hangs under any row whose upgrade has one. Written the
+// same careful way as the rest: only when the words change. A row with no note
+// has no `.note` element and this does nothing.
+const sayNote = (row, u) => { const n = row.querySelector('.note'); if (n && typeof u.note === 'function') say(n, u.note()); };
 
 export function refresh(el, list, headcount) {
   for (const row of el.children) {
@@ -332,6 +335,7 @@ export function refresh(el, list, headcount) {
       grey(row.querySelector('.less'), u.lo());
       say(row.querySelector('.count'), u.value());
       grey(row.querySelector('.more'), u.hi());
+      sayNote(row, u);
       continue;
     }
     if (row.dataset.job) {
@@ -356,10 +360,12 @@ export function refresh(el, list, headcount) {
       const bill = cost.map(([m, n]) =>
         `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
       sayHTML(price, u.on() ? 'brewing' : bill);
+      sayNote(row, u);
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
     if (!u) continue;
+    sayNote(row, u);
     // What it costs, as a mark and a number for each currency in the bill. Most
     // rows are priced in a single thing, and reading every price the same way is
     // what lets the ones that are not be read at all.

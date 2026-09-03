@@ -379,7 +379,11 @@ export const TESTS = [
     ];
   }],
 
-  ['a note stands clear of the board it belongs to', async () => {
+  ['a row wears its description inline, not on a hover', async () => {
+    // A board row that has something to say now says it in its own line under
+    // the row, not in a sheet that opens on hover -- so the menu reads without a
+    // mouse and without waiting. The crew submenu is the one exception (a roster
+    // of a dozen bodies keeps the hover; see shop.js), and this is a board.
     newRun();
     await settle();
     window.__crew(4, 2);
@@ -395,36 +399,23 @@ export const TESTS = [
     await sleep(200);
 
     const tip = document.getElementById('tip');
-    const panel = document.getElementById('panel');
-    let notes = 0, over = 0, layered = true;
+    let described = 0, hoverTip = 0;
     for (const b of shop().querySelectorAll('button')) {
+      const note = b.querySelector('.note');
+      if (note && note.textContent.trim()) described++;
       const r = b.getBoundingClientRect();
       b.dispatchEvent(new PointerEvent('pointerenter',
         { clientX: r.right - 4, clientY: r.top + 4, bubbles: true }));
       await sleep(30);
-      if (tip.hidden) continue;
-      notes++;
-      const t = tip.getBoundingClientRect(), p = panel.getBoundingClientRect();
-      const clash = t.left < p.right - 1 && t.right > p.left + 1 &&
-                    t.top < p.bottom - 1 && t.bottom > p.top + 1;
-      // A note may only land on the board when there is nowhere else for it: no
-      // room to the right of the board and none to the left either. On a window
-      // that narrow it is still readable, because it is drawn over the menu
-      // rather than under it, which is the half of this that always holds.
-      const roomRight = p.right + 8 + t.width <= innerWidth - 4;
-      const roomLeft = p.left - 8 - t.width >= 4;
-      if (clash && (roomRight || roomLeft)) over++;
-      // and above it in any case, so that even a note with nowhere else to go is
-      // readable rather than swallowed
-      if (+getComputedStyle(tip).zIndex <= +getComputedStyle(panel).zIndex) layered = false;
+      if (!tip.hidden) hoverTip++;
     }
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(notes > 0, 'there are rows with something to say', `${notes} notes`),
-      ok(over === 0, 'and none of them lands on the board while there is room beside it',
-         `${over} of ${notes} overlapped`),
-      ok(layered, 'and a note is drawn over the menu, never under it')
+      ok(described > 0, 'a row with something to say carries it in its own line',
+         `${described} described`),
+      ok(hoverTip === 0, 'and hovering a board row opens no sheet beside it',
+         `${hoverTip} rows still popped a tip`)
     ];
   }],
 
