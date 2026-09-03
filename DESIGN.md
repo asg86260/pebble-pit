@@ -3558,3 +3558,138 @@ the reason to buy the belt and more carriers. That was a deliberate trade: a
 mechanic that can end a run is worse than a mechanic that is missed. The rift's
 own ladder stays — how wide it is torn open is still worth buying, because it is
 what drains the pile back down to something you can see.
+
+## The shop's language (design, not built)
+
+Seven boards, fifty-two rows, and three grammars running at once. The writing
+itself is not the problem -- "somewhere to keep a shovel, and somebody to swing
+it" is the best line in the game -- the problem is that a player who learns what
+a row is called on one board cannot use that anywhere else.
+
+### What was already right, and stays
+
+The bench names the same stat the same way for different bodies, and lets the
+section heading say whose it is: `carry` and `haulcarry` are both **strength**,
+under *you* and *the crew*; `speed` and `minerspeed` are both **swing**, under
+*you* and *the rock*. That is not a collision to be fixed. It is the language,
+and everything below is an attempt to make the rest of the boards speak it.
+
+### The rules
+
+One rule per `kind`, because rows are already typed that way -- so this is a
+thing a check can hold the boards to rather than a thing fifty-two rows have to
+remember. See `test/boards.test.mjs`.
+
+| kind | the rule |
+|---|---|
+| `rung` | a bare noun, naming the quantity. The board and its section say whose it is. |
+| `place` | **"another X"**, where X is what marks one body's place at that station. |
+| `machine` | **"the X"**. |
+| `building` | **"⟨verb⟩ the X"**, one verb per place, chosen once and kept. |
+| tune rows | **"tune the X"**, the same verb for all four. The note carries the flavour. |
+| capability | the plain sentence of what you can now do. |
+
+And two rules that are not about names:
+
+- **Every rated row states a unit.** Four lab rows say `+25%` of nothing.
+- **Every row has a note.** Fifteen of fifty-two have one, and which buildings
+  got one looks arbitrary: the scrubbing house, the closet and the tower have
+  them; the farm, the quarry, the lab, the casino and the school do not.
+
+**A place is always standing room for one more body.** `capOfBare` says so for
+every station in the game -- quarriers are capped by `benches()`, farmhands by
+`plotCount()`, labbers by `labRooms()` -- so "another X" is not a figure of
+speech, it is what the row does. Each board names that room in its own idiom:
+the ground a farmhand stands on, the shovel a quarrier holds, the bench a labber
+sits at, the cap a janitor wears. The yard already did this once, with "a second
+cap".
+
+**A lab row is named exactly what the row it multiplies is named.** The lab said
+*quarry speed* while the quarry's own board said *speed*, for the same number --
+two conventions for one quantity. So the qualifier comes off and the heading
+does the work, the way it already does on the bench. You learn "speed" once and
+it means the same thing in five places.
+
+That forces the lab's sections, which were grouped by theme, to be grouped by
+the board each row multiplies -- otherwise `labcave` and `labtend` are two rows
+called *speed* under one heading:
+
+| was | becomes |
+|---|---|
+| the lab: `labkit`, `labroom` | the lab: `labkit`, `labroom` |
+| the work: `labswing`, `labhaul` | the rock: `labswing` / the crew: `labhaul` |
+| the ground: `labcave`, `labtend` | the quarry: `labcave` / the farm: `labtend` |
+| the air: `labair` | the air: `labair` |
+
+Six headings over seven rows is heavy, and it buys something worth the weight:
+the lab's board and the bench's board now use the same headings for the same
+things, which is the whole of what the lab is -- the rows you already have,
+multiplied.
+
+### What changes
+
+Eighteen rows. Everything not listed keeps its name.
+
+| board | key | now | becomes |
+|---|---|---|---|
+| bench | `pick` | upgrade pickaxe | **pickaxe** |
+| bench | `minerpick` | upgrade pickaxe | **pickaxe** |
+| bench | `loopost` | a second cap | **another cap** |
+| bench | `tuneram` | drive the ram harder | **tune the ram** |
+| bench | `tunebelt` | speed the belt | **tune the belt** |
+| farm | `farmplot` | new plot | **another plot** |
+| farm | `tunetiller` | gear up the tiller | **tune the tiller** |
+| quarry | `quarrybench` | dig deeper | **another shovel** |
+| quarry | `tunejaw` | sharpen the drill | **tune the drill** |
+| lab | `labkit` | better instruments | **instruments** |
+| lab | `labroom` | a second bench | **another bench** |
+| lab | `labswing` | swing speed | **swing** |
+| lab | `labhaul` | carry speed | **speed** |
+| lab | `labcave` | quarry speed | **speed** |
+| lab | `labtend` | plot speed | **speed** |
+| scrub | `fan` | a bigger fan | **the fan** |
+| scrub | `balloon` | a scrubber balloon | **the balloon** |
+| scrub | `recycler` | recycler | **the recycler** |
+
+Units to add: `labswing` and `labhaul` in dust a second, `labcave` in stone a
+minute, `labtend` in crop a minute -- the same units the rows they multiply
+already print. And the three place rows say what they are counting: *plots*,
+*shovels*, *benches*.
+
+**"upgrade pickaxe" was the only genre-speak in the game.** The only row on any
+board containing the word *upgrade*, and the only imperative-with-an-object
+among the stat rungs, where everything around it is a bare noun. Every row on
+every board is an upgrade; saying so is a word that carries nothing.
+
+**"better instruments" goes the same way.** Every rung makes something better.
+
+**Four tune rows, four verbs, one rule.** *Drive the ram harder*, *speed the
+belt*, *gear up the tiller*, *sharpen the drill* -- and the notes one line below
+them are already perfectly parallel ("the ram strikes 1.3x harder, again"). The
+shape existed a line down and the names would not use it. The flavour is not
+lost, it moves to where the flavour already lives.
+
+### "dig deeper" becomes "another shovel"
+
+The one row that named the act rather than the thing, and the argument written
+over it was that "the thing you are buying is the hole going further down, and
+that is what the row should say". That was right about what the row *leaves
+behind* and wrong about what you are *buying*: a bench is standing room for one
+more quarrier -- `capOfBare` caps them at `benches()` -- and "dig deeper" reads
+as a bigger yield out of the same hole rather than as another body in it. It is
+the only place row in the game that does not tell you a body can now stand
+there, and it was the one place row whose whole point was that a body can.
+
+A bench does do both, and the note is where the other half goes: another body at
+the face, and the cut a bench deeper for them to work. The name says who; the
+note says what it leaves behind.
+
+### What is exempt
+
+**The casino's table.** *chips*, *stake*, *bank it*, *spin again* are moves at a
+table, not purchases -- a different register on purpose, and the one board where
+the player is not shopping.
+
+**`airrate`.** It is a readout wearing a row: it says *pollution / holding
+steady* and sells nothing. It should stop being a row rather than be renamed
+into one.
