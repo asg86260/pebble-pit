@@ -1300,32 +1300,33 @@ load, and the pile going down at the lip is the pile going down at the lip.
 or at delivery. At press is simpler and is how every other price works; at
 delivery is truer and lets you cancel. Recommend at press.
 
-### Amendment: it goes to the shop it is spent at, not the bench
+### Amendment: it goes to the shop it is spent at, not the bench (built)
 
 *(Raised while designing the apothecary, and it is the general form of the
-above.)* Today a spent resource arcs to **the bench**, wherever the row lives --
-buy a farm rung and the dust flies to the bench, not to the farm. That is
+above.)* A spent resource used to arc to **the bench**, wherever the row lived --
+buy a farm rung and the dust flew to the bench, not to the farm. That was
 backwards: the dust is being spent *at the farm*, on the farm's own board, so it
 should travel to the farm. The destination of a spent resource is **the station
-that sells the row**, not one fixed building.
+that sells the row**, not one fixed building -- and it is now.
 
-Every station already knows where it is (`site`, and the pile/standoff geometry
-in config.js), and the delivery machinery above is already per-site
-(`S.owed[site]`). So this is not a new system -- it is the carried-to-site
-design with its destination read off the row's `site` instead of hard-coded to
-the bench. A lab row's stone goes to the lab, a quarry rung's spores go to the
-quarry, the apothecary's crop goes to the apothecary.
+**How it is built.** The arc already existed (`S.paid`, flown by `fly` in
+game.js); all that was hard-coded was the target. `buy` in upgrades.js now reads
+the row's own station off `siteBox(u.site)` and, for the length of the payment,
+sets `payTo` (pit.js) to that station's centre; `lift` stamps the destination on
+each grain as it leaves the pile, and `fly` flies each grain to its own stamp,
+falling back to the bench for a spend with no `payTo` around it (the rift, the
+casino). A bench row keeps paying to the bench, because that is its site; a farm
+rung's dust arcs to the farm, a brew rung's to the cauldron.
 
-This is what makes the apothecary read right in particular: the crop a tonic
-costs is *carried into the apothecary* and the doses are *carried out of it*, so
-the building is visibly a place where crop goes in and buffs come out, rather
-than a board that debits a counter. It is the same reason the farm's own rungs
-should pull their dust to the farm -- a shop you can see being paid is a shop,
-and a counter going down is a spreadsheet.
+**Not the hauler-carried version.** This is the *destination* change, not the
+full "haulers walk loads to the site" design at the top of this section
+(`S.owed`, the work waiting on delivery) -- that is still design, not built. The
+grains still arc on their own; they just arc to the right place now.
 
-**Scope, same as above.** The things that read as *building* something -- and
-now *brewing* something -- are what get carried; a rate rung keeps its snap. The
-honest line is still the kind, not a floor.
+**What is still only dust.** Only dust arcs at all -- shard, spore and core are
+taken out of the hole without a flight, so the crop a brew costs still leaves the
+pile without a visible trip *into* the cauldron. Making the other coins arc to
+their station too -- so the crop is seen going in -- is the remaining piece.
 
 ## Later rungs cost the other grounds (design, not built)
 

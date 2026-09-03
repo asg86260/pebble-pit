@@ -478,8 +478,13 @@ function fly(list, tx, ty) {
     if (m.t >= 1) { list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
 
+    // A grain flies to the station that sold the row it paid for -- stamped on
+    // the grain at `lift` -- and falls back to the bench (`tx`/`ty`) for a spend
+    // with no destination around it. See `payTo` in pit.js.
+    const gx = m.tx != null ? m.tx : tx;
+    const gy = m.ty != null ? m.ty : ty;
     const e = m.t * m.t * (3 - 2 * m.t);           // ease in and out
-    m.x = m.x0 + (tx - m.x0) * e;
-    m.y = m.y0 + (ty - m.y0) * e - Math.sin(e * Math.PI) * m.lift;
+    m.x = m.x0 + (gx - m.x0) * e;
+    m.y = m.y0 + (gy - m.y0) * e - Math.sin(e * Math.PI) * m.lift;
   }
 }

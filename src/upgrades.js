@@ -6,7 +6,7 @@
 // on the board.
 
 import {
-  CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
+  P, CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
@@ -17,7 +17,7 @@ import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, apothecary, school, casino, scrub, tower, outhouse } from './state.js';
-import { spend, spendHeld, pitCapacity } from './pit.js';
+import { spend, spendHeld, pitCapacity, payTo } from './pit.js';
 import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
          FARM_CORES, QUARRY_CORES, COMMUTE_PACE, HAUL_EMPTY,
          APOTHECARY_CORES, APOTHECARY_DUST } from './config.js';
@@ -35,7 +35,7 @@ import { syncWorkers } from './crew.js';
 import { mult } from './lab.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows,
-         busyBuilderSites, siteX } from './works.js';
+         busyBuilderSites, siteX, siteBox } from './works.js';
 // The one row this file's owner does not hold: the house is track C's
 // building, and this is the one line of upgrades.js it edits. See C1 in
 // wave-feedback3.md.
@@ -1418,9 +1418,19 @@ export function buy(u) {
   // and not while the site is already putting something up. One work per site is
   // the whole of what makes the waiting a decision -- see works.js.
   if (siteBusy(u)) return;
+  // What is spent flies to the station that sold the row, not to the bench: buy a
+  // rung of the farm and the dust arcs to the farm, buy a brew rung and it arcs
+  // to the cauldron. The destination is the row's own site (`siteBox`), and it is
+  // set for the length of the payment and cleared straight after, so a spend with
+  // nobody's `payTo` around it -- the rift -- still falls back to the bench. A
+  // row with no site of its own (the bench's own, a yard building) leaves it null
+  // and pays to the bench, which is where it is bought.
+  const box = u.site && u.site !== 'yard' ? siteBox(u.site) : null;
+  if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
+  payTo();                                       // back to the bench for the next spend
 
   // Past the bench, paying does not buy the thing: it starts the yard building
   // it, and the row's own `buy` runs when somebody has finished the work. The

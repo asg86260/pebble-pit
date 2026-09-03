@@ -365,6 +365,14 @@ const SHOWN = 200;
 // wear six hundred columns down evenly and flat while the disc hung over one of
 // them, pulling nothing. Given a point, the walk goes nearest-that-point first
 // instead; see `nearestSurface`.
+// Where paid grains fly to. Null is the default -- the bench -- and `payTo` sets
+// it for the length of one purchase so the grains a row costs arc to the station
+// that sold the row, not to the bench. See `buy` in upgrades.js and `fly` in
+// game.js, which reads the target off each grain. A spend with no `payTo` around
+// it (the rift, an old call) leaves these null and falls back to the bench.
+let payX = null, payY = null;
+export const payTo = (x = null, y = null) => { payX = x; payY = y; };
+
 function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN) {
   let left = n;
 
@@ -393,6 +401,10 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
         // it and which way round they go -- see `orbit` in game.js
         a0: rand() * Math.PI * 2,
         spin: rand() < 0.5 ? -1 : 1,
+        // Where this grain is paying to -- the selling station, or null for the
+        // bench. Stamped at lift so a grain keeps its destination however the
+        // list is stepped. See `fly` in game.js.
+        tx: payX, ty: payY,
         s: v
       });
     }

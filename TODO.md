@@ -11,14 +11,15 @@ harsh review; the blocking defects (miner tonic inert, the pot reading as a
 table, undocumented crit coverage) are fixed. Two follow-ups remain, neither
 blocking:
 
-1. **Crop is spent at brew-start, not carried into the building.** The general
-   "a spent resource travels to the shop that sells it" rule (DESIGN.md "it goes
-   to the shop it is spent at") turned out to be *designed, not built* — there
-   is no `S.owed[site]`, and every spend still arcs to the bench (`stepPaid` in
-   game.js, hard-coded to `bench.x`). The doses ARE carried out by the stirrer
-   (no teleport); the carried-*in* half waits on that general machinery. Build
-   `S.owed[site]` once, wire `stepPaid` to the row's `site`, and the apothecary
-   (and every other board) gets carried-in crop for free.
+1. **Only dust arcs to its station; the other coins still leave the hole
+   invisibly.** *(Dust done.)* A spent resource now flies to the station that
+   sold the row rather than to the bench — `payTo` in pit.js, set by `buy` off
+   `siteBox(u.site)`, stamped on each grain and read by `fly` (DESIGN.md "it goes
+   to the shop it is spent at (built)"). But shard, spore and core are taken out
+   of the hole without a flight, so the crop a brew costs still leaves the pile
+   with no visible trip *into* the cauldron. Making the other coins arc to their
+   station too is what is left — and it is a different job from the full
+   hauler-carried delivery (`S.owed`), which is still design, not built.
 
 2. **A second pot brews the same tonic, not an independent one.** `another pot`
    adds coverage of the one setting; the DESIGN "Open" recommendation of a
