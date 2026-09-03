@@ -7,7 +7,7 @@
 // drawCircle, drawMark) come from render.js, the core module; drawCoreGlow and
 // markAt come from the cores and pilemarks clusters that already own them.
 
-import { atPot, doseFrac } from '../apothecary.js';
+import { atPot, doseFrac, doseColor, tonicColor } from '../apothecary.js';
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
@@ -510,17 +510,22 @@ const LEAN = 0.5;
 // filling the body from the bottom by `fill` (0..1). Black glass, a white line
 // for the surface of what is in it -- no glow, on the grid, the yard's language.
 // `x` is the left of the three-wide body; `topY` is the neck's row.
-function drawPotion(x, topY, fill = 1) {
+// A little vial: a black cork over glass sides with a column of coloured liquid
+// between them. `color` is the tonic's own (see TONICS); `fill` is how full it
+// is, the liquid rising from the foot, so a fresh dose is a full vial and a
+// spent one nearly empty.
+function drawPotion(x, topY, fill = 1, color = '#fff') {
   x = Math.round(x / P) * P;
   topY = Math.round(topY / P) * P;
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + P, topY, P, P);                 // the cork/neck, centered
-  ctx.fillRect(x, topY + P, P * 3, P * 3);         // the body, three wide and tall
-  // The liquid: a white surface line that sits lower as the flask empties, so a
-  // full dose is a full bottle and a spent one is nearly empty.
-  ctx.fillStyle = '#fff';
-  const drop = Math.round((1 - Math.max(0, Math.min(1, fill))) * 2);   // 0..2 cells down
-  ctx.fillRect(x + P, topY + P + drop * P, P, P);                      // surface within the body
+  ctx.fillRect(x + P, topY, P, P);                 // the cork, centered on the neck
+  ctx.fillRect(x, topY + P, P, P * 3);             // the left glass
+  ctx.fillRect(x + P * 2, topY + P, P, P * 3);     // the right glass
+  ctx.fillRect(x + P, topY + P * 3, P, P);         // the rounded foot
+  // the liquid, filling the middle column from the foot up by `fill`
+  const cells = Math.max(1, Math.round(Math.max(0, Math.min(1, fill)) * 2));   // 1..2 cells
+  ctx.fillStyle = color;
+  for (let k = 0; k < cells; k++) ctx.fillRect(x + P, topY + P * 2 - k * P, P, P);
   ctx.fillStyle = '#000';
 }
 
@@ -557,13 +562,13 @@ export function drawWorkers() {
     // flask empties -- which is the readout being a picture, not a lamp. See
     // `doseFrac` in apothecary.js.
     const frac = doseFrac(w);
-    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac);
+    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac, doseColor(w));
 
-    // A stirrer with a dose in hand carries the flask in front of it, so the
-    // round is a body plainly walking a potion out to somebody -- not a number
-    // arriving on a worker across the yard. See `stepStirrer`.
+    // A stirrer carrying a dose holds the vial over its head, the way a hauler
+    // carries dust -- coloured by which tonic it is walking out, so you can see
+    // what is crossing the yard. See `stepStirrer` (`w.carryTonic`).
     if (w.type === 'stirrer' && w.holding)
-      drawPotion(x + (w.face || 1) * P * 2, y - P * 2, 1);
+      drawPotion(x + WORKER / 2 - P * 1.5, y - P * 5, 1, tonicColor(w.carryTonic));
 
     if (!w.carry && !w.hasCore) continue;
 

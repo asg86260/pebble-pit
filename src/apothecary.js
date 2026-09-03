@@ -53,13 +53,18 @@ export const strengthMult = () => ease(STRENGTH0, STRENGTH5, S.strengthLevel) / 
 // The stew is the general buff, so its reagent is dust, the shared coin; the two
 // targeted tonics take shard, the coin of neither the crew nor the crit they
 // lift. Each effect is a lever the game already has.
+// `color` is the liquid in the vial -- each tonic its own, so the stock on the
+// shelf, the vial a stirrer carries, and the potion floating over a buffed body
+// all read as the same brew by colour. The one place besides the fire the yard
+// takes colour, and here it carries meaning (which tonic), which is what colour
+// is for. See `tonicColor`, drawPotion and the stock rack in render.js.
 export const TONICS = [
   { key: 'stew',   name: 'a hearty stew',   reagent: 'dust',  kind: 'work',
-    base: TONIC_STEW_WORK,   unit: 'work' },
+    base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f' },   // green
   { key: 'brace',  name: 'a bracing tonic', reagent: 'shard', kind: 'crit',
-    base: TONIC_BRACE_CRIT,  unit: 'crit' },
+    base: TONIC_BRACE_CRIT,  unit: 'crit',  color: '#a05fd6' },   // purple
   { key: 'strong', name: 'a strong brew',   reagent: 'shard', kind: 'carry',
-    base: TONIC_STRONG_CARRY, unit: 'carry' }
+    base: TONIC_STRONG_CARRY, unit: 'carry', color: '#4a86c7' }   // blue
 ];
 export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 
@@ -99,6 +104,10 @@ export const doseLive = w => !!(w && w.dose && w.dose.until > now());
 export const doseOf = w => (doseLive(w) ? w.dose : null);
 export const doseTonic = w => { const d = doseOf(w); return d ? tonicOf(d.tonic) : null; };
 export const doseName = w => { const t = doseTonic(w); return t ? t.name : ''; };
+// The colour of a tonic's liquid, and of the dose a body wears -- for the vial
+// on the shelf, in a stirrer's hands, and over a buffed body's head.
+export const tonicColor = key => { const t = tonicOf(key); return t ? t.color : '#fff'; };
+export const doseColor = w => { const t = doseTonic(w); return t ? t.color : '#fff'; };
 export const doseLeftMs = w => { const d = doseOf(w); return d ? Math.max(0, d.until - now()) : 0; };
 // How much of the dose is left, 0..1 -- the mark on the body stands in this many
 // of its cells, so it fades as the dose wears off.
@@ -132,7 +141,7 @@ export function newStirrer() {
 // the left edge is clear of it and reaching in. `inMix` counts the bodies
 // actually at a pot brewing -- not `S.stirrers`, which counts everybody the
 // building has, one of whom may be crossing the yard with a dose in hand.
-export const apothecaryDoor = () => apothecary.x + P * 3;
+export const apothecaryDoor = () => apothecary.x + P * 8;
 const stirrers = () => S.workers.filter(w => w.type === 'stirrer');
 export const atPot = w => w.type === 'stirrer' && w.goal === 'in';
 export const inMix = () => S.workers.filter(atPot).length;
@@ -190,7 +199,7 @@ export function stepStirrer(w) {
     if (now() >= (w.stirAt || 0)) { w.lunge = 1; w.stirAt = now() + 520 + rand() * 260; }
     if (idx >= 0 && idx < S.apothPots && (S.doseHold[idx] || 0) > 0) {
       const target = pickTarget(w);
-      if (target) { S.doseHold[idx]--; w.holding = 1; w.dealTo = target; w.goal = 'out'; }
+      if (target) { S.doseHold[idx]--; w.holding = 1; w.carryTonic = S.potTonic; w.dealTo = target; w.goal = 'out'; }
     }
     return;
   }

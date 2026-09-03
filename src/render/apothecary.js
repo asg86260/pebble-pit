@@ -7,7 +7,7 @@ import { P } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
-import { boiling, brewFrac } from '../apothecary.js';
+import { boiling, brewFrac, TONICS } from '../apothecary.js';
 import { ctx, withRise, risingPlace, bar } from '../render.js';
 
 // The apothecary: a cauldron on a fire, a bed of herbs beside it, and steam off
@@ -51,7 +51,29 @@ export function drawApothecary() {
     // is empty. The fire, the bubbles and the steam are animation and stay code
     // below; everything static about the pot -- rim, belly, legs, handle -- is in
     // the grid, so the shape is yours to draw and not mine to guess.
-    const potX = x + P * 5;                 // the pot sits right, leaving the left for the stirrer
+    // The stock shelf on the far left: the tonics you can brew, each a little
+    // vial of its own colour standing on a shelf, so what is on offer reads from
+    // across the yard. A post holds the shelf up; the vials sit on it in the order
+    // TONICS lists them.
+    const shelfY = g - P * 5;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + P, shelfY, P * (TONICS.length * 2 + 1), P);   // the shelf
+    ctx.fillRect(x + P, shelfY + P, P, P * 3);                     // a post under its left end
+    for (let i = 0; i < TONICS.length; i++) {
+      const vx = x + P * (2 + i * 2);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(vx, shelfY - P * 3, P, P);                      // cork
+      ctx.fillStyle = TONICS[i].color;
+      ctx.fillRect(vx, shelfY - P * 2, P, P * 2);                  // the coloured brew
+    }
+    ctx.fillStyle = '#000';
+
+    // The cauldron is a *picture*, not arithmetic -- draw it by retyping the grid
+    // in CAULDRON (above this function). `#` is iron, `o` is the pale brew, `.`
+    // is empty. The fire, the bubbles and the steam are animation and stay code
+    // below; everything static about the pot -- rim, belly, legs, handle -- is in
+    // the grid, so the shape is yours to draw and not mine to guess.
+    const potX = x + P * 10;                // pot on the right; shelf and stirrer to its left
     const topY = g - CAULDRON.length * P;
     drawSprite(ctx, CAULDRON, potX, topY);
 
@@ -78,12 +100,33 @@ export function drawApothecary() {
       // up the belly and no higher -- the fire licks the pot, it does not shoot
       // past the rim.
       const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
-      const tongues = [[potX + P * 4, 2], [potX + P * 6, 4], [potX + P * 8, 2]];
-      for (let i = 0; i < tongues.length; i++) {
-        const [fx, h] = tongues[i];
-        const hgt = h + (Math.sin(t / 130 + i * 2) > 0.2 ? 1 : 0);   // the tip leaps
-        for (let hy = 0; hy < hgt; hy++) {
-          ctx.fillStyle = hy === 0 ? HOT : hy < hgt - 1 ? MID : TIP;
+      // The fire is ONE body of flame, not three fingers: a continuous bed of
+      // cells across the foot of the pot whose top edge is jagged and living.
+      // Driven by value noise rather than clean sines now, so the crests rise and
+      // fall at random heights and the top never falls into a repeating ripple.
+      // The noise is smooth -- hashed samples eased between -- so it stays lively
+      // without the per-frame strobe that raw randomness gives. A gentle centre
+      // hump keeps it a touch taller in the middle; colour runs hot yellow at the
+      // base through orange to a red top edge; capped low, below the rim.
+      const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+      const vnoise = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
+                            return hash(i) + (hash(i + 1) - hash(i)) * u; };   // 0..1, smooth
+      const bedL = potX + P * 3, cols = 7, mid = (cols - 1) / 2;
+      for (let c = 0; c < cols; c++) {
+        const hump = (1 - Math.abs(c - mid) / mid) * 0.9;    // lowered centre hump
+        // Each column gets its OWN noise stream that only moves in time -- the big
+        // per-column offsets (17.3, 11.9) put neighbours far apart in noise space
+        // so they are uncorrelated and flicker independently in place. The old
+        // small offsets made neighbours nearly the same value one step apart,
+        // which is a travelling wave -- the fire looked like it was all sliding
+        // left. Now it just rises and falls where it stands.
+        const n = vnoise(c * 17.3 + t / 130) * 2.4           // this column's own flicker
+                + vnoise(c * 11.9 + 40 + t / 260) * 1.2;     // a slower second stream
+        const h = Math.max(0, Math.min(5, Math.round(0.4 + hump + n)));
+        const fx = bedL + c * P;
+        for (let hy = 0; hy < h; hy++) {
+          const frac = hy / Math.max(1, h);
+          ctx.fillStyle = frac < 0.34 ? HOT : frac < 0.72 ? MID : TIP;
           ctx.fillRect(fx, g - P - hy * P, P, P);
         }
       }
@@ -116,15 +159,19 @@ export function drawApothecary() {
         const ph = (t / 560 + bcol * 0.21) % 1;
         if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
       }
-      // Steam: wisps off the pool, climbing and fading out near the top.
-      for (let k = 0; k < 4; k++) {
-        const ph = (t / 900 + k * 0.25) % 1;
-        if (ph > 0.85) continue;
-        const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.5);
-        const sx = potMid + (k - 1.5) * P + sway * P;
-        const sy = brewY - P * 2 - Math.round(ph * 6) * P;
+      // Steam: grey wisps off the pool -- more of them than before, spread wider
+      // and climbing higher, fading out near the top. Grey, not black, so it
+      // reads as vapour rising rather than soot.
+      ctx.fillStyle = '#9a9a9a';
+      for (let k = 0; k < 9; k++) {
+        const ph = (t / 850 + k * 0.11) % 1;
+        if (ph > 0.9) continue;
+        const sway = Math.round(Math.sin(t / 760 + k * 1.4) * 2);
+        const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
+        const sy = brewY - P * 2 - Math.round(ph * 8) * P;
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
+      ctx.fillStyle = '#000';
     }
   });
 
@@ -133,7 +180,7 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 5 + Math.round(CAULDRON[0].length / 2) * P;
-    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
+    const potMid = apothecary.x + P * 10 + Math.round(CAULDRON[0].length / 2) * P;
+    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 6) * P, brewFrac());
   }
 }
