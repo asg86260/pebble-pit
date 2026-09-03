@@ -23,18 +23,16 @@ import { ctx, withRise, risingPlace, bar } from '../render.js';
 // it has a true centre for the steam, and if you move the row the brew sits on,
 // update CAULDRON_BREW_ROW to match (0 is the top row).
 export const CAULDRON = [
-  '.....###.....',
-  '....#...#....',
   '#############',
-  '#ooooooooooo#',
-  '..#########..',
   '.###########.',
+  '#############',
+  '#############',
+  '#############',
+    '#############',
+  '#############',
   '.###########.',
   '..#########..',
-  '...#######...',
-  '....#####....',
-  '...#..#..#...',
-  '...#..#..#...',
+  '..#.......#..',
 ];
 // The row of CAULDRON the brew sits on -- where the bubbles pop and the steam
 // lifts off. Counts from the top, 0-based.
@@ -53,7 +51,7 @@ export function drawApothecary() {
     // is empty. The fire, the bubbles and the steam are animation and stay code
     // below; everything static about the pot -- rim, belly, legs, handle -- is in
     // the grid, so the shape is yours to draw and not mine to guess.
-    const potX = x + P * 2;
+    const potX = x + P * 5;                 // the pot sits right, leaving the left for the stirrer
     const topY = g - CAULDRON.length * P;
     drawSprite(ctx, CAULDRON, potX, topY);
 
@@ -64,19 +62,54 @@ export function drawApothecary() {
     const potMid = potX + Math.round(CAULDRON[0].length / 2) * P;
     const brewY = topY + CAULDRON_BREW_ROW * P;
 
-    // The fire beneath: flames licking up between the legs, uneven and flickering
-    // on the clock so it is a live fire and not a fence. The cauldron is always
-    // over its fire; the steam and the bubbles are the extra that say a batch is
-    // on the boil. See `boiling`.
+    // The fire, the bubbles and the steam are all drawn only while a batch is on
+    // the boil -- so an idle cauldron is *exactly* the CAULDRON grid, nothing
+    // added underneath it. The fire used to be drawn always, and its flames stood
+    // up at the foot like a second set of legs whether or not the grid had any;
+    // now the pot you draw is the pot you get, and the fire is part of what says
+    // it is being worked. See `boiling`.
     const t = now();
-    const flames = [[potX + P * 4, 2], [potX + P * 5, 3], [potX + P * 7, 3], [potX + P * 8, 2]];
-    for (let i = 0; i < flames.length; i++) {
-      const [fx, base] = flames[i];
-      const flick = (Math.sin(t / 220 + i * 1.7) > 0.4) ? 1 : 0;   // a tongue leaps
-      for (let hy = 0; hy < base + flick; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
-    }
-
     if (boiling()) {
+      // The fire beneath: a few coloured flame *tongues*, not scattered flecks --
+      // the one place the yard breaks its black-and-white (like the sparks and the
+      // star). Each tongue is a short run of cells that burns hot yellow at its
+      // foot, through orange, to a red tip that leaps on the clock; the middle one
+      // stands tallest, so the shape reads as a flame. They lick only a little way
+      // up the belly and no higher -- the fire licks the pot, it does not shoot
+      // past the rim.
+      const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
+      const tongues = [[potX + P * 4, 2], [potX + P * 6, 4], [potX + P * 8, 2]];
+      for (let i = 0; i < tongues.length; i++) {
+        const [fx, h] = tongues[i];
+        const hgt = h + (Math.sin(t / 130 + i * 2) > 0.2 ? 1 : 0);   // the tip leaps
+        for (let hy = 0; hy < hgt; hy++) {
+          ctx.fillStyle = hy === 0 ? HOT : hy < hgt - 1 ? MID : TIP;
+          ctx.fillRect(fx, g - P - hy * P, P, P);
+        }
+      }
+      // Embers: a stray spark or two lifting off the fire and winking out, kept
+      // low against the belly so they read as the fire's own sparks.
+      for (let e = 0; e < 3; e++) {
+        const ph = (t / 520 + e * 0.33) % 1;
+        if (ph > 0.6) continue;
+        const ex = potX + P * (4 + e * 2) + Math.round(Math.sin(t / 200 + e)) * P;
+        const ey = g - P * 4 - Math.round(ph * 3) * P;
+        ctx.fillStyle = (e % 2) ? MID : TIP;
+        ctx.fillRect(Math.round(ex / P) * P, ey, P, P);
+      }
+      // A wisp of smoke off the fire -- a mote or two lifting up the belly and
+      // thinning out, kept below the rim so it stays part of the fire rather than
+      // a column climbing the sky.
+      ctx.fillStyle = '#3a3a3a';
+      for (let s = 0; s < 2; s++) {
+        const ph = (t / 900 + s * 0.5) % 1;
+        if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;
+        const sway = Math.round(Math.sin(t / 700 + s * 1.3));
+        const sx = potX + P * (5 + s * 3) + sway * P;
+        const sy = Math.max(topY + P, g - P * 3 - Math.round(ph * 5) * P);
+        ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
+      }
+      ctx.fillStyle = '#000';
       // Bubbles rising through the brew and breaking its surface.
       for (let bcol = 0; bcol < 5; bcol++) {
         const bx = potX + P * 3 + bcol * P;
@@ -100,7 +133,7 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 2 + Math.round(CAULDRON[0].length / 2) * P;
+    const potMid = apothecary.x + P * 5 + Math.round(CAULDRON[0].length / 2) * P;
     bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
   }
 }

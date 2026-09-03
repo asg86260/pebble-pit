@@ -486,6 +486,7 @@ const LOOK = {
   janitor:  { lunge:  0, lean: 1 },
   labber:   { lunge:  1 },
   farmhand: { lunge:  1 },
+  stirrer:  { lunge:  1, lean: 1 },   // stoops and leans toward the pot as it stirs
   quarrier: { lunge:  1, load: 'shard' },
   wizard:   { lunge: -1 },
   miner:    { lunge:  0 },
@@ -525,8 +526,11 @@ function drawPotion(x, topY, fill = 1) {
 
 export function drawWorkers() {
   for (const w of S.workers) {
-    // out of sight: in the lab, down the quarry, in the outhouse, or home
-    if (underground(w) || indoors(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
+    // out of sight: in the lab, down the quarry, in the outhouse, or home. The
+    // stirrer is NOT hidden -- it stands at the pot's left and stirs in plain
+    // sight, so `atPot` is not a reason to skip it here (it still gates the
+    // brew clock and the count in apothecary.js).
+    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
 
     const look = LOOK[w.type] || PLAIN;
     const throwOn = w.lunge || 0;

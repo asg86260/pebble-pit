@@ -22,6 +22,7 @@ import { P, RUNGS,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER } from './config.js';
 import { S, apothecary } from './state.js';
 import { now, frames } from './clock.js';
+import { rand } from './rng.js';
 import { walkY } from './world.js';
 import { JOB_OF } from './kit.js';
 import { rebalance, rungCost, commutePace } from './upgrades.js';
@@ -125,10 +126,13 @@ export function newStirrer() {
   return { type: 'stirrer', goal: 'to', x: apothecary.x, y: 0 };
 }
 
-// The door, and who is through it. `inMix` counts only the bodies actually at a
-// pot brewing -- not `S.stirrers`, which counts everybody the building has been
-// given, one of whom may be crossing the yard with a dose in hand.
-export const apothecaryDoor = () => apothecary.x + apothecary.w * 0.5;
+// Where the stirrer stands to work: at the LEFT of the pot, not in it. It stands
+// there and stirs, in plain sight, the way a farmhand stands at a plot -- the
+// pot is drawn from apothecary.x + 5 cells, so a body a couple of cells in from
+// the left edge is clear of it and reaching in. `inMix` counts the bodies
+// actually at a pot brewing -- not `S.stirrers`, which counts everybody the
+// building has, one of whom may be crossing the yard with a dose in hand.
+export const apothecaryDoor = () => apothecary.x + P * 3;
 const stirrers = () => S.workers.filter(w => w.type === 'stirrer');
 export const atPot = w => w.type === 'stirrer' && w.goal === 'in';
 export const inMix = () => S.workers.filter(atPot).length;
@@ -179,6 +183,11 @@ export function stepStirrer(w) {
   // out -- which takes it off the pot, so brewing pauses while it is dealing,
   // same body, same pot.
   if (w.goal === 'in') {
+    // Stood at the pot's left, facing it and stirring: a lean toward the pot on
+    // its own slow rhythm, the same `lunge` a farmhand stoops with, so the body
+    // is plainly working the pot rather than standing idle beside it.
+    w.face = 1;
+    if (now() >= (w.stirAt || 0)) { w.lunge = 1; w.stirAt = now() + 520 + rand() * 260; }
     if (idx >= 0 && idx < S.apothPots && (S.doseHold[idx] || 0) > 0) {
       const target = pickTarget(w);
       if (target) { S.doseHold[idx]--; w.holding = 1; w.dealTo = target; w.goal = 'out'; }
