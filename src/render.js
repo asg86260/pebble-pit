@@ -1050,20 +1050,22 @@ export function drawApothecary() {
       // past the rim.
       const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
       // The fire is ONE body of flame, not three fingers: a continuous bed of
-      // cells across the foot of the pot whose top edge is jagged and moving. Each
-      // column's height is a sum of sines whose crests *travel* sideways across
-      // the bed over time (`- c * 0.9`), so the flame's silhouette ripples and the
-      // peaks drift the way fire does -- no single tongue swaying, no per-frame
-      // strobe. A centre hump makes it stand tallest in the middle; colour runs
-      // hot yellow at the base through orange to a red top edge. Capped low so it
-      // licks the belly and stays below the rim.
-      const bedL = potX + P * 3, cols = 7;
+      // cells across the foot of the pot whose top edge is jagged and living.
+      // Driven by value noise rather than clean sines now, so the crests rise and
+      // fall at random heights and the top never falls into a repeating ripple.
+      // The noise is smooth -- hashed samples eased between -- so it stays lively
+      // without the per-frame strobe that raw randomness gives. A gentle centre
+      // hump keeps it a touch taller in the middle; colour runs hot yellow at the
+      // base through orange to a red top edge; capped low, below the rim.
+      const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+      const vnoise = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
+                            return hash(i) + (hash(i + 1) - hash(i)) * u; };   // 0..1, smooth
+      const bedL = potX + P * 3, cols = 7, mid = (cols - 1) / 2;
       for (let c = 0; c < cols; c++) {
-        const hump = (1 - Math.abs(c - (cols - 1) / 2) / ((cols - 1) / 2)) * 1.6;
-        const wave = Math.sin(t / 300 - c * 0.9) * 1.3       // a crest travelling across
-                   + Math.sin(t / 125 + c * 1.7) * 0.9       // a faster ripple
-                   + Math.sin(t / 47 + c * 3.1) * 0.5;       // the flicker
-        const h = Math.max(0, Math.min(5, Math.round(1.4 + hump + wave)));
+        const hump = (1 - Math.abs(c - mid) / mid) * 0.9;    // lowered centre hump
+        const n = vnoise(c * 0.8 + t / 130) * 2.4            // the main rise and fall, random
+                + vnoise(c * 1.9 - t / 260) * 1.2;           // a slower octave, drifting the other way
+        const h = Math.max(0, Math.min(5, Math.round(0.4 + hump + n)));
         const fx = bedL + c * P;
         for (let hy = 0; hy < h; hy++) {
           const frac = hy / Math.max(1, h);
