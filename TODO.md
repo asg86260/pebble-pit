@@ -428,3 +428,27 @@ holds everything` in DESIGN.md, including the two counter/pile disagreements it
 turned up on the way (the red was never reconciled into the pile at all, and
 `grant` moved four of the five counters without the cells) and the new verify
 rule 8 that would have caught both.
+
+## A miner can end up inside the hill, now that the yard never stops
+
+`test/endgame.test.mjs`, "the ram does not strike a rock that is still coming
+down" — fails with *a body has been buried in the way it is standing on: kit
+(miner) at 3695,1911 is 39px into the rock and has been under it for 61 frames*.
+Caught by `verify.js`, not by the group's own assertions.
+
+Bisected (2026-09-02): it is the pit collapse, and nothing else. It passes at
+`e0f4c43`; it fails on the collapse alone with the crate height set to zero and
+with `pitFree` put back to the old arithmetic, so neither of those is the cause.
+
+What is almost certainly happening: this fixture used to STOP once its hole
+filled — a full hole stopped the yard, the ram stood down, and the miner stood
+still. The hole cannot stop anything now, so the ram goes on eating the rock out
+from under a body that neither falls nor steps clear. That points at the falling
+rule rather than at the pit: `fall` in crew.js exempts a body whose feet are on a
+climb (`scaleAt`) and only drops one with more than five cells of nothing under
+it, and a rock being mined away underneath is neither.
+
+So the likely fix is in how a body leaves ground that is taken out from under it,
+not in the hole. Worth checking whether the same thing was always possible with
+the ram on a yard that had not filled its hole — if so this is an old hole in the
+rule that the collapse merely made reachable.
