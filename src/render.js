@@ -1049,21 +1049,24 @@ export function drawApothecary() {
       // up the belly and no higher -- the fire licks the pot, it does not shoot
       // past the rim.
       const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
-      // The flame reshapes many times a second so it dances rather than standing
-      // in three fixed fingers. `flick` is a cheap hash -- a different value for
-      // each column every `tick` -- so each column of the fire leaps, drops, and
-      // sometimes goes out for a beat, all on its own. Bases lean taller toward
-      // the middle; the per-tick jump is what makes it fire.
-      const flick = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
-      const tick = Math.floor(t / 70);                       // ~14 reshapes a second
-      const bases = [1, 2, 2, 3, 2, 2, 1];                   // the fire's rough envelope
-      for (let i = 0; i < bases.length; i++) {
-        const fx = potX + P * (3 + i);
-        const jump = Math.floor(flick(tick * 1.7 + i * 5.3) * 4);   // 0..3, new each tick
-        const hgt = Math.min(5, bases[i] + jump - 1);        // can drop to nothing or leap high
-        for (let hy = 0; hy < hgt; hy++) {
-          ctx.fillStyle = hy === 0 ? HOT : hy < hgt - 1 ? MID : TIP;
-          ctx.fillRect(fx, g - P - hy * P, P, P);
+      // A few distinct flame tongues, each a thin lick that *waves* -- its height
+      // rides slow sines and its tip curls sideways on another, all continuous, so
+      // the fire flows instead of strobing (the old per-frame randomness is gone).
+      // Thin with a gap between them and tapering to a single-cell tip, so it
+      // reads as separate flames rather than one lump. A wider hot foot roots each
+      // one. Height is capped so it licks the belly and stays below the rim.
+      const tongues = [[potX + P * 4, 3, 0], [potX + P * 6, 4, 1.7], [potX + P * 8, 3, 3.4]];
+      for (const [cx, baseH, ph] of tongues) {
+        const h = Math.max(1, Math.min(5,
+          Math.round(baseH + Math.sin(t / 260 + ph) * 1.6 + Math.sin(t / 95 + ph) * 0.6)));
+        ctx.fillStyle = HOT;                                 // the hot foot, a cell each side
+        ctx.fillRect(cx - P, g - P, P, P);
+        ctx.fillRect(cx + P, g - P, P, P);
+        for (let hy = 0; hy < h; hy++) {
+          const frac = h === 1 ? 0 : hy / (h - 1);
+          const lean = Math.round(Math.sin(t / 170 + ph) * frac * 1.8);   // the tip curls over
+          ctx.fillStyle = frac < 0.34 ? HOT : frac < 0.8 ? MID : TIP;
+          ctx.fillRect(cx + lean * P, g - P - hy * P, P, P);
         }
       }
       // Embers: a stray spark or two lifting off the fire and winking out, kept
