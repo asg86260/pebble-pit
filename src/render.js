@@ -1025,14 +1025,12 @@ export function drawApothecary() {
     ctx.fillRect(potX + P, rimY + P, potW - P * 2, P);
     ctx.fillStyle = '#000';
 
-    // The fire under the belly, in the three cells between the legs -- licks of
-    // uneven height so it reads as a flame and not a bar. Always laid; only the
-    // steam says whether the pot is being worked.
-    const licks = [1, 2, 1];
-    for (let f = 0; f < 3; f++) {
-      const fx = potX + P + f * P;
-      for (let hy = 0; hy < licks[f]; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
-    }
+    // The fire under the belly: two licks with a cell of gap between them, so it
+    // reads as flame and not the solid foot three adjacent cells made. Uneven
+    // height for a little flicker. Always laid; only the steam says whether the
+    // pot is being worked.
+    for (const [fx, ht] of [[potX + P, 2], [potX + P * 3, 3]])
+      for (let hy = 0; hy < ht; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
 
     // Steam, when a body is stirring it. Two short wisps off the rim on their own
     // slow clock, one cell at a time, thinning as they climb -- the fade is the
