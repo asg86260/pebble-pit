@@ -3985,15 +3985,78 @@ tonic, and these rungs make every tonic you know worth more at once. So the lab
 widens the list and the apothecary deepens it, which is the same division of
 labour the lab and the stations already have.
 
+### The numbers (a starting point, to tune on a real farm)
+
+All of these are sized off the one measurement that matters: **the farm caps at
+~86 spore a minute (~12 per hand, linear below that), and the apothecary opens
+early, when the farm is a few hands and cutting 12--40 a minute.** So the first
+pot has to be affordable for a small farm and a second one has to bite.
+
+**The first three tonics.** Plain, mid-sized, and each a lever the game already
+has:
+
+| tonic | effect on a buffed body | the one-off it is for |
+|---|---|---|
+| **a hearty stew** | works +25% faster (its own main action, whatever the body does) | the everyday standing order |
+| **a bracing tonic** | crit chance +8 points | a burst before a rich boulder |
+| **a strong brew** | carries +50% | clearing a backed-up pile |
+
++25% is the lab's own `STEP`, so it reads as one familiar size. The crit tonic
+is the reason crits are worth building first: a standing order on a rate that
+does nothing is a standing order nobody sets.
+
+**One pot, at level 0:**
+
+| dial | value | why |
+|---|---|---|
+| cost a brew | 5 spore | — |
+| brew time | 30 s | → **drain = 10 spore/min** to keep one pot lit |
+| buff length | 60 s | — |
+| doses a brew | 3 | → 2 brews/min × 3 = 6 doses/min |
+| bodies held buffed | ~6 per pot | 6 doses/min × 60 s length = 6 bodies always up |
+
+**The arc that falls out of it.** A brand-new apothecary on a 2-hand farm
+(~12--24/min) can just keep one pot lit -- a real squeeze, which is the right
+feeling at the moment it opens. A growing farm keeps one comfortably and a second
+pot (another 10/min *and* another stirrer body) is the stretch. A mature farm at
+86/min is never crop-limited on pots at all -- and that is intended, because by
+then the limit is **bodies**: every pot needs a stirrer, so "how many pots" is a
+question asked of the crew, not the crop. Early it is crop-gated, late it is
+crew-gated, and the handover is the farm growing.
+
+**Is a tonic worth a body?** A stirrer is a body not cutting -- about 12
+greens/min given up. A +25% stew held on ~6 bodies is worth about +1.5
+bodies-worth of work, minus the one stirring, minus 10/min of crop: marginal the
+day it opens and a clear win once the ladders widen the round. That is the
+decision doing its job.
+
+**The five ladders, level 0 → maxed (5 rungs, `rungCost`, priced in spore and
+dust like every tier-two row):**
+
+| rung | 0 | 5 |
+|---|---|---|
+| brew speed | 30 s | 15 s (drain doubles, coverage doubles) |
+| buff length | 60 s | 180 s |
+| buff strength | +25% | +60% |
+| doses a brew | 3 | 8 |
+| bodies a brew | (see below) | — |
+
+Maxed, a single pot pours: 4 brews/min × 8 doses × 180 s length is far more
+coverage than one pot has bodies to spend it on, which is the endgame pushing you
+toward a second pot and its second stirrer.
+
 ### Open
 
-- **What the tonics are.** The first ones want to be plain and mid-sized -- the
-  crew walk quicker, the swing bites harder, a crit comes up more often -- and
-  the crit one is the strongest argument for building crits first, since a
-  standing order on a rate that does nothing is a standing order nobody sets.
-- **What a tonic costs an hour**, which is the whole of the balance and wants
-  measuring against a real farm rather than picking.
-- **Whether a second pot is a second tonic or a stronger one.** A second tonic is
-  the more interesting board and the harder sum.
-- **Whether `doses a brew` and `bodies a brew` are one rung or two**, which is
-  really the question of whether a body can hold more than one dose at a time.
+- **`doses a brew` vs `bodies a brew`.** Held as two rungs above but they are the
+  same sentence unless a body can hold more than one dose at once. If a dose is
+  one-body-one-buff, fold them into a single rung; keep two only if a body can
+  stack. Decide with the brewing model.
+- **A second pot: a second tonic up, or a stronger one?** A second *tonic* (two
+  different buffs running at once, two preferred stations) is the more
+  interesting board and the harder sum. Recommend a second tonic.
+- **The apothecary's own rung prices.** The first-rung dust/spore figures follow
+  the house `rungCost` curve; the exact first values want the same measure-on-a-
+  save treatment `TIER_COIN`'s thresholds do, not a pick here.
+- **Star-tier tonics.** The later recipes that cost something off a star are left
+  for when the tower and the star economy are settled -- named in the arc, not
+  numbered here.
