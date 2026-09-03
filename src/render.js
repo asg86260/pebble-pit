@@ -10,7 +10,7 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         RAY_N, RAY_MIN, RAY_MAX, RAY_BEAT, CORE_FLICK, SUMMON_FLASH, MAGIC_TONES, DRAUGHT_INK, BROLLY_W, BROLLY_STICK,
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT, MAX_DEPTH } from './config.js';
 import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse, rift } from './state.js';
-import { boiling, atPot, doseFrac, brewFrac } from './apothecary.js';
+import { boiling, atPot, doseFrac, brewFrac, doseColor, tonicColor, TONICS } from './apothecary.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
 import { PILE_HOLDS, CRATE_H, CRATED } from './config.js';
 import { SITES, workAt, worksAt, siteBox, progressAt, progressOf, busyAt, rowFor, OPENS_PLACE } from './works.js';
@@ -1022,7 +1022,29 @@ export function drawApothecary() {
     // is empty. The fire, the bubbles and the steam are animation and stay code
     // below; everything static about the pot -- rim, belly, legs, handle -- is in
     // the grid, so the shape is yours to draw and not mine to guess.
-    const potX = x + P * 5;                 // the pot sits right, leaving the left for the stirrer
+    // The stock shelf on the far left: the tonics you can brew, each a little
+    // vial of its own colour standing on a shelf, so what is on offer reads from
+    // across the yard. A post holds the shelf up; the vials sit on it in the order
+    // TONICS lists them.
+    const shelfY = g - P * 5;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x + P, shelfY, P * (TONICS.length * 2 + 1), P);   // the shelf
+    ctx.fillRect(x + P, shelfY + P, P, P * 3);                     // a post under its left end
+    for (let i = 0; i < TONICS.length; i++) {
+      const vx = x + P * (2 + i * 2);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(vx, shelfY - P * 3, P, P);                      // cork
+      ctx.fillStyle = TONICS[i].color;
+      ctx.fillRect(vx, shelfY - P * 2, P, P * 2);                  // the coloured brew
+    }
+    ctx.fillStyle = '#000';
+
+    // The cauldron is a *picture*, not arithmetic -- draw it by retyping the grid
+    // in CAULDRON (above this function). `#` is iron, `o` is the pale brew, `.`
+    // is empty. The fire, the bubbles and the steam are animation and stay code
+    // below; everything static about the pot -- rim, belly, legs, handle -- is in
+    // the grid, so the shape is yours to draw and not mine to guess.
+    const potX = x + P * 10;                // pot on the right; shelf and stirrer to its left
     const topY = g - CAULDRON.length * P;
     drawSprite(ctx, CAULDRON, potX, topY);
 
@@ -1108,15 +1130,19 @@ export function drawApothecary() {
         const ph = (t / 560 + bcol * 0.21) % 1;
         if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
       }
-      // Steam: wisps off the pool, climbing and fading out near the top.
-      for (let k = 0; k < 4; k++) {
-        const ph = (t / 900 + k * 0.25) % 1;
-        if (ph > 0.85) continue;
-        const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.5);
-        const sx = potMid + (k - 1.5) * P + sway * P;
-        const sy = brewY - P * 2 - Math.round(ph * 6) * P;
+      // Steam: grey wisps off the pool -- more of them than before, spread wider
+      // and climbing higher, fading out near the top. Grey, not black, so it
+      // reads as vapour rising rather than soot.
+      ctx.fillStyle = '#9a9a9a';
+      for (let k = 0; k < 9; k++) {
+        const ph = (t / 850 + k * 0.11) % 1;
+        if (ph > 0.9) continue;
+        const sway = Math.round(Math.sin(t / 760 + k * 1.4) * 2);
+        const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
+        const sy = brewY - P * 2 - Math.round(ph * 8) * P;
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
+      ctx.fillStyle = '#000';
     }
   });
 
@@ -1125,8 +1151,8 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 5 + Math.round(CAULDRON[0].length / 2) * P;
-    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
+    const potMid = apothecary.x + P * 10 + Math.round(CAULDRON[0].length / 2) * P;
+    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 6) * P, brewFrac());
   }
 }
 
@@ -3532,17 +3558,22 @@ const LEAN = 0.5;
 // filling the body from the bottom by `fill` (0..1). Black glass, a white line
 // for the surface of what is in it -- no glow, on the grid, the yard's language.
 // `x` is the left of the three-wide body; `topY` is the neck's row.
-function drawPotion(x, topY, fill = 1) {
+// A little vial: a black cork over glass sides with a column of coloured liquid
+// between them. `color` is the tonic's own (see TONICS); `fill` is how full it
+// is, the liquid rising from the foot, so a fresh dose is a full vial and a
+// spent one nearly empty.
+function drawPotion(x, topY, fill = 1, color = '#fff') {
   x = Math.round(x / P) * P;
   topY = Math.round(topY / P) * P;
   ctx.fillStyle = '#000';
-  ctx.fillRect(x + P, topY, P, P);                 // the cork/neck, centered
-  ctx.fillRect(x, topY + P, P * 3, P * 3);         // the body, three wide and tall
-  // The liquid: a white surface line that sits lower as the flask empties, so a
-  // full dose is a full bottle and a spent one is nearly empty.
-  ctx.fillStyle = '#fff';
-  const drop = Math.round((1 - Math.max(0, Math.min(1, fill))) * 2);   // 0..2 cells down
-  ctx.fillRect(x + P, topY + P + drop * P, P, P);                      // surface within the body
+  ctx.fillRect(x + P, topY, P, P);                 // the cork, centered on the neck
+  ctx.fillRect(x, topY + P, P, P * 3);             // the left glass
+  ctx.fillRect(x + P * 2, topY + P, P, P * 3);     // the right glass
+  ctx.fillRect(x + P, topY + P * 3, P, P);         // the rounded foot
+  // the liquid, filling the middle column from the foot up by `fill`
+  const cells = Math.max(1, Math.round(Math.max(0, Math.min(1, fill)) * 2));   // 1..2 cells
+  ctx.fillStyle = color;
+  for (let k = 0; k < cells; k++) ctx.fillRect(x + P, topY + P * 2 - k * P, P, P);
   ctx.fillStyle = '#000';
 }
 
@@ -3579,13 +3610,13 @@ export function drawWorkers() {
     // flask empties -- which is the readout being a picture, not a lamp. See
     // `doseFrac` in apothecary.js.
     const frac = doseFrac(w);
-    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac);
+    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac, doseColor(w));
 
-    // A stirrer with a dose in hand carries the flask in front of it, so the
-    // round is a body plainly walking a potion out to somebody -- not a number
-    // arriving on a worker across the yard. See `stepStirrer`.
+    // A stirrer carrying a dose holds the vial over its head, the way a hauler
+    // carries dust -- coloured by which tonic it is walking out, so you can see
+    // what is crossing the yard. See `stepStirrer` (`w.carryTonic`).
     if (w.type === 'stirrer' && w.holding)
-      drawPotion(x + (w.face || 1) * P * 2, y - P * 2, 1);
+      drawPotion(x + WORKER / 2 - P * 1.5, y - P * 5, 1, tonicColor(w.carryTonic));
 
     if (!w.carry && !w.hasCore) continue;
 
