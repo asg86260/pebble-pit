@@ -260,7 +260,7 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
                    'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
-                   'harnessLevel', 'bootsLevel', 'fanLevel']) {
+                   'harnessLevel', 'bootsLevel', 'fanLevel', 'riftLevel']) {
     if (k in o) S[k] = o[k];
   }
   resite(); rebalance(); syncWorkers();

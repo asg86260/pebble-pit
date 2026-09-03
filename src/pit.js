@@ -9,9 +9,9 @@
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
         findKind, someFind } from './config.js';
-import { S, pit } from './state.js';
+import { S, pit, rift } from './state.js';
 import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
-         surfaceY, colOf } from './grid.js';
+         surfaceY, colOf, topRow } from './grid.js';
 import { SETTLE_BUDGET } from './config.js';
 import { makePainter } from './painter.js';
 import { buildShop } from './shop.js';
@@ -341,34 +341,149 @@ const pileTarget = () => Math.min(inHole(), pitCapacity());
 // `takes` says which cells this lift is about. Paying in dust lifts dust, so
 // that is the default; the rift takes whatever is on top, which is what makes it
 // a hole rather than a sieve -- see `swallow`.
-function lift(n, leaving, takes = isDust, took = null) {
+//
+// `near` is the other thing the two destinations differ in, and it is what makes
+// a rift look like a rift. A purchase comes off the top of the pile *anywhere* --
+// that is the whole picture of paying, a stream off the heap -- so it walks the
+// plot row by row and takes what it finds. A hole cannot eat that way: it would
+// wear six hundred columns down evenly and flat while the disc hung over one of
+// them, pulling nothing. Given a point, the walk goes nearest-that-point first
+// instead; see `nearestSurface`.
+function lift(n, leaving, takes = isDust, took = null, near = null) {
   let left = n;
-  for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
-    for (let c = 0; c < pit.cols && left > 0; c++) {
-      const v = at(pit, c, r);
-      if (!takes(v)) continue;
-      put(pit, c, r, 0);
-      left--;
-      if (took) took(v);
-      if (leaving && leaving.length < 200) {   // a few hundred is plenty to read
-        leaving.push({
-          x0: pit.x + c * pit.p,
-          y0: bottomY(pit) - (r + 1) * pit.p,
-          x: pit.x + c * pit.p,
-          y: bottomY(pit) - (r + 1) * pit.p,
-          t: -rand() * 0.5,           // they leave in a stream, not a block
-          rate: 0.012 + rand() * 0.01,
-          lift: 60 + rand() * 90,     // how high it arcs on the way
-          // and, for the ones going into the rift, where on the ring they join
-          // it and which way round they go -- see `orbit` in game.js
-          a0: rand() * Math.PI * 2,
-          spin: rand() < 0.5 ? -1 : 1,
-          s: v
-        });
+
+  // What taking one grain is, wherever the walk found it: out of the plot, off
+  // the ledger, and onto the list of things in flight.
+  const take = (c, r, v) => {
+    put(pit, c, r, 0);
+    left--;
+    if (took) took(v);
+    if (leaving && leaving.length < 200) {   // a few hundred is plenty to read
+      leaving.push({
+        x0: pit.x + c * pit.p,
+        y0: bottomY(pit) - (r + 1) * pit.p,
+        x: pit.x + c * pit.p,
+        y: bottomY(pit) - (r + 1) * pit.p,
+        // Paying lifts a block of grains in one frame and wants them to leave as
+        // a stream, so each one waits its own fraction of a path before it
+        // starts. The rift lifts a few every frame for as long as it is
+        // swallowing: it is already a stream, and staggering it as well leaves
+        // most of a full list lying on the pile waiting its turn -- which is a
+        // ring of two or three grains under a hole eating thousands a second.
+        t: near ? 0 : -rand() * 0.5,
+        rate: 0.012 + rand() * 0.01,
+        lift: 60 + rand() * 90,     // how high it arcs on the way
+        // and, for the ones going into the rift, where on the ring they join
+        // it and which way round they go -- see `orbit` in game.js
+        a0: rand() * Math.PI * 2,
+        spin: rand() < 0.5 ? -1 : 1,
+        s: v
+      });
+    }
+  };
+
+  if (near) nearestSurface(near, n, takes, take);
+  else {
+    for (let r = pit.rows - 1; r >= 0 && left > 0; r--) {
+      for (let c = 0; c < pit.cols && left > 0; c++) {
+        const v = at(pit, c, r);
+        if (takes(v)) take(c, r, v);
       }
     }
   }
   S.dirty = true;
+}
+
+// Take `want` grains off the pile, nearest a point first, and hand each one to
+// `hit`.
+//
+// **Only the top grain of a column is a candidate.** A hole pulls at what is
+// exposed to it; a grain with three grains lying on it is not exposed. So the
+// pile is read as a row of surfaces, and this takes the surface nearest the
+// mouth, over and over. Every take drops that column's surface by one and so
+// pushes it further away, which hands the next take to somebody else -- and what
+// falls out of that, with no shape written down anywhere and no constant to
+// tune, is a bowl. That is the whole of the crater: it is not drawn, it is what
+// eating nearest-first leaves behind.
+//
+// Nearest-first is an **order, not a reach**. Capping it at a radius would look
+// better still for a second and then stop the yard: a crater eaten out faster
+// than the pile can slump into it would leave the rift swallowing nothing with a
+// full hole either side of it, and a full hole is what the rift is for. There is
+// always a farthest grain and it is always the last one taken.
+//
+// The columns are opened lazily, into a small heap keyed by distance. A column
+// can never be nearer than its own offset from the mouth, so one is only worth
+// opening once the best distance in hand has reached that offset -- which is why
+// swallowing out of a pile six hundred columns wide only ever looks at the few
+// dozen it is actually eating.
+function nearestSurface(mouth, want, takes, hit) {
+  const p = pit.p;
+  const mcol = colOf(pit, mouth.x);
+  const mrow = (bottomY(pit) - mouth.y) / p - 0.5;   // the mouth, in rows
+
+  // the heap: a column, the top grain in it, and the square of how far that
+  // grain is from the mouth. Squared, because nothing here needs the root.
+  const col = [], top = [], key = [];
+  let size = 0;
+  const far = (c, r) => { const dx = c - mcol, dy = r - mrow; return dx * dx + dy * dy; };
+  const swap = (i, j) => {
+    const c = col[i], t = top[i], k = key[i];
+    col[i] = col[j]; top[i] = top[j]; key[i] = key[j];
+    col[j] = c; top[j] = t; key[j] = k;
+  };
+  const up = i => {
+    while (i > 0) { const par = (i - 1) >> 1; if (key[par] <= key[i]) break; swap(i, par); i = par; }
+  };
+  const down = i => {
+    for (;;) {
+      const l = i * 2 + 1, r = l + 1;
+      let m = i;
+      if (l < size && key[l] < key[m]) m = l;
+      if (r < size && key[r] < key[m]) m = r;
+      if (m === i) return;
+      swap(i, m); i = m;
+    }
+  };
+  const drop = () => {                       // the top of the heap is finished with
+    size--;
+    if (size) { col[0] = col[size]; top[0] = top[size]; key[0] = key[size]; down(0); }
+  };
+  const open = c => {
+    const r = topRow(pit, c);
+    if (r < 0) return;                       // an empty column has no surface
+    col[size] = c; top[size] = r; key[size] = far(c, r); size++;
+    up(size - 1);
+  };
+
+  // the frontier of columns nobody has looked at yet, spreading either way
+  let lo = mcol, hi = mcol + 1, reach = -1;
+  const spread = to => {
+    while (lo >= 0 && mcol - lo <= to) open(lo--);
+    while (hi < pit.cols && hi - mcol <= to) open(hi++);
+    reach = to;
+  };
+
+  let n = 0;
+  spread(0);
+  while (n < want) {
+    // Anything nearer than the best in hand has to be opened before the best is
+    // believed. With nothing in hand at all, widen a column at a time until
+    // there is something or the pile has been read from end to end.
+    const need = size ? Math.ceil(Math.sqrt(key[0])) : reach + 1;
+    if (need > reach) spread(Math.min(need, pit.cols));
+    if (!size) { if (lo < 0 && hi >= pit.cols) break; continue; }
+
+    const c = col[0], r = top[0], v = at(pit, c, r);
+    if (!takes(v)) { drop(); continue; }     // and nothing under it can be reached
+    hit(c, r, v);
+    n++;
+    let next = r - 1;                        // whatever was lying under it
+    while (next >= 0 && !at(pit, c, next)) next--;
+    if (next < 0) drop();
+    else { top[0] = next; key[0] = far(c, next); down(0); }
+  }
+  return n;
 }
 
 // The same, said as a ceiling rather than a count. Paying knows what the pile
@@ -423,11 +538,14 @@ export function swallow(n) {
   if (!take) return 0;
   const held = riftHeld();
   let dust = 0;
+  // Out of the pile nearest the mouth first: the disc eats what it is over. The
+  // mouth is read off `rift` in the state rather than asked of rift.js, which
+  // reaches this file for `swallow` and would be a circle.
   lift(take, S.gulped, v => !!v, v => {
     if (isDust(v)) { dust++; return; }
     const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
     if (key) held[key]++;
-  });
+  }, { x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 });
   S.rift = (S.rift || 0) + dust;
   return take;
 }

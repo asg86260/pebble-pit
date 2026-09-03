@@ -2645,6 +2645,77 @@ a time and it was taken away for making a hole in the ground the ceiling on ever
 press replaced it and made the pile ugly. The rift is the third attempt at the same job and the
 first one that sells **rate** rather than **room**.
 
+### Where it hangs, and the suck (the overhaul)
+
+Two things were wrong with the built rift, and they are the same thing said twice: **it was a picture
+of an absence that did not act like one.** It sat buried to its middle in the hole, and the grains it
+took were lifted off the top of the pile evenly along six hundred columns — so the pile wore down
+flat, the disc hung over whatever happened to be under it, and nothing on the screen connected the
+two. A black hole you can watch for a minute without seeing it pull is a black circle.
+
+**Where it hangs.** Still at the near end of the hole, and now standing in the air over the lip
+rather than sunk in the pile.
+
+- **Above the ground line** is what gives it a silhouette. Everything in this yard is black on white,
+  so an absence only reads as one against the paper; sunk to its middle in grey speckle it is a blob
+  painted on the pile — which is exactly what the ring of white cells around it in `drawRift` was
+  already patching over. Its middle stands `RIFT_UP` cells clear of the line, so the lower edge dips
+  into the mouth and the rest of it is against nothing, which is the truth about it. It also puts the
+  mouth where the grains can be seen arriving: over the lip, not down a hole.
+- **Near the lip, as a fraction rather than a cell count.** `RIFT_IN` (four cells from the lip)
+  becomes `RIFT_AT`, a twentieth of `pitWidth()` — thirty cells in, so it clears the counter's card,
+  which stands four cells from the lip and is the one other thing at that end. A fraction because the
+  hole is 3,600 across and the disc belongs at the end of it that is on screen, whatever that end
+  happens to measure. Further in was tried on paper and thrown out: a quarter along is 900 world
+  pixels from the lip, which on a narrow window is a scroll away from where the counter, the belt's
+  head and the haulers all are — the same mistake the endgame pass corrected when it moved the rift
+  in from past the far wall.
+- **`PIT_PAD`, the column count and every saved grid are untouched.** The world's width is measured
+  off the pit and the floor's columns off the world; the disc moves within ground the pit and the sky
+  already own, and nothing is measured off it.
+
+**The suck.** Three changes, and none of them is a constant tuned for one case:
+
+1. **It eats what it is over, and only what is exposed.** `lift` walked the plot row by row from
+   column nought, which is right for paying — a purchase comes off the top of the pile anywhere, and
+   that stream off the heap is the whole picture of buying something — and wrong for a hole. The rift
+   gets an order instead of a row walk: **the surface grain nearest the mouth, over and over**. Only
+   the top grain of a column is a candidate, because a hole pulls at what is exposed to it and a
+   grain with three grains lying on it is not. Every take drops that column's surface by one and so
+   pushes it further away, handing the next take to a neighbor — and what falls out of that, with no
+   shape written down and no constant to tune, is **a bowl**. The crater is not drawn; it is what
+   eating nearest-first leaves behind.
+   It is an order, not a reach. Capping it at a radius would look better for a second and then stop
+   the yard: a crater eaten out faster than the pile can slump into it would leave the rift
+   swallowing nothing with a full hole either side of it, and a full hole is what the rift is for.
+   Cost is paid for by opening columns lazily into a heap keyed by distance — a column can never be
+   nearer than its own offset from the mouth — so a swallow out of a 600-column pile only ever looks
+   at the few dozen it is actually eating.
+2. **The pile slides in.** The crater is a real void in the plot and the pit already settles grains
+   into a void, so the pile creeps toward the mouth on machinery that is there, with nothing new
+   written and no second rule about how dust moves. `settleSome` sweeps a rolling band of columns and
+   covers the whole hole in a couple of frames, so the crater is always in a band that is about to be
+   visited; there is nothing to point at the mouth.
+3. **The grains are pulled, not lifted.** A swallowed grain used to ease off the pile on a smoothstep,
+   join a ring a third of a radius outside the rim, and hold that radius until a cubed dive at the
+   end — a grain settling into an orbit somebody had arranged for it. Everything about the shape now
+   accelerates: the lift off the pile is eased *in* rather than in and out, the ring is joined just
+   outside the rim, and the angle runs on a rising power of `t`, so the further in a grain is the
+   faster it is dragged round. The last quarter of the path is a whip, and that is the picture of the
+   thing pulling. Radius and angle are still the same one number, so a grain is exactly as far round
+   as it is far in and there is no second clock to drift.
+
+**What it does not touch.** The counter and the picture still agree; nobody holds it open; nothing is
+carried to it; capacity is still unbounded and the ladder is still on rate. The rift is still what
+the hole does with its overflow — the overhaul is about where it hangs and what it looks like doing
+it.
+
+**How it is checked.** The node tier: the disc's middle is above the ground line and its lower edge
+below it, it sits in the first tenth of the hole, a swallow takes from the columns under the mouth
+and leaves the far end of the pile alone, and a save from before it still comes back as a full pile.
+Then a shot, measured in pixels: black above the ground line where the disc stands, and a hollow in
+the pile under it.
+
 ### A save from before it
 
 A save holding more than the hole can show comes back as a full pile — up to 37,566 grains — with

@@ -152,15 +152,15 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
-  // The rift: the black hole hanging in the near end of the pit, the pile it is
-  // eating under it, and the ring of grains going round it on their way in.
-  // The hole is filled past the brim first so the rift has something to eat.
-  // Widened before the dust goes in: a widening is paid in dust, and paid out
-  // of the very pile the scene is about.
-  rift: `${RICH} window.__meteor(); window.__give(60000); window.__buy('rift');
-         for (let i = 0; i < 6; i++) window.__buy('riftrate');
-         window.__give(12000);
-         window.__fast(4); window.__look(window.__state().pitX + 70 - window.innerWidth / 2);`,
+  // The rift: the black hole standing in the air over the near end of the pit,
+  // the crater it has eaten in the pile under it, and the grains being pulled
+  // round it on their way in. The hole is filled past the brim first so the rift
+  // has something to eat, and widened before the dust goes in: a widening is
+  // paid in dust, and paid out of the very pile the scene is about.
+  // The camera is on the lip, so the ground line the disc breaks is in shot.
+  rift: `${RICH} window.__meteor(); window.__give(60000);
+         window.__levels({riftLevel: 6}); window.__give(12000);
+         window.__fast(4); window.__look(window.__state().pitX - 260);`,
 
   // The endgame yard: every machine standing, the ram driven up its ladder, the
   // belt running, the rift torn. What the pass in DESIGN.md is about.

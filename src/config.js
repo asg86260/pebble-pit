@@ -1144,17 +1144,27 @@ export const PIT_PAD = 18;       // cells of ground past its far edge, so you ca
 // The hole in the air past the far wall of the pit: what the hole in the ground
 // overflows into. See src/rift.js and `## The rift` in DESIGN.md.
 //
-// A black disc hanging in the hole at the near end, over the pile: fifteen cells
-// across, its near edge RIFT_IN cells in from the near lip. It used to be a lens
-// on the ground past the far wall, which is two windows off screen -- see
+// A black disc standing in the air over the near end of the hole: fifteen cells
+// across, its middle RIFT_UP cells above the ground line and RIFT_AT of the
+// hole's length in from the near lip, so its lower edge dips into the mouth and
+// the rest of it stands against the white page. It used to be a lens on the
+// ground past the far wall, which is two windows off screen, and then a disc
+// buried to its middle in the pile, which is a blob painted on the grey -- see
 // `seatRift`.
 export const RIFT_W = P * 15;
 export const RIFT_H = P * 15;
-export const RIFT_IN = 4;
+// A fraction of the hole rather than a count of cells: the hole is 3,600 across
+// and the disc belongs at the end of it that is on screen, whatever that end
+// happens to measure. Far enough in to clear the counter's card, which stands
+// four cells from the lip.
+export const RIFT_AT = 0.05;
+export const RIFT_UP = 4;
 // How the swallowed grains go: how many turns round the disc a grain makes on
-// its way in, and how long the whole orbit takes, in frames at sixty.
-export const RIFT_TURNS = 1.6;
-export const RIFT_ORBIT_FRAMES = 110;
+// its way in, and how long the whole orbit takes, in frames at sixty. Both are
+// what the suck is made of -- a grain is dragged round faster the closer it
+// gets, so it wants turns to spend and it wants to be quick about them.
+export const RIFT_TURNS = 2.4;
+export const RIFT_ORBIT_FRAMES = 84;
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];

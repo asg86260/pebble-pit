@@ -28,28 +28,39 @@
 // grains is `swallow` in pit.js, which is the same lift-off-the-top that paying
 // uses: one way of taking dust out of the pile, two destinations.
 
-import { P, RIFT_W, RIFT_H, RIFT_IN,
+import { P, RIFT_W, RIFT_H, RIFT_AT, RIFT_UP,
          RIFT_RATE, RIFT_RATE0, RIFT_RATE_COST, RIFT_RATE_UP } from './config.js';
 import { S, pit, rift } from './state.js';
-import { swallow, pitDepth } from './pit.js';
+import { swallow, pitWidth } from './pit.js';
 
 // --- where it hangs ------------------------------------------------------------
-// In the hole, over the pile, at the near end: its middle a few cells in from
-// the near lip, halfway down the depth of the hole. That is where the haulers
-// tip in, where the belt's head drops, and where the counter stands -- the one
-// end of the pit that is on screen. It stood past the far wall once, and nobody
-// saw it: the endgame's dust was a stream arcing off the edge of the window
-// while the pit itself sat there, one unchanging full pile.
+// Over the near end of the hole, and standing in the air rather than sunk in it:
+// its middle RIFT_UP cells above the ground line, so the lower edge of the disc
+// dips into the mouth and the rest of it is against the white page.
 //
-// `PIT_PAD` is untouched. The world's width is measured off the pit and the
-// floor's column count off the world, and a changed column count invalidates
-// every saved floor grid in existence -- see the note over `placeSites` in
-// world.js. The disc hangs in ground the pit already owns.
+// The near end because that is where the haulers tip in, where the belt's head
+// drops and where the counter stands -- the one end of the pit that is on
+// screen. It stood past the far wall once and nobody saw it: the endgame's dust
+// was a stream arcing off the edge of the window while the pit itself sat there,
+// one unchanging full pile.
+//
+// And above the line because a black disc buried in a full hole has no
+// silhouette. Everything in this yard is black on white, so an absence only
+// reads as one against the paper; sunk to its middle in grey speckle it is a
+// blob painted on the pile, which is what the cell of white round it in
+// `drawRift` was already patching. Standing clear of the lip, the thing that is
+// behind it is nothing, which is the truth about it.
+//
+// `PIT_PAD` is untouched, and so is every column count. The world's width is
+// measured off the pit and the floor's column count off the world, and a changed
+// column count invalidates every saved floor grid in existence -- see the note
+// over `placeSites` in world.js. The disc moves within ground the pit and the
+// sky already own.
 export function seatRift() {
   rift.w = RIFT_W;
   rift.h = RIFT_H;
-  rift.x = pit.x + P * RIFT_IN;
-  rift.y = S.groundY + Math.round((pitDepth() - RIFT_H) / 2 / P) * P;
+  rift.x = pit.x + Math.round(pitWidth() * RIFT_AT / P) * P;
+  rift.y = S.groundY - RIFT_UP * P - Math.round(RIFT_H / 2 / P) * P;
 }
 
 // The middle of it: where the orbit tightens to, and where a grain is gone.
