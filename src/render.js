@@ -1002,10 +1002,8 @@ export const CAULDRON = [
   '.###########.',
   '.###########.',
   '..#########..',
-  '...#######...',
-  '....#####....',
-  '...#..#..#...',
-  '...#..#..#...',
+  '..#.......#..',
+  '..#.......#..',
 ];
 // The row of CAULDRON the brew sits on -- where the bubbles pop and the steam
 // lifts off. Counts from the top, 0-based.
