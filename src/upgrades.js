@@ -913,13 +913,15 @@ export const UPGRADES = [
   // Crits: two ladders for the whole yard, on the bench because they reach every
   // station -- one rule, one home. See src/crit.js and "Crits" in DESIGN.md.
   //
-  // The names here are placeholders. Track A -- the shop's language -- owns the
-  // final wording of every row, and the grammar pass running in parallel may
-  // rename these; do not tune the words to fight it.
+  // Named to the shop's grammar (see DESIGN.md "The shop's language"): a rung is
+  // a bare noun for the quantity, and the section heading -- "a lucky swing" --
+  // says what it is a swing of. So "chance" (how often a crit comes up) and
+  // "power" (how much it is worth), not the "lucky strike" / "heavy hit" the
+  // build first shipped.
   {
     key: 'critchance',
     kind: 'rung', site: 'bench',
-    name: 'lucky strike',
+    name: 'chance',
     unit: '%',
     rung: () => S.critChanceLevel,
     from: () => Math.round(critChance(S.critChanceLevel) * 100),
@@ -931,7 +933,7 @@ export const UPGRADES = [
   {
     key: 'critmult',
     kind: 'rung', site: 'bench',
-    name: 'heavy hit',
+    name: 'power',
     unit: 'x',
     rung: () => S.critMultLevel,
     from: () => critMult(S.critMultLevel),

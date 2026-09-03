@@ -203,7 +203,6 @@ export const S = {
   seenSpark: false,       // and whether one has ever come down
   wizardHats: 0,          // hats the tower has finished
   wizards: 0,             // bodies up there wearing one
-  brewAt: 0,              // when the hat on the go is done, or 0 for nothing on the go
   labOpen: false,
 
   // --- the casino ---

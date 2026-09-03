@@ -1,13 +1,15 @@
 # Still to do
 
-## The apothecary — BUILT, with three flagged follow-ups (2026-09-03)
+## The apothecary — BUILT, reviewed, two follow-ups left (2026-09-03)
 
 The apothecary shipped (`src/apothecary.js` + station wiring; DESIGN.md "The
 apothecary (built)"). The pot is an upkeep, the stirrer brews through the door
 and carries doses out one at a time, the buff lands on the body (a cells-drawn
 mark and a `card(w)` row), the four ladders and the three tonics are in, and it
-saves and reloads. `test/apothecary.test.mjs` is green (9/9). Three things were
-left deliberately, none blocking:
+saves and reloads. `test/apothecary.test.mjs` is green (11/11). It went through a
+harsh review; the blocking defects (miner tonic inert, the pot reading as a
+table, undocumented crit coverage) are fixed. Two follow-ups remain, neither
+blocking:
 
 1. **Crop is spent at brew-start, not carried into the building.** The general
    "a spent resource travels to the shop that sells it" rule (DESIGN.md "it goes
@@ -18,19 +20,23 @@ left deliberately, none blocking:
    `S.owed[site]` once, wire `stepPaid` to the row's `site`, and the apothecary
    (and every other board) gets carried-in crop for free.
 
-2. **The +work / +crit tonics do not yet quicken a miner's swing at the rock.**
-   `rock.js`'s `hitRock` is shared by your own click and a miner's swing and has
-   no body in hand, so `critBoost`/`workBoost` are wired at the farm, the quarry
-   and the wizard but not the rock. A stew or bracing tonic dealt to a miner
-   shows on the card and the mark but does not speed the swing. Thread the
-   swinging body through `hitRock` (null for a click) to close it.
-
-3. **A second pot brews the same tonic, not an independent one.** `another pot`
+2. **A second pot brews the same tonic, not an independent one.** `another pot`
    adds coverage of the one setting; the DESIGN "Open" recommendation of a
    second independent tonic (two buffs up at once, two preferred stations) is
    the follow-up. The per-tonic effect submenu is likewise a hover note for now
    — fine for three tonics, worth a real submenu once the lab's recipe ladder
    widens the list.
+
+## Crits — BUILT, four of six work paths (2026-09-03)
+
+Crits fire on the click/miner, the quarrier, the farmhand and the wizard's bolt
+(DESIGN.md "Crits (built)"). The **hauler and labber are deliberately not
+wired**, and the reasons are in the design: a hauler crit is real output nobody
+can see (a crowd of them averages it flat), and the lab is *indoors* — a labber
+crit would be a multiplier on a body you cannot watch, which fails the one hard
+rule ("a crit you cannot see is a multiplier with extra steps"). If the lab ever
+gains a visible unit of work, wire it there. Not a bug to be fixed; a line to
+hold.
 
 ---
 

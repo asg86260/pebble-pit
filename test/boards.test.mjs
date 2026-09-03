@@ -27,6 +27,7 @@ import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
+import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 
 group('every row on every board has somewhere to be drawn', async () => {
   window.__reset();
@@ -94,7 +95,8 @@ group('a row no section names is still drawn', async () => {
 // still wraps it so a fistful of violations reports as a fistful.
 group('the shop keeps to one grammar per kind', async () => {
   const rows = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
-                ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES];
+                ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
+                ...APOTHECARY_UPGRADES];
 
   // The casino is not a shop -- chips, stake, bank it, spin again are moves at a
   // table -- so its rows keep their own register on purpose. And `airrate` is a
@@ -118,6 +120,7 @@ group('the shop keeps to one grammar per kind', async () => {
   const placeBad = [];     // kind 'place' must be "another X"
   const tuneBad = [];      // a tune row must be "tune the X"
   const unitless = [];     // a rated row (pct) must state a unit
+  const genreBad = [];     // no row says "upgrade" -- the one genre-word cut
 
   for (const r of rows) {
     const name = r.name || '';
@@ -132,6 +135,10 @@ group('the shop keeps to one grammar per kind', async () => {
     // A "+25%" of nothing is the bug this catches: every rated row names its
     // unit, whatever its kind or board.
     if (r.pct && !r.unit) unitless.push(r.key);
+    // "upgrade pickaxe" was the only genre-speak in the game and the rename cut
+    // it; this stops it or another "upgrade the X" from creeping back onto any
+    // board -- every row is an upgrade, so saying so carries nothing.
+    if (/\bupgrade\b/i.test(name)) genreBad.push(`${r.key}:"${name}"`);
   }
 
   return [
@@ -146,6 +153,9 @@ group('the shop keeps to one grammar per kind', async () => {
        tuneBad.join(', ') || 'none'),
     ok(unitless.length === 0,
        'every rated row states a unit, so none render a percent of nothing',
-       unitless.join(', ') || 'none')
+       unitless.join(', ') || 'none'),
+    ok(genreBad.length === 0,
+       'no row says "upgrade" -- every row is one, so the word carries nothing',
+       genreBad.join(', ') || 'none')
   ];
 });

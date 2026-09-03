@@ -18,6 +18,7 @@ import { at, put, depthShade, colOf, bottomY } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { critRoll } from './crit.js';
+import { critBoost } from './apothecary.js';
 import { pickCount, minerBite, minerMs } from './upgrades.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
@@ -516,7 +517,14 @@ export function pickCell(mx, my) {
 // still had a browning sky, from nothing but you clicking.
 //
 // Everything with a body still pays: a miner's swing, and the ram's.
-export function knockOff(mx, my, want = pickCount(), dirties = true) {
+// `body` is who is swinging -- a miner, or null for your own hand at the rock.
+// It is threaded through only so a body under a tonic gets what the tonic
+// promised: a bracing tonic lifts this one swing's crit chance (`critBoost`),
+// and the cadence a miner swings at is quickened at its own clock in crew.js
+// (`workBoost`), the same way the farm quickens a stoop. Your own click carries
+// no body and so neither bonus, which is right -- the tonics are dealt to the
+// crew, not to your cursor.
+export function knockOff(mx, my, want = pickCount(), dirties = true, body = null) {
   const c = pickCell(mx, my);
   if (!c) return;
 
@@ -529,10 +537,11 @@ export function knockOff(mx, my, want = pickCount(), dirties = true) {
   // The rock is an unbounded job, so a crit ADDS: this swing takes several
   // pixels' worth off the face at once, and there is no ceiling on how much
   // stone is in the hill. One roll for the swing, whoever is swinging -- your
-  // click and a miner's both come through here. Its spoil then flies up as a
-  // fountain rather than onto the heap; see the toss below. The rock never fouls
-  // the sky and a crit does not change that -- there is no pollution here to add.
-  const crit = critRoll();
+  // click and a miner's both come through here, and a miner under a bracing
+  // tonic rolls at a lifted chance. Its spoil then flies up as a fountain rather
+  // than onto the heap; see the toss below. The rock never fouls the sky and a
+  // crit does not change that -- there is no pollution here to add.
+  const crit = critRoll(critBoost(body));
   if (crit > 1) want *= crit;
 
   const reach = Math.ceil(Math.sqrt(want)) + 1;

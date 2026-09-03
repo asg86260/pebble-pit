@@ -3857,7 +3857,7 @@ the player is not shopping.
 steady* and sells nothing. It should stop being a row rather than be renamed
 into one.
 
-## Crits (design, not built)
+## Crits (built)
 
 Every ladder in the game makes a number bigger. What none of them do is change
 what a swing *is*, and the yard is a thing you watch -- so the swing worth
@@ -3956,6 +3956,34 @@ wash out at scale.
 That is a feature and it is worth saying out loud: it is the one thing on any
 board that keeps *your own hand* worth using deep into a run, in a game whose
 whole shape is handing the work over to other people.
+
+### What is wired, and why two stations are not
+
+Crits fire on four of the six work paths in the table: **your click and a
+miner** (`rock.js knockOff`, ADD), **a quarrier** (`quarry.js findShards`, PULL
+FORWARD), **a farmhand** (`farm.js cut`, ADD) and **a wizard's bolt**
+(`wizard.js`, PULL FORWARD). The fountain of dust rides every one of them.
+
+**The hauler is left out on purpose.** A hauler is the job everybody falls back
+to, so a yard has more of them than anything else -- and a crit on a station
+with a crowd in it is exactly the "flat multiplier nobody can see" this section
+warns about. A carrying crit would be real output and invisible, which is the
+one thing crits are not allowed to be.
+
+**The labber is left out for a stronger reason: the lab is indoors.** The crew
+go inside it and there is nothing to watch -- the chimney is the only tell it is
+worked at all. A crit is a thing you see happen, off the cell that was worked,
+and there is no cell and no watching a labber's second. Wiring one would put a
+multiplier on a body you cannot see, which fails "a crit you cannot see is a
+multiplier with extra steps" outright. The two design lines pull against each
+other here -- a labber is a thin station, where a crit is meant to be loud, and
+it is also a hidden one, where a crit cannot be seen -- and the hard rule wins:
+no invisible crits. If the lab ever gains a visible unit of work, this is the
+place to revisit.
+
+Also on the roll but not in the original table: a **miner under a bracing
+tonic** rolls at a lifted chance (`critBoost`), so the apothecary reaches the
+crit ladder for one body at a time -- see "The apothecary".
 
 ## The apothecary (built)
 

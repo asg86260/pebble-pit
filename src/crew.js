@@ -35,7 +35,7 @@ import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from 
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
 import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
 import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
-import { stepStirrer, newStirrer, apothecaryDoor, carryBoost } from './apothecary.js';
+import { stepStirrer, newStirrer, apothecaryDoor, carryBoost, workBoost } from './apothecary.js';
 import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
 import { now, frames } from './clock.js';
@@ -3180,10 +3180,13 @@ function minerWork(w, c) {
     // twice the bite for a breaker: the shards bought a bigger swing on a
     // body that is not going anywhere
     const bite = minerBite() * (w.trained ? 2 : 1);
-    knockOff(w.x + WORKER / 2, surf + P / 2, bite);
+    knockOff(w.x + WORKER / 2, surf + P / 2, bite, true, w);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
-    w.next = now + minerMs() * (0.85 + rand() * 0.3);    // never quite in time
+    // A hearty stew quickens the swing the way it quickens a stoop at the farm --
+    // the miner's own clock, divided by the boost, so a fed miner comes round
+    // sooner. `workBoost` is 1 for a body wearing no work tonic.
+    w.next = now + minerMs() / workBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
   } else if (boulderAlive()) {
     // Between swings, and never instead of one: a grain that came down on the
     // hill is lying on the ground this body is working, so it goes on the rock's

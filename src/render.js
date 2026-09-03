@@ -1002,29 +1002,36 @@ export function drawApothecary() {
       ctx.fillRect(hx + (s ? P : -P), g - P * 3, P, P);
     }
 
-    // The cauldron, right of the herbs: a rim that lips out over a belly that
-    // narrows to a rounded bottom, standing on two legs with the fire between
-    // them. Drawn row by row so it is a bowl and not a box.
+    // The cauldron, right of the herbs. The belly is the widest part -- wider
+    // than the mouth above it -- and that is the whole of what reads as a pot
+    // rather than a table: the old draw had the lip widest and sat there like a
+    // tabletop. A narrow mouth, shoulders widening, a belly bulging past the
+    // mouth, then rounding back in to the legs.
     const potW = P * 5;                     // five cells across the belly
     const potX = x + P * 4;                 // clear of the herb bed
-    const rimY = g - P * 6;                 // the rim sits six cells up
-    ctx.fillRect(potX - P, rimY, potW + P * 2, P);          // the rim, lipping out
-    ctx.fillRect(potX, rimY + P, potW, P * 2);              // the shoulders, full width
-    ctx.fillRect(potX + P, rimY + P * 3, potW - P * 2, P);  // and the base, drawn in a cell
-    ctx.fillRect(potX + P, g - P, P, P);                    // a stubby leg
-    ctx.fillRect(potX + potW - P * 2, g - P, P, P);         // and the other
+    const rimY = g - P * 6;                 // the mouth sits six cells up
+    ctx.fillRect(potX + P, rimY,           potW - P * 2, P);   // the mouth, narrow
+    ctx.fillRect(potX,     rimY + P,       potW,         P);   // shoulders, widening
+    ctx.fillRect(potX - P, rimY + P * 2,   potW + P * 2, P);   // the belly, bulging widest
+    ctx.fillRect(potX,     rimY + P * 3,   potW,         P);   // rounding back in
+    ctx.fillRect(potX + P, rimY + P * 4,   potW - P * 2, P);   // to the base over the fire
+    // Two legs under the belly, a flame's width apart -- clear of the fire, which
+    // the old draw sat a leg on top of.
+    ctx.fillRect(potX,             g - P, P, P);
+    ctx.fillRect(potX + potW - P,  g - P, P, P);
 
-    // The brew: a clear line of it just under the rim.
+    // The brew: a clear line of it just inside the mouth.
     ctx.fillStyle = '#fff';
     ctx.fillRect(potX + P, rimY + P, potW - P * 2, P);
     ctx.fillStyle = '#000';
 
-    // The fire under the belly, between the legs -- three flame licks standing on
-    // the ground. Always laid; only the steam says whether it is being worked.
+    // The fire under the belly, in the three cells between the legs -- licks of
+    // uneven height so it reads as a flame and not a bar. Always laid; only the
+    // steam says whether the pot is being worked.
+    const licks = [1, 2, 1];
     for (let f = 0; f < 3; f++) {
       const fx = potX + P + f * P;
-      ctx.fillRect(fx, g - P, P, P);                        // the base of the lick
-      if (f === 1) ctx.fillRect(fx, g - P * 2, P, P);       // the middle one taller
+      for (let hy = 0; hy < licks[f]; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
     }
 
     // Steam, when a body is stirring it. Two short wisps off the rim on their own
