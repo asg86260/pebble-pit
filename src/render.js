@@ -1035,19 +1035,22 @@ export function drawApothecary() {
     const potMid = potX + Math.round(CAULDRON[0].length / 2) * P;
     const brewY = topY + CAULDRON_BREW_ROW * P;
 
-    // The fire beneath: flames licking up between the legs, uneven and flickering
-    // on the clock so it is a live fire and not a fence. The cauldron is always
-    // over its fire; the steam and the bubbles are the extra that say a batch is
-    // on the boil. See `boiling`.
+    // The fire, the bubbles and the steam are all drawn only while a batch is on
+    // the boil -- so an idle cauldron is *exactly* the CAULDRON grid, nothing
+    // added underneath it. The fire used to be drawn always, and its flames stood
+    // up at the foot like a second set of legs whether or not the grid had any;
+    // now the pot you draw is the pot you get, and the fire is part of what says
+    // it is being worked. See `boiling`.
     const t = now();
-    const flames = [[potX + P * 4, 2], [potX + P * 5, 3], [potX + P * 7, 3], [potX + P * 8, 2]];
-    for (let i = 0; i < flames.length; i++) {
-      const [fx, base] = flames[i];
-      const flick = (Math.sin(t / 220 + i * 1.7) > 0.4) ? 1 : 0;   // a tongue leaps
-      for (let hy = 0; hy < base + flick; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
-    }
-
     if (boiling()) {
+      // The fire beneath: flames licking up under the pot, uneven and flickering
+      // on the clock so it reads as a live fire and not a fence.
+      const flames = [[potX + P * 4, 2], [potX + P * 5, 3], [potX + P * 7, 3], [potX + P * 8, 2]];
+      for (let i = 0; i < flames.length; i++) {
+        const [fx, base] = flames[i];
+        const flick = (Math.sin(t / 220 + i * 1.7) > 0.4) ? 1 : 0;   // a tongue leaps
+        for (let hy = 0; hy < base + flick; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
+      }
       // Bubbles rising through the brew and breaking its surface.
       for (let bcol = 0; bcol < 5; bcol++) {
         const bx = potX + P * 3 + bcol * P;
