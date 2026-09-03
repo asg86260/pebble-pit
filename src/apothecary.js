@@ -14,7 +14,7 @@
 // spreads across the yard rather than blinking on, and a body whose dose has
 // worn off is a body the stirrer comes back to.
 
-import { P, RUNGS, FARM_WALK, APOTH_WALK,
+import { P, RUNGS,
          BREW_CROP, BREW_REAGENT, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
          DOSES0, DOSES5, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
@@ -24,7 +24,7 @@ import { S, apothecary } from './state.js';
 import { now, frames } from './clock.js';
 import { walkY } from './world.js';
 import { JOB_OF } from './kit.js';
-import { rebalance, rungCost } from './upgrades.js';
+import { rebalance, rungCost, commutePace } from './upgrades.js';
 import { registerRows, registerSite } from './works.js';
 
 // --- the pot's dials, level by level ------------------------------------------
@@ -198,7 +198,8 @@ export function stepStirrer(w) {
     w.y = walkY(w.x + WORKER / 2);
     const d = t.x - w.x;
     if (Math.abs(d) < WORKER) { deal(w, t); w.holding = 0; w.dealTo = null; w.goal = 'to'; return; }
-    w.x += Math.sign(d) * Math.min(APOTH_WALK * frames(), Math.abs(d));
+    w.face = Math.sign(d) || w.face || 1;
+    w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
     return;
   }
 
@@ -208,7 +209,8 @@ export function stepStirrer(w) {
   w.y = walkY(w.x + WORKER / 2);
   const d = apothecaryDoor() - WORKER / 2 - w.x;
   if (Math.abs(d) < 1) { w.goal = 'in'; return; }
-  w.x += Math.sign(d) * Math.min(FARM_WALK * frames(), Math.abs(d));
+  w.face = Math.sign(d) || w.face || 1;
+  w.x += Math.sign(d) * Math.min(commutePace() * frames(), Math.abs(d));
 }
 
 // --- the pot on the boil ------------------------------------------------------
@@ -363,10 +365,10 @@ export const APOTHECARY_UPGRADES = [
   brewRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  brewRung({ key: 'bufflength', name: 'a longer draught', unit: 's', level: 'lengthLevel',
+  brewRung({ key: 'bufflength', name: 'quality', unit: 's', level: 'lengthLevel',
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  brewRung({ key: 'buffstrength', name: 'a stronger draught', unit: '%', level: 'strengthLevel',
+  brewRung({ key: 'buffstrength', name: 'potency', unit: '%', level: 'strengthLevel',
     from: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel) * 100),
     to: () => Math.round(ease(STRENGTH0, STRENGTH5, S.strengthLevel + 1) * 100) }),
   brewRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel',

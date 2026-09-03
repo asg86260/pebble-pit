@@ -472,6 +472,22 @@ export const finishResearch = key => {
   return { seenAir: S.seenAir, mult: { ...S.mult } };
 };
 
+// dev: put a tonic on a body -- a dose on a worker to look at the buff mark, or a
+// dose in a stirrer's hand to look at it being carried. For screenshots only; the
+// real round is `stepStirrer`.
+export const dose = (type = 'miner', tonic = 'stew') => {
+  const w = S.workers.find(b => b.type === type);
+  if (!w) return false;
+  if (type === 'stirrer') {
+    w.holding = 1; w.goal = 'out';
+    w.dealTo = S.workers.find(b => b.type !== 'stirrer') || null;
+  } else {
+    w.dose = { tonic, until: clockNow() + 999999 };
+  }
+  S.dirty = true;
+  return true;
+};
+
 export const grant = (o = {}) => {              // shards and spores, for looking at things
   if (o.shards) { S.shards += o.shards; S.seenShard = true; }
   if (o.spores) { S.spores += o.spores; S.seenSpore = true; }
@@ -893,7 +909,7 @@ export const HANDLES = {
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection,
-  __lab: openLab, __research: finishResearch, __grant: grant,
+  __lab: openLab, __research: finishResearch, __grant: grant, __dose: dose,
   __spend: spendDust,
   // Pay a price in any coin, through the very function every row's bill goes
   // through. Not a way of setting a counter: what a check using this is about

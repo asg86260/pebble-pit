@@ -994,60 +994,72 @@ export function drawApothecary() {
     const g = S.groundY;
     ctx.fillStyle = '#000';
 
-    // The bed of herbs on the left -- two stalks with a leaf apiece, standing off
-    // the ground: the crop, before it is a tonic.
+    // The bed of herbs on the far left -- two stalks with a leaf apiece, standing
+    // off the ground: the crop, before it is a tonic.
     for (let s = 0; s < 2; s++) {
       const hx = x + P * s;
       ctx.fillRect(hx, g - P * 3, P, P * 3);
       ctx.fillRect(hx + (s ? P : -P), g - P * 3, P, P);
     }
 
-    // The cauldron, right of the herbs. A round-bellied pot: a rim narrower than
-    // the belly, so the belly bulges past it -- which is the whole of what reads
-    // as a pot and not a table -- rounding back in to two feet with the fire
-    // between them. Each row is [y, cells inset from EACH side]; the belly rows
-    // at inset 0 are the widest.
-    const potW = P * 6;                     // six cells across the widest belly
-    const potX = x + P * 3;                 // clear of the herb bed
-    const rimY = g - P * 6;                 // the rim sits six cells up
+    // The cauldron, right of the herbs. A big round-bellied pot drawn row by row
+    // so the sides curve: a flared lip over a pinched neck, shoulders widening to
+    // a belly that bulges wider than anything above it -- which is what reads as a
+    // pot and not a table -- rounding back in to two feet with the fire between.
+    // Each row is [y, cells inset from EACH side]; the belly rows at inset 0 are
+    // the widest.
+    const potW = P * 9;                     // nine cells across the widest belly
+    const potX = x + P * 4;                 // clear of the herb bed
+    const rimY = g - P * 9;                 // the lip sits nine cells up
     const potMid = potX + potW / 2;
-    for (const [ry, inset] of [[rimY, 1], [rimY + P, 0], [rimY + P * 2, 0],
-                               [rimY + P * 3, 1], [rimY + P * 4, 2]])
+    for (const [ry, inset] of [[rimY, 2], [rimY + P, 3], [rimY + P * 2, 1],
+                               [rimY + P * 3, 0], [rimY + P * 4, 0], [rimY + P * 5, 1],
+                               [rimY + P * 6, 2], [rimY + P * 7, 3]])
       ctx.fillRect(potX + inset * P, ry, potW - inset * P * 2, P);
-    // Two feet under the belly's lower round, the fire between them.
-    ctx.fillRect(potX,             g - P, P, P);
-    ctx.fillRect(potX + potW - P,  g - P, P, P);
-
-    // The brew: liquid sitting in the mouth, framed by the rim on both sides.
+    // A metal band around the belly -- a white line for detail, the way a real
+    // cauldron is hooped.
     ctx.fillStyle = '#fff';
-    ctx.fillRect(potX + P * 2, rimY, potW - P * 4, P);
+    ctx.fillRect(potX + P, rimY + P * 4, potW - P * 2, P);
+    ctx.fillStyle = '#000';
+    // The bail handle, arching over the mouth: two short posts off the lip and a
+    // bar across the top.
+    ctx.fillRect(potX + P * 2,          rimY - P,     P, P);
+    ctx.fillRect(potX + potW - P * 3,   rimY - P,     P, P);
+    ctx.fillRect(potX + P * 2,          rimY - P * 2, potW - P * 4, P);
+    // Two feet under the belly's lower round, the fire between them.
+    ctx.fillRect(potX + P,            g - P, P, P);
+    ctx.fillRect(potX + potW - P * 2, g - P, P, P);
+
+    // The brew: liquid sitting in the mouth, framed by the lip on both sides.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(potX + P * 3, rimY, potW - P * 6, P);
     ctx.fillStyle = '#000';
 
-    // The fire under the belly: two licks with a cell of gap between them, so it
-    // reads as flame and not a solid foot. Uneven height for a little flicker.
-    // Always laid; only the steam and the bubbles say the pot is being worked.
-    for (const [fx, ht] of [[potX + P * 2, 2], [potX + P * 4, 3]])
+    // The fire under the belly: three licks of uneven height with a cell of gap
+    // between each, so it reads as a flame and not a solid foot. Always laid;
+    // only the steam and the bubbles say the pot is being worked.
+    for (const [fx, ht] of [[potX + P * 3, 2], [potX + P * 5, 3], [potX + P * 7, 2]])
       for (let hy = 0; hy < ht; hy++) ctx.fillRect(fx, g - P * (hy + 1), P, P);
 
     // A working pot bubbles and steams; an idle one is a cold cauldron. See
     // `boiling` -- true only while a stirrer is through the door on a batch.
     if (boiling()) {
       const t = now();
-      // Bubbles rising through the brew and breaking its surface: a black cell
-      // that climbs the mouth on its own phase, so they pop one after another.
-      for (let bcol = 0; bcol < 2; bcol++) {
-        const bx = potX + P * 2 + bcol * P;                  // the two mouth cells
-        const ph = (t / 560 + bcol * 0.5) % 1;
+      // Bubbles rising through the brew and breaking its surface: cells that climb
+      // the mouth on their own phase, so they pop one after another.
+      for (let bcol = 0; bcol < 3; bcol++) {
+        const bx = potX + P * 3 + bcol * P;                  // across the brew line
+        const ph = (t / 560 + bcol * 0.33) % 1;
         if (ph < 0.6) ctx.fillRect(bx, rimY - (ph < 0.3 ? 0 : P), P, P);
       }
-      // Steam: three wisps off the mouth, climbing and fading out near the top --
+      // Steam: four wisps off the mouth, climbing and fading out near the top --
       // one cell at a time, each on its own slow clock, swaying as it rises.
-      for (let k = 0; k < 3; k++) {
-        const ph = (t / 900 + k * 0.33) % 1;
+      for (let k = 0; k < 4; k++) {
+        const ph = (t / 900 + k * 0.25) % 1;
         if (ph > 0.85) continue;                             // gone near the top
-        const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.2);
-        const sx = potMid + (k - 1) * P + sway * P;
-        const sy = rimY - P * 2 - Math.round(ph * 5) * P;
+        const sway = Math.round(Math.sin(t / 800 + k * 1.4) * 1.5);
+        const sx = potMid + (k - 1.5) * P + sway * P;
+        const sy = rimY - P * 3 - Math.round(ph * 6) * P;
         ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
       }
     }
@@ -1058,8 +1070,8 @@ export function drawApothecary() {
   // building has finished rising. Uses the yard's one bar, the same the lab and
   // the tower show.
   if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 6;                     // middle of the belly
-    bar(Math.round(potMid / P) * P, S.groundY - P * 9, brewFrac());
+    const potMid = apothecary.x + P * 4 + P * 4.5;           // middle of the belly
+    bar(Math.round(potMid / P) * P, S.groundY - P * 13, brewFrac());
   }
 }
 
@@ -3460,6 +3472,24 @@ const PLAIN = { lunge: 0 };
 // not as a body reaching.
 const LEAN = 0.5;
 
+// A little flask, in cells: a corked neck over a rounded body, with the liquid
+// filling the body from the bottom by `fill` (0..1). Black glass, a white line
+// for the surface of what is in it -- no glow, on the grid, the yard's language.
+// `x` is the left of the three-wide body; `topY` is the neck's row.
+function drawPotion(x, topY, fill = 1) {
+  x = Math.round(x / P) * P;
+  topY = Math.round(topY / P) * P;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + P, topY, P, P);                 // the cork/neck, centered
+  ctx.fillRect(x, topY + P, P * 3, P * 3);         // the body, three wide and tall
+  // The liquid: a white surface line that sits lower as the flask empties, so a
+  // full dose is a full bottle and a spent one is nearly empty.
+  ctx.fillStyle = '#fff';
+  const drop = Math.round((1 - Math.max(0, Math.min(1, fill))) * 2);   // 0..2 cells down
+  ctx.fillRect(x + P, topY + P + drop * P, P, P);                      // surface within the body
+  ctx.fillStyle = '#000';
+}
+
 export function drawWorkers() {
   for (const w of S.workers) {
     // out of sight: in the lab, down the quarry, in the outhouse, or home
@@ -3484,17 +3514,19 @@ export function drawWorkers() {
     const hat = wearing(w);
     if (hat && hat !== 'cart') drawHat(x, y, hat);
 
-    // The tonic on the body, drawn in cells like everything else -- no glow, no
-    // gradient. A short bar off the shoulder that stands in fewer cells as the
-    // dose wears off, so a buffed corner of the yard reads at a glance and the
-    // bar shrinking is the dose running out. See `doseFrac` in apothecary.js.
+    // The tonic on the body: the potion itself, floating over the head, so a
+    // buffed body reads as buffed at a glance rather than by a bar that merged
+    // into the black of the worker. Its liquid drops as the dose wears off -- the
+    // flask empties -- which is the readout being a picture, not a lamp. See
+    // `doseFrac` in apothecary.js.
     const frac = doseFrac(w);
-    if (frac > 0) {
-      const cells = Math.max(1, Math.ceil(frac * DOSE_MARK_CELLS));
-      const mx = x - P;
-      ctx.fillStyle = '#000';
-      for (let k = 0; k < cells; k++) ctx.fillRect(mx, y - P * (k + 1), P, P);
-    }
+    if (frac > 0) drawPotion(x + WORKER / 2 - P * 1.5, y - P * 6, frac);
+
+    // A stirrer with a dose in hand carries the flask in front of it, so the
+    // round is a body plainly walking a potion out to somebody -- not a number
+    // arriving on a worker across the yard. See `stepStirrer`.
+    if (w.type === 'stirrer' && w.holding)
+      drawPotion(x + (w.face || 1) * P * 2, y - P * 2, 1);
 
     if (!w.carry && !w.hasCore) continue;
 

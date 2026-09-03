@@ -2684,8 +2684,8 @@ export const CRIT_MULT_COST = 80;
 // worth breaking -- so it is priced the way the farm is: a core, and dust a
 // small early yard can just about find. A core, because a place costs a core;
 // less dust than the lab, because it stands earlier than the lab.
-export const APOTHECARY_W = P * 10;    // the pot and the herb bed beside it
-export const APOTHECARY_H = P * 11;    // as tall as the farm's fence, near enough
+export const APOTHECARY_W = P * 15;    // a big cauldron and the herb bed beside it
+export const APOTHECARY_H = P * 14;    // room for the belly, the bail handle and steam
 export const APOTHECARY_CORES = 1;     // a place costs a core
 export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it follows
 
