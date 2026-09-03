@@ -23,7 +23,8 @@ import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
 import { mult } from './lab.js';
-import { spawnSpoil } from './dust.js';
+import { spawnSpoil, critToss } from './dust.js';
+import { critRoll } from './crit.js';
 import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
@@ -151,11 +152,22 @@ function pickPlot(w) {
 // carries it to the pit.
 // Cut, and the spore leaves from the tip of the stalk it grew on -- the same
 // one that has been sitting there since it ripened, in the same tone.
+// Returns how many spores came off, which is one on an ordinary cut and several
+// on a crit. The farm is an unbounded job -- there is no fixed seam to a plot --
+// so a crit ADDS: the plot gives up a lump of crop in one cut rather than the
+// single spore, and each extra one is real dust thrown up as a fountain and
+// banked like any other. A crit does not add pollution; nothing here does.
 function cut(i, x) {
   const tone = S.plotTone[i] || someFind(SPORE_CELL);
-  spawnSpoil(x, plotTop(i) - P, tone, 'farm');
+  const crit = critRoll();
+  if (crit > 1) {
+    for (let n = 0; n < crit; n++) critToss(x, plotTop(i) - P, tone, 'farm', crit);
+  } else {
+    spawnSpoil(x, plotTop(i) - P, tone, 'farm');
+  }
   S.plots[i] = 0;
   S.plotTone[i] = 0;
+  return crit;
 }
 
 // one farmhand, one frame
@@ -224,8 +236,7 @@ export function stepFarmhand(w, now, dt, c = null) {
   // a smothered plot is dug out before it is picked: the muck is on top of the
   // crop, not beside it
   if (throughPlotMuck(1) < 1) { w.quarryAt = now + CUT_MS; return; }
-  cut(i, plotX(i));
-  w.farmed = (w.farmed || 0) + 1;
+  w.farmed = (w.farmed || 0) + cut(i, plotX(i));
   w.quarryAt = 0;
   w.plot = pickPlot(w);
   w.goal = 'to';

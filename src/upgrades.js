@@ -25,7 +25,9 @@ import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
          MACHINE_TUNE, BUILD_GANG,
-         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
+         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
+  CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
+import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
@@ -904,6 +906,36 @@ export const UPGRADES = [
     buy: () => S.pickLevel++,
     show: () => S.seenShard
   },
+  // Crits: two ladders for the whole yard, on the bench because they reach every
+  // station -- one rule, one home. See src/crit.js and "Crits" in DESIGN.md.
+  //
+  // The names here are placeholders. Track A -- the shop's language -- owns the
+  // final wording of every row, and the grammar pass running in parallel may
+  // rename these; do not tune the words to fight it.
+  {
+    key: 'critchance',
+    kind: 'rung', site: 'bench',
+    name: 'lucky strike',
+    unit: '%',
+    rung: () => S.critChanceLevel,
+    from: () => Math.round(critChance(S.critChanceLevel) * 100),
+    to: () => Math.round(critChance(S.critChanceLevel + 1) * 100),
+    cost: () => rungCost(CRIT_CHANCE_COST, S.critChanceLevel),
+    buy: () => S.critChanceLevel++,
+    show: () => true
+  },
+  {
+    key: 'critmult',
+    kind: 'rung', site: 'bench',
+    name: 'heavy hit',
+    unit: 'x',
+    rung: () => S.critMultLevel,
+    from: () => critMult(S.critMultLevel),
+    to: () => critMult(S.critMultLevel + 1),
+    cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel),
+    buy: () => S.critMultLevel++,
+    show: () => true
+  },
   // And the crew's is what the crew are fed on. The plots grow the only thing in
   // this yard anybody eats, so what a body can take out of the rock is bought in
   // spores -- which also keeps the green from piling up unspent, and gives the
@@ -1214,6 +1246,9 @@ registerRows(UPGRADES);
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
+  // Placeholder heading -- Track A owns the final wording. The crit rows apply
+  // to the whole yard, so the bench is their natural home.
+  { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram', 'tuneram'] },
   { title: 'the quarry', keys: ['unlockquarry'] },

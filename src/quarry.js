@@ -22,7 +22,8 @@ import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
 import { mult } from './lab.js';
-import { spawnChip, aim, bell } from './dust.js';
+import { spawnChip, aim, bell, critToss } from './dust.js';
+import { critRoll } from './crit.js';
 import { now } from './clock.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { spelled } from './tower.js';
@@ -607,17 +608,30 @@ export function stepQuarrier(w, now, ctx = null) {
 //
 // `left` is the count *including* the cell just swung, which is what makes that
 // last cell come out at one-in-one.
-function findShards(w, left) {
+export function findShards(w, left) {
   if (S.quarryOwed <= 0 || left <= 0) return;
   let found = 0;
   for (let n = 0; n < S.quarryOwed; n++) if (rand() * left < 1) found++;
+  // The dig is a bounded job, so a crit PULLS FORWARD rather than adds: it takes
+  // several of the shards *already owed* in one swing -- a lump, not a trickle --
+  // so the dig finishes sooner and the total never moves. This is the whole of
+  // why the cut can have crits at all: `S.quarryOwed` starts at `seamShards()`
+  // and only ever comes down, so a dig with every swing critting still yields
+  // exactly `seamShards()`, not a shard more. The crit does not put extra stone
+  // in the ground; it brings forward stone that was going to come up anyway.
+  const crit = critRoll();
+  if (crit > 1) found = Math.min(S.quarryOwed, Math.max(found, crit));
   if (!found) return;
   S.quarryOwed -= found;
   w.quarried = (w.quarried || 0) + found;
   // The swing that found it is the swing that throws it out, so the stone leaves
   // the hole from the cell it came out of rather than from wherever the body
-  // happened to finish up.
-  for (let n = 0; n < found; n++) tossOut(w.x + WORKER / 2, w.y + WORKER);
+  // happened to finish up. A crit throws its lump up as a fountain -- higher and
+  // out over the rim, the same climb `tossOut` makes, only taller.
+  for (let n = 0; n < found; n++) {
+    if (crit > 1) critToss(w.x + WORKER / 2, w.y + WORKER, someFind(SHARD_CELL), 'quarry', crit);
+    else tossOut(w.x + WORKER / 2, w.y + WORKER);
+  }
   S.dirty = true;
 }
 

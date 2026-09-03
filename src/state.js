@@ -135,6 +135,13 @@ export const S = {
   pickLevel: 0,
   autoMine: false,
 
+  // --- crits, the one rule that reaches every station ---
+  // Two ladders for the whole yard, not a station apiece: how often a unit of
+  // work counts for several, and how many it counts for. They live on the bench
+  // because they apply everywhere the bench's other rows only wish they did.
+  critChanceLevel: 0,
+  critMultLevel: 0,
+
   // --- the quarry, and what comes out of it ---
   shards: 0,
   seenShard: false,       // nothing about shards is shown until one is brought up
