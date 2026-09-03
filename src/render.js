@@ -1063,8 +1063,14 @@ export function drawApothecary() {
       const bedL = potX + P * 3, cols = 7, mid = (cols - 1) / 2;
       for (let c = 0; c < cols; c++) {
         const hump = (1 - Math.abs(c - mid) / mid) * 0.9;    // lowered centre hump
-        const n = vnoise(c * 0.8 + t / 130) * 2.4            // the main rise and fall, random
-                + vnoise(c * 1.9 - t / 260) * 1.2;           // a slower octave, drifting the other way
+        // Each column gets its OWN noise stream that only moves in time -- the big
+        // per-column offsets (17.3, 11.9) put neighbours far apart in noise space
+        // so they are uncorrelated and flicker independently in place. The old
+        // small offsets made neighbours nearly the same value one step apart,
+        // which is a travelling wave -- the fire looked like it was all sliding
+        // left. Now it just rises and falls where it stands.
+        const n = vnoise(c * 17.3 + t / 130) * 2.4           // this column's own flicker
+                + vnoise(c * 11.9 + 40 + t / 260) * 1.2;     // a slower second stream
         const h = Math.max(0, Math.min(5, Math.round(0.4 + hump + n)));
         const fx = bedL + c * P;
         for (let hy = 0; hy < h; hy++) {
