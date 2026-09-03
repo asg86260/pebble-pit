@@ -3992,28 +3992,50 @@ All of these are sized off the one measurement that matters: **the farm caps at
 early, when the farm is a few hands and cutting 12--40 a minute.** So the first
 pot has to be affordable for a small farm and a second one has to bite.
 
+**A tonic is a crop base plus a reagent.** Not crop alone. Every recipe is the
+herbal base -- spore, which is what keeps the apothecary a *continuous green
+drain* the way the whole design wants -- plus **one reagent coin** that gives the
+recipe its identity and, in doing so, drains a second coin at the same steady
+rate. So the apothecary is a sink for more than green: a tonic with a shard
+reagent is a standing draw on blue, which blue badly needs.
+
+**The reagent is never the coin of the station the tonic boosts**, and the crop
+base is dropped entirely for any tonic that boosts the *farm* -- that is the
+"never fed by what it boosts" rule, made sharper. A crop-only farm tonic would
+have the farm paying for its own speed, a loop; a farm tonic is priced in shard
+and dust instead, no crop at all. Every other tonic carries the crop base freely,
+because the crop it costs is not the output it speeds.
+
 **The first three tonics.** Plain, mid-sized, and each a lever the game already
 has:
 
-| tonic | effect on a buffed body | the one-off it is for |
-|---|---|---|
-| **a hearty stew** | works +25% faster (its own main action, whatever the body does) | the everyday standing order |
-| **a bracing tonic** | crit chance +8 points | a burst before a rich boulder |
-| **a strong brew** | carries +50% | clearing a backed-up pile |
+| tonic | effect on a buffed body | costs | the one-off it is for |
+|---|---|---|---|
+| **a hearty stew** | works +25% faster (its own main action, whatever the body does) | crop + dust | the everyday standing order |
+| **a bracing tonic** | crit chance +8 points | crop + shard | a burst before a rich boulder |
+| **a strong brew** | carries +50% | crop + shard | clearing a backed-up pile |
 
 +25% is the lab's own `STEP`, so it reads as one familiar size. The crit tonic
 is the reason crits are worth building first: a standing order on a rate that
-does nothing is a standing order nobody sets.
+does nothing is a standing order nobody sets. The stew is the general buff, so
+its reagent is dust, the shared coin; the two targeted tonics take shard, the
+coin of neither the crew nor the crit they lift.
 
 **One pot, at level 0:**
 
 | dial | value | why |
 |---|---|---|
-| cost a brew | 5 spore | — |
-| brew time | 30 s | → **drain = 10 spore/min** to keep one pot lit |
+| crop base a brew | 5 spore | the green drain, on every tonic |
+| reagent a brew | 2 shard (or dust) | the second coin, per the recipe |
+| brew time | 30 s | → **drain = 10 spore/min + 4 reagent/min** to keep one pot lit |
 | buff length | 60 s | — |
 | doses a brew | 3 | → 2 brews/min × 3 = 6 doses/min |
 | bodies held buffed | ~6 per pot | 6 doses/min × 60 s length = 6 bodies always up |
+
+The green drain is exactly what it was -- 10 spore/min a pot, sized under the
+farm as before. The reagent is a lighter second draw (a shard reagent at ~4/min
+a pot sits well under the quarry's ~5/min at full pace), so it is a real cost
+without making blue the thing that gates a green building.
 
 **The arc that falls out of it.** A brand-new apothecary on a 2-hand farm
 (~12--24/min) can just keep one pot lit -- a real squeeze, which is the right
