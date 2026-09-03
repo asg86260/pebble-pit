@@ -3693,3 +3693,139 @@ the player is not shopping.
 **`airrate`.** It is a readout wearing a row: it says *pollution / holding
 steady* and sells nothing. It should stop being a row rather than be renamed
 into one.
+
+## Crits (design, not built)
+
+Every ladder in the game makes a number bigger. What none of them do is change
+what a swing *is*, and the yard is a thing you watch -- so the swing worth
+watching is the one that comes off differently from the last.
+
+**A crit is a unit of work that counts for several. What that is worth depends
+on what the work was.**
+
+One rule, in one place, called wherever work happens -- not a constant per
+station. Every station already has its unit: a swing at the rock, a swing at the
+face, a stoop over a plot, a trip, a bolt, a second of research.
+
+| station | a crit is | what it does |
+|---|---|---|
+| your click, a miner | a swing that takes several pixels | adds |
+| a quarrier | a swing that turns up a lump, not a trickle | pulls forward |
+| a farmhand | a stoop that brings the plot most of the way on | adds |
+| a hauler | a trip that carries double | adds |
+| a labber | a second that counts as several | adds |
+| a wizard | a bolt that takes a cluster of cells | pulls forward |
+
+**The bounded jobs pull forward rather than add**, and that is what lets the cut
+have crits at all. A dig is worth `seamShards()` and not a shard more -- see
+`findShards`, and "a dig never ends owing you any". A crit does not put extra
+stone in the ground; it takes several of the ones already there in one swing, so
+the dig finishes sooner and the total never moves. Which is what the row wanted
+anyway: the face gives up a lump instead of a trickle, the haulers go less often
+and carry more, and the whole of it is visible.
+
+Two rungs, and they are the two everybody expects: **how often** and **how much**.
+They apply everywhere, because the rule does.
+
+### A crit you cannot see is a multiplier with extra steps
+
+The one hard requirement. Pillar 4 is that the simulation is the reward, and a
+crit that resolves silently into a counter is a number wearing a costume. A
+bigger bite out of the rock, a burst of dust off it, a lump going over the rim
+-- if you cannot tell from looking at the yard that one happened, it has not
+earned its place on a board.
+
+### It is loudest where the yard is thinnest
+
+Crits are a roll, and rolls average out. One body swinging makes a crit an event;
+twenty bodies swinging make it a flat multiplier nobody can see. So crits are
+loud on your own click and at a station with one or two bodies in it, and they
+wash out at scale.
+
+That is a feature and it is worth saying out loud: it is the one thing on any
+board that keeps *your own hand* worth using deep into a run, in a game whose
+whole shape is handing the work over to other people.
+
+## The apothecary (design, not built)
+
+A pot, a fire, and somebody stirring. The farm's crop goes in and comes out as a
+tonic the whole yard is under.
+
+### It is an upkeep, not a timer
+
+You do not brew a potion and drink it. **You choose what the pot is set to, and
+it brews for as long as it has crop and a body.** The buff is up while both hold
+and lapses when either stops.
+
+This is the first thing in the game paid for *continuously*. Everything else is
+bought once and kept for ever, so "can I afford this" has only ever meant "do I
+have the pile today". A standing order asks a different question -- can the farm
+keep this up -- and it is the only kind of sink that scales with a station's
+output on its own, without a row being added every time the yard gets bigger.
+
+Which is the point. Green is the coin with nothing to do: of four hundred spores
+of lifetime demand, about a quarter is food-shaped and the rest is pickaxes and
+machines priced green because blue was already taken. More one-off rows would not
+fix that, because a one-off is satisfied once. A drain is never satisfied, and it
+gets thirstier exactly as the farm gets better.
+
+**Lapsing is not a punishment.** Nothing is lost and nothing is owed -- the yard
+is back to what it was, and the pot picks up again the moment there is crop to
+pick up with. No fail state, and nothing asking anybody to come back and top it
+up.
+
+### The rules it inherits
+
+**It needs a body.** A pot nobody is stirring is a pot that is not brewing. The
+apothecary competes for the crew with the rock, the cut, the plots and the lab,
+which is the only real question this game asks, and a station that worked while
+empty would be the first one that did not ask it.
+
+**The pot says whether it is up.** The lab's chimney rule, word for word: a lab
+with research paid for and nobody in it does not smoke at all. On the boil means
+the buff is on. That is the readout, and there is not a second one -- you learn
+it from across the yard the way you learn the lab is being worked.
+
+**Its place row is "another pot".** Standing room for one more stirrer and one
+more tonic up at a time -- `capOfBare` shaped, and the grammar in "The shop's
+language" already names it.
+
+**A potion is never fed by the thing it boosts.** This is the machines' own rule
+-- a machine is never priced in what its own station makes -- and it matters more
+here, because a tonic that quickens the farm and is brewed out of the farm's crop
+pays for itself and stops being a decision. A tonic is a trade between two parts
+of the yard or it is not a tonic.
+
+### Where it stands in the run
+
+Early, and not late. The instinct that potions are an endgame thing comes from
+potions being magic, and this is not magic: it is herbs and a pot, and you are
+already growing the herbs. It goes in shortly after the plots are broken, and it
+is the reason the plots are worth breaking.
+
+That also keeps the two registers apart. Down here it is a fire and a wooden
+spoon; up at the tower it is rings and bolts and a hat that takes two minutes to
+make. The tower stays the last act.
+
+A later tier of the same building is where the two meet -- the recipes that need
+something off a star -- so the apothecary is a place you have walked past for
+hours before it starts making anything strange. Which is a better late building
+than a new one, because it is one you already know.
+
+### The recipes are the lab's
+
+Research the recipe, brew the tonic. The lab already works rather than buys, and
+it is the one building whose whole job is making other buildings better -- so a
+growing list of tonics is something the game can already hand out, and a tech
+ladder that does not need a new system to hang on.
+
+### Open
+
+- **What the tonics are.** The first ones want to be plain and mid-sized -- the
+  crew walk quicker, the swing bites harder, a crit comes up more often -- and
+  the crit one is the strongest argument for building crits first, since a
+  standing order on a rate that does nothing is a standing order nobody sets.
+- **What a tonic costs an hour**, which is the whole of the balance and wants
+  measuring against a real farm rather than picking.
+- **Whether a second pot is a second tonic or a stronger one.** A second tonic is
+  the more interesting board and the harder sum.
