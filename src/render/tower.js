@@ -7,7 +7,7 @@ import { now } from '../clock.js';
 import { DOOR_H, DOOR_W, MAGIC_TONES, P, TOWER_SHAFT, TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, WORKER } from '../config.js';
 import { S, floor, outhouse, tower } from '../state.js';
 import { brewAt, brewing } from '../tower.js';
-import { ctx, drawHat, risingPlace, withRise } from '../render.js';
+import { cell, ctx, drawHat, risingPlace, withRise } from '../render.js';
 
 // The tower. The one building in this yard that goes up rather than along: a
 // narrow shaft, a band of stone every few courses so it reads as built rather
