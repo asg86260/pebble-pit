@@ -10,9 +10,13 @@ branches, all merged and green except the standing red below.
 
 Follow-ups the wave surfaced, none blocking:
 
-1. **`sky-readout.test.mjs` — "a speck off a swing is the speck in the
-   band"** was red before the wave and is red after; nobody's regression,
-   still undiagnosed.
+1. **Four checks were red before the wave and are red after** — nobody's
+   regression, still undiagnosed, each verified red at `bdb9b7d`:
+   `sky-readout.test.mjs` "a speck off a swing is the speck in the band";
+   and in the browser tier, "a hand through the smoke drags the band along"
+   (the far end drifts a deterministic 1.04px against a 1px bound), "the
+   board does not shut on the way to it: and so does walking off below it",
+   and "the cursor says what a thing will do — crosshair".
 2. **The pit is permanently empty in the endgame** (item 20 as built):
    once the rift tears, nothing ever settles on the pit floor again, so the
    pile — and the crater the nearest-first walk carves — is unobservable
