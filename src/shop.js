@@ -147,7 +147,7 @@ export function stayOpen() { clearTimeout(leaving); leaving = 0; }
 // below, pulled back inside the window, measured pinned at the origin so nothing
 // wraps it -- is a rule about the window, not about boards, and there is no
 // version of it that should exist twice. See potpick.js.
-export function openOptsAt(r, opts, row = null) {
+export function openOptsAt(r, opts, row = null, align = 'right') {
   opts.hidden = false;
   opts.style.minWidth = `${Math.round(r.width)}px`;
   // Measured pinned at the origin, where nothing can wrap it: left where it
@@ -160,7 +160,12 @@ export function openOptsAt(r, opts, row = null) {
   const room = innerHeight - r.bottom - 4;
   // Flush with the control's edge, above it when there is no room below.
   const top = box.height <= room ? r.bottom : Math.max(4, r.top - box.height);
-  const left = Math.max(4, Math.min(r.right - box.width, innerWidth - box.width - 4));
+  // Flush right for a board's dial, whose control is the row's right-hand
+  // column; centered for a thing in the yard, which has a middle and no row.
+  const want = align === 'center'
+    ? r.left + r.width / 2 - box.width / 2
+    : r.right - box.width;
+  const left = Math.max(4, Math.min(want, innerWidth - box.width - 4));
   opts.style.top = `${Math.round(top)}px`;
   opts.style.left = `${Math.round(left)}px`;
   row?.classList.add('open');

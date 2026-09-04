@@ -93,7 +93,7 @@ function openFor(i) {
   for (const o of opts.querySelectorAll('.opt'))
     o.classList.toggle('on', o.dataset.opt === (at || ''));
   stayOpen();                       // whatever grace was running, this cancels it
-  openOptsAt(potRect(i), opts);
+  openOptsAt(potRect(i), opts, null, 'center');
 }
 
 // A press in the yard, in world pixels. Answers whether it landed on a pot --
