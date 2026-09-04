@@ -487,9 +487,13 @@ export function stepDoseMotes(dt) {
     // an average colour -- an average of green and purple is a colour that is
     // neither, and which tonic a body is under has to stay readable. Two
     // colours rising together says two tonics; one muddy one says nothing.
+    // Two motes a beat, per tonic -- the density the plume had when it was one
+    // tonic flat. "Shows both" cut this to one so a stacked pair would not
+    // crowd, and halved the common case instead: a single-tonic body's column
+    // thinned from a plume you could read across the yard to a thread.
     for (const t of doseTonics(w))
       puff(w.x + WORKER / 2, w.y, {
-        n: 1,
+        n: 2,
         s: 0.55,
         rise: DOSE_MOTE_RISE,
         life: DOSE_MOTE_LIFE,
