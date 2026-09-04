@@ -85,8 +85,8 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom'];
 
-// A live dose is kept too, and it is the one thing on a body that cannot be
-// written down as it stands. `w.dose.until` is a moment on the clock, and the
+// Live doses are kept too, and they are the one thing on a body that cannot be
+// written down as they stand. A dose's `until` is a moment on the clock, and the
 // clock starts again when the page does -- so a dose saved as "until 94,000"
 // comes back either already spent or good for another minute and a half,
 // depending on how long you were gone. What is true either way is how much of it
@@ -95,24 +95,30 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
 //
 // It is out here rather than in KEEPS because KEEPS is a straight copy, and this
 // is the one field that has to be turned round on both journeys.
-const doseKeep = w => (w.dose && w.dose.until > now()
-  ? { tonic: w.dose.tonic, left: Math.round(w.dose.until - now()) } : null);
+const doseKeep = w => (w.doses || [])
+  .filter(d => d.until > now())
+  .map(d => ({ tonic: d.tonic, left: Math.round(d.until - now()) }));
 
 export function keepOf(w) {
   const out = { type: w.type };
   for (const k of KEEPS) if (w[k] != null) out[k] = w[k];
-  const dose = doseKeep(w);
-  if (dose) out.dose = dose;
+  const doses = doseKeep(w);
+  if (doses.length) out.doses = doses;
   return out;
 }
 
 // and back again, on to a body the factory has just made
 export function wearRecord(w, from) {
   for (const k of KEEPS) if (from[k] != null) w[k] = from[k];
-  // A dose written by an older save has `until` and no `left`; it is not worth
-  // guessing what that moment meant, so such a body simply comes back sober.
-  if (from.dose && from.dose.left > 0)
-    w.dose = { tonic: from.dose.tonic, until: now() + from.dose.left };
+  // A save written before tonics stacked has one `dose` rather than a list of
+  // them; it is read as a list of one. Either way a dose with no `left` on it is
+  // older still -- it was written as a moment on a clock that has since started
+  // again -- and it is not worth guessing what that moment meant, so a body
+  // carrying one comes back sober.
+  const had = from.doses || (from.dose ? [from.dose] : []);
+  const on = had.filter(d => d && d.left > 0)
+                .map(d => ({ tonic: d.tonic, until: now() + d.left }));
+  if (on.length) w.doses = on;
   if (!w.at) w.at = {};
   return w;
 }

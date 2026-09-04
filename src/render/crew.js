@@ -7,7 +7,7 @@
 // drawCircle, drawMark) come from render.js, the core module; drawCoreGlow and
 // markAt come from the cores and pilemarks clusters that already own them.
 
-import { atPot, doseFrac, doseColor, tonicColor } from '../apothecary.js';
+import { atPot, tonicColor } from '../apothecary.js';
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';

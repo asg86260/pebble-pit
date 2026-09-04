@@ -268,8 +268,9 @@ group("a refresh does not drink the crew's tonic", async () => {
   return [
     ok(dealt && wasOn > 0, 'a body is under a tonic before the refresh', `${wasOn}`),
     ok(after.length === wasOn, 'and is still under it after', `${wasOn} -> ${after.length}`),
-    ok(after[0] && after[0].dose.tonic === 'stew', 'wearing the same tonic',
-       after[0] && after[0].dose.tonic),
+    ok(after[0] && after[0].doses.some(d => d.tonic === 'stew'),
+       'wearing the same tonic',
+       after[0] && after[0].doses.map(d => d.tonic).join(',')),
     // Not topped back up to full, and not run down to nothing: what was left is
     // what is left.
     ok(after[0] && Math.abs(doseLeftMs(after[0]) - leftBefore) < 2000,

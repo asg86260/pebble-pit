@@ -483,7 +483,11 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
     w.holding = 1; w.goal = 'out';
     w.dealTo = S.workers.find(b => b.type !== TYPE.STIR) || null;
   } else {
-    w.dose = { tonic, until: clockNow() + 999999 };
+    // Added to whatever it already carries, the way a dealt one is, so that
+    // `__dose(...)` twice with two tonics gives you a body under both -- which
+    // is the state worth looking at.
+    w.doses = [...(w.doses || []).filter(d => d.tonic !== tonic),
+               { tonic, until: clockNow() + 999999 }];
   }
   S.dirty = true;
   return true;

@@ -100,38 +100,69 @@ export function tonicGain(t) {
   return '';
 }
 
-// --- the buff on a body -------------------------------------------------------
-// A dealt tonic is a record on the body: which tonic, and when it runs out. It
-// is read wherever the body's work happens, and it expires on its own clock --
-// nothing sweeps the yard to take it off, the readers simply stop seeing it.
-export const doseLive = w => !!(w && w.dose && w.dose.until > now());
-export const doseOf = w => (doseLive(w) ? w.dose : null);
-export const doseTonic = w => { const d = doseOf(w); return d ? tonicOf(d.tonic) : null; };
-export const doseName = w => { const t = doseTonic(w); return t ? t.name : ''; };
-// The colour of a tonic's liquid, and of the dose a body wears -- for the vial
-// on the shelf, in a stirrer's hands, and over a buffed body's head.
+// --- the buffs on a body ------------------------------------------------------
+// A body carries a LIST of dealt tonics: one of each kind at most, each on its
+// own clock. A second stew refreshes the stew it already has; a stew on top of a
+// brace is both, because they lift different things and there is no sense in
+// which one replaces the other.
+//
+// It was one dose flat, and a body under a bracing tonic lost it the moment
+// somebody handed it a stew -- the yard quietly undoing work it had just paid
+// crop and a reagent for. The KINDS are what may not double up, not the doses:
+// two stews at once would be the same boost applied twice, which is the stacking
+// this is meant to avoid.
+//
+// Nothing sweeps the yard to take a spent one off; the readers simply stop
+// seeing it, and `stepDoses` clears the husks so the list cannot grow for ever.
+const liveOf = w => (w && w.doses ? w.doses.filter(d => d.until > now()) : []);
+export const doses = liveOf;
+export const doseLive = w => liveOf(w).length > 0;
+// The live dose of one KIND -- what each of the three readers below is asking
+// for, and what `deal` refreshes rather than piles on to.
+const kindOf = (w, kind) => liveOf(w).find(d => (tonicOf(d.tonic) || {}).kind === kind);
+export const doseTonics = w => liveOf(w).map(d => tonicOf(d.tonic)).filter(Boolean);
+// What it is wearing, said: every tonic on it, for the card that lists a body's
+// state. One name while it is under one, which is what it always used to say.
+export const doseName = w => doseTonics(w).map(t => t.name).join(', ');
+// The colour of a tonic's liquid -- for the vial on the shelf and in a stirrer's
+// hands. A body may be under several, so the plume asks `doseTonics` instead.
 export const tonicColor = key => { const t = tonicOf(key); return t ? t.color : '#fff'; };
-export const doseColor = w => { const t = doseTonic(w); return t ? t.color : '#fff'; };
-export const doseLeftMs = w => { const d = doseOf(w); return d ? Math.max(0, d.until - now()) : 0; };
-// How much of the dose is left, 0..1 -- the mark on the body stands in this many
-// of its cells, so it fades as the dose wears off.
-export const doseFrac = w => { const d = doseOf(w); return d ? Math.min(1, doseLeftMs(w) / buffMs()) : 0; };
+// How long the longest-lasting of them has to run, which is what "under a tonic
+// for another Ns" means on the card.
+export const doseLeftMs = w =>
+  liveOf(w).reduce((most, d) => Math.max(most, d.until - now()), 0);
+// How much of a dose is left, 0..1, taking the freshest -- what the plume thins
+// against, so a body just topped up gives off a full plume even if something
+// else on it is nearly spent.
+export const doseFrac = w => {
+  const ms = Math.max(1, buffMs());
+  return liveOf(w).reduce((most, d) => Math.max(most, Math.min(1, (d.until - now()) / ms)), 0);
+};
 
 // The three readers, each returning the neutral value when the body wears no
-// dose of that kind. A body can wear one dose at a time -- a fresh dose refreshes
-// the timer rather than stacking (which is why doses and bodies are one ladder,
-// not two; see DESIGN.md "Open").
+// dose of that kind. One of each kind at most, so each of these finds one or
+// none -- no summing, and no question about what two stews would mean.
 export function workBoost(w) {
-  const t = doseTonic(w);
-  return t && t.kind === 'work' ? 1 + tonicVal(t) : 1;
+  const d = kindOf(w, 'work');
+  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
 }
 export function critBoost(w) {
-  const t = doseTonic(w);
-  return t && t.kind === 'crit' ? tonicVal(t) : 0;
+  const d = kindOf(w, 'crit');
+  return d ? tonicVal(tonicOf(d.tonic)) : 0;
 }
 export function carryBoost(w) {
-  const t = doseTonic(w);
-  return t && t.kind === 'carry' ? 1 + tonicVal(t) : 1;
+  const d = kindOf(w, 'carry');
+  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
+}
+
+// Take the spent ones off. Nothing reads a lapsed dose, but a body that works
+// all day would otherwise carry a list of every tonic it has ever been handed.
+export function stepDoses() {
+  for (const w of S.workers) {
+    if (!w.doses || !w.doses.length) continue;
+    const live = liveOf(w);
+    if (live.length !== w.doses.length) w.doses = live;
+  }
 }
 
 // --- the crew of the pot ------------------------------------------------------
@@ -158,7 +189,18 @@ const potOf = w => stirrers().indexOf(w);
 // A body worth dealing a dose to: anybody working who is not a stirrer and is
 // not already under a live dose. The preferred station is a nudge applied on top
 // of this, not a wall.
-const buffable = w => w.type !== TYPE.STIR && !doseLive(w);
+// A body worth dealing to: anybody working who is not a stirrer and is not
+// already under a live dose OF THE KIND the pot is on. It used to be "not
+// already under anything", which with tonics that stack means a body under a
+// bracing tonic would never be offered a stew -- the crew would settle on
+// whichever tonic reached them first and the rest of the menu would go nowhere.
+// What a body may not have is two of the same kind.
+const buffable = w => {
+  if (w.type === TYPE.STIR) return false;
+  const t = tonicOf(S.potTonic);
+  if (!t) return false;
+  return !doses(w).some(d => (tonicOf(d.tonic) || {}).kind === t.kind);
+};
 
 // The body the next dose goes to: the preferred station first, then whoever is
 // nearest the pot. A small brew lands where it matters and a big one spills to
@@ -178,7 +220,11 @@ function pickTarget(self) {
 // The dose reaches the body: the buff lands here, when the stirrer arrives, and
 // not before.
 function deal(w, target) {
-  target.dose = { tonic: S.potTonic, until: now() + buffMs() };
+  // One of each kind: a tonic of a kind the body already carries refreshes that
+  // one rather than being added beside it, so two stews can never both count.
+  const t = tonicOf(S.potTonic);
+  const keep = doses(target).filter(d => (tonicOf(d.tonic) || {}).kind !== (t || {}).kind);
+  target.doses = [...keep, { tonic: S.potTonic, until: now() + buffMs() }];
   w.brewed = (w.brewed || 0) + 1;
   S.dirty = true;
 }
@@ -312,13 +358,19 @@ export function stepDoseMotes(dt) {
     // Faster while the dose is fresh, so the plume thins as it wears off rather
     // than stopping all at once.
     w.moteAt = at + DOSE_MOTE_MS * (1.6 - frac * 0.8);
-    puff(w.x + WORKER / 2, w.y, {
-      n: 2,
-      s: 0.55,
-      rise: DOSE_MOTE_RISE,
-      life: DOSE_MOTE_LIFE,
-      color: doseColor(w)
-    });
+    // A body under several tonics gives off all of them at once, mixed: one
+    // mote of each colour, let go together off the same head. Not blended into
+    // an average colour -- an average of green and purple is a colour that is
+    // neither, and which tonic a body is under has to stay readable. Two
+    // colours rising together says two tonics; one muddy one says nothing.
+    for (const t of doseTonics(w))
+      puff(w.x + WORKER / 2, w.y, {
+        n: 1,
+        s: 0.55,
+        rise: DOSE_MOTE_RISE,
+        life: DOSE_MOTE_LIFE,
+        color: t.color
+      });
   }
 }
 
@@ -433,7 +485,7 @@ export const APOTHECARY_UPGRADES = [
   // Who the round favors. A dial that walks the jobs the doses can land on.
   {
     key: 'potprefer', dial: true, site: 'apothecary',
-    name: 'doses go to',
+    name: 'give potion to',
     value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
     // Seven stations to walk past two buttons at a time; a list you pick from is
     // the whole reason this control exists. "Nobody in particular" is the first
@@ -442,8 +494,6 @@ export const APOTHECARY_UPGRADES = [
                     ...PREFER_JOBS.map(j => ({ key: j, label: PREFER_LABEL[j] }))],
     at: () => S.potPrefer || '',
     pick: k => choosePrefer(k || null),
-    note: () => 'The keeper hands a dose to this station first; if none want ' +
-                'one, to whoever is nearest the pot.',
     less: () => setPrefer(stepPrefer(-1)),
     more: () => setPrefer(stepPrefer(1)),
     lo: () => false, hi: () => false,

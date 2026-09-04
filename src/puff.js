@@ -53,7 +53,15 @@ export function puff(x, y, o = {}) {
       // does not use it; a tonic shifts its hue by it, so a plume is a colour
       // rather than one swatch repeated. Settled here rather than at the draw
       // because a variation rolled per frame is a mote that blinks.
-      v: rand(),
+      //
+      // Hashed off where the mote is, NOT drawn from `rand()`. `rand()` is the
+      // SIMULATION's stream: it is seeded, every check in the suite is written
+      // against the yard that seed produces, and one more call per mote shifts
+      // it for everything downstream. That is not a theory -- taking one from it
+      // here put a quarrier through the floor in a test six thousand frames
+      // later, in a file that has nothing to do with smoke. Decoration does not
+      // get to touch the stream the game is dealt from.
+      v: ((Math.sin((x + y * 3 + i) * 12.9898) * 43758.5453) % 1 + 1) % 1,
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }

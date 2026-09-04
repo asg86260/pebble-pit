@@ -79,8 +79,9 @@ group('the stirrer carries a dose out and the buff lands on a body', async () =>
     ok(landed, 'a body ends up under the tonic'),
     ok(who && who.type !== 'stirrer', 'and it is a worker, not the stirrer itself',
        who && who.type),
-    ok(who && who.dose.tonic === 'stew', 'wearing the tonic the pot was set to',
-       who && who.dose.tonic)
+    ok(who && who.doses.some(d => d.tonic === 'stew'),
+       'wearing the tonic the pot was set to',
+       who && who.doses.map(d => d.tonic).join(','))
   ];
 });
 
@@ -118,7 +119,7 @@ group('a hearty stew makes a rockhand swing faster', async () => {
     window.__grant({ dust: 5000 });
     run(2);                                     // let it reach the face
     const m = yard.S.workers.find(w => w.type === 'rockhand');
-    if (buff) m.dose = { tonic: 'stew', until: 9e12 };   // a stew that will not lapse
+    if (buff) m.doses = [{ tonic: 'stew', until: 9e12 }];   // a stew that will not lapse
     const before = m.mined || 0;
     run(30);
     return { took: (m.mined || 0) - before, boost: workBoost(m) };
@@ -141,7 +142,7 @@ group('a bracing tonic reaches a rockhand\'s crit roll', async () => {
   window.__crew(1, 0, 0, 0);
   run(2);
   const m = yard.S.workers.find(w => w.type === 'rockhand');
-  m.dose = { tonic: 'brace', until: 9e12 };
+  m.doses = [{ tonic: 'brace', until: 9e12 }];
   return [
     ok(critBoost(m) > 0, 'a brace-dosed rockhand carries a crit bonus into its swing',
        String(critBoost(m)))
@@ -212,5 +213,53 @@ group('the pot remembers what it was set to across a reload', async () => {
     ok(yard.S.apothecaryOpen, 'the building comes back up'),
     ok(yard.S.potTonic === 'brace', 'set to the tonic it was on', yard.S.potTonic),
     ok(yard.S.lengthLevel === lvl, 'with its ladder where it was', `${lvl} -> ${yard.S.lengthLevel}`)
+  ];
+});
+
+// --- a body can be under more than one tonic ---------------------------------
+// They lift different things, so there is no sense in which a stew replaces a
+// bracing tonic -- and it used to, which meant the yard quietly threw away a
+// dose it had just paid crop and a reagent for whenever the pot changed.
+//
+// What may NOT double up is a kind: two stews at once would be the same boost
+// applied twice. A second stew refreshes the first.
+group('a body wears one tonic of each kind, and a repeat refreshes rather than stacks', async () => {
+  standApothecary();
+  window.__pot('stew');
+  window.__assign('stirrers', 1);
+  runUntil(() => dosed().some(w => w.type === 'farmhand'), 200);
+  const fh = dosed().find(w => w.type === 'farmhand');
+  const stewOnly = workBoost(fh);
+  const critBefore = critBoost(fh);
+
+  // ...and now the pot goes on to something that lifts a different thing
+  window.__pot('stew');                        // off
+  window.__pot('brace');
+  const both = runUntil(() => fh.doses.length > 1, 300);
+  const workAfter = workBoost(fh);
+  const critAfter = critBoost(fh);
+
+  // A second of the SAME kind: the list does not grow, and the boost does not
+  // double -- it is the same stew, wound back up.
+  const was = fh.doses.length;
+  const stew = { tonic: 'stew', until: 1 };    // a spent one to be replaced
+  fh.doses = [...fh.doses.filter(d => d.tonic !== 'stew'), stew];
+  window.__pot('brace'); window.__pot('stew');
+  const again = runUntil(() => fh.doses.some(d => d.tonic === 'stew' && d.until > 1), 300);
+  const doubled = workBoost(fh);
+
+  window.__crew(0, 0);
+  return [
+    ok(stewOnly > 1.2 && critBefore === 0,
+       'a stew alone lifts the work and nothing else', `${stewOnly.toFixed(2)}, crit ${critBefore}`),
+    ok(both, 'a bracing tonic lands on a body already under a stew',
+       fh.doses.map(d => d.tonic).join(',')),
+    ok(workAfter > 1.2 && critAfter > 0,
+       'and it is under both at once -- the stew was not thrown away',
+       `work ${workAfter.toFixed(2)}, crit ${critAfter.toFixed(2)}`),
+    ok(again && fh.doses.filter(d => d.tonic === 'stew').length === 1,
+       'a second stew is one stew, not two', `${fh.doses.length} doses`),
+    ok(Math.abs(doubled - workAfter) < 0.001,
+       'and it lifts the work by the same as one did', `${doubled.toFixed(2)}`)
   ];
 });
