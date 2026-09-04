@@ -202,7 +202,12 @@ export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
-export const nearApothecary = (x, y) => S.apothecaryOpen && near(apothecary, x, y);
+// The hut, not the plot: the plot runs hut, shelves and four pots, and a pot
+// answers to its own picker (src/potpick.js) -- a pointer near a cauldron was
+// throwing the shop menu over the thing being clicked. The same hut rect the
+// stand and the board hang from, so the three cannot disagree.
+export const nearApothecary = (x, y) =>
+  S.apothecaryOpen && near(standAt.apothecary, x, y);
 // The shed beside it is now the *only* way in. #1 of "Wave 3.1" made it a
 // second one and left the hole answering as well, which is the half-measure
 // this replaces: pointing anywhere at the cut -- the ground the crew work, the
