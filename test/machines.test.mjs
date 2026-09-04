@@ -848,7 +848,7 @@ group('a machine is paid for in three coins at once', async () => {
   openSites();
   window.__crew(0, 3);                             // hands spare to put it up
   window.__fullSites();
-  window.__tip(9000);
+  window.__tip(15000);                             // the ram's dust half and change
   run(1);
 
   // Every coin but one: the row is there and refuses.

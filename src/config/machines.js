@@ -22,7 +22,12 @@ export let MACHINE_GAIN = 1.5;
 // last, which is what stops an endless row from running away with the game --
 // and what makes it a sink deep enough to swallow an endgame's dust.
 export const MACHINE_TUNE = 1.3;
-export const MACHINE_TUNE_COST = 30;
+// The first rung quadrupled with the machines themselves: red gathers far
+// quicker than these prices were written against, and a ladder whose first
+// rungs are always affordable is a dial you turn, not a thing you save for.
+// The climb per rung is unchanged -- 1.55 against a gain of 1.3 is already
+// each rung buying less than the last, which is what makes the ladder a sink.
+export const MACHINE_TUNE_COST = 120;
 export const MACHINE_TUNE_UP = 1.55;
 // Dust to the spark, the line every price in this game sits on. `DUST_PER` in
 // upgrades.js is the full table; this is the one entry that is also needed here,
@@ -140,14 +145,18 @@ export const PUFF_SPREAD = 0.8;      // how far apart they start, in cells
 // Sixty dust to the spark is the line the three that already had dust were
 // sitting on -- the tiller exactly, the jaw within a rounding -- so the two
 // being fixed are put on the same line rather than given a number apiece.
-export const JAW_BILL    = [['spark', 30], ['dust', 2000], ['spore', 25]];
-export const RAM_BILL    = [['spark', 50], ['dust', 3000], ['shard', 40], ['spore', 30]];
-export const TILLER_BILL = [['spark', 20], ['dust', 1200], ['shard', 18]];
+// Raised fourfold across the board (and the dust held to the sixty-a-spark
+// line): at the old prices an endgame yard bought a machine out of pocket
+// change the moment the row appeared. A machine is the last thing in the
+// game, and the last thing in the game is saved for.
+export const JAW_BILL    = [['spark', 120], ['dust', 7200], ['spore', 100]];
+export const RAM_BILL    = [['spark', 200], ['dust', 12000], ['shard', 160], ['spore', 120]];
+export const TILLER_BILL = [['spark', 80], ['dust', 4800], ['shard', 72]];
 // The belt is the one machine not priced away from its own station's coin,
 // because carrying does not *have* a coin: a hauler makes nothing, it moves what
 // everybody else made. So it is priced in all three grounds, which is the truest
 // thing a price can say about a thing the whole yard uses.
-export const BELT_BILL = [['spark', 40], ['dust', 2400], ['shard', 30], ['spore', 30]];
+export const BELT_BILL = [['spark', 160], ['dust', 9600], ['shard', 120], ['spore', 120]];
 // The rock's notional gang was five; the lip's is what a full crew of carriers
 // looks like, which is rather more -- carrying is the job everybody falls back
 // to, so at any moment most of the yard is doing it.
