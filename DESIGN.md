@@ -2824,6 +2824,47 @@ pressed their pile twice and banked 202,000 opens the new build to a hole full o
 dust and a rift holding the other 165,000, which is the state the game would have put them in had
 the rift existed all along.
 
+## The abyss (design, not built)
+
+The rift's *account* stays; its *picture* goes. Instead of a black disc hanging in the air over the
+mouth, **the pit itself liquefies**: the moment the hole cannot take a grain, the pile turns to a
+black liquid, an abyss standing in the hole, and from then on the liquid is what eats.
+
+**The tear becomes the drowning.** Today the hole gives way and the whole pile orbits up into a
+disc — dust flying *up* to be destroyed, which reads as a machine. Liquefying reads as the thing
+that actually happened: the ground gave out. Over the gulp's few seconds the pile darkens from the
+bottom up and slumps into a level black surface; grains still solid ride down into it. When it is
+over, the hole holds a liquid standing at a fixed line a few cells below the brim.
+
+**What the liquid does.**
+
+- Anything that lands on it is taken at the surface: a short swallow ripple where it struck, and
+  gone. The catch-at-the-mouth rule stays — a thrown grain crossing the brim dives to the surface
+  and is eaten there, rather than orbiting a disc.
+- The surface is alive but quiet: a slow swell of a cell or two, black on white, flat shapes — no
+  gradients, which the current disc's speckled halo already bends. A liquid is *easier* to keep
+  inside the game's language than a black hole is.
+- Spending still lifts out of the abyss: paid grains surface and arc to the station exactly where
+  the pile's used to lift from. The liquid holds everything the rift held — dust, finds, the red —
+  and `riftHeld`'s account is untouched.
+
+**What it must not break.** The counter and the picture still agree: the counter is what you own,
+the pile-turned-liquid shows a *surface*, and the readout that said what the rift holds now reads
+off the abyss. Nobody holds it open, nothing staffs it, capacity is still unbounded. The haulers'
+walkable surface over the pit becomes the liquid's line — bodies do not walk on it; the two ladders
+stop at the surface, and the pit stops being a way through once it has drowned (or the crossing is
+kept by a plank laid over the mouth — the one open call worth deciding at review).
+
+**Why a liquid rather than a disc.** The disc is the one object in the yard that is not a thing a
+works could have: it hangs, it spins, it has no silhouette against the ground. A drowned pit is
+still the pit — the same hole, gone wrong in a way you watch happen — and "the ground ate it" is
+the same sentence the collapse already says.
+
+**How it would be checked.** Node tier: the accounting is byte-identical to the rift's (same
+`S.rift`, `riftHeld`, swallow and spend order), a grain thrown at a drowned pit is counted the
+frame it crosses the surface, and a save from the disc era comes back drowned with nothing lost.
+Then shots: the tear mid-gulp, the standing surface, a throw being eaten, a purchase surfacing.
+
 ## The air
 
 Nothing stands in the background of this game — no hills, no clouds, no furniture of any kind — so

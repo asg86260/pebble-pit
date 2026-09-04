@@ -1,5 +1,14 @@
 # Still to do
 
+## The abyss — DESIGNED, awaiting approval (2026-09-04)
+
+The rift's picture replaced: the pit liquefies into a black liquid that eats
+what lands on it, instead of a disc hanging in the air. The account, the
+catch-at-the-mouth rule and the spend order are unchanged — see "The abyss
+(design, not built)" in DESIGN.md. One open call for review: whether the
+drowned pit stays a way through (a plank over the mouth) or stops being one.
+No code until the design is signed off.
+
 ## Wave 5 — SHIPPED (2026-09-04)
 
 Both batches are on main: the scalability refactor (config/smog/upgrades
