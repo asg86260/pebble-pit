@@ -164,8 +164,8 @@ group('the hill is a workplace, not a road', async () => {
       } else if (b.t === 'h') {
         // A hauler in front of the hill, on the floor of the yard and at the
         // height of it. Haulers only, because they are the ones with no reason
-        // ever to leave the ground here -- a miner passing through this band is
-        // a miner walking down off the crest to a mess, and it is meant to be
+        // ever to leave the ground here -- a rockhand passing through this band is
+        // a rockhand walking down off the crest to a mess, and it is meant to be
         // between the two heights for the few frames that takes.
         crossed++;
         worstFlat = Math.max(worstFlat, Math.abs(feet - gy));
@@ -177,7 +177,7 @@ group('the hill is a workplace, not a road', async () => {
     // The gang's work is on the rock, so the route to their stand goes up it.
     // Nothing tells them to climb: their stand is a place on the hill's surface,
     // so the shortest walk to it is a walk on to the hill.
-    ok(climbed.has('m'), 'the gang climb the hill, because their work is on it',
+    ok(climbed.has('r'), 'the gang climb the hill, because their work is on it',
        `up there: ${[...climbed].join('') || 'nobody'}`),
     // And everybody else goes past it. This is the whole of the bug: with the
     // hill in the yard's floor the shortest path across the yard went over the
@@ -230,7 +230,7 @@ group('the way over the hill is the hill that is left', async () => {
   // the same reason. It used to be measured against the single column under the
   // body's midpoint, and that read 20px on a gang at work while the climber had
   // in fact arrived -- `w.foot` sat exactly on its target on the worst frame of
-  // the run. What the 20 was, was a miner standing on the column it is striking
+  // the run. What the 20 was, was a rockhand standing on the column it is striking
   // (which is what a body working a face does, see `rockTopY(colAtX(...))` in
   // crew.js) with a two-cell spike left standing beside it, and the midpoint
   // happening to land on the spike. A body is not buried in a column it is
@@ -273,15 +273,15 @@ group('the way over the hill is the hill that is left', async () => {
     // And the walk over it tracks the outline as the outline changes, craters
     // and steps included, without anybody dropping through it. Measured at 8px
     // against the columns a body is actually standing on, and all 8 of it is
-    // the miner's own bob and lunge -- a swing drives it down as much as
-    // `P * 1.4` (see the miner's branch in crew.js) and it comes back up. So
+    // the rockhand's own bob and lunge -- a swing drives it down as much as
+    // `P * 1.4` (see the rockhand's branch in crew.js) and it comes back up. So
     // the mark is that, with room for the bob on top of it, and anything over
     // it is a body genuinely under the rock rather than leaning into a swing.
     ok(into <= 12, 'and nobody on it is ever buried in the shape it is left with',
        `worst ${Math.round(into)}px into the face`),
     // A cell a frame is what `climbTo` allows, and the bob and the swing ride on
     // top of that. Anything much over it is a body being put on the new surface
-    // rather than walking down to it -- a miner hopping down the hill a cell at
+    // rather than walking down to it -- a rockhand hopping down the hill a cell at
     // a time as the swings land, which is what easing is here to stop.
     ok(jump <= 12, 'and it walks down to the new surface rather than being put on it',
        `worst ${Math.round(jump)}px in a frame`)

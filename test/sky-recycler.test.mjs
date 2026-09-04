@@ -9,7 +9,7 @@ group('the scrubbing house empties its filters out the back, until the recycler'
     window.__crew(0, 0);
     window.__clearFloor();
     // under the rain line, or the weather makes the muck instead of the house
-    window.__air({ haze: 300, open: true, scrubbers: 1, muck: 0 });
+    window.__air({ haze: 300, open: true, purifiers: 1, muck: 0 });
     // long enough for one body to walk out there and fill a filter: the house
     // holds one now, so the catch that used to take ten seconds takes twenty.
     run(20);
@@ -20,7 +20,7 @@ group('the scrubbing house empties its filters out the back, until the recycler'
   window.__reset();
   window.__crew(0, 0);
   window.__clearFloor();
-  window.__air({ haze: 300, open: true, scrubbers: 1, recycler: true, muck: 0 });
+  window.__air({ haze: 300, open: true, purifiers: 1, recycler: true, muck: 0 });
   run(20);
   const fitted = state();
 
@@ -56,7 +56,7 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
   window.__crew(0, 0);
   window.__clearFloor();
   window.__tune('PILE_LIMIT.scrub', 40);      // a small strip, so this is seconds
-  window.__air({ haze: 0, muck: 0, open: true, scrubbers: 2, recycler: true });
+  window.__air({ haze: 0, muck: 0, open: true, purifiers: 2, recycler: true });
   window.__air({ haze: 3000 });
   run(20);
   const on = state();
@@ -93,7 +93,7 @@ group('the house heaps what it makes, and clogs when there is no room', async ()
   run(8);
   const freed = state();
 
-  window.__air({ haze: 0, muck: 0, open: false, scrubbers: 0 });
+  window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
   window.__tune('PILE_LIMIT.scrub', 140);
   window.__clearFloor();
   return [
@@ -123,7 +123,7 @@ group('the recycler pays out on the ground under its own chute', async () => {
   window.__crew(0, 3);                 // two go in the house, one is left to fetch
   run(3);
   window.__clearFloor();
-  window.__air({ open: true, scrubbers: 2, recycler: true, haze: 400 });
+  window.__air({ open: true, purifiers: 2, recycler: true, haze: 400 });
   // held topped up: the house empties a sky of 400 faster than a body crosses
   // the yard to it, and a house that runs dry mid-check is a check about the
   // walk rather than about the chute
@@ -142,7 +142,7 @@ group('the recycler pays out on the ground under its own chute', async () => {
   runUntil(() => state().stored > 0, 200);
   const swept = state();
   window.__crew(0, 0);
-  window.__air({ open: false, recycler: false, scrubbers: 0, haze: 0, muck: 0 });
+  window.__air({ open: false, recycler: false, purifiers: 0, haze: 0, muck: 0 });
   window.__clearFloor();
   return [
     ok(paid.smog.recycled > 0 && paid.floor > 0,

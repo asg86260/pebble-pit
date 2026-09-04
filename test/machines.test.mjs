@@ -226,7 +226,7 @@ group('a machine smokes out of its own chimney, whichever way it faces', async (
 // A body put on a station with a machine on it walks to the machine.
 //
 // It walked to the *hand's* spot first. `stationX` answers "where is this job
-// done", and for a miner that is the middle of the hill -- so a body put on the
+// done", and for a rockhand that is the middle of the hill -- so a body put on the
 // rock climbed the boulder, stood on top of it, and was then walked back down to
 // the ram it was always going to end up on. Three trips to do one thing, which
 // is the very thing `retask` goes out of its way to avoid for the kit stand.
@@ -249,18 +249,18 @@ group('a body put on a station with a machine goes to the machine, not up the hi
   run(2);
   window.__clearFloor();
 
-  window.__assign('miners', 1);
+  window.__assign('rockhands', 1);
   const g = yard.S.groundY;
   let highest = 0;
   for (let i = 0; i < 300; i++) {
     run(1 / 12);
-    const m = yard.S.workers.find(w => w.type === 'miner');
+    const m = yard.S.workers.find(w => w.type === 'rockhand');
     if (m) highest = Math.max(highest, Math.round((g - m.y - WORKER) / P));
   }
   // The ram's roof is five cells up. The hill is a great deal more than that, so
   // anything much above the roof means it went over the boulder to get here.
   const roof = 5;
-  const men = state().miners;                 // read before the crew is torn down
+  const men = state().rockhands;                 // read before the crew is torn down
   window.__crew(0, 0, 0);
   return [
     ok(men === 1, 'the body is on the rock', `${men}`),
@@ -303,7 +303,7 @@ group('a machine at a station leaves room for one body', async () => {
 });
 
 // The rock is the one station with no floor plan, and the one `rebalance` used
-// to leave alone -- its clamp list was written out by hand with `miners` left
+// to leave alone -- its clamp list was written out by hand with `rock hands` left
 // off, because clamping to `Infinity` is a no-op. That was true right up until a
 // machine made it finite.
 group('the ram is the case the old clamp list would have missed', async () => {
@@ -315,15 +315,15 @@ group('the ram is the case the old clamp list would have missed', async () => {
 
   window.__machine('ram', { bought: true });
   const on = state();
-  const rock = on.roster.find(r => r.job === 'miners');
+  const rock = on.roster.find(r => r.job === 'rockhands');
 
   window.__crew(0, 0);
   return [
-    ok(before.miners === 6, 'six on the rock, more than any station holds',
-       `${before.miners}`),
-    ok(before.roster.find(r => r.job === 'miners').cap === null,
+    ok(before.rockhands === 6, 'six on the rock, more than any station holds',
+       `${before.rockhands}`),
+    ok(before.roster.find(r => r.job === 'rockhands').cap === null,
        'and the rock has no floor plan to run out of'),
-    ok(on.miners === 1, 'the ram leaves one body on it too', `${before.miners} -> ${on.miners}`),
+    ok(on.rockhands === 1, 'the ram leaves one body on it too', `${before.rockhands} -> ${on.rockhands}`),
     ok(rock && rock.hands === 5, "and stands in for the rock's notional gang of five",
        `hands ${rock && rock.hands}`)
   ];
@@ -371,7 +371,7 @@ group('a machine is worth its complement times the dial', async () => {
 });
 
 // The single highest-value edit in the feature. `__crew` already zeroes the
-// scrubbers and the janitors, with an essay about bodies leaking into a station
+// purifiers and the janitors, with an essay about bodies leaking into a station
 // the caller never named. A machine left running is that trap one level worse:
 // it does not merely move bodies, it changes what the next `__crew(0, 0, 3)` is
 // *allowed* to mean.
@@ -635,8 +635,8 @@ group('the tiller crawls the row and brings the plots in', async () => {
 // The ram is measured against itself with the lever off, and it has to be.
 //
 // The first version of this group asserted `took > 0` with the ram running and
-// called that proof -- but the one miner the cap leaves at the station is still
-// a miner, and its own swings are what that number counted. The ram took *no*
+// called that proof -- but the one rockhand the cap leaves at the station is still
+// a rockhand, and its own swings are what that number counted. The ram took *no*
 // bites at all for the whole of that commit, and the check said it was working.
 // A machine is only ever proved by the difference it makes.
 group('the ram works the rock, measured against not having one', async () => {
@@ -777,7 +777,7 @@ group('a jaw fills the cut in behind itself, for ever', async () => {
 // field with itself -- the field did not exist, so it read `undefined ===
 // undefined` and passed while asserting nothing at all, which is worse than
 // failing.
-group('the ram replaces the miners and never your own cursor', async () => {
+group('the ram replaces the rockhands and never your own cursor', async () => {
   window.__reset();
   openSites();
   window.__fullSites();
@@ -802,7 +802,7 @@ group('the ram replaces the miners and never your own cursor', async () => {
     ok(withRam === bare,
        'and takes exactly as much with the ram running beside it',
        `${bare} -> ${withRam}`),
-    ok(s.machines.ram.job === 'miners',
+    ok(s.machines.ram.job === 'rockhands',
        "because what the ram stands in for is the crew's job, not yours")
   ];
 });

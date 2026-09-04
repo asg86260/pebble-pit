@@ -34,7 +34,7 @@ group('a stood-down crew shifts about', async () => {
   const poses = new Set();
   for (let i = 0; i < 480; i++) {
     run(1 / 60);
-    poses.add(state().workerPos.filter(w => w[0] === 'm').join('|'));
+    poses.add(state().workerPos.filter(w => w[0] === 'r').join('|'));
   }
   const after = state();
   window.__crew(0, 0);
@@ -59,16 +59,16 @@ group('the crew stand on the rock and work it down', async () => {
   runUntil(() => state().commuting.length === 0, 200);
   run(0.3);
   const s = state();
-  const miners = s.workerPos.filter(p => p[0] === 'm')
+  const rockhands = s.workerPos.filter(p => p[0] === 'r')
                             .map(p => p.split(':')[1].split(',').map(Number));
   const foot = s.rockFoot;
   window.__crew(0, 0);                    // put them back on the shelf
   return [
-    ok(miners.length === 5, 'five miners are out', `${miners.length}`),
-    ok(miners.every(([, y]) => y <= foot), 'nobody is below the ground',
-       JSON.stringify(miners)),
-    ok(miners.every(([x]) => x > s.rockX - s.rockW / 2 - 24 && x < s.rockX + s.rockW / 2 + 24),
-       'they are all on the rock, not orbiting it', JSON.stringify(miners)),
+    ok(rockhands.length === 5, 'five rockhands are out', `${rockhands.length}`),
+    ok(rockhands.every(([, y]) => y <= foot), 'nobody is below the ground',
+       JSON.stringify(rockhands)),
+    ok(rockhands.every(([x]) => x > s.rockX - s.rockW / 2 - 24 && x < s.rockX + s.rockW / 2 + 24),
+       'they are all on the rock, not orbiting it', JSON.stringify(rockhands)),
     // Most of them level, rather than all of them. The rule is that the gang
     // works a layer and nobody bores a shaft -- and the gang takes the layer
     // down *around* each other, so at any instant one of them can be off it
@@ -76,14 +76,14 @@ group('the crew stand on the rock and work it down', async () => {
     // that demanded every last one be level was really checking that it had
     // not caught anybody mid-climb, and it failed on the timing.
     ok((() => {
-      const ys = miners.map(([, y]) => y).sort((a, b) => a - b);
+      const ys = rockhands.map(([, y]) => y).sort((a, b) => a - b);
       const mid = ys[Math.floor(ys.length / 2)];
       return ys.filter(y => Math.abs(y - mid) <= 6 * 6).length >= ys.length - 1;
     })(), 'they stand level with each other, because they work a layer',
-       JSON.stringify(miners.map(([, y]) => y))),
-    ok(new Set(miners.map(([x]) => Math.round(x / 18))).size > 1,
+       JSON.stringify(rockhands.map(([, y]) => y))),
+    ok(new Set(rockhands.map(([x]) => Math.round(x / 18))).size > 1,
        'and spread out along it rather than stacking up',
-       JSON.stringify(miners.map(([x]) => Math.round(x))))
+       JSON.stringify(rockhands.map(([x]) => Math.round(x))))
   ];
 });
 
@@ -124,7 +124,7 @@ group('a body walks to its new work instead of appearing at it', async () => {
   const digging = body();
 
   window.__assign('quarriers', -1);           // now it is wanted on the rock
-  window.__assign('miners', 1);
+  window.__assign('rockhands', 1);
   const off = state();
 
   // A thirtieth of a second at a time, so the climb out is not stepped over.
@@ -161,9 +161,9 @@ group('a body walks to its new work instead of appearing at it', async () => {
     ok(off.workers === 1 && off.crew === 1,
        'moving it is one body, not one deleted and another made',
        `${off.workers} bodies, ${off.crew} on the payroll`),
-    ok(off.miners === 1 && off.quarriers === 0,
+    ok(off.rockhands === 1 && off.quarriers === 0,
        'and it counts at its new job the moment it is given it',
-       `${off.miners} mining, ${off.quarriers} in the quarry`),
+       `${off.rockhands} mining, ${off.quarriers} in the quarry`),
     ok(climbing.length > 0 && rose.length > 0 &&
        rose.every(p => Math.abs(p.x - s0.quarryFaceX) < WORKER || onFloor(p)),
        'it comes out of the quarry up the ladder, and nowhere else',
@@ -186,8 +186,8 @@ group('a body walks to its new work instead of appearing at it', async () => {
     ok(Math.abs(home.x - s0.rockX) < s0.rockW,
        'which is the rock it was sent to',
        `${home.x}, rock at ${s0.rockX}`),
-    ok(after.miners === 1 && after.workers === 1,
-       'still the one body, and now it is a miner', `${after.workers} bodies`)
+    ok(after.rockhands === 1 && after.workers === 1,
+       'still the one body, and now it is a rockhand', `${after.workers} bodies`)
   ];
 });
 
@@ -239,25 +239,25 @@ group('a hat is walked to, put on, and walked back', async () => {
   const on = state();
 
   // and off the rock again: the helmet has to come back before the body does
-  window.__assign('miners', -1);
+  window.__assign('rockhands', -1);
   run(20);
   const back = state();
   window.__crew(0, 0);
   window.__school({ breakers: 0 });
   run(20);
   window.__clearFloor();
-  const rock = r => r.roster.find(x => x.job === 'miners');
+  const rock = r => r.roster.find(x => x.job === 'rockhands');
   return [
     ok(bought.trained === '', 'buying one puts nobody in a helmet',
        `"${bought.trained}"`),
     ok(rock(bought).spareKit === 2, 'both of them are left waiting at the rock',
        `${rock(bought).spareKit} waiting`),
-    ok(on.trained === 'mm', 'the bodies walk over, pick them up and wear them',
+    ok(on.trained === 'rr', 'the bodies walk over, pick them up and wear them',
        `"${on.trained}"`),
     ok(rock(on).spareKit === 0 && rock(on).hats === 2,
        'and the stand is empty while they are worn',
        `${rock(on).spareKit} of ${rock(on).hats} waiting`),
-    ok(back.trained === 'm', 'one taken off the rock is one helmet fewer worn',
+    ok(back.trained === 'r', 'one taken off the rock is one helmet fewer worn',
        `"${back.trained}"`),
     ok(rock(back).spareKit === 1 && rock(back).hats === 2,
        'and it is back on the stand, not gone with the body',
@@ -524,7 +524,7 @@ group('a heap that is backing up is cleared before the finds are collected', asy
   window.__reset();
   openSites();
   window.__crew(4, 4, 0, 2);                  // and two on the plots, paying green
-  window.__levels({ haulCarryLevel: 5, pickLevel: 6, minerPickLevel: 6 });
+  window.__levels({ haulCarryLevel: 5, pickLevel: 6, rockhandPickLevel: 6 });
   run(30);                                    // long enough to be a going concern
 
   let full = 0, n = 0;

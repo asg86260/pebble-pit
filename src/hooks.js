@@ -82,15 +82,15 @@ export const machineSet = (which, o = {}) => {
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
-  S.minerPickLevel = RUNGS;
-  S.minerSpeedLevel = RUNGS;
+  S.rockhandPickLevel = RUNGS;
+  S.rockhandSpeedLevel = RUNGS;
   S.quarryOpen = true;
   S.farmOpen = true;
   // And a full set of specialists, which is the other half of what a machine is
   // gated behind. A check that wants a machine should not have to know that the
   // hats are called breakers, blasters and growers -- nor how many make a set,
   // which is `kitCap` and is a smaller number than the complement now.
-  S.breakers = Math.max(S.breakers, kitCap('miners'));
+  S.breakers = Math.max(S.breakers, kitCap('rockhands'));
   S.blasters = Math.max(S.blasters, kitCap('quarriers'));
   S.growers = Math.max(S.growers, kitCap('farmhands'));
   S.schoolOpen = true;
@@ -99,7 +99,7 @@ export const fullSites = () => {
   buildShop();
   S.dirty = true;
   return { benches: benches(), plots: plotCount(),
-           pick: S.minerPickLevel, speed: S.minerSpeedLevel,
+           pick: S.rockhandPickLevel, speed: S.rockhandSpeedLevel,
            breakers: S.breakers, blasters: S.blasters, growers: S.growers };
 };
 
@@ -135,7 +135,7 @@ export const birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(
 
 export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb + wz;
-  S.miners = m; S.quarriers = sp; S.farmhands = f; S.labbers = lb;
+  S.rockhands = m; S.quarriers = sp; S.farmhands = f; S.scholars = lb;
   // The sky holds one body per hat, so a hook asked for wizards is given the
   // hats to put them in -- the same way it is given benches for quarriers.
   S.wizardHats = Math.max(S.wizardHats, wz);
@@ -147,10 +147,10 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // house became a real job and this line did not know about it: two bodies a
   // check never asked for walked off to a building that was not even open, and
   // twenty checks further down the suite lost their haulers to it.
-  S.scrubbers = 0;
+  S.purifiers = 0;
   S.janitors = 0;
   // And every machine goes back in the box. This is the same trap as the
-  // scrubbers above, one level worse: a machine left standing by whatever ran
+  // purifiers above, one level worse: a machine left standing by whatever ran
   // before does not merely move bodies about, it rewrites what the next
   // `__crew(0, 0, 3)` is *allowed* to mean -- three quarriers asked for, one
   // machine's worth permitted, and two of them quietly carrying dust while a
@@ -258,8 +258,8 @@ export const plots = () => {
 };
 
 export const levels = (o = {}) => {             // set upgrade levels, for weighing balance
-  for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'minerSpeedLevel',
-                   'minerPickLevel', 'haulCarryLevel', 'haulPaceLevel',
+  for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'rockhandSpeedLevel',
+                   'rockhandPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'harnessLevel', 'bootsLevel', 'fanLevel', 'riftLevel',
@@ -326,7 +326,7 @@ export const setAir = (o = {}) => {
   if (o.haze != null) { S.haze = o.haze; fillSky(); }
   if (o.open != null) { S.scrubOpen = !!o.open; resite(); }
   if (o.recycler != null) S.recycler = !!o.recycler;
-  if (o.scrubbers != null) { S.scrubbers = o.scrubbers; rebalance(); syncWorkers(); }
+  if (o.purifiers != null) { S.purifiers = o.purifiers; rebalance(); syncWorkers(); }
   if (o.janitors != null) { S.janitors = o.janitors; rebalance(); syncWorkers(); }
   if (o.muck != null) S.muck = new Array(floor.cols).fill(o.muck);
   if (o.rains != null) S.rains = o.rains;
@@ -475,7 +475,7 @@ export const finishResearch = key => {
 // dev: put a tonic on a body -- a dose on a worker to look at the buff mark, or a
 // dose in a stirrer's hand to look at it being carried. For screenshots only; the
 // real round is `stepStirrer`.
-export const dose = (type = 'miner', tonic = 'stew') => {
+export const dose = (type = 'rockhand', tonic = 'stew') => {
   const w = S.workers.find(b => b.type === type);
   if (!w) return false;
   if (type === 'stirrer') {

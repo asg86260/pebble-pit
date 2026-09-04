@@ -6,11 +6,11 @@
 // on the board.
 
 import {
-  P, CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, MINER_BASE, MINER_FLOOR,
+  P, CAP_BASE, CAP_STEP, RUNGS, LOO_MUCK, LOO_POSTS, MINE_BASE, MINE_FLOOR, ROCKHAND_BASE, ROCKHAND_FLOOR,
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST, MINER_BITE_MULT
+  TOWER_CORES, TOWER_DUST, ROCKHAND_BITE_MULT
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
@@ -114,13 +114,13 @@ export const folds = u => maxed(u) && !u.keep;
 // Five rungs to every ladder in the game -- see RUNGS -- so that "how far along
 // is this" is one question with one answer wherever it is asked.
 const mineGap = swing(MINE_BASE, MINE_FLOOR, RUNGS);
-const minerGap = swing(MINER_BASE, MINER_FLOOR, RUNGS);
+const rockhandGap = swing(ROCKHAND_BASE, ROCKHAND_FLOOR, RUNGS);
 const scoopGap = swing(HAUL_MS, 30, RUNGS);
 
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, mineGap(lvl) / mult('swing'));
 export const mineRate = (lvl = S.speedLevel) => 1000 / mineMs(lvl);
-export const minerMs = (lvl = S.minerSpeedLevel) => Math.max(1, minerGap(lvl) / mult('swing'));
-export const minerRate = (lvl = S.minerSpeedLevel) => 1000 / minerMs(lvl);
+export const rockhandMs = (lvl = S.rockhandSpeedLevel) => Math.max(1, rockhandGap(lvl) / mult('swing'));
+export const rockhandRate = (lvl = S.rockhandSpeedLevel) => 1000 / rockhandMs(lvl);
 // What a pair of hands carries: what it can hold, and then what it can hold
 // *with something to hold it in*. The harness is the second tier -- bought with
 // stone out of the quarry, because gear is what stone is for.
@@ -138,19 +138,19 @@ export const scoopMs = (lvl = S.haulPaceLevel) => Math.max(1, scoopGap(lvl) / mu
 // a trip, whoever makes it.
 export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY);
 // Pixels a swing takes. Yours and theirs are two different tools now: one row
-// that made every miner in the yard hit harder was doing two jobs at once, and
+// that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
 export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
-// What a miner takes, eased across the ladder the same way `swing` eases a
+// What a rockhand takes, eased across the ladder the same way `swing` eases a
 // rate rather than added a flat pixel a rung. A flat +1 looked tame on the row
 // and was a straight multiple against the base underneath it -- five rungs
 // bought six times the bite, which is a pit filling faster than the crew you
-// actually have could ever carry it away. Eased and capped at `MINER_BITE_MULT`
+// actually have could ever carry it away. Eased and capped at `ROCKHAND_BITE_MULT`
 // total over the ladder, the early rungs still read as the biggest jump and the
 // last rung lands exactly on the cap instead of wherever the arithmetic put it.
-export const minerBite = (lvl = S.minerPickLevel) => {
+export const rockhandBite = (lvl = S.rockhandPickLevel) => {
   const k = Math.max(0, Math.min(1, lvl / RUNGS));
-  return 1 + (MINER_BITE_MULT - 1) * (1 - Math.pow(1 - k, 1.6));
+  return 1 + (ROCKHAND_BITE_MULT - 1) * (1 - Math.pow(1 - k, 1.6));
 };
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
@@ -255,7 +255,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'stirrers', 'janitors', 'wizards'];
+export const JOBS = ['rockhands', 'quarriers', 'farmhands', 'scholars', 'purifiers', 'stirrers', 'janitors', 'wizards'];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -333,7 +333,7 @@ const capOfBare = job =>
   // argument for it -- research is one thing being looked into at a time, and a
   // second pair of hands on *one* bench is a queue. What the second bench buys
   // is a second *thing*, not a second helper.
-  job === 'labbers' ? labRooms() :
+  job === 'scholars' ? labRooms() :
   // One body in the scrubbing house too, and for the same reason: it is a shed
   // with a fan in it. A second body was a second pair of hands on a machine
   // that runs itself once somebody is standing in it -- the draught it makes is
@@ -346,7 +346,7 @@ const capOfBare = job =>
   // above is about the *shed*: a second body at one fan is a queue. A craft is a
   // second mouth rather than a second pair of hands at the same one, so it is a
   // place to be and it takes a body of its own. See balloon.js.
-  job === 'scrubbers' ? 1 + craftCount() :
+  job === 'purifiers' ? 1 + craftCount() :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
@@ -392,7 +392,7 @@ export const roomAt = job => capOf(job) - S[job];
 // "where can I put a body" and the wrong one to "what is this machine standing
 // in for", so the two questions get two functions.
 //
-// The rock is the one station with no floor plan to read: `capOf('miners')` is
+// The rock is the one station with no floor plan to read: `capOf('rock hands')` is
 // `Infinity` and should stay that way. Its complement is `ROCK_GANG`, a named
 // constant in config with its reasoning over it.
 // What the station could hold by hand -- its complement, before it was given a
@@ -407,7 +407,7 @@ export const roomAt = job => capOf(job) - S[job];
 // lip has no machine and no floor plan, and a roster claiming carrying holds
 // five would be a number with nothing behind it.
 export const handsOf = job =>
-  job === 'miners' ? ROCK_GANG :
+  job === 'rockhands' ? ROCK_GANG :
   // Carrying has no floor plan either, and for a different reason: it is not a
   // place at all. It is what a body does when it is on nothing, so "how many fit"
   // is the whole crew, and what the belt stands in for is a full complement of
@@ -556,7 +556,7 @@ export function rebalance() {
   // ones that do not fit go back to carrying dust rather than standing in each
   // other at a plot that is not there.
   // Over `JOBS`, not over a hand-kept copy of it. The list used to be written out
-  // here with `miners` deliberately left off, because `capOf('miners')` is
+  // here with `rock hands` deliberately left off, because `capOf('rock hands')` is
   // `Infinity` and clamping to it is a no-op -- which was true right up until the
   // ram made it finite, and then the one job the list omitted was the one job
   // that needed clamping and nothing walked the gang off the rock. A no-op for
@@ -565,8 +565,8 @@ export function rebalance() {
   for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
-  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'minerPickLevel',
-                   'minerSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
+  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel',
+                   'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'harnessLevel', 'bootsLevel'])
     S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
   // Building is not a job on the roster and never will be. You do not decide to
@@ -588,7 +588,7 @@ export function rebalance() {
   // its count, which makes it spare, and given back the moment there is nothing
   // left to build. One a site and never a gang: borrowing is what keeps a
   // purchase from stalling, not a way to staff a build off the rock. What it
-  // costs is a miner away from the rock for ten seconds, which you can see.
+  // costs is a rockhand away from the rock for ten seconds, which you can see.
   //
   // The four sites with a gang of their own keep the lab's rule instead -- an
   // empty cut builds nothing -- because their work *is* the gang's.
@@ -601,7 +601,7 @@ export function rebalance() {
   // yard was carrying. And nothing tied a repayment to a body still being there
   // to repay: move somebody on to the same job while the loan is out and the
   // count came back on *top* of the move, so a crew of three ended the build
-  // with four miners on the rock and nothing said.
+  // with four rock hands on the rock and nothing said.
   for (let short = sites.length - Math.max(0, spareHands()); short > 0; short--) {
     const w = nearestLendable(sites);
     if (!w) break;
@@ -617,7 +617,7 @@ export function rebalance() {
   //
   // And only if there is a body spare to be the one going home. A count handed
   // back that nobody in the yard can stand behind is a roster that reads higher
-  // than the crew, for ever, with the extra miner nowhere to be seen.
+  // than the crew, for ever, with the extra rockhand nowhere to be seen.
   if (!sites.length) {
     for (const w of S.workers) {
       const job = w.lentFrom;
@@ -667,8 +667,8 @@ export function hire() {
 // The roster shows a job's count with whatever is out on loan already taken off
 // it, so a press on those buttons is a decision about the number in front of
 // you. Handing the borrowed body back afterwards, on top of the press, is the
-// yard quietly undoing what you just did -- which is how "+1 miner" ended a
-// build with two more miners than it started with. Forgiven rather than repaid:
+// yard quietly undoing what you just did -- which is how "+1 rockhand" ended a
+// build with two more rock hands than it started with. Forgiven rather than repaid:
 // `rebalance`, on the next line down, borrows again if the build still needs
 // somebody, and it borrows against the count you just set.
 const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) delete w.lentFrom; };
@@ -830,8 +830,8 @@ export const UPGRADES = [
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
-    show: () => canBuy('ram', () => S.minerPickLevel >= RUNGS && S.minerSpeedLevel >= RUNGS,
-                       () => kitFull('miners'))
+    show: () => canBuy('ram', () => S.rockhandPickLevel >= RUNGS && S.rockhandSpeedLevel >= RUNGS,
+                       () => kitFull('rockhands'))
   },
   {
     // The belt from the rock to the hole, and the one machine that changes the
@@ -894,7 +894,7 @@ export const UPGRADES = [
   {
     key: 'pick',
     kind: 'rung', site: 'bench',
-    // And the same again for the tool. What you swing and what a miner swings do
+    // And the same again for the tool. What you swing and what a rockhand swings do
     // exactly the same job, so they are the same row under two headings rather
     // than "pick" here and "pickaxe" over there.
     name: 'pickaxe',
@@ -947,36 +947,36 @@ export const UPGRADES = [
   // spores -- which also keeps the green from piling up unspent, and gives the
   // two currencies a job each instead of one of them doing all the work.
   {
-    key: 'minerpick',
+    key: 'rockhandpick',
     kind: 'rung', site: 'bench',
     // What you are buying is the tool, not the number the tool moves. The row
-    // said "miner bite", which is the effect described in the game's own jargon
+    // said "rockhand bite", which is the effect described in the game's own jargon
     // -- a player reads "bite" as a stat and "pickaxe" as a thing you can hold.
     name: 'pickaxe',
     unit: 'px',
-    rung: () => S.minerPickLevel,
-    from: () => minerBite(),
-    to: () => minerBite(S.minerPickLevel + 1),
-    bill: () => [['spore', rungCost(5, S.minerPickLevel)], ['dust', rungCost(300, S.minerPickLevel)]],
-    cost: () => rungCost(300, S.minerPickLevel),
-    buy: () => S.minerPickLevel++,
+    rung: () => S.rockhandPickLevel,
+    from: () => rockhandBite(),
+    to: () => rockhandBite(S.rockhandPickLevel + 1),
+    bill: () => [['spore', rungCost(5, S.rockhandPickLevel)], ['dust', rungCost(300, S.rockhandPickLevel)]],
+    cost: () => rungCost(300, S.rockhandPickLevel),
+    buy: () => S.rockhandPickLevel++,
     show: () => S.seenSpore && S.crew > 0
   },
   {
-    key: 'minerspeed',
+    key: 'rockhandspeed',
     kind: 'rung', site: 'bench',
     // Two words do the work of every rate on these boards now: a **swing** is a
     // pick hitting rock, and **speed** is how often anything else happens. Each
-    // one means one thing, and a row under "the rock" saying "miner" was saying
+    // one means one thing, and a row under "the rock" saying "rockhand" was saying
     // what the heading already said.
     name: 'swing',
     unit: 'px/s',
     pct: true,
-    rung: () => S.minerSpeedLevel,
-    from: () => minerRate(),
-    to: () => minerRate(S.minerSpeedLevel + 1),
-    cost: () => rungCost(70, S.minerSpeedLevel),
-    buy: () => S.minerSpeedLevel++,
+    rung: () => S.rockhandSpeedLevel,
+    from: () => rockhandRate(),
+    to: () => rockhandRate(S.rockhandSpeedLevel + 1),
+    cost: () => rungCost(70, S.rockhandSpeedLevel),
+    buy: () => S.rockhandSpeedLevel++,
     show: () => S.crew > 0
   },
   {
@@ -1267,7 +1267,7 @@ export const SECTIONS = [
   // to the whole yard, so the bench is their natural home.
   { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'] },
-  { title: 'the rock', keys: ['minerpick', 'minerspeed', 'ram', 'tuneram'] },
+  { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },

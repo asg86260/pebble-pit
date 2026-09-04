@@ -46,7 +46,7 @@ group('a shaken body drops its hat, and goes back for it', async () => {
   run(6);                                    // and has gone and put it on
 
   const wore = state().trained.length;
-  const j = state().crewDetail.findIndex(d => d[0] === 'm');
+  const j = state().crewDetail.findIndex(d => d[0] === 'r');
   const shook = window.__shake(j);
   run(0.2);                                  // land
 

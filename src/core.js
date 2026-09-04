@@ -81,7 +81,7 @@ export function stepCore() {
     else S.coreBuried = false;
     // No dancers, no dance: on a game with nobody hired yet this would be five
     // seconds of standing about, and that is most of the early game.
-    S.danceUntil = S.miners > 0 ? now() + DANCE_MS : 0;
+    S.danceUntil = S.rockhands > 0 ? now() + DANCE_MS : 0;
     S.nextBoulderAt = now() + 2500;      // backstop if it never falls clear
     S.dirty = true;
   }

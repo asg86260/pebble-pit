@@ -16,7 +16,7 @@ import { doseLive, boiling, brewMs, dosesPer, workBoost, critBoost } from '../sr
 function standApothecary() {
   window.__reset();
   openSites();                                 // the plots are broken
-  window.__crew(1, 3, 0, 1);                   // a miner, spare hands, a farmhand to buff
+  window.__crew(1, 3, 0, 1);                   // a rockhand, spare hands, a farmhand to buff
   window.__grant({ cores: 3, dust: 20000, spores: 2000, shards: 400 });
   run(1);
   const started = window.__buy('unlockapothecary');
@@ -105,19 +105,19 @@ group('a hearty stew makes a farmhand cut faster', async () => {
 });
 
 // --- the buff reaches the rock, not just the farm and the cut ------------------
-// The reviewer's C-1: the stew and the bracing tonic were offered to miners on
-// the `doses favor` dial and drew the mark on a miner's body, but did nothing --
+// The reviewer's C-1: the stew and the bracing tonic were offered to rock hands on
+// the `doses favor` dial and drew the mark on a rockhand's body, but did nothing --
 // `rock.js knockOff` took no body, so neither the quicker swing nor the lifted
-// crit chance reached it. Here the dose is put on the miner directly (the
+// crit chance reached it. Here the dose is put on the rockhand directly (the
 // carrying is proven above); what is under test is whether the swing answers it.
-group('a hearty stew makes a miner swing faster', async () => {
+group('a hearty stew makes a rockhand swing faster', async () => {
   function minedIn(sec, buff) {
     window.__reset();
     openSites();
-    window.__crew(1, 2, 0, 0);                 // one miner at the rock
+    window.__crew(1, 2, 0, 0);                 // one rockhand at the rock
     window.__grant({ dust: 5000 });
     run(2);                                     // let it reach the face
-    const m = yard.S.workers.find(w => w.type === 'miner');
+    const m = yard.S.workers.find(w => w.type === 'rockhand');
     if (buff) m.dose = { tonic: 'stew', until: 9e12 };   // a stew that will not lapse
     const before = m.mined || 0;
     run(30);
@@ -126,24 +126,24 @@ group('a hearty stew makes a miner swing faster', async () => {
   const base = minedIn(30, false);
   const up = minedIn(30, true);
   return [
-    ok(up.boost > 1.2, 'a stew-dosed miner reads as boosted', String(up.boost)),
+    ok(up.boost > 1.2, 'a stew-dosed rockhand reads as boosted', String(up.boost)),
     ok(up.took > base.took * 1.1,
        'and takes more rock over the same stretch than an unbuffed one',
        `${base.took} -> ${up.took}`)
   ];
 });
 
-group('a bracing tonic reaches a miner\'s crit roll', async () => {
-  // The +crit half of C-1: a brace-dosed miner is eligible for the lifted chance
+group('a bracing tonic reaches a rockhand\'s crit roll', async () => {
+  // The +crit half of C-1: a brace-dosed rockhand is eligible for the lifted chance
   // `rock.js` now passes into `critRoll`. Proven at the seam it was missing from.
   window.__reset();
   openSites();
   window.__crew(1, 0, 0, 0);
   run(2);
-  const m = yard.S.workers.find(w => w.type === 'miner');
+  const m = yard.S.workers.find(w => w.type === 'rockhand');
   m.dose = { tonic: 'brace', until: 9e12 };
   return [
-    ok(critBoost(m) > 0, 'a brace-dosed miner carries a crit bonus into its swing',
+    ok(critBoost(m) > 0, 'a brace-dosed rockhand carries a crit bonus into its swing',
        String(critBoost(m)))
   ];
 });

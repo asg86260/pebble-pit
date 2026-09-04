@@ -31,14 +31,14 @@ group('a placed grain on the ground reads as dust', async () => {
 // D1 -- a body reads as its job.
 group('a body reads as the job it does', async () => {
   window.__reset();
-  window.__crew(1);              // one miner, straight off
+  window.__crew(1);              // one rockhand, straight off
   run(0.1);
-  const w = yard.S.workers.find(o => o.type === 'miner');
+  const w = yard.S.workers.find(o => o.type === 'rockhand');
   const label = w ? whatIsAt(w.x + 4, w.y + 4) : null;
 
   return [
-    ok(!!w, 'a miner is standing in the yard'),
-    ok(label === 'miner', 'and the cursor over it reads its job', `got ${label}`)
+    ok(!!w, 'a rockhand is standing in the yard'),
+    ok(label === 'rockhand', 'and the cursor over it reads its job', `got ${label}`)
   ];
 });
 

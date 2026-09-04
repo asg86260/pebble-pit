@@ -58,7 +58,7 @@ group('a walk is a distance over a time, whatever the frame rate', async () => {
     window.__seed(SEED);
     window.__crew(1, 0);
     window.__clearFloor();
-    window.__place('miner', 400);            // a long way from the rock
+    window.__place('rockhand', 400);            // a long way from the rock
     window.__fast(0.5, hz);                  // under way before the tape starts
     const a = Number(state().workerPos[0].split(':')[1].split(',')[0]);
     // Three seconds, and it matters that the body is still walking at the end of
@@ -186,7 +186,7 @@ group('and a rock falls, and rain lands, on the clock too', async () => {
 // it walked at a flat FARM_WALK a frame and nothing above could see it. At
 // thirty it crawled between plots at half speed while the tending clock it was
 // walking to kept perfect time, and a hand on a slow machine spent twice as long
-// walking for it. (The scrubber's walk to the balloon mast, in balloon.js, was
+// walking for it. (The purifier's walk to the balloon mast, in balloon.js, was
 // the same line and is fixed with it; there is no readout in this tier to
 // measure that one's pace off.)
 //

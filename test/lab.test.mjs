@@ -21,8 +21,8 @@ group('the lab can be made quicker at what it does', async () => {
     // lent a hand by the yard now (see `busyBuilderSites`), and a lent hand
     // would see the piece through before this could measure the pace of the
     // body it is about.
-    window.__assign('labbers', 1);
-    runUntil(() => state().labbers === 1, 60);
+    window.__assign('scholars', 1);
+    runUntil(() => state().scholars === 1, 60);
     // Started, not seen through: what is being measured is how fast the piece
     // moves, so it has to still be moving.
     window.__buy('labswing');
@@ -63,8 +63,8 @@ group('a second bench is a second thing looked into', async () => {
   // farm -- so it wants somebody in the room and the room's one bench free,
   // which is the whole of what a second bench costs: the lab stops looking into
   // anything while it is being fitted.
-  window.__assign('labbers', 1);
-  runUntil(() => state().labbers === 1, 60);
+  window.__assign('scholars', 1);
+  runUntil(() => state().scholars === 1, 60);
   const bought = buyBuilt('labroom');
 
   // Started, not finished: what this group is about is two pieces being ON the
@@ -72,9 +72,9 @@ group('a second bench is a second thing looked into', async () => {
   window.__buy('labswing');
   const first = state();
   // and now there is room for a second, where a moment ago there was not
-  window.__assign('labbers', 1);
+  window.__assign('scholars', 1);
   window.__buy('labhaul');
-  runUntil(() => state().labbers === 2, 60);
+  runUntil(() => state().scholars === 2, 60);
   const two = state();
 
   window.__crew(0, 0);
@@ -87,9 +87,9 @@ group('a second bench is a second thing looked into', async () => {
     // over, which slides the other up and leaves one on the go -- true, and not
     // what this group is about -- so the pieces are counted off what the lab is
     // *holding* rather than off the two slots at one instant.
-    ok(two.labRooms === 2 && two.labbers === 2,
+    ok(two.labRooms === 2 && two.scholars === 2,
        'and then two pieces can be looked into at once',
-       `${two.labRooms} benches, ${two.labbers} in`),
+       `${two.labRooms} benches, ${two.scholars} in`),
     ok(!!two.research, 'with work on the bench', `${two.research && two.research.key}`)
   ];
 });

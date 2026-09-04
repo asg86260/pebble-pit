@@ -82,9 +82,9 @@ export const TESTS = [
     ];
   }],
 
-  // Your pick and a miner's are two different tools. One row that bought both
+  // Your pick and a rockhand's are two different tools. One row that bought both
   // was doing two jobs, and it sat under `you` while half of it was on the rock.
-  ['your pick and a miner bite are bought apart', async () => {
+  ['your pick and a rockhand bite are bought apart', async () => {
     window.__crew(1, 0);
     // Yours is cut stone and theirs is what they are fed on: no core buys a
     // rate any more, they open places. And dust with it -- every rung above the
@@ -94,21 +94,21 @@ export const TESTS = [
     window.__give(4000);
     await hoverBench();
     const before = state();
-    const gotBite = await buy('minerpick');
+    const gotBite = await buy('rockhandpick');
     const mid = state();
     const gotPick = await buy('pick');
     const after = state();
     window.__crew(0, 0);
     return [
       ok(gotBite, 'the rock has a bite row of its own'),
-      ok(mid.minerPickLevel === before.minerPickLevel + 1, 'buying it moves the miners',
-         `${before.minerPickLevel} -> ${mid.minerPickLevel}`),
+      ok(mid.rockhandPickLevel === before.rockhandPickLevel + 1, 'buying it moves the rockhands',
+         `${before.rockhandPickLevel} -> ${mid.rockhandPickLevel}`),
       ok(mid.pickLevel === before.pickLevel, 'and leaves your own pick alone',
          `${before.pickLevel} -> ${mid.pickLevel}`),
       ok(gotPick && after.pickLevel === mid.pickLevel + 1, 'your pick still buys your own swing',
          `${mid.pickLevel} -> ${after.pickLevel}`),
-      ok(after.minerPickLevel === mid.minerPickLevel, 'and not theirs',
-         `${mid.minerPickLevel} -> ${after.minerPickLevel}`)
+      ok(after.rockhandPickLevel === mid.rockhandPickLevel, 'and not theirs',
+         `${mid.rockhandPickLevel} -> ${after.rockhandPickLevel}`)
     ];
   }],
 

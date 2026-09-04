@@ -31,7 +31,7 @@ import { registerRows } from './works.js';
 // breaker and a blaster is a word and a multiplier at the place the work is
 // done, not a mechanism.
 export const TRADES = [
-  { key: 'breaker', name: 'breaker', job: 'miners', count: 'breakers',
+  { key: 'breaker', name: 'breaker', job: 'rockhands', count: 'breakers',
     does: 'twice the bite' },
   { key: 'carter', name: 'carter', job: 'haulers', count: 'carters',
     does: 'twice the load' },
@@ -42,12 +42,12 @@ export const TRADES = [
 ];
 
 // where each trade's kit lives, in the words the yard uses for the place
-const WHERE = { miners: 'the rock', haulers: 'the pit', quarriers: 'the quarry',
+const WHERE = { rockhands: 'the rock', haulers: 'the pit', quarriers: 'the quarry',
                 farmhands: 'the farm' };
 
 // and whether that place is a place yet. The rock and the lip are there from
 // the first frame; the other two are bought.
-const OPEN = { miners: () => true, haulers: () => true,
+const OPEN = { rockhands: () => true, haulers: () => true,
                quarriers: () => S.quarryOpen, farmhands: () => S.farmOpen };
 
 export const tradeCost = t =>

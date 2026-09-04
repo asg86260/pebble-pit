@@ -29,14 +29,14 @@ export const TESTS = [
     return [
       ok(hired, 'the yard starts with a body, and it is not bought'),
       ok(start.crew === 1, 'it is on the payroll', `${start.crew}`),
-      ok(start.miners === 1, 'and it is digging, which is why it is here',
-         `${start.miners} mining`),
-      ok(off && carrying.miners === 0 && carrying.haulers === 1,
+      ok(start.rockhands === 1, 'and it is digging, which is why it is here',
+         `${start.rockhands} mining`),
+      ok(off && carrying.rockhands === 0 && carrying.haulers === 1,
          'the roster takes it off, and then it carries dust',
-         `${carrying.miners} mining, ${carrying.haulers} carrying`),
+         `${carrying.rockhands} mining, ${carrying.haulers} carrying`),
       ok(moved, 'the rock has a roster under it to put it back on'),
-      ok(after.miners === 1 && after.haulers === 0, 'now it is on the rock and not carrying',
-         `${after.miners} mining, ${after.haulers} carrying`),
+      ok(after.rockhands === 1 && after.haulers === 0, 'now it is on the rock and not carrying',
+         `${after.rockhands} mining, ${after.haulers} carrying`),
       ok(after.crew === 1, 'and it is the same body, not a second hire', `${after.crew}`),
       ok(after.rock < before.rock, 'rock is coming off', `${before.rock} -> ${after.rock}`)
     ];
@@ -53,13 +53,13 @@ export const TESTS = [
     const capped = state();
     window.__crew(0, 0);
     return [
-      ok(on.miners === 1 && on.idle === 0, 'it starts on the rock', `${on.miners} mining`),
+      ok(on.rockhands === 1 && on.idle === 0, 'it starts on the rock', `${on.rockhands} mining`),
       ok(back, 'the roster lets it go'),
-      ok(off.miners === 0 && off.haulers === 1, 'and it goes back to carrying dust',
-         `${off.miners} mining, ${off.haulers} carrying`),
+      ok(off.rockhands === 0 && off.haulers === 1, 'and it goes back to carrying dust',
+         `${off.rockhands} mining, ${off.haulers} carrying`),
       ok(!tooMany, 'a body it does not have cannot be put anywhere'),
-      ok(capped.miners + capped.haulers === capped.crew,
-         'the crew always adds up', `${capped.miners}+${capped.haulers} of ${capped.crew}`)
+      ok(capped.rockhands + capped.haulers === capped.crew,
+         'the crew always adds up', `${capped.rockhands}+${capped.haulers} of ${capped.crew}`)
     ];
   }],
 
@@ -81,8 +81,8 @@ export const TESTS = [
     // One body. The lab holds one to a bench and starts with one bench, so the
     // second `assign` was always a no-op -- and now that nothing staffs itself,
     // a group that relied on it getting somebody in anyway gets an empty lab.
-    window.__assign('labbers', 1);
-    runUntil(() => state().labbers === 1, 60);
+    window.__assign('scholars', 1);
+    runUntil(() => state().scholars === 1, 60);
     runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(4);
     const worked = state();
@@ -97,7 +97,7 @@ export const TESTS = [
       // One body. The lab is a room with a bench in it and research is one thing
       // being looked into at a time, so a second pair of hands has nothing to be
       // a second pair of hands on.
-      ok(worked.crewDetail.filter(d => d.startsWith('l|in')).length === 1,
+      ok(worked.crewDetail.filter(d => d.startsWith('s|in')).length === 1,
          'and it is inside it, not standing about in front',
          JSON.stringify(worked.crewDetail.filter(d => d[0] === 'l')))
     ];
@@ -183,8 +183,8 @@ export const TESTS = [
     const empty = state();
 
     // And now somebody is put in, which is the only way anybody gets in.
-    window.__assign('labbers', 1);
-    runUntil(() => state().labbers === 1, 60);
+    window.__assign('scholars', 1);
+    runUntil(() => state().scholars === 1, 60);
     runUntil(() => state().commuting.length === 0, 90);   // they walk there now
     run(5);
     const part = state();
@@ -209,7 +209,7 @@ export const TESTS = [
       ok(empty.research && empty.research.at < 0.5,
          'a lab nobody has been put in creeps along on a borrowed pair of hands',
          `${empty.research && empty.research.at}`),
-      ok(part.labbers === 1 && part.research && part.research.at > 0.1,
+      ok(part.scholars === 1 && part.research && part.research.at > 0.1,
          'somebody in it and it moves', `${part.research && part.research.at}`),
       ok(!after.research && after.mult.swing === before.mult.swing + 1,
          'and finishing it is what raises the multiplier',
@@ -253,8 +253,8 @@ export const TESTS = [
     const started = state();
 
     // Somebody put in it, which is the only way anybody gets in.
-    window.__assign('labbers', 1);
-    runUntil(() => state().labbers === 1, 60);
+    window.__assign('scholars', 1);
+    runUntil(() => state().scholars === 1, 60);
     const staffed = state();
 
     away();                                      // and walk off while they work
@@ -271,8 +271,8 @@ export const TESTS = [
     away();
     await sleep(160);
     return [
-      ok(staffed.labbers === 1, 'a body can be put in the lab',
-         `${staffed.labbers}`),
+      ok(staffed.scholars === 1, 'a body can be put in the lab',
+         `${staffed.scholars}`),
       ok(!!started.research && started.labDone === null,
          'and starting a piece leaves nothing to report yet',
          JSON.stringify(started.research)),

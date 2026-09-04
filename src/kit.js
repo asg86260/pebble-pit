@@ -46,7 +46,7 @@ import { P, LOO_POSTS, KIT_MAX } from './config.js';
 import { S } from './state.js';
 
 export const KIT = {
-  miners:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
+  rockhands:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
   quarriers: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
   farmhands: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
   // A set of three, and no ceiling over it: see the note on `max` above.
@@ -73,9 +73,9 @@ export const KIT = {
 // What job a body is doing, from what it is. Here rather than in upgrades.js so
 // that `wearing` -- which has to go from a body to its own kit -- can be
 // answered without the kit importing the shop and the shop importing the kit.
-export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', stirrer: 'stirrers',
+export const JOB_OF = { rockhand: 'rockhands', hauler: 'haulers', quarrier: 'quarriers',
+                        farmhand: 'farmhands', scholar: 'scholars',
+                        purifier: 'purifiers', stirrer: 'stirrers',
                         janitor: 'janitors', wizard: 'wizards',
                         // Building is not a job on the roster -- you do not put
                         // anybody on it, the spare hands go and do it -- but it
@@ -84,6 +84,16 @@ export const JOB_OF = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers
                         // It owns no kit, which is what keeps it out of
                         // everything below.
                         builder: 'builders' };
+
+// How a job is *said*, where the key is not already the words. A key has to be
+// one word -- it is a property name, a save field and a data attribute -- and
+// most jobs are one word, so for most of them the key is the answer. The two
+// that are not live here, once, rather than as a second spelling written out at
+// every board that shows them: a key doubling as its own label is how "labbers"
+// survived being read by anybody, and how the haulers came to be called "the
+// crew" on one dial and "haulers" everywhere else. Nothing prints a raw key.
+const JOB_SAID = { rockhands: 'rock hands', purifiers: 'air purifiers' };
+export const jobSaid = job => JOB_SAID[job] || job || '';
 
 // And back again: what to put a body on so that it is doing a given job. The
 // same table read the other way about, because there is now one move that needs

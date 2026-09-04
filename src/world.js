@@ -92,17 +92,17 @@ export function resite() {
 // reach the boards use to decide you are standing at one: what you can walk up
 // to and open is what you can be put down on and carry on working at.
 export function atStation(job, x) {
-  if (job === 'labbers') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
-  if (job === 'scrubbers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
+  if (job === 'scholars') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
+  if (job === 'purifiers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
   if (job === 'farmhands') return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
   if (job === 'stirrers') return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;
   if (job === 'quarriers') return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
-  if (job === 'miners') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
+  if (job === 'rockhands') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
   return true;                     // carrying is done wherever the dust is
 }
 
 export const kitX = job =>
-  job === 'miners' ? rockLeft() - P * 4 :
+  job === 'rockhands' ? rockLeft() - P * 4 :
   // well back from the lip: the full-hole warning stands five cells short of
   // the edge, and a trestle under a warning triangle is two marks in one place
   job === 'haulers' ? pit.x - P * 16 :
@@ -424,7 +424,7 @@ export const blocked = c => {
   //   1. `clearApron` used to shovel the clearance into the nearest column that
   //      would take it -- the first column of the rock's own heap, which then
   //      stood twelve cells against the boulder. It throws now, on the same arc
-  //      a miner's spoil takes, so the sweepings land out along the heap like
+  //      a rockhand's spoil takes, so the sweepings land out along the heap like
   //      everything else that is thrown at it.
   //   2. A bank standing up against the hill: `bankCeiling` treats the footprint
   //      as the cliff it used to treat the apron as, so the clearance takes a
@@ -439,7 +439,7 @@ export const blocked = c => {
   //
   // Inside it, and not on top of it. The hill stopped blocking dust the day it
   // got a surface of its own: a chip that comes down over the crest lands ON the
-  // outline as it has actually been mined and lies there until a miner throws it
+  // outline as it has actually been mined and lies there until a rockhand throws it
   // on the heap. That is `rockSand` in rock.js, and it is a layer above this
   // grid rather than a column in it -- the same shape of answer the cut's mouth
   // got. What this line still bars is the yard's own floor running in under the

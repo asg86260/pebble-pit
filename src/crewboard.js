@@ -55,9 +55,9 @@ export function houseRect() {
 // Every job the yard can put somebody on has a line here. One that did not --
 // the scrubbing house was added without one -- read as `undefined` on its row,
 // which is the board saying it does not know where one of its own people is.
-const AT = { miners: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
-             farmhands: 'at the farm plots', labbers: 'in the lab',
-             scrubbers: 'at the scrubbing house',
+const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
+             farmhands: 'at the farm plots', scholars: 'in the lab',
+             purifiers: 'at the scrubbing house',
              janitors: 'clearing up' };
 
 export function whereIs(w) {
@@ -70,7 +70,7 @@ export function whereIs(w) {
   if (indoors(w)) return 'inside the lab';
   if (inScrubHouse(w)) return 'inside the scrubbing house';
 
-  // Standing on it beats what it is doing on it. A miner between swings, one
+  // Standing on it beats what it is doing on it. A rockhand between swings, one
   // stood about on a break, one that has just been put down -- all of them are
   // on the rock, because that is the answer to "where is it". Carrying is the
   // exception: a hauler is at home everywhere, so for that one the doing is the
@@ -88,9 +88,9 @@ export function whereIs(w) {
 // A line a job, for the same reason: a body who has spent all day in the
 // scrubbing house does not have a favourite of `undefined`, and it does not
 // have one of `transporting` either.
-const DOES = { miners: 'mining the rock', quarriers: 'quarrying',
-               farmhands: 'farming', labbers: 'researching',
-               scrubbers: 'clearing the air',
+const DOES = { rockhands: 'mining the rock', quarriers: 'quarrying',
+               farmhands: 'farming', scholars: 'researching',
+               purifiers: 'clearing the air',
                janitors: 'shovelling', haulers: 'transporting' };
 const tally = n => Math.round(n || 0).toLocaleString('en-US');
 
@@ -148,9 +148,9 @@ const NAMED = { bench: 'the bench', school: 'the school',
 // the farm is its plots and not just its shed, the quarry is the cut -- so a
 // place named any other way here would disagree with the board about where
 // somebody is standing the moment a plot was bought.
-const JOB_PLACE = [['miners', 'the rock'], ['quarriers', 'the quarry'],
-                   ['farmhands', 'the farm'], ['labbers', 'the lab'],
-                   ['scrubbers', 'the scrubbing house']];
+const JOB_PLACE = [['rockhands', 'the rock'], ['quarriers', 'the quarry'],
+                   ['farmhands', 'the farm'], ['scholars', 'the lab'],
+                   ['purifiers', 'the scrubbing house']];
 
 function placeAt(x) {
   for (const [job, name] of JOB_PLACE) if (atStation(job, x)) return name;
@@ -237,7 +237,7 @@ export function card(w) {
     row('quarried', tally(w.quarried)),
     row('farmed', tally(w.farmed)),
     row('stored', tally(w.stored)),
-    // Only the ones whose job is carrying. A miner's hands are always empty
+    // Only the ones whose job is carrying. A rockhand's hands are always empty
     // between swings, and a row that says nothing every time you read it is a
     // row that trains you to stop reading.
     ...(JOBS_AT[w.type] === 'haulers' ? [row('carrying', cargo(w))] : []),

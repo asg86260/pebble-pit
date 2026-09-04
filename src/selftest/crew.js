@@ -244,7 +244,7 @@ export const TESTS = [
   ['a body stops now and then, and somebody clears up after it', async () => {
     newRun();
     await settle();
-    window.__crew(4, 0);                       // miners only: nobody to shovel it yet
+    window.__crew(4, 0);                       // rockhands only: nobody to shovel it yet
     window.__air({ haze: 0, muck: 0 });
     window.__clearFloor();
     // Wound in for the check. A body is due about every ten minutes now, which
@@ -419,7 +419,7 @@ export const TESTS = [
     const s = state();
     return [
       ok(!!rockBadge, 'a section with people under it carries a badge'),
-      ok(rockBadge && rockBadge.textContent === String(s.miners),
+      ok(rockBadge && rockBadge.textContent === String(s.rockhands),
          'the badge is the bare number, no x and no word', rockBadge && rockBadge.textContent),
       ok(!!farm && !farmBadge, 'a section with nobody has no badge'),
       ok(rockBadge && rockBadge.parentElement === rock, 'the badge is a span inside the heading'),

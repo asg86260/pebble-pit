@@ -11,7 +11,7 @@
 // from inside it is not a thing a node check can see fire. This file covers
 // the mechanical halves: where the shed sits as the click/hover/board target
 // (#1), the builder's hop and lunge actually moving a body (#4), the order
-// buildings are recorded in (#5), a builder's walk not dropping a lent miner
+// buildings are recorded in (#5), a builder's walk not dropping a lent rockhand
 // off the rock (#6, amendment), and the house's own barrier width and build
 // time (#7 and #8, amendments -- #7 is drawing too and is only shot).
 
@@ -178,10 +178,10 @@ group('a save with no build order lays out exactly as it did', async () => {
   ];
 });
 
-// #6, amendment -- a miner lent off the rock to build must walk down it, not
-// drop. Reproduced first, filmed a frame at a time: a miner is put on a tall
+// #6, amendment -- a rockhand lent off the rock to build must walk down it, not
+// drop. Reproduced first, filmed a frame at a time: a rockhand is put on a tall
 // rock, a bench rung is bought with nobody spare to fit it (so the nearest
-// body -- a miner -- is lent, see "with nobody spare..." in works.test.mjs),
+// body -- a rockhand -- is lent, see "with nobody spare..." in works.test.mjs),
 // and every builder's `y` is watched for the whole walk from the rock to the
 // bench. Before the fix this could drop most of the rock's height in the one
 // frame `wayAt` decided a step off the edge had already carried the body
@@ -189,10 +189,10 @@ group('a save with no build order lays out exactly as it did', async () => {
 // with a wall rule facing up and none facing down. `stepBuilder` now routes
 // the walk (`keepTo`/`stepRoute`, the way `stepCommute` does for every other
 // errand) instead of asking "what is under me now" fresh every step.
-group('a miner lent off the rock walks down it, rather than dropping', async () => {
+group('a rockhand lent off the rock walks down it, rather than dropping', async () => {
   window.__reset();
   window.__jump(6);                    // a tall rock: room for a real drop
-  window.__crew(4, 0);                 // miners only -- nobody spare to lend
+  window.__crew(4, 0);                 // rockhands only -- nobody spare to lend
   window.__grant({ dust: 90000 });
   run(15);                             // let them climb well up the crest
 
@@ -215,7 +215,7 @@ group('a miner lent off the rock walks down it, rather than dropping', async () 
   }
 
   return [
-    ok(sawWalking, 'a miner is lent and actually walks over'),
+    ok(sawWalking, 'a rockhand is lent and actually walks over'),
     // a cell is P (6 world px); a slope can carry a little more than that in
     // one frame (see CLIMB_SLOPE in route.js), so the bar is generous rather
     // than exactly one cell, and still nowhere near a rock's height

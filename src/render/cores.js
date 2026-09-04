@@ -136,7 +136,7 @@ export function drawCoreAt(x, y, capAtGround) {
 // Every grain through `drawMark`, which is what a chip in the air and a mark on
 // the ground both go through: what lands up here is dust, or a spore, or a
 // shard, and it has to look like the thing it is. There are never many of them
-// -- a miner throws them off between swings -- so a call each costs nothing.
+// -- a rockhand throws them off between swings -- so a call each costs nothing.
 export function drawRockSand() {
   if (!boulderAlive() || !S.rockSand) return;
   const left = rockLeft();

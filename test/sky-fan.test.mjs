@@ -89,13 +89,13 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
   // What this file measures is the house against the machines, so it buys the
   // room outright rather than measuring a jammed yard.
   window.__spend(20000);
-  window.__air({ haze: 1800, muck: 0, scrubbers: 1, recycler: true, open: true });
+  window.__air({ haze: 1800, muck: 0, purifiers: 1, recycler: true, open: true });
   // Wait for the body to actually be IN the house, rather than assuming three
   // seconds of walking is enough.
   //
   // It was three seconds, and that made every reading below partly a measurement
   // of a walk. The house does nothing at all until somebody is through the door
-  // -- `inScrub`, not `S.scrubbers`, which counts everybody it has been given
+  // -- `inScrub`, not `S.purifiers`, which counts everybody it has been given
   // including one still crossing the yard -- so a run that started before the
   // body arrived spent part of its thirty seconds measuring an empty shed. On a
   // busy yard the walk is longer than three seconds and the same setting came
@@ -303,7 +303,7 @@ group('a speck a mouth takes fades rather than popping', async () => {
   window.__reset();
   window.__crew(0, 3);
   window.__clearFloor();
-  window.__air({ open: true, haze: 2000, muck: 0, scrubbers: 1 });
+  window.__air({ open: true, haze: 2000, muck: 0, purifiers: 1 });
   run(25);
   const working = state();
 
@@ -312,7 +312,7 @@ group('a speck a mouth takes fades rather than popping', async () => {
   const rated = scrubRate() * SMOG_PER_MOTE * 60;
   const said = working.smog.scrubbing;
 
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   run(3);
   const stopped = state();
 

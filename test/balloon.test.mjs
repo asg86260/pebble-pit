@@ -1,5 +1,5 @@
-// The scrubber balloon: bought off the house's board, boarded on foot, and
-// crossing the sky. See src/balloon.js and DESIGN.md, "The scrubber balloon".
+// The purifier balloon: bought off the house's board, boarded on foot, and
+// crossing the sky. See src/balloon.js and DESIGN.md, "The purifier balloon".
 //
 // Bought the way a player buys it -- `__buy('balloon')` presses the row -- rather
 // than by pushing a craft into the array. A check that sets the state through a
@@ -31,8 +31,8 @@ group('a balloon is bought at the house and rides the sky', async () => {
   const idle = state();
 
   // ...and then somebody is put on it. The house takes the first body and the
-  // craft the second, so two on the scrubbers is one indoors and one aloft.
-  window.__air({ scrubbers: 2 });
+  // craft the second, so two on the purifiers is one indoors and one aloft.
+  window.__air({ purifiers: 2 });
   const up = runUntil(() => state().craft[0] && state().craft[0].up, 60);
   const flying = state();
 
@@ -40,7 +40,7 @@ group('a balloon is bought at the house and rides the sky', async () => {
   run(12);
   const later = state();
 
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   return [
     ok(before === 0 && bought && moored.craft.length === 1,
        'the board sells one, and the yard has one', `${before} -> ${moored.craft.length}`),
@@ -49,7 +49,7 @@ group('a balloon is bought at the house and rides the sky', async () => {
     ok(!idle.craft[0].crewed && idle.craft[0].lift === 0,
        'and stays there while there is nobody in it',
        `crewed ${idle.craft[0].crewed}, lift ${idle.craft[0].lift}`),
-    ok(up, 'a body put on the scrubbers gets into it and it goes up',
+    ok(up, 'a body put on the purifiers gets into it and it goes up',
        `lift ${flying.craft[0].lift}`),
     ok(flying.craft[0].y < moored.craft[0].y - 40,
        'and it is a long way over the yard once it is up',
@@ -67,7 +67,7 @@ group('nobody gets into a balloon without walking to it', async () => {
   // and the craft is over by the scrubbing house.
   const mast = state().craft[0].x;
 
-  window.__air({ scrubbers: 2 });
+  window.__air({ purifiers: 2 });
   // Watched every frame from the moment it is assigned. The one thing that must
   // never happen is a body appearing at the mast: every position it is ever seen
   // at has to be one it walked to, and the gap between two of them has to be a
@@ -98,7 +98,7 @@ group('nobody gets into a balloon without walking to it', async () => {
     last = body.x;
   }
 
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   return [
     ok(seen > 10, 'the body is watched the whole way there', `${seen} frames`),
     ok(jumped === 0, 'and never moves further in one frame than a stride',
@@ -110,13 +110,13 @@ group('nobody gets into a balloon without walking to it', async () => {
 group('taken off the job, the rider steps out and the craft leaves', async () => {
   rich();
   buyNow('balloon');
-  window.__air({ scrubbers: 2 });
+  window.__air({ purifiers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
   const flying = state().craft[0];
 
-  // Off the scrubbers while it is up. Nobody rides a balloon home: the body puts
+  // Off the purifiers while it is up. Nobody rides a balloon home: the body puts
   // an umbrella up, goes over the side, and the craft goes up out of the window.
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   const opened = runUntil(() => (state().brollies || []).length > 0, 10);
   const first = (state().brollies || [])[0];
   const rose = runUntil(() => state().craft[0].y < flying.y - 100, 20);
@@ -130,7 +130,7 @@ group('taken off the job, the rider steps out and the craft leaves', async () =>
   // and the umbrella comes down and is put down
   const landed = runUntil(() => (state().brollies || []).length === 0, 60);
 
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   return [
     ok(opened, 'the rider steps out under an umbrella', `at y ${first}`),
     ok(rose, 'and the craft goes up rather than coming home across the yard',
@@ -144,13 +144,13 @@ group('taken off the job, the rider steps out and the craft leaves', async () =>
 group('a craft comes back and is let go of when the job ends', async () => {
   rich();
   buyNow('balloon');
-  window.__air({ scrubbers: 2 });
+  window.__air({ purifiers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
 
-  // Taken off the scrubbers altogether. The craft has nobody in it, so it comes
+  // Taken off the purifiers altogether. The craft has nobody in it, so it comes
   // down and goes home to its mast -- and the body is not left believing it is
   // still in a balloon.
-  window.__air({ scrubbers: 0 });
+  window.__air({ purifiers: 0 });
   const home = runUntil(() => state().craft[0].lift === 0, 90);
   const down = state();
   const stuck = (down.scrubCrew || []).filter(w => w.aloft).length;
@@ -167,11 +167,11 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
   window.__clearFloor();
   buyNow('balloon');
   // The house shut and the craft crewed. `capOf` fills the house's berth first,
-  // so three on the scrubbers is one indoors and two aloft -- but there is only
+  // so three on the purifiers is one indoors and two aloft -- but there is only
   // one craft here, so it is one indoors and one up. What isolates the craft is
   // not the staffing, it is *where the muck lands*: the house's own spout is a
   // fixed lip on its left wall and the craft is halfway across the yard.
-  window.__air({ haze: 2200, muck: 0, scrubbers: 2 });
+  window.__air({ haze: 2200, muck: 0, purifiers: 2 });
   runUntil(() => state().craft[0] && state().craft[0].up, 60);
   const lit = state();
 
@@ -203,7 +203,7 @@ group('a craft takes the sky in where it is, and drops it under itself', async (
   const far = laid.filter(c => c * 6 > scrubX + 400);
   const flew = Math.abs(done.craft[0].x - lit.craft[0].x);
 
-  window.__air({ haze: 0, muck: 0, scrubbers: 0 });
+  window.__air({ haze: 0, muck: 0, purifiers: 0 });
   window.__clearFloor();
   return [
     ok(done.smog.recycled >= 0 && laid.length > 0,

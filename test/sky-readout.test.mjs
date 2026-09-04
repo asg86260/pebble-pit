@@ -60,11 +60,11 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__clearFloor();
   const losing = state().smog;
 
-  window.__air({ scrubbers: 2, haze: 600 });
+  window.__air({ purifiers: 2, haze: 600 });
   run(40);
   const winning = state().smog;
   window.__crew(0, 0);
-  window.__air({ haze: 0, muck: 0, open: false, scrubbers: 0 });
+  window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
   healJaw();
   return [
     ok(losing.fouling > 0 && losing.scrubbing === 0,

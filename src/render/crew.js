@@ -39,7 +39,7 @@ export function drawBench() {
 
 // The body: one hollow square, whoever it is. Each job used to carry a mark of
 // its own -- a lamp on a quarrier's head, a low notch on a stooping farmhand, a
-// hollow centre on a miner -- and every one of them was a thing to learn before
+// hollow centre on a rockhand -- and every one of them was a thing to learn before
 // the yard could be read. Where somebody is standing already says what they are
 // doing: the one on the rock is mining it, the one at a plot is tending it. So
 // the marks went, and what is left is a body.
@@ -463,7 +463,7 @@ export function drawIntro() {
 //
 // This was six branches, each repeating the same four steps in a slightly
 // different order and each free to forget one of them -- which is how a hat came
-// to be drawn on five kinds of body and not the sixth, and how a miner walking a
+// to be drawn on five kinds of body and not the sixth, and how a rockhand walking a
 // shovelful of muck across the yard carried it invisibly. A body is a body: it
 // stands somewhere, it may be dragging a cart, it wears whatever is on its head,
 // and it is holding whatever it picked up. The only things that actually differ
@@ -484,12 +484,12 @@ export function drawIntro() {
 //          grains, in the cart if there is one.
 const LOOK = {
   janitor:  { lunge:  0, lean: 1 },
-  labber:   { lunge:  1 },
+  scholar:   { lunge:  1 },
   farmhand: { lunge:  1 },
   stirrer:  { lunge:  1, lean: 1 },   // stoops and leans toward the pot as it stirs
   quarrier: { lunge:  1, load: 'shard' },
   wizard:   { lunge: -1 },
-  miner:    { lunge:  0 },
+  rockhand:    { lunge:  0 },
   hauler:   { lunge:  0 },
   // A builder at a busy site hops and lunges at the bottom of each hop -- see
   // `workJig` in crew.js -- but with no row here it fell through to `PLAIN`,

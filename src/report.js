@@ -49,7 +49,7 @@ import { now as clockNow } from './clock.js';
 import { seed } from './rng.js';
 import { windAt } from './wind.js';
 import { CRAFT, craftY, crewed, working } from './balloon.js';
-import { mineMs, capacity, mineRate, minerMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
+import { mineMs, capacity, mineRate, rockhandMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
 import { boiling as apothBoiling } from './apothecary.js';
 
@@ -272,7 +272,7 @@ export const snapshot = () => ({
 
   // The lab, and every kind of smoke over the yard.
   skyShown: S.skyShown,
-  labbers: S.labbers,
+  scholars: S.scholars,
   smoke: S.smoke.filter(p => !p.house && !p.cig && !p.mach).length,
   machSmoke: S.smoke.filter(p => p.mach).length,
   cigSmoke: S.smoke.filter(p => p.cig).length,
@@ -479,13 +479,13 @@ export const snapshot = () => ({
 
   // The upgrades, by rung.
   pickLevel: S.pickLevel,
-  minerPickLevel: S.minerPickLevel,
+  rockhandPickLevel: S.rockhandPickLevel,
   carryLevel: S.carryLevel,
   speedLevel: S.speedLevel,
   autoMine: S.autoMine,
-  miners: S.miners,
+  rockhands: S.rockhands,
   haulers: S.haulers,
-  minerSpeedLevel: S.minerSpeedLevel,
+  rockhandSpeedLevel: S.rockhandSpeedLevel,
   haulCarryLevel: S.haulCarryLevel,
   haulPaceLevel: S.haulPaceLevel,
   haulCap: haulCap(),
@@ -498,7 +498,7 @@ export const snapshot = () => ({
   booked: S.workers.reduce((n, w) => n + (w.booked || 0), 0),
   carried: S.workers.reduce((n, w) => n + (w.carry || 0), 0),
   pace: { laden: +haulSpeed().toFixed(2), empty: +(haulSpeed() * HAUL_EMPTY).toFixed(2), commute: +commutePace().toFixed(2) },
-  minerMs: minerMs(),
+  rockhandMs: rockhandMs(),
 
   // The bodies themselves: where they are, what they are saying, and what is
   // being dragged.
@@ -518,10 +518,10 @@ export const snapshot = () => ({
   // a picture, and it is here so a check can tell a fade from a pop.
   going: GOING.length,
   brollies: S.workers.filter(w => w.brolly).map(w => Math.round(w.y)),
-  // The bodies on the scrubbers, which is the one station whose people are in
+  // The bodies on the purifiers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
   // a basket. `berth` is -1 for the house and the craft's index otherwise.
-  scrubCrew: S.workers.filter(w => w.type === 'scrubber').map(w => ({
+  scrubCrew: S.workers.filter(w => w.type === 'purifier').map(w => ({
     name: w.name, x: Math.round(w.x), y: Math.round(w.y),
     berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
   })),

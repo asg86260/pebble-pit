@@ -132,7 +132,7 @@ group('a chip over the crest comes to rest on the rock', async () => {
   ];
 });
 
-group('a miner throws what is lying on the hill onto the rock\'s pile', async () => {
+group('a rockhand throws what is lying on the hill onto the rock\'s pile', async () => {
   window.__crew(0, 0);
   haveRock();
   run(1);

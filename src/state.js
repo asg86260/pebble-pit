@@ -131,7 +131,7 @@ export const S = {
   // trade, and what the shards bought is the fact that it stays.
   schoolOpen: false,      // the school is built and the trades can be learnt
   schoolBoardOpen: false, // and you are standing at it
-  breakers: 0,            // of the miners, this many are nailed to the rock
+  breakers: 0,            // of the rockhands, this many are nailed to the rock
   carters: 0,             // of the haulers, to the dust
   growers: 0,             // of the farmhands, to the plots
   blasters: 0,            // of the quarriers, to the face
@@ -250,7 +250,7 @@ export const S = {
   // putting somebody on the rock a decision rather than a purchase.
   workers: [],            // little squares that mine and ferry dust
   crew: 0,                // bodies hired, all told
-  miners: 0, minerSpeedLevel: 0, minerPickLevel: 0,
+  rockhands: 0, rockhandSpeedLevel: 0, rockhandPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
   quarriers: 0, quarryPaceLevel: 0,
   // How many cells deep each column of the quarry has been dug. Nought everywhere is
@@ -307,7 +307,7 @@ export const S = {
   spells: [],
   wizSpeedLevel: 0,
   wizPowerLevel: 0,
-  labbers: 0,             // and the ones standing in the lab, working on the research
+  scholars: 0,             // and the ones standing in the lab, working on the research
   farmhands: 0, tendLevel: 0,
 
   // --- the apothecary, and the pot on the boil ---
@@ -354,7 +354,7 @@ export const S = {
   rainFor: 0,             // seconds into this shower, which is how hard it is coming down
   rains: 0,               // how many times they have
   scrubOpen: false,       // the house is built
-  scrubbers: 0,           // and this many bodies are in it
+  purifiers: 0,           // and this many bodies are in it
   janitors: 0,            // and how many are shovelling up after everybody
   seenMess: false,        // and whether the yard has ever been left in a state
   // The crew's second tier, which the quarry pays for: a harness to carry with and

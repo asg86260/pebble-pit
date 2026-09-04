@@ -16,7 +16,7 @@ import { ctx } from '../render.js';
 // cannot end up drawn over a house that has been re-sited under it.
 //
 // **The filter is the point of the drawing.** A bag with a basket under it is a
-// balloon; what makes this one read as a *scrubber* is the works slung between
+// balloon; what makes this one read as a *purifier* is the works slung between
 // the two -- a vented box the air goes into at the top and what is caught falls
 // out of the bottom. Without it the craft is a nice picture of the wrong thing.
 export function drawBalloons() {

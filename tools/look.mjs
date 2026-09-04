@@ -93,7 +93,7 @@ const SCENES = {
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});
          window.__loo(); window.__assign('janitors',1); window.__fast(20);
-         window.__dose('miner', 'brace'); window.__dose('janitor', 'strong');
+         window.__dose('rockhand', 'brace'); window.__dose('janitor', 'strong');
          window.__look(window.__state().rockLeftX - 420);`,
 
   // One hand on the whole row. This is the shot the row is *for*: a single body
@@ -141,7 +141,7 @@ const SCENES = {
           window.__fast(4); window.__look(window.__state().rockLeftX - 340);`,
 
   // Dust lying on the hill itself, which is ground now: grains dropped over the
-  // crest come to rest on the mined outline and lie there until a miner throws
+  // crest come to rest on the mined outline and lie there until a rockhand throws
   // them on the heap. Nobody is mining in this one, so it stays put to be looked
   // at.
   crest: `window.__reset(); window.__jump(6); window.__fast(2);
@@ -221,19 +221,19 @@ const SCENES = {
   // The house working: a filthy sky over it, a body inside, and no river of haze
   // leaning towards the roof -- what a mouth looks like now is a few cells drawn
   // in over the hood, and nothing in the sky is moved at all.
-  scrubbing: `${RICH} window.__air({open:true, haze:2600, scrubbers:1}); window.__fast(25);
+  scrubbing: `${RICH} window.__air({open:true, haze:2600, purifiers:1}); window.__fast(25);
               window.__look(window.__state().scrubX - 300);`,
-  // A rider stepping out: taken off the scrubbers while it was up, so it is on
+  // A rider stepping out: taken off the purifiers while it was up, so it is on
   // its way down under an umbrella and the craft is on its way out of the window.
   brolly: `${RICH} window.__air({open:true, haze:1600}); window.__fast(2);
-          window.__buy('balloon'); window.__air({scrubbers:2}); window.__fast(35);
+          window.__buy('balloon'); window.__air({purifiers:2}); window.__fast(35);
           (c => window.__look(c.x - 400))(window.__state().craft[0]);
-          window.__air({scrubbers:0}); window.__fast(2.2);`,
+          window.__air({purifiers:0}); window.__fast(2.2);`,
   moored: `${RICH} window.__air({open:true}); window.__fast(2);
            window.__buy('balloon'); window.__fast(2);
            window.__look(window.__state().scrubX - 220);`,
   balloon: `${RICH} window.__air({open:true, haze: 1800}); window.__fast(2);
-            window.__buy('balloon'); window.__air({scrubbers:2}); window.__fast(30);
+            window.__buy('balloon'); window.__air({purifiers:2}); window.__fast(30);
             window.__look(window.__state().craft[0].x - 380);`,
 
   // The sky at four levels. The haze has the whole window now rather than a

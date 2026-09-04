@@ -43,9 +43,9 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 // its own people out after a while with nothing to do, which is the same thing
 // wearing a friendlier coat.
 export const POSTS = [
-  { key: 'scrubjob', job: 'scrubbers',
+  { key: 'scrubjob', job: 'purifiers',
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
-  { key: 'labjob', job: 'labbers',
+  { key: 'labjob', job: 'scholars',
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: 'stirrers',
@@ -94,7 +94,7 @@ export const POSTS = [
   // roster in the yard nobody could stand next to.
   { key: 'skyjob', job: 'wizards',
     at: () => sky.x, show: () => S.meteorOpen, kit: true },
-  { key: 'mine', job: 'miners',
+  { key: 'mine', job: 'rockhands',
     at: () => S.cx, show: () => S.crew > 0, kit: true },
   // The haulers stand under the houses. Every other post is written under the
   // place its work is done, and carrying has no such place -- the dust is

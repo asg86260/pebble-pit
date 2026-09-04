@@ -274,7 +274,7 @@ export function ways() {
 //
 // Above the yard's floor and inside the hill's footprint is on the hill -- and
 // the discriminator there is *height*, not x. This is the whole of the thing the
-// bug was about: a hauler crossing the footprint at ground level and a miner
+// bug was about: a hauler crossing the footprint at ground level and a rockhand
 // standing on the crest are at the same x and are not in the same place, and the
 // only thing that tells them apart is that one of them is up in the air. So the
 // question asked is "is this body higher than the yard would put it, somewhere
@@ -389,7 +389,7 @@ function floorWay(x, all) {
 // who climbs: the gang's stand is on the crest, so their route goes up; a load
 // of dust waiting on the far side of the yard is on the ground, so the route to
 // it runs along the floor in front of the hill, which is flatter and shorter and
-// therefore cheaper. Neither of those is a rule about miners or about haulers.
+// therefore cheaper. Neither of those is a rule about rock hands or about haulers.
 //
 // And a place over the mouth of the hole is *in* the hole. There is no floor
 // over an opening, and what a thing dropped there comes to rest on is the top
@@ -618,7 +618,7 @@ export function stepRoute(w, pace) {
 // --- the climber ---------------------------------------------------------------
 // One frame of a body getting from the height it is at to the height it should
 // be at, and the height it reaches. Everything that moves a body along a surface
-// goes through this: a miner on the crest, a hauler crossing the pile, a janitor
+// goes through this: a rockhand on the crest, a hauler crossing the pile, a janitor
 // walking past a bank, and every leg of every route.
 //
 // There were two of these. This one lived in crew.js and kept its answer in

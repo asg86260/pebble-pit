@@ -46,8 +46,8 @@ const button = (box, text, fn) => {
 };
 
 // how many of each job, straight off, with the same call the checks use
-const crew = ['miners', 'haulers', 'quarriers', 'farmhands'];
-const jobs = { miners: 'rock', haulers: 'carry', quarriers: 'quarry', farmhands: 'farm' };
+const crew = ['rockhands', 'haulers', 'quarriers', 'farmhands'];
+const jobs = { rockhands: 'rock', haulers: 'carry', quarriers: 'quarry', farmhands: 'farm' };
 const hire = (which, d) => {
   const n = crew.map(k => S[k]);
   const i = crew.indexOf(which);

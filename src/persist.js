@@ -209,15 +209,15 @@ export function persist() {
     // and a record now, and rebuilding the yard from four counts would hand you
     // back four strangers standing where your crew was.
     who: S.workers.map(keepOf),
-    miners: S.miners,
+    rockhands: S.rockhands,
     schoolOpen: S.schoolOpen,
     breakers: S.breakers,
     carters: S.carters,
     blasters: S.blasters,
     growers: S.growers,
     haulers: S.haulers,
-    minerSpeedLevel: S.minerSpeedLevel,
-    minerPickLevel: S.minerPickLevel,
+    rockhandSpeedLevel: S.rockhandSpeedLevel,
+    rockhandPickLevel: S.rockhandPickLevel,
     haulCarryLevel: S.haulCarryLevel,
     haulPaceLevel: S.haulPaceLevel,
     shards: S.shards,
@@ -244,7 +244,7 @@ export function persist() {
     seenSpore: S.seenSpore,
     farmOpen: S.farmOpen,
     farmhands: S.farmhands,
-    labbers: S.labbers,
+    scholars: S.scholars,
     labDone: S.labDone,
     labLeft: S.labLeft,
     tendLevel: S.tendLevel,
@@ -320,7 +320,7 @@ export function persist() {
     buildOrder: S.buildOrder || [],
     lent: S.lent || [],
     wizards: S.wizards,
-    scrubbers: S.scrubbers,
+    purifiers: S.purifiers,
     // The craft the house has sold. Two numbers and an eased height apiece; the
     // lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
@@ -447,15 +447,15 @@ export function restore() {
     S.critChanceLevel = 0;
     S.critMultLevel = 0;
     S.coreItem = null;
-    S.miners = 0;
+    S.rockhands = 0;
     S.haulers = 0;
     S.schoolOpen = false;
     S.breakers = 0;
     S.carters = 0;
     S.blasters = 0;
     S.growers = 0;
-    S.minerSpeedLevel = 0;
-    S.minerPickLevel = 0;
+    S.rockhandSpeedLevel = 0;
+    S.rockhandPickLevel = 0;
     S.haulCarryLevel = 0;
     S.haulPaceLevel = 0;
     S.shards = 0;
@@ -472,7 +472,7 @@ export function restore() {
     S.seenSpore = false;
     S.farmOpen = false;
     S.farmhands = 0;
-    S.labbers = 0;
+    S.scholars = 0;
     S.labDone = null;
     S.labLeft = 0;
     S.tendLevel = 0;
@@ -526,7 +526,11 @@ export function restore() {
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
       : { x: S.worldW * 0.2, y: S.groundY - CORE_SIZE, vx: 0, vy: 0, rest: false };
   }
-  S.miners = s.miners || 0;
+  // The jobs were renamed -- miners became rock hands, labbers scholars,
+  // scrubbers air purifiers -- and a save written before that says the old word.
+  // Read both, old as the fallback, so a yard saved under the old names walks
+  // back in with its people. Every renamed counter below does the same.
+  S.rockhands = s.rockhands ?? s.miners ?? 0;
   S.schoolOpen = !!s.schoolOpen;
   // rebalance clamps them to what is actually standing there
   S.breakers = s.breakers || 0;
@@ -543,7 +547,7 @@ export function restore() {
   S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
   S.plotLevel = Math.max(+s.plotLevel || 0, (s.farmhands || 0) - FARM_PLOTS0);
   S.farmhands = s.farmhands || 0;
-  S.labbers = s.labbers || 0;
+  S.scholars = s.scholars ?? s.labbers ?? 0;
   // a piece of research keeps whatever the crew already put into it
   // and one that finished while you were away is still news when you come back
   S.labDone = s.labDone || null;
@@ -552,7 +556,7 @@ export function restore() {
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
-  S.crew = s.crew ?? (s.miners || 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0);
+  S.crew = s.crew ?? (s.rockhands ?? s.miners ?? 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0);
   // Before the `rebalance()` below, and that ordering is the whole point: a
   // restored machine changes what its station's cap *is*, and a rebalance run
   // against the old cap leaves five bodies standing at a cut that now holds one.
@@ -592,9 +596,9 @@ export function restore() {
       ? (r.tookKit == null ? true : !!r.tookKit) : false;
   }
   rebalance();
-  S.minerSpeedLevel = s.minerSpeedLevel || 0;
-  // A save from when one pick row bought both keeps what its miners had.
-  S.minerPickLevel = s.minerPickLevel ?? (s.pickLevel || 0);
+  S.rockhandSpeedLevel = s.rockhandSpeedLevel ?? s.minerSpeedLevel ?? 0;
+  // A save from when one pick row bought both keeps what its rock hands had.
+  S.rockhandPickLevel = s.rockhandPickLevel ?? s.minerPickLevel ?? (s.pickLevel || 0);
   S.haulCarryLevel = s.haulCarryLevel || 0;
   S.haulPaceLevel = s.haulPaceLevel || 0;
   S.shards = s.shards || 0;
@@ -703,7 +707,7 @@ export function restore() {
     }
     S.summon = Math.max(0, Math.min(1, s.summon || 0));
   }
-  S.scrubbers = s.scrubbers || 0;
+  S.purifiers = s.purifiers ?? s.scrubbers ?? 0;
   craftLoad(s.craft);
   S.janitors = s.janitors || 0;
   S.harnessLevel = s.harnessLevel || 0;
@@ -871,6 +875,18 @@ export function restore() {
 // The crew, put back. Each body is made by its own factory -- so it has every
 // field its job expects, whatever has changed since the save was written -- and
 // then handed back the things that are *it* rather than its job.
+// What a job used to be called, for saves written before it was renamed. The
+// rift-holder is the old one: a job that stopped existing, whose bodies come
+// back as haulers. The other three are the same word for the same job.
+const OLD_TYPE = { rifter: 'hauler', miner: 'rockhand',
+                   labber: 'scholar', scrubber: 'purifier' };
+// And the same renaming again on the *job*, because a body does not only say
+// what it is -- it says which station's hat it is wearing (`kitOf`), and that is
+// a job name. A save written before the rename has a body in a "miners" hat,
+// which is a hat no station keeps any more: `verifyWorld` calls that out as kit
+// that is not in the table, and rightly.
+const OLD_JOB = { miners: 'rockhands', labbers: 'scholars', scrubbers: 'purifiers' };
+
 function restoreCrew(who) {
   S.workers = [];
   if (!Array.isArray(who)) return;
@@ -882,10 +898,16 @@ function restoreCrew(who) {
     // the ladders the way it got there. Carrying is what a body does when it is
     // on nothing, which is what a job that no longer exists leaves it on, and
     // `rebalance` counts the spare hands as carters without being told.
-    const type = k.type === 'rifter' ? 'hauler' : k.type;
+    // And a body saved under a job's old name. The jobs were renamed -- miners
+    // became rock hands, labbers scholars, scrubbers air purifiers -- and a save
+    // is a list of bodies each of which says what it is. Without this every one
+    // of them is "a trade this build does not have" on the line below, and a
+    // yard saved the day before comes back empty.
+    const type = OLD_TYPE[k.type] || k.type;
     const made = FACTORY(type);
     if (!made.type) continue;                  // a trade this build does not have
-    S.workers.push(wearRecord(Object.assign(made, newRecord()), k));
+    const rec = OLD_JOB[k.kitOf] ? { ...k, kitOf: OLD_JOB[k.kitOf] } : k;
+    S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
   }
 }
 
@@ -940,15 +962,15 @@ export function reset(fresh = true) {
   S.critMultLevel = 0;
   S.coreItem = null;
   S.heldCore = false;
-  S.miners = 0;
+  S.rockhands = 0;
   S.haulers = 0;
   S.schoolOpen = false;
   S.breakers = 0;
   S.carters = 0;
   S.blasters = 0;
   S.growers = 0;
-  S.minerSpeedLevel = 0;
-  S.minerPickLevel = 0;
+  S.rockhandSpeedLevel = 0;
+  S.rockhandPickLevel = 0;
   S.haulCarryLevel = 0;
   S.haulPaceLevel = 0;
   S.shards = 0;
@@ -964,7 +986,7 @@ export function reset(fresh = true) {
   S.seenSpore = false;
   S.farmOpen = false;
   S.farmhands = 0;
-  S.labbers = 0;
+  S.scholars = 0;
   S.labDone = null;
   S.labLeft = 0;
   S.tendLevel = 0;
@@ -994,7 +1016,7 @@ export function reset(fresh = true) {
   S.builders = 0;
   sky.cells = null;
   sky.n = 0;
-  S.scrubbers = 0;
+  S.purifiers = 0;
   clearCraft();
   S.janitors = 0;
   S.introThrew = 0;

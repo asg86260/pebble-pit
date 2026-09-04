@@ -51,13 +51,13 @@ group('a trade is a hat the station keeps', async () => {
   window.__crew(3, 0);
   window.__school({ breakers: 2 });
   const s = state();
-  window.__assign('miners', -1);
+  window.__assign('rockhands', -1);
   const one = state();
-  window.__assign('miners', -1);
-  window.__assign('miners', -1);
+  window.__assign('rockhands', -1);
+  window.__assign('rockhands', -1);
   run(15);                                   // long enough to walk the hat back
   const bare = state();
-  window.__assign('miners', 1);
+  window.__assign('rockhands', 1);
   run(15);                                   // and long enough to walk over and get it
   const two = state();
   // The same body count, twice as hard on the rock -- both halves off a fresh
@@ -80,15 +80,15 @@ group('a trade is a hat the station keeps', async () => {
   window.__crew(0, 0);
   window.__jump(1);
   return [
-    ok(s.breakers === 2 && s.miners === 3, 'the rock has two helmets and three bodies',
-       `${s.breakers} of ${s.miners}`),
-    ok(one.miners === 2, 'anybody on it can be taken off', `${one.miners}`),
-    ok(bare.miners === 0 && bare.breakers === 2,
+    ok(s.breakers === 2 && s.rockhands === 3, 'the rock has two helmets and three bodies',
+       `${s.breakers} of ${s.rockhands}`),
+    ok(one.rockhands === 2, 'anybody on it can be taken off', `${one.rockhands}`),
+    ok(bare.rockhands === 0 && bare.breakers === 2,
        'and the last of them too -- the helmets stay on the rock',
-       `${bare.breakers} left with ${bare.miners} there`),
-    ok(bare.roster.find(r => r.job === 'miners').spareKit === 2,
+       `${bare.breakers} left with ${bare.rockhands} there`),
+    ok(bare.roster.find(r => r.job === 'rockhands').spareKit === 2,
        'lying there with nobody wearing them'),
-    ok(two.trained.includes('m'),
+    ok(two.trained.includes('r'),
        'so the next body sent over picks one up', two.trained || 'nobody'),
     ok(hewn > plain * 1.5, 'a breaker takes twice the bite',
        `${plain} plain, ${hewn} broken`)
@@ -102,9 +102,9 @@ group('a cart belongs to the lip, not to the carter', async () => {
   window.__crew(0, 4);
   window.__school({ carters: 2 });
   const s = state();
-  window.__assign('miners', 1);
-  window.__assign('miners', 1);
-  window.__assign('miners', 1);
+  window.__assign('rockhands', 1);
+  window.__assign('rockhands', 1);
+  window.__assign('rockhands', 1);
   run(20);                     // the carts are walked back to the lip and put down
   const after = state();
   window.__crew(0, 0); window.__school({ carters: 0 });
@@ -112,8 +112,8 @@ group('a cart belongs to the lip, not to the carter', async () => {
     ok(s.haulers === 4 && s.carters === 2, 'the lip has two carts and four bodies',
        `${s.carters} of ${s.haulers}`),
     ok(s.idle === 4, 'and every one of them is a spare hand', `${s.idle} spare`),
-    ok(after.miners === 3, 'so all of them can be sent to the rock',
-       `${after.miners} went`),
+    ok(after.rockhands === 3, 'so all of them can be sent to the rock',
+       `${after.rockhands} went`),
     ok(after.haulers === 1 && after.carters === 2,
        'and the carts stay at the lip', `${after.carters} carts, ${after.haulers} there`),
     ok(after.roster.find(r => r.job === 'haulers').worn === 1,
@@ -124,10 +124,10 @@ group('a cart belongs to the lip, not to the carter', async () => {
 group('the roster says how many of them have the trade', async () => {
   window.__crew(4, 3);
   window.__school({ breakers: 0, carters: 0 });
-  const none = state().roster.find(r => r.job === 'miners');
+  const none = state().roster.find(r => r.job === 'rockhands');
   window.__school({ breakers: 2, carters: 1 });
   const some = state().roster;
-  const rock = some.find(r => r.job === 'miners');
+  const rock = some.find(r => r.job === 'rockhands');
   const carry = some.find(r => r.job === 'haulers');
   window.__crew(0, 0);
   return [
@@ -168,13 +168,13 @@ group('a hat is still on after a reload', async () => {
   window.__clearFloor();
   const at = (s, job) => s.roster.find(r => r.job === job);
   return [
-    ok(before.trained === 'hmm', 'the yard is kitted before the reload',
+    ok(before.trained === 'hrr', 'the yard is kitted before the reload',
        `"${before.trained}"`),
-    ok(after.trained === 'hmm', 'and every one of them still has it after',
+    ok(after.trained === 'hrr', 'and every one of them still has it after',
        `"${after.trained}"`),
-    ok(at(after, 'miners').worn === 2 && at(after, 'miners').spareKit === 0,
+    ok(at(after, 'rockhands').worn === 2 && at(after, 'rockhands').spareKit === 0,
        'the rock counts two helmets worn and none waiting',
-       `${at(after, 'miners').worn} worn, ${at(after, 'miners').spareKit} waiting`),
+       `${at(after, 'rockhands').worn} worn, ${at(after, 'rockhands').spareKit} waiting`),
     ok(at(after, 'haulers').worn === 1, 'and the cart is still being pulled',
        `${at(after, 'haulers').worn} worn`)
   ];
@@ -186,9 +186,9 @@ group('a body put in the lab stays in the lab', async () => {
   window.__abandon();                         // nothing for them to work on
   window.__crew(0, 1);
   window.__lab(true);
-  window.__assign('labbers', 1);
+  window.__assign('scholars', 1);
   const sent = state();
-  const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('l|in')), 200);
+  const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('s|in')), 200);
   // LAB_IDLE_MS is twenty seconds: the grace to get some work started before
   // the people you sent over give up on you
   run(10);                                     // half way: still standing there
@@ -197,18 +197,18 @@ group('a body put in the lab stays in the lab', async () => {
   const gone = state();
   window.__crew(0, 0);
   return [
-    ok(sent.labbers === 1, 'a body can be put on the lab', `${sent.labbers}`),
+    ok(sent.scholars === 1, 'a body can be put on the lab', `${sent.scholars}`),
     ok(inside, 'and it walks over and goes in'),
-    ok(waiting.labbers === 1,
+    ok(waiting.scholars === 1,
        'an empty lab does not turn people out the moment they arrive',
-       `${waiting.labbers}`),
+       `${waiting.scholars}`),
     // It keeps them. The lab used to turn its own people out after a while with
     // nothing to research, which reads as thoughtful and is the building
     // overruling the roster: you put somebody in, and some time later they were
     // somewhere else without your having said so. An idle bench is a thing for
     // you to notice, and the counter under the lab is where you act on it.
-    ok(gone.labbers === 1, 'and it keeps them until you say otherwise',
-       `${gone.labbers}`),
+    ok(gone.scholars === 1, 'and it keeps them until you say otherwise',
+       `${gone.scholars}`),
     ok(gone.haulers === 0,
        'and nobody is handed back to carrying without you saying so',
        `${gone.haulers} carrying of ${gone.crew}`)
@@ -246,14 +246,14 @@ group('the save keeps what matters', async () => {
     ok(Math.abs(raw.stored - s.stored) <= 20, 'the hole is saved',
        `${raw?.stored} vs ${s.stored}`),
     ok(raw.cores === s.cores, 'cores are saved'),
-    ok(raw.miners === s.miners && raw.haulers === s.haulers, 'the crew is saved'),
+    ok(raw.rockhands === s.rockhands && raw.haulers === s.haulers, 'the crew is saved'),
     ok(raw.shards === s.shards, 'shards are saved', `${raw?.shards} vs ${s.shards}`),
     ok(raw.quarryOpen === s.quarryOpen, 'and whether the quarry is open'),
     ok(raw.spores === s.spores, 'spores are saved', `${raw?.spores} vs ${s.spores}`),
     ok(Array.isArray(raw.plots), 'and how far along every plot is'),
     ok(raw.labOpen === s.labOpen, 'whether the lab is built'),
     ok(!!raw.mult && raw.mult.swing === s.mult.swing, 'and every multiplier bought'),
-    ok(raw.labbers === s.labbers, 'who is in the lab', `${raw?.labbers} vs ${s.labbers}`),
+    ok(raw.scholars === s.scholars, 'who is in the lab', `${raw?.scholars} vs ${s.scholars}`),
     ok(!raw.research === !s.research, 'and whatever it is working on'),
     ok(typeof raw.boulder === 'string' && raw.boulder.length === raw.gw * raw.gh,
        'the rock is saved cell by cell')

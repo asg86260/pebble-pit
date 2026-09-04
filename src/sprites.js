@@ -84,7 +84,7 @@ export const spriteH = rows => rows.length;
 // here guessed at them and made every one of them bigger -- a five-by-two
 // helmet on a three-cell body -- so the crew wore buckets.
 export const HATS = {
-  // A miner's helmet: the body's own width, one course.
+  // A rockhand's helmet: the body's own width, one course.
   helmet: [
     '###'
   ],

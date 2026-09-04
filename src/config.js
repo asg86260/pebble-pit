@@ -608,9 +608,9 @@ export const FARM_DUST = 600;      // the plots, and the first real bill
 export const QUARRY_DUST = 1800;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
-// --- the scrubber balloon ------------------------------------------------------
+// --- the purifier balloon ------------------------------------------------------
 // A craft the scrubbing house sells: it rides the sky, takes it in where it is,
-// and drops what it catches under itself. See DESIGN.md, "The scrubber balloon",
+// and drops what it catches under itself. See DESIGN.md, "The purifier balloon",
 // and src/balloon.js.
 export const BALLOON_RUNGS = 3;      // a finite ladder, like every other one
 export const BALLOON_DUST = 1200;    // what the first one costs
@@ -772,7 +772,7 @@ export const WIZ_SPEED_COST = 12;    // sparks for the first rung of either
 export const WIZ_POWER_COST = 16;
 export const WIZ_LADDER_RATE = 1.8;  // and how much steeper each one gets
 // It does not touch the thing. A body hanging against the rind with its arms in
-// it was a miner on a rock four hundred feet up; what it does instead is circle
+// it was a rockhand on a rock four hundred feet up; what it does instead is circle
 // the star at a distance and throw magic at it, which is the one thing in this
 // yard that is allowed to happen at range -- it is the whole of what the hat is
 // for.
@@ -1506,16 +1506,16 @@ export const AT_POST = IDLE_ROAM + P + WORKER;
 // put three of the five off instead.
 export const DOOR_W = 4;         // cells across a way in, everywhere in the yard
 export const DOOR_H = 4;         // and courses tall
-export let MINER_BASE = 1100;  // a hired miner starts slower than your own pick
-export const MINER_FLOOR = 260;  // fastest a miner can swing
-// How much bigger a miner's bite gets over the whole `minerpick` ladder --
+export let ROCKHAND_BASE = 1100;  // a hired rockhand starts slower than your own pick
+export const ROCKHAND_FLOOR = 260;  // fastest a rockhand can swing
+// How much bigger a rockhand's bite gets over the whole `rockhandpick` ladder --
 // eased across the rungs the same way `swing` eases a rate, so the early rungs
 // are worth more than the late ones. It used to be a flat +1 a rung, which
 // looks tame on the row but is a straight multiple against the base: five rungs
 // bought six times the bite, and the crew you actually have could never keep up
 // with the pile that made. A cap here is the fix rather than a hand-tuned rung
 // price, because the price was never the thing that was wrong.
-export const MINER_BITE_MULT = 2.2;
+export const ROCKHAND_BITE_MULT = 2.2;
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
@@ -1537,7 +1537,7 @@ export const MINER_BITE_MULT = 2.2;
 // and for most of that time the yard was one enormous heap with a stopped gang
 // standing over it. Seven hundred fills sooner, so the crew find their level
 // sooner and the ground beside the rock reads as a working bank rather than as
-// a second hill. It costs nothing: the limit is when the miners *wait*, not how
+// a second hill. It costs nothing: the limit is when the rock hands *wait*, not how
 // much dust the game will ever give you.
 // The scrubbing house is in here now, and it is the reason the recycler stopped
 // spraying the yard. Its spout paid on to bare ground, and bare ground takes a
@@ -1681,10 +1681,10 @@ export const SHAKE_DECAY = 0.87; // and how much of the throw is left each frame
 // while the last rock's celebration is on, and a body still in it once the rock
 // is in the air walks out at a pace nobody walks anywhere else.
 export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
-// A stopped crew is not a frozen crew. When the pile is full the miners stand
+// A stopped crew is not a frozen crew. When the pile is full the rock hands stand
 // down and shift about on the spot -- slowly, and nothing like the dance, which
 // is a hop a second and goes places.
-export const IDLE_BEAT = 0.9;    // radians a second a stood-down miner sways through
+export const IDLE_BEAT = 0.9;    // radians a second a stood-down rockhand sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
 // --- breaks -------------------------------------------------------------------
@@ -1760,7 +1760,7 @@ export const DUST_PER_SPARK = 60;
 // -- which is why this is not three trebled constants at four call sites.
 export let MACHINE_FOUL = 0.4;
 // The rock's complement, which is the one a machine cannot read off the station.
-// `capOf('miners')` is `Infinity` and rightly so -- a rock is as long as it is,
+// `capOf('rock hands')` is `Infinity` and rightly so -- a rock is as long as it is,
 // and there is no floor plan to run out of. But the ram still has to be worth
 // something, and "worth as much as whatever gang you happen to have on it" is a
 // machine that gets better the less you need it.
@@ -2347,8 +2347,8 @@ export const TUNABLE = [
     get: () => TRADE_COST, set: v => { TRADE_COST = v; } },
   { key: 'MINE_BASE', label: 'your swing', min: 60, max: 1200, step: 20,
     get: () => MINE_BASE, set: v => { MINE_BASE = v; } },
-  { key: 'MINER_BASE', label: 'miner swing', min: 60, max: 2000, step: 20,
-    get: () => MINER_BASE, set: v => { MINER_BASE = v; } },
+  { key: 'ROCKHAND_BASE', label: 'rockhand swing', min: 60, max: 2000, step: 20,
+    get: () => ROCKHAND_BASE, set: v => { ROCKHAND_BASE = v; } },
   { key: 'HAUL_BASE', label: 'carry pace', min: 0.2, max: 6, step: 0.1,
     get: () => HAUL_BASE, set: v => { HAUL_BASE = v; } },
   { key: 'CUT_DIG_MS', label: 'a dig takes', min: 3000, max: 120000, step: 1000,
@@ -2720,7 +2720,7 @@ export const TONIC_STEW_WORK = 0.25;   // +25% work, its own main action
 export const TONIC_BRACE_CRIT = 0.08;  // +8 points of crit chance
 export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
 
-// The five ladders, priced spore + dust like every tier-two row (minerpick's
+// The five ladders, priced spore + dust like every tier-two row (rockhandpick's
 // shape). `doses a brew` and `bodies a brew` are one rung here, not two: a dose
 // is one body, one buff -- a fresh dose refreshes the timer rather than stacking
 // -- so "more doses" and "more bodies reached" are the same sentence. See the

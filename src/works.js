@@ -25,7 +25,7 @@ import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 // Where a row's work stands, and therefore whose hands do it.
 //
 // Four of the sites have a gang of their own and the work is theirs: quarriers
-// take out the next bench, farmhands break the next furrow, the scrubbers fit
+// take out the next bench, farmhands break the next furrow, the purifiers fit
 // the bigger fan, the wizards raise what the tower raises. That is the whole
 // cost of it -- a station building its own upgrade is a station not producing
 // while it does, which is the same bargain every other decision in this game
@@ -37,7 +37,7 @@ import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 export const SITE_JOB = {
   quarry: 'quarriers',
   farm: 'farmhands',
-  scrub: 'scrubbers',
+  scrub: 'purifiers',
   tower: 'wizards',
   yard: 'builders',
   // The bench's own ladders, fitted at the bench: the one site where what is
@@ -47,7 +47,7 @@ export const SITE_JOB = {
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
   // row in this file already was.
-  lab: 'labbers',
+  lab: 'scholars',
   // The apothecary, whose gang is its stirrers. Its rungs are built by its own
   // hands the way the plots break the next furrow; the brewing itself is an
   // upkeep stepped in apothecary.js, not a one-shot work here.
@@ -364,8 +364,8 @@ export function stepWorks(dt) {
     if (!list.length) continue;
     const hands = handsAt(site);
     // The hands are shared out over what is on the go rather than every piece
-    // getting the whole gang. Two benches with one labber between them is one
-    // labber's work being done, spread over both -- which is what a person
+    // getting the whole gang. Two benches with one scholar between them is one
+    // scholar's work being done, spread over both -- which is what a person
     // moving between two benches looks like from outside.
     const each = hands / list.length;
     const effort = effortAt(site);

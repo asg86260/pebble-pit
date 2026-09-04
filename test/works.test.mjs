@@ -228,7 +228,7 @@ group('with nobody spare, the nearest body is lent and given back', async () => 
   window.__grant({ dust: 90000 });
   run(2);
 
-  const miners0 = state().miners;
+  const rockhands0 = state().rockhands;
   window.__buy('carry');
   run(0.2);
   const lent = state();
@@ -237,15 +237,15 @@ group('with nobody spare, the nearest body is lent and given back', async () => 
   const back = state();
 
   return [
-    ok(lent.miners === miners0 - 1 && lent.builders === 1,
-       'one miner comes off the rock to do it',
-       `${miners0} -> ${lent.miners} miners, ${lent.builders} building`),
-    ok(lent.lent.length === 1 && lent.lent[0] === 'miners',
+    ok(lent.rockhands === rockhands0 - 1 && lent.builders === 1,
+       'one rockhand comes off the rock to do it',
+       `${rockhands0} -> ${lent.rockhands} rockhands, ${lent.builders} building`),
+    ok(lent.lent.length === 1 && lent.lent[0] === 'rockhands',
        'and the rock is owed a body', JSON.stringify(lent.lent)),
     ok(landed, 'the rung is fitted'),
-    ok(back.miners === miners0 && back.builders === 0 && back.lent.length === 0,
-       'and the miner is back on the rock, the debt cleared',
-       `${back.miners} miners, ${back.builders} building, owed ${JSON.stringify(back.lent)}`)
+    ok(back.rockhands === rockhands0 && back.builders === 0 && back.lent.length === 0,
+       'and the rockhand is back on the rock, the debt cleared',
+       `${back.rockhands} rockhands, ${back.builders} building, owed ${JSON.stringify(back.lent)}`)
   ];
 });
 
@@ -259,14 +259,14 @@ group('a station with a gang of its own is never lent a body', async () => {
   window.__grant({ shards: 900, spores: 900, dust: 90000 });
   run(2);
 
-  const miners0 = state().miners;
+  const rockhands0 = state().rockhands;
   window.__buy('quarrybench');
   run(20);
   const s = state();
 
   return [
-    ok(s.miners === miners0 && s.lent.length === 0,
-       'the rock keeps its gang', `${s.miners} miners, owed ${JSON.stringify(s.lent)}`),
+    ok(s.rockhands === rockhands0 && s.lent.length === 0,
+       'the rock keeps its gang', `${s.rockhands} rockhands, owed ${JSON.stringify(s.lent)}`),
     ok(!s.works?.quarry || s.works.quarry.done > 0,
        'and the cut digs its own bench', JSON.stringify(s.works?.quarry))
   ];
@@ -284,7 +284,7 @@ group('a station standing empty is lent a body', async () => {
   window.__grant({ shards: 900, spores: 900, dust: 90000 });
   run(2);
 
-  const miners0 = state().miners;
+  const rockhands0 = state().rockhands;
   window.__buy('quarrybench');
   run(6);
   const going = state();
@@ -292,14 +292,14 @@ group('a station standing empty is lent a body', async () => {
   const back = state();
 
   return [
-    ok(going.lent.length === 1 && going.miners === miners0 - 1,
+    ok(going.lent.length === 1 && going.rockhands === rockhands0 - 1,
        'somebody is taken off the rock for it',
-       `${going.miners} miners, owed ${JSON.stringify(going.lent)}`),
+       `${going.rockhands} rockhands, owed ${JSON.stringify(going.lent)}`),
     ok((going.works?.quarry?.done || 0) > 0, 'and the bench is actually being dug',
        JSON.stringify(going.works?.quarry)),
     ok(done, 'it finishes'),
-    ok(back.miners === miners0 && back.lent.length === 0,
-       'and the rock has its body back', `${back.miners} miners`)
+    ok(back.rockhands === rockhands0 && back.lent.length === 0,
+       'and the rock has its body back', `${back.rockhands} rockhands`)
   ];
 });
 
@@ -382,7 +382,7 @@ group('a row that lands rebuilds the board it is on', async () => {
 // list, with nothing tying either end of it to the body it was about. So a
 // player who moved somebody on to the same job while the loan was out got the
 // count handed back on top of the move: a crew of three, one build, and a rock
-// with four miners on it afterwards. The roster said four for the rest of the
+// with four rock hands on it afterwards. The roster said four for the rest of the
 // run and there was never a fourth body.
 group('a loan is a body, and the roster ends where the player put it', async () => {
   const start = () => {
@@ -398,7 +398,7 @@ group('a loan is a body, and the roster ends where the player put it', async () 
   window.__buy('unlockschool');
   run(4);
   const lent = state();
-  window.__assign('miners', 1);               // ...and the player fills the gap
+  window.__assign('rockhands', 1);               // ...and the player fills the gap
   const landedUp = land();
   run(2);
   const up = state();
@@ -406,22 +406,22 @@ group('a loan is a body, and the roster ends where the player put it', async () 
   start();
   window.__buy('unlockschool');
   run(4);
-  window.__assign('miners', -1);              // ...or takes another one off
+  window.__assign('rockhands', -1);              // ...or takes another one off
   const landedDown = land();
   run(2);
   const down = state();
 
   return [
-    ok(lent.lent.length === 1 && lent.miners === 2,
+    ok(lent.lent.length === 1 && lent.rockhands === 2,
        'a body is borrowed off the rock for the build',
-       `${lent.miners} miners, owed ${JSON.stringify(lent.lent)}`),
+       `${lent.rockhands} rockhands, owed ${JSON.stringify(lent.lent)}`),
     ok(landedUp && landedDown, 'both builds finish'),
-    ok(up.miners === 3, 'the rock ends with the three the player asked for',
-       `${up.miners} miners out of a crew of ${up.crew}`),
-    ok(up.miners <= up.crew, 'and never with more miners than there are people',
-       `${up.miners} of ${up.crew}`),
-    ok(down.miners === 1, 'and taking one off means one off, not one off and back',
-       `${down.miners} miners`),
+    ok(up.rockhands === 3, 'the rock ends with the three the player asked for',
+       `${up.rockhands} rockhands out of a crew of ${up.crew}`),
+    ok(up.rockhands <= up.crew, 'and never with more rockhands than there are people',
+       `${up.rockhands} of ${up.crew}`),
+    ok(down.rockhands === 1, 'and taking one off means one off, not one off and back',
+       `${down.rockhands} rockhands`),
     ok(up.lent.length === 0 && down.lent.length === 0,
        'with nothing left owed either way',
        `${JSON.stringify(up.lent)} / ${JSON.stringify(down.lent)}`)
@@ -444,18 +444,18 @@ group('a loan comes back with the body that owes it', async () => {
   run(4);
   window.__reload();
   const back = state();
-  window.__assign('miners', 1);
+  window.__assign('rockhands', 1);
   const landed = runUntil(() => !on('unlockschool'), 180);
   run(2);
   const after = state();
 
   return [
-    ok(back.lent.length === 1 && back.miners === 2,
+    ok(back.lent.length === 1 && back.rockhands === 2,
        'the yard comes back still owing the rock a body',
-       `${back.miners} miners, owed ${JSON.stringify(back.lent)}`),
+       `${back.rockhands} rockhands, owed ${JSON.stringify(back.lent)}`),
     ok(landed, 'and the school still goes up'),
-    ok(after.miners === 3 && after.miners <= after.crew,
+    ok(after.rockhands === 3 && after.rockhands <= after.crew,
        'and the rock ends with the crew it was set to, not one more',
-       `${after.miners} miners out of ${after.crew}`)
+       `${after.rockhands} rockhands out of ${after.crew}`)
   ];
 });

@@ -116,7 +116,7 @@ export const TESTS = [
       return canvasEl.style.cursor;
     };
     const s0 = state();
-    const r = s0.roster.find(x => x.job === 'miners');
+    const r = s0.roster.find(x => x.job === 'rockhands');
     // Below the ground line and well clear of everything: the sky is where the
     // birds are, and a bird under the cursor is a thing you can click.
     const sky = at(s0.rockX - 900, s0.groundY + 300);

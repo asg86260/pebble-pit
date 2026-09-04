@@ -458,7 +458,7 @@ const nextBurst = () =>
 // One function, called from one stage (see `celebrate` in STAGES), and that is
 // the whole arrangement.
 //
-// It was five: a `held` row on the miner, an idle branch on the hauler, and
+// It was five: a `held` row on the rockhand, an idle branch on the hauler, and
 // three errand call sites that handed a body to the dance when a rock cut
 // across its walk -- with every other job having no row at all, so half the
 // yard went on working through the party. The judder everybody kept seeing was

@@ -21,7 +21,7 @@ export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
   S.chips.push({ x, y, vx, vy, s: shade, land });
 }
 
-// A miner tosses its spoil onto the heap. It is a person throwing, the same as a
+// A rockhand tosses its spoil onto the heap. It is a person throwing, the same as a
 // quarrier putting a seam up over the rim or a hauler tipping a load into the
 // hole -- somebody with a shovel and somewhere to put what is on it.
 //
@@ -34,7 +34,7 @@ export function spawnChip(x, y, vx, vy, shade = 1, land = null) {
 // the back of the hill, where the crew, the bench and the hole are not, and lay
 // there in a layer nobody had a reason to walk to.
 //
-// So the miner throws, and where it throws is the heap that belongs to the rock.
+// So the rockhand throws, and where it throws is the heap that belongs to the rock.
 // The arc is the same one everything else in this yard is thrown on.
 // `key` is whose heap it is going on. A farmhand tosses a spore onto the farm's
 // heap, not across the yard onto the rock's -- each place has its own strip of
@@ -190,7 +190,7 @@ export function beltRunning(now) {
 // The band is a **surface**. Anything thrown across it comes down on it and is
 // carried, exactly the way anything thrown across the ground comes down on the
 // ground -- which means the rock's spoil goes straight onto the belt from the
-// miner's shovel and never touches the yard at all.
+// rockhand's shovel and never touches the yard at all.
 //
 // That is the whole point of a belt from the rock to the hole, and without it
 // the machine was doing the job the long way round: every grain fell to the

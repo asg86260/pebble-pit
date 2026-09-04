@@ -20,7 +20,7 @@ const { machineRate } = await import('../src/upgrades.js');
 
 const MACHINES = [
   { key: 'jaw', row: 'tunejaw', job: 'quarriers' },
-  { key: 'ram', row: 'tuneram', job: 'miners' },
+  { key: 'ram', row: 'tuneram', job: 'rockhands' },
   { key: 'tiller', row: 'tunetiller', job: 'farmhands' },
   { key: 'belt', row: 'tunebelt', job: 'haulers' }
 ];

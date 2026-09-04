@@ -2,7 +2,7 @@
 // own pile.
 //
 // One rule, and the whole of it is here. A quarrier between digs, a farmhand
-// between plots and a miner between swings all do the same thing to three quite
+// between plots and a rockhand between swings all do the same thing to three quite
 // different patches of ground -- the floor of the cut, the strip the plots stand
 // on, and the surface of the hill itself -- so what differs is the *patch* and
 // nothing else. A patch is five questions about a column of somewhere:

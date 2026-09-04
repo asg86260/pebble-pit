@@ -229,11 +229,11 @@ export function drawScrub() {
   for (let i = 0; i <= SCRUB_FOLDS; i++)
     ctx.fillRect(c(mid - (LEAF - 1) / 2), r(head + i + Math.min(i, open)), P * LEAF, P);
 
-  // The way in. A scrubber walks the length of the yard to get here and has to
+  // The way in. A purifier walks the length of the yard to get here and has to
   // arrive somewhere -- the settlement gives a body a P*4 doorway explicitly so
   // that a building does not read as a model of a building, the school's stands
   // open, the casino has one because somebody goes in -- and before this there
-  // was nowhere on the front for a body to go, so a scrubber crossed the ground
+  // was nowhere on the front for a body to go, so a purifier crossed the ground
   // and evaporated against the most solid column of it.
   //
   // DOOR_W by DOOR_H, which is the way in at the school, the lab, the casino and
@@ -295,7 +295,7 @@ export function drawScrub() {
   // underside rather than off the bottom of the box. Two things were wrong with
   // the old arithmetic. A body is three courses tall and stands on the bottom
   // three, so an arm two courses off the ground left one clear course and every
-  // scrubber the house was given walked out from under it with its head inside
+  // purifier the house was given walked out from under it with its head inside
   // the chute -- daylight underneath is true of paper and false of anything that
   // walks. It hangs off the foot of the building and the courses of daylight
   // wanted under it, which is the thing that actually decides where it goes. It

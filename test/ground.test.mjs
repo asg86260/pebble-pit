@@ -236,7 +236,7 @@ group('each station piles to its right, and stops when its pile is full', async 
 });
 
 group('a worker can reach the bank behind the rock', async () => {
-  // no miners, so nothing new lands while we watch, and only one heap on the
+  // no rock hands, so nothing new lands while we watch, and only one heap on the
   // ground: the one on the far side of the hill
   window.__crew(0, 1);
   quickCrew();                               // so it walks at a fair clip
@@ -560,7 +560,7 @@ group('dust lies on the ground in front of the hill', async () => {
 // that dust has to go somewhere. It used to be handed to `addGrain`, which walks
 // outward for the first column with room -- the first column of the rock's own
 // heap, which then stood a dozen cells hard against the boulder. It is thrown
-// now, on the arc a miner's spoil takes, so it leaves the ground as dust in the
+// now, on the arc a rockhand's spoil takes, so it leaves the ground as dust in the
 // air and comes down out along the heap like everything else thrown at it.
 group('a rock landing throws the dust off its footprint rather than shovelling it', async () => {
   window.__crew(0, 0);

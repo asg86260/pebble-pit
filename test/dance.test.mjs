@@ -65,7 +65,7 @@ group('the dance joins up instead of teleporting', async () => {
   // has jumped.
   //
   // A cell at the edges and half of one in the middle, and the difference is
-  // the ground rather than slack. A miner celebrates on the bare floor -- it
+  // the ground rather than slack. A rockhand celebrates on the bare floor -- it
   // walks out of the footprint to do it -- so the frame it goes back to work is
   // the frame it puts its foot back on the rock, which stands a couple of pixels
   // proud of the floor. That is a body stepping onto something, and it is the

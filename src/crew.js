@@ -1,6 +1,6 @@
 // The crew: who they are, where they stand and what they do with their hands.
 //
-// Miners take the rock off in layers; workers carry dust to the pit. A new kind
+// Rock hands take the rock off in layers; workers carry dust to the pit. A new kind
 // of worker is a new `type` and a new branch in updateWorkers -- and, when the
 // quarry and the farm arrive, its own file.
 
@@ -25,7 +25,7 @@ import { pitRoom } from './pit.js';
 // `JOBS` is renamed on the way in: this file has a `JOBS` of its own further
 // down -- the table of what each kind of body actually does -- and the roster's
 // list of job names is a different thing with the same name.
-import { minerMs, haulCap, haulSpeed, scoopMs, minerBite, hats, worn, spareKit, JOB_OF,
+import { rockhandMs, haulCap, haulSpeed, scoopMs, rockhandBite, hats, worn, spareKit, JOB_OF,
          JOBS as ROSTER_JOBS, machineRate,
          roomAt, rebalance, commutePace } from './upgrades.js';
 import { KIT_JOBS, TYPE_OF } from './kit.js';
@@ -33,8 +33,8 @@ import { standTop, keepTo, stepRoute, wayAt, wayOver, feetOn, rockTop,
          ways, climbTo, plant, inWorking, footing, solidNear, SOLID } from './route.js';
 import { stepQuarrier, newQuarrier, quarryFace, quarryFloor, underground } from './quarry.js';
 import { stepFarmhand, newFarmhand, plotX } from './farm.js';
-import { stepLabber, newLabber, labDoor, indoors } from './lab.js';
-import { stepScrubber, newScrubber, scrubDoor, inHouse } from './scrubhouse.js';
+import { stepScholar, newScholar, labDoor, indoors } from './lab.js';
+import { stepPurifier, newPurifier, scrubDoor, inHouse } from './scrubhouse.js';
 import { stepStirrer, newStirrer, apothecaryDoor, carryBoost, workBoost } from './apothecary.js';
 import { bailOut } from './balloon.js';
 import { stepWizard, newWizard, underMeteor, floatDown } from './wizard.js';
@@ -61,7 +61,7 @@ export { workerAt, lift, lifted, drop, shakeHeld } from './crew/pointer.js';
 import { grabHat, dispossessed, stepKit, kitFree } from './crew/kitwalk.js';
 export { kitFree } from './crew/kitwalk.js';
 
-// The crew take the hill off in layers. A miner does not stand in one spot and
+// The crew take the hill off in layers. A rockhand does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
 // goes, so the crest comes off as a row and the next row is exposed underneath.
 // It turns at the ends of the layer and turns before walking into a mate, so the
@@ -70,7 +70,7 @@ const MINE_BAND = 3;      // cells below the peak still counted as the top layer
 const ROAM_RANGE = 420;   // how far an idle worker will wander for no reason
 const ROAM_PACE = 0.45;   // and how slowly it goes about it
 const ROAM_ELBOW = WORKER * 1.4;   // how close two of them will stand
-const MINER_WALK = 0.5;   // pixels a frame along the row
+const ROCKHAND_WALK = 0.5;   // pixels a frame along the row
 
 // Where a body's feet go when it is standing still or walking: on whatever it is
 // standing on.
@@ -127,13 +127,13 @@ export function nearestInBand(from) {
 // Somebody already working the stretch this one is about to walk into.
 //
 // It asks `mineDir` -- the way this one is working along the row -- rather than
-// which way it is facing. They are the same thing for a miner on the crest and
+// which way it is facing. They are the same thing for a rockhand on the crest and
 // they are not the same field: a heading is remembered between frames and turned
 // round at the ends of the layer, and a facing is measured off the ground the
 // body has just covered. See `faceTravel`.
 export function elbowed(w, x) {
   for (const o of S.workers) {
-    if (o === w || o.type !== 'miner') continue;
+    if (o === w || o.type !== 'rockhand') continue;
     if ((o.x - w.x) * w.mineDir <= 0) continue;         // behind it: not in the way
     if (Math.abs(o.x - x) < WORKER * 1.2) return true;
   }
@@ -158,7 +158,7 @@ const sideOf = (zone, x) => x + WORKER <= zone.from ? -1 : x >= zone.to ? 1 : 0;
 // beat between rocks -- the crew's five seconds on the bare ground as well as
 // the fall -- because a body has to be *out* of the footprint before the rock
 // starts coming down. But standing still for all of it stopped the whole yard
-// dead every time a rock finished: the dance is the miners' business, and a
+// dead every time a rock finished: the dance is the rock hands' business, and a
 // hauler halfway to the lip has no reason to wait on it. Nobody may cross while
 // the rock is in the air; before that the ground is bare and they carry on.
 const across = (zone, x, target) =>
@@ -184,15 +184,15 @@ export function duck(w, zone) {
 // rather than a number this file holds a copy of.
 export const hireSpot = () => doorAt();
 
-// A body that has knocked off and gone in. It is the same idea as a labber
+// A body that has knocked off and gone in. It is the same idea as a scholar
 // through the door or a quarrier down the quarry: out of sight, still counted, and
 // still on the same job the moment it comes back out.
 export const atHome = w => !!w.inside;
 export const homeCount = () => S.workers.filter(atHome).length;
 
-function newMiner() {
+function newRockhand() {
   return {
-    type: 'miner', next: 0, lunge: 0,
+    type: 'rockhand', next: 0, lunge: 0,
     x: rockLeft() + rand() * S.gw * P, y: S.cy,
     mineDir: rand() < 0.5 ? -1 : 1,  // which way along the layer it is working
     ph: rand() * Math.PI * 2,        // where in its wobble it starts
@@ -226,9 +226,9 @@ function newHauler() {
 // one before it goes back to sweeping the yard.
 // Builders come before carrying, like every other job: a spare body goes to the
 // thing the yard is in the middle of building before it goes back to sweeping.
-const TYPES = ['miner', 'quarrier', 'farmhand', 'labber', 'scrubber', 'stirrer', 'janitor', 'wizard', 'builder', 'hauler'];
-const MAKE = { miner: newMiner, quarrier: newQuarrier, farmhand: newFarmhand,
-               labber: newLabber, scrubber: newScrubber, stirrer: newStirrer,
+const TYPES = ['rockhand', 'quarrier', 'farmhand', 'scholar', 'purifier', 'stirrer', 'janitor', 'wizard', 'builder', 'hauler'];
+const MAKE = { rockhand: newRockhand, quarrier: newQuarrier, farmhand: newFarmhand,
+               scholar: newScholar, purifier: newPurifier, stirrer: newStirrer,
                janitor: newJanitor, wizard: newWizard, builder: newBuilder, hauler: newHauler };
 
 // Every body gets a rhythm of its own, whatever trade it is.
@@ -354,7 +354,7 @@ export function stepBuilder(w) {
       w.goal = 'to';
       // Routed, not slid -- see #6, "Wave 3.1" in wave-feedback3.md. This used
       // to be `w.y = stand(w)` (a fresh climb-toward-wherever-it-is-standing)
-      // followed by a plain step in x, and a miner lent off the rock reads as
+      // followed by a plain step in x, and a rockhand lent off the rock reads as
       // ON the rock right up until a step carries it clear of the hill's
       // footprint -- at which point `wayAt` answers with the yard's own floor
       // instead, `climbTo`'s target jumps from the rock's height to the
@@ -410,7 +410,7 @@ export function stepBuilder(w) {
 const ARRIVED = {
   quarriers: w => w.type === 'quarrier' && w.goal !== 'to',
   farmhands: w => w.type === 'farmhand' && w.goal !== 'to',
-  scrubbers: w => w.type === 'scrubber' && w.goal === 'in',
+  purifiers: w => w.type === 'purifier' && w.goal === 'in',
   // Through the door and stirring. A stirrer out dealing a dose is not at the
   // pot, so the brew clock pauses -- same rule the lab and the house keep.
   stirrers: w => w.type === 'stirrer' && w.goal === 'in',
@@ -418,9 +418,9 @@ const ARRIVED = {
   // under it; either way it is at the tower, which is the only thing this asks.
   wizards: w => w.type === 'wizard',
   builders: w => w.type === 'builder' && w.goal === 'at',
-  // Through the door and at the bench. A labber crossing the yard is not doing
-  // research yet, which is the same rule the scrubbers keep.
-  labbers: w => w.type === 'labber' && w.goal === 'in'
+  // Through the door and at the bench. A scholar crossing the yard is not doing
+  // research yet, which is the same rule the purifiers keep.
+  scholars: w => w.type === 'scholar' && w.goal === 'in'
 };
 
 setHands(site => {
@@ -484,11 +484,11 @@ export function stationX(type) {
 // Where the job is done by hand, which is where a body goes when there is no
 // machine standing on it.
 function handStationX(type) {
-  if (type === 'miner') return S.cx - WORKER / 2;
+  if (type === 'rockhand') return S.cx - WORKER / 2;
   if (type === 'quarrier') return quarryFace();
   if (type === 'farmhand') return plotX(0);
-  if (type === 'labber') return labDoor() - WORKER / 2;
-  if (type === 'scrubber') return scrubDoor() - WORKER / 2;
+  if (type === 'scholar') return labDoor() - WORKER / 2;
+  if (type === 'purifier') return scrubDoor() - WORKER / 2;
   if (type === 'stirrer') return apothecaryDoor() - WORKER / 2;
   if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
@@ -956,9 +956,9 @@ export function syncWorkers() {
   // `room[w.type]` comes back undefined, every body of that type is stood down on
   // the frame it is made, and the station runs on the number alone with nobody
   // ever walking to it.
-  const want = { miner: S.miners, hauler: S.haulers, quarrier: S.quarriers,
-                 farmhand: S.farmhands, labber: S.labbers,
-                 scrubber: S.scrubbers, stirrer: S.stirrers,
+  const want = { rockhand: S.rockhands, hauler: S.haulers, quarrier: S.quarriers,
+                 farmhand: S.farmhands, scholar: S.scholars,
+                 purifier: S.purifiers, stirrer: S.stirrers,
                  janitor: S.janitors, wizard: S.wizards,
                  builder: S.builders };
   // Bodies are moved between jobs, not bought and sold, so one that is stood
@@ -1005,13 +1005,13 @@ export function syncWorkers() {
     }
   }
 
-  // number the miners off so they can be spaced evenly round the rock, and
+  // number the rock hands off so they can be spaced evenly round the rock, and
   // stagger the new ones through the swing cycle so the crew never hits as one
   let slot = 0;
   for (const w of S.workers) {
-    if (w.type !== 'miner') continue;
+    if (w.type !== 'rockhand') continue;
     w.slot = slot++;
-    if (!w.next) w.next = now() + minerMs() * (w.slot / Math.max(1, S.miners));
+    if (!w.next) w.next = now() + rockhandMs() * (w.slot / Math.max(1, S.rockhands));
   }
 
   // Nothing here hands out hats. A hat is on a head because that body walked
@@ -1140,7 +1140,7 @@ function fall(w) {
     w.landedAt = w.x;                       // what it wobbles about
     // Whatever it was carrying, on the ground under it.
     // Shaken loose, and it lands where the body is standing -- which, for a
-    // miner, is on top of the hill. The rock is a surface now, so what a shaken
+    // rockhand, is on top of the hill. The rock is a surface now, so what a shaken
     // body drops there stays there instead of walking eighty columns out from
     // under the footprint to find ground that would take it.
     if (w.spill) {
@@ -1311,7 +1311,7 @@ function elbowMuck(w) {
     // a coin toss they both call the same way leaves them stacked for ever.
     // Sideways, and nothing else. It used to plant the feet on the ground line
     // after the nudge, which is right for the yard and wrong on the hill: a
-    // miner shovelling the crest was dropped the height of the rock on every
+    // rockhand shovelling the crest was dropped the height of the rock on every
     // frame it stood too close to somebody, and lifted back up on every frame it
     // did not -- the body flickering between the top of the rock and the ground
     // for as long as the two of them were shoulder to shoulder. Height belongs
@@ -1415,8 +1415,8 @@ export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 //
 //   **The tender used to sit below the stations.** That is harmless for the
 //   quarrier and the farmhand, whose branches fall through to it, and it was
-//   fatal for the miner, whose branch `continue`s on every path. The ram was
-//   bought, it clamped the gang to one man, and then no miner ever walked to it
+//   fatal for the rockhand, whose branch `continue`s on every path. The ram was
+//   bought, it clamped the gang to one man, and then no rockhand ever walked to it
 //   and it never took a single bite.
 //
 //   **The pit used to sit below the dodge.** The dodge puts a body back on the
@@ -1462,7 +1462,7 @@ export const anyBackedUp = () => S.piles.some(p => backedUp(p.key));
 //      Below the commute (you do not stop halfway across the yard) and above the
 //      work (it is the one thing that interrupts work).
 //   9. **tender** -- somebody minding a machine. **Above the stations, and this
-//      is the first ordering bug quoted above.** A miner's branch ends in
+//      is the first ordering bug quoted above.** A rockhand's branch ends in
 //      `continue` on every path, so a tender check below it was never reached.
 //  10. **shutIn** -- a body behind a closed door stays behind it. Everything
 //      below this line is a reason to walk somewhere -- a mess, a hat, a rock
@@ -1531,11 +1531,11 @@ function nearestPoop(wx, taken) {
 // One thing a body can be told to do, because several different kinds of body
 // have to be able to do it.
 //
-// This used to live inline in the shared part of the loop, below the miners' own
-// branch -- and that branch ends in `continue`, so a miner never reached it. That
+// This used to live inline in the shared part of the loop, below the rock hands' own
+// branch -- and that branch ends in `continue`, so a rockhand never reached it. That
 // was invisible while the rock was worth swinging at. It stops being invisible
 // the moment the rock's pile fills up, which is what happens when the hole is
-// full and the haulers cannot clear it: the miners stand down, "free to take
+// full and the haulers cannot clear it: the rock hands stand down, "free to take
 // five", and take five under a yard of muck with nothing else in the world to
 // do. Idle bodies and a mess is the one combination this whole idea was written
 // to rule out.
@@ -1625,7 +1625,7 @@ function takeMess(w, c) {
     return true;
   }
   // and the dance is put away when the shovel comes back out, the same tidy-up
-  // the miners and the haulers do, so the hop is not carried to the mess
+  // the rock hands and the haulers do, so the hop is not carried to the mess
   if (w.jigAt != null) { stopJig(w); w.say = null; }
   if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }
   unbook(w);
@@ -1638,7 +1638,7 @@ function takeMess(w, c) {
   // Off the rock, and down -- but climbed down, not dropped down.
   //
   // This used to put the body's feet on the ground line the moment the job
-  // came up, on the reasoning that a miner going shovelling is a miner off the
+  // came up, on the reasoning that a rockhand going shovelling is a rockhand off the
   // rock. It is, eventually; it is not off it in the frame it decides to go.
   // A body standing on the crest with muck to clear fell ninety pixels in one
   // frame -- the height of the hill, from the top of it to the yard, between
@@ -1648,9 +1648,9 @@ function takeMess(w, c) {
   // Nothing needs setting. `foot()` below already asks where the body is: on
   // the rock's footprint it climbs to the rock's surface, off it, it walks the
   // ground -- and `climbTo` eases from wherever the feet actually are, in
-  // either direction. A miner leaving the crest walks down it the way it
+  // either direction. A rockhand leaving the crest walks down it the way it
   // walked up.
-  if (w.type === 'miner') {
+  if (w.type === 'rockhand') {
     if (w.jigAt != null) { stopJig(w); w.say = null; }
     w.resting = false;
     w.idleAt = null;
@@ -1701,7 +1701,7 @@ function takeMess(w, c) {
   // pushed it back out again -- a body sliding on the spot for as long as
   // there was muck in front of it.
   //
-  // And it shovels the way a miner mines: it plants its feet, swings, and a
+  // And it shovels the way a rockhand mines: it plants its feet, swings, and a
   // cell comes off. The muck was being poured away at a *rate* with the
   // lunge pinned at full every frame, which reads as a shape vibrating over
   // a heap that melts -- a progress bar wearing a hat. Same throughput, one
@@ -1751,7 +1751,7 @@ function takeMess(w, c) {
 // --- the work -------------------------------------------------------------------
 // One frame of a job, once every stage above has passed the body on.
 
-function minerWork(w, c) {
+function rockhandWork(w, c) {
   const { now } = c;
 
   // Back to it. The dance leaves its ground and its move behind, so the next
@@ -1770,7 +1770,7 @@ function minerWork(w, c) {
     w.resting = true;                      // stopped, and free to take five
     // Standing down is not being switched off. It shifts its weight where
     // it stands: a slow pace of about a cell either side of the spot it
-    // stopped on, and now and then it straightens up. Every miner has its
+    // stopped on, and now and then it straightens up. Every rockhand has its
     // own phase already, so a stopped gang reads as a gang standing about
     // rather than as one animation played five times -- and it is nothing
     // like the dance, which is three hops a second and goes nowhere.
@@ -1780,7 +1780,7 @@ function minerWork(w, c) {
     // assignment overwrites whatever the climber gave back last frame -- its
     // whole way of refusing a step is to undo it -- so a sway written as
     // position dragged bodies over edges the climber was refusing. The janitor
-    // idles this way already; now the stood-down miner does too.
+    // idles this way already; now the stood-down rockhand does too.
     const swayTo = w.idleAt + Math.sin(idle * IDLE_STRIDE) * P;
     w.x += Math.sign(swayTo - w.x) * Math.min(IDLE_PACE * frames(), Math.abs(swayTo - w.x));
     const surf = rockTopY(colAtX(w.x + WORKER / 2));
@@ -1790,7 +1790,7 @@ function minerWork(w, c) {
     // every few seconds. It read as a glitch, not a posture; the amble and the
     // sway carry the standing-about on their own.
     w.y = climbTo(w, standOn(surf));
-    w.next = now + minerMs();
+    w.next = now + rockhandMs();
     return;
   }
   w.resting = false;
@@ -1799,7 +1799,7 @@ function minerWork(w, c) {
   const t = now / 1000;
 
   // Walk the layer, turning at its ends and before walking into a mate. A
-  // miner that finds itself off the layer -- because the rest of the gang
+  // rockhand that finds itself off the layer -- because the rest of the gang
   // took the row down around it, or because it was hired onto a flank --
   // climbs back to it rather than standing there boring a shaft.
   //
@@ -1811,9 +1811,9 @@ function minerWork(w, c) {
   if (!inBand(here)) {
     const back = nearestInBand(here);
     if (back !== here) w.mineDir = Math.sign(back - here);
-    w.x += w.mineDir * MINER_WALK * 2.5 * frames();       // brisk, it has ground to make up
+    w.x += w.mineDir * ROCKHAND_WALK * 2.5 * frames();       // brisk, it has ground to make up
   } else {
-    const step = w.x + w.mineDir * MINER_WALK * frames();
+    const step = w.x + w.mineDir * ROCKHAND_WALK * frames();
     if (inBand(colAtX(step + WORKER / 2)) && !elbowed(w, step)) w.x = step;
     else w.mineDir = -w.mineDir;
   }
@@ -1828,14 +1828,14 @@ function minerWork(w, c) {
   if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
     // twice the bite for a breaker: the shards bought a bigger swing on a
     // body that is not going anywhere
-    const bite = minerBite() * (w.trained ? 2 : 1);
+    const bite = rockhandBite() * (w.trained ? 2 : 1);
     knockOff(w.x + WORKER / 2, surf + P / 2, bite, true, w);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;
     // A hearty stew quickens the swing the way it quickens a stoop at the farm --
-    // the miner's own clock, divided by the boost, so a fed miner comes round
+    // the rockhand's own clock, divided by the boost, so a fed rockhand comes round
     // sooner. `workBoost` is 1 for a body wearing no work tonic.
-    w.next = now + minerMs() / workBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
+    w.next = now + rockhandMs() / workBoost(w) * (0.85 + rand() * 0.3);    // never quite in time
   } else if (boulderAlive()) {
     // Between swings, and never instead of one: a grain that came down on the
     // hill is lying on the ground this body is working, so it goes on the rock's
@@ -1865,7 +1865,7 @@ function janitorWork(w, c) {
   //
   // It used to stand exactly on its post, rigid, until something got
   // dropped -- and a body that never moves reads as a body the game has
-  // forgotten about. It gets what a stood-down miner gets, and a little
+  // forgotten about. It gets what a stood-down rockhand gets, and a little
   // more of it: the same slow shift of weight about the spot it stopped
   // on, on its own phase, and now and then it wanders a few cells along
   // and props itself up somewhere else. Somebody minding a shed, rather
@@ -1888,7 +1888,7 @@ function janitorWork(w, c) {
   w.x += Math.sign(step) * Math.min(IDLE_PACE * frames()
            * (spelled('sweep') ? SPELL_SWEEP : 1), Math.abs(step));
   // and its feet stay on the ground -- the straightening-up hop is gone, for
-  // the same reason the miner's is: see the note there.
+  // the same reason the rockhand's is: see the note there.
   w.y = stand(w);
 }
 
@@ -2314,18 +2314,18 @@ function haulerWork(w, c) {
 //             late  it picks its own shovel up, inside `work`, rather than in
 //                   the mess stage. The hauler alone, and see the note there.
 //
-// The mess rules, said once and in one place: a miner shovels what is lying on
+// The mess rules, said once and in one place: a rockhand shovels what is lying on
 // the rock, and the whole yard when its pile is full and there is nothing else
 // in the world it could be doing; a quarrier and a farmhand shovel their own
 // site's, and only from up on the surface; a janitor shovels everything,
 // everywhere, always, because that is the whole of the job; a hauler shovels the
-// yard. A labber, a scrubber and a wizard have no shovel at all -- a body behind
+// yard. A scholar, a purifier and a wizard have no shovel at all -- a body behind
 // a door or four hundred feet up is not somewhere a mess reaches.
 const JOBS = {
-  miner: {
-    work: minerWork,
+  rockhand: {
+    work: rockhandWork,
     // A mess on the rock comes before the rock. It used to come before nothing
-    // but standing about: a miner picked up a shovel only when its pile was full
+    // but standing about: a rockhand picked up a shovel only when its pile was full
     // and there was no swing left to take, and the layer on the rock was not
     // something a shovel could touch at all -- it was worked off a swing at a
     // time by whoever happened to be mining. Nobody mining meant nobody
@@ -2339,7 +2339,7 @@ const JOBS = {
     // half a full rain takes to shift.
     mess: {
       when: () => rockMuck() > 0 || S.pileFull.rock,
-      // and back up the hill when the face is clear. A miner carries no goal of
+      // and back up the hill when the face is clear. A rockhand carries no goal of
       // its own, so the shovel's is put down with the shovel.
       back: w => { if (w.goal === 'muck') { w.goal = null; w.muckAt = null; } }
     }
@@ -2373,17 +2373,17 @@ const JOBS = {
   },
 
   // A body in the lab stays in the lab. Research is one job being worked on by
-  // one pair of hands, and a labber that wandered out to shovel and back left
+  // one pair of hands, and a scholar that wandered out to shovel and back left
   // the bench cold for the length of two commutes while the chimney went on
   // smoking, which is the building claiming something the crew deny.
-  labber: { work: stepLabber, shutIn: w => w.goal === 'in' },
+  scholar: { work: stepScholar, shutIn: w => w.goal === 'in' },
 
-  // A stirrer at the pot is behind a door like a labber; a stirrer out dealing a
+  // A stirrer at the pot is behind a door like a scholar; a stirrer out dealing a
   // dose is a body walking a load and belongs to the yard again. `shutIn` only
   // while it is through the door.
   stirrer: { work: stepStirrer, shutIn: w => w.goal === 'in' },
 
-  // A scrubber is behind a door, and a balloon is a door too.
+  // A purifier is behind a door, and a balloon is a door too.
   //
   // The house's body has always been out of the yard's reach once it is through
   // the door -- it simply had no `shutIn` to say so, because `goal === 'in'`
@@ -2397,7 +2397,7 @@ const JOBS = {
   //
   // The same sentence the wizard's entry makes, for the same reason: nothing in
   // the pipeline applies to a body that is not on the ground.
-  scrubber: { work: stepScrubber, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
+  purifier: { work: stepPurifier, shutIn: w => w.goal === 'in' || w.goal === 'aloft' },
 
   // A builder walks to whatever is being put up and stands there. It shovels
   // like anybody else: a build is not so urgent that the mess can pile up round
@@ -2459,7 +2459,7 @@ const STAGES = [
     // onto the bridge. The reported float is bodies over the yard and the
     // hill; the holes keep their ladders and their eases.
     // And not in its first moments. A fresh body is born at its station's own
-    // height -- a miner at the heart of the rock -- and eases onto the surface
+    // height -- a rockhand at the heart of the rock -- and eases onto the surface
     // as it comes into the world; treating that settling-in as a fall dropped
     // newborns out of the sky with their velocities zeroed, and a warm-up's
     // worth of hat errands never happened.
@@ -2558,7 +2558,7 @@ const STAGES = [
   //
   // Below the commute and the loo, which is where the old `held` sat and for
   // the reason worked out then: a body already on its way somewhere finishes
-  // the walk. Above them it stopped bodies mid-errand -- a miner fetching its
+  // the walk. Above them it stopped bodies mid-errand -- a rockhand fetching its
   // helmet stood down to dance with the hat still on the stand -- and walking
   // and dancing at once is the collision this whole rewrite is against.
   //
@@ -2589,7 +2589,7 @@ const STAGES = [
     return true;
   },
 
-  // Every station's tender, *before* the station's own work -- the miner's
+  // Every station's tender, *before* the station's own work -- the rockhand's
   // included. See the first of the two ordering bugs at the top of this section.
   (w, c) => stepTender(w, c.now),
 
@@ -2614,7 +2614,7 @@ const STAGES = [
 ];
 
 export function updateWorkers(now, dt) {
-  if (S.miners > 0) findPeak();
+  if (S.rockhands > 0) findPeak();
   const zone = dropZone();          // the ground nobody may be standing on
   const taken = claims();
   // And who is going for which patch of muck. Rebuilt each pass rather than kept
@@ -2670,7 +2670,7 @@ export function updateWorkers(now, dt) {
   const rockTaken = new Set();
   const bookFor = w => w.type === 'quarrier' ? cutTaken
                      : w.type === 'farmhand' ? taken
-                     : w.type === 'miner' ? rockTaken : null;
+                     : w.type === 'rockhand' ? rockTaken : null;
   for (const w of S.workers) {
     if (w.tidyAt == null) continue;
     const book = bookFor(w);

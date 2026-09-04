@@ -727,7 +727,7 @@ export function tweenCount(now) {
 // how many bodies a section has, so a heading can say so
 const headcount = title =>
   title === 'the crew' ? S.crew :
-  title === 'the rock' ? S.miners :
+  title === 'the rock' ? S.rockhands :
   title === 'the quarry' ? S.quarriers :
   title === 'the farm' ? S.farmhands : 0;
 

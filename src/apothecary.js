@@ -24,7 +24,7 @@ import { S, apothecary } from './state.js';
 import { now, frames } from './clock.js';
 import { rand } from './rng.js';
 import { walkY } from './world.js';
-import { JOB_OF } from './kit.js';
+import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, rungCost, commutePace } from './upgrades.js';
 import { registerRows, registerSite } from './works.js';
 
@@ -450,9 +450,12 @@ export const APOTHECARY_SECTIONS = [
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is
 // nearest) is the step before the first and after the last.
-const PREFER_JOBS = ['miners', 'quarriers', 'farmhands', 'labbers', 'scrubbers', 'haulers'];
-const PREFER_LABEL = { miners: 'miners', quarriers: 'quarriers', farmhands: 'farmhands',
-                       labbers: 'labbers', scrubbers: 'scrubbers', haulers: 'the crew' };
+const PREFER_JOBS = ['rockhands', 'quarriers', 'farmhands', 'scholars', 'purifiers', 'haulers'];
+// Said the way every other board says a job -- see `jobSaid` in kit.js. This was
+// a second table of the same words, which is how the haulers ended up as "the
+// crew" here and "haulers" everywhere else, on a board where "the crew" also
+// means the whole settlement.
+const PREFER_LABEL = Object.fromEntries(PREFER_JOBS.map(j => [j, jobSaid(j)]));
 function stepPrefer(d) {
   const at = PREFER_JOBS.indexOf(S.potPrefer);
   const next = at + d;

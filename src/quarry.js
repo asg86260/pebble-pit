@@ -96,7 +96,7 @@ export function newQuarrier() {
     // Not on the same beat as everybody else. Two quarriers used to walk the
     // face at exactly the same pace, turn at exactly the same wall and start
     // swinging on the same frame, which read as one animation played twice
-    // rather than as two people working. The miners have had their own rhythms
+    // rather than as two people working. The rock hands have had their own rhythms
     // since the day they were written; these are the same four numbers.
     swingAt: now() + rand() * QUARRY_SWING,
     lunge: 0,

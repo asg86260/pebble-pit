@@ -71,7 +71,7 @@ export function skipIntro() {
   if (S.intro === 'chat') crush();
   S.pair = [];
   S.crew = 1;
-  S.miners = 1;
+  S.rockhands = 1;
   finish();
 }
 
@@ -323,7 +323,7 @@ function up(t) {
 function begin(t) {
   // Where it is standing when it stops being a story and starts being the crew.
   // The body that walks to the rock is *this* body, from here -- it used to be
-  // stood down and a miner made from nothing, which put a fresh square on top of
+  // stood down and a rockhand made from nothing, which put a fresh square on top of
   // the rock in the same frame the one you had been watching disappeared.
   const from = S.pair[0] ? S.pair[0].x : S.cx;
 
@@ -331,7 +331,7 @@ function begin(t) {
   S.introAt = t;
   S.pair = [];
   S.crew = 1;
-  S.miners = 1;                                // on the rock, or on its way
+  S.rockhands = 1;                                // on the rock, or on its way
   rebalance();
   syncWorkers();
 
@@ -377,7 +377,7 @@ function show(t) {
   // Enough off the rock, and it throws one of them into the hole.
   //
   // From where it is standing -- up on the crest, which is where the work is and
-  // the best place in the yard to throw from. It stays a miner while it does it:
+  // the best place in the yard to throw from. It stays a rockhand while it does it:
   // handing the body to the hauling rules mid-scene means the scene is at the
   // mercy of whatever a hauler decides to do next, and what it decides is to go
   // and fetch something, which is the walk this is here to be rid of.
@@ -409,7 +409,7 @@ function show(t) {
 // would not. The trip to the hole was a thing it went and did; the rock is where
 // it lives.
 function toWork() {
-  if (S.crew > 0 && !S.miners) assign('miners', 1);
+  if (S.crew > 0 && !S.rockhands) assign('rockhands', 1);
 }
 
 function finish() {

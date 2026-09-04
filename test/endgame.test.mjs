@@ -44,7 +44,7 @@ group('the ram does not strike a rock that is still coming down', async () => {
   // finished, so left alone the machine is simply unmanned while the rock is in
   // the air and the check would pass by saying nothing. What is being checked
   // is the machine's own rule, so the body is stood where the rule is asked.
-  const tender = yard.S.workers.find(w => w.type === 'miner');
+  const tender = yard.S.workers.find(w => w.type === 'rockhand');
   const post = specOf('ram').tendAt();
   if (tender) { tender.x = post; tender.walking = false; tender.route = null; tender.walkTo = null; }
   const workedAtStart = ram.workedAt || 0;

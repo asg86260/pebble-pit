@@ -220,7 +220,7 @@ group('a janitor is not starved of its own mess by a crowd on the shared kind', 
   const poopCol = Math.round((outX - 500) / 6);
   window.__poopSet(c => (c === poopCol ? 4 : 0));
 
-  // Thirty seconds rather than twenty. The window was set when the miners alone
+  // Thirty seconds rather than twenty. The window was set when the rock hands alone
   // stopped for a celebration; the whole crew stops now, which is a few per cent
   // of every body's day, and it moves where sixteen idle hands are standing when
   // the janitor looks around. The slowest seed measured clears at twenty-five.

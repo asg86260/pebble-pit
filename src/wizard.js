@@ -11,7 +11,7 @@
 // You watch it climb. It is slow on purpose: the sky is a long way off, and a
 // body that got there instantly would be a body that teleported with a hat on.
 //
-// What it does up there is not what a miner does on the rock. It rides a ring
+// What it does up there is not what a rockhand does on the rock. It rides a ring
 // round the star at a distance and throws bolts at it, and the cell comes off
 // where the bolt lands -- which is the one thing in this yard that is allowed to
 // happen at range, and the whole of what the hat is for. What comes off falls

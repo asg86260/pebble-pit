@@ -29,17 +29,17 @@ export const TESTS = [
     window.__abandon();
     window.__crew(0, 0);
     return [
-      ok(staffed.labbers === 1, 'one is put in the lab', `${staffed.labbers}`),
+      ok(staffed.scholars === 1, 'one is put in the lab', `${staffed.scholars}`),
       // It keeps them. The lab used to turn its own people out after a while
       // with nothing to research, and call them back when work arrived -- which
       // reads as thoughtful and is the building overruling the roster: you put
       // somebody in, and later they were somewhere else without your having said
       // so. An idle bench is a thing for you to notice, and the counter under
       // the lab is where you act on it.
-      ok(empty.labbers === 1, 'and with nothing to work on it keeps them anyway',
-         `${empty.labbers} left in`),
-      ok(back.labbers === 1, 'and they are still there when work arrives',
-         `${back.labbers} in`),
+      ok(empty.scholars === 1, 'and with nothing to work on it keeps them anyway',
+         `${empty.scholars} left in`),
+      ok(back.scholars === 1, 'and they are still there when work arrives',
+         `${back.scholars} in`),
       ok(!!back.research, 'with the work actually started', JSON.stringify(back.research))
     ];
   }],
@@ -90,13 +90,13 @@ export const TESTS = [
          JSON.stringify(said)),
       ok(/^mined {5}/m.test(said) && /^quarried {2}/m.test(said) && /^stored {4}/m.test(said),
          'one line per site, all lined up in a column', JSON.stringify(said)),
-      ok(!/^carrying/m.test(said), 'and a miner is not asked what it is carrying',
+      ok(!/^carrying/m.test(said), 'and a rockhand is not asked what it is carrying',
          JSON.stringify(said)),
       ok(!!up.lifted, 'the right button picks it up', `${up.lifted}`),
       ok(heldSaid.startsWith(up.lifted), 'and it keeps saying who it is while you hold it',
          JSON.stringify(heldSaid.slice(0, 40))),
       ok(up.rock === s.rock, 'and does not swing at what it was standing on'),
-      // whichever miner is on the cursor, not whichever is first in the list:
+      // whichever rockhand is on the cursor, not whichever is first in the list:
       // there are two of them and the order they are stored in is not a fact
       // about which one you picked up
       ok(carried.workerPos.some(p => p[0] === 'm' &&
@@ -104,9 +104,9 @@ export const TESTS = [
          'it goes where the cursor goes',
          `${carried.workerPos.filter(p => p[0] === 'm')} want ${Math.round(away[0])}`),
       ok(put.falling === 1, 'let go, it falls rather than being lowered', `${put.falling}`),
-      ok(!put.lifted && put.miners === s.miners,
+      ok(!put.lifted && put.rockhands === s.rockhands,
          'putting it down leaves everybody on the job they were on',
-         `${s.miners} -> ${put.miners}`),
+         `${s.rockhands} -> ${put.rockhands}`),
       ok(Math.abs(+home.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[0] - s.rockX) < s.rockW,
          'and it walks back to what it was doing',
          home.workerPos.find(p => p[0] === 'm'))
@@ -142,7 +142,7 @@ export const TESTS = [
       ok(+air.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[1] > over[1],
          'and it is coming down', air.workerPos.find(p => p[0] === 'm')),
       ok(down.falling === 0 && near < s.groundY + 40, 'it lands', `${down.falling}, ${near}`),
-      ok(down.miners === s.miners, 'still a miner', `${s.miners} -> ${down.miners}`)
+      ok(down.rockhands === s.rockhands, 'still a rockhand', `${s.rockhands} -> ${down.rockhands}`)
     ];
   }],
 

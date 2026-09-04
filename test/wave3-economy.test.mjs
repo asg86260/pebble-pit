@@ -3,7 +3,7 @@
 // "Track A -- economy & fixes" (A1-A8).
 
 import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
-import { priceText, billOf, UPGRADES, minerBite } from '../src/upgrades.js';
+import { priceText, billOf, UPGRADES, rockhandBite } from '../src/upgrades.js';
 import { LAB_UPGRADES } from '../src/lab.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
@@ -11,7 +11,7 @@ import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
-import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, MINER_BITE_MULT, RUNGS } from '../src/config.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, ROCKHAND_BITE_MULT, RUNGS } from '../src/config.js';
 
 const roster = () => state().roster;
 
@@ -40,7 +40,7 @@ group('the janitor post carries no line the others do not', async () => {
   window.__reset();
   window.__loo(true);
   const loo = roster().find(r => r.job === 'janitors');
-  const mine = roster().find(r => r.job === 'miners');
+  const mine = roster().find(r => r.job === 'rockhands');
   return [
     ok(!!loo, 'the closet posts a janitor row once it is open'),
     ok(!!mine, 'and the rock has one to compare it with'),
@@ -114,13 +114,13 @@ group('the farm costs a real stretch of dust to open, not pocket change', async 
   ];
 });
 
-// --- A6: the miner's pick is capped at 2.2x over five rungs -------------------
-group('the miner pick caps out at 2.2x over the whole ladder', async () => {
-  const b0 = minerBite(0), b3 = minerBite(3), b5 = minerBite(RUNGS);
+// --- A6: the rockhand's pick is capped at 2.2x over five rungs -------------------
+group('the rockhand pick caps out at 2.2x over the whole ladder', async () => {
+  const b0 = rockhandBite(0), b3 = rockhandBite(3), b5 = rockhandBite(RUNGS);
   return [
     ok(Math.abs(b0 - 1) < 1e-9, 'rung 0 is the bare bite', b0),
     ok(b3 > b0 && b3 < b5, 'rung 3 is between the ends', b3),
-    ok(Math.abs(b5 - MINER_BITE_MULT) < 1e-9,
+    ok(Math.abs(b5 - ROCKHAND_BITE_MULT) < 1e-9,
        'rung 5 lands exactly on the cap, 2.2x the bare bite', b5)
   ];
 });

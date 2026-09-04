@@ -52,7 +52,7 @@ export function drawSchool() {
 // against the stack of one-cell rooms the crew live in.
 //
 // It was the one building in the yard with no way in. Everything else on the
-// ground has a door because somebody walks into it, and a wall a labber
+// ground has a door because somebody walks into it, and a wall a scholar
 // evaporates against is the thing the scrubbing house's door was added to stop --
 // so it had the same fault, and nobody had said so out loud.
 //
@@ -91,10 +91,10 @@ export function drawLab() {
     // the school's tall narrow lights, which come in a row and say a crowd.
     ctx.fillRect(c(across - 4), r(LAB_FLUE + 1), P * 2, P * 2);   // a window
     // and the way in, DOOR_W by DOOR_H like every other way in, dead in the middle
-    // of the front and standing on the ground. lab.js walks a labber to the middle
+    // of the front and standing on the ground. lab.js walks a scholar to the middle
     // of it (labDoor), so the hole in the wall and the place a body disappears at
     // are one thing rather than two numbers that used to differ by a tenth of the
-    // front -- which put every labber through the window.
+    // front -- which put every scholar through the window.
     ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
     ctx.fillStyle = '#000';
   });

@@ -20,15 +20,15 @@ import { airRows, airSection } from './airboard.js';
 import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
 
-export function newScrubber() {
-  return { type: 'scrubber', goal: 'to', x: scrub.x, y: 0 };
+export function newPurifier() {
+  return { type: 'purifier', goal: 'to', x: scrub.x, y: 0 };
 }
 
 // the door, and who is through it
 export const scrubDoor = () => scrub.x + scrub.w * 0.5;
-export const inHouse = w => w.type === 'scrubber' && w.goal === 'in';
+export const inHouse = w => w.type === 'purifier' && w.goal === 'in';
 
-// How many are actually in there. Not `S.scrubbers`: that counts everybody the
+// How many are actually in there. Not `S.purifiers`: that counts everybody the
 // house has been given, and one of them may still be crossing the yard. Nothing
 // comes out of the sky until they are through the door.
 export const inScrub = () => S.workers.filter(inHouse).length;
@@ -73,7 +73,7 @@ export function stepScrub(dt) {
   else S.pumpAt = Math.min(cycle, S.pumpAt + step) % cycle;
 }
 
-export function stepScrubber(w) {
+export function stepPurifier(w) {
   if (w.goal === 'in') return;                   // through the door, out of sight
 
   // Some of them are not going into the house at all. A body whose berth is a

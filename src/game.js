@@ -330,7 +330,7 @@ export function step() {
     // be barred ground -- a grain over the crest had nowhere to be, so it walked
     // out from under the footprint and appeared in the heap beside it, eighty
     // columns from where it was dropped. It comes to rest on the outline as it
-    // has actually been mined, and lies there until a miner throws it on the
+    // has actually been mined, and lies there until a rockhand throws it on the
     // heap: see `restOnRock` in rock.js.
     //
     // Behind `arrived`, which is what keeps this from catching the spoil coming

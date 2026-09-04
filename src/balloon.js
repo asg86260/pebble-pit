@@ -1,16 +1,16 @@
-// The scrubber balloon: the craft, where it is, and how a body gets into it.
+// The purifier balloon: the craft, where it is, and how a body gets into it.
 //
 // The scrubbing house drags the sky down to itself, and everything it catches
 // comes down in one place -- a heap out the back that fouls the one strip of
 // ground the house stands on, and clogs it. A balloon answers the same sky the
 // other way round: it goes up into it, takes it in where it is, and drops what
 // it catches wherever it happens to be. The sink stops being a heap and becomes
-// the whole yard. See DESIGN.md, "The scrubber balloon".
+// the whole yard. See DESIGN.md, "The purifier balloon".
 //
 // **The house stays.** This is a thing the house sells, not a thing that
 // replaces it. The throat still hangs off the roof and still pulls, the fan and
 // the recycler are still fitted at the house and still say what they say, the
-// board is still the house's board, and a body put on the scrubbers still walks
+// board is still the house's board, and a body put on the purifiers still walks
 // to the same door. What the purchase adds is a second kind of mouth.
 //
 // **The air is not this file's.** `smog.js` owns what is up there and what
@@ -123,7 +123,7 @@ export function craftY(i) {
 // of what makes a balloon read as a thing that cleans rather than a thing that
 // floats.
 //
-// A bag with a basket under it is a balloon. What says *scrubber* is the works
+// A bag with a basket under it is a balloon. What says *purifier* is the works
 // hanging in between -- a vented housing the air is drawn into at the top and
 // what is caught falls out of the bottom. So the craft's mouth is the filter's
 // intake and its drop is the filter's underside, and those are two different
@@ -150,23 +150,23 @@ export const crewed = i => !!riderOf(i);
 // the house has always run on.
 export const working = i => crewed(i) && CRAFT[i].lift > 0.98;
 
-// Which berth a body on the scrubbers takes: `-1` for the house, or the index of
+// Which berth a body on the purifiers takes: `-1` for the house, or the index of
 // a craft.
 //
 // **Claimed once and kept.** The first cut worked this out from the body's place
-// in the roster -- the house to the first scrubber, craft to the rest -- and that
+// in the roster -- the house to the first purifier, craft to the rest -- and that
 // is a berth that changes under the body, because the roster's order is not
-// stable. What it did was hand the house's berth to whichever scrubber happened
+// stable. What it did was hand the house's berth to whichever purifier happened
 // to sort first *this frame*, and when that was the one already up in a balloon
 // it was pulled straight back out of it: the craft rose a few pixels, lost its
 // rider, sank, and did it again for as long as anybody watched.
 //
 // So a berth is a claim. A body takes the first one nobody else holds and keeps
-// it until it stops being a scrubber, which is what makes "the place a body walks
+// it until it stops being a purifier, which is what makes "the place a body walks
 // to is decided before it sets off and does not change under it" actually true
 // rather than only written down.
 export function berthFor(w) {
-  const others = S.workers.filter(o => o !== w && o.type === 'scrubber' && o.berth != null);
+  const others = S.workers.filter(o => o !== w && o.type === 'purifier' && o.berth != null);
   const taken = new Set(others.map(o => o.berth));
   // What it already holds, if that is still a real place and still its own. The
   // ladder only goes up, so a craft is never sold out from under anybody -- but
@@ -182,7 +182,7 @@ export function berthFor(w) {
   return (w.berth = -1);
 }
 
-// **Over the side.** A rider taken off the scrubbers does not ride the craft
+// **Over the side.** A rider taken off the purifiers does not ride the craft
 // home; it puts an umbrella up, steps out, and the balloon goes
 // up without it.
 //
@@ -200,7 +200,7 @@ export function bailOut(w) {
   if (w.goal === 'aloft') w.goal = 'to';
 }
 
-// Out of the basket, but still on the scrubbers: it keeps its berth and goes
+// Out of the basket, but still on the purifiers: it keeps its berth and goes
 // back to walking. Used when a body's berth turns out to be the house after all.
 export function dismount(w) {
   w.craft = null;
@@ -331,7 +331,7 @@ export function stepBalloons() {
 }
 
 // --- the body walking to it -------------------------------------------------------------
-// A scrubber whose berth is a craft. It walks to the mast on its feet -- the same
+// A purifier whose berth is a craft. It walks to the mast on its feet -- the same
 // walk it already makes to the door -- and steps into the basket at ground level.
 //
 // It returns true when it has taken the body for this frame, so the house's own
@@ -357,7 +357,7 @@ export function stepRider(w, berth) {
   if (Math.abs(d) >= 1) {
     // Times the frame, like the craft above it (see `frames` in clock.js).
     // The walk to the mast was written before the rest of the file was put on
-    // the clock and was left behind: at thirty hertz a scrubber crossed to its
+    // the clock and was left behind: at thirty hertz a purifier crossed to its
     // basket at half speed while the craft it was boarding rose on time.
     w.x += Math.sign(d) * Math.min(FARM_WALK * frames(), Math.abs(d));
     return true;
@@ -374,7 +374,7 @@ export function stepRider(w, berth) {
     // the same rule, and a body in a basket is in the sky for the same reasons.
     //
     // It also buys the right ending for free: `retask` floats an `aloft` body
-    // down rather than dropping it, so a rider taken off the scrubbers comes
+    // down rather than dropping it, so a rider taken off the purifiers comes
     // down the way it went up.
     w.aloft = true;
     w.goal = 'aloft';                  // in, and the craft takes it from here

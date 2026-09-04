@@ -23,7 +23,7 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   // the door. Waiting a fixed six was waiting for the walk to be decoration.
   // One body: the house is a shed with a fan in it and holds exactly one, the
   // way the lab does -- see `capOf`.
-  window.__air({ scrubbers: 1, haze: 500 });
+  window.__air({ purifiers: 1, haze: 500 });
   runUntil(() => state().smog.scrubbing > 0, 40);
   // and then the sky has to arrive. The fan reaches about fifteen hundred
   // pixels; what is further out than that is slid along the band towards the
@@ -38,14 +38,14 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
   run(12);
   const paid = state();
   window.__crew(0, 0);
-  window.__air({ haze: 0, muck: 0, open: false, recycler: false, scrubbers: 0 });
+  window.__air({ haze: 0, muck: 0, open: false, recycler: false, purifiers: 0 });
   window.__clearFloor();
   return [
     ok(shut.haze >= 500 && shut.scrubbing === 0,
        'an empty house does nothing at all', `${shut.haze}, ${shut.scrubbing}/min`),
-    ok(on.scrubbers === 1 && on.scrubbing > 0 && on.haze < 500,
+    ok(on.purifiers === 1 && on.scrubbing > 0 && on.haze < 500,
        'bodies in it start pulling the sky down',
-       `${on.scrubbers} in, ${on.scrubbing}/min, haze ${on.haze}`),
+       `${on.purifiers} in, ${on.scrubbing}/min, haze ${on.haze}`),
     ok(on.caught > 0, 'and you can see it: motes bend out of the drift towards it',
        `${on.caught} of ${on.motes} on their way in'`),
     ok(paid.smog.recycled > 0, 'a recycler keeps what it catches',
@@ -120,7 +120,7 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
   window.__air({ janitors: 2 });
   const openPost = state().janitors;
   // Watched along the way rather than only at the end. Two janitors keep up
-  // with three miners, so the figure at any one moment is nought as often as
+  // with three rock hands, so the figure at any one moment is nought as often as
   // not -- and "nought left" read once is equally what a yard where nobody ever
   // went would say. The high-water mark is what says the mess was still being
   // made while they were clearing it.

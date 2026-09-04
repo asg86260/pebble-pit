@@ -19,7 +19,7 @@ import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.j
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
-import { pickCount, minerBite, minerMs } from './upgrades.js';
+import { pickCount, rockhandBite, rockhandMs } from './upgrades.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
 
@@ -225,7 +225,7 @@ export function refreshRockTops() {
 
 // --- what is lying on the rock -------------------------------------------------
 // The hill does not block dust any more. A chip that comes down over the crest
-// lands ON it and lies there until a miner throws it onto the heap, which is the
+// lands ON it and lies there until a rockhand throws it onto the heap, which is the
 // same bargain every other piece of ground in this yard has.
 //
 // Two ways to say that were on the table and this is the second one.
@@ -385,7 +385,7 @@ export function makeBoulder(fromSky = false) {
 // the sheer wall `bankCeiling` exists to prevent, arriving by the one door that
 // does not go past `bankCeiling` at all.
 //
-// So the sweepings take the arc a miner's spoil takes, onto the heap that
+// So the sweepings take the arc a rockhand's spoil takes, onto the heap that
 // belongs to the rock, and land out along it honestly. Nothing is made and
 // nothing is lost: every grain lifted here is one grain put back in the air.
 export function clearApron() {
@@ -408,7 +408,7 @@ export function clearApron() {
 
 
 // The rock's surface, as a patch the one tidying rule can work -- see tidy.js.
-// A miner between swings picks the nearest grain lying on the hill and throws it
+// A rockhand between swings picks the nearest grain lying on the hill and throws it
 // onto the rock's own heap, which is the same throw its spoil takes.
 export const rockPatch = () => ({
   key: 'rock',
@@ -448,7 +448,7 @@ export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S
 // Whether there is any rock left. Read off `rockTops`, which `refreshRockTops`
 // keeps for every column after every swing, rather than by walking the grid: it
 // used to scan every cell of a forty-by-twenty hill, and it is asked every frame
-// by the ram, by `stepCore`, by every miner, by every route and by the drawing.
+// by the ram, by `stepCore`, by every rockhand, by every route and by the drawing.
 // Measured on the driven-ram yard it was a twelfth of the whole simulation.
 //
 // Which makes it a rule that nothing zeroes `S.boulder` without going through
@@ -472,7 +472,7 @@ export function clearBoulder() {
 // (`overBoulder`) and by the ram's `ready`, so the two cannot drift apart: the
 // machine used to read `boulderAlive` alone, which is true the instant a new
 // hill is built, and hammered the rock the whole way down from the sky. The
-// miners already duck out from under a falling rock (`dancing`, crew.js); this
+// rock hands already duck out from under a falling rock (`dancing`, crew.js); this
 // is the same rule for anything that works the face without walking to it.
 export const rockDown = () => boulderAlive() && !(S.rockFall > 0);
 
@@ -505,7 +505,7 @@ export function pickCell(mx, my) {
   return best;
 }
 
-// `want` is how many pixels this swing takes. Your pick and a miner's are two
+// `want` is how many pixels this swing takes. Your pick and a rockhand's are two
 // different tools, so whoever is swinging says which.
 // `dirties` is whose swing this is.
 //
@@ -516,11 +516,11 @@ export function pickCell(mx, my) {
 // made the opening dirty: a yard with one boulder, no crew and no buildings
 // still had a browning sky, from nothing but you clicking.
 //
-// Everything with a body still pays: a miner's swing, and the ram's.
-// `body` is who is swinging -- a miner, or null for your own hand at the rock.
+// Everything with a body still pays: a rockhand's swing, and the ram's.
+// `body` is who is swinging -- a rockhand, or null for your own hand at the rock.
 // It is threaded through only so a body under a tonic gets what the tonic
 // promised: a bracing tonic lifts this one swing's crit chance (`critBoost`),
-// and the cadence a miner swings at is quickened at its own clock in crew.js
+// and the cadence a rockhand swings at is quickened at its own clock in crew.js
 // (`workBoost`), the same way the farm quickens a stoop. Your own click carries
 // no body and so neither bonus, which is right -- the tonics are dealt to the
 // crew, not to your cursor.
@@ -537,7 +537,7 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
   // The rock is an unbounded job, so a crit ADDS: this swing takes several
   // pixels' worth off the face at once, and there is no ceiling on how much
   // stone is in the hill. One roll for the swing, whoever is swinging -- your
-  // click and a miner's both come through here, and a miner under a bracing
+  // click and a rockhand's both come through here, and a rockhand under a bracing
   // tonic rolls at a lifted chance. Its spoil then flies up as a fountain rather
   // than onto the heap; see the toss below. The rock never fouls the sky and a
   // crit does not change that -- there is no pollution here to add.
@@ -587,11 +587,11 @@ export function knockOff(mx, my, want = pickCount(), dirties = true, body = null
 
 // --- the ram --------------------------------------------------------------------
 // The machine at the foot of the hill. Its arm reaches up into the face and
-// strikes, and what a strike does is exactly what a miner's swing does, through
+// strikes, and what a strike does is exactly what a rockhand's swing does, through
 // `knockOff`, so the muck on top of the rock is spent first and the spoil falls
 // where spoil falls.
 //
-// **It replaces the miners, and not you.** That is the one line DESIGN.md says
+// **It replaces the rock hands, and not you.** That is the one line DESIGN.md says
 // twice, and it falls out for free here: the player's own swings go through
 // `knockOff` from `input.js`, which this does not touch. The hill still comes
 // apart under your cursor at exactly the rate it did.
@@ -637,8 +637,8 @@ export const ramX = () =>
   Math.round((rockFaceX() - P * (RAM_REACH + spriteW(RAM))) / P) * P;
 
 defineMachine('ram', {
-  job: 'miners',
-  type: 'miner',
+  job: 'rockhands',
+  type: 'rockhand',
   at: ramX,
   y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
   // Up on the roof of the engine, at the end away from the chimney. It stood
@@ -655,12 +655,12 @@ defineMachine('ram', {
                   y: S.groundY - spriteH(RAM) * P }),
   // Where the body stands. The yard side of the machine, clear of the apron --
   // the ground right against the face is where the next boulder lands, and a
-  // tender posted in it would be stood on. Without a `tendAt` the runner looked for a miner
+  // tender posted in it would be stood on. Without a `tendAt` the runner looked for a rockhand
   // within reach of the machine's own x, which is fifty-odd pixels the far side
-  // of the apron from anywhere a miner ever stands, so the ram was never manned
+  // of the apron from anywhere a rockhand ever stands, so the ram was never manned
   // and never took a bite.
   tendAt: () => ramX() - WORKER - P,
-  ms: rate => minerMs() / Math.max(0.01, rate),
+  ms: rate => rockhandMs() / Math.max(0.01, rate),
   // Not while the rock is still coming down. `rockDown` is what your own hand
   // reads too; with `boulderAlive` alone here the ram struck a hill that was
   // still six hundred pixels up, and the runner holds the beat clock while
@@ -673,20 +673,20 @@ defineMachine('ram', {
   bite: (tender, n = 1) => {
     // Where the arm lands: the near shoulder of the hill, at about the height a
     // body would be swinging at. `knockOff` finds the cell from there exactly as
-    // it does for a miner or for the player's own pointer.
+    // it does for a rockhand or for the player's own pointer.
     // The nearest column that still has rock in it, not a fixed spot.
     //
     // It struck `rockLeft() + P` every beat, which is fine until that column is
     // gone -- and then the arm went on swinging at a hole in the air for the
     // rest of the boulder. Measured, the ram came out *slower than the single
     // pair of hands it had stood down*, which is a machine you paid fifty sparks
-    // to make things worse. A miner walks the face; the ram reaches along it.
+    // to make things worse. A rockhand walks the face; the ram reaches along it.
     let col = -1;
     for (let c = 0; c < S.gw; c++) if (S.rockTops[c] >= 0) { col = c; break; }
     if (col < 0) return false;                 // nothing left of this one
     const x = rockLeft() + col * P + P / 2;
     const y = rockTopY(col) + P * 2;
-    const bite = minerBite();
+    const bite = rockhandBite();
     const took = knockOff(x, y, bite * n) || 0;
     if (!took) return 0;
     // Credited what it took, not one a strike -- `mined` counts cells off the

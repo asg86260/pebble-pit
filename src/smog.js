@@ -52,7 +52,7 @@ import { rand } from './rng.js';
 // ring -- the boards read the sky, the scrubbing house is a board, and the sky
 // asked the scrubbing house how many were in it -- so whichever file in the ring
 // happened to be reached first came up with its exports still empty.
-const inScrub = () => S.workers.filter(w => w.type === 'scrubber' && w.goal === 'in').length;
+const inScrub = () => S.workers.filter(w => w.type === 'purifier' && w.goal === 'in').length;
 
 // Every mote in the air, climbing or arrived. This is the haze -- not a number
 // with a picture of a cloud beside it, the actual things.
@@ -1570,7 +1570,7 @@ function slideOffLoose() {
 // A shovel reaches on to a site, and it always should have. `onSite` was in this
 // loop, so muck that came down on the rock, the quarry or the plots was not
 // something anybody could clear: it was worked off by mining through it, and a
-// rock nobody was swinging at -- a full pile, a crew with no miners on it, the
+// rock nobody was swinging at -- a full pile, a crew with no rock hands on it, the
 // gap between one rock and the next -- kept whatever the sky left on it for the
 // rest of the run. A body cannot *stand* on a site, which is a different rule
 // and is kept where it belongs, in `cleanSpotNear`: it stands on the ground
@@ -2065,7 +2065,7 @@ export function smogReport() {
            caught: drawnIn(), clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
-           scrubbers: S.scrubbers, scrubOpen: S.scrubOpen, recycler: S.recycler,
+           purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,
            muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
                    cols: muckCols().filter(Boolean).length },

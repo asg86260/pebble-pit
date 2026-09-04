@@ -581,7 +581,7 @@ export const TESTS = [
     window.__lab(true);
     window.__school({ open: true });
     window.__loo(true);
-    window.__air({ open: true, scrubbers: 1 });
+    window.__air({ open: true, purifiers: 1 });
     window.__meteor();
     window.__wizardHat(1);
     const St = (await import('/src/state.js')).S;
@@ -765,7 +765,7 @@ export const TESTS = [
     const c = chosen?.getBoundingClientRect(), o = opts?.getBoundingClientRect();
     const placed = !!c && !!o && o.top >= c.bottom - 1 && Math.abs(o.right - c.right) <= 2;
 
-    opts?.querySelector('.opt[data-opt="miners"]')?.click();
+    opts?.querySelector('.opt[data-opt="rockhands"]')?.click();
     await sleep(40);
     const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
@@ -797,7 +797,7 @@ export const TESTS = [
                   `list ${Math.round(o.right)}/${Math.round(o.top)}` : 'no rects'),
       ok(Math.abs(wasAt - stillAt) < 1, 'and nothing under it moves to make room',
          `${Math.round(wasAt)} -> ${Math.round(stillAt)}`),
-      ok(said === 'miners', 'pressing one of them sets it', said),
+      ok(said === 'rockhands', 'pressing one of them sets it', said),
       ok(shutAfter, 'and the list shuts behind the choice'),
       ok(heldOn, 'the cursor leaving does not shut it on the spot'),
       ok(wanderedOff, 'but it puts itself away a breath later'),

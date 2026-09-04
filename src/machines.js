@@ -37,7 +37,7 @@ export const MACHINES = [
   // Keyed 'jaw' still, which is what it was before it became a drill. The key
   // is in every save; the name is what anybody actually reads.
   { key: 'jaw',    job: 'quarriers', name: 'the drill' },
-  { key: 'ram',    job: 'miners',    name: 'the ram' },
+  { key: 'ram',    job: 'rockhands',    name: 'the ram' },
   { key: 'tiller', job: 'farmhands', name: 'the tiller' },
   // The fourth, and the odd one out twice over: it does not work a face -- it
   // works the *ground between* the rock and the hole, see the belt's spec in

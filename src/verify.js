@@ -62,9 +62,9 @@ import { seed } from './rng.js';
 // same list `syncWorkers` builds the crew from, and it has to be: a job missing
 // from one of them is a job with a count and no bodies, which is the failure
 // rule 4 is here to catch.
-const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', labber: 'labbers',
-                        scrubber: 'scrubbers', stirrer: 'stirrers',
+const ROSTER_COUNTS = { rockhand: 'rockhands', hauler: 'haulers', quarrier: 'quarriers',
+                        farmhand: 'farmhands', scholar: 'scholars',
+                        purifier: 'purifiers', stirrer: 'stirrers',
                         janitor: 'janitors', wizard: 'wizards',
                         // Building is not on the roster -- nobody is put on it --
                         // but it is a count `syncWorkers` builds bodies from, and
@@ -82,7 +82,7 @@ const ROSTER_COUNTS = { miner: 'miners', hauler: 'haulers', quarrier: 'quarriers
 //
 // And the depth alone still says nothing, which is what the first draft of this
 // rule got wrong: checked on the frame, it fired on eleven groups in the quick
-// tier, every one of them a miner part way up a step it was already climbing.
+// tier, every one of them a rockhand part way up a step it was already climbing.
 // What is actually wrong is a body that is inside the hill and *stays* there.
 // Fourteen per cent a frame takes the worst lag seen -- ninety-one pixels, at a
 // step the gang had just cut -- back under the mark in eight frames, so a body
@@ -100,11 +100,11 @@ const sunkSince = new WeakMap();
 //
 // `standTop` -- the highest surface under any part of a body's three cells -- is
 // where a body walking a slope belongs, and most of the yard puts a body there.
-// The gang on the rock do not: a miner stands on the column it is hitting (see
-// `rockTopY(colAtX(...))` in the miner's branch), because a body working a face
+// The gang on the rock do not: a rockhand stands on the column it is hitting (see
+// `rockTopY(colAtX(...))` in the rockhand's branch), because a body working a face
 // stands on the face and not on the step behind it. Both are right, and on a
 // stepped hill they are a step apart -- so measuring burial against the higher
-// of them calls every working miner buried, which is what the first draft of
+// of them calls every working rockhand buried, which is what the first draft of
 // this file did to four groups in the tier.
 //
 // So the question asked is the one both rules agree on: is the body below *even

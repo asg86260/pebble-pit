@@ -46,8 +46,8 @@ group('a toss lands in the hole, not on the ground behind it', async () => {
 // crew stood at the lip throwing dust at a brim with nowhere under it -- for
 // ever, because nothing about that state could change.
 group('a core in the pile does not jam the hole', async () => {
-  const was = (({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }) =>
-               ({ minerSpeedLevel, haulPaceLevel, haulCarryLevel }))(state());
+  const was = (({ rockhandSpeedLevel, haulPaceLevel, haulCarryLevel }) =>
+               ({ rockhandSpeedLevel, haulPaceLevel, haulCarryLevel }))(state());
   // The core goes in first, while there is still room for it. Everything is
   // counted against the one capacity now -- a find is a grain like any other --
   // so a core arriving at a hole that is already full is a core that waits on
@@ -60,7 +60,7 @@ group('a core in the pile does not jam the hole', async () => {
   // Enough hands to keep the yard clear: the rock's pile stops the gang when
   // it fills, and this check needs the hole actually filled inside its run.
   window.__crew(3, 6);
-  window.__levels({ minerSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
+  window.__levels({ rockhandSpeedLevel: 10, haulPaceLevel: 8, haulCarryLevel: 3 });
   // Filled by hand. The hole is the whole hole from the first frame, so mining
   // it full is an hour of yard -- and what this is about starts the moment
   // there is no more room, not on the way there. The crew above are still here

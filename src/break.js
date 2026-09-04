@@ -7,7 +7,7 @@
 // and a break that produced something would be a break you farmed.
 //
 // So the rule is strict and worth stating: **a break only ever happens to a
-// body that had stopped anyway.** A miner stood down because the yard is full,
+// body that had stopped anyway.** A rockhand stood down because the yard is full,
 // a hauler with nothing left to fetch, a quarrier at a face it cannot tip
 // another shard off. Nobody ever downs tools to have one. The pace of the works
 // is exactly what it was before this file existed.

@@ -1,7 +1,7 @@
 // Crits: one rule, in one place, called wherever work happens.
 //
 // A crit is a unit of work that counts for several. What it does depends on the
-// job -- an unbounded job (your swing, a miner's, a stoop, a trip, a second of
+// job -- an unbounded job (your swing, a rockhand's, a stoop, a trip, a second of
 // research) ADDS, so the unit is worth `mult` and the output rises with no
 // ceiling; a bounded job (a dig, a bolt at the star) PULLS FORWARD, so the crit
 // takes several of the units already owed in one go and the total never moves.

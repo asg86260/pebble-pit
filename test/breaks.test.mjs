@@ -78,7 +78,7 @@ group('a stopped crew takes a break, a working one does not', async () => {
 group('a full hole does not send the crew home any more', async () => {
     run(0.4);
   window.__crew(3, 6);
-  window.__levels({ minerSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
+  window.__levels({ rockhandSpeedLevel: 8, haulPaceLevel: 4, haulCarryLevel: 2 });
   window.__give(999999);                     // far more than the hole holds
   runUntil(() => state().riftOpen, 30);
   const before = state();

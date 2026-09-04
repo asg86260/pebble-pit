@@ -12,8 +12,8 @@
 // A lab standing EMPTY is the one exception, and it is not about the lab: a
 // station with nobody at all on its job is lent a hand by the yard, because a
 // purchase that can never start is money taken for nothing said (see
-// `busyBuilderSites` in works.js). Put one labber in and the lab is the
-// labber's again -- the yard does not cover for a gang that is merely busy. Everything it sells is a rate: a pixel of rock is
+// `busyBuilderSites` in works.js). Put one scholar in and the lab is the
+// scholar's again -- the yard does not cover for a gang that is merely busy. Everything it sells is a rate: a pixel of rock is
 // still worth exactly one dust wherever it came from, which is a rule the game
 // keeps, so growth has to come from doing the same work sooner.
 
@@ -97,7 +97,7 @@ export function begin() {
   // lab did so because there was nothing to do in it, and the moment there is,
   // the reason it left has gone. Only the ones the lab itself sent home, and
   // only if they are still spare.
-  while (S.labLeft > 0 && idle() > 0) { assign('labbers', 1); S.labLeft--; }
+  while (S.labLeft > 0 && idle() > 0) { assign('scholars', 1); S.labLeft--; }
   S.labLeft = 0;
   S.dirty = true;
 }
@@ -124,7 +124,7 @@ function letIdleGo() {
   if (now() - S.labIdleAt < LAB_IDLE_MS) return;
   S.labIdleAt = 0;
   S.labLeft++;                     // remembered, so starting something fetches it back
-  assign('labbers', -1);
+  assign('scholars', -1);
 }
 
 // One frame of it. Nothing happens without bodies in the lab -- that is the
@@ -191,9 +191,9 @@ export function markLabSeen() {
 
 // A body in the lab walks to the door and goes in. There is nothing to watch
 // after that, on purpose: what a lab looks like from outside is a chimney.
-export function newLabber() {
+export function newScholar() {
   return {
-    type: 'labber', goal: 'to',
+    type: 'scholar', goal: 'to',
     x: lab.x, y: 0
   };
 }
@@ -203,12 +203,12 @@ export function newLabber() {
 // the casino, the scrubbing house and the crew's own rooms have. It used to be
 // 0.62 of the way across, which was a share of the front and not a place: the
 // lab had no door drawn on it at all then, so the number could not be wrong, and
-// the moment one was cut it was, by a fifth of the building. Every labber walked
+// the moment one was cut it was, by a fifth of the building. Every scholar walked
 // up to the wall beside it and vanished.
 export const labDoor = () => lab.x + lab.w / 2;
-export const indoors = w => w.type === 'labber' && w.goal === 'in';
+export const indoors = w => w.type === 'scholar' && w.goal === 'in';
 
-// How many are actually in there working. It is not `S.labbers`: that counts
+// How many are actually in there working. It is not `S.scholars`: that counts
 // everybody the lab has been given, and one of them may still be halfway across
 // the yard on its way over. Nobody does the work until they are through the door.
 export const inLab = () => S.workers.filter(indoors).length;
@@ -234,7 +234,7 @@ export function stepSmoke(now, dt) {
   }
 }
 
-export function stepLabber(w) {
+export function stepScholar(w) {
   if (w.goal === 'in') return;                 // through the door, out of sight
 
   w.y = walkY(w.x + WORKER / 2);
@@ -405,7 +405,7 @@ export const LAB_SECTIONS = [
   // somewhere else in the yard.
   { title: 'the lab', keys: ['labkit', 'labroom'] },
   // The rest are grouped by the board each row multiplies, not by theme, so a
-  // labber's row sits under the same heading the bench uses for the same thing.
+  // scholar's row sits under the same heading the bench uses for the same thing.
   // Without this, labcave and labtend are two rows both called "speed" under one
   // heading -- the qualifier came off the name so the heading has to do the work.
   { title: 'the rock', keys: ['labswing'] },

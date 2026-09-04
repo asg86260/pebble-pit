@@ -85,7 +85,7 @@ function busyYard(seed) {
   window.__seed(seed);
   window.__fullSites();            // the quarry and the plots open, and the hats to work them
   window.__grant({ shards: 500, spores: 500, cores: 20, sparks: 200 });
-  window.__crew(4, 4, 3, 3);       // miners, haulers, quarriers, farmhands
+  window.__crew(4, 4, 3, 3);       // rockhands, haulers, quarriers, farmhands
   window.__school({ breakers: 4, carters: 4, blasters: 3, growers: 3 });
   run(30);                         // half a minute of yard, in a few hundred ms
   return canon();

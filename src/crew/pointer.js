@@ -147,7 +147,7 @@ export function drop(w) {
 // coming out of somebody's arms, it is a heap being drawn under them -- and the
 // game already had the thing this wanted. Everything else loose in this yard is
 // a chip: a shade with a place and a velocity, falling under the same gravity,
-// landing where it meets the ground. A miner's spoil is one, a hauler's tip is
+// landing where it meets the ground. A rockhand's spoil is one, a hauler's tip is
 // one, the load a stood-down body drops is one.
 //
 // So this is one too. Each grain leaves the hands where the hands actually are,

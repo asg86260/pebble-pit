@@ -16,7 +16,7 @@ group('a finished rock is worth a moment', async () => {
   const heights = new Set();
   for (let i = 0; i < 60; i++) {
     run(1 / 60);
-    heights.add(state().workerPos.filter(p => p[0] === 'm').map(p => p.split(',')[1]).join());
+    heights.add(state().workerPos.filter(p => p[0] === 'r').map(p => p.split(',')[1]).join());
   }
   const stillPartying = state();
   let sky = 0;
@@ -147,7 +147,7 @@ group('the crew dance rather than vibrate while the next rock falls', async () =
     if (!s.dancing && s.rockFall <= 0) break;
     sampled++;
     s.workerPos.forEach((w, idx) => {
-      if (w[0] !== 'm') return;
+      if (w[0] !== 'r') return;
       const x = +w.split(':')[1].split(',')[0];
       if (s.dropZone && x + WORKER > s.dropZone[0] && x < s.dropZone[1]) return;
       if (!seen.has(idx)) seen.set(idx, { lo: x, hi: x });
@@ -159,7 +159,7 @@ group('the crew dance rather than vibrate while the next rock falls', async () =
   const ranges = [...seen.values()].map(t => t.hi - t.lo).sort((a, b) => b - a);
   return [
     ok(sampled > 240, 'there was a stretch of the beat to watch', `${sampled} frames of it`),
-    ok(ranges.length >= 3, 'with a gang on the ground under it', `${ranges.length} miners`),
+    ok(ranges.length >= 3, 'with a gang on the ground under it', `${ranges.length} rockhands`),
     ok(ranges[0] > P * 4, 'and the dance travels rather than bobbing on the spot',
        `widest patch ${ranges[0]}px, want > ${P * 4}`),
     ok(ranges.filter(r => r > P * 2).length >= 2,
@@ -367,7 +367,7 @@ group('the game opens on two squares and a rock lands on one', async () => {
   ];
 });
 
-group('a miner tosses its spoil onto the heap', async () => {
+group('a rockhand tosses its spoil onto the heap', async () => {
   window.__crew(6, 0);
   run(12);
   const s = state();
@@ -380,7 +380,7 @@ group('a miner tosses its spoil onto the heap', async () => {
     // A rock has two sides and only one of them is the yard. Letting spoil
     // simply fall put half of it on the back of the hill, where the crew, the
     // bench and the hole are not, and it lay there in a layer nobody had a
-    // reason to walk to. A miner throws it onto the heap instead.
+    // reason to walk to. A rockhand throws it onto the heap instead.
     ok(s.dustLeftOfRock === 0, 'and none on the back of the hill',
        `${s.dustLeftOfRock} behind it`),
     ok(right === s.floor, 'it all goes onto the heap the rock pours into',
