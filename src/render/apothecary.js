@@ -1,7 +1,7 @@
 // The apothecary: the cauldron on its fire and the animation over it.
 // Extracted verbatim from render.js; behavior unchanged. Owns the CAULDRON
 // picture and drawApothecary. Shared draw primitives (ctx, withRise,
-// risingPlace, bar) are imported from render.js, which stays the core module.
+// risingPlace, bar) come from ./ctx.js, ./rise.js and ./bars.js.
 
 import { P } from '../config.js';
 import { S, apothecary } from '../state.js';
@@ -9,7 +9,9 @@ import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
 import { vnoise } from './flicker.js';
 import { boiling, brewFrac, TONICS } from '../apothecary.js';
-import { ctx, withRise, risingPlace, bar } from '../render.js';
+import { bar } from './bars.js';
+import { ctx } from './ctx.js';
+import { risingPlace, withRise } from './rise.js';
 
 // The apothecary: a cauldron on a fire, a bed of herbs beside it, and steam off
 // the pot when there is a body stirring it. The steam IS the readout -- the

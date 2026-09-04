@@ -2,13 +2,14 @@
 // the pegged pile strips, the pile-full warning triangle and the offer diamond.
 // Extracted verbatim from render.js; behavior unchanged. Owns stripMark,
 // drawPileGround, drawPileMarks, warning, marksOn, markAnchor, markAt,
-// pileMarkAt and overPileMark. The shared primitives (ctx, drawMark,
-// drawTriangle) come from render.js, the core module.
+// pileMarkAt and overPileMark. The shared primitives come from this folder's own
+// leaves: ctx from ./ctx.js, drawMark and drawTriangle from ./marks.js.
 
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { CRATED, CRATE_H, P, PILE_HOLDS } from '../config.js';
 import { S, farm, scrub, sky } from '../state.js';
-import { ctx, drawMark, drawTriangle } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawMark, drawTriangle } from './marks.js';
 
 // --- the ground a station pays out on to -------------------------------------
 //

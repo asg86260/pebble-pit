@@ -2,13 +2,17 @@
 // spoils on the table. Extracted verbatim from render.js; behavior unchanged.
 // Owns drawSign, ringCells, drawPotPile, drawSparks, drawCasino, casinoMarkAt,
 // drawCasinoMark and the sign's glyphs. The shared primitives (ctx, drawGrid,
-// drawMark, withRise, risingPlace) come from render.js, the core module.
+// drawMark, withRise, risingPlace) come from ./ctx.js, ./ground.js, ./marks.js
+// and ./rise.js.
 
 import { potAt, sliceKeeps } from '../casino.js';
 import { now } from '../clock.js';
 import { CASINO_H, CASINO_KEEP, CASINO_LOSE, CASINO_SLICES, DOOR_H, DOOR_W, FIND_COLOR, P, SHADES, SHARD_CELL, SPORE_CELL, TABLE_LIFE, findKind } from '../config.js';
 import { S, casino, floor, table } from '../state.js';
-import { ctx, drawGrid, drawMark, risingPlace, withRise } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawGrid } from './ground.js';
+import { drawMark } from './marks.js';
+import { risingPlace, withRise } from './rise.js';
 
 // The casino: a block with one big round hole knocked out of it, and a wheel in
 // the hole. Everything else in this yard is a shape with holes in it, and a

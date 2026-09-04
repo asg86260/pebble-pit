@@ -3,7 +3,7 @@
 // rift eating a pile. Extracted verbatim from render.js; behavior unchanged.
 // Owns drawCoreGlow, drawCoreAt, drawRockSand, drawCoreBehind, drawCore,
 // drawPaid, drawRift and drawLeaving. The shared primitives (ctx, drawCircle,
-// drawMark) come from render.js, the core module.
+// drawMark) come from ./ctx.js and ./marks.js.
 
 import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P } from '../config.js';
@@ -12,7 +12,8 @@ import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
 import { S, floor, rift } from '../state.js';
 import { rockLeft } from '../world.js';
-import { ctx, drawCircle, drawMark } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawCircle, drawMark } from './marks.js';
 
 // --- what a core gives off ----------------------------------------------------
 // The one thing in this game with anything in it.

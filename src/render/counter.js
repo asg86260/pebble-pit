@@ -1,12 +1,13 @@
 // The counter over the pit mouth: the one thing here read rather than looked at,
 // drawn in screen pixels. Extracted verbatim from render.js; behavior unchanged.
 // Owns digits and drawCount and the counter's remembered marks. The shared
-// primitives (ctx, drawMark, cell) come from render.js, the core module.
+// primitives (ctx, drawMark) come from ./ctx.js and ./marks.js.
 
 import { fmt } from '../board.js';
 import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
 import { S, floor, pit } from '../state.js';
-import { ctx, drawMark } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawMark } from './marks.js';
 
 // The counter is the one thing here that is read rather than looked at, so it is
 // drawn in **screen** pixels and stays the size it is however far the yard has

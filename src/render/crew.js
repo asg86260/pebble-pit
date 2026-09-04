@@ -4,7 +4,7 @@
 // unchanged. Owns drawBench, drawBody, drawHat, drawCart, drawOffers,
 // drawDroppedHats, drawKitStands, drawKitCounts, drawSays, drawPointed,
 // drawIntro, drawWorkers and their private helpers. The shared primitives (ctx,
-// drawCircle, drawMark) come from render.js, the core module; drawCoreGlow and
+// drawCircle, drawMark) come from ./ctx.js and ./marks.js; drawCoreGlow and
 // markAt come from the cores and pilemarks clusters that already own them.
 
 import { atPot, tonicColor } from '../apothecary.js';
@@ -18,11 +18,13 @@ import { indoors } from '../lab.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
 import { markAt } from '../render/pilemarks.js';
-import { kitStands } from '../roster.js';
+import { drawRoster, kitStands } from '../roster.js';
 import { inHouse } from '../scrubhouse.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
-import { ctx, drawCircle, drawMark } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawRunSwitch } from './machines.js';
+import { drawCircle, drawMark } from './marks.js';
 import { TYPE } from '../jobs.js';
 
 // The bench is not in the yard until there is something on it worth buying, and
@@ -598,4 +600,11 @@ export function drawWorkers() {
       drawCircle(cx, cy, P * 1.2);
     }
   }
+}
+
+// Who is working here, under the place they work. roster.js lays the badges out
+// and is handed the four draws a badge is made of, so that the crew's own
+// drawing stays here rather than being pulled into the roster.
+export function drawRosterBodies() {
+  drawRoster(ctx, drawBody, drawHat, drawCart, drawRunSwitch);
 }

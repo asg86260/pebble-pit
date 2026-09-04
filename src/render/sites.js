@@ -3,14 +3,16 @@
 // farm. Extracted verbatim from render.js; behavior unchanged. Owns drawQuarry,
 // drawCut, drawLadder, drawBridge, drawFarm, drawShed, drawFarmShed and
 // drawQuarryShed. The shared primitives (ctx, drawMark, withRise, risingPlace)
-// come from render.js, the core module.
+// come from ./ctx.js, ./marks.js and ./rise.js.
 
 import { FARM_GATE, FARM_H, P, SPORE_CELL } from '../config.js';
 import { plotX } from '../farm.js';
 import { ladder, quarryCells } from '../quarry.js';
 import { S, cut, farm, quarry } from '../state.js';
 import { bridgeSpan, farmShed, plotSlots, quarryShed } from '../world.js';
-import { ctx, drawMark, risingPlace, withRise } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawMark } from './marks.js';
+import { risingPlace, withRise } from './rise.js';
 
 // The mouth of the quarry: an open cut going down, so the ground line breaks
 // across it and the walls carry on below. Drawn downwards rather than as an arch

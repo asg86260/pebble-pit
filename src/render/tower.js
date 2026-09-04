@@ -1,13 +1,17 @@
 // The outhouse and the wizard's tower, and the tower's pour and hat readouts.
 // Extracted verbatim from render.js; behavior unchanged. Owns drawOuthouse,
 // drawTower, drawTowerWaves, drawTowerBar and towerBarAt. The shared primitives
-// (ctx, drawHat, withRise, risingPlace) come from render.js, the core module.
+// (ctx, drawHat, withRise, risingPlace) come from ./ctx.js, ./crew.js and
+// ./rise.js.
 
 import { now } from '../clock.js';
 import { DOOR_H, DOOR_W, MAGIC_TONES, P, TOWER_SHAFT, TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, WORKER } from '../config.js';
 import { S, floor, outhouse, tower } from '../state.js';
 import { brewAt, brewing } from '../tower.js';
-import { cell, ctx, drawHat, risingPlace, withRise } from '../render.js';
+import { drawHat } from './crew.js';
+import { ctx } from './ctx.js';
+import { cell } from './marks.js';
+import { risingPlace, withRise } from './rise.js';
 
 // The tower. The one building in this yard that goes up rather than along: a
 // narrow shaft, a band of stone every few courses so it reads as built rather

@@ -1,12 +1,13 @@
 // The scrubbing house: its hood open to the sky and the bellows breathing under
 // it. Extracted verbatim from render.js; behavior unchanged. Owns drawScrub and
 // its private hood/leaf constants. The shared primitives (ctx, withRise,
-// risingPlace) come from render.js, the core module.
+// risingPlace) come from ./ctx.js and ./rise.js.
 
 import { DOOR_H, DOOR_W, P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_FOLDS } from '../config.js';
 import { inScrub } from '../scrubhouse.js';
 import { S, floor, scrub } from '../state.js';
-import { ctx, risingPlace, withRise } from '../render.js';
+import { ctx } from './ctx.js';
+import { risingPlace, withRise } from './rise.js';
 
 // The scrubbing house: a hood open to the sky, and a bellows breathing under it.
 //
