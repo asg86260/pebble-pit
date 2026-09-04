@@ -1,5 +1,5 @@
 import { APOTHECARY_W } from './apothecary.js';
-import { CASINO_W, OUTHOUSE_W, TOWER_W } from './buildings.js';
+import { CASINO_W, CLOSET_W, OUTHOUSE_W, TOWER_W } from './buildings.js';
 import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
@@ -97,6 +97,12 @@ export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
 export const SITES = [
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null },
+  // Next door to the rooms, and pinned there with them -- see PINNED_FIRST in
+  // world.js. The closet is the crew's own cupboard rather than a place the
+  // walk goes past: a broom belongs where the people are, and it is the one
+  // stand in the yard that is never bought, so it has no place in the order the
+  // buying makes.
+  { key: 'closet',   w: () => CLOSET_W,                     standoff: 0,  pile: null },
   { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null },
   { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
   { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry' },

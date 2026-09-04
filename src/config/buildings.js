@@ -35,6 +35,26 @@ export const OUTHOUSE_H = P * 10;
 // the janitors' row in kit.js, which both read `S.looPosts` and fall back to
 // this for a save that has never set it.
 export const LOO_POSTS = 1;
+
+// The janitor's closet: the cupboard the brooms and the caps live in, and the
+// only shop stand in the yard nobody buys.
+//
+// It is not the outhouse. The outhouse is the shed with the moon over the door
+// that `unlockouthouse` puts up, and it is where a body *goes*; the closet is
+// where the tools are kept, and it is where you go to decide about the job. The
+// two were one thing for a while and the row that bought the outhouse was
+// called "build the janitor's closet" because of it, which left the yard with a
+// cupboard nobody could point at and a shop section on the bench for a place
+// that was not there.
+//
+// Squat rather than tall: eight across and seven down, against the outhouse's
+// seven by ten. Wider than it is high is what a cupboard is and what a shed
+// never is, and the yard has enough sheds. The width is also what the front
+// needs -- a seam down the middle with a handle either side of it wants eight
+// columns to sit on, and at six the handles landed against the seam and drew a
+// white cross.
+export const CLOSET_W = P * 8;
+export const CLOSET_H = P * 7;
 // What the second post costs: `loopost`, on the bench's own outhouse section.
 export const LOOPOST_SHARDS = 6;
 

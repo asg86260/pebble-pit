@@ -20,6 +20,7 @@ import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
+import { CLOSET_UPGRADES, CLOSET_SECTIONS } from './closet.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -34,6 +35,7 @@ const farmEl = document.getElementById('farmshop');
 const apothEl = document.getElementById('apothshop');
 const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
+const closetEl = document.getElementById('closetshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -686,6 +688,9 @@ const BOARDS = {
   // The books. Nothing on them is for sale, and a currency you have never seen
   // is not on them either -- so an early yard reads one row, which is honest.
   stats:  () => [statsEl, STATS_UPGRADES, STATS_SECTIONS, 'nothing has come in yet'],
+  // Nothing on it until there is mess on the ground to want a janitor for --
+  // see `show` on the outhouse row, which is the board's whole first offer.
+  closet: () => [closetEl, CLOSET_UPGRADES, CLOSET_SECTIONS, 'the brooms are all on their hooks'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']

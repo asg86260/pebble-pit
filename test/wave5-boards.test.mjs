@@ -10,7 +10,7 @@
 // shots -- `node tools/look.mjs bench,books`.
 
 import { group, ok, state, run, yard } from './helpers.mjs';
-import { gainText, unitText, MARK, SECTIONS, UPGRADES } from '../src/upgrades.js';
+import { gainText, unitText, MARK, UPGRADES } from '../src/upgrades.js';
 import { LAB_UPGRADES } from '../src/lab.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
@@ -20,7 +20,6 @@ import { FARM_UPGRADES } from '../src/farm.js';
 import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 import { bookRate, bookSpan } from '../src/stats.js';
 import { showPanel, hud } from '../src/board.js';
-import { buildBoard } from '../src/shop.js';
 
 const ALL_ROWS = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
                   ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
@@ -59,43 +58,10 @@ group('no row spells a second with the letter s', async () => {
   ];
 });
 
-// --- the janitor's closet -----------------------------------------------------
-// Bought the way a player buys it: the mess appears, the row appears with it,
-// the row is pressed, and the yard builds the thing. Then the board is asked
-// what heading it drew over it.
-group('the closet is bought off the bench and filed under its own heading', async () => {
-  window.__reset();
-  window.__crew(3, 2);
-  window.__tune('LOO_EVERY', 4000);            // so they go while we are watching
-  window.__air({ haze: 0, muck: 0 });
-  run(90);
-  const messy = state();
-
-  // The row is on the board because there is mess on the ground, which is the
-  // only thing that puts it there -- see `show` on `unlockouthouse`.
-  window.__give(20000);
-  const pressed = window.__buy('unlockouthouse');
-  window.__finish();                           // it is a building; the yard puts it up
-  const built = state();
-
-  // and what the bench actually drew over it
-  buildBoard('bench');
-  const shopEl = document.getElementById('shop');
-  const heads = [...shopEl.children].map(c => c.dataset.sect).filter(Boolean);
-  const sect = SECTIONS.find(x => x.title === "the janitor's closet");
-
-  window.__reset();
-  return [
-    ok(messy.smog.poop > 0, 'there is mess, so the row is on the board',
-       `${messy.smog.poop} cells`),
-    ok(pressed && built.outhouseOpen, 'pressing it puts the closet up'),
-    ok(!!sect && sect.keys.includes('unlockouthouse') && sect.keys.includes('loopost'),
-       'both of the janitor rows are in the closet section',
-       sect ? sect.keys.join(',') : 'no such section'),
-    ok(!heads.includes('the outhouse'), 'and nothing on the bench says "the outhouse"',
-       heads.join(', '))
-  ];
-});
+// The janitor's closet used to be a section on the bench, and this file used to
+// check that it was. It is a board of its own now -- see test/wave5-closet.test.mjs
+// -- so the group moved there with the feature rather than being kept here
+// asserting where the rows are not.
 
 // --- the books ----------------------------------------------------------------
 // Measured, not predicted. The point of this check is that the number on the

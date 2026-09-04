@@ -15,7 +15,7 @@ import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
-import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, showPanel, placeBoard, showTip,
+import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearCloset, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
@@ -91,7 +91,7 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 const atStation = (x, y) =>
   nearBench(x, y) || nearLab(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
   nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearApothecary(x, y) || nearTower(x, y) ||
-  nearHouse(x, y) || nearStats(x, y);
+  nearHouse(x, y) || nearStats(x, y) || nearCloset(x, y);
 
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything. A paused game you can still
@@ -218,6 +218,7 @@ canvas.addEventListener('pointermove', e => {
                : nearApothecary(S.mouse.x, S.mouse.y) ? 'apothecary'
                : nearTower(S.mouse.x, S.mouse.y) ? 'tower'
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
+               : nearCloset(S.mouse.x, S.mouse.y) ? 'closet'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house'
                // and the books over the pit, which are a patch of air rather
                // than a building: anything actually standing on the ground wins
@@ -287,6 +288,7 @@ export function endDrag(e) {
     else if (nearApothecary(p.x, p.y)) showPanel(S.apothBoardOpen ? null : 'apothecary', true);
     else if (nearTower(p.x, p.y)) showPanel(S.towerBoardOpen ? null : 'tower', true);
     else if (nearHouse(p.x, p.y)) showPanel(S.houseBoardOpen ? null : 'house', true);
+    else if (nearCloset(p.x, p.y)) showPanel(S.closetBoardOpen ? null : 'closet', true);
     else if (nearStats(p.x, p.y)) showPanel(S.statsBoardOpen ? null : 'stats', true);
     else showPanel(null, true);
   }
@@ -579,7 +581,8 @@ const CURSORS = [
   [(x, y) => overRoster(x, y), 'pointer'],
   [(x, y) => nearBench(x, y) || nearLab(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
              nearHouse(x, y) || nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) ||
-             nearApothecary(x, y) || nearTower(x, y) || nearStats(x, y), 'pointer'],
+             nearApothecary(x, y) || nearTower(x, y) || nearStats(x, y) ||
+             nearCloset(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
   // and a bird, which is a thing to notice rather than a thing to farm

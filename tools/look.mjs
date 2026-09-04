@@ -270,6 +270,19 @@ const SCENES = {
   westend: `${RICH} window.__meteor(); window.__fast(3);
             window.__look(window.__state().towerX - 420);`,
 
+  // The janitor's closet: the cupboard by the rooms, with the broom leaning on
+  // it, and the outhouse one along. A crew, because the closet is the crew's --
+  // an empty yard has no settlement and no cupboard.
+  closet: `window.__reset(); window.__crew(3,2); window.__fast(4);
+           (s => window.__look(s.closetX + 18 - s.viewW / 2))(window.__state());`,
+
+  // and the same thing with its board up, which is what you are standing there
+  // for. The mess is what puts the outhouse on it -- see the row's `show`.
+  closetboard: `window.__reset(); window.__crew(3,2); window.__tune('LOO_EVERY', 4000);
+                window.__air({haze:0, muck:0}); window.__fast(120);
+                window.__give(20000); window.__board('closet');
+                (s => window.__look(s.closetX + 18 - s.viewW / 2))(window.__state());`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 

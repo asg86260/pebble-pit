@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
-import { S, bench, lab, apothecary, school, casino, scrub, tower, pit } from './state.js';
+import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, closet } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
@@ -16,6 +16,7 @@ import { APOTHECARY_UPGRADES } from './apothecary.js';
 import { APOTH_HUT_W, APOTH_HUT_H } from './config.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
+import { CLOSET_UPGRADES } from './closet.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          shutOpts } from './shop.js';
 import { now } from './clock.js';
@@ -33,6 +34,7 @@ const farmShopEl = document.getElementById('farmshop');
 const apothShopEl = document.getElementById('apothshop');
 const towerShopEl = document.getElementById('towershop');
 const statsShopEl = document.getElementById('statsshop');
+const closetShopEl = document.getElementById('closetshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
@@ -43,7 +45,8 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
                 farm: document.getElementById('farmboard'),
                 apothecary: document.getElementById('apothboard'),
                 tower: document.getElementById('towerboard'),
-                stats: document.getElementById('statsboard') };
+                stats: document.getElementById('statsboard'),
+                closet: document.getElementById('closetboard') };
 
 // How far up a ladder you are is a row of pips, and how big and how dark they
 // are is a number rather than a rule -- so the two of them live in config with
@@ -87,6 +90,7 @@ const standAt = { bench, lab, school, casino, scrub, tower,
                     return { x: apothecary.x, y: S.groundY - APOTH_HUT_H,
                              w: APOTH_HUT_W, h: APOTH_HUT_H };
                   },
+                  closet,
                   get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },
@@ -114,13 +118,14 @@ const listFor = which =>
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
   which === 'stats' ? STATS_UPGRADES :
+  which === 'closet' ? CLOSET_UPGRADES :
   which === 'house' ? crewRows() : [];
 
 // Every station that has a board. One list, so that a thing which is true of all
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
-                         'farm', 'apothecary', 'tower', 'house', 'stats'];
+                         'farm', 'apothecary', 'tower', 'house', 'stats', 'closet'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -137,6 +142,12 @@ const standing = which =>
   // the first frame, but a rate measured over a yard that has never earned
   // anything is a column of noughts, and a board of noughts teaches nothing
   // except that the board is not worth walking to.
+  // The closet stands as soon as anybody lives here. It is the crew's own
+  // cupboard rather than a thing you buy -- see src/closet.js -- so what puts it
+  // in the yard is the first body, the same question the house board asks. A
+  // board offering the janitor's job to a yard with no crew in it would be a
+  // board about nobody.
+  which === 'closet' ? S.crew > 0 :
   which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
 
@@ -216,6 +227,8 @@ export const nearQuarry = (x, y) => {
 // whole width of the row.
 export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
 export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
+// And the cupboard by the rooms, once there is a crew to keep a broom for.
+export const nearCloset = (x, y) => S.crew > 0 && near(closet, x, y);
 // And the books, over the pit mouth. Asked after every building in the cascade
 // -- see input.js -- for the same reason the house is: this is a patch of open
 // air rather than a thing standing on the ground, so anything actually built
@@ -729,6 +742,7 @@ function settle(want) {
   S.apothBoardOpen = want === 'apothecary';
   S.towerBoardOpen = want === 'tower';
   S.statsBoardOpen = want === 'stats';
+  S.closetBoardOpen = want === 'closet';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
@@ -851,6 +865,7 @@ function fill(which) {
   // went stale the moment you opened it would be the board telling you what the
   // yard used to be earning.
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
+  if (which === 'closet') refresh(closetShopEl, CLOSET_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') {
