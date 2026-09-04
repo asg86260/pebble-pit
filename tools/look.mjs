@@ -309,6 +309,15 @@ const SCENES = {
     window.__buy('quarrybench'); window.__buy('farmplot'); window.__fast(6);
     window.__look(window.__state().farmShed.x - 60);`,
 
+  // A finished work's tick, over a station that is not the lab: the quarry's
+  // bench lands and the shack wears the mark until its board is read.
+  donemark: `window.__reset(); window.__crew(3,3);
+    window.__grant({dust:99999, shards:99, spores:9999, cores:9});
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockquarry'); window.__finish();
+    window.__buy('quarrybench'); window.__finish(); window.__fast(2);
+    window.__look(window.__state().quarryX - 300);`,
+
   // A trade mid-teaching: the school with its own bar over it, and a body at
   // it. The one site that had no bar at all while its rows were the yard's.
   schoolbar: `window.__reset(); window.__crew(3,3);

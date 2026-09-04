@@ -234,11 +234,12 @@ export const S = {
   // watching still tells you which way it went.
   hand: null,             // { won, n, cur, at }
   labBoardOpen: false,
-  // A finished piece of research nobody has been to see yet. The crew are
-  // inside the lab where you cannot watch them, so the one moment worth
-  // reporting is the moment the work is done -- and it is kept until it is
-  // read, because it usually happens while you are looking somewhere else.
-  labDone: null,
+  // A finished work nobody has been to see yet, per site: the key of what
+  // landed, kept until that station's board is read. It was the lab's alone --
+  // its crew work behind a door -- but a rung finishing anywhere usually
+  // happens while you are looking somewhere else, so every station says so
+  // with the same tick. See `workFinished` in lab.js and drawDoneMarks.
+  siteDone: {},
   // When the lab last had somebody in it with nothing to research. Nothing else
   // takes a body off the lab, so this is what eventually does: it is a stopwatch
   // rather than a fact about the game, so it is not worth saving.
@@ -492,9 +493,9 @@ export const SAVED = [
   'spores',
   'farmOpen',
   JOB.FARM,
-  // a piece of research that finished while you were away is still news when
-  // you come back, and how many the lab let out for want of anything to do
-  'labDone',
+  // a work that finished while you were away is still news when you come
+  // back, and how many the lab let out for want of anything to do
+  'siteDone',
   'labLeft',
   'tendLevel',
   // The apothecary: the building, its crew, and the pot's standing order. A

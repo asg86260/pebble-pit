@@ -36,7 +36,7 @@ import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { drawFloor, drawGroundLine, drawPit, drawPitOutline } from './render/ground.js';
 import { drawRisingHouse, drawSettlement } from './render/houses.js';
-import { drawLabMark } from './render/labmark.js';
+import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
 import { drawPileMarks } from './render/pilemarks.js';
@@ -58,7 +58,7 @@ export { risingPlace, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
 export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from './render/ground.js';
-export { drawLabMark, labMarkAt, overLabMark } from './render/labmark.js';
+export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
 export { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
@@ -157,7 +157,7 @@ const LAYERS = [
   { name: 'draught', draw: drawDraught },        // the air going into the scrubbing house
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
   { name: 'tower bar', draw: drawTowerBar },     // and how far along the tower's hat is, over the tower
-  { name: 'lab mark', draw: drawLabMark },       // and a tick over it if it finished something
+  { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'offers', draw: drawOffers },          // and an arrow under whichever of them has something for you
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them

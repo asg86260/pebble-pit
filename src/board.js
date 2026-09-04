@@ -6,7 +6,7 @@ import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse 
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
-import { LAB_UPGRADES, markLabSeen } from './lab.js';
+import { LAB_UPGRADES, markDoneSeen } from './lab.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
@@ -845,10 +845,12 @@ function fill(which) {
   // `buildShop`. Asking here costs a handful of `show()` calls on the one board
   // you are looking at, and no row added after this has to remember anything.
   buildBoard(which);
+  // a station's board being open is what reads its news -- the tick over the
+  // building comes down whether the board was already open when the work
+  // finished or you walked over because of the mark
+  markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  // the lab board being open is what reads its news, whether it was already
-  // open when the work finished or you walked over because of the mark
-  if (which === 'lab') { markLabSeen(); refresh(labShopEl, LAB_UPGRADES, null); }
+  if (which === 'lab') refresh(labShopEl, LAB_UPGRADES, null);
   // and the school's headings count kit rather than bodies: what is on the
   // stand there is the thing you are deciding about
   if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, kitCount);

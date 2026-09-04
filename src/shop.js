@@ -8,7 +8,7 @@
 import { S } from './state.js';
 import { showTipAt } from './board.js';
 import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceText, rungOf, rungsOf, maxed, folds, building, siteBusy } from './upgrades.js';
-import { takesTime, stalled, BUILDER_SITES } from './works.js';
+import { takesTime, stalled, BUILDER_SITES, worksAt, rowFor } from './works.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
 import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
@@ -553,7 +553,11 @@ export function refresh(el, list, headcount) {
         // ...except at a builders' site, where there is always somebody: the
         // nearest body is lent if nobody is spare, and while it is walking over
         // the row says so rather than claiming the yard has given up.
-        sayHTML(gain, !mine ? '' :
+        // A row greyed because its site is putting up something *else* says
+        // what that something is. A grey row with a price you can afford and
+        // no word of why reads as broken -- "the cut is busy with the next
+        // bench" is the actual reason, and it is one nobody could see.
+        sayHTML(gain, !mine ? `busy: ${worksAt(u.site).map(w => rowFor(w.key)?.name || w.key).join(', ')}` :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
         sayHTML(price, bill);

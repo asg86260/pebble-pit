@@ -17,7 +17,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
-import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
+import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
@@ -551,8 +551,9 @@ function askedAbout(x, y, cx, cy) {
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
-  if (S.labDone && overLabMark(x, y)) {
-    showTip(doneName(), labMarkAt());
+  const finished = overDoneMark(x, y);
+  if (finished) {
+    showTip(doneName(finished), doneMarkAt(finished));
     return true;
   }
   // Nothing has more to say than a word -- which is `whatIsAt`'s question, not
@@ -600,7 +601,7 @@ const CURSORS = [
 // finished asking.
 function overAnyMark(x, y) {
   for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
-  return !!(S.labDone && overLabMark(x, y));
+  return !!overDoneMark(x, y);
 }
 
 let wearing = '';

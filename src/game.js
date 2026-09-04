@@ -29,7 +29,7 @@ import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
-import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
+import { sampleRates, stepLab, stepSmoke, workFinished } from './lab.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';        // F4
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
@@ -44,8 +44,8 @@ import { sampleBooks } from './stats.js';
 // exactly that, and so does a player's click landing a build and the board
 // seating itself off where the building now is.
 setGround(layPiles);
-// and the lab puts a mark up when its own work lands -- see `labFinished`
-setDone(labFinished);
+// and a site puts a mark up when its own work lands -- see `workFinished`
+setDone(workFinished);
 // and where a station stands, for a body walking over to help at one
 setFoot(stationFoot);
 // and the settlement's rooms, so a build there is fenced round what will stand

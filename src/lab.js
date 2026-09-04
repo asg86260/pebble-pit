@@ -26,7 +26,7 @@ import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
          BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
 import { rand } from './rng.js';
-import { registerRows, registerSite, worksAt, abandonAt } from './works.js';
+import { registerRows, registerSite, worksAt, abandonAt, rowFor } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
@@ -141,15 +141,19 @@ export function finish(key) {
   S.dirty = true;
 }
 
-// What the lab does when one of its works lands, which is not what the row
-// does: the row's own `buy` is the multiplier going up. This is the announcing,
-// and the lab is the one site that needs any -- its work happens behind a door,
-// so the bar everybody else watches was never the news here. Wired in game.js
-// through `setDone`.
-export function labFinished(site, key) {
-  if (site !== 'lab') return;
-  S.labDone = key;                 // a mark over the lab until somebody looks
-  cough();                         // and one last plume off the chimney
+// What a site does when one of its works lands, which is not what the row
+// does: the row's own `buy` is the rung going up. This is the announcing. It
+// was the lab's alone -- its work happens behind a door -- but a rung landing
+// anywhere usually lands while you are looking somewhere else, so every site
+// leaves the same tick over its building until its board is read. Wired in
+// game.js through `setDone`.
+//
+// The yard's own builds are the exception: a building arriving is its own
+// announcement -- it is standing there -- and a tick centered on the camera
+// (the yard has no box until something is rising) said nothing.
+export function workFinished(site, key) {
+  if (site !== 'yard') S.siteDone[site] = key;
+  if (site === 'lab') cough();     // and one last plume off the chimney
 }
 
 // One frame of the lab. There is no research stepping in here any more --
@@ -177,16 +181,16 @@ function cough() {
   });
 }
 
-// what finished, in the words the row used
-export const doneName = () => {
-  const u = LAB_UPGRADES.find(x => x.key === S.labDone);
-  return u ? `${u.name} done` : 'research done';
+// what finished at a site, in the words the row used
+export const doneName = site => {
+  const u = rowFor(S.siteDone[site]);
+  return u ? `${u.name} done` : 'work done';
 };
 
-// and reading it is what clears the mark
-export function markLabSeen() {
-  if (!S.labDone) return;
-  S.labDone = null;
+// and reading that station's board is what clears its mark
+export function markDoneSeen(site) {
+  if (!S.siteDone[site]) return;
+  delete S.siteDone[site];
   S.dirty = true;
 }
 

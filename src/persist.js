@@ -601,6 +601,9 @@ export function restore() {
   // it built the closet when that was the whole of what it bought, and nobody
   // loses a cap they had to a rung that did not exist yet.
   S.looPosts = s.looPosts ?? 2;
+  // A save from when only the lab announced a finish carries `labDone`; it is
+  // the same news under the per-site name now.
+  if (s.labDone) S.siteDone = { ...S.siteDone, lab: s.labDone };
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // and whatever was being built. Only the sites this build knows about and only

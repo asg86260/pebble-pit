@@ -289,7 +289,9 @@ export const snapshot = () => ({
   labRooms: labRooms(),
   labKitLevel: S.labKitLevel || 0,
   labPace: +labPace().toFixed(3),
-  labDone: S.labDone,
+  // per-site now; `labDone` is kept as the lab's own reading of it
+  siteDone: S.siteDone,
+  labDone: S.siteDone?.lab ?? null,
 
   // The boards: which one is up, what each has to offer, and where you stand to
   // open it.

@@ -1,0 +1,59 @@
+// The tick that stands over a station when it has finished something. It was
+// the lab's alone (this file was labmark.js) and every station shows it now: a
+// rung usually lands while you are looking somewhere else, and the bar coming
+// down is a signal made of nothing happening. Owns drawDoneMarks, doneMarkAt
+// and overDoneMark. ctx comes from ./ctx.js.
+
+import { now } from '../clock.js';
+import { P } from '../config.js';
+import { S } from '../state.js';
+import { worksAt } from '../works.js';
+import { barSpot } from './bars.js';
+import { ctx } from './ctx.js';
+
+// A tick in a box, the opposite number to the bar that means a station
+// stopped. It bobs, because it is asking to be come and looked at rather than
+// reporting a state, and it stays there until somebody opens that station's
+// board.
+const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
+
+export function drawDoneMarks() {
+  for (const site in S.siteDone) {
+    if (!S.siteDone[site]) continue;
+    const at = doneMarkAt(site);
+    if (!at) continue;
+    const y = at.y + Math.round(Math.sin(now() / 500)) * P;   // one cell, never half
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+    ctx.lineWidth = Math.max(1, P / 3);
+    ctx.strokeStyle = '#000';
+    ctx.strokeRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+
+    ctx.fillStyle = '#000';
+    for (const [dx, dy] of TICK)
+      ctx.fillRect(at.x + dx * P - P / 2, y + dy * P - P / 2, P, P);
+  }
+}
+
+// Where a site's tick hangs: the same spot its bar does (`barSpot` -- over the
+// building, which for the quarry and the farm is the shack and for the
+// apothecary the hut), lifted over any bars still on the go there so the two
+// never sit on each other.
+export function doneMarkAt(site) {
+  const at = barSpot(site);
+  if (!at) return null;
+  const lift = worksAt(site).length * P * 5;
+  return { x: Math.round(at.x / P) * P,
+           y: Math.round(at.y / P) * P - lift - P * 4 };
+}
+
+// where the cursor has to be to be asking what finished; says which site
+export function overDoneMark(mx, my) {
+  for (const site in S.siteDone) {
+    if (!S.siteDone[site]) continue;
+    const at = doneMarkAt(site);
+    if (at && Math.abs(mx - at.x) < P * 5 && Math.abs(my - at.y) < P * 5) return site;
+  }
+  return null;
+}
