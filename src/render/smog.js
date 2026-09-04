@@ -1,14 +1,14 @@
 // The muck, the smog, the rain and the draught -- everything the sky does and
 // leaves behind. Extracted verbatim from render.js; behavior unchanged. Owns
 // drawStink, drawMuck, drawSmog, drawPuffs, drawDraught, drawRain and their
-// module-private tones and helpers. ctx comes from render.js, the core module.
+// module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
 import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, MUCK_SKIN, MUCK_TONE, P, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
 import { S, floor } from '../state.js';
-import { ctx } from '../render.js';
+import { ctx } from './ctx.js';
 
 // What the rain left, drawn where it landed: one column of the world at a time,
 // stacked on whatever that column has -- the ground, the floor of the quarry, or

@@ -1,12 +1,12 @@
 // The filter balloons the scrubbing house sells, and anyone stepped out under a
 // brolly. Extracted verbatim from render.js; behavior unchanged. Owns
-// drawBalloons and drawBrollies. ctx comes from render.js, the core module.
+// drawBalloons and drawBrollies. ctx comes from ./ctx.js.
 
 import { BALLOON_BASKET, BALLOON_FILTER_H, BALLOON_FILTER_W, BALLOON_H, BALLOON_W, CRAFT, craftY, mastX } from '../balloon.js';
 import { BROLLY_STICK, BROLLY_W, P, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { walkY } from '../world.js';
-import { ctx } from '../render.js';
+import { ctx } from './ctx.js';
 
 // The craft the scrubbing house sells, one per lane. See balloon.js.
 //

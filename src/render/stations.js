@@ -1,12 +1,13 @@
 // The two indoor stations and the smoke that says one is being worked: the
 // school, the lab, and the lab's chimney smoke. Extracted verbatim from
 // render.js; behavior unchanged. Owns drawSmoke, drawSchool and drawLab. The
-// shared primitives (ctx, withRise, risingPlace) come from render.js, the core
-// module.
+// shared primitives (ctx, withRise, risingPlace) come from ./ctx.js and
+// ./rise.js.
 
 import { DOOR_H, DOOR_W, LAB_FLUE, P, SMOKE_LIFE } from '../config.js';
 import { S, lab, school } from '../state.js';
-import { ctx, risingPlace, withRise } from '../render.js';
+import { ctx } from './ctx.js';
+import { risingPlace, withRise } from './rise.js';
 import { drawDoseMote } from './effects.js';
 
 // Smoke off the lab's chimney -- and off a cigarette, which is the same smoke

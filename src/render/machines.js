@@ -1,8 +1,8 @@
 // The three machines and the hoist: the drill, the ram, the tiller, the belt,
 // their run switch and their smoke. Extracted verbatim from render.js; behavior
 // unchanged. Owns stroke, drawDrill, drawRam, drawTiller, drawBelt,
-// drawRunSwitch and stepMachineSmoke. The shared primitives (ctx, drawMark) come
-// from render.js, the core module.
+// drawRunSwitch and stepMachineSmoke. The shared primitives come from this
+// folder's own leaves: ctx from ./ctx.js, drawMark from ./marks.js.
 
 import { now } from '../clock.js';
 import { MACHINE_IDLE_MS, MACHINE_PUFF_LIFE, MACHINE_PUFF_MS, MACHINE_PUFF_RISE, MACHINE_PUFF_S, P, WORKER } from '../config.js';
@@ -17,7 +17,8 @@ import { ramX, rockFaceX, rockShare } from '../rock.js';
 import { BIT, DRILL, MACHINE_MARK, RAM, TILLER, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S } from '../state.js';
 import { walkY } from '../world.js';
-import { ctx, drawMark } from '../render.js';
+import { ctx } from './ctx.js';
+import { drawMark } from './marks.js';
 
 // --- the machines ---------------------------------------------------------------
 // Three machines and a hoist, drawn the way everything else in this yard is

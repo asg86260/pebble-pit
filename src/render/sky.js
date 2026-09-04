@@ -1,13 +1,14 @@
 // The star in the sky: its crust, corona, the summon flash, the trail and the
 // bolts. Extracted verbatim from render.js; behavior unchanged. Owns drawSky,
-// drawCorona, drawSummon, drawFlash, drawTrail, cell, drawBolts, skyRing. ctx
-// comes from render.js, the core module.
+// drawCorona, drawSummon, drawFlash, drawTrail, drawBolts, skyRing. ctx comes
+// from ./ctx.js and the ring cell from ./marks.js.
 
 import { now } from '../clock.js';
 import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY_N, SPARK_CELL, SUMMON_FLASH, WORKER } from '../config.js';
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
-import { cell, ctx } from '../render.js';
+import { ctx } from './ctx.js';
+import { cell } from './marks.js';
 
 // The thing in the sky is a star, and a small one: a dead black crust with fire
 // under it, drawn cell by cell like everything else here that is made of cells.
