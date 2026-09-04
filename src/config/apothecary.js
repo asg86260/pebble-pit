@@ -84,10 +84,13 @@ export const APOTH_HUT_H = P * 10;     // and how tall it stands, gable and all
 export const APOTH_SHELF_W = P * 7;    // the bookshelf of stock beside it
 export const APOTH_SHELF_H = P * 12;   // three shelves, one to a tonic, and a frame
 export const APOTH_GAP = P * 3;        // bare ground between hut, shelves and the first pot
-export const POT_W = P * 9;            // a cauldron is this wide...
-// Three clear cells between one belly and the next: at a tighter step four
-// cauldrons in a row stopped reading as four pots and became one black wall.
-export const POT_PITCH = P * 12;       // ...and this is the step from one to the next
+export const POT_W = P * 13;           // a cauldron is this wide...
+// Four clear cells between one belly and the next. Bellies this fat need real
+// air between them or four of them in a row read as one black wall rather than
+// as four pots -- and the walk has room for it now that GROUND_LEFT is derived
+// from the site table rather than typed, so a wider building buys its own ground
+// instead of overflowing somebody else's.
+export const POT_PITCH = P * 17;       // ...and this is the step from one to the next
 // Where the row of pots starts, measured in from the building's left edge, and
 // where a keeper stands: at its own pot's left, clear of the belly and reaching
 // in. Both are derived rather than typed, so moving the shelf moves the pots.

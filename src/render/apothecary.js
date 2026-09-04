@@ -37,21 +37,23 @@ export const HUT = [
   '###....###'
 ];
 
-// The cauldron. Narrower than it was: four of these stand side by side now, and
-// a building wide enough for four fat pots would have been wider than the farm.
+// The cauldron, unchanged since the day it was drawn: the fat belly, the neck
+// under the rim and the two little legs. Four of them stand side by side now,
+// and the answer to that is four cauldrons' worth of ground (see POT_PITCH), not
+// a smaller pot -- the pot is the picture the building is known by.
 // Keep it an odd number of columns so it has a true centre for the steam, and if
 // you move the row the brew sits on, update CAULDRON_BREW_ROW to match.
 export const CAULDRON = [
-  '#########',
-  '.#######.',
-  '.#######.',
-  '#########',
-  '#########',
-  '#########',
-  '.#######.',
-  '..#####..',
-  '..#...#..',
-  '..#...#..'
+  '#############',
+  '.###########.',
+  '#############',
+  '#############',
+  '#############',
+  '#############',
+  '#############',
+  '.###########.',
+  '..#########..',
+  '..#.......#..'
 ];
 // The row of CAULDRON the brew sits on -- where the bubbles pop and the steam
 // lifts off. Counts from the top, 0-based.
@@ -162,7 +164,7 @@ function drawPot(i, g) {
   // the foot, the middle of the pot for the steam. These are cell offsets into
   // the grid, so if you move the brew up or down in CAULDRON, move
   // CAULDRON_BREW_ROW to match.
-  const potMid = px + Math.floor(CAULDRON[0].length / 2) * P;
+  const potMid = px + Math.round(CAULDRON[0].length / 2) * P;
   const brewY = topY + CAULDRON_BREW_ROW * P;
 
   // The fire, the bubbles and the steam are all drawn only while a batch is on
@@ -184,7 +186,7 @@ function drawPot(i, g) {
   // the middle; the colour ramp is the pot's own brew (see `flameOf`); capped
   // low, below the rim. `vnoise` is shared with the tonic burning off a dosed
   // body -- the two fires in this game should flicker with the same hand.
-  const bedL = px + P * 2, cols = 5, mid = (cols - 1) / 2;
+  const bedL = px + P * 3, cols = 7, mid = (cols - 1) / 2;
   // Each pot's fire is given its own place in the noise, so four pots side by
   // side do not all flicker in step like one long fire cut into four.
   const seed = i * 613.7;
@@ -197,7 +199,7 @@ function drawPot(i, g) {
     // travelling wave: the fire looked like it was sliding left.
     const n = vnoise(seed + c * 17.3 + t / 130) * 2.4
             + vnoise(seed + c * 11.9 + 40 + t / 260) * 1.2;
-    const h = Math.max(1, Math.min(6, Math.round(1.4 + hump + n)));
+    const h = Math.max(0, Math.min(5, Math.round(0.4 + hump + n)));
     const fx = bedL + c * P;
     for (let hy = 0; hy < h; hy++) {
       const frac = hy / Math.max(1, h);
@@ -210,7 +212,7 @@ function drawPot(i, g) {
   for (let e = 0; e < 3; e++) {
     const ph = (t / 520 + e * 0.33 + i * 0.17) % 1;
     if (ph > 0.6) continue;
-    const ex = px + P * (2 + e * 2) + Math.round(Math.sin(t / 200 + e + i)) * P;
+    const ex = px + P * (4 + e * 2) + Math.round(Math.sin(t / 200 + e + i)) * P;
     const ey = g - P * 4 - Math.round(ph * 3) * P;
     ctx.fillStyle = (e % 2) ? fire.mid : fire.tip;
     ctx.fillRect(Math.round(ex / P) * P, ey, P, P);
@@ -223,14 +225,14 @@ function drawPot(i, g) {
     const ph = (t / 900 + s * 0.5 + i * 0.23) % 1;
     if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;
     const sway = Math.round(Math.sin(t / 700 + s * 1.3 + i));
-    const sx = px + P * (2 + s * 3) + sway * P;
+    const sx = px + P * (5 + s * 3) + sway * P;
     const sy = Math.max(topY + P, g - P * 3 - Math.round(ph * 5) * P);
     ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
   }
   // Bubbles rising through the brew and breaking its surface.
   ctx.fillStyle = '#000';
   for (let bcol = 0; bcol < 5; bcol++) {
-    const bx = px + P * 2 + bcol * P;
+    const bx = px + P * 3 + bcol * P;
     const ph = (t / 560 + bcol * 0.21 + i * 0.31) % 1;
     if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
   }
@@ -265,28 +267,26 @@ export function drawApothecary() {
     ctx.fillStyle = '#000';
   });
 
-  // One bar for the fires, over the middle of the row -- the pot furthest
-  // through its batch. Drawn outside `withRise` so it rides above the pots at
-  // full size once the building has finished rising. Uses the yard's one bar,
-  // the same the lab and the tower show.
+  // A bar a pot, over its own cauldron, only up while that batch is going. Drawn
+  // outside `withRise` so they ride above the pots at full size once the building
+  // has finished rising. Uses the yard's one bar, the same the lab and the tower
+  // show.
   //
-  // A bar a pot is what this wanted to be, and `bar` is fourteen cells wide
-  // against a twelve-cell step: four of them side by side overlapped into a
-  // single band with three bars' worth of black in it, which says less than one
-  // bar does. Which pot is on which brew is told by the colour of its flame
-  // instead, and that is the reading the rework is for.
+  // These were one bar for the whole building while the pots stood twelve cells
+  // apart, because `bar` is fourteen cells wide and four of them overlapped into
+  // a single band. At the seventeen-cell step the fat bellies want, they clear
+  // each other by three cells and each pot can say for itself how far along it is.
   if (S.apothecaryOpen && !rising) {
-    let best = 0, at = 0;
-    for (let i = 0; i < S.apothPots; i++)
-      if (brewFracOf(i) > best) { best = brewFracOf(i); at = i; }
-    if (best > 0) {
-      // The bar hangs low, a couple of cells over the cauldrons -- clear of the
-      // site's build/upgrade bar, which floats higher (four cells over the
+    for (let i = 0; i < S.apothPots; i++) {
+      const frac = brewFracOf(i);
+      if (frac <= 0) continue;
+      // A pot's bar hangs low, a couple of cells over its cauldron -- clear of
+      // the site's build/upgrade bar, which floats higher (four cells over the
       // building's top, in `barSpot`). The two used to sit three cells apart and,
       // three cells tall each, touched; the pot's bar low and the building's high
       // is also the truer reading -- one is the brew, the other the building.
-      const mid = potX(at) + Math.floor(CAULDRON[0].length / 2) * P;
-      bar(Math.round(mid / P) * P, S.groundY - (CAULDRON.length + 3) * P, best);
+      const mid = potX(i) + Math.round(CAULDRON[0].length / 2) * P;
+      bar(Math.round(mid / P) * P, S.groundY - (CAULDRON.length + 3) * P, frac);
     }
   }
 }
