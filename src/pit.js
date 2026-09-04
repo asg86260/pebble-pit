@@ -253,6 +253,27 @@ function throughRift(x, shade) {
   return true;
 }
 
+// A grain thrown at a torn pit is the rift's from the moment it crosses the
+// mouth. It used to land on the pile first and be lifted straight back off it
+// the next frame -- the rift inhales everything in the hole, so with the rift
+// open the pile is only ever a waiting room -- and a grain that touches down
+// for one frame purely to be picked up again is a round trip with no meaning.
+// It counts exactly as an overflow grain does (`throughRift`), and joins the
+// orbit from where it was caught, so the picture is the throw being pulled in
+// rather than a landing and a second lift.
+//
+// The cap on the orbit list is a drawing budget, not an account: a grain past
+// it is counted all the same and simply not drawn on its way in, the same
+// bargain `lift` strikes with SHOWN.
+export function riftCatch(x, y, shade) {
+  if (!throughRift(x, shade)) return false;
+  if (S.gulped.length < SHOWN) {
+    S.gulped.push({ x0: x, y0: y, x, y, t: 0,
+                    a0: rand() * Math.PI * 2, spin: rand() < 0.5 ? -1 : 1, s: shade });
+  }
+  return true;
+}
+
 export function bankDust(x, shade = 1) {
   // A hole with no room turns the grain away and whatever was carrying it keeps
   // it. It used to settle the pile finer and try again; there is no finer now.

@@ -22,7 +22,7 @@ import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses } from './pit.js';
+import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch } from './pit.js';
 import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
@@ -320,6 +320,13 @@ function stepChips(now) {
       // and nothing goes in uncounted.
       if (pitRefuses() && isDust(ch.s)) {
         spawnSpoil(ch.x, ch.y, ch.s);
+        S.chips.splice(i, 1);
+        continue;
+      }
+      // A torn pit takes the grain the moment it crosses the mouth: it goes
+      // into the rift's orbit from right here, instead of landing on a pile
+      // the rift would only lift it straight back off. See `riftCatch`.
+      if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s)) {
         S.chips.splice(i, 1);
         continue;
       }
