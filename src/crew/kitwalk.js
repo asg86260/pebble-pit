@@ -11,6 +11,7 @@ import { KIT_JOBS, TYPE_OF } from '../kit.js';
 import { S } from '../state.js';
 import { JOB_OF, hats, rebalance, roomAt, spareKit, worn } from '../upgrades.js';
 import { errand, nextLeg, retask, stationX, syncWorkers } from '../crew.js';
+import { JOB, TYPE } from '../jobs.js';
 
 // A body already at work whose station has a hat lying spare, and which is free
 // to go and get it: hands empty, not walking anywhere, not indoors. One at a
@@ -72,7 +73,7 @@ export const kitFree = job => spareKit(job) - claimed(job);
 // the cart in first -- and it already can: put it on another job and `stepKit`'s
 // stray rule walks it to the stand, and it is bare-handed and eligible on the
 // way back. One rule, and no cross-kit special case anywhere.
-const bareHauler = o => o.type === 'hauler' && !o.trained;
+const bareHauler = o => o.type === TYPE.HAUL && !o.trained;
 
 // Could this body wear that hat if it were standing over it? Somebody on the job
 // needs nothing but a bare head. Anybody else needs somewhere to stand at the
@@ -142,7 +143,7 @@ function joinJob(w, job) {
   // Carrying is not a station you can join by putting something on -- it is what
   // is left when you are on nothing -- and nothing reaches here asking to: a
   // loose cart is only ever claimable by a hauler, who is on that job already.
-  if (!type || job === 'haulers' || roomAt(job) < 1) return false;
+  if (!type || job === JOB.HAUL || roomAt(job) < 1) return false;
   w.type = type;
   S[job] += 1;
   rebalance();
@@ -189,15 +190,15 @@ export function grabHat(w) {
 // swap: the headcount does not move, and the hat took the job with it both ways.
 export function dispossessed(w) {
   const job = JOB_OF[w.type];
-  if (w.trained || w.type === 'hauler' || !S[job] || kitFree(job) > 0) {
+  if (w.trained || w.type === TYPE.HAUL || !S[job] || kitFree(job) > 0) {
     retask(w, w.type);
     return;
   }
-  w.type = 'hauler';                 // the body and the count together, as ever
+  w.type = TYPE.HAUL;                 // the body and the count together, as ever
   S[job] -= 1;
   rebalance();                       // ...and carrying is whoever is left over
   syncWorkers();
-  retask(w, 'hauler');
+  retask(w, TYPE.HAUL);
   S.dirty = true;
 }
 

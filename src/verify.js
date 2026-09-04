@@ -57,20 +57,21 @@ const COIN_CELLS = [[CORE_CELL, 'cores'], [SHARD_CELL, 'shards'],
 const COIN_OF = Object.fromEntries(COIN_CELLS.map(([cell, key]) => [cell, key]));
 import { yardLeft } from './world.js';
 import { seed } from './rng.js';
+import { JOB } from './jobs.js';
 
 // The jobs the roster is made of, and the count on S that owns each. This is the
 // same list `syncWorkers` builds the crew from, and it has to be: a job missing
 // from one of them is a job with a count and no bodies, which is the failure
 // rule 4 is here to catch.
-const ROSTER_COUNTS = { rockhand: 'rockhands', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', scholar: 'scholars',
-                        purifier: 'purifiers', stirrer: 'stirrers',
-                        janitor: 'janitors', wizard: 'wizards',
+const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUARRY,
+                        farmhand: JOB.FARM, scholar: JOB.SCHOLAR,
+                        purifier: JOB.PURIFY, stirrer: JOB.STIR,
+                        janitor: JOB.JANITOR, wizard: JOB.WIZARD,
                         // Building is not on the roster -- nobody is put on it --
                         // but it is a count `syncWorkers` builds bodies from, and
                         // a count this list leaves out is bodies in the yard the
                         // books do not have. Which is this rule, exactly.
-                        builder: 'builders' };
+                        builder: JOB.BUILD };
 
 // How far below the surface of the way it is on a body may be, and for how long.
 //

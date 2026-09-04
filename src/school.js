@@ -25,19 +25,20 @@ import { kitDisplaced, machineFor } from './machines.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { registerRows } from './works.js';
+import { JOB } from './jobs.js';
 
 // Every trade is the same object: a job, the count of that job already trained,
 // and the thing it is twice as good at. One line each -- what differs between a
 // breaker and a blaster is a word and a multiplier at the place the work is
 // done, not a mechanism.
 export const TRADES = [
-  { key: 'breaker', name: 'breaker', job: 'rockhands', count: 'breakers',
+  { key: 'breaker', name: 'breaker', job: JOB.ROCK, count: 'breakers',
     does: 'twice the bite' },
-  { key: 'carter', name: 'carter', job: 'haulers', count: 'carters',
+  { key: 'carter', name: 'carter', job: JOB.HAUL, count: 'carters',
     does: 'twice the load' },
-  { key: 'blaster', name: 'blaster', job: 'quarriers', count: 'blasters',
+  { key: 'blaster', name: 'blaster', job: JOB.QUARRY, count: 'blasters',
     does: 'twice the trips' },
-  { key: 'grower', name: 'grower', job: 'farmhands', count: 'growers',
+  { key: 'grower', name: 'grower', job: JOB.FARM, count: 'growers',
     does: 'twice the tending' }
 ];
 

@@ -29,6 +29,7 @@
 
 import { S } from './state.js';
 import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from './config.js';
+import { JOB } from './jobs.js';
 
 // The three of them, and the job each one stands in for. The job is the link to
 // everything else: it is what `capOf` answers about, what `handsOf` reads, and
@@ -36,9 +37,9 @@ import { MACHINE_TUNE, MACHINE_TUNE_COST, MACHINE_TUNE_UP, DUST_PER_SPARK } from
 export const MACHINES = [
   // Keyed 'jaw' still, which is what it was before it became a drill. The key
   // is in every save; the name is what anybody actually reads.
-  { key: 'jaw',    job: 'quarriers', name: 'the drill' },
-  { key: 'ram',    job: 'rockhands',    name: 'the ram' },
-  { key: 'tiller', job: 'farmhands', name: 'the tiller' },
+  { key: 'jaw',    job: JOB.QUARRY, name: 'the drill' },
+  { key: 'ram',    job: JOB.ROCK,    name: 'the ram' },
+  { key: 'tiller', job: JOB.FARM, name: 'the tiller' },
   // The fourth, and the odd one out twice over: it does not work a face -- it
   // works the *ground between* the rock and the hole, see the belt's spec in
   // dust.js -- and it is the one machine that leaves its station's kit alone.
@@ -52,7 +53,7 @@ export const MACHINES = [
   // rock and the hole. So the carts stay bought, they stay useful, and the
   // school goes on selling them -- see `kitDisplaced`, which is what tells the
   // training grounds which rows to take down.
-  { key: 'belt',   job: 'haulers',   name: 'the belt', takesKit: false }
+  { key: 'belt',   job: JOB.HAUL,   name: 'the belt', takesKit: false }
 ];
 
 // Derived, not written out again: a hand-kept inverse of the table six lines

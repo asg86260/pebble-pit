@@ -27,6 +27,7 @@ import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, rungCost, commutePace } from './upgrades.js';
 import { registerRows, registerSite } from './works.js';
+import { JOB, TYPE } from './jobs.js';
 
 // --- the pot's dials, level by level ------------------------------------------
 // Each eases straight across the ladder from its level-0 value to the top over
@@ -133,7 +134,7 @@ export function carryBoost(w) {
 
 // --- the crew of the pot ------------------------------------------------------
 export function newStirrer() {
-  return { type: 'stirrer', goal: 'to', x: apothecary.x, y: 0 };
+  return { type: TYPE.STIR, goal: 'to', x: apothecary.x, y: 0 };
 }
 
 // Where the stirrer stands to work: at the LEFT of the pot, not in it. It stands
@@ -143,8 +144,8 @@ export function newStirrer() {
 // actually at a pot brewing -- not `S.stirrers`, which counts everybody the
 // building has, one of whom may be crossing the yard with a dose in hand.
 export const apothecaryDoor = () => apothecary.x + P * 8;
-const stirrers = () => S.workers.filter(w => w.type === 'stirrer');
-export const atPot = w => w.type === 'stirrer' && w.goal === 'in';
+const stirrers = () => S.workers.filter(w => w.type === TYPE.STIR);
+export const atPot = w => w.type === TYPE.STIR && w.goal === 'in';
 export const inMix = () => S.workers.filter(atPot).length;
 
 // The pot a body tends: the k-th stirrer keeps the k-th pot, so one stirrer is
@@ -155,7 +156,7 @@ const potOf = w => stirrers().indexOf(w);
 // A body worth dealing a dose to: anybody working who is not a stirrer and is
 // not already under a live dose. The preferred station is a nudge applied on top
 // of this, not a wall.
-const buffable = w => w.type !== 'stirrer' && !doseLive(w);
+const buffable = w => w.type !== TYPE.STIR && !doseLive(w);
 
 // The body the next dose goes to: the preferred station first, then whoever is
 // nearest the pot. A small brew lands where it matters and a big one spills to
@@ -450,7 +451,7 @@ export const APOTHECARY_SECTIONS = [
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is
 // nearest) is the step before the first and after the last.
-const PREFER_JOBS = ['rockhands', 'quarriers', 'farmhands', 'scholars', 'purifiers', 'haulers'];
+const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.HAUL];
 // Said the way every other board says a job -- see `jobSaid` in kit.js. This was
 // a second table of the same words, which is how the haulers ended up as "the
 // crew" here and "haulers" everywhere else, on a board where "the crew" also

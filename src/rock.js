@@ -22,6 +22,7 @@ import { critBoost } from './apothecary.js';
 import { pickCount, rockhandBite, rockhandMs } from './upgrades.js';
 import { inWorking } from './route.js';
 import { rand } from './rng.js';
+import { JOB, TYPE } from './jobs.js';
 
 // --- boulder ----------------------------------------------------------------
 // boulder n is n sheets thick (capped) and a little wider than the last, so each
@@ -637,8 +638,8 @@ export const ramX = () =>
   Math.round((rockFaceX() - P * (RAM_REACH + spriteW(RAM))) / P) * P;
 
 defineMachine('ram', {
-  job: 'rockhands',
-  type: 'rockhand',
+  job: JOB.ROCK,
+  type: TYPE.ROCK,
   at: ramX,
   y: () => S.groundY - P * Math.round(spriteH(RAM) / 2),
   // Up on the roof of the engine, at the end away from the chimney. It stood

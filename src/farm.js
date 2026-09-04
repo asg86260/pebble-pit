@@ -30,6 +30,7 @@ import { at, put, topRow, colOf, bottomY } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
 import { registerRows } from './works.js';
+import { JOB, TYPE } from './jobs.js';
 
 // how long one plot takes to come on, at this level of tending
 // Five rungs from the base to the floor, the fifth rung being the floor itself
@@ -60,7 +61,7 @@ export function plantPlots() {
 export function newFarmhand() {
   plantPlots();
   return {
-    type: 'farmhand', goal: 'to', plot: 0, quarryAt: 0, stoopAt: 0, lunge: 0,
+    type: TYPE.FARM, goal: 'to', plot: 0, quarryAt: 0, stoopAt: 0, lunge: 0,
     bob: rand() * Math.PI * 2,      // its own rhythm, so a row of them is not a chorus
     x: plotX(0), y: 0, carry: 0
   };
@@ -143,7 +144,7 @@ export const farmPatch = () => ({
 function pickPlot(w) {
   let best = -1, most = -1;
   for (let i = 0; i < S.plots.length; i++) {
-    if (S.workers.some(o => o !== w && o.type === 'farmhand' && o.plot === i)) continue;
+    if (S.workers.some(o => o !== w && o.type === TYPE.FARM && o.plot === i)) continue;
     if (S.plots[i] > most) { most = S.plots[i]; best = i; }
   }
   return best < 0 ? w.plot : best;
@@ -288,7 +289,7 @@ export const FARM_UPGRADES = [
     bill: () => TILLER_BILL,
     buy: () => { buyMachine('tiller'); rebalance(); },
     show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX,
-                                      () => kitFull('farmhands'))
+                                      () => kitFull(JOB.FARM))
   },
   {
     key: 'tend',
@@ -398,8 +399,8 @@ const tillerPlot = () => {
 };
 
 defineMachine('tiller', {
-  job: 'farmhands',
-  type: 'farmhand',
+  job: JOB.FARM,
+  type: TYPE.FARM,
   at: tillerAt,
   y: () => walkY(tillerAt() + WORKER / 2) - P,
   // Where the driver sits: up on the back of it, over the axle. Everybody else in

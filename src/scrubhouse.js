@@ -19,14 +19,15 @@ import { idle, assign, rungCost } from './upgrades.js';
 import { airRows, airSection } from './airboard.js';
 import { CRAFT_ROW, berthFor, stepRider, dismount } from './balloon.js';
 import { registerRows } from './works.js';
+import { TYPE } from './jobs.js';
 
 export function newPurifier() {
-  return { type: 'purifier', goal: 'to', x: scrub.x, y: 0 };
+  return { type: TYPE.PURIFY, goal: 'to', x: scrub.x, y: 0 };
 }
 
 // the door, and who is through it
 export const scrubDoor = () => scrub.x + scrub.w * 0.5;
-export const inHouse = w => w.type === 'purifier' && w.goal === 'in';
+export const inHouse = w => w.type === TYPE.PURIFY && w.goal === 'in';
 
 // How many are actually in there. Not `S.purifiers`: that counts everybody the
 // house has been given, and one of them may still be crossing the yard. Nothing

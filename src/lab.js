@@ -27,6 +27,7 @@ import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
 import { rand } from './rng.js';
 import { registerRows, registerSite, worksAt, abandonAt } from './works.js';
+import { JOB, TYPE } from './jobs.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -97,7 +98,7 @@ export function begin() {
   // lab did so because there was nothing to do in it, and the moment there is,
   // the reason it left has gone. Only the ones the lab itself sent home, and
   // only if they are still spare.
-  while (S.labLeft > 0 && idle() > 0) { assign('scholars', 1); S.labLeft--; }
+  while (S.labLeft > 0 && idle() > 0) { assign(JOB.SCHOLAR, 1); S.labLeft--; }
   S.labLeft = 0;
   S.dirty = true;
 }
@@ -124,7 +125,7 @@ function letIdleGo() {
   if (now() - S.labIdleAt < LAB_IDLE_MS) return;
   S.labIdleAt = 0;
   S.labLeft++;                     // remembered, so starting something fetches it back
-  assign('scholars', -1);
+  assign(JOB.SCHOLAR, -1);
 }
 
 // One frame of it. Nothing happens without bodies in the lab -- that is the
@@ -193,7 +194,7 @@ export function markLabSeen() {
 // after that, on purpose: what a lab looks like from outside is a chimney.
 export function newScholar() {
   return {
-    type: 'scholar', goal: 'to',
+    type: TYPE.SCHOLAR, goal: 'to',
     x: lab.x, y: 0
   };
 }
@@ -206,7 +207,7 @@ export function newScholar() {
 // the moment one was cut it was, by a fifth of the building. Every scholar walked
 // up to the wall beside it and vanished.
 export const labDoor = () => lab.x + lab.w / 2;
-export const indoors = w => w.type === 'scholar' && w.goal === 'in';
+export const indoors = w => w.type === TYPE.SCHOLAR && w.goal === 'in';
 
 // How many are actually in there working. It is not `S.scholars`: that counts
 // everybody the lab has been given, and one of them may still be halfway across

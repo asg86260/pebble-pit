@@ -25,6 +25,7 @@ import { inHouse as inScrubHouse } from './scrubhouse.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
 import { P, WORKER, SHARD_CELL, SPORE_CELL, findKind } from './config.js';
+import { JOB } from './jobs.js';
 
 // The block, as a rectangle to stand near: what is actually built, on a plot
 // that never moves.
@@ -76,7 +77,7 @@ export function whereIs(w) {
   // exception: a hauler is at home everywhere, so for that one the doing is the
   // only thing that says anything.
   const job = JOBS_AT[w.type];
-  if (job !== 'haulers' && atStation(job, w.x + WORKER / 2)) return AT[job] || 'in the yard';
+  if (job !== JOB.HAUL && atStation(job, w.x + WORKER / 2)) return AT[job] || 'in the yard';
 
   if (w.resting) return 'on a break';
   if (w.walking) return 'on the way';
@@ -148,9 +149,9 @@ const NAMED = { bench: 'the bench', school: 'the school',
 // the farm is its plots and not just its shed, the quarry is the cut -- so a
 // place named any other way here would disagree with the board about where
 // somebody is standing the moment a plot was bought.
-const JOB_PLACE = [['rockhands', 'the rock'], ['quarriers', 'the quarry'],
-                   ['farmhands', 'the farm'], ['scholars', 'the lab'],
-                   ['purifiers', 'the scrubbing house']];
+const JOB_PLACE = [[JOB.ROCK, 'the rock'], [JOB.QUARRY, 'the quarry'],
+                   [JOB.FARM, 'the farm'], [JOB.SCHOLAR, 'the lab'],
+                   [JOB.PURIFY, 'the scrubbing house']];
 
 function placeAt(x) {
   for (const [job, name] of JOB_PLACE) if (atStation(job, x)) return name;
@@ -240,7 +241,7 @@ export function card(w) {
     // Only the ones whose job is carrying. A rockhand's hands are always empty
     // between swings, and a row that says nothing every time you read it is a
     // row that trains you to stop reading.
-    ...(JOBS_AT[w.type] === 'haulers' ? [row('carrying', cargo(w))] : []),
+    ...(JOBS_AT[w.type] === JOB.HAUL ? [row('carrying', cargo(w))] : []),
     // What it is under, and how long it has left. The mark on the body across
     // the yard says *that* a tonic is on it; this row is where you read the
     // *what*. Only a body actually under one gets the row -- see the apothecary.

@@ -14,12 +14,13 @@ import { S, floor } from '../state.js';
 import { spelled } from '../tower.js';
 import { JOB_OF, commutePace, machineRate } from '../upgrades.js';
 import { walkY } from '../world.js';
+import { TYPE } from '../jobs.js';
 
 // How long between one stroke of a shovel and the next. A hastened janitor works
 // at twice the pace, which is the tower reaching into the yard rather than into
 // its own tower -- see SPELLS.
 export const swingFor = w =>
-  MUCK_SWING / (w.type === 'janitor' && spelled('sweep') ? SPELL_SWEEP : 1);
+  MUCK_SWING / (w.type === TYPE.JANITOR && spelled('sweep') ? SPELL_SWEEP : 1);
 
 // Tending. One body, standing at the machine that has taken its job over.
 //

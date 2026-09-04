@@ -255,7 +255,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = ['rockhands', 'quarriers', 'farmhands', 'scholars', 'purifiers', 'stirrers', 'janitors', 'wizards'];
+export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -279,6 +279,7 @@ export const idle = () => spareHands();
 // is, and are passed straight through here: the shop asks about a trade, and a
 // trade is a fact about a hat.
 import { TRADE_OF, JOB_OF, stockOf, hasKit, kitSetOf } from './kit.js';
+import { JOB } from './jobs.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -321,11 +322,11 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 // was fixed for one screen down: the copy that gets forgotten is the one that
 // matters.
 const capOfBare = job =>
-  job === 'quarriers' ? benches() :
-  job === 'farmhands' ? plotCount() :
+  job === JOB.QUARRY ? benches() :
+  job === JOB.FARM ? plotCount() :
   // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
   // apothecary has broken standing room for. A second pot is a second body's.
-  job === 'stirrers' ? S.apothPots :
+  job === JOB.STIR ? S.apothPots :
   // One body in the lab. It is a room with a bench in it, not a floor plan, and
   // research is one thing being looked into at a time -- a second body standing
   // in there was a second pair of hands on a job that has no second pair.
@@ -333,7 +334,7 @@ const capOfBare = job =>
   // argument for it -- research is one thing being looked into at a time, and a
   // second pair of hands on *one* bench is a queue. What the second bench buys
   // is a second *thing*, not a second helper.
-  job === 'scholars' ? labRooms() :
+  job === JOB.SCHOLAR ? labRooms() :
   // One body in the scrubbing house too, and for the same reason: it is a shed
   // with a fan in it. A second body was a second pair of hands on a machine
   // that runs itself once somebody is standing in it -- the draught it makes is
@@ -346,7 +347,7 @@ const capOfBare = job =>
   // above is about the *shed*: a second body at one fan is a queue. A craft is a
   // second mouth rather than a second pair of hands at the same one, so it is a
   // place to be and it takes a body of its own. See balloon.js.
-  job === 'purifiers' ? 1 + craftCount() :
+  job === JOB.PURIFY ? 1 + craftCount() :
   // Shovelling up after everybody is a job once there is a shed to gather it
   // under. Before that the mess is the yard's problem and nobody is on it -- see
   // `takeMuck` -- so there is nowhere to put a body even if you wanted to.
@@ -360,12 +361,12 @@ const capOfBare = job =>
   // and the cap that goes with it are one thing the shed opens, and two places
   // counting it separately is exactly how you get a body sent to a job with
   // nothing on the stand to pick up.
-  job === 'janitors' ? hats('janitors') :
+  job === JOB.JANITOR ? hats(JOB.JANITOR) :
   // One body per hat, and the tower makes them one at a time. This is the only
   // station in the yard whose floor plan is a thing you buy rather than a thing
   // you build: there is as much room in the sky as there are people who can get
   // to it.
-  job === 'wizards' ? S.wizardHats :
+  job === JOB.WIZARD ? S.wizardHats :
   // The rock and the lip have no plan: a rock is as long as it is, and carrying
   // is what a body does when it is on nothing at all.
   Infinity;
@@ -407,12 +408,12 @@ export const roomAt = job => capOf(job) - S[job];
 // lip has no machine and no floor plan, and a roster claiming carrying holds
 // five would be a number with nothing behind it.
 export const handsOf = job =>
-  job === 'rockhands' ? ROCK_GANG :
+  job === JOB.ROCK ? ROCK_GANG :
   // Carrying has no floor plan either, and for a different reason: it is not a
   // place at all. It is what a body does when it is on nothing, so "how many fit"
   // is the whole crew, and what the belt stands in for is a full complement of
   // carriers.
-  job === 'haulers' ? LIP_GANG :
+  job === JOB.HAUL ? LIP_GANG :
   capOfBare(job);
 
 
@@ -831,7 +832,7 @@ export const UPGRADES = [
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
     show: () => canBuy('ram', () => S.rockhandPickLevel >= RUNGS && S.rockhandSpeedLevel >= RUNGS,
-                       () => kitFull('rockhands'))
+                       () => kitFull(JOB.ROCK))
   },
   {
     // The belt from the rock to the hole, and the one machine that changes the
@@ -856,7 +857,7 @@ export const UPGRADES = [
     show: () => canBuy('belt',
                        () => S.haulCarryLevel >= RUNGS && S.haulPaceLevel >= RUNGS
                           && S.harnessLevel >= RUNGS && S.bootsLevel >= RUNGS,
-                       () => kitFull('haulers'))
+                       () => kitFull(JOB.HAUL))
   },
   {
     key: 'auto',

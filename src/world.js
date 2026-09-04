@@ -18,6 +18,7 @@ import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casin
 import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
+import { JOB } from './jobs.js';
 
 const canvas = document.getElementById('c');
 
@@ -92,37 +93,37 @@ export function resite() {
 // reach the boards use to decide you are standing at one: what you can walk up
 // to and open is what you can be put down on and carry on working at.
 export function atStation(job, x) {
-  if (job === 'scholars') return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
-  if (job === 'purifiers') return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
-  if (job === 'farmhands') return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
-  if (job === 'stirrers') return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;
-  if (job === 'quarriers') return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
-  if (job === 'rockhands') return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
+  if (job === JOB.SCHOLAR) return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
+  if (job === JOB.PURIFY) return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
+  if (job === JOB.FARM) return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
+  if (job === JOB.STIR) return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;
+  if (job === JOB.QUARRY) return S.quarryOpen && x > quarry.x - P * 6 && x < quarry.x + quarry.w + P * 6;
+  if (job === JOB.ROCK) return S.gw > 0 && x > rockLeft() - P * 4 && x < rockLeft() + S.gw * P + P * 4;
   return true;                     // carrying is done wherever the dust is
 }
 
 export const kitX = job =>
-  job === 'rockhands' ? rockLeft() - P * 4 :
+  job === JOB.ROCK ? rockLeft() - P * 4 :
   // well back from the lip: the full-hole warning stands five cells short of
   // the edge, and a trestle under a warning triangle is two marks in one place
-  job === 'haulers' ? pit.x - P * 16 :
+  job === JOB.HAUL ? pit.x - P * 16 :
   // clear of the bridge: the ramp up to the deck starts right at the mouth, and
   // a trestle standing on a slope is a trestle about to fall over
-  job === 'quarriers' ? quarry.x - BRIDGE_RUN - P * 5 :
+  job === JOB.QUARRY ? quarry.x - BRIDGE_RUN - P * 5 :
   // clear of the first plot and of whoever is stooping over it: a farmhand
   // stands a body's width off its plot, which is where a stand four cells out
   // would be standing too
-  job === 'farmhands' ? farm.x - P * 18 :
+  job === JOB.FARM ? farm.x - P * 18 :
   // The stirrers' stand outside the pot, clear to the left of the door.
-  job === 'stirrers' ? apothecary.x - P * 6 :
+  job === JOB.STIR ? apothecary.x - P * 6 :
   // The wizards' stand is at the foot of the tower, because the tower is what
   // makes them: a hat on a stand outside the door of the place it was made in.
-  job === 'wizards' ? tower.x - P * 8 :
+  job === JOB.WIZARD ? tower.x - P * 8 :
   // And the janitors' outside the closet, which is where their caps come from --
   // the shed keeps them, the way the tower keeps the cones. Clear to the left of
   // the front, because the door is cut in the middle of it and a stand across a
   // doorway is a stand somebody has to walk round to get in.
-  job === 'janitors' ? outhouse.x - P * 6 : null;
+  job === JOB.JANITOR ? outhouse.x - P * 6 : null;
 
 // The strips as they stand, and whether they still describe the yard.
 //

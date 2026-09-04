@@ -23,6 +23,7 @@ import { inHouse } from '../scrubhouse.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
 import { ctx, drawCircle, drawMark } from '../render.js';
+import { TYPE } from '../jobs.js';
 
 // The bench is not in the yard until there is something on it worth buying, and
 // once it is there it says so without being opened: a dot for something you can
@@ -565,7 +566,7 @@ export function drawWorkers() {
     // hauler carries dust -- the same small flask that stands on the apothecary
     // table, coloured by which tonic it is walking out, so you can see what is
     // crossing the yard. See `stepStirrer` (`w.carryTonic`).
-    if (w.type === 'stirrer' && w.holding) {
+    if (w.type === TYPE.STIR && w.holding) {
       const vx = Math.round((x + WORKER / 2 - P / 2) / P) * P;
       const vy = y - P * 5;
       ctx.fillStyle = '#000';

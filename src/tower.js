@@ -23,6 +23,7 @@ import { riftRate, riftUpCost } from './rift.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, leftAt, progressOf } from './works.js';
+import { TYPE } from './jobs.js';
 
 // what the next hat costs, in each of the three things the yard makes
 export const wizCost = () => {
@@ -42,9 +43,9 @@ export const wizCost = () => {
 // the rate it is actually going. The rule the whole game runs on is that a
 // station idles until somebody is actually standing there, and the tower was
 // the one place quietly exempt from it.
-export const brewing = () => !!workOn('wizard');
-export const brewLeft = () => leftAt('tower', 'wizard');
-export const brewAt = () => { const w = workOn('wizard'); return w ? progressOf(w) : 0; };
+export const brewing = () => !!workOn(TYPE.WIZARD);
+export const brewLeft = () => leftAt('tower', TYPE.WIZARD);
+export const brewAt = () => { const w = workOn(TYPE.WIZARD); return w ? progressOf(w) : 0; };
 
 // A minute and a half is a long time to look at a number of milliseconds.
 const mins = ms => {
@@ -131,7 +132,7 @@ export const TOWER_UPGRADES = [
   // And the hat. Dust, stone and crop -- everything the ground makes, for the
   // one body that will not be standing on it.
   {
-    key: 'wizard',
+    key: TYPE.WIZARD,
     name: 'train a wizard',
     // No note. What the note said was how long it takes, and how long a thing
     // takes is part of what it costs -- so it is priced in the bill with the
@@ -201,7 +202,7 @@ TOWER_UPGRADES.push(
 );
 
 export const TOWER_SECTIONS = [
-  { title: 'the tower', keys: ['wizard', 'wizspeed', 'wizpower'] },
+  { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   // And what the tower does for the rest of the yard, which is the only thing on
   // any board that is about somewhere else entirely.
   { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },

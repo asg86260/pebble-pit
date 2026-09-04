@@ -54,6 +54,7 @@ import { advance, restart as restartClock } from './clock.js';
 import { step, settleIntoWorld } from './game.js';
 import { rand, seedRng, seed } from './rng.js';
 import { verifyWorld, resetVerify } from './verify.js';
+import { JOB, TYPE } from './jobs.js';
 
 // clear the yard: the dust lying about and anything the sites have given up and
 // nobody has carried in. Both are 'what is lying around out there'.
@@ -90,9 +91,9 @@ export const fullSites = () => {
   // gated behind. A check that wants a machine should not have to know that the
   // hats are called breakers, blasters and growers -- nor how many make a set,
   // which is `kitCap` and is a smaller number than the complement now.
-  S.breakers = Math.max(S.breakers, kitCap('rockhands'));
-  S.blasters = Math.max(S.blasters, kitCap('quarriers'));
-  S.growers = Math.max(S.growers, kitCap('farmhands'));
+  S.breakers = Math.max(S.breakers, kitCap(JOB.ROCK));
+  S.blasters = Math.max(S.blasters, kitCap(JOB.QUARRY));
+  S.growers = Math.max(S.growers, kitCap(JOB.FARM));
   S.schoolOpen = true;
   resite();
   rebalance();
@@ -209,8 +210,8 @@ export const brewWizard = () => {
   // for is a hat part way along to look at, and making a check bank three
   // currencies first would be a check about paying rather than about brewing.
   // The work itself is the real one -- same row, same site, same clock.
-  const u = everyRow().find(r => r.key === 'wizard');
-  if (u && !workOn('wizard')) start(u.site, u, null);
+  const u = everyRow().find(r => r.key === TYPE.WIZARD);
+  if (u && !workOn(TYPE.WIZARD)) start(u.site, u, null);
   S.dirty = true;
   return Math.round(WIZ_BREW_MS / 1000);
 };
@@ -475,12 +476,12 @@ export const finishResearch = key => {
 // dev: put a tonic on a body -- a dose on a worker to look at the buff mark, or a
 // dose in a stirrer's hand to look at it being carried. For screenshots only; the
 // real round is `stepStirrer`.
-export const dose = (type = 'rockhand', tonic = 'stew') => {
+export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
   const w = S.workers.find(b => b.type === type);
   if (!w) return false;
-  if (type === 'stirrer') {
+  if (type === TYPE.STIR) {
     w.holding = 1; w.goal = 'out';
-    w.dealTo = S.workers.find(b => b.type !== 'stirrer') || null;
+    w.dealTo = S.workers.find(b => b.type !== TYPE.STIR) || null;
   } else {
     w.dose = { tonic, until: clockNow() + 999999 };
   }

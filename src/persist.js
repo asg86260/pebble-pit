@@ -26,6 +26,7 @@ import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
 import { resetRates } from './lab.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
+import { JOB, TYPE } from './jobs.js';
 
 // A full pit is a million cells, which is a million characters written to
 // localStorage every second if you store it a digit at a time. A pile is nearly
@@ -878,14 +879,14 @@ export function restore() {
 // What a job used to be called, for saves written before it was renamed. The
 // rift-holder is the old one: a job that stopped existing, whose bodies come
 // back as haulers. The other three are the same word for the same job.
-const OLD_TYPE = { rifter: 'hauler', miner: 'rockhand',
-                   labber: 'scholar', scrubber: 'purifier' };
+const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
+                   labber: TYPE.SCHOLAR, scrubber: TYPE.PURIFY };
 // And the same renaming again on the *job*, because a body does not only say
 // what it is -- it says which station's hat it is wearing (`kitOf`), and that is
 // a job name. A save written before the rename has a body in a "miners" hat,
 // which is a hat no station keeps any more: `verifyWorld` calls that out as kit
 // that is not in the table, and rightly.
-const OLD_JOB = { miners: 'rockhands', labbers: 'scholars', scrubbers: 'purifiers' };
+const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.SCHOLAR, scrubbers: JOB.PURIFY };
 
 function restoreCrew(who) {
   S.workers = [];

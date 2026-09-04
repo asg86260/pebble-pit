@@ -19,6 +19,7 @@ import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
 import { KIT_MARK } from './kit.js';
+import { JOB } from './jobs.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -43,20 +44,20 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 // its own people out after a while with nothing to do, which is the same thing
 // wearing a friendlier coat.
 export const POSTS = [
-  { key: 'scrubjob', job: 'purifiers',
+  { key: 'scrubjob', job: JOB.PURIFY,
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
-  { key: 'labjob', job: 'scholars',
+  { key: 'labjob', job: JOB.SCHOLAR,
     at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   // One body to a pot, stood under the apothecary it stirs.
-  { key: 'stirjob', job: 'stirrers',
+  { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
-  { key: 'loojob', job: 'janitors',
+  { key: 'loojob', job: JOB.JANITOR,
     at: () => outhouse.x + outhouse.w / 2, show: () => S.outhouseOpen, kit: true },
-  { key: 'farmjob', job: 'farmhands',
+  { key: 'farmjob', job: JOB.FARM,
     at: () => farm.x + farm.w / 2, show: () => S.farmOpen, kit: true },
-  { key: 'quarryjob', job: 'quarriers',
+  { key: 'quarryjob', job: JOB.QUARRY,
     at: () => quarry.x + quarry.w / 2, show: () => S.quarryOpen,
     // the quarry is a hole: a roster under the ground line there would be a
     // roster down the shaft, so it stands clear of the floor of it
@@ -92,9 +93,9 @@ export const POSTS = [
   // long way over it, but the buttons belong where the body walks to, and a
   // count hanging in the air beside the thing it is about would be the one
   // roster in the yard nobody could stand next to.
-  { key: 'skyjob', job: 'wizards',
+  { key: 'skyjob', job: JOB.WIZARD,
     at: () => sky.x, show: () => S.meteorOpen, kit: true },
-  { key: 'mine', job: 'rockhands',
+  { key: 'mine', job: JOB.ROCK,
     at: () => S.cx, show: () => S.crew > 0, kit: true },
   // The haulers stand under the houses. Every other post is written under the
   // place its work is done, and carrying has no such place -- the dust is
@@ -103,7 +104,7 @@ export const POSTS = [
   // the bodies come from. It used to sit out by the lip, which put a count with
   // no buttons on it in the emptiest corner of the yard, reading as a stray
   // control rather than as a fact about the crew.
-  { key: 'carry', job: 'haulers',
+  { key: 'carry', job: JOB.HAUL,
     at: () => doorAt().x, show: () => S.crew > 0, fixed: true, kit: true }
 ];
 
@@ -286,7 +287,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     // wizards is the same number written twice with a spare hat drawn beside it.
     // What is waiting on the stand is already said at the stand, at the foot of
     // the tower, where somebody would go to pick one up.
-    if (p.job === 'wizards') {
+    if (p.job === JOB.WIZARD) {
       drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
       if (p.fixed) continue;
       button(ctx, b.less, '-', n > 0);
@@ -304,7 +305,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
       // is pulling. It trails to the left, exactly as it does in the yard, into
       // the slot the minus button would be in: carrying is the one post that has
       // no buttons, because you never put a body *on* it, so the room is there.
-      if (p.job === 'haulers') drawCart(b.trade.x, b.trade.y, 1);
+      if (p.job === JOB.HAUL) drawCart(b.trade.x, b.trade.y, 1);
       else drawHat(b.trade.x, b.trade.y, KIT_MARK[p.job], true);
     }
 
@@ -360,7 +361,7 @@ export function drawRosterCounts(ctx, screenAt) {
     // that it tells you what is waiting there for the next body you send.
     //
     // and the sky has no second line at all: see `drawRoster`.
-    if (p.job !== 'wizards' && hats(p.job) > 0) {
+    if (p.job !== JOB.WIZARD && hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
     }

@@ -44,15 +44,16 @@
 // which of the two answered it.
 import { P, LOO_POSTS, KIT_MAX } from './config.js';
 import { S } from './state.js';
+import { JOB } from './jobs.js';
 
 export const KIT = {
-  rockhands:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
-  quarriers: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
-  farmhands: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
+  [JOB.ROCK]:    { mark: 'helmet', trade: 'breakers', tall: P,     set: KIT_MAX, max: KIT_MAX },
+  [JOB.QUARRY]: { mark: 'lamp',   trade: 'blasters', tall: P * 2, set: KIT_MAX, max: KIT_MAX },
+  [JOB.FARM]: { mark: 'brim',   trade: 'growers',  tall: P * 2, set: KIT_MAX, max: KIT_MAX },
   // A set of three, and no ceiling over it: see the note on `max` above.
-  haulers:   { mark: 'cart',   trade: 'carters',  tall: 0,     set: KIT_MAX },
+  [JOB.HAUL]:   { mark: 'cart',   trade: 'carters',  tall: 0,     set: KIT_MAX },
   // Not a doubling but a licence: no hat, no flying. See wizard.js.
-  wizards:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
+  [JOB.WIZARD]:   { mark: 'point',  trade: 'wizardHats', tall: P * 3 },
   // The one hat nobody buys -- and it used to be the one hat nobody walked for
   // either. It was `innate`: worn by every janitor from the moment it was put on
   // the job, appearing on the head out of nothing. Which is the same trick the
@@ -67,41 +68,16 @@ export const KIT = {
   // is a helmet's life: it waits on a stand, somebody walks over and puts it on,
   // it walks home when that body is taken off the job, and it falls in the dirt
   // if you pick the body up and shake it.
-  janitors:  { mark: 'cap',    stock: () => S.outhouseOpen ? (S.looPosts ?? LOO_POSTS) : 0, tall: P }
+  [JOB.JANITOR]:  { mark: 'cap',    stock: () => S.outhouseOpen ? (S.looPosts ?? LOO_POSTS) : 0, tall: P }
 };
 
-// What job a body is doing, from what it is. Here rather than in upgrades.js so
-// that `wearing` -- which has to go from a body to its own kit -- can be
-// answered without the kit importing the shop and the shop importing the kit.
-export const JOB_OF = { rockhand: 'rockhands', hauler: 'haulers', quarrier: 'quarriers',
-                        farmhand: 'farmhands', scholar: 'scholars',
-                        purifier: 'purifiers', stirrer: 'stirrers',
-                        janitor: 'janitors', wizard: 'wizards',
-                        // Building is not a job on the roster -- you do not put
-                        // anybody on it, the spare hands go and do it -- but it
-                        // is a thing a body in this yard can be, and every rule
-                        // that asks what a body is doing has to have an answer.
-                        // It owns no kit, which is what keeps it out of
-                        // everything below.
-                        builder: 'builders' };
-
-// How a job is *said*, where the key is not already the words. A key has to be
-// one word -- it is a property name, a save field and a data attribute -- and
-// most jobs are one word, so for most of them the key is the answer. The two
-// that are not live here, once, rather than as a second spelling written out at
-// every board that shows them: a key doubling as its own label is how "labbers"
-// survived being read by anybody, and how the haulers came to be called "the
-// crew" on one dial and "haulers" everywhere else. Nothing prints a raw key.
-const JOB_SAID = { rockhands: 'rock hands', purifiers: 'air purifiers' };
-export const jobSaid = job => JOB_SAID[job] || job || '';
-
-// And back again: what to put a body on so that it is doing a given job. The
-// same table read the other way about, because there is now one move that needs
-// it -- somebody picking a knocked-off hat up off the ground takes the job with
-// it, and the job is what the hat says. A second hand-written list of the same
-// eight pairs is the exact bug this file exists to stop.
-export const TYPE_OF = Object.fromEntries(
-  Object.entries(JOB_OF).map(([type, job]) => [job, type]));
+// What job a body is doing, what to put a body on to get a job done, and how a
+// job is said out loud -- all three live in jobs.js now, with the names
+// themselves. They are handed straight on from here because this is where the
+// rest of the game learned to ask for them, and because a hat is answered in the
+// same breath: `wearing` goes from a body to its own kit, and it needs both
+// tables in one place. jobs.js imports nothing, so nothing rings.
+export { JOB_OF, TYPE_OF, jobSaid } from './jobs.js';
 
 // Whether a job has kit at all -- somewhere its hats come from. What every
 // consumer below is really asking before it counts, draws, fetches or checks.

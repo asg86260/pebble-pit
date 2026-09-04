@@ -59,6 +59,7 @@ import { swingFor, postOf, stepTender } from './crew/tenders.js';
 export { stepMachines } from './crew/tenders.js';
 export { workerAt, lift, lifted, drop, shakeHeld } from './crew/pointer.js';
 import { grabHat, dispossessed, stepKit, kitFree } from './crew/kitwalk.js';
+import { TYPE } from './jobs.js';
 export { kitFree } from './crew/kitwalk.js';
 
 // The crew take the hill off in layers. A rockhand does not stand in one spot and
@@ -133,7 +134,7 @@ export function nearestInBand(from) {
 // body has just covered. See `faceTravel`.
 export function elbowed(w, x) {
   for (const o of S.workers) {
-    if (o === w || o.type !== 'rockhand') continue;
+    if (o === w || o.type !== TYPE.ROCK) continue;
     if ((o.x - w.x) * w.mineDir <= 0) continue;         // behind it: not in the way
     if (Math.abs(o.x - x) < WORKER * 1.2) return true;
   }
@@ -192,7 +193,7 @@ export const homeCount = () => S.workers.filter(atHome).length;
 
 function newRockhand() {
   return {
-    type: 'rockhand', next: 0, lunge: 0,
+    type: TYPE.ROCK, next: 0, lunge: 0,
     x: rockLeft() + rand() * S.gw * P, y: S.cy,
     mineDir: rand() < 0.5 ? -1 : 1,  // which way along the layer it is working
     ph: rand() * Math.PI * 2,        // where in its wobble it starts
@@ -209,7 +210,7 @@ function newHauler() {
   // and a placeholder height reads as one that has to climb down out of the sky.
   const { x } = hireSpot();
   return {
-    type: 'hauler', x, y: walkY(x + WORKER / 2),
+    type: TYPE.HAUL, x, y: walkY(x + WORKER / 2),
     carry: 0, next: 0, goal: 'seek', claim: -1, cutClaim: null, roamTo: null,
     // Its own legs and its own patience, for when it has nowhere to be. Six
     // bodies strolling at exactly one speed and standing about for exactly one
@@ -226,7 +227,7 @@ function newHauler() {
 // one before it goes back to sweeping the yard.
 // Builders come before carrying, like every other job: a spare body goes to the
 // thing the yard is in the middle of building before it goes back to sweeping.
-const TYPES = ['rockhand', 'quarrier', 'farmhand', 'scholar', 'purifier', 'stirrer', 'janitor', 'wizard', 'builder', 'hauler'];
+const TYPES = [TYPE.ROCK, TYPE.QUARRY, TYPE.FARM, TYPE.SCHOLAR, TYPE.PURIFY, TYPE.STIR, TYPE.JANITOR, TYPE.WIZARD, TYPE.BUILD, TYPE.HAUL];
 const MAKE = { rockhand: newRockhand, quarrier: newQuarrier, farmhand: newFarmhand,
                scholar: newScholar, purifier: newPurifier, stirrer: newStirrer,
                janitor: newJanitor, wizard: newWizard, builder: newBuilder, hauler: newHauler };
@@ -258,7 +259,7 @@ export const FACTORY = type => ({
 // every other body starts at its station -- though the work is wherever the mess
 // happens to be, which is anywhere on the ground.
 function newJanitor() {
-  return { type: 'janitor', goal: 'to', x: outhouse.x, y: 0 };
+  return { type: TYPE.JANITOR, goal: 'to', x: outhouse.x, y: 0 };
 }
 
 // --- the builders -------------------------------------------------------------
@@ -277,7 +278,7 @@ function newJanitor() {
 // one place the count is set.
 function newBuilder() {
   const { x } = hireSpot();
-  return { type: 'builder', goal: 'to', site: null, x, y: walkY(x + WORKER / 2) };
+  return { type: TYPE.BUILD, goal: 'to', site: null, x, y: walkY(x + WORKER / 2) };
 }
 
 // Which site a builder is on. Three places can want one at once -- the bench,
@@ -290,7 +291,7 @@ function siteFor(w) {
   if (w.site && busy.includes(w.site)) return w.site;
   let pick = null, fewest = Infinity;
   for (const site of busy) {
-    const n = S.workers.filter(o => o.type === 'builder' && o.site === site).length;
+    const n = S.workers.filter(o => o.type === TYPE.BUILD && o.site === site).length;
     if (n < fewest) { fewest = n; pick = site; }
   }
   w.site = pick;
@@ -408,19 +409,19 @@ export function stepBuilder(w) {
 // while its gang was halfway down the ladder would be the building claiming
 // something the crew deny.
 const ARRIVED = {
-  quarriers: w => w.type === 'quarrier' && w.goal !== 'to',
-  farmhands: w => w.type === 'farmhand' && w.goal !== 'to',
-  purifiers: w => w.type === 'purifier' && w.goal === 'in',
+  quarriers: w => w.type === TYPE.QUARRY && w.goal !== 'to',
+  farmhands: w => w.type === TYPE.FARM && w.goal !== 'to',
+  purifiers: w => w.type === TYPE.PURIFY && w.goal === 'in',
   // Through the door and stirring. A stirrer out dealing a dose is not at the
   // pot, so the brew clock pauses -- same rule the lab and the house keep.
-  stirrers: w => w.type === 'stirrer' && w.goal === 'in',
+  stirrers: w => w.type === TYPE.STIR && w.goal === 'in',
   // A wizard's work is four hundred pixels up and the walk is to the ground
   // under it; either way it is at the tower, which is the only thing this asks.
-  wizards: w => w.type === 'wizard',
-  builders: w => w.type === 'builder' && w.goal === 'at',
+  wizards: w => w.type === TYPE.WIZARD,
+  builders: w => w.type === TYPE.BUILD && w.goal === 'at',
   // Through the door and at the bench. A scholar crossing the yard is not doing
   // research yet, which is the same rule the purifiers keep.
-  scholars: w => w.type === 'scholar' && w.goal === 'in'
+  scholars: w => w.type === TYPE.SCHOLAR && w.goal === 'in'
 };
 
 setHands(site => {
@@ -435,9 +436,9 @@ setHands(site => {
   // over, stood at the tower and did nothing: the work it had been sent for was
   // asking how many WIZARDS were there, and the answer was the nought that had
   // sent for it.
-  const helping = w => w.type === 'builder' && w.goal === 'at' && w.site === site;
+  const helping = w => w.type === TYPE.BUILD && w.goal === 'at' && w.site === site;
   const there = S.workers.filter(w => helping(w)
-                                   || (at(w) && (w.type !== 'builder' || w.site === site))).length;
+                                   || (at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
   // One pair of hands on a piece of work, whoever owns the site.
   //
   // `BUILD_GANG` already said this for the yard and the bench -- one spare body
@@ -484,20 +485,20 @@ export function stationX(type) {
 // Where the job is done by hand, which is where a body goes when there is no
 // machine standing on it.
 function handStationX(type) {
-  if (type === 'rockhand') return S.cx - WORKER / 2;
-  if (type === 'quarrier') return quarryFace();
-  if (type === 'farmhand') return plotX(0);
-  if (type === 'scholar') return labDoor() - WORKER / 2;
-  if (type === 'purifier') return scrubDoor() - WORKER / 2;
-  if (type === 'stirrer') return apothecaryDoor() - WORKER / 2;
-  if (type === 'janitor') return outhouse.x + outhouse.w / 2 - WORKER / 2;
+  if (type === TYPE.ROCK) return S.cx - WORKER / 2;
+  if (type === TYPE.QUARRY) return quarryFace();
+  if (type === TYPE.FARM) return plotX(0);
+  if (type === TYPE.SCHOLAR) return labDoor() - WORKER / 2;
+  if (type === TYPE.PURIFY) return scrubDoor() - WORKER / 2;
+  if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;
+  if (type === TYPE.JANITOR) return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
   // pixels above that, but the walk is to here: the going up is the job, not the
   // commute.
-  if (type === 'wizard') return underMeteor();
+  if (type === TYPE.WIZARD) return underMeteor();
   // A builder has no station to be walked to: it picks a site of its own and
   // walks itself there, see `stepBuilder`.
-  if (type === 'builder') return null;
+  if (type === TYPE.BUILD) return null;
   return null;
 }
 
@@ -837,7 +838,7 @@ export function retask(w, type) {
   // It floats rather than falls. Gravity put it on the ground in a quarter of a
   // second, which for a body that took the best part of a minute to go up reads
   // as the hat being switched off. It comes down the way it went up.
-  if (w.aloft && type !== 'wizard') w.floating = true;
+  if (w.aloft && type !== TYPE.WIZARD) w.floating = true;
   // ...and a body taken out of a balloon goes over the side under an umbrella. It
   // is already floating by the line above; this is what says there is one
   // up over it, and it lets go of the craft so the craft can leave.
@@ -1009,7 +1010,7 @@ export function syncWorkers() {
   // stagger the new ones through the swing cycle so the crew never hits as one
   let slot = 0;
   for (const w of S.workers) {
-    if (w.type !== 'rockhand') continue;
+    if (w.type !== TYPE.ROCK) continue;
     w.slot = slot++;
     if (!w.next) w.next = now() + rockhandMs() * (w.slot / Math.max(1, S.rockhands));
   }
@@ -1247,7 +1248,7 @@ export function unbook(w) {
 function nearIdle(w) {
   let best = null, near = Infinity;
   for (const o of S.workers) {
-    if (o === w || o.type !== 'hauler' || o.inside || o.carry || o.walking) continue;
+    if (o === w || o.type !== TYPE.HAUL || o.inside || o.carry || o.walking) continue;
     if (o.goal !== 'idle') continue;
     const d = Math.abs(o.x - w.x);
     if (d < 24 || d > ROAM_RANGE * 1.6 || d >= near) continue;
@@ -1278,7 +1279,7 @@ function strollTo(w) {
 // apart a little, the way the gang on the rock and the crew down the quarry do.
 function elbowIdle(w) {
   for (const o of S.workers) {
-    if (o === w || o.type !== 'hauler' || o.inside || o.goal !== 'idle') continue;
+    if (o === w || o.type !== TYPE.HAUL || o.inside || o.goal !== 'idle') continue;
     const d = o.x - w.x;
     if (Math.abs(d) >= ROAM_ELBOW) continue;
     w.x -= Math.sign(d || 1) * 0.25 * frames();
@@ -1498,7 +1499,7 @@ const isMark = c => S.floorMarks.some(m => colOf(floor, m.x) === c);
 // the columns already spoken for this frame
 function claims() {
   const taken = new Set();
-  for (const w of S.workers) if (w.type === 'hauler' && w.claim >= 0) taken.add(w.claim);
+  for (const w of S.workers) if (w.type === TYPE.HAUL && w.claim >= 0) taken.add(w.claim);
   return taken;
 }
 
@@ -1577,7 +1578,7 @@ function takeMess(w, c) {
     // -- not shoved by anybody's elbow, simply never the nearest thing going.
     // A janitor looks for its own kind first and only falls back to the shared
     // search when there is genuinely none of it left.
-    const pick = (w.type === 'janitor' ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
+    const pick = (w.type === TYPE.JANITOR ? nearestPoop(w.x + WORKER / 2, poopTaken) : null)
       ?? nearestMuck(w.x + WORKER / 2, muckTaken, w);
     w.muckAt = pick == null ? null : Math.floor(pick / P);
   }
@@ -1650,7 +1651,7 @@ function takeMess(w, c) {
   // ground -- and `climbTo` eases from wherever the feet actually are, in
   // either direction. A rockhand leaving the crest walks down it the way it
   // walked up.
-  if (w.type === 'rockhand') {
+  if (w.type === TYPE.ROCK) {
     if (w.jigAt != null) { stopJig(w); w.say = null; }
     w.resting = false;
     w.idleAt = null;
@@ -1850,7 +1851,7 @@ function rockhandWork(w, c) {
 // its shed and waits there, which is where you will look for it.
 function janitorWork(w, c) {
   const { now } = c;
-  const post = stationX('janitor');
+  const post = stationX(TYPE.JANITOR);
   const d = post - w.x;
   // Far enough off its post to have left it, which is a wider mark than being
   // off the post -- the loitering below is *meant* to take it a few cells away.
@@ -2107,7 +2108,7 @@ function haulerWork(w, c) {
         // whole shard, so one body fetching them keeps up with what the yard
         // produces; everybody else shifts grit. The other two grounds keep
         // coming in and the rock keeps working.
-        const busy = S.workers.filter(o => o.type === 'hauler' && o.forMark).length;
+        const busy = S.workers.filter(o => o.type === TYPE.HAUL && o.forMark).length;
         const spare = !backedUp('rock') || busy < 1;
         const first = spare ? mark : dust;
         const other = spare ? dust : mark;
@@ -2649,7 +2650,7 @@ export function updateWorkers(now, dt) {
       muckTaken.add(k);
       // Only a janitor's claim is an elbow on poop -- nobody else can be going
       // for any.
-      if (w.type === 'janitor') poopTaken.add(k);
+      if (w.type === TYPE.JANITOR) poopTaken.add(k);
     }
   }
   // And the same book, kept for the cut's own dust: one column of it, one
@@ -2668,9 +2669,9 @@ export function updateWorkers(now, dt) {
   // other has; the farm's strip is floor, so a hand's claim goes in `taken`
   // beside the haulers' own. Only the rock has ground nobody else works.
   const rockTaken = new Set();
-  const bookFor = w => w.type === 'quarrier' ? cutTaken
-                     : w.type === 'farmhand' ? taken
-                     : w.type === 'rockhand' ? rockTaken : null;
+  const bookFor = w => w.type === TYPE.QUARRY ? cutTaken
+                     : w.type === TYPE.FARM ? taken
+                     : w.type === TYPE.ROCK ? rockTaken : null;
   for (const w of S.workers) {
     if (w.tidyAt == null) continue;
     const book = bookFor(w);
@@ -2688,7 +2689,7 @@ export function updateWorkers(now, dt) {
     const to = Math.min(floor.cols - 1, colOf(floor, zone.to));
     for (let col = from; col <= to; col++) taken.add(col);
     for (const w of S.workers) {
-      if (w.type === 'hauler' && w.claim >= from && w.claim <= to) w.claim = -1;
+      if (w.type === TYPE.HAUL && w.claim >= from && w.claim <= to) w.claim = -1;
     }
   }
   if (!S.coreItem || S.heldCore || !S.coreItem.rest) S.coreTaker = null;

@@ -35,6 +35,7 @@ import { MACHINE_TUNE } from './config.js';
 import { rand } from './rng.js';
 import { tidyStep } from './tidy.js';
 import { registerRows } from './works.js';
+import { JOB, TYPE } from './jobs.js';
 
 // how long a trip takes, at this pace
 // A ladder with an end on it, like every other rate in the game -- five rungs
@@ -90,7 +91,7 @@ export const quarryFace = () => ladder().x + LADDER_W / 2 - WORKER / 2;
 
 export function newQuarrier() {
   return {
-    type: 'quarrier',
+    type: TYPE.QUARRY,
     goal: 'to',                            // to the rim, then down, then work
     next: 0,
     // Not on the same beat as everybody else. Two quarriers used to walk the
@@ -350,14 +351,14 @@ export const quarryBand = () => {
 
 // somebody already working the stretch this one is about to walk into
 function elbowRoom(w, x) {
-  return S.workers.some(o => o !== w && o.type === 'quarrier' && o.goal === 'work' &&
+  return S.workers.some(o => o !== w && o.type === TYPE.QUARRY && o.goal === 'work' &&
                              (o.x - w.x) * (w.face || 1) > 0 &&
                              Math.abs(o.x - x) < WORKER * 1.3);
 }
 
 function seatX(w) {
   const n = Math.max(1, S.quarriers);
-  const i = Math.max(0, S.workers.filter(o => o.type === 'quarrier').indexOf(w));
+  const i = Math.max(0, S.workers.filter(o => o.type === TYPE.QUARRY).indexOf(w));
   const { lo, hi } = quarryBand();
   return lo + ((i + 0.5) / n) * (hi - lo);
 }
@@ -457,7 +458,7 @@ export function stepQuarrier(w, now, ctx = null) {
     // The last one out is what fills the hole back in. Doing it the moment the
     // seam was emptied dropped the dirt back under the feet of everybody still
     // down there, and they rode it up like a lift.
-    if (!S.workers.some(o => o.type === 'quarrier' && o !== w && o.y > S.groundY)) {
+    if (!S.workers.some(o => o.type === TYPE.QUARRY && o !== w && o.y > S.groundY)) {
       fillQuarry();
       S.quarrySpent = false;
     }
@@ -740,7 +741,7 @@ export function nextQuarryCell(x, self = null) {
   // arriving to find the work done.
   const taken = new Set();
   for (const o of S.workers)
-    if (o !== self && o.type === 'quarrier' && o.cell != null && o.cell >= 0) taken.add(o.cell);
+    if (o !== self && o.type === TYPE.QUARRY && o.cell != null && o.cell >= 0) taken.add(o.cell);
 
   // The shallowest ground first: a cut is worked *down* in layers, the whole
   // floor coming off a course at a time, and the hole opens out as it deepens.
@@ -855,7 +856,7 @@ export const QUARRY_UPGRADES = [
     bill: () => JAW_BILL,
     buy: () => { buyMachine('jaw'); rebalance(); },
     show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
-                                       () => kitFull('quarriers'))
+                                       () => kitFull(JOB.QUARRY))
   },
   {
     key: 'quarrypace',
@@ -958,8 +959,8 @@ export const drillSeat = () => ({
 });
 
 defineMachine('jaw', {
-  job: 'quarriers',
-  type: 'quarrier',
+  job: JOB.QUARRY,
+  type: TYPE.QUARRY,
   at: jawX,
   y: jawY,
   // The top of its chimney. The jaw's stack is not part of its picture -- it is
@@ -997,7 +998,7 @@ defineMachine('jaw', {
     // A cut already worked out: the ground comes back in and this beat is spent
     // on that. See `ready`, which used to refuse the beat entirely.
     if (quarryDone()) {
-      if (S.workers.some(o => o.type === 'quarrier' && o.y > S.groundY)) return false;
+      if (S.workers.some(o => o.type === TYPE.QUARRY && o.y > S.groundY)) return false;
       fillQuarry();
       S.quarrySpent = false;
       return false;
@@ -1031,7 +1032,7 @@ defineMachine('jaw', {
     // for ever: `fillQuarry` had only ever been reached from a quarrier's own
     // step, and a tended station does not run one.
     if (quarryDone()) {
-      const below = S.workers.some(o => o.type === 'quarrier' && o.y > S.groundY);
+      const below = S.workers.some(o => o.type === TYPE.QUARRY && o.y > S.groundY);
       if (!below) { fillQuarry(); S.quarrySpent = false; }
       else S.quarrySpent = true;
     }

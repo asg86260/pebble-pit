@@ -11,6 +11,7 @@ import { at, put, colOf, bottomY } from './grid.js';
 import { scoopMs, haulCap } from './upgrades.js';
 import { pitFull, pitRefuses } from './pit.js';
 import { rand } from './rng.js';
+import { JOB, TYPE } from './jobs.js';
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => rand() + rand() + rand() - 1.5;
@@ -271,8 +272,8 @@ export function stepBelt(now, f) {
 }
 
 defineMachine('belt', {
-  job: 'haulers',
-  type: 'hauler',
+  job: JOB.HAUL,
+  type: TYPE.HAUL,
   at: beltFrom,
   y: beltY,
   tendAt: beltPost,

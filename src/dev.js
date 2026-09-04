@@ -14,6 +14,7 @@ import { S } from './state.js';
 import { SKY } from './smog.js';
 import { TUNABLE, tune } from './config.js';
 import { relayout, beat } from './main.js';
+import { JOB } from './jobs.js';
 
 const KEY = 'boulder-clicker/dev-open';
 const el = document.createElement('div');
@@ -46,7 +47,7 @@ const button = (box, text, fn) => {
 };
 
 // how many of each job, straight off, with the same call the checks use
-const crew = ['rockhands', 'haulers', 'quarriers', 'farmhands'];
+const crew = [JOB.ROCK, JOB.HAUL, JOB.QUARRY, JOB.FARM];
 const jobs = { rockhands: 'rock', haulers: 'carry', quarriers: 'quarry', farmhands: 'farm' };
 const hire = (which, d) => {
   const n = crew.map(k => S[k]);

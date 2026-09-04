@@ -28,6 +28,7 @@ import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from 
 import { rand } from './rng.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
+import { TYPE } from './jobs.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
 // near the sky, and where it comes back down to.
@@ -39,7 +40,7 @@ export function newWizard() {
   // column between them would rise as a single body four deep.
   const x = underMeteor() + Math.round((rand() - 0.5) * 6) * P;
   return {
-    type: 'wizard', x, spot: x, y: walkY(x + WORKER / 2),
+    type: TYPE.WIZARD, x, spot: x, y: walkY(x + WORKER / 2),
     aloft: false,           // whether its feet are off the ground
     orb0: null,             // its place on the ring round the star, once it has one
     cell: null,             // the cell of the meteor it is working on
@@ -78,7 +79,7 @@ const APART = Math.PI / 3;
 function spaceOut(w, secs) {
   let push = 0;
   for (const o of S.workers) {
-    if (o === w || o.type !== 'wizard' || o.orb0 == null || !o.aloft) continue;
+    if (o === w || o.type !== TYPE.WIZARD || o.orb0 == null || !o.aloft) continue;
     let d = (o.orb0 - w.orb0) % (Math.PI * 2);
     if (d > Math.PI) d -= Math.PI * 2;
     if (d < -Math.PI) d += Math.PI * 2;
@@ -285,7 +286,7 @@ export function stepWizard(w, now) {
 // be a different mechanic with the same name.
 export function stepSummon(dt) {
   if (!summoning()) return;
-  const hands = S.workers.filter(w => w.type === 'wizard' && w.aloft && w.channel).length;
+  const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
   summon(hands, dt / 1000);
 }
 
@@ -306,7 +307,7 @@ const ELBOW = 3;
 function spokenFor(w, elbows) {
   const out = new Set();
   for (const o of S.workers) {
-    if (o === w || o.type !== 'wizard' || !o.cell) continue;
+    if (o === w || o.type !== TYPE.WIZARD || !o.cell) continue;
     if (!elbows) { out.add(o.cell.r * sky.cols + o.cell.c); continue; }
     for (let dr = -ELBOW; dr <= ELBOW; dr++) {
       const r = o.cell.r + dr;

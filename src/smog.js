@@ -47,12 +47,13 @@ import { shadeNear } from './grid.js';
 import { pitTop } from './pit.js';
 import { dugTopY } from './quarry.js';
 import { rand } from './rng.js';
+import { TYPE } from './jobs.js';
 // Counted here rather than imported from `scrubhouse.js`, which is the same sum
 // that file exports for everybody else. It is one line, and importing it made a
 // ring -- the boards read the sky, the scrubbing house is a board, and the sky
 // asked the scrubbing house how many were in it -- so whichever file in the ring
 // happened to be reached first came up with its exports still empty.
-const inScrub = () => S.workers.filter(w => w.type === 'purifier' && w.goal === 'in').length;
+const inScrub = () => S.workers.filter(w => w.type === TYPE.PURIFY && w.goal === 'in').length;
 
 // Every mote in the air, climbing or arrived. This is the haze -- not a number
 // with a picture of a cloud beside it, the actual things.
@@ -1350,7 +1351,7 @@ export const poopCols = () => cols('poop');
 
 // Whether a given pair of hands may shift a given kind. The whole of the
 // ownership rule, asked of the kind rather than re-derived at every call site.
-const mayShift = (hand, kind) => !MESS[kind].theirs || !!(hand && hand.type === 'janitor');
+const mayShift = (hand, kind) => !MESS[kind].theirs || !!(hand && hand.type === TYPE.JANITOR);
 
 // What this pair of hands may shift, in the order it works it: its own post
 // first, since that is the job it was put on, and the weather after.
@@ -1749,7 +1750,7 @@ export function nearestMuck(wx, taken, hand) {
   // left on the pile (bodies work down there, and cross it) lay in the hole for
   // the rest of the run with the janitor loitering at its shed: barred here,
   // while every hauler that could walk to it was barred by `shiftable`.
-  const canDescend = hand && (hand.type === 'hauler' || hand.type === 'janitor');
+  const canDescend = hand && (hand.type === TYPE.HAUL || hand.type === TYPE.JANITOR);
   const m = muckCols();
   const here = c => { let n = 0; for (const s of mine) n += s[c] || 0; return n; };
   const home = colAt(wx);

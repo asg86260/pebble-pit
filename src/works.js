@@ -21,6 +21,7 @@
 
 import { S, bench, quarry, farm, lab, scrub, tower, apothecary } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
+import { JOB } from './jobs.js';
 
 // Where a row's work stands, and therefore whose hands do it.
 //
@@ -35,23 +36,23 @@ import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 // built is not standing there yet. Those go to the yard, and the yard's spare
 // hands walk over and put it up. See `builders` in crew.js.
 export const SITE_JOB = {
-  quarry: 'quarriers',
-  farm: 'farmhands',
-  scrub: 'purifiers',
-  tower: 'wizards',
-  yard: 'builders',
+  quarry: JOB.QUARRY,
+  farm: JOB.FARM,
+  scrub: JOB.PURIFY,
+  tower: JOB.WIZARD,
+  yard: JOB.BUILD,
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.
-  bench: 'builders',
+  bench: JOB.BUILD,
   // And the lab, which used to run a building site of its own behind the same
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
   // row in this file already was.
-  lab: 'scholars',
+  lab: JOB.SCHOLAR,
   // The apothecary, whose gang is its stirrers. Its rungs are built by its own
   // hands the way the plots break the next furrow; the brewing itself is an
   // upkeep stepped in apothecary.js, not a one-shot work here.
-  apothecary: 'stirrers'
+  apothecary: JOB.STIR
 };
 
 // --- what a site can take, and how fast ----------------------------------------
@@ -93,7 +94,7 @@ export const OPENS_PLACE = {
 };
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
-export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders');
+export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === JOB.BUILD);
 
 // Where the yard's spare hands are needed. The two sites that have no gang of
 // their own -- the yard and the bench -- and any station standing empty.
@@ -112,7 +113,7 @@ export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === 'builders')
 const noGang = site => !(S[SITE_JOB[site]] > 0);
 
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === 'builders' || noGang(site)));
+  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
 
 // And where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`

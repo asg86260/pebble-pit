@@ -36,6 +36,7 @@ import { walkY, setZoom, clampCam } from './world.js';
 import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 import { rand } from './rng.js';
+import { JOB } from './jobs.js';
 
 // Where the two of them stand: either side of the spot the rock is about to
 // land on, which is the middle of the yard and the middle of the game. The one
@@ -409,7 +410,7 @@ function show(t) {
 // would not. The trip to the hole was a thing it went and did; the rock is where
 // it lives.
 function toWork() {
-  if (S.crew > 0 && !S.rockhands) assign('rockhands', 1);
+  if (S.crew > 0 && !S.rockhands) assign(JOB.ROCK, 1);
 }
 
 function finish() {

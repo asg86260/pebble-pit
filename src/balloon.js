@@ -32,6 +32,7 @@ import { frames, now } from './clock.js';
 import { bandTop, bandLow } from './smog.js';
 import { walkY, yardLeft } from './world.js';
 import { windAt } from './wind.js';
+import { TYPE } from './jobs.js';
 
 // --- the craft ----------------------------------------------------------------------
 // An array of craft, not a count, from the very first one. A fleet is more
@@ -166,7 +167,7 @@ export const working = i => crewed(i) && CRAFT[i].lift > 0.98;
 // to is decided before it sets off and does not change under it" actually true
 // rather than only written down.
 export function berthFor(w) {
-  const others = S.workers.filter(o => o !== w && o.type === 'purifier' && o.berth != null);
+  const others = S.workers.filter(o => o !== w && o.type === TYPE.PURIFY && o.berth != null);
   const taken = new Set(others.map(o => o.berth));
   // What it already holds, if that is still a real place and still its own. The
   // ladder only goes up, so a craft is never sold out from under anybody -- but

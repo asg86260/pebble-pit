@@ -52,6 +52,7 @@ import { CRAFT, craftY, crewed, working } from './balloon.js';
 import { mineMs, capacity, mineRate, rockhandMs, haulCap, haulSpeed, benchMark, idle, capOf, handsOf, machineRate, kitFull, hats } from './upgrades.js';
 import { hasOffer, STATIONS, standRect } from './board.js';
 import { boiling as apothBoiling } from './apothecary.js';
+import { TYPE } from './jobs.js';
 
 // Dust that got past the hole. Everything thrown at the pit is thrown from the
 // near lip, so anything lying on the ground beyond the far wall is a throw that
@@ -331,7 +332,7 @@ export const snapshot = () => ({
   wizMs: Math.round(wizMs()),
   wizBite: wizBite(),
   janitors: S.janitors,
-  brewing: !!workOn('wizard'),
+  brewing: !!workOn(TYPE.WIZARD),
 
   // What the yard is in the middle of building, site by site: the row, how much
   // of the work is in, and how much it takes. A check that buys something past
@@ -346,7 +347,7 @@ export const snapshot = () => ({
   buildOrder: [...(S.buildOrder || [])],
   lent: [...(S.lent || [])],
   aloft: S.workers.filter(w => w.aloft).length,
-  wizardY: S.workers.filter(w => w.type === 'wizard').map(w => Math.round(w.y)),
+  wizardY: S.workers.filter(w => w.type === TYPE.WIZARD).map(w => Math.round(w.y)),
 
   // The smog, and the house that scrubs it.
   smog: smogReport(),
@@ -431,7 +432,7 @@ export const snapshot = () => ({
   plotTone: [...S.plotTone],
 
   // The rock being worked: which one, how deep, and how much is left.
-  underground: S.workers.filter(w => w.type === 'quarrier' && w.y > S.groundY).length,
+  underground: S.workers.filter(w => w.type === TYPE.QUARRY && w.y > S.groundY).length,
   boulderNo: S.boulderNo,
   depth: depthOf(),
   gw: S.gw,
@@ -492,7 +493,7 @@ export const snapshot = () => ({
 
   // The shovelling: who has claimed which stretch of floor, and what they are
   // carrying.
-  claims: S.workers.filter(w => w.type === 'hauler').map(w => w.claim),
+  claims: S.workers.filter(w => w.type === TYPE.HAUL).map(w => w.claim),
   floorX: floor.x,
   pitFree: pitFree(),
   booked: S.workers.reduce((n, w) => n + (w.booked || 0), 0),
@@ -521,7 +522,7 @@ export const snapshot = () => ({
   // The bodies on the purifiers, which is the one station whose people are in
   // two quite different places: through a door, or several hundred pixels up in
   // a basket. `berth` is -1 for the house and the craft's index otherwise.
-  scrubCrew: S.workers.filter(w => w.type === 'purifier').map(w => ({
+  scrubCrew: S.workers.filter(w => w.type === TYPE.PURIFY).map(w => ({
     name: w.name, x: Math.round(w.x), y: Math.round(w.y),
     berth: w.berth == null ? null : w.berth, aloft: !!w.aloft, goal: w.goal || null
   })),
