@@ -933,7 +933,14 @@ export const HANDLES = {
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
   // the same functions the pointer calls, so a check that sets the pot this way
   // sets it the way a player does.
-  __pot: key => { const u = APOTHECARY_UPGRADES.find(r => r.tonic === key); if (u) u.set(); return !!u; },
+  // Track F1: every pot has its own menu now, so the pot is named as well as the
+  // tonic -- the first one when nobody says, which is what every caller written
+  // before the pots came apart meant.
+  __pot: (key, pot = 0) => {
+    const u = APOTHECARY_UPGRADES.find(r => r.tonic === key && r.potIndex === pot);
+    if (u && u.show()) u.set();
+    return !!(u && u.show());
+  },
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
   __muckOverPit: muckOverPit, __look: look,

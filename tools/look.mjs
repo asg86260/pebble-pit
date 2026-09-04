@@ -90,6 +90,23 @@ const SCENES = {
     window.__fast(16);
     window.__look(window.__state().apothecaryX - 400);`,
 
+  // Track F1: the whole building at its widest -- the hut, the bookshelf with
+  // stock standing on all three shelves, and four pots each on a brew of its
+  // own, so the flames read as three different colours side by side. This is the
+  // shot the rework is for.
+  apothpots: `window.__reset(); window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__assign('stirrers', 4);
+    window.__pot('stew', 0); window.__pot('brace', 1);
+    window.__pot('strong', 2); window.__pot('stew', 3);
+    window.__fast(50);
+    window.__look(window.__state().apothecaryX - 320);`,
+
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});
          window.__loo(); window.__assign('janitors',1); window.__fast(20);

@@ -9,7 +9,8 @@
 // through the same `set` the board row's click calls.
 
 import { group, ok, state, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
-import { doseLive, boiling, brewMs, dosesPer, workBoost, critBoost } from '../src/apothecary.js';
+import { doseLive, boiling, brewMs, dosesPer, workBoost, critBoost,
+         doseStockTotal, potTonicOf, potSpentOf } from '../src/apothecary.js';
 
 // Open the farm, put the apothecary up, and hand the yard enough coin to brew.
 // Leaves a spare hand or two to make into a stirrer.
@@ -25,7 +26,9 @@ function standApothecary() {
 }
 
 const dosed = () => yard.S.workers.filter(doseLive);
-const doseHeld = () => (yard.S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
+// Stock is per tonic now (wave 5, item 13): what a batch mints goes on the
+// shelf for its own brew rather than into a per-pot heap.
+const doseHeld = () => doseStockTotal();
 
 // --- the building opens, the player's way -------------------------------------
 group('the apothecary opens after the plots are broken', async () => {
@@ -169,11 +172,11 @@ group('a one-off brews a single batch and then idles', async () => {
   window.__pot('stew');
   window.__potKeep(false);                      // a one-off
   window.__assign('stirrers', 1);
-  runUntil(() => yard.S.potSpent, 120);
-  const spent = yard.S.potSpent;
+  runUntil(() => potSpentOf(0), 120);
+  const spent = potSpentOf(0);
   // let the doses all deal out, then confirm no second batch ever starts
   run(120);
-  const minted = (yard.S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
+  const minted = doseStockTotal();
   return [
     ok(spent, 'the batch is put up and the pot is marked spent'),
     ok(minted === 0, 'its doses deal out and no second batch is brewed',
@@ -211,7 +214,7 @@ group('the pot remembers what it was set to across a reload', async () => {
   window.__reload();
   return [
     ok(yard.S.apothecaryOpen, 'the building comes back up'),
-    ok(yard.S.potTonic === 'brace', 'set to the tonic it was on', yard.S.potTonic),
+    ok(potTonicOf(0) === 'brace', 'set to the tonic it was on', potTonicOf(0)),
     ok(yard.S.lengthLevel === lvl, 'with its ladder where it was', `${lvl} -> ${yard.S.lengthLevel}`)
   ];
 });
