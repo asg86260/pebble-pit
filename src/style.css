@@ -355,40 +355,48 @@ canvas {
    same ink and border as every other sheet here. It hangs off the body rather
    than off its row -- the board carries a transform, and a transform captures
    `position: fixed` -- so it is styled on its own rather than under `.rows`. */
+/* It is a sheet, so it is built like every other sheet on this screen: white,
+   two-pixel black edge, uppercase and letterspaced. It hangs flush off the
+   bottom of the control it belongs to, so the two read as one piece of paper
+   rather than a box floating near a row. */
 .optspop {
   position: fixed;
   z-index: 21;                 /* over the boards, and over a note beside one */
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   background: #fff;
-  border: 1px solid #000;
-  padding: 2px 0;
+  border: 2px solid #000;
+  padding: 0;
   max-height: 60vh;
   overflow-y: auto;
   font: inherit;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 /* `display: flex` above beats the browser's own rule for the hidden attribute,
    so a shut list has to be shut again here -- without this every list on the
    board stands permanently open. */
 .optspop[hidden] { display: none; }
 .optspop .opt {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
   text-align: left;
-  padding: 2px 10px 2px 1.6em;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: .75;
+  color: #000;
+  background: none;
+  border: 0;
+  padding: 4px 14px 4px 10px;
+  cursor: pointer;
 }
-.optspop .opt:hover { color: #fff; background: #000; opacity: 1; }
-/* The one that is set, marked in the margin the indent leaves for it. */
-.optspop .opt.on { opacity: 1; }
-.optspop .opt.on::before {
-  content: '\2022';
-  position: absolute;
-  margin-left: -1em;
-}
-.optspop .opt { position: relative; }
+/* The one that is set, and the one under the cursor, both read the way a chosen
+   thing reads everywhere else on these boards: inverted. A dot in the margin was
+   a mark this game does not use anywhere, and it made the list look like a
+   document rather than a menu. */
+.optspop .opt:hover,
+.optspop .opt.on { color: #fff; background: #000; }
 .rows .job button {
   display: block;
   grid-template-columns: none;

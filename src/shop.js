@@ -115,7 +115,8 @@ function showOpts(row, chosen, opts) {
   opts.style.minWidth = `${Math.round(r.width)}px`;
   const box = opts.getBoundingClientRect();
   const room = innerHeight - r.bottom - 4;
-  const top = box.height <= room ? r.bottom + 2 : Math.max(4, r.top - box.height - 2);
+  // Flush with the control's edge, above it when there is no room below.
+  const top = box.height <= room ? r.bottom : Math.max(4, r.top - box.height);
   const left = Math.max(4, Math.min(r.right - box.width, innerWidth - box.width - 4));
   opts.style.top = `${Math.round(top)}px`;
   opts.style.left = `${Math.round(left)}px`;
