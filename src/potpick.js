@@ -26,8 +26,15 @@
 // in the game prints, marks and all, greyed when you cannot pay it. Setting a pot
 // is spending, and a control that asks you to spend without saying how much is a
 // control you have to go and look something up for.
+//
+// Under the two of them, quieter, what the brew actually does -- the boards' own
+// note register, a second line rather than a longer first one, so the names and
+// the bills stay in their columns and the list stays scannable at a glance. The
+// wording is `tonicGain`'s, in apothecary.js, which is the one place a brew's
+// effect is put into words.
 
-import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost } from './apothecary.js';
+import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
+         tonicGain, tonicOf } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
 import { MARK, priceText, purse } from './upgrades.js';
 import { screenAt } from './render/frame.js';
@@ -64,18 +71,29 @@ function build() {
     swatch.className = 'swatch';
     if (t) swatch.style.background = t.color;
     pick.appendChild(swatch);
+    // Everything the row says, in one column beside the swatch: the name and the
+    // bill on a line, the effect under them.
+    const says = document.createElement('span');
+    says.className = 'says';
+    const line = document.createElement('span');
+    line.className = 'line';
     const what = document.createElement('span');
     what.className = 'what';
     what.textContent = t ? t.name : 'nothing';
-    pick.appendChild(what);
-    // The bill hangs on the row and is filled at every open, so what it says is
-    // what the next batch will actually be charged -- and whether you can pay it
-    // is a fact about the pile a moment ago, not about when the list was built.
-    // Turning a pot off costs nothing and says nothing: an empty bill beside
-    // "nothing" would be a price on a thing that is not for sale.
+    line.appendChild(what);
+    // The bill and the effect hang on the row and are filled at every open, so
+    // what they say is what the next batch will actually be charged and what it
+    // will actually be worth -- both of which move under a rung. Turning a pot
+    // off costs nothing and does nothing: a price and an effect beside "nothing"
+    // would be a description of a thing that is not for sale.
     const bill = document.createElement('span');
     bill.className = 'bill';
-    pick.appendChild(bill);
+    line.appendChild(bill);
+    says.appendChild(line);
+    const gain = document.createElement('span');
+    gain.className = 'note';
+    says.appendChild(gain);
+    pick.appendChild(says);
     pick.addEventListener('click', () => {
       if (onPot >= 0) choosePotTonic(onPot, t ? t.key : null);
       shutOpts();
@@ -112,6 +130,7 @@ function openFor(i) {
     o.querySelector('.bill').innerHTML = brewCost(o.dataset.opt).map(([money, n]) =>
       `<span class="${purse(money) >= n ? 'have' : 'short'}">` +
       `${MARK[money]} ${priceText(money, n)}</span>`).join('');
+    o.querySelector('.note').innerHTML = tonicGain(tonicOf(o.dataset.opt));
   }
   stayOpen();                       // whatever grace was running, this cancels it
   openOptsAt(potRect(i), opts, null, 'center');

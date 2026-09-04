@@ -430,6 +430,15 @@ canvas {
    that way. */
 .optspop[data-potpick] .opt {
   display: flex;
+  align-items: flex-start;
+}
+.optspop[data-potpick] .opt .says {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.optspop[data-potpick] .opt .line {
+  display: flex;
   align-items: baseline;
 }
 .optspop[data-potpick] .opt .what { flex: 1 1 auto; }
@@ -439,6 +448,17 @@ canvas {
   white-space: nowrap;
 }
 .optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
+/* What the brew does, under what it is called: the boards' own note register,
+   so a second line reads as a footnote rather than as a second row. */
+.optspop[data-potpick] .opt .note {
+  opacity: .5;
+  font-size: .82em;
+  line-height: 1.3;
+  margin-top: .1em;
+}
+.optspop[data-potpick] .opt:hover .note,
+.optspop[data-potpick] .opt.on .note { opacity: .6; }
+.optspop[data-potpick] .opt .note:empty { display: none; }
 
 /* A block of the brew's own color, for the picker at the pot. The color itself
    is set on the element, because which color is data about the tonic and not a
@@ -451,6 +471,9 @@ canvas {
   vertical-align: -1px;
   border: 1px solid #000;
 }
+/* On a row that has a second line under it, the block belongs beside the NAME
+   rather than halfway down the whole row. */
+.optspop[data-potpick] .opt .swatch { margin-top: 3px; }
 .optspop .opt.on .swatch,
 .optspop .opt:hover .swatch { border-color: #fff; }
 .rows .job button {

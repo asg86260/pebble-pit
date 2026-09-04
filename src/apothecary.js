@@ -41,7 +41,7 @@ import { now, frames } from './clock.js';
 import { rand } from './rng.js';
 import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
-import { rebalance, rungCost, commutePace } from './upgrades.js';
+import { rebalance, rungCost, commutePace, unitText } from './upgrades.js';
 import { registerRows, registerSite } from './works.js';
 import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
@@ -103,6 +103,29 @@ const strengthOf = key => ease(STRENGTH0, STRENGTH5, potencyLevel(key)) / STRENG
 // to. A crit tonic reads in points of chance; the other two in a fraction of the
 // action.
 export const tonicVal = t => (t ? t.base * strengthOf(t.key) : 0);
+
+// What a brew does, in the few words a menu row has for it: how much of what,
+// and how long it lasts. Read live off the tonic's own potency ladder and off
+// the building's dose-length ladder, so a rung bought on one recipe changes what
+// the picker says about that recipe the next time it opens and says nothing
+// about the other two.
+//
+// One place, because it is said in one place: the picker at the pot. It was
+// written for the board rows that used to set a pot's brew and went with them,
+// and it is back for the control that replaced them -- the same string, because
+// the question "what does this do" did not change when the answer moved.
+//
+// Seconds are a clock, never the letter `s` (see `secondsMark` in upgrades.js).
+// The carry brew names haulers because it is the only brew a hauler takes at
+// all, and that is the fact that decides whether it is worth putting a pot on.
+export function tonicGain(t) {
+  if (!t) return '';
+  const v = Math.round(tonicVal(t) * 100);
+  const what = t.kind === 'work' ? `+${v}% work`
+             : t.kind === 'crit' ? `+${v} crit`
+             : `+${v}% carried, haulers too`;
+  return `${what}, ${Math.round(buffMs() / 1000)} ${unitText('s')}`;
+}
 
 // --- who a tonic is for -------------------------------------------------------
 // A hauler takes the carry brew and nothing else (item 12). Its whole day is the

@@ -958,6 +958,33 @@ export const TESTS = [
     await sleep(60);
     const pressed = !!pop() && !pop().hidden;
 
+    // What each brew does, said on the row -- and it has to follow the ladder.
+    // A potency rung bought on one recipe is a deeper stew and nothing else, so
+    // the stew's line has to move next time the list opens and the other two
+    // have to sit exactly where they were. Bought the way a player buys it: the
+    // board is opened and the row is pressed.
+    const linesNow = () => Object.fromEntries(
+      [...pop().querySelectorAll('.opt')]
+        .filter(o => o.dataset.opt)
+        .map(o => [o.dataset.opt, o.querySelector('.note').textContent.trim()]));
+    const before = linesNow();
+    const allSaid = priced.every(k => (before[k] || '').length > 0);
+
+    window.__board('apothecary');
+    await sleep(140);
+    const rung = document.querySelector('[data-key="potency-stew"]');
+    rung?.click();
+    window.__finish();                           // the yard builds what you buy
+    window.__board(null);
+    await sleep(40);
+
+    point('pointermove', two[0], two[1] + 260, 0);   // off every pot, so that...
+    await sleep(40);
+    point('pointermove', ...two, 0);                 // ...moving back reopens it
+    await sleep(60);
+    const deeper = linesNow();
+    const moved = priced.filter(k => before[k] !== deeper[k]);
+
     return [
       ok(open, 'standing at a cauldron drops its picker open, with no press'),
       ok(swatches === 4, 'with a swatch for each brew and one for nothing',
@@ -979,7 +1006,13 @@ export const TESTS = [
       ok(upAgain && heldOn,
          'wandering off does not shut it on the instant', `${upAgain} then ${heldOn}`),
       ok(wanderedOff, 'but it puts itself away a breath later'),
-      ok(pressed, 'and a press opens it too, for a screen with no hover')
+      ok(pressed, 'and a press opens it too, for a screen with no hover'),
+      ok(allSaid, 'every brew says what it does as well as what it costs',
+         priced.map(k => `${k}: ${before[k]}`).join(' / ')),
+      ok(!!rung, 'the stew has a potency rung to buy on the board'),
+      ok(moved.join(',') === 'stew',
+         'a rung on one recipe moves that row and no other',
+         `${moved.join(',') || 'nothing'} moved -- ${before.stew} -> ${deeper.stew}`)
     ];
   }],
 ];
