@@ -13,6 +13,7 @@ import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES } from './apothecary.js';
+import { APOTH_HUT_W, APOTH_HUT_H } from './config.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
@@ -77,7 +78,15 @@ const booksRect = () => ({ x: pit.x, y: S.groundY,
 // it. That read wrong -- the shed is what looks like the sign, so it is what
 // the hand goes to. It is the whole answer now: the hover target, the click
 // target, and the anchor the board hangs from, for both of them.
-const standAt = { bench, lab, apothecary, school, casino, scrub, tower,
+const standAt = { bench, lab, school, casino, scrub, tower,
+                  // The hut is the station (item 17): the whole plot is 408px of
+                  // hut, shelves and pots, and a board centered over all of it
+                  // hangs off the window on a narrow view. Hover, click and the
+                  // sheet all belong to the building that holds the rungs.
+                  get apothecary() {
+                    return { x: apothecary.x, y: S.groundY - APOTH_HUT_H,
+                             w: APOTH_HUT_W, h: APOTH_HUT_H };
+                  },
                   get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },

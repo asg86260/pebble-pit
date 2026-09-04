@@ -130,6 +130,12 @@ function showOpts(row, chosen, opts) {
   const r = chosen.getBoundingClientRect();
   opts.hidden = false;
   opts.style.minWidth = `${Math.round(r.width)}px`;
+  // Measured pinned at the origin, where nothing can wrap it: left where it
+  // last stood, a list near the window's right edge folds its longest label
+  // and reports a width the final position will not have, so the right edges
+  // land 15-40px apart depending on which station's board opened it.
+  opts.style.top = '0px';
+  opts.style.left = '0px';
   const box = opts.getBoundingClientRect();
   const room = innerHeight - r.bottom - 4;
   // Flush with the control's edge, above it when there is no room below.
