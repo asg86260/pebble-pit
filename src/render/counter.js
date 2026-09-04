@@ -3,7 +3,7 @@
 // Owns digits and drawCount and the counter's remembered marks. The shared
 // primitives (ctx, drawMark) come from ./ctx.js and ./marks.js.
 
-import { fmt } from '../board.js';
+import { fmt, openBoardRect } from '../board.js';
 import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
@@ -17,6 +17,8 @@ import { drawMark } from './marks.js';
 // screen as you scroll the length of the hole.
 const MARK = 9;          // a mark on the counter, in screen pixels
 const ROW = 19;          // and the gap between one row and the next
+const EDGE = 10;         // and how close to the glass it will stand
+const CLEAR = 8;         // the air it keeps between itself and an open board
 
 // the marks down the left of the counter, lifted off the card and put back
 let markCan = null, markKey = '';
@@ -41,16 +43,9 @@ export function drawCount() {
   ctx.font = '13px ui-monospace, "Courier New", monospace';
   ctx.textAlign = 'left';
 
-  // The dust count is the widest thing on it and it grows a digit at a time, so
-  // the room it needs is measured rather than guessed: a counter that clips its
-  // own number at seven figures is a counter that fails exactly when it matters.
-  const dust = digits(Math.round(S.shownStored));
-  const wide = MARK * 2 + ctx.measureText(dust).width + 10;
-  const x = Math.max(10, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
-  const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - 10);
-
   // Everything that is going on it, bottom row first. Gathered before any of it
-  // is drawn because the card behind it has to be the size of all of it.
+  // is placed, because how wide the card is decides where it can stand.
+  const dust = digits(Math.round(S.shownStored));
   const lines = [{ cell: null, text: dust }];
   if (S.seenCore) lines.push({ cell: CORE_CELL, text: String(S.cores) });
   if (S.seenShard) lines.push({ cell: SHARD_CELL, text: digits(S.shards) });
@@ -66,13 +61,48 @@ export function drawCount() {
   // same white box with a black edge every menu in this game is made of -- it is
   // the same kind of thing, a panel that says what you have.
   const PAD = 7;
+  // Measured off every row rather than off the dust alone. The room it needs was
+  // guessed from the widest count on the card -- which is the dust nearly always
+  // and is not a rule -- and the same figure has to be right about the board it
+  // now has to stand clear of, so it is the card's real width or it is nothing.
   const widest = lines.reduce((w, l) => Math.max(w, ctx.measureText(l.text).width), 0);
-  const box = {
-    x: Math.round(x - PAD),
-    y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
-    w: Math.round(MARK * 2 + widest + PAD * 2),
-    h: Math.round(MARK + (lines.length - 1) * ROW + PAD * 2)
-  };
+  const wide = Math.round(MARK * 2 + widest + PAD * 2);
+  const tall = Math.round(MARK + (lines.length - 1) * ROW + PAD * 2);
+
+  let x = Math.max(EDGE, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
+  const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - EDGE);
+
+  const box = { x: Math.round(x - PAD), y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
+                w: wide, h: tall };
+
+  // And clear of whatever board is open.
+  //
+  // The card floats over the pit and the books stand at the pit mouth, which is
+  // the whole point of them -- the counter says what you have and they say how
+  // fast it is arriving, so they belong within a glance of each other. Within a
+  // glance is not on top of: a board is an opaque element on the page and the
+  // card is paint underneath it, so an overlap is not a clash, it is the reading
+  // simply gone.
+  //
+  // The card is what moves, not the board. A board is seated on the station it
+  // belongs to and that seating is what makes it readable at all; the card has
+  // never had a place of its own -- it already slides along the pit to stay on
+  // screen -- so stepping aside is the thing it was already doing. Off the left
+  // by preference and off the right if the left has run out of glass, which is
+  // the rule the row notes already use when they run out of room (`showTipAt`).
+  // Neither side will take it on a very narrow window, and then it stays where
+  // it was: half a card behind a menu is better than a card off the glass.
+  const sheet = openBoardRect();
+  if (sheet && box.x < sheet.x + sheet.w && box.x + box.w > sheet.x &&
+      box.y < sheet.y + sheet.h && box.y + box.h > sheet.y) {
+    const left = sheet.x - CLEAR - box.w;
+    const right = sheet.x + sheet.w + CLEAR;
+    const put = left >= EDGE ? left
+              : right + box.w <= S.W - EDGE ? right
+              : box.x;
+    x += put - box.x;
+    box.x = put;
+  }
   ctx.fillStyle = '#fff';
   ctx.fillRect(box.x, box.y, box.w, box.h);
   ctx.strokeStyle = '#000';

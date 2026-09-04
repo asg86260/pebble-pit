@@ -272,6 +272,29 @@ export const nearHouse = (x, y) => {
 // and doing that sixty times a second for a menu whose size did not change is
 // work for nothing.
 let sized = { w: 0, h: 0 };
+
+// How big the sheet is *now*, with the last measurement standing in only while
+// it is not laid out at all.
+//
+// `sized` is a cache to keep the frame loop from forcing a layout sixty times a
+// second. It is not a second opinion, and it used to be treated as one: the
+// clamp below took `Math.max(sized.h, offsetHeight)` on the argument that the
+// pretend window a check reasons about is not the window on the screen, so the
+// taller of the two was the safe one. That is true of the direction it was
+// written for and false of the other, and the other happens every time a board
+// is swapped for a shorter one -- the cache still holds the *last* board's
+// height, and it belongs to a different sheet entirely. Clamped against 568
+// pixels of bench, a 292-pixel sheet in a 390-pixel window was pushed ninety
+// pixels off the top of the glass to make room for rows that were not there.
+//
+// A board that grows a section -- a pot, a shelf, a currency -- changes height
+// under its own seating, so this cannot be a rule about which boards exist. The
+// live measurement is the only thing that is about *this* sheet, so it wins
+// whenever there is one; a hidden element is zero by zero, and that is the one
+// case the cache is for.
+const measured = () => ({ w: panelEl.offsetWidth || sized.w,
+                          h: panelEl.offsetHeight || sized.h });
+
 export function remeasure() {
   // A board nobody is looking at measures nothing: a hidden element is zero by
   // zero, and taking that as the size would seat the next open board off the
@@ -324,7 +347,7 @@ function seatFlyout(el, at) {
 }
 
 function place(el, at) {
-  const w = sized.w || el.offsetWidth, h = sized.h || el.offsetHeight;
+  const { w, h } = measured();
   // Centred over the station, not hung off its left edge.
   //
   // For a building the two are nearly the same thing and nobody noticed. The
@@ -350,12 +373,9 @@ function place(el, at) {
   // it could land on.
   const strip = (S.groundY + P * 11 - S.camY) * S.zoom;      // where the counters begin
   const lowest = Math.max(GAP, S.H - strip);
-  // The top clamp takes the board at its tallest. `sized` is what the sheet
-  // measured when it was filled, and `offsetHeight` is what the browser is
-  // actually laying out right now -- and they part company whenever the window
-  // being reasoned about is not the window on the screen. Clamping on the
-  // smaller of the two lets the taller reality poke out of the top.
-  const highest = S.H - Math.max(h, el.offsetHeight) - GAP;
+  // The top clamp takes the board at the height it actually is -- see
+  // `measured`, which is where the two readings were reconciled.
+  const highest = S.H - h - GAP;
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
 
@@ -423,9 +443,17 @@ const SAFE_SLACK = 34;
 // wants the top corner, so it is turned back here rather than in four places.
 const panelRect = () => {
   if (putX === null) return null;
-  const h = sized.h || panelEl.offsetHeight;
-  return { x: putX, y: S.H - putY - h, w: sized.w || panelEl.offsetWidth, h };
+  const { w, h } = measured();
+  return { x: putX, y: S.H - putY - h, w, h };
 };
+
+// The same rectangle, for whatever is drawn on the canvas underneath it. A board
+// is a real element on the page and everything else in this game is paint, so
+// nothing painted can find out where the menu is standing without being told --
+// and a sheet is opaque, so anything it lands on is simply gone. The counter
+// over the pit is the one reading in the game, and it now shares its patch of
+// air with the books; it asks this and steps aside. Null while nothing is open.
+export const openBoardRect = () => (panelEl.hidden ? null : panelRect());
 
 // and where the station it belongs to is: the ground under the middle of it
 function apexAt(which) {
