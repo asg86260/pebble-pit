@@ -28,8 +28,19 @@ import { vnoise } from './flicker.js';
 //
 // `x`,`y` are the body's top-left; `frac` is how much of the dose is left (see
 // `doseFrac`), and the flame is shorter the less there is.
+// A tonic's colour, lifted toward white by `k`. The fire under the cauldron runs
+// three hand-picked colours from hot yellow to a red tip; a tonic cannot, because
+// its colour is the thing that says *which tonic*, and three hand-picked shades
+// per tonic would be nine constants to keep in step with a menu that grows. So
+// the one colour it already has is lifted, and the ramp comes out of it.
+const lift = (hex, k) => {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, gg = (n >> 8) & 255, b = n & 255;
+  const up = v => Math.round(v + (255 - v) * k);
+  return `rgb(${up(r)},${up(gg)},${up(b)})`;
+};
+
 export function drawDoseFlame(g, x, y, color, frac, t) {
-  g.fillStyle = color;
   const cols = 3;                                    // the body is three cells wide
   const mid = (cols - 1) / 2;
   for (let c = 0; c < cols; c++) {
@@ -46,7 +57,22 @@ export function drawDoseFlame(g, x, y, color, frac, t) {
     // the cauldron. Winking individual cells out on the way up was tried first
     // and it reads as static rather than as flame: what makes a pixel fire read
     // is a jagged top edge moving, not holes in the middle of it.
-    for (let hy = 0; hy < h; hy++) g.fillRect(fx, y - P - hy * P, P, P);
+    for (let hy = 0; hy < h; hy++) {
+      const up = hy / Math.max(1, h - 1);           // 0 at the root, 1 at the tip
+      // Palest where it is hottest, at the root, deepening to the tonic's own
+      // colour at the tip -- the same direction the cauldron's fire runs, and
+      // the reason a one-colour flame read as a paper cut-out.
+      g.fillStyle = lift(color, 0.55 * (1 - up) * (1 - up));
+      // And the very tip of a tall tongue licks sideways. Only the topmost cell,
+      // and only when there is a tongue under it to lean off: shifted any lower
+      // the cell tore away from its own column and read as a speck floating
+      // beside the flame rather than as a flame leaning. A cell either side or
+      // not at all, on its own noise, so neighbouring tips lean independently --
+      // shifting whole columns together would be the travelling-wave mistake.
+      const lick = hy === h - 1 && h >= 3 && vnoise(c * 23.1 + t / 95) > 0.55
+        ? (vnoise(c * 7.7 + t / 150) > 0.5 ? 1 : -1) : 0;
+      g.fillRect(fx + lick * P, y - P - hy * P, P, P);
+    }
   }
   g.fillStyle = '#000';
 }
