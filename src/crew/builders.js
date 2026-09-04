@@ -46,6 +46,13 @@ function siteFor(w) {
   return pick;
 }
 
+// The ground inside a site's zone that is nearest a given x, which is where a
+// body standing at that site belongs. The same span `jigSpan` works across in
+// dance.js -- the whole box, less the body's own width so it never hangs off
+// the far end -- so the spot a builder walks to and the patch it then shuffles
+// along are one rule rather than two that have to agree.
+const nearestIn = (box, x) => Math.max(box.x, Math.min(box.x + box.w - WORKER, x));
+
 // Where the work is, and how much of it there is to walk along.
 //
 // One box for every site -- `siteBox` in works.js, the same one the tape is
@@ -61,9 +68,29 @@ function buildStationX(w) {
   // Nowhere in particular to stand -- the two machines on the bench, a ram on
   // the rock, a belt the length of the yard -- so it works where it is.
   if (!box) return siteX(site);
-  // The near end of the zone, a body's width in, which is where a walk to it
-  // ends. The patch below carries it across the rest.
-  return box.x;
+  // The nearest ground inside the zone, which is where a walk to it ends. The
+  // shift below carries the body across the rest.
+  //
+  // This used to be `box.x` outright, described as "the near end" -- and the
+  // left corner is the near end only for somebody coming from the left. Every
+  // body lent to the cut comes from the other side (the rock and the shacks
+  // both stand to the right of it), so it walked the whole width of the work
+  // *past* the thing it had been sent to build, to stand at the far corner,
+  // and only then picked up a hammer. A hundred and fifty pixels of walking
+  // past your own errand, on every loan, at every site left of the body.
+  //
+  // Invisible until the stations were given room to breathe: the walk from the
+  // rock to the cut was five and a half seconds and the wasted stretch was
+  // inside the slack. One `STATION_GAP` later it was six, and a build that is
+  // supposed to be under way after six seconds of a lent body was not.
+  //
+  // Clamped rather than picked by side, because a side is a branch and a branch
+  // has a flip point in it: a body working across the span would cross the
+  // middle, the answer would jump the width of the box, and the walk and the
+  // hammer would be back in the tug of war the note below is about. A clamp is
+  // continuous -- a body already inside the zone is already there, distance
+  // nought -- so there is nothing to flip.
+  return nearestIn(box, w.x);
 }
 
 // A builder walks to the site and stands there. There is nothing to watch after
@@ -130,6 +157,19 @@ export function stepBuilder(w) {
   // Arrived, or nowhere in particular to walk to -- at work where it stands
   // either way.
   w.goal = 'at';
+  // ...and standing ON the work, not a fraction of a pixel off the end of it.
+  //
+  // Arriving is a patch and not a pixel (the note above), so the walk stops as
+  // soon as it is within a pixel of the mark -- which for a body coming from
+  // the left means it stops a fraction SHORT. `workJig` then takes that spot as
+  // the near end of its patch and steps four cells at a time from it, so every
+  // stance for the rest of the build carries that fraction: measured, six
+  // tenths of a pixel of an eighteen-pixel body hanging off the near end of a
+  // seventy-two pixel bench top, for the whole of the build. The slack belongs
+  // to the walk -- it is what stops the hammer and the walk fighting -- and it
+  // has no business deciding where the body's feet finish.
+  const zone = w.site && siteBox(w.site);
+  if (zone) w.x = nearestIn(zone, w.x);
   if (w.site && handsAt(w.site) > 0) {
     // The bench is a fixed structure, not terrain -- its top edge is always
     // where a body climbs on to. Everywhere else (the yard's own machines,
