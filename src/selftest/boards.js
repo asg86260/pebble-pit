@@ -814,6 +814,44 @@ export const TESTS = [
   // arriving. Walked up to with a real pointer, like every other board -- the
   // node tier can say what the rows compute, and only this tier can say that
   // standing there opens them.
+  // The janitor's closet, walked up to. It is the one stand in the yard nobody
+  // buys -- it comes with the crew, and the crew are there from the first frame
+  // -- so unlike every other board this one is reachable in a brand new game,
+  // which is exactly what it has to be: the row it carries is what opens the
+  // janitor's job, and it could not live on the board of the place that job
+  // opens.
+  [`the janitor's closet stands with the rooms, and walking up to it opens it`, async () => {
+    newRun();
+    await settle();
+    // mess on the ground is what puts the outhouse row on it -- see `show`
+    window.__crew(3, 2);
+    window.__tune('LOO_EVERY', 4000);
+    window.__air({ haze: 0, muck: 0 });
+    window.__fast(90);
+    window.__give(20000);
+    await raf();
+
+    const stand = state().stands.closet;
+    await hoverStation('closet');
+    const open = state().closetBoardOpen;
+    const rows = [...document.querySelectorAll('#closetshop [data-key]')]
+      .map(r => r.dataset.key);
+    const title = document.querySelector('#closetboard .title')?.textContent.trim();
+    await hoverAway();
+    const shut = !state().closetBoardOpen;
+    window.__crew(0, 0);
+
+    return [
+      ok(!!stand, 'there is a cupboard to stand at in a yard that has bought nothing',
+         stand ? `${stand.x},${stand.w}` : 'nowhere'),
+      ok(open, 'walking up to it opens its board'),
+      ok(title === "the janitor's closet", 'which says whose it is', title),
+      ok(rows.includes('unlockouthouse'),
+         'and the outhouse is sold on it, not on the bench', rows.join(',') || 'nothing'),
+      ok(shut, 'and walking away shuts it again')
+    ];
+  }],
+
   ['the books stand over the pit, and walking up to them opens them', async () => {
     newRun();
     await settle();

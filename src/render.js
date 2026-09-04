@@ -48,6 +48,7 @@ import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 import { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerBar, drawTowerWaves } from './render/tower.js';
+import { drawCloset } from './render/closet.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
 // game imports every one of these from render.js and has no business knowing
@@ -63,6 +64,7 @@ export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
 export { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 export { drawOuthouse, drawTower, drawTowerBar, drawTowerWaves, towerBarAt } from './render/tower.js';
+export { drawCloset } from './render/closet.js';
 export { drawBalloons, drawBrollies } from './render/balloon.js';
 export { drawScrub } from './render/scrub.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
@@ -117,6 +119,9 @@ const LAYERS = [
   { name: 'scrub house', draw: drawScrub },
   { name: 'tower', draw: drawTower },
   { name: 'outhouse', draw: drawOuthouse },
+  // Beside the outhouse and painted with it: both stand on the settlement's
+  // ground, behind the bodies that walk in front of them.
+  { name: 'closet',   draw: drawCloset },
   { name: 'pot pile', draw: drawPotPile },       // what is on the table, as a heap on the ground
   { name: 'sparks', draw: drawSparks },          // and whatever the last spin threw out of it
   { name: 'school', draw: drawSchool },

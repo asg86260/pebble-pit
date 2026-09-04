@@ -68,7 +68,11 @@ group('the shed is offered once the yard is in a state', async () => {
   window.__air({ haze: 0, muck: 0 });
   run(0.2);                                    // a frame, so the readings are this yard's
   const clean = state();
-  const offered = () => !!window.__upgrades().find(u => u.key === 'unlockouthouse')?.show();
+  // Asked of every row in the game rather than of the bench's list. The outhouse
+  // is sold at the janitor's closet now, not on the bench -- see src/closet.js --
+  // and what this group is about is *when* it is offered, which is the same
+  // question wherever the row is drawn.
+  const offered = () => !!window.__rows().find(r => r.key === 'unlockouthouse')?.shown;
   const before = offered();
   run(120);
   const after = offered();

@@ -307,7 +307,6 @@ import { CREW_ROWS } from './upgrades/rows-crew.js';
 import { FARM_ROWS } from './upgrades/rows-farm.js';
 import { SCHOOL_ROWS } from './upgrades/rows-school.js';
 import { SCRUB_ROWS } from './upgrades/rows-scrub.js';
-import { CLOSET_ROWS } from './upgrades/rows-closet.js';
 import { TOWER_ROWS } from './upgrades/rows-tower.js';
 import { CASINO_ROWS } from './upgrades/rows-casino.js';
 import { LAB_ROWS } from './upgrades/rows-lab.js';
@@ -796,7 +795,6 @@ export const UPGRADES = [
   ...FARM_ROWS,
   ...SCHOOL_ROWS,
   ...SCRUB_ROWS,
-  ...CLOSET_ROWS,
   ...TOWER_ROWS,
   ...CASINO_ROWS,
   ...LAB_ROWS,
@@ -823,12 +821,11 @@ export const SECTIONS = [
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the apothecary', keys: ['unlockapothecary'] },
   { title: 'the casino', keys: ['unlockcasino'] },
-  // The janitor's closet, not "the outhouse". Nothing under this heading is
-  // about a privy: it is the cupboard the shovels and the caps live in, and the
-  // row that puts it up has said so in those words since it was written. The
-  // rows are the ones that were here, at the prices they were, doing what they
-  // did -- see `src/upgrades/rows-closet.js`.
-  { title: "the janitor's closet", keys: ['unlockouthouse', 'loopost'] },
+  // The janitor's rows are not here any more: they are the closet's own board
+  // now -- see src/closet.js -- for the same reason the lab's and the school's
+  // rows left the bench. A decision about a place is made at the place, and
+  // this one was made under a heading naming a shed on the other side of the
+  // yard.
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }
