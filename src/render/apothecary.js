@@ -321,8 +321,12 @@ export function drawApothecary() {
       // building's top, in `barSpot`). The two used to sit three cells apart and,
       // three cells tall each, touched; the pot's bar low and the building's high
       // is also the truer reading -- one is the brew, the other the building.
+      // Five cells over the rim, not three: the steam lifts off the brew right
+      // where the bar used to sit, so the bar's bottom edge sat on the wisps'
+      // roots and hid them. Two cells up shows the steam rising under the bar
+      // while still keeping under the building's own bar (four over the hut).
       const mid = potX(i) + Math.round(CAULDRON[0].length / 2) * P;
-      bar(Math.round(mid / P) * P, S.groundY - (CAULDRON.length + 3) * P, frac);
+      bar(Math.round(mid / P) * P, S.groundY - (CAULDRON.length + 5) * P, frac);
     }
   }
 }
