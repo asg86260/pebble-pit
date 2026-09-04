@@ -21,9 +21,15 @@
 // the register the yard already reads tonics in -- the liquid in the bottles on
 // the rack, the flame under the pot, the plume off a dosed body -- so the picker
 // says which brew in the same word the rest of the building does.
+//
+// And what a batch of it costs, on the end of the row: the same bill every board
+// in the game prints, marks and all, greyed when you cannot pay it. Setting a pot
+// is spending, and a control that asks you to spend without saying how much is a
+// control you have to go and look something up for.
 
-import { TONICS, potTonicOf, choosePotTonic, potAt, potBox } from './apothecary.js';
+import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
+import { MARK, priceText, purse } from './upgrades.js';
 import { screenAt } from './render/frame.js';
 
 const canvas = document.getElementById('c');
@@ -58,7 +64,18 @@ function build() {
     swatch.className = 'swatch';
     if (t) swatch.style.background = t.color;
     pick.appendChild(swatch);
-    pick.appendChild(document.createTextNode(t ? t.name : 'nothing'));
+    const what = document.createElement('span');
+    what.className = 'what';
+    what.textContent = t ? t.name : 'nothing';
+    pick.appendChild(what);
+    // The bill hangs on the row and is filled at every open, so what it says is
+    // what the next batch will actually be charged -- and whether you can pay it
+    // is a fact about the pile a moment ago, not about when the list was built.
+    // Turning a pot off costs nothing and says nothing: an empty bill beside
+    // "nothing" would be a price on a thing that is not for sale.
+    const bill = document.createElement('span');
+    bill.className = 'bill';
+    pick.appendChild(bill);
     pick.addEventListener('click', () => {
       if (onPot >= 0) choosePotTonic(onPot, t ? t.key : null);
       shutOpts();
@@ -90,8 +107,12 @@ function openFor(i) {
   if (!opts) build();
   onPot = i;
   const at = potTonicOf(i);
-  for (const o of opts.querySelectorAll('.opt'))
+  for (const o of opts.querySelectorAll('.opt')) {
     o.classList.toggle('on', o.dataset.opt === (at || ''));
+    o.querySelector('.bill').innerHTML = brewCost(o.dataset.opt).map(([money, n]) =>
+      `<span class="${purse(money) >= n ? 'have' : 'short'}">` +
+      `${MARK[money]} ${priceText(money, n)}</span>`).join('');
+  }
   stayOpen();                       // whatever grace was running, this cancels it
   openOptsAt(potRect(i), opts, null, 'center');
 }

@@ -45,7 +45,8 @@ import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { CLOSET_UPGRADES, CLOSET_SECTIONS } from './closet.js';
-import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox } from './apothecary.js';
+import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
+         brewCost } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -962,6 +963,10 @@ export const HANDLES = {
   // has to aim at it, and the yard is the only thing that knows where it put its
   // pots -- so it says, and the pointer does the rest.
   __potSpot: i => potBox(i),
+  // What a batch of a tonic costs, straight off the thing that charges for it.
+  // A check comparing the picker's printed bill against a number it typed out
+  // itself would only be checking that two people copied the same constant.
+  __brewCost: key => brewCost(key),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
   __muckOverPit: muckOverPit, __look: look,

@@ -409,20 +409,35 @@ export function stepStirrer(w) {
 // thing that gates the brew: a pot with no crop to start on does not start, and
 // nothing smokes. A one-off brews a single batch and then idles; a keep-brewing
 // pot starts the next batch the moment the last one is minted.
-function canAffordBrew(key) {
+// What one batch of a tonic costs: crop on every recipe -- the green drain the
+// whole design wants -- plus the reagent that gives that recipe its identity.
+//
+// The one place the price is written. The pot asks it before it lights, the pot
+// pays it out of the same list, and the picker at the pot prints it, so what you
+// are shown and what you are charged cannot come apart. It reads as a bill --
+// pairs of currency and number -- because that is what every price in this game
+// is, and the picker hands it straight to the same marks the boards print.
+export const brewCost = key => {
   const t = tonicOf(key);
-  if (!t) return false;
-  if (S.spores < BREW_CROP) return false;
-  const reagent = t.reagent === 'dust' ? S.stored : t.reagent === 'shard' ? S.shards : S.spores;
-  return reagent >= BREW_REAGENT;
-}
+  return t ? [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]] : [];
+};
+
+// What is in the pile of a given coin. `purse` in upgrades.js is this, but this
+// module cannot see upgrades.js at load (the ring runs upgrades -> works ->
+// apothecary), and a brew has to know before it lights whether it can pay.
+const held = money =>
+  money === 'shard' ? S.shards :
+  money === 'spore' ? S.spores :
+  money === 'core' ? S.cores :
+  money === 'spark' ? S.sparks : S.stored;
+
+const canAffordBrew = key =>
+  brewCost(key).length > 0 && brewCost(key).every(([money, n]) => held(money) >= n);
 
 function spendBrew(key) {
-  const t = tonicOf(key);
-  // Crop, on every tonic -- the green drain. Taken through `take` so the grains
-  // are lifted out of the pile the way every price is paid.
-  take('spore', BREW_CROP);
-  take(t.reagent, BREW_REAGENT);
+  // Taken through `take` so the grains are lifted out of the pile the way every
+  // price in the game is paid.
+  for (const [money, n] of brewCost(key)) take(money, n);
 }
 
 // `take` is upgrades.js's, but importing it at the top makes a ring (upgrades ->

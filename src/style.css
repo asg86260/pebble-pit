@@ -423,6 +423,23 @@ canvas {
    document rather than a menu. */
 .optspop .opt:hover,
 .optspop .opt.on { color: #fff; background: #000; }
+/* The picker at the pot lays its rows out like a board row rather than like a
+   plain option: the name on the left, what a batch of it costs on the right, and
+   the column of bills lining up down the list. Scoped to the picker's own list,
+   because a board's dial options are words and nothing else and should stay
+   that way. */
+.optspop[data-potpick] .opt {
+  display: flex;
+  align-items: baseline;
+}
+.optspop[data-potpick] .opt .what { flex: 1 1 auto; }
+.optspop[data-potpick] .opt .bill {
+  flex: 0 0 auto;
+  padding-left: 18px;
+  white-space: nowrap;
+}
+.optspop[data-potpick] .opt .bill span + span { margin-left: 8px; }
+
 /* A block of the brew's own color, for the picker at the pot. The color itself
    is set on the element, because which color is data about the tonic and not a
    style; this is only how big the block is and where it sits. */

@@ -914,6 +914,18 @@ export const TESTS = [
     const swatches = pop() ? pop().querySelectorAll('.opt .swatch').length : 0;
     const marked = pop()?.querySelector('.opt.on')?.dataset.opt;
 
+    // What each row says a batch costs, against what the thing that charges for
+    // a batch says it costs. Both read off the page: a check with the numbers
+    // typed into it would only be proving that two people copied the same
+    // constant out of config.
+    const billOfRow = row => [...row.querySelectorAll('.bill span')]
+      .map(sp => `${sp.querySelector('i')?.className} ${sp.textContent.trim()}`);
+    const said = k => `${k}: ${billOfRow(pop().querySelector(`.opt[data-opt="${k}"]`)).join(', ')}`;
+    const charged = k => `${k}: ${window.__brewCost(k).map(([m, n]) => `${m} ${n}`).join(', ')}`;
+    const priced = ['stew', 'brace', 'strong'];
+    const wrong = priced.filter(k => said(k) !== charged(k));
+    const free = billOfRow(pop().querySelector('.opt[data-opt=""]')).length;
+
     // Crossing to the other cauldron moves the list with the cursor rather than
     // leaving it standing over the one you have left.
     point('pointermove', ...one, 0);
@@ -952,6 +964,11 @@ export const TESTS = [
          `${swatches} options`),
       ok(marked === '', 'the pot it opened over reads as set to nothing',
          String(marked)),
+      ok(wrong.length === 0, 'every brew says what the pot will actually be charged',
+         wrong.map(k => `${said(k)} not ${charged(k)}`).join(' / ') ||
+         priced.map(said).join(' / ')),
+      ok(free === 0, 'and turning a pot off carries no price at all',
+         `${free} marks`),
       ok(movedOn === 'stew', 'crossing to the other pot moves the list to it',
          String(movedOn)),
       ok(after.potTonics[1] === 'brace', 'picking a swatch sets THAT pot',
