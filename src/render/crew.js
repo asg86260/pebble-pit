@@ -552,12 +552,26 @@ export function drawWorkers() {
     if (frac > 0) {
       const t = now();
       ctx.fillStyle = doseColor(w);
-      const motes = Math.max(1, Math.round(frac * 4));
-      for (let m = 0; m < motes; m++) {
-        const ph = (t / 620 + m * 0.37 + (Math.abs(Math.round(w.x)) % 40) / 40) % 1;
-        const mx = x + WORKER / 2 + Math.round(Math.sin(t / 240 + m * 2) * 2) * P;
-        const my = y - P * 2 - Math.round(ph * 5) * P;
-        ctx.fillRect(Math.round(mx / P) * P, my, P, P);
+      // Anchored on the body's own spot, NOT on the leaning position it is drawn
+      // at: `x` carries the lunge and is mirrored by `w.face`, so an aura hung
+      // off it swung with every swing and jumped to the other side whenever the
+      // body turned round. It is the body that is glowing, and the body does not
+      // move when it leans.
+      const cx = Math.round(w.x) + WORKER / 2;
+      const cy = Math.round(w.y) + WORKER / 2;
+      // A ring around the body rather than a column climbing off it. Motes keep
+      // their station and breathe in and out on their own clocks, so it reads as
+      // something the body is giving off; rising and swaying read as flies.
+      const n = 8;
+      for (let m = 0; m < n; m++) {
+        if (m / n > frac) continue;              // it thins as the dose wears off
+        const a = (m / n) * Math.PI * 2 + t / 4200;      // a slow turn, not a climb
+        const puff = 0.5 + 0.5 * Math.sin(t / 760 + m * 1.9);
+        if (puff < 0.3) continue;                        // and winks out on the beat
+        const r = P * (2 + puff);
+        const mx = cx + Math.cos(a) * r;
+        const my = cy + Math.sin(a) * r * 0.75;          // a touch flatter than round
+        ctx.fillRect(Math.round(mx / P) * P, Math.round(my / P) * P, P, P);
       }
       ctx.fillStyle = '#000';
     }
