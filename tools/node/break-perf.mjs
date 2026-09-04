@@ -34,8 +34,9 @@ if (!process.env.NOTOWER) window.__meteor();          // the tower stands: the r
 window.__give(60000);
 // (the grant above has already torn it: what it could not hold went through)
 if (!S.riftOpen && !window.__buy('rift')) console.log('the rift could not be summoned; the yard is not the one measured');
-for (let i = 0; i < 14; i++) window.__buy('riftrate');
-if (!S.riftLevel) console.log('the rift is not widened; the yard is not the one measured');
+// It used to be widened here, fourteen rungs of a ladder on the tower. There is
+// no ladder: a torn rift inhales at full strength, so an open one is the yard
+// this measures. See `stepRift`.
 window.__fast(10);                                   // let everybody get to work
 
 const frames = seconds * 60;

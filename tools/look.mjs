@@ -113,6 +113,37 @@ const SCENES = {
          window.__dose('rockhand', 'brace'); window.__dose('janitor', 'strong');
          window.__look(window.__state().rockLeftX - 420);`,
 
+  // F4 (item 6): the same buff on bodies that are WALKING, which is where it
+  // used to come apart -- the plume was let go into the yard, so a body trailed
+  // it behind in a streak as long as its pace and pointing whichever way it was
+  // going. Haulers cross the whole yard between the rock and the lip, so a shot
+  // of the run catches them going both ways at once, and the one under two
+  // tonics says the two colours still read apart while it moves.
+  buffwalk: `window.__reset(); window.__crew(2, 5);
+         window.__dose('hauler', 'brace'); window.__dose('hauler', 'strong');
+         window.__dose('rockhand', 'stew'); window.__fast(12);
+         window.__look(window.__state().pitX - 620);`,
+
+  // F4 (item 21): the celebration. A rock is taken off and the gang have the
+  // ground to themselves for five seconds -- which is now straight jumps and
+  // nothing else, so what a still frame should show is bodies at different
+  // heights over one line of ground rather than a row of squares wandering
+  // sideways. Each body rolls its own tempo, so no two are at the same height.
+  dance: `window.__reset(); window.__crew(3, 4); window.__fast(3);
+          window.__next(); window.__fast(1.2);
+          window.__look(window.__state().rockLeftX - 300);`,
+
+  // F4 (item 19): crits landing. The roll is forced on and the rockhands are
+  // left to work, so every swing in shot is a crit -- a ring going out, the
+  // specks the blow threw, and the fountain of real dust over the top of it. A
+  // single swing by hand is no good here: the runner gives every scene a second
+  // before the shot and a ring is over in a third of one, so the yard has to be
+  // making them while the picture is taken.
+  crit: `window.__reset(); window.__crew(3, 0); window.__levels({pickLevel: 5,
+         rockhandSpeedLevel: 5, rockhandPickLevel: 5});
+         window.__crit(true); window.__fast(6);
+         window.__look(window.__state().rockLeftX - 260);`,
+
   // One hand on the whole row. This is the shot the row is *for*: a single body
   // stooping over one plot with the other six visibly coming on behind it,
   // rather than one stalk and six patches of bare dirt.

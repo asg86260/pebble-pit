@@ -42,6 +42,7 @@ import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
 import { drawPileGround, drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawScrub } from './render/scrub.js';
+import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
@@ -124,6 +125,9 @@ const LAYERS = [
   { name: 'rock', draw: drawRock },
   { name: 'rock sand', draw: drawRockSand },     // and whatever has come down on top of it
   { name: 'chips', draw: drawChips },            // and whatever is in the air off it
+  // F4: and the ring and specks off a crit, over the chips it threw up -- the
+  // blow is in front of its own spoil, the way a splash is in front of the water.
+  { name: 'shocks', draw: drawShocks },
 
   // The bench and the settlement go down before the loose stuff, not after.
   //

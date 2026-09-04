@@ -20,6 +20,7 @@ import { WORKER, LOO_EVERY, LOO_SPREAD, LOO_MS, LOO_MUCK } from '../config.js';
 import { inWorking } from '../route.js';
 import { dropMuckAt, cleanSpotNear } from '../smog.js';
 import { rand } from '../rng.js';
+import { MOVE_KEYS } from './dance.js';
 
 export function relieve(w, now) {
   // Its own hour -- and it starts somewhere *inside* the cycle rather than a
@@ -50,6 +51,14 @@ export function relieve(w, now) {
   }
 
   if (now < w.looAt) return false;
+  // Not in the middle of a celebration. A dance is five seconds and this has
+  // waited an hour; it can wait five more. It is also the one stage in the list
+  // that stops a body without moving it, and a dancing body's feet are off the
+  // ground -- so a squat begun mid-jump left somebody standing in the air for
+  // the length of it, which is the "left hanging" the dance's own check catches.
+  // Asked of the move rather than of `jigAt`, so a builder's hammering -- which
+  // uses the same fields and lasts a whole build -- is not held out with it.
+  if (MOVE_KEYS.includes(w.move)) return false;
   // finish what you are holding -- and there is nowhere to go from the sky. A
   // wizard aloft is not somewhere a walk can start: it comes down when it has
   // nothing to do, and it can go then.

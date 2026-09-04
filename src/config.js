@@ -51,6 +51,8 @@ export * from './config/crits.js';
 export * from './config/apothecary.js';
 // Track F3 (wave5): the pips under a row's name, and the books over the pit.
 export * from './config/boards.js';
+// F4: the rift's pull and look, a crit landing, and the dance.
+export * from './config/effects.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.
@@ -105,12 +107,13 @@ import { FARM_KNOBS } from './config/farm.js';
 import { WEATHER_KNOBS } from './config/weather.js';
 import { LAB_KNOBS } from './config/lab.js';
 import { ROCK_KNOBS } from './config/rocks.js';
+import { EFFECT_KNOBS } from './config/effects.js';   // F4
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...CREW_KNOBS, ...SCHOOL_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS, ...LAB_KNOBS,
-  ...ROCK_KNOBS
+  ...ROCK_KNOBS, ...EFFECT_KNOBS
 ];
 
 // The rows, by key. Asking for a knob that has no row is worth hearing about:

@@ -13,13 +13,11 @@
 
 import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './lab.js';
-import { S, rift } from './state.js';
+import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
-         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         RIFT_RATE } from './config.js';
+         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS } from './config.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
-import { riftRate, riftUpCost } from './rift.js';
 import { syncWorkers } from './crew.js';
 import { emptySky } from './meteor.js';
 import { registerRows, workOn, leftAt, progressOf } from './works.js';
@@ -164,50 +162,31 @@ export const TOWER_UPGRADES = [
 ];
 
 // --- the black hole ------------------------------------------------------------
-// The rift, summoned. It used to be a row on the bench under `the hole`, which
-// sold it as a purchase: pay, and the hole in the ground has a hole in the air
-// beside it. It is the one plainly magic thing done to the one plainly dirt
-// thing, and the tower is where the yard's magic comes from -- so it is called
-// down from here, once the pit has been a problem, the way the first star was.
-// Its ladder sits beside it for the same reason the wizards' do: what a board
-// is about is what stands on it. What it is and what it swallows is in rift.js.
-TOWER_UPGRADES.push(
-  // There is no row here that summons the black hole, and that is the point.
-  //
-  // It used to be one: red, dust, and a note about the hole no longer being the
-  // ceiling. The trouble was what it was a cure FOR. A full hole stops the yard
-  // -- a hauler cannot put its load down, so nothing is banked, so nothing is
-  // earned -- and this row was priced in the very coin that had stopped coming
-  // in. A player whose hole filled before they could afford it was stuck, and
-  // playing harder could not get them out.
-  //
-  // So the hole collapses on its own the first time it cannot take a grain (see
-  // `throughRift` in pit.js) and the purchase is gone with the problem. What is
-  // left on this board is the ladder below: the hole is there, and how wide it
-  // is opened is still something to buy.
-  {
-    key: 'riftrate',
-    kind: 'rung', site: 'tower',
-    name: 'widen the black hole',
-    unit: 'dust/s',
-    // No `rung`, and that is the point rather than an omission. `rungOf` calls a
-    // row with no rung "not a ladder at all -- a building, a one-off, a job --
-    // and never finished", which is exactly what this is. Five pips over the one
-    // row in the game that must not end would be the board promising an end.
-    note: () => `it swallows ${Math.round(riftRate() * RIFT_RATE)} a second instead of ${Math.round(riftRate())}`,
-    bill: () => [['spark', riftUpCost()], ['dust', riftUpCost() * 60]],
-    buy: () => { S.riftLevel = (S.riftLevel || 0) + 1; },
-    show: () => S.towerOpen && !!S.riftOpen
-  }
-);
+// **Nothing on this board is about the rift, and that is the whole of it.**
+//
+// There were two rows here in turn. The first summoned the black hole: red and
+// dust, offered the first time the hole said no -- and what it was a cure for
+// was a yard that had stopped earning, so it was priced in the very coin that
+// had stopped coming in. That one went when the hole learned to collapse on its
+// own (see `throughRift` in pit.js).
+//
+// The second was the ladder: how wide the hole is torn, bought a rung at a time,
+// for ever. It went for a plainer reason. A black hole is not a thing you tune.
+// It is the one object in this yard that is not machinery -- it has no walls, no
+// tender and no dial, and a board row promising it half a second more appetite
+// made it a machine with a bad interface. What it does now it does at full
+// strength from the moment it tears: it takes everything, on the frame it
+// arrives. See `stepRift` in rift.js.
+//
+// A save that bought rungs of the old ladder loses nothing by it -- every one of
+// them collapses into behavior the yard now has for free, and `S.riftLevel` is
+// still read back off the save so an old file still loads clean.
 
 export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   // And what the tower does for the rest of the yard, which is the only thing on
   // any board that is about somewhere else entirely.
-  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
-  // And the one it does to the hole.
-  { title: 'the black hole', keys: ['riftrate'] }
+  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) }
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a

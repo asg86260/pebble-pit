@@ -31,6 +31,7 @@ import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
 import { stepGrit } from './grit.js';
+import { stepShocks } from './shock.js';        // F4
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
 import { cubes as houseCubes } from './house.js';
 // Track F3 (wave5): the books over the pit, which measure what the yard earned.
@@ -68,7 +69,7 @@ import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
-import { stepApothecary, stepDoseMotes, stepDoses, setTake } from './apothecary.js';
+import { stepApothecary, stepDoses, setTake } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is here rather than in `restOnRock` because it is the chip loop's
 // own question -- has this thing reached the surface yet -- and every other
@@ -229,6 +230,7 @@ export const STEPS = [
   { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
   { name: 'smoke',        step: c => stepSmoke(c.now, c.dt) },   // which the chimney says out loud
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
+  { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table
   { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
   { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
@@ -242,7 +244,12 @@ export const STEPS = [
   { name: 'scrub',        step: c => stepScrub(c.dt) },   // and the pumps on the scrubbing house
   { name: 'apothecary',   step: c => stepApothecary(c.dt) },  // and the pot on the boil, minting its doses
   { name: 'doses',        step: stepDoses },              // spent tonics come off the bodies wearing them
-  { name: 'dosemotes',    step: c => stepDoseMotes(c.dt) },   // and the rest burn off whoever is under them
+  // F4: there is no `dosemotes` step any more. The tonic's plume used to be let
+  // go into the yard here, as world-space motes that stayed where they were
+  // dropped -- which trailed the buff behind a walking body in a streak whose
+  // length was its pace and whose direction was its facing (item 6). The haze is
+  // drawn on the body's own box now, off the clock, with nothing to step: see
+  // `drawDoseHaze` in render/effects.js.
   // And the rift swallows, if it is torn. It takes grains off the top of the
   // pile without taking them off you -- see `swallow` in pit.js -- so this is
   // the one thing in the yard that empties the hole and leaves the counter where

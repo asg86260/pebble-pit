@@ -12,6 +12,7 @@ import { scoopMs, haulCap } from './upgrades.js';
 import { pitFull, pitRefuses } from './pit.js';
 import { rand } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
+import { shockAt } from './shock.js';       // F4: the ring a crit throws
 
 // roughly normal, in about -1.5..1.5, most of it near nothing
 export const bell = () => rand() + rand() + rand() - 1.5;
@@ -83,6 +84,12 @@ export function critToss(px, py, shade, key = 'rock', power = 3) {
   ch.crit = true;
   ch.cv = Math.abs(v.vy) || 1;   // launch |vy|: the fastest it moves, the swell's floor
   ch.cp = power;
+  // And the blow itself: a ring going out and a scatter of specks, which are not
+  // dust and are not counted -- see shock.js. Asked for once per grain, because
+  // this is called once per grain; `shockAt` keeps one shock per blow -- one
+  // frame at one place of work -- rather than the caller having to know it is in
+  // a loop.
+  shockAt(px, py, power, key);
 }
 
 // The one arc from here to there: the pop is sized to the distance, and the
