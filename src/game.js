@@ -109,41 +109,37 @@ export function settleIntoWorld() {
   seedWeather();       // and a sky that is already full of cloud
 }
 
-export function step() {
-  // The bench arrives the moment there is something on it worth buying, and
-  // stays from then on: a bench that came and went would be worse than one that
-  // sat there empty.
-  if (!S.seenBench && canAfford()) { S.seenBench = true; S.dirty = true; }
-  // The plots are dug when the ground is broken, not when the first farmhand
-  // walks up to them: a plot you have paid for that shows nothing but fence
-  // posts reads as a purchase that did not happen. Asked every frame rather
-  // than hooked onto the sale, so a save, the dev panel and the sale itself all
-  // arrive at the same plot; it is two length checks and it does nothing once
-  // the plots are there.
-  if (S.farmOpen) plantPlots();
-  // And the ground each station heaps on, for the same reason: a save, the dev
-  // panel and the door itself all arrive at the same strips. It does nothing at
-  // all unless the set of open places has actually changed. See `layPiles`.
-  layPiles();
-  // How long this frame was, before anything moves on the strength of it. It
-  // used to be worked out halfway down, which was fine while it was only handed
-  // to the things below it; now that everything which moves reads it (see
-  // `frames` in clock.js) it has to be the first thing the frame knows.
-  const frameNow = clockNow();
-  const dt = Math.min(100, frameNow - (S.lastFrame || frameNow));  // a long tab-out is not a long frame
-  S.lastFrame = frameNow;
-  setFrames(dt);
-  stepCamera(clockNow());
-  stepShake();                                // and whatever the last landing left
-  stepAir();
-  stepPaid();
-  sampleRates(clockNow());
-  const now = clockNow();
-  stepWeather(now);
+// --- the order a frame happens in ---------------------------------------------
+// One list, top to bottom, and it IS the order: `step` walks it and does nothing
+// else. It is the same shape as the layer list in render.js, and for the same
+// reason -- the order was load-bearing and buried in a call sequence, where the
+// only way to see it was to read the whole function and the only way to move
+// something was to hope. Two of these positions have a comment on them saying
+// what breaks if they move; those comments are the point of the list.
+//
+// Each entry is handed `c`, the frame: `{ now, dt }`, filled in by the `clock`
+// entry before anything reads it. `frames()` is the same number for the whole
+// frame once `setFrames` has run, so anything wanting it asks the clock.
+//
+// Adding a step is one row here. Where in the list it goes is a decision you
+// have to make out loud, which is the whole idea.
 
-  // How much is lying about. Counting fifty thousand cells is not a thing to do
-  // every frame, and the answer moves by a grain at a time, so it is counted
-  // twice a second and the crew are told to stop or start on that.
+// How long this frame was, before anything moves on the strength of it. It used
+// to be worked out halfway down, which was fine while it was only handed to the
+// things below it; now that everything which moves reads it (see `frames` in
+// clock.js) it has to be the first thing the frame knows.
+function startFrame(c) {
+  const frameNow = clockNow();
+  c.dt = Math.min(100, frameNow - (S.lastFrame || frameNow));  // a long tab-out is not a long frame
+  S.lastFrame = frameNow;
+  setFrames(c.dt);
+  c.now = clockNow();
+}
+
+// How much is lying about. Counting fifty thousand cells is not a thing to do
+// every frame, and the answer moves by a grain at a time, so it is counted
+// twice a second and the crew are told to stop or start on that.
+function countTick() {
   S.tick++;
   // four times a second, not twice: this is what tells a station it has room
   // again, and waiting half a second to notice reads as the crew dawdling.
@@ -155,74 +151,121 @@ export function step() {
   // And the mess settles, a few times a second rather than every frame: a heap
   // finding its angle is a slow thing and nobody is watching a single cell.
   if (S.tick % 12 === 3) slumpMess();
-  tidyBoards();                               // and no submenu outliving its board
-  stepRock();                                 // a new one on its way down
-  updateWorkers(now, dt);
-  // A lever that was thrown during the pass asks for its station to be staffed
-  // again, and it cannot do that itself: `restaff` calls `syncWorkers`, which
-  // replaces `S.workers` -- the very array the pass was walking. So the arrival
-  // sets a latch and it is drained here, one frame's worth at a time, safely
-  // outside the loop. This is the same reason the yard does its rebuilding
-  // between passes rather than inside them.
+}
+
+// A lever that was thrown during the crew pass asks for its station to be
+// staffed again, and it cannot do that itself: `restaff` calls `syncWorkers`,
+// which replaces `S.workers` -- the very array the pass was walking. So the
+// arrival sets a latch and it is drained here, one frame's worth at a time,
+// safely outside the loop. This is the same reason the yard does its rebuilding
+// between passes rather than inside them.
+function drainRestaff() {
   if (S.restaff) { const r = S.restaff; S.restaff = null; restaff(r.job, r.want); }
-  // Before `stepSmog`, so the dirt a machine makes this frame is in this frame's
+}
+
+function holdToMine(now) {
+  if (!S.mining) return;
+  S.nextHit = Math.max(S.nextHit, now - 500);      // don't burst after a background tab
+  while (now >= S.nextHit) {
+    // A held swing takes the top off, at the nearest high point to where the
+    // cursor is -- see `topOfRock`. You aim a click; holding the button is
+    // working, and a rock is worked from the top down.
+    const at = overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
+    if (at) knockOff(at.x, at.y, undefined, false);   // hold-to-mine is still your hands
+    S.nextHit += mineMs();
+  }
+}
+
+export const STEPS = [
+  // The bench arrives the moment there is something on it worth buying, and
+  // stays from then on: a bench that came and went would be worse than one that
+  // sat there empty.
+  { name: 'bench', step: () => {
+      if (!S.seenBench && canAfford()) { S.seenBench = true; S.dirty = true; } } },
+  // The plots are dug when the ground is broken, not when the first farmhand
+  // walks up to them: a plot you have paid for that shows nothing but fence
+  // posts reads as a purchase that did not happen. Asked every frame rather
+  // than hooked onto the sale, so a save, the dev panel and the sale itself all
+  // arrive at the same plot; it is two length checks and it does nothing once
+  // the plots are there.
+  { name: 'plots',   step: () => { if (S.farmOpen) plantPlots(); } },
+  // And the ground each station heaps on, for the same reason: a save, the dev
+  // panel and the door itself all arrive at the same strips. It does nothing at
+  // all unless the set of open places has actually changed. See `layPiles`.
+  { name: 'piles',   step: layPiles },
+  { name: 'clock',   step: startFrame },      // and how long this frame was
+  { name: 'camera',  step: c => stepCamera(c.now) },
+  { name: 'shake',   step: stepShake },       // and whatever the last landing left
+  { name: 'air',     step: stepAir },
+  { name: 'paid',    step: stepPaid },
+  { name: 'rates',   step: c => sampleRates(c.now) },
+  { name: 'weather', step: c => stepWeather(c.now) },
+  { name: 'survey',  step: countTick },
+  { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
+  { name: 'rock',    step: stepRock },        // a new one on its way down
+  { name: 'crew',    step: c => updateWorkers(c.now, c.dt) },
+  { name: 'restaff', step: drainRestaff },
+  // Before `smog`, so the dirt a machine makes this frame is in this frame's
   // sky rather than trailing it by one -- the same ordering the stations' own
   // fouling already has.
-  stepMachines(now);                          // and whatever the machines got through
-  stepRecords(dt);                            // and everybody gets a little older
-  stepBreaks(now);                            // and what the stopped ones get up to
-  stepLab(dt);                                // and whatever the lab is working on
+  { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through
+  { name: 'records',  step: c => stepRecords(c.dt) },     // and everybody gets a little older
+  { name: 'breaks',   step: c => stepBreaks(c.now) },     // and what the stopped ones get up to
+  { name: 'lab',      step: c => stepLab(c.dt) },         // and whatever the lab is working on
   // The collapse does NOT take the camera. It was tempting -- it is the one
   // thing that happens to you rather than because you pressed something -- but
   // the view is where you put it, and a yard that yanks it away is a yard
   // interrupting you to show you a thing you did not ask about. It also stole
   // the frame from anything else pointing the camera, which is how it was
   // noticed. The hole is there when you next look at it.
-  stepWorks(dt);                              // and whatever the yard is building
-  stepMachineSmoke(now);                      // and the stacks over the machines
-  stepSmoke(now, dt);                         // which the chimney says out loud
-  stepGrit(dt);                               // and the chips off a builder's hammer
-  stepCasino(dt);                             // and the wheel, if there is anything on the table
-  stepTable(dt);                              // and the pot, arriving or leaving, a grain at a time
-  maybeReunion(now);                          // the one beat after the first rock
-  stepIntro(now);                             // and, once and once only, the two of them
-  stepBuried(now);                            // and whoever is under the rock, when they can be seen
-  stepHouse(now);                             // and the crew's own hearth, now and then
-  stepCore();
-  stepMeteor(now);                            // and the sky, which has a rock in it now
-  stepSummon(dt);                             // and whatever the ring is pouring into it
-  stepSparkle(dt);                            // and the magic they leave in the air
-  stepScrub(dt);                              // and the pumps on the scrubbing house
-  stepApothecary(dt);                         // and the pot on the boil, minting its doses
-  stepDoses();                                // spent tonics come off the bodies wearing them
-  stepDoseMotes(dt);                          // and the rest burn off whoever is under them
+  { name: 'works',        step: c => stepWorks(c.dt) },   // and whatever the yard is building
+  { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
+  { name: 'smoke',        step: c => stepSmoke(c.now, c.dt) },   // which the chimney says out loud
+  { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
+  { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table
+  { name: 'table',        step: c => stepTable(c.dt) },   // and the pot, arriving or leaving, a grain at a time
+  { name: 'reunion',      step: c => maybeReunion(c.now) },  // the one beat after the first rock
+  { name: 'intro',        step: c => stepIntro(c.now) },  // and, once and once only, the two of them
+  { name: 'buried',       step: c => stepBuried(c.now) }, // and whoever is under the rock, when they can be seen
+  { name: 'house',        step: c => stepHouse(c.now) },  // and the crew's own hearth, now and then
+  { name: 'core',         step: stepCore },
+  { name: 'meteor',       step: c => stepMeteor(c.now) }, // and the sky, which has a rock in it now
+  { name: 'summon',       step: c => stepSummon(c.dt) },  // and whatever the ring is pouring into it
+  { name: 'sparkle',      step: c => stepSparkle(c.dt) }, // and the magic they leave in the air
+  { name: 'scrub',        step: c => stepScrub(c.dt) },   // and the pumps on the scrubbing house
+  { name: 'apothecary',   step: c => stepApothecary(c.dt) },  // and the pot on the boil, minting its doses
+  { name: 'doses',        step: stepDoses },              // spent tonics come off the bodies wearing them
+  { name: 'dosemotes',    step: c => stepDoseMotes(c.dt) },   // and the rest burn off whoever is under them
   // And the rift swallows, if it is torn. It takes grains off the top of the
   // pile without taking them off you -- see `swallow` in pit.js -- so this is
   // the one thing in the yard that empties the hole and leaves the counter where
   // it was.
-  stepRift(dt);
-  stepSmog(dt);                               // and the sky, which is filling up
-  stepBalloons();                             // and the craft crossing it
-  sampleAir(now);
-  if (S.dragging) catchAir(S.mouse.x, S.mouse.y);   // swinging does not catch its own spray
-
-  if (S.mining) {
-    S.nextHit = Math.max(S.nextHit, now - 500);      // don't burst after a background tab
-    while (now >= S.nextHit) {
-      // A held swing takes the top off, at the nearest high point to where the
-      // cursor is -- see `topOfRock`. You aim a click; holding the button is
-      // working, and a rock is worked from the top down.
-      const at = overBoulder(S.mouse.x, S.mouse.y) ? topOfRock(S.mouse.x) : null;
-      if (at) knockOff(at.x, at.y, undefined, false);   // hold-to-mine is still your hands
-      S.nextHit += mineMs();
-    }
-  }
-
-  const f = frames();
+  { name: 'rift',      step: c => stepRift(c.dt) },
+  { name: 'smog',      step: c => stepSmog(c.dt) },       // and the sky, which is filling up
+  { name: 'balloons',  step: stepBalloons },              // and the craft crossing it
+  { name: 'sampleair', step: c => sampleAir(c.now) },
+  // swinging does not catch its own spray
+  { name: 'catch', step: () => { if (S.dragging) catchAir(S.mouse.x, S.mouse.y); } },
+  { name: 'mining', step: c => holdToMine(c.now) },
   // The belt's band, before the chips: a load that runs off the head becomes a
   // chip this same frame, and it should fall on the frame it left rather than
   // hanging in the air for one.
-  stepBelt(now, f);
+  { name: 'belt',  step: c => stepBelt(c.now, frames()) },
+  { name: 'chips', step: c => stepChips(c.now) },
+  { name: 'settle', step: () => {
+      settleSome(floor, SETTLE_BUDGET);
+      settlePit();
+      if (cut.grid) settleSome(cut, SETTLE_BUDGET); } }
+];
+
+export function step() {
+  const c = { now: 0, dt: 0 };
+  for (const s of STEPS) s.step(c);
+}
+
+// Everything in the air, one frame further along, and whatever it lands on.
+function stepChips(now) {
+  const f = frames();
   for (let i = S.chips.length - 1; i >= 0; i--) {
     const ch = S.chips[i];
     // however long this frame was, in the sixtieths these speeds are written in
@@ -353,10 +396,6 @@ export function step() {
       S.dirty = true;
     }
   }
-
-  settleSome(floor, SETTLE_BUDGET);
-  settlePit();
-  if (cut.grid) settleSome(cut, SETTLE_BUDGET);
 }
 
 // One walk of the ground, four times a second, for the things worth knowing about
