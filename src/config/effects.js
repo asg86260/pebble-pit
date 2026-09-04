@@ -72,20 +72,6 @@ export const RIFT_STREAK_LEN = 4;    // and how many cells long it is drawn
 export const RIFT_TAIL = 3;          // cells of tail behind a grain
 export const RIFT_TAIL_R = 2.2;      // and how near the disc, in radii, it grows one
 
-// --- the tonic on a body ------------------------------------------------------
-// The haze a dosed body gives off, drawn **on the body's own box** and derived
-// from the clock: no list, no stepping, nothing saved. See `drawDoseHaze`.
-//
-// The plume used to be let go into the yard as world-space motes, which is why
-// these numbers are here at all: a mote dropped where the head was stays there,
-// so a walking body trailed its buff behind it in a streak that got longer the
-// faster it went, and which way it pointed depended on which way the body
-// happened to be facing. The same tonic looked like four different things.
-export const DOSE_HAZE_MOTES = 5;    // motes of it in the air over a fresh dose
-export const DOSE_HAZE_MS = 900;     // how long one takes to rise and go
-export const DOSE_HAZE_RISE = 3.5;   // cells it climbs in that time
-export const DOSE_HAZE_SPREAD = 0.9; // and how far it wanders to either side
-
 // --- a crit landing -----------------------------------------------------------
 // The crit already throws its own spoil up as a fountain (see `critToss`), and
 // that is the part of it that is *real*: those are the grains the work turned

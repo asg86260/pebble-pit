@@ -194,13 +194,18 @@ group('the celebration is jumping, and nothing but jumping', async () => {
 
 // --- the tonic on a body ---------------------------------------------------------
 //
-// The buff is drawn on the body's own box, off the clock -- see `drawDoseHaze`.
-// Neither tier can see that, but the thing it replaced is a fact about the yard
-// and can be checked: the plume used to be let go INTO the yard, as world-space
-// motes that stayed where they were dropped, which is what trailed a walking
-// body's buff behind it in a streak as long as its pace (item 6). Nothing is let
-// go any more, so there is nothing to trail.
-group('a tonic leaves nothing behind a body that walks', async () => {
+// **Item 6 is withdrawn.** It read the plume's trail as a bug -- the same buff
+// wearing a different face depending on which way a body walked and how fast --
+// and the answer built for it drew the haze on the body's own box instead, with
+// nothing let go into the yard. Looked at in the running game that was the wrong
+// call and the user said so: the plume let go behind a walking body is the point
+// of it, and the yard is back to what it did before the wave.
+//
+// So what is pinned here is the opposite of what this group used to say: the
+// motes ARE let go into the yard, they stay where they were dropped, and a body
+// that walks leaves them behind it. Neither tier can see the picture; what it
+// can see is that the yard is still making one.
+group('a tonic is let go into the yard behind a body that walks', async () => {
   window.__reset();
   window.__crew(2, 2);
   run(1);
@@ -209,14 +214,20 @@ group('a tonic leaves nothing behind a body that walks', async () => {
   const moved = S.workers.map(w => w.x);
   run(4);
   const walked = S.workers.some((w, i) => Math.abs(w.x - moved[i]) > 6);
-  const colored = S.smoke.filter(m => m.color).length;
+  const colored = S.smoke.filter(m => m.color);
+  // A mote left where it was dropped is a mote the body has walked away from:
+  // with several in the air at once off a moving body, they cannot all be
+  // standing over one spot.
+  const spread = new Set(colored.map(m => Math.round(m.x))).size;
 
   return [
     ok(walked, 'somebody crossed some ground under a tonic'),
-    ok(colored === 0, 'and no colored mote was left lying in the yard behind them',
-       `${colored} in the air`),
-    ok(!STEPS.some(s => s.name === 'dosemotes'),
-       'there is no step that lets one go', STEPS.map(s => s.name).join(',')),
+    ok(colored.length > 0, 'and the tonic is coming off it into the yard',
+       `${colored.length} colored motes in the air`),
+    ok(spread > 1, 'left where they were let go rather than riding the head',
+       `${spread} places for ${colored.length} motes`),
+    ok(STEPS.some(s => s.name === 'dosemotes'),
+       'the step that lets them go is in the frame', STEPS.map(s => s.name).join(',')),
     ok(S.workers.some(w => (w.doses || []).length), 'while the doses are still on')
   ];
 });
