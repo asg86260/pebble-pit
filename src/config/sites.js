@@ -50,10 +50,6 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 //             heap's WIDTH is never declared -- it is `heapBase(key) * P`, the
 //             width that key's own limit needs at `BANK_SLOPE`, so the ground
 //             reserved and the ground used cannot disagree.
-//   gap       bare ground between this site's leftmost extent and whatever comes
-//             next along. This is the number that says "do not build on top of
-//             me", and it is the only spacing anybody has to think about when
-//             adding a station.
 //   side      which side of the site its heap lies on. 'right' means towards the
 //             rock, which is where a body throwing already aims. The scrubbing
 //             house is the exception: its spout is on the left wall, so a strip
@@ -65,18 +61,55 @@ export const PILE_STANDOFF = { farm: P * 9, quarry: P * 12 };
 // Adding a station is a row. Its spot is reserved from the moment the table
 // names it, whether or not it has been bought, so "place it in the next open
 // spot" is true by construction rather than by arithmetic at purchase time.
+// --- Track F2: the yard's furniture ------------------------------------------
+// One gap between every pair of neighbouring sites, and the whole of the yard's
+// spacing.
+//
+// Every row here used to carry a `gap` of its own -- eleven numbers between 60
+// and 240, each measured by hand against whatever happened to stand beside it
+// when it was written. The near end of the walk was the cramped end: the bench,
+// the settlement, the closet and the school stood 60 to 102 apart, close enough
+// to read as one long building, while the far end had 240 of bare ground
+// between the apothecary and the lab. Eleven numbers cannot be right about a
+// yard whose order changes with what you buy (see `siteOrder` in world.js) --
+// a gap measured against the lab is a guess the moment the farm is standing
+// there instead.
+//
+// So there is one. It is wide enough to clear the widest thing a site hangs off
+// its own left-hand side -- the farmhands' kit stand, eighteen cells out from
+// the first plot -- because that stand is furniture belonging to the site
+// behind it and may not end up inside the next site along.
+export const STATION_GAP = P * 20;
+// And the bare ground between the tower's wall and the near end of the star's
+// ground under it. See the tower's row below: the star is the tower's business,
+// so the ground it drops its rind on is reserved by the tower's own slot.
+export const SUN_GAP = P * 3;
+
+// A shack is a course taller than it was, and wears an eave. Item 1 of
+// feedback5: the sheds beside the cut and the field read as meagre -- a black
+// box with a slot in it, at the two sites you spend the most time looking at.
+// The presence is the extra course and the lip; what tells them apart is the
+// detail each one carries (see drawFarmShed / drawQuarryShed in render/sites.js).
+export const SHACK_RISE = P;
+export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
+
 export const SITES = [
-  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null,     gap: 60 },
-  { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null,     gap: 102 },
-  { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null,     gap: 102 },
-  { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null,     gap: 96 },
-  { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry', gap: 234 },
-  { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm', gap: 132 },
-  { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null,     gap: 240 },
-  { key: 'lab',      w: () => LAB_W,                       standoff: 0,  pile: null,     gap: 138 },
-  { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  gap: 210, side: 'left' },
-  { key: 'casino',   w: () => CASINO_W,                    standoff: 0,  pile: null,     gap: 168 },
-  { key: 'tower',    w: () => TOWER_W,                     standoff: 0,  pile: null,     gap: 66 }
+  { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
+  { key: 'house',    w: () => HOUSE_COLS * HOUSE_CUBE,     standoff: 0,  pile: null },
+  { key: 'outhouse', w: () => OUTHOUSE_W,                  standoff: 0,  pile: null },
+  { key: 'school',   w: () => SCHOOL_W,                    standoff: 0,  pile: null },
+  { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry' },
+  { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm' },
+  { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null },
+  { key: 'lab',      w: () => LAB_W,                       standoff: 0,  pile: null },
+  { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
+  { key: 'casino',   w: () => CASINO_W,                    standoff: 0,  pile: null },
+  // The tower carries the star's ground on its own far side, which is what puts
+  // the star beside it (item 10). A wizard is made in the tower and flies from
+  // it to the star, so the two are one station in everything but where they
+  // stand -- and the rind the star drops has to land on ground somebody has
+  // reserved, or it walks the yard looking for a column with room in it.
+  { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left' }
 ];
 
 // The bare ground between the rock's centre and the far edge of the first site

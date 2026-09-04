@@ -167,6 +167,20 @@ const SCENES = {
         window.__assign('janitors',1); window.__fast(30);
         window.__look(window.__state().outhouseX - 260);`,
 
+  // --- Track F2: the yard's furniture ---------------------------------------
+  // The two shacks, side by side in one frame: the field's with its trough and
+  // the cut's with the timber over its door. Nothing else in the list frames
+  // both -- `quarry` and `farm` each look at the work rather than at the shed
+  // beside it -- and the whole question about a shack is whether it reads as a
+  // different building from the other one.
+  shacks: `${RICH} window.__look(window.__state().farmShed.x - 60);`,
+
+  // The far end of the walk: the tower, the star beside it and the ground under
+  // the star, which is where item 10 put them. The star wants the meteor open or
+  // there is nothing up there to look at.
+  westend: `${RICH} window.__meteor(); window.__fast(3);
+            window.__look(window.__state().towerX - 420);`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 

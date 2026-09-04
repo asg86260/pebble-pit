@@ -182,6 +182,23 @@ export function drawScrub() {
   ctx.fillStyle = '#fff';
   ctx.fillRect(c(throatMid), r(HOOD), P, P);
 
+  // A vent out of the far wall (item 1 of feedback5). It is the one wall of this
+  // building with nothing on it: the chute hangs off the near side, the hood
+  // opens upward, the door is at the foot, and the right-hand face is a blank
+  // column of black from the flare down to the ground.
+  //
+  // A stub through the wall with an elbow turned up at its end, drawn on sky
+  // rather than cut into the wall, for the reason everything else on this
+  // building is: white laid over a face this building has already painted white
+  // is a nick you cannot see, and a hole in the black would read as a second way
+  // in. It turns UP because what a scrubbing house has spare is air, and air
+  // goes up -- the chute on the other side turns down, because what it has spare
+  // there is grit.
+  ctx.fillStyle = '#000';
+  const vent = c(across - towerL);
+  ctx.fillRect(vent, r(HOOD + 2), P * 2, P);
+  ctx.fillRect(vent + P, r(HOOD + 1), P, P);
+
   // The shaft, and the bellows in it. It starts one whole solid course below the
   // point of the throat: without that course the hole at the end of the funnel
   // would open straight into the top of the shaft, and a hole opening into a hole
