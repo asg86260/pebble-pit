@@ -769,7 +769,24 @@ export const TESTS = [
     await sleep(40);
     const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
+
+    // The cursor wandering off puts it away -- after a breath, so that crossing
+    // the gap between the control and the list does not shut it under you.
+    chosen?.click();
+    opts?.dispatchEvent(new PointerEvent('pointerleave', { bubbles: false }));
+    await sleep(120);
+    const heldOn = !opts?.hidden;                // still there a moment later
+    await sleep(600);
+    const wanderedOff = !!opts?.hidden;
+
+    // And it never outlives the board it belongs to: it hangs off the body, so
+    // the board closing does not take it with it unless something says so.
+    chosen?.click();
+    const upAgain = !opts?.hidden;
     window.__board(null);
+    await sleep(40);
+    const wentWithBoard = !!opts?.hidden;
+
     window.__crew(0, 0);
     return [
       ok(shutFirst, 'the list starts shut, with the set option on the row itself'),
@@ -781,7 +798,11 @@ export const TESTS = [
       ok(Math.abs(wasAt - stillAt) < 1, 'and nothing under it moves to make room',
          `${Math.round(wasAt)} -> ${Math.round(stillAt)}`),
       ok(said === 'miners', 'pressing one of them sets it', said),
-      ok(shutAfter, 'and the list shuts behind the choice')
+      ok(shutAfter, 'and the list shuts behind the choice'),
+      ok(heldOn, 'the cursor leaving does not shut it on the spot'),
+      ok(wanderedOff, 'but it puts itself away a breath later'),
+      ok(upAgain && wentWithBoard, 'and it never outlives the board it belongs to',
+         `${upAgain} then ${wentWithBoard}`)
     ];
   }],
 ];

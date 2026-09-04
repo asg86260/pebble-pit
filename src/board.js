@@ -14,7 +14,8 @@ import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
-import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved } from './shop.js';
+import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
+         shutOpts } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -599,6 +600,14 @@ export function showPanel(want, now = false) {
   // Back where it was, before it had gone anywhere: nothing happened.
   if (want === at) { clearTimeout(leaving); leaving = 0; return; }
 
+  // An option list hangs off the body rather than off the board (it has to --
+  // see `showOpts`), so nothing about the board going away takes it with it. It
+  // goes the moment the board is asked to leave, not when the board finally
+  // settles: the board lingers for a breath so that walking to the next station
+  // is one movement, and a menu left standing over the yard for that breath is
+  // exactly what this looked like.
+  if (!want) shutOpts();
+
   // Off to bare ground. Hold the board where it is for a moment -- see LINGER --
   // rather than closing on the spot, so that walking to the next station along
   // is one movement instead of a close and an open.
@@ -617,6 +626,7 @@ export function showPanel(want, now = false) {
 // leaving answered above it.
 function settle(want) {
   if (want === at) return;
+  shutOpts();                  // and a board swapped for another takes its lists with it
   // Walking off to another station, or off to nothing, takes the submenu with
   // it. Done before `at` moves, so the list is put away while it still belongs
   // to the board it is standing beside.

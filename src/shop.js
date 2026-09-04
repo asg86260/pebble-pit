@@ -99,13 +99,28 @@ const built = new WeakMap();
 // beside a row (`#tip`) lives outside the board for the same reason. Placed from
 // the control's own rect once it is out there.
 let openList = null;
+let leaving = 0;                 // the wander-off timer, if one is running
 
-function shutOpts() {
+export function shutOpts() {
+  clearTimeout(leaving);
+  leaving = 0;
   if (!openList) return;
   openList.opts.hidden = true;
   openList.row.classList.remove('open');
   openList = null;
 }
+
+// The cursor wandering off puts the list away, but not the instant it crosses
+// the edge: the gap between the control and the list, and the width of a finger
+// on the way down a column of options, are both places the pointer is briefly
+// outside the thing it is using. So it is a short grace, cancelled the moment
+// the pointer comes back to either the list or the control that opened it.
+const LEAVE_MS = 450;
+function leaveSoon() {
+  clearTimeout(leaving);
+  leaving = setTimeout(shutOpts, LEAVE_MS);
+}
+function stayOpen() { clearTimeout(leaving); leaving = 0; }
 
 // Under the control, right edges lined up, and kept on the screen: flipped above
 // when there is no room below, and pulled back inside the window at either edge.
@@ -271,6 +286,11 @@ function build(el, list, sections, empty) {
           opts.dataset.forDial = u.key;
           document.body.appendChild(opts);
           row._opts = opts;
+          // Wandering off shuts it; coming back to either half calls that off.
+          opts.addEventListener('pointerenter', stayOpen);
+          opts.addEventListener('pointerleave', leaveSoon);
+          row.addEventListener('pointerenter', stayOpen);
+          row.addEventListener('pointerleave', leaveSoon);
           for (const o of u.options()) {
             const pick = document.createElement('button');
             pick.type = 'button';
