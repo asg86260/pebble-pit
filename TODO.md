@@ -5,8 +5,12 @@
 Both batches are on main: the scalability refactor (config/smog/upgrades
 barrels, `SAVED` lists with a round-trip check, the `LAYERS` and `STEPS`
 lists, the crew `JOBS` registry) and all 21 feedback5.md items through the
-new seams. Canon in `docs/wave5.md`; eight tracks, six follow-up fix
-branches, all merged and green except the standing red below.
+new seams. Canon in `docs/wave5.md`; eight tracks, nine follow-up fix
+branches, all merged and green except the standing red below. Two of the
+wave's unasked-for changes were reverted on the user's review (2026-09-04):
+the cauldron kept its original 13-cell shape (the pot pitch widened instead,
+which the derived world budget absorbs), and the tonic plume went back to
+exactly its pre-wave let-go-into-the-yard behavior — item 6 is withdrawn.
 
 Follow-ups the wave surfaced, none blocking:
 
