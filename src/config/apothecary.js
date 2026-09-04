@@ -101,7 +101,17 @@ export const SHELF_CAP = 5;            // bottles a plank shows before it starts
 // screen pixels, placed against a gap measured in world pixels, overlaps at some
 // zoom or some count no matter where you put it. Given ground of its own inside
 // the case, and clipped to it, it cannot reach anything however big it gets.
-export const SHELF_NUM_W = 3;          // cells of the plank kept for the count
+export const SHELF_NUM_W = 3;          // cells of the plank always kept for the count
+// ...and what it takes once there IS a count in it: the last bottle's place as
+// well. A plank showing four bottles and a readable "12" says more than five
+// bottles and a speck -- the numeral is the reading at that point, and the fifth
+// bottle was only ever saying "and more".
+export const SHELF_NUM_WIDE = SHELF_NUM_W + BOTTLE_PITCH;
+// The floor on the numeral, in cells of its own height. Everything else in this
+// game is measured in cells, and a glyph is the one thing that was not: it was
+// shrunk to fit by fractions of a CSS pixel and came out unreadable. Two cells
+// tall is the smallest a number in this yard may be.
+export const SHELF_NUM_MIN = 2;
 export const SHELF_PAD = 1;            // and a cell of air inside each wall
 export const APOTH_SHELF_ROWS = BOTTLE_H + 1;    // a bottle and the plank under it
 export const APOTH_SHELF_W = P * (2 + SHELF_PAD * 2
@@ -110,6 +120,11 @@ export const APOTH_SHELF_W = P * (2 + SHELF_PAD * 2
 export const APOTH_SHELF_H = P * (1 + 3 * APOTH_SHELF_ROWS);   // a plank a tonic, and a top
 export const APOTH_GAP = P * 3;        // bare ground between hut, shelves and the first pot
 export const POT_W = P * 13;           // a cauldron is this wide...
+// ...and this tall. It is the CAULDRON grid's own row count -- the picture is
+// the truth and this follows it, so retyping a row into the grid means changing
+// this too. What wants it is the box you click to set that pot's brew, which is
+// not drawing and so cannot read the grid.
+export const POT_H = P * 10;
 // Four clear cells between one belly and the next. Bellies this fat need real
 // air between them or four of them in a row read as one black wall rather than
 // as four pots -- and the walk has room for it now that GROUND_LEFT is derived

@@ -121,9 +121,32 @@ const SCENES = {
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
-    window.__stock('stew', 5); window.__stock('brace', 2);
-    window.__stock('strong', 12);
+    window.__stock('stew', 5); window.__stock('brace', 12);
+    window.__stock('strong', 999);
     window.__fast(3); window.__look(window.__state().apothecaryX - 320);`,
+
+  // The picker at the pot (item 17): the second cauldron pressed, its list of
+  // brews dropped open over it as swatches. The press is a real pointerdown on
+  // the canvas at the pot's own spot, because that is the only thing that opens
+  // it -- there is no hook that puts the list up, and there should not be.
+  apothpick: `window.__reset(); window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__pot('stew', 0); window.__pot('brace', 1);
+    window.__look(window.__state().apothecaryX - 200);
+    (() => {
+      const s = window.__state(), b = window.__potSpot(1);
+      const x = (b.x + b.w / 2 - s.camX) * s.zoom;
+      const y = (b.y + b.h / 2 - s.camY) * s.zoom;
+      const c = document.getElementById('c');
+      for (const type of ['pointerdown', 'pointerup'])
+        c.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y,
+          pointerId: 1, isPrimary: true, button: 0,
+          buttons: type === 'pointerup' ? 0 : 1, bubbles: true }));
+    })();`,
 
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});

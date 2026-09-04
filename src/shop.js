@@ -108,7 +108,7 @@ export function shutOpts() {
   leaving = 0;
   if (!openList) return;
   openList.opts.hidden = true;
-  openList.row.classList.remove('open');
+  openList.row?.classList.remove('open');
   openList = null;
 }
 
@@ -126,8 +126,15 @@ function stayOpen() { clearTimeout(leaving); leaving = 0; }
 
 // Under the control, right edges lined up, and kept on the screen: flipped above
 // when there is no room below, and pulled back inside the window at either edge.
-function showOpts(row, chosen, opts) {
-  const r = chosen.getBoundingClientRect();
+//
+// It takes a RECT rather than the element it hangs off, because the second thing
+// in the game with a list of named options to pick from is not a board row at
+// all: it is a cauldron in the yard, and a cauldron has no DOM to measure. Every
+// rule about where a list may stand -- flush right, flipped when there is no room
+// below, pulled back inside the window, measured pinned at the origin so nothing
+// wraps it -- is a rule about the window, not about boards, and there is no
+// version of it that should exist twice. See potpick.js.
+export function openOptsAt(r, opts, row = null) {
   opts.hidden = false;
   opts.style.minWidth = `${Math.round(r.width)}px`;
   // Measured pinned at the origin, where nothing can wrap it: left where it
@@ -143,16 +150,21 @@ function showOpts(row, chosen, opts) {
   const left = Math.max(4, Math.min(r.right - box.width, innerWidth - box.width - 4));
   opts.style.top = `${Math.round(top)}px`;
   opts.style.left = `${Math.round(left)}px`;
-  row.classList.add('open');
+  row?.classList.add('open');
   openList = { row, opts };
 }
+
+// A board row's own: the control it hangs off is an element, and its rect is
+// what `openOptsAt` wants.
+const showOpts = (row, chosen, opts) =>
+  openOptsAt(chosen.getBoundingClientRect(), opts, row);
 
 // Anywhere else puts it away -- including a press on the yard behind the board.
 // `pointerdown` rather than `click` so it is shut before whatever was pressed
 // acts on it; a press inside the list is the one that chooses, and is left alone.
 addEventListener('pointerdown', e => {
   if (!openList) return;
-  if (openList.opts.contains(e.target) || openList.row.contains(e.target)) return;
+  if (openList.opts.contains(e.target) || openList.row?.contains(e.target)) return;
   shutOpts();
 }, true);
 addEventListener('keydown', e => { if (e.key === 'Escape') shutOpts(); });

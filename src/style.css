@@ -423,6 +423,19 @@ canvas {
    document rather than a menu. */
 .optspop .opt:hover,
 .optspop .opt.on { color: #fff; background: #000; }
+/* A block of the brew's own color, for the picker at the pot. The color itself
+   is set on the element, because which color is data about the tonic and not a
+   style; this is only how big the block is and where it sits. */
+.optspop .opt .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 1px solid #000;
+}
+.optspop .opt.on .swatch,
+.optspop .opt:hover .swatch { border-color: #fff; }
 .rows .job button {
   display: block;
   grid-template-columns: none;

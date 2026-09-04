@@ -21,6 +21,7 @@ import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
+import { potPick } from './potpick.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
 import { card, houseRect } from './crewboard.js';
@@ -140,6 +141,11 @@ canvas.addEventListener('pointerdown', e => {
   // the yard that is not on a board, and it has to be caught here or a bought
   // machine can never be switched off by anybody but a dev hook.
   if (rosterHit(p.x, p.y)) return;
+  // A cauldron is a control as well as a picture: clicking one drops open the
+  // picker for what that pot brews (item 17). Before the ground behind it, for
+  // the machine lever's reason -- it is a thing you press, and the ground is
+  // what is left when you have not pressed anything.
+  if (potPick(p.x, p.y)) return;
   if (overBoulder(p.x, p.y)) {                // false once the rock is finished
     // The top, at the nearest high point to where you clicked -- the same place
     // a held swing lands. Clicking is aiming at the rock, not at a cell of it:

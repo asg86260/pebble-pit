@@ -44,7 +44,7 @@ import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
-import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock } from './apothecary.js';
+import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, potBox } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -946,6 +946,10 @@ export const HANDLES = {
   // job and it does it by brewing. This is for looking at a full shelf without
   // waiting twenty batches for one.
   __stock: (key, n) => setStock(key, n),
+  // Where a cauldron stands, in world pixels. A check that wants to CLICK a pot
+  // has to aim at it, and the yard is the only thing that knows where it put its
+  // pots -- so it says, and the pointer does the rest.
+  __potSpot: i => potBox(i),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
   __muckOverPit: muckOverPit, __look: look,

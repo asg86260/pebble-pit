@@ -842,4 +842,54 @@ export const TESTS = [
       ok(shut, 'and walking away shuts them again')
     ];
   }],
+
+  // A cauldron is a control: clicking one drops open the picker for what THAT
+  // pot brews (item 17). Done the way a player does it -- the pointer goes to
+  // the pot, the swatch is clicked -- because the whole point of the feature is
+  // that you do not have to go and find a board, and a check that set the tonic
+  // through a hook would prove nothing about the route.
+  //
+  // Two pots, so the check can say the thing that matters: the picker sets the
+  // pot you clicked and leaves the other one exactly where it was.
+  ['clicking a pot picks what that pot brews', async () => {
+    newRun();
+    await settle();
+    window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__pot('stew', 0);                     // the first pot is set and stays set
+    window.__look(state().apothecaryX - 200);    // both pots on the glass
+    await raf();
+
+    const box = window.__potSpot(1);             // the yard says where its second pot is
+    const at = onScreen(box.x + box.w / 2, box.y + box.h / 2);
+    point('pointerdown', ...at);
+    point('pointerup', ...at);
+    await sleep(60);
+
+    const pop = document.querySelector('[data-potpick]');
+    const open = !!pop && !pop.hidden;
+    const swatches = pop ? pop.querySelectorAll('.opt .swatch').length : 0;
+    const marked = pop?.querySelector('.opt.on')?.dataset.opt;
+
+    pop?.querySelector('.opt[data-opt="brace"]')?.click();
+    await sleep(40);
+    const after = state();
+    const shut = !!pop && pop.hidden;
+
+    return [
+      ok(open, 'pressing a cauldron drops its picker open'),
+      ok(swatches === 4, 'with a swatch for each brew and one for nothing',
+         `${swatches} options`),
+      ok(marked === '', 'the pot it was pressed on reads as set to nothing',
+         String(marked)),
+      ok(after.potTonics[1] === 'brace', 'picking a swatch sets THAT pot',
+         String(after.potTonics[1])),
+      ok(after.potTonics[0] === 'stew', 'and leaves the other one where it was',
+         String(after.potTonics[0])),
+      ok(shut, 'and the picker shuts behind the choice')
+    ];
+  }],
 ];

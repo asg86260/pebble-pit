@@ -6,13 +6,14 @@
 
 import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
          APOTH_SHELF_ROWS, APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
-         BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP, SHELF_NUM_W, SHELF_PAD,
+         BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP,
+         SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD,
          FLAME_HOT, FLAME_TIP, FLAME_STEAM } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
 import { vnoise } from './flicker.js';
-import { potBoiling, brewFracOf, potTonicOf, doseStock, TONICS } from '../apothecary.js';
+import { potBoiling, brewFracOf, potTonicOf, doseStock, potBox, TONICS } from '../apothecary.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
 import { risingPlace, withRise } from './rise.js';
@@ -101,8 +102,9 @@ function flameOf(key) {
            steam: mix(c, 154, 1 - FLAME_STEAM) };
 }
 
-// Where each pot stands, measured off the building's own left edge.
-export const potX = i => apothecary.x + APOTH_POT_ROW + i * POT_PITCH;
+// Where each pot stands. `potBox` is apothecary.js's, because the pointer wants
+// the same box the drawing uses -- a pot is a control as well as a picture.
+export const potX = i => potBox(i).x;
 
 // --- the shelf of potions ------------------------------------------------------
 // Stock is per tonic (item 13), and this is where a passerby reads it: a plank to
@@ -133,12 +135,19 @@ const plankY = i => shelfY(i) + BOTTLE_H * P;
 // are measured off the case's own walls, so the count has nowhere to be but
 // inside the case -- see SHELF_NUM_W in config, and `drawStockCount` below.
 const bottlesX = () => shelfX() + (1 + SHELF_PAD) * P;
-export const numWell = i => ({
-  x: shelfX() + (shelfCols() - 1 - SHELF_PAD - SHELF_NUM_W) * P,
-  y: shelfY(i),
-  w: SHELF_NUM_W * P,
-  h: BOTTLE_H * P
-});
+// Whether this plank is holding more than it can stand a bottle for -- the one
+// question that decides both how many bottles are drawn and how wide the well
+// at the end of the plank is, so it is asked in one place.
+const overCap = key => doseStock(key) > SHELF_CAP;
+export const numWell = i => {
+  const cells = overCap(TONICS[i].key) ? SHELF_NUM_WIDE : SHELF_NUM_W;
+  return {
+    x: shelfX() + (shelfCols() - 1 - SHELF_PAD - cells) * P,
+    y: shelfY(i),
+    w: cells * P,
+    h: BOTTLE_H * P
+  };
+};
 
 // One bottle: a black cork over a body of the brew. The cork is what makes it a
 // bottle rather than a colored block, and it is centered, so BOTTLE_W wants to
@@ -153,7 +162,8 @@ function bottle(x, y, color) {
 // How many bottles actually stand on a plank: the stock, up to the cap. Past the
 // cap the count takes over -- forty bottles drawn on a plank is a plank nobody
 // can count, and the numeral is the honest way to say forty.
-const bottlesOn = key => Math.min(SHELF_CAP, doseStock(key));
+const bottlesOn = key =>
+  overCap(key) ? SHELF_CAP - 1 : Math.min(SHELF_CAP, doseStock(key));
 
 // Two posts and three planks, and nothing behind them. The bottles stand against
 // the sky, which is the most color per pixel this can be and the plainest reading
@@ -351,19 +361,26 @@ export function drawStockCount(screenAt) {
     ctx.fillStyle = '#000';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    // Sized off the well, in both directions: the height sets it, and a count
-    // with too many digits for the width is shrunk until it fits rather than
-    // being trimmed by the clip. The clip is the guarantee; this is so that what
-    // survives it is a number you can read.
+    // Sized off the well, in cells rather than in CSS pixels. A cell is however
+    // many screen pixels the yard's own zoom makes it, so the numeral grows and
+    // shrinks with the bottles beside it instead of holding a size the rest of
+    // the picture does not agree with -- and it has a floor of SHELF_NUM_MIN
+    // cells, which is what stopped this from shrinking itself into a speck. Only
+    // then, if the digits still will not fit the width, is it taken down toward
+    // that floor and no further; the clip guarantees containment either way, and
+    // this is so that what survives the clip is a number you can read.
+    const cell = h / BOTTLE_H;                   // one grid cell, in screen pixels
+    const floor = SHELF_NUM_MIN * cell;
     const said = String(n);
-    let size = Math.max(6, Math.round(h * 0.7));
+    let size = Math.max(floor, h * 0.9);
     ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
+    const room = w - cell;                       // a cell of air inside the well
     const wide = ctx.measureText(said).width;
-    if (wide > w - 2) {
-      size = Math.max(5, Math.floor(size * (w - 2) / wide));
+    if (wide > room) {
+      size = Math.max(floor, size * room / wide);
       ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
     }
-    ctx.fillText(said, Math.round(at.x + w - 1), Math.round(at.y + h / 2));
+    ctx.fillText(said, Math.round(at.x + w - cell / 2), Math.round(at.y + h / 2));
     ctx.restore();
   }
   ctx.textAlign = 'left';

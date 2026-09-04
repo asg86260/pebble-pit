@@ -33,6 +33,7 @@ import { RUNGS,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          BREW_RUNG_SPORE, BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, CARRY_RUNGS, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
+         POT_W, POT_H,
          APOTHECARY_DUST, APOTHECARY_CORES, WORKER,
          DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
@@ -280,6 +281,26 @@ export function newStirrer() {
 export const potStandX = i =>
   apothecary.x + APOTH_POT_ROW + Math.max(0, i) * POT_PITCH - APOTH_POT_STAND;
 export const apothecaryDoor = () => potStandX(0);
+
+// Where a pot stands, as a box. The drawing wants it and so does the pointer --
+// a pot is a control now, not only a picture (item 17: each pot chooses its own
+// brew, at the pot) -- and the two must not each work it out for themselves.
+export const potBox = i => ({
+  x: apothecary.x + APOTH_POT_ROW + i * POT_PITCH,
+  y: S.groundY - POT_H,
+  w: POT_W,
+  h: POT_H
+});
+// Which pot a point in the yard is on, or -1. Only pots that have actually been
+// stood: the ground where a fifth one would go is bare ground.
+export const potAt = (x, y) => {
+  if (!S.apothecaryOpen) return -1;
+  for (let i = 0; i < S.apothPots; i++) {
+    const b = potBox(i);
+    if (x >= b.x && x < b.x + b.w && y >= b.y && y <= b.y + b.h) return i;
+  }
+  return -1;
+};
 const stirrers = () => S.workers.filter(w => w.type === TYPE.STIR);
 export const atPot = w => w.type === TYPE.STIR && w.goal === 'in';
 export const inMix = () => S.workers.filter(atPot).length;
@@ -555,6 +576,16 @@ export function stepApothecary(dt) {
 export function setPotTonic(i, key) {
   const was = potTonicOf(i);
   S.potTonics[i] = was === key ? null : key;     // the set tonic toggles the pot off
+  S.potSpents[i] = false;
+  S.dirty = true;
+}
+// The same setting, chosen off a list rather than stepped onto -- the picker at
+// the pot. A pick says which one it wants, so unlike `setPotTonic` it does not
+// toggle back off when you pick the one already set; picking `null` is how the
+// picker turns a pot off, and it says so with a row of its own. Same split as
+// `setPrefer` and `choosePrefer` below.
+export function choosePotTonic(i, key) {
+  S.potTonics[i] = key || null;
   S.potSpents[i] = false;
   S.dirty = true;
 }
