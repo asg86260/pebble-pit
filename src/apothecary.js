@@ -104,31 +104,6 @@ const strengthOf = key => ease(STRENGTH0, STRENGTH5, potencyLevel(key)) / STRENG
 // action.
 export const tonicVal = t => (t ? t.base * strengthOf(t.key) : 0);
 
-// A short line for the hover: what this tonic does and how much, spelled at the
-// strength it is worth today. The carry brew says who it reaches, because it is
-// the only one that reaches a hauler at all (item 12) and that is the whole
-// reason to buy it.
-export function tonicSays(t) {
-  if (!t) return '';
-  const v = tonicVal(t);
-  if (t.kind === 'work')  return `works ${Math.round(v * 100)}% faster; nothing for a hauler`;
-  if (t.kind === 'crit')  return `crit chance +${Math.round(v * 100)} points; nothing for a hauler`;
-  if (t.kind === 'carry') return `carries ${Math.round(v * 100)}% more -- the one brew a hauler takes`;
-  return '';
-}
-
-// The compact form for the menu row itself -- the effect in a few characters, so
-// it fits beside the name with the duration and the price. The hover carries the
-// full sentence.
-export function tonicGain(t) {
-  if (!t) return '';
-  const v = tonicVal(t);
-  if (t.kind === 'work')  return `+${Math.round(v * 100)}% work`;
-  if (t.kind === 'crit')  return `+${Math.round(v * 100)} crit`;
-  if (t.kind === 'carry') return `+${Math.round(v * 100)}% carry`;
-  return '';
-}
-
 // --- who a tonic is for -------------------------------------------------------
 // A hauler takes the carry brew and nothing else (item 12). Its whole day is the
 // walk between a pile and the hole: a quicker swing is a swing it never makes
@@ -599,31 +574,11 @@ export function setPrefer(job) { S.potPrefer = S.potPrefer === job ? null : job;
 export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 
 // --- what the building's board sells ------------------------------------------
-// The hut holds every rung (item 17); each pot gets a section of its own holding
-// the menu, so setting what a pot brews is a choice made at that pot rather than
-// a single setting for the place. The tonic rows carry a `pot` flag so the board
-// renders them as a set-the-pot choice rather than a purchase.
-const tonicRow = (i, t) => ({
-  key: `tonic-${i}-${t.key}`, pot: true, tonic: t.key, potIndex: i,
-  name: t.name,
-  // What the row shows in place of a gain and a price: the effect, and the
-  // crop-and-reagent a brew costs. The board renders these the way it renders
-  // any row's gain and bill, so a tonic reads at a glance rather than only on
-  // hover. See the pot branch in shop.js.
-  //
-  // How long it lasts is not here: it is a rung of its own further down the same
-  // board ("a longer dose"), and a figure that is set in one place and repeated
-  // in three is a figure you have to keep in step.
-  gain: () => tonicGain(t),
-  brewCost: () => [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]],
-  // No description. A brew's row is its name, what it does, and what it costs,
-  // and all three are already on the line -- a sentence under it could only say
-  // them again. The rows that keep a description are the ones whose meaning is
-  // not on the line at all.
-  on: () => potTonicOf(i) === t.key,
-  set: () => setPotTonic(i, t.key),
-  show: () => S.apothecaryOpen && i < S.apothPots
-});
+// The rungs, and nothing about what any one pot is brewing. Setting a pot's brew
+// is done at the pot now (see potpick.js): the board is where you read the
+// building's figures and buy its ladders, and a menu of twelve rows saying the
+// same three things four times over was the board doing a job the yard does
+// better. Reading and setting are different errands and this is the reading one.
 
 // A rung on the building, priced spore + dust like every tier-two row. `level`
 // reads the rung and `climb` puts it up, so a ladder kept on `S` as a number and
@@ -660,19 +615,7 @@ const potencyRow = t => brewRung({
   to: () => Math.round(t.base * (ease(STRENGTH0, STRENGTH5, potencyLevel(t.key) + 1) / STRENGTH0) * 100)
 });
 
-// What each pot's section is called. Named rather than numbered because the
-// board's headings are words everywhere else in the game, and a heading reading
-// "pot 2" would be the only figure on a board of sentences. One a pot the
-// building can ever hold; the sections for pots nobody has broken room for hold
-// no visible rows, and a section with no rows is not drawn.
-const POT_SAID = ['the first pot', 'the second pot', 'the third pot', 'the fourth pot'];
-
 export const APOTHECARY_UPGRADES = [
-  // The menu, pot by pot. Pot-major order, so the first pot's rows come first --
-  // which is also what makes `__pot('stew')`, the hook that finds a row by its
-  // tonic, still mean "put the first pot on a stew".
-  ...Array.from({ length: APOTH_POTS_MAX }, (_, i) => TONICS.map(t => tonicRow(i, t))).flat(),
-
   // The rhythm: keep the fires going for batch after batch, or let them die once
   // this one is dealt. A dial, spending nothing. Named "the fire" rather than
   // "the pot" so it does not echo the section heading a line above it.
@@ -744,11 +687,9 @@ export const APOTHECARY_UPGRADES = [
   ...TONICS.map(potencyRow)
 ];
 
-// The board reads top to bottom the way the building stands left to right: the
-// pots' menus first, then the hut that holds everything else.
+// Three sections, all of them the building's: how it is run, how well it runs,
+// and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
-  ...POT_SAID.slice(0, APOTH_POTS_MAX)
-    .map((title, i) => ({ title, keys: TONICS.map(t => `tonic-${i}-${t.key}`) })),
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
   { title: 'the craft', keys: ['brewspeed', 'bufflength', 'brewdoses', 'dosecarry'] },
   { title: 'the recipes', keys: TONICS.map(t => `potency-${t.key}`) }

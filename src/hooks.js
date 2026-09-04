@@ -45,7 +45,7 @@ import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { CLOSET_UPGRADES, CLOSET_SECTIONS } from './closet.js';
-import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, potBox } from './apothecary.js';
+import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -940,13 +940,18 @@ export const HANDLES = {
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
   // the same functions the pointer calls, so a check that sets the pot this way
   // sets it the way a player does.
-  // Track F1: every pot has its own menu now, so the pot is named as well as the
-  // tonic -- the first one when nobody says, which is what every caller written
-  // before the pots came apart meant.
+  //
+  // Except the tonic, which is no longer set from a board at all: the brew is
+  // picked at the pot now (potpick.js), and a DOM popover is not something the
+  // node tier can press. So this calls the same toggle the picker's own
+  // machinery does, and it is setup rather than the route -- the route is proved
+  // by the browser check that clicks a cauldron and then a swatch. The pot is
+  // named as well as the tonic, the first one when nobody says, which is what
+  // every caller written before the pots came apart meant.
   __pot: (key, pot = 0) => {
-    const u = APOTHECARY_UPGRADES.find(r => r.tonic === key && r.potIndex === pot);
-    if (u && u.show()) u.set();
-    return !!(u && u.show());
+    if (!S.apothecaryOpen || pot < 0 || pot >= S.apothPots) return false;
+    setPotTonic(pot, key);
+    return true;
   },
   // What is standing on a shelf, set outright. The setup a check or a scene is
   // NOT about: proving that a batch reaches the shelf is `wave5-apothecary`'s

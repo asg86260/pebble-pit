@@ -958,7 +958,7 @@ export const priceText = (money, n) =>
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
 export function buy(u) {
-  if (u.job || u.dial || u.pot) return;   // a tonic is set through `u.set`, not bought                   // a job row moves bodies and a dial sets a number
+  if (u.job || u.dial) return;   // a job row moves bodies and a dial sets a number
   // A row with a payout on it instead of a price is not a purchase: nothing is
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.

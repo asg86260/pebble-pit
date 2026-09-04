@@ -189,7 +189,7 @@ export function hasOffer(which) {
   // A row that moves bodies about spends nothing, and a ladder at the top of
   // itself cannot be bought however much you are holding: neither is something
   // you would cross the yard for.
-  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial && !u.pot &&
+  return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
                                   !u.price && !maxed(u) && !u.dead?.() && canPay(u));
 }
 

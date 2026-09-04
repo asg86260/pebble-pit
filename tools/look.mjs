@@ -125,6 +125,16 @@ const SCENES = {
     window.__stock('strong', 999);
     window.__fast(3); window.__look(window.__state().apothecaryX - 320);`,
 
+  // The apothecary's board, which is the building's figures and nothing about
+  // what any one pot is brewing -- that is set at the pot now. Three sections:
+  // how the place is run, how well it runs, and how deep each recipe goes.
+  apothboard: `window.__reset(); window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__look(window.__state().apothecaryX - 320);
+    window.__board('apothecary');`,
+
   // The picker at the pot (item 17): the second cauldron pressed, its list of
   // brews dropped open over it as swatches. The press is a real pointerdown on
   // the canvas at the pot's own spot, because that is the only thing that opens

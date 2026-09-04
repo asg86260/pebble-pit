@@ -11,7 +11,7 @@
 // which is the part these checks are not about.
 
 import { group, ok, run, runUntil, openSites, buyNow, yard } from './helpers.mjs';
-import { APOTHECARY_UPGRADES, TONICS, tonicOf, tonicVal, doseStock,
+import { TONICS, tonicOf, tonicVal, doseStock, choosePotTonic,
          potTonicOf, carryDoses, potencyLevel, migrateApothecary,
          workBoost, critBoost, carryBoost, doses } from '../src/apothecary.js';
 
@@ -28,16 +28,14 @@ function standApothecary() {
   return started;
 }
 
-// Setting a pot's brew the way the board does it: the tonic button on that pot's
-// section calls the row's own `set`. `window.__pot` is this for the first pot;
-// there is no hook for the others, and reaching for `S.potTonics` instead would
-// be the check setting the thing it is meant to be testing the route to.
-const setPot = (i, key) => {
-  const row = APOTHECARY_UPGRADES.find(r => r.key === `tonic-${i}-${key}`);
-  if (!row || !row.show()) return false;
-  row.set();
-  return true;
-};
+// Setting a pot's brew: the same call the picker at the pot makes when a swatch
+// is clicked. The board's per-pot menu is gone -- the pot IS the control now --
+// and a DOM popover is not something this tier can press, so the route itself is
+// proved by the browser check that clicks a cauldron and then a swatch
+// ("clicking a pot picks what that pot brews", selftest/boards.js). What these
+// checks are about is what happens downstream of the setting, and this is how
+// they get there without asserting anything about how you reach it.
+const setPot = (i, key) => choosePotTonic(i, key);
 
 // --- two pots, two brews, two shelves -----------------------------------------
 group('a second pot brews its own tonic, onto its own shelf', async () => {
@@ -45,8 +43,8 @@ group('a second pot brews its own tonic, onto its own shelf', async () => {
   const boughtPot = buyNow('anotherpot');
   window.__assign('stirrers', 2);              // a keeper apiece
 
-  const setFirst = setPot(0, 'stew');
-  const setSecond = setPot(1, 'brace');
+  setPot(0, 'stew');
+  setPot(1, 'brace');
 
   // Both shelves fill: the pots run at the same time, each on its own recipe.
   const both = runUntil(() => doseStock('stew') > 0 && doseStock('brace') > 0, 400);
@@ -55,7 +53,6 @@ group('a second pot brews its own tonic, onto its own shelf', async () => {
   return [
     ok(boughtPot && yard.S.apothPots === 2, 'the row breaks room for a second pot',
        `${yard.S.apothPots} pots`),
-    ok(setFirst && setSecond, 'and each pot takes a brew of its own'),
     ok(potTonicOf(0) === 'stew' && potTonicOf(1) === 'brace',
        'the two pots are on two different tonics',
        `${potTonicOf(0)} / ${potTonicOf(1)}`),

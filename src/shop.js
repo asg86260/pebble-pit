@@ -259,26 +259,6 @@ function build(el, list, sections, empty) {
     }
 
     for (const u of rows) {
-      // A tonic on the menu is set, not bought: clicking it puts the pot on that
-      // tonic (or off it, if it was already on), and spends nothing until a batch
-      // is brewed. It keeps the shape of a purchase row so the board lines up, and
-      // says what it does on hover -- the effect submenu, kept to one line while
-      // there are three of them. See apothecary.js.
-      if (u.pot) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.dataset.pot = u.key;
-        b.className = 'pick';
-        b.innerHTML = '<span class="name"><i class="what"></i></span>' +
-                      '<span class="gain"></span><span class="cost"></span>' +
-                      (u.note ? '<span class="note"></span>' : '');
-        b.querySelector('.what').textContent = u.name;
-        b.addEventListener('click', () => { u.set(); buildShop(); });
-        if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
-        el.appendChild(b);
-        continue;
-      }
-
       // A dial is the same shape as a job row -- a setting between two buttons --
       // for a setting that is not a headcount. The casino's chip is the only
       // one: how much goes on the table is chosen, and choosing spends nothing.
@@ -495,23 +475,6 @@ export function refresh(el, list, headcount) {
       grey(row.querySelector('.less'), u.count() < 1);
       say(row.querySelector('.count'), String(u.count()));
       grey(row.querySelector('.more'), u.spare() < 1);
-      continue;
-    }
-    if (row.dataset.pot) {
-      const u = list.find(x => x.key === row.dataset.pot);
-      if (!u) continue;
-      // A tonic reads like any other row: its effect and how long it lasts where
-      // a gain goes, and the crop-and-reagent a brew costs where a price goes.
-      // The set tonic is highlighted (`on`) and reads "brewing" in place of the
-      // price, so the one the pot is on is plain without hiding what it does.
-      row.classList.toggle('on', u.on());
-      const [, gain, price] = row.children;
-      say(gain, u.gain ? u.gain() : '');
-      const cost = u.brewCost ? u.brewCost() : [];
-      const bill = cost.map(([m, n]) =>
-        `<span class="${purse(m) >= n ? 'have' : 'short'}">${MARK[m]} ${priceText(m, n)}</span>`).join('');
-      sayHTML(price, u.on() ? 'brewing' : bill);
-      sayNote(row, u);
       continue;
     }
     const u = list.find(x => x.key === row.dataset.key);
