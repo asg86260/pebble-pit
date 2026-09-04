@@ -19,20 +19,39 @@ export const TESTS = [
     window.__crew(2, 2);
     run(2);
 
+    // **The body actually in your hand, by name.**
+    //
+    // This used to click where `workerPos[0]` was standing and then read
+    // `workerPos[0]` for the rest of the throw, on the assumption that the two
+    // were the same body. They are not: `workerAt` lifts whichever body is under
+    // the cursor, and two rockhands working one face routinely overlap -- so the
+    // click picked one up and every reading afterwards was taken off a bystander
+    // standing still nearby. Measured that way the throw carried 7 to 11 pixels
+    // of somebody else's idle drift against a bar of eight, which is a coin toss
+    // rather than a check, while the flick itself was leaving the hand at the cap
+    // (`HURL_MAX`) the whole time.
+    //
+    // `lifted` is the snapshot's own answer to "who is in your hand", and the
+    // name is looked up again on every reading rather than kept as an index,
+    // because the order of the crew is not a promise anybody made.
+    const seat = name => state().crewNames.split(' ').findIndex(n => n.split('|')[0] === name);
+    const posOf = name => {
+      const i = seat(name);
+      return i < 0 ? [NaN, NaN] : state().workerPos[i].split(':')[1].split(',').map(Number);
+    };
     const grab = () => {
       const s = state();
       const [wx, wy] = s.workerPos[0].split(':')[1].split(',').map(Number);
       const [sx, sy] = onScreen(wx, wy);
       point('pointerdown', sx, sy, 2, 2);
-      return { wx, sx, sy };
+      return { wx, sx, sy, who: state().lifted };
     };
-    const at = () => state().workerPos[0].split(':')[1].split(',').map(Number);
     // Where it came to rest, not where it had walked to afterwards: a body picks
     // its job back up the moment it lands, so a fixed run() after the throw
     // measures the walk as well as the flight.
-    const landed = () => {
+    const landed = who => {
       for (let i = 0; i < 240 && state().falling > 0; i++) run(1 / 60);
-      return at();
+      return posOf(who);
     };
 
     // Thrown sideways from up in the air. Held at head height it has no time to
@@ -45,8 +64,8 @@ export const TESTS = [
     await sleep(180);                            // the climb is not the throw
     for (let i = 1; i <= 6; i++) { point('pointermove', a.sx + i * 20, a.sy - 200, 2); await sleep(16); }
     point('pointerup', a.sx + 140, a.sy - 200, 0);
-    const thrown = at();
-    const landedAt = landed();
+    const thrown = posOf(a.who);
+    const landedAt = landed(a.who);
     const carried = Math.abs(landedAt[0] - thrown[0]);
 
     // and dropped from a standstill: it goes where it was let go of
@@ -56,8 +75,8 @@ export const TESTS = [
     for (let i = 1; i <= 5; i++) { point('pointermove', b.sx, b.sy - i * 40, 2); await sleep(16); }
     await sleep(180);                            // stood still before letting go
     point('pointerup', b.sx, b.sy - 200, 0);
-    const still = at();
-    const stillLanded = landed();
+    const still = posOf(b.who);
+    const stillLanded = landed(b.who);
     const dropped = Math.abs(stillLanded[0] - still[0]);
 
     // shaken about: it lands seeing stars
@@ -86,6 +105,7 @@ export const TESTS = [
       // thrown in this yard is in the air for less time and carries less far.
       // The claim is unchanged -- the flick does something the standstill does
       // not -- and the margin is what a shorter flight leaves of it.
+      ok(a.who && b.who, 'a body was picked up to throw', `${a.who} then ${b.who}`),
       ok(carried > dropped + 8, 'a body flicked out of your hand travels while it falls',
          `${carried}px thrown against ${dropped}px let go of`),
       // Sixteen, not ten. A body let go of from a standstill still comes
@@ -354,20 +374,21 @@ export const TESTS = [
     let falling = false;
     for (let i = 0; i < 3600 && !falling; i++) { run(1 / 60); falling = state().rockFall > 0; }
 
-    // Sampled right through the fall rather than off the front of it. The dance
-    // spreads them by walking -- a whole cell at a twentieth of a step, because
-    // a body that jumped to its mark would be teleporting -- so the first few
-    // frames of it look exactly like the standing about it replaced.
-    // On an odd number of frames, and not a round one. The hop is a sine on the
-    // clock: sampled every twenty frames it is read at the same point of the
-    // beat every time, and a body hopping steadily reads as a body standing
-    // still.
+    // Sampled right through the fall rather than off the front of it, on an odd
+    // number of frames and not a round one: the jump is a sine on the beat, so
+    // sampled every twenty frames it is read at the same point of it every time
+    // and a body jumping steadily reads as a body standing still.
     const shots = [];
     for (let i = 0; i < 14; i++) { run(7 / 60); shots.push(state()); }
     const hauls = s => s.workerPos.filter(d => d[0] === 'h');
     const xs = s => hauls(s).map(d => d.split(':')[1].split(',')[0]);
     const ys = s => hauls(s).map(d => d.split(':')[1].split(',')[1]);
-    const spread = shots.map(s => new Set(xs(s)).size);
+    // How many different heights the gang are at within one frame. This is what
+    // says a stack of bodies still reads as a gang: every body rolls its own
+    // tempo (`jigRate`), so they are never all at the top of the beat together.
+    const apart = shots.map(s => new Set(ys(s)).size);
+    // and that not one of them slid off its own spot while it did it
+    const held = new Set(shots.map(s => xs(s).join(','))).size === 1;
     const finite = shots.every(s => ys(s).every(y => Number.isFinite(+y)));
     const hopped = new Set(shots.flatMap(s => ys(s))).size > 1;
     const zone = shots[0].dropZone;
@@ -391,9 +412,29 @@ export const TESTS = [
       ok(falling, 'a rock comes down to be held up by'),
       ok(finite, 'a body that has never been on the rock can still dance',
          ys(shots[0]).join(' ')),
-      ok(Math.max(...spread) > 1, 'they do not all wait it out on the same pixel',
-         spread.join('/')),
-      ok(hopped, 'and they are hopping rather than standing', [...new Set(shots.flatMap(ys))].join(' ')),
+      // This used to be "they do not all wait it out on the same pixel",
+      // counting the different x's among them -- and that was the right question
+      // while a celebration was three moves, two of which crossed the ground:
+      // the gang were spread by walking, so a row of bodies on one x meant the
+      // dance had degenerated into the standing about it replaced.
+      //
+      // A celebration is jumping now (item 21, feedback5) and a dancing body
+      // covers no ground at all, so that count is nought or one whatever the
+      // yard is doing -- and what it was reading was never the dance anyway.
+      // These five haulers share a pixel BEFORE the rock comes off, because five
+      // idle bodies share one post; the old dance walked them apart for five
+      // seconds and they stacked up again the moment it ended.
+      //
+      // What survives is the thing the count was standing in for: a gang has to
+      // read as several bodies rather than as one. It does that on the BEAT now
+      // -- every body rolls its own tempo, so they are never all at the top of
+      // the jump together, and a stack of five is five heights.
+      ok(Math.max(...apart) > 1, 'they do not all wait it out on the same beat',
+         apart.join('/')),
+      ok(hopped, 'and they are jumping rather than standing', [...new Set(shots.flatMap(ys))].join(' ')),
+      // ...and the other half of the same change, said outright: nobody shuffles.
+      ok(held, 'none of them wanders off its own spot to do it',
+         [...new Set(shots.map(s => xs(s).join(',')))].join(' | ')),
       ok(clear, 'without any of them wandering under the rock',
          `${xs(shots[0]).join(' ')} against ${JSON.stringify(zone)}`),
       ok(new Set(hauls(after).map(d => d.split(',')[1])).size === 1,
