@@ -2,6 +2,7 @@ import { APOTHECARY_W } from './apothecary.js';
 import { CASINO_W, OUTHOUSE_W, TOWER_W } from './buildings.js';
 import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
+import { heapBase } from './piles.js';
 import { QUARRY_W } from './quarry.js';
 import { LAB_W, SCHOOL_W } from './school.js';
 import { SCRUB_W } from './scrub.js';
@@ -117,7 +118,40 @@ export const SITES = [
 // changes size and the yard does not rearrange itself around it.
 export const TO_FIRST_SITE = 264;
 
-export const GROUND_LEFT = 3678;
+// Bare ground kept past the last building, at the far end of the walk, before
+// the world runs out. Somewhere for the camera to stop and for the casino to
+// stand clear of the edge rather than against it.
+export const YARD_MARGIN = P * 10;
+
+// How much ground there is to the left of the rock -- which is the whole of the
+// yard, since everything but the hole is laid out leftwards from the boulder.
+//
+// It was 3678, measured by hand, and it was a guess about content nobody had
+// written yet. Track F1 widened the apothecary from 24 cells to 68 -- a hut, a
+// bookshelf and four pots, which is the shape that station has to be -- and the
+// walk ran 204 pixels off the left-hand end of the world: the casino stood at
+// x = -204, half of it outside the ground and none of it reachable, because the
+// view may not scroll past nought. Nothing warned about it except a check that
+// happened to ask.
+//
+// So the ground is as wide as the table says it needs to be, and the next
+// station that grows moves the world's edge instead of walking through it. The
+// sum is what `placeSites` in world.js spends on one pass: every site's own
+// width, the standoff to its heap and the heap itself, with one STATION_GAP
+// between each pair -- and it does not depend on the ORDER the walk visits them
+// in, which is what makes it safe to work out here while the order is a thing
+// the player decides by buying.
+//
+// It is a `const` worked out once at load, not a function: `S.worldW` and
+// `floor.cols` are measured off it, and a world whose width could change under a
+// standing yard is a world where every grain on the ground is in a column that
+// means something else. Growing it at all is a migration -- see `floorShift` in
+// persist.js, which slides a save's dust across by however many columns the
+// world gained on its left.
+const WALK = SITES.reduce((n, row) =>
+  n + row.w() + row.standoff + (row.pile ? heapBase(row.pile) * P : 0), 0)
+  + STATION_GAP * (SITES.length - 1);
+export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
 export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last

@@ -345,7 +345,11 @@ export function persist() {
     // could only see a core lying on the ground or one on the cursor -- see the
     // note where it is read.
     coreBuried: S.coreBuried,
-    floor: { cols: floor.cols, rows: floor.rows, cells: gridStr(floor) },
+    // ...and where the rock's centre stood when it was written, which is the
+    // ground's own anchor: the yard is laid out leftwards from it, so a save
+    // read into a world whose left-hand ground has since widened knows exactly
+    // how far its dust has to slide. See `floorShift`.
+    floor: { cols: floor.cols, rows: floor.rows, cx: S.cx, cells: gridStr(floor) },
     pit: pitToSave(),
     // The cut's own sand, kept the same way the floor's is: a shape and a
     // run-length string. It only means anything alongside `quarryCells`
@@ -354,17 +358,75 @@ export function persist() {
   });
 }
 
-export function restoreGrid(b, s) {
+// Reading a saved plot into one that has grown at its left-hand end.
+//
+// The world only ever grows that way. The rock and the lip are the two things
+// that never move relative to each other, and everything else is laid out
+// leftwards from them, so widening the yard is widening the ground in front of
+// the boulder -- which slides every building, and every grain lying under one,
+// the same number of columns to the right. `GROUND_LEFT` is derived from the
+// site table now (config/sites.js), so a station that grows widens the world
+// rather than walking off the end of it, and that is a thing that can happen to
+// a yard somebody has already been playing.
+//
+// Without this the save still loaded: `fillFlat` below re-packs the same NUMBER
+// of grains flat along the floor. What that loses is where they were lying and
+// what each of them was -- a shard, a spore, a spark, all of it re-dealt as
+// plain grey dust at the bottom of the yard. Which is a heap you carried,
+// carried away.
+//
+// It is written straight into the cells rather than through `put` for the same
+// reason `gridFill` is: a run at a time, with one `recount` at the end.
+function gridSlide(b, s, dx) {
+  if (!(dx > 0 && s.rows === b.rows && s.cols + dx <= b.cols)) return false;
+  const from = new b.grid.constructor(s.cols * s.rows);
+  let i = 0;
+  for (const part of String(s.cells || '').split('.')) {
+    const x = part.indexOf('x');
+    if (x < 0) return false;
+    const v = +part.slice(0, x), len = +part.slice(x + 1);
+    if (!(len >= 0) || i + len > from.length) return false;
+    if (v) from.fill(v, i, i + len);
+    i += len;
+  }
+  if (i !== from.length) return false;
+  for (let r = 0; r < s.rows; r++)
+    for (let c = 0; c < s.cols; c++) {
+      const v = from[r * s.cols + c];
+      if (v) b.grid[r * b.cols + c + dx] = v;
+    }
+  return true;
+}
+
+export function restoreGrid(b, s, dx = 0) {
   if (!s) return;
   b.grid.fill(0);
-  if (s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
+  if (!dx && s.cols === b.cols && s.rows === b.rows && gridFill(b, s.cells)) {
     if (b.n != null) recount(b);           // written run by run, not put
+    if (b.painter) b.painter.repaint();
+    return;
+  }
+  if (gridSlide(b, s, dx)) {
+    recount(b);                            // and the same: wholesale, so re-ledgered
     if (b.painter) b.painter.repaint();
     return;
   }
   fillFlat(b, gridCount(s.cells));   // a different shape: re-pack the same amount
   if (b.painter) b.painter.repaint();
 }
+
+// How far a saved floor has to slide to line up with today's yard, in columns.
+//
+// A save carries the ground's own anchor -- where the rock's centre stood when
+// it was written -- so the answer is exact whichever end of the world moved.
+// A save from before that was written down does not, and for those the column
+// count is the answer: the only thing that has ever changed the floor's width is
+// the ground in front of the boulder, so every column it gained, it gained on
+// the left.
+const floorShift = saved =>
+  !saved ? 0
+  : Number.isFinite(saved.cx) ? Math.round((S.cx - saved.cx) / P)
+  : Math.max(0, floor.cols - (saved.cols || floor.cols));
 
 export function restore() {
   const s = load();
@@ -673,7 +735,7 @@ export function restore() {
   if (busyBuilderSites().length) { rebalance(); syncWorkers(); }
   if (!Array.isArray(s.who)) wearKitOnLoad();   // an old save has no record of who wore what
   if (!S.introDone) startIntro();
-  restoreGrid(floor, s.floor);
+  restoreGrid(floor, s.floor, floorShift(s.floor));
   if (!pitFromSave(s.pit)) pit.grid.fill(0);
   // What is here and what is somewhere else. The rift comes back before the dust
   // is put away, because how much of it belongs in the hole depends on how much
