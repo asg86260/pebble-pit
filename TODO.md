@@ -1,5 +1,12 @@
 # Still to do
 
+## Wave 5 — spec committed, awaiting approval (2026-09-03)
+
+Two batches: the scalability refactor (config/smog/upgrades barrels, persist
+that fails loud, painting order and sim steps as data, a crew job registry),
+then the 21 feedback5.md items built through the new seams. The canon is
+`docs/wave5.md`; nothing is built until it is signed off.
+
 ## The apothecary — BUILT, reviewed, two follow-ups left (2026-09-03)
 
 The apothecary shipped (`src/apothecary.js` + station wiring; DESIGN.md "The
