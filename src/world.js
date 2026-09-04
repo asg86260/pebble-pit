@@ -5,10 +5,10 @@
 // are placed by their distance from the rock, so adding one is a distance in
 // config.js and a line in `layout` below.
 
-import { P, CELL, CRATE_H, SKY, TO_SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
+import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
-        SITES, TO_FIRST_SITE,
-        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE, CRATED,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE,
+        PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
@@ -63,13 +63,20 @@ export const plotSlots = () => FARM_PLOTS_MAX;
 // see C5. Worked out off the station's own anchor rather than off `S.placed`,
 // because that anchor is already the shed's far edge plus the gap: the two
 // numbers cannot come apart.
+//
+// A course taller than the box config declares, and both of them by the same
+// course: `SHACK_RISE` is what item 1 of feedback5 buys -- a shed that reads as
+// somewhere a body goes rather than as a crate with a slot in it. It is added
+// here rather than in the two pairs of constants because the height a shack
+// stands at is one decision, and two numbers that have to be raised together
+// are two numbers that will not be.
 export const farmShed = () => ({
-  x: farm.x - SHED_GAP - FARM_SHED_W, y: S.groundY - FARM_SHED_H,
-  w: FARM_SHED_W, h: FARM_SHED_H
+  x: farm.x - SHED_GAP - FARM_SHED_W, y: S.groundY - FARM_SHED_H - SHACK_RISE,
+  w: FARM_SHED_W, h: FARM_SHED_H + SHACK_RISE
 });
 export const quarryShed = () => ({
-  x: quarry.x - SHED_GAP - QUARRY_SHED_W, y: S.groundY - QUARRY_SHED_H,
-  w: QUARRY_SHED_W, h: QUARRY_SHED_H
+  x: quarry.x - SHED_GAP - QUARRY_SHED_W, y: S.groundY - QUARRY_SHED_H - SHACK_RISE,
+  w: QUARRY_SHED_W, h: QUARRY_SHED_H + SHACK_RISE
 });
 
 // A site that has just grown. It is not a relayout: nothing else in the yard
@@ -150,8 +157,14 @@ let laid = null;
 // the ground had already been laid under the old order and the key had not
 // changed. Buying the lab before the school put the lab exactly where buying
 // it second would have.
+//
+// The star's own position used to be in here, from when it was a place the
+// layout did not know about and could drift. It is the tower's slot now (see
+// SITES), so it is already covered by `buildOrder` -- and a key that depended
+// on something the walk itself sets is a key that says "lay again" on the frame
+// after every laying.
 const groundKey = () =>
-  `${S.scrubOpen}|${S.meteorOpen}|${Math.round(sky.x)}|${(S.buildOrder || []).join(',')}`;
+  `${S.scrubOpen}|${S.meteorOpen}|${(S.buildOrder || []).join(',')}`;
 
 export function layPiles() {
   const now = groundKey();
@@ -260,7 +273,11 @@ export function placeSites() {
       at[row.key] = { x: left, w };
       x = left;
     }
-    x = snap(x - row.gap);
+    // One gap, the same one, between every pair of neighbours -- see
+    // `STATION_GAP` in config/sites.js. It is applied here rather than declared
+    // per row so that the padding is a property of the walk instead of eleven
+    // hand-measured guesses about who a site's neighbour was going to be.
+    x = snap(x - STATION_GAP);
   }
 
   // The rock's own spoil is NOT in here, and that is deliberate. Every strip the
@@ -285,7 +302,7 @@ export function placeSites() {
     const p = strips[i];
     if (!(p.to - p.from >= 3 * P))
       throw new Error(`the ${p.key} heap has no room: ${p.from}..${p.to}. `
-                    + `Widen a gap in SITES, or lower PILE_LIMIT.${p.key}.`);
+                    + `Widen STATION_GAP, or lower PILE_LIMIT.${p.key}.`);
     if (i && p.from < strips[i - 1].to)
       throw new Error(`the ${p.key} heap overlaps the ${strips[i - 1].key} heap: `
                     + `${p.from} is left of ${strips[i - 1].to}.`);
@@ -296,13 +313,7 @@ export function placeSites() {
 export function refreshPiles() {
   laid = groundKey();
   S.piles = [
-    // The ground under the star, for what the wizards knock off it. Four hundred
-    // pixels up is still a station, and what a station makes has to have
-    // somewhere of its own to land. It is the one strip not in the SITES table,
-    // because the thing that owns it does not stand on the ground and so has no
-    // place in a walk along it.
-    ...(S.meteorOpen ? [skyHeap()] : []),
-    // And the rest off the same walk that reserved the ground for them, in
+    // Off the walk that reserved the ground for them, in
     // `placeSites`. They used to be rebuilt here from where the buildings had
     // ended up, with `heap()` clamping the far end against a neighbour -- which
     // is how a strip came back with its end left of its start, and a yard with
@@ -312,7 +323,12 @@ export function refreshPiles() {
     // only *appears* once the site it belongs to is standing, because until then
     // nothing pays out on to it. That is the whole of the difference between
     // reserving a spot and opening one.
-    ...(S.strips || []).filter(p => p.key !== 'scrub' || S.scrubOpen),
+    //
+    // The star's ground is the same case as the scrubbing house's: the tower's
+    // slot reserves it from the first frame, and nothing pays out on to it until
+    // the star is up there to knock a rind off.
+    ...(S.strips || []).filter(p => (p.key !== 'scrub' || S.scrubOpen)
+                                 && (p.key !== 'sky' || S.meteorOpen)),
     // and the rock's, worked out fresh every time, because the rock it stands
     // off from is a different size for every boulder
     { key: 'rock', from: rockLeft() + S.gw * P + ROCK_CLEAR, to: S.cx + ROCK_PILE_TO }
@@ -326,14 +342,6 @@ export function refreshPiles() {
   wakeGrid(floor);
 }
 
-
-// The ground under the star, centred on it: sparks fall straight down, so the
-// strip is under where they fall rather than off to one side of it.
-function skyHeap() {
-  const half = (heapBase('sky') / 2) * P;
-  const mid = Math.round(sky.x / P) * P;
-  return { key: 'sky', from: mid - half, to: mid + half };
-}
 
 // The ground under the recycler's spout, running left from the wall.
 function scrubHeap() {
@@ -501,21 +509,19 @@ export const bankCeiling = c => {
   // bank here rises on, and levels off at the scatter -- which reads as a low
   // ramp out of the foot of the hill and up into the heap beyond it.
   if (!p) return Math.min(LOOSE_DEEP, Math.max(0, pastRock(x)) * BANK_SLOPE);
-  // A strip is a crate, and a crate fills to its brim everywhere before anything
-  // leans anywhere: every column takes the height of the sides, and above that
-  // it slopes away from the ends the way loose stuff does.
+  // A strip is a heap of loose stuff and nothing else: it rises from its own
+  // ends at the angle sand finds, and its crest is in the middle.
   //
-  // It used to be the slope alone, which meant a heap with nothing at its ends
-  // -- the marked-out ground stood emptiest exactly where it was marked, and a
-  // strip narrower than a few cells could not hold a single grain, because the
-  // ceiling at its edge columns was nought. The sides hold it in now, which is
-  // what sides are for. Same rule as the hole: see `heapCeiling` in pit.js.
+  // It used to stand in a crate -- five cells of flat brim everywhere, and the
+  // slope only above that -- which is what the two posts and a floor drawn at
+  // every station were. The crate went with item 8 of feedback5, and it took the
+  // brim with it: sides you cannot see are a rule nobody can read off the
+  // picture. What held the capacity up was never the sides anyway, it was
+  // `heapBase` being a cell or two mean about how wide a strip has to be (see
+  // config/piles.js, where that is now worked out honestly), and a strip wide
+  // enough for its own limit needs nothing holding it in.
   const toEnd = Math.min((x + P - p.from) / P, (p.to - (x + P)) / P);
-  // Unless the strip has no crate to fill -- the rock's, which is the width of
-  // the hill. Nothing holds that in, so it is the slope alone and what falls
-  // there heaps where it fell. See `CRATED` in config.js.
-  if (!CRATED(p.key)) return Math.max(0, toEnd) * BANK_SLOPE;
-  return CRATE_H / P + Math.max(0, toEnd) * BANK_SLOPE;
+  return Math.max(0, toEnd) * BANK_SLOPE;
 };
 
 // the outside of the rock's apron on one side: spoil and cores are aimed past it
@@ -611,8 +617,20 @@ export function seatSites() {
   farm.x = S.placed.farm.x;
   farm.y = S.groundY;
 
-  // the one thing that is not on the ground
-  sky.x = S.cx + TO_SKY;
+  // The one thing that is not on the ground -- and it stands beside the tower
+  // all the same (item 10 of feedback5). The star used to be its own offset from
+  // the rock, three and a half thousand pixels of hand-measured distance that
+  // agreed with the walk by luck: it ended up hanging over the casino's roof,
+  // which is the one building in the yard that has nothing to do with it.
+  //
+  // A wizard is made in the tower and flies from the tower to the star, so the
+  // two belong together. The tower's slot carries the star's ground on its far
+  // side (see SITES), and the star sits over the middle of that ground -- the
+  // rind it drops falls straight down, so the strip has to be under where it
+  // falls rather than off to one side. Nothing teleports: a wizard already on
+  // its way simply has further to fly.
+  const under = placed.strips.find(p => p.key === 'sky');
+  sky.x = Math.round((under.from + under.to) / 2 / P) * P;
   sky.y = S.groundY - SKY_UP;
   sky.r = SKY_R;
 

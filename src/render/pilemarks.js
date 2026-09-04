@@ -6,7 +6,7 @@
 // leaves: ctx from ./ctx.js, drawMark and drawTriangle from ./marks.js.
 
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
-import { CRATED, CRATE_H, P, PILE_HOLDS } from '../config.js';
+import { P, PILE_HOLDS } from '../config.js';
 import { S, farm, scrub, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark, drawTriangle } from './marks.js';
@@ -48,44 +48,24 @@ function stripMark(kind, x, y) {
   ctx.fillStyle = '#000';
 }
 
-// The crate a station's output is thrown into.
+// The ground a station's output is thrown on to.
 //
-// This was pegs and a dashed run -- a surveyor's marking on bare ground, which
-// said "something belongs here" and left you to imagine what. A crate says it
-// outright, in the vocabulary the rest of the yard is written in: the bench, the
-// kit stand and the closet are all THINGS, and a heap of stone that lives in a
-// box is easier to read than a heap of stone that lives on a line.
+// It was a crate for a while -- two posts and a floor, in the yard's own ink --
+// and item 8 of feedback5 took them out. Five stations wearing a box each is
+// five more black objects along a ground line that already carries a shed, a
+// stand, a fence and a bridge, and what they boxed in was the one thing here
+// that is meant to read as loose material. A heap of stone standing free says
+// "heap"; the same heap in a box says "crate", and the crate was the louder of
+// the two by a distance.
 //
-// Drawn before the grid, so what is thrown in piles up inside it. The sides hold
-// the pile in rather than overlapping it -- see `bankCeiling` in world.js, where
-// a strip fills to the brim of its sides before anything leans.
+// What is left is the mark: whose ground this is and what lands on it, cut into
+// the floor rather than standing on it.
 export function drawPileGround() {
   for (const p of S.piles) {
     const y = S.groundY;
-    // In the yard's own ink, not the pale grey a marking is drawn in. A crate is
-    // furniture -- the same black the bench and the kit stand are drawn in --
-    // and the pegs were pale because they were a note about the ground rather
-    // than a thing standing on it.
-    ctx.fillStyle = '#000';
-    // The box, where there is one. The rock's strip has none: it runs the width
-    // of the hill, and a box that long is a bar laid across the yard rather than
-    // something with sides -- see `CRATED` in config.js, which the rule about how
-    // a strip fills reads from the same place.
-    if (CRATED(p.key)) {
-      // Two sides, standing on the floor. A cell thick, so they read as boards
-      // rather than as walls.
-      for (const x of [p.from, p.to - P]) ctx.fillRect(x, y - CRATE_H, P, CRATE_H);
-      // ...and the floor they stand on, in the same ink as the sides, because a
-      // box is made of one thing. It lies in the ground rather than on it -- the
-      // cell *under* the ground line -- so what is thrown in sits on top of it
-      // instead of standing in it. Drawn pale and level with the first row of
-      // grains, it was a floor nobody ever saw: the first thing thrown covered
-      // it, and a crate whose floor only shows while it is empty is two posts.
-      ctx.fillRect(p.from - P, y, (p.to - p.from) + P * 2, P);
-    }
-    // ...and whose crate it is, cut into the ground under it rather than hung
-    // in the air over it. It stays put as the crate fills: a marking that dimmed
-    // as the strip filled told you least about the strip you could see least of.
+    // Whose ground it is, cut into it rather than hung in the air over it. It
+    // stays put as the heap grows: a marking that dimmed as the strip filled
+    // told you least about the strip you could see least of.
     const mid = Math.round((p.from + p.to) / 2 / P) * P;
     ctx.fillStyle = GROUND_INK;
     stripMark(PILE_HOLDS[p.key], mid, y + P * 3);

@@ -168,34 +168,11 @@ export const ROCKHAND_BITE_MULT = 2.2;
 // the wizards stop until somebody has carried it away.
 export const PILE_LIMIT = { rock: 700, quarry: 180, farm: 180, scrub: 140, sky: 260 };
 
-// How tall the sides of a station's crate stand.
-//
-// A strip used to be bare ground with a heap leaning on it, and a heap that
-// leans has nothing at its ends: the marked-out ground was emptiest exactly
-// where it was marked. A crate holds what is thrown into it -- it fills flat to
-// the brim, corner to corner, and only leans once it is over the top of the
-// sides. That is the pit's own rule (`heapCeiling` in pit.js) at a station's
-// scale, which is why it is the same arithmetic rather than a second idea.
-//
-// Five cells. Three read as two pegs with a heap between them rather than as a
-// box -- a crate is a thing with *sides*, and sides you can see over the top of
-// at a glance are not sides. Five is still under a body, so a carter throws into
-// it rather than over a wall, and a full one still reads as a heap standing
-// proud of its box.
-export const CRATE_H = P * 5;
-
-// Which strips stand in a crate, and which are left as bare ground.
-//
-// The rock's is not crated. It is seven hundred grains across -- the whole run
-// of the hill -- and a box that long is not a box, it is a bar laid across the
-// yard with rubble behind it. What comes off the hill is spoil, and spoil at the
-// foot of a cliff should read as a slope of rubble that has fallen there, which
-// is what it did before there were crates and what it goes back to being.
-//
-// One predicate, read by the drawing (`drawPileGround`) and by the rule that
-// says how a strip fills (`bankCeiling`), so a strip cannot end up with a box
-// drawn round it and no sides to fill against, or the other way about.
-export const CRATED = key => key !== 'rock';
+// Item 8 of feedback5 took the station crates out, and with them the two
+// constants that lived here: CRATE_H, the height of a crate's sides, and CRATED,
+// which said whose strip stood in one. A strip is bare ground with a heap on it
+// again -- see `bankCeiling` in world.js, and `heapBase` in config/piles.js for
+// what now keeps a station able to reach its own limit.
 
 // And what lands on each of those strips, which is the one thing about a heap
 // that nowhere else in the game says out loud. Every other fact about a strip is

@@ -87,6 +87,14 @@ export function drawLab() {
     ctx.fillStyle = '#000';
     ctx.fillRect(x, r(LAB_FLUE), w, h - P * LAB_FLUE);       // the body
     ctx.fillRect(c(2), y, P * 3, P * LAB_FLUE);              // a chimney
+    // ...and a second, small one at the far end of the roof: a pipe a cell
+    // through with a cap on it (item 1 of feedback5). The stack beside it is a
+    // mass and carries the smoke; this is a vent, and what tells them apart at
+    // this size is that one is a solid block and the other is a line with a hat
+    // on. Two things standing off one roof is what says the building is full of
+    // works rather than being a box with a chimney.
+    ctx.fillRect(c(across - 4), r(LAB_FLUE - 3), P, P * 3);
+    ctx.fillRect(c(across - 5), r(LAB_FLUE - 3), P * 3, P);
     ctx.fillStyle = '#fff';
     // The window goes off to one side, because the middle of the front belongs to
     // the door now: a window over a doorway is a fanlight, which is a detail this

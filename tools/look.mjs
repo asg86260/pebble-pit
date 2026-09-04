@@ -90,6 +90,23 @@ const SCENES = {
     window.__fast(16);
     window.__look(window.__state().apothecaryX - 400);`,
 
+  // Track F1: the whole building at its widest -- the hut, the bookshelf with
+  // stock standing on all three shelves, and four pots each on a brew of its
+  // own, so the flames read as three different colours side by side. This is the
+  // shot the rework is for.
+  apothpots: `window.__reset(); window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__assign('stirrers', 4);
+    window.__pot('stew', 0); window.__pot('brace', 1);
+    window.__pot('strong', 2); window.__pot('stew', 3);
+    window.__fast(50);
+    window.__look(window.__state().apothecaryX - 320);`,
+
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});
          window.__loo(); window.__assign('janitors',1); window.__fast(20);
@@ -166,6 +183,20 @@ const SCENES = {
   loo: `window.__reset(); window.__crew(0,3); window.__loo();
         window.__assign('janitors',1); window.__fast(30);
         window.__look(window.__state().outhouseX - 260);`,
+
+  // --- Track F2: the yard's furniture ---------------------------------------
+  // The two shacks, side by side in one frame: the field's with its trough and
+  // the cut's with the timber over its door. Nothing else in the list frames
+  // both -- `quarry` and `farm` each look at the work rather than at the shed
+  // beside it -- and the whole question about a shack is whether it reads as a
+  // different building from the other one.
+  shacks: `${RICH} window.__look(window.__state().farmShed.x - 60);`,
+
+  // The far end of the walk: the tower, the star beside it and the ground under
+  // the star, which is where item 10 put them. The star wants the meteor open or
+  // there is nothing up there to look at.
+  westend: `${RICH} window.__meteor(); window.__fast(3);
+            window.__look(window.__state().towerX - 420);`,
 
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
