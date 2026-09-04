@@ -329,6 +329,10 @@ export function setTonic(key) {
 }
 export function setKeep(keep) { S.potKeep = keep; S.potSpent = false; S.dirty = true; }
 export function setPrefer(job) { S.potPrefer = S.potPrefer === job ? null : job; S.dirty = true; }
+// The same setting, chosen off a list rather than stepped onto: a pick says
+// which one it wants, so unlike `setPrefer` it does not toggle back off when the
+// one you picked is the one already set.
+export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 
 // --- what the pot's board sells ----------------------------------------------
 // The tonics are a menu you set, not rungs you buy; the ladders below are the
@@ -342,10 +346,15 @@ const tonicRow = t => ({
   // it lasts, and the crop-and-reagent a brew costs. The board renders these the
   // way it renders any row's gain and bill, so a tonic reads at a glance rather
   // than only on hover. See the pot branch in shop.js.
-  gain: () => `${tonicGain(t)}, ${Math.round(buffMs() / 1000)}s`,
+  // Just what the brew does. How long it lasts is not here: it is a rung of its
+  // own further down the same board ("a longer dose"), and a figure that is set
+  // in one place and repeated in three is a figure you have to keep in step.
+  gain: () => tonicGain(t),
   brewCost: () => [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]],
-  note: () => `${tonicSays(t)}, and it lasts ${Math.round(buffMs() / 1000)}s. ` +
-              `${BREW_CROP} spore and ${BREW_REAGENT} ${t.reagent} a brew.`,
+  // No description. A brew's row is its name, what it does, and what it costs,
+  // and all three are already on the line -- a sentence under it could only say
+  // them again. The rows that keep a description are the ones whose meaning is
+  // not on the line at all.
   on: () => S.potTonic === t.key,
   set: () => setTonic(t.key),
   show: () => S.apothecaryOpen
@@ -373,6 +382,13 @@ export const APOTHECARY_UPGRADES = [
     key: 'potkeep', dial: true, site: 'apothecary',
     name: 'keep brewing',
     value: () => (S.potKeep ? 'batch after batch' : 'just this one'),
+    // A setting picked off a list rather than stepped through. `options` is what
+    // makes a dial a select -- a dial without it keeps the two buttons, which is
+    // what a *number* like the casino's chip still wants.
+    options: () => [{ key: 'on', label: 'batch after batch' },
+                    { key: 'off', label: 'just this one' }],
+    at: () => (S.potKeep ? 'on' : 'off'),
+    pick: k => setKeep(k === 'on'),
     less: () => setKeep(!S.potKeep),
     more: () => setKeep(!S.potKeep),
     lo: () => false, hi: () => false,
@@ -384,6 +400,13 @@ export const APOTHECARY_UPGRADES = [
     key: 'potprefer', dial: true, site: 'apothecary',
     name: 'doses go to',
     value: () => PREFER_LABEL[S.potPrefer] || 'whoever is nearest',
+    // Seven stations to walk past two buttons at a time; a list you pick from is
+    // the whole reason this control exists. "Nobody in particular" is the first
+    // of them rather than a step off either end.
+    options: () => [{ key: '', label: 'whoever is nearest' },
+                    ...PREFER_JOBS.map(j => ({ key: j, label: PREFER_LABEL[j] }))],
+    at: () => S.potPrefer || '',
+    pick: k => choosePrefer(k || null),
     note: () => 'The keeper hands a dose to this station first; if none want ' +
                 'one, to whoever is nearest the pot.',
     less: () => setPrefer(stepPrefer(-1)),

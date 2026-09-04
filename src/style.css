@@ -335,6 +335,49 @@ canvas {
   padding: 2px 3px;
 }
 .rows .job .count { text-align: center; }
+
+/* A setting picked off a list. Shut, it is the chosen option sitting where a
+   count would sit, with a caret to say there is more behind it; open, the
+   options come down the sheet under it as their own lines, the set one marked.
+   It is drawn in the board's own ink rather than as a browser dropdown, because
+   an OS menu in the middle of this yard is the one thing on the screen that
+   would not be black and white. */
+.rows .job.pickrow .chosen {
+  grid-column: 2 / -1;
+  justify-self: end;
+  text-align: right;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.rows .job.pickrow .chosen::after { content: ' \25BE'; opacity: .55; }
+.rows .job.pickrow.open .chosen::after { content: ' \25B4'; opacity: .55; }
+.rows .job.pickrow .opts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 2px 0 1px;
+}
+/* `display: flex` above beats the browser's own rule for the hidden attribute,
+   so a shut list has to be shut again here -- without this every list on the
+   board stands permanently open. */
+.rows .job.pickrow .opts[hidden] { display: none; }
+.rows .job.pickrow .opts .opt {
+  text-align: left;
+  padding: 1px 3px 1px 1.6em;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  opacity: .75;
+}
+.rows .job.pickrow .opts .opt:hover { color: #fff; background: #000; opacity: 1; }
+/* The one that is set, marked in the margin the indent leaves for it. */
+.rows .job.pickrow .opts .opt.on { opacity: 1; }
+.rows .job.pickrow .opts .opt.on::before {
+  content: '\2022';
+  position: absolute;
+  margin-left: -1em;
+}
+.rows .job.pickrow .opts .opt { position: relative; }
 .rows .job button {
   display: block;
   grid-template-columns: none;

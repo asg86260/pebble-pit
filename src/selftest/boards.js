@@ -1,7 +1,7 @@
 // The boards: what a row is, how wide a column goes, what a price says, and
 // where a board seats itself.
 //
-// 13 groups, in the order they have always run in --
+// 14 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen,
@@ -728,6 +728,44 @@ export const TESTS = [
          'and it opens in the same place the first time as the second',
          `${Math.round(first.top)}/${Math.round(first.height)} then ` +
          `${Math.round(again.top)}/${Math.round(again.height)}`)
+    ];
+  }],
+
+  // A setting with a list of named options is picked off the list rather than
+  // stepped onto with two buttons -- seven stations was six presses to reach the
+  // last one, and one press past it went all the way round. Pressed the way a
+  // player presses it: the board is opened, the shut control is clicked, and an
+  // option is chosen. The hooks here only stand the building up, which is the
+  // part this check is not about.
+  ['a setting with named options is picked off a list', async () => {
+    newRun();
+    await settle();
+    window.__crew(0, 1, 0, 2);
+    window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__board('apothecary');
+    await sleep(120);
+
+    const row = document.querySelector('[data-dial="potprefer"]');
+    const opts = row?.querySelector('.opts');
+    const shutFirst = !!opts?.hidden;
+    row?.querySelector('.chosen')?.click();
+    await sleep(40);
+    const dropped = !opts?.hidden;
+    const listed = row ? row.querySelectorAll('.opt').length : 0;
+    row?.querySelector('.opt[data-opt="miners"]')?.click();
+    await sleep(40);
+    const said = (row?.querySelector('.chosen')?.textContent || '').trim();
+    const shutAfter = !!opts?.hidden;
+    window.__board(null);
+    window.__crew(0, 0);
+    return [
+      ok(shutFirst, 'the list starts shut, with the set option on the row itself'),
+      ok(dropped && listed > 2, 'pressing the row drops its options open',
+         `${listed} options`),
+      ok(said === 'miners', 'pressing one of them sets it', said),
+      ok(shutAfter, 'and the list shuts behind the choice')
     ];
   }],
 ];

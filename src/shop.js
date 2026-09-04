@@ -194,6 +194,48 @@ function build(el, list, sections, empty) {
         const row = document.createElement('div');
         row.className = 'job';
         row.dataset.dial = u.key;
+
+        // A setting with a list of named options is picked off the list, not
+        // stepped onto with two buttons: seven stations is six presses to reach
+        // the last one, and a press that walks past the one you wanted has to go
+        // all the way round. A dial that declares `options` gets this; one that
+        // does not -- a *number*, like the casino's chip -- keeps its two
+        // buttons, which is what stepping is actually good at.
+        if (u.options) {
+          row.classList.add('pickrow');
+          row.innerHTML = '<span class="name"><i class="what"></i></span>' +
+                          '<button type="button" class="chosen"></button>' +
+                          '<span class="opts" hidden></span>' +
+                          (u.note ? '<span class="note"></span>' : '');
+          row.querySelector('.what').textContent = u.name;
+          const opts = row.querySelector('.opts');
+          const chosen = row.querySelector('.chosen');
+          for (const o of u.options()) {
+            const pick = document.createElement('button');
+            pick.type = 'button';
+            pick.className = 'opt';
+            pick.dataset.opt = o.key;
+            pick.textContent = o.label;
+            // Picking closes the list: you came to set the thing, and the board
+            // reads shorter with it shut.
+            pick.addEventListener('click', () => {
+              u.pick(o.key);
+              opts.hidden = true;
+              row.classList.remove('open');
+              moved = true;
+            });
+            opts.appendChild(pick);
+          }
+          chosen.addEventListener('click', () => {
+            const opening = opts.hidden;
+            opts.hidden = !opening;
+            row.classList.toggle('open', opening);
+            moved = true;              // the sheet is a different height open
+          });
+          el.appendChild(row);
+          continue;
+        }
+
         row.innerHTML = STEPPER + (u.note ? '<span class="note"></span>' : '');
         row.querySelector('.what').textContent = u.name;
         row.querySelector('.less').addEventListener('click', () => u.less());
@@ -332,9 +374,18 @@ export function refresh(el, list, headcount) {
     if (row.dataset.dial) {
       const u = list.find(x => x.key === row.dataset.dial);
       if (!u) continue;
-      grey(row.querySelector('.less'), u.lo());
-      say(row.querySelector('.count'), u.value());
-      grey(row.querySelector('.more'), u.hi());
+      if (u.options) {
+        // The shut list says which one is set; the open one also marks it, so
+        // you can see what you are changing from.
+        say(row.querySelector('.chosen'), u.value());
+        const at = String(u.at ? u.at() : '');
+        for (const o of row.querySelectorAll('.opt'))
+          o.classList.toggle('on', o.dataset.opt === at);
+      } else {
+        grey(row.querySelector('.less'), u.lo());
+        say(row.querySelector('.count'), u.value());
+        grey(row.querySelector('.more'), u.hi());
+      }
       sayNote(row, u);
       continue;
     }
