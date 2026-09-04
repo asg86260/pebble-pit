@@ -368,7 +368,7 @@ export const snapshot = () => ({
   apothecaryOpen: S.apothecaryOpen,
   boiling: apothBoiling(),
   stirrers: S.stirrers,
-  potTonic: S.potTonic,
+  potTonics: S.potTonics,
   potKeep: S.potKeep,
   potSpent: S.potSpent,
   apothPots: S.apothPots,
