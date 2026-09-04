@@ -11,6 +11,8 @@
 // so they live here as consts rather than as fields on S.
 
 import { P, LOO_POSTS, APOTH_POTS0 } from './config.js';
+// The save lists count bodies by job, and the words are jobs.js's to spell.
+import { JOB } from './jobs.js';
 
 export const S = {
   // --- the window and the view ---
@@ -469,7 +471,7 @@ export const SAVED = [
   'shards',
   'spores',
   'farmOpen',
-  'farmhands',
+  JOB.FARM,
   // a piece of research that finished while you were away is still news when
   // you come back, and how many the lab let out for want of anything to do
   'labDone',
@@ -479,7 +481,7 @@ export const SAVED = [
   // save from before it existed comes back with the pot idle and one pot to a
   // building, which is what a fresh apothecary is.
   'apothecaryOpen',
-  'stirrers',
+  JOB.STIR,
   'apothPots',
   'potTonic',
   'potKeep',
@@ -511,7 +513,7 @@ export const SAVED = [
   // the bench has been *paid for*, and closing the tab on one used to lose the
   // dust, the stone and the crop with it.
   'wizardHats',
-  'janitors',
+  JOB.JANITOR,
   'harnessLevel',
   'bootsLevel',
   'seenMess',
@@ -541,18 +543,18 @@ export const SAVED_BY_HAND = [
   'coreItem',             // a core loose in the world: a spot, or the fact of one
   'crew',                 // an old save has a headcount per job and no total
   'workers',              // saved as `who`: a name and a record apiece, not four counts
-  'rockhands',            // renamed from miners, and read under both names
+  JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
   'seenShard',
   'quarryOpen',           // renamed from the cave, along with the three below
-  'quarriers',
+  JOB.QUARRY,
   'quarryPaceLevel',
   'benchLevel',           // grandfathered up to the crew already standing in it
   'quarryCells',          // how deep each column has been dug
   'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save
   'seenSpore',
-  'scholars',             // renamed from labbers
+  JOB.SCHOLAR,             // renamed from labbers
   'plotLevel',            // grandfathered, the way `benchLevel` is
   'introDone',            // an old save with anybody hired has plainly had its opening
   'reunionDone',
@@ -561,11 +563,11 @@ export const SAVED_BY_HAND = [
   'machines',             // facts only: bought, driven, tuned, took the kit
   'summon',               // three places, and only meaningful once the tower is open
   'seenSpark',
-  'wizards',              // never more bodies up there than there are hats
+  JOB.WIZARD,              // never more bodies up there than there are hats
   'works',                // what the yard is part way through building, per site
   'buildOrder',           // and the order its buildings went up in
   'lent',                 // the jobs the builders were borrowed from
-  'purifiers',            // renamed from scrubbers
+  JOB.PURIFY,            // renamed from scrubbers
   'haze',                 // rounded: a fraction of a mote is not worth the characters
   'rockSand',             // what is lying on the rock, a column at a time
   'pot',                  // the casino: what is on the table...
@@ -584,7 +586,7 @@ export const SAVED_BY_HAND = [
   // `rebalance` works the number out again from the crew and the other jobs. It
   // stays in the file because the format on disk is not this refactor's to
   // change, and because a save is also the thing a bug report arrives as.
-  'haulers',
+  JOB.HAUL,
   // Saved and restored, but nothing else in the game reads it -- the crew's
   // leavings live in `S.muck`, under a kind. A leftover the format still
   // carries; kept for the same reason `haulers` is.
@@ -632,7 +634,7 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame
-  'builders', 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  JOB.BUILD, 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
   'raining', 'rainFor', 'scrubBank', 'pumpAt',
   // Three that are hung on S by their own modules rather than declared above --

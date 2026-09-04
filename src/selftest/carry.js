@@ -55,7 +55,7 @@ export const TESTS = [
     window.__clearFloor();
     run(30);
     const s = state();
-    const m = state().workerPos.find(p => p[0] === 'm').split(':')[1].split(',').map(Number);
+    const m = state().workerPos.find(p => p[0] === 'r').split(':')[1].split(',').map(Number);
     const scr = (wx, wy) => [(wx - state().camX) * s.zoom, (wy - state().camY) * s.zoom];
 
     // hovering one says who it is
@@ -99,17 +99,17 @@ export const TESTS = [
       // whichever rockhand is on the cursor, not whichever is first in the list:
       // there are two of them and the order they are stored in is not a fact
       // about which one you picked up
-      ok(carried.workerPos.some(p => p[0] === 'm' &&
+      ok(carried.workerPos.some(p => p[0] === 'r' &&
            Math.abs(+p.split(':')[1].split(',')[0] - away[0]) < 30),
          'it goes where the cursor goes',
-         `${carried.workerPos.filter(p => p[0] === 'm')} want ${Math.round(away[0])}`),
+         `${carried.workerPos.filter(p => p[0] === 'r')} want ${Math.round(away[0])}`),
       ok(put.falling === 1, 'let go, it falls rather than being lowered', `${put.falling}`),
       ok(!put.lifted && put.rockhands === s.rockhands,
          'putting it down leaves everybody on the job they were on',
          `${s.rockhands} -> ${put.rockhands}`),
-      ok(Math.abs(+home.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[0] - s.rockX) < s.rockW,
+      ok(Math.abs(+home.workerPos.find(p => p[0] === 'r').split(':')[1].split(',')[0] - s.rockX) < s.rockW,
          'and it walks back to what it was doing',
-         home.workerPos.find(p => p[0] === 'm'))
+         home.workerPos.find(p => p[0] === 'r'))
     ];
   }],
 
@@ -124,7 +124,7 @@ export const TESTS = [
     run(30);
     const s = state();
     const scr = (wx, wy) => [(wx - s.camX) * s.zoom, (wy - s.camY) * s.zoom];
-    const m = s.workerPos.find(p => p[0] === 'm').split(':')[1].split(',').map(Number);
+    const m = s.workerPos.find(p => p[0] === 'r').split(':')[1].split(',').map(Number);
     point('pointerdown', ...scr(m[0] + 9, m[1] + 9), 2, 2);
     // straight up in the air over the rock, then let go
     const over = [s.rockX + s.rockW / 2, s.groundY - 260];
@@ -135,12 +135,12 @@ export const TESTS = [
     const air = state();
     run(4);
     const down = state();
-    const near = +down.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[1];
+    const near = +down.workerPos.find(p => p[0] === 'r').split(':')[1].split(',')[1];
     window.__crew(0, 0);
     return [
       ok(let_go.falling === 1, 'let go over its own rock, it is in the air', `${let_go.falling}`),
-      ok(+air.workerPos.find(p => p[0] === 'm').split(':')[1].split(',')[1] > over[1],
-         'and it is coming down', air.workerPos.find(p => p[0] === 'm')),
+      ok(+air.workerPos.find(p => p[0] === 'r').split(':')[1].split(',')[1] > over[1],
+         'and it is coming down', air.workerPos.find(p => p[0] === 'r')),
       ok(down.falling === 0 && near < s.groundY + 40, 'it lands', `${down.falling}, ${near}`),
       ok(down.rockhands === s.rockhands, 'still a rockhand', `${s.rockhands} -> ${down.rockhands}`)
     ];
