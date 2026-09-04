@@ -2588,7 +2588,14 @@ banked the whole yard for free and left the haulers with nothing to do. Throwing
 is still a real tactic — a flick sends it through the air, and anything that crosses the mouth
 falls in.
 
-## The crate
+## The crate (cut, wave 5)
+
+feedback5 item 8 removed the crates: every strip is now the bare slope, and
+`heapBase` counts whole cells instead of rounding so a station can still fill
+its own pile without the brim the sides used to lend it. The section below is
+kept as the reasoning that shaped the strips, not as a description of the yard.
+
+## The crate, as it was
 
 A station's output lands on a marked-out strip of ground. That strip is a **crate**: two sides and a
 floor, in the same black the bench and the kit stand are drawn in, with the station's mark cut into
@@ -3985,6 +3992,22 @@ place to revisit.
 Also on the roll but not in the original table: a **miner under a bracing
 tonic** rolls at a lifted chance (`critBoost`), so the apothecary reaches the
 crit ladder for one body at a time -- see "The apothecary".
+
+## The apothecary rework (built, wave 5)
+
+feedback5 items 7, 11-14, 17-18 reshaped the station: the plot reads hut,
+bookshelf, pots, left to right. The hut is the building — the board's target
+and the home of every global rung. Each pot is its own: bought one at a time,
+set to its own tonic (a board section per pot), brewing simultaneously, its
+flame and steam mixed from its brew's color. Stock is per tonic on the
+bookshelf, a count badge a shelf, and switching a pot's brew keeps the
+backlog. The ladders are hybrid by decision: potency is one row per tonic —
+committing to a recipe is the point — while brew speed, dose length, batch
+size and the stirrer's armful (carry 1/2/3/4) stay facts about the building.
+Haulers take only the carry tonic; a multiplier on a crowd of carters averages
+flat, so the other brews skip them and say so in their hover text. The old
+single-pot fields (`potTonic`, `potSpent`, `doseHold`, `strengthLevel`)
+migrate on load and are dead otherwise.
 
 ## The apothecary (built)
 

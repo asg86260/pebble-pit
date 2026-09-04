@@ -154,10 +154,11 @@ millisecond, and the real spike was `addGrain` searching the whole floor.
   prose and commit messages.
 - Black and white only, flat shapes, no gradients, no textures. Everything sits
   on the `P = 6` cell grid; half a cell off puts a hairline through the picture.
-- **`persist.js` must know about every new field on `S`** that should survive a
-  reload. Nothing warns you if it does not.
-- **Painting order in `render.js` is the whole trick.** Reordering it is a
-  visual change, not a tidy-up.
+- **Every new field on `S` goes in one of state.js's three lists** (`SAVED`,
+  `SAVED_BY_HAND`, `EPHEMERAL`); `test/persist-roundtrip.test.mjs` is red for a
+  field in none of them.
+- **Painting order in `render.js` is the whole trick.** It is the `LAYERS`
+  list now; moving an entry is a visual change, not a tidy-up.
 - `dev.js` (backtick opens it) is the panel most of these numbers were actually
   found with. A new knob is one `export let` in `config.js` plus one line in
   `TUNABLE`.

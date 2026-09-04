@@ -1,11 +1,36 @@
 # Still to do
 
-## Wave 5 — spec committed, awaiting approval (2026-09-03)
+## Wave 5 — SHIPPED (2026-09-04)
 
-Two batches: the scalability refactor (config/smog/upgrades barrels, persist
-that fails loud, painting order and sim steps as data, a crew job registry),
-then the 21 feedback5.md items built through the new seams. The canon is
-`docs/wave5.md`; nothing is built until it is signed off.
+Both batches are on main: the scalability refactor (config/smog/upgrades
+barrels, `SAVED` lists with a round-trip check, the `LAYERS` and `STEPS`
+lists, the crew `JOBS` registry) and all 21 feedback5.md items through the
+new seams. Canon in `docs/wave5.md`; eight tracks, six follow-up fix
+branches, all merged and green except the standing red below.
+
+Follow-ups the wave surfaced, none blocking:
+
+1. **`sky-readout.test.mjs` — "a speck off a swing is the speck in the
+   band"** was red before the wave and is red after; nobody's regression,
+   still undiagnosed.
+2. **The pit is permanently empty in the endgame** (item 20 as built):
+   once the rift tears, nothing ever settles on the pit floor again, so the
+   pile — and the crater the nearest-first walk carves — is unobservable
+   from that moment on. If that reads badly in play, the correction is an
+   inhale that takes what arrives rather than everything present.
+3. **The tower lost its endless red sink** (item 15 removed the black-hole
+   ladder). Late-game sparks now have one fewer place to go; the fan ladder
+   and machine tuning carry it alone.
+4. **Retire the four legacy apothecary fields** (`potTonic`, `potSpent`,
+   `doseHold`, `strengthLevel`) once enough saves have rolled over; the
+   migration in apothecary.js reads them once.
+5. **Two rate mechanisms**: `lab.js`'s eased books and `stats.js`'s
+   measured window. One should absorb the other; lab.js's is the weaker.
+6. **`src/crew/jobs.js` vs `src/jobs.js`** — the registry and the
+   vocabulary share a basename a directory apart; rename the registry to
+   `registry.js` in a quiet moment.
+7. **Seed the `crew` scene in tools/look.mjs** so its shots can prove
+   something; unseeded, two same-code runs differ as much as any change.
 
 ## The apothecary — BUILT, reviewed, two follow-ups left (2026-09-03)
 

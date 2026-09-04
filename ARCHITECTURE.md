@@ -19,8 +19,8 @@ field or two on `S` and a constant or two in `config.js`.
 
 | File | Owns | Safe to change alone? |
 |---|---|---|
-| `config.js` | every tunable number | yes — no logic |
-| `state.js` | every mutable fact, plus the two sand grids and every site's rect | yes — no logic |
+| `config.js` | every tunable number — a barrel over `src/config/`, one file per feature; add a constant in the feature's file, never here | yes — no logic |
+| `state.js` | every mutable fact, plus the two sand grids and every site's rect — and `SAVED` / `SAVED_BY_HAND` / `EPHEMERAL`, which say what a reload keeps | yes — no logic |
 | `grid.js` | the falling-sand rules, and nothing that knows what sand is *for* | yes |
 | `painter.js` | drawing a sand grid through a scratch canvas | yes |
 | `world.js` | where the sites stand; which ground is spoken for | changes coordinates for everyone |
@@ -31,17 +31,17 @@ field or two on `S` and a constant or two in `config.js`.
 | `dust.js` | a chip in the air: where it is aimed and how it flies | yes |
 | `pit.js` | the hole: banking, capacity, spending, its paint buffer | yes |
 | `core.js` | the thing buried in each rock | yes |
-| `crew.js` | miners, workers, and the two site crews | yes |
+| `crew.js` | the crew — a barrel over `src/crew/`; a worker type is one file there plus a row in the `JOBS` registry (`src/crew/jobs.js`) | yes |
 | `air.js` | the dust hanging in the yard: three bands of it, at three distances, and its colour over each site | yes |
 | `roster.js` | the crew count and its two buttons under each station | yes |
 | `weather.js` | the clouds and the birds, far behind everything | yes |
-| `upgrades.js` | what the bench sells and what it costs | yes |
+| `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
-| `render.js` | everything drawn, nothing decided | painting **order** matters |
-| `persist.js` | reading and writing the game | must know every new field on `S` |
+| `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
+| `persist.js` | reading and writing the game; plain fields come off `SAVED` in state.js in one loop, hand-encoded ones stay here | a field in no list is a red test |
 | `main.js` | the frame order and the browser's hooks | small; touched by most features |
 | `save.js` | the localStorage key and its guard | rarely |
 | `selftest.js` | the order the browser groups run in; the checks themselves are in `selftest/`, one file to a subject | grows with every feature |
@@ -56,11 +56,12 @@ The bench works the same list out loud: `canAfford` and `unseenSection` in
 `upgrades.js` are what decide whether it is in the yard at all and which mark
 it wears, so a new row or a new section is picked up without touching them.
 
-**A new job for the crew.** There is only one kind of body: `jobRow(...)` in
-`upgrades.js` gives you the row that moves workers on to it and off it again, and
-its count goes in `JOBS` and on `S`. Add a `type` branch in `updateWorkers` and a
-shape in `drawWorkers`. `S.haulers` is never assigned anywhere but `rebalance()`
-— it is whatever is left over once every job has taken its share.
+**A new job for the crew.** One file in `src/crew/` for the work, one row in
+the `JOBS` registry in `src/crew/jobs.js` (`factory`, `want`, `step`), the words
+in `src/jobs.js`, the count on `S` and in `SAVED`, a shape in `drawWorkers`.
+`syncWorkers` and `FACTORY` read the registry, so nothing else changes.
+`S.haulers` is never assigned anywhere but `rebalance()` — it is whatever is
+left over once every job has taken its share.
 
 **A new plot of sand** — a farm plot, say. `grid.js` takes any object of
 the shape documented at the top of it, with optional hooks:
@@ -117,13 +118,17 @@ keeping.
 
 ## Two things to be careful of
 
-**Painting order is the whole trick** in `render.js`. The ground line goes down
-first so the rock stands in front of it; the crew and the spoil go over the rock;
-the pit is blitted from its own scratch canvas rather than drawn a grain at a
-time. Reordering these is a visual change, not a tidy-up.
+**Painting order is the whole trick** in `render.js`, and since wave 5 it is
+one list — `LAYERS`, an entry a line, read top to bottom as the painting order.
+The ground line goes down first so the rock stands in front of it; the crew and
+the spoil go over the rock; the pit is blitted from its own scratch canvas
+rather than drawn a grain at a time. Moving a line in that list is a visual
+change, not a tidy-up; a new feature adds its entry at the right depth.
 
-**`persist.js` must know about every new field on `S`** that should survive a
-reload. Nothing warns you if it does not.
+**Every new field on `S` goes in one of state.js's three lists** — `SAVED`
+(a plain copy), `SAVED_BY_HAND` (its code in `persist.js`), or `EPHEMERAL`
+(thrown away on purpose). `test/persist-roundtrip.test.mjs` goes red for a
+field in none of them, which is the warning persist.js used to owe you.
 
 ## The dev panel
 
