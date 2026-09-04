@@ -181,10 +181,15 @@ group('a full pit still saves and reloads', async () => {
     // pile cannot be read back from: lose this line and a player's dust is not
     // somewhere else, it is gone.
     // A hole filled past the brim tears open, so there is something standing in
-    // the rift to travel. Not to the grain: the save is written on its own timer
-    // and the rift swallows every frame, so the two are read a moment apart.
-    ok(j.rift > 0 && Math.abs(j.rift - s.rift) < 200,
-       'and what is standing in the rift', `${j?.rift} saved against ${s.rift}`),
+    // the rift to travel. The two readings are no longer near each other and
+    // must not be asked to be: the file says what was through at the moment it
+    // was written, and a torn rift INHALES -- a second after the load the whole
+    // restored pile is through it as well. What is checked is the rule, which
+    // holds at both instants: what is counted is the pile plus what is through.
+    ok(j.rift > 0 && j.rift <= s.rift, 'and what is standing in the rift travels with it',
+       `${j?.rift} saved, ${s.rift} through now`),
+    ok(s.pitDust + s.rift === s.stored,
+       'and the loaded yard still adds up', `${s.pitDust} + ${s.rift} against ${s.stored}`),
     ok(j.pitLevel === s.pitLevel, 'and how far the hole has been dug', `${j?.pitLevel}`)
   ];
 });

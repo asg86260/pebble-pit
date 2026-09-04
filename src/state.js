@@ -184,6 +184,10 @@ export const S = {
   research: null,         // { key, done } -- worker-seconds put in so far
   smoke: [],              // puffs off the chimney while it is being worked
   grit: [],               // chips off a hammer at a building site
+  // F4: what a crit left in the air -- the ring going out, and the specks the
+  // blow threw. Neither is dust and neither is counted; see shock.js.
+  shocks: [],
+  shockMotes: [],
   smokeAt: 0,
   houseSmokeAt: 0,      // and when the crew's own chimney last had a puff
   shutters: [],         // rooms with the curtain across, by room number
@@ -621,6 +625,9 @@ export const EPHEMERAL = [
   'heldCore', 'coreTaker',
   // smoke, curtains and chips off a hammer
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
+  // F4: a crit's ring and its specks -- a moment, half a second long, with no
+  // beginning for a reload to come back to
+  'shocks', 'shockMotes',
   'skyShown', 'flashAt',
   // the wheel, and a hand that settled before you closed the tab
   'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',

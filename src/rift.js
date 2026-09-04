@@ -18,9 +18,11 @@
 // stand at it, and the bargain was a body not on the rock. The bargain stopped
 // paying -- the body arrived once and stood there for ever, two windows off
 // screen, and a decision nobody ever takes back is not a decision. Torn is
-// open. What it costs is what it already cost: red to tear it, and an endless
-// ladder of red and dust on how fast it swallows. The yard's two oldest rules
-// survive that, because no body was ever what moved the grains, and the rift
+// open, and open is full strength: it costs nothing, because there is nothing
+// to buy -- the hole tears itself the first time the pit cannot take a grain,
+// and from that moment it takes everything thrown at the pit. The yard's two
+// oldest rules survive that, because no body was ever what moved the grains,
+// and the rift
 // is not a station -- it is what the hole does with its overflow, and the hole
 // has never been staffed either.
 //
@@ -29,7 +31,7 @@
 // uses: one way of taking dust out of the pile, two destinations.
 
 import { P, RIFT_W, RIFT_H, RIFT_AT, RIFT_UP, RIFT_GULP, RIFT_GULP_SHOW,
-         RIFT_RATE, RIFT_RATE0, RIFT_RATE_COST, RIFT_RATE_UP } from './config.js';
+         RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains } from './pit.js';
 
@@ -75,38 +77,40 @@ export const riftRadius = () => rift.w * 0.5;
 export const riftOpen = () => !!S.riftOpen;
 
 // --- how fast ----------------------------------------------------------------
-// Grains a second. An endless ladder, and endless is the point rather than an
-// oversight.
+// **It inhales.** Everything in the hole goes, on the frame it lands there.
 //
-// What the rift sells is **rate**, never room. Capacity is unbounded from the
-// moment it is built, because a magic hole with a number written on it is the
-// pit again -- and the whole lesson of the press is that selling capacity is
-// selling the wrong thing. What you are buying is whether the rift keeps up with
-// what the yard is making. A works that has outgrown its rift fills the hole and
-// stops, exactly as it does today, so the pressure is real and the answer to it
-// is a row that never runs out.
-export const riftRate = () => RIFT_RATE0 * Math.pow(RIFT_RATE, S.riftLevel || 0);
-
-// and what the next rung of it costs, in red and in dust
-export const riftUpCost = () => Math.round(RIFT_RATE_COST * Math.pow(RIFT_RATE_UP, S.riftLevel || 0));
+// It was a rate, and the rate was a ladder: twelve grains a second to start with
+// and a row on the tower that widened it, for ever. Two things were wrong with
+// that, and they are the same thing said twice.
+//
+// The first is what it looked like. A pile with a black hole over it, losing a
+// dozen grains a second, is a pile that is very slightly shorter than it was --
+// nothing about the picture says *pulled*. Grains went on settling on the floor
+// under the disc and lying there, which is the one thing a hole in the air is
+// supposed to make impossible.
+//
+// The second is what it was to play. Buying a black hole's appetite up a rung at
+// a time makes it a machine with a dial, and it is the only object in this yard
+// that is not machinery. Nothing tends it, nothing switches it on, and it has
+// nothing on the front of it to adjust.
+//
+// So there is no rate and no ladder. What is left is a ceiling on one frame --
+// see RIFT_INHALE_MAX -- which is not a balance number: it is there so that a
+// hundred thousand grains arriving in one act are taken over a few frames
+// instead of walking a million cells inside one. Anything the yard can earn is
+// orders under it.
+export const riftBite = () => Math.min(pitGrains(), RIFT_INHALE_MAX);
 
 // --- the swallowing ----------------------------------------------------------
-// Grains off the top of the pile and out of this dimension, at the rift's rate.
-//
-// The remainder is carried between frames. At one grain a second and a sixtieth
-// of a second a frame, flooring every frame's share would swallow nothing at
-// all, for ever -- the same trap the sky's fouling fell into, and the reason
-// every rate in this game is accumulated rather than rounded at each step.
-let owed = 0;
-
+// Grains off the top of the pile and out of this dimension. Nothing is
+// accumulated between frames and no remainder is carried, because there is no
+// rate to carry the remainder of: what is in the hole is what goes.
 export function stepRift(dt) {
-  if (!riftOpen()) { owed = 0; return 0; }    // not torn: nothing is owed
+  if (!riftOpen()) return 0;                  // not torn: nothing is pulled
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
-  owed += riftRate() * dt / 1000;
-  const whole = Math.floor(owed);
-  if (whole < 1) return 0;
-  owed -= whole;
-  return swallow(whole);
+  const take = riftBite();
+  if (!take) return 0;
+  return swallow(take, RIFT_INHALE_SHOW);
 }
 
 // The tearing: the hole emptied, over RIFT_GULP seconds, however much is in it.
@@ -128,7 +132,6 @@ function gulp(dt) {
   const was = S.riftGulp;
   const left = Math.max(0, was - dt / 1000);
   S.riftGulp = left;
-  owed = 0;
   const have = pitGrains();
   if (!have) return 0;
   const take = left <= 0 ? have : Math.ceil(have * Math.min(1, (was - left) / was));
@@ -139,8 +142,8 @@ function gulp(dt) {
 // draw the moment rather than take part in it.
 export const riftTearing = () => Math.max(0, Math.min(1, (S.riftGulp || 0) / RIFT_GULP));
 
-// The two rows it sells live in upgrades.js with the rest of the bench's, under
-// `the hole` -- the section the press used to stand in, which is the right home
-// for them: what both are about is what happens when the hole is full. They are
-// not here because upgrades.js reaches this file through pit.js and shop.js, and
-// an array spread across that circle is read before it exists.
+// **It sells nothing, on any board.** There is no row that summons it -- the
+// hole collapses on its own the first time it cannot take a grain -- and no row
+// that widens it, because there is nothing left to widen: it takes everything.
+// See the note under `the black hole` in tower.js for what those two rows were
+// and why each of them went.

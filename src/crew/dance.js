@@ -6,12 +6,12 @@
 // from here.
 
 import { frames, now } from '../clock.js';
-import { BUILD_HAMMER_H, BUILD_HAMMER_MS, BUILD_HITS_MAX, BUILD_HITS_MIN, BUILD_REST_MS, BUILD_SHIFT, BUILD_SHIFT_SPAN, DANCE_BEAT, JIG_PACE, P, WORKER } from '../config.js';
+import { BUILD_HAMMER_H, BUILD_HAMMER_MS, BUILD_HITS_MAX, BUILD_HITS_MIN, BUILD_REST_MS, BUILD_SHIFT, BUILD_SHIFT_SPAN,
+         DANCE_BEAT, DANCE_JUMP_BEAT, DANCE_JUMP_H, P, WORKER } from '../config.js';
 import { at } from '../grid.js';
 import { spawnGrit } from '../grit.js';
 import { rand } from '../rng.js';
 import { fallMs } from '../rock.js';
-import { feetOn, wayOver } from '../route.js';
 import { S, floor } from '../state.js';
 import { commutePace } from '../upgrades.js';
 import { siteBox } from '../works.js';
@@ -24,13 +24,15 @@ import { duck, stand, upTop } from '../crew.js';
 // read as dancing. It read as vibrating.
 //
 // What was wrong with it was not the size of the hop. It was that nobody *went*
-// anywhere and nobody did anything twice. So: three moves, held for a couple of
-// beats each and then swapped, and a patch of ground each to do them on. Bodies
-// that travel and change what they are doing read as pleased with themselves;
-// bodies that stay on their mark read as an animation.
-// It read as vibrating again, and for a different reason each time, so here is
-// the whole of what a body has to dance with -- because the answer is short, and
-// every move below is built out of it and nothing else:
+// anywhere and nobody did anything twice. So it became three moves, held for a
+// couple of beats each and then swapped, with a patch of ground each to do them
+// on -- and the two that travelled turned out to be the wrong answer to that
+// (item 21, feedback5): a gang that ambles sideways and turns on the spot reads
+// as milling about, not as pleased. What a body does now is jump, higher and
+// quicker than the old hop, and that is the whole table.
+//
+// Here is the whole of what a body has to dance with -- because the answer is
+// short, and every move below is built out of it and nothing else:
 //
 //   **Where it is.** `w.x`, in whole cells.
 //   **How high it is.** `w.y` off `w.foot`, in whole cells.
@@ -45,10 +47,11 @@ import { duck, stand, upTop } from '../crew.js';
 // was a square changing height on the spot at two and a half beats a second --
 // which is the definition of vibrating, and is exactly what it looked like.
 //
-// So each move is written in travel and height, both of which can be seen, and
-// each is given its own rate so the gang are not all pulsing on one tick. And it
-// is a table rather than a chain of ifs: a move is a row, the next one is
-// another row, and no row can quietly forget to move.
+// So a move is written in height, which can be seen, and every body rolls its
+// own rate so the gang are not all pulsing on one tick. And it is a table rather
+// than a chain of ifs: a move is a row, the next one is another row, and no row
+// can quietly forget to move. It is one row long today; the builders' hammer is
+// a second one, added below where the dance's own roll cannot reach it.
 //
 // --- and a move is counted in beats, from its own start -----------------------
 // The third rewrite is about the seams rather than the moves. Every move used to
@@ -68,20 +71,16 @@ import { duck, stand, upTop } from '../crew.js';
 // once, because at a whole beat every move is in the same pose:
 //
 //   swing = |sin(beat * PI)| is zero at every whole beat -- the body is on the
-//   ground, and `hop`, `step` and `spin` all draw it at `w.foot` there,
-//   whatever their height.
-//   the spin's travel, sin(beat * 2PI), is zero at every whole beat too -- the
-//   body is on `moveFrom`, which is where the next move is about to start it.
+//   ground, and every move draws it at `w.foot` there, whatever its height.
 //
 // A move therefore ends with the body standing on the ground on its mark, and
 // the next one begins from exactly there. Nothing to jump across. It is a
-// property of where the beats are cut, not a number anybody tuned, so a fourth
+// property of where the beats are cut, not a number anybody tuned, so another
 // move added to the table below gets it without asking.
 //
-//   beat   how fast this move pulses, as a multiple of DANCE_BEAT. A hop is
-//          quicker than a step, because a step is a longer thing to do. Nothing
-//          here may run much over a beat a second: a body crossing its own
-//          height twice a second is not dancing, it is buzzing, and that is the
+//   beat   how fast this move pulses, as a multiple of DANCE_BEAT. Nothing here
+//          may run up to DANCE_BUZZ: a body crossing its own height two and a
+//          half times a second is not dancing, it is buzzing, and that is the
 //          other half of what was wrong.
 //   beats  how many whole beats of it a body does before it swaps -- the low
 //          and the high of the roll. Beats and not milliseconds, because the
@@ -89,82 +88,31 @@ import { duck, stand, upTop } from '../crew.js';
 //   at     one frame of it: where the body goes and how high, given the swing
 //          (0..1, the pulse), the length of the frame, the ground under a
 //          falling rock that it may not wander onto, and the beat it is on.
+// --- and there is one of them, and it is jumping ------------------------------
+// The dance was three moves: this one, a pace across the ground, and a turn on
+// the spot. Both of the others travelled, and travelling is what was wrong with
+// them (item 21, feedback5). A gang celebrating a finished rock by ambling
+// sideways and turning round on the spot reads as a shuffle -- as bodies milling
+// about -- and what it is meant to read as is delight. People jump when they are
+// pleased. They do not pace.
+//
+// So the two that went sideways are gone, and what is left is the one that was
+// always the clearest thing in the table: straight up, straight down, higher and
+// quicker than before. No arc, no travel, nothing that has to be measured against
+// the drop zone or the footing, and the whole of the join arithmetic below still
+// holds -- a jump is on the ground at every whole beat, which is where the next
+// one starts it.
 const MOVES = {
-  // Straight up and down, and high: three cells at the top of it. The one move
-  // that is all height and no ground.
-  hop: {
-    beat: 1.2,
+  // Straight up and down. The one move that is all height and no ground.
+  jump: {
+    beat: DANCE_JUMP_BEAT,
     beats: [2, 4],
-    at: (w, swing) => { w.y = w.foot - swing * 3 * P; }
-  },
-
-  // Across its patch and back, in whole cells and at a pace you can see, with a
-  // bob under it. The travel is the whole point: a body crossing the ground is
-  // doing something a body on its mark is not, and it is what spreads a gang out
-  // over the yard instead of leaving them stacked where the rock finished.
-  step: {
-    beat: 0.55,
-    beats: [1, 2],
-    at: (w, swing, dt, zone) => {
-      const off = w.x - w.jigAt;
-      if (Math.abs(off) > JIG_SPREAD) w.jigDir = -Math.sign(off);
-      // And the ground under a coming rock is not part of anybody's patch. It is
-      // a wall to the dance exactly as the edge of the patch is: the body turns
-      // and paces the other way, rather than being walked into a place the dodge
-      // then has to drag it out of.
-      //
-      // ...and the mark comes to this side of the wall with it. A body whose
-      // mark lay through the zone was ordered toward it by the drift rule above
-      // and flipped straight back by the wall, every frame, going nowhere -- a
-      // square bobbing on the spot for the whole of the fall, which is the
-      // vibration this dance was twice rewritten to kill. With the mark re-taken
-      // where it stands, the body paces its own side like anybody else.
-      //
-      // The other wall is the ground itself. A body dances on the footing it
-      // joined with (see `celebrate`), so the edge of that footing -- the lip of
-      // the hole, the toe of a pile, the wall of the cut -- is a wall to the
-      // dance too. Without it a body paced off its own ground and hung in the
-      // air over the next thing down, or had its feet dragged a cell to meet it.
-      const next = w.x + w.jigDir * JIG_PACE * dt;
-      const offGround = Math.abs(feetOn(wayOver(next + WORKER / 2), next) - w.foot) > 1;
-      if (offGround || (zone && next + WORKER > zone.from && next < zone.to)) {
-        w.jigDir = -w.jigDir;
-        // The mark comes to this side of the wall with it. A mark on the far
-        // side is an order to walk into the wall, which the wall countermands
-        // the next frame, and the body paces on the spot for the whole of the
-        // celebration. Moving a mark is not moving a body -- `jigAt` is only
-        // read by the turn rule above -- which is why this one is safe where
-        // the old re-anchoring of `moveFrom` was not.
-        w.jigAt = w.x;
-      } else w.x = next;
-      w.y = w.foot - swing * P;
-    }
-  },
-
-  // A tight turn on the spot. Facing cannot be drawn, so turning is drawn the
-  // only way it can be: a cell out and a cell back while it bobs, which traces a
-  // little loop. Round the mark it started this move on rather than round the
-  // patch's, so switching into it does not jerk the body back across ground it
-  // has just stepped over.
-  spin: {
-    beat: 1.2,
-    beats: [2, 3],
-    // How far this move carries the body off its mark at a given beat. Only the
-    // spin travels, and naming it here means the duck can take it back off when
-    // it re-anchors -- see `jig`. Without that the anchor swallows the offset and
-    // hands it back all at once when the duck lets go.
-    dx: beat => Math.sin(beat * Math.PI * 2) * P,
-    at: (w, swing, dt, zone, beat) => {
-      const to = w.moveFrom + Math.sin(beat * Math.PI * 2) * P;
-      if (!zone || !(to + WORKER > zone.from && to < zone.to)) w.x = to;
-      w.y = w.foot - swing * 2 * P;
-    }
+    at: (w, swing) => { w.y = w.foot - swing * DANCE_JUMP_H * P; }
   }
 };
-export const MOVE_KEYS = Object.keys(MOVES);      // the dance's own three -- see below
-const JIG_SPREAD = P * 14;         // how far off its mark a body will wander
+export const MOVE_KEYS = Object.keys(MOVES);      // the dance's own -- see below
 
-// A fourth move, added after `MOVE_KEYS` is taken rather than into the table
+// The builders' move, added after `MOVE_KEYS` is taken rather than into the table
 // above, so the rock's own celebration never rolls it by chance -- see B2 in
 // wave-feedback3.md and, for the rewrite, the hammer note in config.js.
 //
@@ -211,18 +159,19 @@ const danceEnd = now =>
   S.rockFall > 0 ? now + fallMs() : S.danceUntil;
 
 // `zone` is the ground the next rock is coming down on, when there is one. The
-// dance has to know about it, because the dance travels: a body stepping across
-// its patch will walk into the drop zone, the dodge will push it straight back
-// out, and the two of them will hold it against that line at sixty steps a
-// second. That is not a body dancing near a falling rock, it is a body
-// vibrating -- and it is the one thing anybody watching a celebration notices.
+// dance itself no longer travels -- it is jumping on the spot -- so nothing in
+// here walks a body into the drop zone any more; it is still taken, because
+// `celebrate` above ducks a body clear before it joins in and wants the same
+// answer this does.
 //
 // `endsAt` is when the yard stops celebrating, and it is here for the last join
 // of all: a body still in the air when the dance is switched off lands by
 // teleport. It is the same rule as every other join, asked one beat early.
 function jig(w, now, zone, endsAt) {
-  // a mark to dance around, taken once, so the gang spread out instead of
-  // dancing in the line they happened to finish the rock in
+  // the mark it dances on, taken once: where it stands. It used to be a spot
+  // rolled a few cells either side, because the dance paced across it and the
+  // roll is what spread the gang out; jumping goes nowhere, so a body's mark is
+  // its own feet and there is nothing to spread.
   if (w.jigAt == null) {
     // The ground this body will dance on, for as long as it dances. Everything
     // below turns on it: the height of every move is measured off `foot`, and
@@ -236,11 +185,7 @@ function jig(w, now, zone, endsAt) {
     // than the job about where that job stands.
     w.foot = w.y;
     w.footAt = w.x;
-    w.jigAt = w.x + (rand() - 0.5) * JIG_SPREAD * 2;
-    // and never on the ground the next rock is coming down on: a mark in the
-    // zone is an order to dance under the rock, which the wall in `step` then
-    // countermands every frame. The body dances where it stands instead.
-    if (zone && w.jigAt + WORKER > zone.from && w.jigAt < zone.to) w.jigAt = w.x;
+    w.jigAt = w.x;
     w.jigDir = rand() < 0.5 ? -1 : 1;
     // its own tempo, so the gang are never all on one tick -- see `beatMs`
     w.jigRate = 0.85 + rand() * 0.3;
@@ -255,7 +200,7 @@ function jig(w, now, zone, endsAt) {
   // measuring the dance should ask.
   w.jigOn = now;
 
-  let move = MOVES[w.move] || MOVES.hop;
+  let move = MOVES[w.move] || MOVES.jump;
   let beat = (now - w.moveAt) / beatMs(w, move);
 
   // Nobody is caught in mid-air by the end of the celebration. A body only goes
@@ -284,14 +229,17 @@ function jig(w, now, zone, endsAt) {
   // Never the one it is already doing.
   if (beat >= w.moveBeats) {
     const ended = w.moveAt + w.moveBeats * beatMs(w, move);
-    // The body is on the ground on `moveFrom` at a whole beat, whatever the move
-    // was doing on the way there. Put it there before the next move reads `w.x`
-    // off it, so the join is exact rather than a frame's worth of near enough.
-    if (w.move === 'spin') w.x = w.moveFrom;
+    // The body is on the ground at a whole beat, whatever the move was doing on
+    // the way there. Put it there before the next move reads `w.y` off it, so
+    // the join is exact rather than a frame's worth of near enough.
     w.y = w.foot;
+    // The next move, which is another run of the same one while the dance has
+    // only jumping in it. Written as "anything but this one, or this one again
+    // if there is nothing else" rather than as `startMove(w, ended, 'jump')`,
+    // because a second dance move added to the table gets swapped to without
+    // anybody having to come back here.
     const other = MOVE_KEYS.filter(m => m !== w.move);
-    startMove(w, ended, other[Math.floor(rand() * other.length)]);
-    w.jigDir = -w.jigDir;
+    startMove(w, ended, other.length ? other[Math.floor(rand() * other.length)] : w.move);
     move = MOVES[w.move];
     beat = (now - w.moveAt) / beatMs(w, move);
     // and something over its head, now and then rather than every time: five

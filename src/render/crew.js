@@ -7,7 +7,7 @@
 // drawCircle, drawMark) come from ./ctx.js and ./marks.js; drawCoreGlow and
 // markAt come from the cores and pilemarks clusters that already own them.
 
-import { atPot, tonicColor } from '../apothecary.js';
+import { atPot, doseFrac, doseTonics, tonicColor } from '../apothecary.js';
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
@@ -23,6 +23,7 @@ import { inHouse } from '../scrubhouse.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
 import { S, bench, floor } from '../state.js';
 import { ctx } from './ctx.js';
+import { drawDoseHaze } from './effects.js';    // F4: the tonic on a body
 import { drawRunSwitch } from './machines.js';
 import { drawCircle, drawMark } from './marks.js';
 import { TYPE } from '../jobs.js';
@@ -545,16 +546,32 @@ export function drawWorkers() {
     if (hat && hat !== 'cart') drawHat(x, y, hat);
 
     // The tonic on the body reads as a haze of its own colour lifting off the
-    // worker -- coloured motes rising and winking out around the head, not a vial
-    // parked overhead. The haze thins as the dose wears off, so a nearly-spent
-    // body gives off only a wisp and a fresh one fizzes. It is the one place a
-    // worker itself carries colour, so a buffed body reads as buffed at a glance.
-    // See `doseFrac`, `doseColor` in apothecary.js.
-    // The tonic is not drawn on the body at all any more. It is a plume of
-    // coloured motes let go from the head into the yard -- see `stepDoseMotes`
-    // in apothecary.js -- so it stays where it was let go and a body that walks
-    // trails it behind. Anything drawn on the head could only ever move with the
-    // head, however it was anchored.
+    // worker -- coloured motes rising and winking out over the head. The haze
+    // thins as the dose wears off, so a nearly-spent body gives off a wisp and a
+    // fresh one fizzes. It is the one place a worker itself carries colour, so a
+    // buffed body reads as buffed at a glance.
+    //
+    // **It hangs off the body's box and nothing else** -- not the facing, not
+    // the stride, not the pace. It was let go into the yard for a while, as
+    // world-space motes that stayed where they were dropped, and the result was
+    // a buff that looked like four different things depending on which way the
+    // body was walking and how fast: a neat column when stood still, a comet's
+    // tail when moving. See `drawDoseHaze` in render/effects.js, and item 6 in
+    // feedback5. `x` is the drawn body's left, lunge and all, so the haze leans
+    // with the body it belongs to instead of hanging where the body was.
+    const tonics = doseTonics(w);
+    if (tonics.length) {
+      const frac = doseFrac(w);
+      const t = now();
+      // One column per tonic, spaced against each other: a body under two of
+      // them gives off both at once, each its own colour. Not blended -- an
+      // average of green and purple is a colour that is neither, and which
+      // tonic a body is under has to stay readable.
+      tonics.forEach((tn, i) =>
+        drawDoseHaze(ctx, x + WORKER / 2 + (i - (tonics.length - 1) / 2) * P,
+                     y, tn.color, frac, i / Math.max(1, tonics.length), t));
+      ctx.fillStyle = '#000';
+    }
 
     // A stirrer carrying a dose holds a little vial over its head, the way a
     // hauler carries dust -- the same small flask that stands on the apothecary

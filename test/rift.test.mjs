@@ -1,18 +1,20 @@
-// The rift: bought at the bench, and swallowing from the moment it is torn.
+// The rift: torn by a hole that could not take another grain, and inhaling from
+// that moment on.
 //
 // It used to be a station, held open by a body that had walked the whole length
-// of the hole to stand at it. Nobody holds it now -- see `## The endgame pass`
-// in DESIGN.md -- so what these check is the bargain that is left: it costs red
-// and dust to tear, it swallows at a rate you buy up an endless ladder, the
-// counter never moves, and the pile and the rift together are always the
-// counter.
+// of the hole to stand at it, and then a purchase with a ladder beside it.
+// Nobody holds it and nobody buys it now -- see `## The endgame pass` in
+// DESIGN.md and `the black hole` in tower.js -- so what these check is the
+// bargain that is left: it costs nothing because it is not sold, it takes
+// everything in the hole on the frame the grains land, the counter never moves,
+// and the pile and the rift together are always the counter.
 
 import { readFileSync } from 'node:fs';
-import { group, ok, state, run, runUntil, yard, buyBuilt, buyNow } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 
 // Straight off the modules: `yard.upgrades` is the `__upgrades` hook, and the
 // rift's plot is not among the handles the yard spreads.
-const { JOBS, UPGRADES } = await import('../src/upgrades.js');
+const { JOBS } = await import('../src/upgrades.js');
 const { TOWER_UPGRADES } = await import('../src/tower.js');
 const { rift } = await import('../src/state.js');
 
@@ -50,9 +52,12 @@ group('the hole tears itself open the first time it cannot take a grain', async 
     ok(late.riftOpen, 'and a yard that has filled one has torn it open'),
     ok(!window.__rows().some(r => r.key === 'rift'),
        'there is no row that sells one, on any board'),
-    // The ladder stays: how wide it is torn is still worth buying.
-    ok(TOWER_UPGRADES.some(r => r.key === 'riftrate'),
-       'but widening it is still a row, and on the tower'),
+    // And the ladder is gone too. It was a row on the tower that widened the
+    // hole a rung at a time, for ever; a black hole is not a thing you tune, and
+    // what it does now it does at full strength from the moment it tears. See
+    // `the black hole` in tower.js and `stepRift` in rift.js.
+    ok(!TOWER_UPGRADES.some(r => r.key === 'riftrate'),
+       'and none that widens one either: it is not a bought thing at all'),
     // Nothing is lost to the collapse. What will not fit is through the rift,
     // and what you own is the pile plus what is through it.
     ok(late.stored > late.pitDust, 'the dust over the brim is banked, not turned away',
@@ -122,12 +127,16 @@ group('it stands over the near end of the hole, and the grains are pulled in', a
   window.__rift();
   // The tearing empties the hole, so a yard three seconds past it has nothing
   // left to swallow and nothing in the air. What this group is about is the
-  // ordinary swallowing that comes after: so let the gulp finish, fill the hole
-  // again, and widen the rift enough that the stream is a stream.
+  // ordinary swallowing that comes after: so let the gulp finish and fill the
+  // hole again.
+  //
+  // And then look at it QUICKLY. The rift inhales -- a pile goes in the frame it
+  // lands -- so the stream is a burst rather than a trickle: a fifth of a second
+  // after the dust arrives the grains are strung out between the pile and the
+  // disc, and a second after it they have all got there and gone.
   run(3);
-  window.__levels({ riftLevel: 8 });
   window.__give(20000);
-  run(1);
+  run(0.2);
   const { pit, S } = yard;
   const c = yard.riftMod.riftCenter();
   const R = yard.riftMod.riftRadius();
@@ -226,24 +235,28 @@ group('it eats the pile under it, not the whole top of it', async () => {
   ];
 });
 
-group('widening it is a row that never runs out', async () => {
+// It used to be a ladder: `widening it is a row that never runs out`, twelve
+// rungs deep and priced in red. There is no row and no rate -- what a torn rift
+// takes is what is in the hole, every frame, and the only number left is a
+// ceiling on how much of that one frame may do. See `stepRift`.
+group('what it takes is the whole pile, not a rate off a ladder', async () => {
   readyYard();
   window.__rift();
-  window.__grant({ sparks: 99999, dust: 30000 });
+  run(4);                                    // the tear empties it; then it idles
+  const empty = state().pitGrains;
 
-  const rate = () => yard.riftMod.riftRate();
-  const first = rate();
-  for (let i = 0; i < 12; i++) buyNow('riftrate');
-  const twelve = rate();
-  const row = window.__rows().find(r => r.key === 'riftrate');
+  window.__give(3000);
+  const owed = state().pitGrains;
+  run(1 / 60);                               // ONE frame
+  const after = state().pitGrains;
 
   return [
-    ok(twelve > first, 'twelve widenings make it faster',
-       `${first.toFixed(1)} -> ${twelve.toFixed(1)} a second`),
-    ok(row && row.shown, 'and the row is still there afterwards',
-       `shown ${row?.shown}`),
-    // The point of it having no rung: nothing about this row ever says "done".
-    ok(!row?.done, 'it never finishes', JSON.stringify({ done: row?.done }))
+    ok(empty === 0, 'the tear leaves the hole empty', `${empty}`),
+    ok(owed > 0, 'a fresh pile lands in it', `${owed} grains`),
+    ok(after === 0, 'and one frame later there is nothing left down there',
+       `${owed} -> ${after}`),
+    ok(yard.riftMod.riftBite() === 0, 'with nothing owed to the next frame',
+       `${yard.riftMod.riftBite()}`)
   ];
 });
 
@@ -284,7 +297,6 @@ group('the hole swallows the coins too, and they are still yours', async () => {
   readyYard();
   window.__grant({ shards: 300, spores: 300, cores: 4 });
   window.__rift();
-  for (let i = 0; i < 6; i++) buyNow('riftrate');
   // Measured from *after* the hole is seeded, not from before it. A full hole
   // cannot hold every coin you own, so some are through the rift before a
   // single frame has run -- which is the right answer and not what this group
@@ -317,7 +329,6 @@ group('a coin is spent out of the hole first, and the rift after', async () => {
   readyYard();
   window.__grant({ shards: 40 });
   window.__rift();
-  for (let i = 0; i < 8; i++) buyNow('riftrate');
   // Everything through: run until the hole has no shards left in it at all.
   const gone = runUntil(() => yard.pitMod.heldInHole('shards') === 0
                               && state().riftHeld.shards > 0, 200);

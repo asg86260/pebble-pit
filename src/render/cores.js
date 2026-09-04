@@ -6,7 +6,10 @@
 // drawMark) come from ./ctx.js and ./marks.js.
 
 import { now } from '../clock.js';
-import { CORE_FROM, CORE_SIZE, P } from '../config.js';
+import { CORE_FROM, CORE_SIZE, P,
+         RIFT_HALO, RIFT_STIPPLE, RIFT_STIPPLE_MS, RIFT_LENS, RIFT_LENS_MS,
+         RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_FROM, RIFT_STREAK_TURN,
+         RIFT_STREAK_LEN, RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
@@ -192,8 +195,8 @@ const drawLeaving = list => {
 // rim is gone behind it rather than drawn over it.
 export function drawPaid() { drawLeaving(S.paid); }
 
-// The rift: a black hole hanging in the pit, over the pile, with the dust it is
-// swallowing going round it.
+// The rift: a black hole hanging in the pit, with everything the yard throws
+// into the hole being pulled through it.
 //
 // Everything in this yard is black cells on white paper, so the honest drawing
 // of an absence is the paper's opposite -- a solid black disc, with nothing
@@ -202,34 +205,137 @@ export function drawPaid() { drawLeaving(S.paid); }
 // the front. And it is always filled in, because it is always open: nobody
 // holds it, so there is no shut to draw.
 //
-// The ring comes first and the disc over it. The orbit runs from outside the
-// rim in to the middle, so the last of every grain's path is under the disc --
-// which is what going *in* looks like, and it costs nothing: the grains are the
-// `gulped` list that was always drawn, and a disc is fewer rectangles than the
-// lens was.
+// A disc on its own was not enough, and what it was missing was *pulling*. Four
+// things are drawn now and each of them is one property of the thing:
+//
+//   the halo    two cells of bare paper cleared round the rim, and a thinning
+//               stipple past that. This is what makes the core dark: there is no
+//               ink blacker than ink, so the way to deepen the middle is to take
+//               everything else away from around it.
+//   the streaks stuff falling in, spiralling to the rim, running whether or not
+//               the hole has anything to eat. That matters more than it sounds:
+//               a fed rift empties the pile within a frame or two of the grains
+//               landing, so most of the endgame it has nothing in its mouth, and
+//               a hole that only moves when it is fed looks broken exactly when
+//               it is working hardest.
+//   the lens    the rim swells and shrinks, slowly and not evenly round itself.
+//               Light bending is the one property of a black hole everybody
+//               knows by sight, and on a grid this coarse it can only be a warp
+//               of the silhouette.
+//   the tails   a smear on each grain actually going in, pointing back the way
+//               it came, so the stream reads as dragged rather than as beads
+//               threaded on a wire.
+//
+// The order is the picture: halo, streaks and tails go down first and the disc
+// over them, so anything that has crossed the rim is gone behind it rather than
+// drawn on top of it -- which is what going *in* looks like.
+
+// How far out of round the rim is at a given angle, this instant. One slow
+// breath plus a second one at a third the size and twice the rate, which is
+// enough to keep it from ever being a circle pulsing on a metronome.
+const lensAt = (a, t) =>
+  1 + RIFT_LENS * (Math.sin(t / RIFT_LENS_MS * Math.PI * 2 + a * 2) * 0.75
+                 + Math.sin(t / RIFT_LENS_MS * Math.PI * 4 + a * 3) * 0.25);
+
 export function drawRift() {
   if (!S.riftOpen) return;
-  drawLeaving(S.gulped);
+  const t = now();
   const { x, y, w, h } = rift;
   const across = Math.round(w / P), down = Math.round(h / P);
   const mid = (across - 1) / 2, midR = (down - 1) / 2;
-  // A disc: the half-width of each row off the circle, worked out from the row
-  // rather than written down as a table, so the shape follows RIFT_W and RIFT_H
-  // if either ever moves. Drawn twice: a cell wider in paper first, then the
-  // black. Over a full pile a black disc on grey speckle is a blob painted on
-  // the pile; with a cell of paper round it, it is a hole *in* the pile, and a
-  // grain crossing that margin on its way in is seen going.
+  const cx = x + (mid + 0.5) * P, cy = y + (midR + 0.5) * P;
+  const rad = (mid + 0.5) * P;
+
+  // A disc, warped by the lens: the half-width of each row off the circle,
+  // worked out from the row rather than written down as a table, so the shape
+  // follows RIFT_W and RIFT_H if either ever moves. `grow` widens it in cells,
+  // which is how the halo is cut: the same disc, a couple of cells fatter, in
+  // paper.
   const disc = (grow, style) => {
     ctx.fillStyle = style;
     for (let r = -grow; r < down + grow; r++) {
       const dy = (r - midR) / (midR + 0.5 + grow);
-      const half = Math.floor((mid + grow) * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
+      // The row's own angle, so the warp is a shape rather than a size: the rim
+      // leans out on one side while it comes in on the other.
+      const half = Math.floor((mid + grow) * lensAt(Math.asin(Math.max(-1, Math.min(1, dy))), t)
+                              * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
       if (half < 0) continue;
       const left = x + Math.round(mid - half) * P;
       ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
     }
   };
-  disc(1, '#fff');
+
+  // Paper first, so whatever the disc is standing over -- the pile, the ground
+  // line, a grain on its last turn -- is cleared away from the rim. Over a full
+  // pile a black disc on grey speckle is a blob painted on the pile; with the
+  // page showing round it, it is a hole *in* the world.
+  disc(RIFT_HALO, '#fff');
+
+  // ...and then the speckle, thinning outward through the halo: the last of what
+  // is being dragged in, too far gone to be a grain any more. Laid on a ring of
+  // cells rather than at random so it holds still enough to read as one thing,
+  // and turned slowly so it is never a printed collar.
+  ctx.fillStyle = '#000';
+  const turn = t / RIFT_STIPPLE_MS * Math.PI * 2;
+  for (let ring = 0; ring < RIFT_STIPPLE; ring++) {
+    const r = rad + (RIFT_HALO + ring + 0.5) * P;
+    // fewer the further out, which is the thinning
+    const n = Math.max(4, Math.round((Math.PI * 2 * r) / P / (3 + ring * 3)));
+    for (let i = 0; i < n; i++) {
+      const a = turn * (ring % 2 ? -1 : 1) + (i / n) * Math.PI * 2;
+      const px = cx + Math.cos(a) * r * lensAt(a, t);
+      const py = cy + Math.sin(a) * r * lensAt(a, t);
+      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
+    }
+  }
+
+  // The infall. Each streak is a spiral from RIFT_STREAK_FROM radii out to the
+  // rim, its position derived from the clock and its own slot -- no list, no
+  // stepping and nothing to save, because there is nothing about one of these
+  // that anybody could act on. They are spaced round the clock as well as round
+  // the disc, so the ring is a stream rather than a wheel of spokes.
+  // How far out a streak's head is, `k` of the way in: the square puts most of
+  // the journey out at the far end and makes the last stretch quick, which is
+  // what falling into something looks like.
+  const reach = RIFT_STREAK_FROM - 1;
+  for (let i = 0; i < RIFT_STREAKS; i++) {
+    const k = ((t / RIFT_STREAK_MS) + i / RIFT_STREAKS) % 1;
+    const a0 = (i / RIFT_STREAKS) * Math.PI * 2;
+    const head = rad * (1 + reach * (1 - k) * (1 - k));
+    // The tail is measured in **cells behind the head**, not in fractions of the
+    // journey. Spaced by k it bunched into a knot at the rim -- the head slows
+    // to nothing in distance terms while k runs on at the same pace, so the
+    // whole streak arrived on top of itself and read as soot round the disc
+    // rather than as something falling in.
+    for (let c = 0; c < RIFT_STREAK_LEN; c++) {
+      const d = head + c * P;
+      if (d > rad * RIFT_STREAK_FROM) break;             // off the end of its run
+      const kk = 1 - Math.sqrt(Math.max(0, (d / rad - 1) / reach));
+      const a = a0 + kk * kk * RIFT_STREAK_TURN * Math.PI * 2;
+      const px = cx + Math.cos(a) * d * lensAt(a, t);
+      const py = cy + Math.sin(a) * d * lensAt(a, t);
+      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
+    }
+  }
+
+  // And the grains themselves, each with a tail pointing back the way it came.
+  // The tail grows as the grain nears the rim, which is where it is being pulled
+  // hardest -- one grain is a speck, a grain with three cells behind it is a
+  // grain being taken.
+  drawLeaving(S.gulped);
+  ctx.fillStyle = '#000';
+  for (const m of S.gulped) {
+    const dx = cx - m.x, dy = cy - m.y;
+    const d = Math.hypot(dx, dy);
+    if (!d || d > rad * RIFT_TAIL_R) continue;
+    const near = 1 - d / (rad * RIFT_TAIL_R);
+    const n = Math.round(RIFT_TAIL * near);
+    for (let c = 1; c <= n; c++)
+      ctx.fillRect(Math.round((m.x - dx / d * c * P) / P) * P,
+                   Math.round((m.y - dy / d * c * P) / P) * P, P, P);
+  }
+
   disc(0, '#000');
+  ctx.fillStyle = '#000';
 }
 
