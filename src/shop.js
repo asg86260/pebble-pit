@@ -114,17 +114,28 @@ export function shutOpts() {
   openList = null;
 }
 
+// Whether a given list is the one standing open. The pot picker has to know
+// whether its own list is up before it decides whether hovering a cauldron is a
+// thing to do -- opening it again every pointermove is a list that flickers.
+export const optsOpen = list => !!openList && openList.opts === list;
+
 // The cursor wandering off puts the list away, but not the instant it crosses
 // the edge: the gap between the control and the list, and the width of a finger
 // on the way down a column of options, are both places the pointer is briefly
 // outside the thing it is using. So it is a short grace, cancelled the moment
 // the pointer comes back to either the list or the control that opened it.
+//
+// Exported, because the second thing with a list to drop open is a cauldron in
+// the yard and the grace is the same grace. It reads as board machinery only
+// because boards were the only place that had one; what it is actually about is
+// a pointer crossing the gap between a control and the list it opened, and there
+// is no version of that this file should own twice. See potpick.js.
 const LEAVE_MS = 450;
-function leaveSoon() {
+export function leaveSoon() {
   clearTimeout(leaving);
   leaving = setTimeout(shutOpts, LEAVE_MS);
 }
-function stayOpen() { clearTimeout(leaving); leaving = 0; }
+export function stayOpen() { clearTimeout(leaving); leaving = 0; }
 
 // Under the control, right edges lined up, and kept on the screen: flipped above
 // when there is no room below, and pulled back inside the window at either edge.

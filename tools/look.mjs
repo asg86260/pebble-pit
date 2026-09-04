@@ -135,10 +135,12 @@ const SCENES = {
     window.__look(window.__state().apothecaryX - 320);
     window.__board('apothecary');`,
 
-  // The picker at the pot (item 17): the second cauldron pressed, its list of
-  // brews dropped open over it as swatches. The press is a real pointerdown on
-  // the canvas at the pot's own spot, because that is the only thing that opens
-  // it -- there is no hook that puts the list up, and there should not be.
+  // The picker at the pot (item 17): the cursor standing at the second cauldron,
+  // its list of brews dropped open over it as swatches. No press -- a real
+  // pointermove on the canvas at the pot's own spot, because standing at a pot is
+  // what opens it and there is no hook that puts the list up, nor should there
+  // be. A press opens it too; that path is the touchscreen's, and the browser
+  // check covers it.
   apothpick: `window.__reset(); window.__crew(1, 4, 0, 2);
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
@@ -152,10 +154,8 @@ const SCENES = {
       const x = (b.x + b.w / 2 - s.camX) * s.zoom;
       const y = (b.y + b.h / 2 - s.camY) * s.zoom;
       const c = document.getElementById('c');
-      for (const type of ['pointerdown', 'pointerup'])
-        c.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y,
-          pointerId: 1, isPrimary: true, button: 0,
-          buttons: type === 'pointerup' ? 0 : 1, bubbles: true }));
+      c.dispatchEvent(new PointerEvent('pointermove', { clientX: x, clientY: y,
+        pointerId: 1, isPrimary: true, button: 0, buttons: 0, bubbles: true }));
     })();`,
 
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);

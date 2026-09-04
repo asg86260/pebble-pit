@@ -21,7 +21,7 @@ import { overPileMark, pileMarkAt, overLabMark, labMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
-import { potPick } from './potpick.js';
+import { potPick, potHover } from './potpick.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import './upgrades.js';
 import { card, houseRect } from './crewboard.js';
@@ -201,6 +201,11 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
+    // A cauldron drops its brew picker open when you stand at it, the same way a
+    // station's board does -- and it does not fight the boards for the cursor,
+    // because the apothecary's board answers to the hut and the pots are the
+    // other end of the building. See potpick.js.
+    potHover(S.mouse.x, S.mouse.y);
     // One menu: whichever station the cursor is standing at, or none -- unless
     // it is on its way to the one already open, in which case it is still on it.
     // See `inSafeZone`.

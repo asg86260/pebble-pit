@@ -889,7 +889,7 @@ export const TESTS = [
   //
   // Two pots, so the check can say the thing that matters: the picker sets the
   // pot you clicked and leaves the other one exactly where it was.
-  ['clicking a pot picks what that pot brews', async () => {
+  ['standing at a pot picks what that pot brews', async () => {
     newRun();
     await settle();
     window.__crew(1, 4, 0, 2);
@@ -901,33 +901,68 @@ export const TESTS = [
     window.__look(state().apothecaryX - 200);    // both pots on the glass
     await raf();
 
-    const box = window.__potSpot(1);             // the yard says where its second pot is
-    const at = onScreen(box.x + box.w / 2, box.y + box.h / 2);
-    point('pointerdown', ...at);
-    point('pointerup', ...at);
-    await sleep(60);
+    const mid = b => onScreen(b.x + b.w / 2, b.y + b.h / 2);
+    const one = mid(window.__potSpot(0));        // the yard says where its pots are
+    const two = mid(window.__potSpot(1));
+    const pop = () => document.querySelector('[data-potpick]');
 
-    const pop = document.querySelector('[data-potpick]');
-    const open = !!pop && !pop.hidden;
-    const swatches = pop ? pop.querySelectorAll('.opt .swatch').length : 0;
-    const marked = pop?.querySelector('.opt.on')?.dataset.opt;
+    // Standing at the second cauldron is enough: no press, the way a station's
+    // board opens when you walk up to it.
+    point('pointermove', ...two, 0);
+    await sleep(40);
+    const open = !!pop() && !pop().hidden;
+    const swatches = pop() ? pop().querySelectorAll('.opt .swatch').length : 0;
+    const marked = pop()?.querySelector('.opt.on')?.dataset.opt;
 
-    pop?.querySelector('.opt[data-opt="brace"]')?.click();
+    // Crossing to the other cauldron moves the list with the cursor rather than
+    // leaving it standing over the one you have left.
+    point('pointermove', ...one, 0);
+    await sleep(40);
+    const movedOn = pop()?.querySelector('.opt.on')?.dataset.opt;
+
+    // ...and back, to set the one this check is about.
+    point('pointermove', ...two, 0);
+    await sleep(40);
+    pop()?.querySelector('.opt[data-opt="brace"]')?.click();
     await sleep(40);
     const after = state();
-    const shut = !!pop && pop.hidden;
+    const shut = !!pop() && pop().hidden;
+
+    // Wandering off puts it away -- after a breath, not on the instant, because
+    // the gap between a control and its list is a place the pointer is briefly
+    // outside both. Same grace the boards' own dials run on.
+    point('pointermove', ...two, 0);
+    await sleep(40);
+    const upAgain = !!pop() && !pop().hidden;
+    point('pointermove', two[0], two[1] + 260, 0);   // bare ground below the yard
+    await sleep(80);
+    const heldOn = !!pop() && !pop().hidden;
+    await sleep(700);
+    const wanderedOff = !!pop() && pop().hidden;
+
+    // And a press still opens it, which is the only way in on a touchscreen.
+    point('pointerdown', ...two);
+    point('pointerup', ...two);
+    await sleep(60);
+    const pressed = !!pop() && !pop().hidden;
 
     return [
-      ok(open, 'pressing a cauldron drops its picker open'),
+      ok(open, 'standing at a cauldron drops its picker open, with no press'),
       ok(swatches === 4, 'with a swatch for each brew and one for nothing',
          `${swatches} options`),
-      ok(marked === '', 'the pot it was pressed on reads as set to nothing',
+      ok(marked === '', 'the pot it opened over reads as set to nothing',
          String(marked)),
+      ok(movedOn === 'stew', 'crossing to the other pot moves the list to it',
+         String(movedOn)),
       ok(after.potTonics[1] === 'brace', 'picking a swatch sets THAT pot',
          String(after.potTonics[1])),
       ok(after.potTonics[0] === 'stew', 'and leaves the other one where it was',
          String(after.potTonics[0])),
-      ok(shut, 'and the picker shuts behind the choice')
+      ok(shut, 'and the picker shuts behind the choice'),
+      ok(upAgain && heldOn,
+         'wandering off does not shut it on the instant', `${upAgain} then ${heldOn}`),
+      ok(wanderedOff, 'but it puts itself away a breath later'),
+      ok(pressed, 'and a press opens it too, for a screen with no hover')
     ];
   }],
 ];

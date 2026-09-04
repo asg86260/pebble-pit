@@ -1,7 +1,10 @@
 // Setting a pot's brew at the pot.
 //
-// Item 17 asks for the choice to be made where the thing is: you click the
-// cauldron and pick what goes in it. The board keeps its per-pot sections -- it
+// Item 17 asks for the choice to be made where the thing is: you point at the
+// cauldron and pick what goes in it. Pointing is enough -- the picker drops open
+// on hover, the way a station's board opens when you walk up to it, because a
+// pot is a thing you are standing at rather than a thing you have to remember to
+// click. A press opens it too, and has to: a touchscreen has no hover. The board keeps its per-pot sections -- it
 // is where the ladders and the figures live, and reading is a different errand
 // from setting -- but the direct path is the pot itself, and a control you point
 // at is worth more than a menu you go and find.
@@ -20,7 +23,7 @@
 // says which brew in the same word the rest of the building does.
 
 import { TONICS, potTonicOf, choosePotTonic, potAt, potBox } from './apothecary.js';
-import { openOptsAt, shutOpts } from './shop.js';
+import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
 import { screenAt } from './render/frame.js';
 
 const canvas = document.getElementById('c');
@@ -29,6 +32,12 @@ const canvas = document.getElementById('c');
 // handlers that keep it open while the cursor is crossing it.
 let opts = null;
 let onPot = -1;                      // which pot it is currently set for
+// The pot the cursor was last over, so a hover opens the list once per pot
+// ENTERED rather than once per pointermove. Every move over the same cauldron
+// would otherwise tear the list down and stand it up again sixty times a second,
+// and every move over bare ground would restart the wander-off grace and the
+// thing would never close at all.
+let over = -1;
 
 function build() {
   opts = document.createElement('div');
@@ -56,6 +65,11 @@ function build() {
     });
     opts.appendChild(pick);
   }
+  // Crossing the gap from the cauldron to the list must not count as wandering
+  // off, and neither must running the cursor down the options. Same two handlers
+  // the board's dials hang on their own lists, and the same timer behind them.
+  opts.addEventListener('pointerenter', stayOpen);
+  opts.addEventListener('pointerleave', leaveSoon);
 }
 
 // Where the pot is on the glass. The picker is `position: fixed`, so it wants
@@ -71,17 +85,45 @@ function potRect(i) {
            width: z.x - a.x, height: z.y - a.y };
 }
 
-// A press in the yard, in world pixels. Answers whether it landed on a pot --
-// input.js stops there if it did, so clicking a cauldron does not also do
-// whatever clicking the ground behind it would have done.
-export function potPick(x, y) {
-  const i = potAt(x, y);
-  if (i < 0) return false;
+// Stand the list over pot `i`, with the brew it is on marked.
+function openFor(i) {
   if (!opts) build();
   onPot = i;
   const at = potTonicOf(i);
   for (const o of opts.querySelectorAll('.opt'))
     o.classList.toggle('on', o.dataset.opt === (at || ''));
+  stayOpen();                       // whatever grace was running, this cancels it
   openOptsAt(potRect(i), opts);
+}
+
+// A press in the yard, in world pixels. Answers whether it landed on a pot --
+// input.js stops there if it did, so clicking a cauldron does not also do
+// whatever clicking the ground behind it would have done. Kept alongside the
+// hover because a touchscreen has no hover: a tap is the only way in there.
+export function potPick(x, y) {
+  const i = potAt(x, y);
+  if (i < 0) return false;
+  over = i;
+  openFor(i);
+  return true;
+}
+
+// The cursor crossing the yard. Acts on the pot it is over CHANGING and on
+// nothing else, so the list is stood up once per cauldron entered and the
+// wander-off grace is started once, on the way out, rather than restarted by
+// every move over open ground.
+export function potHover(x, y) {
+  const i = potAt(x, y);
+  if (i < 0) {
+    if (over >= 0 && optsOpen(opts)) leaveSoon();
+    over = -1;
+    return false;
+  }
+  // Already on this one with its list up: leave the timer alone. Down, though,
+  // means something else closed it -- a pick, a press elsewhere -- and pointing
+  // at a pot is a request to see its brews whatever happened before.
+  if (i === over && optsOpen(opts)) return true;
+  over = i;
+  openFor(i);
   return true;
 }
