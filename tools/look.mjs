@@ -91,6 +91,15 @@ const SCENES = {
     window.__fast(16);
     window.__look(window.__state().apothecaryX - 400);`,
 
+  // The apothecary with an upgrade on the go: the site's own bar, which hangs
+  // over the hut -- the building -- not over the middle of the plot.
+  apothbar: `window.__reset(); window.__crew(0, 1, 0, 2);
+    window.__grant({ cores: 3, dust: 60000, spores: 3000, shards: 300 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('brewspeed'); window.__fast(4);
+    window.__look(window.__state().apothecaryX - 300);`,
+
   // The pot row up close: four boiling pots with their bars up, for where the
   // bar hangs against the steam. Same setup as `apothpots`, camera on the pots
   // instead of the building.

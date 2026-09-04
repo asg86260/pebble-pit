@@ -6,6 +6,7 @@ import { P } from '../config.js';
 import { S } from '../state.js';
 import { SITES, progressOf, siteBox, worksAt } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
+import { apothHut } from '../apothecary.js';
 import { ctx } from './ctx.js';
 
 // One bar, drawn wherever something is being worked through. The lab has had
@@ -47,16 +48,19 @@ export function bar(cx, cy, at) {
 // hand any more.
 const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
 
-// The quarry and the farm are the two sites whose box is ground rather than a
-// building -- the hole and the plots -- and a bar centered over ground floats
-// over the middle of nowhere. Each has a shed, and the shed is the station's
-// building everywhere else in the game (the board opens at it, the crew stand
-// at it), so the bar hangs over the shed too. Still a measured rect, not a
-// hand-placed spot.
-const SHED_OF = { quarry: quarryShed, farm: farmShed };
+// Sites whose box is wider than their building hang the bar over the building.
+// The quarry's and farm's boxes are ground -- the hole and the plots -- and the
+// apothecary's is the whole plot of hut, shelves and pots; a bar centered on
+// any of those floats over the middle of nowhere. Each has one rect that IS the
+// building (the board opens at it, the crew stand at it), so the bar hangs over
+// that. Still a measured rect, not a hand-placed spot.
+// Deferred with arrows: this module sits in an import cycle with world.js, so
+// naming the bindings while the object is built reads them before they exist.
+const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
+                      apothecary: () => apothHut() };
 
 export function barSpot(site) {
-  const box = SHED_OF[site] ? SHED_OF[site]() : siteBox(site);
+  const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site);
   if (!box) return null;
   // A hole in the ground has no top above the line -- the quarry's box starts at
   // the ground and goes down -- so the bar hangs off the ground line for those,

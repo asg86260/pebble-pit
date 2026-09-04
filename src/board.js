@@ -12,8 +12,7 @@ import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
 import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
-import { APOTHECARY_UPGRADES } from './apothecary.js';
-import { APOTH_HUT_W, APOTH_HUT_H } from './config.js';
+import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { CLOSET_UPGRADES } from './closet.js';
@@ -86,10 +85,7 @@ const standAt = { bench, lab, school, casino, scrub, tower,
                   // hut, shelves and pots, and a board centered over all of it
                   // hangs off the window on a narrow view. Hover, click and the
                   // sheet all belong to the building that holds the rungs.
-                  get apothecary() {
-                    return { x: apothecary.x, y: S.groundY - APOTH_HUT_H,
-                             w: APOTH_HUT_W, h: APOTH_HUT_H };
-                  },
+                  get apothecary() { return apothHut(); },
                   closet,
                   get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },

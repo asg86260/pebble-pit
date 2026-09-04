@@ -34,7 +34,7 @@ import { RUNGS,
          BREW_RUNG_SPORE, BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, CARRY_RUNGS, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
-         APOTHECARY_DUST, APOTHECARY_CORES, WORKER,
+         APOTHECARY_DUST, APOTHECARY_CORES, WORKER, APOTH_HUT_W, APOTH_HUT_H,
          DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
 import { now, frames } from './clock.js';
@@ -42,7 +42,7 @@ import { rand } from './rng.js';
 import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, rungCost, commutePace, unitText } from './upgrades.js';
-import { registerRows, registerSite } from './works.js';
+import { registerRows } from './works.js';
 import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -282,6 +282,14 @@ export const potBox = i => ({
   w: POT_W,
   h: POT_H
 });
+// The hut itself, as a box. The plot runs hut, shelves and pots, but the hut is
+// the building -- the board opens at it and the site's bar hangs over it -- and
+// everything that wants "the building" must mean the same rect.
+export const apothHut = () => ({
+  x: apothecary.x, y: S.groundY - APOTH_HUT_H,
+  w: APOTH_HUT_W, h: APOTH_HUT_H
+});
+
 // Which pot a point in the yard is on, or -1. Only pots that have actually been
 // stood: the ground where a fifth one would go is bare ground.
 export const potAt = (x, y) => {
@@ -744,10 +752,12 @@ function stepPrefer(d) {
 export const apothecaryCost = () => APOTHECARY_DUST;
 export const apothecaryCores = () => APOTHECARY_CORES;
 
-// The building brews rather than buys, so the works machinery knows the pots are
-// its own gang's work-site and the rungs belong to it. One stirrer to a pot is
-// the room, and the pot's own pace is a body's second a second -- the brew clock
-// is stepped here, not by `stepWorks`, because a brew is an upkeep and not a
-// one-shot build.
-registerSite('apothecary', { room: () => S.apothPots });
+// The building brews rather than buys: the brew clock is stepped here, not by
+// `stepWorks`, because a brew is an upkeep and not a one-shot build. Which is
+// why the site claims no `room` of its own -- brews never enter the works list,
+// so `room` would only widen how many *upgrades* can be built at once. It was
+// one per pot for a while, meant as "one stirrer to a pot", and what it
+// actually bought was four rungs climbing in parallel at a station every other
+// board works one at a time. The default room of one is the rule everywhere
+// but the lab, and the lab pays for its second bench.
 registerRows(APOTHECARY_UPGRADES);
