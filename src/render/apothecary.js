@@ -7,6 +7,7 @@ import { P } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
+import { vnoise } from './flicker.js';
 import { boiling, brewFrac, TONICS } from '../apothecary.js';
 import { ctx, withRise, risingPlace, bar } from '../render.js';
 
@@ -110,9 +111,8 @@ export function drawApothecary() {
       // without the per-frame strobe that raw randomness gives. A gentle centre
       // hump keeps it a touch taller in the middle; colour runs hot yellow at the
       // base through orange to a red top edge; capped low, below the rim.
-      const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
-      const vnoise = x => { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
-                            return hash(i) + (hash(i + 1) - hash(i)) * u; };   // 0..1, smooth
+      // `vnoise` is shared with the tonic burning off a dosed body -- the two
+      // fires in this game should flicker with the same hand. See flicker.js.
       const bedL = potX + P * 3, cols = 7, mid = (cols - 1) / 2;
       for (let c = 0; c < cols; c++) {
         const hump = (1 - Math.abs(c - mid) / mid) * 0.9;    // lowered centre hump

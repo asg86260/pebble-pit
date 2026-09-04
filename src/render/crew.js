@@ -10,6 +10,7 @@
 import { atPot, doseFrac, doseColor, tonicColor } from '../apothecary.js';
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
+import { drawDoseFlame } from './effects.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible } from '../intro.js';
@@ -549,32 +550,10 @@ export function drawWorkers() {
     // worker itself carries colour, so a buffed body reads as buffed at a glance.
     // See `doseFrac`, `doseColor` in apothecary.js.
     const frac = doseFrac(w);
-    if (frac > 0) {
-      const t = now();
-      ctx.fillStyle = doseColor(w);
-      // Anchored on the body's own spot, NOT on the leaning position it is drawn
-      // at: `x` carries the lunge and is mirrored by `w.face`, so an aura hung
-      // off it swung with every swing and jumped to the other side whenever the
-      // body turned round. It is the body that is glowing, and the body does not
-      // move when it leans.
-      const cx = Math.round(w.x) + WORKER / 2;
-      const cy = Math.round(w.y) + WORKER / 2;
-      // A ring around the body rather than a column climbing off it. Motes keep
-      // their station and breathe in and out on their own clocks, so it reads as
-      // something the body is giving off; rising and swaying read as flies.
-      const n = 8;
-      for (let m = 0; m < n; m++) {
-        if (m / n > frac) continue;              // it thins as the dose wears off
-        const a = (m / n) * Math.PI * 2 + t / 4200;      // a slow turn, not a climb
-        const puff = 0.5 + 0.5 * Math.sin(t / 760 + m * 1.9);
-        if (puff < 0.3) continue;                        // and winks out on the beat
-        const r = P * (2 + puff);
-        const mx = cx + Math.cos(a) * r;
-        const my = cy + Math.sin(a) * r * 0.75;          // a touch flatter than round
-        ctx.fillRect(Math.round(mx / P) * P, Math.round(my / P) * P, P, P);
-      }
-      ctx.fillStyle = '#000';
-    }
+    // Anchored on the body's own spot, NOT on the position it is drawn at: `x`
+    // carries the lunge and is mirrored by `w.face`, so a flame hung off it
+    // swung with every swing and jumped sides when the body turned round.
+    if (frac > 0) drawDoseFlame(ctx, Math.round(w.x), Math.round(w.y), doseColor(w), frac, now());
 
     // A stirrer carrying a dose holds a little vial over its head, the way a
     // hauler carries dust -- the same small flask that stands on the apothecary

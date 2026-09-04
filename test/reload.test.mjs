@@ -16,6 +16,7 @@ import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 const { stake, canStake, bank, canBank, pot } = await import('../src/casino.js');
 const { dugShare } = await import('../src/quarry.js');
 const { boulderAlive } = await import('../src/rock.js');
+const { doseLive, doseLeftMs } = await import('../src/apothecary.js');
 
 const player = () =>
   readFileSync(new URL('./fixtures/player-yard.json', import.meta.url), 'utf8');
@@ -237,4 +238,42 @@ group('a refresh does not hand you a second core', async () => {
       ok(cores === 1, `${what} gives one core out of one rock`, `${cores} cores`));
   }
   return out;
+});
+
+// A tonic is a thing you paid crop and a reagent for, and it runs on a clock. A
+// refresh used to drink it: the dose lived on the body and the body's record did
+// not carry it, so everybody came back sober however much of the buff was left.
+//
+// The clock is the catch -- `until` is a moment, and the moment starts again
+// when the page does -- so what is written down is how much is LEFT. Bought the
+// player's way: the pot is set, a stirrer walks a dose out and deals it, and
+// only then is the yard written down and read back.
+group("a refresh does not drink the crew's tonic", async () => {
+  window.__reset();
+  window.__crew(0, 1, 0, 2);
+  window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
+  window.__buy('unlockfarm'); window.__finish();
+  window.__buy('unlockapothecary'); window.__finish();
+  window.__pot('stew');
+  window.__assign('stirrers', 1);
+  const dealt = runUntil(() => yard.S.workers.some(w => doseLive(w)), 200);
+  const before = yard.S.workers.filter(w => doseLive(w));
+  const wasOn = before.length;
+  const leftBefore = before[0] ? doseLeftMs(before[0]) : 0;
+
+  window.__reload();
+  run(0.1);
+  const after = yard.S.workers.filter(w => doseLive(w));
+
+  return [
+    ok(dealt && wasOn > 0, 'a body is under a tonic before the refresh', `${wasOn}`),
+    ok(after.length === wasOn, 'and is still under it after', `${wasOn} -> ${after.length}`),
+    ok(after[0] && after[0].dose.tonic === 'stew', 'wearing the same tonic',
+       after[0] && after[0].dose.tonic),
+    // Not topped back up to full, and not run down to nothing: what was left is
+    // what is left.
+    ok(after[0] && Math.abs(doseLeftMs(after[0]) - leftBefore) < 2000,
+       'with what was left of it still left',
+       `${Math.round(leftBefore)}ms -> ${after[0] ? Math.round(doseLeftMs(after[0])) : 0}ms`)
+  ];
 });

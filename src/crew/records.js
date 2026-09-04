@@ -5,6 +5,7 @@
 // in crew.js -- every name it uses comes from the modules imported below.
 
 import { S } from '../state.js';
+import { now } from '../clock.js';
 import { rand } from '../rng.js';
 import { indoors } from '../lab.js';
 import { inHouse } from '../scrubhouse.js';
@@ -84,15 +85,34 @@ export const KEEPS = ['name', 'lived', 'mined', 'quarried', 'farmed', 'stored',
                       'at', 'trained', 'kitOf', 'x', 'y',
                       'carry', 'load', 'hasCore', 'goal', 'lentFrom'];
 
+// A live dose is kept too, and it is the one thing on a body that cannot be
+// written down as it stands. `w.dose.until` is a moment on the clock, and the
+// clock starts again when the page does -- so a dose saved as "until 94,000"
+// comes back either already spent or good for another minute and a half,
+// depending on how long you were gone. What is true either way is how much of it
+// is *left*, so that is what is written, and the moment it runs out is worked
+// out again on the way back in.
+//
+// It is out here rather than in KEEPS because KEEPS is a straight copy, and this
+// is the one field that has to be turned round on both journeys.
+const doseKeep = w => (w.dose && w.dose.until > now()
+  ? { tonic: w.dose.tonic, left: Math.round(w.dose.until - now()) } : null);
+
 export function keepOf(w) {
   const out = { type: w.type };
   for (const k of KEEPS) if (w[k] != null) out[k] = w[k];
+  const dose = doseKeep(w);
+  if (dose) out.dose = dose;
   return out;
 }
 
 // and back again, on to a body the factory has just made
 export function wearRecord(w, from) {
   for (const k of KEEPS) if (from[k] != null) w[k] = from[k];
+  // A dose written by an older save has `until` and no `left`; it is not worth
+  // guessing what that moment meant, so such a body simply comes back sober.
+  if (from.dose && from.dose.left > 0)
+    w.dose = { tonic: from.dose.tonic, until: now() + from.dose.left };
   if (!w.at) w.at = {};
   return w;
 }

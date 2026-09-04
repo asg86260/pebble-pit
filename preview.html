@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>effects</title>
+<style>
+  html, body { margin: 0; background: #fff; color: #000;
+               font: 12px/1.4 ui-monospace, "Courier New", monospace; }
+  canvas { display: block; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<!-- The effects bench: every effect in render/effects.js, drawn on its own at
+     whatever stage of whatever parameter is worth seeing, with no yard behind
+     it. Open it at /preview.html, or shoot it with tools/effect.mjs.
+
+     It exists because the alternative is what tuning the tonic flame actually
+     cost: open a yard, hire a crew, build the apothecary, set a pot, wait for a
+     batch, and hope the body it dealt to walked into shot -- per attempt. -->
+<canvas id="bench"></canvas>
+<script type="module">
+import { P, WORKER } from './src/config.js';
+import { drawDoseFlame } from './src/render/effects.js';
+
+const SCALE = 3;                       // a cell is six pixels; nobody can see that
+const canvas = document.getElementById('bench');
+const g = canvas.getContext('2d');
+
+// One row per case, one column per stage of it. Add an effect by adding a row:
+// a name, the columns it wants, and how to draw one.
+const COLOURS = [['a hearty stew', '#5fb84f'], ['a bracing tonic', '#a05fd6'],
+                 ['a strong brew', '#4a86c7']];
+const ROWS = [];
+// A still cannot show a flicker, so one row shows the same flame at five moments
+// a few hundred milliseconds apart: if the silhouette is the same in all five it
+// is not a fire, whatever it looks like standing still. This is the check the
+// game itself cannot give you -- in the yard you get one moment per screenshot.
+ROWS.push({
+  what: 'a bracing tonic, full -- five moments apart',
+  cells: [0, 220, 440, 660, 880].map(off => (gg, x, y, t) => {
+    gg.fillStyle = '#fff';
+    gg.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    gg.strokeStyle = '#000';
+    gg.lineWidth = 2;
+    gg.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+    drawDoseFlame(gg, x, y, '#a05fd6', 1, t + off);
+  })
+});
+
+for (const [name, colour] of COLOURS) {
+  ROWS.push({
+    what: `${name} -- full, half, nearly spent`,
+    cells: [1, 0.5, 0.15].map(frac => (gg, x, y, t) => {
+      // the body it burns off, so the flame is read at the size it really sits
+      gg.fillStyle = '#fff';
+      gg.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+      gg.strokeStyle = '#000';
+      gg.lineWidth = 2;
+      gg.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
+      drawDoseFlame(gg, x, y, colour, frac, t);
+    })
+  });
+}
+
+const CELL_W = P * 12, CELL_H = P * 13;
+canvas.width = CELL_W * 5 * SCALE;
+canvas.height = CELL_H * ROWS.length * SCALE;
+
+function frame(t) {
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  g.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+  ROWS.forEach((row, r) => {
+    g.fillStyle = '#000';
+    g.font = '7px ui-monospace, monospace';
+    g.fillText(row.what, 4, r * CELL_H + 10);
+    row.cells.forEach((draw, c) => {
+      // the body stands on the floor of its cell, so the flame has room over it
+      draw(g, c * CELL_W + P * 5, r * CELL_H + CELL_H - P * 4, t);
+    });
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// headless.mjs waits for this before it does anything, so say we are here.
+window.__test = () => {};
+</script>
+</body>
+</html>
