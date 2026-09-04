@@ -8,8 +8,9 @@
 import { readFileSync } from 'node:fs';
 import { yard, group, ok, state, run, runUntil, openSites, P } from './helpers.mjs';
 import { S, floor, sky, tower } from '../src/state.js';
+import { at as cellAt } from '../src/grid.js';
 import { placeSites, bankCeiling } from '../src/world.js';
-import { PILE_LIMIT, STATION_GAP, SUN_GAP, SITES } from '../src/config.js';
+import { PILE_LIMIT, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
 
 // What ground a site has spoken for: its own box and its heap's strip as one
 // run, because the bare gap between a station and its own heap is that
@@ -38,11 +39,13 @@ group('one gap, and the same one, between every pair of stations', () => {
        `${runs.length} of ${SITES.length}`),
     ok(!odd.length, 'and each one is exactly STATION_GAP from the next',
        odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${STATION_GAP} throughout`),
-    // The gap has one job that no number in the table can be trusted with any
-    // more: it has to hold the furniture a site hangs off its own left-hand
-    // side. The farmhands' stand is the deepest of those.
-    ok(runs[0].from >= 0, 'and the far end of the walk is still inside the world',
-       `${runs[0].key} starts at ${runs[0].from}`)
+    // Exactly the margin, not merely inside it. `GROUND_LEFT` is worked out from
+    // this very sum now (config/sites.js), so the far end of the walk landing
+    // anywhere else means the two have come apart -- which is the failure a
+    // widened station used to cause silently.
+    ok(runs[0].from === YARD_MARGIN,
+       'and the far end of the walk stands exactly its margin inside the world',
+       `${runs[0].key} starts at ${runs[0].from}, margin ${YARD_MARGIN}`)
   ];
 });
 
@@ -105,6 +108,58 @@ group('a strip can still hold everything its station may pile on it', () => {
   out.push(ok(end <= 1, 'a heap leans off the bare end of its ground, with no sides to fill',
               `${end} cells of room in the first column`));
   return out;
+});
+
+// Widening the yard moves the world's left-hand edge away from everything
+// standing on it, which is a thing that happens to saves people are in the
+// middle of playing. What the ground carries is not only how MUCH dust there is
+// but where each grain lies and what it is -- a shard in the quarry's heap is
+// not the same object as a grey grain at the foot of the yard -- and re-packing
+// the floor flat, which is what a shape change used to mean, loses both.
+group('a save from before the world widened keeps its dust where it lay', () => {
+  const raw = readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8');
+  const was = JSON.parse(raw).floor;
+  // The saved cells, unpacked the way persist.js unpacks them, as the columns
+  // that had anything standing in them.
+  const cells = new Uint8Array(was.cols * was.rows);
+  let i = 0;
+  for (const part of was.cells.split('.')) {
+    const x = part.indexOf('x');
+    const v = +part.slice(0, x), len = +part.slice(x + 1);
+    if (v) cells.fill(v, i, i + len);
+    i += len;
+  }
+  const held = new Map();                    // column -> how many grains stood in it
+  for (let r = 0; r < was.rows; r++)
+    for (let c = 0; c < was.cols; c++)
+      if (cells[r * was.cols + c]) held.set(c, (held.get(c) || 0) + 1);
+
+  localStorage.setItem('boulder-clicker/v4', raw);
+  yard.restore();
+  const dx = floor.cols - was.cols;          // the columns the world gained, all on its left
+  const now = new Map();
+  const shades = new Set();
+  for (let r = 0; r < floor.rows; r++)
+    for (let c = 0; c < floor.cols; c++) {
+      const v = cellAt(floor, c, r);
+      if (!v) continue;
+      now.set(c, (now.get(c) || 0) + 1);
+      shades.add(v);
+    }
+  const moved = [...held].every(([c, n]) => now.get(c + dx) === n);
+  const grains = [...now.values()].reduce((a, b) => a + b, 0);
+  const total = [...held.values()].reduce((a, b) => a + b, 0);
+  return [
+    ok(dx > 0, 'the world this save was written in was narrower than today\'s',
+       `${was.cols} columns then, ${floor.cols} now`),
+    ok(grains === total, 'every grain it was carrying came back',
+       `${grains} of ${total}`),
+    ok(moved, 'and each one is the same distance along, in the same column of the yard',
+       `${dx} columns across`),
+    // Re-packed flat, every grain comes back as one middling grey. What the
+    // shades say is what the ground is made of.
+    ok(shades.size > 1, 'still made of what it was made of', [...shades].join(','))
+  ];
 });
 
 // A save made before any of this moved. Every building in it stands somewhere
