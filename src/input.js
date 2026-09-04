@@ -471,10 +471,29 @@ export function whatIsAt(x, y) {
 // fires between two of them. The one it last found stands in the gap, which
 // is also what keeps it from flickering off between polls that would only
 // have found the same thing again.
-let tipTick = 0, tipWas = null;
+//
+// But it is an answer about a SPOT, and it may only stand in for the spot it
+// was an answer about. It used to be kept on the call count alone -- three
+// calls in four handed back the last label wherever the cursor had got to --
+// which is harmless while a mouse is drifting a few pixels and wrong the moment
+// it jumps. And it jumps often: the camera glides out from under a still
+// cursor, a touch lands somewhere new, a fresh game starts with the last game's
+// answer still sitting in the variable. That last one is how a hover over bare
+// sky three hundred pixels from the rock answered "the farm" -- the label had
+// been cached over the farm's shed, in a different game, and nothing since had
+// landed on a fourth call to replace it.
+//
+// So the cache is keyed on where it was taken. Within a cell of the same spot
+// it stands, and the poll rate is what it was; a cursor that has moved further
+// than that is asking a different question and gets it answered. A cell is the
+// yard's own unit of "the same place" -- `whatIsAt` reads grains by cell -- so
+// there is nothing to tune here.
+let tipTick = 0, tipWas = null, tipAt = null;
 function polledWhatIsAt(x, y) {
-  tipTick++;
-  if (tipTick % 4 !== 0) return tipWas;
+  const same = tipAt && Math.abs(x - tipAt[0]) < P && Math.abs(y - tipAt[1]) < P;
+  if (same && ++tipTick % 4 !== 0) return tipWas;
+  tipTick = 0;
+  tipAt = [x, y];
   tipWas = whatIsAt(x, y);
   return tipWas;
 }
