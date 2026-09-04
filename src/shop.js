@@ -19,6 +19,7 @@ import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
+import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -32,6 +33,7 @@ const quarryEl = document.getElementById('quarryshop');
 const farmEl = document.getElementById('farmshop');
 const apothEl = document.getElementById('apothshop');
 const towerEl = document.getElementById('towershop');
+const statsEl = document.getElementById('statsshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -663,6 +665,9 @@ const BOARDS = {
   farm:   () => [farmEl, FARM_UPGRADES, FARM_SECTIONS, 'the ground is all broken'],
   apothecary: () => [apothEl, APOTHECARY_UPGRADES, APOTHECARY_SECTIONS, 'the pot stands cold'],
   tower:  () => [towerEl, TOWER_UPGRADES, TOWER_SECTIONS, 'nothing stirs in here yet'],
+  // The books. Nothing on them is for sale, and a currency you have never seen
+  // is not on them either -- so an early yard reads one row, which is honest.
+  stats:  () => [statsEl, STATS_UPGRADES, STATS_SECTIONS, 'nothing has come in yet'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']

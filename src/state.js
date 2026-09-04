@@ -352,6 +352,10 @@ export const S = {
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,
+  // Track F3 (wave5): the books over the pit -- the one board that belongs to no
+  // building. Which board is open is this session's business, like the rest of
+  // them, so it is in EPHEMERAL below.
+  statsBoardOpen: false,
 
   // --- the air ----------------------------------------------------------------
   haze: 0,                // motes in the sky, waiting to come back down
@@ -630,6 +634,7 @@ export const EPHEMERAL = [
   'boardOpen', 'schoolBoardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
+  'statsBoardOpen',                        // Track F3 (wave5)
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame
   'builders', 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',

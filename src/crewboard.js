@@ -24,7 +24,7 @@ import { onTheMove } from './air.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
-import { P, WORKER, SHARD_CELL, SPORE_CELL, findKind } from './config.js';
+import { P, WORKER, SHARD_CELL, SPORE_CELL, findKind, CLOCK_GLYPH } from './config.js';
 import { JOB } from './jobs.js';
 
 // The block, as a rectangle to stand near: what is actually built, on a plot
@@ -245,7 +245,12 @@ export function card(w) {
     // What it is under, and how long it has left. The mark on the body across
     // the yard says *that* a tonic is on it; this row is where you read the
     // *what*. Only a body actually under one gets the row -- see the apothecary.
-    ...(doseLive(w) ? [row('under', `${doseName(w)}, ${Math.ceil(doseLeftMs(w) / 1000)}s`)] : [])
+    // How long it has left is said in seconds, and seconds are a clock -- the
+    // same rule the boards' bills go by. This card is one monospace text node
+    // and can hold no markup, so it uses the glyph rather than the `.clock`
+    // mark, exactly as it already says a shard with ▲ rather than with the
+    // shard's own element.
+    ...(doseLive(w) ? [row('under', `${doseName(w)}, ${Math.ceil(doseLeftMs(w) / 1000)}${CLOCK_GLYPH}`)] : [])
   ].join(NL);
 }
 

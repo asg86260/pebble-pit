@@ -49,6 +49,8 @@ export * from './config/piles.js';
 export * from './config/build.js';
 export * from './config/crits.js';
 export * from './config/apothecary.js';
+// Track F3 (wave5): the pips under a row's name, and the books over the pit.
+export * from './config/boards.js';
 
 // --- turning the knobs ------------------------------------------------------
 // One dial, one row, one home.

@@ -33,6 +33,8 @@ import { sampleRates, stepLab, stepSmoke, labFinished } from './lab.js';
 import { stepGrit } from './grit.js';
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
 import { cubes as houseCubes } from './house.js';
+// Track F3 (wave5): the books over the pit, which measure what the yard earned.
+import { sampleBooks } from './stats.js';
 
 // The ground is laid the moment the order the yard was bought in changes, and
 // not on the frame after. `layPiles` would catch it next frame -- the order is
@@ -199,6 +201,11 @@ export const STEPS = [
   { name: 'air',     step: stepAir },
   { name: 'paid',    step: stepPaid },
   { name: 'rates',   step: c => sampleRates(c.now) },
+  // Track F3 (wave5): and the books, which take the same readings over a window
+  // instead of an easing and are what the stats board prints. Beside `rates`
+  // rather than anywhere else because it is the same act -- reading the
+  // counters -- and after `clock`, which is what puts `now` on the frame.
+  { name: 'books',   step: c => sampleBooks(c.now) },
   { name: 'weather', step: c => stepWeather(c.now) },
   { name: 'survey',  step: countTick },
   { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board

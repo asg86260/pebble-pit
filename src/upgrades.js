@@ -193,6 +193,26 @@ export const UNITS = {
   'plots/min': '<i class="spore"></i>/min'
 };
 
+// A second is the clock, never the letter.
+//
+// Every other quantity on these boards is a mark -- a grain, a core, a shard,
+// a clock for what a build costs in waiting -- and seconds were the one thing
+// still spelled out, as an `s` hanging off a number. Next to a lowercase word
+// unit that reads as the end of the word ("a longer dose, +14 s") and next to a
+// mark it reads as a stray letter, and the game already has a picture for time
+// standing in the bill directly underneath.
+//
+// Done here rather than in the four rows that name a unit in seconds -- and in
+// whichever row is written next -- because a row's business is what it measures,
+// not how the board spells it. `s` on its own is a duration; a trailing `/s` is
+// a rate, and the clock goes where the letter was in both.
+export const secondsMark = text =>
+  text === 's' ? MARK.time : text.replace(/\/s$/, `/${MARK.time}`);
+
+// What a unit is drawn as: the mark the yard has a coin for, or the row's own
+// word if it has not -- and either way with its seconds turned into clocks.
+export const unitText = unit => secondsMark(UNITS[unit] || unit);
+
 export const num = v => (v < 10 ? v.toFixed(1) : String(Math.round(v)));
 
 // --- what a row says it gives you -------------------------------------------
@@ -225,7 +245,7 @@ export const gainText = u => {
   // the tower's bolts and the cells one takes off a star -- and what the board
   // printed for all four was the failed lookup: "better instruments, +25%
   // undefined". A missing mark is a unit to write out, not a row to break.
-  const mark = u.unit ? ' ' + (UNITS[u.unit] || u.unit) : '';
+  const mark = u.unit ? ' ' + unitText(u.unit) : '';
   // A count says what it is now and what it would be. "+1" tells you what the
   // row does and nothing about whether it is worth it: going from one to two is
   // doubling what you can carry, and going from eleven to twelve is not, and the
@@ -287,7 +307,7 @@ import { CREW_ROWS } from './upgrades/rows-crew.js';
 import { FARM_ROWS } from './upgrades/rows-farm.js';
 import { SCHOOL_ROWS } from './upgrades/rows-school.js';
 import { SCRUB_ROWS } from './upgrades/rows-scrub.js';
-import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
+import { CLOSET_ROWS } from './upgrades/rows-closet.js';
 import { TOWER_ROWS } from './upgrades/rows-tower.js';
 import { CASINO_ROWS } from './upgrades/rows-casino.js';
 import { LAB_ROWS } from './upgrades/rows-lab.js';
@@ -776,7 +796,7 @@ export const UPGRADES = [
   ...FARM_ROWS,
   ...SCHOOL_ROWS,
   ...SCRUB_ROWS,
-  ...OUTHOUSE_ROWS,
+  ...CLOSET_ROWS,
   ...TOWER_ROWS,
   ...CASINO_ROWS,
   ...LAB_ROWS,
@@ -803,7 +823,12 @@ export const SECTIONS = [
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the apothecary', keys: ['unlockapothecary'] },
   { title: 'the casino', keys: ['unlockcasino'] },
-  { title: 'the outhouse', keys: ['unlockouthouse', 'loopost'] },
+  // The janitor's closet, not "the outhouse". Nothing under this heading is
+  // about a privy: it is the cupboard the shovels and the caps live in, and the
+  // row that puts it up has said so in those words since it was written. The
+  // rows are the ones that were here, at the prices they were, doing what they
+  // did -- see `src/upgrades/rows-closet.js`.
+  { title: "the janitor's closet", keys: ['unlockouthouse', 'loopost'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }

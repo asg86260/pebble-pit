@@ -805,4 +805,39 @@ export const TESTS = [
          `${upAgain} then ${wentWithBoard}`)
     ];
   }],
+
+  // Track F3 (wave5). The books are the one board in the game that belongs to no
+  // building: they hang over the pit mouth, where the counter card already
+  // floats, because the counter says what you have and this says how fast it is
+  // arriving. Walked up to with a real pointer, like every other board -- the
+  // node tier can say what the rows compute, and only this tier can say that
+  // standing there opens them.
+  ['the books stand over the pit, and walking up to them opens them', async () => {
+    newRun();
+    await settle();
+    window.__crew(3, 3);
+    window.__fast(40);                       // so there is a rate to read
+    await raf();
+
+    const stand = state().stands.stats;
+    await hoverStation('stats');
+    const open = state().statsBoardOpen;
+    const rows = [...document.getElementById('statsshop').querySelectorAll('[data-key]')]
+      .map(r => r.dataset.key);
+    // What the dust row says, off the sheet: a mark, a number and a clock.
+    const dust = document.querySelector('#statsshop [data-key="ratedust"]');
+    const said = dust ? dust.children[2].innerHTML : '';
+    await hoverAway();
+    const shut = !state().statsBoardOpen;
+    window.__crew(0, 0);
+
+    return [
+      ok(!!stand, 'there is somewhere to stand to read them',
+         stand ? `${stand.x},${stand.y}` : 'nowhere'),
+      ok(open, 'standing there opens them'),
+      ok(rows.includes('ratedust'), 'and dust is on them', rows.join(',')),
+      ok(/class="clock"/.test(said), 'with its rate over a clock', said),
+      ok(shut, 'and walking away shuts them again')
+    ];
+  }],
 ];

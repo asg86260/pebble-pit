@@ -1,8 +1,8 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P } from './config.js';
-import { S, bench, lab, apothecary, school, casino, scrub, tower } from './state.js';
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
+import { S, bench, lab, apothecary, school, casino, scrub, tower, pit } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
@@ -14,6 +14,7 @@ import { QUARRY_UPGRADES } from './quarry.js';
 import { FARM_UPGRADES } from './farm.js';
 import { APOTHECARY_UPGRADES } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
+import { STATS_UPGRADES } from './stats.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          shutOpts } from './shop.js';
 import { now } from './clock.js';
@@ -30,6 +31,7 @@ const quarryShopEl = document.getElementById('quarryshop');
 const farmShopEl = document.getElementById('farmshop');
 const apothShopEl = document.getElementById('apothshop');
 const towerShopEl = document.getElementById('towershop');
+const statsShopEl = document.getElementById('statsshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
@@ -39,7 +41,31 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
                 quarry: document.getElementById('quarryboard'),
                 farm: document.getElementById('farmboard'),
                 apothecary: document.getElementById('apothboard'),
-                tower: document.getElementById('towerboard') };
+                tower: document.getElementById('towerboard'),
+                stats: document.getElementById('statsboard') };
+
+// How far up a ladder you are is a row of pips, and how big and how dark they
+// are is a number rather than a rule -- so the two of them live in config with
+// every other number and are handed to the stylesheet here. Written once, on the
+// root, so the nine boards that draw pips cannot disagree about them.
+document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
+document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
+document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
+
+// Where you stand to read the books: the mouth of the pit, at its near lip. The
+// books are the only board in the game that does not belong to a building, and
+// that is the point of them -- the pit is the yard's bank, the counter floating
+// over it says what you have, and standing at the same place says how fast it is
+// arriving. Derived off the hole rather than written as a position, so it goes
+// wherever the layout puts the hole.
+//
+// Below the ground line rather than in the air above it, which is where the
+// counter card is drawn. That air is the rift's: the disc hangs three cells
+// clear of the ground at the near end of the hole -- the same few feet -- and a
+// menu that opened whenever you looked at the black hole would be the worst
+// place in the yard to put one.
+const booksRect = () => ({ x: pit.x, y: S.groundY,
+                           w: P * BOOKS_STAND_W, h: P * BOOKS_STAND_H });
 // The house is the only stand that is not a fixed rectangle: it grows a room per
 // body, so where you have to be standing to read the list of who lives there
 // depends on how many of them there are.
@@ -52,6 +78,7 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
 // the hand goes to. It is the whole answer now: the hover target, the click
 // target, and the anchor the board hangs from, for both of them.
 const standAt = { bench, lab, apothecary, school, casino, scrub, tower,
+                  get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },
                   get house() { return houseRect(); } };
@@ -77,13 +104,14 @@ const listFor = which =>
   which === 'farm' ? FARM_UPGRADES :
   which === 'apothecary' ? APOTHECARY_UPGRADES :
   which === 'tower' ? TOWER_UPGRADES :
+  which === 'stats' ? STATS_UPGRADES :
   which === 'house' ? crewRows() : [];
 
 // Every station that has a board. One list, so that a thing which is true of all
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
-                         'farm', 'apothecary', 'tower', 'house'];
+                         'farm', 'apothecary', 'tower', 'house', 'stats'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -96,6 +124,11 @@ const standing = which =>
   which === 'farm' ? S.farmOpen :
   which === 'apothecary' ? S.apothecaryOpen :
   which === 'tower' ? S.towerOpen :
+  // The books open once the hole has had something in it. The hole is there from
+  // the first frame, but a rate measured over a yard that has never earned
+  // anything is a column of noughts, and a board of noughts teaches nothing
+  // except that the board is not worth walking to.
+  which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
 
 // Where a station's mark goes: the middle of it, on the ground. Now that the
@@ -174,6 +207,21 @@ export const nearQuarry = (x, y) => {
 // whole width of the row.
 export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
 export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
+// And the books, over the pit mouth. Asked after every building in the cascade
+// -- see input.js -- for the same reason the house is: this is a patch of open
+// air rather than a thing standing on the ground, so anything actually built
+// wins over it.
+// A tight patch rather than `near`'s generous eight cells all round. The rift
+// hangs three cells over the near lip of this very hole, and the ordinary
+// padding reaches into it -- the same complaint the quarry's ramp raised, and
+// answered the same way. One cell of grace above, two either side and two below,
+// which is a comfortable target and reaches nothing else.
+export const nearStats = (x, y) => {
+  if (!standing('stats')) return false;
+  const r = booksRect();
+  return x > r.x - P * 2 && x < r.x + r.w + P * 2 &&
+         y > r.y - P && y < r.y + r.h + P * 2;
+};
 // And the house, once anybody lives in it -- with a tight right edge rather than
 // the usual eight cells.
 //
@@ -643,6 +691,7 @@ function settle(want) {
   S.farmBoardOpen = want === 'farm';
   S.apothBoardOpen = want === 'apothecary';
   S.towerBoardOpen = want === 'tower';
+  S.statsBoardOpen = want === 'stats';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
@@ -760,6 +809,11 @@ function fill(which) {
   if (which === 'farm') refresh(farmShopEl, FARM_UPGRADES, null);
   if (which === 'apothecary') refresh(apothShopEl, APOTHECARY_UPGRADES, apothHeads);
   if (which === 'tower') refresh(towerShopEl, TOWER_UPGRADES, null);
+  // The books are written every frame they are open, the same as the crew list
+  // and for the same reason: what is on them moves on its own, and a rate that
+  // went stale the moment you opened it would be the board telling you what the
+  // yard used to be earning.
+  if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') {
