@@ -1,7 +1,14 @@
 // The rock: how it comes down, where it stands, what it leaves behind, and the
 // beat the crew get when it is finished.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, yard, P, WORKER } from './helpers.mjs';
+// The dance's own numbers, for the celebration group below: what a jump clears,
+// the pace that reads as a fault, and the two the beat is derived from. Read
+// rather than retyped, so the check moves with the dial instead of pinning it.
+import { DANCE_BEAT, DANCE_BUZZ, DANCE_JUMP_H, DANCE_TEMPO_HI, danceJumpBeat } from '../src/config.js';
+// The bodies themselves, for the same group: which frames the dance actually
+// drew is a fact about a worker and not one the snapshot carries.
+import { S } from '../src/state.js';
 
 // Finishing a rock is the end of a long job, so it gets a beat: the crew hop
 // about on the bare ground, and only then does the next one come down.
@@ -119,11 +126,34 @@ group('the crew get out from under the next rock', async () => {
   ];
 });
 
-// And while they wait for it, they dance -- travel and all. A body whose dance
-// mark lay through the drop zone was ordered toward it by the drift rule and
-// flipped back by the zone's wall every frame, going nowhere: a square bobbing
-// on the spot for the whole of the fall. The mark is re-taken on the body's own
-// side now, so the gang pace their patches like anybody else.
+// And while they wait for it, they dance -- and what dancing IS changed under
+// this check, so the check changed with it (item 21, feedback5; F4 of wave 5).
+//
+// It used to assert *travel*: the dance had three moves, two of which crossed
+// the ground, and the bug this group was written for was a body whose mark lay
+// through the drop zone being ordered toward it by the drift rule and flipped
+// back by the zone's wall every frame -- a square going nowhere for the whole of
+// the fall. Travel was the tell that the celebration had not degenerated.
+//
+// The two moves that travelled are gone: a gang ambling sideways and turning on
+// the spot read as milling about rather than as delight, so a celebration is
+// jumping now and **a dancing body covers no ground at all**. That makes the old
+// assertion the exact opposite of the rule, so what is defended here is the same
+// spirit against the new promise -- a celebration must not degenerate into a
+// shiver, and the shiver now has three different shapes:
+//
+//   too small   nobody leaves the ground: a gang standing still is not a
+//               celebration, whatever the moves table says.
+//   too quick   somebody crosses its own height past DANCE_BUZZ, which is where
+//               a bounce stops reading as pleased and starts reading as a fault.
+//               That IS the vibration this group is named for.
+//   sliding     a jumping body that also drifts sideways is the old shuffle
+//               coming back, and it is the one thing the new dance cannot do.
+//
+// The numbers all come off the dance's own constants rather than being typed
+// again here: a check that pins 21 pixels of jump is a check that goes red the
+// day somebody moves the dial, which is the failure that brought this group's
+// author back in the first place.
 group('the crew dance rather than vibrate while the next rock falls', async () => {
   window.__crew(4, 0);
   quickCrew();
@@ -132,38 +162,100 @@ group('the crew dance rather than vibrate while the next rock falls', async () =
   run(6);
   window.__next();
   // Frame by frame, as the groups above do -- a coarse step walks straight over
-  // the fall -- and across the whole beat, celebration and fall alike: the zone
-  // is drawn the moment the rock is off, so a mark through it pinned a body
-  // just as hard while the sky was still empty.
+  // the fall -- and across the whole beat, celebration and fall alike: a body
+  // pinned against the drop zone is pinned while the sky is still empty.
   //
-  // Only ground outside the zone counts toward a body's patch. The duck drags
-  // anybody inside it out at the start of the fall, and that march is travel --
-  // just not the travel this check is about.
+  // Off the bodies rather than off `workerPos`, which is the one thing this
+  // group needed that a snapshot cannot say: WHICH FRAMES THE DANCE DREW. Those
+  // are the only frames any of this is about -- a body being walked clear of the
+  // drop zone is travelling, and rightly, but the duck is doing that and not the
+  // dance. `jigOn` is the frame the dance last ran on a body, which is exactly
+  // the question, and `foot` is the footing it took when it joined in.
   const seen = new Map();
   let sampled = 0;
   for (let i = 0; i < 1200; i++) {
     run(1 / 60);
     const s = state();
     if (!s.dancing && s.rockFall <= 0) break;
-    sampled++;
-    s.workerPos.forEach((w, idx) => {
-      if (w[0] !== 'r') return;
-      const x = +w.split(':')[1].split(',')[0];
-      if (s.dropZone && x + WORKER > s.dropZone[0] && x < s.dropZone[1]) return;
-      if (!seen.has(idx)) seen.set(idx, { lo: x, hi: x });
-      const t = seen.get(idx);
-      t.lo = Math.min(t.lo, x); t.hi = Math.max(t.hi, x);
+    const t = yard.clock.now();
+    S.workers.forEach((w, idx) => {
+      if (w.type !== 'rockhand' || w.jigOn !== t) return;   // not dancing this frame
+      if (!seen.has(idx)) seen.set(idx, []);
+      seen.get(idx).push({ f: sampled, x: w.x, y: w.y, foot: w.foot });
     });
+    sampled++;
   }
   window.__crew(0, 0);
-  const ranges = [...seen.values()].map(t => t.hi - t.lo).sort((a, b) => b - a);
+
+  // The last frame anybody was still dancing, which is when the yard stopped
+  // watching: the dance ends for the whole gang at once.
+  const ended = Math.max(...[...seen.values()].map(f => f[f.length - 1].f));
+
+  // What one body did, off the footing it joined the dance on.
+  const bodies = [...seen.values()].filter(f => f.length > 30).map(film => {
+    const foot = film[film.length - 1].foot;
+    const rise = foot - Math.min(...film.map(p => p.y));
+    // Ground covered while the dance was the thing moving it, measured only
+    // between two frames it drew BACK TO BACK. A gap in the film is a frame
+    // something else had the body -- the duck walking it clear of the drop zone
+    // is the one that happens here, and it is travel, but it is not the dance's.
+    // Not a range with slack in it either: a jump writes `w.y` and never `w.x`,
+    // so the answer is nought exactly, and anything else is a move that travels
+    // having come back.
+    let slide = 0;
+    for (let k = 1; k < film.length; k++)
+      if (film[k].f === film[k - 1].f + 1)
+        slide = Math.max(slide, Math.abs(film[k].x - film[k - 1].x));
+    // How often it crossed its own height: the tops of the bounces, counting
+    // only the ones that got at least halfway up so a pixel of wobble at a beat
+    // join is not read as a bounce of its own.
+    const tops = [];
+    for (let k = 1; k < film.length - 1; k++)
+      if (film[k].y < film[k - 1].y && film[k].y <= film[k + 1].y && foot - film[k].y > rise / 2)
+        tops.push(film[k].f);
+    let quickest = 0;
+    for (let k = 1; k < tops.length; k++)
+      quickest = Math.max(quickest, 60 / (tops[k] - tops[k - 1]));
+    // And how high it was on the last frame the dance drew it -- which the
+    // wind-down promises is the ground: a body only leaves it if it can be back
+    // down before the yard has something else to look at.
+    //
+    // Only for the bodies that were still dancing at the end. One that was
+    // ducked clear in the last moments stopped dancing early and was stood on
+    // its feet by the duck, which is a different rule keeping the same promise.
+    const last = film[film.length - 1];
+    return { rise, slide, quickest, hanging: last.f === ended ? foot - last.y : 0 };
+  });
+
+  const rises = bodies.map(b => b.rise).sort((a, b) => b - a);
+  const jump = DANCE_JUMP_H * P;                       // what a full jump clears
+  const quickest = Math.max(0, ...bodies.map(b => b.quickest));
+  const slide = Math.max(0, ...bodies.map(b => b.slide));
+  const hanging = bodies.filter(b => b.hanging > 1).length;
+  // The bound the tempo is built on, which holds whatever the panel is set to:
+  // the quickest tempo any body can roll, times the beat derived from it.
+  const ceiling = DANCE_BEAT * danceJumpBeat() * DANCE_TEMPO_HI;
+
   return [
     ok(sampled > 240, 'there was a stretch of the beat to watch', `${sampled} frames of it`),
-    ok(ranges.length >= 3, 'with a gang on the ground under it', `${ranges.length} rockhands`),
-    ok(ranges[0] > P * 4, 'and the dance travels rather than bobbing on the spot',
-       `widest patch ${ranges[0]}px, want > ${P * 4}`),
-    ok(ranges.filter(r => r > P * 2).length >= 2,
-       'for more of the gang than one', ranges.map(r => `${r}px`).join(' '))
+    ok(bodies.length >= 3, 'with a gang on the ground under it', `${bodies.length} rockhands`),
+    // Three quarters of a jump rather than the whole of it: the film is sampled
+    // a frame at a time and the very top of the arc falls between two of them.
+    ok(rises[0] > jump * 0.75, 'and the gang leave the ground rather than shivering on it',
+       `tallest ${rises[0]}px of a ${jump}px jump`),
+    ok(rises.filter(r => r > jump * 0.5).length >= 2,
+       'for more of the gang than one', rises.map(r => `${r}px`).join(' ')),
+    // The vibration this group is named for, said as the rule it always meant.
+    ok(quickest < DANCE_BUZZ, 'and nobody crosses its own height fast enough to buzz',
+       `quickest ${quickest.toFixed(2)} a second against ${DANCE_BUZZ}`),
+    ok(ceiling < DANCE_BUZZ, 'nor could they: the tempo is derived to stay under it',
+       `ceiling ${ceiling.toFixed(2)} against ${DANCE_BUZZ}`),
+    // The new rule, and the old assertion turned over: a jump goes up, and only
+    // up. A body sliding while it is in the air is the shuffle coming back.
+    ok(slide === 0, 'a body in the air covers no ground at all', `${slide}px of drift`),
+    // And the promise the wind-down makes: nobody is switched off mid-jump.
+    ok(hanging === 0, 'and nobody is left hanging when the yard stops watching',
+       `${hanging} still up`)
   ];
 });
 
