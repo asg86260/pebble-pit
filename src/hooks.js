@@ -44,7 +44,7 @@ import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
-import { APOTHECARY_UPGRADES, setKeep, setPrefer } from './apothecary.js';
+import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -941,6 +941,11 @@ export const HANDLES = {
     if (u && u.show()) u.set();
     return !!(u && u.show());
   },
+  // What is standing on a shelf, set outright. The setup a check or a scene is
+  // NOT about: proving that a batch reaches the shelf is `wave5-apothecary`'s
+  // job and it does it by brewing. This is for looking at a full shelf without
+  // waiting twenty batches for one.
+  __stock: (key, n) => setStock(key, n),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
   __muckOverPit: muckOverPit, __look: look,

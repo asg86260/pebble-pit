@@ -216,6 +216,15 @@ export const potSpentOf = i => !!(S.potSpents || [])[i];
 export const doseStock = key => Math.max(0, (S.shelf || {})[key] | 0);
 export const doseStockTotal = () => TONICS.reduce((n, t) => n + doseStock(t.key), 0);
 const shelve = (key, n) => { S.shelf[key] = doseStock(key) + n; S.dirty = true; };
+// What is standing on a shelf, set outright rather than brewed onto it. Nothing
+// in the game calls this -- it is the dev handle behind `__stock`, for looking
+// at a stocked shelf without brewing twenty batches first.
+export const setStock = (key, n) => {
+  if (!tonicOf(key)) return 0;
+  S.shelf[key] = Math.max(0, n | 0);
+  S.dirty = true;
+  return S.shelf[key];
+};
 
 // --- an old save, poured into the new shape -----------------------------------
 // Everything the building used to hold as one figure -- one tonic, one spent

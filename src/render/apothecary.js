@@ -5,7 +5,8 @@
 // risingPlace, bar) come from ./ctx.js, ./rise.js and ./bars.js.
 
 import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
-         APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
+         APOTH_SHELF_ROWS, APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
+         BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP, SHELF_NUM_W, SHELF_PAD,
          FLAME_HOT, FLAME_TIP, FLAME_STEAM } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
@@ -103,54 +104,122 @@ function flameOf(key) {
 // Where each pot stands, measured off the building's own left edge.
 export const potX = i => apothecary.x + APOTH_POT_ROW + i * POT_PITCH;
 
-// --- the bookshelf ------------------------------------------------------------
-// Stock is per tonic now (item 13), so the stock is drawn as a bookshelf with a
-// shelf to a tonic: what is standing on each one is that brew and no other, and
-// turning a pot from stew to brace plainly does not empty the stew shelf. The
-// number on each shelf is drawn in screen pixels by `drawStockCount` below --
-// the vials say which brew and roughly how much, the badge says exactly.
-const SHELF_ROWS = 3;                    // cells a compartment stands, board included
-const shelfTop = () => S.groundY - APOTH_SHELF_H;
-// The top of tonic `i`'s compartment, and the board it stands on.
-export const shelfY = i => shelfTop() + P + i * SHELF_ROWS * P;
-export const shelfX = () => apothecary.x + APOTH_HUT_W + APOTH_GAP;
+// --- the shelf of potions ------------------------------------------------------
+// Stock is per tonic (item 13), and this is where a passerby reads it: a plank to
+// a tonic, and a bottle standing on that plank for every dose in stock, filled
+// with the brew's own color. Nothing here is a legend or a label -- the shelf
+// says what it is holding by holding it, the way the pile says how much dust
+// there is.
+//
+// It was a seven-cell case, taller than it was wide, with a colored tick on each
+// board and a run of single cells beside it. Nothing in it was shaped like a
+// bottle and the whole thing read as a ladder with paint on it. So: a box wider
+// than it is tall, and a bottle that is a bottle.
+//
+// TEMP (wave5-shelf): two treatments to choose between, switchable. `rack` is an
+// open frame -- posts, planks, bottles standing against the sky. `cabinet` puts
+// the same bottles behind a black case, in pigeonhole slots. Set
+// `window.__shelfLook = 'cabinet'` to shoot the other one. Delete the loser, the
+// switch and this comment before it lands.
+const SHELF_LOOK = 'rack';
+const shelfLook = () => globalThis.__shelfLook || SHELF_LOOK;
 
-function drawShelves() {
-  const x = shelfX(), top = shelfTop(), g = S.groundY;
-  const cols = Math.round(APOTH_SHELF_W / P);
-  // The case: two uprights to the ground and a cap over them.
-  for (let r = 0; r * P < g - top; r++) {
+const shelfTop = () => S.groundY - APOTH_SHELF_H;
+export const shelfX = () => apothecary.x + APOTH_HUT_W + APOTH_GAP;
+const shelfCols = () => Math.round(APOTH_SHELF_W / P);
+// The top of tonic `i`'s bottles, and the plank they stand on: one cell of frame
+// over the first, then a bottle's height and a plank, over and over.
+export const shelfY = i => shelfTop() + P + i * APOTH_SHELF_ROWS * P;
+const plankY = i => shelfY(i) + BOTTLE_H * P;
+// Where the bottles start, and the well the count sits in at the far end. Both
+// are measured off the case's own walls, so the count has nowhere to be but
+// inside the case -- see SHELF_NUM_W in config, and `drawStockCount` below.
+const bottlesX = () => shelfX() + (1 + SHELF_PAD) * P;
+export const numWell = i => ({
+  x: shelfX() + (shelfCols() - 1 - SHELF_PAD - SHELF_NUM_W) * P,
+  y: shelfY(i),
+  w: SHELF_NUM_W * P,
+  h: BOTTLE_H * P
+});
+
+// One bottle: a black cork over a body of the brew. The cork is what makes it a
+// bottle rather than a colored block, and it is centered, so BOTTLE_W wants to
+// be odd.
+function bottle(x, y, color) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x + Math.floor(BOTTLE_W / 2) * P, y, P, P);
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y + P, BOTTLE_W * P, (BOTTLE_H - 1) * P);
+}
+
+// How many bottles actually stand on a plank: the stock, up to the cap. Past the
+// cap the count takes over -- forty bottles drawn on a plank is a plank nobody
+// can count, and the numeral is the honest way to say forty.
+const bottlesOn = key => Math.min(SHELF_CAP, doseStock(key));
+
+// --- treatment: the open rack --------------------------------------------------
+// Two posts and three planks, and nothing behind them. The bottles stand against
+// the sky, which is the most color per pixel this can be and the plainest reading
+// of "there are five of those left".
+function drawRack() {
+  const x = shelfX(), top = shelfTop(), g = S.groundY, cols = shelfCols();
+  for (let r = 0; r * P < g - top; r++) {           // the two posts, to the ground
     ctx.fillStyle = grain(0, r); ctx.fillRect(x, top + r * P, P, P);
     ctx.fillStyle = grain(cols - 1, r); ctx.fillRect(x + (cols - 1) * P, top + r * P, P, P);
   }
-  for (let c = 0; c < cols; c++) {
+  for (let c = 0; c < cols; c++) {                  // and the board over the top
     ctx.fillStyle = grain(c, 0); ctx.fillRect(x + c * P, top, P, P);
   }
-
   for (let i = 0; i < TONICS.length; i++) {
-    const t = TONICS[i];
-    const y = shelfY(i);
-    const board = y + (SHELF_ROWS - 1) * P;              // the plank it all stands on
-    for (let c = 1; c < cols - 1; c++) {
-      ctx.fillStyle = grain(c, i * SHELF_ROWS + 3);
-      ctx.fillRect(x + c * P, board, P, P);
+    const t = TONICS[i], py = plankY(i);
+    for (let c = 0; c < cols; c++) {
+      ctx.fillStyle = grain(c, i * APOTH_SHELF_ROWS + 3);
+      ctx.fillRect(x + c * P, py, P, P);
     }
-    // A tick of the brew's own colour at the near end of every board: which
-    // shelf is which has to be legible when the shelf is empty, and an empty
-    // shelf is exactly when you are asking.
-    ctx.fillStyle = t.color;
-    ctx.fillRect(x + P, board, P, P);
-    // ...and a vial standing for each dose in stock, up to what the shelf holds.
-    const room = cols - 3;
-    const n = Math.min(room, doseStock(t.key));
-    for (let v = 0; v < n; v++) {
-      const vx = x + (2 + v) * P;
-      ctx.fillStyle = '#000';
-      ctx.fillRect(vx, y, P, P);                          // the cork
-      ctx.fillStyle = t.color;
-      ctx.fillRect(vx, y + P, P, P);                      // and the brew in it
-    }
+    const n = bottlesOn(t.key);
+    for (let b = 0; b < n; b++)
+      bottle(bottlesX() + b * BOTTLE_PITCH * P, shelfY(i), t.color);
   }
+}
+
+// --- treatment: the cabinet ----------------------------------------------------
+// The same bottles behind a case: a black frame all round, a white interior, and
+// a divider between one bottle's place and the next, so a place with nothing in
+// it reads as an empty slot rather than as absence. Furniture with a job.
+function drawCabinet() {
+  const x = shelfX(), top = shelfTop(), g = S.groundY, cols = shelfCols();
+  const rows = Math.round((g - top) / P);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x, top, cols * P, g - top);
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++) {
+      if (c !== 0 && c !== cols - 1 && r !== 0 && r !== rows - 1) continue;
+      ctx.fillStyle = grain(c, r);
+      ctx.fillRect(x + c * P, top + r * P, P, P);
+    }
+  for (let i = 0; i < TONICS.length; i++) {
+    const t = TONICS[i], py = plankY(i), y = shelfY(i);
+    for (let c = 1; c < cols - 1; c++) {            // the shelf itself
+      ctx.fillStyle = grain(c, i * APOTH_SHELF_ROWS + 3);
+      ctx.fillRect(x + c * P, py, P, P);
+    }
+    ctx.fillStyle = '#000';
+    for (let b = 1; b <= SHELF_CAP; b++)
+      ctx.fillRect(bottlesX() + b * BOTTLE_PITCH * P - P, y, P, BOTTLE_H * P);
+    // A tick of the brew's color on the frame beside its shelf: in a closed case
+    // an empty shelf shows no color at all, and which shelf is which is exactly
+    // the question an empty shelf raises.
+    ctx.fillStyle = t.color;
+    ctx.fillRect(x, y + P, P, (BOTTLE_H - 1) * P);
+    const n = bottlesOn(t.key);
+    for (let b = 0; b < n; b++)
+      bottle(bottlesX() + b * BOTTLE_PITCH * P, y, t.color);
+  }
+}
+
+function drawShelves() {
+  if (shelfLook() === 'cabinet') drawCabinet();
+  else drawRack();
 }
 
 // --- one pot ------------------------------------------------------------------
@@ -291,23 +360,55 @@ export function drawApothecary() {
   }
 }
 
-// How many finished doses are standing on each shelf, written beside it -- the
-// shelf shows *which* brew and roughly how much, this says exactly how many are
-// ready to be carried out. Drawn in screen pixels next to the kit-stand counts
-// (the same read-it, don't-look-at-it band). One badge a tonic, so a shelf that
-// is holding nothing says nothing.
+// The count, for a shelf holding more than it can stand a bottle for. Under the
+// cap the bottles ARE the count -- five bottles is five, and a numeral beside
+// them would be the same fact written twice -- so nothing is drawn at all until
+// the shelf runs past what it can show.
+//
+// It lives in a well of its own inside the case (`numWell`) and is clipped to it,
+// and that clip is the whole fix for the count that used to overlap the pots. The
+// numeral is drawn in SCREEN pixels at a fixed size; the gap it used to sit in,
+// between the case and the first cauldron, is a WORLD distance. Measured at the
+// game's own zoom of 0.833: two digits are 15.6 px against 12.5 px of clear air,
+// so a count of ten ran three pixels into the pot -- and there was no count and
+// no zoom at which it was safe, because the two are not measured in the same
+// thing. Given ground of its own and a clip, it cannot reach past the case
+// however far the stock climbs. The size follows the well for the same reason.
 export function drawStockCount(screenAt) {
   if (!S.apothecaryOpen) return;
-  ctx.font = '13px ui-monospace, "Courier New", monospace';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#000';
   for (let i = 0; i < TONICS.length; i++) {
     const n = doseStock(TONICS[i].key);
-    if (n <= 0) continue;
-    // Just off the case's right upright, level with the vials on that shelf.
-    const at = screenAt(shelfX() + APOTH_SHELF_W + P / 2, shelfY(i) + P);
-    ctx.fillText(String(n), Math.round(at.x), Math.round(at.y));
+    if (n <= SHELF_CAP) continue;
+    const well = numWell(i);
+    const at = screenAt(well.x, well.y);
+    const to = screenAt(well.x + well.w, well.y + well.h);
+    const w = to.x - at.x, h = to.y - at.y;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(at.x, at.y, w, h);
+    ctx.clip();
+    // A white ground under it, so the number reads over a plank, a slot or the
+    // open sky without caring which treatment is drawing behind it.
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(at.x, at.y, w, h);
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    // Sized off the well, in both directions: the height sets it, and a count
+    // with too many digits for the width is shrunk until it fits rather than
+    // being trimmed by the clip. The clip is the guarantee; this is so that what
+    // survives it is a number you can read.
+    const said = String(n);
+    let size = Math.max(6, Math.round(h * 0.7));
+    ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
+    const wide = ctx.measureText(said).width;
+    if (wide > w - 2) {
+      size = Math.max(5, Math.floor(size * (w - 2) / wide));
+      ctx.font = `${size}px ui-monospace, "Courier New", monospace`;
+    }
+    ctx.fillText(said, Math.round(at.x + w - 1), Math.round(at.y + h / 2));
+    ctx.restore();
   }
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
 }

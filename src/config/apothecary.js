@@ -81,8 +81,33 @@ export const POT_RATE = 1.7;           // and how much steeper each one gets
 // names a site, so breaking room for a fourth pot must never shove the lab along.
 export const APOTH_HUT_W = P * 10;     // the main building: the door, the sign, the board
 export const APOTH_HUT_H = P * 10;     // and how tall it stands, gable and all
-export const APOTH_SHELF_W = P * 7;    // the bookshelf of stock beside it
-export const APOTH_SHELF_H = P * 12;   // three shelves, one to a tonic, and a frame
+// --- the shelf of stock -------------------------------------------------------
+// A shelf of potions, said as potions: a bottle standing on a plank for every
+// dose in stock, one plank to a tonic, the brew's own colour in the glass. It
+// was a narrow seven-cell case with a coloured tick and a run of single cells on
+// each board, and it read as a ladder with paint on it -- taller than it was
+// wide, and nothing about it shaped like a bottle.
+//
+// So the box is wider than it is tall now, and everything in it is derived from
+// what a bottle is rather than typed: change BOTTLE_W or SHELF_CAP and the case,
+// the pots and the whole walk move to fit.
+export const BOTTLE_W = 3;             // a bottle: a cork over a body this wide...
+export const BOTTLE_H = 3;             // ...and this tall, cork row included
+export const BOTTLE_PITCH = BOTTLE_W + 1;   // with a cell of air, or the bodies merge into a bar
+export const SHELF_CAP = 5;            // bottles a plank shows before it starts counting instead
+// The well the count lives in, at the far end of every plank. It is reserved
+// whether or not there is a number in it, and that reservation IS the fix for
+// the count that used to overlap the pots: a numeral drawn at a fixed size in
+// screen pixels, placed against a gap measured in world pixels, overlaps at some
+// zoom or some count no matter where you put it. Given ground of its own inside
+// the case, and clipped to it, it cannot reach anything however big it gets.
+export const SHELF_NUM_W = 3;          // cells of the plank kept for the count
+export const SHELF_PAD = 1;            // and a cell of air inside each wall
+export const APOTH_SHELF_ROWS = BOTTLE_H + 1;    // a bottle and the plank under it
+export const APOTH_SHELF_W = P * (2 + SHELF_PAD * 2
+                                    + SHELF_CAP * BOTTLE_PITCH - 1
+                                    + 1 + SHELF_NUM_W);
+export const APOTH_SHELF_H = P * (1 + 3 * APOTH_SHELF_ROWS);   // a plank a tonic, and a top
 export const APOTH_GAP = P * 3;        // bare ground between hut, shelves and the first pot
 export const POT_W = P * 13;           // a cauldron is this wide...
 // Four clear cells between one belly and the next. Bellies this fat need real
