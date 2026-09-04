@@ -8,6 +8,9 @@
 // nicety: none of them can be argued about on paper.
 
 import { P } from './yard.js';
+// The dance's own two rules -- the base beat and the pace that reads as a fault
+// -- which the jump's tempo below is worked out from rather than set beside.
+import { DANCE_BEAT, DANCE_BUZZ } from './rocks.js';
 
 // --- the rift inhales ---------------------------------------------------------
 // The pull is not a rate any more, and that is the point of it. A hole in the
@@ -111,11 +114,33 @@ export const CRIT_MOTE_DRAG = 0.9;   // and how quickly it gives that up
 // as a shuffle rather than as delight: a body pleased with itself does not amble
 // sideways, it leaves the ground.
 //
-// So the dance is one move now, and these are its two numbers. The beat is a
-// multiple of DANCE_BEAT like every other move's, and it is quicker than the old
-// hop's 1.2 without reaching DANCE_BUZZ -- the pace at which a bouncing body
-// stops reading as pleased and starts reading as faulty.
-export let DANCE_JUMP_BEAT = 1.5;    // jumps a beat, as a multiple of DANCE_BEAT
+// So the dance is one move now, and it has one dial and one height.
+//
+// **The tempo is derived, not chosen.** `DANCE_BUZZ` is the pace at which a
+// bouncing body stops reading as pleased and starts reading as faulty -- it is
+// the rule, and it was already written down. What a body actually crosses its
+// own height at is `DANCE_BEAT` times the move's multiple times the tempo that
+// body rolled for itself, so the honest thing to set is how much of that ceiling
+// the QUICKEST body in the yard may use, and to work the multiple back out of
+// it. A hand-set multiple is a number that is right until somebody widens the
+// tempo spread or nudges DANCE_BEAT, and then it is silently wrong in a way only
+// a suite notices.
+//
+// Every body rolls its own tempo so that no two of them are ever quite together
+// -- see `beatMs` in dance.js, which is the only reader. The two ends of that
+// roll are here rather than in the module because the bound above is worked out
+// from the top of it: if the roll and the bound lived apart they could drift,
+// and the drift would be exactly this bug.
+export const DANCE_TEMPO_LO = 0.85;  // the slowest tempo a body rolls for itself
+export const DANCE_TEMPO_HI = 1.15;  // and the quickest
+// A ninth of the ceiling is left over the fastest body in the yard, and it is
+// not decoration: a crossing rate can only ever be measured as sixty over some
+// whole number of frames, so a true 2.375 reads as 2.40 and a bound with no room
+// in it is a bound that fails on the rounding. What this buys is a dance that
+// still cannot buzz when somebody widens the tempo roll or nudges DANCE_BEAT.
+export let DANCE_JUMP_ROOM = 0.88;   // how much of the buzz ceiling that quickest one may use
+export const danceJumpBeat = () =>
+  DANCE_BUZZ * DANCE_JUMP_ROOM / (DANCE_BEAT * DANCE_TEMPO_HI);
 export let DANCE_JUMP_H = 3.5;       // and how many cells it clears at the top
 
 // The dev panel's rows for the dials above. A row lives beside the binding it
@@ -128,8 +153,10 @@ export const EFFECT_KNOBS = [
     get: () => RIFT_LENS, set: v => { RIFT_LENS = v; } },
   { key: 'RIFT_STREAKS', label: 'rift streaks', min: 0, max: 48, step: 1,
     get: () => RIFT_STREAKS, set: v => { RIFT_STREAKS = v; } },
-  { key: 'DANCE_JUMP_BEAT', label: 'jumps a beat', min: 0.5, max: 2.4, step: 0.05,
-    get: () => DANCE_JUMP_BEAT, set: v => { DANCE_JUMP_BEAT = v; } },
+  // The dial is how near the buzz the quickest body is allowed to get, not the
+  // beat itself: whatever this is set to, the bound holds by construction.
+  { key: 'DANCE_JUMP_ROOM', label: 'jump tempo', min: 0.3, max: 1, step: 0.01,
+    get: () => DANCE_JUMP_ROOM, set: v => { DANCE_JUMP_ROOM = v; } },
   { key: 'DANCE_JUMP_H', label: 'jump height', min: 1, max: 6, step: 0.25,
     get: () => DANCE_JUMP_H, set: v => { DANCE_JUMP_H = v; } }
 ];

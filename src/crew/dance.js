@@ -7,7 +7,8 @@
 
 import { frames, now } from '../clock.js';
 import { BUILD_HAMMER_H, BUILD_HAMMER_MS, BUILD_HITS_MAX, BUILD_HITS_MIN, BUILD_REST_MS, BUILD_SHIFT, BUILD_SHIFT_SPAN,
-         DANCE_BEAT, DANCE_JUMP_BEAT, DANCE_JUMP_H, P, WORKER } from '../config.js';
+         DANCE_BEAT, DANCE_JUMP_H, DANCE_TEMPO_HI, DANCE_TEMPO_LO, danceJumpBeat,
+         P, WORKER } from '../config.js';
 import { at } from '../grid.js';
 import { spawnGrit } from '../grit.js';
 import { rand } from '../rng.js';
@@ -105,7 +106,11 @@ import { duck, stand, upTop } from '../crew.js';
 const MOVES = {
   // Straight up and down. The one move that is all height and no ground.
   jump: {
-    beat: DANCE_JUMP_BEAT,
+    // Read through a getter, because it is derived from DANCE_BUZZ and the top
+    // of the tempo roll (see config/effects.js) and the panel's dial moves the
+    // room it is allowed rather than the beat itself. A plain field here would
+    // freeze whatever the value was at import and the slider would go dead.
+    get beat() { return danceJumpBeat(); },
     beats: [2, 4],
     at: (w, swing) => { w.y = w.foot - swing * DANCE_JUMP_H * P; }
   }
@@ -188,7 +193,7 @@ function jig(w, now, zone, endsAt) {
     w.jigAt = w.x;
     w.jigDir = rand() < 0.5 ? -1 : 1;
     // its own tempo, so the gang are never all on one tick -- see `beatMs`
-    w.jigRate = 0.85 + rand() * 0.3;
+    w.jigRate = DANCE_TEMPO_LO + rand() * (DANCE_TEMPO_HI - DANCE_TEMPO_LO);
     w.jigBeat = null;                // no beat counted yet, and not winding down
     w.jigDown = false;
     startMove(w, now, MOVE_KEYS[Math.floor(rand() * MOVE_KEYS.length)]);
@@ -242,6 +247,27 @@ function jig(w, now, zone, endsAt) {
     startMove(w, ended, other.length ? other[Math.floor(rand() * other.length)] : w.move);
     move = MOVES[w.move];
     beat = (now - w.moveAt) / beatMs(w, move);
+    // And the wind-down is asked AGAIN, here, for the beat the body is about to
+    // draw -- because the beat it was asked about a few lines up is not that
+    // beat, it is the one that has just finished.
+    //
+    // What that cost, when the dance had three moves to roll between, was
+    // invisible: the answer above was made against the old move's length, the
+    // swap happened, and the new move drew its first frame under it. Now that
+    // there is only jumping, the seam shows -- a body whose last beat lands
+    // inside the final second takes off for exactly one frame (a pixel and a
+    // half of lift, measured), is told to stand down on the next, and comes back
+    // to the ground. Nobody could see it and a peak-finder can: it makes a
+    // second bump half a beat after a real one, which reads as a body crossing
+    // its own height twice as often as it does. The blip is the bug either way,
+    // and this is where it was made -- the body is on the ground at this exact
+    // instant, so this is the one moment the answer can be acted on for free.
+    //
+    // Measured against `w.moveAt` rather than `now`: the question is whether the
+    // beat that starts *there* has landed by `endsAt`, and the frame's own
+    // overshoot is not part of it.
+    w.jigBeat = Math.floor(beat);
+    if (endsAt != null) w.jigDown = w.moveAt + beatMs(w, move) > endsAt;
     // and something over its head, now and then rather than every time: five
     // bodies all shouting at once is noise
     if (rand() < 0.5)
