@@ -85,7 +85,10 @@ export const TESTS = [
     move(bx, by);
     const aside = await leave(r.x + r.width + 400, by);
     move(bx, by);
-    const below = await leave(bx, by + 200);
+    // Below the *panel*, not a pinned distance below the bench: the board has
+    // grown rows since this probe was written, and 200px down landed on the
+    // sheet itself -- where holding open is the rule, not the failure.
+    const below = await leave(bx, Math.max(by + 200, r.y + r.height + 40));
     move(s.W - 4, 4);                           // and out of the way for the next check
     await hoverAway();
     window.__crew(0, 0);
