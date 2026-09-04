@@ -14,31 +14,50 @@
 // The import list is the other half of it: config, and nothing else. A leaf
 // module is what makes the preview cheap; the moment one of these reaches for
 // the yard, the preview has to build a yard.
-import { P } from '../config.js';
+import { P, DOSE_MOTE_HUE } from '../config.js';
 
-// A tonic's colour, lifted toward white by `k`. The fire under the cauldron runs
-// three hand-picked colours from hot yellow to a red tip; a tonic cannot, because
-// its colour is the thing that says *which tonic*, and three hand-picked shades
-// per tonic would be nine constants to keep in step with a menu that grows. So
-// the one colour it already has is lifted, and the ramp comes out of it.
-const lift = (hex, k) => {
+// A tonic's colour as hue, saturation and lightness, so that a mote can be
+// shifted round the wheel from it. Kept as a table rather than converted every
+// frame: there are three tonics and a great many motes.
+const HSL = {};
+function hsl(hex) {
+  if (HSL[hex]) return HSL[hex];
   const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 255, gg = (n >> 8) & 255, b = n & 255;
-  const up = v => Math.round(v + (255 - v) * k);
-  return `rgb(${up(r)},${up(gg)},${up(b)})`;
-};
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const hi = Math.max(r, g, b), lo = Math.min(r, g, b), d = hi - lo;
+  const l = (hi + lo) / 2;
+  let h = 0, sat = 0;
+  if (d) {
+    sat = d / (1 - Math.abs(2 * l - 1));
+    h = hi === r ? ((g - b) / d + (g < b ? 6 : 0))
+      : hi === g ? (b - r) / d + 2
+      : (r - g) / d + 4;
+    h *= 60;
+  }
+  return (HSL[hex] = { h, s: sat * 100, l: l * 100 });
+}
 
-// One mote of a rising plume: a cell that swells and pales as it ages. `k` is
-// how far through its life it is, 0 just let go and 1 gone.
+// One mote of a rising plume: a cell that pales as it ages. `k` is how far
+// through its life it is (0 just let go, 1 gone) and `v` is the mote's own
+// variation, 0..1, fixed when it was let go.
 //
-// Colour and age are the whole of it. A mote is palest when it is oldest --
-// lifted toward white, which on this page is the same as dissolving into it --
-// so a plume fades out at the top instead of stopping. That is also why nothing
-// here uses alpha for the colour: white paper and a lifted colour do the same
-// job, and a lifted colour still prints as one flat cell rather than as a wash.
-export function drawDoseMote(g, x, y, color, k) {
+// The hue is shifted off the tonic's by a few degrees each way, on `v`. A plume
+// of one exact colour reads as a decal -- every cell the identical swatch, which
+// nothing burning ever is -- and a few degrees is enough to make it a colour
+// rather than a value, while staying plainly the tonic it came out of. Fixed at
+// birth, not rolled per frame: a mote that changes hue while you watch it is a
+// mote that is blinking.
+//
+// Paling is lightness rather than a mix toward white, now that the colour is in
+// HSL anyway: it is the same journey to the page, said in the space the hue
+// already lives in. No alpha -- a colour at low alpha over a dark body is a
+// muddy colour, and this has to stay legible as *which tonic*.
+export function drawDoseMote(g, x, y, color, k, v = 0.5) {
+  const c = hsl(color);
+  const h = c.h + (v - 0.5) * DOSE_MOTE_HUE;
+  const l = c.l + (100 - c.l) * Math.min(1, k * 0.95);
   const size = Math.max(1, Math.round(P * (1.05 - k * 0.35)));
-  g.fillStyle = lift(color, Math.min(0.85, k * 0.9));
+  g.fillStyle = `hsl(${h.toFixed(1)} ${c.s.toFixed(1)}% ${l.toFixed(1)}%)`;
   g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
   g.fillStyle = '#000';
 }

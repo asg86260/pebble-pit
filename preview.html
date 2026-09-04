@@ -50,9 +50,14 @@ function plume(gg, x, y, colour, speed) {
   for (let age = LIFE; age > 0; age -= EVERY) {
     const k = age / LIFE;
     for (const off of [-P * 0.7, P * 0.7]) {
+      // Each mote its own variation, the way `puff` gives it one -- fixed per
+      // mote, not per frame. Off a hash of its age and side rather than a random,
+      // so the bench draws the same plume every time and two shots can be
+      // compared. A bench that reshuffles is a bench you cannot A/B.
+      const v = ((Math.sin(age * 12.9898 + off) * 43758.5453) % 1 + 1) % 1;
       gg.save();
       drawDoseMote(gg, x - speed * age + off + Math.sin(age / 90) * P * 0.4,
-                   y - age * DOSE_MOTE_RISE / 16.7, colour, k);
+                   y - age * DOSE_MOTE_RISE / 16.7, colour, k, v);
       gg.restore();
     }
   }
@@ -64,10 +69,20 @@ const ROWS = [
   { what: 'walking -- the trail it leaves (slow, quicker, quickest)',
     cells: [0.04, 0.08, 0.14].map(v => (gg, x, y) => plume(gg, x, y, '#a05fd6', v)) },
   { what: 'one mote, new to gone',
-    cells: [0, 0.5, 1].map(k => (gg, x, y) => drawDoseMote(gg, x, y, '#4a86c7', k)) }
+    cells: [0, 0.5, 1].map(k => (gg, x, y) => drawDoseMote(gg, x, y, '#4a86c7', k)) },
+  // The hue spread on its own: one tonic, one age, the whole range of variation
+  // a mote may be let go with. This is the row that says whether the spread is
+  // still plainly the tonic or has wandered off into another colour.
+  { what: 'the hue a mote may start on -- across the spread',
+    cells: [0, 1, 2].map(band => (gg, x, y) => {
+      for (let i = 0; i < 7; i++) {
+        const v = band === 0 ? i / 6 : band === 1 ? 0.5 : (i % 2 ? 0 : 1);
+        drawDoseMote(gg, x + (i - 3) * P * 1.6, y, '#a05fd6', 0.1, v);
+      }
+    }) }
 ];
 
-const CELL_W = P * 20, CELL_H = P * 12;
+const CELL_W = P * 20, CELL_H = P * 8;
 canvas.width = CELL_W * 3 * SCALE;
 canvas.height = CELL_H * ROWS.length * SCALE;
 

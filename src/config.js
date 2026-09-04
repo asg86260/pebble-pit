@@ -2748,3 +2748,4 @@ export const APOTH_WALK = 2.4;
 export const DOSE_MOTE_MS = 90;        // between one little puff and the next
 export const DOSE_MOTE_RISE = 0.38;    // pixels a frame, well under the chimney's
 export const DOSE_MOTE_LIFE = 0.55;    // seconds before it has gone into the page
+export const DOSE_MOTE_HUE = 26;       // degrees of hue a mote may vary from its tonic

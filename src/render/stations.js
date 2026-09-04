@@ -23,7 +23,7 @@ export function drawSmoke() {
     // page as it ages rather than thinning to grey, because a colour at low
     // alpha over a dark body is a muddy colour and this is the one thing on a
     // worker that has to stay legible as *which tonic*.
-    if (p.color) { drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, k)); continue; }
+    if (p.color) { drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, k), p.v); continue; }
     const size = Math.round(P * (p.s || 1) * (1 + k * 1.4));
     ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
     ctx.fillStyle = '#000';

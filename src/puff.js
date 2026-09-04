@@ -48,6 +48,12 @@ export function puff(x, y, o = {}) {
       // it is a colour a caller may pass rather than a second particle system
       // that rises and spreads and expires all over again. See `drawSmoke`.
       color: o.color,
+      // A mote's own variation, fixed when it is let go: whatever the drawer
+      // wants to make different about this one and not its neighbours. Smoke
+      // does not use it; a tonic shifts its hue by it, so a plume is a colour
+      // rather than one swatch repeated. Settled here rather than at the draw
+      // because a variation rolled per frame is a mote that blinks.
+      v: rand(),
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }
