@@ -1,45 +1,253 @@
-// The apothecary: the cauldron on its fire and the animation over it.
-// Extracted verbatim from render.js; behavior unchanged. Owns the CAULDRON
-// picture and drawApothecary. Shared draw primitives (ctx, withRise,
+// The apothecary, left to right: the hut, the bookshelf of stock, and the row of
+// pots on their fires (item 18's order -- you meet the building, then what it
+// holds, then what it is doing). Owns the HUT and CAULDRON pictures, the shelf,
+// and the count badges over it. Shared draw primitives (ctx, withRise,
 // risingPlace, bar) come from ./ctx.js, ./rise.js and ./bars.js.
 
-import { P } from '../config.js';
+import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
+         APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
+         FLAME_HOT, FLAME_TIP, FLAME_STEAM } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
 import { vnoise } from './flicker.js';
-import { boiling, brewFrac, TONICS } from '../apothecary.js';
+import { potBoiling, brewFracOf, potTonicOf, doseStock, TONICS } from '../apothecary.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
 import { risingPlace, withRise } from './rise.js';
 
-// The apothecary: a cauldron on a fire, a bed of herbs beside it, and steam off
-// the pot when there is a body stirring it. The steam IS the readout -- the
-// lab's chimney rule, word for word -- so a pot with nobody on it stands cold,
-// however much crop is in the yard, and you learn it is up from across the
-// yard the way you learn the lab is being worked. See `boiling` in apothecary.js.
-// The cauldron, as a picture you can hand-draw. One character to a cell:
-//   #  iron (black)      o  the pale brew (white)      .  empty
-// Retype it to redraw it -- see `drawSprite` in sprites.js. The animated fire,
-// bubbles and steam are drawn in code over the top (see drawApothecary); this
-// grid is everything that stands still. Keep it an odd number of columns wide so
-// it has a true centre for the steam, and if you move the row the brew sits on,
-// update CAULDRON_BREW_ROW to match (0 is the top row).
+// --- the two pictures ---------------------------------------------------------
+// One character to a cell: `#` is timber (black), `.` is empty. Retype either to
+// redraw it -- see `drawSprite` in sprites.js. Everything that moves -- the fire,
+// the bubbles, the steam -- is drawn in code over the top.
+
+// The hut: the main building (item 17). It is what the board belongs to and what
+// the whole place is called, so it stands first and it stands up -- a gable, two
+// window slits and a doorway you could walk a crate of vials through.
+export const HUT = [
+  '....##....',
+  '...####...',
+  '..######..',
+  '.########.',
+  '##########',
+  '##########',
+  '#.#....#.#',
+  '#.#....#.#',
+  '###....###',
+  '###....###'
+];
+
+// The cauldron. Narrower than it was: four of these stand side by side now, and
+// a building wide enough for four fat pots would have been wider than the farm.
+// Keep it an odd number of columns so it has a true centre for the steam, and if
+// you move the row the brew sits on, update CAULDRON_BREW_ROW to match.
 export const CAULDRON = [
-  '#############',
-  '.###########.',
-  '#############',
-  '#############',
-  '#############',
-    '#############',
-  '#############',
-  '.###########.',
-  '..#########..',
-  '..#.......#..',
+  '#########',
+  '.#######.',
+  '.#######.',
+  '#########',
+  '#########',
+  '#########',
+  '.#######.',
+  '..#####..',
+  '..#...#..',
+  '..#...#..'
 ];
 // The row of CAULDRON the brew sits on -- where the bubbles pop and the steam
 // lifts off. Counts from the top, 0-based.
 export const CAULDRON_BREW_ROW = 3;
+
+// --- per-cell variation -------------------------------------------------------
+// Timber is not one flat black. A stable hash of the cell's own coordinates
+// picks its tone, so a wall reads as boards rather than as printed paint and
+// does not strobe from frame to frame the way `shadeNear`'s dice would. Kept
+// very dark: this is grain in a black mass, not a grey building.
+const BOARD = ['#000', '#0b0b0b', '#151515', '#060606'];
+const grain = (c, r) => BOARD[Math.abs((c * 73856093) ^ (r * 19349663)) % BOARD.length];
+
+// One character grid, drawn cell by cell with the grain on it. `drawSprite` is
+// the right tool for a shape in one colour; the hut wants a tone per cell.
+function drawGrained(rows, x, y) {
+  for (let r = 0; r < rows.length; r++)
+    for (let c = 0; c < rows[r].length; c++) {
+      if (rows[r][c] !== '#') continue;
+      ctx.fillStyle = grain(c, r);
+      ctx.fillRect(x + c * P, y + r * P, P, P);
+    }
+}
+
+// --- a tonic's fire -----------------------------------------------------------
+// Each pot's flame runs its own brew's colour (item 18): washed out toward white
+// at the foot where it is hottest, the tonic's own colour through the middle,
+// and taken down toward black at the tip. So which pot is on which recipe reads
+// from across the yard, without a label and without three fires that all look
+// the same. A tonic that has somehow no colour falls back to the old fire.
+const hex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+const mix = (h, toward, amt) => {
+  const [r, g, b] = hex(h);
+  const f = v => Math.round(v + (toward - v) * amt);
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+};
+function flameOf(key) {
+  const t = TONICS.find(x => x.key === key);
+  const c = t ? t.color : '#f5851f';
+  // The foot is the brew washed out toward white, the middle a shade of it, and
+  // the tip the brew at full strength -- the old fire's hot-yellow-to-red run,
+  // read in one colour instead of three.
+  return { hot: mix(c, 255, FLAME_HOT), mid: mix(c, 255, FLAME_TIP), tip: c,
+           steam: mix(c, 154, 1 - FLAME_STEAM) };
+}
+
+// Where each pot stands, measured off the building's own left edge.
+export const potX = i => apothecary.x + APOTH_POT_ROW + i * POT_PITCH;
+
+// --- the bookshelf ------------------------------------------------------------
+// Stock is per tonic now (item 13), so the stock is drawn as a bookshelf with a
+// shelf to a tonic: what is standing on each one is that brew and no other, and
+// turning a pot from stew to brace plainly does not empty the stew shelf. The
+// number on each shelf is drawn in screen pixels by `drawStockCount` below --
+// the vials say which brew and roughly how much, the badge says exactly.
+const SHELF_ROWS = 3;                    // cells a compartment stands, board included
+const shelfTop = () => S.groundY - APOTH_SHELF_H;
+// The top of tonic `i`'s compartment, and the board it stands on.
+export const shelfY = i => shelfTop() + P + i * SHELF_ROWS * P;
+export const shelfX = () => apothecary.x + APOTH_HUT_W + APOTH_GAP;
+
+function drawShelves() {
+  const x = shelfX(), top = shelfTop(), g = S.groundY;
+  const cols = Math.round(APOTH_SHELF_W / P);
+  // The case: two uprights to the ground and a cap over them.
+  for (let r = 0; r * P < g - top; r++) {
+    ctx.fillStyle = grain(0, r); ctx.fillRect(x, top + r * P, P, P);
+    ctx.fillStyle = grain(cols - 1, r); ctx.fillRect(x + (cols - 1) * P, top + r * P, P, P);
+  }
+  for (let c = 0; c < cols; c++) {
+    ctx.fillStyle = grain(c, 0); ctx.fillRect(x + c * P, top, P, P);
+  }
+
+  for (let i = 0; i < TONICS.length; i++) {
+    const t = TONICS[i];
+    const y = shelfY(i);
+    const board = y + (SHELF_ROWS - 1) * P;              // the plank it all stands on
+    for (let c = 1; c < cols - 1; c++) {
+      ctx.fillStyle = grain(c, i * SHELF_ROWS + 3);
+      ctx.fillRect(x + c * P, board, P, P);
+    }
+    // A tick of the brew's own colour at the near end of every board: which
+    // shelf is which has to be legible when the shelf is empty, and an empty
+    // shelf is exactly when you are asking.
+    ctx.fillStyle = t.color;
+    ctx.fillRect(x + P, board, P, P);
+    // ...and a vial standing for each dose in stock, up to what the shelf holds.
+    const room = cols - 3;
+    const n = Math.min(room, doseStock(t.key));
+    for (let v = 0; v < n; v++) {
+      const vx = x + (2 + v) * P;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(vx, y, P, P);                          // the cork
+      ctx.fillStyle = t.color;
+      ctx.fillRect(vx, y + P, P, P);                      // and the brew in it
+    }
+  }
+}
+
+// --- one pot ------------------------------------------------------------------
+function drawPot(i, g) {
+  const px = potX(i);
+  const topY = g - CAULDRON.length * P;
+  ctx.fillStyle = '#000';
+  drawSprite(ctx, CAULDRON, px, topY);
+
+  // Where the animation hangs off the grid: the pool near the top, the fire at
+  // the foot, the middle of the pot for the steam. These are cell offsets into
+  // the grid, so if you move the brew up or down in CAULDRON, move
+  // CAULDRON_BREW_ROW to match.
+  const potMid = px + Math.floor(CAULDRON[0].length / 2) * P;
+  const brewY = topY + CAULDRON_BREW_ROW * P;
+
+  // The fire, the bubbles and the steam are all drawn only while a batch is on
+  // the boil -- so an idle cauldron is *exactly* the CAULDRON grid, nothing
+  // added underneath it. The fire used to be drawn always, and its flames stood
+  // up at the foot like a second set of legs whether or not the grid had any;
+  // now the pot you draw is the pot you get, and the fire is part of what says
+  // it is being worked. See `potBoiling`.
+  if (!potBoiling(i)) return;
+  const t = now();
+  const fire = flameOf(potTonicOf(i));
+
+  // The fire is ONE body of flame, not three fingers: a continuous bed of cells
+  // across the foot of the pot whose top edge is jagged and living. Driven by
+  // value noise rather than clean sines, so the crests rise and fall at random
+  // heights and the top never falls into a repeating ripple. The noise is smooth
+  // -- hashed samples eased between -- so it stays lively without the per-frame
+  // strobe raw randomness gives. A gentle centre hump keeps it a touch taller in
+  // the middle; the colour ramp is the pot's own brew (see `flameOf`); capped
+  // low, below the rim. `vnoise` is shared with the tonic burning off a dosed
+  // body -- the two fires in this game should flicker with the same hand.
+  const bedL = px + P * 2, cols = 5, mid = (cols - 1) / 2;
+  // Each pot's fire is given its own place in the noise, so four pots side by
+  // side do not all flicker in step like one long fire cut into four.
+  const seed = i * 613.7;
+  for (let c = 0; c < cols; c++) {
+    const hump = (1 - Math.abs(c - mid) / mid) * 0.9;
+    // Each column gets its OWN noise stream that only moves in time -- the big
+    // per-column offsets (17.3, 11.9) put neighbours far apart in noise space so
+    // they are uncorrelated and flicker independently in place. Small offsets
+    // made neighbours nearly the same value one step apart, which is a
+    // travelling wave: the fire looked like it was sliding left.
+    const n = vnoise(seed + c * 17.3 + t / 130) * 2.4
+            + vnoise(seed + c * 11.9 + 40 + t / 260) * 1.2;
+    const h = Math.max(1, Math.min(6, Math.round(1.4 + hump + n)));
+    const fx = bedL + c * P;
+    for (let hy = 0; hy < h; hy++) {
+      const frac = hy / Math.max(1, h);
+      ctx.fillStyle = frac < 0.34 ? fire.hot : frac < 0.72 ? fire.mid : fire.tip;
+      ctx.fillRect(fx, g - P - hy * P, P, P);
+    }
+  }
+  // Embers: a stray spark or two lifting off the fire and winking out, kept low
+  // against the belly so they read as the fire's own sparks.
+  for (let e = 0; e < 3; e++) {
+    const ph = (t / 520 + e * 0.33 + i * 0.17) % 1;
+    if (ph > 0.6) continue;
+    const ex = px + P * (2 + e * 2) + Math.round(Math.sin(t / 200 + e + i)) * P;
+    const ey = g - P * 4 - Math.round(ph * 3) * P;
+    ctx.fillStyle = (e % 2) ? fire.mid : fire.tip;
+    ctx.fillRect(Math.round(ex / P) * P, ey, P, P);
+  }
+  // A wisp of smoke off the fire -- a mote or two lifting up the belly and
+  // thinning out, kept below the rim so it stays part of the fire rather than a
+  // column climbing the sky.
+  ctx.fillStyle = '#3a3a3a';
+  for (let s = 0; s < 2; s++) {
+    const ph = (t / 900 + s * 0.5 + i * 0.23) % 1;
+    if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;
+    const sway = Math.round(Math.sin(t / 700 + s * 1.3 + i));
+    const sx = px + P * (2 + s * 3) + sway * P;
+    const sy = Math.max(topY + P, g - P * 3 - Math.round(ph * 5) * P);
+    ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
+  }
+  // Bubbles rising through the brew and breaking its surface.
+  ctx.fillStyle = '#000';
+  for (let bcol = 0; bcol < 5; bcol++) {
+    const bx = px + P * 2 + bcol * P;
+    const ph = (t / 560 + bcol * 0.21 + i * 0.31) % 1;
+    if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
+  }
+  // Steam off the pool: wisps climbing and fading out near the top, carrying a
+  // hint of the brew's colour so a glance up at the vapour says the same thing
+  // the flame does.
+  ctx.fillStyle = fire.steam;
+  for (let k = 0; k < 9; k++) {
+    const ph = (t / 850 + k * 0.11 + i * 0.13) % 1;
+    if (ph > 0.9) continue;
+    const sway = Math.round(Math.sin(t / 760 + k * 1.4 + i) * 2);
+    const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
+    const sy = brewY - P * 4 - Math.round(ph * 8) * P;
+    ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
+  }
+  ctx.fillStyle = '#000';
+}
 
 export function drawApothecary() {
   const rising = risingPlace() === 'apothecary';
@@ -48,173 +256,58 @@ export function drawApothecary() {
   withRise(rising, x, S.groundY, w, h, () => {
     const g = S.groundY;
     ctx.fillStyle = '#000';
-
-    // The cauldron is a *picture*, not arithmetic -- draw it by retyping the grid
-    // in CAULDRON (above this function). `#` is iron, `o` is the pale brew, `.`
-    // is empty. The fire, the bubbles and the steam are animation and stay code
-    // below; everything static about the pot -- rim, belly, legs, handle -- is in
-    // the grid, so the shape is yours to draw and not mine to guess.
-    // The stock table on the far left, built like the kit stands by the rock: a
-    // slab on two legs, with a little vial of each tonic standing on it in its
-    // own colour, so what is on offer reads from across the yard. The vials sit
-    // on the slab in the order TONICS lists them.
-    const tableY = g - P * 5;
-    const tableW = P * (TONICS.length * 2 + 1);
+    drawGrained(HUT, x, g - APOTH_HUT_H);
+    drawShelves();
+    // Only the pots that have been stood: buying `another pot` is the thing that
+    // puts one there, and an outline of the ones you could buy would be a
+    // promise the building makes on its own behalf.
+    for (let i = 0; i < S.apothPots; i++) drawPot(i, g);
     ctx.fillStyle = '#000';
-    ctx.fillRect(x + P, tableY, tableW, P);                       // the slab
-    ctx.fillRect(x + P, tableY + P, P, g - tableY - P);           // the left leg, to the ground
-    ctx.fillRect(x + P + tableW - P, tableY + P, P, g - tableY - P);   // and the right leg
-    for (let i = 0; i < TONICS.length; i++) {
-      const vx = x + P * (2 + i * 2);
-      ctx.fillStyle = '#000';
-      ctx.fillRect(vx, tableY - P * 3, P, P);                     // cork
-      ctx.fillStyle = TONICS[i].color;
-      ctx.fillRect(vx, tableY - P * 2, P, P * 2);                 // the coloured brew
-    }
-    ctx.fillStyle = '#000';
-
-    // The cauldron is a *picture*, not arithmetic -- draw it by retyping the grid
-    // in CAULDRON (above this function). `#` is iron, `o` is the pale brew, `.`
-    // is empty. The fire, the bubbles and the steam are animation and stay code
-    // below; everything static about the pot -- rim, belly, legs, handle -- is in
-    // the grid, so the shape is yours to draw and not mine to guess.
-    const potX = x + P * 10;                // pot on the right; shelf and stirrer to its left
-    const topY = g - CAULDRON.length * P;
-    drawSprite(ctx, CAULDRON, potX, topY);
-
-    // Where the animation hangs off the grid: the pool near the top, the fire at
-    // the foot, the middle of the pot for the steam. These are cell offsets into
-    // the grid, so if you move the brew up or down in CAULDRON, move `BREW_ROW`
-    // to match.
-    const potMid = potX + Math.round(CAULDRON[0].length / 2) * P;
-    const brewY = topY + CAULDRON_BREW_ROW * P;
-
-    // The fire, the bubbles and the steam are all drawn only while a batch is on
-    // the boil -- so an idle cauldron is *exactly* the CAULDRON grid, nothing
-    // added underneath it. The fire used to be drawn always, and its flames stood
-    // up at the foot like a second set of legs whether or not the grid had any;
-    // now the pot you draw is the pot you get, and the fire is part of what says
-    // it is being worked. See `boiling`.
-    const t = now();
-    if (boiling()) {
-      // The fire beneath: a few coloured flame *tongues*, not scattered flecks --
-      // the one place the yard breaks its black-and-white (like the sparks and the
-      // star). Each tongue is a short run of cells that burns hot yellow at its
-      // foot, through orange, to a red tip that leaps on the clock; the middle one
-      // stands tallest, so the shape reads as a flame. They lick only a little way
-      // up the belly and no higher -- the fire licks the pot, it does not shoot
-      // past the rim.
-      const HOT = '#ffd23f', MID = '#f5851f', TIP = '#e8402a';
-      // The fire is ONE body of flame, not three fingers: a continuous bed of
-      // cells across the foot of the pot whose top edge is jagged and living.
-      // Driven by value noise rather than clean sines now, so the crests rise and
-      // fall at random heights and the top never falls into a repeating ripple.
-      // The noise is smooth -- hashed samples eased between -- so it stays lively
-      // without the per-frame strobe that raw randomness gives. A gentle centre
-      // hump keeps it a touch taller in the middle; colour runs hot yellow at the
-      // base through orange to a red top edge; capped low, below the rim.
-      // `vnoise` is shared with the tonic burning off a dosed body -- the two
-      // fires in this game should flicker with the same hand. See flicker.js.
-      const bedL = potX + P * 3, cols = 7, mid = (cols - 1) / 2;
-      for (let c = 0; c < cols; c++) {
-        const hump = (1 - Math.abs(c - mid) / mid) * 0.9;    // lowered centre hump
-        // Each column gets its OWN noise stream that only moves in time -- the big
-        // per-column offsets (17.3, 11.9) put neighbours far apart in noise space
-        // so they are uncorrelated and flicker independently in place. The old
-        // small offsets made neighbours nearly the same value one step apart,
-        // which is a travelling wave -- the fire looked like it was all sliding
-        // left. Now it just rises and falls where it stands.
-        const n = vnoise(c * 17.3 + t / 130) * 2.4           // this column's own flicker
-                + vnoise(c * 11.9 + 40 + t / 260) * 1.2;     // a slower second stream
-        const h = Math.max(0, Math.min(5, Math.round(0.4 + hump + n)));
-        const fx = bedL + c * P;
-        for (let hy = 0; hy < h; hy++) {
-          const frac = hy / Math.max(1, h);
-          ctx.fillStyle = frac < 0.34 ? HOT : frac < 0.72 ? MID : TIP;
-          ctx.fillRect(fx, g - P - hy * P, P, P);
-        }
-      }
-      // Embers: a stray spark or two lifting off the fire and winking out, kept
-      // low against the belly so they read as the fire's own sparks.
-      for (let e = 0; e < 3; e++) {
-        const ph = (t / 520 + e * 0.33) % 1;
-        if (ph > 0.6) continue;
-        const ex = potX + P * (4 + e * 2) + Math.round(Math.sin(t / 200 + e)) * P;
-        const ey = g - P * 4 - Math.round(ph * 3) * P;
-        ctx.fillStyle = (e % 2) ? MID : TIP;
-        ctx.fillRect(Math.round(ex / P) * P, ey, P, P);
-      }
-      // A wisp of smoke off the fire -- a mote or two lifting up the belly and
-      // thinning out, kept below the rim so it stays part of the fire rather than
-      // a column climbing the sky.
-      ctx.fillStyle = '#3a3a3a';
-      for (let s = 0; s < 2; s++) {
-        const ph = (t / 900 + s * 0.5) % 1;
-        if (ph > 0.8 || (Math.floor(t / 130 + s) % 2 === 0)) continue;
-        const sway = Math.round(Math.sin(t / 700 + s * 1.3));
-        const sx = potX + P * (5 + s * 3) + sway * P;
-        const sy = Math.max(topY + P, g - P * 3 - Math.round(ph * 5) * P);
-        ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
-      }
-      ctx.fillStyle = '#000';
-      // Bubbles rising through the brew and breaking its surface.
-      for (let bcol = 0; bcol < 5; bcol++) {
-        const bx = potX + P * 3 + bcol * P;
-        const ph = (t / 560 + bcol * 0.21) % 1;
-        if (ph < 0.6) ctx.fillRect(bx, brewY - (ph < 0.3 ? 0 : P), P, P);
-      }
-      // Steam: grey wisps off the pool -- more of them than before, spread wider
-      // and climbing higher, fading out near the top. Grey, not black, so it
-      // reads as vapour rising rather than soot.
-      ctx.fillStyle = '#9a9a9a';
-      for (let k = 0; k < 9; k++) {
-        const ph = (t / 850 + k * 0.11) % 1;
-        if (ph > 0.9) continue;
-        const sway = Math.round(Math.sin(t / 760 + k * 1.4) * 2);
-        const sx = potMid + Math.round((k - 4) * 0.8) * P + sway * P;
-        const sy = brewY - P * 4 - Math.round(ph * 8) * P;
-        ctx.fillRect(Math.round(sx / P) * P, sy, P, P);
-      }
-      ctx.fillStyle = '#000';
-    }
   });
 
-  // The brew's progress bar, over the cauldron -- only up while a batch is going.
-  // Drawn outside `withRise` so it rides above the pot at full size once the
-  // building has finished rising. Uses the yard's one bar, the same the lab and
-  // the tower show.
-  if (S.apothecaryOpen && !rising && brewFrac() > 0) {
-    const potMid = apothecary.x + P * 10 + Math.round(CAULDRON[0].length / 2) * P;
-    // The pot's own bar hangs low, a couple of cells over the cauldron -- clear
-    // of the site's build/upgrade bar, which floats higher (four cells over the
-    // building's top, in `barSpot`). The two used to sit three cells apart and,
-    // three cells tall each, touched; the pot's bar low and the building's high
-    // is also the truer reading -- one is the brew, the other the building.
-    bar(Math.round(potMid / P) * P, S.groundY - (CAULDRON.length + 3) * P, brewFrac());
+  // One bar for the fires, over the middle of the row -- the pot furthest
+  // through its batch. Drawn outside `withRise` so it rides above the pots at
+  // full size once the building has finished rising. Uses the yard's one bar,
+  // the same the lab and the tower show.
+  //
+  // A bar a pot is what this wanted to be, and `bar` is fourteen cells wide
+  // against a twelve-cell step: four of them side by side overlapped into a
+  // single band with three bars' worth of black in it, which says less than one
+  // bar does. Which pot is on which brew is told by the colour of its flame
+  // instead, and that is the reading the rework is for.
+  if (S.apothecaryOpen && !rising) {
+    let best = 0, at = 0;
+    for (let i = 0; i < S.apothPots; i++)
+      if (brewFracOf(i) > best) { best = brewFracOf(i); at = i; }
+    if (best > 0) {
+      // The bar hangs low, a couple of cells over the cauldrons -- clear of the
+      // site's build/upgrade bar, which floats higher (four cells over the
+      // building's top, in `barSpot`). The two used to sit three cells apart and,
+      // three cells tall each, touched; the pot's bar low and the building's high
+      // is also the truer reading -- one is the brew, the other the building.
+      const mid = potX(at) + Math.floor(CAULDRON[0].length / 2) * P;
+      bar(Math.round(mid / P) * P, S.groundY - (CAULDRON.length + 3) * P, best);
+    }
   }
 }
 
-// How many finished doses are standing in stock, written over the vial of the
-// tonic the pot is set to -- the table shows *what* is on offer, this says *how
-// many* of it are ready to be carried out. Drawn in screen pixels next to the
-// kit-stand counts (the same read-it, don't-look-at-it band), off `doseHold`,
-// which is the doses brewed but not yet walked to a body. Doses take whichever
-// tonic the pot is on, so the count sits over that one vial and the others,
-// holding nothing, show nothing.
+// How many finished doses are standing on each shelf, written beside it -- the
+// shelf shows *which* brew and roughly how much, this says exactly how many are
+// ready to be carried out. Drawn in screen pixels next to the kit-stand counts
+// (the same read-it, don't-look-at-it band). One badge a tonic, so a shelf that
+// is holding nothing says nothing.
 export function drawStockCount(screenAt) {
   if (!S.apothecaryOpen) return;
-  const total = (S.doseHold || []).reduce((a, b) => a + (b || 0), 0);
-  if (total <= 0) return;
-  const i = TONICS.findIndex(t => t.key === S.potTonic);
-  if (i < 0) return;
-  const vx = apothecary.x + P * (2 + i * 2) + P / 2;   // over the active tonic's vial
-  const vy = S.groundY - P * 5 - P * 5;                // a clear space above the cork
-  const at = screenAt(vx, vy);
   ctx.font = '13px ui-monospace, "Courier New", monospace';
-  ctx.textAlign = 'center';
+  ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#000';
-  ctx.fillText(String(total), Math.round(at.x), Math.round(at.y));
-  ctx.textAlign = 'left';
+  for (let i = 0; i < TONICS.length; i++) {
+    const n = doseStock(TONICS[i].key);
+    if (n <= 0) continue;
+    // Just off the case's right upright, level with the vials on that shelf.
+    const at = screenAt(shelfX() + APOTH_SHELF_W + P / 2, shelfY(i) + P);
+    ctx.fillText(String(n), Math.round(at.x), Math.round(at.y));
+  }
   ctx.textBaseline = 'alphabetic';
 }

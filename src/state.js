@@ -339,6 +339,17 @@ export const S = {
   strengthLevel: 0,       // buff strength: what a dose is worth while it is up
   dosesLevel: 0,          // doses a brew: how many bodies one batch reaches
 
+  // --- Track F1: the apothecary rework ---
+  // The five fields above that these replace -- `potTonic`, `potSpent`,
+  // `doseHold` and `strengthLevel` -- are kept where they are, saved, and read
+  // once on load: an old save carries them and `migrateApothecary` pours each
+  // into its new home. Nothing writes them after that. See apothecary.js.
+  potTonics: [],          // the tonic each pot is set to, by pot index, or null for off
+  potSpents: [],          // and whether that pot's one-off batch has been put up
+  shelf: {},              // doses in stock on the bookshelf, by tonic key
+  potency: {},            // how far each tonic's own strength ladder has climbed
+  doseCarryLevel: 0,      // doses a stirrer takes out in one trip: DOSE_CARRY's rung
+
   // --- what you are doing right now ---
   mouse: { x: 0, y: 0 },
   mining: false,
@@ -491,6 +502,13 @@ export const SAVED = [
   'lengthLevel',
   'strengthLevel',
   'dosesLevel',
+  // Track F1: the apothecary rework. The pots' own settings, the stock on the
+  // bookshelf, and the ladders that are no longer one number for the building.
+  'potTonics',
+  'potSpents',
+  'shelf',
+  'potency',
+  'doseCarryLevel',
   'labOpen',
   'casinoOpen',
   'scrubOpen',
