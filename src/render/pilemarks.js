@@ -1,15 +1,15 @@
 // The ground each station pays out onto, and the marks that hang over a station:
 // the pegged pile strips, the pile-full warning triangle and the offer diamond.
 // Extracted verbatim from render.js; behavior unchanged. Owns stripMark,
-// drawPileGround, drawPileMarks, warning, marksOn, markAnchor, markAt,
+// drawPileMarks, warning, marksOn, markAnchor, markAt,
 // pileMarkAt and overPileMark. The shared primitives come from this folder's own
-// leaves: ctx from ./ctx.js, drawMark and drawTriangle from ./marks.js.
+// leaves: ctx from ./ctx.js and drawTriangle from ./marks.js.
 
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
-import { P, PILE_HOLDS } from '../config.js';
+import { P } from '../config.js';
 import { S, farm, scrub, sky } from '../state.js';
 import { ctx } from './ctx.js';
-import { drawMark, drawTriangle } from './marks.js';
+import { drawTriangle } from './marks.js';
 
 // --- the ground a station pays out on to -------------------------------------
 //
@@ -29,51 +29,12 @@ import { drawMark, drawTriangle } from './marks.js';
 // what the warning marks below used to do (they named two keys and sent
 // everything else to the farm, and two stations spent a while with their signs
 // three thousand pixels from the thing that had stopped).
-const GROUND_INK = '#c9c9c9';         // paler than anything built: a marking, not a wall
-
-// What piles here, cut into the ground it is kept for.
-//
-// A find gets its own glyph, in its own colour -- the same shape the counter and
-// the crew board use for it -- with `glyph` on, because a solid coloured cell is
-// what a single *grain* looks like, and a strip marked with one grain reads as
-// one grain lying there rather than as ground kept for a heap. Dust has no glyph
-// and does not need one: it is drawn as what a heap of it looks like from a
-// distance, a little mound of cells, in the same grey as the pegs so the whole
-// marking reads as one thing.
-function stripMark(kind, x, y) {
-  if (kind) { drawMark(kind, x, y, P * 4, true); ctx.fillStyle = '#000'; return; }
-  ctx.fillStyle = GROUND_INK;
-  ctx.fillRect(x - P * 1.5, y, P * 3, P);
-  ctx.fillRect(x - P / 2, y - P, P, P);
-  ctx.fillStyle = '#000';
-}
-
-// The ground a station's output is thrown on to.
-//
-// It was a crate for a while -- two posts and a floor, in the yard's own ink --
-// and item 8 of feedback5 took them out. Five stations wearing a box each is
-// five more black objects along a ground line that already carries a shed, a
-// stand, a fence and a bridge, and what they boxed in was the one thing here
-// that is meant to read as loose material. A heap of stone standing free says
-// "heap"; the same heap in a box says "crate", and the crate was the louder of
-// the two by a distance.
-//
-// What is left is the mark: whose ground this is and what lands on it, cut into
-// the floor rather than standing on it.
-export function drawPileGround() {
-  for (const p of S.piles) {
-    const y = S.groundY;
-    // Whose ground it is, cut into it rather than hung in the air over it. It
-    // stays put as the heap grows: a marking that dimmed as the strip filled
-    // told you least about the strip you could see least of.
-    const mid = Math.round((p.from + p.to) / 2 / P) * P;
-    ctx.fillStyle = GROUND_INK;
-    stripMark(PILE_HOLDS[p.key], mid, y + P * 3);
-    ctx.fillStyle = '#000';
-  }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#000';
-}
+// The strips themselves are unmarked ground now. They wore a crate each for a
+// while (item 8 of feedback5 took the crates out), then a glyph or a grey
+// mound cut into the ground saying what piles there -- and the glyphs went the
+// same way the crates did: a row of icons along a ground line that already
+// carries the heaps themselves, which are their own best label. What lands
+// where is visible because it lands there.
 
 // A station whose pile is full has stopped, and says so: a bar over it, which is
 // the one mark in the game that means nothing is happening. It sits above the

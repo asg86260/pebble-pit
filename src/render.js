@@ -39,7 +39,7 @@ import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawLabMark } from './render/labmark.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
-import { drawPileGround, drawPileMarks } from './render/pilemarks.js';
+import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawScrub } from './render/scrub.js';
 import { drawShocks } from './render/shock.js';          // F4
@@ -70,7 +70,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileGround, drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';
+export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';
 export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
@@ -140,7 +140,6 @@ const LAYERS = [
   { name: 'settlement', draw: drawSettlement },  // and the crew are drawn later still, so they walk in front of both
   { name: 'rising room', draw: drawRisingHouse },// the one room still going up, if a hire is under way
 
-  { name: 'pile ground', draw: drawPileGround }, // the pegs on the ground each station's heap belongs to
   { name: 'floor', draw: drawFloor },
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
