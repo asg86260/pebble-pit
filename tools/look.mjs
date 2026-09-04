@@ -274,6 +274,17 @@ const SCENES = {
   // different building from the other one.
   shacks: `${RICH} window.__look(window.__state().farmShed.x - 60);`,
 
+  // The same frame with a work on the go at both sites: a bench being cut and a
+  // plot being broken, so each shack has its bar over it. This is the scene for
+  // where a site's bar hangs -- `quarry` and `farm` finish their builds, so
+  // neither ever shows one.
+  sitebars: `window.__reset(); window.__crew(3,3,3,3);
+    window.__grant({dust:99999, shards:999, spores:9999, sparks:999});
+    window.__buy('unlockquarry'); window.__finish();
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('quarrybench'); window.__buy('farmplot'); window.__fast(6);
+    window.__look(window.__state().farmShed.x - 60);`,
+
   // The far end of the walk: the tower, the star beside it and the ground under
   // the star, which is where item 10 put them. The star wants the meteor open or
   // there is nothing up there to look at.

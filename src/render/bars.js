@@ -5,6 +5,7 @@
 import { P } from '../config.js';
 import { S } from '../state.js';
 import { SITES, progressOf, siteBox, worksAt } from '../works.js';
+import { farmShed, quarryShed } from '../world.js';
 import { ctx } from './ctx.js';
 
 // One bar, drawn wherever something is being worked through. The lab has had
@@ -46,8 +47,16 @@ export function bar(cx, cy, at) {
 // hand any more.
 const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
 
+// The quarry and the farm are the two sites whose box is ground rather than a
+// building -- the hole and the plots -- and a bar centered over ground floats
+// over the middle of nowhere. Each has a shed, and the shed is the station's
+// building everywhere else in the game (the board opens at it, the crew stand
+// at it), so the bar hangs over the shed too. Still a measured rect, not a
+// hand-placed spot.
+const SHED_OF = { quarry: quarryShed, farm: farmShed };
+
 export function barSpot(site) {
-  const box = siteBox(site);
+  const box = SHED_OF[site] ? SHED_OF[site]() : siteBox(site);
   if (!box) return null;
   // A hole in the ground has no top above the line -- the quarry's box starts at
   // the ground and goes down -- so the bar hangs off the ground line for those,
