@@ -105,6 +105,9 @@ export const TESTS = [
   // the school runs out of trades on purpose, and an empty sheet is a bug you
   // have to rule out before you can believe it.
   ['every board says whose it is, even an empty one', async () => {
+    // Counted apart, so a page that grew without a title is a missing name
+    // rather than a shorter list nobody notices.
+    const pages = [...document.querySelectorAll('.page')];
     const titles = [...document.querySelectorAll('.page .title')].map(t => t.textContent);
 
     window.__crew(2, 2);
@@ -125,9 +128,26 @@ export const TESTS = [
     window.__crew(0, 0);
     window.__school({ open: false });
     return [
-      ok(titles.join('|') === 'the bench|the lab|the training grounds|the house|' +
-                              'the tower|the quarry|the farm|the scrubbing house|the casino',
-         'each board carries its own name', titles.join('|')),
+      // The rule, not the roll-call.
+      //
+      // This pinned the nine names there were, in the order they happened to be
+      // written in the page, and every board added since has failed it for
+      // being new rather than for being wrong: the apothecary, and then the
+      // books. A list of names somebody typed cannot be right about a board
+      // nobody has written yet, which is the whole of what the check is meant
+      // to be about -- "even an empty one" is a promise about the *next* board.
+      //
+      // So it asks the thing it means: every page has a name of its own, and no
+      // two pages share one. Both halves matter. A page with no title is a
+      // sheet that opens over the yard saying nothing about where you are
+      // standing; two pages with the same title is the same failure a frame
+      // later, when you walk from one to the other and cannot tell that the
+      // board changed under you.
+      ok(pages.length > 8 && titles.length === pages.length,
+         'every board carries a name', `${titles.length} names on ${pages.length} boards`),
+      ok(titles.every(t => t.trim().length > 0) &&
+         new Set(titles.map(t => t.trim())).size === titles.length,
+         'and each of them is its own', titles.join('|')),
       ok(emptyRows === 0 && emptyText.trim().length > 0,
          'a board with no rows says so instead of standing there blank', emptyText),
       ok(back > 0, 'and the rows come back once the place is built', `${back}`)
