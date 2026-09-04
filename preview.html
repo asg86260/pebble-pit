@@ -23,7 +23,7 @@
      path its emitter walked. -->
 <canvas id="bench"></canvas>
 <script type="module">
-import { P } from './src/config.js';
+import { P, DOSE_MOTE_LIFE, DOSE_MOTE_MS, DOSE_MOTE_RISE } from './src/config.js';
 import { drawDoseMote } from './src/render/effects.js';
 
 const SCALE = 3;
@@ -36,8 +36,11 @@ const g = canvas.getContext('2d');
 // it is really showing you is the DRAW -- the colour, the size, the fade.
 const TONICS = [['a hearty stew', '#5fb84f'], ['a bracing tonic', '#a05fd6'],
                 ['a strong brew', '#4a86c7']];
-const LIFE = 750;                      // DOSE_MOTE_LIFE, in milliseconds
-const EVERY = 90;                      // DOSE_MOTE_MS
+// Off config.js, not copied from it. Written out here once, the bench went on
+// showing the plume the game used to have the moment either number was tuned --
+// which is the one thing a bench must never do.
+const LIFE = DOSE_MOTE_LIFE * 1000;
+const EVERY = DOSE_MOTE_MS;
 
 // A plume, as a still: motes let go every EVERY ms from a head that is moving at
 // `speed` px/ms, each risen by however long it has been in the air. Standing
@@ -49,7 +52,7 @@ function plume(gg, x, y, colour, speed) {
     for (const off of [-P * 0.7, P * 0.7]) {
       gg.save();
       drawDoseMote(gg, x - speed * age + off + Math.sin(age / 90) * P * 0.4,
-                   y - age * 0.033, colour, k);
+                   y - age * DOSE_MOTE_RISE / 16.7, colour, k);
       gg.restore();
     }
   }
