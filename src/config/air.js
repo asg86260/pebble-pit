@@ -76,10 +76,14 @@ export const SWAY_Y = 8;             // and up and down, which is the smaller mo
 export const SWAY_PACE = 0.42;
 
 export const SMOG_TINTS = {
-  dust:  ['#2b2b2b', '#3a3733', '#232830', '#332b2b'],
+  // Browned, not grey. A haze is burnt air, and burnt air is brown: the dust
+  // family carries an umber cast, so a dirty sky reads as smog rather than as
+  // the page dimming.
+  dust:  ['#5c4224', '#6b4d28', '#503a20', '#644626'],
   shard: ['#1436b8', '#2444c4', '#0f2c9c', '#2a3fa8'],
   spore: ['#12703a', '#1c8046', '#0d6032', '#237a48'],
-  // What comes off a machine's stack is soot, and soot is grey.
+  // What comes off a machine's stack is soot, and soot is near-black with the
+  // same burnt-brown cast as the haze it thickens.
   //
   // It used to go up as the station's own kind -- the jaw's extra dirt was blue,
   // because the cut's dust is blue -- and a sky going blue because you bought a
@@ -87,7 +91,7 @@ export const SMOG_TINTS = {
   // because it is stone; what an engine puts up is what an engine puts up
   // wherever it stands, and it is the one thing in the sky that is nobody's
   // resource. A shade darker than the rock's dust, because it is dirtier.
-  mach:  ['#1e1e1e', '#282828', '#161616', '#232323']
+  mach:  ['#3c2c18', '#46341c', '#332615', '#402f19']
 };
 
 export const AIR_KINDS = ['dust', 'shard', 'spore'];

@@ -1,5 +1,5 @@
 import { now } from '../clock.js';
-import { GOING_CAP, P, PLUME_LEAN, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
+import { GOING_CAP, P, PLUME_LEAN, PLUME_LIFE, PLUME_THIN, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { give, windAt } from '../wind.js';
@@ -289,7 +289,24 @@ export function stepPuffs(secs) {
     // `foul`. On average a speck rises about half the sky, because that is where
     // the middle of the sky is; the spread either side of that is what fills the
     // window rather than making a band of it.
-    if (p.y > slotY(p, top, deep)) continue;
+    if (p.y > slotY(p, top, deep)) {
+      // ...unless it has been climbing longer than a plume lives. A speck bound
+      // for the top of the window used to cross most of the sky in view, and a
+      // column of smoke the height of the screen reads as an event rather than
+      // as exhaust. Past PLUME_LIFE it thins out where it is, and once it is
+      // gone from the climb its mote joins the band *at its own height* --
+      // fading in up there over PUFF_FADE, the same arrival every settled mote
+      // already makes. The dirt is counted identically; only the journey is
+      // cut short.
+      p.age += secs;
+      if (p.age <= PLUME_LIFE) continue;
+      p.fade = Math.max(0, p.fade - secs / PLUME_THIN);
+      if (p.fade > 0) continue;
+      settleHere(p, false);
+      p.fromY = slotY(p, top, deep);
+      p.y = p.fromY;
+      continue;
+    }
     // Arrived, and the wind up there has it.
     //
     // It joins the band somewhere along the sky rather than directly over the
@@ -321,7 +338,10 @@ export function stepPuffs(secs) {
 // what settling looks like -- and neither is what it is made of or how solid it
 // is drawn: it went up at the weight of the haze and it stays at the weight of
 // the haze.
-function settleHere(m) {
+// `ghost` is the cross-fade picture left at the top of a finished climb. A
+// plume that timed out has already thinned to nothing -- leaving a ghost there
+// would draw the smoke back in at the spot it just faded from.
+function settleHere(m, ghost = true) {
   m.up = false;
   // Its look is not among the fields set here, and that is deliberate: `foul`
   // gave it one when it left the swing and it keeps it. A speck that changed
@@ -346,7 +366,7 @@ function settleHere(m) {
   // So it is a cross-fade. This used to say `m.fade = 1` on the reasoning that a
   // speck never went out and so had nothing to come back from, which was true
   // when it arrived where it had climbed to, and is not true now.
-  if (GOING.length < GOING_CAP) {
+  if (ghost && GOING.length < GOING_CAP) {
     // still climbing, and still leaning the way it was leaning: what is left
     // behind at the top of a climb is smoke thinning as it goes, not a speck
     // parked in the air.

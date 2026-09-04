@@ -192,6 +192,14 @@ export const PUFF_UP = 0.40;
 export const PUFF_UP_GIVE = 0.14;
 export const PUFF_UP_FLOOR = 0.20;   // and the crawl it never slows below
 export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
+// How long a plume is a plume. A speck used to climb visibly all the way to its
+// slot -- for one bound near the top of the window, most of the sky -- and a
+// column of smoke crossing the whole view reads as an event, not as exhaust.
+// After this many seconds of climb it thins out where it is over PLUME_THIN,
+// and its mote joins the band at its own height, coming up to weight there
+// (see `stepPuffs`). The dirt is identical either way; only the journey is cut.
+export const PLUME_LIFE = 2.0;
+export const PLUME_THIN = 0.8;
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as
 // pollution appearing out of nothing in the middle of the sky. A thick plume is
