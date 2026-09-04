@@ -351,33 +351,44 @@ canvas {
 }
 .rows .job.pickrow .chosen::after { content: ' \25BE'; opacity: .55; }
 .rows .job.pickrow.open .chosen::after { content: ' \25B4'; opacity: .55; }
-.rows .job.pickrow .opts {
-  grid-column: 1 / -1;
+/* The open list: a small sheet laid over the board under the control, in the
+   same ink and border as every other sheet here. It hangs off the body rather
+   than off its row -- the board carries a transform, and a transform captures
+   `position: fixed` -- so it is styled on its own rather than under `.rows`. */
+.optspop {
+  position: fixed;
+  z-index: 21;                 /* over the boards, and over a note beside one */
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  margin: 2px 0 1px;
+  background: #fff;
+  border: 1px solid #000;
+  padding: 2px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  font: inherit;
 }
 /* `display: flex` above beats the browser's own rule for the hidden attribute,
    so a shut list has to be shut again here -- without this every list on the
    board stands permanently open. */
-.rows .job.pickrow .opts[hidden] { display: none; }
-.rows .job.pickrow .opts .opt {
+.optspop[hidden] { display: none; }
+.optspop .opt {
   text-align: left;
-  padding: 1px 3px 1px 1.6em;
+  padding: 2px 10px 2px 1.6em;
   letter-spacing: .1em;
   text-transform: uppercase;
+  white-space: nowrap;
   opacity: .75;
 }
-.rows .job.pickrow .opts .opt:hover { color: #fff; background: #000; opacity: 1; }
+.optspop .opt:hover { color: #fff; background: #000; opacity: 1; }
 /* The one that is set, marked in the margin the indent leaves for it. */
-.rows .job.pickrow .opts .opt.on { opacity: 1; }
-.rows .job.pickrow .opts .opt.on::before {
+.optspop .opt.on { opacity: 1; }
+.optspop .opt.on::before {
   content: '\2022';
   position: absolute;
   margin-left: -1em;
 }
-.rows .job.pickrow .opts .opt { position: relative; }
+.optspop .opt { position: relative; }
 .rows .job button {
   display: block;
   grid-template-columns: none;

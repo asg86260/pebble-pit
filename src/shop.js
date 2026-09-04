@@ -84,6 +84,55 @@ const built = new WeakMap();
 // row had different numbers of columns and no board could line the two up
 // without somebody cutting widths for both by hand. Wrapped, the two shapes
 // agree: a name, and one thing on the right of it.
+// --- the open option list -----------------------------------------------------
+// A select's list is a popover laid over the board at the spot under the control
+// that opened it -- not a fold in the sheet. Folded in, it pushed every row below
+// it down the moment you pressed: the board changed height, and the option you
+// were reaching for was no longer where you had aimed. Over the top, nothing
+// under it moves.
+//
+// It hangs off `document.body`, not off the row, and this is not a detail: the
+// board sits in a container that carries a *transform*, and a transform makes
+// itself the containing block for anything `position: fixed` inside it. Built
+// into the row, the list took its coordinates from the board rather than from
+// the window -- the styles read `left: 435px` and it drew at 688. The note
+// beside a row (`#tip`) lives outside the board for the same reason. Placed from
+// the control's own rect once it is out there.
+let openList = null;
+
+function shutOpts() {
+  if (!openList) return;
+  openList.opts.hidden = true;
+  openList.row.classList.remove('open');
+  openList = null;
+}
+
+// Under the control, right edges lined up, and kept on the screen: flipped above
+// when there is no room below, and pulled back inside the window at either edge.
+function showOpts(row, chosen, opts) {
+  const r = chosen.getBoundingClientRect();
+  opts.hidden = false;
+  opts.style.minWidth = `${Math.round(r.width)}px`;
+  const box = opts.getBoundingClientRect();
+  const room = innerHeight - r.bottom - 4;
+  const top = box.height <= room ? r.bottom + 2 : Math.max(4, r.top - box.height - 2);
+  const left = Math.max(4, Math.min(r.right - box.width, innerWidth - box.width - 4));
+  opts.style.top = `${Math.round(top)}px`;
+  opts.style.left = `${Math.round(left)}px`;
+  row.classList.add('open');
+  openList = { row, opts };
+}
+
+// Anywhere else puts it away -- including a press on the yard behind the board.
+// `pointerdown` rather than `click` so it is shut before whatever was pressed
+// acts on it; a press inside the list is the one that chooses, and is left alone.
+addEventListener('pointerdown', e => {
+  if (!openList) return;
+  if (openList.opts.contains(e.target) || openList.row.contains(e.target)) return;
+  shutOpts();
+}, true);
+addEventListener('keydown', e => { if (e.key === 'Escape') shutOpts(); });
+
 const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></span>' +
   '<span class="step">' +
   '<button type="button" class="less">-</button>' +
@@ -141,6 +190,11 @@ function build(el, list, sections, empty) {
   // told the set changed and measures itself after it has filled the rows in.
   moved = true;
 
+  // Whatever list was open belonged to a row that is about to be thrown away --
+  // and its popover is out on the body, so clearing the board would not take it
+  // with it. Each row carries a handle to its own, and only this board's go.
+  shutOpts();
+  for (const old of el.querySelectorAll('[data-dial]')) old._opts?.remove();
   el.textContent = '';
   if (!now) {                              // nothing to show: say so rather than nothing
     const line = document.createElement('div');
@@ -205,11 +259,17 @@ function build(el, list, sections, empty) {
           row.classList.add('pickrow');
           row.innerHTML = '<span class="name"><i class="what"></i></span>' +
                           '<button type="button" class="chosen"></button>' +
-                          '<span class="opts" hidden></span>' +
                           (u.note ? '<span class="note"></span>' : '');
           row.querySelector('.what').textContent = u.name;
-          const opts = row.querySelector('.opts');
           const chosen = row.querySelector('.chosen');
+          // Out on the body, clear of the board's transform (see `showOpts`).
+          // The row keeps a handle on it so a rebuild can take it away again.
+          const opts = document.createElement('div');
+          opts.className = 'optspop';
+          opts.hidden = true;
+          opts.dataset.forDial = u.key;
+          document.body.appendChild(opts);
+          row._opts = opts;
           for (const o of u.options()) {
             const pick = document.createElement('button');
             pick.type = 'button';
@@ -218,19 +278,16 @@ function build(el, list, sections, empty) {
             pick.textContent = o.label;
             // Picking closes the list: you came to set the thing, and the board
             // reads shorter with it shut.
-            pick.addEventListener('click', () => {
-              u.pick(o.key);
-              opts.hidden = true;
-              row.classList.remove('open');
-              moved = true;
-            });
+            pick.addEventListener('click', () => { u.pick(o.key); shutOpts(); });
             opts.appendChild(pick);
           }
+          // The list lies over the board, so opening one changes no row's place
+          // and the sheet needs no reseating -- no `moved` here. Only one is open
+          // at a time: a second list is the first one's answer put away.
           chosen.addEventListener('click', () => {
             const opening = opts.hidden;
-            opts.hidden = !opening;
-            row.classList.toggle('open', opening);
-            moved = true;              // the sheet is a different height open
+            shutOpts();
+            if (opening) showOpts(row, chosen, opts);
           });
           el.appendChild(row);
           continue;
@@ -379,7 +436,7 @@ export function refresh(el, list, headcount) {
         // you can see what you are changing from.
         say(row.querySelector('.chosen'), u.value());
         const at = String(u.at ? u.at() : '');
-        for (const o of row.querySelectorAll('.opt'))
+        for (const o of row._opts?.querySelectorAll('.opt') || [])
           o.classList.toggle('on', o.dataset.opt === at);
       } else {
         grey(row.querySelector('.less'), u.lo());

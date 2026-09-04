@@ -748,15 +748,26 @@ export const TESTS = [
     await sleep(120);
 
     const row = document.querySelector('[data-dial="potprefer"]');
-    const opts = row?.querySelector('.opts');
+    const chosen = row?.querySelector('.chosen');
+    const opts = row?._opts;                       // out on the body, not in the row
+    const under = document.querySelector('[data-key="anotherpot"]');
     const shutFirst = !!opts?.hidden;
-    row?.querySelector('.chosen')?.click();
+    const wasAt = under?.getBoundingClientRect().top;
+
+    chosen?.click();
     await sleep(40);
     const dropped = !opts?.hidden;
-    const listed = row ? row.querySelectorAll('.opt').length : 0;
-    row?.querySelector('.opt[data-opt="miners"]')?.click();
+    const listed = opts ? opts.querySelectorAll('.opt').length : 0;
+    // The list is laid over the board, so the rows under it do not budge. It was
+    // folded into the sheet once, and opening it shoved everything below it down
+    // -- past the place you had already aimed at.
+    const stillAt = under?.getBoundingClientRect().top;
+    const c = chosen?.getBoundingClientRect(), o = opts?.getBoundingClientRect();
+    const placed = !!c && !!o && o.top >= c.bottom - 1 && Math.abs(o.right - c.right) <= 2;
+
+    opts?.querySelector('.opt[data-opt="miners"]')?.click();
     await sleep(40);
-    const said = (row?.querySelector('.chosen')?.textContent || '').trim();
+    const said = (chosen?.textContent || '').trim();
     const shutAfter = !!opts?.hidden;
     window.__board(null);
     window.__crew(0, 0);
@@ -764,6 +775,11 @@ export const TESTS = [
       ok(shutFirst, 'the list starts shut, with the set option on the row itself'),
       ok(dropped && listed > 2, 'pressing the row drops its options open',
          `${listed} options`),
+      ok(placed, 'the list stands under the control that opened it, right edges level',
+         c && o ? `control ${Math.round(c.right)}/${Math.round(c.bottom)}, ` +
+                  `list ${Math.round(o.right)}/${Math.round(o.top)}` : 'no rects'),
+      ok(Math.abs(wasAt - stillAt) < 1, 'and nothing under it moves to make room',
+         `${Math.round(wasAt)} -> ${Math.round(stillAt)}`),
       ok(said === 'miners', 'pressing one of them sets it', said),
       ok(shutAfter, 'and the list shuts behind the choice')
     ];
