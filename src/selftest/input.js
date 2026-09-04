@@ -156,8 +156,13 @@ export const TESTS = [
       ok(at((r.less[0] + r.more[0]) / 2, r.less[1]) !== 'pointer',
          'and the count between them is still not a button'),
       ok(core === 'grab', 'a loose core is a thing to pick up', `${core}`),
-      ok(full.pitFull && warn === 'help',
-         'and a mark that says why something stopped is a thing to ask', warn)
+      // The hole used to carry a pile-full mark and a help cursor to go with
+      // it. It cannot stop anything now -- the first grain it refuses tears
+      // the rift -- so there is no mark, no question, and the spot is plain
+      // aim like the rest of the ground. The stations still carry their marks,
+      // and the stations group hovers one for the tooltip half of this rule.
+      ok(warn === 'crosshair',
+         'and the hole, which cannot stop any more, is not a thing to ask', warn)
     ];
   }],
 ];
