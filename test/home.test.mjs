@@ -2,6 +2,7 @@
 // home, and turn a light on behind a window.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { STATION_GAP } from '../src/config.js';
 // A yard with nothing in it to carry is a yard nobody needs to be stood in.
 // The one thing that has to be true is that letting them go is never a
 // decision you regret: they are all back the moment there is dust.
@@ -125,15 +126,31 @@ group('the crew have somewhere to live', async () => {
     // own front door to get to the shop, not out past the shop to get home.
     ok(big.right <= state().benchX, 'the block stands outside the bench',
        `${big.right} / ${state().benchX}`),
-    // and it stands in the middle of the ground it has, rather than hard
-    // against one neighbour with all the slack on the other side
-    ok(big.ofBench > 0, 'it stands clear of the bench',
-       `${big.ofBench}px`),
+    // Two clearances, and they come from two different rules -- which is why
+    // this no longer asks them to be equal.
+    //
+    // It used to: the bench sat 60 from the block and 60 from the apron, and
+    // the check called that "centred". Nothing kept them in step. The 60 on the
+    // house side was the bench's own hand-set `gap` in the SITES table, one of
+    // eleven numbers each measured by hand against whatever stood beside it;
+    // the 60 on the rock side falls out of `rockSize` in rock.js, where a
+    // boulder may grow to whatever room is left between the yard's middle and
+    // the bench, less fourteen cells it always keeps clear. Item 9 of feedback5
+    // replaced the eleven gaps with one STATION_GAP, the house side became 120,
+    // and the coincidence showed itself for what it was.
+    //
+    // Restoring the equality would mean either a per-site exception for the
+    // bench -- the exact thing the one gap exists to remove -- or widening the
+    // rock's own standoff to match the yard's padding, which caps the boulder a
+    // third narrower. The rock is the thing the game is about; it does not get
+    // shrunk to centre a bench.
+    //
+    // So each side is checked against the rule that actually decides it.
+    ok(big.ofBench === STATION_GAP,
+       'the block stands a station\'s padding off the bench, like every neighbour',
+       `${big.ofBench}px, gap ${STATION_GAP}`),
     ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
        `${big.benchOfApron}px`),
-    ok(big.ofBench === big.benchOfApron,
-       'the bench is centred between the block and the biggest rock',
-       `${big.ofBench}px to the houses, ${big.benchOfApron}px to the apron`),
     ok(big.ofApron > 0, 'with the block further out again',
        `${big.ofApron}px`),
     ok(onGrid, 'every cube sits on the lattice'),

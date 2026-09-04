@@ -337,12 +337,33 @@ function jigSpan(w) {
   // it left the builder working one corner of it.
   const box = siteBox(w.site);
   if (box && box.w > WORKER) return { from: box.x, to: box.x + box.w - WORKER };
-  // No zone to speak of: back along the yard from the mark it arrived on.
-  return { from: w.jigAt - BUILD_SHIFT_SPAN, to: w.jigAt };
+  // No zone to speak of: back along the yard from the mark it arrived on --
+  // or, on the frame the jig starts and there is no mark yet, from where it is
+  // standing, which is the same spot a moment earlier.
+  const at = w.jigAt ?? w.x;
+  return { from: at - BUILD_SHIFT_SPAN, to: at };
 }
 
 export function workJig(w, at) {
   if (w.jigAt == null) {
+    // On to the patch before the first blow, not merely near it.
+    //
+    // `stepBuilder` calls a body arrived when it is within a pixel of the mark,
+    // and it has to: testing arrival against the exact pixel puts the walk and
+    // the hammer in a tug of war (the note there says it at length). But a
+    // pixel of slack in *arriving* was also a pixel of slack in *standing*: the
+    // body stopped wherever its last step left it and started work there, so
+    // it could begin up to a pixel off the near end of the very thing it is
+    // standing on. Every patch after the first is clamped into the span below;
+    // the one it walked to was not.
+    //
+    // Which end of the mark that pixel fell on was decided by how far the body
+    // had walked to get there -- so it changed when the yard's spacing changed,
+    // and a builder that had always started just inside the bench started just
+    // outside it. A tolerance that depends on the length of a walk is not a
+    // tolerance about the bench at all.
+    const span = jigSpan(w);
+    w.x = Math.max(span.from, Math.min(span.to, w.x));
     w.jigAt = w.x;              // the near end of the patch it is working
     // Away from the thing being built, not into it. `buildStationX` stands the
     // body off the footprint's left edge precisely so it is not lost against
