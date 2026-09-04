@@ -203,22 +203,39 @@ canvas {
   display: inline-block;
   vertical-align: baseline;
 }
-/* A clock, for the one price that is not a coin: what a thing costs in waiting.
-   A ring with a hand in it, at the size the coins are drawn, because it stands
-   in the same row as them and has to weigh the same. */
+/* A clock: what a thing costs in waiting, and now the mark for seconds
+   everywhere the boards used to print the letter s. A ring at the size the coins
+   are drawn, because it stands in the same row as them and has to weigh the
+   same.
+
+   Two hands, not one. A ring with a single spoke in it reads as a dial, a gauge
+   or a pie with a slice out of it -- anything but a clock -- and this mark now
+   has to say "seconds" on its own, in a column of rates, with no price beside it
+   to lend it the meaning. Two hands of plainly different lengths at plainly
+   different angles is the whole of what makes a circle a clock, at any size. */
 .clock {
   position: relative;
   width: 8px; height: 8px;
   border: 1.5px solid currentColor;
   border-radius: 50%;
 }
-.clock::after {
+/* Both hands are pinned at the middle of the face and swung from there, so
+   neither has an offset of its own to get wrong: `bottom: 50%` puts the base of
+   the hand on the center line and the origin at that base. */
+.clock::before, .clock::after {
   content: '';
   position: absolute;
-  left: 50%; top: 1px;
-  width: 1.5px; height: 2.5px;
+  left: 50%; bottom: 50%;
+  width: 1.5px;
+  margin-left: -0.75px;
   background: currentColor;
+  transform-origin: 50% 100%;
 }
+/* the minute hand: long, and straight up */
+.clock::after { height: 3.5px; }
+/* and the hour hand: short, round at four, so the two never lie along each
+   other at any size */
+.clock::before { height: 2.25px; transform: rotate(120deg); }
 .dust { width: 7px; height: 7px; background: currentColor; }
 .core {
   width: 8px; height: 8px;
@@ -305,15 +322,24 @@ canvas {
 .rows .name .what { font-style: normal; }
 .rows .ladder {
   font-style: normal;
-  /* big enough that a filled pip and a hollow one are plainly different, which
-     at six tenths of an em they were not: it read as a dotted underline */
-  font-size: .8em;
+  /* Big enough that a filled pip and a hollow one are plainly different, and
+     dark enough to be counted rather than merely noticed -- at eight tenths of
+     an em and half opacity the row read as a dotted underline. Both numbers are
+     `PIP_EM` and `PIP_TONE` in config/boards.js and are written on to the root
+     by board.js: the pips are on nine boards and every one of them wants the
+     same answer, so there is one place to change it. */
+  font-size: var(--pip-em, 1em);
   letter-spacing: .22em;
   line-height: 1;
-  opacity: .5;
+  opacity: var(--pip-tone, .78);
   margin-top: 1px;
 }
-.rows button:hover:not(:disabled) .ladder { opacity: .75; }
+/* The hover is a share of the way from the resting tone to full black rather
+   than a second tone found by hand -- two hand-tuned numbers would part company
+   the moment either was retuned. */
+.rows button:hover:not(:disabled) .ladder {
+  opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
+}
 /* A row with no ladder keeps the ladder's line anyway. The pips are half a line
    under the name, and a board where some rows have them and some do not is a
    board whose names sit at a different height in every row -- which is the thing

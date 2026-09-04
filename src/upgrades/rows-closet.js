@@ -4,9 +4,19 @@ import { S, outhouse } from '../state.js';
 import { rebalance } from '../upgrades.js';
 import { lookAt } from '../world.js';
 
-// The bench's outhouse rows. Data only: upgrades.js strings the files together
-// into UPGRADES, in this order.
-export const OUTHOUSE_ROWS = [
+// The janitor's closet: what the yard buys to have somebody sweeping it at all,
+// and the second cap that lets a second body do it.
+//
+// The file was `rows-outhouse.js` and the section over it read "the outhouse",
+// which is the one name in here for a thing that is not what it is called: what
+// stands in the yard is a cupboard with shovels and caps in it, every row on it
+// is about the janitor, and the row itself has said "build the janitor's closet"
+// since it was written. The rows, their prices and what they do are untouched --
+// only where they are filed and what the heading over them says.
+//
+// Data only: upgrades.js strings the files together into UPGRADES, in this
+// order.
+export const CLOSET_ROWS = [
   // The last thing on the ground, and the only one that makes nothing.
   //
   // What it buys is a *job*, not a place. It was a shed the crew walked to,

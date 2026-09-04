@@ -302,6 +302,7 @@ export const snapshot = () => ({
   quarryBoardOpen: S.quarryBoardOpen,
   farmBoardOpen: S.farmBoardOpen,
   towerBoardOpen: S.towerBoardOpen,
+  statsBoardOpen: S.statsBoardOpen,       // Track F3 (wave5): the books over the pit
   towerOpen: S.towerOpen,
   towerX: Math.round(tower.x),
   outhouseOpen: S.outhouseOpen,

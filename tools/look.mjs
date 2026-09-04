@@ -201,6 +201,19 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
+  // Track F3 (wave5). The bench, which is the longest board in the game: every
+  // heading, the pips under every ladder, and the clocks in the bills of the
+  // rows that have to be built. This is the shot for the pips and for the clock
+  // icon -- both of them are three or four pixels of a row, and this is the only
+  // place several of each stand together to be compared.
+  bench: `${RICH} window.__board('bench');`,
+
+  // And the books over the pit: the measured rate for every currency the yard
+  // has met. It is run for a minute first, because a rate is a thing that takes
+  // time to be true -- a board opened on a yard one frame old reads noughts.
+  books: `${RICH} window.__fast(60); window.__board('stats');
+          window.__look(window.__state().pitX - 300);`,
+
   // The rift: the black hole standing in the air over the near end of the pit,
   // the crater it has eaten in the pile under it, and the grains being pulled
   // round it on their way in. The hole is filled past the brim first so the rift
