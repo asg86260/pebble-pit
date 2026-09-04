@@ -365,7 +365,7 @@ export const S = {
   quarryBoardOpen: false,
   farmBoardOpen: false,
   outhouseOpen: false,    // there is somewhere to go
-  looPosts: LOO_POSTS,    // how many caps the closet's stand has; `loopost` sells the second
+  looPosts: LOO_POSTS,    // how many caps the outhouse's stand has; `loopost` sells the second
   towerOpen: false,       // the tower is up
   towerBoardOpen: false,
   scrubBoardOpen: false,
@@ -373,7 +373,7 @@ export const S = {
   // building. Which board is open is this session's business, like the rest of
   // them, so it is in EPHEMERAL below.
   statsBoardOpen: false,
-  closetBoardOpen: false,   // and the closet's, which is the crew's own cupboard
+  looBoardOpen: false,      // and the outhouse's, which carries the janitor's ladder
 
   // --- the air ----------------------------------------------------------------
   haze: 0,                // motes in the sky, waiting to come back down
@@ -662,7 +662,7 @@ export const EPHEMERAL = [
   'boardOpen', 'schoolBoardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
-  'statsBoardOpen', 'closetBoardOpen',     // Track F3 (wave5)
+  'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame
   JOB.BUILD, 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
@@ -735,13 +735,12 @@ export const scrub = { x: 0, y: 0, w: 0, h: 0 };
 export const rift = { x: 0, y: 0, w: 0, h: 0 };
 // The tower: the far end of the walk, and the only thing a core buys.
 export const tower = { x: 0, y: 0, w: 0, h: 0 };
-// The outhouse, out among the rooms the crew live in.
+// The outhouse, out among the rooms the crew live in: the shed with the moon on
+// the door, and the janitor's whole trade with it -- the caps hang on the stand
+// outside, the brooms live here, and its board sells the ladder's rungs. There
+// used to be a second shed for the tools (the janitor's closet); one trade gets
+// one building.
 export const outhouse = { x: 0, y: 0, w: 0, h: 0 };
-// And the janitor's closet, next door to the rooms: the cupboard the brooms and
-// the caps are kept in, and the stand you go to to decide about the job. It is
-// the one shop stand in the yard nobody buys, so there is no flag on `S` saying
-// whether it is there -- the crew bring it with them. See `standing` in board.js.
-export const closet = { x: 0, y: 0, w: 0, h: 0 };
 // The ground the pot piles up on: a real plot of sand, like the yard and the
 // hole, on the ground either side of the casino. A pot is grains, not a drawing
 // of grains -- see casino.js.

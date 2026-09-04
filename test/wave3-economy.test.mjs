@@ -11,6 +11,7 @@ import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
+import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
 import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, ROCKHAND_BITE_MULT, RUNGS } from '../src/config.js';
 
 const roster = () => state().roster;
@@ -42,7 +43,7 @@ group('the janitor post carries no line the others do not', async () => {
   const loo = roster().find(r => r.job === 'janitors');
   const mine = roster().find(r => r.job === 'rockhands');
   return [
-    ok(!!loo, 'the closet posts a janitor row once it is open'),
+    ok(!!loo, 'the outhouse posts a janitor row once it is open'),
     ok(!!mine, 'and the rock has one to compare it with'),
     ok(Object.keys(loo).sort().join() === Object.keys(mine).sort().join(),
        'the two posts report the same fields -- no extra line on the janitor\'s',
@@ -50,24 +51,27 @@ group('the janitor post carries no line the others do not', async () => {
   ];
 });
 
-// --- A3: the closet opens with one post; loopost buys the second -------------
-group('the closet starts at one post, and loopost buys the second', async () => {
+// --- A3: the outhouse opens with one post; loopost buys the second -----------
+// `loopost` lives on the outhouse's own board now, so it is looked up there
+// rather than in the bench's UPGRADES (where this check went quietly stale
+// when wave5 moved the row).
+group('the outhouse starts at one post, and loopost buys the second', async () => {
   window.__reset();
   window.__loo(true);
   window.__crew(0, 2);                          // spare hands to build it
 
   const one = roster().find(r => r.job === 'janitors');
-  const shownBefore = UPGRADES.find(u => u.key === 'loopost').show();
+  const shownBefore = OUTHOUSE_UPGRADES.find(u => u.key === 'loopost').show();
 
   window.__grant({ shards: 20 });
   window.__tip(1000);                           // the bill's dust half, from DUST_PER
   const bought = buyBuilt('loopost');
   const two = roster().find(r => r.job === 'janitors');
-  const shownAfter = UPGRADES.find(u => u.key === 'loopost').show();
+  const shownAfter = OUTHOUSE_UPGRADES.find(u => u.key === 'loopost').show();
 
   return [
     ok(LOO_POSTS === 1, 'LOO_POSTS itself is one now', LOO_POSTS),
-    ok(one.hats === 1, 'the closet opens with one cap on the stand', one.hats),
+    ok(one.hats === 1, 'the outhouse opens with one cap on the stand', one.hats),
     ok(shownBefore, 'and the second cap is on offer'),
     ok(bought, 'and it can be bought'),
     ok(two.hats === 2, 'which puts a second cap on the stand', two.hats),

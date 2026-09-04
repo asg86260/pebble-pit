@@ -21,14 +21,14 @@ export const TO_CASINO = -3078;
 export const TO_OUTHOUSE = -756;
 export const OUTHOUSE_W = P * 7;
 export const OUTHOUSE_H = P * 10;
-// How many janitors the closet opens a place for at the outset -- and, because
+// How many janitors the outhouse opens a place for at the outset -- and, because
 // the caps hang on the stand outside it, how many caps there are to start with.
 // One number for both: a post with no cap to go with it would be a body sent to
 // a job with nothing to pick up.
 //
 // It used to be two from the first day the shed went up, on the argument that
 // one pair of hands is not enough ground for a yard this long to keep up with --
-// which is true, and was also the whole of the closet's story: build it once and
+// which is true, and was also the whole of the shed's story: build it once and
 // it is already finished. One post now, and a second one is `loopost`'s to sell
 // -- a shed that opens small and grows is a shed with something left to buy, the
 // same shape as every other station in the yard. See `capOf` in upgrades.js and
@@ -36,26 +36,10 @@ export const OUTHOUSE_H = P * 10;
 // this for a save that has never set it.
 export const LOO_POSTS = 1;
 
-// The janitor's closet: the cupboard the brooms and the caps live in, and the
-// only shop stand in the yard nobody buys.
-//
-// It is not the outhouse. The outhouse is the shed with the moon over the door
-// that `unlockouthouse` puts up, and it is where a body *goes*; the closet is
-// where the tools are kept, and it is where you go to decide about the job. The
-// two were one thing for a while and the row that bought the outhouse was
-// called "build the janitor's closet" because of it, which left the yard with a
-// cupboard nobody could point at and a shop section on the bench for a place
-// that was not there.
-//
-// Squat rather than tall: eight across and seven down, against the outhouse's
-// seven by ten. Wider than it is high is what a cupboard is and what a shed
-// never is, and the yard has enough sheds. The width is also what the front
-// needs -- a seam down the middle with a handle either side of it wants eight
-// columns to sit on, and at six the handles landed against the seam and drew a
-// white cross.
-export const CLOSET_W = P * 8;
-export const CLOSET_H = P * 7;
-// What the second post costs: `loopost`, on the bench's own outhouse section.
+// What the second post costs: `loopost`, on the outhouse's own board. The
+// outhouse is the janitor's whole trade in one building -- the seat, the stand
+// with the caps, the brooms and the board. It kept a separate broom cupboard
+// (the janitor's closet) for a while; one trade gets one building.
 export const LOOPOST_SHARDS = 6;
 
 // Far enough past the casino to read as its own place rather than the next unit

@@ -313,13 +313,14 @@ import { LAB_ROWS } from './upgrades/rows-lab.js';
 import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
 import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
+import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
 // there waiting for somebody to come and get them
 //
 // Where those hats came from is the kit table's business and not the shop's:
-// most stations buy theirs a trade at a time, the closet simply has its caps,
+// most stations buy theirs a trade at a time, the outhouse simply has its caps,
 // and `stockOf` is the one place that knows the difference. Everything from here
 // down -- `spareKit`, `kitFull`, the errand, the stand, the roster's second line
 // -- is written against this number and cannot tell the two apart.
@@ -389,7 +390,7 @@ const capOfBare = job =>
   // with a bench in it: it is the whole yard, and a yard the length of this one
   // is more ground than one pair of hands can keep up with.
   //
-  // How many is `LOO_POSTS`, and the closet hangs a cap on its stand for each --
+  // How many is `LOO_POSTS`, and the outhouse hangs a cap on its stand for each --
   // which is why this reads the kit table rather than the number itself. A post
   // and the cap that goes with it are one thing the shed opens, and two places
   // counting it separately is exactly how you get a body sent to a job with
@@ -452,7 +453,7 @@ export const handsOf = job =>
 
 // What a full set of a station's kit is: its trade's own set (`KIT_MAX`, for the
 // four the school sells), or its whole complement if it holds fewer hands than
-// that. The second half is what keeps a small station honest -- the closet's two
+// that. The second half is what keeps a small station honest -- the outhouse's two
 // posts are fully kitted at two, and asking it for a third cap would be asking
 // for a cap with no head to go under.
 //
@@ -800,7 +801,8 @@ export const UPGRADES = [
   ...LAB_ROWS,
   ...APOTHECARY_ROWS,
   ...TUNING_ROWS,
-  ...QUARRY_ROWS
+  ...QUARRY_ROWS,
+  ...OUTHOUSE_ROWS
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a save
@@ -821,11 +823,11 @@ export const SECTIONS = [
   { title: 'the lab', keys: ['unlocklab'] },
   { title: 'the apothecary', keys: ['unlockapothecary'] },
   { title: 'the casino', keys: ['unlockcasino'] },
-  // The janitor's rows are not here any more: they are the closet's own board
-  // now -- see src/closet.js -- for the same reason the lab's and the school's
-  // rows left the bench. A decision about a place is made at the place, and
-  // this one was made under a heading naming a shed on the other side of the
-  // yard.
+  // Only the row that puts the shed up. The rest of the janitor's ladder is on
+  // the outhouse's own board -- see src/outhouse.js -- for the same reason the
+  // lab's and the school's rows left the bench: a decision about a place is
+  // made at the place. This one cannot be, because the place is what it buys.
+  { title: 'the outhouse', keys: ['unlockouthouse'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }

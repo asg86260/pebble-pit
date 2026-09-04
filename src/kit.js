@@ -61,7 +61,7 @@ export const KIT = {
   // walk is a hat that belongs to nowhere, and everything in this file is the
   // sentence "a hat belongs to the station".
   //
-  // So it belongs to the outhouse, and the closet hangs one on the stand for
+  // So it belongs to the outhouse, and the shed hangs one on the stand for
   // every post it opens. That is a station with a *stock* rather than a station
   // with a trade -- nobody sells these, the shed simply has them -- and it is
   // the only difference between this row and the five above it. Everything else
@@ -127,7 +127,7 @@ export const kitSetOf = job =>
 //
 // `TRADE_OF` is the bought rows only, and that is a narrower list than "every
 // job with a hat" now. It is the shop's question -- which counter on S does this
-// trade add to -- and a hat the closet hands out has no such counter.
+// trade add to -- and a hat the outhouse hands out has no such counter.
 export const TRADE_OF = Object.fromEntries(
   Object.entries(KIT).filter(([, k]) => k.trade).map(([job, k]) => [job, k.trade]));
 

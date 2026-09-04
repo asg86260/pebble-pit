@@ -101,23 +101,23 @@ group('a full hole does not send the crew home any more', async () => {
   ];
 });
 
-// What the closet buys is a job, not a place.
+// What the outhouse buys is a job, not a place.
 //
 // It was a shed the crew walked to: across the yard, in for a minute, out, and
 // back to work, several times an hour each. That is a lot of walking to buy, it
 // takes bodies off the job for the length of it, and it makes the purchase a
 // destination when what you actually wanted was somebody whose job it is to
-// clear up. So they go where they stand, whether the closet is up or not, and
-// what the closet changes is that a janitor can be posted at all.
-group('the closet buys the job, not somewhere to walk to', async () => {
+// clear up. So they go where they stand, whether the outhouse is up or not, and
+// what the outhouse changes is that a janitor can be posted at all.
+group('the outhouse buys the job, not somewhere to walk to', async () => {
   window.__crew(3, 3);
-  window.__loo();                            // the closet up
+  window.__loo();                            // the outhouse up
   window.__tune('LOO_EVERY', 4000);          // ten minutes a body, wound in
   window.__air({ haze: 0, muck: 0 });
   run(4);
 
   const shed = state().outhouseX;
-  // where they were when they went, and how far that is from the closet
+  // where they were when they went, and how far that is from the outhouse
   const went = runUntil(() => state().saying > 0, 120);
   const going = yard.S.workers.filter(w => w.say && w.say.mark === 'loo');
   const away = going.map(w => Math.round(Math.abs(w.x - shed)));
@@ -134,11 +134,11 @@ group('the closet buys the job, not somewhere to walk to', async () => {
        `${state().inLoo} inside`),
     // Four hundred pixels, against the six hundred and seventy-five the one body
     // due a break is actually standing at on a seeded run. Two hundred was the
-    // old band, and two hundred is a distance a body could be from the closet
+    // old band, and two hundred is a distance a body could be from the outhouse
     // while still walking to it -- which is the very thing this is meant to rule
     // out.
     ok(away.some(d => d > 400), 'they go where they were working, wherever that is',
-       `${away.join(', ')}px from the closet`),
+       `${away.join(', ')}px from the outhouse`),
     ok(after.smog.poop > 0, 'and what they leave is left there for somebody to clear',
        `${after.smog.poop} cells`)
   ];
@@ -188,7 +188,7 @@ group('a janitor on his break smokes, every time', async () => {
 // two rooms with doors on them -- and picking somebody up is the same fact
 // arriving by a road the fix did not cover. A body carried across the yard did
 // nothing for the whole trip and was charged for every second of it, so putting
-// one down set it straight off to the closet.
+// one down set it straight off to the outhouse.
 group('a body held on the cursor is not owing the yard an hour', async () => {
   window.__reset();
   window.__crew(2, 0);

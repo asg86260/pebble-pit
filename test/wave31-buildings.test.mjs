@@ -115,7 +115,7 @@ group('a builder on the yard hammers, and it reads as work', async () => {
 // #5 -- reproduced first: farm and quarry cannot actually be bought out of
 // order (`unlockquarry`'s own `show` requires `S.farmOpen`), so that pair
 // can never show the bug either way it is recorded. Two independently-gated
-// places -- the school and the closet -- stand in for them: both orders are
+// places -- the school and the outhouse -- stand in for them: both orders are
 // bought for real, through the row, and `S.buildOrder` is checked after each.
 // It already comes out right in both directions, because everything past the
 // bench builds on one shared site (`site: 'yard'`) and `siteBusy` refuses a
@@ -130,7 +130,7 @@ group('two independently-gated buildings land in the order they were bought', as
     window.__crew(2, 2);
     window.__grant({ dust: 500000, shards: 900 });
     yard.S.seenShard = true;      // the school's own gate
-    yard.S.seenMess = true;       // the closet's
+    yard.S.seenMess = true;       // the outhouse's
     run(1);
     for (const key of order) {
       const started = window.__buy(key);
@@ -145,12 +145,12 @@ group('two independently-gated buildings land in the order they were bought', as
   const backward = await bothOrders(['unlockouthouse', 'unlockschool']);
 
   return [
-    ok(forward.ok, 'school then closet: both are bought and built',
+    ok(forward.ok, 'school then outhouse: both are bought and built',
        JSON.stringify(forward)),
     ok(forward.ok && forward.buildOrder.indexOf('school') <
        forward.buildOrder.indexOf('outhouse'),
        'and land in that order', JSON.stringify(forward.buildOrder)),
-    ok(backward.ok, 'closet then school: both are bought and built',
+    ok(backward.ok, 'outhouse then school: both are bought and built',
        JSON.stringify(backward)),
     ok(backward.ok && backward.buildOrder.indexOf('outhouse') <
        backward.buildOrder.indexOf('school'),

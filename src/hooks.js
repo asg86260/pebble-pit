@@ -44,7 +44,7 @@ import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
-import { CLOSET_UPGRADES, CLOSET_SECTIONS } from './closet.js';
+import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
          brewCost } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
@@ -584,7 +584,7 @@ export const upgrades = () => UPGRADES;
 let unsectioned = null;
 export const unsection = key => {
   const all = [SECTIONS, LAB_SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
-               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, CLOSET_SECTIONS];
+               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS];
   if (unsectioned) {
     for (const [sect, keys] of unsectioned) sect.keys = keys;
     unsectioned = null;
@@ -610,7 +610,7 @@ export const boards = () => [
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
   { name: 'quarry', keys: QUARRY_UPGRADES.map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
   { name: 'farm',   keys: FARM_UPGRADES.map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
-  { name: 'closet', keys: CLOSET_UPGRADES.map(u => u.key), sections: CLOSET_SECTIONS.map(x => x.keys) }
+  { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) }
 ];
 
 export const allRows = () => everyRow().map(u => ({
@@ -636,11 +636,12 @@ export const allRows = () => everyRow().map(u => ({
 // were added: a check that wants to put a chip down should put it down through
 // the row that puts it down, prices and rules and dead states and all.
 const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
-                        // The janitor's rows left the bench for the closet's own
-                        // board, and `__buy('unlockouthouse')` has to keep
-                        // reaching them or every check that buys a janitor the
-                        // player's way goes quietly false.
-                        ...CLOSET_UPGRADES,
+                        // The outhouse board's own rows -- `unlockouthouse`
+                        // itself is a bench row in UPGRADES above -- and
+                        // `__buy('loopost')` has to keep reaching them or every
+                        // check that buys a janitor the player's way goes
+                        // quietly false.
+                        ...OUTHOUSE_UPGRADES,
                         ...SCHOOL_UPGRADES, ...SCRUB_UPGRADES,
                         ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                         ...APOTHECARY_UPGRADES,

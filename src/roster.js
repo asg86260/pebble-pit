@@ -273,7 +273,7 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     // The counter is a bare body, and that is every post but the sky now. It
     // used to have a second case: a hat nobody bought was worn by the badge
     // unconditionally, because the janitor's cap was worn unconditionally out in
-    // the yard. The cap hangs on a stand outside the closet like every other hat
+    // the yard. The cap hangs on a stand outside the outhouse like every other hat
     // in this yard, so the janitor's roster is the ordinary two lines -- so many
     // bodies, so many caps -- and the line that made an exception of it is gone
     // along with the exception.

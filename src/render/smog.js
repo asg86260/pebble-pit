@@ -70,7 +70,7 @@ export function drawMuck() {
   // two separate columns, because they are two different jobs -- everybody
   // clears the first and only a janitor clears the second -- and this drew the
   // first and no more. So what the crew left was never on the screen at all: it
-  // piled up in the count, held the row that sells the closet open, and looked
+  // piled up in the count, held the row that sells the outhouse open, and looked
   // for all the world like somebody had been round and tidied it away.
   const poo = poopCols();
   const from = Math.max(0, Math.floor(S.camX / P) - 2);

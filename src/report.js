@@ -15,7 +15,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, closet, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
@@ -303,8 +303,7 @@ export const snapshot = () => ({
   farmBoardOpen: S.farmBoardOpen,
   towerBoardOpen: S.towerBoardOpen,
   statsBoardOpen: S.statsBoardOpen,       // Track F3 (wave5): the books over the pit
-  closetBoardOpen: S.closetBoardOpen,
-  closetX: Math.round(closet.x),
+  looBoardOpen: S.looBoardOpen,
   towerOpen: S.towerOpen,
   towerX: Math.round(tower.x),
   outhouseOpen: S.outhouseOpen,

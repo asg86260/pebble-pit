@@ -20,7 +20,7 @@ import { P } from './yard.js';
 export const WORK_BASE = {
   rung: 5,          // one step up a ladder
   place: 18,        // a bench in the cut, a furrow, a hat off the stand
-  building: 45,     // the lab, the school, the closet, the tower
+  building: 45,     // the lab, the school, the outhouse, the tower
   machine: 90       // the ram, the belt, the jaw, the tiller
 };
 // and it climbs with the rung the way the price does, so the first bench in the

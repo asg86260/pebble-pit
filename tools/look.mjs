@@ -281,7 +281,7 @@ const SCENES = {
          (c => window.__look(c.x - window.innerWidth / 2))(window.__state().coreItem
            || { x: window.__state().coreHome.x });`,
 
-  // The closet, its roster and its stand. The caps are the one hat in the yard
+  // The outhouse, its roster and its stand. The caps are the one hat in the yard
   // nobody buys -- the shed simply has two of them -- so this is where you look
   // to see that a stock reads the same as a trade: a stand outside the door with
   // a cap on it and a figure over it, one body gone to fetch one, and the post's
@@ -315,18 +315,12 @@ const SCENES = {
   westend: `${RICH} window.__meteor(); window.__fast(3);
             window.__look(window.__state().towerX - 420);`,
 
-  // The janitor's closet: the cupboard by the rooms, with the broom leaning on
-  // it, and the outhouse one along. A crew, because the closet is the crew's --
-  // an empty yard has no settlement and no cupboard.
-  closet: `window.__reset(); window.__crew(3,2); window.__fast(4);
-           (s => window.__look(s.closetX + 18 - s.viewW / 2))(window.__state());`,
-
-  // and the same thing with its board up, which is what you are standing there
-  // for. The mess is what puts the outhouse on it -- see the row's `show`.
-  closetboard: `window.__reset(); window.__crew(3,2); window.__tune('LOO_EVERY', 4000);
-                window.__air({haze:0, muck:0}); window.__fast(120);
-                window.__give(20000); window.__board('closet');
-                (s => window.__look(s.closetX + 18 - s.viewW / 2))(window.__state());`,
+  // The outhouse with its board up: the shed with the moon on the door, the
+  // broom standing beside it, and the janitor's own rungs on the sheet. The
+  // shed has to be up first -- the board arrives with the building.
+  looboard: `window.__reset(); window.__crew(3,2); window.__loo();
+             window.__give(20000); window.__board('outhouse');
+             (s => window.__look(s.outhouseX + 21 - s.viewW / 2))(window.__state());`,
 
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,

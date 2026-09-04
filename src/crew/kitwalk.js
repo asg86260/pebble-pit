@@ -26,7 +26,7 @@ import { JOB, TYPE } from '../jobs.js';
 // it has kit at all -- somewhere its hats come from -- and every row does. The
 // janitor is on it now. Its cap used to appear on its head the moment it was put
 // on the job, which made it the one hat in the yard that belonged to nobody; the
-// closet keeps the caps on a stand outside the door, and a body sent to sweep
+// outhouse keeps the caps on a stand outside the door, and a body sent to sweep
 // walks over and picks one up like everybody else. See kit.js.
 
 // somebody on that job who could go on an errand right now: hands empty, not

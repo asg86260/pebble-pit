@@ -160,7 +160,7 @@ function placeAt(x) {
     if (r && x > r.x - P * 6 && x < r.x + r.w + P * 6) return NAMED[key];
   }
   if (S.outhouseOpen && x > outhouse.x - P * 4 && x < outhouse.x + outhouse.w + P * 4)
-    return 'the closet';
+    return 'the outhouse';
   const h = houseRect();
   if (h.w && x > h.x - P * 4 && x < h.x + h.w + P * 4) return 'the houses';
   if (x > pit.x - P * 4 && x < pit.x + pit.w + P * 4) return 'the hole';

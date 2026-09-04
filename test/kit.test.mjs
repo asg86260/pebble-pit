@@ -49,9 +49,9 @@ group('the kit table is the only list of hats there is', async () => {
        'and the ones the school sells are all of them but the cap',
        traded.join(' ')),
     // The cap: the same table, the same errand, the same stand -- and no trade,
-    // because the closet has them rather than sells them.
+    // because the outhouse has them rather than sells them.
     ok(!!KIT.janitors && !boughtKit('janitors') && typeof KIT.janitors.stock === 'function',
-       'the cap is stock the closet keeps, not a trade the school sells',
+       'the cap is stock the outhouse keeps, not a trade the school sells',
        JSON.stringify(Object.keys(KIT.janitors)))
   ];
 });
@@ -179,9 +179,9 @@ group('a dropped body keeps the hat it is wearing', async () => {
 // The cap used to be `innate`: put a body on sweeping and it was wearing one, in
 // the same frame, wherever it happened to be standing. Which is the thing this
 // whole file is against -- a hat that arrives without a walk belongs to no
-// station, and there is nothing to take off it either. The closet keeps the caps
+// station, and there is nothing to take off it either. The outhouse keeps the caps
 // now, one for every post it opens, on a stand outside its door.
-group('the closet keeps the caps, and a janitor walks over for one', async () => {
+group('the outhouse keeps the caps, and a janitor walks over for one', async () => {
   window.__reset();
   window.__crew(0, 3);                       // three bodies, all on carrying
   window.__air({ haze: 0, muck: 0 });
@@ -210,7 +210,7 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
   }
   const capped = loo();
   const got = { at: w.x, trained: w.trained, of: w.kitOf };
-  run(4);                                   // and back to the closet with it on
+  run(4);                                   // and back to the outhouse with it on
 
   // Off the job again: the cap is not its own, so it goes back on the stand --
   // and it goes back the way it came, on foot.
@@ -220,7 +220,7 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
   const strays = detail().filter(b => b.kit !== '-' && b.kit !== b.t);
 
   return [
-    // The closet opens with one post now -- `loopost` sells the second, see
+    // The outhouse opens with one post now -- `loopost` sells the second, see
     // A3 in feedback3.md -- so there is one cap on the stand, not two.
     ok(shut.hats === 1 && shut.worn === 0 && shut.spareKit === 1,
        'the shed opens with its one cap out on the stand and nobody in it',
@@ -230,7 +230,7 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
        `${put.worn} worn the frame it was assigned`),
     ok(bareFrames > 30, 'it is bare for the whole of a real walk, not a frame or two',
        `${bareFrames} frames`),
-    ok(aimed > 0, 'which it spends walking to the stand outside the closet',
+    ok(aimed > 0, 'which it spends walking to the stand outside the outhouse',
        `${aimed} frames aimed at ${Math.round(stand)}`),
     ok(reached > 0 && Math.abs(from - stand) > WORKER * 2,
        'from wherever it was standing to where the caps are',
@@ -239,7 +239,7 @@ group('the closet keeps the caps, and a janitor walks over for one', async () =>
        'it puts the cap on at the stand and nowhere else',
        `${got.of} at ${Math.round(got.at)}, stand at ${Math.round(stand)}`),
     ok(capped.worn === 1 && capped.spareKit === 0,
-       'so the closet has its one cap worn and none spare',
+       'so the outhouse has its one cap worn and none spare',
        `${capped.worn} worn, ${capped.spareKit} waiting`),
     ok(home.worn === 0 && home.spareKit === 1 && strays.length === 0,
        'and taken off the job it walks the cap home again',

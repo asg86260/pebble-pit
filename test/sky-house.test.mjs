@@ -64,14 +64,14 @@ group('a staffed scrubbing house pulls the sky back down', async () => {
 // made it disappear. The shed is not a destination any more (see `relieve` in
 // crew.js): a body goes where it stands and leaves it there, always. What the
 // row buys now is the *post* rather than the place. `capOf('janitors')` in
-// upgrades.js is two with the closet up and nought without it, and `mayShift`
+// upgrades.js is two with the outhouse up and nought without it, and `mayShift`
 // in smog.js makes a janitor the only pair of hands in the yard allowed to
 // touch what a body left -- carrying hands may not, however idle they are.
 //
-// So the closet cannot be weighed by where the mess lands: that is the same
+// So the outhouse cannot be weighed by where the mess lands: that is the same
 // either way, and the old check asking whether it was gathered could only ever
 // answer no. It is weighed by whether there is anybody on it.
-group("the closet is the janitor's post, and only a janitor shifts what the crew leave", async () => {
+group("the outhouse is the janitor's post, and only a janitor shifts what the crew leave", async () => {
   // What the crew left, and over how much ground. `smog.poop` is their layer.
   // The old check read `smog.muck.cols`, which counts the *sky's* layer -- and
   // this scenario winds the sky to nothing, so that count was nought in both
@@ -95,7 +95,7 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
     window.__clearFloor();
   };
 
-  // --- the closet shut ---------------------------------------------------------
+  // --- the outhouse shut ---------------------------------------------------------
   fresh();
   window.__air({ janitors: 2 });              // asked for, with nowhere to keep a shovel
   const shutPost = state().janitors;
@@ -105,8 +105,8 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
   run(60);
   const ignored = spread();
 
-  // --- the closet up, and nobody on it -----------------------------------------
-  // The half that says what the closet does *not* do. It is the same ninety
+  // --- the outhouse up, and nobody on it -----------------------------------------
+  // The half that says what the outhouse does *not* do. It is the same ninety
   // seconds of the same yard with the door open and no janitor hired, so the
   // only thing that could differ is where the mess lands -- and it does not.
   fresh();
@@ -114,7 +114,7 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
   run(90);
   const landed = spread();
 
-  // --- the closet up, and two on it --------------------------------------------
+  // --- the outhouse up, and two on it --------------------------------------------
   fresh();
   window.__loo(true);
   window.__air({ janitors: 2 });
@@ -139,18 +139,18 @@ group("the closet is the janitor's post, and only a janitor shifts what the crew
   return [
     ok(wild.poop > 0, 'the crew leave something behind wherever they are working',
        `${wild.poop} over ${wild.cols} columns`),
-    ok(shutPost === 0, 'with the closet shut there is no post to put anybody on',
+    ok(shutPost === 0, 'with the outhouse shut there is no post to put anybody on',
        `asked for two janitors, got ${shutPost}`),
     ok(ignored.poop >= wild.poop, 'so it lies there however long you leave it',
        `${wild.poop} -> ${ignored.poop} after another minute`),
     // The thing the old check thought it was measuring, written down as what it
-    // actually is. The closet on its own gathers nothing and clears nothing:
+    // actually is. The outhouse on its own gathers nothing and clears nothing:
     // open it and hire nobody and the same ninety seconds leaves the same mess
     // over the same spread of yard. What the row buys is a job, not a place.
     ok(landed.cols > 1 && landed.poop > 0,
-       'the closet on its own gathers nothing -- it still lands where they work',
+       'the outhouse on its own gathers nothing -- it still lands where they work',
        `${wild.cols} columns shut, ${landed.cols} open with nobody on it`),
-    // The closet opens with one post now -- `loopost` sells the second, see
+    // The outhouse opens with one post now -- `loopost` sells the second, see
     // A3 in feedback3.md -- so asking for two janitors with nowhere but that
     // one post gets one.
     ok(openPost === 1, 'what it opens is the post', `${openPost} janitors`),

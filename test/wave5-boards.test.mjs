@@ -2,7 +2,7 @@
 //
 // Three subjects, and they are all about the *boards* rather than about the
 // yard: seconds are a clock and never the letter s, the janitor's rows are filed
-// under the janitor's closet, and the books over the pit report what the yard
+// at the outhouse, and the books over the pit report what the yard
 // actually earned rather than what it ought to.
 //
 // The pips and the clock face itself are not in here and cannot be: no check in

@@ -2603,7 +2603,7 @@ the ground beneath it.
 
 It was pegs and a dashed run once — a surveyor's marking, which said "something belongs here" and
 left you to imagine what. The crate says it outright, in the vocabulary the rest of the yard is
-written in: the bench, the kit stand and the closet are all THINGS, and a heap of stone that lives in
+written in: the bench, the kit stand and the outhouse are all THINGS, and a heap of stone that lives in
 a box reads faster than a heap of stone that lives on a line.
 
 Three things about how it is drawn, each of them a fix for the same failure — that a crate has to
@@ -3327,7 +3327,7 @@ the rung, from one table (`WORK_BASE`), not hand-tuned per row:
 |---|---|---|
 | rung | one step up a ladder, and a hat off the school's stand | 8s |
 | place | a bench in the cut, a furrow, the recycler | 30s |
-| building | the lab, the school, the closet, the casino, the tower, the two sites | 90s |
+| building | the lab, the school, the outhouse, the casino, the tower, the two sites | 90s |
 | machine | the ram, the belt, the jaw, the tiller | 180s |
 
 A rung climbs with the ladder the way its price does (`WORK_STEP`, a third again
@@ -3764,7 +3764,7 @@ And two rules that are not about names:
 
 - **Every rated row states a unit.** Four lab rows say `+25%` of nothing.
 - **Every row has a note.** Fifteen of fifty-two have one, and which buildings
-  got one looks arbitrary: the scrubbing house, the closet and the tower have
+  got one looks arbitrary: the scrubbing house, the outhouse and the tower have
   them; the farm, the quarry, the lab, the casino and the school do not.
 
 **A place is always standing room for one more body.** `capOfBare` says so for

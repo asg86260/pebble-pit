@@ -68,6 +68,17 @@ export function drawOuthouse() {
     ctx.fillRect(c(MID - 1), my + P, P, P);
     ctx.fillRect(c(MID), my + P * 2, P * 2, P);
     ctx.fillStyle = '#000';
+
+    // The broom, standing on its own two cells clear of the wall: a wide flat
+    // head and a thin tall handle, which is the whole of what makes a broom a
+    // broom in six-pixel cells. It says the tools live here too -- the outhouse
+    // is the janitor's one building, and it kept a separate cupboard for a
+    // while (the closet). Clear of the wall rather than leaning, because two
+    // shapes that touch are one shape at this size. On the far side from the
+    // cap stand, which hangs off the near wall.
+    const head = c(WIDE + 2);
+    ctx.fillRect(head, r(TALL) - P * 2, P * 3, P * 2);       // the bristles, on the ground
+    ctx.fillRect(head + P, r(TALL) - P * 6, P, P * 4);       // and the handle out of them
   });
 }
 

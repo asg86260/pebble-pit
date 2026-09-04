@@ -11,10 +11,10 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
-        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, CLOSET_H,
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse, closet } from './state.js';
+import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
@@ -126,7 +126,7 @@ export const kitX = job =>
   // The wizards' stand is at the foot of the tower, because the tower is what
   // makes them: a hat on a stand outside the door of the place it was made in.
   job === JOB.WIZARD ? tower.x - P * 8 :
-  // And the janitors' outside the closet, which is where their caps come from --
+  // And the janitors' outside the outhouse, which is where their caps come from --
   // the shed keeps them, the way the tower keeps the cones. Clear to the left of
   // the front, because the door is cut in the middle of it and a stand across a
   // doorway is a stand somebody has to walk round to get in.
@@ -220,11 +220,7 @@ export function layPiles() {
 // who bought it early have it nearest to hand, which is the exact opposite of
 // what it is for. `boards.js` says so too, and said so out loud the first time
 // this was written without the pin.
-// The closet stands with the rooms rather than out in the walk. Everything in
-// `rest` slides into the order you bought it in, and the closet is never bought
-// -- it is the crew's own cupboard, and a cupboard that wandered off down the
-// yard as you opened places would be a shop stand nobody could learn the way to.
-const PINNED_FIRST = ['bench', 'house', 'closet'];
+const PINNED_FIRST = ['bench', 'house'];
 const PINNED_LAST = ['casino'];
 
 function siteOrder() {
@@ -669,9 +665,6 @@ export function seatSites() {
   // The outhouse, on the bare strip between the school and the rooms: no pile
   // claims that ground and it is where the crew already are.
   seat(outhouse, 'outhouse', OUTHOUSE_H);
-
-  // And the closet, next door to the rooms it belongs to.
-  seat(closet, 'closet', CLOSET_H);
 
   // The far end of everything. It is tall rather than wide, because it is the one
   // building that goes up rather than along: everything else in this yard is a

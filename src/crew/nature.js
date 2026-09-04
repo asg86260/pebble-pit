@@ -77,10 +77,10 @@ export function relieve(w, now) {
   // There used to be a shed to walk to, and the crew walked to it: across the
   // yard, in, out, and back to work. That is a long way to send somebody, it
   // took them off the job for the length of the walk, and it turned the thing
-  // you bought into a place rather than a job. What you buy now is the closet a
-  // janitor keeps a shovel in -- the *post*, not the destination -- so the mess
-  // still lands where the body was working and somebody whose job it is comes
-  // round and clears it. See `capOf`, which is what the closet actually opens.
+  // you bought into a place rather than a job. What you buy now is the post a
+  // janitor stands -- the *job*, not the destination -- so the mess still
+  // lands where the body was working and somebody whose job it is comes
+  // round and clears it. See `capOf`, which is what the outhouse actually opens.
   w.looUntil = now + LOO_MS;
   w.say = { mark: 'loo', until: w.looUntil };
   w.resting = false;                       // stopped, but this is not a break
