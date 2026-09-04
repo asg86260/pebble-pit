@@ -199,7 +199,7 @@ export const TESTS = [
     // gravity was gentle enough to let it drift inward, and stopped catching it
     // when gravity went up. The question is whether a body dropped over the rock
     // lands on the rock, and the middle is where that is asked.
-    const landed = await dropAt('m', s.rockX);
+    const landed = await dropAt('r', s.rockX);
     window.__crew(0, 0);
     return [
       ok(/^carrying {2}(nothing|[■▲⬢◯] \d)/m.test(hauled),
