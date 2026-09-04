@@ -45,6 +45,9 @@ const declared = src => {
   each(/\b(?:const|let|var)\s*\[([^\]]*)\]/g, m => m[1].split(',').forEach(add));
   each(/import\s*\{([^}]*)\}\s*from/g, m =>
     m[1].split(',').forEach(p => add(p.split(' as ').pop())));
+  // a barrel's `export { x } from './leaf.js'` names x without using it
+  each(/export\s*\{([^}]*)\}\s*from/g, m =>
+    m[1].split(',').forEach(p => add(p.split(' as ')[0])));
   each(/import\s+([A-Za-z_$][\w$]*)\s+from/g, m => add(m[1]));
   each(/function\s*\w*\s*\(([^)]*)\)/g, m =>
     m[1].split(',').forEach(p => add(p.split(/[=:]/)[0].replace(/^\.+/, ''))));
@@ -60,10 +63,22 @@ const declared = src => {
   return n;
 };
 
+// Walk the tree: the barrels' leaves live in subdirectories now, and a check
+// that only reads the top level shrinks toward nothing as they fill up. The
+// browser suite checks itself, so selftest stays out.
+const files = [];
+const walk = dir => {
+  for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (e.isDirectory()) { if (e.name !== 'selftest') walk(`${dir}/${e.name}`); continue; }
+    if (e.name.endsWith('.js') && e.name !== 'selftest.js') files.push(`${dir}/${e.name}`);
+  }
+};
+walk('src');
+
 let bad = 0;
-for (const f of readdirSync('src').sort()) {
-  if (!f.endsWith('.js') || f === 'selftest.js') continue;
-  const src = readFileSync(`src/${f}`, 'utf8');
+for (const path of files) {
+  const f = path.slice(4);   // drop 'src/' so the report reads as it always has
+  const src = readFileSync(path, 'utf8');
   const bare = src
     .replace(/\/\/[^\n]*/g, '')
     .replace(/\/\*[\s\S]*?\*\//g, '')
