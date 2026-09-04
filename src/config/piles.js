@@ -10,14 +10,35 @@ import { BANK_SLOPE } from './pit.js';
 // the area of a triangle, read backwards -- and a strip that wide fills to a
 // crest just as the limit is reached.
 //
-// Rounded up, and that rounding is also the headroom. A column may not stand at
-// a fraction of a cell, so every one of them holds a little more than the ideal
-// triangle wants: 180 grains go into 187 cells of room here, which leaves the
-// half-dozen still in the air when the station stops somewhere to land.
+// Counted rather than rounded, and that is Track F2's correction. A column may
+// not stand at a fraction of a cell, so what a strip really holds is the sum of
+// the FLOORS of its ceilings, and every one of those loses up to most of a cell:
+// the ideal triangle for the quarry's 180 wants a base of 21.9, and the 22 cells
+// that were reserved hold 176. The four missing grains never showed, because a
+// crate stood on the strip and its five cells of flat brim covered them over --
+// so the rounding-up was never actually the headroom the note above claimed, the
+// crate was. Item 8 took the crate away, which leaves this the one thing holding
+// a station's limit up, and a strip that cannot reach its own limit is a station
+// that never stops and a full-pile mark that never lights.
+//
+// So: the narrowest base whose whole cells hold the limit. It is a loop rather
+// than a formula because the loss is a sum of fractions and there is no closed
+// form for it -- and it is cheap, run once a key at layout time. The ideal
+// triangle is where it starts from, since the answer is never below that.
 //
 // The rock is not in here on purpose. Its spoil is a long bank of dust running
 // out to the lip of the pit, and a bank is what it should look like.
-export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SLOPE));
+const holds = base => {
+  let n = 0;
+  for (let c = 0; c < base; c++) n += Math.floor(Math.min(c + 1, base - 1 - c) * BANK_SLOPE);
+  return n;
+};
+export const heapBase = key => {
+  const want = PILE_LIMIT[key];
+  let base = Math.ceil(Math.sqrt(4 * want / BANK_SLOPE));
+  while (holds(base) < want) base++;
+  return base;
+};
 // --- Track PRESS ------------------------------------------------------------
 // The filter over the finished frame. See press.js for what each one is, and why
 // these three are drawn in 2D rather than through a shader -- the pass that used

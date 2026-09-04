@@ -5,7 +5,7 @@
 // drawQuarryShed. The shared primitives (ctx, drawMark, withRise, risingPlace)
 // come from ./ctx.js, ./marks.js and ./rise.js.
 
-import { FARM_GATE, FARM_H, P, SPORE_CELL } from '../config.js';
+import { FARM_GATE, FARM_H, P, SHACK_EAVE, SPORE_CELL } from '../config.js';
 import { plotX } from '../farm.js';
 import { ladder, quarryCells } from '../quarry.js';
 import { S, cut, farm, quarry } from '../state.js';
@@ -169,14 +169,62 @@ export function drawFarm() {
 // The farm's and the quarry's own shed, in the black-box-with-a-door style
 // every building here is drawn in -- a mass, and a hole knocked in it for the
 // way in. See C5 in wave-feedback3.md.
-function drawShed(rect) {
+//
+// The mass and the door are all the two of them had, which is item 1 of
+// feedback5: two identical black boxes with a slot in each, standing at the two
+// sites you spend the most time looking at, and nothing about either one saying
+// which trade is worked there. They get a course of height and an eave here --
+// that is the presence, and it is shared, because a shack is a shack -- and one
+// piece of its own furniture each, passed in by the caller.
+//
+// The detail has to be black and it has to be OUTSIDE the box. Every one of
+// these buildings is a solid mass, so anything drawn inside the wall can only be
+// a white hole, and this yard has one white hole that means something: a way in.
+// A second one on the same face is a second door. So the beam goes through the
+// wall and out the other side, and the trough stands on the ground beside it.
+function drawShed(rect, detail) {
   const { x, y, w, h } = rect;
   ctx.fillStyle = '#000';
   ctx.fillRect(x, y, w, h);
+  // The eave, the same lip the crew's rooms wear: half a cell of roof hanging
+  // past each wall. It is what separates a building from a block, and it is the
+  // cheapest presence there is -- one rect, and it survives being small.
+  ctx.fillRect(x - SHACK_EAVE, y - SHACK_EAVE, w + SHACK_EAVE * 2, SHACK_EAVE);
   ctx.fillStyle = '#fff';
   const dw = Math.min(P * 2, w - P * 2), dh = Math.min(P * 3, h - P);
-  ctx.fillRect(x + (w - dw) / 2, y + h - dh, dw, dh);
+  const head = y + h - dh;                      // the top of the doorway
+  ctx.fillRect(x + (w - dw) / 2, head, dw, dh);
   ctx.fillStyle = '#000';
+  if (detail) detail(rect, head);
+}
+
+// The cut's shack: a timber over the door, run through the wall so its ends
+// stand out either side of it. A doorway that has to be propped is what says
+// this is the shed at the hole in the ground rather than the one at the field --
+// it is the same timbering the cut itself would be held open with, and the only
+// place on a solid black front where it can be seen is where it comes out.
+function quarryBeam({ x, w }, head) {
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x - P, head - P, w + P * 2, P);
+}
+
+// The field's shack: a trough on the ground beside it. A floor with a wall
+// standing at each end of it, which is a U -- what makes it read as a vessel is
+// the notch of white between the two walls, and a solid block at the foot of a
+// wall is a buttress.
+//
+// On the shed's far side from the plots, which is not where a trough would
+// obviously go and is the only clear ground there is: the fence's near post, the
+// first furrow and its stalk all stand within a few cells of the shed's other
+// wall, and a trough drawn into that reads as one more black smudge in a row of
+// them. The bare run between the shack and the farmhands' kit stand is the one
+// piece of ground at this site with nothing on it.
+function farmTrough({ x }) {
+  const foot = S.groundY;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(x - P * 5, foot - P, P * 4, P);
+  ctx.fillRect(x - P * 5, foot - P * 2, P, P);
+  ctx.fillRect(x - P * 2, foot - P * 2, P, P);
 }
 
 // Both sheds rise out of the ground while they are being built, like every
@@ -193,14 +241,14 @@ export function drawFarmShed() {
   const rising = risingPlace() === 'farm';
   if (!S.farmOpen && !rising) return;
   const r = farmShed();
-  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r));
+  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r, farmTrough));
 }
 
 export function drawQuarryShed() {
   const rising = risingPlace() === 'quarry';
   if (!S.quarryOpen && !rising) return;
   const r = quarryShed();
-  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r));
+  withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r, quarryBeam));
 }
 
 
