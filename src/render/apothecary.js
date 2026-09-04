@@ -116,14 +116,12 @@ export const potX = i => apothecary.x + APOTH_POT_ROW + i * POT_PITCH;
 // bottle and the whole thing read as a ladder with paint on it. So: a box wider
 // than it is tall, and a bottle that is a bottle.
 //
-// TEMP (wave5-shelf): two treatments to choose between, switchable. `rack` is an
-// open frame -- posts, planks, bottles standing against the sky. `cabinet` puts
-// the same bottles behind a black case, in pigeonhole slots. Set
-// `window.__shelfLook = 'cabinet'` to shoot the other one. Delete the loser, the
-// switch and this comment before it lands.
-const SHELF_LOOK = 'rack';
-const shelfLook = () => globalThis.__shelfLook || SHELF_LOOK;
-
+// It is an open rack -- posts, planks, and the bottles standing against the sky
+// with nothing behind them. A closed cabinet with a slot per bottle was drawn
+// and looked at beside it: at the size the yard is actually played, the divider
+// between one slot and the next put a black cell between every bottle, and the
+// dividers and the corks merged into a lattice you had to work to read stock out
+// of. Color is the only thing in this box for a reason.
 const shelfTop = () => S.groundY - APOTH_SHELF_H;
 export const shelfX = () => apothecary.x + APOTH_HUT_W + APOTH_GAP;
 const shelfCols = () => Math.round(APOTH_SHELF_W / P);
@@ -157,11 +155,10 @@ function bottle(x, y, color) {
 // can count, and the numeral is the honest way to say forty.
 const bottlesOn = key => Math.min(SHELF_CAP, doseStock(key));
 
-// --- treatment: the open rack --------------------------------------------------
 // Two posts and three planks, and nothing behind them. The bottles stand against
 // the sky, which is the most color per pixel this can be and the plainest reading
 // of "there are five of those left".
-function drawRack() {
+function drawShelves() {
   const x = shelfX(), top = shelfTop(), g = S.groundY, cols = shelfCols();
   for (let r = 0; r * P < g - top; r++) {           // the two posts, to the ground
     ctx.fillStyle = grain(0, r); ctx.fillRect(x, top + r * P, P, P);
@@ -180,46 +177,6 @@ function drawRack() {
     for (let b = 0; b < n; b++)
       bottle(bottlesX() + b * BOTTLE_PITCH * P, shelfY(i), t.color);
   }
-}
-
-// --- treatment: the cabinet ----------------------------------------------------
-// The same bottles behind a case: a black frame all round, a white interior, and
-// a divider between one bottle's place and the next, so a place with nothing in
-// it reads as an empty slot rather than as absence. Furniture with a job.
-function drawCabinet() {
-  const x = shelfX(), top = shelfTop(), g = S.groundY, cols = shelfCols();
-  const rows = Math.round((g - top) / P);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x, top, cols * P, g - top);
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++) {
-      if (c !== 0 && c !== cols - 1 && r !== 0 && r !== rows - 1) continue;
-      ctx.fillStyle = grain(c, r);
-      ctx.fillRect(x + c * P, top + r * P, P, P);
-    }
-  for (let i = 0; i < TONICS.length; i++) {
-    const t = TONICS[i], py = plankY(i), y = shelfY(i);
-    for (let c = 1; c < cols - 1; c++) {            // the shelf itself
-      ctx.fillStyle = grain(c, i * APOTH_SHELF_ROWS + 3);
-      ctx.fillRect(x + c * P, py, P, P);
-    }
-    ctx.fillStyle = '#000';
-    for (let b = 1; b <= SHELF_CAP; b++)
-      ctx.fillRect(bottlesX() + b * BOTTLE_PITCH * P - P, y, P, BOTTLE_H * P);
-    // A tick of the brew's color on the frame beside its shelf: in a closed case
-    // an empty shelf shows no color at all, and which shelf is which is exactly
-    // the question an empty shelf raises.
-    ctx.fillStyle = t.color;
-    ctx.fillRect(x, y + P, P, (BOTTLE_H - 1) * P);
-    const n = bottlesOn(t.key);
-    for (let b = 0; b < n; b++)
-      bottle(bottlesX() + b * BOTTLE_PITCH * P, y, t.color);
-  }
-}
-
-function drawShelves() {
-  if (shelfLook() === 'cabinet') drawCabinet();
-  else drawRack();
 }
 
 // --- one pot ------------------------------------------------------------------

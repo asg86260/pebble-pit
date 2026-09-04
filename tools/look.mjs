@@ -50,19 +50,6 @@ const LIP = `window.__levels({haulCarryLevel:5, haulPaceLevel:5, harnessLevel:5,
 // the thing being looked at.
 const SKYAT = `${RICH} window.__look(window.__state().rockLeftX - 300);`;
 
-// TEMP (wave5-shelf): the apothecary standing with four pots and nothing on the
-// boil, so the shelf beside them is the only thing in the frame doing anything.
-// `SHELF=cabinet node tools/look.mjs apothshelf` shoots the other treatment;
-// without it you get the rack. Goes when the treatment is chosen.
-const SHELF = `window.__reset(); window.__crew(1, 4, 0, 2);
-  window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
-  window.__buy('unlockfarm'); window.__finish();
-  window.__buy('unlockapothecary'); window.__finish();
-  window.__buy('anotherpot'); window.__finish();
-  window.__buy('anotherpot'); window.__finish();
-  window.__buy('anotherpot'); window.__finish();`;
-const SHELF_LOOK = `window.__shelfLook = ${JSON.stringify(process.env.SHELF || 'rack')};
-  window.__fast(3); window.__look(window.__state().apothecaryX - 320);`;
 
 const SCENES = {
   // Bodies, wearing everything the school sells, standing where you can see them.
@@ -121,18 +108,22 @@ const SCENES = {
     window.__fast(50);
     window.__look(window.__state().apothecaryX - 320);`,
 
-  // TEMP (wave5-shelf): the shelf of stock, stocked, for choosing a treatment.
-  // Four scenes, two treatments by two stock levels: 5/2/1 is the everyday
-  // reading (a full plank, a couple, one), and 12/99/999 is what a shelf does
-  // once it holds more bottles than it has room to stand -- and, at three
-  // digits, that the count still cannot reach past the case it lives in.
-  //
-  // The pots are set and left cold on purpose -- what is under the eye here is
-  // the shelf, and four fires burning beside it are four things pulling at it.
-  apothshelf: `${SHELF} window.__stock('stew',5); window.__stock('brace',2);
-    window.__stock('strong',1); ${SHELF_LOOK}`,
-  apothshelf12: `${SHELF} window.__stock('stew',12); window.__stock('brace',99);
-    window.__stock('strong',999); ${SHELF_LOOK}`,
+  // The rack of stock, stocked, with the camera on it and the pots left cold --
+  // four fires burning beside it are four things pulling the eye off the thing
+  // being looked at. Mixed on purpose: a full plank, a couple, and one over the
+  // cap, so one shot carries both readings the rack has to make -- bottles you
+  // count, and the numeral that takes over once there are more of them than the
+  // plank can stand. See `drawShelves` in render/apothecary.js.
+  apothshelf: `window.__reset(); window.__crew(1, 4, 0, 2);
+    window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
+    window.__buy('unlockfarm'); window.__finish();
+    window.__buy('unlockapothecary'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__buy('anotherpot'); window.__finish();
+    window.__stock('stew', 5); window.__stock('brace', 2);
+    window.__stock('strong', 12);
+    window.__fast(3); window.__look(window.__state().apothecaryX - 320);`,
 
   apothbuff: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});
