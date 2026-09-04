@@ -7,7 +7,7 @@
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
   ROCK_W_MAX, ROCK_H_MAX, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
-  ROCK_CLEAR, SHAKE_LAND, WORKER
+  ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CLEAR
 } from './config.js';
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
@@ -629,13 +629,38 @@ export const RAM_REACH = 8;
 // into the ground it has cleared, and its tender walks along with it, and the
 // progress through the hill is a thing you watch happen rather than a bar.
 //
-// Nothing is remembered, so the awkward case takes care of itself: a new
-// boulder puts the face back at the near end and the ram is at its parked spot
-// again. That matters because the boulders grow -- each one reaches further into
-// the ground in front of it -- and a ram that remembered how far it had crawled
-// would be standing inside the next one.
-export const ramX = () =>
-  Math.round((rockFaceX() - P * (RAM_REACH + spriteW(RAM))) / P) * P;
+// A new boulder puts the face back at the near end, so the parked spot comes
+// back with it. That matters because the boulders grow -- each one reaches
+// further into the ground in front of it -- and a ram that remembered how far
+// it had crawled would be standing inside the next one.
+//
+// **It drives, it does not teleport.** The parked spot is the target; where the
+// machine actually is chases it -- a slow crawl forward as the face retreats,
+// and a brisk reverse the moment a boulder is finished, quick enough that it is
+// parked again before the next rock is down. The chase is clamped by real
+// elapsed time, so it advances the same under a fast-forwarded clock, and a
+// fresh page starts the machine at its spot rather than driving it in from
+// nowhere.
+//
+// And never into the bench: the target itself is clamped clear of it. The spot
+// is measured off the face, and a fresh boulder's face is near enough that the
+// machine stood into the bench's own silhouette.
+const ramTargetX = () => {
+  const parked = rockFaceX() - P * (RAM_REACH + spriteW(RAM));
+  return Math.round(Math.max(bench.x + bench.w + RAM_CLEAR, parked) / P) * P;
+};
+let ramNowX = null, ramMovedAt = 0;
+export function ramX() {
+  const target = ramTargetX();
+  const t = now();
+  if (ramNowX == null) { ramNowX = target; ramMovedAt = t; }
+  const f = Math.max(0, (t - ramMovedAt) / (1000 / 60));   // elapsed, in frames
+  ramMovedAt = t;
+  const d = target - ramNowX;
+  const speed = d < 0 ? RAM_BACK : RAM_CRAWL;              // left is the drive home
+  ramNowX += Math.sign(d) * Math.min(Math.abs(d), speed * f);
+  return Math.round(ramNowX / P) * P;
+}
 
 defineMachine('ram', {
   job: JOB.ROCK,

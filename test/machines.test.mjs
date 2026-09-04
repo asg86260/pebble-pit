@@ -143,7 +143,12 @@ group('the ram advances into the hill as it eats it', async () => {
   const moved = face[face.length - 1] - face[0];
   const backwards = face.some((f, i) => i > 0 && f < face[i - 1]);
   const standoff = seen.map(s => s[0] - s[1]);
-  const held = standoff.every(d => d === standoff[0]);
+  // The machine *drives* after the face now rather than being pinned to it (see
+  // `ramX`: a crawl toward the parked spot, so a finished boulder does not
+  // teleport it home), so the standoff is not held to the pixel -- what must
+  // hold is that the arm's daylight never collapses and the machine never
+  // overshoots into the hill.
+  const daylight = standoff.every(d => d >= P * RAM_REACH);
 
   window.__crew(0, 0, 0);
   return [
@@ -152,13 +157,10 @@ group('the ram advances into the hill as it eats it', async () => {
     ok(!backwards, 'and never takes any back -- the hill is only ever eaten',
        face.join(' ')),
     ok(ram[ram.length - 1] > ram[0],
-       'and the ram walks in after it rather than standing still',
+       'and the ram drives in after it rather than standing still',
        `${ram[0]} -> ${ram[ram.length - 1]}`),
-    ok(held, 'holding exactly its own standoff the whole way',
-       `${standoff.join(' ')}`),
-    ok(standoff[0] > P * RAM_REACH,
-       'which leaves the arm real daylight to cross -- a stroke you can see',
-       `${standoff[0]}px, reach ${RAM_REACH} cells`)
+    ok(daylight, 'never closing the daylight the arm strikes across',
+       `${standoff.join(' ')}, reach ${RAM_REACH} cells`)
   ];
 });
 

@@ -1,4 +1,6 @@
 // --- the machines ---------------------------------------------------------------
+import { P } from './yard.js';
+
 // What a machine is worth, as a multiple of the complement its station could
 // hold by hand. See `handsOf` and DESIGN.md's "The machines".
 //
@@ -36,6 +38,18 @@ export const DUST_PER_SPARK = 60;
 // with. The runner charges it in one place, off the stack -- see `stepMachines`
 // -- which is why this is not three trebled constants at four call sites.
 export let MACHINE_FOUL = 0.4;
+// How the ram gets about: a slow crawl forward as the face retreats, and a
+// brisker drive in reverse when a boulder is finished and its parked spot is
+// back at the near end. Pixels a frame. The reverse is quick enough to beat
+// the next rock down from any distance a boulder run can open up, so the ram
+// is parked and ready when the rock lands -- but it drives back, it does not
+// teleport.
+export const RAM_CRAWL = 0.6;
+export const RAM_BACK = 8;
+// Bare ground kept between the bench and the ram's tail. The parked spot is
+// measured off the face, and a fresh boulder's face is close enough to the
+// bench that the machine stood into it.
+export const RAM_CLEAR = P * 3;
 // The rock's complement, which is the one a machine cannot read off the station.
 // `capOf('rock hands')` is `Infinity` and rightly so -- a rock is as long as it is,
 // and there is no floor plan to run out of. But the ram still has to be worth
