@@ -148,13 +148,6 @@ export const tonicColor = key => { const t = tonicOf(key); return t ? t.color : 
 // for another Ns" means on the card.
 export const doseLeftMs = w =>
   liveOf(w).reduce((most, d) => Math.max(most, d.until - now()), 0);
-// How much of a dose is left, 0..1, taking the freshest -- what the plume thins
-// against, so a body just topped up gives off a full plume even if something
-// else on it is nearly spent.
-export const doseFrac = w => {
-  const ms = Math.max(1, buffMs());
-  return liveOf(w).reduce((most, d) => Math.max(most, Math.min(1, (d.until - now()) / ms)), 0);
-};
 
 // The three readers, each returning the neutral value when the body wears no
 // dose of that kind. One of each kind at most, so each of these finds one or
@@ -472,21 +465,20 @@ export const brewFrac = () => {
 // trail hanging behind it and a body standing still stands in its own column.
 // A flame drawn on the head could only ever move with the head.
 //
-// Thinner the less of the dose is left, so a body coming to the end of one gives
-// off a wisp rather than stopping mid-plume.
+// Full strength for the dose's whole life. It used to thin as the dose wore
+// off, and that made the plume a timer you read at a glance -- which is not
+// its job: the buff is either on you or it is not, and a wisp reading as
+// "nearly out" had people standing at the pot waiting instead of working.
 export function stepDoseMotes(dt) {
   for (const w of S.workers) {
-    const frac = doseFrac(w);
-    if (frac <= 0) { w.moteAt = 0; continue; }
+    if (!doseLive(w)) { w.moteAt = 0; continue; }
     // Nothing to see through a wall, or off a body in the air. Read off the
     // body's own fields rather than by asking the lab and the house, which
     // would be this module importing half the yard to draw a mote.
     if (w.inside || w.aloft || w.lifted || w.falling) continue;
     const at = now();
     if (at < (w.moteAt || 0)) continue;
-    // Faster while the dose is fresh, so the plume thins as it wears off rather
-    // than stopping all at once.
-    w.moteAt = at + DOSE_MOTE_MS * (1.6 - frac * 0.8);
+    w.moteAt = at + DOSE_MOTE_MS;
     // A body under several tonics gives off all of them at once, mixed: one
     // mote of each colour, let go together off the same head. Not blended into
     // an average colour -- an average of green and purple is a colour that is

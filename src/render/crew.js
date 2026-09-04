@@ -549,7 +549,7 @@ export function drawWorkers() {
     // parked overhead. The haze thins as the dose wears off, so a nearly-spent
     // body gives off only a wisp and a fresh one fizzes. It is the one place a
     // worker itself carries colour, so a buffed body reads as buffed at a glance.
-    // See `doseFrac`, `doseColor` in apothecary.js.
+    // See `doseLive`, `tonicColor` in apothecary.js.
     // The tonic is not drawn on the body at all. It is a plume of coloured motes
     // let go from the head into the yard -- see `stepDoseMotes` in apothecary.js
     // -- so it stays where it was let go and a body that walks trails it behind.
