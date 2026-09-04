@@ -325,6 +325,11 @@ export const S = {
   potTonic: null,         // the tonic key the pot is set to, or null for off
   potKeep: true,          // keep brewing (an upkeep) or a one-off (a single batch)
   potPrefer: null,        // the job the round favors first, or null for whoever is passed
+  // A one-off batch has been brewed and the pot is done. Only means anything
+  // while `potKeep` is off. It was written, saved and restored without ever
+  // being declared here, which is how it stayed out of `BLANK` -- and so out of
+  // the reach of `seedGame`, which puts the yard back to what this file says.
+  potSpent: false,
   // Per-pot runtime, indexed by pot: how far a batch has come, and how many
   // doses are minted and waiting for the stirrer to deal out.
   brewAt: [],             // worker-milliseconds into the current batch, per pot
@@ -417,6 +422,228 @@ export const S = {
 // that remembers the last one. Nothing in play reads this: a player's new game
 // goes through `reset` as it always did.
 export const BLANK = JSON.parse(JSON.stringify(S));
+
+// --- what survives a reload -------------------------------------------------
+//
+// Which of the facts above are the player's, and which are only this session's.
+// It used to be answerable in one place only -- the body of `persist()` -- and
+// a field added here and forgotten there was silent: nothing warns you, and the
+// first anybody hears of it is a player saying the thing they bought is gone.
+// So the answer is a list, next to the facts, and `test/persist-roundtrip`
+// makes a field in none of the three lists a red test rather than lost data.
+//
+// `SAVED` is the plain part: written straight out and read straight back by one
+// loop in persist.js, against `BLANK` for what a missing key means. Adding a
+// field that is just a number, a flag or a list of them is one line here.
+//
+// The comments are the ones that used to sit over these lines in `persist()`;
+// they say why a field is worth keeping, which is the part that is not obvious.
+export const SAVED = [
+  'stored',               // dust in the hole: the whole point
+  'carryLevel',
+  'speedLevel',
+  'autoMine',
+  'cores',
+  'seenBench',
+  'seenSects',
+  'seenRows',
+  // The rift, and whether the hole has ever turned a grain away. What is
+  // actually *through* it is `rift`/`riftHeld`, which are clamped on the way in
+  // and so are hand-read -- see persist.js.
+  'seenFullPit',
+  'riftOpen',
+  'riftLevel',
+  'hideDone',
+  'pickLevel',
+  'critChanceLevel',
+  'critMultLevel',
+  'schoolOpen',
+  // the four trades that are nailed on. `rebalance` clamps them on the way in
+  // to what is actually standing there
+  'breakers',
+  'carters',
+  'blasters',
+  'growers',
+  'haulCarryLevel',
+  'haulPaceLevel',
+  'shards',
+  'spores',
+  'farmOpen',
+  'farmhands',
+  // a piece of research that finished while you were away is still news when
+  // you come back, and how many the lab let out for want of anything to do
+  'labDone',
+  'labLeft',
+  'tendLevel',
+  // The apothecary: the building, its crew, and the pot's standing order. A
+  // save from before it existed comes back with the pot idle and one pot to a
+  // building, which is what a fresh apothecary is.
+  'apothecaryOpen',
+  'stirrers',
+  'apothPots',
+  'potTonic',
+  'potKeep',
+  'potPrefer',
+  'potSpent',
+  'brewAt',
+  'doseHold',
+  'brewLevel',
+  'lengthLevel',
+  'strengthLevel',
+  'dosesLevel',
+  'labOpen',
+  'casinoOpen',
+  'scrubOpen',
+  'towerOpen',
+  'outhouseOpen',
+  'labKitLevel',
+  'fanLevel',
+  'spells',
+  'wizSpeedLevel',
+  'wizPowerLevel',
+  'labRooms',
+  // the sky: that the tower has called something down, and the red it paid in.
+  // What is left of the meteor is cells, so it is hand-written.
+  'meteorOpen',
+  'sparks',
+  // What the tower still owes you. The rain and the weather in flight are not
+  // saved, because a shower with no beginning is not a shower -- but a hat on
+  // the bench has been *paid for*, and closing the tab on one used to lose the
+  // dust, the stone and the crop with it.
+  'wizardHats',
+  'janitors',
+  'harnessLevel',
+  'bootsLevel',
+  'seenMess',
+  'recycler',
+  'seenAir',
+  'rains',
+  'recycled',
+  'muck',                 // what came down and has not been cleared
+  'chip',                 // which of CASINO_CHIPS is on the table
+];
+
+// The rest of what is saved: fields whose encode or decode is more than a copy
+// -- a run-length string, a clamp against another counter, a job that has been
+// renamed since the save was written. Their code stays in `persist()`, where
+// the reasoning for each of them is written out at length.
+//
+// The last six are not fields on `S` at all: the three sand grids and the sky
+// are module consts (below), the crew's chance is in rng.js, and the craft
+// belong to balloon.js. They are named here because this list is meant to be
+// readable as "everything a save carries that is not a plain copy", and leaving
+// the grids out of it would make the pit look unsaved.
+export const SAVED_BY_HAND = [
+  'runSeed',              // the run's name, and the stream it is partway through
+  'banked',               // every grain ever put in the hole; an old save has only `stored`
+  'seenCore',             // ...or a save from before it was written, which any banked core proves
+  'camX',                 // rounded out, and read back once, into `camWas`
+  'coreItem',             // a core loose in the world: a spot, or the fact of one
+  'crew',                 // an old save has a headcount per job and no total
+  'workers',              // saved as `who`: a name and a record apiece, not four counts
+  'rockhands',            // renamed from miners, and read under both names
+  'rockhandSpeedLevel',
+  'rockhandPickLevel',    // and from when one pick row bought both
+  'seenShard',
+  'quarryOpen',           // renamed from the cave, along with the three below
+  'quarriers',
+  'quarryPaceLevel',
+  'benchLevel',           // grandfathered up to the crew already standing in it
+  'quarryCells',          // how deep each column has been dug
+  'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save
+  'seenSpore',
+  'scholars',             // renamed from labbers
+  'plotLevel',            // grandfathered, the way `benchLevel` is
+  'introDone',            // an old save with anybody hired has plainly had its opening
+  'reunionDone',
+  'buried',
+  'looPosts',             // a save from before the second cap keeps the two it had
+  'machines',             // facts only: bought, driven, tuned, took the kit
+  'summon',               // three places, and only meaningful once the tower is open
+  'seenSpark',
+  'wizards',              // never more bodies up there than there are hats
+  'works',                // what the yard is part way through building, per site
+  'buildOrder',           // and the order its buildings went up in
+  'lent',                 // the jobs the builders were borrowed from
+  'purifiers',            // renamed from scrubbers
+  'haze',                 // rounded: a fraction of a mote is not worth the characters
+  'rockSand',             // what is lying on the rock, a column at a time
+  'pot',                  // the casino: what is on the table...
+  'pouring',              // ...whether its stake is still raining down...
+  'paying',               // ...and what a taken pot still owes the hole
+  'mult',                 // the lab's multipliers; its quarry one answered to `cave`
+  'plots',                // how far along each plot is, as hundredths
+  'plotTone',             // and the spore standing ripe on it
+  'boulder',              // the rock, as a run-length string...
+  'gw', 'gh',             // ...and the shape that string is read against
+  'boulderNo',
+  'coreBuried',           // whether this rock still owes you its core
+  'rift',                 // dust through the rift, clamped to the counter it came out of
+  'riftHeld',             // and the finds through it, each clamped the same way
+  // Written down and never read back: haulers are whoever is spare, so
+  // `rebalance` works the number out again from the crew and the other jobs. It
+  // stays in the file because the format on disk is not this refactor's to
+  // change, and because a save is also the thing a bug report arrives as.
+  'haulers',
+  // Saved and restored, but nothing else in the game reads it -- the crew's
+  // leavings live in `S.muck`, under a kind. A leftover the format still
+  // carries; kept for the same reason `haulers` is.
+  'poop',
+  // Not fields on S: the grids, the sky, the chance and the craft.
+  'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
+];
+
+// And everything else: this session's own, deliberately thrown away on a
+// reload. A moment rather than a fact (the tearing of the rift, a shower, a
+// spin), something worked out again on the way in (the layout, the rock tops,
+// what is lying in each pile), or something in flight that a reload has no
+// beginning for. Named rather than assumed, so that adding a field and not
+// thinking about it is a failing test.
+export const EPHEMERAL = [
+  // the window and the view, all measured at boot
+  'W', 'H', 'zoom', 'dpr', 'viewW', 'viewH', 'camY', 'camTo', 'camWas',
+  'follow', 'camLockY', 'shake', 'shakePh', 'shakeX', 'shakeY',
+  'worldW', 'worldH', 'cx', 'cy', 'groundY',
+  // read off the rock and the ground again every frame, or every survey
+  'rockTops', 'tick', 'floorGrains', 'floorMarks', 'piles', 'pileCount', 'pileFull',
+  'peakRow',
+  // the opening, while it is running
+  'intro', 'sceneHolds', 'introAt', 'introSaid', 'pair', 'buriedSay', 'buriedSayAt',
+  'introThrew',
+  // a rock on its way down, and the celebration for the last one
+  'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
+  // dust in the air: a grain mid-flight has no beginning to come back to
+  'chips', 'belt', 'paid', 'gulped', 'motes', 'trail', 'held', 'falling',
+  // the counter chasing the real number
+  'shownStored', 'tweenFrom', 'tweenTo', 'tweenAt', 'tweenMs',
+  // the tearing of the rift: an event, not a state
+  'riftGulp', 'riftShake',
+  'heldCore', 'coreTaker',
+  // smoke, curtains and chips off a hammer
+  'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',
+  'skyShown', 'flashAt',
+  // the wheel, and a hand that settled before you closed the tab
+  'wheel', 'spinAt', 'spinFrom', 'spinTo', 'spinUntil', 'tableAir', 'spinWon', 'hand',
+  // stopwatches, and the two the lab keeps behind `works`
+  'labIdleAt', 'research', 'research2',
+  // which boards are open, and what the pointer is doing
+  'boardOpen', 'schoolBoardOpen', 'apothBoardOpen', 'labBoardOpen', 'casinoBoardOpen',
+  'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
+  'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
+  'nextHit', 'resetArmed',
+  // worked out again from the counts, or only true for a few lines of a frame
+  'builders', 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  // the weather, and the part-grain the house is partway through
+  'raining', 'rainFor', 'scrubBank', 'pumpAt',
+  // Three that are hung on S by their own modules rather than declared above --
+  // where the buildings were put and the strips beside them (`placeSites` in
+  // world.js, worked out again every time the world is laid out) and the beat
+  // the opening's heart is on (intro.js). Named here so that the list is
+  // complete; declaring them above would be better, and is somebody's tidy-up.
+  'placed', 'strips', 'introHeart',
+  // housekeeping
+  'dirty', 'lastFrame', 'settleAt',
+];
 
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --
 // and the bench. These are mutated in place and never reassigned, so they are

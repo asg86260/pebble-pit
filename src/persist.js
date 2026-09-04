@@ -10,7 +10,7 @@ import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
 import { showPanel } from './board.js';
-import { S, floor, pit, cut, sky } from './state.js';
+import { S, BLANK, SAVED, floor, pit, cut, sky } from './state.js';
 import { SITES, rowFor, workFor, busyBuilderSites } from './works.js';
 import { resetCut, seamShards, dugShare } from './quarry.js';
 import { freshMachines, MACHINES, kitDisplaced } from './machines.js';
@@ -160,34 +160,57 @@ export function gridCount(str) {
   return n;
 }
 
+// Everything a save carries that is a plain copy of a field, taken straight off
+// the list in state.js. There is nothing to say about any of these one at a
+// time, which is exactly why they are a list: a field named there is saved from
+// the moment it is named, and there is no second place to remember.
+function savedFields() {
+  const out = {};
+  for (const k of SAVED) out[k] = S[k];
+  return out;
+}
+
+// A value put back the way a fresh yard has it, without handing out `BLANK`'s
+// own arrays and objects for the game to then mutate.
+const copyOf = v => Array.isArray(v) ? v.slice()
+  : v && typeof v === 'object' ? { ...v } : v;
+
+// ...and the same list read back. One rule rather than a coercion written out a
+// field at a time: what a field *is* is whatever its declaration in state.js
+// says it is, so a save with no key for it -- an old one, or one written before
+// the field existed -- gets what a fresh yard has, and a key that is there is
+// read as the kind of thing the field holds. `SAVED` can be a bare list of names
+// only because this is derived from the declaration rather than guessed per
+// field; a default written beside each name would be the same number twice.
+function readSaved(s) {
+  for (const k of SAVED) {
+    const blank = BLANK[k], v = s[k];
+    if (v == null) S[k] = copyOf(blank);
+    else if (Array.isArray(blank)) S[k] = Array.isArray(v) ? v.slice() : copyOf(blank);
+    else if (typeof blank === 'number') S[k] = +v || 0;
+    else if (typeof blank === 'boolean') S[k] = !!v;
+    else S[k] = v;
+  }
+}
+
 export function persist() {
   if (!S.dirty) return;
   S.dirty = false;
   save({
+    ...savedFields(),
     // Which run this is, and how far into it the chance has got. The seed alone
     // would start the stream over on every reload -- the same run's name on a
     // different run -- so the generator's one word of state goes with it. See
     // rng.js.
     runSeed: S.runSeed,
     rngState: rngState(),
-    stored: S.stored,
     banked: S.banked,
-    carryLevel: S.carryLevel,
-    speedLevel: S.speedLevel,
-    autoMine: S.autoMine,
-    cores: S.cores,
     seenCore: S.seenCore,
-    seenBench: S.seenBench,
-    seenSects: S.seenSects,
-    seenRows: S.seenRows,
     // The rift, and what is standing in it. This is the one part of the pile
     // that is not in the pile: `stored` counts it, the hole does not hold it,
     // and losing this line on the way out would be the difference between a
     // player's dust being somewhere else and being gone.
-    seenFullPit: S.seenFullPit,
-    riftOpen: S.riftOpen,
     rift: S.rift,
-    riftLevel: S.riftLevel,
     // and the coins it holds, for the same reason and with the same weight:
     // four numbers, against a pile that would otherwise have to hold every
     // shard you ever found for the counter to be true
@@ -197,10 +220,6 @@ export function persist() {
     // where-you-were the player sets by hand. Rounded because a pixel of a
     // pixel is not worth the characters.
     camX: Math.round(S.camX),
-    hideDone: S.hideDone,
-    pickLevel: S.pickLevel,
-    critChanceLevel: S.critChanceLevel,
-    critMultLevel: S.critMultLevel,
     core: S.coreItem && !S.heldCore ? { x: S.coreItem.x, y: S.coreItem.y } : null,
     coreLoose: S.heldCore || !!S.coreItem,
     // what the sites have given up and nobody has carried in yet: it was never
@@ -211,17 +230,12 @@ export function persist() {
     // back four strangers standing where your crew was.
     who: S.workers.map(keepOf),
     rockhands: S.rockhands,
-    schoolOpen: S.schoolOpen,
-    breakers: S.breakers,
-    carters: S.carters,
-    blasters: S.blasters,
-    growers: S.growers,
+    // Haulers are whoever is spare, so this is worked out again on the way in
+    // rather than read -- it is written down for the sake of a save being
+    // readable when one arrives as a bug report.
     haulers: S.haulers,
     rockhandSpeedLevel: S.rockhandSpeedLevel,
     rockhandPickLevel: S.rockhandPickLevel,
-    haulCarryLevel: S.haulCarryLevel,
-    haulPaceLevel: S.haulPaceLevel,
-    shards: S.shards,
     seenShard: S.seenShard,
     quarryOpen: S.quarryOpen,
     quarriers: S.quarriers,
@@ -241,44 +255,13 @@ export function persist() {
     // so every swing left in the bench turned up nothing and the dig you were
     // halfway through paid you nothing at all.
     quarryOwed: S.quarryOwed,
-    spores: S.spores,
     seenSpore: S.seenSpore,
-    farmOpen: S.farmOpen,
-    farmhands: S.farmhands,
     scholars: S.scholars,
-    labDone: S.labDone,
-    labLeft: S.labLeft,
-    tendLevel: S.tendLevel,
     plotLevel: S.plotLevel,
-    // the apothecary: the building, its crew, and the pot's standing order
-    apothecaryOpen: S.apothecaryOpen,
-    stirrers: S.stirrers,
-    apothPots: S.apothPots,
-    potTonic: S.potTonic,
-    potKeep: S.potKeep,
-    potPrefer: S.potPrefer,
-    potSpent: S.potSpent,
-    brewAt: S.brewAt,
-    doseHold: S.doseHold,
-    brewLevel: S.brewLevel,
-    lengthLevel: S.lengthLevel,
-    strengthLevel: S.strengthLevel,
-    dosesLevel: S.dosesLevel,
-    labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
     buried: S.buried,
-    casinoOpen: S.casinoOpen,
-    scrubOpen: S.scrubOpen,
-    towerOpen: S.towerOpen,
-    outhouseOpen: S.outhouseOpen,
     looPosts: S.looPosts,
-    labKitLevel: S.labKitLevel,
-    fanLevel: S.fanLevel,
-    spells: [...(S.spells || [])],
-    wizSpeedLevel: S.wizSpeedLevel,
-    wizPowerLevel: S.wizPowerLevel,
-    labRooms: S.labRooms,
     // The machines, as facts only: whether each was bought, whether it is driven,
     // and whether it took the station's kit. The beats and the phases are not
     // saved -- they are clocks the drawing reads, and a machine comes back mid
@@ -297,16 +280,9 @@ export function persist() {
     // handed back. The hat on the go is not: a spell in the middle of being cast
     // when you closed the tab is a spell with no beginning, the same rule the
     // rain goes by, so the tower starts it again and you have not paid twice.
-    meteorOpen: S.meteorOpen,
     meteorCells: sky.cells ? Array.from(sky.cells) : null,
     summon: +(S.summon || 0).toFixed(3),
-    sparks: S.sparks,
     seenSpark: S.seenSpark,
-    wizardHats: S.wizardHats,
-    // What the tower still owes you. The rain and the weather in flight are not
-    // saved, because a shower with no beginning is not a shower -- but a hat on
-    // the bench has been *paid for*, and closing the tab on one used to lose the
-    // dust, the stone and the crop with it.
     // What the yard was in the middle of building. Paid for and part done, so
     // closing the tab on one would lose the coin and the labour both -- the same
     // argument the hat above makes. Worker-seconds rather than a deadline, which
@@ -325,20 +301,10 @@ export function persist() {
     // The craft the house has sold. Two numbers and an eased height apiece; the
     // lane is the index and who is aboard is a fact about the body.
     craft: craftSave(),
-    janitors: S.janitors,
-    harnessLevel: S.harnessLevel,
-    bootsLevel: S.bootsLevel,
-    seenMess: S.seenMess,
-
-    recycler: S.recycler,
-    seenAir: S.seenAir,
     haze: Math.round(S.haze),
-    rains: S.rains,
-    recycled: S.recycled,
-    muck: S.muck || [],
     poop: S.poop || [],
-    // and what is lying on top of the rock, which is a layer like the two above
-    // and belongs to the rock the save already writes down. Column by column,
+    // and what is lying on top of the rock, which is a layer like the muck and
+    // belongs to the rock the save already writes down. Column by column,
     // bottom grain first.
     rockSand: (S.rockSand || []).map(a => (a || []).join(',')),
     pot: S.pot && { ...S.pot },
@@ -367,7 +333,6 @@ export function persist() {
       left: S.paying.left + (S.tableAir || []).reduce((n, k) => n + (k.arc ? (k.worth || 0) : 0), 0),
       grains: S.paying.grains + (S.tableAir || []).filter(k => k.arc).length
     },
-    chip: S.chip,
     mult: { ...S.mult },
     plots: S.plots.map(b => Math.round(b * 100)),
     plotTone: [...S.plotTone],
@@ -426,64 +391,32 @@ export function restore() {
     clearBoulder();
     S.coreBuried = false;
     startIntro();
-    S.stored = 0;
+    // Reading a save that is not there. Every plain field goes back to what
+    // state.js says a yard is, which is what "no save" means -- and it is the
+    // same one line as reading a save, so the two cannot drift apart. This used
+    // to be sixty assignments, and it had already lost several of them.
+    readSaved({});
     S.banked = 0;
     S.shownStored = S.tweenFrom = S.tweenTo = 0;
-    S.carryLevel = 0;
-    S.speedLevel = 0;
-    S.autoMine = false;
     S.crew = 0;
-      S.cores = 0;
     S.seenCore = false;
-    S.seenBench = false;
-    S.seenSects = [];
-    S.seenRows = [];
-    S.seenFullPit = false;
-    S.riftOpen = false;
     S.riftGulp = 0; S.riftShake = 0;   // an event is not a state: see state.js
     S.rift = 0;
-    S.riftLevel = 0;
     S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
-    S.pickLevel = 0;
-    S.critChanceLevel = 0;
-    S.critMultLevel = 0;
     S.coreItem = null;
     S.rockhands = 0;
     S.haulers = 0;
-    S.schoolOpen = false;
-    S.breakers = 0;
-    S.carters = 0;
-    S.blasters = 0;
-    S.growers = 0;
     S.rockhandSpeedLevel = 0;
     S.rockhandPickLevel = 0;
-    S.haulCarryLevel = 0;
-    S.haulPaceLevel = 0;
-    S.shards = 0;
     S.seenShard = false;
     S.quarryOpen = false;
     S.quarriers = 0;
     S.quarryPaceLevel = 0;
     S.benchLevel = 0;
     S.machines = freshMachines();   // a new yard has no machines in it
-    S.labKitLevel = 0; S.labRooms = 1;
-  S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0; S.spells = [];
-    S.wizSpeedLevel = 0; S.wizPowerLevel = 0; S.fanLevel = 0; S.spells = [];
-    S.spores = 0;
     S.seenSpore = false;
-    S.farmOpen = false;
-    S.farmhands = 0;
     S.scholars = 0;
-    S.labDone = null;
-    S.labLeft = 0;
-    S.tendLevel = 0;
     S.plotLevel = 0;
-    S.apothecaryOpen = false; S.stirrers = 0; S.apothPots = 1;
-    S.potTonic = null; S.potKeep = true; S.potPrefer = null; S.potSpent = false;
-    S.brewAt = []; S.doseHold = [];
-    S.brewLevel = 0; S.lengthLevel = 0; S.strengthLevel = 0; S.dosesLevel = 0;
-    S.labOpen = false;
-    S.casinoOpen = false;
     S.pot = null;
     S.paying = null;
     S.pouring = false;
@@ -491,21 +424,18 @@ export function restore() {
     S.buildOrder = [];
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
-  S.plotTone = [];
     S.plotTone = [];
     return;
   }
-  S.stored = s.stored;
+  // Everything the save keeps as it stands, in one pass off the list in
+  // state.js. It runs first because the hand-written lines below it read what it
+  // sets -- the rift is clamped to `S.stored`, the wizards to `S.wizardHats` --
+  // and because a field nobody has had to think about should not need a line
+  // here at all.
+  readSaved(s);
   S.banked = s.banked || s.stored || 0;
   S.shownStored = S.tweenFrom = S.tweenTo = S.stored;
-  S.carryLevel = s.carryLevel || 0;
-  S.speedLevel = s.speedLevel || 0;
-  S.autoMine = !!s.autoMine;
-  S.cores = s.cores || 0;
   S.seenCore = !!s.seenCore || S.cores > 0;
-  S.seenBench = !!s.seenBench;
-  S.seenSects = Array.isArray(s.seenSects) ? s.seenSects : [];
-  S.seenRows = Array.isArray(s.seenRows) ? s.seenRows : [];
   // How far the hole has been dug decides how big the plot is, so it goes in
   // before the plot is laid out -- and the saved pile only fits a plot of the
   // shape it came out of.
@@ -517,11 +447,7 @@ export function restore() {
   // a finer grain arrives at six pixels -- its `pitStep` and `pitFine` are read
   // by nobody now, and the pile it wrote at three pixels or two will not fit
   // this plot. `rehomeDust` below is what puts that dust back where it goes.
-  S.hideDone = !!s.hideDone;
   setPitGrain();
-  S.pickLevel = s.pickLevel || 0;
-  S.critChanceLevel = s.critChanceLevel || 0;
-  S.critMultLevel = s.critMultLevel || 0;
   if (s.coreLoose) {
     S.coreItem = s.core
       ? { x: s.core.x, y: s.core.y, vx: 0, vy: 0, rest: true }
@@ -532,12 +458,6 @@ export function restore() {
   // Read both, old as the fallback, so a yard saved under the old names walks
   // back in with its people. Every renamed counter below does the same.
   S.rockhands = s.rockhands ?? s.miners ?? 0;
-  S.schoolOpen = !!s.schoolOpen;
-  // rebalance clamps them to what is actually standing there
-  S.breakers = s.breakers || 0;
-  S.carters = s.carters || 0;
-  S.blasters = s.blasters || 0;
-  S.growers = s.growers || 0;
   // A save from when the quarry was a cave. The place changed and the people
   // changed name with it; what they had done is still theirs.
   S.quarriers = s.quarriers ?? s.spelunkers ?? 0;
@@ -547,13 +467,7 @@ export function restore() {
   // them: the game does not take a body off a plot it used to have.
   S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
   S.plotLevel = Math.max(+s.plotLevel || 0, (s.farmhands || 0) - FARM_PLOTS0);
-  S.farmhands = s.farmhands || 0;
   S.scholars = s.scholars ?? s.labbers ?? 0;
-  // a piece of research keeps whatever the crew already put into it
-  // and one that finished while you were away is still news when you come back
-  S.labDone = s.labDone || null;
-  // and how many it let out, so a reload does not lose the ones it owes you
-  S.labLeft = +s.labLeft || 0;
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
@@ -600,9 +514,6 @@ export function restore() {
   S.rockhandSpeedLevel = s.rockhandSpeedLevel ?? s.minerSpeedLevel ?? 0;
   // A save from when one pick row bought both keeps what its rock hands had.
   S.rockhandPickLevel = s.rockhandPickLevel ?? s.minerPickLevel ?? (s.pickLevel || 0);
-  S.haulCarryLevel = s.haulCarryLevel || 0;
-  S.haulPaceLevel = s.haulPaceLevel || 0;
-  S.shards = s.shards || 0;
   S.seenShard = !!s.seenShard || S.shards > 0;
   S.quarryOpen = !!(s.quarryOpen ?? s.caveOpen);
   S.quarryPaceLevel = s.quarryPaceLevel ?? s.cavePaceLevel ?? 0;
@@ -611,27 +522,7 @@ export function restore() {
   // nought everywhere -- an unbroken floor, exactly what `resetCut` below then
   // lays fresh rock to match.
   S.quarryCells = Array.isArray(s.quarryCells) ? s.quarryCells.map(v => +v || 0) : null;
-  S.spores = s.spores || 0;
   S.seenSpore = !!s.seenSpore || S.spores > 0;
-  S.farmOpen = !!s.farmOpen;
-  S.farmhands = s.farmhands || 0;
-  S.tendLevel = s.tendLevel || 0;
-  // the apothecary. A save from before it existed comes back with the pot idle
-  // and one pot to a building, which is what a fresh apothecary is.
-  S.apothecaryOpen = !!s.apothecaryOpen;
-  S.stirrers = s.stirrers || 0;
-  S.apothPots = Math.max(1, s.apothPots || 1);
-  S.potTonic = s.potTonic || null;
-  S.potKeep = s.potKeep == null ? true : !!s.potKeep;
-  S.potPrefer = s.potPrefer || null;
-  S.potSpent = !!s.potSpent;
-  S.brewAt = Array.isArray(s.brewAt) ? s.brewAt.map(v => +v || 0) : [];
-  S.doseHold = Array.isArray(s.doseHold) ? s.doseHold.map(v => Math.max(0, Math.round(+v || 0))) : [];
-  S.brewLevel = s.brewLevel || 0;
-  S.lengthLevel = s.lengthLevel || 0;
-  S.strengthLevel = s.strengthLevel || 0;
-  S.dosesLevel = s.dosesLevel || 0;
-  S.labOpen = !!s.labOpen;
   // The opening happens once, ever. Coming back to a saved game is coming back
   // to a yard where it already happened.
   // A save from before the opening existed, with nobody hired yet, is a game
@@ -644,24 +535,11 @@ export function restore() {
   S.camLockY = null;
   S.pair = [];
   S.buried = s.buried ?? !!s.introDone;
-  S.casinoOpen = !!s.casinoOpen;
-  S.scrubOpen = !!s.scrubOpen;
-  S.towerOpen = !!s.towerOpen;
-  S.outhouseOpen = !!s.outhouseOpen;
   // A save from before the second cap existed arrives with two posts already --
   // it built the closet when that was the whole of what it bought, and nobody
   // loses a cap they had to a rung that did not exist yet.
   S.looPosts = s.looPosts ?? 2;
-  S.labKitLevel = s.labKitLevel || 0;
-  S.fanLevel = s.fanLevel || 0;
-  S.spells = Array.isArray(s.spells) ? s.spells.slice() : [];
-  S.wizSpeedLevel = s.wizSpeedLevel || 0;
-  S.wizPowerLevel = s.wizPowerLevel || 0;
-  S.labRooms = Math.max(1, s.labRooms || 1);
-  S.meteorOpen = !!s.meteorOpen;
-  S.sparks = s.sparks || 0;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
-  S.wizardHats = s.wizardHats || 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // and whatever was being built. Only the sites this build knows about and only
   // rows it still has: a save from a version with a row this one has dropped
@@ -710,15 +588,7 @@ export function restore() {
   }
   S.purifiers = s.purifiers ?? s.scrubbers ?? 0;
   craftLoad(s.craft);
-  S.janitors = s.janitors || 0;
-  S.harnessLevel = s.harnessLevel || 0;
-  S.bootsLevel = s.bootsLevel || 0;
-  S.seenMess = !!s.seenMess;
-  S.recycler = !!s.recycler;
-  S.seenAir = !!s.seenAir;
   S.haze = s.haze || 0;
-  S.rains = s.rains || 0;
-  S.recycled = s.recycled || 0;
   S.scrubBank = 0;
   // The rain itself is not saved. It is nine seconds long and it is weather:
   // coming back to a shower that started before you closed the tab is a shower
@@ -726,7 +596,6 @@ export function restore() {
   // that is somebody's job.
   S.raining = false;
   S.rainFor = 0;
-  S.muck = Array.isArray(s.muck) ? s.muck.slice() : [];
   S.poop = Array.isArray(s.poop) ? s.poop.slice() : [];
   // A save from before the rock was something dust could lie on has none, and
   // comes back to a bare hill.
@@ -779,8 +648,7 @@ export function restore() {
   // sand falls again out of an empty table, and the spin it was owed is still
   // owed. A pot that had already been spun for comes back a pot and nothing more.
   S.pouring = S.casinoOpen && !!S.pot && !!s.pouring;
-  S.chip = Math.max(0, +s.chip || 0);
-  S.hand = null;                 // a hand that settled before you closed the tab is old news
+  S.hand = null;                // a hand that settled before you closed the tab is old news
   // the lab's quarry multiplier answered to `cave` before the place was renamed
   if (s.mult) for (const k of Object.keys(S.mult)) S.mult[k] = s.mult[k] ?? (k === 'quarry' ? s.mult.cave : 0) ?? 0;
   if (Array.isArray(s.plots)) S.plots = s.plots.map(b => (+b || 0) / 100);
@@ -928,12 +796,15 @@ export function reset(fresh = true) {
   // the grain it is *at* -- the grain follows from the pile being rebuilt, and
   // reset does rebuild it -- and leaving the paid-for permission behind meant a
   // brand new yard came with the star's red already spent on it.
+  // Everything the save keeps, put back to what state.js says a yard is -- the
+  // same one line the "no save" arm of `restore` uses, and for the same reason:
+  // a new game and a game that has never been played are the same yard, and the
+  // list is the only place either of them says so. Naming a hundred fields here
+  // is what let a new game start with the last game's quarry in it.
+  readSaved({});
   // The rift: a new yard has no hole in the air in it, and nothing standing on
   // the other side of one.
-  S.seenFullPit = false;
-  S.riftOpen = false;
   S.rift = 0;
-  S.riftLevel = 0;
   S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
   S.paused = false;                // a new game is not a held one
   showPanel(null, true);           // nor one with the last game's board still up
@@ -944,37 +815,18 @@ export function reset(fresh = true) {
   S.belt = [];                       // and what was riding the belt, for the same reason
   S.paid = [];
   S.gulped = [];
-  S.stored = 0;
   S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;
   S.held = 0;
-  S.carryLevel = 0;
-  S.speedLevel = 0;
-  S.autoMine = false;
   S.crew = 0;
-  S.cores = 0;
   S.seenCore = false;
-  S.seenBench = false;
-  S.seenSects = [];
-  S.seenRows = [];
   setPitGrain();
-  S.pickLevel = 0;
-  S.critChanceLevel = 0;
-  S.critMultLevel = 0;
   S.coreItem = null;
   S.heldCore = false;
   S.rockhands = 0;
   S.haulers = 0;
-  S.schoolOpen = false;
-  S.breakers = 0;
-  S.carters = 0;
-  S.blasters = 0;
-  S.growers = 0;
   S.rockhandSpeedLevel = 0;
   S.rockhandPickLevel = 0;
-  S.haulCarryLevel = 0;
-  S.haulPaceLevel = 0;
-  S.shards = 0;
   S.seenShard = false;
   S.quarryOpen = false;
   S.quarriers = 0;
@@ -982,34 +834,15 @@ export function reset(fresh = true) {
   S.benchLevel = 0;
   S.quarryCells = null;
   S.machines = freshMachines();     // a new yard has no machines in it
-  S.labKitLevel = 0; S.labRooms = 1;
-  S.spores = 0;
   S.seenSpore = false;
-  S.farmOpen = false;
-  S.farmhands = 0;
   S.scholars = 0;
-  S.labDone = null;
-  S.labLeft = 0;
-  S.tendLevel = 0;
   S.plotLevel = 0;
-  S.apothecaryOpen = false; S.stirrers = 0; S.apothPots = 1;
-  S.potTonic = null; S.potKeep = true; S.potPrefer = null; S.potSpent = false;
-  S.brewAt = []; S.doseHold = [];
-  S.brewLevel = 0; S.lengthLevel = 0; S.strengthLevel = 0; S.dosesLevel = 0;
   S.apothBoardOpen = false;
-  S.labOpen = false;
   S.labBoardOpen = false;
-  S.casinoOpen = false;
-  S.scrubOpen = false;
-  S.towerOpen = false;
-  S.outhouseOpen = false;
   S.looPosts = LOO_POSTS;
-  S.meteorOpen = false;
   S.summon = 0;
   S.flashAt = 0;
-  S.sparks = 0;
   S.seenSpark = false;
-  S.wizardHats = 0;
   S.wizards = 0;
   S.works = {};
   S.buildOrder = [];
@@ -1019,20 +852,11 @@ export function reset(fresh = true) {
   sky.n = 0;
   S.purifiers = 0;
   clearCraft();
-  S.janitors = 0;
   S.introThrew = 0;
-  S.harnessLevel = 0;
-  S.bootsLevel = 0;
-  S.seenMess = false;
-  S.recycler = false;
-  S.seenAir = false;
   S.haze = 0;
   S.raining = false;
   S.rainFor = 0;
-  S.rains = 0;
-  S.recycled = 0;
   S.scrubBank = 0;
-  S.muck = [];
   S.poop = [];
   S.rockSand = null;
   seedSmog();
