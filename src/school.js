@@ -113,7 +113,7 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
   // the carts have no ceiling -- a set of six at a building's pace would be
   // twenty minutes of standing about for a purchase whose whole character is
   // that you make it again.
-  kind: 'rung', site: 'yard',
+  kind: 'rung', site: 'school',
   name: t.name,
   // What it is for. A row here is one word -- breaker, carter -- and the word is
   // the name of the kit rather than the thing it does, which is fine on a board

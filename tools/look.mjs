@@ -309,6 +309,14 @@ const SCENES = {
     window.__buy('quarrybench'); window.__buy('farmplot'); window.__fast(6);
     window.__look(window.__state().farmShed.x - 60);`,
 
+  // A trade mid-teaching: the school with its own bar over it, and a body at
+  // it. The one site that had no bar at all while its rows were the yard's.
+  schoolbar: `window.__reset(); window.__crew(3,3);
+    window.__grant({dust:99999, shards:99, cores:9});
+    window.__buy('unlockschool'); window.__finish();
+    window.__buy('breaker'); window.__fast(4);
+    window.__look(window.__state().schoolX - 300);`,
+
   // The far end of the walk: the tower, the star beside it and the ground under
   // the star, which is where item 10 put them. The star wants the meteor open or
   // there is nothing up there to look at.

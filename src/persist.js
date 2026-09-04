@@ -623,11 +623,16 @@ export function restore() {
   for (const site of SITES) {
     const was = s.works?.[site];
     const list = Array.isArray(was) ? was : was ? [was] : [];
-    const keep = list
-      .filter(w => w && w.key && rowFor(w.key) && w.of > 0)
-      .map(w => ({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
-                   of: w.of, at: w.at ?? null }));
-    if (keep.length) S.works[site] = keep;
+    for (const w of list) {
+      if (!(w && w.key && rowFor(w.key) && w.of > 0)) continue;
+      // Under the site the row says today, not the site the save filed it
+      // under: a work is re-homed when a row moves sites between builds (the
+      // school's trades were the yard's for a while), so a saved mid-training
+      // does not come back blocking the wrong site's queue.
+      const home = rowFor(w.key).site || site;
+      (S.works[home] ||= []).push({ key: w.key, done: Math.max(0, Math.min(w.of, w.done || 0)),
+                                    of: w.of, at: w.at ?? null });
+    }
   }
   // And the lab's own two fields, from before its research was ordinary work.
   // A piece that was half looked into comes back half looked into, on the bench

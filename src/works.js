@@ -19,7 +19,7 @@
 // which is how many pairs of hands are actually at a site this frame, the same
 // way the machines ask about their tenders.
 
-import { S, bench, quarry, farm, lab, scrub, tower, apothecary } from './state.js';
+import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school } from './state.js';
 import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
 import { JOB } from './jobs.js';
 
@@ -44,6 +44,13 @@ export const SITE_JOB = {
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.
   bench: JOB.BUILD,
+  // The school's training, taught at the school by whoever is spare. It was
+  // `site: 'yard'` on every trade row, which had two costs: a hat being taught
+  // blocked the yard's own building work, and the bar had no idea where to
+  // hang -- the yard's box is the building going up, and a trade builds no
+  // building, so the bar fell back to a guess centered on the camera and the
+  // school looked like the one station with no bar at all.
+  school: JOB.BUILD,
   // And the lab, which used to run a building site of its own behind the same
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
@@ -217,7 +224,7 @@ const YARD_ROW_SITE = {
   unlockapothecary: 'apothecary'
 };
 
-const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary };
+const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school };
 
 // Every room the settlement will have once the one going up lands -- one more
 // than today's count, the same way `nextHouseAt` in house.js asks.
