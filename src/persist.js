@@ -656,6 +656,28 @@ export function restore() {
   if (Array.isArray(s.plotTone)) S.plotTone = s.plotTone.map(v => +v || 0);
   resite();                    // the quarry is as deep and the plot as wide as it was
   restoreCrew(s.who);          // the same people, where they were, with what they have done
+  // A body written down is a body in the yard.
+  //
+  // The headcount and the list of people are two records of the same thing, and
+  // a save can carry them disagreeing -- the yard in `test/fixtures` does, with
+  // `crew: 23` over twenty-four people. Whichever way that happened, the bodies
+  // are the thing that exists and the count is only a tally of them, so the
+  // count gives way to the list rather than the other way about.
+  //
+  // It matters because `rebalance` deals the crew out into jobs and
+  // `syncWorkers` below stands down anybody the deal has no room for: one short
+  // in the count is one person gone on the reload, name, record and all. That
+  // used to be covered by an accident of reading order -- the janitors and the
+  // stirrers were read *after* `rebalance`, so the deal counted fewer jobs than
+  // the yard had and happened to leave a spare hauler's worth of room -- and
+  // reading the save off one list took the accident away with it. Saying it
+  // outright is better than either, because it does not care what order
+  // anything is read in.
+  //
+  // Only when the list is the longer of the two, and the deal is done again
+  // when it is: `rebalance` is where `S.haulers` comes from, so a crew corrected
+  // after it has run is a correction nobody is standing for.
+  if (S.workers.length > S.crew) { S.crew = S.workers.length; rebalance(); }
   syncWorkers();               // and anybody the counts say is missing
   // A site with no gang of its own -- the yard, the bench -- that was busy when
   // the tab shut is busy again the moment it comes back: `S.works` is written
