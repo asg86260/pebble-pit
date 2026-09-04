@@ -7,13 +7,23 @@
 import { DOOR_H, DOOR_W, LAB_FLUE, P, SMOKE_LIFE } from '../config.js';
 import { S, lab, school } from '../state.js';
 import { ctx, risingPlace, withRise } from '../render.js';
+import { drawDoseMote } from './effects.js';
 
 // Smoke off the lab's chimney -- and off a cigarette, which is the same smoke
 // at a little over half the size. It is the only thing that says the lab is
 // being worked, because the crew are inside it, so it is worth its own pixels.
 export function drawSmoke() {
   for (const p of S.smoke) {
-    const k = p.t / SMOKE_LIFE;
+    // Against its own life, not against the chimney's. A mote let go with a life
+    // of its own -- a machine's stack, a tonic burning off a body -- was faded
+    // on the lab's clock, so a short-lived one was still solid black when it was
+    // deleted and a long-lived one went invisible halfway up.
+    const k = p.t / (p.life ?? SMOKE_LIFE);
+    // A coloured mote is a tonic, and it is drawn as one: it pales toward the
+    // page as it ages rather than thinning to grey, because a colour at low
+    // alpha over a dark body is a muddy colour and this is the one thing on a
+    // worker that has to stay legible as *which tonic*.
+    if (p.color) { drawDoseMote(ctx, p.x, p.y, p.color, Math.min(1, k)); continue; }
     const size = Math.round(P * (p.s || 1) * (1 + k * 1.4));
     ctx.globalAlpha = Math.max(0, 0.5 - k * 0.5);
     ctx.fillStyle = '#000';

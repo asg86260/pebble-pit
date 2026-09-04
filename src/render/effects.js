@@ -11,23 +11,11 @@
 // These are drawn side by side on a blank page by preview.html, at whatever
 // stage of whatever parameter you want to see, with no simulation behind them.
 //
-// The import list is the other half of it: config and the noise, and nothing
-// else. A leaf module is what makes the preview cheap; the moment one of these
-// reaches for the yard, the preview has to build a yard.
+// The import list is the other half of it: config, and nothing else. A leaf
+// module is what makes the preview cheap; the moment one of these reaches for
+// the yard, the preview has to build a yard.
 import { P } from '../config.js';
-import { vnoise } from './flicker.js';
 
-// The tonic burning off a dosed body, in the tonic's own colour: the same fire
-// the cauldron keeps, at a body's scale. Columns across the body, each rising to
-// its own noise-driven height and flickering where it stands -- never swaying,
-// because a mote that slides sideways reads as a fly and a flame does not
-// travel. Same rule about large per-column offsets as the fire under the pot.
-//
-// It burns UPWARD off the head rather than up through the body: drawn from the
-// feet it filled the three cells the body is and painted the worker out.
-//
-// `x`,`y` are the body's top-left; `frac` is how much of the dose is left (see
-// `doseFrac`), and the flame is shorter the less there is.
 // A tonic's colour, lifted toward white by `k`. The fire under the cauldron runs
 // three hand-picked colours from hot yellow to a red tip; a tonic cannot, because
 // its colour is the thing that says *which tonic*, and three hand-picked shades
@@ -40,39 +28,17 @@ const lift = (hex, k) => {
   return `rgb(${up(r)},${up(gg)},${up(b)})`;
 };
 
-export function drawDoseFlame(g, x, y, color, frac, t) {
-  const cols = 3;                                    // the body is three cells wide
-  const mid = (cols - 1) / 2;
-  for (let c = 0; c < cols; c++) {
-    // Hard centre hump: the middle column runs two or three cells taller than
-    // its neighbours, which is what makes the shape come to a point instead of
-    // standing up as a block. Three cells is a narrow bed for a fire, so the
-    // difference between them has to carry most of the shape.
-    const hump = (1 - Math.abs(c - mid) / (mid + 0.25)) * 2.2;
-    const n = vnoise(c * 17.3 + t / 130) * 2.4       // this column's own flicker
-            + vnoise(c * 11.9 + 40 + t / 260) * 1.2; // and a slower second stream
-    const h = Math.max(0, Math.round((hump + n) * (0.35 + frac * 0.75)));
-    const fx = x + c * P;
-    // Solid tongues, and the flicker is the *height* -- exactly the fire under
-    // the cauldron. Winking individual cells out on the way up was tried first
-    // and it reads as static rather than as flame: what makes a pixel fire read
-    // is a jagged top edge moving, not holes in the middle of it.
-    for (let hy = 0; hy < h; hy++) {
-      const up = hy / Math.max(1, h - 1);           // 0 at the root, 1 at the tip
-      // Palest where it is hottest, at the root, deepening to the tonic's own
-      // colour at the tip -- the same direction the cauldron's fire runs, and
-      // the reason a one-colour flame read as a paper cut-out.
-      g.fillStyle = lift(color, 0.55 * (1 - up) * (1 - up));
-      // And the very tip of a tall tongue licks sideways. Only the topmost cell,
-      // and only when there is a tongue under it to lean off: shifted any lower
-      // the cell tore away from its own column and read as a speck floating
-      // beside the flame rather than as a flame leaning. A cell either side or
-      // not at all, on its own noise, so neighbouring tips lean independently --
-      // shifting whole columns together would be the travelling-wave mistake.
-      const lick = hy === h - 1 && h >= 3 && vnoise(c * 23.1 + t / 95) > 0.55
-        ? (vnoise(c * 7.7 + t / 150) > 0.5 ? 1 : -1) : 0;
-      g.fillRect(fx + lick * P, y - P - hy * P, P, P);
-    }
-  }
+// One mote of a rising plume: a cell that swells and pales as it ages. `k` is
+// how far through its life it is, 0 just let go and 1 gone.
+//
+// Colour and age are the whole of it. A mote is palest when it is oldest --
+// lifted toward white, which on this page is the same as dissolving into it --
+// so a plume fades out at the top instead of stopping. That is also why nothing
+// here uses alpha for the colour: white paper and a lifted colour do the same
+// job, and a lifted colour still prints as one flat cell rather than as a wash.
+export function drawDoseMote(g, x, y, color, k) {
+  const size = Math.max(1, Math.round(P * (1.05 - k * 0.35)));
+  g.fillStyle = lift(color, Math.min(0.85, k * 0.9));
+  g.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
   g.fillStyle = '#000';
 }

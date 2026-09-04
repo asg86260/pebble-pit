@@ -10,63 +10,65 @@
 </style>
 </head>
 <body>
-<!-- The effects bench: every effect in render/effects.js, drawn on its own at
-     whatever stage of whatever parameter is worth seeing, with no yard behind
-     it. Open it at /preview.html, or shoot it with tools/effect.mjs.
+<!-- The effects bench: everything in render/effects.js, drawn on its own with no
+     yard behind it. Open it at /preview.html, or shoot it:
 
-     It exists because the alternative is what tuning the tonic flame actually
-     cost: open a yard, hire a crew, build the apothecary, set a pot, wait for a
-     batch, and hope the body it dealt to walked into shot -- per attempt. -->
+       GAME=http://localhost:PORT/preview.html node tools/headless.mjs --shot out.png 1
+
+     It exists because of what tuning the tonic plume cost the other way: open a
+     yard, hire a crew, build the apothecary, set a pot, wait for a batch, and
+     hope the body it dealt to walked into shot -- per attempt. Twice now the
+     fault has been something a staged screenshot could not have shown: a lick
+     that only reads wrong across several moments, and a plume whose shape is the
+     path its emitter walked. -->
 <canvas id="bench"></canvas>
 <script type="module">
-import { P, WORKER } from './src/config.js';
-import { drawDoseFlame } from './src/render/effects.js';
+import { P } from './src/config.js';
+import { drawDoseMote } from './src/render/effects.js';
 
-const SCALE = 3;                       // a cell is six pixels; nobody can see that
+const SCALE = 3;
 const canvas = document.getElementById('bench');
 const g = canvas.getContext('2d');
 
-// One row per case, one column per stage of it. Add an effect by adding a row:
-// a name, the columns it wants, and how to draw one.
-const COLOURS = [['a hearty stew', '#5fb84f'], ['a bracing tonic', '#a05fd6'],
-                 ['a strong brew', '#4a86c7']];
-const ROWS = [];
-// A still cannot show a flicker, so one row shows the same flame at five moments
-// a few hundred milliseconds apart: if the silhouette is the same in all five it
-// is not a fire, whatever it looks like standing still. This is the check the
-// game itself cannot give you -- in the yard you get one moment per screenshot.
-ROWS.push({
-  what: 'a bracing tonic, full -- five moments apart',
-  cells: [0, 220, 440, 660, 880].map(off => (gg, x, y, t) => {
-    gg.fillStyle = '#fff';
-    gg.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-    gg.strokeStyle = '#000';
-    gg.lineWidth = 2;
-    gg.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-    drawDoseFlame(gg, x, y, '#a05fd6', 1, t + off);
-  })
-});
+// The motes are simulated here, not imported: what ships is one pure draw per
+// mote (`drawDoseMote`), and the rising and expiring belong to the yard's own
+// puff. So the bench runs its own little emitter, on the same numbers, and what
+// it is really showing you is the DRAW -- the colour, the size, the fade.
+const TONICS = [['a hearty stew', '#5fb84f'], ['a bracing tonic', '#a05fd6'],
+                ['a strong brew', '#4a86c7']];
+const LIFE = 750;                      // DOSE_MOTE_LIFE, in milliseconds
+const EVERY = 90;                      // DOSE_MOTE_MS
 
-for (const [name, colour] of COLOURS) {
-  ROWS.push({
-    what: `${name} -- full, half, nearly spent`,
-    cells: [1, 0.5, 0.15].map(frac => (gg, x, y, t) => {
-      // the body it burns off, so the flame is read at the size it really sits
-      gg.fillStyle = '#fff';
-      gg.fillRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-      gg.strokeStyle = '#000';
-      gg.lineWidth = 2;
-      gg.strokeRect(x + 1, y + 1, WORKER - 2, WORKER - 2);
-      drawDoseFlame(gg, x, y, colour, frac, t);
-    })
-  });
+// A plume, as a still: motes let go every EVERY ms from a head that is moving at
+// `speed` px/ms, each risen by however long it has been in the air. Standing
+// still that is a column; walking, it is the trail -- and the trail is the whole
+// reason these are motes in the world rather than a flame drawn on a head.
+function plume(gg, x, y, colour, speed) {
+  for (let age = LIFE; age > 0; age -= EVERY) {
+    const k = age / LIFE;
+    for (const off of [-P * 0.7, P * 0.7]) {
+      gg.save();
+      drawDoseMote(gg, x - speed * age + off + Math.sin(age / 90) * P * 0.4,
+                   y - age * 0.033, colour, k);
+      gg.restore();
+    }
+  }
 }
 
-const CELL_W = P * 12, CELL_H = P * 13;
-canvas.width = CELL_W * 5 * SCALE;
+const ROWS = [
+  { what: 'standing still -- stew, tonic, brew',
+    cells: TONICS.map(([, c]) => (gg, x, y) => plume(gg, x, y, c, 0)) },
+  { what: 'walking -- the trail it leaves (slow, quicker, quickest)',
+    cells: [0.04, 0.08, 0.14].map(v => (gg, x, y) => plume(gg, x, y, '#a05fd6', v)) },
+  { what: 'one mote, new to gone',
+    cells: [0, 0.5, 1].map(k => (gg, x, y) => drawDoseMote(gg, x, y, '#4a86c7', k)) }
+];
+
+const CELL_W = P * 20, CELL_H = P * 12;
+canvas.width = CELL_W * 3 * SCALE;
 canvas.height = CELL_H * ROWS.length * SCALE;
 
-function frame(t) {
+function frame() {
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.fillStyle = '#fff';
   g.fillRect(0, 0, canvas.width, canvas.height);
@@ -74,10 +76,9 @@ function frame(t) {
   ROWS.forEach((row, r) => {
     g.fillStyle = '#000';
     g.font = '7px ui-monospace, monospace';
-    g.fillText(row.what, 4, r * CELL_H + 10);
+    g.fillText(row.what, 4, r * CELL_H + 9);
     row.cells.forEach((draw, c) => {
-      // the body stands on the floor of its cell, so the flame has room over it
-      draw(g, c * CELL_W + P * 5, r * CELL_H + CELL_H - P * 4, t);
+      draw(g, c * CELL_W + P * 10, r * CELL_H + CELL_H - P * 2);
     });
   });
   requestAnimationFrame(frame);

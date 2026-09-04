@@ -66,7 +66,7 @@ import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
 import { tidyBoards, stationFoot } from './board.js';
 import { stepScrub } from './scrubhouse.js';
-import { stepApothecary, setTake } from './apothecary.js';
+import { stepApothecary, stepDoseMotes, setTake } from './apothecary.js';
 // A chip coming down over the hill, and whether the hill has taken it. The
 // height test is here rather than in `restOnRock` because it is the chip loop's
 // own question -- has this thing reached the surface yet -- and every other
@@ -194,6 +194,7 @@ export function step() {
   stepSparkle(dt);                            // and the magic they leave in the air
   stepScrub(dt);                              // and the pumps on the scrubbing house
   stepApothecary(dt);                         // and the pot on the boil, minting its doses
+  stepDoseMotes(dt);                          // and the tonic burning off whoever is under one
   // And the rift swallows, if it is torn. It takes grains off the top of the
   // pile without taking them off you -- see `swallow` in pit.js -- so this is
   // the one thing in the yard that empties the hole and leaves the counter where

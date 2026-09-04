@@ -42,6 +42,12 @@ export function puff(x, y, o = {}) {
       // do. See MACHINE_PUFF_RISE.
       rise: o.rise,
       life: o.life,
+      // Smoke is smoke, and has no colour: it is drawn in the yard's own ink.
+      // A tonic burning off a body is the same rising, coming-apart plume in the
+      // tonic's colour, which is the one thing about it that is not smoke -- so
+      // it is a colour a caller may pass rather than a second particle system
+      // that rises and spreads and expires all over again. See `drawSmoke`.
+      color: o.color,
       ...(o.flag ? { [o.flag]: true } : {})
     });
   }

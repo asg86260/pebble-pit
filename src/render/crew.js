@@ -10,7 +10,6 @@
 import { atPot, doseFrac, doseColor, tonicColor } from '../apothecary.js';
 import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
-import { drawDoseFlame } from './effects.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible } from '../intro.js';
@@ -549,11 +548,11 @@ export function drawWorkers() {
     // body gives off only a wisp and a fresh one fizzes. It is the one place a
     // worker itself carries colour, so a buffed body reads as buffed at a glance.
     // See `doseFrac`, `doseColor` in apothecary.js.
-    const frac = doseFrac(w);
-    // Anchored on the body's own spot, NOT on the position it is drawn at: `x`
-    // carries the lunge and is mirrored by `w.face`, so a flame hung off it
-    // swung with every swing and jumped sides when the body turned round.
-    if (frac > 0) drawDoseFlame(ctx, Math.round(w.x), Math.round(w.y), doseColor(w), frac, now());
+    // The tonic is not drawn on the body at all any more. It is a plume of
+    // coloured motes let go from the head into the yard -- see `stepDoseMotes`
+    // in apothecary.js -- so it stays where it was let go and a body that walks
+    // trails it behind. Anything drawn on the head could only ever move with the
+    // head, however it was anchored.
 
     // A stirrer carrying a dose holds a little vial over its head, the way a
     // hauler carries dust -- the same small flask that stands on the apothecary

@@ -19,7 +19,8 @@ import { P, RUNGS,
          DOSES0, DOSES5, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
          BREW_RUNG_SPORE, BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
-         APOTHECARY_DUST, APOTHECARY_CORES, WORKER } from './config.js';
+         APOTHECARY_DUST, APOTHECARY_CORES, WORKER,
+         DOSE_MOTE_MS, DOSE_MOTE_RISE, DOSE_MOTE_LIFE } from './config.js';
 import { S, apothecary } from './state.js';
 import { now, frames } from './clock.js';
 import { rand } from './rng.js';
@@ -27,6 +28,7 @@ import { walkY } from './world.js';
 import { JOB_OF, jobSaid } from './kit.js';
 import { rebalance, rungCost, commutePace } from './upgrades.js';
 import { registerRows, registerSite } from './works.js';
+import { puff } from './puff.js';
 import { JOB, TYPE } from './jobs.js';
 
 // --- the pot's dials, level by level ------------------------------------------
@@ -287,6 +289,38 @@ export const brewFrac = () => {
   for (const b of (S.brewAt || [])) best = Math.max(best, Math.min(1, (b || 0) / ms));
   return best;
 };
+
+// The tonic burning off the bodies that are under one: a plume of coloured motes
+// let go from the head, on the same machinery as every other plume in the yard
+// (see puff.js). Motes, not a shape drawn on the head: they are let go into the
+// *yard* and they stay where they were let go, so a body that walks leaves its
+// trail hanging behind it and a body standing still stands in its own column.
+// A flame drawn on the head could only ever move with the head.
+//
+// Thinner the less of the dose is left, so a body coming to the end of one gives
+// off a wisp rather than stopping mid-plume.
+export function stepDoseMotes(dt) {
+  for (const w of S.workers) {
+    const frac = doseFrac(w);
+    if (frac <= 0) { w.moteAt = 0; continue; }
+    // Nothing to see through a wall, or off a body in the air. Read off the
+    // body's own fields rather than by asking the lab and the house, which
+    // would be this module importing half the yard to draw a mote.
+    if (w.inside || w.aloft || w.lifted || w.falling) continue;
+    const at = now();
+    if (at < (w.moteAt || 0)) continue;
+    // Faster while the dose is fresh, so the plume thins as it wears off rather
+    // than stopping all at once.
+    w.moteAt = at + DOSE_MOTE_MS * (1.6 - frac * 0.8);
+    puff(w.x + WORKER / 2, w.y, {
+      n: 2,
+      s: 0.55,
+      rise: DOSE_MOTE_RISE,
+      life: DOSE_MOTE_LIFE,
+      color: doseColor(w)
+    });
+  }
+}
 
 export function stepApothecary(dt) {
   if (!S.apothecaryOpen) return;
