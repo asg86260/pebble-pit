@@ -31,13 +31,25 @@ import { motesWanted, reckon, skyMote, spread } from './vents.js';
 // wanted is a number of specks spread evenly over a band, and the honest way to
 // get that is to spread them evenly over the band.
 //
-// The golden angle does the spreading. Stepping a fraction of a turn each time,
-// with the fraction chosen so it never lines up with itself, is the arrangement
-// seeds take on a seed head and for the same reason: it is the one step that
-// leaves no gaps and makes no rows, at every count, without knowing the count in
-// advance. Two of them, at different steps, give a place across and a place down.
+// The golden angle does the spreading -- across, and only across. Stepping a
+// fraction of a turn each time, with the fraction chosen so it never lines up
+// with itself, is the arrangement seeds take on a seed head and for the same
+// reason: it is the one step that leaves no gaps and makes no rows, at every
+// count, without knowing the count in advance.
+//
+// Only the one axis gets it. This used to be two such sequences off the same
+// counter -- the golden ratio across, the plastic number down -- and a pair of
+// them is a lattice: every mote's place was a linear function of its number, so
+// the points fell into families of diagonal lines, and the sky read as woven
+// cloth. Worse, the sway lane was `k % SWAY_LANES`, a third linear function of
+// the same number -- so each lane owned its own regular comb of the lattice and
+// slid it across the others as one piece, which is a moving pattern by
+// construction. A haze must have no pattern in it at all: evenness across is
+// what the readout and the rain lean on, so that axis keeps the sequence, and
+// the depth and the lane are drawn from the yard's chance instead. Depth
+// variance hides inside a band a hundred pixels deep drawn in overlapping
+// specks; what it buys is that no three motes are ever collinear on purpose.
 const ACROSS = 0.6180339887498949;      // one turn less the golden ratio
-const DOWN = 0.7548776662466927;        // and the plastic number, for the other axis
 
 let slots = 0;                          // handed out, never reused, never reset
 
@@ -52,7 +64,8 @@ let slots = 0;                          // handed out, never reused, never reset
 // them for the same reason.
 export const nextSlot = () => {
   const k = slots++;
-  return { slot: k, su: (k * ACROSS) % 1, sv: (k * DOWN) % 1, lane: k % SWAY_LANES };
+  return { slot: k, su: (k * ACROSS) % 1, sv: rand(),
+           lane: Math.floor(rand() * SWAY_LANES) };
 };
 
 // Where a mote sits across the band: its slot's own place, uniform over the
