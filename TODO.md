@@ -13,6 +13,19 @@ only job-walkers gross out at poop (bodies mid-commute pass through); the
 buried square tosses cores into the pit's mouth, not at coreHome, to avoid
 the relaunch loop; the pickaxe's top bite is now 4px against the old capped
 2.2px, a real balance shift. Full suites still owed on main after the merge.
+## The grind pass — DESIGNED, awaiting approval (2026-09-05)
+
+The economy measured with a driven playthrough (`tools/node/playbot.mjs`,
+landed with the design): the opening bench clears in eleven minutes, a new
+board is affordable on the frame it opens, spores pile to thirteen thousand
+against seventeen shards, and no six-hour run ever reached a wizard or a
+machine. Diagnosis and six levers — reprice the grounds by mint rate, open
+boards poor, let the bench ladders outrun the crew, turn the core waits into
+earnings, bring back the rift ladder as the endless red sink, re-measure with
+the bot — in "The grind pass (design, not built)" in DESIGN.md, with a target
+pacing table. Blocker: the user's sign-off on the levers and the exact
+numbers; also verify quarry occupancy on a real save before touching shard
+supply (the bot's shard famine may be its own staffing policy).
 
 ## The abyss — BUILT (2026-09-04)
 

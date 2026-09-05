@@ -4457,3 +4457,118 @@ the buried square does it, which would be the better story. And whether
 machines' spark-priced ladders count as rungs (instant) or builds (walked);
 the rule above says instant, but a machine physically growing a stage would
 look terrific. Decide when the bench is real.
+## The grind pass (design, not built)
+
+The game's prices were set against the yard that existed when each row was
+written; the yard that actually reaches them is richer, and getting richer
+faster than any five-rung ladder gets dearer. Measured with a playthrough bot
+(`tools/node/playbot.mjs` — clicks the rock, staffs the stations, buys every
+shown row it can pay for; four strategies, two seeds, six game-hours each),
+the run looks like this:
+
+- **The opening bench is one purchase, not eight.** First dust banks around
+  minute seven; within the following *forty seconds* every one of the eight
+  opening rows is affordable, and a greedy player clears the whole bench —
+  thirty-one rungs — by minute eleven. The 1.6x rung curve never gets ahead of
+  a crew that is itself compounding (each house is more hands, and the house
+  costs only 1.35x a body).
+- **A new board opens already beaten.** The farm door is bought ten seconds
+  after it first shows. The apothecary is the worst case: the door and all
+  seven of its ladders — twenty-three rungs — go in under four minutes, every
+  row affordable *on the frame the board first existed*. The board is a list
+  to click through, not a set of choices.
+- **The three grounds mint at wildly different rates and are priced at par.**
+  By hour six the yard holds thirteen to twenty thousand spare spores against
+  a peak of seventeen shards — yet `DUST_PER` says a shard and a spore are
+  both worth forty dust, and ladders in either coin start at the same handful.
+  Everything shard-priced (the pickaxe, the harness, the school, the fan, the
+  wizard at forty shards) starves for hours and then lands in one burst;
+  nothing spore-priced is ever a decision. In six greedy hours no run ever
+  afforded a wizard, so sparks — the whole red economy, the machines, the
+  tuning ladders — were never touched.
+- **Cores are waits, not goals.** The quarry door (two cores) sits shown and
+  unaffordable for ninety minutes; the lab door (two more) for nearly four
+  hours. Cores come one a rock on the rock's own clock, so nothing the player
+  does moves these — the mid-game's two biggest purchases are timers wearing
+  price tags.
+- **Dust has nowhere to go.** By hour six income is six hundred to a thousand
+  dust a minute; the endless house is the only sink still standing, and the
+  user's own late saves show every counter in surplus.
+
+One caveat the numbers carry: the bot's shard famine is partly its own crew
+policy — before retuning anything shard-side, measure quarry occupancy on a
+real save (are the benches actually swinging?). If a staffed cut digs this
+slowly for a player too, that is a defect, not a tuning.
+
+### The bargain
+
+The fix is not "make everything expensive". It is: **a purchase should be
+seen before it can be had, and had before the next one is seen.** The gap
+between *seen* and *had* is the grind, and it should be minutes early, tens
+of minutes in the middle, and the better part of an hour late. Targets, in
+active-play minutes (4 clicks/sec, sensible staffing — the bot's greedy run):
+
+| milestone | today | target |
+|---|---|---|
+| opening bench cleared | 11 min | 30–45 min |
+| farm open | 24 min | 15–25 min (fine) |
+| apothecary board cleared | +4 min after door | +45–90 min |
+| quarry open | 116 min (waiting) | 35–55 min (earning) |
+| lab open | 4 h (waiting) | 1.5–2.5 h (earning) |
+| first wizard | never (6 h) | 2.5–4 h |
+| first machine | never (6 h) | 5–8 h |
+| spare coins at 6 h | 13k spores, 5k dust | < 30 min of income, any coin |
+
+### The levers, in the order they are worth pulling
+
+1. **Reprice the grounds by what they mint.** `DUST_PER` calls shard and
+   spore equals; the yard mints spores at up to two hundred a minute and
+   shards at a handful an hour. Split them: spore 40 → 15, shard 40 → 60,
+   and multiply the spore leg of every spore-priced ladder by three to four
+   (the apothecary's `brewRung` base 5/300 → 18/900, `quarrybench` 3 → 10,
+   `quarrypace` 4 → 12, `labcave`/`labtend` likewise). The farm's glut is the
+   apothecary's upkeep coin, so the ongoing `BREW_CROP` 5 → 12 as well. This
+   is one table and a handful of `first` constants — no mechanism changes.
+
+2. **Open a board poor.** A door you can afford is a door whose board you
+   cannot yet clear: set every station ladder's first rung at roughly *half
+   the door*, not a fortieth of it. The apothecary door is 900 dust and its
+   ladders open at 300; the farm door is 600 and a plot is 260 (about right —
+   and the farm is the one board that pacing survives on). Add the stagger
+   the bench already knows (`seenX` flags, not thresholds): potency rows show
+   after the first brew lands, `brewdoses`/`bufflength` after the third, the
+   second pot after the fifth. Earned reveals, in the house pattern.
+
+3. **Make the opening bench outrun the crew.** Keep `rungCost` at 1.6x — the
+   solo player prices are right — but the crew rows should climb with the
+   crew they serve: `haulcarry`/`haulpace`/`rockhandspeed` first costs x3
+   (50/60/70 → 150/180/210), and the house 1.35x → 1.45x so the twentieth
+   body is a real decision (60 → ~64k lifetime instead of ~35k). The crit
+   pair x4 (60/80 → 240/320): they are the strongest per-rung buy on the
+   board and currently the cheapest.
+
+4. **Turn the core waits into earnings.** Keep cores one a rock — the rhythm
+   is right — but let the doors lean on the grounds the player can push:
+   quarry door 2 cores + 1,800 dust → 1 core + 6,000 dust; lab door 2 cores
+   + 5,000 → 1 core + 12,000 + 20 spores. The player still needs the rock's
+   gift, but the rest of the bill is theirs to hurry.
+
+5. **Give the late coins somewhere to die.** The tower already lost its
+   endless red sink (TODO, wave 5 follow-up 3); the decided list says sparks
+   tear *and widen* the rift — so the rift-widening ladder returns as the
+   endless spark sink (x1.7 a rung, gain worth watching but not owning, in
+   the tune-ladder mold). The wizard's endless x1.7 three-coin bill is
+   already the natural spore/shard drain — the reason it never fires is that
+   nobody reaches it, which levers 1–4 fix. No new sink beyond what is
+   already decided; the surplus is a supply problem wearing a sink costume.
+
+6. **Keep the bot, and re-measure every pull.** `tools/node/playbot.mjs`
+   lands with this pass; the table above is its output, and each lever is
+   verified by rerunning it, not by re-reading the constants. The pacing
+   table in "Pacing" above gets re-measured the same way once the dust
+   settles.
+
+Not doing: income nerfs (the crew doubling, the lab multipliers and the
+hats are the game's feel and they stay); prices indexed to live income (a
+price that chases the player can never be beaten, and the sky is already
+the one live opponent); any new plant or sink outside the decided list.
