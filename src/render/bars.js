@@ -2,8 +2,8 @@
 // render.js; behavior unchanged. Owns bar, barSpot and drawWorkBars. ctx comes
 // from ./ctx.js.
 
-import { P } from '../config.js';
-import { S } from '../state.js';
+import { P, TOWER_SHAFT } from '../config.js';
+import { S, tower } from '../state.js';
 import { SITES, progressOf, siteBox, worksAt } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -48,6 +48,13 @@ export function bar(cx, cy, at) {
 // hand any more.
 const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
 
+// The spire: the main shaft, without the turret hung off the right-hand side.
+// The tower's own rect spans both, so a bar centered on it lands right of the
+// point. The top is raised by the weather vane's three cells plus one course so
+// the ordinary BAR_CLEAR does not draw the bar through the vane.
+const towerSpireBox = () =>
+  ({ x: tower.x, w: P * TOWER_SHAFT, y: tower.y - P * 4, h: tower.h + P * 4 });
+
 // Sites whose box is wider than their building hang the bar over the building.
 // The quarry's and farm's boxes are ground -- the hole and the plots -- and the
 // apothecary's is the whole plot of hut, shelves and pots; a bar centered on
@@ -57,7 +64,14 @@ const BAR_CLEAR = P * 4;                 // how far above the top of a thing it 
 // Deferred with arrows: this module sits in an import cycle with world.js, so
 // naming the bindings while the object is built reads them before they exist.
 const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
-                      apothecary: () => apothHut() };
+                      apothecary: () => apothHut(),
+                      // The tower's box is the shaft plus the turret off its
+                      // right side, so the middle of it sits well right of the
+                      // point -- and a bar about the hat being made under that
+                      // roof belongs over that roof. This is the one bar the
+                      // tower gets: the hand-drawn second one it used to paint
+                      // itself is deleted. (feedback6 item 9)
+                      tower: towerSpireBox };
 
 export function barSpot(site) {
   const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site);

@@ -937,6 +937,7 @@ export function reset(fresh = true) {
   S.flashAt = 0;
   S.seenSpark = false;
   S.wizards = 0;
+  S.teachers = 0;
   S.works = {};
   S.buildOrder = [];
   S.lent = [];

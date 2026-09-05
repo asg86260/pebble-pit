@@ -62,6 +62,8 @@ import { newScholar, stepScholar } from '../lab.js';
 import { newPurifier, stepPurifier } from '../scrubhouse.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
+import { newTeacher, stepTeacher } from './teacher.js';
+import { stepShedwork } from './shedhand.js';
 import { quarryMuck, plotMuck } from '../smog.js';
 
 export const JOBS = {
@@ -87,9 +89,15 @@ export const JOBS = {
     factory: newQuarrier,
     want: () => S.quarriers,
     step: {
-      work: (w, c) => stepQuarrier(w, c.now, c),
+      // An upgrade on the go claims one of the gang: it stops quarrying, walks
+      // to the shed and stands there while the bar fills -- see shedhand.js.
+      // `stepShedwork` owns the body for exactly those frames.
+      work: (w, c) => stepShedwork(w) || stepQuarrier(w, c.now, c),
       mess: {
-        when: w => upTop(w) && (quarryMuck() > 0 || S.pileFull.quarry),
+        // ...and the claimed body is off the shovel too: it is standing at the
+        // shed on purpose, and a mess errand would walk it away from the work
+        // it is the only hands on.
+        when: w => !w.onBuild && upTop(w) && (quarryMuck() > 0 || S.pileFull.quarry),
         // and back to the station when the mess is gone or the pile has been
         // cleared: `to` is the walk to it, so nobody is put back.
         back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
@@ -101,9 +109,9 @@ export const JOBS = {
     factory: newFarmhand,
     want: () => S.farmhands,
     step: {
-      work: (w, c) => stepFarmhand(w, c.now, c.dt, c),
+      work: (w, c) => stepShedwork(w) || stepFarmhand(w, c.now, c.dt, c),
       mess: {
-        when: w => upTop(w) && (plotMuck() > 0 || S.pileFull.farm),
+        when: w => !w.onBuild && upTop(w) && (plotMuck() > 0 || S.pileFull.farm),
         back: w => { if (w.goal === 'muck') { w.goal = 'to'; w.muckAt = null; } }
       }
     }
@@ -146,6 +154,15 @@ export const JOBS = {
     factory: newStirrer,
     want: () => S.stirrers,
     step: { work: stepStirrer, shutIn: w => w.goal === 'in' }
+  },
+
+  // A teacher behind the school's door is behind a door like a scholar: the
+  // trades taught in there are works at the school, and they run only while
+  // somebody is actually in there to teach them. See `ARRIVED` in muster.js.
+  [TYPE.TEACH]: {
+    factory: newTeacher,
+    want: () => S.teachers,
+    step: { work: stepTeacher, shutIn: w => w.goal === 'in' }
   },
 
   [TYPE.JANITOR]: {

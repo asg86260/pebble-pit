@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse } from './state.js';
+import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, school } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
@@ -51,6 +51,10 @@ export const POSTS = [
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },
+  // One teacher, through the school's door, or the trades on its board stall.
+  // (wave6-sim, item 1)
+  { key: 'teachjob', job: JOB.TEACH,
+    at: () => school.x + school.w / 2, show: () => S.schoolOpen },
   // The shed does not clean anything. What it buys is somebody whose job the
   // mess is -- see `capOf` -- so the post stands under it.
   { key: 'loojob', job: JOB.JANITOR,

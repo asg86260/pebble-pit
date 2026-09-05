@@ -1,14 +1,11 @@
-// The outhouse and the wizard's tower, and the tower's pour and hat readouts.
-// Extracted verbatim from render.js; behavior unchanged. Owns drawOuthouse,
-// drawTower, drawTowerWaves, drawTowerBar and towerBarAt. The shared primitives
-// (ctx, drawHat, withRise, risingPlace) come from ./ctx.js, ./crew.js and
-// ./rise.js.
+// The outhouse and the wizard's tower, and the tower's pour readout. Owns
+// drawOuthouse, drawTower and drawTowerWaves. The shared primitives (ctx,
+// withRise, risingPlace) come from ./ctx.js and ./rise.js.
 
 import { now } from '../clock.js';
-import { DOOR_H, DOOR_W, MAGIC_TONES, P, TOWER_SHAFT, TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, WORKER } from '../config.js';
+import { DOOR_H, DOOR_W, MAGIC_TONES, P, TOWER_SHAFT, TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R } from '../config.js';
 import { S, floor, outhouse, tower } from '../state.js';
-import { brewAt, brewing } from '../tower.js';
-import { drawHat } from './crew.js';
+import { brewing } from '../tower.js';
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
 import { risingPlace, withRise } from './rise.js';
@@ -196,41 +193,7 @@ export function drawTowerWaves() {
   ctx.fillStyle = '#000';
 }
 
-// How far along the hat is, over the tower: the same bar the lab gets, in the
-// same place over the building doing the work, filling a cell at a time.
-//
-// The board says the same thing in words, and that is not enough on its own: a
-// number you have to walk across the yard and open a menu to see is a number you
-// check once and forget is running. This is the two minutes made visible from
-// wherever you happen to be standing.
-export function drawTowerBar() {
-  if (!S.towerOpen || !brewing()) return;
-  const at = towerBarAt();
-  const w = P * 14, h = P * 3;
-  const x = at.x - w / 2, y = at.y - h / 2;
-
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x, y, w, h);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(x, y, w, h);
-
-  ctx.fillStyle = '#000';
-  const room = w - P * 2;
-  const done = Math.round(room * brewAt() / P) * P;
-  if (done > 0) ctx.fillRect(x + P, y + P, done, h - P * 2);
-
-  // and the hat it is making, over the bar, so the bar is about something
-  drawHat(at.x - WORKER / 2, y - P * 2, 'point', true);
-}
-
-// Clear of the weather vane over the point, which is three cells up from the
-// roof: a bar drawn through it would be two marks in one place.
-// Over the spire, not over the building. The turret off the right-hand side is
-// two and a half cells of the tower's width, so the middle of the whole thing
-// sits well to the right of the point -- and a bar about the hat being made
-// under that roof belongs over that roof.
-export function towerBarAt() {
-  return { x: Math.round((tower.x + P * TOWER_SHAFT / 2) / P) * P,
-           y: Math.round((tower.y - P * 8) / P) * P };
-}
+// There is no drawTowerBar any more. The hat's progress was drawn twice -- once
+// here, once by the generic work bars -- two bars for one work, one of them a
+// hand-kept copy of the other. The generic bar in bars.js hangs it over the
+// spire now (see `towerSpireBox` there). (feedback6 item 9)

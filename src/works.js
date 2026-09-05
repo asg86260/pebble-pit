@@ -44,13 +44,14 @@ export const SITE_JOB = {
   // The bench's own ladders, fitted at the bench: the one site where what is
   // being built is not a place but a thing about somebody.
   bench: JOB.BUILD,
-  // The school's training, taught at the school by whoever is spare. It was
-  // `site: 'yard'` on every trade row, which had two costs: a hat being taught
-  // blocked the yard's own building work, and the bar had no idea where to
-  // hang -- the yard's box is the building going up, and a trade builds no
-  // building, so the bar fell back to a guess centered on the camera and the
-  // school looked like the one station with no bar at all.
-  school: JOB.BUILD,
+  // The school's training, taught by the teacher. It was `JOB.BUILD` -- taught
+  // by whoever was spare -- which left the training grounds the one station
+  // with no post on the boards and no body of its own through the door. The
+  // school *building* is still put up by the yard's spare hands: `unlockschool`
+  // is a yard row, so this line was never about the construction. And a school
+  // with no teacher assigned is still lent a spare hand, the same as the
+  // tower's first hat -- see `busyBuilderSites`. (wave6-sim, item 1)
+  school: JOB.TEACH,
   // And the lab, which used to run a building site of its own behind the same
   // door: its own clock, its own bar, its own two save fields. A piece of
   // research is a thing somebody stands there and works at, which is what every
@@ -253,6 +254,14 @@ export function siteBox(site) {
       return { x: left, w: right - left, y: top, h: S.groundY - top };
     }
   }
+  // A row that knows its own ground says so. The machines are yard rows whose
+  // thing is not a placed site -- the belt is a run from the rock's right edge
+  // to the pit's lip -- and without this they fell through to the guess below,
+  // which centered the belt's bar on `w.at`: the tail of the run, inside the
+  // boulder. The row's `box` is the machine's own extent, so the bar lands over
+  // the middle of what is being built. (feedback6 item 6)
+  const boxed = rowFor(w.key)?.box?.();
+  if (boxed) return boxed;
   const placed = S.placed && S.placed[YARD_ROW_SITE[w.key]];
   if (placed) return { x: placed.x, w: placed.w, y: placed.y, h: placed.h };
   // A yard row this table does not know about yet: a guess centred on where the

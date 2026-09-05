@@ -24,6 +24,10 @@ export const TYPE = Object.freeze({
   STIR:    'stirrer',
   JANITOR: 'janitor',
   WIZARD:  'wizard',
+  // The training grounds' own body. Every other station's works are done by its
+  // gang or by the yard's spare hands; the school had neither -- a post on the
+  // boards with nobody through the door. (wave6-sim, item 1)
+  TEACH:   'teacher',
   BUILD:   'builder'
 });
 
@@ -40,6 +44,7 @@ export const JOB = Object.freeze({
   STIR:    'stirrers',
   JANITOR: 'janitors',
   WIZARD:  'wizards',
+  TEACH:   'teachers',
   BUILD:   'builders'
 });
 

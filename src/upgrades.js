@@ -275,7 +275,7 @@ export const gainText = u => {
 // can be taken back the moment you want the dust moving again -- except a body
 // that has been to the school, which is the deliberate exception and the reason
 // the rule is worth stating out loud. See school.js.
-export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD];
+export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.STIR, JOB.JANITOR, JOB.WIZARD, JOB.TEACH];
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
@@ -401,6 +401,11 @@ const capOfBare = job =>
   // you build: there is as much room in the sky as there are people who can get
   // to it.
   job === JOB.WIZARD ? S.wizardHats :
+  // One teacher, once the training grounds stand: it is a room with a lectern
+  // in it, the scrubbing house's argument word for word -- a second body in
+  // there is a queue, not a second class. Nought before it is built, because a
+  // teacher with no school is a body with nowhere to go. (wave6-sim, item 1)
+  job === JOB.TEACH ? (S.schoolOpen ? 1 : 0) :
   // The rock and the lip have no plan: a rock is as long as it is, and carrying
   // is what a body does when it is on nothing at all.
   Infinity;

@@ -422,7 +422,10 @@ export const S = {
   runSeed: 0,
   dirty: false,           // something changed worth saving
   lastFrame: 0,           // for the length of the last frame
-  settleAt: 0             // the column the pit settler got to last frame
+  settleAt: 0,            // the column the pit settler got to last frame
+
+  // wave6-sim: the training grounds' own body. See crew/teacher.js.
+  teachers: 0             // bodies put on the school; the works there stall without one
 };
 
 // The yard as it is written above, kept.
@@ -552,6 +555,8 @@ export const SAVED = [
   'recycled',
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
+  // wave6-sim
+  'teachers',
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy

@@ -283,6 +283,10 @@ defineMachine('belt', {
   type: TYPE.HAUL,
   at: beltFrom,
   y: beltY,
+  // The ground the machine covers, tail to reach, for anything that has to
+  // point at the belt as a whole rather than at one end of it -- the build
+  // bar hangs over the middle of this. See `siteBox` in works.js.
+  box: () => ({ x: beltFrom(), w: beltReach() - beltFrom() }),
   tendAt: beltPost,
   // At the lip end, over the last leg that has ground under it -- not at the
   // head, which hangs out over the hole.

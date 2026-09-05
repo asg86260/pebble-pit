@@ -47,7 +47,7 @@ import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 import { drawLab, drawSchool, drawSmoke } from './render/stations.js';
-import { drawOuthouse, drawTower, drawTowerBar, drawTowerWaves } from './render/tower.js';
+import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
 // game imports every one of these from render.js and has no business knowing
@@ -62,7 +62,7 @@ export { drawDoneMarks, doneMarkAt, overDoneMark } from './render/donemarks.js';
 export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
 export { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-export { drawOuthouse, drawTower, drawTowerBar, drawTowerWaves, towerBarAt } from './render/tower.js';
+export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 export { drawBalloons, drawBrollies } from './render/balloon.js';
 export { drawScrub } from './render/scrub.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
@@ -156,7 +156,6 @@ const LAYERS = [
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands
   { name: 'draught', draw: drawDraught },        // the air going into the scrubbing house
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
-  { name: 'tower bar', draw: drawTowerBar },     // and how far along the tower's hat is, over the tower
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
   { name: 'offers', draw: drawOffers },          // and an arrow under whichever of them has something for you

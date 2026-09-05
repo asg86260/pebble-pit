@@ -20,6 +20,7 @@ import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
 import { labDoor } from '../lab.js';
 import { scrubDoor } from '../scrubhouse.js';
+import { schoolDoor } from './teacher.js';
 import { apothecaryDoor } from '../apothecary.js';
 import { underMeteor } from '../wizard.js';
 import { outhouse } from '../state.js';
@@ -54,6 +55,7 @@ function handStationX(type) {
   if (type === TYPE.FARM) return plotX(0);
   if (type === TYPE.SCHOLAR) return labDoor() - WORKER / 2;
   if (type === TYPE.PURIFY) return scrubDoor() - WORKER / 2;
+  if (type === TYPE.TEACH) return schoolDoor() - WORKER / 2;
   if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;
   if (type === TYPE.JANITOR) return outhouse.x + outhouse.w / 2 - WORKER / 2;
   // A wizard's station is the ground under the meteor. The work is four hundred
@@ -128,6 +130,11 @@ export function settle(w) {
   w.routeTo = null;
   w.routeWay = null;
   w.muckAt = null;
+  // ...and the shed claim, which belongs to the job it was claimed on. A body
+  // retasked mid-upgrade lets go of it; the next frame's `stepShedwork` hands
+  // it to another of the gang, or the bar stalls -- honestly -- until one is.
+  w.onBuild = null;
+  w.atShed = false;
   w.cutClaim = null;
   w.tidyAt = null;
   w.foot = null;

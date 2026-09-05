@@ -43,7 +43,9 @@ function sentinel(blank, n) {
 // a played save's numbers do agree; it is only this check's nonsense ones that
 // cannot.
 const DEALT = ['breakers', 'carters', 'blasters', 'growers', 'farmhands',
-               'stirrers', 'janitors'];
+               'stirrers', 'janitors',
+               // wave6-sim: clamped to the school's one lectern on the way in
+               'teachers'];
 
 group('every plain field on the list survives a save and a load', async () => {
   const fields = SAVED.filter(k => !DEALT.includes(k));

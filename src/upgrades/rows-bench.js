@@ -63,6 +63,9 @@ export const BENCH_ROWS = [
     // row does not: the builders walk to it rather than building it from
     // wherever they happened to be.
     kind: 'machine', site: 'yard', at: () => specOf('belt')?.at(),
+    // ...and the ground the machine covers, for the bar to hang over: the whole
+    // run, rock to lip, not the tail `at` names. See `siteBox` in works.js.
+    box: () => specOf('belt')?.box?.(),
     name: 'the belt',
     bill: () => BELT_BILL,
     buy: () => { buyMachine('belt'); rebalance(); },
