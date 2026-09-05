@@ -267,13 +267,26 @@ group('a speck off a swing is the speck in the band', async () => {
   const rose = runUntil(() => climbing().length > 0, 30);
   const mote = climbing()[0];
   const startY = mote && mote.y;
-  // followed until it arrives, watching the one object rather than the counts
-  let solid = true, jumped = 0, lastY = startY;
+  // Followed until it arrives, watching the one object rather than the counts.
+  //
+  // The invariants changed with the plume's lifetime (PLUME_LIFE): a speck
+  // bound high no longer climbs the whole window -- past a couple of seconds
+  // it thins out where it is and joins the band at its own height. So "at
+  // full weight the whole way" and "never jumps" are the old rules; what must
+  // hold now is that nothing visible ever teleports (a jump only happens
+  // while it is faded to nothing) and its weight never flickers back up
+  // mid-climb (thinning is one-way until it settles).
+  let visibleJump = 0, flicker = 0, lastY = startY, lastFade = 1;
   for (let i = 0; i < 600 && mote && mote.up; i++) {
     run(1 / 30);
-    if ((mote.fade ?? 1) < 1) solid = false;
-    if (Math.abs(mote.y - lastY) > 40) jumped++;
+    const f = mote.fade ?? 1;
+    // A jump is visible only if the speck could be seen where it LEFT --
+    // weight at the new spot is it fading back in there, which is an
+    // arrival, not a teleport.
+    if (Math.abs(mote.y - lastY) > 40 && lastFade > 0) visibleJump++;
+    if (f > lastFade && mote.up) flicker++;
     lastY = mote.y;
+    lastFade = f;
   }
   const stillThere = mote && yard.smogSky().includes(mote);
   window.__crew(0, 0);
@@ -284,9 +297,10 @@ group('a speck off a swing is the speck in the band', async () => {
     ok(stillThere && mote && !mote.up,
        'and the thing that arrives in the band is that same speck',
        `${stillThere ? 'still the same object' : 'a different one'}`),
-    ok(solid, 'at full weight the whole way: it never goes out and comes back'),
-    ok(jumped === 0, 'and it never jumps: every pixel of the climb is travelled',
-       `${jumped} jumps over 40px`),
+    ok(visibleJump === 0, 'nothing you can see ever jumps: a leap happens only faded out',
+       `${visibleJump} visible jumps over 40px`),
+    ok(flicker === 0, 'and its weight only ever goes one way on the climb',
+       `${flicker} flickers`),
     ok(mote && startY > mote.y, 'and it ends up above where it started',
        `${Math.round(startY)} -> ${Math.round(mote ? mote.y : 0)}`)
   ];

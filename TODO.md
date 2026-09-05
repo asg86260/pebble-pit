@@ -460,16 +460,17 @@ leavings rather than every grain on the strip. That needs muck to carry where it
 came from, which `MESS` does not record today, so it is a field on the layer
 rather than a one-liner. Decide the rule first.
 
-## Housekeeping: one test fails every time
+## Housekeeping: one test fails every time — FIXED (2026-09-04)
 
-`test/sky-readout.test.mjs`, "a speck off a swing is the speck in the band" --
-fails on **every** run, on the assertion "at full weight the whole way: it never
-goes out and comes back". Not a flake and not new: found during the building-site
-pass (2026-09-02) and confirmed to fail identically on `ac1b0b6`'s own `src/`, by
-reverting to it and re-running, so it predates that work and none of it is the
-cause. Nobody has looked at what the check is actually asserting about a speck's
-weight easing; it is written down here rather than fixed because the pass that
-found it was about something else.
+`test/sky-readout.test.mjs`, "a speck off a swing is the speck in the band":
+the check predated the arrival cross-fade (a settling mote deliberately goes
+to nothing and comes back up at its spot) and then the plume lifetime, both of
+which its "full weight the whole way" clause forbade. Rewritten to the rules
+that actually hold now: nothing visible ever teleports (a leap happens only
+while faded to nothing, and weight at the new spot is an arrival), and the
+weight only ever goes one way on the climb. The plume code was tightened to
+honor the first rule exactly -- fade derived from the climb's age, and the
+relocation held a tenth of a second past reaching nothing.
 
 ## Housekeeping: two tests fail at random
 

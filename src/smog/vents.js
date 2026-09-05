@@ -300,8 +300,14 @@ export function stepPuffs(secs) {
       // cut short.
       p.age += secs;
       if (p.age <= PLUME_LIFE) continue;
-      p.fade = Math.max(0, p.fade - secs / PLUME_THIN);
-      if (p.fade > 0) continue;
+      // Thin out first, move after -- and the weight is derived from the
+      // climb's own age rather than integrated, so it cannot drift with the
+      // step size. The relocation waits a tenth of a second past the fade
+      // reaching nothing: whatever the frame step, there is no instant at
+      // which something visible is somewhere new. That is the rule the
+      // sky-readout check holds -- nothing you can see ever jumps.
+      p.fade = Math.max(0, 1 - (p.age - PLUME_LIFE) / PLUME_THIN);
+      if (p.age <= PLUME_LIFE + PLUME_THIN + 0.1) continue;
       settleHere(p, false);
       p.fromY = slotY(p, top, deep);
       p.y = p.fromY;
