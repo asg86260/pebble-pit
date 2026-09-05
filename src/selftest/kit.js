@@ -85,7 +85,7 @@ export async function settle(seconds = 0.4) {
 }
 let STATED = 0, STATES = 0;
 export const state = () => { const t = performance.now(); const v = window.__state(); STATED += performance.now() - t; STATES++; return v; };
-export const fmt = n => n.toLocaleString('en-US');   // the same as the boards write
+export { fmt } from '../board.js';   // the very function the boards write with, so the two cannot drift
 // the boards are rebuilt when the game changes; a check that changes it by hand
 // has to ask for the same
 export const buildShopFromTest = () => window.__build();

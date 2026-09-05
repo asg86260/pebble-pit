@@ -806,7 +806,23 @@ function settle(want) {
 }
 
 
-export const fmt = n => n.toLocaleString('en-US');
+// Short form everywhere a count is read at a glance: 872, 1.3k, 14k, 1.4m.
+// One decimal while the leading figure is doing the work, none once three
+// digits carry it, and the unit steps up the moment rounding would say "1000k"
+// -- a card in this yard is a reading, not a ledger, and six figures of dust
+// is a number nobody was going to read past the first two anyway.
+export const fmt = n => {
+  const v = Math.round(n || 0), a = Math.abs(v);
+  if (a < 1000) return String(v);
+  for (const [d, s] of [[1e9, 'b'], [1e6, 'm'], [1e3, 'k']]) {
+    if (a < d) continue;
+    const q = Math.abs(v) / d;
+    const t = q >= 99.95 ? Math.round(q) : Math.round(q * 10) / 10;
+    // 999.96k rounds to "1000k"; that reading belongs to the next unit up
+    if (t >= 1000) return (v < 0 ? '-' : '') + 1 + { k: 'm', m: 'b', b: 't' }[s];
+    return (v < 0 ? '-' : '') + t + s;
+  }
+};
 
 // the count runs to its new value and eases in at the end, taking longer for a
 // bigger jump so a purchase reads as a real withdrawal

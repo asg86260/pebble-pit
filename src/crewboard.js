@@ -12,6 +12,7 @@
 // this would read as a different game's menu.
 
 import { S, floor, pit, outhouse } from './state.js';
+import { fmt } from './board.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_CUBE } from './config.js';
 import { mainlyAt } from './crew.js';
@@ -93,7 +94,10 @@ const DOES = { rockhands: 'mining the rock', quarriers: 'quarrying',
                farmhands: 'farming', scholars: 'researching',
                purifiers: 'clearing the air',
                janitors: 'shovelling', haulers: 'transporting' };
-const tally = n => Math.round(n || 0).toLocaleString('en-US');
+// The boards' own short form -- one spelling of a count everywhere. Called
+// rather than aliased: this module and board.js load in a cycle, so `fmt` is
+// not initialized yet at the moment this line runs.
+const tally = n => fmt(n);
 
 // Rows, not a sentence. A card you have to read is a card you read once; a card
 // laid out in a column is one you can glance at with somebody in your hand and
