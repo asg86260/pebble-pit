@@ -67,6 +67,7 @@ const ROSTER_COUNTS = { rockhand: JOB.ROCK, hauler: JOB.HAUL, quarrier: JOB.QUAR
                         farmhand: JOB.FARM, scholar: JOB.SCHOLAR,
                         purifier: JOB.PURIFY, stirrer: JOB.STIR,
                         janitor: JOB.JANITOR, wizard: JOB.WIZARD,
+                        teacher: JOB.TEACH,     // wave6-sim: the school's body
                         // Building is not on the roster -- nobody is put on it --
                         // but it is a count `syncWorkers` builds bodies from, and
                         // a count this list leaves out is bodies in the yard the

@@ -21,8 +21,11 @@ import { farmShed, quarryShed } from '../world.js';
 import { keepTo, stepRoute, wayOver } from '../route.js';
 import { TYPE } from '../jobs.js';
 
-const SHED_OF = { [TYPE.QUARRY]: ['quarry', quarryShed],
-                  [TYPE.FARM]: ['farm', farmShed] };
+// Deferred with arrows: this module sits in an import cycle with world.js, so
+// naming the bindings while the object is built reads them before they exist
+// -- the same note BUILDING_OF in render/bars.js carries.
+const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed()],
+                  [TYPE.FARM]: ['farm', () => farmShed()] };
 
 // where the claimed body stands: the middle of the shed's front
 const shedFoot = shed => shed.x + shed.w / 2 - WORKER / 2;
