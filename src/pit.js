@@ -8,7 +8,7 @@
 
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-        RIFT_GULP, RIFT_SHAKE, findKind, someFind } from './config.js';
+        RIFT_GULP, RIFT_SHAKE, ABYSS_DOWN, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
@@ -74,9 +74,27 @@ export function pitLadder(side) {
 // the ground the way they walk the yard a cell off the ground, which is to say
 // not at all. One cell down is the top of the pile itself.
 export function pitTop(wx) {
+  // A drowned pit is crossed on the plank at the mouth. Once the hole has
+  // liquefied nobody stands on what is in it -- the liquid is not ground --
+  // and the pit must not go back to being a dead end (the two ladders exist
+  // exactly so it is a way through), so the crossing surface is the brim.
+  if (S.riftOpen) return S.groundY;
   const c = colOf(pit, wx);
   if (c < 0 || c >= pit.cols) return S.groundY + pitDepth();
   return surfaceY(pit, c) + pit.p;
+}
+
+// Where the abyss's surface stands: a few cells below the brim, once the hole
+// has drowned. During the tear it rises out of the floor with the pile it is
+// taking -- `riftGulp` runs down to nothing over RIFT_GULP seconds, and the
+// liquid comes up over the same breath. Owned here rather than by rift.js,
+// because the hole is what has drowned and rift.js already reaches into this
+// file for `swallow`.
+export function abyssLine() {
+  const line = S.groundY + ABYSS_DOWN;
+  const floorY = S.groundY + pitDepth();
+  const k = Math.max(0, Math.min(1, (S.riftGulp || 0) / RIFT_GULP));
+  return line + (floorY - line) * k;
 }
 
 // Where the plot sits and how many cells it is. The near lip never moves: a dig
@@ -268,8 +286,7 @@ function throughRift(x, shade) {
 export function riftCatch(x, y, shade) {
   if (!throughRift(x, shade)) return false;
   if (S.gulped.length < SHOWN) {
-    S.gulped.push({ x0: x, y0: y, x, y, t: 0,
-                    a0: rand() * Math.PI * 2, spin: rand() < 0.5 ? -1 : 1, s: shade });
+    S.gulped.push({ x0: x, y0: y, x, y, t: 0, s: shade });
   }
   return true;
 }
@@ -418,10 +435,6 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
         t: near ? 0 : -rand() * 0.5,
         rate: 0.012 + rand() * 0.01,
         lift: 60 + rand() * 90,     // how high it arcs on the way
-        // and, for the ones going into the rift, where on the ring they join
-        // it and which way round they go -- see `orbit` in game.js
-        a0: rand() * Math.PI * 2,
-        spin: rand() < 0.5 ? -1 : 1,
         // Where this grain is paying to -- the selling station, or null for the
         // bench. Stamped at lift so a grain keeps its destination however the
         // list is stepped. See `fly` in game.js.
@@ -554,10 +567,29 @@ const liftTo = (target, leaving) => lift(dustIn(pit) - target, leaving);
 // there untouched would be a purchase with no picture at all.
 export function spend(cost) {
   S.stored -= cost;
+  const fromHole = Math.min(cost, dustIn(pit));
   // Spent past everything in the hole, the rest comes out of the rift. It can
   // only ever come *down* to the counter: the rift never holds more than you own.
   if ((S.rift || 0) > S.stored) S.rift = Math.max(0, S.stored);
   liftTo(pileTarget(), S.paid);
+  // What the hole could not show leaving surfaces out of the abyss instead: a
+  // drowned pit pays out of its liquid, and the grains break the surface and
+  // arc to the station like any lifted ones. It used to leave invisibly --
+  // "a payment taken out of another dimension while the pile sat there" is the
+  // exact thing the note above this function forbids, and once the pile is
+  // only ever a waiting room, every endgame payment was that.
+  const short = cost - fromHole;
+  if (short > 0 && S.riftOpen) {
+    const line = abyssLine();
+    const room = Math.max(0, SHOWN - S.paid.length);
+    for (let i = 0; i < Math.min(short, room); i++) {
+      const x = pit.x + rand() * Math.min(700, pit.w);
+      S.paid.push({ x0: x, y0: line, x, y: line,
+                    t: -rand() * 0.5, rate: 0.012 + rand() * 0.01,
+                    lift: 60 + rand() * 90,
+                    tx: payX, ty: payY, s: 1 + Math.floor(rand() * 4) });
+    }
+  }
 }
 
 // The rift swallowing: grains off the top of the pile and into another

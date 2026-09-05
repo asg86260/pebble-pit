@@ -65,12 +65,20 @@ export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather t
 // clear. At a bit over half, the ring holds what drifts into it and the sky
 // stays the sky.
 export const RIFT_FEED = 0.55;
-// How the swallowed grains go: how many turns round the disc a grain makes on
-// its way in, and how long the whole orbit takes, in frames at sixty. Both are
-// what the suck is made of -- a grain is dragged round faster the closer it
-// gets, so it wants turns to spend and it wants to be quick about them.
-export const RIFT_TURNS = 2.4;
-export const RIFT_ORBIT_FRAMES = 84;
+// --- the abyss -----------------------------------------------------------------
+// The rift's picture, since the pit liquefied (see "The abyss" in DESIGN.md):
+// no disc, no orbit. The hole holds a black liquid standing a few cells below
+// the brim, whose surface breathes with a slow swell, and everything that used
+// to spiral into the disc dives to that surface and is eaten there. A plank is
+// laid over the mouth, because the drowned pit stays a way through -- the two
+// ladders were added exactly so the pit was not a dead end, and the liquid
+// must not undo that.
+export const ABYSS_DOWN = P * 4;      // how far below the brim the liquid stands
+export const ABYSS_SWELL = P;         // how much the surface breathes, either way
+export const ABYSS_SWELL_MS = 2600;   // and how slowly
+export const ABYSS_DIVE_FRAMES = 30;  // frames a caught grain takes to reach the surface
+export const ABYSS_RIPPLE_MS = 420;   // how long a swallow's ripple shows
+export const ABYSS_LANES = 9;         // how many pieces the swell moves in
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];

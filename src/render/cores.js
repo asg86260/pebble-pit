@@ -1,19 +1,17 @@
 // What a core gives off, and the things that leave the yard: the core's glow,
 // the buried and freed core, the sand that comes off it, the paid dust and the
-// rift eating a pile. Extracted verbatim from render.js; behavior unchanged.
-// Owns drawCoreGlow, drawCoreAt, drawRockSand, drawCoreBehind, drawCore,
-// drawPaid, drawRift and drawLeaving. The shared primitives (ctx, drawCircle,
-// drawMark) come from ./ctx.js and ./marks.js.
+// abyss the drowned pit holds. Owns drawCoreGlow, drawCoreAt, drawRockSand,
+// drawCoreBehind, drawCore, drawPaid, drawAbyss and drawLeaving. The shared
+// primitives (ctx, drawCircle, drawMark) come from ./ctx.js and ./marks.js.
 
 import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P,
-         RIFT_HALO, RIFT_STIPPLE, RIFT_STIPPLE_MS, RIFT_LENS, RIFT_LENS_MS,
-         RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_FROM, RIFT_STREAK_TURN,
-         RIFT_STREAK_LEN, RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
+         ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS, ABYSS_LANES } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
-import { S, floor, rift } from '../state.js';
+import { abyssLine, pitDepth } from '../pit.js';
+import { S, floor, pit } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawCircle, drawMark } from './marks.js';
@@ -190,152 +188,72 @@ const drawLeaving = list => {
 };
 
 // The stream arcing off the top of the pile to the bench, because you bought
-// something. The other stream off the pile -- the one going into the rift -- is
-// drawn by `drawRift`, under the disc, so a grain that has spiralled inside the
-// rim is gone behind it rather than drawn over it.
+// something. The other stream off the pile -- the one going into the abyss --
+// is drawn by `drawAbyss`, under the liquid's own fill, so a grain that has
+// crossed the surface is gone into it rather than drawn on top of it.
 export function drawPaid() { drawLeaving(S.paid); }
 
-// The rift: a black hole hanging in the pit, with everything the yard throws
-// into the hole being pulled through it.
+// The abyss: the drowned pit. The hole gave way and what it holds now is a
+// black liquid standing a few cells below the brim -- see "The abyss" in
+// DESIGN.md, and `abyssLine` in pit.js for where the surface stands (during
+// the tear it rises out of the floor with the pile it is taking).
 //
-// Everything in this yard is black cells on white paper, so the honest drawing
-// of an absence is the paper's opposite -- a solid black disc, with nothing
-// inside it because there is nothing inside it. It is the only thing in the
-// game that is a shape rather than an object: no walls, no roof, no machine on
-// the front. And it is always filled in, because it is always open: nobody
-// holds it, so there is no shut to draw.
+// Four things are drawn, and each is one property of the thing:
 //
-// A disc on its own was not enough, and what it was missing was *pulling*. Four
-// things are drawn now and each of them is one property of the thing:
+//   the body    solid ink from the surface to the floor of the hole, clipped
+//               to the mouth. Black mass is the game's own language for a
+//               body of anything; what says liquid is the surface, not a tone.
+//   the swell   the surface breathes, a cell up and down, in a few lanes out
+//               of step with each other -- slow enough to read as depth
+//               rather than as waves.
+//   the ripples a white notch where a grain just went in, gone in half a
+//               second. The eating is the one event the liquid has, and it
+//               happens at the surface, where you threw the thing.
+//   the plank   a board over the mouth at the brim. The drowned pit stays a
+//               way through -- the two ladders exist exactly so it is not a
+//               dead end -- and the plank is what the crossing stands on.
 //
-//   the halo    two cells of bare paper cleared round the rim, and a thinning
-//               stipple past that. This is what makes the core dark: there is no
-//               ink blacker than ink, so the way to deepen the middle is to take
-//               everything else away from around it.
-//   the streaks stuff falling in, spiralling to the rim, running whether or not
-//               the hole has anything to eat. That matters more than it sounds:
-//               a fed rift empties the pile within a frame or two of the grains
-//               landing, so most of the endgame it has nothing in its mouth, and
-//               a hole that only moves when it is fed looks broken exactly when
-//               it is working hardest.
-//   the lens    the rim swells and shrinks, slowly and not evenly round itself.
-//               Light bending is the one property of a black hole everybody
-//               knows by sight, and on a grid this coarse it can only be a warp
-//               of the silhouette.
-//   the tails   a smear on each grain actually going in, pointing back the way
-//               it came, so the stream reads as dragged rather than as beads
-//               threaded on a wire.
+// The order is the picture: diving grains go down first and the body over
+// them at the waterline, so anything past the surface is gone into it.
 //
-// The order is the picture: halo, streaks and tails go down first and the disc
-// over them, so anything that has crossed the rim is gone behind it rather than
-// drawn on top of it -- which is what going *in* looks like.
-
-// How far out of round the rim is at a given angle, this instant. One slow
-// breath plus a second one at a third the size and twice the rate, which is
-// enough to keep it from ever being a circle pulsing on a metronome.
-const lensAt = (a, t) =>
-  1 + RIFT_LENS * (Math.sin(t / RIFT_LENS_MS * Math.PI * 2 + a * 2) * 0.75
-                 + Math.sin(t / RIFT_LENS_MS * Math.PI * 4 + a * 3) * 0.25);
-
-export function drawRift() {
+export function drawAbyss() {
   if (!S.riftOpen) return;
   const t = now();
-  const { x, y, w, h } = rift;
-  const across = Math.round(w / P), down = Math.round(h / P);
-  const mid = (across - 1) / 2, midR = (down - 1) / 2;
-  const cx = x + (mid + 0.5) * P, cy = y + (midR + 0.5) * P;
-  const rad = (mid + 0.5) * P;
+  const line = abyssLine();
+  const floorY = S.groundY + pitDepth();
+  const laneW = pit.w / ABYSS_LANES;
 
-  // A disc, warped by the lens: the half-width of each row off the circle,
-  // worked out from the row rather than written down as a table, so the shape
-  // follows RIFT_W and RIFT_H if either ever moves. `grow` widens it in cells,
-  // which is how the halo is cut: the same disc, a couple of cells fatter, in
-  // paper.
-  const disc = (grow, style) => {
-    ctx.fillStyle = style;
-    for (let r = -grow; r < down + grow; r++) {
-      const dy = (r - midR) / (midR + 0.5 + grow);
-      // The row's own angle, so the warp is a shape rather than a size: the rim
-      // leans out on one side while it comes in on the other.
-      const half = Math.floor((mid + grow) * lensAt(Math.asin(Math.max(-1, Math.min(1, dy))), t)
-                              * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
-      if (half < 0) continue;
-      const left = x + Math.round(mid - half) * P;
-      ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
-    }
-  };
-
-  // Paper first, so whatever the disc is standing over -- the pile, the ground
-  // line, a grain on its last turn -- is cleared away from the rim. Over a full
-  // pile a black disc on grey speckle is a blob painted on the pile; with the
-  // page showing round it, it is a hole *in* the world.
-  disc(RIFT_HALO, '#fff');
-
-  // ...and then the speckle, thinning outward through the halo: the last of what
-  // is being dragged in, too far gone to be a grain any more. Laid on a ring of
-  // cells rather than at random so it holds still enough to read as one thing,
-  // and turned slowly so it is never a printed collar.
-  ctx.fillStyle = '#000';
-  const turn = t / RIFT_STIPPLE_MS * Math.PI * 2;
-  for (let ring = 0; ring < RIFT_STIPPLE; ring++) {
-    const r = rad + (RIFT_HALO + ring + 0.5) * P;
-    // fewer the further out, which is the thinning
-    const n = Math.max(4, Math.round((Math.PI * 2 * r) / P / (3 + ring * 3)));
-    for (let i = 0; i < n; i++) {
-      const a = turn * (ring % 2 ? -1 : 1) + (i / n) * Math.PI * 2;
-      const px = cx + Math.cos(a) * r * lensAt(a, t);
-      const py = cy + Math.sin(a) * r * lensAt(a, t);
-      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
-    }
-  }
-
-  // The infall. Each streak is a spiral from RIFT_STREAK_FROM radii out to the
-  // rim, its position derived from the clock and its own slot -- no list, no
-  // stepping and nothing to save, because there is nothing about one of these
-  // that anybody could act on. They are spaced round the clock as well as round
-  // the disc, so the ring is a stream rather than a wheel of spokes.
-  // How far out a streak's head is, `k` of the way in: the square puts most of
-  // the journey out at the far end and makes the last stretch quick, which is
-  // what falling into something looks like.
-  const reach = RIFT_STREAK_FROM - 1;
-  for (let i = 0; i < RIFT_STREAKS; i++) {
-    const k = ((t / RIFT_STREAK_MS) + i / RIFT_STREAKS) % 1;
-    const a0 = (i / RIFT_STREAKS) * Math.PI * 2;
-    const head = rad * (1 + reach * (1 - k) * (1 - k));
-    // The tail is measured in **cells behind the head**, not in fractions of the
-    // journey. Spaced by k it bunched into a knot at the rim -- the head slows
-    // to nothing in distance terms while k runs on at the same pace, so the
-    // whole streak arrived on top of itself and read as soot round the disc
-    // rather than as something falling in.
-    for (let c = 0; c < RIFT_STREAK_LEN; c++) {
-      const d = head + c * P;
-      if (d > rad * RIFT_STREAK_FROM) break;             // off the end of its run
-      const kk = 1 - Math.sqrt(Math.max(0, (d / rad - 1) / reach));
-      const a = a0 + kk * kk * RIFT_STREAK_TURN * Math.PI * 2;
-      const px = cx + Math.cos(a) * d * lensAt(a, t);
-      const py = cy + Math.sin(a) * d * lensAt(a, t);
-      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
-    }
-  }
-
-  // And the grains themselves, each with a tail pointing back the way it came.
-  // The tail grows as the grain nears the rim, which is where it is being pulled
-  // hardest -- one grain is a speck, a grain with three cells behind it is a
-  // grain being taken.
+  // The grains still diving, before the body goes down, so a grain past the
+  // surface is under it.
   drawLeaving(S.gulped);
+
+  // The body, one lane at a time so the surface can breathe. Each lane's own
+  // phase off its index; the swell is snapped to the cell, because half a cell
+  // of liquid is a hairline.
   ctx.fillStyle = '#000';
-  for (const m of S.gulped) {
-    const dx = cx - m.x, dy = cy - m.y;
-    const d = Math.hypot(dx, dy);
-    if (!d || d > rad * RIFT_TAIL_R) continue;
-    const near = 1 - d / (rad * RIFT_TAIL_R);
-    const n = Math.round(RIFT_TAIL * near);
-    for (let c = 1; c <= n; c++)
-      ctx.fillRect(Math.round((m.x - dx / d * c * P) / P) * P,
-                   Math.round((m.y - dy / d * c * P) / P) * P, P, P);
+  for (let l = 0; l < ABYSS_LANES; l++) {
+    const sw = Math.round(Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + l * 1.7)
+                          * (ABYSS_SWELL / P)) * P;
+    const top = Math.min(floorY, line + sw);
+    const x0 = Math.round((pit.x + l * laneW) / P) * P;
+    const x1 = Math.round((pit.x + (l + 1) * laneW) / P) * P;
+    ctx.fillRect(x0, top, x1 - x0, Math.max(0, floorY - top));
   }
 
-  disc(0, '#000');
+  // The ripples: a white notch cut into the surface where something just went
+  // in, opening a cell as it dies. On the surface's own line, so it reads as
+  // the liquid closing over rather than as a mark floating on it.
+  ctx.fillStyle = '#fff';
+  for (const r of S.ripples) {
+    const k = Math.min(1, (t - r.at) / ABYSS_RIPPLE_MS);
+    const wide = P * (1 + Math.round(k * 2));
+    const rx = Math.round((r.x - wide / 2) / P) * P;
+    ctx.fillRect(rx, Math.round(line / P) * P, wide, P);
+  }
+
+  // And the plank over the mouth: a board a cell thick lying on the two lips,
+  // which is what a body crossing the drowned pit walks on (see `pitTop`).
   ctx.fillStyle = '#000';
+  ctx.fillRect(Math.round((pit.x - P) / P) * P, S.groundY - P, pit.w + P * 2, P);
 }
 

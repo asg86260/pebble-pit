@@ -17,6 +17,8 @@ import { group, ok, state, run, runUntil, yard } from './helpers.mjs';
 const { JOBS } = await import('../src/upgrades.js');
 const { TOWER_UPGRADES } = await import('../src/tower.js');
 const { rift } = await import('../src/state.js');
+const { abyssLine, pitDepth } = await import('../src/pit.js');
+const { P } = await import('../src/config.js');
 
 // Everything a player would have before this row is offered: red in the bank,
 // dust in the hole, and a hole that has been filled often enough to know why
@@ -122,7 +124,12 @@ group('the hole takes dust again once the rift has made room', async () => {
   ];
 });
 
-group('it stands over the near end of the hole, and the grains are pulled in', async () => {
+// The disc is gone: the drowned pit holds a liquid that eats at its surface --
+// see "The abyss" in DESIGN.md -- so what this group holds now is the abyss's
+// own picture: the surface stands a few cells under the brim, and every grain
+// in flight is inside the mouth on its way to that surface, never off across
+// the yard or out of the hole.
+group('the drowned hole eats at its surface, and the grains dive to it', async () => {
   readyYard();
   window.__rift();
   // The tearing empties the hole, so a yard three seconds past it has nothing
@@ -130,41 +137,31 @@ group('it stands over the near end of the hole, and the grains are pulled in', a
   // ordinary swallowing that comes after: so let the gulp finish and fill the
   // hole again.
   //
-  // And then look at it QUICKLY. The rift inhales -- a pile goes in the frame it
-  // lands -- so the stream is a burst rather than a trickle: a fifth of a second
-  // after the dust arrives the grains are strung out between the pile and the
-  // disc, and a second after it they have all got there and gone.
+  // And then look at it QUICKLY. The abyss inhales -- a pile goes in the frame
+  // it lands -- so the stream is a burst rather than a trickle: a fifth of a
+  // second after the dust arrives the grains are strung out on their dives,
+  // and a second after it they have all gone in.
   run(3);
   window.__give(20000);
   run(0.2);
   const { pit, S } = yard;
-  const c = yard.riftMod.riftCenter();
-  const R = yard.riftMod.riftRadius();
-  // Every grain in flight is somewhere between the pile it left and the ring
-  // round the disc: never further from the disc than the ring's outer edge plus
-  // the rise, and the ones far enough along are inside a radius and a half.
-  let far = 0, along = 0, inRing = 0;
+  const line = abyssLine();
+  let along = 0, astray = 0;
   for (const m of S.gulped) {
-    if (m.t <= 0) continue;
-    const d = Math.hypot(m.x - c.x, m.y - c.y);
-    if (m.t > 0.25) { along++; if (d <= R * 1.5) inRing++; }
-    if (d > R * 1.5 && m.t > 0.25) far++;
+    if (m.t <= 0.25) continue;
+    along++;
+    const inMouth = m.x >= pit.x - P && m.x <= pit.x + pit.w + P;
+    const inHole = m.y >= S.groundY - P * 2 && m.y <= S.groundY + pitDepth() + P;
+    if (!(inMouth && inHole)) astray++;
   }
   return [
-    ok(rift.x >= pit.x && rift.x + rift.w <= pit.x + pit.w * 0.1,
-       'the disc is over the hole, at the near end',
-       `rift ${rift.x}..${rift.x + rift.w}, pit from ${pit.x}`),
-    // Standing in the air rather than sunk in the pile: its middle is above the
-    // ground line and its lower edge below it, so it breaks the line and the top
-    // of it is black against the page. A disc buried in a full hole has no
-    // silhouette at all -- see `seatRift`.
-    ok(c.y < S.groundY, 'its middle stands above the ground line',
-       `middle ${c.y}, ground ${S.groundY}`),
-    ok(rift.y + rift.h < S.groundY, 'and wholly clear of it, hanging in the air',
-       `rift y ${rift.y}..${rift.y + rift.h}, ground ${S.groundY}`),
+    ok(line > S.groundY && line < S.groundY + pitDepth(),
+       'the surface stands under the brim and above the floor',
+       `line ${Math.round(line)}, ground ${S.groundY}`),
     ok(S.gulped.length > 0, 'there are grains in flight', `${S.gulped.length}`),
-    ok(along > 0 && far === 0, 'and every grain past its rise is on the ring or inside it',
-       `${inRing} of ${along} on the ring, ${far} astray`)
+    ok(along > 0 && astray === 0,
+       'and every grain past its rise is inside the mouth, bound for the surface',
+       `${along} diving, ${astray} astray`)
   ];
 });
 

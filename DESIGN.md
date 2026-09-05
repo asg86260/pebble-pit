@@ -2824,7 +2824,16 @@ pressed their pile twice and banked 202,000 opens the new build to a hole full o
 dust and a rift holding the other 165,000, which is the state the game would have put them in had
 the rift existed all along.
 
-## The abyss (design, not built)
+## The abyss (built)
+
+*Built 2026-09-04, as designed. The two calls made at build: the drowned pit **stays a way
+through** — a plank lies over the mouth at the brim, and `pitTop` answers with it, so the crossing
+the two ladders bought survives the drowning; and a grain that ends up *under* the surface (a dev
+tip, a save's leftovers) is absorbed upward to it unseen — the liquid's body is drawn over
+anything below the line, so no wrong journey is ever visible. The account is byte-identical to the
+rift's; `abyssLine` in pit.js owns where the surface stands, rising out of the floor over the
+gulp. A payment the hole cannot show now surfaces out of the liquid and arcs to its station, which
+closes the "invisible endgame payment" the rift always had.*
 
 The rift's *account* stays; its *picture* goes. Instead of a black disc hanging in the air over the
 mouth, **the pit itself liquefies**: the moment the hole cannot take a grain, the pile turns to a

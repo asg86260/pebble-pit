@@ -907,6 +907,7 @@ export function reset(fresh = true) {
   S.belt = [];                       // and what was riding the belt, for the same reason
   S.paid = [];
   S.gulped = [];
+  S.ripples = [];
   S.banked = 0;
   S.shownStored = S.tweenFrom = S.tweenTo = 0;
   S.held = 0;

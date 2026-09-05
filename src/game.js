@@ -15,15 +15,15 @@
 // `step` is called by whoever is turning the handle: sixty times a second by the
 // frame loop in the shell, or as fast as it will go by a check.
 
-import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, RIFT_TURNS, RIFT_ORBIT_FRAMES } from './config.js';
+import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
 import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bottomY, roomFor } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
-import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch } from './pit.js';
-import { stepRift, riftCenter, riftRadius } from './rift.js';
+import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
+import { stepRift } from './rift.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
@@ -474,7 +474,10 @@ export function stepPaid() {
   // happens (pit.js) and spent here, because a shake is the world's business and
   // pit.js is downstream of the world -- see `shakeView` in world.js.
   if (S.riftShake) { shakeView(S.riftShake); S.riftShake = 0; }
-  orbit(S.gulped);
+  sink(S.gulped);
+  // ripples too old to show are dropped here rather than in the drawing,
+  // which reads the clock but never writes the state
+  while (S.ripples.length && clockNow() - S.ripples[0].at > ABYSS_RIPPLE_MS) S.ripples.shift();
 }
 
 // A grain's whole orbit is one number, `t`, from nought at the pile to one at
@@ -505,25 +508,30 @@ export function stepPaid() {
 //
 // The radius and the angle are the same one number, so none of this is a second
 // clock that can drift: a grain is exactly as far round as it is far in.
-function orbit(list) {
+// Grains going into the abyss: no orbit and no disc any more -- each one dives
+// to the liquid's surface below where it was caught and is eaten there, with a
+// ripple left at the spot. The dive accelerates, because falling into
+// something is what this is.
+function sink(list) {
   const f = frames();
-  const c = riftCenter(), R = riftRadius();
-  const rate = 1 / RIFT_ORBIT_FRAMES;
+  const rate = 1 / ABYSS_DIVE_FRAMES;
+  const now = clockNow();
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
     m.t += rate * f;
-    if (m.t >= 1) { list.splice(i, 1); continue; }
+    if (m.t >= 1) {
+      if (S.ripples.length < 40) S.ripples.push({ x: m.x, at: now });
+      list.splice(i, 1);
+      continue;
+    }
     if (m.t <= 0) continue;
-    const t = m.t;
-    const a = m.a0 + m.spin * Math.pow(t, 1.8) * RIFT_TURNS * Math.PI * 2;
-    // Out past the rim, then a dive that ends at the middle -- which is under
-    // the disc, and gone.
-    const r = R * (1.32 - 1.25 * Math.pow(t, 2.2));
-    const ox = c.x + Math.cos(a) * r, oy = c.y + Math.sin(a) * r;
-    const join = Math.min(1, t / 0.25);           // torn off the pile
-    const e = join * join;
-    m.x = m.x0 + (ox - m.x0) * e;
-    m.y = m.y0 + (oy - m.y0) * e;
+    // Down to the surface, held inside the mouth: a grain caught right at a
+    // lip still drowns in the hole rather than in the ground beside it.
+    const gx = Math.max(pit.x + P, Math.min(pit.x + pit.w - P, m.x0));
+    const gy = abyssLine();
+    const e = m.t * m.t;
+    m.x = m.x0 + (gx - m.x0) * e;
+    m.y = m.y0 + (gy - m.y0) * e;
   }
 }
 

@@ -355,12 +355,12 @@ const SCENES = {
   books: `${RICH} window.__fast(60); window.__board('stats');
           window.__look(window.__state().pitX - 300);`,
 
-  // The rift: the black hole standing in the air over the near end of the pit,
-  // the crater it has eaten in the pile under it, and the grains being pulled
-  // round it on their way in. The hole is filled past the brim first so the rift
-  // has something to eat, and widened before the dust goes in: a widening is
-  // paid in dust, and paid out of the very pile the scene is about.
-  // The camera is on the lip, so the ground line the disc breaks is in shot.
+  // The abyss: the drowned pit's liquid standing under the brim, the plank
+  // over the mouth, and the grains diving to the surface. The hole is filled
+  // past the brim first so the abyss has something to eat, and widened before
+  // the dust goes in: a widening is paid in dust, and paid out of the very
+  // pile the scene is about. The camera is on the lip, so the air between the
+  // brim and the surface is in shot.
   rift: `${RICH} window.__meteor(); window.__give(60000);
          window.__levels({riftLevel: 6}); window.__give(12000);
          window.__fast(4); window.__look(window.__state().pitX - 260);`,

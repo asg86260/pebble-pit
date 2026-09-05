@@ -1,13 +1,12 @@
 # Still to do
 
-## The abyss — DESIGNED, awaiting approval (2026-09-04)
+## The abyss — BUILT (2026-09-04)
 
-The rift's picture replaced: the pit liquefies into a black liquid that eats
-what lands on it, instead of a disc hanging in the air. The account, the
-catch-at-the-mouth rule and the spend order are unchanged — see "The abyss
-(design, not built)" in DESIGN.md. One open call for review: whether the
-drowned pit stays a way through (a plank over the mouth) or stops being one.
-No code until the design is signed off.
+The rift's picture replaced: the drowned pit holds a black liquid that eats
+at its surface, instead of a disc hanging in the air. The account, the
+catch-at-the-mouth rule and the spend order are unchanged; the open call went
+to keeping the pit a way through (a plank over the mouth, and `pitTop`
+answers with it). See "The abyss (built)" in DESIGN.md.
 
 ## Wave 5 — SHIPPED (2026-09-04)
 

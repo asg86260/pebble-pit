@@ -385,7 +385,8 @@ const BUILDING_NAME = {
 function buildingAt(x, y) {
   for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
   if (S.outhouseOpen && inRect(outhouse, x, y)) return 'the outhouse';
-  if (riftOpen() && inRect(rift, x, y)) return 'the rift';
+  // the drowned pit: anywhere over the liquid answers as the abyss
+  if (riftOpen() && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
   return null;
 }
 

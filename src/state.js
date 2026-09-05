@@ -86,7 +86,8 @@ export const S = {
   chips: [],              // knocked loose, still flying
   belt: [],               // riding the belt, between the ground and the hole
   paid: [],               // flying out of the pit to the bench, on the way to being spent
-  gulped: [],             // and out of the pit into the rift, on the way out of this dimension
+  gulped: [],             // and out of the pit into the abyss, diving to its surface
+  ripples: [],            // where the liquid just ate one: { x, at }, briefly drawn
   motes: [],              // the load drifting round the cursor
   trail: [],              // recent cursor positions, for the throw
   held: 0,                // how much dust is on the cursor
@@ -643,7 +644,7 @@ export const EPHEMERAL = [
   // a rock on its way down, and the celebration for the last one
   'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
   // dust in the air: a grain mid-flight has no beginning to come back to
-  'chips', 'belt', 'paid', 'gulped', 'motes', 'trail', 'held', 'falling',
+  'chips', 'belt', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
   'shownStored', 'tweenFrom', 'tweenTo', 'tweenAt', 'tweenMs',
   // the tearing of the rift: an event, not a state
