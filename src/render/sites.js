@@ -5,7 +5,7 @@
 // drawQuarryShed. The shared primitives (ctx, drawMark, withRise, risingPlace)
 // come from ./ctx.js, ./marks.js and ./rise.js.
 
-import { FARM_GATE, FARM_H, P, SHACK_EAVE, SPORE_CELL } from '../config.js';
+import { DOOR_W, FARM_GATE, FARM_H, P, SHACK_EAVE, SPORE_CELL } from '../config.js';
 import { plotX } from '../farm.js';
 import { ladder, quarryCells } from '../quarry.js';
 import { S, cut, farm, quarry } from '../state.js';
@@ -191,9 +191,16 @@ function drawShed(rect, detail) {
   // cheapest presence there is -- one rect, and it survives being small.
   ctx.fillRect(x - SHACK_EAVE, y - SHACK_EAVE, w + SHACK_EAVE * 2, SHACK_EAVE);
   ctx.fillStyle = '#fff';
-  const dw = Math.min(P * 2, w - P * 2), dh = Math.min(P * 3, h - P);
+  // The way in is regulation size (wave6-sky, item 8): DOOR_W cells across and
+  // four courses tall, like every other door in the yard, centered at the foot
+  // of the wall. The sheds wore a 2x3 slot before, which read as a crate with a
+  // hole in it rather than a doorway a body fits through.
+  const dw = Math.min(DOOR_W * P, w - P * 2), dh = Math.min(P * 4, h - P);
   const head = y + h - dh;                      // the top of the doorway
   ctx.fillRect(x + (w - dw) / 2, head, dw, dh);
+  // (A half-cell lintel slit under the eave was tried here -- item 8's second
+  // variant -- and put back: with the quarry beam it made three horizontal
+  // features on a six-cell front, and the box read as a canopy on posts.)
   ctx.fillStyle = '#000';
   if (detail) detail(rect, head);
 }
