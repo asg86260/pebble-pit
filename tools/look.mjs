@@ -426,7 +426,25 @@ const SCENES = {
   sky0: `${SKYAT} window.__air({haze: 0}); window.__fast(8);`,
   sky1: `${SKYAT} window.__air({haze: 900}); window.__fast(8);`,
   sky2: `${SKYAT} window.__air({haze: 2100}); window.__fast(8);`,
-  sky3: `${SKYAT} window.__air({haze: 4200}); window.__fast(8);`
+  sky3: `${SKYAT} window.__air({haze: 4200}); window.__fast(8);`,
+
+  // wave6-sky (item 5): the storm at its four moments. A brim sky is certain to
+  // break at the next look, so each scene fills the sky and runs the clock to
+  // the part of the storm it is named for: the brew-up's darkness, the drizzle,
+  // the full pour, and the taper at the end. The waits are loops on the yard's
+  // own readout rather than counted seconds, so the scenes survive retuning.
+  rainbrew: `${SKYAT} window.__air({haze: 4200});
+    (() => { for (let i = 0; i < 90 && !window.__state().smog.brewing; i++) window.__fast(1); })();
+    window.__fast(9);`,
+  raindrizzle: `${SKYAT} window.__air({haze: 4200});
+    (() => { for (let i = 0; i < 120 && !window.__state().smog.raining; i++) window.__fast(1); })();
+    window.__fast(2);`,
+  rain: `${SKYAT} window.__air({haze: 4200});
+    (() => { for (let i = 0; i < 120 && !window.__state().smog.raining; i++) window.__fast(1); })();
+    window.__fast(18);`,
+  raintaper: `${SKYAT} window.__air({haze: 4200});
+    (() => { for (let i = 0; i < 120 && !window.__state().smog.raining; i++) window.__fast(1); })();
+    (() => { for (let i = 0; i < 90 && window.__state().smog.haze > 700; i++) window.__fast(1); })();`
 };
 
 const args = process.argv.slice(2);

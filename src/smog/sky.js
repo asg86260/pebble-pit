@@ -1,5 +1,5 @@
 import { now } from '../clock.js';
-import { P, PUFF_FADE, SMOG_DRIFT, SMOG_LIFT, SMOG_RAIN_AT, SMOG_SINK, SMOG_SPREAD_MAX, SMOG_SPREAD_MIN, SMOG_SPREAD_RATE, SMOKE_STIR_EASE, SWAY_LANES, SWAY_PACE, SWAY_X, SWAY_Y } from '../config.js';
+import { P, PUFF_FADE, SMOG_DRIFT, SMOG_LIFT, SMOG_RAIN_AT, SMOG_SINK, SMOKE_STIR_EASE, SWAY_LANES, SWAY_PACE, SWAY_X, SWAY_Y } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { windAt } from '../wind.js';
@@ -55,41 +55,18 @@ export const nextSlot = () => {
   return { slot: k, su: (k * ACROSS) % 1, sv: (k * DOWN) % 1, lane: k % SWAY_LANES };
 };
 
-// How wide a stretch of sky a mote of a given age is spread over. It starts at
-// almost nothing and opens slowly, for as long as the mote is up there.
-//
-// This is the dispersal, and it is the whole of it. A mote never travels to a
-// place: it sits where it came in, and the *stretch* it is placed within widens
-// under it, a few tens of pixels a second. So its outward speed is a handful of
-// pixels a second whatever the sky is doing -- slow enough that you never catch
-// one moving, fast enough that a lungful of smoke over the rock has spread across
-// the yard by the time it comes down as rain.
-//
-// It was a journey before: a slot taken from a wide stretch and a few seconds to
-// ease out to it, which is a speck crossing hundreds of pixels in the open. There
-// is no speed for a journey like that which is not wrong. Slow, it is still on
-// its way when it rains; fast, it is a particle flying off on an errand, which is
-// what you see and not what smoke does.
-const spreadAt = age => Math.min(SMOG_SPREAD_MAX, SMOG_SPREAD_MIN + age * SMOG_SPREAD_RATE);
-
-// Where a mote sits across the band: within its stretch, wrapped into the world.
-// Its place is fixed the moment it arrives -- what changes is how wide the
-// stretch is. The place *down* the band is `top + m.sv * deep`, which is one
+// Where a mote sits across the band: its slot's own place, uniform over the
+// whole span from the frame it arrives. There is no stretch to open and no
+// anchor to the stack that made it (wave6-sky, item 4): the haze is a total
+// over the yard, and the golden-ratio `su` already covers the span evenly at
+// every count. The place *down* the band is `top + m.sv * deep`, which is one
 // multiply and is done inline in `place` off numbers hoisted for the frame.
-function homeX(m, span, spread) {
-  let x = (m.fromX + (m.su - 0.5) * spread) % span;
-  if (x < 0) x += span;
-  return x;
-}
 
-// The age past which a mote's own clock stops moving it.
-//
-// Two things read `age`: the stretch it is spread within, which stops opening at
-// `SMOG_SPREAD_MAX`, and the ease down into the band, which is finished at
-// `SMOG_SINK`. Past the later of the two, another second of age changes nothing
-// about where the mote is drawn -- so the arithmetic that works those two out,
-// and the accumulation that feeds them, are all dead weight. See `place`.
-const AGE_STILL = Math.max(SMOG_SINK, (SMOG_SPREAD_MAX - SMOG_SPREAD_MIN) / SMOG_SPREAD_RATE);
+// The age past which a mote's own clock stops moving it: the ease down into
+// the band is finished at `SMOG_SINK`, and past that another second of age
+// changes nothing about where the mote is drawn -- so the arithmetic and the
+// accumulation that feed it are dead weight. See `place`.
+const AGE_STILL = SMOG_SINK;
 
 // One frame of the sky. Every mote is put where its slot says, carried along by
 // the wind and lifted a little by it -- the same wind, the same instant, for all
@@ -158,7 +135,7 @@ const roamOf = m => m.give * (drift - m.roam0);
 // `place` would have written: same terms, same order, same wrap.
 export function moteX(m) {
   if (m.awake) return m.x;
-  let x = (homeX(m, fSpan, SMOG_SPREAD_MAX) + roamOf(m) * fSpan) % fSpan
+  let x = (m.su * fSpan + roamOf(m) * fSpan) % fSpan
           + SWAY_DX[m.lane] + m.sx;
   if (x > fSpan) x -= fSpan;
   if (x < 0) x += fSpan;
@@ -246,7 +223,7 @@ export function place(secs) {
 
     m.age += secs;
     if (m.fade < 1) m.fade = Math.min(1, m.fade + fadeBy);
-    const x = homeX(m, span, spreadAt(m.age));
+    const x = m.su * span;
     const hy = top + m.sv * deep;
     // Down into the band over a few seconds. This one is a settle rather than a
     // dispersal: a mote arrives at the underside of the band, because that is
@@ -318,7 +295,7 @@ function fillTo(want) {
   while (SKY.length > want) dropped(SKY.splice(Math.floor(rand() * SKY.length), 1)[0]);
   while (SKY.length < want) {
     const m = skyMote(rand() * span, bandTop());
-    m.age = SMOG_SPREAD_MAX / SMOG_SPREAD_RATE;   // loaded, not arrived: long since spread
+    m.age = AGE_STILL;                            // loaded, not arrived: long since settled
     enter(m);
   }
 }

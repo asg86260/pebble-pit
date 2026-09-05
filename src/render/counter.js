@@ -5,7 +5,7 @@
 
 import { fmt, openBoardRect } from '../board.js';
 import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
-import { S, floor, pit } from '../state.js';
+import { S, floor, pit, rift } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 
@@ -69,8 +69,26 @@ export function drawCount() {
   const wide = Math.round(MARK * 2 + widest + PAD * 2);
   const tall = Math.round(MARK + (lines.length - 1) * ROW + PAD * 2);
 
-  let x = Math.max(EDGE, Math.min((pit.x + P * 4 - S.camX) * S.zoom, S.W - wide));
-  const y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - EDGE);
+  // Where it stands (wave6-sky, item 7). With the camera at the pit the card
+  // used to seat at the pit mouth, which since the rift moved to the near end
+  // of the hole put it nearly on top of the thing the near end is about. So:
+  // when the pit is in view -- the card not pinned to the left edge -- it seats
+  // centered above the rift, clear of the disc by a couple of cells; scrolled
+  // over the yard it pins to the edge and stands at the ground line as it
+  // always has.
+  const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
+  const atPit = oldX > EDGE && oldX < S.W - wide;   // the pit mouth is in view
+  let x, y;
+  if (atPit) {
+    const mid = (rift.x + rift.w / 2 - S.camX) * S.zoom;
+    x = Math.max(EDGE, Math.min(mid - wide / 2, S.W - wide));
+    // the card's bottom edge sits P*2 over the top of the rift
+    const seat = (rift.y - P * 2 - S.camY) * S.zoom - PAD;
+    y = Math.max(Math.min(seat, S.H - EDGE), EDGE + MARK + (lines.length - 1) * ROW + PAD);
+  } else {
+    x = Math.max(EDGE, Math.min(oldX, S.W - wide));
+    y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - EDGE);
+  }
 
   const box = { x: Math.round(x - PAD), y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
                 w: wide, h: tall };

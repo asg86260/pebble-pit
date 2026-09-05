@@ -174,6 +174,9 @@ export function smogReport() {
            caught: drawnIn(), clumpiness: clumpiness(), skyBins: skyBins(),
            cloudR: cloudR(),
            raining: raining(), rains: S.rains, recycled: S.recycled,
+           // the storm's front and its wash, so a check can watch a brew-up
+           brewing: S.stormFor >= 0, stormFor: S.stormFor,
+           storming: +(S.storming || 0).toFixed(3),
            purifiers: S.purifiers, scrubOpen: S.scrubOpen, recycler: S.recycler,
            muck: { rock: rockMuck(), cut: quarryMuck(), plot: plotMuck(),
                    yard: yardMuck(), all: muckLeft(),
@@ -188,6 +191,9 @@ export function seedSmog() {
   // nothing else. Each of the other files puts its own counter back, because
   // each of them owns the `let` behind it.
   resetRain();
+  // No storm on the way and no wash over the band: both are facts about a run.
+  S.stormFor = -1;
+  S.storming = 0;
   net.fill(0);
   filled = 0;
   oldest = 0;

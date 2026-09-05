@@ -44,7 +44,8 @@ import { stirSmoke } from './smog/draught.js';
 import { clearSky, cloudR, fillSky, moteX, moteY, place, skyFromSave } from './smog/sky.js';
 import { DRAUGHT, breathe, pull } from './smog/house.js';
 import { pullCraft } from './smog/craft.js';
-import { breaks, dryTime, pour, rainOdds, settled, stepDrops, stepGoing } from './smog/rain.js';
+import { breaks, dryTime, markStorm, pour, rainOdds, settled, stepDrops,
+         stepGoing, stepStorm } from './smog/rain.js';
 import { MESS, MUCK_ELBOW, buried, cleanSpotNear, colAt, dropMuckAt, messAt,
          muckAtCol, muckCols, muckFloor, muckFor, muckLeft, nearestMuck,
          plotMuck, poopCols, poopLeft, quarryMuck, retally, rockMuck, slumpMess,
@@ -82,15 +83,19 @@ export function stepSmog(dt) {
   // be raining, because the answer to that question has to be about what is
   // actually overhead.
   reckon();
-  // A shower starts over from the first spot every time -- the ramp is a fact
-  // about this one, not a clock that carries on between them.
+  // A roll that succeeds starts a *brew*, not a shower (wave6-sky, item 5):
+  // the sky darkens for STORM_BREW_S and only then does the drizzle begin --
+  // see `stepStorm`. The marking happens now, at the roll: everything settled
+  // up there right now belongs to this storm. Anything that arrives after this
+  // frame does not, and will still be there when it stops -- which is what a
+  // sky that keeps being dirtied ought to look like.
   if (breaks(secs)) {
-    S.raining = true; S.rains++; S.rainFor = 0;
-    // Everything settled up there right now belongs to this shower. Anything
-    // that arrives after this frame does not, and will still be there when it
-    // stops -- which is what a sky that keeps being dirtied ought to look like.
-    for (const m of SKY) if (settled(m)) m.rain = S.rains;
+    S.stormFor = 0; S.rains++;
+    let marked = 0;
+    for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
+    markStorm(marked);
   }
+  stepStorm(secs);
   if (raining()) pour(secs);
   place(secs);
   stepGoing(secs);

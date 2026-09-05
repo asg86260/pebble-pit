@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { GOING_EASE, MUCK_MAX, P, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RAMP, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK } from '../config.js';
+import { GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
@@ -36,22 +36,37 @@ export const settled = m => !m.up && m.age >= SMOG_SINK;
 // arriving belongs to the next one.
 const doomed = m => settled(m) && m.rain === S.rains;
 
-export function pour(secs) {
-  if (!SKY.length) { S.raining = false; return; }
+// A plain smoothstep, nought to one across [0, 1]. The storm's envelope is made
+// of these because a shower has no corners in it.
+const smooth = k => { k = Math.max(0, Math.min(1, k)); return k * k * (3 - 2 * k); };
 
-  // How far into the shower this is. Rain comes on: a spot or two, then more of
-  // them, then the whole sky. It used to open at the full rate on the very first
-  // frame -- nothing overhead, and a quarter of a second later sixteen hundred
-  // drops in the air -- which is not weather arriving, it is a bucket being
-  // tipped over. The rate is squared across the ramp, so the first second is a
-  // scatter and the shower is properly on by the end of it.
-  //
-  // Nothing is lost to the slow start. What falls is the sky itself, and the sky
-  // is still up there: a shower runs until it is empty either way, so the ramp
-  // makes the front of it gentler rather than the whole of it smaller.
+// How many motes the shower this one broke on was made of, written when the
+// storm commits (see `brew`) and read by the taper: "a quarter of the marked
+// sky left" has to be a share of what was marked, not of whatever has climbed
+// up since.
+let stormMarked = 0;
+export const markStorm = n => { stormMarked = n; };
+
+// How far through the tail the shower is, one for a shower in full voice down
+// to nought as the last marked motes fall. The wash over the sky reads it --
+// the darkness fades back out over the taper.
+let tail = 1;
+export const stormTail = () => tail;
+
+export function pour(secs) {
+  if (!SKY.length) { S.raining = false; tail = 0; return; }
+
+  // The storm envelope (wave6-sky, item 5). Rain comes on the way rain comes
+  // on: a drizzle at a fifth of the rate for the first few seconds, a
+  // smoothstep up to the full pour -- and at the far end, once the marked sky
+  // is down to its last quarter, the rate tapers away with what is left, so
+  // the shower trails off instead of cutting. Nothing is lost to the shape:
+  // what falls is the sky itself, and the shower runs until every marked mote
+  // is gone.
   S.rainFor = (S.rainFor || 0) + secs;
-  const on = Math.min(1, S.rainFor / RAIN_RAMP);
-  let n = RAIN_PER_S * secs * on * on;
+  const t = S.rainFor;
+  const env = 0.2 + 0.8 * smooth((t - RAIN_DRIZZLE_S) / RAIN_RISE_S);
+  let n = RAIN_PER_S * secs * env;
 
   // Which ones may fall, as places in the sky rather than as motes: a settled
   // sky is thousands of specks and this runs every frame of a downpour, so a
@@ -62,7 +77,14 @@ export function pour(secs) {
   // Nothing settled left, and what is left is still climbing. A shower does not
   // reach down the plume and pull specks back out of it -- it is over, and what
   // is on its way up belongs to the next one.
-  if (!pick.length) { S.raining = false; return; }
+  if (!pick.length) { S.raining = false; tail = 0; return; }
+
+  // The taper: the last quarter of the marked sky falls at a rate that shrinks
+  // with it, smoothing to a tenth -- but never to nothing, so every marked mote
+  // still goes and a shower still ends clean.
+  const frac = stormMarked > 0 ? pick.length / stormMarked : 1;
+  tail = smooth(frac / RAIN_TAPER_AT);
+  if (frac < RAIN_TAPER_AT) n *= RAIN_TAPER_FLOOR + (1 - RAIN_TAPER_FLOOR) * tail;
 
   const gone = new Set();
   while (n > 0 && pick.length) {
@@ -92,7 +114,43 @@ export function pour(secs) {
   // frame, for ever, which is what a haze that never comes back looks like from
   // the outside.
   // Over when the sky it broke on is gone, whatever has arrived since.
-  if (!SKY.some(doomed)) S.raining = false;
+  if (!SKY.some(doomed)) { S.raining = false; tail = 0; }
+}
+
+// --- the brew-up ---------------------------------------------------------------
+// (wave6-sky, item 5.) A storm that has been rolled does not open at once: for
+// STORM_BREW_S the sky *brews* -- `S.storming` is a wash of darkness over the
+// band, ramping from nothing up to full while the yard visibly worsens -- and
+// only then does the drizzle begin. The wash holds through the pour and fades
+// back out with the taper, and it eases rather than snapping at either end, so
+// there is no frame on which the sky pops (established vfx taste).
+//
+// `S.stormFor` is the brew's clock: -1 for no storm on the way, otherwise
+// seconds since the roll. The marking of the sky and the count of rains happen
+// at the roll -- see `stepSmog` -- so the shower that finally opens rains the
+// sky that earned it, not whatever climbed up while it brewed.
+export const brewing = () => S.stormFor >= 0;
+
+export function stepStorm(secs) {
+  let want = 0;
+  if (brewing()) {
+    S.stormFor += secs;
+    want = smooth(S.stormFor / STORM_BREW_S);
+    if (S.stormFor >= STORM_BREW_S) {
+      S.stormFor = -1;
+      S.raining = true;
+      S.rainFor = 0;
+    }
+  } else if (S.raining) {
+    want = tail;
+  }
+  // Toward the target, never past it in a jump: the brew's own ramp is already
+  // smooth, and the ease is for the ends -- a shower that ran out early, a
+  // restore -- so the wash always fades rather than cutting.
+  const most = secs * 0.8;
+  const d = want - S.storming;
+  S.storming += Math.abs(d) <= most ? d : Math.sign(d) * most;
+  if (S.storming < 0.001 && !want) S.storming = 0;
 }
 
 // One frame of the fading, and **it keeps whatever motion it had.**
@@ -184,7 +242,8 @@ export const resetRain = () => { dryFor = Infinity; sinceLook = 0; };
 // a sample falls due, so the roll happens at the sampling rate however fast the
 // machine underneath is running.
 export function breaks(secs) {
-  if (raining()) { dryFor = 0; sinceLook = 0; return false; }
+  // A storm on the way is a storm: the sky is not asked again while it brews.
+  if (raining() || brewing()) { dryFor = 0; sinceLook = 0; return false; }
   dryFor += secs;
   sinceLook += secs;
   if (sinceLook < SMOG_SAMPLE) return false;

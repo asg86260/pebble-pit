@@ -150,12 +150,12 @@ export const SMOG_FLOOR = 3;
 // more -- see `band` in weather.js.
 export const CLOUD_TOP = 6;
 export const SMOG_BAND = 13;         // kept for the clouds; see CLOUD_TOP
-// How the haze spreads: not by anything travelling, but by the stretch of sky a
-// mote is placed within opening out under it as it ages. A few pixels a second
-// each, which is slow enough that you never catch one moving.
-export const SMOG_SPREAD_MIN = 90;   // the stretch a mote lands within
-export const SMOG_SPREAD_RATE = 22;  // pixels a second that stretch opens by
-export const SMOG_SPREAD_MAX = 9000; // and as wide as it ever gets: the whole yard
+// SMOG_SPREAD_MIN / SMOG_SPREAD_RATE / SMOG_SPREAD_MAX are gone (wave6-sky,
+// item 4). They anchored each settled mote to the stack that made it, inside a
+// stretch that took minutes to open -- which is what banded the haze over the
+// machines. A settled mote's place across the sky is now its slot alone,
+// uniform over the whole band from the frame it arrives: the haze is a total
+// over the yard, and it does not remember which machine made it.
 export const SMOG_SINK = 5;          // seconds to settle from the band's underside to its height
 // How far a gust lifts the band as it goes through it. This was a wander -- a
 // sine on each mote's own phase, so the haze shimmered in place like television
@@ -207,18 +207,29 @@ export const PLUME_THIN = 0.8;
 // Grains a second across the whole yard. Enough that a rain lays a layer over
 // everything rather than freckling it: a shower you have to go looking for is
 // not a thing that happened to your works.
-export const RAIN_PER_S = 2925;     // per mote: a sky of more specks takes more of them a second
-// How long a shower takes to come on, in seconds. A sky over the line used to
-// open at full rate on the first frame: a clear yard, and then sixteen hundred
-// drops in the air a quarter of a second later, which reads as a bucket tipped
-// over rather than as weather. It comes on the way rain comes on -- a few spots,
-// then more of them, then the whole of it -- and the rate is squared across the
-// ramp so the first second is a scatter you notice rather than a downpour.
-//
-// It is the front of the shower and not the whole of it: a shower runs until the
-// sky it is made of is empty, so a bigger sky still rains for longer, and this
-// only sets how long it takes to get going.
-export const RAIN_RAMP = 3;
+// Cut from 2925 (wave6-sky, item 5): at the old rate a brim sky drained in
+// about nine seconds, which is a bucket tipped over rather than weather. At
+// 650 a brim sky is about forty seconds of shower, and a lighter one is
+// proportionally shorter. The muck a shower leaves is duration-independent
+// (motes times RAIN_MARK), so the longer storm costs the yard exactly what the
+// short one did -- it only lasts long enough to be weather.
+export let RAIN_PER_S = 650;        // per mote: a sky of more specks takes more of them a second
+// RAIN_RAMP is gone (wave6-sky, item 5): the squared come-on is replaced by the
+// storm envelope below -- a brew-up of darkness, a drizzle, the peak, a taper.
+
+// --- wave6-sky: the shape of a storm -------------------------------------------
+// A storm is an event with a front and a tail, not a switch. When the break
+// roll succeeds the sky does not open at once: it *brews* -- a black wash over
+// the band ramps up over STORM_BREW_S so the yard visibly darkens before a
+// drop falls -- then a drizzle at a fifth of the rate, a smoothstep up to the
+// full pour, and a taper at the end (see `pour` in smog/rain.js) so the shower
+// trails off instead of cutting. The wash fades back out with the taper.
+export let STORM_BREW_S = 20;       // seconds of darkening before the first drop
+export let STORM_INK_MAX = 0.35;    // how black the wash gets, as an alpha
+export let RAIN_DRIZZLE_S = 6;      // seconds of drizzle before the pour comes on
+export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full takes
+export const RAIN_TAPER_AT = 0.25;  // taper once this share of the marked sky is left
+export const RAIN_TAPER_FLOOR = 0.1; // and never below this share of the rate
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
 // The share of what lands that leaves a mark. The whole sky falls either way --
 // every mote is a drop you can watch come down -- and this is how much of it is
@@ -284,5 +295,16 @@ export const SKY_KNOBS = [
   { key: 'SMOG_PER_DUST', label: 'soot a grain', min: 0, max: 1.5, step: 0.02,
     get: () => SMOG_PER_DUST, set: v => { SMOG_PER_DUST = v; } },
   { key: 'SMOG_RAIN_BEND', label: 'rain bend', min: 1, max: 8, step: 0.1,
-    get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } }
+    get: () => SMOG_RAIN_BEND, set: v => { SMOG_RAIN_BEND = v; } },
+  // wave6-sky: the storm's own knobs
+  { key: 'RAIN_PER_S', label: 'rain rate', min: 100, max: 3000, step: 25,
+    get: () => RAIN_PER_S, set: v => { RAIN_PER_S = v; } },
+  { key: 'STORM_BREW_S', label: 'storm brew', min: 0, max: 60, step: 1,
+    get: () => STORM_BREW_S, set: v => { STORM_BREW_S = v; } },
+  { key: 'STORM_INK_MAX', label: 'storm ink', min: 0, max: 0.8, step: 0.01,
+    get: () => STORM_INK_MAX, set: v => { STORM_INK_MAX = v; } },
+  { key: 'RAIN_DRIZZLE_S', label: 'drizzle', min: 0, max: 20, step: 0.5,
+    get: () => RAIN_DRIZZLE_S, set: v => { RAIN_DRIZZLE_S = v; } },
+  { key: 'RAIN_RISE_S', label: 'rain rise', min: 0.5, max: 20, step: 0.5,
+    get: () => RAIN_RISE_S, set: v => { RAIN_RISE_S = v; } }
 ];

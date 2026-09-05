@@ -352,12 +352,16 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   buyBuilt('tiller');
   run(40);                                   // a yard properly at work, and smoking
 
-  let fading = 0, going = 0, seen = 0;
+  let fading = 0, thinning = 0, seen = 0;
   for (let i = 0; i < 5; i++) {
     run(0.5);
     const f = window.__skyFades();
     fading += f.filter(v => v < 0.95).length;
-    going += state().going;
+    // The near end of the jump is the plume's own fade now (wave6-sky, item 4):
+    // a puff climbs for PLUME_LIFE, thins out where it stands, and only then
+    // does its mote come up at its slot. There is no ghost left behind --
+    // the thing that thins out IS the climbing speck.
+    thinning += yard.smogSky().filter(m => m.up && (m.fade ?? 1) < 0.95).length;
     seen += f.length;
   }
 
@@ -369,7 +373,7 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
        `${fading} mid-fade over five samples`),
     // ...and thinning out at the near end of it, which is what stops the plume
     // reading as popping.
-    ok(going > 0, 'while what they left behind at the top of the climb thins out',
-       `${going} fading out`)
+    ok(thinning > 0, 'while the plume itself thins out at the top of its climb',
+       `${thinning} thinning`)
   ];
 });

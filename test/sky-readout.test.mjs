@@ -212,8 +212,11 @@ group('a shower ends clean, and the next sky is made from nothing', async () => 
 
   // watched all the way through, because what went wrong before went wrong
   // between two frames: a shower that stops and starts is a shower nobody sees
+  // A brim sky is about forty seconds of shower now (RAIN_PER_S 650, wave6-sky)
+  // plus the drizzle and the taper, so the watch is long enough to see the
+  // whole storm out rather than the front half of it.
   let flips = 0, was = true, dry = null;
-  for (let i = 0; i < 200 && dry == null; i++) {
+  for (let i = 0; i < 400 && dry == null; i++) {
     run(0.25);
     const s = state().smog;
     if (s.raining !== was) { flips++; was = s.raining; }
@@ -289,6 +292,13 @@ group('a speck off a swing is the speck in the band', async () => {
     lastFade = f;
   }
   const stillThere = mote && yard.smogSky().includes(mote);
+  // Where it joined the band: its slot's own place across the whole span,
+  // uniform by construction (wave6-sky, item 4) -- not anywhere near the stack
+  // that made it. Read while it is still being stepped, so `x` is this frame's.
+  run(0.1);
+  const span = state().worldW;
+  const slotX = mote && !mote.up ? ((mote.su * span) % span + span) % span : null;
+  const offSlot = slotX == null ? Infinity : Math.abs(mote.x - slotX);
   window.__crew(0, 0);
   window.__air({ haze: 0 });
   healJaw();
@@ -301,7 +311,11 @@ group('a speck off a swing is the speck in the band', async () => {
        `${visibleJump} visible jumps over 40px`),
     ok(flicker === 0, 'and its weight only ever goes one way on the climb',
        `${flicker} flickers`),
-    ok(mote && startY > mote.y, 'and it ends up above where it started',
-       `${Math.round(startY)} -> ${Math.round(mote ? mote.y : 0)}`)
+    // It used to have to end up above where it started; a slot is anywhere in
+    // the band now, which can be below a tall stack. What must hold instead is
+    // that it joins the band at its slot -- the uniform place the whole sky is
+    // spread by -- rather than remembering the machine that made it.
+    ok(offSlot < 40, 'and it joins the band at its slot, uniform over the sky',
+       `${Math.round(offSlot)}px from its slot`)
   ];
 });

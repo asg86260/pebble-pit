@@ -381,6 +381,9 @@ export const S = {
   haze: 0,                // motes in the sky, waiting to come back down
   raining: false,         // and whether it is coming back down right now
   rainFor: 0,             // seconds into this shower, which is how hard it is coming down
+  // wave6-sky: the storm's front. A break rolls a brew-up now, not a shower.
+  stormFor: -1,           // seconds since the roll, or -1 for no storm on the way
+  storming: 0,            // the wash of darkness over the band, nought to one
   rains: 0,               // how many times they have
   scrubOpen: false,       // the house is built
   purifiers: 0,           // and this many bodies are in it
@@ -675,6 +678,7 @@ export const EPHEMERAL = [
   JOB.BUILD, 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
   'raining', 'rainFor', 'scrubBank', 'pumpAt',
+  'stormFor', 'storming',                  // wave6-sky: weather in flight is not saved
   // Three that are hung on S by their own modules rather than declared above --
   // where the buildings were put and the strips beside them (`placeSites` in
   // world.js, worked out again every time the world is laid out) and the beat
