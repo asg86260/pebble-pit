@@ -269,73 +269,37 @@ export function stepPuffs(secs) {
     // push halfway and hung about would be a swing that never reached the sky.
     p.vy = Math.min(p.vy * (1 - secs * 0.12), -PUFF_UP_FLOOR);
 
-    // **A puff climbs to the height it is going to live at, and stops there.**
+    // **A plume is a plume for PLUME_LIFE, and no puff flies to its slot.**
     //
-    // Which is where this started, and the round trip is worth writing down. It
-    // was the underside of a thirteen-cell strip; then the sky became the whole
-    // window and it became the speck's own slot height; then a few specks were
-    // seen streaking upward and it became a short fixed rise off the stack.
+    // (wave6-sky, item 4.) A puff used to climb all the way to the height its
+    // slot lives at, which for a speck bound near the top of the window is most
+    // of the sky -- a column of smoke crossing the whole view reads as an
+    // event, not as exhaust. Every puff now climbs for PLUME_LIFE, thins out
+    // where it is over PLUME_THIN, and only once it is gone from the climb does
+    // its mote join the band *at its slot* -- fading in there over PUFF_FADE,
+    // the same arrival every settled mote makes. The dirt is counted
+    // identically; only the journey is cut.
     //
-    // That last one was wrong, and wrong in a way that looked like a fix. Cutting
-    // the climb short does not stop a mote going up -- it hands the rest of the
-    // journey to `settleHere`, which eases it from where the climb stopped to its
-    // slot over SMOG_SINK. So the speck still crossed the sky; it just did the
-    // last half of it as a slow glide instead of a climb, which is exactly the
-    // "haze flying up to settle" that came back.
+    // The relocation waits a tenth of a second past the fade reaching nothing,
+    // and the weight is derived from the climb's own age rather than
+    // integrated, so it cannot drift with the step size: whatever the frame
+    // step, there is no instant at which something visible is somewhere new.
+    // That is the rule the sky-readout check holds -- nothing you can see ever
+    // jumps.
     //
-    // A mote climbs to its slot, so the settle has nothing left to do vertically
-    // and there is no second journey to see. The streaking was never the
-    // distance -- it was the *pace*, and that is fixed where it is set, in
-    // `foul`. On average a speck rises about half the sky, because that is where
-    // the middle of the sky is; the spread either side of that is what fills the
-    // window rather than making a band of it.
-    if (p.y > slotY(p, top, deep)) {
-      // ...unless it has been climbing longer than a plume lives. A speck bound
-      // for the top of the window used to cross most of the sky in view, and a
-      // column of smoke the height of the screen reads as an event rather than
-      // as exhaust. Past PLUME_LIFE it thins out where it is, and once it is
-      // gone from the climb its mote joins the band *at its own height* --
-      // fading in up there over PUFF_FADE, the same arrival every settled mote
-      // already makes. The dirt is counted identically; only the journey is
-      // cut short.
-      p.age += secs;
-      if (p.age <= PLUME_LIFE) continue;
-      // Thin out first, move after -- and the weight is derived from the
-      // climb's own age rather than integrated, so it cannot drift with the
-      // step size. The relocation waits a tenth of a second past the fade
-      // reaching nothing: whatever the frame step, there is no instant at
-      // which something visible is somewhere new. That is the rule the
-      // sky-readout check holds -- nothing you can see ever jumps.
-      p.fade = Math.max(0, 1 - (p.age - PLUME_LIFE) / PLUME_THIN);
-      if (p.age <= PLUME_LIFE + PLUME_THIN + 0.1) continue;
-      settleHere(p, false);
-      p.fromY = slotY(p, top, deep);
-      p.y = p.fromY;
-      continue;
-    }
-    // Arrived, and the wind up there has it.
-    //
-    // It joins the band somewhere along the sky rather than directly over the
-    // place it left. That is the difference between a haze and a plume: this yard
-    // fouls from three or four fixed points and the rock most of all, and a mote
-    // that stays over the spot it rose from makes the sky a mound sitting on the
-    // rock with thin air either side.
-    //
-    // Spreading it out afterwards does not fix that, and it was what this did for
-    // a while: a steady stream arriving in one column with a levelling force
-    // pushing outward from it settles into exactly that mound and stays there.
-    // That is what diffusion from a point source does; it is not a tuning
-    // failure, it is the right answer to the wrong arrangement.
-    //
-    // What you watch is unchanged. The puff comes off the swing, at the swing,
-    // and climbs. Where it ends up once it is a thousand feet over the works is
-    // wherever the air up there has taken it.
-    //
-    // And it is the same speck. Nothing is spliced out and nothing is pushed in:
-    // the object you have been watching climb is given the fields a settled mote
-    // has and carries on, from exactly the pixel it had got to. There is no
-    // handover to hide, because there is nothing to hand over to.
-    settleHere(p);
+    // And it is the same speck. Nothing is spliced out and nothing is pushed
+    // in: the object you have been watching climb is given a slot and carries
+    // on. The stack that made it is forgotten with the climb -- the band is a
+    // total over the whole yard, not a bank over each machine.
+    p.age += secs;
+    if (p.age <= PLUME_LIFE) continue;
+    p.fade = Math.max(0, 1 - (p.age - PLUME_LIFE) / PLUME_THIN);
+    if (p.age <= PLUME_LIFE + PLUME_THIN + 0.1) continue;
+    settleHere(p, false);
+    // Born straight at its place in the band, so the sink ease has nothing to
+    // do and the fade-in is the whole of the arrival.
+    p.fromY = slotY(p, top, deep);
+    p.y = p.fromY;
   }
 }
 

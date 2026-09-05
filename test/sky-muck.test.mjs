@@ -111,7 +111,11 @@ group('the sky fills up, and gives it back', async () => {
     ok(dirty.puffs > 0 || dirty.sky > 0,
        'and you can see it up there, or on its way',
        `${dirty.puffs} climbing, ${dirty.sky} arrived`),
-    ok(gathered.clump < 8 && gathered.bins > seeded.bins / 2,
+    // Tightened with wave6-sky item 4: a settled mote's place is its slot
+    // alone, uniform over the whole span, so the fullest strip of a well-fed
+    // sky may only run a little over the average -- there is no anchoring to
+    // the stacks left to bunch it.
+    ok(gathered.clump < 3 && gathered.bins > seeded.bins / 2,
        'and once up there it lies as a haze over everything, not in knots',
        `${seeded.clump} over ${seeded.bins} bins -> ${gathered.clump} over ${gathered.bins}`),
     ok(wet.rains >= 1, 'full, it comes back down', `${wet.rains} rains`),
