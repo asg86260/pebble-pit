@@ -39,12 +39,15 @@ group('one gap, and the same one, between every pair of stations', () => {
        `${runs.length} of ${SITES.length}`),
     ok(!odd.length, 'and each one is exactly STATION_GAP from the next',
        odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${STATION_GAP} throughout`),
-    // Exactly the margin, not merely inside it. `GROUND_LEFT` is worked out from
-    // this very sum now (config/sites.js), so the far end of the walk landing
-    // anywhere else means the two have come apart -- which is the failure a
-    // widened station used to cause silently.
-    ok(runs[0].from === YARD_MARGIN,
-       'and the far end of the walk stands exactly its margin inside the world',
+    // At least the margin. `GROUND_LEFT` still sums every site's *reserved*
+    // width (config/sites.js), but the walk now spaces *drawn* extents
+    // (wave6-sky, item 3), so ground reserved for growth a station has not
+    // bought yet -- the apothecary's unbought pots -- collects as slack past
+    // the far end of the walk. Exactly the margin only holds fully grown; a
+    // station drawn wider than it reserved would still push the walk past the
+    // margin, which is the silent overflow this check exists to catch.
+    ok(runs[0].from >= YARD_MARGIN,
+       'and the far end of the walk stands at least its margin inside the world',
        `${runs[0].key} starts at ${runs[0].from}, margin ${YARD_MARGIN}`)
   ];
 });

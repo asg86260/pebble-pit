@@ -127,6 +127,11 @@ function dryStretch(seconds, measure, before = null, tries = 4) {
   let out = null, dry = false;
   for (let i = 0; i < tries && !dry; i++) {
     if (before) before();
+    // A break rolls a brew-up now (wave6-sky, item 5), and `rains` ticks at the
+    // roll -- so a storm rolled before this stretch would pour inside it with
+    // the counter never moving. A storm already on its way is waited out first;
+    // one that rolls mid-stretch still moves the counter and is caught below.
+    runUntil(() => yard.S.stormFor < 0 && !yard.S.raining, 120);
     const rains = yard.S.rains;
     out = measure(seconds);
     dry = yard.S.rains === rains;
@@ -352,8 +357,12 @@ group('a speck arriving in the sky comes up to weight rather than appearing at i
   buyBuilt('tiller');
   run(40);                                   // a yard properly at work, and smoking
 
+  // Enough samples to be a fact rather than a coincidence: a puff spends under
+  // a second of its three thinning, so a fresh yard with a couple of climbers
+  // at a time can put nothing mid-thin in front of five quick looks. Twenty
+  // looks over ten seconds cannot miss a plume that is really there.
   let fading = 0, thinning = 0, seen = 0;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 20; i++) {
     run(0.5);
     const f = window.__skyFades();
     fading += f.filter(v => v < 0.95).length;

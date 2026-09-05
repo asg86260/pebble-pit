@@ -559,7 +559,7 @@ export const SAVED = [
   'muck',                 // what came down and has not been cleared
   'chip',                 // which of CASINO_CHIPS is on the table
   // wave6-sim
-  'teachers',
+  JOB.TEACH,
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy
