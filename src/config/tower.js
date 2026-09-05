@@ -38,7 +38,10 @@ export const WIZ_SPORES = 40;
 export const WIZ_RATE = 1.7;         // and each one after the first
 export const WIZ_BREW_MS = 120000;   // how long the tower is at it
 // What a wizard does once it is up there: a bolt at the star, this often.
-export const WIZ_MS = 1100;
+// 2600, not the old 1100: a fresh wizard should feel like the bottom of a
+// ladder, not the top of one. The 5-rung speed ladder ends near ~850 ms, so
+// every rung bought is a change you can watch. (wave6-sim, item 10)
+export const WIZ_MS = 2600;
 // The tower's own two ladders, and the sky's first.
 //
 // The wizards were the one trade with nothing to buy for them. Everything on the

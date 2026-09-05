@@ -7,7 +7,9 @@
 // the ladder starts on -- there is no off state below level nought -- up to the
 // top over `RUNGS` rungs. The numbers are decided in the design; they are here so
 // the crit module and the board rows read the one set.
-export const CRIT_CHANCE_MIN = 0.10;   // a crit on one swing in ten, at level 0
+// One in twenty-five at level 0, not one in ten: a crit should be bought, not
+// arrive free -- the ladder is where the chance comes from. (wave6-sim, item 10)
+export const CRIT_CHANCE_MIN = 0.04;
 export const CRIT_CHANCE_MAX = 0.25;   // and one in four at the top of the ladder
 export const CRIT_MULT_MIN = 3;        // worth three units of work at level 0
 export const CRIT_MULT_MAX = 6;        // and six at the top
