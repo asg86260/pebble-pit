@@ -74,11 +74,25 @@ export const RIFT_FEED = 0.55;
 // ladders were added exactly so the pit was not a dead end, and the liquid
 // must not undo that.
 export const ABYSS_DOWN = P * 4;      // how far below the brim the liquid stands
-export const ABYSS_SWELL = P;         // how much the surface breathes, either way
-export const ABYSS_SWELL_MS = 2600;   // and how slowly
+export const ABYSS_SWELL = P * 2;     // how much the surface breathes, either way
+export const ABYSS_SWELL_MS = 3400;   // and how slowly
 export const ABYSS_DIVE_FRAMES = 30;  // frames a caught grain takes to reach the surface
 export const ABYSS_RIPPLE_MS = 420;   // how long a swallow's ripple shows
-export const ABYSS_LANES = 9;         // how many pieces the swell moves in
+// What is down there is not paint: the liquid is a window into somewhere else,
+// and the somewhere else has stars in it. Sparse, faint, breathing on their
+// own slow clocks -- and the deeper rows carry more of them, so the thing
+// reads as depth rather than as speckle. A few wear the tower's own magic
+// purples, because the abyss is the one other plainly unnatural thing in the
+// yard, and it should rhyme with the magic rather than with the dirt.
+export const ABYSS_STAR_EVERY = 26;   // cells of liquid per star, roughly
+export const ABYSS_STAR_MS = 5200;    // one star's slow breath
+// And the weird energy off the top: wisps that rise a few cells off the
+// surface and are gone, the abyss exhaling. Derived from the clock and the
+// column, so there is no list and nothing to save.
+export const ABYSS_WISP_EVERY = 14;   // columns between wisps, roughly
+export const ABYSS_WISP_RISE = P * 7; // how high one climbs before it is gone
+export const ABYSS_WISP_MS = 2400;    // and how long the climb takes
+export const ABYSS_GLINT_MS = 1700;   // how often a cell of the surface glints
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];

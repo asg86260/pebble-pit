@@ -5,8 +5,10 @@
 // primitives (ctx, drawCircle, drawMark) come from ./ctx.js and ./marks.js.
 
 import { now } from '../clock.js';
-import { CORE_FROM, CORE_SIZE, P,
-         ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS, ABYSS_LANES } from '../config.js';
+import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
+         ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS,
+         ABYSS_STAR_EVERY, ABYSS_STAR_MS,
+         ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS, ABYSS_GLINT_MS } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
@@ -198,57 +200,128 @@ export function drawPaid() { drawLeaving(S.paid); }
 // DESIGN.md, and `abyssLine` in pit.js for where the surface stands (during
 // the tear it rises out of the floor with the pile it is taking).
 //
-// Four things are drawn, and each is one property of the thing:
+// Six things are drawn, and each is one property of the thing:
 //
 //   the body    solid ink from the surface to the floor of the hole, clipped
-//               to the mouth. Black mass is the game's own language for a
-//               body of anything; what says liquid is the surface, not a tone.
-//   the swell   the surface breathes, a cell up and down, in a few lanes out
-//               of step with each other -- slow enough to read as depth
-//               rather than as waves.
+//               to the mouth and to the view.
+//   the swell   the surface breathes, per column, on two slow waves out of
+//               step -- a heave and a chop -- so no stretch of it ever moves
+//               as one plate.
+//   the stars   the liquid is a window into somewhere else, and the somewhere
+//               else has stars in it: sparse specks breathing on their own
+//               clocks, thicker with depth, a few in the tower's magic
+//               purples. This is what makes it an abyss and not a puddle of
+//               ink -- the darkness has something on the other side of it.
+//   the wisps   energy rising off the surface and thinning to nothing a few
+//               cells up: the thing exhaling. Derived from the clock and the
+//               column, no list and nothing saved.
 //   the ripples a white notch where a grain just went in, gone in half a
-//               second. The eating is the one event the liquid has, and it
-//               happens at the surface, where you threw the thing.
+//               second, with a glint drifting along the surface between
+//               swallows so the waterline is never still.
 //   the plank   a board over the mouth at the brim. The drowned pit stays a
 //               way through -- the two ladders exist exactly so it is not a
 //               dead end -- and the plank is what the crossing stands on.
 //
 // The order is the picture: diving grains go down first and the body over
-// them at the waterline, so anything past the surface is gone into it.
+// them at the waterline, so anything past the surface is gone into it; the
+// stars go over the body, being *through* it.
 //
+// Everything here is derived from the clock, the column and a stable hash --
+// the same trick the timber grain uses -- so the abyss costs no state, no
+// stepping and no saving, and two frames of a still yard show the same stars.
+const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
+
+// The surface's height at a world column, snapped to the cell. Two waves: the
+// long heave and a shorter chop at a third the size, out of step so the
+// waterline rolls rather than pulses.
+const swellAt = (c, t) => Math.round(
+  (Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + c * 0.11) * 0.75 +
+   Math.sin(t / (ABYSS_SWELL_MS * 0.37) * Math.PI * 2 + c * 0.29) * 0.25)
+  * (ABYSS_SWELL / P)) * P;
+
 export function drawAbyss() {
   if (!S.riftOpen) return;
   const t = now();
   const line = abyssLine();
   const floorY = S.groundY + pitDepth();
-  const laneW = pit.w / ABYSS_LANES;
+
+  // Only the columns in view: the hole is six hundred wide and the window
+  // shows a tenth of it.
+  const from = Math.max(pit.x, Math.floor((S.camX - P * 2) / P) * P);
+  const to = Math.min(pit.x + pit.w, Math.ceil((S.camX + S.viewW + P * 2) / P) * P);
+  if (to <= from) return;
 
   // The grains still diving, before the body goes down, so a grain past the
   // surface is under it.
   drawLeaving(S.gulped);
 
-  // The body, one lane at a time so the surface can breathe. Each lane's own
-  // phase off its index; the swell is snapped to the cell, because half a cell
-  // of liquid is a hairline.
+  // The body, a column at a time so the surface is a rolling line.
   ctx.fillStyle = '#000';
-  for (let l = 0; l < ABYSS_LANES; l++) {
-    const sw = Math.round(Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + l * 1.7)
-                          * (ABYSS_SWELL / P)) * P;
-    const top = Math.min(floorY, line + sw);
-    const x0 = Math.round((pit.x + l * laneW) / P) * P;
-    const x1 = Math.round((pit.x + (l + 1) * laneW) / P) * P;
-    ctx.fillRect(x0, top, x1 - x0, Math.max(0, floorY - top));
+  for (let x = from; x < to; x += P) {
+    const top = Math.min(floorY, line + swellAt(x / P, t));
+    ctx.fillRect(x, top, P, Math.max(0, floorY - top));
+  }
+
+  // The stars. Each candidate cell has a fixed seat and its own slow breath:
+  // it is drawn only through the bright half of its cycle, so the field
+  // twinkles without a single star ever sliding. More of them the deeper the
+  // row -- the shallows are liquid, the depths are sky -- and about one in
+  // five carries a magic purple; the rest are the page's own white, dimmed by
+  // being a single cell in a black mass.
+  for (let x = from; x < to; x += P) {
+    const c = x / P;
+    for (let y = Math.round(line / P) * P + P * 3; y < floorY; y += P) {
+      const r = y / P;
+      const h = seeth(c, r);
+      // deeper rows keep more of their candidates: the cut-off eases with row
+      const depth = Math.min(1, (y - line) / (P * 40));
+      if (h % ABYSS_STAR_EVERY >= 1 + Math.round(depth * 2)) continue;
+      // its own phase and its own rate, off the hash, gated to the bright half
+      const breath = Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h);
+      if (breath < 0.15) continue;
+      ctx.fillStyle = h % 5 === 0 ? MAGIC_TONES[h % MAGIC_TONES.length] : '#fff';
+      ctx.fillRect(x, y, P, P);
+    }
+  }
+
+  // The wisps: a speck rising off the surface every dozen or so columns, gone
+  // by the top of its climb. Position is the clock and the column, so a wisp
+  // is a place that exhales rather than a particle that exists -- and it
+  // narrows as it rises by simply not being drawn on its last stretch.
+  for (let x = from; x < to; x += P) {
+    const c = x / P;
+    const h = seeth(c, 1);
+    if (h % ABYSS_WISP_EVERY) continue;
+    const k = ((t / ABYSS_WISP_MS) + h / 997) % 1;
+    if (k > 0.82) continue;                       // thinned to nothing near the top
+    const wy = Math.round((line + swellAt(c, t) - k * ABYSS_WISP_RISE) / P) * P;
+    // It rises past the mouth into the open air -- it is energy, not a grain,
+    // and a plank does not hold it -- but the plank's own row is skipped, so
+    // it passes behind the board rather than being drawn on it.
+    if (wy === S.groundY - P) continue;
+    const sway = Math.round(Math.sin(t / 640 + h) * 1) * P;
+    ctx.fillStyle = MAGIC_TONES[(h + Math.floor(k * 3)) % MAGIC_TONES.length];
+    ctx.fillRect(x + sway, wy, P, P);
   }
 
   // The ripples: a white notch cut into the surface where something just went
-  // in, opening a cell as it dies. On the surface's own line, so it reads as
-  // the liquid closing over rather than as a mark floating on it.
+  // in, opening a cell as it dies -- on the surface's own rolling line, so it
+  // reads as the liquid closing over rather than as a mark floating on it.
   ctx.fillStyle = '#fff';
   for (const r of S.ripples) {
     const k = Math.min(1, (t - r.at) / ABYSS_RIPPLE_MS);
     const wide = P * (1 + Math.round(k * 2));
     const rx = Math.round((r.x - wide / 2) / P) * P;
-    ctx.fillRect(rx, Math.round(line / P) * P, wide, P);
+    ctx.fillRect(rx, Math.round((line + swellAt(Math.round(r.x / P), t)) / P) * P, wide, P);
+  }
+
+  // ...and a glint sliding along the waterline between swallows: one white
+  // cell on the crest, wherever the long wave's peak is this instant, so the
+  // surface catches light even when nothing is being eaten.
+  const gc = Math.floor(((t / ABYSS_GLINT_MS) * 13) % (pit.w / P));
+  const gx = pit.x + gc * P;
+  if (gx >= from && gx < to && Math.sin(t / ABYSS_GLINT_MS) > 0.4) {
+    ctx.fillRect(gx, line + swellAt(gc + pit.x / P, t), P, P);
   }
 
   // And the plank over the mouth: a board a cell thick lying on the two lips,
