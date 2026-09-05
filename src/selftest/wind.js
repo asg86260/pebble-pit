@@ -215,7 +215,6 @@ export const TESTS = [
     run(1);
 
     const s = state();
-    const was = window.__skyX();              // world x, unrounded: the push is a pixel
 
     const LEFT = 200, RIGHT = 560, HIGH = 42, LOW = 300;
     for (let lap = 0; lap < 3; lap++) {
@@ -224,6 +223,16 @@ export const TESTS = [
       for (let x = RIGHT; x >= LEFT; x -= 20) point('pointermove', x, LOW, 0);
       for (let y = LOW; y >= HIGH; y -= 20) point('pointermove', LEFT, y, 0);
     }
+
+    // Read AFTER the circuit, right before the one stepped frame. A settled
+    // mote's place is worked out from the slot and the wind's phase on demand
+    // now (wave6-sky, item 4), and dispatching sixty pointer events takes real
+    // milliseconds the next tick folds into the game clock -- so a baseline
+    // taken before the circuit is a baseline taken in a different wind, and the
+    // whole band appears to move a pixel that no stir put on it. The stir
+    // offsets are laid on the motes and taken up on the next step either way,
+    // so reading here measures exactly the push and none of the weather.
+    const was = window.__skyX();              // world x, unrounded: the push is a pixel
 
     // The offsets are laid on a mote and taken up when it is next stepped, so
     // one frame -- and one only. A settled mote drifts about a tenth of a pixel
