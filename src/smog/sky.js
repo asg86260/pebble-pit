@@ -64,7 +64,12 @@ let slots = 0;                          // handed out, never reused, never reset
 // them for the same reason.
 export const nextSlot = () => {
   const k = slots++;
-  return { slot: k, su: (k * ACROSS) % 1, sv: rand(),
+  // The depth is the sum of two draws, not one: a uniform depth fills the band
+  // corner to corner and the block ends in two ruled lines, top and bottom. Two
+  // draws pile the motes toward the middle and thin them linearly to nothing at
+  // both edges, so the band fades out instead of stopping -- an edge with no
+  // line on it, and still no pattern, because chance has no rows in it.
+  return { slot: k, su: (k * ACROSS) % 1, sv: (rand() + rand()) / 2,
            lane: Math.floor(rand() * SWAY_LANES) };
 };
 

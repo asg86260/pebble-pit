@@ -198,8 +198,11 @@ export const PUFF_FADE = 900;        // how long a mote takes to go out at the t
 // After this many seconds of climb it thins out where it is over PLUME_THIN,
 // and its mote joins the band at its own height, coming up to weight there
 // (see `stepPuffs`). The dirt is identical either way; only the journey is cut.
-export const PLUME_LIFE = 2.0;
-export const PLUME_THIN = 0.8;
+// Lengthened from 2.0: at two seconds the smoke barely cleared the stacks
+// before thinning, so the yard read as machines coughing rather than plants
+// running. Three and a half puts the top of a plume about halfway to the band.
+export const PLUME_LIFE = 3.5;
+export const PLUME_THIN = 1.2;
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as
 // pollution appearing out of nothing in the middle of the sky. A thick plume is
