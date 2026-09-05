@@ -91,13 +91,67 @@ export const ABYSS_STAR_MS = 5200;    // one star's slow breath
 // -- and each star keeps a tone for life, dimmer in the shallows and allowed
 // up to full white only in the depths, so looking down is looking further in.
 export const ABYSS_TONES = ['#4a4a52', '#6e6e78', '#a2a2ae', '#ffffff'];
-// And one presence, not a texture: a spiral of brighter cells the size of a
-// window, adrift in the deep, crossing the whole hole over minutes. The one
-// thing down there that reads as a THING -- everything else stays quiet so
-// this is what the eye finds.
-export const ABYSS_GALAXY_MS = 210000; // one crossing of the hole, in ms
-export const ABYSS_GALAXY_R = 16;      // its radius, in cells
-export const ABYSS_GALAXY_TURN_MS = 47000; // one slow rotation
+// The purples run the same way, dark to bright, because a magic star has to be
+// able to come up out of the black by the same ramp the grey ones use. There is
+// no alpha here and there never has been: a thing fades by being painted in a
+// darker tone of its own family, so every family needs its dark end written
+// down.
+export const ABYSS_MAGIC_TONES = ['#33195e', '#4e2090', '#6a2fbe', '#9b5de5'];
+// A star's breath is its brightness, not a switch. It climbs its family's ramp
+// and sinks back down it, and only at the very bottom of the sink does it leave
+// the picture -- so the field breathes instead of blinking. The curve is bent
+// so a star spends most of its cycle dim and only briefly at its own top,
+// which is what makes a sky look sparse while every star in it is alive.
+export const ABYSS_BREATH_BEND = 2.2;
+// The deep is a fluid, and what is lit in it moves like smoke in a light ray:
+// slow veils that curl and shear rather than particles that travel. It is all
+// one flow field sampled per cell -- two sideways shears at different rates
+// drag a plain wave into curls, and the veil is drawn along that wave's zero
+// line. There was a single galaxy adrift down here before this; one object
+// crossing an otherwise still field read as a sprite floating over a
+// background, which is the opposite of what the deep is supposed to be. The
+// field is a function of the column, the row and the clock, so nothing is
+// stored and a cell costs two sines.
+export const ABYSS_FLOW_MS = 52000;   // the field's own slow turn
+export const ABYSS_FLOW_COL = 0.16;  // waves across, in radians per cell
+export const ABYSS_FLOW_ROW = 0.09;  // and down
+export const ABYSS_FLOW_ASPECT = 0.7; // rows count for less than columns, so veils lie flat
+export const ABYSS_FLOW_DRIFT = 0.6;  // how much of the turn the crest itself travels
+export const ABYSS_FLOW_SHEAR = 9;  // cells of sideways drag, which is what curls it
+export const ABYSS_SHEAR_ROW = 0.43;  // the second shear's row period, against the first
+export const ABYSS_SHEAR_TURN = 1.7;  // and how much faster it turns
+export const ABYSS_SHEAR_AMT2 = 0.6;  // its share of the drag
+export const ABYSS_SHEAR_COL = 1.3;   // the downward drag's column period, against the first
+export const ABYSS_SHEAR_AMT_Y = 0.5; // and its share
+// One wave alone lays down parallel stripes, however hard it is sheared -- the
+// eye finds the repeat immediately. A second wave running across the first at a
+// far longer period, drifting the other way, cancels and reinforces it along
+// its length, so a veil thins to nothing in one stretch and thickens in
+// another. That interference is the difference between banding and smoke.
+export const ABYSS_FLOW_COL2 = 0.018;
+export const ABYSS_FLOW_ROW2 = -0.035;
+export const ABYSS_FLOW_DRIFT2 = -0.35;
+export const ABYSS_FLOW_MIX = 0.8;    // the second wave's weight against the first
+// The veil is not the crest of the field: it is the line where the field
+// crosses nought. A crest is a broad lobe, and a broad lobe painted in is a
+// blob -- it took several rounds of looking to be sure of that. The zero line
+// is a thin contour that snakes right across the picture, splits and rejoins as
+// the two waves shift against each other, and curls wherever the shear drags
+// it, which is exactly what a filament of smoke in a light ray does.
+//
+// So the band is a half-width measured on the field, brightness falls off from
+// the middle of the filament to its edges, and the whole thing stays near the
+// dark end of the ramp: this is smoke lit from somewhere else, not a light
+// source. The hash does the per-cell variation every surface here gets -- a
+// nudge along the ramp, and a scatter of cells dropped so the filament frays.
+export const ABYSS_VEIL_AT = 0.22;    // half-width of the band, measured on the field
+export const ABYSS_VEIL_EVERY = 3;    // one cell in this many is punched out of it
+export const ABYSS_VEIL_JITTER = 0.05;
+export const ABYSS_VEIL_LIT = 0.16;   // how far up the grey ramp the shallow smoke gets
+export const ABYSS_VEIL_DEEP = 0.18;   // and what the depths add to that
+// And the field lifts and lowers the stars as it passes, so brightening travels
+// through the sky in slow waves instead of each star keeping its own counsel.
+export const ABYSS_FLOW_LIFT = 0.45;
 // And the weird energy off the top: wisps that rise a few cells off the
 // surface and are gone, the abyss exhaling. Derived from the clock and the
 // column, so there is no list and nothing to save.

@@ -8,7 +8,13 @@ import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS,
          ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_TONES,
-         ABYSS_GALAXY_MS, ABYSS_GALAXY_R, ABYSS_GALAXY_TURN_MS,
+         ABYSS_MAGIC_TONES, ABYSS_BREATH_BEND,
+         ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW, ABYSS_FLOW_SHEAR,
+         ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
+         ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y,
+         ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2, ABYSS_FLOW_DRIFT2, ABYSS_FLOW_MIX,
+         ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
+         ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
@@ -240,6 +246,12 @@ const swellAt = (c, t) => Math.round(
    Math.sin(t / (ABYSS_SWELL_MS * 0.37) * Math.PI * 2 + c * 0.29) * 0.25)
   * (ABYSS_SWELL / P)) * P;
 
+// A brightness from 0 to 1 picks a tone out of a family's ramp. Zero is the
+// family's darkest, which is the tone a thing wears on its way out of and back
+// into the black -- there is no alpha to fade with, so the ramp is the fade.
+const toneFor = (ramp, k) => ramp[Math.max(0, Math.min(ramp.length - 1,
+  Math.round(k * (ramp.length - 1))))];
+
 export function drawAbyss() {
   if (!S.riftOpen) return;
   const t = now();
@@ -263,65 +275,88 @@ export function drawAbyss() {
     ctx.fillRect(x, top, P, Math.max(0, floorY - top));
   }
 
-  // The stars. Each candidate cell has a fixed seat, a tone for life and its
-  // own slow breath: it is drawn only through the bright half of its cycle,
-  // so the field twinkles without a single star ever sliding. Two hashes make
-  // it a sky rather than confetti -- the fine one seats a star, the coarse
-  // one (over eight-cell patches) decides whether that stretch of the deep is
-  // nebula-thick, ordinary or empty, so the field clumps and leaves voids the
-  // way a sky does. Tone climbs with depth: the shallows carry only the dim
-  // greys, and full white lives in the depths, so looking down is looking
-  // further in. About one in seven carries a magic purple.
-  for (let x = from; x < to; x += P) {
-    const c = x / P;
-    const patchC = c >> 3;
-    for (let y = Math.round(line / P) * P + P * 3; y < floorY; y += P) {
-      const r = y / P;
-      const h = seeth(c, r);
-      // the patch's own nature: 0..2 empty, 3..6 ordinary, 7+ nebula
-      const patch = seeth(patchC, r >> 3) % 10;
-      if (patch < 3) continue;
-      const keep = patch >= 7 ? 4 : 1;             // nebula patches keep four times the stars
-      if (h % ABYSS_STAR_EVERY >= keep) continue;
-      const breath = Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h);
-      if (breath < 0.15) continue;
-      const depth = Math.min(1, (y - line) / (P * 32));
-      const tone = Math.min(ABYSS_TONES.length - 1,
-                            (h >> 3) % (1 + Math.round(depth * (ABYSS_TONES.length - 1))));
-      ctx.fillStyle = h % 7 === 0 ? MAGIC_TONES[h % MAGIC_TONES.length] : ABYSS_TONES[tone];
-      ctx.fillRect(x, y, P, P);
-    }
-  }
-
-  // The presence. One spiral of brighter cells adrift in the deep, crossing
-  // the hole over minutes and turning as it goes -- the single thing down
-  // there that reads as a THING rather than a texture, which is why the
-  // field around it stays sparse. Two arms, drawn cell by cell along their
-  // curve; the head of each arm is white, the tail falls off through the
-  // greys and the magic purples.
+  // The deep, in one pass: the current that runs through it and the stars that
+  // breathe in it, both read off the same flow field so the sky and the smoke
+  // are plainly the same fluid.
+  //
+  // The stars keep their fixed seats -- the fine hash seats one, the coarse
+  // hash over eight-cell patches decides whether that stretch is nebula-thick,
+  // ordinary or empty, so the field clumps and leaves voids the way a sky does.
+  // What changed is that a star no longer switches on: its breath is a
+  // brightness that walks up its family's ramp and back down, and the current
+  // passing over lifts or lowers that brightness, so brightening travels
+  // through the field in slow waves. Depth still sets a star's ceiling -- only
+  // the deep rows are allowed all the way to white -- so looking down is
+  // looking further in.
+  //
+  // The veil is the crest of the same field: the cells riding near the top of
+  // the wave, broken by the same fixed hash so they light in ragged runs rather
+  // than a painted band. The crests curl and shear as the field turns, which is
+  // what makes it read as smoke in a light ray rather than as stripes.
+  //
+  // The row's sideways drag and the column's downward drag each depend on only
+  // one of the two, so both are worked out once and reused across the pass; a
+  // cell costs one sine.
   {
-    const cross = (t / ABYSS_GALAXY_MS) % 1;
-    const gx = pit.x + cross * pit.w;
-    const gy = line + P * 22;
-    const spin = t / ABYSS_GALAXY_TURN_MS * Math.PI * 2;
-    if (gx + ABYSS_GALAXY_R * P >= from && gx - ABYSS_GALAXY_R * P <= to) {
-      for (let arm = 0; arm < 2; arm++) {
-        for (let i = 0; i < 26; i++) {
-          const k = i / 26;
-          const a = spin + arm * Math.PI + k * Math.PI * 1.6;
-          const rad = (1.5 + k * (ABYSS_GALAXY_R - 1.5)) * P;
-          const px = Math.round((gx + Math.cos(a) * rad) / P) * P;
-          const py = Math.round((gy + Math.sin(a) * rad * 0.45) / P) * P;
-          if (py <= line + P * 2 || py >= floorY || px < from || px >= to) continue;
-          ctx.fillStyle = k < 0.12 ? '#fff'
-                        : k < 0.5 ? ABYSS_TONES[2]
-                        : (i % 3 === 0 ? MAGIC_TONES[i % MAGIC_TONES.length] : ABYSS_TONES[1]);
-          ctx.fillRect(px, py, P, P);
+    const a = t / ABYSS_FLOW_MS * Math.PI * 2;
+    const top = Math.round(line / P) * P + P * 3;
+    const dragY = [];
+    for (let x = from; x < to; x += P) {
+      dragY.push(Math.sin((x / P) * ABYSS_FLOW_COL * ABYSS_SHEAR_COL - a * ABYSS_SHEAR_COL)
+                 * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT_Y);
+    }
+    for (let y = top; y < floorY; y += P) {
+      const r = y / P;
+      const dragX = Math.sin(r * ABYSS_FLOW_ROW + a) * ABYSS_FLOW_SHEAR
+                  + Math.sin(r * ABYSS_FLOW_ROW * ABYSS_SHEAR_ROW - a * ABYSS_SHEAR_TURN)
+                    * ABYSS_FLOW_SHEAR * ABYSS_SHEAR_AMT2;
+      const depth = Math.min(1, (y - line) / (P * 32));
+      for (let x = from, i = 0; x < to; x += P, i++) {
+        const c = x / P;
+        const cx = c + dragX, ry = r + dragY[i];
+        const f = Math.sin(cx * ABYSS_FLOW_COL + ry * ABYSS_FLOW_ROW * ABYSS_FLOW_ASPECT
+                           - a * ABYSS_FLOW_DRIFT);
+        // the second, far slower wave is not added to the first: it rides over
+        // it as a strength, thinning the filament to nothing along one stretch
+        // and swelling it along another, which is how a wisp of smoke fails and
+        // recovers as it travels
+        const swell = 1 - ABYSS_FLOW_MIX + ABYSS_FLOW_MIX
+                    * (Math.sin(cx * ABYSS_FLOW_COL2 + ry * ABYSS_FLOW_ROW2
+                                - a * ABYSS_FLOW_DRIFT2) + 1) / 2;
+        const h = seeth(c, r);
+        // the patch's own nature: 0..2 empty, 3..6 ordinary, 7+ nebula
+        const patch = seeth(c >> 3, r >> 3) % 10;
+        const keep = patch >= 7 ? 4 : 1;           // nebula patches keep four times the stars
+        const seated = patch >= 3 && h % ABYSS_STAR_EVERY < keep;
+        if (seated) {
+          // the breath, bent so a star spends most of its life dim and only
+          // briefly at its own top, then lifted or lowered by the current
+          const swing = (Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h)
+                         + 1) / 2;
+          const k = Math.pow(swing, ABYSS_BREATH_BEND)
+                  * (1 - ABYSS_FLOW_LIFT + ABYSS_FLOW_LIFT * (f + 1) / 2);
+          if (k > 0.06) {
+            const ramp = h % 7 === 0 ? ABYSS_MAGIC_TONES : ABYSS_TONES;
+            // its ceiling: shallow stars never reach the bright end of their
+            // family, and the hash keeps some of the deep ones modest too
+            const ceiling = Math.max(1, (h >> 3) % (1 + Math.round(depth * (ramp.length - 1))));
+            ctx.fillStyle = ramp[Math.min(ramp.length - 1, Math.round(k * ceiling))];
+            ctx.fillRect(x, y, P, P);
+            continue;
+          }
         }
+        const off = Math.abs(f), band = ABYSS_VEIL_AT * swell;
+        if (off > band || h % ABYSS_VEIL_EVERY === 0) continue;
+        // how near the middle of the filament this cell sits, which is how
+        // brightly the smoke shows; the deep carries it a shade further up the
+        // ramp, and the hash nudges each cell so no stretch is one flat tone
+        const thick = (1 - off / band) * swell;
+        const lit = thick * (ABYSS_VEIL_LIT + depth * ABYSS_VEIL_DEEP)
+                  + (h % 3 - 1) * ABYSS_VEIL_JITTER;
+        if (lit <= 0) continue;
+        ctx.fillStyle = toneFor(ABYSS_TONES, lit);
+        ctx.fillRect(x, y, P, P);
       }
-      // and its heart, always lit
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(Math.round(gx / P) * P, Math.round(gy / P) * P, P, P);
     }
   }
 
