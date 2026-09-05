@@ -7,8 +7,9 @@
 import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS,
-         ABYSS_STAR_EVERY, ABYSS_STAR_MS,
-         ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS, ABYSS_GLINT_MS } from '../config.js';
+         ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_TONES,
+         ABYSS_GALAXY_MS, ABYSS_GALAXY_R, ABYSS_GALAXY_TURN_MS,
+         ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
@@ -262,25 +263,65 @@ export function drawAbyss() {
     ctx.fillRect(x, top, P, Math.max(0, floorY - top));
   }
 
-  // The stars. Each candidate cell has a fixed seat and its own slow breath:
-  // it is drawn only through the bright half of its cycle, so the field
-  // twinkles without a single star ever sliding. More of them the deeper the
-  // row -- the shallows are liquid, the depths are sky -- and about one in
-  // five carries a magic purple; the rest are the page's own white, dimmed by
-  // being a single cell in a black mass.
+  // The stars. Each candidate cell has a fixed seat, a tone for life and its
+  // own slow breath: it is drawn only through the bright half of its cycle,
+  // so the field twinkles without a single star ever sliding. Two hashes make
+  // it a sky rather than confetti -- the fine one seats a star, the coarse
+  // one (over eight-cell patches) decides whether that stretch of the deep is
+  // nebula-thick, ordinary or empty, so the field clumps and leaves voids the
+  // way a sky does. Tone climbs with depth: the shallows carry only the dim
+  // greys, and full white lives in the depths, so looking down is looking
+  // further in. About one in seven carries a magic purple.
   for (let x = from; x < to; x += P) {
     const c = x / P;
+    const patchC = c >> 3;
     for (let y = Math.round(line / P) * P + P * 3; y < floorY; y += P) {
       const r = y / P;
       const h = seeth(c, r);
-      // deeper rows keep more of their candidates: the cut-off eases with row
-      const depth = Math.min(1, (y - line) / (P * 40));
-      if (h % ABYSS_STAR_EVERY >= 1 + Math.round(depth * 2)) continue;
-      // its own phase and its own rate, off the hash, gated to the bright half
+      // the patch's own nature: 0..2 empty, 3..6 ordinary, 7+ nebula
+      const patch = seeth(patchC, r >> 3) % 10;
+      if (patch < 3) continue;
+      const keep = patch >= 7 ? 4 : 1;             // nebula patches keep four times the stars
+      if (h % ABYSS_STAR_EVERY >= keep) continue;
       const breath = Math.sin(t / ABYSS_STAR_MS * Math.PI * 2 * (0.6 + (h % 7) * 0.1) + h);
       if (breath < 0.15) continue;
-      ctx.fillStyle = h % 5 === 0 ? MAGIC_TONES[h % MAGIC_TONES.length] : '#fff';
+      const depth = Math.min(1, (y - line) / (P * 32));
+      const tone = Math.min(ABYSS_TONES.length - 1,
+                            (h >> 3) % (1 + Math.round(depth * (ABYSS_TONES.length - 1))));
+      ctx.fillStyle = h % 7 === 0 ? MAGIC_TONES[h % MAGIC_TONES.length] : ABYSS_TONES[tone];
       ctx.fillRect(x, y, P, P);
+    }
+  }
+
+  // The presence. One spiral of brighter cells adrift in the deep, crossing
+  // the hole over minutes and turning as it goes -- the single thing down
+  // there that reads as a THING rather than a texture, which is why the
+  // field around it stays sparse. Two arms, drawn cell by cell along their
+  // curve; the head of each arm is white, the tail falls off through the
+  // greys and the magic purples.
+  {
+    const cross = (t / ABYSS_GALAXY_MS) % 1;
+    const gx = pit.x + cross * pit.w;
+    const gy = line + P * 22;
+    const spin = t / ABYSS_GALAXY_TURN_MS * Math.PI * 2;
+    if (gx + ABYSS_GALAXY_R * P >= from && gx - ABYSS_GALAXY_R * P <= to) {
+      for (let arm = 0; arm < 2; arm++) {
+        for (let i = 0; i < 26; i++) {
+          const k = i / 26;
+          const a = spin + arm * Math.PI + k * Math.PI * 1.6;
+          const rad = (1.5 + k * (ABYSS_GALAXY_R - 1.5)) * P;
+          const px = Math.round((gx + Math.cos(a) * rad) / P) * P;
+          const py = Math.round((gy + Math.sin(a) * rad * 0.45) / P) * P;
+          if (py <= line + P * 2 || py >= floorY || px < from || px >= to) continue;
+          ctx.fillStyle = k < 0.12 ? '#fff'
+                        : k < 0.5 ? ABYSS_TONES[2]
+                        : (i % 3 === 0 ? MAGIC_TONES[i % MAGIC_TONES.length] : ABYSS_TONES[1]);
+          ctx.fillRect(px, py, P, P);
+        }
+      }
+      // and its heart, always lit
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(Math.round(gx / P) * P, Math.round(gy / P) * P, P, P);
     }
   }
 
@@ -315,14 +356,9 @@ export function drawAbyss() {
     ctx.fillRect(rx, Math.round((line + swellAt(Math.round(r.x / P), t)) / P) * P, wide, P);
   }
 
-  // ...and a glint sliding along the waterline between swallows: one white
-  // cell on the crest, wherever the long wave's peak is this instant, so the
-  // surface catches light even when nothing is being eaten.
-  const gc = Math.floor(((t / ABYSS_GLINT_MS) * 13) % (pit.w / P));
-  const gx = pit.x + gc * P;
-  if (gx >= from && gx < to && Math.sin(t / ABYSS_GLINT_MS) > 0.4) {
-    ctx.fillRect(gx, line + swellAt(gc + pit.x / P, t), P, P);
-  }
+  // (A glint used to slide along the waterline here. Cut: the swell, the
+  // ripples and the wisps already animate the surface, and the one bright
+  // moving thing in the abyss should be the presence in the deep.)
 
   // And the plank over the mouth: a board a cell thick lying on the two lips,
   // which is what a body crossing the drowned pit walks on (see `pitTop`).

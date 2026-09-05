@@ -84,15 +84,26 @@ export const ABYSS_RIPPLE_MS = 420;   // how long a swallow's ripple shows
 // reads as depth rather than as speckle. A few wear the tower's own magic
 // purples, because the abyss is the one other plainly unnatural thing in the
 // yard, and it should rhyme with the magic rather than with the dirt.
-export const ABYSS_STAR_EVERY = 26;   // cells of liquid per star, roughly
+export const ABYSS_STAR_EVERY = 34;   // cells of liquid per star, roughly
 export const ABYSS_STAR_MS = 5200;    // one star's slow breath
+// A sky is not confetti: the stars cluster. A coarse second hash gates whole
+// patches -- some stretches of the deep are nebula-thick and some are empty
+// -- and each star keeps a tone for life, dimmer in the shallows and allowed
+// up to full white only in the depths, so looking down is looking further in.
+export const ABYSS_TONES = ['#4a4a52', '#6e6e78', '#a2a2ae', '#ffffff'];
+// And one presence, not a texture: a spiral of brighter cells the size of a
+// window, adrift in the deep, crossing the whole hole over minutes. The one
+// thing down there that reads as a THING -- everything else stays quiet so
+// this is what the eye finds.
+export const ABYSS_GALAXY_MS = 210000; // one crossing of the hole, in ms
+export const ABYSS_GALAXY_R = 16;      // its radius, in cells
+export const ABYSS_GALAXY_TURN_MS = 47000; // one slow rotation
 // And the weird energy off the top: wisps that rise a few cells off the
 // surface and are gone, the abyss exhaling. Derived from the clock and the
 // column, so there is no list and nothing to save.
 export const ABYSS_WISP_EVERY = 14;   // columns between wisps, roughly
 export const ABYSS_WISP_RISE = P * 7; // how high one climbs before it is gone
 export const ABYSS_WISP_MS = 2400;    // and how long the climb takes
-export const ABYSS_GLINT_MS = 1700;   // how often a cell of the surface glints
 // What tearing one costs. Red, because it is the one plainly magic thing acting
 // on the one plainly dirt thing, and dust like every other row in the game.
 export const RIFT_BILL = [['spark', 120], ['dust', 20000]];
