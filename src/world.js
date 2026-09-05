@@ -12,7 +12,8 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
-        FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP } from './config.js';
+        FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
+        APOTH_POT_ROW, POT_PITCH, POT_W } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
@@ -164,7 +165,7 @@ let laid = null;
 // on something the walk itself sets is a key that says "lay again" on the frame
 // after every laying.
 const groundKey = () =>
-  `${S.scrubOpen}|${S.meteorOpen}|${(S.buildOrder || []).join(',')}`;
+  `${S.scrubOpen}|${S.meteorOpen}|${S.apothPots}|${(S.buildOrder || []).join(',')}`;
 
 export function layPiles() {
   const now = groundKey();
@@ -237,6 +238,22 @@ function siteOrder() {
   ];
 }
 
+// What a site is drawn at TODAY, where that differs from the widest self its
+// SITES row reserves (wave6-sky, item 3). The walk used to space the reserved
+// futures, so a station that had bought one pot of a possible four stood with
+// three pots' worth of bare ground beside it and the yard's rhythm ran 120 to
+// 330 pixels from one STATION_GAP. The walk spaces what is actually drawn now,
+// and growth re-walks the yard instead: `groundKey` carries the count, so
+// buying a pot lays the ground again and everything re-seats -- bodies walk to
+// the new seats, nothing teleports.
+//
+// The farm is NOT in here, deliberately: its fence and its row of posts are
+// drawn at the full seven-plot width from the first frame (see C6 and
+// `plotSlots`), so its drawn width IS its reserved width.
+const DRAWN_W = {
+  apothecary: () => APOTH_POT_ROW + POT_PITCH * (Math.max(1, S.apothPots) - 1) + POT_W
+};
+
 // Returns a map of key -> { x, w } and the strips, in yard order.
 export function placeSites() {
   const snap = v => Math.round(v / P) * P;
@@ -250,7 +267,7 @@ export function placeSites() {
   let x = snap(S.cx - TO_FIRST_SITE);
 
   for (const row of siteOrder()) {
-    const w = snap(row.w());
+    const w = snap((DRAWN_W[row.key] || row.w)());
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 
     if (row.side === 'left') {

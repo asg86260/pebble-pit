@@ -9,7 +9,7 @@
 // pour, and a taper at the end so it trails off instead of cutting. A brim sky
 // is about forty seconds of shower, and every marked mote still goes.
 
-import { group, ok, state, run, runUntil, makeItRain } from './helpers.mjs';
+import { group, ok, state, run, runUntil, makeItRain, buyNow, openSites } from './helpers.mjs';
 
 // The band is uniform by construction, at a working level and at the brim: the
 // fullest strip of sky holds barely more than the average one, from the frame
@@ -31,6 +31,38 @@ group('the haze lies as one even band, not banks over the machines', async () =>
        `${heavy.clumpiness}`),
     ok(heavy.skyBins > 100, 'with something in nearly every strip of it',
        `${heavy.skyBins} strips occupied`)
+  ];
+});
+
+// Item 3: the walk spaces what is drawn, not what is reserved. The apothecary
+// used to hold three unbought pots' worth of bare ground; growth re-walks the
+// yard instead, so a pot bought like a player moves the station's own wall out
+// and everything past it along by the same step -- and nothing on the near
+// side moves at all.
+group('buying a pot re-walks the yard rather than spending reserved ground', async () => {
+  run(0.4);
+  window.__crew(3, 3, 3, 3);
+  openSites();
+  window.__fullSites();
+  window.__grant({ dust: 99999, shards: 9999, spores: 99999, sparks: 999, cores: 9 });
+  const opened = buyNow('unlockapothecary');
+  run(1);
+  const before = state();
+  const bought = buyNow('anotherpot');
+  run(1);
+  const after = state();
+  const step = before.apothecaryX - after.apothecaryX;
+  window.__crew(0, 0);
+  return [
+    ok(opened && bought, 'the pot is bought like a player, through the row'),
+    ok(step > 0, 'the apothecary grows into fresh ground on its far side',
+       `${before.apothecaryX} -> ${after.apothecaryX}`),
+    ok(before.labX - after.labX === step,
+       'and everything past it steps along by the same distance',
+       `lab ${before.labX} -> ${after.labX} against a step of ${step}`),
+    ok(after.benchX === before.benchX,
+       'while nothing on the rock side of it moves',
+       `bench ${before.benchX} -> ${after.benchX}`)
   ];
 });
 
