@@ -119,6 +119,9 @@ group('a wizard walks and climbs, and never simply appears at the sky', async ()
 group('the whole star pays sparks, and the core pays most', async () => {
   window.__meteor();
   window.__wizardHat(2);
+  // The group is about the accounting, not the pace: base WIZ_MS is 2600 now
+  // (wave6-sim, item 10), so the ladder is bought out rather than sat through.
+  window.__levels({ wizSpeedLevel: 5 });
   window.__clearFloor();
   window.__crew(0, 3, 0, 0, 0, 2);
   const started = state();
@@ -325,6 +328,9 @@ group('the wizards summon the next star, and more of them do it quicker', async 
 group('an empty sky with nobody in it stays empty', async () => {
   window.__meteor();
   window.__wizardHat(1);
+  // Bought-out casting speed, as above: what is checked is the charge, and a
+  // base-pace teardown of the standing star would be most of the check's clock.
+  window.__levels({ wizSpeedLevel: 5 });
   window.__crew(0, 1, 0, 0, 0, 1);
   runUntil(() => state().meteor === 0, 900);
   run(6);
