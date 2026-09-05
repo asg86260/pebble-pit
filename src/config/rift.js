@@ -74,8 +74,30 @@ export const RIFT_FEED = 0.55;
 // ladders were added exactly so the pit was not a dead end, and the liquid
 // must not undo that.
 export const ABYSS_DOWN = P * 4;      // how far below the brim the liquid stands
-export const ABYSS_SWELL = P * 2;     // how much the surface breathes, either way
-export const ABYSS_SWELL_MS = 3400;   // and how slowly
+export const ABYSS_SWELL = P * 3;     // how much the surface breathes, either way
+// The waterline is an interference pattern, not a shape being slid sideways.
+// Two sines whose phases were both the clock plus the column carry one profile
+// across the hole forever: the silhouette never changes, it only translates,
+// and once the eye has caught that it cannot unsee it. So the three waves here
+// travel at unrelated speeds and the middle one travels the other way. Their
+// crests meet, pile into a peak and come apart again, which is what a surface
+// with something under it does.
+export const ABYSS_SWELL_MS = 4200;   // the long heave's period
+export const ABYSS_SWELL_MS2 = 6700;  // the one running against it, deliberately unrelated
+export const ABYSS_SWELL_MS3 = 2900;  // and the short chop over the top of both
+export const ABYSS_SWELL_K1 = 0.11;   // each one's length, in radians per column
+export const ABYSS_SWELL_K2 = 0.067;
+export const ABYSS_SWELL_K3 = 0.23;
+export const ABYSS_SWELL_W1 = 0.45;   // and its share of the swell
+export const ABYSS_SWELL_W2 = 0.35;
+export const ABYSS_SWELL_W3 = 0.2;
+// And a much slower envelope over the whole line, so one stretch of it heaves
+// while another lies nearly flat and the two trade places over half a minute.
+// Without it every column is equally busy, which is the other half of why the
+// old surface read as a printed waveform.
+export const ABYSS_SWELL_ENV_MS = 21000;
+export const ABYSS_SWELL_ENV_K = 0.031;
+export const ABYSS_SWELL_CALM = 0.35;  // how much heave a stretch keeps at its calmest
 export const ABYSS_DIVE_FRAMES = 30;  // frames a caught grain takes to reach the surface
 export const ABYSS_RIPPLE_MS = 420;   // how long a swallow's ripple shows
 // What is down there is not paint: the liquid is a window into somewhere else,
@@ -86,23 +108,44 @@ export const ABYSS_RIPPLE_MS = 420;   // how long a swallow's ripple shows
 // yard, and it should rhyme with the magic rather than with the dirt.
 export const ABYSS_STAR_EVERY = 34;   // cells of liquid per star, roughly
 export const ABYSS_STAR_MS = 5200;    // one star's slow breath
+// A star's top rung: how bright it is allowed to get at the height of its
+// breath. It is a rung of the ramp rather than a share of it, because the ramp
+// is mostly dark now -- half of it is within a hair of the liquid -- and a star
+// whose ceiling is a fraction of twelve would spend its whole life invisible.
+// The shallows are held to the floor and the depths are let all the way up, and
+// the hash pulls a few of the deep ones back down so they are not uniform.
+export const ABYSS_STAR_FLOOR = 5;
+export const ABYSS_STAR_VARY = 3;
 // A sky is not confetti: the stars cluster. A coarse second hash gates whole
 // patches -- some stretches of the deep are nebula-thick and some are empty
 // -- and each star keeps a tone for life, dimmer in the shallows and allowed
 // up to full white only in the depths, so looking down is looking further in.
-export const ABYSS_TONES = ['#4a4a52', '#6e6e78', '#a2a2ae', '#ffffff'];
+// Twelve steps, not four, and the bottom one is black. A four-step ramp means
+// a star's first visible moment is already a plainly grey cell, which is a pop
+// however smoothly the brightness underneath it moves -- the fade was in the
+// arithmetic and not on the screen. With the bottom few steps within a hair of
+// the liquid, "gone" and "darkest step" are the same picture, so a star arrives
+// and leaves without an edge anywhere in it.
+export const ABYSS_TONES = ['#000000', '#0a0a0c', '#121216', '#1c1c21', '#26262c',
+                            '#333339', '#42424a', '#55555e', '#6e6e78', '#8b8b96',
+                            '#b4b4c0', '#ffffff'];
 // The purples run the same way, dark to bright, because a magic star has to be
 // able to come up out of the black by the same ramp the grey ones use. There is
 // no alpha here and there never has been: a thing fades by being painted in a
 // darker tone of its own family, so every family needs its dark end written
 // down.
-export const ABYSS_MAGIC_TONES = ['#33195e', '#4e2090', '#6a2fbe', '#9b5de5'];
-// A star's breath is its brightness, not a switch. It climbs its family's ramp
-// and sinks back down it, and only at the very bottom of the sink does it leave
-// the picture -- so the field breathes instead of blinking. The curve is bent
-// so a star spends most of its cycle dim and only briefly at its own top,
-// which is what makes a sky look sparse while every star in it is alive.
-export const ABYSS_BREATH_BEND = 2.2;
+export const ABYSS_MAGIC_TONES = ['#000000', '#0b0614', '#130b20', '#1b112c', '#241739',
+                                  '#2d1d47', '#371f56', '#412465', '#4e2090', '#5c2ba6',
+                                  '#6a2fbe', '#9b5de5'];
+// A star's breath is its brightness, not a switch, and the curve it follows is
+// bent the other way from the obvious one. The bottom rungs of the ramp are
+// within a hair of the liquid, so time spent down there is time spent invisible:
+// an exponent under one runs the breath through those rungs quickly and lets it
+// dwell up where the star can actually be seen. The ends still fade -- every
+// rung is crossed, one at a time, several a second at most -- but they fade
+// through tones nobody can tell from black, which is what makes the arrival and
+// the departure edgeless.
+export const ABYSS_BREATH_BEND = 0.7;
 // The deep is a fluid, and what is lit in it moves like smoke in a light ray:
 // slow veils that curl and shear rather than particles that travel. It is all
 // one flow field sampled per cell -- two sideways shears at different rates
@@ -146,9 +189,9 @@ export const ABYSS_FLOW_MIX = 0.8;    // the second wave's weight against the fi
 // nudge along the ramp, and a scatter of cells dropped so the filament frays.
 export const ABYSS_VEIL_AT = 0.22;    // half-width of the band, measured on the field
 export const ABYSS_VEIL_EVERY = 3;    // one cell in this many is punched out of it
-export const ABYSS_VEIL_JITTER = 0.05;
-export const ABYSS_VEIL_LIT = 0.16;   // how far up the grey ramp the shallow smoke gets
-export const ABYSS_VEIL_DEEP = 0.18;   // and what the depths add to that
+export const ABYSS_VEIL_JITTER = 0.04;
+export const ABYSS_VEIL_LIT = 0.34;   // how far up the grey ramp the shallow smoke gets
+export const ABYSS_VEIL_DEEP = 0.34;   // and what the depths add to that
 // And the field lifts and lowers the stars as it passes, so brightening travels
 // through the sky in slow waves instead of each star keeping its own counsel.
 export const ABYSS_FLOW_LIFT = 0.45;

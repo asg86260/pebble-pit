@@ -6,8 +6,11 @@
 
 import { now } from '../clock.js';
 import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
-         ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_RIPPLE_MS,
-         ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_TONES,
+         ABYSS_SWELL, ABYSS_SWELL_MS, ABYSS_SWELL_MS2, ABYSS_SWELL_MS3,
+         ABYSS_SWELL_K1, ABYSS_SWELL_K2, ABYSS_SWELL_K3,
+         ABYSS_SWELL_W1, ABYSS_SWELL_W2, ABYSS_SWELL_W3,
+         ABYSS_SWELL_ENV_MS, ABYSS_SWELL_ENV_K, ABYSS_SWELL_CALM, ABYSS_RIPPLE_MS,
+         ABYSS_STAR_EVERY, ABYSS_STAR_MS, ABYSS_STAR_FLOOR, ABYSS_STAR_VARY, ABYSS_TONES,
          ABYSS_MAGIC_TONES, ABYSS_BREATH_BEND,
          ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW, ABYSS_FLOW_SHEAR,
          ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
@@ -241,16 +244,30 @@ const seeth = (c, r) => Math.abs((c * 73856093) ^ (r * 19349663)) % 997;
 // The surface's height at a world column, snapped to the cell. Two waves: the
 // long heave and a shorter chop at a third the size, out of step so the
 // waterline rolls rather than pulses.
-const swellAt = (c, t) => Math.round(
-  (Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + c * 0.11) * 0.75 +
-   Math.sin(t / (ABYSS_SWELL_MS * 0.37) * Math.PI * 2 + c * 0.29) * 0.25)
-  * (ABYSS_SWELL / P)) * P;
+const swellAt = (c, t) => {
+  // The middle wave runs the other way and none of the three periods divide any
+  // other, so no arrangement of crests repeats: they meet, pile up and come
+  // apart again, and the silhouette is a different silhouette every second.
+  // Two waves both phased on the clock plus the column carry one fixed profile
+  // sideways forever, which is what this used to do and what it looked like.
+  const h = Math.sin(t / ABYSS_SWELL_MS * Math.PI * 2 + c * ABYSS_SWELL_K1) * ABYSS_SWELL_W1
+          + Math.sin(t / ABYSS_SWELL_MS2 * Math.PI * 2 - c * ABYSS_SWELL_K2) * ABYSS_SWELL_W2
+          + Math.sin(t / ABYSS_SWELL_MS3 * Math.PI * 2 + c * ABYSS_SWELL_K3) * ABYSS_SWELL_W3;
+  // and the envelope, which decides which stretch of the line is doing the
+  // heaving at all; it crawls, so a calm patch takes a good while to wake up
+  const env = ABYSS_SWELL_CALM + (1 - ABYSS_SWELL_CALM)
+            * (Math.sin(t / ABYSS_SWELL_ENV_MS * Math.PI * 2 + c * ABYSS_SWELL_ENV_K) + 1) / 2;
+  return Math.round(h * env * (ABYSS_SWELL / P)) * P;
+};
 
-// A brightness from 0 to 1 picks a tone out of a family's ramp. Zero is the
-// family's darkest, which is the tone a thing wears on its way out of and back
-// into the black -- there is no alpha to fade with, so the ramp is the fade.
-const toneFor = (ramp, k) => ramp[Math.max(0, Math.min(ramp.length - 1,
-  Math.round(k * (ramp.length - 1))))];
+// A brightness from 0 to 1 picks a rung of a family's ramp. There is no alpha
+// to fade with, so the ramp is the fade -- and every ramp's bottom rung is
+// black, which is what makes the ends of a fade invisible: a thing on its way
+// out reaches a tone the liquid cannot be told from, and then stops being
+// drawn, with no step between the two. Rung nought therefore means "do not
+// draw", and every caller checks for it rather than painting black on black.
+const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
+  Math.round(k * (ramp.length - 1))));
 
 export function drawAbyss() {
   if (!S.riftOpen) return;
@@ -335,12 +352,17 @@ export function drawAbyss() {
                          + 1) / 2;
           const k = Math.pow(swing, ABYSS_BREATH_BEND)
                   * (1 - ABYSS_FLOW_LIFT + ABYSS_FLOW_LIFT * (f + 1) / 2);
-          if (k > 0.06) {
-            const ramp = h % 7 === 0 ? ABYSS_MAGIC_TONES : ABYSS_TONES;
-            // its ceiling: shallow stars never reach the bright end of their
-            // family, and the hash keeps some of the deep ones modest too
-            const ceiling = Math.max(1, (h >> 3) % (1 + Math.round(depth * (ramp.length - 1))));
-            ctx.fillStyle = ramp[Math.min(ramp.length - 1, Math.round(k * ceiling))];
+          const ramp = h % 7 === 0 ? ABYSS_MAGIC_TONES : ABYSS_TONES;
+          // its ceiling: shallow stars never reach the bright end of their
+          // family, and the hash keeps some of the deep ones modest too. At
+          // least two rungs, so even the dimmest star has a fade rather than a
+          // switch.
+          const allowed = ABYSS_STAR_FLOOR
+                        + Math.round(depth * (ramp.length - 1 - ABYSS_STAR_FLOOR));
+          const ceiling = allowed - (h >> 3) % ABYSS_STAR_VARY;
+          const rung = Math.min(ramp.length - 1, Math.round(k * ceiling));
+          if (rung > 0) {
+            ctx.fillStyle = ramp[rung];
             ctx.fillRect(x, y, P, P);
             continue;
           }
@@ -353,8 +375,9 @@ export function drawAbyss() {
         const thick = (1 - off / band) * swell;
         const lit = thick * (ABYSS_VEIL_LIT + depth * ABYSS_VEIL_DEEP)
                   + (h % 3 - 1) * ABYSS_VEIL_JITTER;
-        if (lit <= 0) continue;
-        ctx.fillStyle = toneFor(ABYSS_TONES, lit);
+        const rung = rungFor(ABYSS_TONES, lit);
+        if (rung === 0) continue;                  // its edges reach black and stop
+        ctx.fillStyle = ABYSS_TONES[rung];
         ctx.fillRect(x, y, P, P);
       }
     }
