@@ -30,4 +30,10 @@ export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 // How far past a station's own ground a held body may be dropped and still mean
 // that station. A body is a bigger thing than a cursor; a drop that has to land
 // on the doorway to the pixel is a control nobody hits twice.
-export const ASSIGN_PAD = P * 2;     // on every side of the stand rect
+export const ASSIGN_PAD = P * 2;     // either side of the stand rect (the top
+                                     // of the zone is the top of the sky)
+
+// The marker over each station a held body could join: a small arrow pointing
+// down at the place, bobbing so it reads as an invitation rather than a stain.
+export const DROP_MARK_LIFT = 10;    // cells above the station's top
+export const DROP_MARK_BOB_MS = 1000;

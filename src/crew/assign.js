@@ -48,9 +48,13 @@ export function dropTargets() {
     // rect is the drop's hit box, padded; ring is the station's own ground,
     // unpadded, for the aura to stroke -- a ring on the padded box floats in
     // the white sky around the building, which on this palette is invisible.
+    // The hit box runs from the top of the sky down to the station's foot: a
+    // held body hangs off the cursor well above the ground, so asking the hand
+    // to land it on the building itself was asking for a stoop every time.
+    // Anywhere in the air over the station means the station.
     out.push({ key, job: JOB_AT[key], ring: r,
-               rect: { x: r.x - ASSIGN_PAD, y: r.y - ASSIGN_PAD,
-                       w: r.w + ASSIGN_PAD * 2, h: r.h + ASSIGN_PAD * 2 } });
+               rect: { x: r.x - ASSIGN_PAD, y: 0,
+                       w: r.w + ASSIGN_PAD * 2, h: r.y + r.h + ASSIGN_PAD } });
   }
   // The construction bench (wave7b-build): builders are hired by count too,
   // and the trestle is their post. Its rect lives on S rather than in
@@ -58,14 +62,15 @@ export function dropTargets() {
   if (S.buildbenchOpen && S.buildbench.w > 0) {
     const b = S.buildbench;
     out.push({ key: 'buildbench', job: JOB.BUILD, ring: b,
-               rect: { x: b.x - ASSIGN_PAD, y: b.y - ASSIGN_PAD,
-                       w: b.w + ASSIGN_PAD * 2, h: b.h + ASSIGN_PAD * 2 } });
+               rect: { x: b.x - ASSIGN_PAD, y: 0,
+                       w: b.w + ASSIGN_PAD * 2, h: b.y + b.h + ASSIGN_PAD } });
   }
   if (rockDown()) {
     const left = cellPos(0, 0).px;
     const box = { x: left, y: rockFootY() - S.gh * P,
                   w: S.gw * P, h: S.gh * P };
-    out.push({ key: 'rock', job: JOB.ROCK, ring: box, rect: box });
+    out.push({ key: 'rock', job: JOB.ROCK, ring: box,
+               rect: { x: box.x, y: 0, w: box.w, h: box.y + box.h } });
   }
   return out;
 }
@@ -96,6 +101,15 @@ export function holdTarget() {
   const w = lifted();
   if (!w) return null;
   return targetAt(w, S.mouse.x, S.mouse.y);
+}
+
+// Every target the held body could join, wherever the cursor is -- for the
+// markers the yard shows while a body is up, so the hand knows its options
+// before it wanders. Same table, same two vetoes as the drop itself.
+export function holdOptions() {
+  const w = lifted();
+  if (!w) return [];
+  return dropTargets().filter(t => t.job !== JOB_OF[w.type] && roomAt(t.job) >= 1);
 }
 
 // The drop itself. Called by drop() in pointer.js before the throw physics;

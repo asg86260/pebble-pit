@@ -12,6 +12,7 @@
 import { STATIONS, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
+  DROP_MARK_BOB_MS, DROP_MARK_LIFT,
   FLAG_GUST_MS, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P,
 } from '../config.js';
@@ -19,7 +20,7 @@ import { now } from '../clock.js';
 import { chimneyAt } from '../house.js';
 import { bench, lab, school } from '../state.js';
 import { benchMark } from '../upgrades.js';
-import { holdTarget } from '../crew/assign.js';   // wave7b-assign
+import { holdOptions, holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
 
@@ -178,6 +179,21 @@ export function drawFlags() {
 
 export function drawAuras() {
   ctx.save();
+  // While a body is held, every station it could join wears a small arrow
+  // pointing down at it, bobbing -- the options laid out before the hand
+  // wanders, read off the same table the drop consults. The zone itself is
+  // the whole column of sky over the station, so the arrow hangs in the air
+  // the way the drop does.
+  const t = now();
+  const bob = Math.round(Math.sin(t / DROP_MARK_BOB_MS * Math.PI * 2)) * P;
+  ctx.fillStyle = '#000';
+  for (const o of holdOptions()) {
+    const cols = Math.round(o.ring.w / P);
+    const cx = Math.round(o.ring.x / P) * P + Math.floor(cols / 2) * P;
+    const y = Math.round(o.ring.y / P) * P - DROP_MARK_LIFT * P + bob;
+    ctx.fillRect(cx - P, y, P * 3, P);
+    ctx.fillRect(cx, y + P, P, P);
+  }
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 1;
   // wave7b-assign: the station under a held body wears the same ring, steady
