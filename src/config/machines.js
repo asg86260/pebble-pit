@@ -33,6 +33,12 @@ export const MACHINE_TUNE_UP = 1.55;
 // upgrades.js is the full table; this is the one entry that is also needed here,
 // where a bill is built and upgrades.js cannot be reached without closing a ring.
 export const DUST_PER_SPARK = 60;
+// And the other three coins on the same line. Shard and spore sat at forty
+// each for a year while the yard minted spores two hundred times as fast as
+// shards -- pricing them apart is the grind pass's first lever (DESIGN.md).
+export const DUST_PER_SHARD = 60;
+export const DUST_PER_SPORE = 15;
+export const DUST_PER_CORE = 500;
 // Soot off the stack, per unit of the station's work -- not per minute. A
 // machine is the sky's only producer (`foul` refuses everything else), so this
 // one dial *is* the pollution rate, and the compounding is what makes it so

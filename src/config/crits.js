@@ -19,5 +19,10 @@ export const CRIT_MULT_MAX = 6;        // and six at the top
 // rungs walk 3, 4, 5, 6 with no repeats, and each rung costs double to make up
 // for there being fewer of them. (feedback7, item 20)
 export const CRIT_MULT_RUNGS = CRIT_MULT_MAX - CRIT_MULT_MIN;
-export const CRIT_CHANCE_COST = 60;    // first rung, dust, rungCost-shaped like the rest
-export const CRIT_MULT_COST = 160;
+// The strongest per-rung buy on the board was also its cheapest; the grind pass
+// (DESIGN.md) prices the pair against the crew-backed income that actually
+// reaches them, not the solo clicking that sees them first. The mult rung
+// carries both scalings: wave 7's double-for-fewer-rungs, then the grind
+// pass's four-across-the-ladder.
+export const CRIT_CHANCE_COST = 240;   // first rung, dust, rungCost-shaped like the rest
+export const CRIT_MULT_COST = 640;

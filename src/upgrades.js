@@ -24,7 +24,8 @@ import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
-         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
+         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
+         HOUSE_COST0, HOUSE_RATE,
          MACHINE_TUNE,
          HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
   CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
@@ -808,8 +809,11 @@ export const HOUSE_ROW = {
   to: () => S.crew + 1,
   // One pool pays for every job now, so the curve is gentler than the four
   // it replaced: 1.7 a body was steep because it was steep four times over,
-  // and the same eight bodies came to about 1,500 dust between them.
-  cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))
+  // and the same eight bodies came to about 1,500 dust between them. The rate
+  // sits above the ladders' 1.6 on purpose: every body compounds the income
+  // every ladder is priced against, so the crew is the one curve that must
+  // outrun the shop's -- the grind pass, DESIGN.md.
+  cost: () => Math.round(HOUSE_COST0 * Math.pow(HOUSE_RATE, Math.max(0, S.crew - 1))
                          * (spelled('thrift') ? SPELL_THRIFT : 1)),
   buy: hire,
   show: () => S.crew > 0
@@ -945,7 +949,7 @@ export function take(money, n) {
 // It is a `let` and a row in TUNABLE for the same reason the rates are: this is
 // the exchange rate of the whole economy, and the way to find it is to push it
 // while watching the yard rather than to reason about it.
-export const DUST_PER = { spark: DUST_PER_SPARK, shard: 40, spore: 40, core: 500 };
+export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE };
 
 // What a row costs, as a currency and an amount each. Almost every row in the
 // game is priced in one thing and says so with `cost` and `currency`; the tower

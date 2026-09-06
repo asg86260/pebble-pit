@@ -1,6 +1,7 @@
 import { ROCKHAND_RUNGS } from '../config.js';
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate, rungCost } from '../upgrades.js';
+import { ROCKHAND_SPEED_COST } from '../config.js';
 
 // The bench's rock rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -42,7 +43,7 @@ export const ROCK_ROWS = [
     rung: () => S.rockhandSpeedLevel,
     from: () => rockhandRate(),
     to: () => rockhandRate(S.rockhandSpeedLevel + 1),
-    cost: () => rungCost(70, S.rockhandSpeedLevel),
+    cost: () => rungCost(ROCKHAND_SPEED_COST, S.rockhandSpeedLevel),
     buy: () => S.rockhandSpeedLevel++,
     show: () => S.crew > 0
   }

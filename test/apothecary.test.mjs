@@ -22,6 +22,9 @@ function standApothecary() {
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
+  // The deeper rows reveal themselves after batches have landed (the grind
+  // pass); the reveal has its own check, and these are not it.
+  yard.S.brews = 5;
   return started;
 }
 
@@ -264,5 +267,26 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
        'a second stew is one stew, not two', `${fh.doses.length} doses`),
     ok(Math.abs(doubled - workAfter) < 0.001,
        'and it lifts the work by the same as one did', `${doubled.toFixed(2)}`)
+  ];
+});
+
+// --- the deeper rows are earned, not delivered --------------------------------
+// The grind pass: a potency ladder shows after the first batch has landed, and
+// never on the frame the door opens. The reveal is the thing under check here,
+// so the batch is brewed the player's way rather than the counter being set.
+group('the potency rows reveal after a batch lands', async () => {
+  standApothecary();
+  yard.S.brews = 0;                            // the stand above pre-earns them
+  window.__build();
+  const rowShown = () => !!window.__rows().find(r => r.key === 'potency-stew')?.shown;
+  const hiddenAtOpen = !rowShown();
+  window.__assign('stirrers', 1);
+  window.__pot('stew', 0);
+  const landed = runUntil(() => yard.S.brews > 0, 120);
+  window.__build();
+  return [
+    ok(hiddenAtOpen, 'no potency row on the frame the door opens'),
+    ok(landed, 'a batch lands', `brews ${yard.S.brews}`),
+    ok(rowShown(), 'and the stew ladder is on the board after it')
   ];
 });

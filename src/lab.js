@@ -24,7 +24,7 @@ import { walkY } from './world.js';
 import { now } from './clock.js';
 import { P, WORKER, FARM_WALK, LAB_EFFORT, LAB_WORK, LAB_IDLE_MS,
          SMOKE_MS, SMOKE_LIFE, SMOKE_RISE, PUFF_MOTES, PUFF_SPREAD,
-         BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, RUNGS } from './config.js';
+         BENCH_KIT_COST, BENCH_KIT_RATE, LAB_ROOM_COST, LAB_CAVE_COST, LAB_TEND_COST, RUNGS } from './config.js';
 import { rand } from './rng.js';
 import { registerRows, registerSite, worksAt, abandonAt, rowFor } from './works.js';
 import { JOB, TYPE } from './jobs.js';
@@ -348,7 +348,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('quarry'),
     from: () => mult('quarry'),
     to: () => mult('quarry') * STEP,
-    cost: () => rungCost(3, levelOf('quarry')),
+    cost: () => rungCost(LAB_CAVE_COST, levelOf('quarry')),
     currency: 'spore',
     kind: 'rung', site: 'lab',
     // What it costs in somebody's time is the piece of research itself --
@@ -391,7 +391,7 @@ export const LAB_UPGRADES = [
     rung: () => levelOf('tend'),
     from: () => mult('tend'),
     to: () => mult('tend') * STEP,
-    cost: () => rungCost(4, levelOf('tend')),
+    cost: () => rungCost(LAB_TEND_COST, levelOf('tend')),
     currency: 'spore',
     kind: 'rung', site: 'lab',
     // What it costs in somebody's time is the piece of research itself --

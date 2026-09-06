@@ -96,6 +96,9 @@ group('the gleam brew reads on a wizard and on nobody else', async () => {
 // --- item 24: shard recipes hide until the quarry opens ------------------------
 group('shard brews are hidden before the quarry opens', async () => {
   standApothecary();                            // farm open, quarry shut
+  // Potency rows also wait on a first batch (the grind pass); that reveal has
+  // its own check, and this one is about the shard gate alone.
+  S().brews = 5;
   const hiddenBefore = TONICS.filter(t => t.reagent === 'shard')
                              .every(t => !tonicShown(t));
   const stewBefore = tonicShown(tonicOf('stew'));

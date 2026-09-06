@@ -1,5 +1,6 @@
 import { S } from '../state.js';
 import { haulCap, haulSpeed, rungCost } from '../upgrades.js';
+import { HAUL_CARRY_COST, HAUL_PACE_COST } from '../config.js';
 
 // The bench's crew rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -20,7 +21,7 @@ export const CREW_ROWS = [
     // the plots -- so pricing them in stone or crop was asking for a currency the
     // game has not shown you yet, on the two rows most likely to be the first
     // you ever read. The first round is dust. See "The ladder" in DESIGN.md.
-    cost: () => rungCost(50, S.haulCarryLevel),
+    cost: () => rungCost(HAUL_CARRY_COST, S.haulCarryLevel),
     buy: () => S.haulCarryLevel++,
     show: () => S.crew > 0
   },
@@ -68,7 +69,7 @@ export const CREW_ROWS = [
     rung: () => S.haulPaceLevel,
     from: () => haulSpeed() * 60,
     to: () => haulSpeed(S.haulPaceLevel + 1) * 60,
-    cost: () => rungCost(60, S.haulPaceLevel),
+    cost: () => rungCost(HAUL_PACE_COST, S.haulPaceLevel),
     buy: () => S.haulPaceLevel++,
     show: () => S.crew > 0
   }

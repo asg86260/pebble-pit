@@ -135,14 +135,16 @@ group('the rockhand pick bites a whole pixel more per rung, and no further', asy
 // --- A7: the lab costs a core -------------------------------------------------
 group('the lab is a place, and a place costs a core', async () => {
   window.__reset();
-  window.__grant({ shards: 400, cores: 5, dust: 30000 });
+  window.__grant({ shards: 400, cores: 5, dust: 30000, spores: 100 });
   window.__crew(0, 2);
   const before = state().cores;
   const built = buyBuilt('unlocklab');
   const after = state().cores;
   return [
     ok(built, 'the lab can still be built'),
-    ok(before - after === 2, 'and it costs two cores, not none', `${before} -> ${after}`)
+    // One core since the grind pass -- the second core was a second rock's
+    // worth of waiting; the dust and spore legs carry the weight now.
+    ok(before - after === 1, 'and it costs a core, not none', `${before} -> ${after}`)
   ];
 });
 

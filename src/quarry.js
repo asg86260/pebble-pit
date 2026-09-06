@@ -9,7 +9,7 @@
 // cores is shown until one is banked.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
-import { BENCH_COST, BENCH_RATE, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
@@ -876,7 +876,7 @@ export const QUARRY_UPGRADES = [
     // the wall and a rung of speed cost exactly the same at every level, which
     // is a coincidence rather than a decision. A rung is a rung now: `rungCost`,
     // like every other ladder in the game, and its own first price.
-    cost: () => rungCost(4, S.quarryPaceLevel),
+    cost: () => rungCost(QUARRY_PACE_COST, S.quarryPaceLevel),
     currency: 'spore',
     buy: () => S.quarryPaceLevel++,
     // It stays on the board once it is finished, saying "done" -- it used to
