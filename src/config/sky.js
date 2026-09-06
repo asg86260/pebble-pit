@@ -253,6 +253,14 @@ export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full ta
 export const RAIN_TAPER_AT = 0.25;  // taper once this share of the marked sky is left
 export const RAIN_TAPER_FLOOR = 0.1; // and never below this share of the rate
 export const RAIN_GRAV = 0.09;       // muck comes down light: it is not falling rock
+// How fast a drop is already going when it enters over the top of the window,
+// in pixels a frame, and how much one may differ from the next. A drop born at
+// the window's edge is not starting its fall there -- it has been falling from
+// a sky you cannot see -- so it arrives at speed instead of easing up from a
+// standstill in plain view. Roughly what a drop used to carry by the time it
+// had crossed half the window under RAIN_GRAV alone.
+export const RAIN_ENTER = 3.6;
+export const RAIN_ENTER_GIVE = 1.2;
 // The share of what lands that leaves a mark. The whole sky falls either way --
 // every mote is a drop you can watch come down -- and this is how much of it is
 // filth rather than water.

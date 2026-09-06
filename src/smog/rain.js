@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_ENTER, RAIN_ENTER_GIVE, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
@@ -104,7 +104,8 @@ export function pour(secs) {
     // apart: the mote thins out where it stood, like every other speck that
     // leaves the sky, and the rain comes down over everything from above the
     // view. The accounting is unchanged -- one mote taken is one drop down.
-    DROPS.push({ x: moteX(m), y: S.camY - P, vy: 0.2 + rand() * 0.4 });
+    DROPS.push({ x: moteX(m), y: S.camY - P,
+                 vy: RAIN_ENTER + rand() * RAIN_ENTER_GIVE });
     if (GOING.length < GOING_CAP)
       GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind, tone: m.tone,
                    ink: m.ink, t: 1, vx: 0, vy: 0 });
