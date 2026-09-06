@@ -1,5 +1,5 @@
 import { now } from '../clock.js';
-import { GOING_CAP, P, PLUME_LEAN, PLUME_LIFE, PLUME_THIN, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
+import { GOING_CAP, P, PLUME_LEAN, PLUME_LIFE, PLUME_THIN, PUFF_FADE, PUFF_LEAN_WIND, PUFF_UP, PUFF_UP_FLOOR, PUFF_UP_GIVE, PUFF_WANDER, SMOG_CAP, SMOG_GIVE, SMOG_PER_DUST, SMOG_PER_MOTE, SMOG_TINTS } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { give, windAt } from '../wind.js';
@@ -83,10 +83,11 @@ export function foul(grains, x, y, kind = 'dust') {
     // and the object is never replaced -- see `skyMote` for why one shape
     // matters. The look, the kind and the share of the wind all come from there;
     // what a climbing one has of its own is the climb.
-    // Born a little either side of the stack's mouth. Three cells of scatter
-    // rather than two: with the longer climb the plume needs a slightly wider
-    // foot or it reads as one column however much it leans.
-    const p = skyMote(x + (rand() - 0.5) * P * 3, y, kind);
+    // Born a little either side of the stack's mouth. Eight cells of scatter
+    // (wave7-sky, A1): three read as one column however much it leaned, and
+    // widening the birth is widening the climb rather than the sky -- the band
+    // above is untouched.
+    const p = skyMote(x + (rand() - 0.5) * P * 8, y, kind);
     p.up = true;
     // How fast it goes up, and it is the one number that decides whether a plume
     // reads as smoke or as sparks. It was more than twice this and spread twice
@@ -191,11 +192,15 @@ export const skyMote = (x, y, kind = 'dust') => ({
   age: 0,
   fromX: x,
   fromY: y,
-  // Solid from the first frame. It used to come up from nothing over the best
-  // part of a second, which is right for a thing that was not there before and
-  // wrong for every mote that got here by climbing: what you had been following
-  // went out and faded back in beside itself.
-  fade: 1,
+  // From nothing (wave7-sky, A1). A speck born at full weight is a speck that
+  // pops into view, and popping is the one thing nothing in this sky may do.
+  // Every mote everywhere -- a climbing puff, a restored band -- comes up to
+  // weight over PUFF_FADE: `stepPuffs` steps a climber's fade and `place` steps
+  // a settled one's, both against the same clock.
+  fade: 0,
+  // the phase its own sideways wander runs on, fixed at birth so a puff leans
+  // its own way for the whole climb -- see `stepPuffs`
+  seed: rand() * Math.PI * 2,
   // Which shower this one belongs to, if any. Written by `stepSmog` when a
   // shower breaks and read by `doomed`; named here rather than added there,
   // because a field added late is a mote that has stopped being one shape.
@@ -233,6 +238,8 @@ const slotY = (m, top, deep) => top + m.sv * deep;
 export function stepPuffs(secs) {
   const top = bandTop(), deep = bandLow() - top;
   const w = windAt(now());          // one wind, asked once, for the whole plume
+  const tSec = now() / 1000;        // one clock for every puff's wander
+  const fadeBy = secs / (PUFF_FADE / 1000);
   for (let i = SKY.length - 1; i >= 0; i--) {
     const p = SKY[i];
     if (!p.up) continue;            // arrived: the band has it, see `place`
@@ -259,6 +266,17 @@ export function stepPuffs(secs) {
     // the height however fast the puff got up there -- a plume that leans and
     // opens a little, not one that fans across the sky.
     p.x += p.lean * PLUME_LEAN * rose;
+    // and its own wander (wave7-sky, A1): a slow sine on the mote's own seed,
+    // on top of the lean. The lean is one straight line per puff, so a plume of
+    // them was a sheaf of straight lines -- still a band, only splayed. A
+    // wander bends each line its own way as it climbs, which is what makes the
+    // plume billow open instead of standing.
+    p.x += Math.sin(p.seed + tSec * 0.7) * PUFF_WANDER * secs;
+    // Coming up to weight as it climbs (wave7-sky, A1). Born at nothing -- see
+    // `skyMote` -- and only while the plume is still a plume: past PLUME_LIFE
+    // the thinning below owns the fade, and stepping it up under that would be
+    // two hands on one number.
+    if (p.age <= PLUME_LIFE && p.fade < 1) p.fade = Math.min(1, p.fade + fadeBy);
     // whatever the cursor left in it, dying away
     if (p.sx || p.sy) {
       p.x += p.sx || 0;

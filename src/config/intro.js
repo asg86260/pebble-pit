@@ -35,6 +35,20 @@ export const MEET_IN_MS = 1200;   // pulling back in on the two of them
 export const MEET_MS = 5200;      // and how long they have
 export const PART_MS = 2600;      // the rock again, and the view letting go
 
+// wave7-sky (A2): the ground the reunion happens on. During the meeting the
+// rest of the crew step this far clear of the buried square's spot -- the same
+// duck they do out from under a falling rock -- instead of dancing, so nothing
+// bounces through the pair and nothing rises under the moving camera.
+export const MEET_CLEAR = 36;     // world pixels either side of the pair
+
+// wave7-sky (A4): the buried square and a stray core. Once cores exist, a core
+// that comes to rest within reach of the square's spot is fetched: the square
+// walks over, picks it up, holds it a beat, and tosses it toward the hole the
+// way the crew throw everything else. See `stepBuried` in intro.js.
+export const BURIED_REACH = 72;      // world pixels (P * 12) it will walk for one
+export const BURIED_HOLD_MS = 450;   // the beat between picking up and throwing
+export const BURIED_TOSS_IN = 24;    // cells inside the pit's mouth the throw is aimed
+
 // --- the casino ---------------------------------------------------------------
 // The last thing on the ground, out past the lab. It is the far end of the walk
 // on purpose: it is the one place in the yard that makes nothing, and a place

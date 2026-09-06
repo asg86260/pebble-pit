@@ -317,6 +317,12 @@ export const LUNGE_EASE = 0.84;
 // named here only because the courses of foot under the works have to be deep
 // enough to hold it.
 
+// wave7-sky (A1): each climbing puff wanders sideways on its own seed, so the
+// plume opens into a cone as it rises instead of standing as a vertical band.
+// Amplitude in world pixels a second; the sine on the mote's own seed keeps two
+// puffs from ever wandering in step.
+export let PUFF_WANDER = 14;
+
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the
@@ -334,5 +340,8 @@ export const SKY_KNOBS = [
   { key: 'RAIN_DRIZZLE_S', label: 'drizzle', min: 0, max: 20, step: 0.5,
     get: () => RAIN_DRIZZLE_S, set: v => { RAIN_DRIZZLE_S = v; } },
   { key: 'RAIN_RISE_S', label: 'rain rise', min: 0.5, max: 20, step: 0.5,
-    get: () => RAIN_RISE_S, set: v => { RAIN_RISE_S = v; } }
+    get: () => RAIN_RISE_S, set: v => { RAIN_RISE_S = v; } },
+  // wave7-sky
+  { key: 'PUFF_WANDER', label: 'puff wander', min: 0, max: 40, step: 1,
+    get: () => PUFF_WANDER, set: v => { PUFF_WANDER = v; } }
 ];
