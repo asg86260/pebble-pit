@@ -3,7 +3,7 @@
 // from ./ctx.js.
 
 import { P, TOWER_SHAFT } from '../config.js';
-import { S, tower } from '../state.js';
+import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
 import { SITES, progressAt, progressOf, siteBox, worksAt } from '../works.js';
 import { risingPlace } from './rise.js';
 import { farmShed, quarryShed } from '../world.js';
@@ -74,6 +74,17 @@ const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
                       // itself is deleted. (feedback6 item 9)
                       tower: towerSpireBox };
 
+// The finished rect of each place a `kind: 'building'` work can raise, keyed
+// the way risingPlace names them. The rects stand in the layout before the
+// place opens, so they are readable mid-build; the house is the one that grows,
+// and siteBox already answers with the rooms the build will have.
+const RISING_BOX = { lab: () => lab, scrub: () => scrub, school: () => school,
+                     casino: () => casino, outhouse: () => outhouse,
+                     tower: towerSpireBox,
+                     apothecary: () => apothHut(),
+                     quarry: () => quarryShed(), farm: () => farmShed(),
+                     house: () => siteBox('yard') };
+
 export function barSpot(site) {
   const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site);
   if (!box) return null;
@@ -83,12 +94,19 @@ export function barSpot(site) {
   let top = Math.min(box.y ?? S.groundY, S.groundY);
   // A building rising out of the yard is only as tall as its progress -- withRise
   // clips the sprite to the risen slice -- so the bar tracks the slice's current
-  // top rather than the finished roofline. Off the full height the bar hung in
-  // the middle of the sprite for most of the build; off the risen top it stays
-  // BAR_CLEAR ahead of the rising edge at any progress. (feedback7, item 15)
-  if (site === 'yard' && risingPlace()) {
-    const p = Math.max(0, Math.min(1, progressAt('yard')));
-    top = S.groundY - (S.groundY - top) * p;
+  // top rather than the ground line. The yard's own box carries no `y` for an
+  // unlock (the ground is reserved by x alone), so the finished height is read
+  // off the PLACE the work is raising: the same station rect the sprite is
+  // clipped against, so the bar stays BAR_CLEAR ahead of the rising edge at any
+  // progress and can never end up inside the drawing. (feedback7, item 15)
+  if (site === 'yard') {
+    const place = risingPlace();
+    const b = place && (RISING_BOX[place] ? RISING_BOX[place]() : null);
+    if (b) {
+      const p = Math.max(0, Math.min(1, progressAt('yard')));
+      const roof = Math.min(b.y ?? S.groundY, S.groundY);
+      top = S.groundY - (S.groundY - roof) * p;
+    }
   }
   return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
 }

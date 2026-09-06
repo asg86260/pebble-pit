@@ -61,6 +61,12 @@ const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
+  // The offer aura (wave7-ui): a rich yard where every open board has something
+  // affordable, so the stations breathe their dashed outline. Shot at the lab,
+  // with the bench in frame too.
+  aura: `${RICH} window.__give(50000); window.__fast(1);
+         window.__look(window.__state().farmShed.x - 60);`,
+
   // A building going up: the lab half out of the ground, its barriers and tape
   // round it, and the builder hammering at it throwing grit off each blow.
   //

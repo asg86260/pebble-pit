@@ -12,7 +12,7 @@ import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { CASINO_UPGRADES } from '../src/casino.js';
 import { OUTHOUSE_UPGRADES } from '../src/outhouse.js';
-import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, ROCKHAND_BITE_MULT, RUNGS } from '../src/config.js';
+import { PLOT_COST, PLOT_RATE, LOO_POSTS, LAB_DUST, ROCKHAND_RUNGS, RUNGS } from '../src/config.js';
 
 const roster = () => state().roster;
 
@@ -118,14 +118,17 @@ group('the farm costs a real stretch of dust to open, not pocket change', async 
   ];
 });
 
-// --- A6: the rockhand's pick is capped at 2.2x over five rungs -------------------
-group('the rockhand pick caps out at 2.2x over the whole ladder', async () => {
-  const b0 = rockhandBite(0), b3 = rockhandBite(3), b5 = rockhandBite(RUNGS);
+// --- A6: the rockhand's pick is a whole pixel a rung, capped at its own top ------
+// Rewritten by wave 7 (feedback7, item 19): the eased 2.2x curve is gone, the
+// ladder is ROCKHAND_RUNGS whole-pixel rungs, and a level past the top bites
+// what the top bites. The full new-ladder coverage is in wave7-ui.test.mjs.
+group('the rockhand pick bites a whole pixel more per rung, and no further', async () => {
+  const b0 = rockhandBite(0), b1 = rockhandBite(1), top = rockhandBite(ROCKHAND_RUNGS);
   return [
-    ok(Math.abs(b0 - 1) < 1e-9, 'rung 0 is the bare bite', b0),
-    ok(b3 > b0 && b3 < b5, 'rung 3 is between the ends', b3),
-    ok(Math.abs(b5 - ROCKHAND_BITE_MULT) < 1e-9,
-       'rung 5 lands exactly on the cap, 2.2x the bare bite', b5)
+    ok(b0 === 1, 'rung 0 is the bare bite', b0),
+    ok(b1 === 2, 'a rung is one more whole pixel', b1),
+    ok(top === 1 + ROCKHAND_RUNGS, 'the top of the ladder', top),
+    ok(rockhandBite(RUNGS) === top, 'a saved level past it bites the top', rockhandBite(RUNGS))
   ];
 });
 

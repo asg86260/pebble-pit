@@ -318,10 +318,10 @@ let full = { w: 0, h: 0 };
 // same rule. The flex gap is read off the element rather than restated here.
 // (feedback7, items 2 and 3)
 function mainWidth() {
-  const page = Object.values(pages).find(p => !p.hidden);
+  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
   const gap = parseFloat(getComputedStyle(panelEl).columnGap) || 0;
   const purseW = purseEl.offsetWidth;
-  return (page ? page.offsetWidth : 0) + (purseW ? purseW + gap : 0);
+  return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + gap : 0);
 }
 
 // And how far the board's left edge stands in from the panel's, which is only

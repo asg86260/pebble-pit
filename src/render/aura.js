@@ -27,11 +27,16 @@ export function drawAuras() {
   // One breath for every station, in step: half a cycle out, half back, eased
   // with a sine so the turn at either end is soft rather than a bounce.
   const breath = (1 - Math.cos((t % AURA_CYCLE_MS) / AURA_CYCLE_MS * Math.PI * 2)) / 2;
+  // The breath runs from INSIDE the walls to just outside them. The ground the
+  // buildings stand against is white, so a ring that lived wholly outside the
+  // box would be white on white -- invisible. Starting inset, the white line
+  // lies on the black of the building where it reads, and the outward half of
+  // the breath carries it over the edge and lets it dissolve into the sky --
+  // which is what makes it a pulse rather than a stripe painted on the wall.
   // Whole pixels, so the 1-px line stays a 1-px line: a fractional offset is
-  // painted as a two-pixel grey fringe, which is the hairline the whole game is
-  // arranged to avoid. The breath steps through a handful of positions and the
-  // easing spends longest at the turns, which reads as breathing, not ticking.
-  const out = Math.round(AURA_IN + breath * AURA_BREATH);
+  // painted as a two-pixel grey fringe, the hairline the game is arranged to
+  // avoid.
+  const out = Math.round(-AURA_IN + breath * (AURA_IN + AURA_BREATH));
 
   ctx.save();
   ctx.strokeStyle = '#fff';

@@ -5,5 +5,5 @@
 export const AURA_CYCLE_MS = 1600;   // one full breath, out and back
 export const AURA_DASH = 4;          // the dash and its gap, in px
 export const AURA_MARCH = 6;         // px/s the dashes crawl along the outline
-export const AURA_IN = 2;            // nearest the outline comes to the walls
-export const AURA_BREATH = 4;        // and how much further out the breath goes
+export const AURA_IN = 2;            // how far inside the walls the breath starts
+export const AURA_BREATH = 4;        // and how far past them it swells before dissolving
