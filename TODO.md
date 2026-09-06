@@ -20,7 +20,13 @@ against a pick ladder wave 7 cut to fewer rungs, so the ram is never for
 sale), `__fullSites` (same ladder), the janitor's shed, the fan draught and
 sky give-back pair, the books board's clocked rate, the jumping
 celebration, and wave5-boards' rebuild-on-land. Undiagnosed beyond the
-ram-gate reading; each verified red at dd7d7bd.
+ram-gate reading; each verified red at dd7d7bd. The browser tier ran too
+(same day, 307/316): nine reds, all in the wave's own seams and none in
+anything the grind pass touched -- the hover card prints three rows where
+its checks expect the full lined-up column (the track C "slim card"
+deviation, deterministic on re-run), the dance-jumping pair (red in the
+node tier at dd7d7bd as well), the board-crossing tooltip pair, and the
+loose-core cursor hint; plus one shard that died without reporting.
 
 ## The grind pass — levers 1–4 BUILT (2026-09-06), lever 5 open
 
