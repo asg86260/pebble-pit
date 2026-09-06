@@ -1,13 +1,18 @@
 # Still to do
 
-## Wave 7 — IN FLIGHT (2026-09-06)
+## Wave 7 — BUILT (2026-09-06), on `wave7-landing`, awaiting fast-forward
 
 feedback7.md, four tracks (sky/intro, shop UI, crew interaction, apothecary),
-canon in `docs/wave-feedback7.md`. Items 16 (workers assigned by hand) and 27
-(the build yard) are designed, not built — see their `(design, not built)`
-sections in DESIGN.md, awaiting sign-off. Seams the orchestrator wires after
-the merge are listed at the bottom of the spec (diamond removal, the
-under-staffed tooltip, the two brew boost call sites).
+canon in `docs/wave-feedback7.md`. All 25 buildable items are in; the four
+wave test files plus persist-roundtrip are green on the merged tree, and the
+seams (diamond → aura, the under-staffed tooltip, the swift and gleam brew
+call sites, the closet heading) are wired. Items 16 (workers assigned by
+hand) and 27 (the build yard) are designed, not built — their `(design, not
+built)` sections in DESIGN.md await sign-off. Track deviations worth review:
+only job-walkers gross out at poop (bodies mid-commute pass through); the
+buried square tosses cores into the pit's mouth, not at coreHome, to avoid
+the relaunch loop; the pickaxe's top bite is now 4px against the old capped
+2.2px, a real balance shift. Full suites still owed on main after the merge.
 
 ## The abyss — BUILT (2026-09-04)
 
