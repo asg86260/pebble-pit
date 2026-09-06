@@ -242,7 +242,7 @@ export const TESTS = [
   // over a roof is about what a place is doing, and this is about what it is
   // offering. Measured in the pixels it is really drawn in, because a mark the
   // yard does not actually paint is a mark nobody sees.
-  ['an arrow under a station says it has something for you', async () => {
+  ['a flag over a station says it has something for you', async () => {
     newRun();
     await settle();
     window.__crew(3, 2, 1, 1);
@@ -253,14 +253,18 @@ export const TESTS = [
     await hoverAway();
     await sleep(200);
 
+    // The offer sign is the flag now: a pole off the station's top with a
+    // pennant on it. Ink is counted in the band of sky over the station --
+    // where nothing else black stands -- rather than under it, where the old
+    // diamond hung.
     const ink = which => {
       const s = state(), r = s.stands[which];
       if (!r) return 0;
       const dpr = window.devicePixelRatio || 1;
-      const x0 = Math.round((r.x - s.camX) * s.zoom * dpr);
-      const y0 = Math.round((s.groundY + 6 - s.camY) * s.zoom * dpr);
-      const w = Math.max(1, Math.round(r.w * s.zoom * dpr));
-      const h = Math.max(1, Math.round(30 * s.zoom * dpr));
+      const x0 = Math.round((r.x - 12 - s.camX) * s.zoom * dpr);
+      const y0 = Math.round((r.y - 72 - s.camY) * s.zoom * dpr);
+      const w = Math.max(1, Math.round((r.w + 24) * s.zoom * dpr));
+      const h = Math.max(1, Math.round(70 * s.zoom * dpr));
       if (x0 < 0 || y0 < 0) return -1;
       const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
       let n = 0;
@@ -289,12 +293,15 @@ export const TESTS = [
     newRun();
     return [
       ok(broke.has === false, 'a board with nothing you can buy offers nothing'),
-      ok(broke.ink === 0, 'and there is no arrow under it', `${broke.ink} px`),
+      // A few sky motes drift through the band, so "no flag" is a near-empty
+      // band rather than a spotless one.
+      ok(broke.ink < 150, 'and no flag flies over it', `${broke.ink} px`),
       ok(rich.has === true, 'money in the purse and it has something for you'),
-      ok(rich.ink > 0, 'and an arrow appears under it', `${rich.ink} px`),
+      ok(rich.ink > broke.ink + 150, 'and a flag goes up over it',
+         `${broke.ink} -> ${rich.ink} px`),
       // and it stays up while you are standing there. Taking it down read as the
       // mark flickering off under the cursor, and what it says is still true.
-      ok(there > 0, 'and stays up while you are standing there reading it',
+      ok(there > broke.ink + 150, 'and stays up while you are standing there reading it',
          `${there} px`)
     ];
   }],
