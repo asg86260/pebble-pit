@@ -232,6 +232,17 @@ export function shortMarkAt(key) {
   return markAt(key, 'short');
 }
 
+// The same half-slot ask for the hollow body, answered with the station's key
+// so the caller does not need this file's JOB_AT table to walk the stations.
+export function overShortMark(mx, my) {
+  for (const key of Object.keys(JOB_AT)) {
+    if (!shortAt(key)) continue;
+    const at = shortMarkAt(key);
+    if (Math.abs(mx - at.x) < SLOT_W / 2 && Math.abs(my - at.y) < P * 4) return key;
+  }
+  return null;
+}
+
 // where the cursor has to be to be asking about one
 export function overPileMark(key, mx, my) {
   const at = pileMarkAt(key);

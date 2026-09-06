@@ -17,7 +17,7 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
-import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { overPileMark, overShortMark, pileMarkAt, shortMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
@@ -561,6 +561,11 @@ function askedAbout(x, y, cx, cy) {
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
+  const short = overShortMark(x, y);
+  if (short) {
+    showTip('nobody works here', shortMarkAt(short));
+    return true;
+  }
   const finished = overDoneMark(x, y);
   if (finished) {
     showTip(doneName(finished), doneMarkAt(finished));
@@ -611,7 +616,7 @@ const CURSORS = [
 // finished asking.
 function overAnyMark(x, y) {
   for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
-  return !!overDoneMark(x, y);
+  return !!overShortMark(x, y) || !!overDoneMark(x, y);
 }
 
 let wearing = '';

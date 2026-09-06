@@ -30,7 +30,7 @@ import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/ca
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
-import { drawBench, drawDroppedHats, drawIntro, drawKitStands, drawOffers,
+import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
@@ -71,7 +71,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt, shortMarkAt } from './render/pilemarks.js';   // wave7-ui: + shortMarkAt
+export { drawPileMarks, markAnchor, markAt, overPileMark, overShortMark, pileMarkAt, shortMarkAt } from './render/pilemarks.js';   // wave7-ui: + the short marks
 export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
@@ -160,7 +160,6 @@ const LAYERS = [
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
-  { name: 'offers', draw: drawOffers },          // and an arrow under whichever of them has something for you
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'dropped hats', draw: drawDroppedHats },// and any that has been shaken off somebody
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work

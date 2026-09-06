@@ -834,7 +834,7 @@ export const SECTIONS = [
   // the outhouse's own board -- see src/outhouse.js -- for the same reason the
   // lab's and the school's rows left the bench: a decision about a place is
   // made at the place. This one cannot be, because the place is what it buys.
-  { title: 'the outhouse', keys: ['unlockouthouse'] },
+  { title: "the janitor's closet", keys: ['unlockouthouse'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }

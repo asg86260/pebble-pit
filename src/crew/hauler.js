@@ -14,6 +14,8 @@ import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
 import { muckLeft, muckAtCol, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs } from '../upgrades.js';
+// the swift brew's pace, read per body at every haul walk (feedback7, item 21)
+import { paceBoost } from '../apothecary.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
 import { rand } from '../rng.js';
@@ -232,7 +234,7 @@ export function haulerWork(w, c) {
     S.coreTaker = w;
     if (w.claim >= 0) { taken.delete(w.claim); w.claim = -1; }   // the core comes first
     const target = S.coreItem.x + CORE_SIZE / 2 - WORKER / 2;
-    const pace = haulSpeed() * HAUL_EMPTY;
+    const pace = haulSpeed() * paceBoost(w) * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P * 2) {
       S.coreItem = null;
@@ -382,7 +384,7 @@ export function haulerWork(w, c) {
     const col = w.claim;
     const target = floor.x + col * P;
     // hands free, so it moves; a load is what slows it down
-    const pace = haulSpeed() * HAUL_EMPTY;
+    const pace = haulSpeed() * paceBoost(w) * HAUL_EMPTY;
     w.x += Math.sign(target - w.x) * Math.min(pace * frames(), Math.abs(target - w.x));
     // It scoops what is under it, not what its left edge is exactly on. The
     // last two columns before the lip sit further right than a worker is
@@ -417,7 +419,7 @@ export function haulerWork(w, c) {
     }
   } else if (w.goal === 'dump') {
     const target = pit.x - WORKER;                 // the lip, where they can stand
-    w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * frames(), Math.abs(target - w.x));
+    w.x += Math.sign(target - w.x) * Math.min(haulSpeed() * paceBoost(w) * frames(), Math.abs(target - w.x));
     if (Math.abs(target - w.x) < P) {
       // A proper toss off the lip, so it arcs out over the edge -- and it is
       // aimed at the hole, the same way spoil is aimed at a pile. It used to

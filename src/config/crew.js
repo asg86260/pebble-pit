@@ -123,14 +123,6 @@ export const DOOR_W = 4;         // cells across a way in, everywhere in the yar
 export const DOOR_H = 4;         // and courses tall
 export let ROCKHAND_BASE = 1100;  // a hired rockhand starts slower than your own pick
 export const ROCKHAND_FLOOR = 260;  // fastest a rockhand can swing
-// How much bigger a rockhand's bite gets over the whole `rockhandpick` ladder --
-// eased across the rungs the same way `swing` eases a rate, so the early rungs
-// are worth more than the late ones. It used to be a flat +1 a rung, which
-// looks tame on the row but is a straight multiple against the base: five rungs
-// bought six times the bite, and the crew you actually have could never keep up
-// with the pile that made. A cap here is the fix rather than a hand-tuned rung
-// price, because the price was never the thing that was wrong.
-export const ROCKHAND_BITE_MULT = 2.2;
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
