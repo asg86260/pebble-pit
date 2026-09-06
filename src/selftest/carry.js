@@ -78,18 +78,16 @@ export const TESTS = [
     const home = state();
     window.__crew(0, 0);
     return [
-      // The name, then a row a fact. Named rather than counted: the count was
-      // seven and is nine since the card started saying what a body is doing
-      // this second and where it is going, and a check that has to be edited
-      // every time a row is added is a check that says nothing about any of
-      // them. What must be true is that it is rows and that they are this
-      // body's.
-      ok(said.split(String.fromCharCode(10)).length >= 7 && said.includes('mining the rock')
-         && /^age {7}/m.test(said) && /^doing {5}/m.test(said) && /^heading {3}/m.test(said),
-         'hovering one says who it is and what it does, a row at a time',
+      // The slim card (wave 7, item 17): the name, the age, what it is doing
+      // this second, and nothing else. The full lined-up column of tallies and
+      // headings was cut on request -- the card answers "who is this and what
+      // is it at", and the rest was a spreadsheet over a body's head.
+      ok(said.includes('mining the rock') && /^age\b/m.test(said) && /^doing\b/m.test(said),
+         'hovering one says who it is and what it is doing',
          JSON.stringify(said)),
-      ok(/^mined {5}/m.test(said) && /^quarried {2}/m.test(said) && /^stored {4}/m.test(said),
-         'one line per site, all lined up in a column', JSON.stringify(said)),
+      ok(!/^(heading|mined|quarried|farmed|stored)\b/m.test(said),
+         'and the old tallies and heading are gone from the card',
+         JSON.stringify(said)),
       ok(!/^carrying/m.test(said), 'and a rockhand is not asked what it is carrying',
          JSON.stringify(said)),
       ok(!!up.lifted, 'the right button picks it up', `${up.lifted}`),
@@ -202,8 +200,10 @@ export const TESTS = [
     const landed = await dropAt('r', s.rockX);
     window.__crew(0, 0);
     return [
-      ok(/^carrying {2}(nothing|[■▲⬢◯] \d)/m.test(hauled),
-         'a body whose job is carrying says what it has, kind by kind',
+      // The slim card (wave 7, item 17) says the job and no cargo manifest --
+      // what a hauler holds is visible in its hands in the yard itself.
+      ok(/^doing\b/m.test(hauled) && !/^carrying/m.test(hauled),
+         'a hauler card says what it is doing and skips the manifest',
          JSON.stringify(hauled)),
       // a body that fell to the ground stands exactly at `standOn(groundY)`; on
       // the rock it stands higher, however low the rock has been worked
