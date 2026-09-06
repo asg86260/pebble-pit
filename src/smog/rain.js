@@ -1,5 +1,5 @@
 import { frames } from '../clock.js';
-import { GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
+import { GOING_CAP, GOING_EASE, MUCK_MAX, P, RAIN_DRIZZLE_S, RAIN_GAP, RAIN_GRAV, RAIN_MARK, RAIN_PER_S, RAIN_RISE_S, RAIN_TAPER_AT, RAIN_TAPER_FLOOR, SMOG_CAP, SMOG_GO_MS, SMOG_RAIN_BEND, SMOG_SAMPLE, SMOG_SINK, STORM_BREW_S } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
 import { DROPS, GOING, SKY, raining } from './band.js';
@@ -96,7 +96,18 @@ export function pour(secs) {
     pick.pop();
     gone.add(i);
     const m = SKY[i];
-    DROPS.push({ x: moteX(m), y: moteY(m), vy: 0.2 + rand() * 0.4 });
+    // The drop falls from over the top of the window, not from wherever its
+    // mote happened to hang. The mote *was* the drop for a while -- it swapped
+    // into one in place -- and a band spread over the whole sky meant drops
+    // materializing at every height of the screen at once, which reads as the
+    // air leaking rather than as weather arriving. So the two halves come
+    // apart: the mote thins out where it stood, like every other speck that
+    // leaves the sky, and the rain comes down over everything from above the
+    // view. The accounting is unchanged -- one mote taken is one drop down.
+    DROPS.push({ x: moteX(m), y: S.camY - P, vy: 0.2 + rand() * 0.4 });
+    if (GOING.length < GOING_CAP)
+      GOING.push({ x: moteX(m), y: moteY(m), kind: m.kind, tone: m.tone,
+                   ink: m.ink, t: 1, vx: 0, vy: 0 });
     dropped(m);
   }
 

@@ -133,8 +133,11 @@ export const SMOG_GO_MS = 1400;
 // so the working population sits near three hundred. The cap is generous
 // against that and exists so a pathological rate cannot grow a list nobody
 // bounded; past it a speck is dropped without its fade, which is why the cap
-// must stay far above what play produces.
-export const GOING_CAP = 900;
+// must stay far above what play produces. Rain is the heaviest producer now --
+// every mote a brim shower takes thins out where it stood, at some six hundred
+// and fifty a second against a fade of well over one -- so the ceiling sits
+// clear above that.
+export const GOING_CAP = 2400;
 // How quickly a fading speck's own drift eases off, and how hard the wind leans
 // one that a mouth has just taken. Both small: it is finishing a movement, not
 // starting one.
