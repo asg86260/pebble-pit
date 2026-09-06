@@ -13,7 +13,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
         BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
-        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H } from './config.js';
+        APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD } from './config.js';
 import { frames } from './clock.js';
 import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
@@ -275,31 +275,28 @@ export function placeSites() {
     const w = snap((DRAWN_W[row.key] || row.w)());
     const pileW = row.pile ? heapBase(row.pile) * P : 0;
 
-    if (row.side === 'left') {
-      // The scrubbing house: its spout is on the left wall, so its heap lies on
-      // that side and the walk meets the building before the ground it pays on to.
-      const left = snap(x - w);
-      at[row.key] = { x: left, w };
-      if (pileW) {
+    // One separation, the same one, between every pair of neighbours: SLOT_PAD
+    // of owned apron plus STATION_GAP of walk (both in config/sites.js). Every
+    // site gets the pad whether or not it has a heap to stand there, which is
+    // what makes the rhythm even -- a site that makes nothing is spaced the
+    // same as one buried in its own spoil. A heap, where there is one, stands
+    // its standoff from the wall on its own side of the building, inside
+    // ground the uniform separation has already reserved.
+    const left = snap(x - SLOT_PAD - w);
+    at[row.key] = { x: left, w };
+    if (pileW) {
+      if (row.side === 'left') {
+        // The scrubbing house's spout is on its left wall, the tower drops the
+        // star's rind on its far side: their heaps lie away from the rock.
         const to = snap(left - row.standoff);
         strips.push({ key: row.pile, from: to - pileW, to });
-        x = to - pileW;
-      } else x = left;
-    } else {
-      // Everything else throws towards the rock, so its heap is on its right and
-      // the walk meets the heap first.
-      const to = x;
-      const from = to - pileW;
-      if (pileW) strips.push({ key: row.pile, from, to });
-      const left = snap(from - row.standoff - w);
-      at[row.key] = { x: left, w };
-      x = left;
+      } else {
+        // Everything else throws towards the rock.
+        const from = snap(left + w + row.standoff);
+        strips.push({ key: row.pile, from, to: from + pileW });
+      }
     }
-    // One gap, the same one, between every pair of neighbours -- see
-    // `STATION_GAP` in config/sites.js. It is applied here rather than declared
-    // per row so that the padding is a property of the walk instead of eleven
-    // hand-measured guesses about who a site's neighbour was going to be.
-    x = snap(x - STATION_GAP);
+    x = snap(left - STATION_GAP);
   }
 
   // The rock's own spoil is NOT in here, and that is deliberate. Every strip the
