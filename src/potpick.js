@@ -34,7 +34,7 @@
 // effect is put into words.
 
 import { TONICS, potTonicOf, choosePotTonic, potAt, potBox, brewCost,
-         tonicGain, tonicOf } from './apothecary.js';
+         tonicGain, tonicOf, tonicShown } from './apothecary.js';
 import { openOptsAt, shutOpts, optsOpen, stayOpen, leaveSoon } from './shop.js';
 import { MARK, priceText, purse } from './upgrades.js';
 import { screenAt } from './render/frame.js';
@@ -126,6 +126,12 @@ function openFor(i) {
   onPot = i;
   const at = potTonicOf(i);
   for (const o of opts.querySelectorAll('.opt')) {
+    // A shard recipe stays off the list until the quarry is open (item 24):
+    // shard is the quarry's coin, and a row priced in a currency the player has
+    // never seen is a row about nothing. Asked at every open, not at build, so
+    // the list grows the moment the quarry does. The "nothing" row always shows.
+    const t = tonicOf(o.dataset.opt);
+    o.hidden = !!t && !tonicShown(t);
     o.classList.toggle('on', o.dataset.opt === (at || ''));
     o.querySelector('.bill').innerHTML = brewCost(o.dataset.opt).map(([money, n]) =>
       `<span class="${purse(money) >= n ? 'have' : 'short'}">` +

@@ -22,7 +22,7 @@
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
-import { drawApothecary } from './render/apothecary.js';
+import { drawApothecary, drawPotLabels } from './render/apothecary.js'; // drawPotLabels: wave7-brew
 import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
@@ -183,6 +183,7 @@ const LAYERS = [
   { name: 'roster counts', draw: drawRosterBadgeCounts },
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
+  { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, said under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
 
