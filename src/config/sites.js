@@ -113,6 +113,15 @@ export const SITES = [
   { key: 'tower',    w: () => TOWER_W,                     standoff: SUN_GAP, pile: 'sky', side: 'left' }
 ];
 
+// Every site gets the same pad of ground on its heap side, whether or not it
+// has a heap to stand there (station-pad prototype). The pad is DERIVED, not
+// tuned: the widest thing any site actually parks beside itself -- its heap at
+// full width plus the standoff that keeps the heap off its wall. One number,
+// measured off real content, so the yard's rhythm is even by construction:
+// wall to wall, every pair of neighbours is SLOT_PAD + STATION_GAP apart.
+export const SLOT_PAD = Math.max(...SITES.filter(r => r.pile)
+  .map(r => r.standoff + heapBase(r.pile) * P));
+
 // The bare ground between the rock's centre and the far edge of the first site
 // along. Measured from `S.cx` rather than from the rock's edge, because the rock
 // changes size and the yard does not rearrange itself around it.
@@ -148,8 +157,7 @@ export const YARD_MARGIN = P * 10;
 // means something else. Growing it at all is a migration -- see `floorShift` in
 // persist.js, which slides a save's dust across by however many columns the
 // world gained on its left.
-const WALK = SITES.reduce((n, row) =>
-  n + row.w() + row.standoff + (row.pile ? heapBase(row.pile) * P : 0), 0)
+const WALK = SITES.reduce((n, row) => n + row.w() + SLOT_PAD, 0)
   + STATION_GAP * (SITES.length - 1);
 export const GROUND_LEFT = Math.round((YARD_MARGIN + WALK + TO_FIRST_SITE) / P) * P;
 export const ROCK_W = 44;        // the rock is a hill: this wide in cells at rock 1
