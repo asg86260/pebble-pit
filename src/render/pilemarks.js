@@ -5,11 +5,9 @@
 // pileMarkAt and overPileMark. The shared primitives come from this folder's own
 // leaves: ctx from ./ctx.js and drawTriangle from ./marks.js.
 
-import { STATIONS, hasOffer, standRect, stationFoot } from '../board.js';
+import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { P } from '../config.js';
-import { JOB } from '../jobs.js';
 import { S, farm, scrub, sky } from '../state.js';
-import { capOf } from '../upgrades.js';
 import { ctx } from './ctx.js';
 import { drawTriangle } from './marks.js';
 
@@ -62,49 +60,12 @@ export function drawPileMarks() {
     // sits low in its own outline, so the mark hangs below the middle of it.
     warning(at.x, at.y);
   }
-  // And a hollow body under any station standing open with nobody on its job:
-  // a place with capacity and no hands is stopped just as surely as one with a
-  // full pile, and until this mark it said so with nothing. (feedback7, item 26)
-  for (const key of Object.keys(JOB_AT)) {
-    if (!shortAt(key)) continue;
-    const at = shortMarkAt(key);
-    shortBody(at.x, at.y);
-  }
 }
 
-// --- the under-staffed mark ---------------------------------------------------
-// Which job a station's headcount is read off. Only the stations whose output is
-// a gang's: the bench, the house, the books have no job of their own to be short
-// of. The rock is not here either -- its gang is optional by design (you swing
-// yourself), so an empty rock is a choice rather than a stall.
-const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, scrub: JOB.PURIFY,
-                 tower: JOB.WIZARD, lab: JOB.SCHOLAR, apothecary: JOB.STIR,
-                 outhouse: JOB.JANITOR, school: JOB.TEACH };
-
-// Open, with room for a body, and nobody on it. `standRect` is null until the
-// station is standing, so a place not yet built shows nothing.
-const shortAt = key =>
-  !!standRect(key) && S[JOB_AT[key]] === 0 && capOf(JOB_AT[key]) > 0;
-
-// The game's own body glyph, wanting: a worker square with a cross in it. A
-// body in this yard is a hollow square -- that is the one shape every player
-// has already learned means "somebody" -- and the cross inside is the same
-// mark the roster's + button wears, so the sign reads "a body, to be added
-// here". It replaced a stick figure that belonged to no drawing in the game.
-function shortBody(x, y, r = WARN_R) {
-  const u = Math.max(1, Math.round(r / 8));          // one stroke of the sign
-  const half = Math.round(r * 0.7);                  // the square, about the body's build
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(x - half, y - half, half * 2, half * 2);
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(x - half, y - half, half * 2, half * 2);
-  // the cross, centered, clear of the walls
-  const arm = Math.round(half * 0.55);
-  ctx.fillStyle = '#000';
-  ctx.fillRect(x - arm, y - Math.ceil(u / 2), arm * 2, u);
-  ctx.fillRect(x - Math.ceil(u / 2), y - arm, u, arm * 2);
-}
+// (The under-staffed mark -- feedback7 item 26, a figure under any station
+// with nobody on its job -- lived here until review dropped it: the drop-zone
+// arrows and the roster row already carry the same fact, and three signs for
+// one absence is two too many.)
 
 // a warning triangle: hollow, with a bar and a dot inside it. A triangle sits
 // low in its own outline, so the mark hangs below the middle of it.
@@ -155,9 +116,9 @@ function warning(x, y, r = WARN_R) {
 // other way -- the triangle is 5.2 cells across and the diamond 3.2, so their
 // half-widths alone come to 4.2 and the two were all but touching.
 const SLOT_W = P * 5.5;
-// 'short' (feedback7, item 26) joins on the right: a mark never moves because a
-// different mark appeared, so a new slot may only ever be appended.
-const SLOTS = ['stopped', 'offer', 'short'];   // left to right, and never reordered
+// A mark never moves because a different mark appeared, so a new slot may only
+// ever be appended. ('short' sat on the right until review dropped that mark.)
+const SLOTS = ['stopped', 'offer'];   // left to right, and never reordered
 
 // Which of them a station is showing right now.
 //
@@ -171,7 +132,6 @@ function marksOn(key) {
   const on = [];
   if (S.pileFull[key]) on.push('stopped');
   if (STATIONS.includes(key) && hasOffer(key)) on.push('offer');
-  if (JOB_AT[key] && shortAt(key)) on.push('short');
   return on;
 }
 
@@ -217,24 +177,6 @@ export function markAt(key, kind) {
 
 export function pileMarkAt(key) {
   return markAt(key, 'stopped');
-}
-
-// The under-staffed mark's slot, the same shape as pileMarkAt so whoever wires
-// the tooltip ("nobody works here" -- input.js, not this file's to edit) reads
-// the position off the same row of slots the drawing uses.
-export function shortMarkAt(key) {
-  return markAt(key, 'short');
-}
-
-// The same half-slot ask for the hollow body, answered with the station's key
-// so the caller does not need this file's JOB_AT table to walk the stations.
-export function overShortMark(mx, my) {
-  for (const key of Object.keys(JOB_AT)) {
-    if (!shortAt(key)) continue;
-    const at = shortMarkAt(key);
-    if (Math.abs(mx - at.x) < SLOT_W / 2 && Math.abs(my - at.y) < P * 4) return key;
-  }
-  return null;
 }
 
 // where the cursor has to be to be asking about one

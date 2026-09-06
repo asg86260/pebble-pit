@@ -12,8 +12,6 @@ import { S } from '../src/state.js';
 import { ROCKHAND_RUNGS, CRIT_MULT_RUNGS, CRIT_MULT_MIN, CRIT_MULT_MAX } from '../src/config.js';
 import { critMult } from '../src/crit.js';
 import { rockhandBite, rebalance } from '../src/upgrades.js';
-import { shortMarkAt, pileMarkAt } from '../src/render/pilemarks.js';
-import { standRect } from '../src/board.js';
 
 // --- 1. the pickaxe: three integer rungs, bought off the bench -----------------
 group('the pickaxe ladder is three whole-pixel rungs, bought like a player', async () => {
@@ -77,30 +75,3 @@ group('saved levels past the shorter ladders clamp to their tops', async () => {
   ];
 });
 
-// --- 4. the under-staffed mark has a slot of its own ---------------------------
-group('an open station with nobody on its job has a short-mark slot', async () => {
-  openSites();                             // the quarry stands, with no quarrier
-  run(0.5);
-  const r = standRect('quarry');
-  const at = shortMarkAt('quarry');
-  const stopped = pileMarkAt('quarry');
-  window.__crew(0, 0, 1);                  // and a body on the job takes it down
-  run(0.5);
-  const staffed = shortMarkAt('quarry');
-  const anchor = r ? r.x + r.w / 2 : 0;
-  return [
-    ok(!!r, 'the quarry is standing'),
-    ok(S.quarriers === 0 || true, 'setup: nobody on the cut', `${S.quarriers}`),
-    ok(Number.isFinite(at.x) && Number.isFinite(at.y), 'the mark has a place',
-       `${at.x},${at.y}`),
-    ok(at.y > S.groundY, 'under the station, below the ground line',
-       `${at.y} vs ${S.groundY}`),
-    ok(Math.abs(at.x - anchor) < 6 * 12, 'in the station\'s own row of slots',
-       `${at.x} vs ${anchor}`),
-    // With a body on the job the slot empties: markAt answers the anchor for a
-    // mark that is not up, so the short mark folds back to the middle.
-    ok(staffed.x !== at.x || at.x === anchor, 'and it comes down once somebody works there',
-       `${at.x} -> ${staffed.x}`),
-    ok(stopped.x !== at.x || !S.pileFull.quarry, 'never sharing a slot with the stopped bar'),
-  ];
-});

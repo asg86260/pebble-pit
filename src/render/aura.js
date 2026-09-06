@@ -18,7 +18,7 @@ import {
 } from '../config.js';
 import { now } from '../clock.js';
 import { chimneyAt } from '../house.js';
-import { bench, lab, school } from '../state.js';
+import { S, bench, lab, school } from '../state.js';
 import { benchMark } from '../upgrades.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
@@ -61,7 +61,12 @@ export function auraRing(rect, phase) {
 // station nobody has built yet gets its mark for free.
 function roofPeak(rect) {
   const cols = Math.round(rect.w / P);
-  const x = Math.round(rect.x / P) * P + Math.floor(cols / 2) * P;
+  // The exact middle of the front, less half the pole's own cell: on an
+  // odd-width building this is the center cell, on an even one the pole
+  // straddles the middle boundary. Half a cell is still whole pixels, and a
+  // solid fill carries no hairline -- snapping to the lattice here just
+  // pushed every even-width flag half a cell to the right.
+  const x = Math.round(rect.x / P) * P + (cols * P) / 2 - P / 2;
   const y = Math.round(rect.y / P) * P;
   return { x, y };
 }
@@ -71,16 +76,25 @@ function roofPeak(rect) {
 // house's chimney climbs as the settlement grows and the flag climbs with it.
 // A station not listed gets the middle column of its stand box's top edge,
 // which is right for anything with a flat or peaked roof.
+// Each two-cell feature takes the pole astride its middle boundary -- half a
+// cell in from its left edge -- so the flag stands centered on it; the lab's
+// three-cell stack centers on its middle cell outright.
 const SPOT = {
-  house: () => { const f = chimneyAt(); return f && { x: f.x, y: f.y - P * 4 }; },
-  bench: () => ({ x: bench.x + P * 4, y: bench.y - P * 2 }),   // the clamped block
-  school: () => ({ x: school.x + P * 9, y: school.y }),        // the belfry
-  lab: () => ({ x: lab.x + P * 3, y: lab.y }),                 // the chimney
+  house: () => { const f = chimneyAt(); return f && { x: f.x + P / 2, y: f.y - P * 4 }; },
+  bench: () => ({ x: bench.x + P * 4.5, y: bench.y - P * 2 }),  // the clamped block
+  school: () => ({ x: school.x + P * 9.5, y: school.y }),       // the belfry
+  lab: () => ({ x: lab.x + P * 3, y: lab.y }),                  // the chimney
 };
 
 function flagBase(rect, which) {
-  const spot = SPOT[which] && SPOT[which]();
-  return spot || roofPeak(rect);
+  const spot = (SPOT[which] && SPOT[which]()) || roofPeak(rect);
+  // The half-cell center is a real place but not a drawable one: the view maps
+  // whole cells to whole device pixels (CELL/P is fractional), so a rect on
+  // the half-cell smears into grey fringes down both edges. Snap the base to
+  // the device-pixel grid instead -- within half a pixel of true center, and
+  // every column of the flag, P multiples from here, stays crisp with it.
+  const k = S.zoom * S.dpr;
+  return { x: Math.round(spot.x * k) / k, y: spot.y };
 }
 
 // A stable per-station number in 0..1, so every flag flutters out of step with
