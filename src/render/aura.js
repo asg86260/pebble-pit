@@ -132,7 +132,11 @@ function drawFlag(rect, which, t) {
   // the box's top edge otherwise.
   const { x, y } = flagBase(rect, which);
   const top = y - FLAG_POLE * P;
-  ctx.fillRect(x, top, P, rect.y + rect.h - top);
+  // Two cells past the base, into the feature it stands on -- enough to bury
+  // the foot in the chimney or the roof mass. It ran to the ground for a
+  // while, trusting the silhouette to cover it, and the bench is mostly air:
+  // the pole showed straight through between its legs.
+  ctx.fillRect(x, top, P, FLAG_POLE * P + P * 2);
   const seed = seedOf(which);
   const wind = windAt(t);
   const dir = wind < 0 ? -1 : 1;
