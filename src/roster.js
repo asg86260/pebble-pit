@@ -413,7 +413,10 @@ export function rosterReport() {
              machine: machineAt(p.job),
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
-             trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
+             // Only where a trade line is actually drawn: a job with kit but no
+             // bought trade wears its hat on the badge (wave7-crew, item 12).
+             trade: TRADE_OF[p.job] && hats(p.job) > 0
+               ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
