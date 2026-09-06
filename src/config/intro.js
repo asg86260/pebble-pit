@@ -45,7 +45,12 @@ export const MEET_CLEAR = 36;     // world pixels either side of the pair
 // that comes to rest within reach of the square's spot is fetched: the square
 // walks over, picks it up, holds it a beat, and tosses it toward the hole the
 // way the crew throw everything else. See `stepBuried` in intro.js.
-export const BURIED_REACH = 72;      // world pixels (P * 12) it will walk for one
+// The spec's P * 12 was measured from the square itself, and no core can ever
+// rest that close: `dropCore` throws every core clear of the footprint, and the
+// footprint's half-width alone is past two hundred pixels by mid-game. So the
+// reach is measured from the footprint's EDGE instead, and covers the throw
+// (three to eleven cells past the lip) plus the bounce that follows it.
+export const BURIED_REACH = 144;     // world pixels (P * 24) past the rock's edge
 export const BURIED_HOLD_MS = 450;   // the beat between picking up and throwing
 export const BURIED_TOSS_IN = 24;    // cells inside the pit's mouth the throw is aimed
 

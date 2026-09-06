@@ -61,6 +61,13 @@ const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
+  // The jaw's smoke, well into its climb: run the machine half a minute so the
+  // plume has puffs at every age, then look at the air over the cut. What this
+  // is for is the shape of the climb -- a cone that dissolves, not a column.
+  // (wave7-sky, A1.)
+  plume: `${RICH} window.__buy('jaw'); window.__finish(); window.__fast(30);
+          window.__look(window.__state().quarryX - 220);`,
+
   // A building going up: the lab half out of the ground, its barriers and tape
   // round it, and the builder hammering at it throwing grit off each blow.
   //

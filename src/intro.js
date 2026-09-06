@@ -496,9 +496,9 @@ function walkBuried(to) {
 }
 
 function stepBuriedToss(t) {
-  // Not during any scene, and not before there are cores to speak of: the
-  // first rocks have none in them and the reunion owns the yard.
-  if (S.intro || !S.reunionDone) return;
+  // Not during any scene: while the opening or the reunion owns the yard the
+  // square is part of the story, not on an errand.
+  if (S.intro) return;
   const k = S.coreItem;
   const e = S.buriedErrand;
 
@@ -511,8 +511,15 @@ function stepBuriedToss(t) {
     // reacting to `rest` alone is what keeps the two systems out of each
     // other's hands.
     if (!k || !k.rest || k.tossed) return;
+    // Within reach -- measured past the rock's own footprint, not from the
+    // square itself. A core is always thrown clear of the footprint when it
+    // drops (`dropCore`), and the footprint alone is wider than any bare
+    // distance a square would sensibly walk, so "near the square" means "just
+    // past the edge of where the rock stood": the ground a dropped core
+    // actually comes to rest on.
     const at = buriedAt();
-    if (Math.abs(k.x + CORE_SIZE / 2 - (at.x + WORKER / 2)) > BURIED_REACH) return;
+    const half = (S.gw * P) / 2;
+    if (Math.abs(k.x + CORE_SIZE / 2 - (at.x + WORKER / 2)) - half > BURIED_REACH) return;
     S.buriedErrand = { phase: 'walk' };
     return;
   }
