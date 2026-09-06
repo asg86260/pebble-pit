@@ -76,7 +76,6 @@ group('a storm brews up, pours, and trails off', async () => {
   // The roll lands within a look or two at the brim, and what it starts is a
   // brew, not a shower: no drop falls while the sky darkens.
   const brewed = runUntil(() => state().smog.brewing, 30);
-  const early = state().smog;
   run(10);
   const mid = state().smog;
   const noRainYet = !mid.raining && mid.drops === 0;
@@ -90,31 +89,21 @@ group('a storm brews up, pours, and trails off', async () => {
   const drizzle = state().smog.drops;
   run(12);                                     // well past the rise
   const peak = state().smog.drops;
-  const washAtPeak = state().smog.storming;
 
   // The taper: watched down to the end. The rate falls away with what is left,
-  // the wash falls with it, and when it stops there is nothing marked left.
+  // and when it stops there is nothing marked left.
   runUntil(() => !state().smog.raining, 120);
   const done = state().smog;
-  run(4);
-  const after = state().smog;
   window.__air({ haze: 0, muck: 0 });
   return [
     ok(brewed, 'a brim sky commits to a storm within a look or two'),
-    ok(early.storming < mid.storming && mid.storming > 0.2,
-       'and the sky darkens through the brew-up',
-       `${early.storming} -> ${mid.storming}`),
     ok(noRainYet, 'with not a drop falling while it brews',
        `${mid.drops} drops, raining ${mid.raining}`),
     ok(atOpen.raining && atOpen.rains >= 1, 'then the drizzle begins'),
     ok(drizzle < peak / 2, 'and the drizzle is far gentler than the pour',
        `${drizzle} drops in the air against ${peak} at the peak`),
-    ok(washAtPeak > 0.8, 'the darkness holds through the pour', `${washAtPeak}`),
     ok(done.haze < 40, 'and the shower still ends clean: every marked mote falls',
-       `${Math.round(done.haze)} haze left`),
-    ok(after.storming < washAtPeak && after.storming < 0.2,
-       'while the wash fades back out with the taper',
-       `${washAtPeak} -> ${after.storming}`)
+       `${Math.round(done.haze)} haze left`)
   ];
 });
 

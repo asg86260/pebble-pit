@@ -240,13 +240,14 @@ export let RAIN_PER_S = 650;        // per mote: a sky of more specks takes more
 
 // --- wave6-sky: the shape of a storm -------------------------------------------
 // A storm is an event with a front and a tail, not a switch. When the break
-// roll succeeds the sky does not open at once: it *brews* -- a black wash over
-// the band ramps up over STORM_BREW_S so the yard visibly darkens before a
-// drop falls -- then a drizzle at a fifth of the rate, a smoothstep up to the
-// full pour, and a taper at the end (see `pour` in smog/rain.js) so the shower
-// trails off instead of cutting. The wash fades back out with the taper.
-export let STORM_BREW_S = 20;       // seconds of darkening before the first drop
-export let STORM_INK_MAX = 0.35;    // how black the wash gets, as an alpha
+// roll succeeds the sky does not open at once: it *brews* for STORM_BREW_S --
+// a quiet delay before the first drop -- then a drizzle at a fifth of the
+// rate, a smoothstep up to the full pour, and a taper at the end (see `pour`
+// in smog/rain.js) so the shower trails off instead of cutting. There used to
+// be a black wash darkening the band through the brew; it was cut -- the sky
+// itself is the warning, and a pane of darkness over it read as a screen
+// effect rather than as weather.
+export let STORM_BREW_S = 20;       // seconds of brewing before the first drop
 export let RAIN_DRIZZLE_S = 6;      // seconds of drizzle before the pour comes on
 export let RAIN_RISE_S = 6;         // and how long the smoothstep up to full takes
 export const RAIN_TAPER_AT = 0.25;  // taper once this share of the marked sky is left
@@ -322,8 +323,6 @@ export const SKY_KNOBS = [
     get: () => RAIN_PER_S, set: v => { RAIN_PER_S = v; } },
   { key: 'STORM_BREW_S', label: 'storm brew', min: 0, max: 60, step: 1,
     get: () => STORM_BREW_S, set: v => { STORM_BREW_S = v; } },
-  { key: 'STORM_INK_MAX', label: 'storm ink', min: 0, max: 0.8, step: 0.01,
-    get: () => STORM_INK_MAX, set: v => { STORM_INK_MAX = v; } },
   { key: 'RAIN_DRIZZLE_S', label: 'drizzle', min: 0, max: 20, step: 0.5,
     get: () => RAIN_DRIZZLE_S, set: v => { RAIN_DRIZZLE_S = v; } },
   { key: 'RAIN_RISE_S', label: 'rain rise', min: 0.5, max: 20, step: 0.5,

@@ -130,11 +130,10 @@ export function pour(secs) {
 
 // --- the brew-up ---------------------------------------------------------------
 // (wave6-sky, item 5.) A storm that has been rolled does not open at once: for
-// STORM_BREW_S the sky *brews* -- `S.storming` is a wash of darkness over the
-// band, ramping from nothing up to full while the yard visibly worsens -- and
-// only then does the drizzle begin. The wash holds through the pour and fades
-// back out with the taper, and it eases rather than snapping at either end, so
-// there is no frame on which the sky pops (established vfx taste).
+// STORM_BREW_S the sky *brews*, and only then does the drizzle begin. There
+// used to be a wash of darkness ramping over the band through the brew; it was
+// cut -- the sky itself is the warning -- and what is left of the brew is the
+// delay.
 //
 // `S.stormFor` is the brew's clock: -1 for no storm on the way, otherwise
 // seconds since the roll. The marking of the sky and the count of rains happen
@@ -143,25 +142,13 @@ export function pour(secs) {
 export const brewing = () => S.stormFor >= 0;
 
 export function stepStorm(secs) {
-  let want = 0;
-  if (brewing()) {
-    S.stormFor += secs;
-    want = smooth(S.stormFor / STORM_BREW_S);
-    if (S.stormFor >= STORM_BREW_S) {
-      S.stormFor = -1;
-      S.raining = true;
-      S.rainFor = 0;
-    }
-  } else if (S.raining) {
-    want = tail;
+  if (!brewing()) return;
+  S.stormFor += secs;
+  if (S.stormFor >= STORM_BREW_S) {
+    S.stormFor = -1;
+    S.raining = true;
+    S.rainFor = 0;
   }
-  // Toward the target, never past it in a jump: the brew's own ramp is already
-  // smooth, and the ease is for the ends -- a shower that ran out early, a
-  // restore -- so the wash always fades rather than cutting.
-  const most = secs * 0.8;
-  const d = want - S.storming;
-  S.storming += Math.abs(d) <= most ? d : Math.sign(d) * most;
-  if (S.storming < 0.001 && !want) S.storming = 0;
 }
 
 // One frame of the fading, and **it keeps whatever motion it had.**

@@ -46,7 +46,6 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawStormPress } from './render/storm.js';    // wave6-sky
 import { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 
@@ -168,7 +167,6 @@ const LAYERS = [
   { name: 'says', draw: drawSays },              // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
-  { name: 'storm press', draw: drawStormPress }, // wave6-sky: the darkness before a shower
   { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
   { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house
