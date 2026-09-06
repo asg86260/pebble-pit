@@ -86,30 +86,24 @@ const JOB_AT = { quarry: JOB.QUARRY, farm: JOB.FARM, scrub: JOB.PURIFY,
 const shortAt = key =>
   !!standRect(key) && S[JOB_AT[key]] === 0 && capOf(JOB_AT[key]) > 0;
 
-// A hollow body: a 1-px stick figure the size of the warning triangle, drawn as
-// an outline because what it marks is an absence. Head, trunk, arms out level,
-// legs apart -- the game's own worker square said hollow.
+// The game's own body glyph, wanting: a worker square with a cross in it. A
+// body in this yard is a hollow square -- that is the one shape every player
+// has already learned means "somebody" -- and the cross inside is the same
+// mark the roster's + button wears, so the sign reads "a body, to be added
+// here". It replaced a stick figure that belonged to no drawing in the game.
 function shortBody(x, y, r = WARN_R) {
+  const u = Math.max(1, Math.round(r / 8));          // one stroke of the sign
+  const half = Math.round(r * 0.7);                  // the square, about the body's build
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(x - half, y - half, half * 2, half * 2);
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - half, y - half, half * 2, half * 2);
+  // the cross, centered, clear of the walls
+  const arm = Math.round(half * 0.55);
   ctx.fillStyle = '#000';
-  const u = Math.max(1, Math.round(r / 8));          // one stroke of the figure
-  // the head: a hollow square, two strokes wide inside its outline
-  const hr = Math.round(r * 0.42);
-  ctx.fillRect(x - hr, y - r, hr * 2, u);            // crown
-  ctx.fillRect(x - hr, y - r + hr * 2, hr * 2, u);   // chin
-  ctx.fillRect(x - hr, y - r, u, hr * 2);            // and the two cheeks
-  ctx.fillRect(x + hr - u, y - r, u, hr * 2);
-  // the trunk, from under the chin down
-  const neck = y - r + hr * 2 + u;
-  const hip = y + Math.round(r * 0.25);
-  ctx.fillRect(x - Math.ceil(u / 2), neck, u, hip - neck);
-  // arms out level, at the shoulders
-  const arm = Math.round(r * 0.55);
-  ctx.fillRect(x - arm, neck + u, arm * 2, u);
-  // and the legs apart: two verticals off the hip, a stride wide
-  const leg = Math.round(r * 0.35);
-  ctx.fillRect(x - leg, hip, u, r - Math.round(r * 0.25));
-  ctx.fillRect(x + leg - u, hip, u, r - Math.round(r * 0.25));
-  ctx.fillRect(x - leg, hip, leg * 2, u);            // the hip bar the legs hang off
+  ctx.fillRect(x - arm, y - Math.ceil(u / 2), arm * 2, u);
+  ctx.fillRect(x - Math.ceil(u / 2), y - arm, u, arm * 2);
 }
 
 // a warning triangle: hollow, with a bar and a dot inside it. A triangle sits
