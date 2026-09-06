@@ -2874,11 +2874,18 @@ the same sentence the collapse already says.
 frame it crosses the surface, and a save from the disc era comes back drowned with nothing lost.
 Then shots: the tear mid-gulp, the standing surface, a throw being eaten, a purchase surfacing.
 
-## The pit's arc: solid, torn, drowned (design, not built)
+## The pit's arc: solid, torn, drowned (built)
 
-*Proposed 2026-09-05. Reverses one built behavior — the abyss arriving at the
+*Proposed 2026-09-05, built 2026-09-06 as designed, with `ABYSS_AT` raised to
+1,000,000 on review. Reverses one built behavior — the abyss arriving at the
 first overflow — and one written camera decision (the note over the pipeline in
-game.js), each with the changed premise named below.*
+game.js), each with the changed premise named below. Build notes: the disc's
+draw and orbit came back verbatim from the pre-abyss tree (`drawRift` in
+render/cores.js, `orbit` in game.js), gated on torn-not-drowned; the cutscene
+triggers watch the *gulp starting* rather than the era flags, which is the one
+thing both live transitions do and a restore never does; `__rift` now lands a
+yard at the end of the arc (drowned, fed past the threshold) so every endgame
+check keeps its meaning, and `__tear(ate)` is the hook into the middle of it.*
 
 The pit currently has two eras: a solid pile of drawn grains, and then, the
 moment it cannot take one more, the abyss. The jump is a single gulp. This
@@ -2926,8 +2933,8 @@ w = RIFT_W0 + (RIFT_WMAX - RIFT_W0) * sqrt(min(1, S.riftAte / ABYSS_AT))
 
 - `RIFT_W0` = 4 cells — a tear, clearly smaller than the old disc.
 - `RIFT_WMAX` = 12 cells — clearly too big for the sky it hangs in.
-- `ABYSS_AT` = 250,000 grains — roughly seven times the hole's own capacity,
-  so the era is a real stretch of play, not a beat. All three go in
+- `ABYSS_AT` = 1,000,000 grains — nearly thirty times the hole's own
+  capacity, so the era is a real stretch of play, not a beat. All three go in
   `config.js` under `TUNABLE`; the numbers above are the opening bid, tuned
   from the dev panel against real pace.
 

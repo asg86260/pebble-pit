@@ -30,6 +30,7 @@ import { MACHINES, running, specOf } from './machines.js';
 import { CRAFT, craftY, BALLOON_W, BALLOON_H, BALLOON_BASKET, BALLOON_FILTER_H } from './balloon.js';
 import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
+import { skipCutscene } from './cutscene.js';
 
 const canvas = document.getElementById('c');
 const resetEl = document.getElementById('reset');
@@ -98,6 +99,10 @@ canvas.addEventListener('pointerdown', e => {
   // swing at is not a paused game; the only live thing is the sheet saying so,
   // and that is over the canvas rather than on it.
   if (S.paused) return;
+  // A cutscene running eats the click and ends: any click skips, and the click
+  // does nothing else -- a swing taken while the camera is being handed back
+  // is a swing at whatever happened to be under the cursor.
+  if (skipCutscene()) return;
   // The right button picks somebody up and puts them down again, and does
   // nothing else at all -- see `lift`. It is checked before anything, because
   // it can never mean any of the things the left button means.
@@ -385,8 +390,10 @@ const BUILDING_NAME = {
 function buildingAt(x, y) {
   for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
   if (S.outhouseOpen && inRect(outhouse, x, y)) return 'the outhouse';
-  // the drowned pit: anywhere over the liquid answers as the abyss
-  if (riftOpen() && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
+  // the drowned pit: anywhere over the liquid answers as the abyss -- and
+  // through the torn era, the disc itself answers as the rift
+  if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
+  if (riftOpen() && !S.drowned && inRect(rift, x, y)) return 'the rift';
   return null;
 }
 

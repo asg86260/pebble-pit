@@ -5,7 +5,8 @@
 // matters about a pile is its shape and its total, and a value per cell would be
 // megabytes written every second.
 
-import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS } from './config.js';
+import { P, SHADES, CORE_SIZE, QUARRY_BENCH0, FARM_PLOTS0, ROCK_CELL, LOO_POSTS,
+         ABYSS_AT } from './config.js';
 import { load, save, clear } from './save.js';
 import { seedSmog, skyFromSave } from './smog.js';
 import { craftSave, craftLoad, clearCraft } from './balloon.js';
@@ -215,6 +216,10 @@ export function persist() {
     // four numbers, against a pile that would otherwise have to hold every
     // shard you ever found for the counter to be true
     riftHeld: S.riftHeld,
+    // the arc: what the rift has eaten and whether the hole has given way.
+    // Losing these would reload a drowned yard back into its disc era.
+    riftAte: S.riftAte,
+    drowned: S.drowned,
     // Where the view is. Scrolling the yard is how you look at any of this, and
     // a reload that dumped you back at the rock threw away the one piece of
     // where-you-were the player sets by hand. Rounded because a pixel of a
@@ -785,6 +790,16 @@ export function restore() {
   S.riftHeld = { cores: 0, shards: 0, spores: 0, sparks: 0 };
   for (const k of ['cores', 'shards', 'spores', 'sparks'])
     S.riftHeld[k] = Math.max(0, Math.min(Math.round(+(s.riftHeld?.[k]) || 0), S[k] || 0));
+  // The arc. A save that has never heard of it (`riftAte` missing) but has a
+  // torn rift was written when the tear and the drowning were the same moment,
+  // so it comes back drowned -- nobody is pulled back an era -- and its eaten
+  // count is seeded from what is through the rift, floored at the threshold so
+  // the derived disc size and the drowning trigger both agree with the era.
+  S.drowned = s.riftAte !== undefined ? !!s.drowned : !!s.riftOpen;
+  S.riftAte = Math.max(0, Math.round(+s.riftAte || 0));
+  if (s.riftAte === undefined && S.riftOpen)
+    S.riftAte = (S.rift || 0) + Object.values(S.riftHeld).reduce((a, b) => a + b, 0);
+  if (S.drowned) S.riftAte = Math.max(S.riftAte, ABYSS_AT);
   rehomeDust();
   seedPitCores();
   // The cut's own sand: rock laid fresh to the depth just restored above, then

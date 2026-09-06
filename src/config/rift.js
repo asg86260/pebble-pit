@@ -4,14 +4,25 @@ import { P } from './yard.js';
 // The hole in the air past the far wall of the pit: what the hole in the ground
 // overflows into. See src/rift.js and `## The rift` in DESIGN.md.
 //
-// A black disc standing in the air over the near end of the hole: fifteen cells
-// across, RIFT_AT of the hole's length in from the near lip and clear of the
-// ground line by RIFT_UP cells, so the whole of it is against the white page.
-// It used to be a lens on the ground past the far wall, which is two windows off
-// screen, and then a disc buried to its middle in the pile, which is a blob
-// painted on the grey -- see `seatRift`.
-export const RIFT_W = P * 15;
-export const RIFT_H = P * 15;
+// A black disc standing in the air over the near end of the hole, RIFT_AT of
+// the hole's length in from the near lip and clear of the ground line by
+// RIFT_UP cells, so the whole of it is against the white page. It used to be a
+// lens on the ground past the far wall, which is two windows off screen, and
+// then a disc buried to its middle in the pile, which is a blob painted on the
+// grey -- see `seatRift`.
+//
+// **It grows with what it eats.** The disc tears small and swells toward
+// RIFT_WMAX as `S.riftAte` -- every grain it has ever swallowed -- climbs
+// toward ABYSS_AT, at which point the hole gives way and the pit drowns (see
+// "The pit's arc" in DESIGN.md). Nothing is sold and nothing shrinks it: the
+// original rift was meant to be the endgame's storage and never got bigger,
+// so it never felt like it was becoming anything. The square root
+// front-loads the visible growth and slows toward the ceiling, which is the
+// shape of a thing straining. Sizes are in cells; `riftCells` in rift.js is
+// the one reader.
+export let RIFT_W0 = 4;              // cells across, the day it tears
+export let RIFT_WMAX = 12;           // and the size it gives way at
+export let ABYSS_AT = 1000000;       // grains eaten when the drowning comes
 // A fraction of the hole rather than a count of cells: the hole is 3,600 across
 // and the disc belongs at the end of it that is on screen, whatever that end
 // happens to measure. Far enough in to clear the counter's card, which stands
@@ -65,6 +76,24 @@ export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather t
 // clear. At a bit over half, the ring holds what drifts into it and the sky
 // stays the sky.
 export const RIFT_FEED = 0.55;
+// How the swallowed grains go while the disc hangs: how many turns round it a
+// grain makes on its way in, and how long the whole orbit takes, in frames at
+// sixty. Both are what the suck is made of -- a grain is dragged round faster
+// the closer it gets, so it wants turns to spend and it wants to be quick
+// about them. Once the pit has drowned the orbit is gone and a grain dives to
+// the liquid instead -- see `sink` in game.js.
+export const RIFT_TURNS = 2.4;
+export const RIFT_ORBIT_FRAMES = 84;
+// --- the cutscenes --------------------------------------------------------------
+// The two one-time transitions -- the tearing and the drowning -- are watched:
+// the camera goes to the pit, the moment plays, the camera comes back. One
+// mechanism (src/cutscene.js) owns the camera for the length of a scene; the
+// yard never pauses, and any click skips. Times are wall seconds, zooms are
+// the setZoom step the scene pulls in to.
+export const CUT_TEAR_S = 4;         // how long the tearing is watched
+export const CUT_TEAR_ZOOM = 1.5;    // pulled in on a small hole being born
+export const CUT_DROWN_S = 6;        // the drowning runs longer than its gulp
+export const CUT_DROWN_ZOOM = 1;     // and is framed wide: the whole mouth goes
 // --- the abyss -----------------------------------------------------------------
 // The rift's picture, since the pit liquefied (see "The abyss" in DESIGN.md):
 // no disc, no orbit. The hole holds a black liquid standing a few cells below
@@ -216,6 +245,17 @@ export const RIFT_RATE = 1.6;
 export const RIFT_RATE_COST = 25;
 export const RIFT_RATE_UP = 1.5;
 export const FLOOR_MARGIN = 12;  // gap under the pit floor, at the bottom of the window
+
+// The dev panel's rows for the growth dials above; a row lives beside the
+// binding it moves, the same as EFFECT_KNOBS.
+export const RIFT_KNOBS = [
+  { key: 'RIFT_W0', label: 'rift born', min: 2, max: 10, step: 1,
+    get: () => RIFT_W0, set: v => { RIFT_W0 = v; } },
+  { key: 'RIFT_WMAX', label: 'rift grown', min: 6, max: 24, step: 1,
+    get: () => RIFT_WMAX, set: v => { RIFT_WMAX = v; } },
+  { key: 'ABYSS_AT', label: 'drowns at', min: 50000, max: 4000000, step: 50000,
+    get: () => ABYSS_AT, set: v => { ABYSS_AT = v; } }
+];
 // how many device pixels we are willing to fill a frame, before backing the
 // resolution off. A phone at three to one is about three million.
 // A `let`, because it is one of the dials -- it sat in TUNABLE as a `const` with

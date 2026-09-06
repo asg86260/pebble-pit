@@ -27,7 +27,7 @@ import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
 import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
-import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRockSand } from './render/cores.js';
+import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawIntro, drawKitStands, drawOffers,
@@ -67,7 +67,7 @@ export { drawBalloons, drawBrollies } from './render/balloon.js';
 export { drawScrub } from './render/scrub.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
 export { drawSky } from './render/sky.js';
-export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss } from './render/cores.js';
+export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
 export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';
@@ -144,6 +144,7 @@ const LAYERS = [
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
+  { name: 'rift', draw: drawRift },              // or, through the torn era, the disc growing over the mouth
 
   { name: 'pit outline', draw: drawPitOutline },
 

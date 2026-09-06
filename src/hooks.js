@@ -13,7 +13,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
@@ -29,6 +29,7 @@ import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS } from './config.js';
+import { seatRift } from './rift.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
 import { syncWorkers, drop as dropHeld, shakeHeld } from './crew.js';
@@ -187,9 +188,25 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
 // first time it cannot take a grain (see `throughRift` in pit.js) -- so a check
 // about what the rift DOES would otherwise have to bank two hundred thousand
 // dust to get one, which is a check about filling a hole.
+// Straight to the end of the arc: torn, fed past the threshold and drowned,
+// with no gulp left to run -- the state every endgame check and scene means.
 export const openRift = () => {
   S.riftOpen = true;
+  S.drowned = true;
+  S.riftAte = Math.max(S.riftAte || 0, ABYSS_AT);
   S.seenFullPit = true;
+  seatRift();                       // the disc's rect follows the era it was put in
+  S.dirty = true;
+};
+
+// And the middle of it: the torn era, the disc hanging and growing. `ate`
+// positions it along its growth without waiting for a million grains.
+export const tearRift = (ate = 0) => {
+  S.riftOpen = true;
+  S.drowned = false;
+  S.riftAte = Math.max(0, Math.round(ate));
+  S.seenFullPit = true;
+  seatRift();
   S.dirty = true;
 };
 
@@ -936,7 +953,7 @@ export const HANDLES = {
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
-  __meteor: openMeteor, __rift: openRift, __wizardHat: wizardHat,
+  __meteor: openMeteor, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
   __loo: openLoo, __brew: brewWizard, __casino: openCasino,
   // Setting the pot the way the board does: clicking a tonic row calls its
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
