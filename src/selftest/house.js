@@ -101,7 +101,10 @@ export const TESTS = [
          open.crewRows.some(r => r.includes('at the pit')),
          'saying where that body is standing, not what its job is called',
          JSON.stringify(open.crewRows)),
-      ok(/^mined {5}/m.test(said) && said.split(String.fromCharCode(10)).length >= 6,
+      // The whole card is the slim card now (feedback7, item 17): name, age,
+      // doing, and nothing else. The tallies this asked for went with the wave.
+      ok(/^age {7}/m.test(said) && /^doing {5}/m.test(said)
+         && said.split(String.fromCharCode(10)).length === 3,
          'and hovering one gives that body its whole card', JSON.stringify(said)),
       ok(picked.pointed.length === 1 && open.crewRows[0].startsWith(picked.pointed[0]),
          'and clicking one puts an arrow over that body, so you can find it',
@@ -352,9 +355,14 @@ export const TESTS = [
     const dr = door.getBoundingClientRect();
     const target = rows[0].getBoundingClientRect();
 
-    // the ugliest crossing there is: out of the bottom of the board, along under
-    // the panel, and up into the list
-    const dip = document.getElementById('panel').getBoundingClientRect().bottom + 18;
+    // the ugliest crossing there is: out of the bottom of the board, along the
+    // bottom edge of the panel, and up into the list. Along the edge and not
+    // eighteen pixels under it: the house board sits deeper since the bar rode
+    // the rising roof, and the ground that far below it is the bench's own
+    // stand -- where a station under the pointer takes the board every time, by
+    // design ("an arrival, not a journey", input.js). The wedge protects the
+    // crossing between a board and its list, not a stroll over the neighbors.
+    const dip = document.getElementById('panel').getBoundingClientRect().bottom - 10;
     const path = [
       [dr.right - 6, dr.bottom - 2],
       [dr.right + 10, dip],
