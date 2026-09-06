@@ -1,4 +1,5 @@
 import { QUARRY_CORES, QUARRY_DUST } from '../config.js';
+import { JOB } from '../jobs.js';
 import { S, quarry } from '../state.js';
 import { assign } from '../upgrades.js';
 import { site } from './site.js';
@@ -18,7 +19,7 @@ const CAVE = site({
   // The cut opens with one body already sent over -- through the same assign
   // the board's + button uses, so it walks there like anybody retrained. A
   // quarry bought and then standing empty read as a purchase that did nothing.
-  then: () => assign('quarriers', 1)
+  then: () => assign(JOB.QUARRY, 1)
 });
 
 // The bench's quarry rows. Data only: upgrades.js strings the files together

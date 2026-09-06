@@ -13,7 +13,7 @@ import { STATIONS, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
-  FLAG_GUST_MS, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
+  FLAG_GUST_MS, FLAG_GUST_SPAN, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P,
 } from '../config.js';
 import { now } from '../clock.js';
@@ -107,11 +107,14 @@ const seedOf = which => {
 
 // The wind, as the flags feel it: two slow sines beating against each other,
 // so the strength swells and dies on no cycle the eye can count, and the sign
-// is the way the cloth flies. One wind for the whole yard -- two flags flying
-// opposite ways would say two skies -- so no seed goes in here.
-const windAt = t =>
-  Math.sin(t / FLAG_GUST_MS * Math.PI * 2) * 0.7 +
-  Math.sin(t / (FLAG_GUST_MS * 0.377) * Math.PI * 2 + 2) * 0.5;
+// is the way the cloth flies. It is a wave over the yard, not a clock -- the
+// same gust reaches each flag when its front actually gets there, so flags
+// far apart turn at different moments while any two neighbors agree. One
+// field for the whole yard: per-flag seeds in the *direction* would say two
+// skies.
+const windAt = (x, t) =>
+  Math.sin((t / FLAG_GUST_MS - x / FLAG_GUST_SPAN) * Math.PI * 2) * 0.7 +
+  Math.sin((t / (FLAG_GUST_MS * 0.377) - x / (FLAG_GUST_SPAN * 0.61)) * Math.PI * 2 + 2) * 0.5;
 
 // The flag: a one-cell pole off the peak, a black pennant off the top of it.
 // The pennant ripples -- each column rides a wave traveling out from the pole,
@@ -138,10 +141,17 @@ function drawFlag(rect, which, t) {
   // the pole showed straight through between its legs.
   ctx.fillRect(x, top, P, FLAG_POLE * P + P * 2);
   const seed = seedOf(which);
-  const wind = windAt(t);
+  const wind = windAt(x, t);
   const dir = wind < 0 ? -1 : 1;
-  const amp = Math.min(1, Math.abs(wind) * 1.6);
-  for (let i = 0; i < FLAG_W; i++) {
+  // How far the cloth is out. The turn is a fold, not a flip: as the gust
+  // dies the pennant shortens back toward the pole, hangs as a stub for the
+  // still moment, and unfurls out the other side as the next gust arrives --
+  // which is what cloth actually does when the wind comes about. The wind is
+  // continuous through zero, so the fold and the turn cost no state.
+  const out = Math.min(1, Math.abs(wind) * 1.6);
+  const len = Math.max(1, Math.round(out * FLAG_W));
+  const amp = out;
+  for (let i = 0; i < len; i++) {
     // The wave grows along the pennant: the column at the pole is pinned to
     // it, the free end swings a whole cell. A third of a wavelength across
     // the cloth, so one crest rides it at a time -- a full wavelength put a

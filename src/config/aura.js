@@ -18,6 +18,9 @@ export const FLAG_H = 3;             // and down -- deep enough that a column a
 export const FLAG_RIPPLE_MS = 700;   // one wave traveling the pennant's length
 export const FLAG_GUST_MS = 7000;    // the slow swell of the wind's strength;
                                      // its sign is the way the cloth flies
+export const FLAG_GUST_SPAN = 2400;  // world px a gust front spans: the wind
+                                     // is a wave crossing the yard, so flags
+                                     // far apart turn at different moments
 
 
 // When an offer first opens, one ring of ink breathes off the flag's tip --
