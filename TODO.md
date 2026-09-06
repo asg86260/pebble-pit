@@ -32,7 +32,13 @@ by design — it jumps to rock 2 now, and a walking body on the yard gives up
 its walk to dance instead of never dancing; the casino's thousand-chip check
 was funded for six spins against 40% odds and wave 7's motes shifted the
 seeded rng into a six-loss streak — it is funded for its own forty-spin loop
-now. The fan/sky pair and the books rate were green on the re-run.
+now. The fan/sky pair was a broken premise in the check itself (the storm
+wait ran the fan on the wound-up sky; the wait comes first now); the books
+rate was green on the re-run. The browser tier's nine reds (same day,
+307/316) are being worked through in the same close-out: the hover-card
+checks against the slim card, the dance-jumping pair (cured with the node
+one), the board-crossing tooltip pair, the loose-core cursor hint, and one
+shard that died without reporting.
 
 ## The grind pass — levers 1–4 BUILT (2026-09-06), lever 5 open
 
