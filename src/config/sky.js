@@ -122,14 +122,19 @@ export const RAIN_GAP = 60;          // seconds of dry before another may break
 // the house, the same dust out of the recycler and the same length of shower.
 // The only thing that changes is how much sky one speck stands for.
 export const SMOG_PER_MOTE = 0.16;
-// How long a speck takes to fade once a mouth has taken it. Long enough to be a
-// fade rather than a flicker, short enough that it is gone before you have
-// looked at it: what this is for is the *absence* of popping, not an effect.
-export const SMOG_GO_MS = 420;
+// How long a speck takes to fade once a mouth has taken it. What this is for is
+// the *absence* of popping, not an effect -- and at 420 it was still a flicker:
+// under half a second is quick enough that a speck going out reads as a cell
+// blinking off, which is the one thing nothing in this sky may do. It eases out
+// over well over a second now, to nothing.
+export const SMOG_GO_MS = 1400;
 // And a ceiling on how many can be fading at once. Four mouths at a full fan is
-// a couple of hundred specks a second; the cap is generous against that and
-// exists so a pathological rate cannot grow a list nobody bounded.
-export const GOING_CAP = 400;
+// a couple of hundred specks a second, each now fading for well over a second --
+// so the working population sits near three hundred. The cap is generous
+// against that and exists so a pathological rate cannot grow a list nobody
+// bounded; past it a speck is dropped without its fade, which is why the cap
+// must stay far above what play produces.
+export const GOING_CAP = 900;
 // How quickly a fading speck's own drift eases off, and how hard the wind leans
 // one that a mouth has just taken. Both small: it is finishing a movement, not
 // starting one.
@@ -191,18 +196,28 @@ export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wi
 export const PUFF_UP = 0.40;
 export const PUFF_UP_GIVE = 0.14;
 export const PUFF_UP_FLOOR = 0.20;   // and the crawl it never slows below
-export const PUFF_FADE = 900;        // how long a mote takes to go out at the top, or come up
+// How long a mote takes to come up to weight in the band, or go out of it, in
+// ms. It was 900, and at nine tenths of a second a speck joining the band read
+// as popping in: the eye catches an arrival that quick as an event. Everything
+// in this sky fades from and to nothing, slowly enough that no single frame of
+// the fade is noticeable.
+export const PUFF_FADE = 2400;
 // How long a plume is a plume. A speck used to climb visibly all the way to its
 // slot -- for one bound near the top of the window, most of the sky -- and a
 // column of smoke crossing the whole view reads as an event, not as exhaust.
 // After this many seconds of climb it thins out where it is over PLUME_THIN,
 // and its mote joins the band at its own height, coming up to weight there
 // (see `stepPuffs`). The dirt is identical either way; only the journey is cut.
-// Lengthened from 2.0: at two seconds the smoke barely cleared the stacks
-// before thinning, so the yard read as machines coughing rather than plants
-// running. Three and a half puts the top of a plume about halfway to the band.
-export const PLUME_LIFE = 3.5;
-export const PLUME_THIN = 1.2;
+// Lengthened from 2.0, then again from 3.5: at three and a half the smoke gave
+// out about halfway up, so the stacks read as venting at the works rather than
+// feeding the sky. Five and a half carries the top of a plume well up into the
+// band before the thinning starts.
+export const PLUME_LIFE = 5.5;
+// And the thinning itself takes its time. At 1.2 the last of a plume went out
+// in about a second, which the eye reads as the smoke being switched off; over
+// two and a half it dies the way it climbed -- gradually, all the way to
+// nothing.
+export const PLUME_THIN = 2.5;
 // (There is no cap on how many specks may be climbing at once. There was, and
 // past it the next mote was put straight into the band -- which read as
 // pollution appearing out of nothing in the middle of the sky. A thick plume is

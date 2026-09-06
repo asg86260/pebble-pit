@@ -83,7 +83,10 @@ export function foul(grains, x, y, kind = 'dust') {
     // and the object is never replaced -- see `skyMote` for why one shape
     // matters. The look, the kind and the share of the wind all come from there;
     // what a climbing one has of its own is the climb.
-    const p = skyMote(x + (rand() - 0.5) * P * 2, y, kind);
+    // Born a little either side of the stack's mouth. Three cells of scatter
+    // rather than two: with the longer climb the plume needs a slightly wider
+    // foot or it reads as one column however much it leans.
+    const p = skyMote(x + (rand() - 0.5) * P * 3, y, kind);
     p.up = true;
     // How fast it goes up, and it is the one number that decides whether a plume
     // reads as smoke or as sparks. It was more than twice this and spread twice

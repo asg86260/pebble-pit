@@ -165,12 +165,13 @@ export const PLUME_STIR_R = 90;
 export const PLUME_STIR_CAP = 7;
 export const SMOKE_STIR_EASE = 2.4;   // and how quickly it eases back
 
-// How far a puff drifts sideways for every pixel it climbs. A tenth: enough that
-// a plume leans and opens a little instead of going up as one straight cylinder,
-// not so much that it fans out across the sky. It is a share of the climb rather
-// than a speed, so a puff ends up about a tenth of its own height off the column
-// it left, however fast it got there.
-export const PLUME_LEAN = 0.1;
+// How far a puff drifts sideways for every pixel it climbs. Enough that a plume
+// leans and opens instead of going up as one straight cylinder, not so much
+// that it fans out across the sky. It is a share of the climb rather than a
+// speed, so a puff ends up about a sixth of its own height off the column it
+// left, however fast it got there. Raised from a tenth when the climb was
+// lengthened: a taller plume at the old lean read as a chimney pipe.
+export const PLUME_LEAN = 0.16;
 export const AIR_LOW = 0.6;       // share of the air that hangs low, near the ground
 export const AIR_LOW_BAND = 260;  // how far above the ground line "low" reaches
 
