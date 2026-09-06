@@ -117,12 +117,14 @@ export const POSTS = [
     at: () => doorAt().x, show: () => S.crew > 0, fixed: true, kit: true }
 ];
 
-// Where a post's roster stands, in world units. Well below the ground line: the
-// bar over a station that has stopped is already just under it, and two marks
-// in one place are two marks nobody reads.
+// Where a post's roster stands, in world units. Below the ground line, clear
+// of the stopped-station triangle that hangs just under it. Fourteen cells
+// down while the offer diamond shared that row; ten now that the diamond is
+// gone (offers fly a flag off the roof instead) and the triangle, at seven
+// cells down and 2.6 tall, is all the roster has to duck.
 export function postAt(p) {
   const y = p.above ? S.groundY - p.above()
-                    : S.groundY + (p.below ? p.below() : P * 14);
+                    : S.groundY + (p.below ? p.below() : P * 10);
   return { x: Math.round(p.at() / P) * P, y: Math.round(y / P) * P };
 }
 
@@ -144,7 +146,7 @@ function runBox(p, left, y) {
   if (p.runAt) {
     const x = Math.round(p.runAt() / P) * P;
     return { x: Math.round((x - WIDE / 2) / P) * P,
-             y: Math.round((S.groundY + P * 14) / P) * P, w: WIDE, h };
+             y: Math.round((S.groundY + P * 10) / P) * P, w: WIDE, h };
   }
   return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
 }
