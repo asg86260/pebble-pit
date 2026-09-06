@@ -1,9 +1,9 @@
 // The dance: how a body that has stopped for a full pile, a celebration or a
 // hammer-swing moves on the spot. Extracted verbatim from crew.js; behavior
 // unchanged. Owns the MOVES table and the jig/celebrate engine. It leans on
-// three helpers the spine still owns (duck, stand, upTop), imported from
-// crew.js; the spine in turn calls stopJig, workJig, celebrate and MOVE_KEYS
-// from here.
+// two helpers the spine still owns (duck, stand), imported from crew.js, and
+// on body.js for onYard; the spine in turn calls stopJig, workJig, celebrate
+// and MOVE_KEYS from here.
 
 import { frames, now } from '../clock.js';
 import { BUILD_HAMMER_H, BUILD_HAMMER_MS, BUILD_HITS_MAX, BUILD_HITS_MIN, BUILD_REST_MS, BUILD_SHIFT, BUILD_SHIFT_SPAN,
@@ -16,7 +16,8 @@ import { fallMs } from '../rock.js';
 import { S, floor } from '../state.js';
 import { commutePace } from '../upgrades.js';
 import { siteBox } from '../works.js';
-import { duck, stand, upTop } from '../crew.js';
+import { duck, stand } from '../crew.js';
+import { onYard } from './body.js';
 
 // --- the dance ----------------------------------------------------------------
 // A rock is off and the gang have the ground to themselves. This used to be one
@@ -507,7 +508,22 @@ export function celebrate(w, now, zone) {
   // coming down on the surface, and shoving it toward the edge of the
   // footprint walked it out through the side of the cut -- the one thing
   // `route.test.mjs` exists to forbid.
-  if (upTop(w) && duck(w, zone)) {
+  //
+  // Asked as `onYard`, the same question the walk's own duck (commute.js) and
+  // the fall rule ask. It used to be `upTop` -- feet within a pixel of the
+  // ground line -- and a pixel is a tolerance, not a fact about the world: this
+  // one was crossed by the body's own idle bob. A miner half way through a bob
+  // sits 1.17px below its footing, `upTop` read false by 0.17px, the duck was
+  // skipped, and `jig` then baked the bob into the footing so it stayed false
+  // for every frame of the fall -- the rock landed on a body standing in its
+  // own footprint, which is the buried miner in TODO.md. The two predicates
+  // differ only for a body at ground level over a mouth, and no mouth is
+  // reachable from a footprint: the drop zone is `S.cx` +/- 300 at the widest
+  // rock the game allows (ROCK_W_MAX / 2 + ROCK_CLEAR), the pit's lip is
+  // TO_LEDGE = 636 away and the cut's mouth 1,434 the other way. What is left
+  // of the difference is exactly the bug: a body on the yard whose feet are a
+  // hair low now ducks.
+  if (onYard(w) && duck(w, zone)) {
     w.jigAt = null;                    // it will take its mark where it ends up
     w.y = stand(w);
     return;

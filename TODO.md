@@ -522,26 +522,51 @@ turned up on the way (the red was never reconciled into the pile at all, and
 `grant` moved four of the five counters without the cells) and the new verify
 rule 8 that would have caught both.
 
-## A miner can end up inside the hill, now that the yard never stops
+## A miner can end up inside the hill (fixed 2026-09-03)
 
 `test/endgame.test.mjs`, "the ram does not strike a rock that is still coming
-down" — fails with *a body has been buried in the way it is standing on: kit
+down" — failed with *a body has been buried in the way it is standing on: kit
 (miner) at 3695,1911 is 39px into the rock and has been under it for 61 frames*.
 Caught by `verify.js`, not by the group's own assertions.
 
-Bisected (2026-09-02): it is the pit collapse, and nothing else. It passes at
-`e0f4c43`; it fails on the collapse alone with the crate height set to zero and
-with `pitFree` put back to the old arithmetic, so neither of those is the cause.
+**The bisect this entry used to carry was wrong, and is worth keeping as a
+warning.** It named the pit collapse, because the test passed at `e0f4c43` and
+failed on the collapse alone. That was a butterfly: the collapse reshuffled the
+run so that a sub-pixel margin was crossed on the one frame that mattered. The
+ram was never involved, the pit was never involved, and `fall` was never a
+candidate — it only fires for a body *above* its ground, and already exempts a
+climb.
 
-What is almost certainly happening: this fixture used to STOP once its hole
-filled — a full hole stopped the yard, the ram stood down, and the miner stood
-still. The hole cannot stop anything now, so the ram goes on eating the rock out
-from under a body that neither falls nor steps clear. That points at the falling
-rule rather than at the pit: `fall` in crew.js exempts a body whose feet are on a
-climb (`scaleAt`) and only drops one with more than five cells of nothing under
-it, and a rock being mined away underneath is neither.
+**What was actually happening.** `celebrate` (now in crew/dance.js) gated its
+duck-out-of-the-footprint on `upTop(w)` — feet within a pixel of the ground
+line. A body half way through its idle bob sits about 1.17px below its footing,
+so `upTop` read false by 0.17px and the duck was skipped; `jig` then baked the
+bob into the footing, so it stayed false for every frame of the fall. The rock
+landed on a body standing in its own footprint, 104px deep. It climbed out
+correctly at the per-frame cap to 39px — and at that moment `relieve` started a
+loo break, which returns before any stepper runs, so nothing called the climb
+for `LOO_MS` = 102 frames and it froze there.
 
-So the likely fix is in how a body leaves ground that is taken out from under it,
-not in the hole. Worth checking whether the same thing was always possible with
-the ram on a yard that had not filled its hole — if so this is an old hole in the
-rule that the collapse merely made reachable.
+**The fix** is one line: that duck asks `onYard(w)` now, the same question the
+walk's own duck (crew/commute.js) and the fall rule ask. A pixel is a tolerance,
+not a fact about the world, and this one was crossed by the body's own
+animation. The two predicates differ only for a body at ground level over a
+mouth, and no mouth is reachable from a footprint — the drop zone is `S.cx` ±
+300 at the widest rock the game allows, the pit's lip is 636 away and the cut's
+mouth 1,434 the other way. Measured over three seeds and 5,400 frames on the
+pre-split tree: 406 body-frames in a live drop zone, of which the two predicates
+disagree on 1. Rare, and one is enough, because the offset persists for the rest
+of the fall once `jig` has baked it in.
+
+**Left undone, deliberately.** `upTop` survives at two station-errand predicates
+with the same 1px fragility; a false negative there costs one frame of an errand.
+And `relieve` will still start a break for a body being led up a face, which is
+what turned a burial into a 1.7-second freeze — with the duck fixed that measured
+zero, so it is prevention rather than a live bug.
+
+**One more thing to look at.** `wayAt` answers `rock` for a body standing under a
+rock that is still 620px up in the sky, and `verify.js`'s `deepest` then measures
+it against the airborne `rockTopY` — "743px into the rock" while the rock is in
+the air. Today's falls run 42 frames, under `BURIED_FRAMES` = 60, so it never
+fires; a longer fall or a lower threshold would make it spuriously true.
+`rockDown()` in rock.js is the predicate that would exempt it.
