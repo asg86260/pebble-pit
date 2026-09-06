@@ -319,9 +319,17 @@ let full = { w: 0, h: 0 };
 // (feedback7, items 2 and 3)
 function mainWidth() {
   const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
-  const gap = parseFloat(getComputedStyle(panelEl).columnGap) || 0;
   const purseW = purseEl.offsetWidth;
-  return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + gap : 0);
+  return (sheet ? sheet.offsetWidth : 0) + (purseW ? purseW + panelGap() : 0);
+}
+
+// The panel's flex gap, read off the element rather than restated here. The
+// node yard has elements but no layout engine: getComputedStyle is a browser
+// global there, and every width it would feed is a seat nobody looks at, so
+// zero is the honest answer rather than a crash.
+function panelGap() {
+  if (typeof getComputedStyle !== 'function') return 0;
+  return parseFloat(getComputedStyle(panelEl).columnGap) || 0;
 }
 
 // And how far the board's left edge stands in from the panel's, which is only
@@ -331,8 +339,7 @@ function mainWidth() {
 function flyLead() {
   if (crewListEl.hidden || !panelEl.classList.contains('flip') ||
       panelEl.classList.contains('stack')) return 0;
-  const gap = parseFloat(getComputedStyle(panelEl).columnGap) || 0;
-  return crewListEl.offsetWidth + gap;
+  return crewListEl.offsetWidth + panelGap();
 }
 
 export function remeasure() {
