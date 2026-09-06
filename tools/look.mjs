@@ -74,6 +74,17 @@ const SCENES = {
   aura: `${RICH} window.__give(50000); window.__fast(1);
          window.__look(window.__state().farmShed.x - 60);`,
 
+  // The assignment ring (wave7b-assign): a body held over the farm, so the
+  // station under it wears the steady solid ring while the offer auras breathe
+  // around it. The held body hangs off the cursor; __hold is the same lift.
+  // A smaller crew than RICH's: the rich yard fills every plot, and a full
+  // station is exactly the one that must NOT ring.
+  assign: `window.__reset(); window.__crew(3,3,2,2); window.__give(50000);
+           window.__levels({plotLevel: 4}); window.__fast(1);
+           var fs = window.__state().farmShed;
+           window.__hold(0, fs.x + fs.w / 2, fs.y + fs.h / 2);
+           window.__look(fs.x - 60);`,
+
   // A building going up: the lab half out of the ground, its barriers and tape
   // round it, and the builder hammering at it throwing grit off each blow.
   //

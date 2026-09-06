@@ -45,15 +45,18 @@ export function dropTargets() {
   for (const key of Object.keys(JOB_AT)) {
     const r = standRect(key);
     if (!r) continue;
-    out.push({ key, job: JOB_AT[key],
+    // rect is the drop's hit box, padded; ring is the station's own ground,
+    // unpadded, for the aura to stroke -- a ring on the padded box floats in
+    // the white sky around the building, which on this palette is invisible.
+    out.push({ key, job: JOB_AT[key], ring: r,
                rect: { x: r.x - ASSIGN_PAD, y: r.y - ASSIGN_PAD,
                        w: r.w + ASSIGN_PAD * 2, h: r.h + ASSIGN_PAD * 2 } });
   }
   if (rockDown()) {
     const left = cellPos(0, 0).px;
-    out.push({ key: 'rock', job: JOB.ROCK,
-               rect: { x: left, y: rockFootY() - S.gh * P,
-                       w: S.gw * P, h: S.gh * P } });
+    const box = { x: left, y: rockFootY() - S.gh * P,
+                  w: S.gw * P, h: S.gh * P };
+    out.push({ key: 'rock', job: JOB.ROCK, ring: box, rect: box });
   }
   return out;
 }

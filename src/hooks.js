@@ -28,10 +28,10 @@ import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
-import { WIZ_BREW_MS } from './config.js';
+import { WIZ_BREW_MS, WORKER } from './config.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers, drop as dropHeld, shakeHeld } from './crew.js';
+import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
@@ -855,6 +855,22 @@ export const shake = (i = 0) => {
   return { hatOff: !!w.hatOff, shed, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
 };
 
+// wave7b-assign: hold a body over a spot, through the real lift, for looking
+// at the assignment ring. The scene cannot drive a right-button drag; what it
+// wants to see is only what the yard draws while a body hangs there.
+export const hold = (i = 0, x = 0, y = 0) => {
+  const w = S.workers[i];
+  if (!w) return false;
+  liftHeld(w);
+  w.inside = false;                // out of whatever door it was behind; a hook may
+  w.x = x - WORKER / 2;
+  w.y = y - WORKER / 2;
+  S.mouse.x = x;
+  S.mouse.y = y;
+  S.dirty = true;
+  return true;
+};
+
 export const poopSet = f => {
   const q = poopCols();
   for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;
@@ -970,7 +986,7 @@ export const HANDLES = {
   __brewCost: key => brewCost(key),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
-  __muckOverPit: muckOverPit, __look: look,
+  __muckOverPit: muckOverPit, __look: look, __hold: hold,   // wave7b-assign
   // getting about: the surface under a place, the ways there are, and how a
   // given body would get somewhere
   __route: routeOf, __surface: surfaceAt, __ways: waysNow

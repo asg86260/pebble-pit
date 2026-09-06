@@ -69,13 +69,16 @@ export function drawAuras() {
     auraRing(r, breath);
   }
   // wave7b-assign: the station under a held body wears the same ring, steady
-  // -- fully swelled, solid line, no breath and no crawl -- so the offer to
-  // retrain reads before the hand commits. holdTarget is null over a full
-  // station: no ring, no deal, one rule, and both read off assign.js's table.
+  // -- solid line, no breath and no crawl -- so the offer to retrain reads
+  // before the hand commits. At phase 0, fully inset: the line lies on the
+  // black of the building where a white line is at its brightest; swelled out
+  // it would sit in the white sky, which on this palette is no ring at all.
+  // holdTarget is null over a full station: no ring, no deal, one rule, and
+  // the ring and the drop read one table in assign.js.
   const hold = holdTarget();
   if (hold) {
     ctx.setLineDash([]);
-    auraRing(hold.rect, 1);
+    auraRing(hold.ring, 0);
   }
   ctx.restore();
 }
