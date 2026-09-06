@@ -30,10 +30,23 @@
 // grains is `swallow` in pit.js, which is the same lift-off-the-top that paying
 // uses: one way of taking dust out of the pile, two destinations.
 
-import { P, RIFT_W, RIFT_H, RIFT_AT, RIFT_UP, RIFT_GULP, RIFT_GULP_SHOW,
+import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
+         RIFT_GULP_SHOW, RIFT_SHAKE,
          RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains } from './pit.js';
+
+// --- how big it is -------------------------------------------------------------
+// The disc grows with what it eats and with nothing else: no rung, no dial,
+// nothing tended. `S.riftAte` is every grain it has ever swallowed, and the
+// diameter is derived from it here rather than stored anywhere -- the square
+// root front-loads the visible growth and slows toward the ceiling, which is
+// the shape of a thing straining. Whole cells, because everything in this
+// yard sits on the cell grid and a disc half a cell wider is a hairline.
+export function riftCells() {
+  const k = Math.sqrt(Math.min(1, (S.riftAte || 0) / ABYSS_AT));
+  return Math.round(RIFT_W0 + (RIFT_WMAX - RIFT_W0) * k);
+}
 
 // --- where it hangs ------------------------------------------------------------
 // Over the near end of the hole, and standing in the air rather than in it: the
@@ -62,10 +75,11 @@ import { swallow, pitWidth, pitGrains } from './pit.js';
 // over `placeSites` in world.js. The disc moves within ground the pit and the
 // sky already own.
 export function seatRift() {
-  rift.w = RIFT_W;
-  rift.h = RIFT_H;
+  const w = riftCells() * P;
+  rift.w = w;
+  rift.h = w;
   rift.x = pit.x + Math.round(pitWidth() * RIFT_AT / P) * P;
-  rift.y = S.groundY - RIFT_H - RIFT_UP * P;
+  rift.y = S.groundY - w - RIFT_UP * P;
 }
 
 // The middle of it: where the orbit tightens to, and where a grain is gone.
@@ -107,6 +121,18 @@ export const riftBite = () => Math.min(pitGrains(), RIFT_INHALE_MAX);
 // rate to carry the remainder of: what is in the hole is what goes.
 export function stepRift(dt) {
   if (!riftOpen()) return 0;                  // not torn: nothing is pulled
+  // The disc is reseated every step because it grows: the bottom edge stays
+  // RIFT_UP cells off the ground line and the swelling goes upward, so the
+  // thing rises over the mouth as it eats rather than sinking into it.
+  if (!S.drowned) seatRift();
+  // The drowning: the hole has eaten its fill and gives way downward. The
+  // gulp runs again -- this time it is `abyssLine` rising out of the floor
+  // (see pit.js) -- and from here on the abyss is the picture. One-way, once.
+  if (!S.drowned && (S.riftAte || 0) >= ABYSS_AT) {
+    S.drowned = true;
+    S.riftGulp = RIFT_GULP;
+    S.riftShake = RIFT_SHAKE;
+  }
   if (S.riftGulp > 0) return gulp(dt);        // and the tearing is its own thing
   const take = riftBite();
   if (!take) return 0;

@@ -101,8 +101,8 @@ export const TESTS = [
          open.crewRows.some(r => r.includes('at the pit')),
          'saying where that body is standing, not what its job is called',
          JSON.stringify(open.crewRows)),
-      // The whole card is the slim card now (feedback7, item 17 / spec C5):
-      // name, age, doing, and nothing else.
+      // The whole card is the slim card now (feedback7, item 17): name, age,
+      // doing, and nothing else. The tallies this asked for went with the wave.
       ok(/^age {7}/m.test(said) && /^doing {5}/m.test(said)
          && said.split(String.fromCharCode(10)).length === 3,
          'and hovering one gives that body its whole card', JSON.stringify(said)),
@@ -358,10 +358,10 @@ export const TESTS = [
     // the ugliest crossing there is: out of the bottom of the board, along the
     // bottom edge of the panel, and up into the list. Along the edge and not
     // eighteen pixels under it: the house board sits deeper since the bar rode
-    // the rising roof (feedback7), and the ground that far below it is the
-    // bench's own stand -- and a station under the pointer takes the board
-    // every time, by design ("an arrival, not a journey" in input.js). The
-    // wedge protects the crossing, not a stroll over the neighbors.
+    // the rising roof, and the ground that far below it is the bench's own
+    // stand -- where a station under the pointer takes the board every time, by
+    // design ("an arrival, not a journey", input.js). The wedge protects the
+    // crossing between a board and its list, not a stroll over the neighbors.
     const dip = document.getElementById('panel').getBoundingClientRect().bottom - 10;
     const path = [
       [dr.right - 6, dr.bottom - 2],
@@ -371,12 +371,9 @@ export const TESTS = [
       [target.left + 20, target.top + 6]
     ];
     let openThroughout = true;
-    const legs = [];
     for (const [x, y] of path) {
       point('pointermove', x, y, 0);          // to the canvas: the game's own ears
       await sleep(50);
-      const st = state();
-      legs.push(`${Math.round(x)},${Math.round(y)}:${st.houseBoardOpen ? 1 : 0}${st.crewListOpen ? 1 : 0}b${st.boardOpen ? 1 : 0}s${st.statsBoardOpen ? 1 : 0}q${st.quarryBoardOpen ? 1 : 0}f${st.farmBoardOpen ? 1 : 0}l${st.labBoardOpen ? 1 : 0}`);
       if (!state().houseBoardOpen || !state().crewListOpen) openThroughout = false;
     }
     const at = state();
@@ -384,7 +381,7 @@ export const TESTS = [
     window.__crew(0, 0);
     return [
       ok(rows.length > 0, 'there are names to walk to', `${rows.length} of them`),
-      ok(openThroughout, 'and the board and its list survive the crossing', legs.join(' ')),
+      ok(openThroughout, 'and the board and its list survive the crossing'),
       ok(at.houseBoardOpen && at.crewListOpen, 'and are still up at the far end of it',
          `${at.houseBoardOpen}, ${at.crewListOpen}`)
     ];

@@ -401,9 +401,20 @@ const SCENES = {
   // the dust goes in: a widening is paid in dust, and paid out of the very
   // pile the scene is about. The camera is on the lip, so the air between the
   // brim and the surface is in shot.
-  rift: `${RICH} window.__meteor(); window.__give(60000);
-         window.__levels({riftLevel: 6}); window.__give(12000);
+  rift: `${RICH} window.__meteor(); window.__rift(); window.__give(60000);
+         window.__give(12000);
          window.__fast(4); window.__look(window.__state().pitX - 260);`,
+
+  // The torn era, half way along: the disc grown well past its born size,
+  // hanging over the mouth and eating what the yard throws at it.
+  grown: `${RICH} window.__meteor(); window.__tear(400000); window.__give(30000);
+          window.__fast(3); window.__look(window.__state().pitX - 300);`,
+
+  // The drowning: a disc at its full size crosses the threshold and gives
+  // way; the runner's second before the shot lands this mid-liquefy, with
+  // the cutscene's own camera on it.
+  drown: `${RICH} window.__meteor(); window.__tear(999500); window.__give(30000);
+          window.__fast(0.6);`,
 
   // The tearing: a hole filled past the brim gives way, and everything in it
   // goes at once. No `__fast` of its own -- the runner gives every scene a

@@ -108,9 +108,21 @@ export const S = {
   // nothing to keep, because nothing about it is drawn. `stored` is still all the
   // dust you own -- see `inHole` in pit.js, and `## The rift` in DESIGN.md.
   seenFullPit: false,     // the hole has turned a grain away at least once
-  riftOpen: false,        // the rift is bought
+  riftOpen: false,        // the rift has torn: the account is live
   rift: 0,                // and how many grains of dust are through it
   riftLevel: 0,           // how fast it swallows: an endless ladder, not a capacity
+  // The arc of the thing -- see "The pit's arc" in DESIGN.md. `riftAte` is
+  // every grain the rift has ever swallowed, monotonic: spending reads
+  // `riftHeld` and never shrinks it, because a wound does not heal when you
+  // take something back out of it. The disc's size is derived from it
+  // (`riftCells` in rift.js), and at ABYSS_AT the hole gives way: `drowned`
+  // is the era after that, the abyss standing in the pit.
+  riftAte: 0,
+  drowned: false,
+  // The cutscene running right now, or null: { name, at, s, zoom }. A camera
+  // pointed at a one-time event, never a pause and never saved -- a reload
+  // mid-scene comes back to a yard that has already had it. See cutscene.js.
+  cine: null,
   // The tearing, while it is happening: seconds of the gulp left to run, and a
   // knock waiting to be spent on the view. Neither is saved -- an event is a
   // moment, not a state, and a save reloaded halfway through one should come
@@ -647,6 +659,8 @@ export const SAVED_BY_HAND = [
   'coreBuried',           // whether this rock still owes you its core
   'rift',                 // dust through the rift, clamped to the counter it came out of
   'riftHeld',             // and the finds through it, each clamped the same way
+  'riftAte',              // every grain it ever swallowed; old saves seed it -- see persist.js
+  'drowned',              // whether the hole has given way; a pre-arc save derives it there too
   // Written down and never read back: haulers are whoever is spare, so
   // `rebalance` works the number out again from the crew and the other jobs. It
   // stays in the file because the format on disk is not this refactor's to
@@ -683,8 +697,9 @@ export const EPHEMERAL = [
   'chips', 'belt', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
   'shownStored', 'tweenFrom', 'tweenTo', 'tweenAt', 'tweenMs',
-  // the tearing of the rift: an event, not a state
-  'riftGulp', 'riftShake',
+  // the tearing of the rift: an event, not a state -- and the cutscene
+  // watching it, which is a camera, not a fact about the yard
+  'riftGulp', 'riftShake', 'cine',
   'heldCore', 'coreTaker',
   // smoke, curtains and chips off a hammer
   'smoke', 'grit', 'smokeAt', 'houseSmokeAt', 'shutters', 'shutterAt', 'shutterN',

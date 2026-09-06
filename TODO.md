@@ -1,5 +1,27 @@
 # Still to do
 
+## The pit's arc — BUILT (2026-09-06)
+
+A third era between the solid pit and the abyss: the first overflow tears a
+*small* hole that inhales at full strength and grows with what it eats
+(`S.riftAte`, derived diameter, nothing sold, nothing tended); at `ABYSS_AT`
+(1,000,000 on the user's review) it collapses and the drowning — the abyss as
+built — happens then instead of at the first overflow. Both transitions are
+one-time cutscenes via `src/cutscene.js`, which owns the camera exclusively,
+never pauses the yard, and skips on any click; this deliberately reverses the
+game.js note against the collapse taking the camera (premise changed: rare
+story beats, one system, a skip). See "The pit's arc: solid, torn, drowned
+(built)" in DESIGN.md. Covered by `test/pit-arc.test.mjs` (6/6), with
+`rift.test.mjs`, `pit-full.test.mjs` and `persist-roundtrip.test.mjs` green
+alongside; the `tear`, `grown` and `drown` scenes in tools/look.mjs are the
+eyes on it.
+
+**It collides with the grind pass's lever 5** (below), which proposes bringing
+the rift ladder back as the endless red sink. There is no ladder here and the
+arc's whole argument is that there must not be one — the disc grows by being
+fed, not bought. Lever 5 needs a different sink, or a decision that overrides
+this section.
+
 ## Wave 7b — BUILT (2026-09-06): items 16 and 27
 
 Hand-assignment and the build yard, canon in `docs/wave7b.md`, both DESIGN.md

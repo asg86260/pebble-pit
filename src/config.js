@@ -108,12 +108,13 @@ import { WEATHER_KNOBS } from './config/weather.js';
 import { LAB_KNOBS } from './config/lab.js';
 import { ROCK_KNOBS } from './config/rocks.js';
 import { EFFECT_KNOBS } from './config/effects.js';   // F4
+import { RIFT_KNOBS } from './config/rift.js';
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
   ...SKY_KNOBS, ...CREW_KNOBS, ...SCHOOL_KNOBS, ...QUARRY_KNOBS,
   ...MACHINE_KNOBS, ...FARM_KNOBS, ...WEATHER_KNOBS, ...LAB_KNOBS,
-  ...ROCK_KNOBS, ...EFFECT_KNOBS
+  ...ROCK_KNOBS, ...EFFECT_KNOBS, ...RIFT_KNOBS
 ];
 
 // The rows, by key. Asking for a knob that has no row is worth hearing about:

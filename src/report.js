@@ -20,6 +20,7 @@ import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
 import { BOLTS, SPARKLE } from './meteor.js';
+import { riftCells } from './rift.js';
 
 // how much of the meteor is still up there, rind or core
 const skyLeft = kind => {
@@ -457,6 +458,12 @@ export const snapshot = () => ({
   rift: S.rift || 0,
   riftOpen: !!S.riftOpen,
   riftLevel: S.riftLevel || 0,
+  // the arc: how much it has eaten, the disc size that derives, and whether
+  // the hole has given way into the abyss
+  riftAte: S.riftAte || 0,
+  riftCells: riftCells(),
+  drowned: !!S.drowned,
+  cine: S.cine ? S.cine.name : null,
   // and the coins through it, which the counters do not distinguish: what you
   // own is what is in the hole plus what is in here
   riftHeld: { ...(S.riftHeld || {}) },

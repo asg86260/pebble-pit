@@ -78,7 +78,10 @@ export function pitTop(wx) {
   // liquefied nobody stands on what is in it -- the liquid is not ground --
   // and the pit must not go back to being a dead end (the two ladders exist
   // exactly so it is a way through), so the crossing surface is the brim.
-  if (S.riftOpen) return S.groundY;
+  // While the rift merely hangs (torn, not drowned) the hole is still the
+  // working floor it always was; the disc keeps it near-empty, and a body
+  // crosses it on the ground the way it did before the tear.
+  if (S.drowned) return S.groundY;
   const c = colOf(pit, wx);
   if (c < 0 || c >= pit.cols) return S.groundY + pitDepth();
   return surfaceY(pit, c) + pit.p;
@@ -254,6 +257,7 @@ function throughRift(x, shade) {
     S.riftShake = RIFT_SHAKE;      // knocked by whoever steps the world: see game.js
   }
   const held = riftHeld();
+  S.riftAte = (S.riftAte || 0) + 1;   // fed at the mouth counts toward its growth
   if (isDust(shade)) {
     S.stored++;
     S.banked++;
@@ -286,7 +290,10 @@ function throughRift(x, shade) {
 export function riftCatch(x, y, shade) {
   if (!throughRift(x, shade)) return false;
   if (S.gulped.length < SHOWN) {
-    S.gulped.push({ x0: x, y0: y, x, y, t: 0, s: shade });
+    // where on the ring it joins and which way round -- read by `orbit` in
+    // game.js while the disc hangs, ignored by the abyss's dive
+    S.gulped.push({ x0: x, y0: y, x, y, t: 0,
+                    a0: rand() * Math.PI * 2, spin: rand() < 0.5 ? -1 : 1, s: shade });
   }
   return true;
 }
@@ -435,6 +442,10 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
         t: near ? 0 : -rand() * 0.5,
         rate: 0.012 + rand() * 0.01,
         lift: 60 + rand() * 90,     // how high it arcs on the way
+        // and, for the ones going into the hanging rift, where on the ring
+        // they join it and which way round they go -- see `orbit` in game.js
+        a0: rand() * Math.PI * 2,
+        spin: rand() < 0.5 ? -1 : 1,
         // Where this grain is paying to -- the selling station, or null for the
         // bench. Stamped at lift so a grain keeps its destination however the
         // list is stepped. See `fly` in game.js.
@@ -580,11 +591,22 @@ export function spend(cost) {
   // only ever a waiting room, every endgame payment was that.
   const short = cost - fromHole;
   if (short > 0 && S.riftOpen) {
-    const line = abyssLine();
     const room = Math.max(0, SHOWN - S.paid.length);
     for (let i = 0; i < Math.min(short, room); i++) {
-      const x = pit.x + rand() * Math.min(700, pit.w);
-      S.paid.push({ x0: x, y0: line, x, y: line,
+      // Out of the liquid once the pit has drowned; out of the disc's own
+      // middle while it still hangs. The old disc paid invisibly -- the exact
+      // thing the note above this function forbids -- so a torn-era payment
+      // is grains coming back OUT of the hole in the air, the one place the
+      // player was shown them going.
+      let x, y0;
+      if (S.drowned) {
+        x = pit.x + rand() * Math.min(700, pit.w);
+        y0 = abyssLine();
+      } else {
+        x = rift.x + rift.w * (0.25 + rand() * 0.5);
+        y0 = rift.y + rift.h * (0.25 + rand() * 0.5);
+      }
+      S.paid.push({ x0: x, y0, x, y: y0,
                     t: -rand() * 0.5, rate: 0.012 + rand() * 0.01,
                     lift: 60 + rand() * 90,
                     tx: payX, ty: payY, s: 1 + Math.floor(rand() * 4) });
@@ -633,6 +655,10 @@ export function swallow(n, show, everywhere) {
     if (key) held[key]++;
   }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 }, show);
   S.rift = (S.rift || 0) + dust;
+  // What it has eaten, ever. Monotonic -- spending reads `riftHeld` and never
+  // shrinks this -- and it is what the disc's size and the drowning are
+  // derived from: see `riftCells` and the trigger in `stepRift`.
+  S.riftAte = (S.riftAte || 0) + take;
   return take;
 }
 
