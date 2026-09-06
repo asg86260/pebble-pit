@@ -7,7 +7,7 @@
 import { DOOR_H, DOOR_W, LAB_FLUE, P, SMOKE_LIFE } from '../config.js';
 import { S, lab, school } from '../state.js';
 import { ctx } from './ctx.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 import { drawDoseMote } from './effects.js';
 
 // Smoke off the lab's chimney -- and off a cigarette, which is the same smoke
@@ -35,7 +35,7 @@ export function drawSmoke() {
 }
 
 export function drawSchool() {
-  const rising = risingPlace() === 'school';
+  const rising = risingAt('school') && 'school';
   if (!S.schoolOpen && !rising) return;
   const { x, y, w, h } = school;
   withRise(rising, x, S.groundY, w, h, () => {
@@ -77,7 +77,7 @@ export function drawSchool() {
 // a fraction of anything, and nothing is a literal either -- read the front off
 // the cells it is actually made of, so a lab a course taller draws right.
 export function drawLab() {
-  const rising = risingPlace() === 'lab';
+  const rising = risingAt('lab') && 'lab';
   if (!S.labOpen && !rising) return;
   const { x, y, w, h } = lab;
   withRise(rising, x, S.groundY, w, h, () => {
@@ -116,5 +116,28 @@ export function drawLab() {
     // front -- which put every scholar through the window.
     ctx.fillRect(c(across / 2 - DOOR_W / 2), y + h - P * DOOR_H, P * DOOR_W, P * DOOR_H);
     ctx.fillStyle = '#000';
+  });
+}
+
+// wave7b-build: the construction bench -- a trestle like the work bench with a
+// hammer lying on it. Furniture, not a building: a top a cell thick on two
+// splayed legs, and the hammer's head standing a cell proud so the one detail
+// that says what the place is for reads at a glance. Black, whole cells, on
+// the same ground line as everything else.
+export function drawBuildBench() {
+  const rising = risingAt('buildbench') && 'buildbench';
+  if (!S.buildbenchOpen && !rising) return;
+  const { x, y, w, h } = S.buildbench;
+  withRise(rising, x, S.groundY, w, h, () => {
+    ctx.fillStyle = '#000';
+    // the top, full width, one cell thick
+    ctx.fillRect(x, y + P, w, P);
+    // two legs, a cell wide, one cell in from either end
+    ctx.fillRect(x + P, y + P * 2, P, h - P * 2);
+    ctx.fillRect(x + w - P * 2, y + P * 2, P, h - P * 2);
+    // the hammer lying on it: a haft along the top and a head at its end,
+    // standing a cell proud of the surface
+    ctx.fillRect(x + P * 2, y, P * 4, P);
+    ctx.fillRect(x + P * 5, y - P, P, P * 2);
   });
 }

@@ -8,7 +8,7 @@ import { S, floor, outhouse, tower } from '../state.js';
 import { brewing } from '../tower.js';
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // The tower. The one building in this yard that goes up rather than along: a
 // narrow shaft, a band of stone every few courses so it reads as built rather
@@ -23,7 +23,7 @@ import { risingPlace, withRise } from './rise.js';
 // magic is working -- what it does is make a thing not happen, and there is no
 // way to draw an absence except by marking the place it would have been.
 export function drawOuthouse() {
-  const rising = risingPlace() === 'outhouse';
+  const rising = risingAt('outhouse') && 'outhouse';
   if (!S.outhouseOpen && !rising) return;
   const { x, y, w, h } = outhouse;
   withRise(rising, x, S.groundY, w, h, () => {
@@ -90,7 +90,7 @@ export function drawOuthouse() {
 // scrubbing house is a black block with a chute, and a tower is a black shaft
 // with a hat on.
 export function drawTower() {
-  const rising = risingPlace() === 'tower';
+  const rising = risingAt('tower') && 'tower';
   if (!S.towerOpen && !rising) return;
   const { x, y, w, h } = tower;
   withRise(rising, x, S.groundY, w, h, () => {

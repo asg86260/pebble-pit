@@ -7,7 +7,7 @@ import { DOOR_H, DOOR_W, P, SCRUB_ARM, SCRUB_CHUTE, SCRUB_FOLDS } from '../confi
 import { inScrub } from '../scrubhouse.js';
 import { S, floor, scrub } from '../state.js';
 import { ctx } from './ctx.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // The scrubbing house: a hood open to the sky, and a bellows breathing under it.
 //
@@ -113,7 +113,7 @@ const LEAF = 5;          // and cells across every leaf of it, in a shaft LEAF +
 // see config.js: the mechanic reads these two as well, so they live there
 const CHUTE = SCRUB_CHUTE;
 export function drawScrub() {
-  const rising = risingPlace() === 'scrub';
+  const rising = risingAt('scrub') && 'scrub';
   if (!S.scrubOpen && !rising) return;
   const { x, y, w, h } = scrub;
   withRise(rising, x, S.groundY, w, h, () => {

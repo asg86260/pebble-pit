@@ -4,8 +4,7 @@
 
 import { P, TOWER_SHAFT } from '../config.js';
 import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
-import { SITES, progressAt, progressOf, siteBox, worksAt } from '../works.js';
-import { risingPlace } from './rise.js';
+import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { ctx } from './ctx.js';
@@ -83,10 +82,18 @@ const RISING_BOX = { lab: () => lab, scrub: () => scrub, school: () => school,
                      tower: towerSpireBox,
                      apothecary: () => apothHut(),
                      quarry: () => quarryShed(), farm: () => farmShed(),
-                     house: () => siteBox('yard') };
+                     house: () => siteBox('yard'),
+                     // wave7b-build: the construction bench raises like any place
+                     buildbench: () => S.buildbench };
 
-export function barSpot(site) {
-  const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site);
+// wave7b-build: which place a yard work is raising, per WORK now -- the yard
+// holds two builds at once, and each bar belongs over its own.
+const placeOf = w =>
+  rowFor(w.key)?.kind === 'building'
+    ? (OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null)) : null;
+
+export function barSpot(site, w = null) {
+  const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site, w);
   if (!box) return null;
   // A hole in the ground has no top above the line -- the quarry's box starts at
   // the ground and goes down -- so the bar hangs off the ground line for those,
@@ -99,11 +106,11 @@ export function barSpot(site) {
   // off the PLACE the work is raising: the same station rect the sprite is
   // clipped against, so the bar stays BAR_CLEAR ahead of the rising edge at any
   // progress and can never end up inside the drawing. (feedback7, item 15)
-  if (site === 'yard') {
-    const place = risingPlace();
+  if (site === 'yard' && w) {
+    const place = placeOf(w);
     const b = place && (RISING_BOX[place] ? RISING_BOX[place]() : null);
     if (b) {
-      const p = Math.max(0, Math.min(1, progressAt('yard')));
+      const p = Math.max(0, Math.min(1, progressOf(w)));
       const roof = Math.min(b.y ?? S.groundY, S.groundY);
       top = S.groundY - (S.groundY - roof) * p;
     }
@@ -115,12 +122,17 @@ export function drawWorkBars() {
   for (const site of SITES) {
     const list = worksAt(site);
     if (!list.length) continue;
-    const at = barSpot(site);
-    if (!at) continue;
-    // One bar a work, stacked upward. A site with room for two -- the lab, with
-    // a second bench -- has two things on the go and two bars to say so; every
-    // other site has one and this is the one, exactly where it always hung.
-    list.forEach((w, i) => bar(Math.round(at.x / P) * P,
-                               Math.round(at.y / P) * P - i * P * 5, progressOf(w)));
+    // One bar a work. On the yard each work stands on its own ground now, so
+    // each bar hangs over its own thing -- two builds, two bars, two places --
+    // and a second work that happens to share the head work's ground (the lab's
+    // second bench) stacks upward exactly as it always has.
+    let stacked = 0;
+    for (const w of list) {
+      const at = barSpot(site, w);
+      if (!at) continue;
+      const x = Math.round(at.x / P) * P;
+      const lift = site === 'yard' ? 0 : stacked++;
+      bar(x, Math.round(at.y / P) * P - lift * P * 5, progressOf(w));
+    }
   }
 }

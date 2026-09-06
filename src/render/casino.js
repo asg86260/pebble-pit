@@ -12,7 +12,7 @@ import { S, casino, floor, table } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
 import { drawMark } from './marks.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // The casino: a block with one big round hole knocked out of it, and a wheel in
 // the hole. Everything else in this yard is a shape with holes in it, and a
@@ -168,7 +168,7 @@ export function drawSparks() {
 }
 
 export function drawCasino() {
-  const rising = risingPlace() === 'casino';
+  const rising = risingAt('casino') && 'casino';
   if (!S.casinoOpen && !rising) return;
   const { x, y, w, h } = casino;
   withRise(rising, x, S.groundY, w, h, () => {
