@@ -18,7 +18,7 @@ import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
 import { assign, idle, hats, worn, spareKit, roomAt, capOf, handsOf } from './upgrades.js';
-import { KIT_MARK } from './kit.js';
+import { KIT_MARK, TRADE_OF } from './kit.js';
 import { JOB } from './jobs.js';
 
 
@@ -141,15 +141,17 @@ function runBox(p, left, y) {
     return { x: Math.round((x - WIDE / 2) / P) * P,
              y: Math.round((S.groundY + P * 14) / P) * P, w: WIDE, h };
   }
-  return { x: left, y: y + WORKER + P * 2 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
+  return { x: left, y: y + WORKER + P * 3 + (p.kit ? WORKER + P * 2 : 0), w: WIDE, h };
 }
 
 function boxes(p) {
   const { x, y } = postAt(p);
   const left = x - WIDE / 2;
-  // a cell of air more than the gap elsewhere, because the hat stands a cell
-  // proud of the square it is on and would otherwise touch the badge above it
-  const under = y + WORKER + P * 2;
+  // Two cells of air more than the gap elsewhere: the hat stands a cell proud
+  // of the square it is on, and past that there is a full clear cell between
+  // the counter group and the specialist group, so the two read as two lines
+  // rather than one smudged column (wave7-crew, item 11).
+  const under = y + WORKER + P * 3;
   return {
     less: { x: left, y: y - BTN / 2, w: BTN, h: BTN },
     badge: { x: left + BTN + GAP, y: y - WORKER / 2, w: WORKER, h: WORKER },
@@ -291,7 +293,12 @@ export function drawRoster(ctx, drawBody, drawHat, drawCart, drawRun) {
     // wizards is the same number written twice with a spare hat drawn beside it.
     // What is waiting on the stand is already said at the stand, at the foot of
     // the tower, where somebody would go to pick one up.
-    if (p.job === JOB.WIZARD) {
+    // wave7-crew, item 12: a job with kit but no bought trade -- the janitor --
+    // gets the wizard's treatment. There is no such thing as a bare-headed
+    // janitor at work, so a default body above a hatted one would be two
+    // pictures of the same fact; the badge wears the cap and the count beside
+    // it is the whole line.
+    if (p.job === JOB.WIZARD || (KIT_MARK[p.job] && !TRADE_OF[p.job])) {
       drawHat(b.badge.x, b.badge.y, KIT_MARK[p.job], true);
       if (p.fixed) continue;
       button(ctx, b.less, '-', n > 0);
@@ -365,7 +372,9 @@ export function drawRosterCounts(ctx, screenAt) {
     // that it tells you what is waiting there for the next body you send.
     //
     // and the sky has no second line at all: see `drawRoster`.
-    if (p.job !== JOB.WIZARD && hats(p.job) > 0) {
+    // ...and none for a job with no bought trade either: its badge already
+    // wears the hat, so a second count would be the headcount written twice.
+    if (p.job !== JOB.WIZARD && TRADE_OF[p.job] && hats(p.job) > 0) {
       const t = screenAt(b.tradeNum.x + b.tradeNum.w / 2, b.tradeNum.y);
       ctx.fillText(String(hats(p.job)), Math.round(t.x), Math.round(t.y));
     }
@@ -404,7 +413,10 @@ export function rosterReport() {
              machine: machineAt(p.job),
              run: (b => [b.run.x + b.run.w / 2, b.run.y + b.run.h / 2])(boxes(p)),
              hands: (n => n === Infinity ? null : n)(handsOf(p.job)),
-             trade: hats(p.job) > 0 ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
+             // Only where a trade line is actually drawn: a job with kit but no
+             // bought trade wears its hat on the badge (wave7-crew, item 12).
+             trade: TRADE_OF[p.job] && hats(p.job) > 0
+               ? [b.trade.x + b.trade.w / 2, b.trade.y + b.trade.h / 2] : null,
              mark: KIT_MARK[p.job],
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
              more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };

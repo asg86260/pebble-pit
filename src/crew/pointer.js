@@ -6,7 +6,7 @@
 // re-export. stepHat, landing and fall stay in the spine (the STAGES call them).
 
 import { now } from '../clock.js';
-import { DIZZY_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
+import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { indoors } from '../lab.js';
@@ -43,6 +43,17 @@ export function workerAt(x, y) {
 }
 
 export const lifted = () => S.workers.find(w => w.lifted) || null;
+
+// wave7-crew: the cursor resting on a body holds it still, so its card is read
+// off somebody standing. Called from input.js on every pointermove; the stamp
+// is refreshed for as long as the cursor stays, so the pause outlives the hover
+// by HOVER_PAUSE_MS and no more. A plain worker field, like `looUntil`: per
+// frame hover state, dropped by `keepOf` on save the way every other clock is.
+export function hoverAt(x, y) {
+  const w = workerAt(x, y);
+  if (w && !w.lifted) w.pauseUntil = now() + HOVER_PAUSE_MS;
+  return w;
+}
 
 export function lift(w) {
   if (!w) return false;

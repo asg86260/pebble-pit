@@ -35,7 +35,8 @@ export const OUTHOUSE_UPGRADES = [
 // all -- see `lone` in shop.js, which is what keeps a board with a single group
 // from saying its own name twice with a rule between.
 export const OUTHOUSE_SECTIONS = [
-  { title: 'the outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key) }
+  // Display string only: everything internal still says outhouse (wave7-crew).
+  { title: "the janitor's closet", keys: OUTHOUSE_UPGRADES.map(u => u.key) }
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a save
