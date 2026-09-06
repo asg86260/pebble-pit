@@ -215,27 +215,25 @@ canvas {
    different angles is the whole of what makes a circle a clock, at any size. */
 .clock {
   position: relative;
-  width: 8px; height: 8px;
-  border: 1.5px solid currentColor;
+  width: 9px; height: 9px;
+  border: 1px solid currentColor;
   border-radius: 50%;
 }
-/* Both hands are pinned at the middle of the face and swung from there, so
-   neither has an offset of its own to get wrong: `bottom: 50%` puts the base of
-   the hand on the center line and the origin at that base. */
+/* Both hands sit on whole pixels of the face's 7px inner box -- no rotation, no
+   fractional offsets. Rotated hands were painted with antialiased fringes at
+   every zoom, which at coin size is a smudge, not a clock. Nine o'clock: the
+   minute hand straight up from the middle pixel, the hour hand out to the left,
+   at a right angle -- two hands of plainly different lengths is the whole of
+   what makes a circle a clock. */
 .clock::before, .clock::after {
   content: '';
   position: absolute;
-  left: 50%; bottom: 50%;
-  width: 1.5px;
-  margin-left: -0.75px;
   background: currentColor;
-  transform-origin: 50% 100%;
 }
-/* the minute hand: long, and straight up */
-.clock::after { height: 3.5px; }
-/* and the hour hand: short, round at four, so the two never lie along each
-   other at any size */
-.clock::before { height: 2.25px; transform: rotate(120deg); }
+/* the minute hand: long, and straight up from the middle pixel */
+.clock::after { left: 3px; top: 1px; width: 1px; height: 3px; }
+/* and the hour hand: short, out to nine */
+.clock::before { left: 1px; top: 3px; width: 2px; height: 1px; }
 .dust { width: 7px; height: 7px; background: currentColor; }
 .core {
   width: 8px; height: 8px;
@@ -280,9 +278,11 @@ canvas {
    row it explains, and a row with nothing to say has no such line. */
 .rows .note {
   grid-column: 1 / -1;
-  opacity: .5;
-  font-size: .82em;
-  line-height: 1.3;
+  /* Readable at rest, not merely findable: half-strength ink at .82em was a
+     line you had to lean into. Hover still lifts it brighter than this. */
+  opacity: .72;
+  font-size: .9em;
+  line-height: 1.35;
   margin-top: .1em;
   white-space: normal;
   max-width: 46ch;
@@ -291,7 +291,7 @@ canvas {
    the words go white with the rest of the row, so the description stays readable
    on the black rather than turning to ink on ink. */
 .rows button:hover:not(:disabled) .note,
-.rows button.pick.on .note { color: #fff; opacity: .6; }
+.rows button.pick.on .note { color: #fff; opacity: .9; }
 
 /* The count and its two buttons, held in the one cell that a price would fill,
    so that a row which moves bodies and a row which spends dust are the same
@@ -821,6 +821,11 @@ canvas {
 
 .panel .sheet {
   box-sizing: border-box;      /* so a max-height is the height, padding and all */
+  /* A floor under the width, so a note's words changing under the cursor cannot
+     make the sheet a hair narrower and walk the whole board sideways -- the
+     shifting boards of feedback7 items 2 and 3. Wide enough for the ordinary
+     row; a board with longer rows still grows past it and stays there. */
+  min-width: 34ch;
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 12px;
   background: #fff;

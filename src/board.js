@@ -17,7 +17,7 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
-         shutOpts } from './shop.js';
+         boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
@@ -303,8 +303,37 @@ let sized = { w: 0, h: 0 };
 // live measurement is the only thing that is about *this* sheet, so it wins
 // whenever there is one; a hidden element is zero by zero, and that is the one
 // case the cache is for.
-const measured = () => ({ w: panelEl.offsetWidth || sized.w,
+const measured = () => ({ w: (panelEl.hidden ? 0 : mainWidth()) || sized.w,
                           h: panelEl.offsetHeight || sized.h });
+
+// The whole panel, flyout included, for the things that are about the element
+// on the page rather than the seat -- the safe-zone wedge and the tip's dodge
+// both have to cover the list of names, or crossing to it closes the board.
+let full = { w: 0, h: 0 };
+
+// The main board's own width: the open page and the purse, WITHOUT the crew
+// flyout. The seat is taken off this and not off the whole panel, so the list
+// coming out beside the board never moves the board -- the flyout flips and
+// stacks around a fixed sheet (see seatFlyout), which is the other half of the
+// same rule. The flex gap is read off the element rather than restated here.
+// (feedback7, items 2 and 3)
+function mainWidth() {
+  const page = Object.values(pages).find(p => !p.hidden);
+  const gap = parseFloat(getComputedStyle(panelEl).columnGap) || 0;
+  const purseW = purseEl.offsetWidth;
+  return (page ? page.offsetWidth : 0) + (purseW ? purseW + gap : 0);
+}
+
+// And how far the board's left edge stands in from the panel's, which is only
+// ever the flyout on the left: flipped, the list is the first flex item, so the
+// panel has to be seated that much further left for the board itself to stay
+// put. Stacked, the list is on a line of its own and leads nothing.
+function flyLead() {
+  if (crewListEl.hidden || !panelEl.classList.contains('flip') ||
+      panelEl.classList.contains('stack')) return 0;
+  const gap = parseFloat(getComputedStyle(panelEl).columnGap) || 0;
+  return crewListEl.offsetWidth + gap;
+}
 
 export function remeasure() {
   // A board nobody is looking at measures nothing: a hidden element is zero by
@@ -314,7 +343,8 @@ export function remeasure() {
   // at the bench -- so this has to be able to say no. Opening measures it
   // again, which is where a board that was rebuilt out of sight gets its size.
   if (panelEl.hidden) return;
-  sized = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
+  full = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
+  sized = { w: mainWidth(), h: full.h };
 }
 
 // And it is only written when it actually moves. Assigning the same transform
@@ -369,7 +399,11 @@ function place(el, at) {
   // stops being the odd one out.
   const mid = at.x + (at.w || 0) / 2;
   const want = (mid - S.camX) * S.zoom - w / 2;
-  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
+  // `w` is the main board's width only, and the clamp holds the BOARD inside
+  // the window; the crew flyout seats itself around it (seatFlyout). When the
+  // list stands on the left it is the panel's first flex item, so the panel is
+  // pushed that much further left and the board itself never moves for it.
+  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP))) - flyLead();
 
   const stands = S.H - (at.y - S.camY) * S.zoom + P * 3;
 
@@ -454,7 +488,10 @@ const SAFE_SLACK = 34;
 // wants the top corner, so it is turned back here rather than in four places.
 const panelRect = () => {
   if (putX === null) return null;
-  const { w, h } = measured();
+  // The full panel, not the seat: the wedge and the tip are about everything on
+  // the page, and the crew flyout is part of the panel however it is seated.
+  const w = panelEl.offsetWidth || full.w;
+  const h = panelEl.offsetHeight || full.h;
   return { x: putX, y: S.H - putY - h, w, h };
 };
 
@@ -1001,6 +1038,15 @@ export function hud() {
   // different size than the one it is seated by. The rows are filled in by
   // `fill` just above, so by here there is a whole board to measure.
   if (boardMoved()) remeasure();
+  // Words alone are gentler: a hover rewriting a note may not move the board
+  // unless it genuinely changed the sheet's width. So the board is measured --
+  // the words might really have widened it -- and when the width comes back
+  // the same the old seat stands, height nudges and all. (feedback7, items 2-3)
+  else if (boardReworded()) {
+    const was = sized;
+    remeasure();
+    if (sized.w === was.w) sized = was;
+  }
   // A board is placed when it opens, and it is empty at that moment: its rows
   // are filled on the next frame, and a board that grew a row after being
   // seated could end up hanging off the top of a short window. Seating it every

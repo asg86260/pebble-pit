@@ -4,7 +4,8 @@
 
 import { P, TOWER_SHAFT } from '../config.js';
 import { S, tower } from '../state.js';
-import { SITES, progressOf, siteBox, worksAt } from '../works.js';
+import { SITES, progressAt, progressOf, siteBox, worksAt } from '../works.js';
+import { risingPlace } from './rise.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { ctx } from './ctx.js';
@@ -46,7 +47,7 @@ export function bar(cx, cy, at) {
 // had guessed for it -- the settlement grows a course at a time, so its bar
 // ended up inside the building rather than above it. Nothing here is placed by
 // hand any more.
-const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
+const BAR_CLEAR = P * 7;                 // how far above the top of a thing it floats
 
 // The spire: the main shaft, without the turret hung off the right-hand side.
 // The tower's own rect spans both, so a bar centered on it lands right of the
@@ -79,7 +80,16 @@ export function barSpot(site) {
   // A hole in the ground has no top above the line -- the quarry's box starts at
   // the ground and goes down -- so the bar hangs off the ground line for those,
   // which is the top of them as far as anybody looking at the yard is concerned.
-  const top = Math.min(box.y ?? S.groundY, S.groundY);
+  let top = Math.min(box.y ?? S.groundY, S.groundY);
+  // A building rising out of the yard is only as tall as its progress -- withRise
+  // clips the sprite to the risen slice -- so the bar tracks the slice's current
+  // top rather than the finished roofline. Off the full height the bar hung in
+  // the middle of the sprite for most of the build; off the risen top it stays
+  // BAR_CLEAR ahead of the rising edge at any progress. (feedback7, item 15)
+  if (site === 'yard' && risingPlace()) {
+    const p = Math.max(0, Math.min(1, progressAt('yard')));
+    top = S.groundY - (S.groundY - top) * p;
+  }
   return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
 }
 

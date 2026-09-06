@@ -16,7 +16,7 @@
 import { S } from './state.js';
 import { rand } from './rng.js';
 import {
-  RUNGS, CRIT_CHANCE_MIN, CRIT_CHANCE_MAX, CRIT_MULT_MIN, CRIT_MULT_MAX,
+  RUNGS, CRIT_CHANCE_MIN, CRIT_CHANCE_MAX, CRIT_MULT_MIN, CRIT_MULT_RUNGS,
 } from './config.js';
 
 // A level clamped to the ladder, the way lab.js clamps its own -- a save from
@@ -29,11 +29,12 @@ const rung = lvl => Math.max(0, Math.min(RUNGS, lvl | 0));
 export const critChance = (lvl = S.critChanceLevel) =>
   CRIT_CHANCE_MIN + (CRIT_CHANCE_MAX - CRIT_CHANCE_MIN) * (rung(lvl) / RUNGS);
 
-// Rounded, because a unit of work that counts for several counts for a whole
-// several: three grains, not three-and-a-tenth. The board can read the raw
-// figure; the yard works in whole units.
+// A whole unit a rung, so no rung repeats a value: the eased five-rung ladder
+// rounded two neighbors to the same figure and the row read "4 -> 4". Its own
+// rung count -- the span of the ladder itself -- rather than the shared RUNGS,
+// so a saved level past the top reads as the top.
 export const critMult = (lvl = S.critMultLevel) =>
-  Math.round(CRIT_MULT_MIN + (CRIT_MULT_MAX - CRIT_MULT_MIN) * (rung(lvl) / RUNGS));
+  CRIT_MULT_MIN + Math.max(0, Math.min(CRIT_MULT_RUNGS, lvl | 0));
 
 // The expected multiplier on a unit of work over many swings, for a check that
 // wants to know what a run should come to: 1 + chance*(mult - 1).

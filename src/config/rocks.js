@@ -96,3 +96,10 @@ export const ROCK_KNOBS = [
   { key: 'SHAKE_LAND', label: 'landing shake', min: 0, max: 40, step: 1,
     get: () => SHAKE_LAND, set: v => { SHAKE_LAND = v; } }
 ];
+
+// --- wave7-ui -----------------------------------------------------------------
+// The pickaxe ladder: three rungs, each worth a whole pixel of bite. The eased
+// fractional curve read as noise on the row ("1.4 -> 1.7 px"); a whole pixel a
+// rung is a purchase you can see land, so there are fewer rungs and each is
+// dearer -- see rows-rock.js, where the bases are eight times what they were.
+export const ROCKHAND_RUNGS = 3;
