@@ -1,5 +1,14 @@
 # Still to do
 
+## Wave 7 — IN FLIGHT (2026-09-06)
+
+feedback7.md, four tracks (sky/intro, shop UI, crew interaction, apothecary),
+canon in `docs/wave-feedback7.md`. Items 16 (workers assigned by hand) and 27
+(the build yard) are designed, not built — see their `(design, not built)`
+sections in DESIGN.md, awaiting sign-off. Seams the orchestrator wires after
+the merge are listed at the bottom of the spec (diamond removal, the
+under-staffed tooltip, the two brew boost call sites).
+
 ## The abyss — BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats

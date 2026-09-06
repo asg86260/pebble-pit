@@ -4379,3 +4379,81 @@ toward a second pot and its second stirrer.
 - **Star-tier tonics.** The later recipes that cost something off a star are left
   for when the tower and the star economy are settled -- named in the arc, not
   numbered here.
+
+## Workers assigned by hand (design, not built)
+
+The counters and their plus/minus buttons under each station do the job, but
+they are a spreadsheet's answer to a question the yard already knows how to
+ask with bodies: pick a worker up, carry it to a station, put it down. The
+game already has the pickup (the hand lifts a body today), and wave 7 gives
+the hover a pause and a question mark, so the hard part -- catching one -- is
+solved. What is missing is the drop meaning something.
+
+**The bargain.** Assignment becomes a physical act with travel time -- you do
+not reassign half the yard in a second, you carry them one at a time, and the
+body you drop still has to walk in through the door before it counts. In
+exchange the boards lose two buttons per station and a number nobody loved,
+and the yard's one rule ("nothing teleports") finally applies to the player's
+own hand.
+
+**The shape.**
+
+- A worker dropped within a station's rect (the `siteBox`, padded a cell)
+  retrains to that station's job: hat swap at the bench as today's retraining
+  does, then the walk in. Dropped anywhere else, the body goes back to what
+  it was doing -- a drop is only an order when it lands on a door.
+- While a body is held over a station, the station shows the same aura wave 7
+  gives affordable offers, so the drop target reads before you commit.
+- The counters do not vanish in the same change. First the drag-assign ships
+  alongside them; the plus/minus buttons go only after it has proven it can
+  cover the cases the buttons cover -- bulk moves ("five quarriers, now") are
+  the open question below. Removing the readout number itself is not planned:
+  a count you can see is information, not a control.
+- `rebalance()` stays the single owner of `S.haulers`; a drop changes the
+  *ask* (`S.<job>`), exactly as a button press does today, so the economy's
+  invariant is untouched.
+
+**Open.**
+
+- Bulk assignment. Carrying ten bodies one at a time is a chore, not a game.
+  Candidates: dropping a body while holding shift moves its whole idle
+  cohort; or the station's aura, clicked while a body is held, takes "as many
+  as fit". Decide by playing the drag version first.
+- Whether a held body's old station should count it as gone immediately or
+  only when the new door swallows it. The walk-in rule says the latter; the
+  counter should read "in transit" somehow or the numbers look wrong.
+
+## The build yard (design, not built)
+
+A rung and a building cost the same click and read the same on the board, but
+one is a number and the other is a thing that should exist in the yard.
+Construction is invisible -- a bar fills, a building rises, nobody built it.
+
+**The bargain.** New constructions (stations, machines, pots -- anything with
+a `works.js` site) require a builder: a construction bench adjacent to the
+existing bench, one worker assigned, and that body walks to the site and
+works the build. Build time becomes a function of hands on it rather than a
+flat timer. In exchange the player gets a visible cause for every rising
+wall, and a new ladder: the construction bench upgrades to run more than one
+build at once (a second builder's post), which is the answer to the late-game
+click-five-buildings-at-once moment. Rungs stay instant -- a rung is a better
+tool, not a new wall, and gating numbers behind a walk would be pure
+friction. That is also the answer to the confusion that raised the item: if
+only buildings summon a walking builder and a fenced footprint, the board
+does not have to explain which rows are buildings -- the yard does.
+
+**The shape.** A new site per the ARCHITECTURE.md checklist (rect in
+`world.js`, file of its own, hire row, `want` map entry in `syncWorkers`,
+draw in LAYERS, fields in the saved lists). The builder job follows the
+JOBS-registry pattern; output depends on a body through the door
+(`inBuild()`), never on the assigned count. Queued builds wait visibly --
+fenced footprint, no bar moving -- until a builder frees up, which is itself
+the signal to buy the second post. BUILD_GANG (wave 3) folds in: the gang
+multiplier becomes the builder's pace ladder.
+
+**Open.** What the earliest builds do before the bench exists -- either the
+first construction (the bench itself) is free and self-raising as today, or
+the buried square does it, which would be the better story. And whether
+machines' spark-priced ladders count as rungs (instant) or builds (walked);
+the rule above says instant, but a machine physically growing a stage would
+look terrific. Decide when the bench is real.
