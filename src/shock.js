@@ -99,5 +99,11 @@ export function stepShocks(dt) {
 export const shockAge = s => Math.min(1, (s.t * 1000) / CRIT_RING_MS);
 
 // And how far it has got, in world pixels: the reach is per point of the crit's
-// multiplier, so the ring says how big the thing that happened was.
-export const shockReach = s => CRIT_RING_R * s.power * shockAge(s);
+// multiplier, so the ring says how big the thing that happened was. Eased out
+// hard -- most of the reach in the first third of the run -- because a blow
+// spends itself at once; a ring that grows evenly reads as an announcement, not
+// a slam.
+export const shockReach = s => {
+  const k = shockAge(s);
+  return CRIT_RING_R * s.power * (1 - Math.pow(1 - k, 3));
+};
