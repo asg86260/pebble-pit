@@ -17,7 +17,9 @@ export const OUTHOUSE_ROWS = [
   {
     key: 'unlockouthouse',
     kind: 'building', site: 'yard', at: () => outhouse.x + outhouse.w / 2,
-    name: 'build the outhouse',
+    // The building keeps its internal name -- keys, ids and save fields all say
+    // outhouse -- but the player is sold a janitor's closet (wave7-crew, item 10).
+    name: "build the janitor's closet",
     note: () => 'you\'ve seen enough poop, lets clean it up.',
     cost: () => OUTHOUSE_DUST,
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },

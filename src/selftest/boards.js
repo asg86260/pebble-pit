@@ -840,7 +840,7 @@ export const TESTS = [
       ok(!!stand, 'the outhouse is a stand once it is up',
          stand ? `${stand.x},${stand.w}` : 'nowhere'),
       ok(open, 'walking up to it opens its board'),
-      ok(title === 'the outhouse', 'which says whose it is', title),
+      ok(title === "the janitor's closet", 'which says whose it is', title),
       ok(rows.includes('loopost'),
          "and the janitor's second cap is sold on it", rows.join(',') || 'nothing'),
       ok(shut, 'and walking away shuts it again')

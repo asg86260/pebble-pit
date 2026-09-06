@@ -309,6 +309,9 @@ export function drawKitCounts(screenAt) {
 //
 // All of it is cells, like everything else, and all of it stands a clear cell
 // above the head so it never touches the load a worker is carrying.
+// wave7-crew: the smallest thing that is unmistakably a question mark, in cells.
+const QUERY = ['111', '001', '011', '000', '010'];
+
 function drawSay(w) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
@@ -352,6 +355,29 @@ function drawSay(w) {
     ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);
     ctx.fillRect(Math.round(x - P * 0.5), top - P * 2, P, P);
     ctx.fillStyle = '#000';
+    return;
+  }
+
+  // wave7-crew: stink risers, the comic-strip smell mark -- two thin wavy lines
+  // climbing off the patch the body has just refused to step in. They alternate
+  // their middle cell so the pair reads as wafting rather than printed.
+  if (w.say.mark === 'yuck') {
+    const wave = Math.floor(now() / 240) % 2 ? P : -P;
+    for (const sx of [-P, P]) {
+      const cx = Math.round(x + sx - P / 2);
+      ctx.fillRect(cx, top - P, P - 1, P - 1);
+      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P - 1, P - 1);
+      ctx.fillRect(cx, top - P * 3, P - 1, P - 1);
+    }
+    return;
+  }
+
+  // wave7-crew: a body held still under the cursor asks what you want of it.
+  if (w.say.mark === '?') {
+    for (let r = 0; r < QUERY.length; r++)
+      for (let c = 0; c < 3; c++)
+        if (QUERY[r][c] === '1')
+          ctx.fillRect(Math.round(x - P * 1.5 + c * P), top - P * 5 + r * P, P - 1, P - 1);
     return;
   }
 

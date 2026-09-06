@@ -76,13 +76,14 @@
 // the trip has to be decided together with the rest of its errands. See
 // `haulerWork`.
 
-import { P, LUNGE_EASE, WOBBLE, WOBBLE_BEAT } from '../config.js';
+import { P, LUNGE_EASE, WOBBLE, WOBBLE_BEAT, WORKER,
+         GROSS_MS, GROSS_COOLDOWN_MS } from '../config.js';
 import { S, floor } from '../state.js';
 import { colOf } from '../grid.js';
 import { dropZone } from '../rock.js';
 import { keepTo, stepRoute, wayOver, solidNear } from '../route.js';
 import { TIDY_ELBOW } from '../tidy.js';
-import { MUCK_ELBOW } from '../smog.js';
+import { MUCK_ELBOW, colAt, poopCols, muckFloor } from '../smog.js';
 import { commutePace } from '../upgrades.js';
 import { TYPE } from '../jobs.js';
 import { floatDown } from '../wizard.js';
@@ -216,11 +217,53 @@ const STAGES = [
   // it lands, so the rest of its day happens as usual.
   w => w.floating === true && !floatDown(w),
 
+  // wave7-crew: a cursor resting on a body holds it still, so the card over its
+  // head is read off somebody standing rather than somebody walking away. Above
+  // the commute -- the bodies you hover are mostly mid-walk, and a pause that
+  // let the walk finish first would never be seen -- and held out of a dance,
+  // whose feet are off the ground: a body frozen mid-hop would hang in the air.
+  // Nothing is dropped and no claim is released; the body simply spends the
+  // frame standing, and everything it was doing resumes when the cursor leaves.
+  (w, c) => {
+    if (!(w.pauseUntil > c.now) || dancing(c)) return false;
+    w.say = { mark: '?', until: w.pauseUntil };
+    return true;
+  },
+
   // on its way to a job it has just been put on, and doing none of it yet
   (w, c) => { if (!w.walking) return false; stepCommute(w, c.zone); return true; },
 
   // and now and then a body has to stop, whatever it was doing
   (w, c) => relieve(w, c.now),
+
+  // wave7-crew: grossed out. A body whose next step lands in somebody's
+  // leavings stops short, says so, then steps around rather than through.
+  // Directly after the loo stage: the mess exists because that stage ran, and a
+  // body mid-squat must not be interrupted by its own results. The step around
+  // is a local hop of two columns -- the duck's own scale of move -- rather
+  // than a call into body.js, and the cooldown is per body so a crowd crossing
+  // a fouled yard does not gridlock.
+  (w, c) => {
+    if (w.grossUntil) {
+      if (c.now < w.grossUntil) { w.lunge = 0; return true; }
+      // done gagging: around it, one clear column past the fouled one
+      w.x += (w.face || 1) * P * 2;
+      w.grossUntil = 0;
+      w.say = null;
+      return true;
+    }
+    if (c.now < (w.grossOkAt || 0) || dancing(c)) return false;
+    const dir = w.face || 1;
+    const ahead = colAt(w.x + WORKER / 2 + dir * P);
+    if (!(poopCols()[ahead] > 0)) return false;
+    // only leavings at this body's own feet -- a patch on the rock's flank far
+    // over a walker's head is not something it is about to step in
+    if (Math.abs(muckFloor(ahead) - (w.y + WORKER)) > P * 3) return false;
+    w.grossUntil = c.now + GROSS_MS;
+    w.grossOkAt = c.now + GROSS_COOLDOWN_MS;
+    w.say = { mark: 'yuck', until: w.grossUntil };
+    return true;
+  },
 
   // The rock is off and the whole yard is celebrating. Above the work, the
   // stations and the mess, so that nothing else in this list can move a dancing

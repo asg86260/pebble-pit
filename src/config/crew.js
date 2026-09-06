@@ -238,3 +238,22 @@ export const CREW_KNOBS = [
   { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4,
     get: () => PILE_LIMIT.sky, set: v => { PILE_LIMIT.sky = v; } }
 ];
+
+// --- wave7-crew ---------------------------------------------------------------
+// A body about to step in somebody's leavings stops and says so before going
+// around. Long enough to read, short enough not to jam an errand -- and the
+// cooldown is per body, so a crowd crossing a fouled yard does not gridlock
+// into a queue of retching statues.
+export let GROSS_MS = 1200;           // how long the stop lasts
+export let GROSS_COOLDOWN_MS = 8000;  // before the same body minds again
+// Hovering the cursor over a body holds it still, so the card over its head is
+// read off somebody standing rather than somebody walking away. Refreshed while
+// hovered, so it is really "this long after the cursor leaves".
+export let HOVER_PAUSE_MS = 900;
+CREW_KNOBS.push(
+  { key: 'GROSS_MS', label: 'yuck stop', min: 200, max: 5000, step: 100,
+    get: () => GROSS_MS, set: v => { GROSS_MS = v; } },
+  { key: 'GROSS_COOLDOWN_MS', label: 'yuck cooldown', min: 1000, max: 60000, step: 500,
+    get: () => GROSS_COOLDOWN_MS, set: v => { GROSS_COOLDOWN_MS = v; } },
+  { key: 'HOVER_PAUSE_MS', label: 'hover hold', min: 100, max: 5000, step: 100,
+    get: () => HOVER_PAUSE_MS, set: v => { HOVER_PAUSE_MS = v; } });
