@@ -27,6 +27,12 @@ import { TYPE } from '../jobs.js';
 const SHED_OF = { [TYPE.QUARRY]: ['quarry', () => quarryShed()],
                   [TYPE.FARM]: ['farm', () => farmShed()] };
 
+// The site whose shed this body would build at, if its trade has one. Asked by
+// stepTender: a machine's post must not outbid an open work at the station, or
+// a one-body gang -- which is every gang once its machine is bought, see
+// `capOf` -- tends for ever and the purchase never gets worked.
+export const shedSite = w => (SHED_OF[w.type] || [null])[0];
+
 // where the claimed body stands: the middle of the shed's front
 const shedFoot = shed => shed.x + shed.w / 2 - WORKER / 2;
 

@@ -8,6 +8,8 @@ import { frames, now } from '../clock.js';
 import { CLIMB_PACE, MACHINE_FOUL, MACHINE_MAX_BEATS, MUCK_SWING, P, SPELL_SWEEP, WORKER } from '../config.js';
 import { JOB_MACHINE, MACHINES, machine, specOf } from '../machines.js';
 import { quarryFace } from '../quarry.js';
+import { busyAt } from '../works.js';
+import { shedSite } from './shedhand.js';
 import { inWorking } from '../route.js';
 import { foul } from '../smog.js';
 import { S, floor } from '../state.js';
@@ -40,6 +42,21 @@ export function stepTender(w, now) {
   if (!r || !r.bought) return false;
   const spec = specOf(key);
   if (!spec) return false;
+
+  // An upgrade on the go at this body's own station comes first. Tending runs
+  // before the job's own step, and once the machine is bought the gang is one
+  // body (`capOf`) -- so a tender that never let go was a station whose bought
+  // bench sat at nought for the rest of the run: nobody else exists to claim
+  // it, and the yard lends no builder to a gang it can count. Declining here
+  // hands the frame to `stepShedwork`, which claims the body and walks it to
+  // the shed; the machine idles unmanned meanwhile, which is the same bargain
+  // a hand-worked gang pays -- while the bench is being cut, nothing comes up.
+  // ...and a body still holding a claim after the work has landed is declined
+  // too: `stepShedwork` is the only thing that clears `onBuild`, and a tender
+  // that grabbed the body first left the claim set for ever -- which reads as
+  // claimed to everything that asks, `tenderFor` included.
+  const site = shedSite(w);
+  if (w.onBuild || (site && busyAt(site))) return false;
 
   // One machine, one tender. This used to catch every body of the trade: the
   // machine caps its station at one, but nothing capped how many walked to the
@@ -162,6 +179,7 @@ function tenderFor(spec, at) {
     if (w.type !== spec.type) continue;
     if (w.walking || w.inside || w.aloft || inWorking(w) || w.lifted || w.falling) continue;
     if (w.looUntil) continue;                  // stopped, but not for the machine
+    if (w.onBuild) continue;                   // claimed by the station's own upgrade
     if (Math.abs(w.x - postOf(spec, at)) > MACHINE_REACH) continue;
     return w;
   }
