@@ -87,7 +87,7 @@ export const RIFT_TAIL_R = 2.2;      // and how near the disc, in radii, it grow
 // thing that happened: a three-times blow is a ring you notice and a six-times
 // one is a ring that crosses the yard.
 export const CRIT_RING_MS = 260;     // how long the ring takes to run out
-export const CRIT_RING_R = P * 4;    // how far it reaches, per point of multiplier
+export const CRIT_RING_R = P * 2.5;  // how far it reaches, per point of multiplier
 export const CRIT_RING_WIDE = P;     // and how thick the ring is drawn
 export const CRIT_MOTES = 3;         // specks thrown, per point of multiplier
 export const CRIT_MOTE_LIFE = 0.35;  // seconds one lasts
