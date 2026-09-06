@@ -18,7 +18,7 @@ export const OUTHOUSE_ROWS = [
     key: 'unlockouthouse',
     kind: 'building', site: 'yard', at: () => outhouse.x + outhouse.w / 2,
     name: 'build the outhouse',
-    note: () => 'somewhere for the crew to go, and somebody to clear up after',
+    note: () => 'you\'ve seen enough poop, lets clean it up.',
     cost: () => OUTHOUSE_DUST,
     buy: () => { S.outhouseOpen = true; lookAt(outhouse.x + outhouse.w / 2); },
     // Offered once you have seen why you want one -- which is a thing you can

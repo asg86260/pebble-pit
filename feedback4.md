@@ -1,0 +1,5 @@
+- the new shacks by quarry/lab should be the main target for the station, not the station itself.
+- the bench timed upgrades shouldnt get the construction ornament.
+- the building construction should slowly translate the building from the ground. then when its done, a little puff of smoke and screen shake should solidify the building is fully finished.
+- workers still need an animation when buildings are being constructed.
+- buildings are not in the order they are purchased.

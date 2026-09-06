@@ -1,0 +1,23 @@
+- we should have a little tooltip on all of the objects in the game. nothing crazy, just a little label hover. like dust, house, sparks, food, bird, poop, etc. 
+- the worker animation for working on upgrades at the bench needs something, i think workser should climb up the bench and move/jump around, look like theyre doing work.
+- only one worker should work on upgrades, not all avail.
+- building houses should also take time, instead of instant.
+- lets remove the S on the seconds itll take to upgrade. just the number is fine. 
+- remove the janitor submenu text.
+- lets add a little under construction type site when building new buildings. some tape/barriers, dust for workers doing work. etc. 
+- building the janitor closet starts off when a 2 worker max. it should be one worker, and an upgrade to expand to 2 janitors.
+- refreshing during a worker working on an upgrade gets stuck in progress, workers dont auto resume working.
+- worker speed is still too slow at the start. 
+- i dont think we should have farm upgrades immediately be affordable when the farm is built. we should make it a bit more expensive for those upgrades.
+- the upgrade miner pickaxe is way too strong. it really scales up too fast for workers to keep up. 
+- the lab should require a core cost. 
+- lets explore having workers actually move dust from the pit to the stations for the upgrades. instead of flying dust from the pit to the stations. 
+- workers carrying the core, the core loses its energy waves.
+- workers just drop the core into the pit, lets add some flair, they should really lob it high into the pit.
+- opening the farm feels pointless. it opens up one upgrade tree for the existing workers. i wonder if we should start adding resource requirements to higher upgrades, after 10 houses, it starts costing food, 15 starts costing green and blue. i like this approach, lets spike this out and see how it could change the ladders.
+- when opening the lab before the quarry, the quarry upgrades are visible. the upgrades that cost blue are also visible.
+- i still want to dynamically place building on build order.
+- janitors are blocked by idle workers and wont clean up poop.
+- the whole house structure should be the target for the menu.
+- i think we should add small buildings for the farm/quarry to house the upgrades. everything else has a house/structure to hold its store menu. so a small building on the left side of both.
+- lets make the farm the full width right off the bat, but keep the plots empty until they are planted/bought. 
