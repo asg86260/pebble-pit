@@ -9,7 +9,7 @@
 // pour, and a taper at the end so it trails off instead of cutting. A brim sky
 // is about forty seconds of shower, and every marked mote still goes.
 
-import { group, ok, state, run, runUntil, makeItRain, buyNow, openSites } from './helpers.mjs';
+import { group, ok, state, run, runUntil, makeItRain, buyNow, openSites, yard } from './helpers.mjs';
 
 // The band is uniform by construction, at a working level and at the brim: the
 // fullest strip of sky holds barely more than the average one, from the frame
@@ -47,6 +47,9 @@ group('buying a pot re-walks the yard rather than spending reserved ground', asy
   window.__grant({ dust: 99999, shards: 9999, spores: 99999, sparks: 999, cores: 9 });
   const opened = buyNow('unlockapothecary');
   run(1);
+  // The second pot reveals after batches have landed (the grind pass); this
+  // check is about the ground it breaks, not the reveal.
+  yard.S.brews = 5;
   const before = state();
   const bought = buyNow('anotherpot');
   run(1);

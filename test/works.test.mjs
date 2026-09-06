@@ -286,7 +286,11 @@ group('a station standing empty is lent a body', async () => {
 
   const rockhands0 = state().rockhands;
   window.__buy('quarrybench');
-  run(6);
+  // Eight, not six: wave7b-build added the construction bench's slot to the
+  // walk, so the yard is a station-gap wider and the lent body's commute from
+  // the rock to the cut is about half a second longer. The margin, not the
+  // mechanic.
+  run(8);
   const going = state();
   const done = runUntil(() => !state().works?.quarry, 60);
   const back = state();

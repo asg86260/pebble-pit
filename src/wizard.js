@@ -27,7 +27,7 @@ import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
 import { rand } from './rng.js';
 import { critRoll } from './crit.js';
-import { critBoost } from './apothecary.js';
+import { critBoost, sparkBoost } from './apothecary.js';
 import { TYPE } from './jobs.js';
 
 // The ground under the meteor: where a wizard walks to before it goes anywhere
@@ -272,7 +272,9 @@ export function stepWizard(w, now) {
     // sparks in the sky, on their own arc, and it reads as a patch coming off at
     // once. See DESIGN.md: the crit rule is one rule, but its dust looks like
     // whatever the station's own spoil already looks like.
-    const bite = wizBite() * critRoll(critBoost(w));
+    // The gleam brew pays out here because the bite is the one per-body step in
+    // a wizard's spark yield -- the sparks a cell gives up are fixed.
+    const bite = wizBite() * critRoll(critBoost(w)) * sparkBoost(w);
     fire(w.x + WORKER / 2, w.y + WORKER / 2, w.cell, bite);
     w.mined = (w.mined || 0) + bite;
     w.lunge = 1;

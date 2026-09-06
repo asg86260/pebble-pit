@@ -13,10 +13,12 @@ import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
 import { vnoise } from './flicker.js';
-import { potBoiling, brewFracOf, potTonicOf, doseStock, potBox, TONICS } from '../apothecary.js';
+import { potBoiling, brewFracOf, potTonicOf, doseStock, potBox, TONICS,
+         tonicOf, tonicShown } from '../apothecary.js';
+import { screenAt } from './frame.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // --- the two pictures ---------------------------------------------------------
 // One character to a cell: `#` is timber (black), `.` is empty. Retype either to
@@ -124,7 +126,13 @@ export const potX = i => potBox(i).x;
 // between one slot and the next put a black cell between every bottle, and the
 // dividers and the corks merged into a lattice you had to work to read stock out
 // of. Color is the only thing in this box for a reason.
-const shelfTop = () => S.groundY - APOTH_SHELF_H;
+// The planks the rack shows: one per recipe the player can see (item 24 hides
+// the shard brews until the quarry opens), so the rack grows when the book does.
+// The top is derived from that count rather than from APOTH_SHELF_H, which was
+// typed for the three-recipe book and would leave the wave-7 planks drawing
+// below the ground.
+const shownTonics = () => TONICS.filter(tonicShown);
+const shelfTop = () => S.groundY - P * (1 + shownTonics().length * APOTH_SHELF_ROWS);
 export const shelfX = () => apothecary.x + APOTH_HUT_W + APOTH_GAP;
 const shelfCols = () => Math.round(APOTH_SHELF_W / P);
 // The top of tonic `i`'s bottles, and the plank they stand on: one cell of frame
@@ -140,7 +148,7 @@ const bottlesX = () => shelfX() + (1 + SHELF_PAD) * P;
 // at the end of the plank is, so it is asked in one place.
 const overCap = key => doseStock(key) > SHELF_CAP;
 export const numWell = i => {
-  const cells = overCap(TONICS[i].key) ? SHELF_NUM_WIDE : SHELF_NUM_W;
+  const cells = overCap(shownTonics()[i].key) ? SHELF_NUM_WIDE : SHELF_NUM_W;
   return {
     x: shelfX() + (shelfCols() - 1 - SHELF_PAD - cells) * P,
     y: shelfY(i),
@@ -177,8 +185,9 @@ function drawShelves() {
   for (let c = 0; c < cols; c++) {                  // and the board over the top
     ctx.fillStyle = grain(c, 0); ctx.fillRect(x + c * P, top, P, P);
   }
-  for (let i = 0; i < TONICS.length; i++) {
-    const t = TONICS[i], py = plankY(i);
+  const book = shownTonics();
+  for (let i = 0; i < book.length; i++) {
+    const t = book[i], py = plankY(i);
     for (let c = 0; c < cols; c++) {
       ctx.fillStyle = grain(c, i * APOTH_SHELF_ROWS + 3);
       ctx.fillRect(x + c * P, py, P, P);
@@ -288,7 +297,7 @@ function drawPot(i, g) {
 }
 
 export function drawApothecary() {
-  const rising = risingPlace() === 'apothecary';
+  const rising = risingAt('apothecary') && 'apothecary';
   if (!S.apothecaryOpen && !rising) return;
   const { x, y, w, h } = apothecary;
   withRise(rising, x, S.groundY, w, h, () => {
@@ -347,8 +356,9 @@ export function drawApothecary() {
 // however far the stock climbs. The size follows the well for the same reason.
 export function drawStockCount(screenAt) {
   if (!S.apothecaryOpen) return;
-  for (let i = 0; i < TONICS.length; i++) {
-    const n = doseStock(TONICS[i].key);
+  const book = shownTonics();
+  for (let i = 0; i < book.length; i++) {
+    const n = doseStock(book[i].key);
     if (n <= SHELF_CAP) continue;
     const well = numWell(i);
     const at = screenAt(well.x, well.y);
@@ -389,4 +399,36 @@ export function drawStockCount(screenAt) {
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
+}
+
+// The tonic's short name under each pot that has a brew set (item 23). The flame
+// already says which brew from across the yard, but only while a batch is going;
+// the word under the belly says it always, and says it to a player who has not
+// learned the colors yet. Screen-space, the same bargain `drawStockCount`
+// strikes: the glyph is drawn at a size measured off the yard's own cells, so it
+// grows and shrinks with the pot over it rather than holding a CSS size the
+// picture does not agree with.
+export function drawPotLabels() {
+  if (!S.apothecaryOpen) return;
+  for (let i = 0; i < S.apothPots; i++) {
+    const t = tonicOf(potTonicOf(i));
+    if (!t) continue;
+    const b = potBox(i);
+    // One cell in screen pixels, off two points a cell apart -- zoom-proof.
+    const cell = screenAt(b.x + P, 0).x - screenAt(b.x, 0).x;
+    const at = screenAt(b.x + b.w / 2, S.groundY);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = `${cell * 2}px ui-monospace, "Courier New", monospace`;
+    // A white slab under the word, so it reads over the dust the ground under a
+    // pot gathers -- the count over the shelf makes the same choice.
+    const w = ctx.measureText(t.short).width + cell;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(Math.round(at.x - w / 2), Math.round(at.y + cell / 2), Math.round(w), Math.round(cell * 2.4));
+    ctx.fillStyle = '#000';
+    ctx.fillText(t.short, Math.round(at.x), Math.round(at.y + cell * 0.7));
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#000';
 }

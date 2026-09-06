@@ -11,7 +11,7 @@
 
 import { group, ok, state, run, runUntil, buyBuilt } from './helpers.mjs';
 import { yard } from './helpers.mjs';
-import { BUILD_GANG, BUILD_HAMMER_MS, BUILD_HAMMER_H, BUILD_HITS_MAX, BUILD_REST_MS,
+import { BUILD_HAMMER_MS, BUILD_HAMMER_H, BUILD_HITS_MAX, BUILD_REST_MS,
          CORE_LOB_H, P, WORKER } from '../src/config.js';
 import { bench } from '../src/state.js';
 
@@ -24,7 +24,8 @@ group('one builder to a bench rung, not a gang of three', async () => {
   const buildersAt = () => yard.S.workers.filter(w => w.type === 'builder').length;
   run(2);                                 // long enough for the crowd to settle
   return [
-    ok(BUILD_GANG === 1, 'the gang is one body, not three', `${BUILD_GANG}`),
+    // wave7b-build: BUILD_GANG the constant is gone -- one body a site is the
+    // derived gang's rule outright, and the count below is the whole check.
     ok(buildersAt() <= 1, 'and no more than one is actually made a builder',
        `${buildersAt()} builders for six spare hands`)
   ];

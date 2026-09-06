@@ -1,0 +1,10 @@
+- training grounds needs a worker assignment.
+- when a farm or quarry upgrade is bought, there should be a worker that stops working and starts working at the shack. right now the workers all keep working on resources. 
+- lets look at the spacing between stations, it feels inconsistent and sloppy. some things are grouped together really weirdly. 
+- i still want to revisit the haze logic. right now the pollution rises a bit then gets assigned to a close sky slot. this concentrates haze into bands above the machines. i would love for the pollution to rise, then fade out. that happens, but the way it settles in the sky is weird. the sky haze level should represent the total pollution in the sky. theres too much logic around it spreading from the source.
+- i want the rain to be more storm like. i want the sky to be fairly dark before the rain starts, and it should start slow, a drizzle, then pick up a bit, and taper off towards the end. right now the rain lasts like 10 seconds, i want it to last much longer, doesnt mean every rain particle becomes a muck cell, i dont want the total amount of muck to increase
+- the belt progress bar is in the middle of the rock. it should be beween the rock and pit edge. 
+- i think we need to revisit the resources card location/layout. or move it to above the black hole when the screen is scrolled to the pit. 
+- the shack doorways arent regulation size. lets do another couple design passes at them.
+- training a wizard create two progress bars.
+- also why are the wizards so strong be default? it seems like all of the upgrades were purchased already. 

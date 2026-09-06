@@ -123,14 +123,6 @@ export const DOOR_W = 4;         // cells across a way in, everywhere in the yar
 export const DOOR_H = 4;         // and courses tall
 export let ROCKHAND_BASE = 1100;  // a hired rockhand starts slower than your own pick
 export const ROCKHAND_FLOOR = 260;  // fastest a rockhand can swing
-// How much bigger a rockhand's bite gets over the whole `rockhandpick` ladder --
-// eased across the rungs the same way `swing` eases a rate, so the early rungs
-// are worth more than the late ones. It used to be a flat +1 a rung, which
-// looks tame on the row but is a straight multiple against the base: five rungs
-// bought six times the bite, and the crew you actually have could never keep up
-// with the pile that made. A cap here is the fix rather than a hand-tuned rung
-// price, because the price was never the thing that was wrong.
-export const ROCKHAND_BITE_MULT = 2.2;
 // The yard runs from the mouth of the quarry to the lip of the pit, and heaped to
 // the brim it holds about 10,100 grains -- the slope of the banks decides it,
 // and it was measured, not guessed. The crew down tools a little short of that,
@@ -206,6 +198,16 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 // ladder above it is unchanged -- every multiplier still multiplies this -- so
 // what moved is where the ladder starts, not how far it goes.
 export let HAUL_BASE = 1.8;
+
+// What the crew's own ladders open at, and what a body costs over a run. These
+// rows serve a compounding crew, so their firsts sit well above the solo rows
+// beside them, and the house climbs steeply enough that the twentieth body is a
+// decision rather than a reflex -- the grind pass, DESIGN.md.
+export const HAUL_CARRY_COST = 150;     // the haulers' strength ladder, dust
+export const HAUL_PACE_COST = 180;      // and their speed, dust
+export const ROCKHAND_SPEED_COST = 210; // the rockhands' swing, dust
+export const HOUSE_COST0 = 60;          // the first house
+export const HOUSE_RATE = 1.45;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
@@ -238,3 +240,22 @@ export const CREW_KNOBS = [
   { key: 'PILE_LIMIT.sky', label: 'star pile holds', min: 4, max: 600, step: 4,
     get: () => PILE_LIMIT.sky, set: v => { PILE_LIMIT.sky = v; } }
 ];
+
+// --- wave7-crew ---------------------------------------------------------------
+// A body about to step in somebody's leavings stops and says so before going
+// around. Long enough to read, short enough not to jam an errand -- and the
+// cooldown is per body, so a crowd crossing a fouled yard does not gridlock
+// into a queue of retching statues.
+export let GROSS_MS = 1200;           // how long the stop lasts
+export let GROSS_COOLDOWN_MS = 8000;  // before the same body minds again
+// Hovering the cursor over a body holds it still, so the card over its head is
+// read off somebody standing rather than somebody walking away. Refreshed while
+// hovered, so it is really "this long after the cursor leaves".
+export let HOVER_PAUSE_MS = 900;
+CREW_KNOBS.push(
+  { key: 'GROSS_MS', label: 'yuck stop', min: 200, max: 5000, step: 100,
+    get: () => GROSS_MS, set: v => { GROSS_MS = v; } },
+  { key: 'GROSS_COOLDOWN_MS', label: 'yuck cooldown', min: 1000, max: 60000, step: 500,
+    get: () => GROSS_COOLDOWN_MS, set: v => { GROSS_COOLDOWN_MS = v; } },
+  { key: 'HOVER_PAUSE_MS', label: 'hover hold', min: 100, max: 5000, step: 100,
+    get: () => HOVER_PAUSE_MS, set: v => { HOVER_PAUSE_MS = v; } });

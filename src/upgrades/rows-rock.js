@@ -1,5 +1,7 @@
+import { ROCKHAND_RUNGS } from '../config.js';
 import { S } from '../state.js';
 import { rockhandBite, rockhandRate, rungCost } from '../upgrades.js';
+import { ROCKHAND_SPEED_COST } from '../config.js';
 
 // The bench's rock rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -17,10 +19,14 @@ export const ROCK_ROWS = [
     name: 'pickaxe',
     unit: 'px',
     rung: () => S.rockhandPickLevel,
+    // Its own short ladder: three rungs, each a whole pixel of bite (see
+    // rockhandBite), each eight times the old base -- fewer, dearer, and every
+    // one visible on the row. (feedback7, item 19)
+    rungs: () => ROCKHAND_RUNGS,
     from: () => rockhandBite(),
     to: () => rockhandBite(S.rockhandPickLevel + 1),
-    bill: () => [['spore', rungCost(5, S.rockhandPickLevel)], ['dust', rungCost(300, S.rockhandPickLevel)]],
-    cost: () => rungCost(300, S.rockhandPickLevel),
+    bill: () => [['spore', rungCost(40, S.rockhandPickLevel)], ['dust', rungCost(2400, S.rockhandPickLevel)]],
+    cost: () => rungCost(2400, S.rockhandPickLevel),
     buy: () => S.rockhandPickLevel++,
     show: () => S.seenSpore && S.crew > 0
   },
@@ -37,7 +43,7 @@ export const ROCK_ROWS = [
     rung: () => S.rockhandSpeedLevel,
     from: () => rockhandRate(),
     to: () => rockhandRate(S.rockhandSpeedLevel + 1),
-    cost: () => rungCost(70, S.rockhandSpeedLevel),
+    cost: () => rungCost(ROCKHAND_SPEED_COST, S.rockhandSpeedLevel),
     buy: () => S.rockhandSpeedLevel++,
     show: () => S.crew > 0
   }

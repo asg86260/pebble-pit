@@ -71,6 +71,12 @@ export function drawDoseMote(g, x, y, color, k, v = 0.5) {
 // here is a thing. A shockwave is not a thing -- it is the air after a thing --
 // so it is the one drawing that is a line, and it cannot be mistaken for a grain
 // of anything. It thins as it widens, the way anything spreading does.
+//
+// Not a *clean* circle, though, and that is deliberate too: a full outline read
+// as a drawn shape -- an announcement -- where a blow's edge is ragged. So each
+// spoke gets a hashed roll that drops about a third of the cells and shoves the
+// rest a little in or out, and the roll is reseeded a couple of dozen times over
+// the ring's life so the gaps crackle rather than sit still.
 export function drawShockRing(g, x, y, r, k) {
   // One cell per cell of arc, and never the same cell twice: a ring drawn at an
   // even angle doubles up on the diagonals, and a cell painted twice at half
@@ -85,13 +91,20 @@ export function drawShockRing(g, x, y, r, k) {
   // instead of a wave leaving it.
   g.globalAlpha = 1 - k;
   g.fillStyle = '#000';
+  // The reseed clock for the crackle: a leaf module has no rng, so the "roll"
+  // is a sine hash of the spoke and this tick.
+  const tick = Math.floor(k * 24);
   for (let j = 0; j < n; j++) {
+    const h = Math.sin(j * 127.1 + tick * 311.7) * 43758.5453;
+    const f = h - Math.floor(h);
+    if (f < 0.35) continue;
+    const rj = r + (f - 0.675) * P * 2;
     const a = (j / n) * Math.PI * 2;
     // Rounded away from nought rather than always upwards: `Math.round` goes
     // half-up, so a cell wanted at plus a half lands on 1 and its mirror at
     // minus a half lands on 0, and the ring leans.
-    const cx = x + Math.sign(Math.cos(a)) * Math.round(Math.abs(Math.cos(a) * r / P)) * P;
-    const cy = y + Math.sign(Math.sin(a)) * Math.round(Math.abs(Math.sin(a) * r / P)) * P;
+    const cx = x + Math.sign(Math.cos(a)) * Math.round(Math.abs(Math.cos(a) * rj / P)) * P;
+    const cy = y + Math.sign(Math.sin(a)) * Math.round(Math.abs(Math.sin(a) * rj / P)) * P;
     const key = `${cx},${cy}`;
     if (seen.has(key)) continue;
     seen.add(key);

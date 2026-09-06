@@ -19,8 +19,13 @@ export const QUARRY_BENCH_MAX = 5; // and the deepest it is ever worked
 
 export const LIP_GANG = 6;
 export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
-export const BENCH_COST = 3;       // shards for the first of them
+// Spores for the first of them (the farm feeds the cut -- the comment here said
+// shards for a year while the row spent spores), and priced against a farm that
+// mints them by the hundred: the grind pass measured a spore glut two hundred
+// times the shard trickle, with both coins priced as equals.
+export const BENCH_COST = 10;      // spores for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets
+export const QUARRY_PACE_COST = 12; // the dig-speed ladder's first rung, spores
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a

@@ -20,7 +20,7 @@
 // way the machines ask about their tenders.
 
 import { S, bench, quarry, farm, lab, scrub, tower, apothecary, school } from './state.js';
-import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT } from './config.js';
+import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT, BUILD_PACE_STEP } from './config.js';
 import { JOB } from './jobs.js';
 
 // Where a row's work stands, and therefore whose hands do it.
@@ -98,7 +98,9 @@ export const OPENS_PLACE = {
   unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
   unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
-  unlockapothecary: 'apothecary'
+  unlockapothecary: 'apothecary',
+  // wave7b-build: the construction bench is the last free-standing build.
+  unlockbuildbench: 'buildbench'
 };
 // The sites with no gang of their own, worked by whoever is spare -- and by
 // whoever is nearest, when nobody is. See `rebalance` in upgrades.js.
@@ -120,8 +122,25 @@ export const BUILDER_SITES = SITES.filter(site => SITE_JOB[site] === JOB.BUILD);
 // up there, and whoever is spare goes and does it.
 const noGang = site => !(S[SITE_JOB[site]] > 0);
 
+// wave7b-build: whether a site's open work is the kind that rises out of the
+// ground -- a building or a machine. With the construction bench open, those
+// are the builders' and nobody else's, whoever the site's own gang is: a
+// station raising a machine goes on producing while a builder puts it up.
+const risingKind = w => {
+  const kind = rowFor(w.key)?.kind;
+  return kind === 'building' || kind === 'machine';
+};
+export const hasRisingWork = site => worksAt(site).some(risingKind);
+
+// A site the builders man: the two with no gang of their own always, and --
+// once the bench is open -- any station whose open work is a building or a
+// machine, because those change hands to the builders then.
+export const builderManned = site =>
+  SITE_JOB[site] === JOB.BUILD || (S.buildbenchOpen && hasRisingWork(site));
+
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
+  SITES.filter(site => busyAt(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)
+                                        || (S.buildbenchOpen && hasRisingWork(site))));
 
 // And where a station itself stands, for a body walking to a work that is not a
 // building going up somewhere new. Wired in game.js to the same `stationFoot`
@@ -147,6 +166,15 @@ export const siteX = site => {
 let handsHook = () => 0;
 export const setHands = fn => { handsHook = fn; };
 export const handsAt = site => Math.max(0, handsHook(site) | 0);
+
+// wave7b-build: and how many of them are at ONE work of the site's several. A
+// builder is given a work, not just a site, so two things rising on the yard at
+// once each move only while its own body is present. Null until crew.js wires
+// it, in which case the site total is shared out the old way.
+let handsOnHook = null;
+export const setHandsOn = fn => { handsOnHook = fn; };
+export const handsOn = (site, key) =>
+  handsOnHook ? Math.max(0, handsOnHook(site, key) | 0) : null;
 
 // ...and putting the crew back where the change leaves them. A build starting is
 // what makes spare hands into builders, and a build landing is what makes them
@@ -222,7 +250,7 @@ const YARD_ROW_SITE = {
   house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm',
   unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
-  unlockapothecary: 'apothecary'
+  unlockapothecary: 'apothecary', unlockbuildbench: 'buildbench'
 };
 
 const SITE_BOX = { quarry, farm, scrub, tower, bench, lab, apothecary, school };
@@ -236,11 +264,15 @@ const risingRooms = () => {
 let houseRooms = () => [];
 export const setRooms = fn => { houseRooms = fn; };
 
-export function siteBox(site) {
+// `which` names one particular work on the yard, for a yard holding several at
+// once (wave7b-build): the fence, the bar and the builder for the SECOND thing
+// going up must all stand on the second thing's ground, not the head work's.
+// Left out, it is the head work, which is what every one-work caller means.
+export function siteBox(site, which = null) {
   const box = SITE_BOX[site];
   if (box) return { x: box.x, w: box.w, y: box.y, h: box.h };
   if (site !== 'yard') return null;
-  const w = workAt(site);
+  const w = which || workAt(site);
   if (!w) return null;
   // The settlement is the one thing that does not arrive at its full size: it
   // grows a room at a time, so the ground it covers is the rooms it will have
@@ -292,6 +324,10 @@ export const fullAt = site => worksAt(site).length >= roomAt(site);
 // how far along it is, 0..1 -- for a bar over the site
 export const progressOf = w => (w && w.of > 0 ? Math.min(1, w.done / w.of) : 0);
 export const progressAt = site => progressOf(workAt(site));
+// ...and one particular work's, by key, for a site with several on the go --
+// each rising building is clipped to ITS work's progress, not the head's.
+export const progressOfKey = (site, key) =>
+  progressOf(worksAt(site).find(w => w.key === key) || null);
 
 // What is left of a work, in milliseconds, at the rate it is actually going.
 //
@@ -385,14 +421,25 @@ export function stepWorks(dt) {
     // scholar's work being done, spread over both -- which is what a person
     // moving between two benches looks like from outside.
     const each = hands / list.length;
-    const effort = effortAt(site);
+    // wave7b-build: a builder-manned site does not spread its hands over the
+    // queue -- a body is at ONE work (see `slotFor` in crew/builders.js), so
+    // each work moves by the hands actually at it, and a queued build with
+    // nobody at it stands at nought instead of creeping along at a fraction.
+    // The lab keeps the spread: a scholar between two benches is one scholar's
+    // work being done over both, which is what that looks like from outside.
+    // ...and the builders' own pace ladder, BUILD_GANG's old meaning as a rung.
+    const manned = builderManned(site);
+    const pace = manned ? Math.pow(BUILD_PACE_STEP, S.buildPaceLevel) : 1;
+    const effort = effortAt(site) * pace;
     // Backwards, because a finished work is spliced out of the list it is being
     // walked.
     for (let i = list.length - 1; i >= 0; i--) {
       const w = list[i];
+      const own = manned ? handsOn(site, w.key) : null;
+      const share = own != null ? Math.min(1, own) : each;
       // Nobody there, nothing done. That is the whole of the mechanic: an empty
       // cut builds nothing however long you leave it.
-      if (hands > 0) w.done += each * effort * (dt / 1000);
+      if (share > 0) w.done += share * effort * (dt / 1000);
       // ...but a work that is already through lands whether or not anybody is
       // standing there this frame. The last body walking off on the frame the
       // work completes is not a reason to leave a finished thing unbuilt, and a

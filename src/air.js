@@ -11,7 +11,7 @@
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_LEAN, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
-         AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE,
+         AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE, AIR_STIR_SCATTER,
          RIFT_PULL, RIFT_PULL_R, RIFT_SPIN, RIFT_FEED } from './config.js';
 import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm, rift } from './state.js';
@@ -360,8 +360,16 @@ export function stirAir(sx, sy, dx, dy) {
     // hardest right under the cursor, nothing at all at the edge of its reach
     const fall = 1 - d / AIR_STIR_R;
     const k = push * fall * fall * m.b.take;
-    m.sx = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sx || 0) + ux * k));
-    m.sy = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sy || 0) + uy * k));
+    // Each mote leans its own way off the cursor's heading -- picked once when
+    // the wake first touches it, kept while it is still coasting, dropped when
+    // the draught has died so the next pass deals it a fresh one. All the motes
+    // taking the exact heading was what made the wake slide as one stiff sheet;
+    // the spread is what lets a pass billow the dust open like air.
+    if (!m.sx && !m.sy) m.st = (rand() * 2 - 1) * AIR_STIR_SCATTER;
+    const cs = Math.cos(m.st || 0), sn = Math.sin(m.st || 0);
+    const px = ux * cs - uy * sn, py = ux * sn + uy * cs;
+    m.sx = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sx || 0) + px * k));
+    m.sy = Math.max(-AIR_STIR_CAP, Math.min(AIR_STIR_CAP, (m.sy || 0) + py * k));
     moved++;
   }
   return moved;

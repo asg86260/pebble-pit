@@ -17,12 +17,13 @@ import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
 import { nearBench, nearLab, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
-import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
+import { overPileMark, overShortMark, pileMarkAt, shortMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './lab.js';
 import { reset } from './persist.js';
 import { rosterHit, overRoster } from './roster.js';
 import { potPick, potHover } from './potpick.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
+import { hoverAt } from './crew/pointer.js';
 import './upgrades.js';
 import { card, houseRect } from './crewboard.js';
 import { now } from './clock.js';
@@ -206,6 +207,10 @@ canvas.addEventListener('pointermove', e => {
   track(S.mouse.x, S.mouse.y);
   // there is no hovering on a touchscreen, so the board opens on a tap instead
   if (e.pointerType !== 'touch') {
+    // wave7-crew: a body under the cursor stands still while it is looked at,
+    // so the card over its head is read off somebody who is not walking away.
+    // The stamp refreshes every move; the stage in crew/step.js does the rest.
+    hoverAt(S.mouse.x, S.mouse.y);
     // A cauldron drops its brew picker open when you stand at it, the same way a
     // station's board does -- and it does not fight the boards for the cursor,
     // because the apothecary's board answers to the hut and the pots are the
@@ -389,7 +394,7 @@ const BUILDING_NAME = {
 
 function buildingAt(x, y) {
   for (const key in BUILDING_NAME) if (inRect(standRect(key), x, y)) return BUILDING_NAME[key];
-  if (S.outhouseOpen && inRect(outhouse, x, y)) return 'the outhouse';
+  if (S.outhouseOpen && inRect(outhouse, x, y)) return "the janitor's closet";
   // the drowned pit: anywhere over the liquid answers as the abyss -- and
   // through the torn era, the disc itself answers as the rift
   if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return 'the abyss';
@@ -474,12 +479,16 @@ export function whatIsAt(x, y) {
   if (S.crew >= 1 && inRect(houseRect(), x, y)) return 'house';
   const building = buildingAt(x, y);
   if (building) return building;
+  // wave7-crew: the mess before the rock it lies on. Poop lands on the rock's
+  // flank as readily as on the yard, and the rock answered first for the whole
+  // of its own footprint -- so the one patch a player is pointing at to have
+  // cleared was the one patch the label refused to name.
+  const mess = messAt(x, y);
+  if (mess) return mess;
   if (overBoulder(x, y)) return 'rock';
   const machine = machineAt(x, y);
   if (machine) return machine;
   if (overBird(x, y)) return 'bird';
-  const mess = messAt(x, y);
-  if (mess) return mess;
   if (potAt(x, y)) return 'pot';
   if (balloonAt(x, y)) return 'balloon';
   if (cropAt(x, y)) return 'food';
@@ -559,6 +568,11 @@ function askedAbout(x, y, cx, cy) {
     showTip('pile is full', pileMarkAt(p.key));
     return true;
   }
+  const short = overShortMark(x, y);
+  if (short) {
+    showTip('nobody works here', shortMarkAt(short));
+    return true;
+  }
   const finished = overDoneMark(x, y);
   if (finished) {
     showTip(doneName(finished), doneMarkAt(finished));
@@ -609,7 +623,7 @@ const CURSORS = [
 // finished asking.
 function overAnyMark(x, y) {
   for (const p of S.piles) if (S.pileFull[p.key] && overPileMark(p.key, x, y)) return true;
-  return !!overDoneMark(x, y);
+  return !!overShortMark(x, y) || !!overDoneMark(x, y);
 }
 
 let wearing = '';

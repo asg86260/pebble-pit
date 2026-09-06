@@ -7,7 +7,7 @@ import { HOUSE_CUBE } from '../config.js';
 import { drawHouses, cubes as houseCubes } from '../house.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // The settlement itself. house.js draws on whichever context it is handed --
 // the roster hands it one of its own -- so the frame's is passed in here.
@@ -41,10 +41,10 @@ function risingRoom() {
 // ground rises out of the ground, a room on the third storey rises out of the
 // course under it, which is the only "ground" it has.
 export function drawRisingHouse() {
-  if (risingPlace() !== 'house') return;
+  if (!risingAt('house')) return;
   const room = risingRoom();
   if (!room) return;
-  withRise(true, room.x, room.y + HOUSE_CUBE, HOUSE_CUBE, HOUSE_CUBE, () => {
+  withRise('house', room.x, room.y + HOUSE_CUBE, HOUSE_CUBE, HOUSE_CUBE, () => {
     ctx.fillStyle = '#000';
     ctx.fillRect(room.x, room.y, HOUSE_CUBE, HOUSE_CUBE);
   });

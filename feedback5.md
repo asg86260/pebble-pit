@@ -1,0 +1,21 @@
+- the shacks should get a little love. they read small and meager next to their stations. i wonder if we should personalize each one for their stations so they blend in. 
+- lets not use 'S' for seconds anywhere, lets use the clock icon.
+- lets update the clock icon to have 2 hands.
+- lets make the rung pips a little bit bigger/darker
+- lets move the outhouse upgrade into a new janitor closet shop menu.
+- the worker potion buff looks a bit odd when the worker is walking. its different depending on which direction theyre going and how fast theyre going.
+- when buying another apothecary pot, lets actually render another pot and allow the player to brew 2 potions simultaneously. 
+- lets get rid of the station crates.
+- lets space out stations a bit more. there should be some padding between them. 
+- the wizard tower station should be coupled with the sun station. instead of the sun being all the way to the left, it should be right next to the tower.
+- lets add an upgrade to allow apo workers to carry 2/3/4 potions at a time. 
+- also it two potions dont apply to the haulers, only one applies to the haulers, carry amount. 
+- also the potion inventory needs to be per potion. changing what potion is brewing keeps the potion backlog. lets give the shelf some love, lets make it more like a book shelf with a shelf per type of potion. use a number badge to denote how many there are of each potion type. 
+- i also wonder if we should have per potion upgrades, instead of global potion upgrades. requires more decision making and committing to a type of potion. 
+- the black hole upgrades in the tower should be removed, the black hole shouldnt need upgrades. its not a thing that is bought or upgraded.
+- we should have a stats menu for each resources per second listed. 
+- lets change the apothecary station. lets give it a main building that holds the upgrades, then each apo pot you can choose which potion to brew.
+- the brew animation should be diff for each potion, diff colors. lets have the order go new apo hut, potion shelfs, then the pots.
+- the crit effect should be amplified, lets stack some effects. extra particles, shockwaves, etc.
+- the black hole needs to inhale faster. its way too slow. the black hole should catch everything thats thrown into the pit. the black hole itself looks super lackluster. should be awesome.
+- the dance celebration animation jumps are still too slow. they should just jump up and down.

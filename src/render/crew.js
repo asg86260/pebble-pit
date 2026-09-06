@@ -1,14 +1,13 @@
 // The crew and everything they carry, say and stand under: the bodies, their
-// hats and carts, the bench, the offers and kit stands, the speech, the pointed
+// hats and carts, the bench, the kit stands, the speech, the pointed
 // arrow, and the whole-crew draw. Extracted verbatim from render.js; behavior
-// unchanged. Owns drawBench, drawBody, drawHat, drawCart, drawOffers,
+// unchanged. Owns drawBench, drawBody, drawHat, drawCart,
 // drawDroppedHats, drawKitStands, drawKitCounts, drawSays, drawPointed,
 // drawIntro, drawWorkers and their private helpers. The shared primitives (ctx,
-// drawCircle, drawMark) come from ./ctx.js and ./marks.js; drawCoreGlow and
-// markAt come from the cores and pilemarks clusters that already own them.
+// drawCircle, drawMark) come from ./ctx.js and ./marks.js; drawCoreGlow
+// comes from the cores cluster that already owns it.
 
 import { atPot, tonicColor } from '../apothecary.js';
-import { STATIONS, hasOffer, stationFoot } from '../board.js';
 import { now } from '../clock.js';
 import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
 import { atHome } from '../crew.js';
@@ -17,7 +16,6 @@ import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
 import { indoors } from '../lab.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
-import { markAt } from '../render/pilemarks.js';
 import { drawRoster, kitStands } from '../roster.js';
 import { inHouse } from '../scrubhouse.js';
 import { HATS, HATS_TIGHT, drawSprite, spriteH, spriteW } from '../sprites.js';
@@ -183,66 +181,6 @@ const STAND_W = P * 5, STAND_H = P * 3;
 // Off the kit table with the rest of it: a hat added there stands the right
 // height here without anybody remembering to come and say so.
 
-// An arrow under a station, pointing up at it: there is something on that board
-// you could buy.
-//
-// One mark and one question. There were two for a while -- a flag for a heading
-// you had never read, a dot for something you could afford -- and telling those
-// apart is a thing to learn before the yard can be read at a glance, for a
-// difference that changes nothing about what you do: you walk over and look
-// either way.
-//
-// It stays up while you are standing there reading the board, too. Taking it
-// down was tidy and read as the mark flickering off under the cursor -- and what
-// it says is still true: there is something on that board. It goes when you buy
-// the thing, which is the only event that changes the answer.
-//
-// It goes *under* the station, in the empty ground below the line, where nothing
-// else in this game is drawn. Over the roof it would be among the tower's bar,
-// the lab's tick and the casino's mark, every one of which is about what a place
-// is *doing*; this is about what it is offering, and those want telling apart.
-export function drawOffers() {
-  ctx.fillStyle = '#000';
-  for (const which of STATIONS) {
-    if (stationFoot(which) == null || !hasOffer(which)) continue;
-    const at = markAt(which, 'offer');
-    // A diamond, not an arrow.
-    //
-    // The arrow was a solid head pointing up, and up is a direction -- which
-    // asks to be read as "go this way" when what it means is "there is something
-    // here". A diamond has no direction in it at all: it is a marker, the same
-    // shape a map puts on a place, and it stops competing with the pointer over
-    // a body's head that really does mean go and look at this.
-    //
-    // A real diamond, drawn as a shape rather than built out of cells.
-    //
-    // This is the one mark in the yard that is not on the lattice, and it earns
-    // the exception the same way the core's ring does: it has to be small *and*
-    // unambiguous, and those two things fight on a six-pixel grid. Stepped, a
-    // diamond small enough not to shout is five courses -- and five courses of
-    // square cells is a fat plus, because the corner steps are the same size as
-    // the arms and nothing in the shape tells you which is which. Every attempt
-    // to fix that made it bigger, hollow, or blurred.
-    //
-    // Four points and a fill has no steps in it at all, so the slopes are
-    // slopes at any size. The core is drawn the same way and for the same
-    // reason: some shapes are not made of cells.
-    // Half the size it was. At two and a half cells by three it was the biggest
-    // thing on the ground line -- taller than the plots it hung under and heavier
-    // than the counter beside it -- which is the wrong weight for a mark whose
-    // whole job is to be noticed and then ignored. It has no steps in it, so it
-    // stays a clean diamond at any size; there was nothing keeping it large.
-    const w = P * 1.25, h = P * 1.5;
-    ctx.beginPath();
-    ctx.moveTo(at.x + P / 2, at.y - h);          // top
-    ctx.lineTo(at.x + P / 2 + w, at.y);          // right
-    ctx.lineTo(at.x + P / 2, at.y + h);          // bottom
-    ctx.lineTo(at.x + P / 2 - w, at.y);          // left
-    ctx.closePath();
-    ctx.fill();
-  }
-}
-
 // A hat that has been shaken off somebody: in the air on its own little arc
 // while it falls, then lying where it came down until its owner comes round and
 // fetches it. Drawn off its own position both ways -- it flies off the head the
@@ -309,6 +247,9 @@ export function drawKitCounts(screenAt) {
 //
 // All of it is cells, like everything else, and all of it stands a clear cell
 // above the head so it never touches the load a worker is carrying.
+// wave7-crew: the smallest thing that is unmistakably a question mark, in cells.
+const QUERY = ['111', '001', '011', '000', '010'];
+
 function drawSay(w) {
   const x = Math.round(w.x) + WORKER / 2;
   const top = Math.round(w.y) - P * 2;
@@ -352,6 +293,29 @@ function drawSay(w) {
     ctx.fillRect(Math.round(x - P * 1.5), top - P, P * 3, P);
     ctx.fillRect(Math.round(x - P * 0.5), top - P * 2, P, P);
     ctx.fillStyle = '#000';
+    return;
+  }
+
+  // wave7-crew: stink risers, the comic-strip smell mark -- two thin wavy lines
+  // climbing off the patch the body has just refused to step in. They alternate
+  // their middle cell so the pair reads as wafting rather than printed.
+  if (w.say.mark === 'yuck') {
+    const wave = Math.floor(now() / 240) % 2 ? P : -P;
+    for (const sx of [-P, P]) {
+      const cx = Math.round(x + sx - P / 2);
+      ctx.fillRect(cx, top - P, P - 1, P - 1);
+      ctx.fillRect(cx + wave * (sx > 0 ? 1 : -1), top - P * 2, P - 1, P - 1);
+      ctx.fillRect(cx, top - P * 3, P - 1, P - 1);
+    }
+    return;
+  }
+
+  // wave7-crew: a body held still under the cursor asks what you want of it.
+  if (w.say.mark === '?') {
+    for (let r = 0; r < QUERY.length; r++)
+      for (let c = 0; c < 3; c++)
+        if (QUERY[r][c] === '1')
+          ctx.fillRect(Math.round(x - P * 1.5 + c * P), top - P * 5 + r * P, P - 1, P - 1);
     return;
   }
 

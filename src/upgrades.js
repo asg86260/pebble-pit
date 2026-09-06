@@ -10,7 +10,7 @@ import {
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST, ROCKHAND_BITE_MULT
+  TOWER_CORES, TOWER_DUST, ROCKHAND_RUNGS, CRIT_MULT_RUNGS
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
@@ -24,8 +24,9 @@ import { CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
 import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
-         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
-         MACHINE_TUNE, BUILD_GANG,
+         SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
+         HOUSE_COST0, HOUSE_RATE,
+         MACHINE_TUNE,
          HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
   CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
 import { critChance, critMult } from './crit.js';
@@ -40,6 +41,8 @@ import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows
 // building, and this is the one line of upgrades.js it edits. See C1 in
 // wave-feedback3.md.
 import { nextHouseAt } from './house.js';
+// wave7b-build: how many builder posts the construction bench holds.
+import { buildPosts } from './buildbench.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -141,17 +144,14 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
 export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
-// What a rockhand takes, eased across the ladder the same way `swing` eases a
-// rate rather than added a flat pixel a rung. A flat +1 looked tame on the row
-// and was a straight multiple against the base underneath it -- five rungs
-// bought six times the bite, which is a pit filling faster than the crew you
-// actually have could ever carry it away. Eased and capped at `ROCKHAND_BITE_MULT`
-// total over the ladder, the early rungs still read as the biggest jump and the
-// last rung lands exactly on the cap instead of wherever the arithmetic put it.
-export const rockhandBite = (lvl = S.rockhandPickLevel) => {
-  const k = Math.max(0, Math.min(1, lvl / RUNGS));
-  return 1 + (ROCKHAND_BITE_MULT - 1) * (1 - Math.pow(1 - k, 1.6));
-};
+// What a rockhand takes: a whole pixel a rung, over the pickaxe's own short
+// ladder. The eased curve this replaces bought fractions of a pixel per rung --
+// numbers the row could only show as noise ("1.4 -> 1.7 px") -- so the ladder
+// is three rungs now, each a pixel you can watch land, and each an order dearer
+// (see rows-rock.js). Clamped to the ladder here as well as at load, so a saved
+// level past the new top reads as the top.  (feedback7, item 19)
+export const rockhandBite = (lvl = S.rockhandPickLevel) =>
+  1 + Math.max(0, Math.min(ROCKHAND_RUNGS, lvl | 0));
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet.
@@ -279,7 +279,12 @@ export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JO
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
-export const spareHands = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
+// wave7b-build: once the construction bench stands, building is a job you put
+// somebody ON, so a hired builder is spoken for like anybody else. Before it
+// stands the count is derived FROM the spares (see `rebalance`), so it must
+// not be subtracted from them.
+export const spareHands = () =>
+  S.crew - JOBS.reduce((n, j) => n + S[j], 0) - (S.buildbenchOpen ? S.builders : 0);
 export const idle = () => spareHands();
 
 // --- the kit ----------------------------------------------------------------
@@ -314,6 +319,7 @@ import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
 import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
+import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -406,6 +412,10 @@ const capOfBare = job =>
   // there is a queue, not a second class. Nought before it is built, because a
   // teacher with no school is a body with nowhere to go. (wave6-sim, item 1)
   job === JOB.TEACH ? (S.schoolOpen ? 1 : 0) :
+  // wave7b-build: a builder needs a post at the construction bench, and the
+  // bench holds one plus a rung each of `buildposts`. Nought before it stands:
+  // building is not a job you assign until there is somewhere to be hired at.
+  job === JOB.BUILD ? (S.buildbenchOpen ? buildPosts() : 0) :
   // The rock and the lip have no plan: a rock is as long as it is, and carrying
   // is what a body does when it is on nothing at all.
   Infinity;
@@ -605,10 +615,15 @@ export function rebalance() {
   for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
-  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel',
+  for (const k of ['carryLevel', 'speedLevel', 'pickLevel',
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'harnessLevel', 'bootsLevel'])
     S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
+  // Two ladders got shorter (feedback7 items 19 and 20), so their saved levels
+  // clamp against their own tops rather than the shared RUNGS: a save at pick
+  // level five reads as the new level three, not as two rungs past the ladder.
+  S.rockhandPickLevel = Math.max(0, Math.min(ROCKHAND_RUNGS, S.rockhandPickLevel || 0));
+  S.critMultLevel = Math.max(0, Math.min(CRIT_MULT_RUNGS, S.critMultLevel || 0));
   // Building is not a job on the roster and never will be. You do not decide to
   // have builders -- you decide to build something, and the hands that had
   // nothing else on go and do it, which is what "spare" already meant. So the
@@ -617,11 +632,32 @@ export function rebalance() {
   //
   // Never the whole yard: a build that swallowed every idle body would stop the
   // dust moving altogether, and what this is meant to be is a share of the
-  // yard's attention rather than all of it. See BUILD_GANG -- that many a site,
+  // yard's attention rather than all of it. One a site (the old BUILD_GANG),
   // because the bench, the yard and the school are three places and a body at
   // one of them is not at the other two.
+  // wave7b-build: THE one `if`. With the construction bench standing, builders
+  // are a post the player fills -- an ask like any job, capped by the bench's
+  // posts -- and nothing is derived and nothing is lent: a build with no
+  // builder waits, fenced, which is the bargain the bench strikes. Any loan
+  // still out from before the bench opened is forgiven the way `!sites.length`
+  // forgives them below, so no station is left short a body it is owed.
+  if (S.buildbenchOpen) {
+    for (const w of S.workers) {
+      const job = w.lentFrom;
+      if (!job) continue;
+      delete w.lentFrom;
+      if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
+    }
+    S.lent = [];
+    S.builders = Math.max(0, Math.min(S.builders, buildPosts()));
+    // ...and never more than the crew can stand behind: a shrunk crew gives
+    // the bench back its posts before it gives up its haulers.
+    while (spareHands() < 0 && S.builders > 0) S.builders--;
+    S.haulers = Math.max(0, spareHands());
+    return;
+  }
   const sites = busyBuilderSites();
-  const gang = BUILD_GANG * sites.length;
+  const gang = sites.length;
   // Nobody spare: the nearest body comes and does it. Carrying first -- a
   // hauler is spare by definition and is already counted -- and if there is
   // nobody carrying, the body standing nearest the site is *lent*: taken off
@@ -773,8 +809,11 @@ export const HOUSE_ROW = {
   to: () => S.crew + 1,
   // One pool pays for every job now, so the curve is gentler than the four
   // it replaced: 1.7 a body was steep because it was steep four times over,
-  // and the same eight bodies came to about 1,500 dust between them.
-  cost: () => Math.round(60 * Math.pow(1.35, Math.max(0, S.crew - 1))
+  // and the same eight bodies came to about 1,500 dust between them. The rate
+  // sits above the ladders' 1.6 on purpose: every body compounds the income
+  // every ladder is priced against, so the crew is the one curve that must
+  // outrun the shop's -- the grind pass, DESIGN.md.
+  cost: () => Math.round(HOUSE_COST0 * Math.pow(HOUSE_RATE, Math.max(0, S.crew - 1))
                          * (spelled('thrift') ? SPELL_THRIFT : 1)),
   buy: hire,
   show: () => S.crew > 0
@@ -807,7 +846,8 @@ export const UPGRADES = [
   ...APOTHECARY_ROWS,
   ...TUNING_ROWS,
   ...QUARRY_ROWS,
-  ...OUTHOUSE_ROWS
+  ...OUTHOUSE_ROWS,
+  ...BUILDBENCH_ROWS
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a save
@@ -832,7 +872,9 @@ export const SECTIONS = [
   // the outhouse's own board -- see src/outhouse.js -- for the same reason the
   // lab's and the school's rows left the bench: a decision about a place is
   // made at the place. This one cannot be, because the place is what it buys.
-  { title: 'the outhouse', keys: ['unlockouthouse'] },
+  { title: "the janitor's closet", keys: ['unlockouthouse'] },
+  // wave7b-build: the construction bench and its ladders.
+  { title: 'the build yard', keys: ['unlockbuildbench', 'buildposts', 'buildpace'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }
@@ -907,7 +949,7 @@ export function take(money, n) {
 // It is a `let` and a row in TUNABLE for the same reason the rates are: this is
 // the exchange rate of the whole economy, and the way to find it is to push it
 // while watching the yard rather than to reason about it.
-export const DUST_PER = { spark: DUST_PER_SPARK, shard: 40, spore: 40, core: 500 };
+export const DUST_PER = { spark: DUST_PER_SPARK, shard: DUST_PER_SHARD, spore: DUST_PER_SPORE, core: DUST_PER_CORE };
 
 // What a row costs, as a currency and an amount each. Almost every row in the
 // game is priced in one thing and says so with `cost` and `currency`; the tower

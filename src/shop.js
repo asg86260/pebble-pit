@@ -212,6 +212,14 @@ const STEPPER = '<span class="name"><i class="what"></i><i class="ladder"></i></
 let moved = false;
 export const boardMoved = () => { const was = moved; moved = false; return was; };
 
+// And a softer word for a cell whose TEXT changed while the set of rows did
+// not: a hover rewriting a note, a price ticking over. The board still measures
+// itself after one of these -- the words may genuinely have widened the sheet --
+// but when the width comes back unchanged it keeps its seat, so reading a board
+// cannot walk it sideways. (feedback7, items 2 and 3; see hud in board.js.)
+let reworded = false;
+export const boardReworded = () => { const was = reworded; reworded = false; return was; };
+
 // One row per available upgrade, under a heading for whatever it belongs to.
 //
 // It is rebuilt only when the set of rows changes. Rebuilding throws away every
@@ -434,8 +442,8 @@ function build(el, list, sections, empty) {
 // text node was replaced for every name on the board. Nothing on a shop row
 // changes more than a few times a minute. The board is careful about this in
 // every other place; this is the one that was not.
-const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; moved = true; } };
-const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; moved = true; } };
+const say = (el, text) => { if (el._said !== text) { el._said = text; el.textContent = text; reworded = true; } };
+const sayHTML = (el, html) => { if (el._said !== html) { el._said = html; el.innerHTML = html; reworded = true; } };
 const grey = (el, off) => { if (el.disabled !== off) el.disabled = off; };
 // A row's description, in place of the hover it used to carry -- written into the
 // `.note` line the builder hangs under any row whose upgrade has one. Written the

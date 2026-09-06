@@ -1,0 +1,27 @@
+- pollution is still settling into veritcal bands above the machine its emitted from. its also popping into view, instead of fading in from 0 opacity.
+- lets set a min-width for shop menus, so they dont shift as much.
+- submenus or hovering shouldnt shift the main menu.
+- i kind of hate the diamond notifier for avail shop menus. i wonder if we should add an aura to the shops that have an affordable item. 
+- after the first rock is cleared, the cutscene happens, then the worker rises into the air int he middle of the cutscene. super weird, he should jump out of the way again.
+- workers should be disgusted by walking over poop. they should stop and be grossed out. 
+- the clock icon in the shop menu looks fucked, clean it up.
+- the descriptions are kind of hard to read. 
+- poop hover tooltip doesnt show when poop is on the rock.
+- the outhouse should be updated to the janitors closet. i updated the description.
+- there should be a gap of 1 cell between the worker counter sprites and the specialist sprites. 
+- the janitor doesnt have a specialist, like the wizards, so the default worker shouldnt be displayed. just the worker with the hat.
+- workers through dust evenly spread out in the pit, lets give it a bit more variance and randomness.
+- lets have the buried square pick up the core and toss after the cores start showing up. 
+- the construction sprite and the progress bar overlapp. lets scoot the bar up a bit.
+- i kind of want to explore getting rid of the worker counters and the plus/minus buttons. and start doing the picking up workers and dropping them onto the stations to assign them.
+- lets get rid of the full stat menu when hovering a worker. lets have it just be their name, age, and current job. 
+- its also really hard to pick up workers after a couple speed upgrades. lets have workers pause a moment if hovered over. lets give them aquestion mark over there head while theyre paused too.
+- for the pick axe upgrade for miners, it has decimal steps, which actually dont do anything. lets reduce the number of rungs, but increase by integers. 1, 2, 3. and make them way more expensive.
+- the second crit power upgrade says 4 -> 4
+- lets create a new speed brew, that only applies to haulers. 
+- lets update the potions. potions should filter targets to only applicable targets. haulers shouldnt get work brews, they should only get speed and haul amount brews. 
+- lets add an label to the pots that have a brew selected. small text underneath the pot. 
+- the apo brews that require quarry ore, should be hidden until the quarry is unlocked.
+- lets come up with a potion for sparks, maybe a wizard potion?
+- lets add an indicator that a station is under staffed.
+- thought: its hard to tell if something is a building or a rung type upgrade. wonder if we could introduce a construction type station adjacent to the bench, that will require a worker assigned to it, they will build all new things. we can upgrade the construction station to allow multiple constructions at the same time. 

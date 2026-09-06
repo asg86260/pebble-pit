@@ -23,16 +23,20 @@
 // bottom, and it makes opening the plots something you went and earned rather
 // than something that happened while you were looking elsewhere.
 export const FARM_CORES = 1;       // the plots, and the first thing a core buys
-export const QUARRY_CORES = 2;     // and the cut, once the plots are feeding it
+// One core, not two: a second core is a second rock's worth of *waiting*, which
+// nothing the player does can hurry. The dust half carries the weight instead
+// (see "The grind pass" in DESIGN.md) -- a bill you can push on.
+export const QUARRY_CORES = 1;     // and the cut, once the plots are feeding it
 // Still here, and still what the *dust* half of a bill is measured against:
 // every place above tier one is priced in its own coin and in dust both, so the
 // rock never stops being worth digging. See DESIGN.md, "A rung costs the tier's
 // currency and dust, both."
 export const FARM_DUST = 600;      // the plots, and the first real bill
-export const QUARRY_DUST = 1800;   // the quarry
+export const QUARRY_DUST = 6000;   // the quarry
 export const SCRUB_DUST = 3500;    // the scrubbing house
 
-export const LAB_DUST = 5000;      // the lab
+export const LAB_DUST = 12000;     // the lab
+export const LAB_SPORES = 20;      // and a taste of the ground it multiplies
 export const CASINO_DUST = 15000;  // and the table, which makes nothing
 export const OUTHOUSE_DUST = 900;  // and somewhere for the crew to go
 // A row shows once you are within this much of affording it. Nothing here is

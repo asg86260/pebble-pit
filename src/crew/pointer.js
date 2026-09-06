@@ -6,7 +6,7 @@
 // re-export. stepHat, landing and fall stay in the spine (the STAGES call them).
 
 import { now } from '../clock.js';
-import { DIZZY_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
+import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
 import { indoors } from '../lab.js';
@@ -14,6 +14,7 @@ import { underground } from '../quarry.js';
 import { inHouse } from '../scrubhouse.js';
 import { S } from '../state.js';
 import { unbook } from '../crew.js';
+import { assignDrop } from './assign.js';   // wave7b-assign
 
 // --- picking somebody up ------------------------------------------------------
 // You can pick a body up and put it down somewhere else, and that is all it
@@ -43,6 +44,17 @@ export function workerAt(x, y) {
 }
 
 export const lifted = () => S.workers.find(w => w.lifted) || null;
+
+// wave7-crew: the cursor resting on a body holds it still, so its card is read
+// off somebody standing. Called from input.js on every pointermove; the stamp
+// is refreshed for as long as the cursor stays, so the pause outlives the hover
+// by HOVER_PAUSE_MS and no more. A plain worker field, like `looUntil`: per
+// frame hover state, dropped by `keepOf` on save the way every other clock is.
+export function hoverAt(x, y) {
+  const w = workerAt(x, y);
+  if (w && !w.lifted) w.pauseUntil = now() + HOVER_PAUSE_MS;
+  return w;
+}
 
 export function lift(w) {
   if (!w) return false;
@@ -98,8 +110,19 @@ export function drop(w) {
   const v = throwVel();
   w.lifted = false;
   w.falling = true;
-  w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
-  w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  // wave7b-assign: a drop onto a station with room is a retraining, not a
+  // throw. The ask moves in assignDrop -- the same move the roster buttons
+  // make -- and the body is simply let go where it is: no hurl, so it comes
+  // down where you put it and walks to its new work from there. A drop
+  // anywhere else, or onto a full or invalid target, falls through
+  // to exactly today's throw.
+  if (assignDrop(w)) {
+    w.vx = 0;
+    w.vy = 0;
+  } else {
+    w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
+    w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  }
   // Shaken about rather than thrown: it lands not knowing which way is up. The
   // count is taken while it is in your hand -- see `shakeHeld` -- and spent
   // here, so one shaking is one dizzy spell however long you keep hold of it.

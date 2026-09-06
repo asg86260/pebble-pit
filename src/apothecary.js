@@ -31,6 +31,7 @@ import { RUNGS,
          BREW_CROP, BREW_REAGENT, BREW_MS0, BREW_MS5, BUFF_MS0, BUFF_MS5,
          DOSES0, DOSES5, STRENGTH0, STRENGTH5,
          TONIC_STEW_WORK, TONIC_BRACE_CRIT, TONIC_STRONG_CARRY,
+         TONIC_SWIFT_PACE, TONIC_GLEAM_SPARK,
          BREW_RUNG_SPORE, BREW_RUNG_DUST, APOTH_POTS_MAX, POT_COST, POT_RATE,
          DOSE_CARRY, CARRY_RUNGS, APOTH_POT_ROW, APOTH_POT_STAND, POT_PITCH,
          POT_W, POT_H,
@@ -81,14 +82,34 @@ export const carryDoses = () => DOSE_CARRY[carryRung()];
 // says what it is doing to them -- "a stronger hearty stew" is three words of
 // throat-clearing on a line with a price on the end of it, and "a stronger
 // strong brew" is a joke.
+// `jobs` is who a brew is for, said on the recipe itself (item 22). The stew and
+// the bracing tonic are for everybody who swings or rolls -- every job but the
+// haulers, whose day has no swing in it; the strong brew is for whoever carries;
+// and the two wave-7 recipes are each one trade's own. `takesTonic` below is
+// nothing but a membership test on this list, so who a brew reaches and what the
+// picker offers cannot come apart.
+const EVERY_BUT_HAUL = Object.values(JOB).filter(j => j !== JOB.HAUL);
 export const TONICS = [
   { key: 'stew',   name: 'a hearty stew',   reagent: 'dust',  kind: 'work',
-    base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f', short: 'stew' },   // green
+    base: TONIC_STEW_WORK,   unit: 'work',  color: '#5fb84f', short: 'stew',
+    jobs: EVERY_BUT_HAUL },                                                      // green
   { key: 'brace',  name: 'a bracing tonic', reagent: 'shard', kind: 'crit',
-    base: TONIC_BRACE_CRIT,  unit: 'crit',  color: '#a05fd6', short: 'tonic' },  // purple
+    base: TONIC_BRACE_CRIT,  unit: 'crit',  color: '#a05fd6', short: 'tonic',
+    jobs: EVERY_BUT_HAUL },                                                      // purple
   { key: 'strong', name: 'a strong brew',   reagent: 'shard', kind: 'carry',
-    base: TONIC_STRONG_CARRY, unit: 'carry', color: '#4a86c7', short: 'brew' }   // blue
+    base: TONIC_STRONG_CARRY, unit: 'carry', color: '#4a86c7', short: 'brew',
+    jobs: [JOB.HAUL, JOB.QUARRY] },                                              // blue
+  { key: 'swift',  name: 'speed brew',      reagent: 'spore', kind: 'pace',
+    base: TONIC_SWIFT_PACE,  unit: 'pace',  color: '#d9a441', short: 'speed',
+    jobs: [JOB.HAUL] },                                                          // amber
+  { key: 'gleam',  name: 'gleam brew',      reagent: 'shard', kind: 'spark',
+    base: TONIC_GLEAM_SPARK, unit: 'spark', color: '#e04848', short: 'gleam',
+    jobs: [JOB.WIZARD] }                                                         // red
 ];
+// A shard recipe is hidden until the quarry is open (item 24): shard is the
+// quarry's coin, and a brew priced in a currency the player has never seen is a
+// row about nothing. Asked by the picker and by the potency rows alike.
+export const tonicShown = t => !!t && (t.reagent !== 'shard' || S.quarryOpen);
 export const tonicOf = key => TONICS.find(t => t.key === key) || null;
 
 // --- the potency ladders, one to a tonic --------------------------------------
@@ -123,19 +144,19 @@ export function tonicGain(t) {
   const v = Math.round(tonicVal(t) * 100);
   const what = t.kind === 'work' ? `+${v}% work`
              : t.kind === 'crit' ? `+${v} crit`
+             : t.kind === 'pace' ? `+${v}% haul speed`
+             : t.kind === 'spark' ? `+${v}% sparks`
              : `+${v}% carried, haulers too`;
   return `${what}, ${Math.round(buffMs() / 1000)} ${unitText('s')}`;
 }
 
 // --- who a tonic is for -------------------------------------------------------
-// A hauler takes the carry brew and nothing else (item 12). Its whole day is the
-// walk between a pile and the hole: a quicker swing is a swing it never makes
-// and a lifted crit is a roll nobody asks it for, so a stew handed to a hauler
-// was crop and dust spent on nothing. Said here once, and asked both by the
-// readers below -- so an old save's misplaced dose stops counting -- and by
-// `buffable`, so no stirrer ever walks one out again.
-const takesTonic = (w, t) =>
-  !!t && (t.kind === 'carry' || JOB_OF[w.type] !== JOB.HAUL);
+// The recipe says who it is for (`jobs`, item 22), so this is nothing but a
+// membership test. It was a hand-written hauler exception; the list is asked
+// both by the readers below -- so an old save's misplaced dose stops counting --
+// and by `buffable`, so no stirrer ever walks one out again.
+export const takesTonic = (w, t) =>
+  !!t && t.jobs.includes(JOB_OF[w.type]);
 
 // --- the buffs on a body ------------------------------------------------------
 // A body carries a LIST of dealt tonics: one of each kind at most, each on its
@@ -187,6 +208,19 @@ export function carryBoost(w) {
   const d = kindOf(w, 'carry');
   return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
 }
+// The speed brew on a hauler's legs (item 21): multiply the pace wherever a
+// hauler's own walk is computed. The one call site is crew/hauler.js's use of
+// `haulSpeed()`.
+export function paceBoost(w) {
+  const d = kindOf(w, 'pace');
+  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
+}
+// And the gleam brew on a wizard's bolt (item 25): scale what a strike brings
+// off the star, at wizard.js's one `fire(...)` call.
+export function sparkBoost(w) {
+  const d = kindOf(w, 'spark');
+  return d ? 1 + tonicVal(tonicOf(d.tonic)) : 1;
+}
 
 // Take the spent ones off. Nothing reads a lapsed dose, but a body that works
 // all day would otherwise carry a list of every tonic it has ever been handed.
@@ -228,6 +262,16 @@ export const setStock = (key, n) => {
 // brew: taking rungs away because the shape of the ladder changed would be the
 // one thing a refactor must never do to a save.
 export function migrateApothecary() {
+  // A tonic added after a save was written has no key in the save's maps. The
+  // readers already treat a missing key as zero, but the maps are written back
+  // out whole, so the keys are stood up here once and every save carries the
+  // full recipe book from then on (items 21 and 25).
+  S.potency = S.potency || {};
+  S.shelf = S.shelf || {};
+  for (const t of TONICS) {
+    if (S.potency[t.key] == null) S.potency[t.key] = 0;
+    if (S.shelf[t.key] == null) S.shelf[t.key] = 0;
+  }
   if (S.potTonic != null && !(S.potTonics || []).length) {
     S.potTonics = [S.potTonic];
     S.potTonic = null;
@@ -450,7 +494,11 @@ export function stepStirrer(w) {
 // is, and the picker hands it straight to the same marks the boards print.
 export const brewCost = key => {
   const t = tonicOf(key);
-  return t ? [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]] : [];
+  if (!t) return [];
+  // A recipe whose reagent IS the crop (the speed brew) pays one spore line, not
+  // two: a bill saying "spore 5, spore 2" is the same coin written twice.
+  if (t.reagent === 'spore') return [['spore', BREW_CROP + BREW_REAGENT]];
+  return [['spore', BREW_CROP], [t.reagent, BREW_REAGENT]];
 };
 
 // What is in the pile of a given coin. `purse` in upgrades.js is this, but this
@@ -576,6 +624,7 @@ export function stepApothecary(dt) {
       // Onto the shelf for what it IS, not for the pot that made it: turn this
       // pot to another tonic tomorrow and today's batch is still standing there.
       shelve(key, dosesPer());
+      S.brews++;                                 // and the craft is one batch deeper
       if (!S.potKeep) S.potSpents[i] = true;     // this pot's one-off is spent
       S.dirty = true;
     }
@@ -621,7 +670,7 @@ export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 // A rung on the building, priced spore + dust like every tier-two row. `level`
 // reads the rung and `climb` puts it up, so a ladder kept on `S` as a number and
 // one kept per tonic in a map are the same row to the board.
-const brewRung = ({ key, name, unit, level, climb, from, to, rungs }) => ({
+const brewRung = ({ key, name, unit, level, climb, from, to, rungs, after = 0 }) => ({
   key, kind: 'rung', site: 'apothecary', name, unit,
   rung: level,
   rungs,
@@ -630,7 +679,10 @@ const brewRung = ({ key, name, unit, level, climb, from, to, rungs }) => ({
                ['dust', rungCost(BREW_RUNG_DUST, level())]],
   cost: () => rungCost(BREW_RUNG_DUST, level()),
   buy: climb,
-  show: () => S.apothecaryOpen && level() < (rungs ? rungs() : RUNGS)
+  // `after` is batches landed before the row shows at all: the deeper rows of
+  // the craft reveal themselves as the craft is practiced, rather than the
+  // whole board arriving priced and clickable on the frame the door opens.
+  show: () => S.apothecaryOpen && S.brews >= after && level() < (rungs ? rungs() : RUNGS)
 });
 
 // A ladder kept on `S` under its own name -- the building's four.
@@ -643,7 +695,15 @@ const stateRung = o => brewRung({
 // And the per-tonic potency ladders (item 14). One row a tonic, all in the hut's
 // own section: what you are buying is a deeper version of one recipe, which is a
 // fact about the craft rather than about any one pot.
-const potencyRow = t => brewRung({
+const potencyRow = t => ({
+  ...potencyRowBare(t),
+  // A shard recipe the player cannot brew yet is a recipe worth no rung either
+  // (item 24) -- the row hides with the picker entry until the quarry opens.
+  // And no potency row at all until a first batch has landed (the grind pass):
+  // the deeper craft is earned by brewing.
+  show: () => S.apothecaryOpen && S.brews >= 1 && potencyLevel(t.key) < RUNGS && tonicShown(t)
+});
+const potencyRowBare = t => brewRung({
   key: `potency-${t.key}`,
   name: `a stronger ${t.short}`,
   unit: t.kind === 'crit' ? 'crit' : '%',
@@ -683,7 +743,7 @@ export const APOTHECARY_UPGRADES = [
     // the whole reason this control exists. "Nobody in particular" is the first
     // of them rather than a step off either end.
     options: () => [{ key: '', label: 'whoever is nearest' },
-                    ...PREFER_JOBS.map(j => ({ key: j, label: PREFER_LABEL[j] }))],
+                    ...preferable().map(j => ({ key: j, label: PREFER_LABEL[j] }))],
     at: () => S.potPrefer || '',
     pick: k => choosePrefer(k || null),
     less: () => setPrefer(stepPrefer(-1)),
@@ -702,16 +762,18 @@ export const APOTHECARY_UPGRADES = [
     cost: () => Math.round(POT_COST * Math.pow(POT_RATE, S.apothPots - 1)),
     currency: 'dust',
     buy: () => { S.apothPots++; rebalance(); },
-    show: () => S.apothecaryOpen && S.apothPots < APOTH_POTS_MAX
+    // A second pot is for a craft with batches behind it -- the same earned
+    // reveal the deeper rungs use (`after` on brewRung).
+    show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
   stateRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel',
+  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel', after: 3,
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel',
+  stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel', after: 3,
     from: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel)),
     to: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel + 1)) }),
   // How many vials leave in one pair of hands (item 11). Three rungs, not five:
@@ -735,16 +797,26 @@ export const APOTHECARY_SECTIONS = [
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is
 // nearest) is the step before the first and after the last.
-const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.HAUL];
+const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
+// The jobs the dial actually offers right now: only those some tonic a pot is
+// SET to can land on (item 22). A dial listing "haulers" while every pot is on
+// stew would be offering a preference no dose can honor. With no pot set, the
+// whole list stands -- the dial then reads as what the building could do.
+function preferable() {
+  const set = (S.potTonics || []).map(tonicOf).filter(Boolean);
+  if (!set.length) return PREFER_JOBS;
+  return PREFER_JOBS.filter(j => set.some(t => t.jobs.includes(j)));
+}
 // Said the way every other board says a job -- see `jobSaid` in kit.js. This was
 // a second table of the same words, which is how the haulers ended up as "the
 // crew" here and "haulers" everywhere else, on a board where "the crew" also
 // means the whole settlement.
 const PREFER_LABEL = Object.fromEntries(PREFER_JOBS.map(j => [j, jobSaid(j)]));
 function stepPrefer(d) {
-  const at = PREFER_JOBS.indexOf(S.potPrefer);
+  const list = preferable();                 // the buttons walk what the picker offers
+  const at = list.indexOf(S.potPrefer);
   const next = at + d;
-  return next < 0 || next >= PREFER_JOBS.length ? null : PREFER_JOBS[next];
+  return next < 0 || next >= list.length ? null : list[next];
 }
 
 // What it costs to put the place up: a core, and dust a small early yard can

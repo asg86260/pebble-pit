@@ -242,15 +242,39 @@ export const TESTS = [
     const now = window.__skyX();
     const y = window.__skyXY();               // for the height, which __skyX does not carry
 
+    // Near and far are measured against the whole circuit, not against its top
+    // leg. The hand went round a rectangle, and every leg of it stirs: when the
+    // band was a strip along the top the other three legs crossed empty air and
+    // the top line was the whole story, but the haze has the full sky now
+    // (wave6), so a mote sitting on the bottom leg is stirred like any other --
+    // classifying it "far" because it is a long way *from the top line* filed
+    // the hand's own work under the still air and failed the stillness check
+    // with it.
     const wx0 = s.camX + LEFT / s.zoom, wx1 = s.camX + RIGHT / s.zoom;
-    const at = s.camY + HIGH / s.zoom;        // the line the hand was drawn along
+    const wy0 = s.camY + HIGH / s.zoom, wy1 = s.camY + LOW / s.zoom;
+    // Distance from a point to the rectangle's perimeter: outside, the usual
+    // clamp; inside, how far from the nearest wall the hand ran along.
+    const offRect = (x, yy) => {
+      const dx = Math.max(0, wx0 - x, x - wx1), dy = Math.max(0, wy0 - yy, yy - wy1);
+      if (dx || dy) return Math.hypot(dx, dy);
+      return Math.min(x - wx0, wx1 - x, yy - wy0, wy1 - yy);
+    };
     const near = [], far = [];
     for (let i = 0; i < was.length; i++) {
-      const off = Math.hypot(Math.max(0, Math.max(wx0 - was[i], was[i] - wx1)),
-                             s.camY + y[i][1] - at);
+      const X = was[i], Y = s.camY + y[i][1];
       const moved = Math.abs(now[i] - was[i]);
-      if (off < 50) near.push(moved);
-      else if (off > 300) far.push(moved);
+      // `moved` is x alone -- that is what __skyX carries -- and a hand drags
+      // the smoke the way it is going, so only the two horizontal legs put
+      // their push on the measured axis. A mote on a vertical leg is dragged
+      // just as hard, straight down the axis nobody is reading: counting it as
+      // "near" dilutes the drag, and counting it as "far" (it is a long way
+      // from the top line) files the hand's own work under the still air.
+      // Near is therefore the horizontal legs' close wake; far is anything
+      // well clear of the whole circuit.
+      const onLeg = X >= wx0 && X <= wx1 &&
+                    (Math.abs(Y - wy0) < 30 || Math.abs(Y - wy1) < 30);
+      if (onLeg) near.push(moved);
+      else if (offRect(X, Y) > 300) far.push(moved);
     }
     const mean = a => a.length ? a.reduce((x, v) => x + v, 0) / a.length : 0;
     const most = a => a.length ? Math.max(...a) : 0;

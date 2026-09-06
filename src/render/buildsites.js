@@ -4,7 +4,7 @@
 
 import { P } from '../config.js';
 import { S } from '../state.js';
-import { SITES, rowFor, siteBox, workAt } from '../works.js';
+import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
 
 // --- a busy site looks like a building site -----------------------------------
@@ -36,10 +36,11 @@ function drawBarrierPost(x, y, w, bands) {
 // of the ground, so barriers and tape round it would be fencing off thin air.
 // See #2, "Wave 3.1" in wave-feedback3.md.
 const risingKinds = new Set(['building', 'machine']);
-const underConstruction = site => {
-  const w = workAt(site);
-  return !!w && risingKinds.has(rowFor(w.key)?.kind);
-};
+// wave7b-build: per WORK now, not per site -- the yard holds two builds at
+// once, and a queued one waiting for a builder stands fenced on its own ground
+// too, which is the whole of how the player is told it is waiting.
+const construction = site =>
+  worksAt(site).filter(w => risingKinds.has(rowFor(w.key)?.kind));
 
 // The site sheds no dust of its own, and that is deliberate rather than
 // missing. There was a haze along the foot of whatever was going up -- a puff
@@ -50,9 +51,8 @@ const underConstruction = site => {
 // chips coming off each blow (see `workJig` in crew.js). Dust with nobody
 // making it was decoration.
 export function drawBuildSites() {
-  for (const site of SITES) {
-    if (!underConstruction(site)) continue;
-    const foot = siteBox(site);
+  for (const site of SITES) for (const work of construction(site)) {
+    const foot = siteBox(site, work);
     if (!foot) continue;
 
     const postW = P * 2, postBands = 5, postH = P * postBands;

@@ -16,6 +16,69 @@ story beats, one system, a skip). See "The pit's arc: solid, torn, drowned
 alongside; the `tear`, `grown` and `drown` scenes in tools/look.mjs are the
 eyes on it.
 
+**It collides with the grind pass's lever 5** (below), which proposes bringing
+the rift ladder back as the endless red sink. There is no ladder here and the
+arc's whole argument is that there must not be one — the disc grows by being
+fed, not bought. Lever 5 needs a different sink, or a decision that overrides
+this section.
+
+## Wave 7b — BUILT (2026-09-06): items 16 and 27
+
+Hand-assignment and the build yard, canon in `docs/wave7b.md`, both DESIGN.md
+sections flipped to `(built)`. Follow-ups, none blocking: the buildbench has
+no under-staffed mark (markAnchor doesn't know its geometry); `leftAt` quotes
+the site total so a two-build yard's row clock is approximate while one work
+is manned; bulk assignment and touch lift are future work by design.
+
+## Wave 7 — BUILT (2026-09-06), on `wave7-landing`, awaiting fast-forward
+
+feedback7.md, four tracks (sky/intro, shop UI, crew interaction, apothecary),
+canon in `docs/wave-feedback7.md`. All 25 buildable items are in; the four
+wave test files plus persist-roundtrip are green on the merged tree, and the
+seams (diamond → aura, the under-staffed tooltip, the swift and gleam brew
+call sites, the closet heading) are wired. Items 16 (workers assigned by
+hand) and 27 (the build yard) are designed, not built — their `(design, not
+built)` sections in DESIGN.md await sign-off. Track deviations worth review:
+only job-walkers gross out at poop (bodies mid-commute pass through); the
+buried square tosses cores into the pit's mouth, not at coreHome, to avoid
+the relaunch loop; the pickaxe's top bite is now 4px against the old capped
+2.2px, a real balance shift. The wave's 12 standing reds (found by the full
+node tier at the grind-pass landing) are all diagnosed and fixed
+(2026-09-06): the ram gate and `__fullSites` now ask the pick ladder's own
+top (`ROCKHAND_RUNGS`) instead of the shared `RUNGS`, which cured the five
+ram/machine checks; two board-measuring reds were `getComputedStyle` in the
+node yard (guarded in `panelGap()`); the janitor gagged at the poop it came
+to shovel (the mess crew is exempt from the gross-out now); the jumping
+celebration's check ran on rock 1, which is the reunion where nobody jumps
+by design — it jumps to rock 2 now, and a walking body on the yard gives up
+its walk to dance instead of never dancing; the casino's thousand-chip check
+was funded for six spins against 40% odds and wave 7's motes shifted the
+seeded rng into a six-loss streak — it is funded for its own forty-spin loop
+now. The fan/sky pair was a broken premise in the check itself (the storm
+wait ran the fan on the wound-up sky; the wait comes first now); the books
+rate was green on the re-run. The browser tier's nine reds (same day,
+307/316) are being worked through in the same close-out: the hover-card
+checks against the slim card, the dance-jumping pair (cured with the node
+one), the board-crossing tooltip pair, the loose-core cursor hint, and one
+shard that died without reporting.
+
+## The grind pass — levers 1–4 BUILT (2026-09-06), lever 5 open
+
+The economy measured with a driven playthrough (`tools/node/playbot.mjs`,
+landed with the design): the opening bench clears in eleven minutes, a new
+board is affordable on the frame it opens, spores pile to thirteen thousand
+against seventeen shards, and no six-hour run ever reached a wizard or a
+machine. Diagnosis and six levers — reprice the grounds by mint rate, open
+boards poor, let the bench ladders outrun the crew, turn the core waits into
+earnings, bring back the rift ladder as the endless red sink, re-measure with
+the bot — in "The grind pass (design, not built)" in DESIGN.md, with a target
+pacing table. Playtested and approved 2026-09-06; the re-measure shows the opening
+staggered and the apothecary earning its reveals. Open: lever 5 (the rift
+ladder as the endless red sink); the quarry/lab doors may still sit heavy
+(bot says 200 min / 5.3 h — a saving player will read differently, watch the
+next real save); verify quarry occupancy on a real save before touching
+shard supply (the bot's shard famine may be its own staffing policy).
+
 ## The abyss — BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats

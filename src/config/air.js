@@ -132,10 +132,17 @@ export const AIR_GRIT_LEAN = 0.65;
 // Barely there on purpose. It was strong enough that the dust visibly obeyed the
 // pointer, which makes it a toy you are playing rather than air you are moving
 // through: what is wanted is the suspicion that the room noticed you.
-export let AIR_STIR = 0.04;       // how hard a fast cursor drags a mote along
-export const AIR_STIR_R = 78;     // how far the wake reaches, in screen pixels
-export const AIR_STIR_CAP = 1.1;  // the fastest the draught will carry one
-export const AIR_STIR_EASE = 3.0; // and how quickly it dies, share a second
+//
+// What made even the faint version read as stiff was not the strength but the
+// agreement: every mote in reach took the cursor's exact heading, so the patch
+// slid as one sheet. The scatter below gives each mote its own lean off that
+// heading, held for as long as it is being stirred, so a pass billows the dust
+// open instead of dragging a plate of it.
+export let AIR_STIR = 0.055;      // how hard a fast cursor drags a mote along
+export const AIR_STIR_R = 96;     // how far the wake reaches, in screen pixels
+export const AIR_STIR_CAP = 1.5;  // the fastest the draught will carry one
+export const AIR_STIR_EASE = 2.2; // and how quickly it dies, share a second
+export const AIR_STIR_SCATTER = 0.8; // furthest a mote leans off the heading, radians
 
 // The same hand through the smoke, and fainter again: a mote of haze weighs
 // nothing and hangs a long way off, so what a cursor going past does to it is

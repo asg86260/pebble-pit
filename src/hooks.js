@@ -13,7 +13,7 @@
 
 import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
-         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, RUNGS, ABYSS_AT } from './config.js';
+         QUARRY_BENCH_MAX, FARM_PLOTS_MAX, ROCKHAND_RUNGS, RUNGS, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
 import { workOn, workAt, worksAt, abandonAt, start, stepWorks, SITES } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
@@ -28,11 +28,11 @@ import { SKY, fillSky, poopCols, moteX, moteY, clearSky , retally } from './smog
 import { overPitMouth } from './world.js';
 import { dropCore } from './core.js';
 import { makeMeteor } from './meteor.js';
-import { WIZ_BREW_MS } from './config.js';
+import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
 import { now as clockNow } from './clock.js';
 import { finish } from './lab.js';
-import { syncWorkers, drop as dropHeld, shakeHeld } from './crew.js';
+import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
@@ -86,7 +86,7 @@ export const machineSet = (which, o = {}) => {
 export const fullSites = () => {
   S.benchLevel = QUARRY_BENCH_MAX - QUARRY_BENCH0;
   S.plotLevel = FARM_PLOTS_MAX - FARM_PLOTS0;
-  S.rockhandPickLevel = RUNGS;
+  S.rockhandPickLevel = ROCKHAND_RUNGS;
   S.rockhandSpeedLevel = RUNGS;
   S.quarryOpen = true;
   S.farmOpen = true;
@@ -872,6 +872,22 @@ export const shake = (i = 0) => {
   return { hatOff: !!w.hatOff, shed, spill: w.spill | 0, dizzyFor: w.dizzyFor | 0 };
 };
 
+// wave7b-assign: hold a body over a spot, through the real lift, for looking
+// at the assignment ring. The scene cannot drive a right-button drag; what it
+// wants to see is only what the yard draws while a body hangs there.
+export const hold = (i = 0, x = 0, y = 0) => {
+  const w = S.workers[i];
+  if (!w) return false;
+  liftHeld(w);
+  w.inside = false;                // out of whatever door it was behind; a hook may
+  w.x = x - WORKER / 2;
+  w.y = y - WORKER / 2;
+  S.mouse.x = x;
+  S.mouse.y = y;
+  S.dirty = true;
+  return true;
+};
+
 export const poopSet = f => {
   const q = poopCols();
   for (let c = 0; c < q.length; c++) q[c] = f(c) || 0;
@@ -987,7 +1003,7 @@ export const HANDLES = {
   __brewCost: key => brewCost(key),
   __potKeep: keep => { setKeep(keep); return true; },
   __potPrefer: job => { setPrefer(job); return true; },
-  __muckOverPit: muckOverPit, __look: look,
+  __muckOverPit: muckOverPit, __look: look, __hold: hold,   // wave7b-assign
   // getting about: the surface under a place, the ways there are, and how a
   // given body would get somewhere
   __route: routeOf, __surface: surfaceAt, __ways: waysNow

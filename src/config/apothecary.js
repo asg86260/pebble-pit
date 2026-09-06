@@ -18,7 +18,7 @@ export const APOTHECARY_DUST = 900;    // and dust, a shade above the plots it f
 // design wants; the reagent is the second coin that gives the recipe its
 // identity. Both are spent when a brew starts -- carried in, in spirit, though
 // the general carried-to-the-site machinery is a follow-up (see the report).
-export const BREW_CROP = 5;            // spore a brew, on every tonic -- the green drain
+export const BREW_CROP = 12;           // spore a brew, on every tonic -- the green drain
 export const BREW_REAGENT = 2;         // the second coin a brew, per the recipe
 
 // The pot at level 0, and where each ladder takes it by its fifth rung. Every
@@ -47,14 +47,24 @@ export const STRENGTH5 = 0.60;
 export const TONIC_STEW_WORK = 0.25;   // +25% work, its own main action
 export const TONIC_BRACE_CRIT = 0.08;  // +8 points of crit chance
 export const TONIC_STRONG_CARRY = 0.50;// +50% carried a trip
+// The two wave-7 recipes, each for one trade only (items 21 and 25): the speed
+// brew is the hauler's -- a hauler's whole day is the walk, so pace is the one
+// lever a tonic can pull for it -- and the gleam brew is the wizard's, scaling
+// what a bolt brings off the star. Both climb the same potency ladder shape as
+// the first three.
+export const TONIC_SWIFT_PACE = 0.25;  // +25% haul speed at potency 0
+export const TONIC_GLEAM_SPARK = 0.20; // +20% sparks off a dosed wizard
 
 // The ladders, priced spore + dust like every tier-two row (rockhandpick's
 // shape). `doses a brew` and `bodies a brew` are one rung here, not two: a dose
 // is one body, one buff -- a fresh dose refreshes the timer rather than stacking
 // -- so "more doses" and "more bodies reached" are the same sentence. See the
 // report and DESIGN.md "Open".
-export const BREW_RUNG_SPORE = 5;      // first rung, spore, rungCost-shaped
-export const BREW_RUNG_DUST = 300;     // and the dust half, per the house rule
+// A first rung at about half the door (900 dust), not a fortieth of it: a board
+// you can clear on the frame it opens is a list, not a set of choices. The
+// grind pass measured exactly that happening -- see DESIGN.md.
+export const BREW_RUNG_SPORE = 18;     // first rung, spore, rungCost-shaped
+export const BREW_RUNG_DUST = 450;     // and the dust half, per the house rule
 
 // How many doses a stirrer takes out of the building in one trip, rung by rung.
 // One at level nought -- a body carrying a single vial, which is what it always

@@ -1,4 +1,4 @@
-import { CRIT_CHANCE_COST, CRIT_MULT_COST } from '../config.js';
+import { CRIT_CHANCE_COST, CRIT_MULT_COST, CRIT_MULT_RUNGS } from '../config.js';
 import { critChance, critMult } from '../crit.js';
 import { S } from '../state.js';
 import { rungCost } from '../upgrades.js';
@@ -32,6 +32,10 @@ export const LUCK_ROWS = [
     name: 'power',
     unit: 'x',
     rung: () => S.critMultLevel,
+    // One whole unit a rung -- 3, 4, 5, 6 over three rungs -- so no rung ever
+    // reads "4 -> 4". The costs doubled to make up for there being fewer of
+    // them; see config/crits.js. (feedback7, item 20)
+    rungs: () => CRIT_MULT_RUNGS,
     from: () => critMult(S.critMultLevel),
     to: () => critMult(S.critMultLevel + 1),
     cost: () => rungCost(CRIT_MULT_COST, S.critMultLevel),

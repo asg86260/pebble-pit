@@ -61,6 +61,30 @@ const SCENES = {
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
+  // The jaw's smoke, well into its climb: run the machine half a minute so the
+  // plume has puffs at every age, then look at the air over the cut. What this
+  // is for is the shape of the climb -- a cone that dissolves, not a column.
+  // (wave7-sky, A1.)
+  plume: `${RICH} window.__buy('jaw'); window.__finish(); window.__fast(30);
+          window.__look(window.__state().quarryX - 220);`,
+
+  // The offer aura (wave7-ui): a rich yard where every open board has something
+  // affordable, so the stations breathe their dashed outline. Shot at the lab,
+  // with the bench in frame too.
+  aura: `${RICH} window.__give(50000); window.__fast(1);
+         window.__look(window.__state().farmShed.x - 60);`,
+
+  // The assignment ring (wave7b-assign): a body held over the farm, so the
+  // station under it wears the steady solid ring while the offer auras breathe
+  // around it. The held body hangs off the cursor; __hold is the same lift.
+  // A smaller crew than RICH's: the rich yard fills every plot, and a full
+  // station is exactly the one that must NOT ring.
+  assign: `window.__reset(); window.__crew(3,3,2,2); window.__give(50000);
+           window.__levels({plotLevel: 4}); window.__fast(1);
+           var fs = window.__state().farmShed;
+           window.__hold(0, fs.x + fs.w / 2, fs.y + fs.h / 2);
+           window.__look(fs.x - 60);`,
+
   // A building going up: the lab half out of the ground, its barriers and tape
   // round it, and the builder hammering at it throwing grit off each blow.
   //
@@ -74,6 +98,22 @@ const SCENES = {
   // The same, later: far enough on that the building is most of the way up, to
   // see the clip actually moving rather than to trust one frame of it.
   build2: `${RICH} window.__buy('unlocklab'); window.__fast(70);
+           window.__look(window.__state().labX - 380);`,
+
+  // wave7b-build: the build yard proper -- the construction bench open, a
+  // second post bought, two builders hired, and the lab and the school rising
+  // AT ONCE, each with its own fence, bar and hammering body. Shot mid-rise
+  // for the same reason `build` is.
+  build3: `${RICH} window.__jump(2); window.__buy('unlockbuildbench'); window.__finish();
+           window.__buy('buildposts'); window.__assign('builders',1);
+           window.__assign('builders',1);
+           window.__buy('unlocklab'); window.__buy('unlockschool');
+           window.__fast(30); window.__look(window.__state().labX - 700);`,
+
+  // ...and the trestle itself, with a build queued and NO builder hired: the
+  // fenced footprint standing with its bar empty is the picture of waiting.
+  build4: `${RICH} window.__jump(2); window.__buy('unlockbuildbench'); window.__finish();
+           window.__buy('unlocklab'); window.__fast(20);
            window.__look(window.__state().labX - 380);`,
 
   // The plots, and the tractor crossing them.

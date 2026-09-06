@@ -74,6 +74,10 @@ export const S = {
   buried: false,          // somebody is under it, and still alive
   buriedSay: null,
   buriedSayAt: 0,
+  // wave7-sky (A4): the square's core errand -- where it has walked to (null
+  // means home) and which leg of the fetch-and-toss it is on. See intro.js.
+  buriedX: null,
+  buriedErrand: null,
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
@@ -353,6 +357,10 @@ export const S = {
   // Per-pot runtime, indexed by pot: how far a batch has come, and how many
   // doses are minted and waiting for the stirrer to deal out.
   brewAt: [],             // worker-milliseconds into the current batch, per pot
+  // Batches ever landed, across the run. The building's deeper rows reveal
+  // themselves against this rather than all at once on the frame the door opens
+  // -- an earned reveal, in the seenX pattern (the grind pass, DESIGN.md).
+  brews: 0,
   doseHold: [],           // doses brewed and not yet carried out, per pot
   brewLevel: 0,           // brew speed: crop into a dose, faster
   lengthLevel: 0,         // buff length: how long a dose lasts on the body
@@ -439,7 +447,16 @@ export const S = {
   settleAt: 0,            // the column the pit settler got to last frame
 
   // wave6-sim: the training grounds' own body. See crew/teacher.js.
-  teachers: 0             // bodies put on the school; the works there stall without one
+  teachers: 0,            // bodies put on the school; the works there stall without one
+
+  // --- wave7b-build: the build yard ---
+  // The construction bench: once it stands, builders are a post you hire rather
+  // than a count the yard derives, and new buildings wait for one. See
+  // buildbench.js and DESIGN.md, "The build yard".
+  buildbench: { x: 0, y: 0, w: 0, h: 0 },   // where the trestle stands (reseated at boot)
+  buildbenchOpen: false,  // the construction bench is built
+  buildPostLevel: 0,      // rungs of `buildposts`: +1 builder and +1 concurrent build each
+  buildPaceLevel: 0       // rungs of `buildpace`: how much faster a builder works
 };
 
 // The yard as it is written above, kept.
@@ -507,6 +524,7 @@ export const SAVED = [
   'growers',
   'haulCarryLevel',
   'haulPaceLevel',
+  'brews',
   'shards',
   'spores',
   'farmOpen',
@@ -571,6 +589,17 @@ export const SAVED = [
   'chip',                 // which of CASINO_CHIPS is on the table
   // wave6-sim
   JOB.TEACH,
+  // wave7b-build: the construction bench and its two ladders. The rect is
+  // reseated by the layout at boot, so saving it costs nothing and keeps the
+  // list honest about a field the roundtrip test can see. The builders count is
+  // a hired post once the bench is open, so it is kept like every other job --
+  // and `rebalance` on restore re-derives or clamps it, the way the dealt
+  // counts are.
+  'buildbench',
+  'buildbenchOpen',
+  'buildPostLevel',
+  'buildPaceLevel',
+  JOB.BUILD,
 ];
 
 // The rest of what is saved: fields whose encode or decode is more than a copy
@@ -688,8 +717,10 @@ export const EPHEMERAL = [
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
   'nextHit', 'resetArmed',
-  // worked out again from the counts, or only true for a few lines of a frame
-  JOB.BUILD, 'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
+  // worked out again from the counts, or only true for a few lines of a frame.
+  // (wave7b-build: `builders` moved to SAVED -- once the construction bench is
+  // open it is a hired post like any job, and a hired post survives a reload.)
+  'quarryTotal', 'restaff', 'quarrySpent', 'machineWorking', 'tillerAt',
   // the weather, and the part-grain the house is partway through
   'raining', 'rainFor', 'scrubBank', 'pumpAt',
   'stormFor',                              // wave6-sky: weather in flight is not saved
@@ -701,6 +732,9 @@ export const EPHEMERAL = [
   'placed', 'strips', 'introHeart',
   // housekeeping
   'dirty', 'lastFrame', 'settleAt',
+  // wave7-sky: the buried square's core errand is a moment, not a fact -- a
+  // reload finds the square at home and the core wherever the save left it
+  'buriedX', 'buriedErrand',
 ];
 
 // The two sand grids -- the ground the dust lands on, and the pit dug into it --

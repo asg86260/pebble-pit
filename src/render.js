@@ -22,7 +22,7 @@
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
 
-import { drawApothecary } from './render/apothecary.js';
+import { drawApothecary, drawPotLabels } from './render/apothecary.js'; // drawPotLabels: wave7-brew
 import { drawBalloons, drawBrollies } from './render/balloon.js';
 import { drawWorkBars } from './render/bars.js';
 import { drawBuildSites, drawGrit } from './render/buildsites.js';
@@ -30,7 +30,7 @@ import { drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/ca
 import { drawCore, drawCoreBehind, drawPaid, drawAbyss, drawRift, drawRockSand } from './render/cores.js';
 import { drawKitStandCounts, drawRosterBadgeCounts, drawStockCounts } from './render/counts.js';
 import { drawCount } from './render/counter.js';
-import { drawBench, drawDroppedHats, drawIntro, drawKitStands, drawOffers,
+import { drawBench, drawDroppedHats, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
 import { clearPage, enterScreen, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
@@ -39,6 +39,7 @@ import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
+import { drawAuras } from './render/aura.js';   // wave7-ui
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawScrub } from './render/scrub.js';
@@ -46,7 +47,7 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawLab, drawSchool, drawSmoke } from './render/stations.js';
+import { drawLab, drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
@@ -54,7 +55,7 @@ import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 // which file in `src/render/` each of them ended up in.
 export { canvas, ctx } from './render/ctx.js';
 export { cell, drawCircle, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
-export { risingPlace, withRise } from './render/rise.js';
+export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
 export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from './render/ground.js';
@@ -70,7 +71,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';
+export { drawPileMarks, markAnchor, markAt, overPileMark, overShortMark, pileMarkAt, shortMarkAt } from './render/pilemarks.js';   // wave7-ui: + the short marks
 export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
@@ -137,6 +138,7 @@ const LAYERS = [
   // that piles up *against* the wall and buries its foot is a heap. The buildings
   // are the yard and the loose stuff is what the yard is full of.
   { name: 'bench', draw: drawBench },
+  { name: 'build bench', draw: drawBuildBench }, // wave7b-build: the trestle beside it
   { name: 'settlement', draw: drawSettlement },  // and the crew are drawn later still, so they walk in front of both
   { name: 'rising room', draw: drawRisingHouse },// the one room still going up, if a hire is under way
 
@@ -151,6 +153,7 @@ const LAYERS = [
   { name: 'paid', draw: drawPaid },
   { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
+  { name: 'auras', draw: drawAuras },            // wave7-ui: the offer aura on the buildings themselves
   { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
@@ -159,7 +162,6 @@ const LAYERS = [
   { name: 'tower waves', draw: drawTowerWaves }, // the tower pouring, while it is making a hat
   { name: 'done marks', draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'casino mark', draw: drawCasinoMark }, // and which way the last hand at the table went
-  { name: 'offers', draw: drawOffers },          // and an arrow under whichever of them has something for you
   { name: 'kit stands', draw: drawKitStands },   // and the kit put out ready at each of them
   { name: 'dropped hats', draw: drawDroppedHats },// and any that has been shaken off somebody
   { name: 'roster', draw: drawRosterBodies },    // who is working here, under the place they work
@@ -184,6 +186,7 @@ const LAYERS = [
   { name: 'roster counts', draw: drawRosterBadgeCounts },
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
+  { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, said under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
 

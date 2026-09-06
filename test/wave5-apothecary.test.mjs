@@ -25,6 +25,9 @@ function standApothecary() {
   run(1);
   const started = window.__buy('unlockapothecary');
   window.__finish();
+  // The deeper rows reveal themselves after batches have landed (the grind
+  // pass); the reveal has its own check, and these are not it.
+  yard.S.brews = 5;
   return started;
 }
 
