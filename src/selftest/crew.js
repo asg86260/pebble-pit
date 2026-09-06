@@ -367,6 +367,14 @@ export const TESTS = [
     window.__clearFloor();
     const p = state().piles.find(q => q.key === 'rock');
     for (let x = p.from + 8; x < p.to - 8; x += 8) window.__pile(x, 30);
+    // On the second rock, not the first: the first rock's send-off is the
+    // reunion now, and the reunion is not a party (wave7-sky, A2) -- nobody
+    // dances through it. This group is about the ordinary celebration.
+    window.__jump(2);
+    // ...and settled on it: the jump moves the rock, so the gang re-post first
+    // -- a body mid-commute ducks and walks through the fall, rightly, and
+    // this group is about the ones standing when it starts.
+    for (let i = 0; i < 1800 && state().commuting.length; i++) run(1 / 60);
     window.__next();                             // the rock is off; the next one comes
     // A frame at a time. `runUntil` moves a whole second at a go, and the fall
     // is over inside one -- so the coarse loop steps straight across it and
@@ -378,8 +386,15 @@ export const TESTS = [
     // number of frames and not a round one: the jump is a sine on the beat, so
     // sampled every twenty frames it is read at the same point of it every time
     // and a body jumping steadily reads as a body standing still.
+    // ...and only while it is in the air. The celebration comes BEFORE the
+    // fall now -- the next rock waits for the crew to finish -- so the moment
+    // it lands the gang walk back to work, and a window that runs past the
+    // landing reads that walk-off as the dance wandering.
     const shots = [];
-    for (let i = 0; i < 14; i++) { run(7 / 60); shots.push(state()); }
+    // The last quarter second is the wind-down -- a body one beat from the
+    // landing is allowed to step off toward its work -- so the window stops
+    // short of it.
+    for (let i = 0; i < 14 && state().rockFall > 250; i++) { run(7 / 60); shots.push(state()); }
     const hauls = s => s.workerPos.filter(d => d[0] === 'h');
     const xs = s => hauls(s).map(d => d.split(':')[1].split(',')[0]);
     const ys = s => hauls(s).map(d => d.split(':')[1].split(',')[1]);
@@ -387,8 +402,15 @@ export const TESTS = [
     // says a stack of bodies still reads as a gang: every body rolls its own
     // tempo (`jigRate`), so they are never all at the top of the beat together.
     const apart = shots.map(s => new Set(ys(s)).size);
-    // and that not one of them slid off its own spot while it did it
-    const held = new Set(shots.map(s => xs(s).join(','))).size === 1;
+    // and that not one of them slid off its own spot while it did it.
+    // A body mid-walk is exempt: a walker finishes its walk before it joins
+    // the dance now (wave7-sky, A2), so a hauler that set off on a fetch as
+    // the rock cleared walks through the fall -- rightly. What must hold its
+    // ground is everybody who was standing.
+    const walkersAt = s => new Set(s.commuting.filter(d => d[0] === 'h')
+                                              .map(d => d.split('|')[1].split('>')[0]));
+    const still = shots.map(s => xs(s).filter(x => !walkersAt(s).has(x)));
+    const held = new Set(still.flat()).size <= new Set(xs(shots[0])).size;
     const finite = shots.every(s => ys(s).every(y => Number.isFinite(+y)));
     const hopped = new Set(shots.flatMap(s => ys(s))).size > 1;
     const zone = shots[0].dropZone;

@@ -145,6 +145,10 @@ export function installDom({ W = 800, H = 600, dpr = 1 } = {}) {
   globalThis.innerWidth = W;
   globalThis.innerHeight = H;
   globalThis.devicePixelRatio = dpr;
+  // The seat measures the sheet through this now (feedback7, items 2 and 3);
+  // here there is no layout, so every property reads empty and the callers'
+  // own `|| 0` fallbacks do the rest.
+  globalThis.getComputedStyle = () => ({ columnGap: '', getPropertyValue: () => '' });
   globalThis.requestAnimationFrame = cb => setTimeout(() => cb(performance.now()), 0);
   globalThis.cancelAnimationFrame = clearTimeout;
   globalThis.window = globalThis;
