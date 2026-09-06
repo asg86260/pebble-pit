@@ -10,7 +10,7 @@ import {
   HAUL_MS, HAUL_BASE, QUARRY_FLOOR, TEND_FLOOR, SCHOOL_COST, SCHOOL_DUST,
   QUARRY_BENCH_MAX, FARM_PLOTS_MAX, BENCH_COST, BENCH_RATE, PLOT_COST, PLOT_RATE,
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
-  TOWER_CORES, TOWER_DUST, ROCKHAND_BITE_MULT
+  TOWER_CORES, TOWER_DUST, ROCKHAND_RUNGS, CRIT_MULT_RUNGS
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
@@ -141,17 +141,14 @@ export const commutePace = () => Math.max(COMMUTE_PACE, haulSpeed() * HAUL_EMPTY
 // that made every rockhand in the yard hit harder was doing two jobs at once, and
 // it sat under `you` while half of what it bought was on the rock.
 export const pickCount = () => 1 + S.pickLevel;         // pixels your own swing takes
-// What a rockhand takes, eased across the ladder the same way `swing` eases a
-// rate rather than added a flat pixel a rung. A flat +1 looked tame on the row
-// and was a straight multiple against the base underneath it -- five rungs
-// bought six times the bite, which is a pit filling faster than the crew you
-// actually have could ever carry it away. Eased and capped at `ROCKHAND_BITE_MULT`
-// total over the ladder, the early rungs still read as the biggest jump and the
-// last rung lands exactly on the cap instead of wherever the arithmetic put it.
-export const rockhandBite = (lvl = S.rockhandPickLevel) => {
-  const k = Math.max(0, Math.min(1, lvl / RUNGS));
-  return 1 + (ROCKHAND_BITE_MULT - 1) * (1 - Math.pow(1 - k, 1.6));
-};
+// What a rockhand takes: a whole pixel a rung, over the pickaxe's own short
+// ladder. The eased curve this replaces bought fractions of a pixel per rung --
+// numbers the row could only show as noise ("1.4 -> 1.7 px") -- so the ladder
+// is three rungs now, each a pixel you can watch land, and each an order dearer
+// (see rows-rock.js). Clamped to the ladder here as well as at load, so a saved
+// level past the new top reads as the top.  (feedback7, item 19)
+export const rockhandBite = (lvl = S.rockhandPickLevel) =>
+  1 + Math.max(0, Math.min(ROCKHAND_RUNGS, lvl | 0));
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
 // in the stylesheet.
@@ -605,10 +602,15 @@ export function rebalance() {
   for (const job of JOBS) S[job] = Math.min(S[job], capOf(job));
   for (const job of Object.keys(TRADE_OF)) S[TRADE_OF[job]] = Math.max(0, S[TRADE_OF[job]]);
   // and no ladder past its top, whatever a save says
-  for (const k of ['carryLevel', 'speedLevel', 'pickLevel', 'rockhandPickLevel',
+  for (const k of ['carryLevel', 'speedLevel', 'pickLevel',
                    'rockhandSpeedLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'harnessLevel', 'bootsLevel'])
     S[k] = Math.max(0, Math.min(RUNGS, S[k] || 0));
+  // Two ladders got shorter (feedback7 items 19 and 20), so their saved levels
+  // clamp against their own tops rather than the shared RUNGS: a save at pick
+  // level five reads as the new level three, not as two rungs past the ladder.
+  S.rockhandPickLevel = Math.max(0, Math.min(ROCKHAND_RUNGS, S.rockhandPickLevel || 0));
+  S.critMultLevel = Math.max(0, Math.min(CRIT_MULT_RUNGS, S.critMultLevel || 0));
   // Building is not a job on the roster and never will be. You do not decide to
   // have builders -- you decide to build something, and the hands that had
   // nothing else on go and do it, which is what "spare" already meant. So the

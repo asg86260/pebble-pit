@@ -133,3 +133,6 @@ export function tune(key, v) {
   t.set(v);
   return t.get();
 }
+
+// wave7-ui: the pulsing offer aura around a station with something affordable.
+export * from './config/aura.js';

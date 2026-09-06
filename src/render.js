@@ -39,6 +39,7 @@ import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
+import { drawAuras } from './render/aura.js';   // wave7-ui
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawScrub } from './render/scrub.js';
@@ -70,7 +71,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';
+export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt, shortMarkAt } from './render/pilemarks.js';   // wave7-ui: + shortMarkAt
 export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
@@ -150,6 +151,7 @@ const LAYERS = [
   { name: 'paid', draw: drawPaid },
   { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
+  { name: 'auras', draw: drawAuras },            // wave7-ui: the offer aura on the buildings themselves
   { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls

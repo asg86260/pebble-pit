@@ -3,8 +3,9 @@
 // from ./ctx.js.
 
 import { P, TOWER_SHAFT } from '../config.js';
-import { S, tower } from '../state.js';
-import { SITES, progressOf, siteBox, worksAt } from '../works.js';
+import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
+import { SITES, progressAt, progressOf, siteBox, worksAt } from '../works.js';
+import { risingPlace } from './rise.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
 import { ctx } from './ctx.js';
@@ -46,7 +47,7 @@ export function bar(cx, cy, at) {
 // had guessed for it -- the settlement grows a course at a time, so its bar
 // ended up inside the building rather than above it. Nothing here is placed by
 // hand any more.
-const BAR_CLEAR = P * 4;                 // how far above the top of a thing it floats
+const BAR_CLEAR = P * 7;                 // how far above the top of a thing it floats
 
 // The spire: the main shaft, without the turret hung off the right-hand side.
 // The tower's own rect spans both, so a bar centered on it lands right of the
@@ -73,13 +74,40 @@ const BUILDING_OF = { quarry: () => quarryShed(), farm: () => farmShed(),
                       // itself is deleted. (feedback6 item 9)
                       tower: towerSpireBox };
 
+// The finished rect of each place a `kind: 'building'` work can raise, keyed
+// the way risingPlace names them. The rects stand in the layout before the
+// place opens, so they are readable mid-build; the house is the one that grows,
+// and siteBox already answers with the rooms the build will have.
+const RISING_BOX = { lab: () => lab, scrub: () => scrub, school: () => school,
+                     casino: () => casino, outhouse: () => outhouse,
+                     tower: towerSpireBox,
+                     apothecary: () => apothHut(),
+                     quarry: () => quarryShed(), farm: () => farmShed(),
+                     house: () => siteBox('yard') };
+
 export function barSpot(site) {
   const box = BUILDING_OF[site] ? BUILDING_OF[site]() : siteBox(site);
   if (!box) return null;
   // A hole in the ground has no top above the line -- the quarry's box starts at
   // the ground and goes down -- so the bar hangs off the ground line for those,
   // which is the top of them as far as anybody looking at the yard is concerned.
-  const top = Math.min(box.y ?? S.groundY, S.groundY);
+  let top = Math.min(box.y ?? S.groundY, S.groundY);
+  // A building rising out of the yard is only as tall as its progress -- withRise
+  // clips the sprite to the risen slice -- so the bar tracks the slice's current
+  // top rather than the ground line. The yard's own box carries no `y` for an
+  // unlock (the ground is reserved by x alone), so the finished height is read
+  // off the PLACE the work is raising: the same station rect the sprite is
+  // clipped against, so the bar stays BAR_CLEAR ahead of the rising edge at any
+  // progress and can never end up inside the drawing. (feedback7, item 15)
+  if (site === 'yard') {
+    const place = risingPlace();
+    const b = place && (RISING_BOX[place] ? RISING_BOX[place]() : null);
+    if (b) {
+      const p = Math.max(0, Math.min(1, progressAt('yard')));
+      const roof = Math.min(b.y ?? S.groundY, S.groundY);
+      top = S.groundY - (S.groundY - roof) * p;
+    }
+  }
   return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
 }
 
