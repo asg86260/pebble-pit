@@ -55,7 +55,9 @@ group('a fully slotted yard is a thing a check can ask for', async () => {
   return [
     ok(full.benches === 5, 'the cut is down to its last bench', `${full.benches}`),
     ok(full.plots === 7, 'and the whole plot is broken', `${full.plots}`),
-    ok(full.pick === 5 && full.speed === 5, "and the rock's kit is bought out",
+    // The pick ladder is three whole-pixel rungs since wave 7; speed keeps
+    // the house five.
+    ok(full.pick === 3 && full.speed === 5, "and the rock's kit is bought out",
        `pick ${full.pick}, speed ${full.speed}`),
     ok(quarry && quarry.cap === 5, 'so the cut has five places to stand',
        `cap ${quarry && quarry.cap}`),

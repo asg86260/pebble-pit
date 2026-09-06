@@ -160,6 +160,10 @@ group('a crit leaves one shock, however many grains it threw', async () => {
 group('the celebration is jumping, and nothing but jumping', async () => {
   window.__reset();
   window.__crew(3, 3);
+  // Past the first rock: its send-off is the reunion, where by design (wave 7,
+  // item 5) nobody jumps -- the pair meets and everyone else steps clear. The
+  // dance this check is about belongs to every ordinary rock after it.
+  window.__jump(2);
   run(2);
   window.__next();                           // the rock goes off; the yard dances
   run(1 / 60);

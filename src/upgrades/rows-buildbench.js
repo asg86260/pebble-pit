@@ -55,6 +55,7 @@ export const BUILDBENCH_ROWS = [
     key: 'buildpace',
     name: 'a better hammer',
     pct: true,
+    unit: 'x',
     rung: () => S.buildPaceLevel,
     rungs: () => BUILD_PACE_RUNGS,
     from: () => Math.pow(BUILD_PACE_STEP, S.buildPaceLevel),

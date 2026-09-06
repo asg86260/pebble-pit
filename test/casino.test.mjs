@@ -152,6 +152,11 @@ const band = n => n <= 100 ? n : Math.min(700, Math.round(100 + 150 * Math.log10
 
 group('the heap past the first band is a reading of the pot', async () => {
   atTheTable(2);                                 // the thousand chip
+  // Fund the whole loop below. The table's 6000 covers six spins at this chip
+  // against 40% odds -- a losing streak the seeded rng actually dealt once
+  // wave 7's motes started drawing on the same stream -- while the loop is
+  // written for forty. The check is about the heap, not the bankroll.
+  window.__give(40000);
   const stake = state().stakes.dust;
 
   // Play it until a win, so the pot on the table is two thousand -- which is the

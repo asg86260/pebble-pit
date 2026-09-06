@@ -252,6 +252,10 @@ const STAGES = [
       w.say = null;
       return true;
     }
+    // The crew that works the mess is not grossed out by it -- a janitor
+    // gagging at the poop it came to shovel circled it forever and the pile
+    // only grew; same for any body already on a shovel errand.
+    if (w.type === TYPE.JANITOR || w.muckAt != null) return false;
     if (c.now < (w.grossOkAt || 0) || dancing(c)) return false;
     const dir = w.face || 1;
     const ahead = colAt(w.x + WORKER / 2 + dir * P);

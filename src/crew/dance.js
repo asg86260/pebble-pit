@@ -186,9 +186,16 @@ function jig(w, now, zone, endsAt) {
     // to the dance mid-stride latches wherever its walk happened to have it --
     // and if anything then moves the ground question out from under it (the
     // cutscene's camera, a route's own footing), the body floats on a foot that
-    // was never the ground. A walking body has a walk to finish; it joins the
-    // dance on the frame its feet are its own.
-    if (w.walking) return;
+    // was never the ground. On the yard the celebration owns the frame, so the
+    // walk is given up and the body stood on its own ground before the foot is
+    // taken -- "wait for the walk to finish" was tried and a commute the dance
+    // itself preempts never finishes, so nobody mid-errand ever danced. Off the
+    // yard (a face, a ladder) the walk keeps the body; it joins if it tops out.
+    if (w.walking) {
+      if (!onYard(w)) return;
+      w.walking = false; w.legs = null; w.leg = 0;
+      w.y = stand(w);
+    }
     // The ground this body will dance on, for as long as it dances. Everything
     // below turns on it: the height of every move is measured off `foot`, and
     // the step turns back where the footing changes.

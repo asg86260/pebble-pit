@@ -1,4 +1,4 @@
-import { BELT_BILL, CAP_STEP, RAM_BILL, RUNGS } from '../config.js';
+import { BELT_BILL, CAP_STEP, RAM_BILL, ROCKHAND_RUNGS, RUNGS } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
@@ -43,7 +43,10 @@ export const BENCH_ROWS = [
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },
-    show: () => canBuy('ram', () => S.rockhandPickLevel >= RUNGS && S.rockhandSpeedLevel >= RUNGS,
+    // The pick ladder is shorter than the house RUNGS (wave 7 cut it to whole
+    // pixels), so the gate asks its own top, not the shared one -- a gate on a
+    // rung nobody can buy is a machine that is never for sale.
+    show: () => canBuy('ram', () => S.rockhandPickLevel >= ROCKHAND_RUNGS && S.rockhandSpeedLevel >= RUNGS,
                        () => kitFull(JOB.ROCK))
   },
   {
