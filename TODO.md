@@ -12,7 +12,15 @@ built)` sections in DESIGN.md await sign-off. Track deviations worth review:
 only job-walkers gross out at poop (bodies mid-commute pass through); the
 buried square tosses cores into the pit's mouth, not at coreHome, to avoid
 the relaunch loop; the pickaxe's top bite is now 4px against the old capped
-2.2px, a real balance shift. Full suites still owed on main after the merge.
+2.2px, a real balance shift. The full node tier ran on main after the merge
+(2026-09-06, at the grind-pass landing): 12 reds, all present at dd7d7bd
+before the grind pass merged, so they are the wave's own. The cluster:
+five ram/machine checks (the ram's gate reads `rockhandPickLevel >= 5`
+against a pick ladder wave 7 cut to fewer rungs, so the ram is never for
+sale), `__fullSites` (same ladder), the janitor's shed, the fan draught and
+sky give-back pair, the books board's clocked rate, the jumping
+celebration, and wave5-boards' rebuild-on-land. Undiagnosed beyond the
+ram-gate reading; each verified red at dd7d7bd.
 
 ## The grind pass — levers 1–4 BUILT (2026-09-06), lever 5 open
 

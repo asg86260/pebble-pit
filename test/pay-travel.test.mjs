@@ -20,6 +20,9 @@ const centre = s => s.x + s.w / 2;
 group('an apothecary row pays to the cauldron, not the bench', async () => {
   stand();
   const apX = centre(yard.apothecary), benchX = centre(yard.bench);
+  // The second pot reveals after batches have landed (the grind pass); the
+  // reveal has its own check, and this one is about where the dust flies.
+  yard.S.brews = 5;
   yard.S.paid = [];
   window.__buy('anotherpot');                      // an apothecary row, priced in dust
   const grains = yard.S.paid;
