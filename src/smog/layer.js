@@ -431,6 +431,20 @@ export function muckAtCol(c) {
   return c >= 0 && c < floor.cols ? messAt(c) : 0;
 }
 
+// A stable number out of who this body is (wave7-sky, A3). The gang used to
+// space themselves at exactly MUCK_ELBOW along a heap, because every claim
+// scanned from the same place and reserved the same stride -- a picket line,
+// not a crew. Each body's jitter and stride come off a hash of its name, so
+// they are the same every frame (a per-frame rand() would send the body to a
+// different patch each frame, which is a body that never settles) and different
+// per body, which is all the irregularity a crowd needs.
+const handHash = hand => {
+  const s = String((hand && (hand.name || hand.type)) || '');
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+};
+
 export function nearestMuck(wx, taken, hand) {
   // What this pair of hands is allowed to shift. Weather is everybody's; what a
   // body left is the janitor's -- so a hauler walking to the nearest mess must
@@ -463,7 +477,16 @@ export function nearestMuck(wx, taken, hand) {
   const canDescend = hand && (hand.type === TYPE.HAUL || hand.type === TYPE.JANITOR);
   const m = muckCols();
   const here = c => { let n = 0; for (const s of mine) n += s[c] || 0; return n; };
-  const home = colAt(wx);
+  // Where the scan starts and how much ground a claim reserves are this body's
+  // own (wave7-sky, A3): the jitter shifts its idea of "nearest" a few columns
+  // one way, the stride varies its elbow room a little, and between them a gang
+  // on one heap stands at uneven gaps instead of on a picket line. The claim
+  // itself is untouched -- one column, one body, checked against `taken` the
+  // same as ever -- so nothing about the reservation is loosened.
+  const h = handHash(hand);
+  const jitter = h % (MUCK_ELBOW * 2 + 1) - MUCK_ELBOW;
+  const stride = MUCK_ELBOW - 1 + ((h >> 3) % 4);      // ELBOW-1 .. ELBOW+2
+  const home = colAt(wx) + jitter;
   for (let d = 0; d < m.length; d++) {
     for (const c of (d ? [home - d, home + d] : [home])) {
       if (c < 0 || c >= m.length || !here(c)) continue;
@@ -474,7 +497,7 @@ export function nearestMuck(wx, taken, hand) {
       // next body one cell over -- close enough that it never has to walk, and
       // the two of them stand in each other for the whole clear-up. Reserving a
       // body's width either side is what actually sends the next one elsewhere.
-      if (taken) for (let k = c - MUCK_ELBOW; k <= c + MUCK_ELBOW; k++) taken.add(k);
+      if (taken) for (let k = c - stride; k <= c + stride; k++) taken.add(k);
       return c * P + P / 2;
     }
   }

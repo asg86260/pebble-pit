@@ -27,9 +27,11 @@
 import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_MS,
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
-         MEET_IN_MS, MEET_MS, PART_MS } from './config.js';
+         MEET_IN_MS, MEET_MS, PART_MS,
+         CORE_SIZE, DUCK_PACE,
+         BURIED_REACH, BURIED_HOLD_MS, BURIED_TOSS_IN } from './config.js';
 import { S, pit } from './state.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { makeBoulder, boulderAlive } from './rock.js';
 import { spawnChip, aim } from './dust.js';
 import { walkY, setZoom, clampCam } from './world.js';
@@ -442,16 +444,117 @@ function finish() {
 export const buriedVisible = () =>
   S.buried && (S.rockFall > 0 || !S.boulder.some(row => row.some(v => v)));
 
+// Where the square lives: the middle of the yard, the spot every rock lands on.
+const buriedHome = () => Math.round((S.cx - WORKER / 2) / P) * P;
+
+// Where it is right now -- home, unless the core errand has walked it somewhere
+// (wave7-sky, A4). The drawing reads this, so the walk is the picture.
 export function buriedAt() {
-  const x = Math.round((S.cx - WORKER / 2) / P) * P;
+  const x = S.buriedX ?? buriedHome();
   return { x, y: walkY(x + WORKER / 2) };
 }
 
 // and every so often, while it is in sight, it says something
 export function stepBuried(t) {
-  if (!buriedVisible()) { S.buriedSay = null; return; }
+  if (!buriedVisible()) {
+    // Out of sight, so the errand ends. If the rock came down mid-hold the core
+    // in its arms goes back on the ground where it stood -- a core is never
+    // lost -- and if that ground is under the new rock, core.js's own re-launch
+    // throws it clear, which is exactly what that rule is for.
+    if (S.buriedErrand && S.buriedErrand.phase === 'hold' && !S.coreItem) {
+      const at = buriedAt();
+      S.coreItem = { x: at.x + WORKER / 2 - CORE_SIZE / 2, y: at.y, vx: 0, vy: 0, rest: false };
+    }
+    S.buriedSay = null; S.buriedErrand = null; S.buriedX = null;
+    return;
+  }
+  stepBuriedToss(t);
   if (S.buriedSay && t < S.buriedSay.until) return;
   S.buriedSay = t < (S.buriedSayAt || 0) ? null
     : { mark: 'dots', n: 1 + Math.floor(rand() * 3), until: t + INTRO_BEAT * 0.9 };
   if (S.buriedSay) S.buriedSayAt = t + INTRO_BEAT * 1.6;
+}
+
+// --- the square and a stray core (wave7-sky, A4) --------------------------------
+// The one under the rock helps the only way it can: a core that comes to rest
+// near its spot gets carried toward the hole. It walks over -- it is a position,
+// never a pop -- picks the thing up, holds it a beat, and tosses it into the
+// pit's mouth on the same arc everything else thrown in this yard flies. If the
+// pit is full, `bankCore` refuses, core.js throws the core back out by the lip
+// -- well past this square's reach -- and the `tossed` mark keeps the square
+// from fetching the same core twice, so a full pit is one throw and done, not a
+// loop of two systems lobbing one core at each other.
+
+// One step of a walk, at the duck's pace: true while it is still moving.
+function walkBuried(to) {
+  const at = S.buriedX ?? buriedHome();
+  const d = to - at;
+  const step = DUCK_PACE * frames();
+  if (Math.abs(d) <= step) { S.buriedX = to; return false; }
+  S.buriedX = at + Math.sign(d) * step;
+  return true;
+}
+
+function stepBuriedToss(t) {
+  // Not during any scene: while the opening or the reunion owns the yard the
+  // square is part of the story, not on an errand.
+  if (S.intro) return;
+  const k = S.coreItem;
+  const e = S.buriedErrand;
+
+  if (!e) {
+    // Nothing to do: drift home, if an interrupted errand left it out.
+    if (S.buriedX != null && !walkBuried(buriedHome())) S.buriedX = null;
+    if (S.coreBuried || S.boulderNo <= 1) return;
+    // Only a RESTING core. One still flying belongs to its arc, and one the
+    // rock's own re-launch (core.js) is about to move is not at rest either --
+    // reacting to `rest` alone is what keeps the two systems out of each
+    // other's hands.
+    if (!k || !k.rest || k.tossed) return;
+    // Within reach -- measured past the rock's own footprint, not from the
+    // square itself. A core is always thrown clear of the footprint when it
+    // drops (`dropCore`), and the footprint alone is wider than any bare
+    // distance a square would sensibly walk, so "near the square" means "just
+    // past the edge of where the rock stood": the ground a dropped core
+    // actually comes to rest on.
+    const at = buriedAt();
+    const half = (S.gw * P) / 2;
+    if (Math.abs(k.x + CORE_SIZE / 2 - (at.x + WORKER / 2)) - half > BURIED_REACH) return;
+    S.buriedErrand = { phase: 'walk' };
+    return;
+  }
+
+  if (e.phase === 'walk') {
+    // Gone mid-walk -- picked up by the player, re-launched clear of the rock,
+    // rolled off. The errand is over; home is the errand now.
+    if (!k || !k.rest) { S.buriedErrand = null; return; }
+    if (walkBuried(k.x + CORE_SIZE / 2 - WORKER / 2)) return;
+    // Arrived: pick it up. The core leaves the world for the length of the
+    // hold -- it is in the square's arms -- and the throw puts it back.
+    S.coreItem = null;
+    e.phase = 'hold';
+    e.until = t + BURIED_HOLD_MS;
+    S.buriedSay = { mark: 'heart', until: t + BURIED_HOLD_MS + INTRO_BEAT };
+    S.buriedSayAt = t + BURIED_HOLD_MS + INTRO_BEAT * 1.6;
+    S.dirty = true;
+    return;
+  }
+
+  if (e.phase === 'hold') {
+    if (t < e.until) return;
+    // The toss: from its hands, into the mouth of the pit -- well inside the
+    // lip, the way the opening's own demonstration throws (see `show`), so the
+    // arc's spread still lands it in the hole. Landing in the pit banks it
+    // through the same physics every core lands by (`stepCore`).
+    const at = buriedAt();
+    const fx = at.x + WORKER / 2, fy = at.y;
+    const v = aim(fx, fy, pit.x + P * BURIED_TOSS_IN, CORE_SIZE);
+    S.coreItem = { x: fx - CORE_SIZE / 2, y: fy, vx: v.vx, vy: v.vy, rest: false, tossed: true };
+    e.phase = 'home';
+    S.dirty = true;
+    return;
+  }
+
+  // and back to its spot, which is where it lives
+  if (!walkBuried(buriedHome())) { S.buriedX = null; S.buriedErrand = null; }
 }

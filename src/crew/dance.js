@@ -18,6 +18,8 @@ import { commutePace } from '../upgrades.js';
 import { siteBox } from '../works.js';
 import { duck, stand } from '../crew.js';
 import { onYard } from './body.js';
+import { buriedAt } from '../intro.js';
+import { MEET_CLEAR } from '../config.js';
 
 // --- the dance ----------------------------------------------------------------
 // A rock is off and the gang have the ground to themselves. This used to be one
@@ -179,6 +181,14 @@ function jig(w, now, zone, endsAt) {
   // roll is what spread the gang out; jumping goes nowhere, so a body's mark is
   // its own feet and there is nothing to spread.
   if (w.jigAt == null) {
+    // Never latch a walking body's foot (wave7-sky, A2). `w.foot` is taken from
+    // `w.y` below and every move measures its height off it, so a body handed
+    // to the dance mid-stride latches wherever its walk happened to have it --
+    // and if anything then moves the ground question out from under it (the
+    // cutscene's camera, a route's own footing), the body floats on a foot that
+    // was never the ground. A walking body has a walk to finish; it joins the
+    // dance on the frame its feet are its own.
+    if (w.walking) return;
     // The ground this body will dance on, for as long as it dances. Everything
     // below turns on it: the height of every move is measured off `foot`, and
     // the step turns back where the footing changes.
@@ -478,6 +488,26 @@ export function celebrate(w, now, zone) {
   w.resting = false;                   // a dance is not a break
   w.idleAt = null;
   w.lunge = 0;
+
+  // The reunion is not a party (wave7-sky, A2). During the first-rock meeting
+  // the camera is moving and the moment belongs to the pair, so nobody jumps:
+  // a body latched mid-camera-move floated, and five squares bouncing around a
+  // reunion read as noise over it. Everyone but the pair steps clear of the
+  // meeting zone exactly as they duck a falling rock, and stands. The ordinary
+  // celebration -- every rock after this one -- keeps the dance.
+  if ((S.intro === 'meet' || S.intro === 'part') && !S.reunionDone) {
+    if (w.jigAt != null && MOVE_KEYS.includes(w.move)) stopJig(w);
+    if (!w.met && onYard(w)) {
+      const at = buriedAt();
+      const mz = { from: at.x - MEET_CLEAR, to: at.x + WORKER + MEET_CLEAR };
+      // clear of the meeting first, and of a rock already on its way second --
+      // during `part` the next boulder is falling on the same spot, and the
+      // wider of the two is whichever this body is still inside
+      if (!duck(w, mz) && zone) duck(w, zone);
+    }
+    w.y = stand(w);
+    return;
+  }
 
   // A body that was hammering arrives with a jig already running: the builders'
   // work jig is this same machinery on a move of its own (`MOVES.build`), and
