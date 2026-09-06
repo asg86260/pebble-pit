@@ -108,6 +108,20 @@ const ownerRacing = o => !o.dizzyUntil && !o.dizzyFor && !o.lifted && !o.falling
 // to one errand at a time: a claimant is that station's errand while it walks.
 function holdClaims() {
   for (const w of S.workers) {
+    // A wear claim is held the same way, or it is not a claim. `wanting` counts
+    // against the stand -- `kitFree` subtracts every body carrying it -- and it
+    // is only put back by finishing the walk (`arrive`) or by a full `retask`.
+    // Anything that kills the walk without passing through either -- a stage
+    // dropping the body's legs, a hand picking it up, a rock knocking it flat --
+    // left the claim standing on a body that was no longer coming, and one
+    // stale claim wedges one hat for the rest of the run: the station reads
+    // spare minus claimed as nothing to hand out, for ever. So a claim is only
+    // honored while its walk is actually being walked; otherwise it is dropped
+    // here and the ordinary dispatch below re-issues the errand to whoever can
+    // run it -- usually the same body, one frame later.
+    if (w.wanting && !(w.walking &&
+        (w.leg === 'wear' || (w.legs || []).some(l => l.do === 'wear'))))
+      w.wanting = null;
     const o = w.claimHat;
     if (!o) continue;
     const h = o.hatOff;
