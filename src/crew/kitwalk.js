@@ -152,7 +152,10 @@ function grabErrand(w, owner) {
 // Changed together, the rebuild finds everybody where it wants them and does
 // nothing at all. `rebalance` takes the body off the carriers afterwards,
 // because carrying is whoever is left over.
-function joinJob(w, job) {
+// Exported for the hand-assignment drop (crew/assign.js), which is the same
+// move made by a hand instead of by a picked-up hat: one body onto one job,
+// type and count together. wave7b-assign.
+export function joinJob(w, job) {
   const type = TYPE_OF[job];
   // Carrying is not a station you can join by putting something on -- it is what
   // is left when you are on nothing -- and nothing reaches here asking to: a

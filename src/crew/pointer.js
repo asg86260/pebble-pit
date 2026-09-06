@@ -14,6 +14,7 @@ import { underground } from '../quarry.js';
 import { inHouse } from '../scrubhouse.js';
 import { S } from '../state.js';
 import { unbook } from '../crew.js';
+import { assignDrop } from './assign.js';   // wave7b-assign
 
 // --- picking somebody up ------------------------------------------------------
 // You can pick a body up and put it down somewhere else, and that is all it
@@ -109,8 +110,19 @@ export function drop(w) {
   const v = throwVel();
   w.lifted = false;
   w.falling = true;
-  w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
-  w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  // wave7b-assign: a drop onto a station with room is a retraining, not a
+  // throw. The ask moves in assignDrop -- the same move the roster buttons
+  // make -- and the body is simply let go where it is: no hurl, so it comes
+  // down where you put it and walks to its new work from there. A drop
+  // anywhere else, or onto a full or invalid target, falls through
+  // to exactly today's throw.
+  if (assignDrop(w)) {
+    w.vx = 0;
+    w.vy = 0;
+  } else {
+    w.vx = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vx * HURL));
+    w.vy = Math.max(-HURL_MAX, Math.min(HURL_MAX, v.vy * HURL));
+  }
   // Shaken about rather than thrown: it lands not knowing which way is up. The
   // count is taken while it is in your hand -- see `shakeHeld` -- and spent
   // here, so one shaking is one dizzy spell however long you keep hold of it.
