@@ -4380,7 +4380,7 @@ toward a second pot and its second stirrer.
   for when the tower and the star economy are settled -- named in the arc, not
   numbered here.
 
-## Workers assigned by hand (design, not built)
+## Workers assigned by hand (built)
 
 The counters and their plus/minus buttons under each station do the job, but
 they are a spreadsheet's answer to a question the yard already knows how to
@@ -4413,7 +4413,12 @@ own hand.
   *ask* (`S.<job>`), exactly as a button press does today, so the economy's
   invariant is untouched.
 
-**Open.**
+**As built (wave 7b).** Canon in `docs/wave7b.md`. The counters and buttons
+stayed; the drop rides `joinJob` so the ask moves exactly as a button press
+does and the body walks its retraining. The steady ring draws on the
+station's own walls (a ring in the padded white sky is invisible), and shows
+for no-deal cases neither -- own job, full station. Touch has no lift today
+and got nothing. Still open, deliberately:
 
 - Bulk assignment. Carrying ten bodies one at a time is a chore, not a game.
   Candidates: dropping a body while holding shift moves its whole idle
@@ -4423,7 +4428,7 @@ own hand.
   only when the new door swallows it. The walk-in rule says the latter; the
   counter should read "in transit" somehow or the numbers look wrong.
 
-## The build yard (design, not built)
+## The build yard (built)
 
 A rung and a building cost the same click and read the same on the board, but
 one is a number and the other is a thing that should exist in the yard.
@@ -4451,9 +4456,11 @@ fenced footprint, no bar moving -- until a builder frees up, which is itself
 the signal to buy the second post. BUILD_GANG (wave 3) folds in: the gang
 multiplier becomes the builder's pace ladder.
 
-**Open.** What the earliest builds do before the bench exists -- either the
-first construction (the bench itself) is free and self-raising as today, or
-the buried square does it, which would be the better story. And whether
-machines' spark-priced ladders count as rungs (instant) or builds (walked);
-the rule above says instant, but a machine physically growing a stage would
-look terrific. Decide when the bench is real.
+**As built (wave 7b).** Canon in `docs/wave7b.md`. Before the bench is
+bought, builds behave exactly as they always did (one `if`, no migration);
+the bench itself is the last self-raising build. With it open, only builders
+count toward building and machine works, queued builds stand fenced with an
+empty bar, and the `buildposts` ladder (sparks, +1 concurrent build and +1
+builder each) with a `buildpace` ladder replaces BUILD_GANG. Machines' tuning
+rungs stayed instant. Still open: the buried-square-as-first-builder story,
+and per-key `leftAt` so a two-build yard's row clocks read exactly.
