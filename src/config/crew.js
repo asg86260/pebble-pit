@@ -198,6 +198,16 @@ export const HAUL_MS = 110;      // gap between grains a hauler scoops at pace 0
 // ladder above it is unchanged -- every multiplier still multiplies this -- so
 // what moved is where the ladder starts, not how far it goes.
 export let HAUL_BASE = 1.8;
+
+// What the crew's own ladders open at, and what a body costs over a run. These
+// rows serve a compounding crew, so their firsts sit well above the solo rows
+// beside them, and the house climbs steeply enough that the twentieth body is a
+// decision rather than a reflex -- the grind pass, DESIGN.md.
+export const HAUL_CARRY_COST = 150;     // the haulers' strength ladder, dust
+export const HAUL_PACE_COST = 180;      // and their speed, dust
+export const ROCKHAND_SPEED_COST = 210; // the rockhands' swing, dust
+export const HOUSE_COST0 = 60;          // the first house
+export const HOUSE_RATE = 1.45;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it

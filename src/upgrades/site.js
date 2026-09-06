@@ -16,12 +16,15 @@ import { lookAt } from '../world.js';
 // A place costs a core *and* dust. The core is what says this is a place rather
 // than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
 // the rock worth digging after it, which every bill above tier one does.
-export const site = ({ key, name, cores, dust, open, at, show }) => ({
+export const site = ({ key, name, cores, dust, more, open, at, show }) => ({
   key, name,
   // A place is a building like the rest of them: the yard's spare hands go out
   // and put it up, and the view does not glide to it until it is standing.
   kind: 'building', site: 'yard', at,
-  bill: () => [['core', cores], ['dust', dust]],
+  // `more` is any further coin a door asks alongside the core and the dust --
+  // the lab takes a handful of spores, because it multiplies the grounds and
+  // should cost a taste of one.
+  bill: () => [['core', cores], ['dust', dust], ...(more || [])],
   buy: () => { S[open] = true; lookAt(at()); },
   show
 });

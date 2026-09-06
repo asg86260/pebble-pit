@@ -624,6 +624,7 @@ export function stepApothecary(dt) {
       // Onto the shelf for what it IS, not for the pot that made it: turn this
       // pot to another tonic tomorrow and today's batch is still standing there.
       shelve(key, dosesPer());
+      S.brews++;                                 // and the craft is one batch deeper
       if (!S.potKeep) S.potSpents[i] = true;     // this pot's one-off is spent
       S.dirty = true;
     }
@@ -669,7 +670,7 @@ export function choosePrefer(job) { S.potPrefer = job; S.dirty = true; }
 // A rung on the building, priced spore + dust like every tier-two row. `level`
 // reads the rung and `climb` puts it up, so a ladder kept on `S` as a number and
 // one kept per tonic in a map are the same row to the board.
-const brewRung = ({ key, name, unit, level, climb, from, to, rungs }) => ({
+const brewRung = ({ key, name, unit, level, climb, from, to, rungs, after = 0 }) => ({
   key, kind: 'rung', site: 'apothecary', name, unit,
   rung: level,
   rungs,
@@ -678,7 +679,10 @@ const brewRung = ({ key, name, unit, level, climb, from, to, rungs }) => ({
                ['dust', rungCost(BREW_RUNG_DUST, level())]],
   cost: () => rungCost(BREW_RUNG_DUST, level()),
   buy: climb,
-  show: () => S.apothecaryOpen && level() < (rungs ? rungs() : RUNGS)
+  // `after` is batches landed before the row shows at all: the deeper rows of
+  // the craft reveal themselves as the craft is practiced, rather than the
+  // whole board arriving priced and clickable on the frame the door opens.
+  show: () => S.apothecaryOpen && S.brews >= after && level() < (rungs ? rungs() : RUNGS)
 });
 
 // A ladder kept on `S` under its own name -- the building's four.
@@ -695,7 +699,9 @@ const potencyRow = t => ({
   ...potencyRowBare(t),
   // A shard recipe the player cannot brew yet is a recipe worth no rung either
   // (item 24) -- the row hides with the picker entry until the quarry opens.
-  show: () => S.apothecaryOpen && potencyLevel(t.key) < RUNGS && tonicShown(t)
+  // And no potency row at all until a first batch has landed (the grind pass):
+  // the deeper craft is earned by brewing.
+  show: () => S.apothecaryOpen && S.brews >= 1 && potencyLevel(t.key) < RUNGS && tonicShown(t)
 });
 const potencyRowBare = t => brewRung({
   key: `potency-${t.key}`,
@@ -756,16 +762,18 @@ export const APOTHECARY_UPGRADES = [
     cost: () => Math.round(POT_COST * Math.pow(POT_RATE, S.apothPots - 1)),
     currency: 'dust',
     buy: () => { S.apothPots++; rebalance(); },
-    show: () => S.apothecaryOpen && S.apothPots < APOTH_POTS_MAX
+    // A second pot is for a craft with batches behind it -- the same earned
+    // reveal the deeper rungs use (`after` on brewRung).
+    show: () => S.apothecaryOpen && S.brews >= 5 && S.apothPots < APOTH_POTS_MAX
   },
 
   stateRung({ key: 'brewspeed', name: 'a quicker brew', unit: 's', level: 'brewLevel',
     from: () => Math.round(brewMs() / 1000),
     to: () => Math.round(ease(BREW_MS0, BREW_MS5, S.brewLevel + 1) / 1000) }),
-  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel',
+  stateRung({ key: 'bufflength', name: 'a longer dose', unit: 's', level: 'lengthLevel', after: 3,
     from: () => Math.round(buffMs() / 1000),
     to: () => Math.round(ease(BUFF_MS0, BUFF_MS5, S.lengthLevel + 1) / 1000) }),
-  stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel',
+  stateRung({ key: 'brewdoses', name: 'a bigger batch', unit: 'doses', level: 'dosesLevel', after: 3,
     from: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel)),
     to: () => Math.round(ease(DOSES0, DOSES5, S.dosesLevel + 1)) }),
   // How many vials leave in one pair of hands (item 11). Three rungs, not five:

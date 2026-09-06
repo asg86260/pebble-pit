@@ -1,4 +1,4 @@
-import { LAB_DUST } from '../config.js';
+import { LAB_DUST, LAB_SPORES } from '../config.js';
 import { S, lab } from '../state.js';
 import { site } from './site.js';
 
@@ -13,7 +13,7 @@ export const LAB_ROWS = [
   // and the farm already have.
   site({
     key: 'unlocklab', name: 'build the lab',
-    cores: 2, dust: LAB_DUST, open: 'labOpen',
+    cores: 1, dust: LAB_DUST, more: [['spore', LAB_SPORES]], open: 'labOpen',
     at: () => lab.x + lab.w / 2,
     // Still behind the quarry or the plots: the lab multiplies what a place does, so
     // it means nothing until there is a second place for it to be about.

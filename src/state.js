@@ -345,6 +345,10 @@ export const S = {
   // Per-pot runtime, indexed by pot: how far a batch has come, and how many
   // doses are minted and waiting for the stirrer to deal out.
   brewAt: [],             // worker-milliseconds into the current batch, per pot
+  // Batches ever landed, across the run. The building's deeper rows reveal
+  // themselves against this rather than all at once on the frame the door opens
+  // -- an earned reveal, in the seenX pattern (the grind pass, DESIGN.md).
+  brews: 0,
   doseHold: [],           // doses brewed and not yet carried out, per pot
   brewLevel: 0,           // brew speed: crop into a dose, faster
   lengthLevel: 0,         // buff length: how long a dose lasts on the body
@@ -499,6 +503,7 @@ export const SAVED = [
   'growers',
   'haulCarryLevel',
   'haulPaceLevel',
+  'brews',
   'shards',
   'spores',
   'farmOpen',
