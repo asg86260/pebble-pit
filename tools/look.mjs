@@ -74,6 +74,13 @@ const SCENES = {
   aura: `${RICH} window.__give(50000); window.__fast(1);
          window.__look(window.__state().farmShed.x - 60);`,
 
+  // The offer flag on the house-and-bench cluster. No big __give here: filling
+  // the hole tears it, and the tear cutscene's camera overrides __look for
+  // every frame after, which frames every shot on the rift instead.
+  flag: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+         window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+         window.__fast(2); window.__look(4930);`,
+
   // The assignment ring (wave7b-assign): a body held over the farm, so the
   // station under it wears the steady solid ring while the offer auras breathe
   // around it. The held body hangs off the cursor; __hold is the same lift.

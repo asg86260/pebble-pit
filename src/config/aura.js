@@ -1,14 +1,27 @@
 import { P } from './yard.js';
 
-// --- the offer aura (wave7-ui, feedback7 item 4) ------------------------------
-// A station with something affordable on its board breathes: a dashed white
-// outline around the building, pulsing in and out. The numbers are here so the
-// drawing (src/render/aura.js) has none of its own.
-export const AURA_CYCLE_MS = 1600;   // one full breath, out and back
-export const AURA_DASH = 4;          // the dash and its gap, in px
-export const AURA_MARCH = 6;         // px/s the dashes crawl along the outline
-export const AURA_IN = 2;            // how far inside the walls the breath starts
-export const AURA_BREATH = 4;        // and how far past them it swells before dissolving
+// --- the hold-a-body ring (wave7b-assign) -------------------------------------
+// The steady ring a station wears under a held body. The offer aura that once
+// shared these numbers is gone -- offers fly a flag now, below.
+export const AURA_IN = 2;            // how far inside the walls the ring sits
+export const AURA_BREATH = 4;        // reach of the (now unused) outward swell
+
+// --- the offer flag (replaces the aura) --------------------------------------
+// A station with something affordable on its board flies a flag: a pole off
+// the roof peak, a black pennant rippling in the wind. The numbers are cells.
+export const FLAG_POLE = 8;          // cells of pole above the roofline
+export const FLAG_W = 5;             // the pennant, cells across
+export const FLAG_H = 3;             // and down -- deep enough that a column a
+                                     // cell out of step still shares two cells
+                                     // with its neighbor, so the cloth holds
+                                     // together instead of tearing into blocks
+export const FLAG_RIPPLE_MS = 700;   // one wave traveling the pennant's length
+
+// When an offer first opens, one ring of ink breathes off the flag's tip --
+// the tower's own gesture at a whisper -- then the flag alone carries it.
+export const OFFER_WAVE_MS = 2600;   // the ring, born to gone
+export const OFFER_WAVE_R = 9 * P;   // how far it reaches before it dies
+export const OFFER_WAVE_INK = 0.35;  // the darkest the ring ever is
 
 // --- assignment by hand (wave7b-assign, feedback7 item 16) --------------------
 // How far past a station's own ground a held body may be dropped and still mean
