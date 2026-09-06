@@ -126,12 +126,18 @@ const fromTheField = (fan, machines = ['jaw', 'ram', 'tiller']) => {
 function dryStretch(seconds, measure, before = null, tries = 4) {
   let out = null, dry = false;
   for (let i = 0; i < tries && !dry; i++) {
-    if (before) before();
     // A break rolls a brew-up now (wave6-sky, item 5), and `rains` ticks at the
     // roll -- so a storm rolled before this stretch would pour inside it with
     // the counter never moving. A storm already on its way is waited out first;
     // one that rolls mid-stretch still moves the counter and is caught below.
+    //
+    // Waited out BEFORE the caller winds the sky up, not after: the wait runs
+    // the yard with the fan on, so a wind-up taken first is part-cleared by an
+    // amount the storm roll decides -- two stretches meant to start from the
+    // same sky started from whatever their waits left, and the comparison
+    // measured the seeded generator instead of the fan.
     runUntil(() => yard.S.stormFor < 0 && !yard.S.raining, 120);
+    if (before) before();
     const rains = yard.S.rains;
     out = measure(seconds);
     dry = yard.S.rains === rains;
