@@ -16,7 +16,7 @@
 import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
-import { busyBuilderSites, siteX, siteBox, handsAt } from '../works.js';
+import { busyBuilderSites, siteX, siteBox, handsAt, worksAt } from '../works.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn } from '../route.js';
 import { commutePace } from '../upgrades.js';
 import { TYPE } from '../jobs.js';
@@ -34,15 +34,27 @@ export function newBuilder() {
 // builder is given a site and counted there. It keeps the one it has while
 // that site is busy; when the work lands it takes the busiest-short site next,
 // or is stood down by `rebalance` if there is none.
+// wave7b-build: the unit a builder is given is a WORK, not just a site -- the
+// yard can hold two builds at once now, and a body has to be at one of them or
+// its presence credits a bar it is nowhere near. Same least-crowded rule as
+// before, over (site, work) slots instead of sites: a builder keeps its slot
+// while the work is still on the go, and when the work lands it takes the
+// emptiest slot next -- oldest first on a tie, so a queue finishes in the order
+// it was bought.
 function siteFor(w) {
   const busy = busyBuilderSites();
-  if (w.site && busy.includes(w.site)) return w.site;
-  let pick = null, fewest = Infinity;
+  if (w.site && busy.includes(w.site)
+      && worksAt(w.site).some(x => x.key === w.workKey)) return w.site;
+  let pick = null, pickKey = null, fewest = Infinity;
   for (const site of busy) {
-    const n = S.workers.filter(o => o.type === TYPE.BUILD && o.site === site).length;
-    if (n < fewest) { fewest = n; pick = site; }
+    for (const work of worksAt(site)) {
+      const n = S.workers.filter(o => o.type === TYPE.BUILD && o !== w
+                                   && o.site === site && o.workKey === work.key).length;
+      if (n < fewest) { fewest = n; pick = site; pickKey = work.key; }
+    }
   }
   w.site = pick;
+  w.workKey = pickKey;
   return pick;
 }
 
@@ -61,10 +73,15 @@ const nearestIn = (box, x) => Math.max(box.x, Math.min(box.x + box.w - WORKER, x
 // rooms it will have once the one going up lands, while the body was placed
 // off a slot looked up separately, which put the hammering away to the left of
 // the fence it was inside.
+// The box a builder's OWN work is on -- by its key, so two bodies on the yard
+// stand each at the thing it is putting up rather than both at the head work's.
+const ownBox = w =>
+  siteBox(w.site, worksAt(w.site).find(x => x.key === w.workKey) || null);
+
 function buildStationX(w) {
   const site = siteFor(w);
   if (!site) return null;
-  const box = siteBox(site);
+  const box = ownBox(w);
   // Nowhere in particular to stand -- the two machines on the bench, a ram on
   // the rock, a belt the length of the yard -- so it works where it is.
   if (!box) return siteX(site);
@@ -105,6 +122,20 @@ function buildStationX(w) {
 // mid-air -- the swing only ever touches `w.y`, and `workFor`/`handsAt` never
 // ask where a body's feet are, only whether it has arrived -- so the rate a
 // bench goes up at is exactly what it always was.
+// wave7b-build (F5): the door predicate, the shape every station's presence
+// rule takes -- `inScrub`, `inLab`, and now this. A builder is "in" its site
+// when it has arrived and is standing inside its own work's fenced box, padded
+// by the span the work jig is allowed to shuffle across; output already
+// depends on presence through `handsAt`/`handsOn`, and this is the same fact
+// exported for checks to read.
+export function inBuildSite(w) {
+  if (w.type !== TYPE.BUILD || w.goal !== 'at' || !w.site) return false;
+  const box = ownBox(w);
+  if (!box) return true;              // nowhere in particular: at work where it stands
+  const pad = BUILD_SHIFT_SPAN;
+  return w.x >= box.x - pad && w.x <= box.x + box.w + pad;
+}
+
 export function stepBuilder(w) {
   const to = buildStationX(w);
   if (to !== null) {
@@ -168,7 +199,7 @@ export function stepBuilder(w) {
   // seventy-two pixel bench top, for the whole of the build. The slack belongs
   // to the walk -- it is what stops the hammer and the walk fighting -- and it
   // has no business deciding where the body's feet finish.
-  const zone = w.site && siteBox(w.site);
+  const zone = w.site && ownBox(w);
   if (zone) w.x = nearestIn(zone, w.x);
   if (w.site && handsAt(w.site) > 0) {
     // The bench is a fixed structure, not terrain -- its top edge is always

@@ -12,7 +12,7 @@ import { S, cut, farm, quarry } from '../state.js';
 import { bridgeSpan, farmShed, plotSlots, quarryShed } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // The mouth of the quarry: an open cut going down, so the ground line breaks
 // across it and the walls carry on below. Drawn downwards rather than as an arch
@@ -245,14 +245,14 @@ function farmTrough({ x }) {
 // were in `OPENS_PLACE`, both were rising as far as `risingPlace` was
 // concerned, and nothing anywhere clipped a draw to it: they popped in whole.
 export function drawFarmShed() {
-  const rising = risingPlace() === 'farm';
+  const rising = risingAt('farm') && 'farm';
   if (!S.farmOpen && !rising) return;
   const r = farmShed();
   withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r, farmTrough));
 }
 
 export function drawQuarryShed() {
-  const rising = risingPlace() === 'quarry';
+  const rising = risingAt('quarry') && 'quarry';
   if (!S.quarryOpen && !rising) return;
   const r = quarryShed();
   withRise(rising, r.x, S.groundY, r.w, r.h, () => drawShed(r, quarryBeam));

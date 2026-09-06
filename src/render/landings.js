@@ -6,8 +6,8 @@ import { BUILD_SHAKE, HOUSE_CUBE } from '../config.js';
 import { cubes as houseCubes } from '../house.js';
 import { puff } from '../puff.js';
 import { farmShed, quarryShed, shakeView } from '../world.js';
-import { casino, lab, outhouse, school, scrub, tower } from '../state.js';
-import { risingPlace } from './rise.js';
+import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
+import { rising as risingAt } from './rise.js';
 
 // The frame a rising place lands, the yard feels it -- a puff over the middle
 // of the roof and a knock on the view, half as hard as a rock coming down (see
@@ -15,16 +15,18 @@ import { risingPlace } from './rise.js';
 // has no idea where any of these places actually stand: the drawing side draws
 // every one of them and so is the one place that already knows.
 const RISE_PLACES = ['school', 'lab', 'tower', 'casino', 'scrub', 'outhouse',
-                     'quarry', 'farm', 'house'];
+                     'quarry', 'farm', 'house',
+                     'buildbench'];   // wave7b-build: the construction bench lands too
 const wasRising = {};
 export function stepRiseLandings() {
   for (const place of RISE_PLACES) {
-    const rising = risingPlace() === place;
+    const rising = risingAt(place);
     if (wasRising[place] && !rising) {
       const rect = place === 'school' ? school : place === 'lab' ? lab
                  : place === 'tower' ? tower : place === 'casino' ? casino
                  : place === 'scrub' ? scrub : place === 'outhouse' ? outhouse
                  : place === 'quarry' ? quarryShed() : place === 'farm' ? farmShed()
+                 : place === 'buildbench' ? S.buildbench
                  : null;
       if (rect) { puff(rect.x + rect.w / 2, rect.y); shakeView(BUILD_SHAKE); }
       else {

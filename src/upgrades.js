@@ -25,7 +25,7 @@ import { refreshPiles, lookAt, resite, benches, plotCount } from './world.js';
 import { machineFor, buyMachine, canBuy, MACHINES, running, machine, JOB_MACHINE, tuneGain, tuneRow, specOf } from './machines.js';
 import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK,
-         MACHINE_TUNE, BUILD_GANG,
+         MACHINE_TUNE,
          HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
   CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
 import { critChance, critMult } from './crit.js';
@@ -40,6 +40,8 @@ import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows
 // building, and this is the one line of upgrades.js it edits. See C1 in
 // wave-feedback3.md.
 import { nextHouseAt } from './house.js';
+// wave7b-build: how many builder posts the construction bench holds.
+import { buildPosts } from './buildbench.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -276,7 +278,12 @@ export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JO
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
-export const spareHands = () => S.crew - JOBS.reduce((n, j) => n + S[j], 0);
+// wave7b-build: once the construction bench stands, building is a job you put
+// somebody ON, so a hired builder is spoken for like anybody else. Before it
+// stands the count is derived FROM the spares (see `rebalance`), so it must
+// not be subtracted from them.
+export const spareHands = () =>
+  S.crew - JOBS.reduce((n, j) => n + S[j], 0) - (S.buildbenchOpen ? S.builders : 0);
 export const idle = () => spareHands();
 
 // --- the kit ----------------------------------------------------------------
@@ -311,6 +318,7 @@ import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
 import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
+import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -403,6 +411,10 @@ const capOfBare = job =>
   // there is a queue, not a second class. Nought before it is built, because a
   // teacher with no school is a body with nowhere to go. (wave6-sim, item 1)
   job === JOB.TEACH ? (S.schoolOpen ? 1 : 0) :
+  // wave7b-build: a builder needs a post at the construction bench, and the
+  // bench holds one plus a rung each of `buildposts`. Nought before it stands:
+  // building is not a job you assign until there is somewhere to be hired at.
+  job === JOB.BUILD ? (S.buildbenchOpen ? buildPosts() : 0) :
   // The rock and the lip have no plan: a rock is as long as it is, and carrying
   // is what a body does when it is on nothing at all.
   Infinity;
@@ -619,11 +631,32 @@ export function rebalance() {
   //
   // Never the whole yard: a build that swallowed every idle body would stop the
   // dust moving altogether, and what this is meant to be is a share of the
-  // yard's attention rather than all of it. See BUILD_GANG -- that many a site,
+  // yard's attention rather than all of it. One a site (the old BUILD_GANG),
   // because the bench, the yard and the school are three places and a body at
   // one of them is not at the other two.
+  // wave7b-build: THE one `if`. With the construction bench standing, builders
+  // are a post the player fills -- an ask like any job, capped by the bench's
+  // posts -- and nothing is derived and nothing is lent: a build with no
+  // builder waits, fenced, which is the bargain the bench strikes. Any loan
+  // still out from before the bench opened is forgiven the way `!sites.length`
+  // forgives them below, so no station is left short a body it is owed.
+  if (S.buildbenchOpen) {
+    for (const w of S.workers) {
+      const job = w.lentFrom;
+      if (!job) continue;
+      delete w.lentFrom;
+      if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
+    }
+    S.lent = [];
+    S.builders = Math.max(0, Math.min(S.builders, buildPosts()));
+    // ...and never more than the crew can stand behind: a shrunk crew gives
+    // the bench back its posts before it gives up its haulers.
+    while (spareHands() < 0 && S.builders > 0) S.builders--;
+    S.haulers = Math.max(0, spareHands());
+    return;
+  }
   const sites = busyBuilderSites();
-  const gang = BUILD_GANG * sites.length;
+  const gang = sites.length;
   // Nobody spare: the nearest body comes and does it. Carrying first -- a
   // hauler is spare by definition and is already counted -- and if there is
   // nobody carrying, the body standing nearest the site is *lent*: taken off
@@ -809,7 +842,8 @@ export const UPGRADES = [
   ...APOTHECARY_ROWS,
   ...TUNING_ROWS,
   ...QUARRY_ROWS,
-  ...OUTHOUSE_ROWS
+  ...OUTHOUSE_ROWS,
+  ...BUILDBENCH_ROWS
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a save
@@ -835,6 +869,8 @@ export const SECTIONS = [
   // lab's and the school's rows left the bench: a decision about a place is
   // made at the place. This one cannot be, because the place is what it buys.
   { title: "the janitor's closet", keys: ['unlockouthouse'] },
+  // wave7b-build: the construction bench and its ladders.
+  { title: 'the build yard', keys: ['unlockbuildbench', 'buildposts', 'buildpace'] },
   { title: 'the tower', keys: ['unlocktower'] },
   { title: 'the training grounds', keys: ['unlockschool'] },
   { title: 'the scrubbing house', keys: ['unlockscrub'] }

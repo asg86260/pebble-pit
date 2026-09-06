@@ -18,7 +18,7 @@ import { potBoiling, brewFracOf, potTonicOf, doseStock, potBox, TONICS,
 import { screenAt } from './frame.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
-import { risingPlace, withRise } from './rise.js';
+import { rising as risingAt, withRise } from './rise.js';
 
 // --- the two pictures ---------------------------------------------------------
 // One character to a cell: `#` is timber (black), `.` is empty. Retype either to
@@ -297,7 +297,7 @@ function drawPot(i, g) {
 }
 
 export function drawApothecary() {
-  const rising = risingPlace() === 'apothecary';
+  const rising = risingAt('apothecary') && 'apothecary';
   if (!S.apothecaryOpen && !rising) return;
   const { x, y, w, h } = apothecary;
   withRise(rising, x, S.groundY, w, h, () => {

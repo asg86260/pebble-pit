@@ -100,6 +100,22 @@ const SCENES = {
   build2: `${RICH} window.__buy('unlocklab'); window.__fast(70);
            window.__look(window.__state().labX - 380);`,
 
+  // wave7b-build: the build yard proper -- the construction bench open, a
+  // second post bought, two builders hired, and the lab and the school rising
+  // AT ONCE, each with its own fence, bar and hammering body. Shot mid-rise
+  // for the same reason `build` is.
+  build3: `${RICH} window.__jump(2); window.__buy('unlockbuildbench'); window.__finish();
+           window.__buy('buildposts'); window.__assign('builders',1);
+           window.__assign('builders',1);
+           window.__buy('unlocklab'); window.__buy('unlockschool');
+           window.__fast(30); window.__look(window.__state().labX - 700);`,
+
+  // ...and the trestle itself, with a build queued and NO builder hired: the
+  // fenced footprint standing with its bar empty is the picture of waiting.
+  build4: `${RICH} window.__jump(2); window.__buy('unlockbuildbench'); window.__finish();
+           window.__buy('unlocklab'); window.__fast(20);
+           window.__look(window.__state().labX - 380);`,
+
   // The plots, and the tractor crossing them.
   farm: `${RICH} window.__buy('tiller'); window.__finish(); window.__look(window.__state().farmX - 200);`,
 

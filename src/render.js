@@ -47,7 +47,7 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawLab, drawSchool, drawSmoke } from './render/stations.js';
+import { drawLab, drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
@@ -55,7 +55,7 @@ import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 // which file in `src/render/` each of them ended up in.
 export { canvas, ctx } from './render/ctx.js';
 export { cell, drawCircle, drawDiamond, drawMark, drawTriangle } from './render/marks.js';
-export { risingPlace, withRise } from './render/rise.js';
+export { risingPlaces, rising, withRise } from './render/rise.js';
 export { bar, barSpot, drawWorkBars } from './render/bars.js';
 export { drawBuildSites, drawGrit } from './render/buildsites.js';
 export { drawGrid, drawGroundLine, drawPit, drawPitCores, drawPitOutline } from './render/ground.js';
@@ -138,6 +138,7 @@ const LAYERS = [
   // that piles up *against* the wall and buries its foot is a heap. The buildings
   // are the yard and the loose stuff is what the yard is full of.
   { name: 'bench', draw: drawBench },
+  { name: 'build bench', draw: drawBuildBench }, // wave7b-build: the trestle beside it
   { name: 'settlement', draw: drawSettlement },  // and the crew are drawn later still, so they walk in front of both
   { name: 'rising room', draw: drawRisingHouse },// the one room still going up, if a hire is under way
 
