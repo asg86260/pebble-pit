@@ -2874,6 +2874,138 @@ the same sentence the collapse already says.
 frame it crosses the surface, and a save from the disc era comes back drowned with nothing lost.
 Then shots: the tear mid-gulp, the standing surface, a throw being eaten, a purchase surfacing.
 
+## The pit's arc: solid, torn, drowned (design, not built)
+
+*Proposed 2026-09-05. Reverses one built behavior — the abyss arriving at the
+first overflow — and one written camera decision (the note over the pipeline in
+game.js), each with the changed premise named below.*
+
+The pit currently has two eras: a solid pile of drawn grains, and then, the
+moment it cannot take one more, the abyss. The jump is a single gulp. This
+design puts a third era between them, so the endgame's infinite storage is
+*earned by watching it grow* rather than granted in one cut:
+
+1. **Solid.** The pit as it is today: every grain a drawn cell, the crater, the
+   crossing. Nothing changes here.
+2. **Torn.** The first time the pit cannot take a grain, a *small* hole tears
+   above the mouth and starts eating. It grows with what it eats. This is the
+   disc era, back — but staged, not permanent, and with the two documented
+   failures designed out (below).
+3. **Drowned.** When the hole has eaten enough, it collapses down into the pit
+   and the pit liquefies — the abyss, exactly as built. The abyss is the end
+   state; nothing about its behavior, account, plank, or surface changes. Only
+   its *arrival* moves later.
+
+### The torn era, and why it does not repeat the old rift's failures
+
+The original black hole failed twice, and both post-mortems stand (rift.js,
+tower.js): a slow trickle never read as *pulled*, and a purchase ladder made
+the one non-machine in the yard a machine with a dial. The torn era keeps both
+verdicts:
+
+- **It inhales at full strength from the first frame.** No rate, no trickle:
+  everything in the hole goes, exactly as `stepRift` does today
+  (`RIFT_INHALE_MAX` stays the frame ceiling it is). What was wrong with the
+  old rift was never the pull — it was the drip. A small hole taking the whole
+  overflow the moment it tears is visibly working from second one.
+- **It sells nothing.** No summon row, no appetite ladder, no upgrade of any
+  kind. Its growth is fed, not bought: the diameter is a pure function of the
+  grains it has eaten. Nothing tends it, nothing has a dial. Playing the game
+  is what grows it, which is the growth the original lacked — it was meant to
+  be the endgame's storage and it never got bigger, so it never kept up and
+  never felt like it was becoming anything.
+
+**Growth.** One new saved counter, `S.riftAte` — cumulative grains ever
+swallowed, monotonic, never reduced by spending (spending reads `riftHeld` as
+today and does not shrink the hole; a wound does not heal because you took
+something back out of it). The diameter is derived, never stored:
+
+```
+w = RIFT_W0 + (RIFT_WMAX - RIFT_W0) * sqrt(min(1, S.riftAte / ABYSS_AT))
+```
+
+- `RIFT_W0` = 4 cells — a tear, clearly smaller than the old disc.
+- `RIFT_WMAX` = 12 cells — clearly too big for the sky it hangs in.
+- `ABYSS_AT` = 250,000 grains — roughly seven times the hole's own capacity,
+  so the era is a real stretch of play, not a beat. All three go in
+  `config.js` under `TUNABLE`; the numbers above are the opening bid, tuned
+  from the dev panel against real pace.
+
+The square root front-loads the visible growth (the first fifty thousand
+grains double it) and slows toward the ceiling, which is the shape of a thing
+straining. `seatRift` reads the derived width; grains still climb out of the
+hole and cross open sky into it — nothing teleports.
+
+**The drowning.** The frame `S.riftAte` crosses `ABYSS_AT`, the hole gives
+way downward: the existing gulp becomes the collapse, the disc falls into the
+mouth as the pile liquefies, and from then on the game is in the abyss era as
+built — same `S.rift` account, same surface, same plank, same spend-surfacing.
+The disc's own critique ("not a thing a works could have") is answered by the
+staging: the torn era's whole job is to *fail into* the abyss, and a wound you
+watched grow for an hour giving way is the payoff of having watched it.
+
+**Saves.** `riftAte` joins `SAVED`. A save with `riftOpen` set and no
+`riftAte` (disc- and abyss-era saves) seeds it from the sum of `riftHeld` —
+already-drowned yards land past `ABYSS_AT` or are pinned drowned by their
+existing drowned state, so nobody is pulled back an era. A fresh yard starts
+solid.
+
+### Cutscenes
+
+Both transitions are one-time events the player should be *shown*: the camera
+goes to the pit, the moment plays with its flair, the camera comes back. The
+pipeline note in game.js decided against the collapse taking the camera, for
+two reasons: a yank interrupts the player, and the ad-hoc grab "stole the
+frame from anything else pointing the camera." The second was a defect of not
+having a system; the first is answered by consent-by-rarity plus a skip. The
+premise that changes: these are once-per-yard story beats, not recurring
+events, and the user wants them staged.
+
+One mechanism, `src/cutscene.js`, not two hand-cut camera grabs:
+
+- **It owns the camera exclusively while a scene runs.** `lookAt`, zoom and
+  any hold go through it; nothing else may point the camera during a scene
+  (the follow, the purchase-glide and the intro all yield — the intro cannot
+  collide anyway, being over long before the first overflow).
+- **The yard does not pause.** A cutscene is a camera, not a stop: bodies keep
+  walking, the sim keeps stepping. What the scene controls is where you look
+  and for how long.
+- **Any click skips**, the `skipIntro` precedent: the event still happens in
+  the world at full flair — skipping releases the camera, never the moment.
+- **A scene is a list of timed beats** (glide here, zoom to k, hold s
+  seconds, release), data in `config.js`, so the two scenes here and any
+  later one are entries, not forks.
+
+The two scenes:
+
+1. **The tearing.** Overflow detected → glide to the pit mouth, pull in a
+   step (the intro's zoom machinery, `camLockY`) → a held beat on the brim,
+   the shake, white page splitting into the `RIFT_W0` tear → the first
+   overflow visibly streams up into it → release. ~4 seconds.
+2. **The drowning.** `ABYSS_AT` crossed → glide to the pit, wider frame (the
+   whole mouth in view) → the disc strains, the collapse, the existing
+   liquefy-from-the-bottom over the gulp's seconds → a beat on the standing
+   black surface → release. ~6 seconds.
+
+Flair stays inside the language: black and white, flat shapes, the existing
+shake, interference and fade vocabulary (full fades, flowing interference, no
+popping). No gradients, no letterboxing bars — the yard does not become a
+film, the camera just goes and looks.
+
+### How it would be checked
+
+Node tier (`test/pit-arc.test.mjs`): the first overflow tears a `RIFT_W0`
+hole and does not drown the pit; the diameter is monotone in `riftAte` and
+pinned at `RIFT_WMAX`; crossing `ABYSS_AT` drowns; spending never shrinks the
+hole; a disc-era save and an abyss-era save each come back in the right era
+with nothing lost; `riftAte` round-trips (the persist check is red for a
+field in no list). Player-path: the tear is reached by filling the pit
+through play (throws and hauls), never by setting `riftOpen` with a hook.
+The cutscene steps run in the node yard (they are sim state), asserting the
+camera is released and the world never paused. Then shots: a `tear` scene
+and a `drown` scene in tools/look.mjs — the fresh tear, the half-grown hole,
+the collapse mid-liquefy.
+
 ## The air
 
 Nothing stands in the background of this game — no hills, no clouds, no furniture of any kind — so

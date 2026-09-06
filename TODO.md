@@ -1,5 +1,18 @@
 # Still to do
 
+## The pit's arc — DESIGNED, awaiting approval (2026-09-05)
+
+A third era between the solid pit and the abyss: the first overflow tears a
+*small* hole that inhales at full strength and grows with what it eats
+(`S.riftAte`, derived diameter, nothing sold, nothing tended); at `ABYSS_AT`
+eaten it collapses and the drowning — the abyss as built — happens then
+instead of at the first overflow. Both transitions are one-time cutscenes via
+a new `src/cutscene.js` that owns the camera exclusively, never pauses the
+yard, and skips on any click; this deliberately reverses the game.js note
+against the collapse taking the camera (premise changed: rare story beats,
+one system, a skip). See "The pit's arc: solid, torn, drowned" in DESIGN.md.
+Blocked on the user's sign-off; no code yet.
+
 ## The abyss — BUILT (2026-09-04)
 
 The rift's picture replaced: the drowned pit holds a black liquid that eats
