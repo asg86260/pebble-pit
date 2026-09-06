@@ -12,10 +12,12 @@
 import { STATIONS, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
-  FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
+  FLAG_GUST_MS, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P,
 } from '../config.js';
 import { now } from '../clock.js';
+import { chimneyAt } from '../house.js';
+import { bench, lab, school } from '../state.js';
 import { benchMark } from '../upgrades.js';
 import { holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
@@ -63,24 +65,75 @@ function roofPeak(rect) {
   return { x, y };
 }
 
+// Where a station's pole stands: on the building's own topmost feature, read
+// off the same geometry the drawing reads, so the two cannot drift apart. The
+// house's chimney climbs as the settlement grows and the flag climbs with it.
+// A station not listed gets the middle column of its stand box's top edge,
+// which is right for anything with a flat or peaked roof.
+const SPOT = {
+  house: () => { const f = chimneyAt(); return f && { x: f.x, y: f.y - P * 4 }; },
+  bench: () => ({ x: bench.x + P * 4, y: bench.y - P * 2 }),   // the clamped block
+  school: () => ({ x: school.x + P * 9, y: school.y }),        // the belfry
+  lab: () => ({ x: lab.x + P * 3, y: lab.y }),                 // the chimney
+};
+
+function flagBase(rect, which) {
+  const spot = SPOT[which] && SPOT[which]();
+  return spot || roofPeak(rect);
+}
+
+// A stable per-station number in 0..1, so every flag flutters out of step with
+// its neighbors without anything being stored or saved.
+const seedOf = which => {
+  let h = 0;
+  for (const c of which) h = (h * 31 + c.charCodeAt(0)) % 997;
+  return h / 997;
+};
+
+// The wind, as the flags feel it: two slow sines beating against each other,
+// so the strength swells and dies on no cycle the eye can count, and the sign
+// is the way the cloth flies. One wind for the whole yard -- two flags flying
+// opposite ways would say two skies -- so no seed goes in here.
+const windAt = t =>
+  Math.sin(t / FLAG_GUST_MS * Math.PI * 2) * 0.7 +
+  Math.sin(t / (FLAG_GUST_MS * 0.377) * Math.PI * 2 + 2) * 0.5;
+
 // The flag: a one-cell pole off the peak, a black pennant off the top of it.
 // The pennant ripples -- each column rides a wave traveling out from the pole,
 // a cell up or down -- which is a thing wind does to cloth, not an effect done
-// to the player. The tip therefore moves the most, the way a real flag's does.
-function drawFlag(rect, t) {
-  const { x, y } = roofPeak(rect);
+// to the player. The tip moves the most, the way a real flag's does; the whole
+// cloth goes slack as a gust dies and picks up again -- sometimes on the other
+// side of the pole -- as the next one arrives. The turn hides in the slack:
+// the cloth only crosses the pole while it is hanging nearly straight.
+//
+// The pole runs all the way down to the ground and this layer is painted
+// BEFORE the buildings, so whatever roofline a station actually draws -- a
+// step, a slope, a turret off center -- covers the pole's lower run and the
+// pole reads as standing on the silhouette. Anchoring it by arithmetic on the
+// stand box put it floating over every roof that was not flat.
+function drawFlag(rect, which, t) {
+  // The pole stands on the station's own topmost feature where one is named
+  // (FLAG_SPOTS, in cells off the stand box's corner), and on the middle of
+  // the box's top edge otherwise.
+  const { x, y } = flagBase(rect, which);
   const top = y - FLAG_POLE * P;
-  ctx.fillRect(x, top, P, FLAG_POLE * P);
+  ctx.fillRect(x, top, P, rect.y + rect.h - top);
+  const seed = seedOf(which);
+  const wind = windAt(t);
+  const dir = wind < 0 ? -1 : 1;
+  const amp = Math.min(1, Math.abs(wind) * 1.6);
   for (let i = 0; i < FLAG_W; i++) {
-    // the wave grows along the pennant: the column at the pole is pinned to
-    // it, the free end swings a whole cell
-    // A third of a wavelength across the cloth: one crest riding out at a
-    // time. A full wavelength put a crest and a trough on the cloth at once,
-    // which in cells is a notch bitten out of the middle of the flag.
-    const swing = Math.sin((t / FLAG_RIPPLE_MS - i / (FLAG_W * 3)) * Math.PI * 2)
-                * (i / (FLAG_W - 1));
+    // The wave grows along the pennant: the column at the pole is pinned to
+    // it, the free end swings a whole cell. A third of a wavelength across
+    // the cloth, so one crest rides it at a time -- a full wavelength put a
+    // crest and a trough on the cloth at once, which in cells is a notch
+    // bitten out of the middle of the flag. The per-station seed staggers
+    // pace and phase so the yard's flags never beat in unison.
+    const swing = Math.sin((t / (FLAG_RIPPLE_MS * (0.85 + 0.3 * seed))
+                            - i / (FLAG_W * 3)) * Math.PI * 2 + seed * 7)
+                * (i / (FLAG_W - 1)) * amp;
     const dy = Math.round(swing) * P;
-    ctx.fillRect(x + P * (1 + i), top + dy, P, P * FLAG_H);
+    ctx.fillRect(x + dir * P * (1 + i), top + dy, P, P * FLAG_H);
   }
 }
 
@@ -88,10 +141,10 @@ function drawFlag(rect, t) {
 // spends itself -- the tower's rings-going-out gesture at a whisper. The flag
 // alone carries the standing state after; the ring marks the moment.
 const openedAt = new Map();
-function drawOpeningWave(rect, since, t) {
+function drawOpeningWave(rect, which, since, t) {
   const k = (t - since) / OFFER_WAVE_MS;
   if (k >= 1) return;
-  const { x, y } = roofPeak(rect);
+  const { x, y } = flagBase(rect, which);
   const from = { x: x + P / 2, y: y - FLAG_POLE * P };
   const rad = k * OFFER_WAVE_R;
   if (rad < P) return;
@@ -106,7 +159,9 @@ function drawOpeningWave(rect, since, t) {
   ctx.globalAlpha = 1;
 }
 
-export function drawAuras() {
+// The flags, painted before the buildings so the poles stand behind the
+// rooflines (see drawFlag). The hold ring stays in drawAuras, over everything.
+export function drawFlags() {
   const t = now();
   ctx.save();
   ctx.fillStyle = '#000';
@@ -115,9 +170,14 @@ export function drawAuras() {
     const r = on && standRect(which);
     if (!on || !r) { openedAt.delete(which); continue; }
     if (!openedAt.has(which)) openedAt.set(which, t);
-    drawFlag(r, t);
-    drawOpeningWave(r, openedAt.get(which), t);
+    drawFlag(r, which, t);
+    drawOpeningWave(r, which, openedAt.get(which), t);
   }
+  ctx.restore();
+}
+
+export function drawAuras() {
+  ctx.save();
   ctx.strokeStyle = '#fff';
   ctx.lineWidth = 1;
   // wave7b-assign: the station under a held body wears the same ring, steady

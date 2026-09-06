@@ -16,6 +16,9 @@ export const FLAG_H = 3;             // and down -- deep enough that a column a
                                      // with its neighbor, so the cloth holds
                                      // together instead of tearing into blocks
 export const FLAG_RIPPLE_MS = 700;   // one wave traveling the pennant's length
+export const FLAG_GUST_MS = 7000;    // the slow swell of the wind's strength;
+                                     // its sign is the way the cloth flies
+
 
 // When an offer first opens, one ring of ink breathes off the flag's tip --
 // the tower's own gesture at a whisper -- then the flag alone carries it.

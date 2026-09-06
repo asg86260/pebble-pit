@@ -39,7 +39,7 @@ import { drawRisingHouse, drawSettlement } from './render/houses.js';
 import { drawDoneMarks } from './render/donemarks.js';
 import { stepRiseLandings } from './render/landings.js';
 import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
-import { drawAuras } from './render/aura.js';   // wave7-ui
+import { drawAuras, drawFlags } from './render/aura.js';   // wave7-ui
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
 import { drawScrub } from './render/scrub.js';
@@ -100,6 +100,10 @@ const LAYERS = [
   { name: 'world', draw: enterWorld },
   { name: 'core behind', draw: drawCoreBehind },
   { name: 'ground line', draw: drawGroundLine },
+  // The offer flags go down before every building: each pole runs to the
+  // ground and the station's own silhouette covers its lower run, so the pole
+  // stands on whatever roofline the building actually draws.
+  { name: 'offer flags', draw: drawFlags },
   { name: 'quarry', draw: drawQuarry },          // a hole in the ground, so it goes down with the ground
   { name: 'quarry shed', draw: drawQuarryShed }, // the shed beside it, holding its board
   { name: 'cut', draw: drawCut },                // the dust lying in it, after the quarry for the same reason
@@ -153,7 +157,7 @@ const LAYERS = [
   { name: 'paid', draw: drawPaid },
   { name: 'core', draw: drawCore },
   { name: 'pile marks', draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
-  { name: 'auras', draw: drawAuras },            // wave7-ui: the offer aura on the buildings themselves
+  { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
   { name: 'work bars', draw: drawWorkBars },     // and whatever else the yard is putting up
   { name: 'build sites', draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
