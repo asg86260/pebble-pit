@@ -142,7 +142,11 @@ export const TOWER_UPGRADES = [
     // here: a station standing empty is lent a hand by the yard (see
     // `busyBuilderSites`), so the first hat is made by whoever is free and every
     // one after it by the wizards already wearing theirs.
-    kind: 'building', site: 'tower',
+    //
+    // A rung, not a building: a hat is made inside a tower that already stands,
+    // so nothing rises out of the ground and no tape goes round it -- the same
+    // reasoning as the school's trades. The clock comes from `work` below.
+    kind: 'rung', site: 'tower',
     // Its own figure rather than the table's, because a hat has always taken a
     // minute and a half and this is not the moment to change what it costs.
     work: () => WIZ_BREW_MS / 1000,
