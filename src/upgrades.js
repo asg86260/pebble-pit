@@ -12,6 +12,7 @@ import {
   QUARRY_DUST, FARM_DUST, LAB_DUST, CASINO_DUST, OUTHOUSE_DUST, LOOPOST_SHARDS, UNLOCK_SHOW,
   TOWER_CORES, TOWER_DUST, ROCKHAND_BITE_MULT
 } from './config.js';
+import { fmt } from './board.js';
 import { scrubCost } from './scrubhouse.js';
 import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
@@ -955,11 +956,12 @@ export const building = u => takesTime(u) && !!workOn(u.key);
 // number of benches is the lab's business rather than a rule in here.
 export const siteBusy = u => takesTime(u) && fullAt(u.site);
 
-// A price, in the words that price is said in. Coins are counted; time is read
-// off a clock, and a hundred and twenty thousand of anything is not a thing
-// anybody says about two minutes.
+// A price, in the words that price is said in. Coins are counted in the same
+// short form as every other reading in the yard (`fmt`: 872, 1.3k, 14k); time is
+// read off a clock, and a hundred and twenty thousand of anything is not a
+// thing anybody says about two minutes.
 export const priceText = (money, n) =>
-  money !== 'time' ? String(n) :
+  money !== 'time' ? fmt(n) :
   n >= 60000 ? `${Math.round(n / 60000)} min` : `${Math.ceil(n / 1000)}`;
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
