@@ -210,6 +210,22 @@ export const HOUSE_COST0 = 60;          // the first house
 export const HOUSE_RATE = 1.45;         // and how much steeper each body gets
 export const HAUL_EMPTY = 1.6;   // and how much quicker it walks with its hands free
 
+// --- tipping a load into the hole ---------------------------------------------
+// A hauler used to empty its cart as one act: every grain left the same point
+// at the same instant on the same arc, differing only in where it came down.
+// A dozen identical parabolas out of one pixel is a spray from a nozzle, not a
+// body turning a barrow over -- and it is the one moment in the game where you
+// watch the yard's whole day's work actually go somewhere.
+//
+// So the throw is a hand's throw: the peak varies grain by grain and the load
+// does not leave from a single point. None of it changes where anything lands
+// or what anything is worth -- `bell` still picks the spot and the count is
+// untouched -- and none of it needs anything remembered, which is why the
+// spill is made of the grains' own arcs rather than of a queue on the worker.
+export const TOSS_RISE = 70;         // world px the average grain peaks at
+export const TOSS_RISE_VARY = 0.55;  // share of that it varies by, either way
+export const TOSS_SPREAD = P * 2;    // how far apart the hands let go
+
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is
 // read-only everywhere else, so the get/set pair has to be written where the

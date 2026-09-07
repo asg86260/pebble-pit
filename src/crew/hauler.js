@@ -12,6 +12,7 @@ import { at, put, colOf } from '../grid.js';
 import { walkY, yardLeft } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
 import { spawnChip, bell, aim } from '../dust.js';
+import { TOSS_RISE, TOSS_RISE_VARY, TOSS_SPREAD } from '../config.js';
 import { muckLeft, muckAtCol, nearestMuck } from '../smog.js';
 import { haulSpeed, scoopMs } from '../upgrades.js';
 // the swift brew's pace, read per body at every haul walk (feedback7, item 21)
@@ -459,8 +460,19 @@ export function haulerWork(w, c) {
         const land = S.riftOpen && !S.drowned
           ? rift.x + rift.w / 2 + bell() * rift.w * 0.4
           : Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
-        const v = aim(from, up, land, P);
-        spawnChip(from, up, v.vx, v.vy, w.load?.[i] || 1);
+        // A hand's throw, not a nozzle's. Every grain used to leave the same
+        // pixel on the same arc and differ only in where it came down, which
+        // is a dozen identical parabolas out of one point -- and this is the
+        // one moment in the game where you watch a whole day's work actually
+        // go somewhere. So the hands are a span rather than a point, and each
+        // grain gets its own peak: some lobbed high and slow, some flicked
+        // flat and quick. They land spread in time as well as in place, which
+        // is what a barrow being turned over looks like.
+        const fx = from + (rand() - 0.5) * TOSS_SPREAD;
+        const fy = up - rand() * P;
+        const rise = TOSS_RISE * (1 + bell() * TOSS_RISE_VARY);
+        const v = aim(fx, fy, land, P, rise);
+        spawnChip(fx, fy, v.vx, v.vy, w.load?.[i] || 1);
       }
       w.stored = (w.stored || 0) + w.carry;
       w.carry = 0;

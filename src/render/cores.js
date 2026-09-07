@@ -450,6 +450,10 @@ function rimPath(cx, cy, rad, t, grow) {
 // *picture*: the transform is dropped to the page for the length of it and the
 // world's restored after. Only each ring's own box is sampled, so this is a
 // handful of small blits rather than four copies of the window.
+// One offscreen sheet, kept, so the warp reads from a still copy of the frame
+// rather than from the frame it is drawing into.
+let bendCan = null, bendCtx = null;
+
 function drawBend(cx, cy, rad) {
   const sx = (cx - S.camX + S.shakeX) * S.zoom;
   const sy = (cy - S.camY + S.shakeY) * S.zoom;
@@ -458,6 +462,27 @@ function drawBend(cx, cy, rad) {
   const wide = can.width / S.dpr;
   // off the glass entirely: nothing to bend and nothing to sample
   if (sx + sr * RIFT_BEND_R < 0 || sx - sr * RIFT_BEND_R > wide) return;
+
+  // **Take a copy first.** Every ring used to sample the live canvas -- the
+  // one the earlier rings had just written into -- so ring two magnified ring
+  // one's output, ring three magnified that, and the picture fed on itself. A
+  // pixel's worth of change anywhere near the hole came back amplified a ring
+  // at a time and the whole band boiled. It looked like noise in the warp and
+  // it was the warp reading its own work.
+  //
+  // Copied once into a sheet of its own, every ring samples the same still
+  // picture: the frame as it stood before any of this. Which is also what a
+  // lens does -- it bends the light that arrives, not the light it has already
+  // bent.
+  const R1 = Math.ceil(sr * RIFT_BEND_R) + 2;
+  const bx0 = Math.floor(sx - R1), by0 = Math.floor(sy - R1);
+  const side = R1 * 2;
+  const dw = Math.ceil(side * S.dpr);
+  if (!bendCan) { bendCan = document.createElement('canvas'); bendCtx = bendCan.getContext('2d'); }
+  if (bendCan.width !== dw || bendCan.height !== dw) { bendCan.width = dw; bendCan.height = dw; }
+  bendCtx.setTransform(1, 0, 0, 1, 0, 0);
+  bendCtx.clearRect(0, 0, dw, dw);
+  bendCtx.drawImage(can, bx0 * S.dpr, by0 * S.dpr, dw, dw, 0, 0, dw, dw);
 
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
@@ -473,12 +498,14 @@ function drawBend(cx, cy, rad) {
     ctx.arc(sx, sy, r1, 0, Math.PI * 2);
     ctx.arc(sx, sy, r0, 0, Math.PI * 2, true);
     ctx.clip('evenodd');
-    // the ring's own box, and the patch of picture that lands in it once that
-    // patch is blown up by `m` about the middle
-    const bx = sx - r1, by = sy - r1, bw = r1 * 2, bh = r1 * 2;
+    // The ring's own box, and the patch of the COPY that lands in it once that
+    // patch is blown up by `m` about the middle. The copy's own corner comes
+    // off first, since it is its own little coordinate space.
+    const bx = sx - r1, by = sy - r1, bw = r1 * 2;
     const px = sx + (bx - sx) / m, py = sy + (by - sy) / m;
-    ctx.drawImage(can, px * S.dpr, py * S.dpr, (bw / m) * S.dpr, (bh / m) * S.dpr,
-                  bx, by, bw, bh);
+    ctx.drawImage(bendCan,
+                  (px - bx0) * S.dpr, (py - by0) * S.dpr, (bw / m) * S.dpr, (bw / m) * S.dpr,
+                  bx, by, bw, bw);
     ctx.restore();
   }
   ctx.restore();
