@@ -7,6 +7,7 @@ import { HAUL_CARRY_COST, HAUL_PACE_COST } from '../config.js';
 export const CREW_ROWS = [
   {
     key: 'haulcarry',
+    board: 'house',
     kind: 'rung', site: 'bench',
     // The heading over these rows already says "the crew", so the rows do not
     // need to say "worker" as well -- and what a body can pick up in one go is
@@ -33,6 +34,7 @@ export const CREW_ROWS = [
   // and say so -- they are gear, which is what blue is for.
   {
     key: 'harness',
+    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'harness',
     unit: 'px',
@@ -48,6 +50,7 @@ export const CREW_ROWS = [
   },
   {
     key: 'boots',
+    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'boots',
     unit: 'px/s',
@@ -62,6 +65,7 @@ export const CREW_ROWS = [
   },
   {
     key: 'haulpace',
+    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'speed',
     unit: 'px/s',

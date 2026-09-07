@@ -62,6 +62,7 @@ export const BENCH_ROWS = [
     // Gated like the others: every rung of the lip's own gear, and a cart for
     // every pair of hands.
     key: 'belt',
+    board: 'house',        // the crew's machine, sold where the crew live
     // Put up where it will stand, which the machine's own spec knows and this
     // row does not: the builders walk to it rather than building it from
     // wherever they happened to be.

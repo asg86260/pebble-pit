@@ -14,7 +14,7 @@
 import { S } from './state.js';
 import { cubes, houseLeft } from './house.js';
 import { HOUSE_CUBE } from './config.js';
-import { JOB_OF as JOBS_AT, HOUSE_ROW } from './upgrades.js';
+import { JOB_OF as JOBS_AT, HOUSE_ROW, UPGRADES } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showCrewList } from './board.js';
 import { indoors } from './lab.js';
@@ -187,8 +187,24 @@ function point(w) {
 // up went through the settlement on the way and threw the sheet open sideways.
 // A row that only puts a list up is a fine thing to have to reach for; a row you
 // came to press is not.
+// The crew's own gear came here off the bench, and this is where it belonged:
+// a decision about a place is made at the place, and what the crew carry and how
+// fast they walk is a decision about the crew. It sat on the workbench under a
+// heading reading "the crew", one yard away from the block the crew live in, for
+// no better reason than that the bench was where every row started life.
+//
+// Read from UPGRADES rather than copied, so these are the same row objects the
+// game already prices, gates and builds -- moving a row between boards is a
+// question of which sheet draws it, and nothing else.
+export const CREW_GEAR = ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'];
+// Read when asked, never at load: upgrades.js reaches this file on the way to
+// building UPGRADES, so the ring is still closing while this module's body runs
+// and a list gathered here would be `undefined`. Same trick, same reason, as
+// `listFor` in board.js.
+const gearRows = () => CREW_GEAR.map(k => UPGRADES.find(u => u.key === k)).filter(Boolean);
+
 export function crewRows() {
-  return [CREW_ROW, HOUSE_ROW];
+  return [CREW_ROW, HOUSE_ROW, ...gearRows()];
 }
 
 // The door through to them. It is priced like the rows below it are -- where the
@@ -247,5 +263,10 @@ function people() {
 // submenu says which heading it came out of.
 export const crewSections = () => [
   { title: 'the crew', keys: [CREW_ROW.key] },
-  { title: 'the block', keys: [HOUSE_ROW.key] }
+  { title: 'the block', keys: [HOUSE_ROW.key] },
+  // What they carry and how fast they walk. Its own heading rather than folded
+  // into "the crew" above, because that one is the door through to the people
+  // and this is a shelf of gear -- the same distinction the board already draws
+  // between a person and a purchase.
+  { title: 'their gear', keys: CREW_GEAR }
 ];

@@ -157,9 +157,13 @@ export const tuneCost = key => Math.round(MACHINE_TUNE_COST * Math.pow(MACHINE_T
 // moment you press a button. It is the same site the machine's own row was
 // built at, said again here because a row saying where it is fitted is what
 // every row in this game does.
-export const tuneRow = (key, name, note, site) => ({
+// `board` is which sheet draws it, and a tuning row is drawn wherever its
+// machine's own row is: the belt is the crew's, so both of its rows are sold at
+// the block the crew live in. Every other machine's tuning stays on the board it
+// has always been on, which is what `undefined` means here.
+export const tuneRow = (key, name, note, site, board) => ({
   key: 'tune' + key,
-  kind: 'rung', site,
+  kind: 'rung', site, board,
   name,
   unit: 'x',
   note,

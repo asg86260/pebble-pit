@@ -864,26 +864,35 @@ export const SECTIONS = [
   // Placeholder heading -- Track A owns the final wording. The crit rows apply
   // to the whole yard, so the bench is their natural home.
   { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
-  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'] },
+  // "the crew" is not here any more: what they carry and how fast they walk is
+  // sold at the block they live in, under "their gear" -- see crewboard.js. The
+  // rows themselves are still in UPGRADES below, because moving a row between
+  // boards is a question of which sheet draws it and nothing else.
   { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'] },
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
   { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
-  { title: 'the quarry', keys: ['unlockquarry'] },
-  { title: 'the farm', keys: ['unlockfarm'] },
-  { title: 'the lab', keys: ['unlocklab'] },
-  { title: 'the apothecary', keys: ['unlockapothecary'] },
-  { title: 'the casino', keys: ['unlockcasino'] },
-  // Only the row that puts the shed up. The rest of the janitor's ladder is on
-  // the outhouse's own board -- see src/outhouse.js -- for the same reason the
-  // lab's and the school's rows left the bench: a decision about a place is
-  // made at the place. This one cannot be, because the place is what it buys.
-  { title: "the janitor's closet", keys: ['unlockouthouse'] },
-  // wave7b-build: the construction bench and its ladders.
-  { title: 'the build yard', keys: ['unlockbuildbench', 'buildposts', 'buildpace'] },
-  { title: 'the tower', keys: ['unlocktower'] },
-  { title: 'the training grounds', keys: ['unlockschool'] },
-  { title: 'the scrubbing house', keys: ['unlockscrub'] }
+  // Everything the yard has not put up yet, under one heading.
+  //
+  // These were ten headings, each carrying a single row -- "the quarry" over
+  // "open the quarry", "the tower" over "raise the tower", and so on down. That
+  // is roughly six hundred pixels of bench spent on a table of contents, and a
+  // heading over one row was never telling you anything the row did not.
+  //
+  // The rows keep their own verbs rather than being flattened to the building's
+  // name. "Open the quarry", "break the ground", "raise the tower" each say what
+  // the work actually is, and under one heading they read as a list of jobs to
+  // be done rather than a list of things to be owned -- which is the truer
+  // description of a yard you are building.
+  //
+  // They are the one group that cannot be moved to the place it belongs to,
+  // which is the rule every other section on this board now follows: a decision
+  // about a place is made at the place, and these cannot be, because the place
+  // is what they buy. See DESIGN.md, "The bench is a catch-all".
+  { title: 'put up', keys: [
+    'unlockquarry', 'unlockfarm', 'unlocklab', 'unlockapothecary', 'unlockcasino',
+    'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool', 'unlockscrub'
+  ] }
 ];
 
 // What the bench has to say for itself, without opening it. The board is built

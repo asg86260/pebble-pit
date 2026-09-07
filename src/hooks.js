@@ -46,6 +46,8 @@ import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
+import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
+import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
@@ -620,7 +622,16 @@ export const unsection = key => {
 };
 
 export const boards = () => [
-  { name: 'bench',  keys: UPGRADES.map(u => u.key),        sections: SECTIONS.map(x => x.keys) },
+  // What the bench actually draws: everything that has not moved to a board of
+  // its own. A row names its sheet with `board` and the bench takes the rest --
+  // the same question `listFor` in board.js asks. Asking `UPGRADES` flat here
+  // would report the crew's gear and the trestle's ladders as bench rows nobody
+  // had given a heading to, which is the opposite of what happened to them.
+  { name: 'bench',  keys: UPGRADES.filter(u => !u.board).map(u => u.key),
+                                                          sections: SECTIONS.map(x => x.keys) },
+  { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
+  { name: 'buildbench', keys: BUILDBENCH_UPGRADES.map(u => u.key),
+                                                          sections: BUILDBENCH_SECTIONS.map(x => x.keys) },
   { name: 'lab',    keys: LAB_UPGRADES.map(u => u.key),    sections: LAB_SECTIONS.map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
   { name: 'school', keys: SCHOOL_UPGRADES.map(u => u.key), sections: SCHOOL_SECTIONS.map(x => x.keys) },

@@ -37,6 +37,7 @@ export const BUILDBENCH_ROWS = [
   // plant, and red is the machines' currency end to end.
   {
     key: 'buildposts',
+    board: 'buildbench',
     name: 'another post',
     rung: () => S.buildPostLevel,
     rungs: () => BUILD_POST_RUNGS,
@@ -53,6 +54,7 @@ export const BUILDBENCH_ROWS = [
   // a number, not a wall.
   {
     key: 'buildpace',
+    board: 'buildbench',
     name: 'a better hammer',
     pct: true,
     unit: 'x',
@@ -65,4 +67,18 @@ export const BUILDBENCH_ROWS = [
     buy: () => S.buildPaceLevel++,
     show: () => S.buildbenchOpen && S.seenSpore
   }
+];
+
+// The bench's own two ladders, on the bench's own board.
+//
+// They sat on the workbench under a heading called "the build yard", beside the
+// row that puts the place up -- which broke the rule the rest of the yard keeps:
+// a decision about a place is made at the place. How many builders the yard
+// holds and how hard they swing are decisions about THIS bench, and the bench is
+// a thing standing in the yard with a rect of its own that you can walk up to.
+// Only `unlockbuildbench` stays behind on the workbench, because a place cannot
+// sell the row that builds it. See DESIGN.md, "The bench is a catch-all".
+export const BUILDBENCH_UPGRADES = BUILDBENCH_ROWS.filter(u => u.key !== 'unlockbuildbench');
+export const BUILDBENCH_SECTIONS = [
+  { title: 'the work bench', keys: ['buildposts', 'buildpace'] }
 ];

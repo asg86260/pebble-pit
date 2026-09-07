@@ -21,6 +21,8 @@ export const TUNING_ROWS = [
   // other two: see `tuneRow` in machines.js.
   tuneRow('ram', 'tune the ram',
           () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard'),
+  // The belt is the crew's machine, so its tuning is sold where the crew live,
+  // beside the row that buys the belt itself.
   tuneRow('belt', 'tune the belt',
-          () => `the belt runs ${MACHINE_TUNE}x faster, again`, 'yard')
+          () => `the belt runs ${MACHINE_TUNE}x faster, again`, 'yard', 'house')
 ];

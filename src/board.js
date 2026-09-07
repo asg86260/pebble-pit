@@ -16,6 +16,7 @@ import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
+import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
@@ -34,6 +35,7 @@ const apothShopEl = document.getElementById('apothshop');
 const towerShopEl = document.getElementById('towershop');
 const statsShopEl = document.getElementById('statsshop');
 const looShopEl = document.getElementById('looshop');
+const buildShopEl = document.getElementById('buildshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
 const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
@@ -45,7 +47,8 @@ const pages = { bench: document.getElementById('board'), lab: document.getElemen
                 apothecary: document.getElementById('apothboard'),
                 tower: document.getElementById('towerboard'),
                 stats: document.getElementById('statsboard'),
-                outhouse: document.getElementById('looboard') };
+                outhouse: document.getElementById('looboard'),
+                buildbench: document.getElementById('buildboard') };
 
 // How far up a ladder you are is a row of pips, and how big and how dark they
 // are is a number rather than a rule -- so the two of them live in config with
@@ -87,6 +90,9 @@ const standAt = { bench, lab, school, casino, scrub, tower,
                   // sheet all belong to the building that holds the rungs.
                   get apothecary() { return apothHut(); },
                   outhouse,
+                  // The trestle is reseated at boot, so it is read when asked
+                  // rather than captured while this table is being built.
+                  get buildbench() { return S.buildbench; },
                   get stats() { return booksRect(); },
                   get quarry() { return quarryShed(); },
                   get farm() { return farmShed(); },
@@ -104,7 +110,10 @@ const anchor = which => boardAt(which);
 // had not been reached yet as `undefined`. Reading it inside a function is the
 // same trick airboard.js hands its row out with.
 const listFor = which =>
-  which === 'bench' ? UPGRADES :
+  // Everything that has not moved to a board of its own. A row names the sheet
+  // it belongs to and the bench takes the rest, which is what every row used to
+  // be -- see the note by `CREW_GEAR` in crewboard.js.
+  which === 'bench' ? UPGRADES.filter(u => !u.board) :
   which === 'lab' ? LAB_UPGRADES :
   which === 'school' ? SCHOOL_UPGRADES :
   which === 'casino' ? CASINO_UPGRADES :
@@ -115,13 +124,15 @@ const listFor = which =>
   which === 'tower' ? TOWER_UPGRADES :
   which === 'stats' ? STATS_UPGRADES :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
+  which === 'buildbench' ? BUILDBENCH_UPGRADES :
   which === 'house' ? crewRows() : [];
 
 // Every station that has a board. One list, so that a thing which is true of all
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
-                         'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse'];
+                         'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
+                         'buildbench'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -141,6 +152,7 @@ const standing = which =>
   // The outhouse's board arrives with the building, like every station's; the
   // row that puts the building up is on the bench with the other unlocks.
   which === 'outhouse' ? S.outhouseOpen :
+  which === 'buildbench' ? S.buildbenchOpen :
   which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
 
@@ -926,6 +938,7 @@ function fill(which) {
   // yard used to be earning.
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
+  if (which === 'buildbench') refresh(buildShopEl, BUILDBENCH_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not
   if (which === 'house') {

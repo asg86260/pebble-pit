@@ -21,6 +21,7 @@ import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
+import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
@@ -36,6 +37,7 @@ const apothEl = document.getElementById('apothshop');
 const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
 const looEl = document.getElementById('looshop');
+const buildEl = document.getElementById('buildshop');
 
 // What is on the board right now, as a string. If it has not changed there is
 // nothing to build: the numbers on the rows are refreshed every frame anyway,
@@ -670,7 +672,9 @@ export function buildCrewList() {
 // them here outright is a reference to a binding that does not exist yet, and
 // the whole game fails to load.
 const BOARDS = {
-  bench:  () => [shopEl, UPGRADES, SECTIONS, 'nothing to sell'],
+  // Everything that has not moved to a board of its own -- see `listFor` in
+  // board.js, which asks the same question, and the note by `CREW_GEAR`.
+  bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
   // The table is empty between hands, and says so rather than standing blank.
   casino: () => [casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table'],
   lab:    () => [labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into'],
@@ -687,6 +691,10 @@ const BOARDS = {
   // Nothing on it until there is mess on the ground to want a janitor for --
   // see `show` on the outhouse row, which is the board's whole first offer.
   outhouse: () => [looEl, OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS, 'the brooms are all on their hooks'],
+  // The trestle's own two ladders. It is never empty once it stands -- both rows
+  // show on `buildbenchOpen` -- but the line is there for the same reason every
+  // other board has one: a blank sheet is a bug you would have to rule out.
+  buildbench: () => [buildEl, BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS, 'the bench is bare'],
   // The school runs out on purpose: one trade per job, and once everybody doing
   // a job has it there is nobody left to send.
   school: () => [schoolEl, SCHOOL_UPGRADES, SCHOOL_SECTIONS, 'nobody left to teach']
