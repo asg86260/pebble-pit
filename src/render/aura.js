@@ -14,11 +14,11 @@ import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
   FLAG_GUST_MS, FLAG_GUST_SPAN, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
-  OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P,
+  OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P, TOWER_SHAFT,
 } from '../config.js';
 import { now } from '../clock.js';
 import { chimneyAt } from '../house.js';
-import { S, bench, lab, school } from '../state.js';
+import { S, bench, lab, school, tower } from '../state.js';
 import { benchMark } from '../upgrades.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
@@ -84,6 +84,13 @@ const SPOT = {
   bench: () => ({ x: bench.x + P * 4.5, y: bench.y - P * 2 }),  // the clamped block
   school: () => ({ x: school.x + P * 9.5, y: school.y }),       // the belfry
   lab: () => ({ x: lab.x + P * 3, y: lab.y }),                  // the chimney
+  // The tower's stand box is the shaft plus the turret hung off its right side,
+  // so the middle of the box is the spire's right shoulder -- two and a half
+  // cells right of the point and three below the vane. The pole goes on the
+  // vane's own mast instead, the topmost thing the tower draws, so the flag
+  // continues the staff the vane already stands on. (bars.js works around the
+  // same wide box with towerSpireBox.)
+  tower: () => ({ x: tower.x + P * (TOWER_SHAFT / 2 - 0.5), y: tower.y - P * 3 }),
 };
 
 function flagBase(rect, which) {

@@ -386,6 +386,19 @@ const SCENES = {
              window.__give(20000); window.__board('outhouse');
              (s => window.__look(s.outhouseX + 21 - s.viewW / 2))(window.__state());`,
 
+  // The tower with its offer flag up. The flag's own scene, because the tower is
+  // the one station whose stand box is wider than the thing the pole stands on:
+  // shaft plus turret, so the middle of the box is nowhere near the point. The
+  // camera is set *after* the run -- __fast lets it drift back to the crew, and
+  // a scene about a roof wants the roof in shot.
+  // Calling the meteor down pans the camera off to it, and the harness runs a
+  // second of the yard after the scene -- so a camera set here has wandered by
+  // the time the shot is taken. Pin it every frame instead.
+  towerflag: `${RICH} window.__meteor(); window.__fast(3);
+              (x => { const pin = () => { window.__look(x);
+                        requestAnimationFrame(pin); }; pin(); })
+              (window.__state().towerX - 361);`,
+
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
