@@ -122,6 +122,11 @@ export function dropHeight() {
 // ground it needs, and knocks a few grains off the tops of the two banks.
 export function stepRock() {
   if (S.rockFall <= 0) return;
+  // Something is holding it. The arch catches one rock and stands under it for
+  // a beat before the crack runs (shield.js), and for that beat the rock is
+  // not falling -- it is resting on something, which is a thing that has never
+  // happened in this game before and is the whole point of the beat.
+  if (S.rockHeld) { placeRock(); return; }
   // A rock takes the same time to come down whatever the machine is drawing at
   const f = frames();
   S.rockFallV += DROP_GRAV * f;

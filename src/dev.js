@@ -12,7 +12,7 @@
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
-import { TUNABLE, tune, tuned, PROP_FROM, PROP_COST, PROP_PLANKS } from './config.js';
+import { TUNABLE, tune, tuned, PROP_FROM, PROP_COST, ARCH_COST } from './config.js';
 import { relayout, beat } from './main.js';
 
 const KEY = 'boulder-clicker/dev-open';
@@ -136,32 +136,41 @@ const SCENES = {
   landing: () => { window.__reset(); window.__crew(2, 1); window.__next(); }
 };
 
-// the shields, beat by beat: the row on the bench, the frame going up a plank
-// at a time, and the rock coming through the finished thing
-const propsYard = () => {
+// The shields, beat by beat: the row on the bench, the thing going up a piece
+// at a time, and the rock reaching the finished one. Each is a fresh yard with
+// the coin for that shield already in hand.
+const shieldYard = () => {
   window.__reset();
   window.__crew(2, 1);
   window.__jump(PROP_FROM);
   window.__give(PROP_COST * 2);
+  window.__grant({ shards: ARCH_COST * 2 });
 };
-const PROPS = {
-  offered: propsYard,
-  building: () => { propsYard(); window.__buy('props'); },
-  smash: () => {
-    propsYard();
-    window.__buy('props');
-    // run the build through rather than skipping it -- the planks still arrive
-    // by walking, only faster than watching
-    for (let i = 0; i < 600 && S.props && S.props.laid < PROP_PLANKS; i++) window.__fast(1);
-    window.__next();
+// Raise one and run its build through rather than skipping it -- the pieces
+// still arrive by walking, only faster than watching.
+const built = kind => {
+  shieldYard();
+  if (kind === 'arch') { S.shieldsDone = ['props']; S.quarryOpen = true; }
+  window.__buy(kind);
+  for (let i = 0; i < 600; i++) {
+    const sh = window.__state().shield;
+    if (!sh || sh.laid >= sh.pieces) break;
+    window.__fast(1);
   }
+};
+const SHIELDS = {
+  offered: shieldYard,
+  building: () => { shieldYard(); window.__buy('props'); },
+  smash: () => { built('props'); window.__next(); },
+  'arch up': () => built('arch'),
+  catch: () => { built('arch'); window.__next(); }
 };
 
 line('scenes', box => {
   for (const [name, fn] of Object.entries(SCENES)) button(box, name, fn);
 });
-line('props', box => {
-  for (const [name, fn] of Object.entries(PROPS)) button(box, name, fn);
+line('shields', box => {
+  for (const [name, fn] of Object.entries(SHIELDS)) button(box, name, fn);
 });
 
 // the numbers themselves. Anything in TUNABLE turns up here without this file

@@ -1598,15 +1598,25 @@ export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SL
 // and the look is the pair of them rather than either one.
 export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };
 
-// --- the props ----------------------------------------------------------------
-// The first shield (DESIGN.md, "The shields"): timber legs and a lid over the
-// rock, raised a plank at a time, and smashed through by the next rock to fall.
-// The frame's width and height are derived from the rock it stands over, so
-// only the story's own numbers live here.
+// --- the shields --------------------------------------------------------------
+// DESIGN.md, "The shields": three tries at stopping the next rock, of which the
+// first two fail. What every shield shares is here; what one kind does
+// differently is a field in KINDS (shield.js). A shield's width and height are
+// derived from the rock it stands over, so only the story's own numbers live in
+// this block.
+export const SHIELD_LEG_W = 2;       // cells across a leg or a pier
+export const SHIELD_LID_T = 2;       // courses thick across the lid, and the arch's band
+export const SHIELD_CLEAR_C = 4;     // courses of daylight kept over the rock's peak
+export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most of the spend comes home
+
+// The props: timber, and the rock does not even slow down for it.
 export const PROP_FROM = 4;         // rocks fallen before the yard thinks to look up
 export const PROP_COST = 400;       // dust for the timber
 export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives per walk
-export const PROP_LEG_W = 2;        // cells across a leg
-export const PROP_LID_T = 2;        // courses thick across the lid
-export const PROP_CLEAR_C = 4;      // courses of daylight kept over the rock's peak
-export const PROP_PLANK_DUST = 25;  // cells a plank breaks back into, so most of the spend comes home
+
+// The arch: quarried stone, priced in the quarry's own coin. It catches one --
+// the hold is long enough for the yard to believe it has won, and short enough
+// that the belief is the beat rather than a pause in the game.
+export const ARCH_COST = 20;        // shards
+export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
+export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs

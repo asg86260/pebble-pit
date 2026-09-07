@@ -1022,7 +1022,7 @@ you are choosing who to hire and where to put them; by the end you are watching 
 itself and deciding what the lab should make faster. There is no finish line, and nothing is
 taken away to make you start again.
 
-## The shields (the props built; the arch and the dome designed, not built)
+## The shields (the props and the arch built; the dome designed, not built)
 
 The story so far has one engine and it turns one way: rocks land on people, and everything the
 yard does about it happens after the fact. You dig. In the whole run nobody has yet done the

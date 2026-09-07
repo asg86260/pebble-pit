@@ -13,8 +13,8 @@ import {
   TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
-import { raiseProps } from './props.js';
-import { PROP_COST, PROP_FROM } from './config.js';
+import { raiseShield, shieldDone } from './shield.js';
+import { PROP_COST, PROP_FROM, ARCH_COST } from './config.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
@@ -570,8 +570,23 @@ export const UPGRADES = [
     name: 'raise the props',
     note: () => 'timber legs and a lid over the rock, so the next one has something to answer',
     cost: () => PROP_COST,
-    buy: () => raiseProps(),
-    show: () => !S.props && !S.propsDone && S.introDone && S.boulderNo >= PROP_FROM
+    buy: () => raiseShield('props'),
+    show: () => !S.shield && !shieldDone('props') && S.introDone && S.boulderNo >= PROP_FROM
+  },
+  // The second try, and the one that nearly works. Stone, and priced in the
+  // quarry's own coin because it is cut from the quarry: the yard answering
+  // the sky with the best thing it has out of the ground. It is offered only
+  // after the timber has been through, because the arch is an argument with
+  // what just happened -- build it heavier, out of the real stuff -- and an
+  // argument offered before the thing it answers is a row about nothing.
+  {
+    key: 'arch',
+    name: 'cut the arch',
+    note: () => 'stone over the landing spot. rock against rock, and this one is ours',
+    cost: () => ARCH_COST,
+    currency: 'shard',
+    buy: () => raiseShield('arch'),
+    show: () => !S.shield && shieldDone('props') && !shieldDone('arch') && S.quarryOpen
   },
   // The one building that undoes something instead of making something. It is
   // offered the first time the sky is visibly dirty rather than on a schedule:
@@ -700,7 +715,7 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
-  { title: 'the shields', keys: ['props'] },
+  { title: 'the shields', keys: ['props', 'arch'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },

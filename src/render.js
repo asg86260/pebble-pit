@@ -22,7 +22,8 @@ import { underground, quarryShape, ladder, quarryCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
-import { PROP_PLANKS, PROP_LEG_W, PROP_LID_T } from './config.js';
+import { SHIELD_LEG_W, SHIELD_LID_T } from './config.js';
+import { KINDS } from './shield.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
@@ -665,32 +666,36 @@ export function overPitMark(mx, my) {
 // width at first, which put the door and the belfry slot a third of a pixel off
 // the lattice and drew them with a grey fringe -- the same hairline the whole
 // game is arranged to avoid.
-// The props, half-built or whole: two braced timber legs and a sagging lid
-// over the rock, drawn in whole cells like every building on this ground. The
-// legs rise through the first half of the planks and the lid closes from both
-// ends through the second, so the frame visibly grows out of the trips that
-// built it rather than fading in. Drawn after the rock, because the lid stands
-// over it -- and before the crew, who walk in front of everything.
-export function drawProps() {
-  const p = S.props;
-  if (!p) return;
-  const done = Math.min(1, p.laid / PROP_PLANKS);
-  const lw = PROP_LEG_W * P;
-  const topY = S.groundY - p.h * P;
-  const cols = p.w / P;
+// Whatever is standing over the yard, half-built or whole, drawn in whole
+// cells like every building on this ground. Each kind grows out of the trips
+// that built it rather than fading in, so a frame at six planks is visibly six
+// planks. Drawn after the rock, because a shield stands over it -- and before
+// the crew, who walk in front of everything.
+export function drawShield() {
+  const s = S.shield;
+  if (!s) return;
+  const done = Math.min(1, s.laid / KINDS[s.kind].pieces);
+  const topY = S.groundY - s.h * P;
+  const cols = s.w / P;
   ctx.fillStyle = '#000';
-  const legC = Math.min(p.h, Math.round(Math.min(1, done * 2) * p.h));
+  if (s.kind === 'arch') return drawArch(s, done, topY, cols);
+
+  // The props: two braced timber legs and a sagging lid. The legs rise through
+  // the first half of the planks and the lid closes from both ends through the
+  // second.
+  const lw = SHIELD_LEG_W * P;
+  const legC = Math.min(s.h, Math.round(Math.min(1, done * 2) * s.h));
   const span = Math.round(Math.max(0, done * 2 - 1) * cols) * P;
-  const half = span > 0 ? Math.min(p.w, Math.ceil(span / 2 / P) * P) : 0;
+  const half = span > 0 ? Math.min(s.w, Math.ceil(span / 2 / P) * P) : 0;
 
   if (legC > 0) {
-    ctx.fillRect(p.x, S.groundY - legC * P, lw, legC * P);
-    ctx.fillRect(p.x + p.w - lw, S.groundY - legC * P, lw, legC * P);
+    ctx.fillRect(s.x, S.groundY - legC * P, lw, legC * P);
+    ctx.fillRect(s.x + s.w - lw, S.groundY - legC * P, lw, legC * P);
     // a diagonal shore leaning into each leg, one cell a course
     const brace = Math.min(legC - 1, 5);
     for (let i = 0; i < brace; i++) {
-      ctx.fillRect(p.x + lw + i * P, S.groundY - (brace - i) * P, P, P);
-      ctx.fillRect(p.x + p.w - lw - (i + 1) * P, S.groundY - (brace - i) * P, P, P);
+      ctx.fillRect(s.x + lw + i * P, S.groundY - (brace - i) * P, P, P);
+      ctx.fillRect(s.x + s.w - lw - (i + 1) * P, S.groundY - (brace - i) * P, P, P);
     }
   }
   if (half > 0) {
@@ -705,7 +710,57 @@ export function drawProps() {
       if (!from) continue;
       const t = (2 * c / cols) - 1;                 // -1 at one end, 1 at the other
       const off = Math.round(sag * (1 - t * t));    // the bow, in whole courses
-      ctx.fillRect(p.x + c * P, topY + off * P, P, PROP_LID_T * P);
+      ctx.fillRect(s.x + c * P, topY + off * P, P, SHIELD_LID_T * P);
+    }
+  }
+}
+
+// The arch: two piers and a shallow segmental curve across them. One law draws
+// all of it -- a cell is stone if it lies in the band between two circles
+// struck from the same center, and below the springing line that band goes
+// straight down as the piers. The piers, the haunches and the crown are not
+// three shapes fitted together; they are one question asked at different
+// heights, which is why it comes out looking built rather than assembled.
+//
+// The curve is a segment rather than a half-circle. A half-circle over an
+// opening this wide is a hoop as tall as the yard, and it read as one: a thin
+// rainbow standing on nothing. A mason spanning a wide gap springs a shallow
+// arc off two solid piers, and the geometry follows from the span and the
+// rise -- the radius is whatever makes a circle pass through both springings
+// and the crown, never a number chosen to look right.
+//
+// It goes up the way an arch goes up: from both feet, round the curve, and the
+// crown last. So it is only closed on the trip that finishes it, and until
+// then it is two piers reaching for each other -- the picture of a thing not
+// yet able to hold anything.
+function drawArch(s, done, topY, cols) {
+  const T = SHIELD_LID_T + 2;            // stone is heavier than plank
+  const a = cols / 2;                    // half the span, in cells
+  const f = Math.max(1, s.rise || Math.round(cols / 4));
+  const R = (a * a + f * f) / (2 * f);   // the circle through both springings and the crown
+  const springC = s.h - f;               // courses of straight pier under the curve
+  const cY = springC - (R - f);          // its center, below the springing line
+  const total = springC + (R - T / 2) * Math.asin(a / R);   // foot to crown, along the stone
+  const reach = done * total;
+  for (let c = 0; c < cols; c++) {
+    const dx = Math.abs(c + 0.5 - a);
+    for (let r = 0; r < s.h; r++) {
+      let stone, along;
+      if (r < springC) {
+        // the outer T cells, which is the same rule the props' legs follow --
+        // a pier is as thick as the stone it carries, never thinner
+        stone = dx >= a - T;
+        along = r;                                   // straight up the pier
+      } else {
+        const d = Math.hypot(dx, r - cY);
+        stone = d >= R - T && d <= R;
+        // how far round the curve this cell sits, measured along the band's
+        // middle from the springing, so the reveal runs at one pace the whole
+        // way up and the crown -- where dx is nought -- is the last of it
+        along = springC + (Math.asin(a / R) - Math.asin(Math.min(1, dx / R))) * (R - T / 2);
+      }
+      if (!stone || along > reach) continue;
+      ctx.fillRect(s.x + c * P, S.groundY - (r + 1) * P, P, P);
     }
   }
 }
@@ -2553,7 +2608,7 @@ export function draw() {
 
   ctx.fillStyle = '#000';
 
-  drawProps();
+  drawShield();
 
   // a chip is a grain in the air, drawn as whatever it is
   for (const ch of S.chips) drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2);

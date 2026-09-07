@@ -25,7 +25,7 @@ import { placeRock, overBoulder, topOfRock, knockOff, stepRock } from './rock.js
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull } from './pit.js';
 import { spawnChip, spawnSpoil } from './dust.js';
 import { stepCore } from './core.js';
-import { stepProps } from './props.js';
+import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { stepTower } from './tower.js';
@@ -111,7 +111,7 @@ export function step() {
   // again, and waiting half a second to notice reads as the crew dawdling.
   if (S.tick % 15 === 1) surveyFloor();
   stepRock();                                 // a new one on its way down
-  stepProps();                                // the timber over the yard, and what the rock makes of it
+  stepShield();                               // whatever is standing over the yard, and what the rock makes of it
   updateWorkers(now, dt);
   stepRecords(dt);                            // and everybody gets a little older
   stepBreaks(now);                            // and what the stopped ones get up to

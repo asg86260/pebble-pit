@@ -206,8 +206,9 @@ export function persist() {
     labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
-    props: S.props && { x: S.props.x, w: S.props.w, h: S.props.h, laid: S.props.laid },
-    propsDone: S.propsDone,
+    shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid },
+    shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     casinoOpen: S.casinoOpen,
     scrubOpen: S.scrubOpen,
@@ -328,8 +329,9 @@ export function restore() {
     S.plots = [];
   S.plotTone = [];
     S.plotTone = [];
-    S.props = null;
-    S.propsDone = false;
+    S.shield = null;
+    S.shieldsDone = [];
+    S.rockHeld = false;
     return;
   }
   S.stored = s.stored;
@@ -415,9 +417,15 @@ export function restore() {
   S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
   // and a save from before the second act existed has plainly had its first rock
   S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
-  // a save from before the shields existed has plainly not raised one
-  S.props = s.props ? { x: s.props.x, w: s.props.w, h: s.props.h, laid: s.props.laid || 0 } : null;
-  S.propsDone = !!s.propsDone;
+  // A save from before the shields existed has plainly not raised one. The
+  // catch is not restored: a rock held in the air is a beat a few seconds
+  // long, and a save reloaded into the middle of it would come back to a rock
+  // resting on nothing if anything about the arch had changed. It falls.
+  S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
+                          h: s.shield.h, rise: s.shield.rise || 0,
+                          laid: s.shield.laid || 0, caught: 0 } : null;
+  S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
+  S.rockHeld = false;
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -620,8 +628,9 @@ export function reset() {
   S.introDone = false;
   S.reunionDone = false;
   S.buried = false;
-  S.props = null;
-  S.propsDone = false;
+  S.shield = null;
+  S.shieldsDone = [];
+  S.rockHeld = false;
   makeBoulder();
   S.boulder = S.boulder.map(row => row.map(() => 0));
   S.coreBuried = false;

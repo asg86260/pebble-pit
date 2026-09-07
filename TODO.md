@@ -2,9 +2,10 @@
 
 ## 6. The shields — the story arc
 
-**Status:** stage 1 (the props) built — `src/props.js`, the `props` bench row,
-the plank walk on the kit-walk legs, the mid-air smash, `test/props.test.mjs`.
-Stages 2 (the arch) and 3 (the dome) remain.
+**Status:** stages 1 and 2 built — `src/shield.js` owns all three kinds through
+one `KINDS` table, with the `props` and `arch` bench rows, the piece walk on
+the kit-walk legs, the catch, the collapse and `test/shield.test.mjs`. Stage 3
+(the dome) remains.
 
 Three attempts to stop the next rock: timber props (bench, dust) the rock goes
 straight through; a stone arch (shards) that catches one for a held beat and
@@ -23,9 +24,13 @@ ever under a shield when it goes, and the wreckage flies out along the heap as
    leg), smashed in the air the frame the falling rock's foot crosses the
    lid, wreckage out along the heap as `spawnSpoil` chips. Saved, reset,
    reported; `test/props.test.mjs` runs the whole story through `__buy`.
-2. **The arch.** Same scaffolding, quarried stone, plus the two new pieces:
-   the *caught* beat (a rock at rest on a shield, every body looking up) and
-   the delayed collapse. The arch's stone lands minable.
+2. **The arch — DONE.** Same scaffolding, quarried stone, priced in shards and
+   offered only once the timber has failed. Two new pieces: the *caught* beat
+   — `S.rockHeld` stops the fall the frame the rock's foot reaches the crown,
+   every body on the ground marks it, and the rock rests there — and the
+   delayed collapse (`ARCH_HOLD_MS`) that drops both. Drawn as a segmental
+   arch on two piers, one circle-band law from foot to crown, closing at the
+   crown on the trip that finishes it.
 3. **The dome.** The tower's fifth spell. Purple rings close over the landing
    spot; the catch is permanent. The choreography of the mate walking out —
    the buried-body system (`rock.test.mjs` "the one underneath") changes
