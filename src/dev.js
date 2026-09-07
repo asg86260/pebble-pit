@@ -12,7 +12,7 @@
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
-import { TUNABLE, tune, tuned } from './config.js';
+import { TUNABLE, tune, tuned, PROP_FROM, PROP_COST, PROP_PLANKS } from './config.js';
 import { relayout, beat } from './main.js';
 
 const KEY = 'boulder-clicker/dev-open';
@@ -122,6 +122,46 @@ line('boulder', box => {
 
 line('run on', box => {
   for (const s of [1, 5, 30]) button(box, `${s}s`, () => window.__fast(s));
+});
+
+// The story, one press a beat. Each button puts a fresh game at the top of a
+// scene, through the same hooks the checks use, so a beat can be watched in
+// seconds without playing the hour up to it. Fresh on purpose: a beat is a
+// fact about the story, not about whatever yard was standing when the button
+// was pressed. A new beat is one entry here, nothing else.
+const SCENES = {
+  opening: () => window.__reset(true),
+  // the one beat after the first rock: it is mined out, and somebody goes over
+  reunion: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); },
+  landing: () => { window.__reset(); window.__crew(2, 1); window.__next(); }
+};
+
+// the shields, beat by beat: the row on the bench, the frame going up a plank
+// at a time, and the rock coming through the finished thing
+const propsYard = () => {
+  window.__reset();
+  window.__crew(2, 1);
+  window.__jump(PROP_FROM);
+  window.__give(PROP_COST * 2);
+};
+const PROPS = {
+  offered: propsYard,
+  building: () => { propsYard(); window.__buy('props'); },
+  smash: () => {
+    propsYard();
+    window.__buy('props');
+    // run the build through rather than skipping it -- the planks still arrive
+    // by walking, only faster than watching
+    for (let i = 0; i < 600 && S.props && S.props.laid < PROP_PLANKS; i++) window.__fast(1);
+    window.__next();
+  }
+};
+
+line('scenes', box => {
+  for (const [name, fn] of Object.entries(SCENES)) button(box, name, fn);
+});
+line('props', box => {
+  for (const [name, fn] of Object.entries(PROPS)) button(box, name, fn);
 });
 
 // the numbers themselves. Anything in TUNABLE turns up here without this file
