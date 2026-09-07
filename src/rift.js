@@ -31,7 +31,7 @@
 // uses: one way of taking dust out of the pile, two destinations.
 
 import { P, RIFT_W0, RIFT_WMAX, ABYSS_AT, RIFT_AT, RIFT_UP, RIFT_GULP,
-         RIFT_GULP_SHOW, RIFT_SHAKE, RIFT_TURNS, RIFT_FALL_FROM, RIFT_FALL_END,
+         RIFT_GULP_SHOW, RIFT_SHAKE,
          RIFT_INHALE_MAX, RIFT_INHALE_SHOW } from './config.js';
 import { S, pit, rift } from './state.js';
 import { swallow, pitWidth, pitGrains } from './pit.js';
@@ -89,40 +89,6 @@ export const riftRadius = () => rift.w * 0.5;
 
 // Whether it is swallowing: torn. There is nothing else to it.
 export const riftOpen = () => !!S.riftOpen;
-
-// --- the drain ----------------------------------------------------------------
-// **One law of infall, and everything that falls in reads it.** The streaks
-// drawn round the disc and the actual grains being swallowed are on the same
-// curve, which is the whole of what makes this read as a drain rather than as
-// decoration hung over a hole: what you see falling and what is really falling
-// agree.
-//
-// The curve is the one water makes. Radius comes in at a steady rate, and the
-// angle advances as the *log* of how far in it has come -- which is what you
-// get from a thing that keeps its angular momentum as it tightens: slow while
-// it is wide, whipping round in the last stretch before it goes under the
-// disc. That is a logarithmic spiral, and it is the reason a bath drains the
-// way it does.
-//
-// This replaced two curves invented separately -- an orbit with an exponent on
-// the angle and another on the radius, and a streak with a third -- which each
-// hung a thing at the rim and then dropped it, the opposite shape.
-//
-// `from` is where this particular thing joined, in disc radii; `u` runs 0 to 1
-// over its fall. Turning is proportional to the log-distance actually covered,
-// so a grain caught near the rim makes proportionally fewer turns than one
-// coming the whole way: the field is the same everywhere and a thing joining
-// it late gets the part of it that is left.
-export function riftFall(from, u) {
-  const end = RIFT_FALL_END;
-  // A thing with no entry stamped on it fell the whole way, which is what the
-  // streaks round the disc do and what anything from before this law did.
-  const at = Number.isFinite(from) ? from : RIFT_FALL_FROM;
-  const start = Math.max(at, end * 1.001);          // never below the floor
-  const r = start + (end - start) * Math.max(0, Math.min(1, u));
-  const turns = RIFT_TURNS * Math.log(start / r) / Math.log(RIFT_FALL_FROM / end);
-  return { r, turns };
-}
 
 // --- how fast ----------------------------------------------------------------
 // **It inhales.** Everything in the hole goes, on the frame it lands there.

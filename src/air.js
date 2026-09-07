@@ -12,7 +12,7 @@
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
          AIR_GRIT, AIR_LEAN, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
          AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE, AIR_STIR_SCATTER,
-         RIFT_PULL, RIFT_PULL_R, RIFT_SPIN, RIFT_FEED } from './config.js';
+         RIFT_PULL, RIFT_PULL_R, RIFT_EAT, RIFT_FEED } from './config.js';
 import { pitDepth } from './pit.js';
 import { S, floor, pit, quarry, farm, rift } from './state.js';
 import { at, surfaceY } from './grid.js';
@@ -308,23 +308,36 @@ function reborn(m, s) {
 
 // One mote's share of it. True when the mote was eaten and is somewhere else now.
 //
-// The pull is hardest at the rim and eases to nothing at the edge of its reach,
-// the same shape the cursor's draught uses -- and it is taken in the band's own
-// share, so the far dust is barely troubled and the near dust dives. Part of it
-// goes *round* rather than in: a mote falling straight down a hole is a mote
-// falling, and what makes it read as a hole rather than a drain is that
-// everything near it is turning.
+// **It is gravity, not a swirl.** The rift pulls, an inverse square quoted at
+// one disc radius, and the pull goes into the mote's own speed rather than
+// into its position. What happens next is the mote's business: one drifting
+// past on the wind is bent and swings round, one that comes in slowly falls
+// straight down the hole, and the whole field turns because the wind is
+// carrying it sideways past something heavy -- not because anything here told
+// it to turn.
+//
+// It used to be a shove: a fraction of the way toward the middle each frame,
+// plus a fixed share of that pushed sideways (RIFT_SPIN) to make it look like
+// a vortex. That is a drawn swirl with the arithmetic of a swirl behind it,
+// and it moved a mote the same way whatever the mote had been doing. This
+// costs the same and is the real thing.
+//
+// The speed goes in `sx, sy` -- the same pair the cursor's draught uses, which
+// already decays -- so orbits lose energy and come in instead of circling for
+// ever, and a mote that escapes the reach keeps the swing it was given and
+// carries it back out into the sky.
 function intoTheRift(m, s, f) {
   const dx = s.x - m.x, dy = s.y - m.y;
   const d = Math.hypot(dx, dy);
   const reach = s.r * RIFT_PULL_R;
   if (d > reach) return false;
-  if (d < s.r * 0.45) { reborn(m, s); return true; }     // over the middle: gone
-  const fall = 1 - d / reach;
-  const k = RIFT_PULL * fall * fall * m.b.take * f;
-  const ux = dx / d, uy = dy / d;
-  m.x += ux * k - uy * k * RIFT_SPIN;
-  m.y += uy * k + ux * k * RIFT_SPIN;
+  if (d < s.r * RIFT_EAT) { reborn(m, s); return true; }     // through, and gone
+  // Held at its rim value further in, because a true square runs away at the
+  // middle and would throw a mote across the yard in one frame.
+  const g = RIFT_PULL * (s.r * s.r) / Math.max(d * d, s.r * s.r);
+  const k = g * m.b.take * f;
+  m.sx = (m.sx || 0) + (dx / d) * k;
+  m.sy = (m.sy || 0) + (dy / d) * k;
   return false;
 }
 

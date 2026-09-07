@@ -4720,7 +4720,16 @@ hats are the game's feel and they stay); prices indexed to live income (a
 price that chases the player can never be beaten, and the sky is already
 the one live opponent); any new plant or sink outside the decided list.
 
-## The drain: what falling into the rift looks like (built)
+## The drain: what falling into the rift looks like (built, then superseded)
+
+> **Superseded by "The rift pulls" below.** Everything in this section about
+> *why* the three motions had to agree still holds and is why the section is
+> kept. What is gone is the answer it reached: one authored spiral that every
+> grain was pinned to. A law of infall is still a script — the giveaway was
+> that a grain released at rest orbited exactly as hard as one flung past at
+> speed — and the rift has actual gravity now, with the shape of a fall left to
+> fall out of it. `riftFall` is deleted.
+
 
 Three notes from the ninth round of feedback, all about the same few hundred
 pixels: dust thrown into a torn pit spreads itself evenly across the hole
@@ -4851,3 +4860,55 @@ Covered by `test/drain.test.mjs` (3/3) — the law's shape, that a grain is
 stamped with where it really went in, and that it comes in the whole way rather
 than hanging and dropping — with `rift`, `pit` and `pit-arc` green alongside.
 Whether it *looks* right is a shot: the `grown` scene.
+
+## The rift pulls (built)
+
+There is no drawn swirl anywhere near the hole any more. The rift has weight,
+everything near it is given the pull, and what each thing does about it is its
+own business.
+
+**Grains.** `orbit` in game.js: an inverse square toward the middle, quoted at
+one disc radius so it follows the disc as it grows; the grain's own speed
+carries it; a little is shed each frame (`RIFT_DRAG`) so nothing circles for
+ever; inside `RIFT_EAT` it is gone. A grain a hauler threw arrives with the arc
+still on it — `riftCatch` keeps the chip's velocity — and swings round the hole
+before it goes. A grain lifted off the pile was lying still and drops straight
+in. Neither is drawn, and the difference between them is the whole point.
+
+**The sky's dust.** `intoTheRift` in air.js: the same pull, added to the mote's
+own speed rather than to its position, through the `sx, sy` pair the cursor's
+draught already uses — which decays, so orbits lose energy and come in instead
+of circling, and a mote that escapes carries its swing back out into the sky.
+The field turns because the wind is carrying it sideways past something heavy,
+not because anything told it to turn.
+
+### What this replaced, and why
+
+Two scripts, both of which moved a thing the same way whatever it had been
+doing:
+
+- a **law of infall** (`riftFall`, the section above) — a logarithmic spiral
+  every grain was pinned to, the same turns for a grain dropped at rest as for
+  one flung past at speed;
+- **`RIFT_SPIN`** — a fixed share of the air's pull pushed sideways, to make a
+  vortex out of a shove.
+
+Both looked like physics and neither was. Gravity costs the same arithmetic and
+is the real thing, and it is the rule the yard already runs on everywhere else:
+a number that changes without a cause you can watch is the one thing this game
+does not do.
+
+### What it must not break
+
+- **The count is not touched.** `throughRift` books every grain exactly as it
+  did; this is how a grain moves, not whether it is banked.
+- **Everything is still eaten.** The drag guarantees it — an orbit decays — and
+  `RIFT_EAT` is a mouth rather than a point, so nothing circles out of reach.
+  `RIFT_VMAX` holds the speed near the middle, where a true square would fling
+  a grain across the yard in a single frame.
+- **The drowning is untouched.** The abyss's dive never read the old law and
+  does not read this one.
+
+Covered by `test/drain.test.mjs` (3/3): a grain at rest falls straight, the
+same grain given a sideways clip swings instead, and a thrown grain keeps the
+speed it arrived with. Those are the checks the old law would have failed.

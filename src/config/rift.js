@@ -64,9 +64,13 @@ export const RIFT_SHAKE = 22;        // and how hard the yard is rocked: the big
 //
 // The reach is in disc radii, so it follows RIFT_W wherever that goes. The rest
 // is screen pixels a frame, which is what a mote is measured in.
-export const RIFT_PULL = 1.3;    // how hard it pulls, right at the rim
+// The pull on the sky's dust, as an acceleration at one disc radius. It goes
+// into a mote's own speed and the mote does the rest -- see `intoTheRift` in
+// air.js. RIFT_SPIN is gone with the shove it belonged to: a fixed share of
+// the pull pushed sideways to make a vortex, which moved every mote the same
+// way whatever it was doing.
+export const RIFT_PULL = 0.5;    // px a frame squared, at one radius out
 export const RIFT_PULL_R = 4.5;  // how far the pull reaches, in radii
-export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather than in
 // What share of the dust it eats is put back at the edge of its own reach rather
 // than anywhere in the yard.
 //
@@ -81,23 +85,29 @@ export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather t
 // clear. At a bit over half, the ring holds what drifts into it and the sky
 // stays the sky.
 export const RIFT_FEED = 0.55;
-// --- the drain: the one law of infall -----------------------------------------
-// Everything that falls into the rift falls along one spiral, and these are its
-// three numbers. See `riftFall` in rift.js for the law itself and "The drain"
-// in DESIGN.md for why there is only one of them.
+// --- gravity ------------------------------------------------------------------
+// **The rift pulls, and everything else follows from that.** There is no
+// scripted spiral any more: a grain is given the pull, its own speed carries
+// it, and whether it falls straight in or swings round two or three times on
+// the way is a consequence of how fast it was going and which way when it
+// arrived. A hauler's throw comes in with the arc still on it and curves; a
+// grain lifted off the pile was lying still and drops. Both are right, and
+// neither is drawn.
 //
-// Turns are counted for a thing falling the whole way in, from RIFT_FALL_FROM
-// to the middle; something that joins nearer the rim does proportionally
-// fewer, because the turning goes with the distance covered rather than with
-// the trip. It was 2.4 while the turning was buried at the end of the fall
-// where nothing could see it.
-export const RIFT_TURNS = 4;
-export const RIFT_FALL_FROM = 2.6;   // where a fall starts, in disc radii
-// ...and where it ends. Not zero: a grain is gone when it passes under the
-// disc, not when it reaches a point, and a spiral that has to reach the middle
-// spends its last turns in a space smaller than a cell.
-export const RIFT_FALL_END = 0.18;
-export const RIFT_ORBIT_FRAMES = 84; // frames at sixty for the whole fall
+// It replaced a law of infall -- a logarithmic spiral every grain was pinned
+// to, with the same turns whatever it was doing beforehand. That was one
+// authored curve wearing the costume of physics, and the giveaway was that a
+// grain dropped at rest orbited exactly as hard as one flung past at speed.
+//
+// The strength is quoted at ONE DISC RADIUS and falls off as the square, so it
+// follows the disc as it grows without a second number to keep in step.
+export const RIFT_G = 0.55;          // px a frame squared, at one radius out
+export const RIFT_DRAG = 0.985;      // speed kept per frame: orbits decay, so
+                                     // nothing circles for ever
+export const RIFT_EAT = 0.35;        // swallowed inside this, in disc radii
+export const RIFT_VMAX = 14;         // px a frame, a ceiling near the middle
+                                     // where the square would otherwise blow up
+
 // --- the cutscenes --------------------------------------------------------------
 // The two one-time transitions -- the tearing and the drowning -- are watched:
 // the camera goes to the pit, the moment plays, the camera comes back. One

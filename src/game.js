@@ -16,7 +16,7 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
-         RIFT_ORBIT_FRAMES } from './config.js';
+         RIFT_G, RIFT_DRAG, RIFT_EAT, RIFT_VMAX } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -24,7 +24,7 @@ import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bot
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
-import { stepRift, riftCenter, riftRadius, riftFall } from './rift.js';
+import { stepRift, riftCenter, riftRadius } from './rift.js';
 import { stepCutscene } from './cutscene.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
@@ -333,7 +333,7 @@ function stepChips(now) {
       // A torn pit takes the grain the moment it crosses the mouth: it goes
       // into the rift's orbit from right here, instead of landing on a pile
       // the rift would only lift it straight back off. See `riftCatch`.
-      if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s)) {
+      if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s, ch.vx, ch.vy)) {
         S.chips.splice(i, 1);
         continue;
       }
@@ -544,30 +544,42 @@ function sink(list) {
   }
 }
 
-// The torn era's journey: the spiral into the hanging disc, as it was before
-// the abyss -- see the long note above `sink` for what each bend of it is for.
+// The torn era's journey: the fall into the hanging disc.
+//
+// **The rift pulls and the grain does the rest.** An inverse square toward the
+// middle, quoted at one disc radius so it follows the disc as it grows; the
+// grain's own speed carries it; a little is shed each frame so nothing circles
+// for ever; and inside RIFT_EAT it is gone. That is the whole of it.
+//
+// What comes out is not one shape. A grain a hauler threw arrives with the arc
+// still on it and swings round the hole once or twice before it goes; a grain
+// lifted off the pile was lying still and drops straight in. Both are right,
+// and neither is drawn -- which is the difference between this and what it
+// replaced. That was a logarithmic spiral every grain was pinned to, the same
+// number of turns whatever it had been doing beforehand, and the giveaway was
+// that a grain released at rest orbited exactly as hard as one flung past at
+// speed. One authored curve wearing the costume of physics.
 function orbit(list) {
   const f = frames();
   const c = riftCenter(), R = riftRadius();
-  const rate = 1 / RIFT_ORBIT_FRAMES;
+  const eat = R * RIFT_EAT;
+  const drag = RIFT_DRAG ** f;
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
-    m.t += rate * f;
-    if (m.t >= 1) { list.splice(i, 1); continue; }
-    if (m.t <= 0) continue;
-    // The drain's own law (`riftFall` in rift.js), the same one the streaks
-    // round the disc are drawn on. A grain comes in at a steady rate and is
-    // whipped round faster the tighter it gets.
-    //
-    // It joins at the radius and angle it was actually caught at -- `riftCatch`
-    // stamps those on it -- so there is nothing to ease onto. The quarter of
-    // its life this used to spend lerping from where it landed onto a curve it
-    // was not on is gone with the two exponents that made that necessary.
-    const fall = riftFall(m.from, m.t);
-    const a = m.a0 + m.spin * fall.turns * Math.PI * 2;
-    const r = R * fall.r;
-    m.x = c.x + Math.cos(a) * r;
-    m.y = c.y + Math.sin(a) * r;
+    const dx = c.x - m.x, dy = c.y - m.y;
+    const d = Math.hypot(dx, dy);
+    if (d < eat) { list.splice(i, 1); continue; }        // through, and gone
+    // The pull. Held at its value on the rim below that, because a true square
+    // goes to infinity at the middle and would fling a grain across the yard
+    // in the frame it got close.
+    const g = RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT);
+    m.vx = (m.vx || 0) + (dx / d) * g * f;
+    m.vy = (m.vy || 0) + (dy / d) * g * f;
+    m.vx *= drag; m.vy *= drag;
+    const sp = Math.hypot(m.vx, m.vy);
+    if (sp > RIFT_VMAX) { m.vx *= RIFT_VMAX / sp; m.vy *= RIFT_VMAX / sp; }
+    m.x += m.vx * f;
+    m.y += m.vy * f;
   }
 }
 
