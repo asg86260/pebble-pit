@@ -13,7 +13,8 @@ import { STATIONS, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
-  FLAG_GUST_MS, FLAG_GUST_SPAN, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS, FLAG_W,
+  FLAG_FILL, FLAG_GUST_MS, FLAG_GUST_SPAN, FLAG_H, FLAG_POLE, FLAG_RIPPLE_MS,
+  FLAG_SAG, FLAG_SWING, FLAG_W, FLAG_WAVES,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P, TOWER_SHAFT,
 } from '../config.js';
 import { now } from '../clock.js';
@@ -105,7 +106,7 @@ function flagBase(rect, which) {
 }
 
 // The highest pixel a station's flag can reach -- the pole's top, less the
-// cell the pennant's crest rides up on. Answered whether or not the station is
+// cells the pennant's crest rides up on. Answered whether or not the station is
 // flying one this second: anything hanging above a station (its work bar, its
 // done tick) clears the flag by this, and a clearance that came and went with
 // the offer would make those marks hop every time a board changed. Null for a
@@ -113,8 +114,18 @@ function flagBase(rect, which) {
 export function flagReach(which) {
   const r = standRect(which);
   if (!r) return null;
-  return flagBase(r, which).y - (FLAG_POLE + 1) * P;
+  return flagBase(r, which).y - (FLAG_POLE + FLAG_CREST) * P;
 }
+
+// The cells the cloth can ride above the knot, derived rather than guessed:
+// integrating a turn of FLAG_SWING radians over the quarter-wave that fits on
+// FLAG_W cells at FLAG_WAVES waves gives the crest's height, and the cloth is
+// stamped centered on its walk, so half its depth clears it again. Anything
+// that hangs over a station clears the flag by this, so a wider swing carries
+// those marks up with it instead of being drawn through.
+// The cloth hangs from the masthead, so its own depth clears nothing extra --
+// only the crest itself lifts it past the pole's top.
+const FLAG_CREST = Math.ceil(FLAG_SWING * FLAG_W / (2 * Math.PI * FLAG_WAVES));
 
 // A stable per-station number in 0..1, so every flag flutters out of step with
 // its neighbors without anything being stored or saved.
@@ -135,13 +146,27 @@ const windAt = (x, t) =>
   Math.sin((t / FLAG_GUST_MS - x / FLAG_GUST_SPAN) * Math.PI * 2) * 0.7 +
   Math.sin((t / (FLAG_GUST_MS * 0.377) - x / (FLAG_GUST_SPAN * 0.61)) * Math.PI * 2 + 2) * 0.5;
 
-// The flag: a one-cell pole off the peak, a black pennant off the top of it.
-// The pennant ripples -- each column rides a wave traveling out from the pole,
-// a cell up or down -- which is a thing wind does to cloth, not an effect done
-// to the player. The tip moves the most, the way a real flag's does; the whole
-// cloth goes slack as a gust dies and picks up again -- sometimes on the other
-// side of the pole -- as the next one arrives. The turn hides in the slack:
-// the cloth only crosses the pole while it is hanging nearly straight.
+// The flag: a one-cell pole off the peak, and a pennant knotted to the top of
+// it. The cloth is the same piece of cloth in every wind -- what the wind
+// changes is which way it points. It is walked out from the knot half a cell
+// at a time, and at each step two things steer the walk: the sag, which turns
+// it toward straight down as the gust dies, and the ripple, one wave traveling
+// out from the knot. So a full gust holds it out level and rippling; a dying
+// one lets it fall against the pole and hang; and the next gust, coming from
+// the other side, lifts it out the other way. The turn hides in the hang.
+//
+// That is the whole of the change from what was here before, and it is worth
+// saying which premise it drops. The old cloth was a row of columns whose
+// COUNT was the wind: a dead calm drew one cell. A flag that shrinks to a nub
+// and grows back is not a flag going slack, it is a flag being deleted and
+// redrawn, and it was the reason the yard's flags never read as cloth however
+// much ripple was piled on top.
+//
+// Depth lies ACROSS the walk, which is what makes it a sheet rather than a
+// line: level cloth shows its depth as height, hanging cloth shows the same
+// depth as width. Half-cell steps mean consecutive stamps always overlap, so
+// the cloth is solid at every angle -- whole-cell steps tore it into a dotted
+// diagonal wherever it ran at a slant.
 //
 // The pole runs all the way down to the ground and this layer is painted
 // BEFORE the buildings, so whatever roofline a station actually draws -- a
@@ -150,8 +175,7 @@ const windAt = (x, t) =>
 // stand box put it floating over every roof that was not flat.
 function drawFlag(rect, which, t) {
   // The pole stands on the station's own topmost feature where one is named
-  // (FLAG_SPOTS, in cells off the stand box's corner), and on the middle of
-  // the box's top edge otherwise.
+  // (SPOT, above), and on the middle of the box's top edge otherwise.
   const { x, y } = flagBase(rect, which);
   const top = y - FLAG_POLE * P;
   // Two cells past the base, into the feature it stands on -- enough to bury
@@ -162,26 +186,44 @@ function drawFlag(rect, which, t) {
   const seed = seedOf(which);
   const wind = windAt(x, t);
   const dir = wind < 0 ? -1 : 1;
-  // How far the cloth is out. The turn is a fold, not a flip: as the gust
-  // dies the pennant shortens back toward the pole, hangs as a stub for the
-  // still moment, and unfurls out the other side as the next gust arrives --
-  // which is what cloth actually does when the wind comes about. The wind is
-  // continuous through zero, so the fold and the turn cost no state.
-  const out = Math.min(1, Math.abs(wind) * 1.6);
-  const len = Math.max(1, Math.round(out * FLAG_W));
-  const amp = out;
-  for (let i = 0; i < len; i++) {
-    // The wave grows along the pennant: the column at the pole is pinned to
-    // it, the free end swings a whole cell. A third of a wavelength across
-    // the cloth, so one crest rides it at a time -- a full wavelength put a
-    // crest and a trough on the cloth at once, which in cells is a notch
-    // bitten out of the middle of the flag. The per-station seed staggers
-    // pace and phase so the yard's flags never beat in unison.
-    const swing = Math.sin((t / (FLAG_RIPPLE_MS * (0.85 + 0.3 * seed))
-                            - i / (FLAG_W * 3)) * Math.PI * 2 + seed * 7)
-                * (i / (FLAG_W - 1)) * amp;
-    const dy = Math.round(swing) * P;
-    ctx.fillRect(x + dir * P * (1 + i), top + dy, P, P * FLAG_H);
+  const out = Math.min(1, Math.abs(wind) * FLAG_FILL);
+  // The walk, in cells out from the knot and cells below it. It starts one
+  // cell clear of the pole so the cloth is knotted to the mast rather than
+  // painted over it, and half a depth down it so the cloth hangs FROM the
+  // masthead: the stamps are centered on the walk, so a walk that began level
+  // with the pole's top put half the cloth above the top of its own mast.
+  let px = 1, py = (FLAG_H - 1) / 2;
+  const step = 0.5;
+  for (let s = step; s <= FLAG_W; s += step) {
+    // How far from level the cloth is by here. Dead calm hangs it straight
+    // down the pole; a full gust holds it out. The knot carries only FLAG_SAG
+    // of the slack and the rest gathers along the length, because the knot is
+    // holding its end up whatever the wind is doing.
+    const sag = (1 - out) * (Math.PI / 2) * (FLAG_SAG + (1 - FLAG_SAG) * (s / FLAG_W));
+    // The ripple: one wave traveling out from the knot, its turn growing
+    // toward the loose end -- a sheet held at one edge is nearly still where
+    // it is held and does almost all of its moving out at the free end. The
+    // per-station seed staggers pace and phase so the yard's flags never beat
+    // in unison.
+    const rip = Math.sin((t / (FLAG_RIPPLE_MS * (0.85 + 0.3 * seed))
+                          - (s * FLAG_WAVES) / FLAG_W) * Math.PI * 2 + seed * 7)
+              * Math.pow(s / FLAG_W, 1.4) * out * FLAG_SWING;
+    const th = sag + rip;
+    px += Math.cos(th) * step;
+    py += Math.sin(th) * step;
+    const cx = x + dir * Math.round(px) * P;
+    const cy = top + Math.round(py) * P;
+    // Depth across the walk. Which way "across" is depends on which way the
+    // cloth is running, and the flip happens on the diagonal, where the two
+    // stampings cover nearly the same cells -- so it costs no seam. Both are
+    // centered on the walk: hung off one side instead, the edge-on stamp
+    // reached a further two cells out and read as a whisker off the tip
+    // rather than as a piece of cloth turned away from you.
+    const off = Math.floor((FLAG_H - 1) / 2) * P;
+    if (Math.abs(Math.cos(th)) >= Math.abs(Math.sin(th)))
+      ctx.fillRect(cx, cy - off, P, FLAG_H * P);
+    else
+      ctx.fillRect(cx - off, cy, FLAG_H * P, P);
   }
 }
 
