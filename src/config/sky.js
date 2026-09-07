@@ -178,6 +178,13 @@ export const SMOG_SINK = 5;          // seconds to settle from the band's unders
 export const SMOG_LIFT = 4;          // world pixels the band rises on a full wind
 export const SMOG_GIVE = 0.15;       // how far one mote may differ from the next, either way
 export const PUFF_LEAN_WIND = 26;    // world pixels a second a climbing puff is carried
+
+// How far a speck of haze is smeared along the wind at full gust, in screen
+// pixels -- the sky's own reach, stated in the sky's own units, because how far
+// a thing smears depends on the thing. The shape of the bend is shared (`gust`
+// in wind.js); the reach is not, and pretending it was would have meant reading
+// the dust's number in the sky's units.
+export let HAZE_STREAK = 5;
 export const SMOG_DRIFT = 0.06;      // and the whole lot creeps along on the wind
 
 // How fast a puff climbs, in world pixels a frame, and how much one may differ

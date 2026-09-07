@@ -516,6 +516,26 @@ const SCENES = {
 
   // The sky at four levels. The haze has the whole window now rather than a
   // strip along the top of it -- see DESIGN.md, "The sky is the band".
+  // The wind, seen. Dust, haze and a flag in one frame, because the whole claim
+  // is that the three of them lean together -- if they do not, that is the bug
+  // and it is visible in one picture.
+  //
+  // The clock is seeded (`__seed` restarts it), and the two times are not round
+  // numbers or guesses: they are where the wind actually is strongest each way
+  // inside the first eighty seconds, found by running wind.js. That matters,
+  // because the field almost never reaches its own peak -- the lull envelope
+  // sees to that -- so a shot at a time that merely sounded windy is a shot of
+  // a lull. Compare the pair side by side; one shot of weather says nothing,
+  // because there is nothing in it to be weather against.
+  gustR: `window.__seed(1); window.__crew(3,3,5,7); window.__fullSites();
+          window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+          window.__air({haze: 2100}); window.__fast(64.5);
+          window.__look(window.__state().rockLeftX - 300);`,
+  gustL: `window.__seed(1); window.__crew(3,3,5,7); window.__fullSites();
+          window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+          window.__air({haze: 2100}); window.__fast(50);
+          window.__look(window.__state().rockLeftX - 300);`,
+
   sky0: `${SKYAT} window.__air({haze: 0}); window.__fast(8);`,
   sky1: `${SKYAT} window.__air({haze: 900}); window.__fast(8);`,
   sky2: `${SKYAT} window.__air({haze: 2100}); window.__fast(8);`,

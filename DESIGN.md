@@ -4852,7 +4852,7 @@ stamped with where it really went in, and that it comes in the whole way rather
 than hanging and dropping — with `rift`, `pit` and `pit-arc` green alongside.
 Whether it *looks* right is a shot: the `grown` scene.
 
-## Seeing the wind (design, not built)
+## Seeing the wind (built, except the gust front)
 
 There is one wind. `wind.js` says so in its first line and it is right: the haze, the grit, the
 smoke, the balloon and — since the flag pass — the flags all lean on one signed number, and that
@@ -4917,6 +4917,37 @@ has to have an `x` to pass. The mote fields and the smog vents have one. The bal
 `report.js` does not obviously want one, and a default (the camera's middle) is the kind of guessed
 constant this codebase treats as a future bug. If that default cannot be made honest, this half is
 worth dropping and the first half stands on its own — it is the one carrying the effect.
+
+### What building it turned up that the design had not
+
+**The wind almost never reaches its own peak, so calibrating against the peak
+calibrates against nothing.** The first pass set the speed so that a full gust
+was brisk, took a shot, and got a field barely faster than before. Sampled over
+fifty minutes, the median of `|gust|` is 0.24 and the ninetieth percentile 0.60
+-- the lull envelope keeps it away from 1 nearly all the time. The numbers are
+set against that distribution now: a typical breeze carries a near mote about
+25 screen pixels a second, a strong one 62, and the rare peak 92. The lesson
+generalizes past this feature: any constant tuned against a field's extreme is
+tuned against a case the player almost never sees.
+
+**The bend had to be gentler than it looked.** A power of 1.6 made the quiet so
+quiet that half the time nothing moved at all, which trades one unreadable
+state for another. It is 1.3.
+
+**The haze needed its ink taken down exactly as far as the speck goes wide,**
+and this is the part that mattered most and was not foreseen at all. A gust does
+not make more muck; it spreads the muck that is there. Without the compensation,
+every speck drawn three cells wider laid down three times the ink and the whole
+band darkened whenever it blew -- and how dark the band is, is how filthy the
+yard is, a reading the player is meant to act on. A weather effect that moved
+that reading would have been lying about the game's state. Measured on the same
+scene, same seed, same clock, main against the branch: the sky's mean ink moved
+by four thousandths of a level out of 255, which is nothing.
+
+**`const gust` was already a local in `smog/sky.js`,** and it shadowed the new
+import for the whole of `place()` -- a temporal-dead-zone error at the first
+frame, from a name collision rather than anything about the design. Renamed to
+`lift`, which is what it was for.
 
 ### What this deliberately does not do
 

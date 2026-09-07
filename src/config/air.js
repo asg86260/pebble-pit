@@ -114,7 +114,24 @@ export const AIR_SITE_UP = P * 10;  // and how high above the ground line they a
 // static rather than as weather. Half a dozen specks in the same square inch
 // each going a different way is noise however slow you make it. What is left is
 // one wind and a mote's share of it -- see `wind.js`.
-export const AIR_LEAN = 0.34;     // screen pixels a mote is carried in a frame, at full wind and pace 1
+// Off `gust()` rather than `wind()`, so a lull is nearly still and a gust
+// plainly moves. It was 0.34 off the raw wind: about twenty screen pixels a
+// second at the peak, which is forty seconds to cross the window. That is a
+// drift, and a drift is what the eye files as "static field" -- the direction
+// was right the whole time, the speed was never enough to read.
+export let AIR_LEAN = 1.7;        // screen pixels a mote is carried in a frame, at full gust and pace 1
+// How far a mote is smeared along the wind, at full gust, as a multiple of its
+// own size -- so the near band, which is biggest and takes the most wind,
+// streaks most, and the far band, which is one pixel and barely leans, stays
+// the square it is. That is not a special case for the far band; it is the one
+// "how far off is this" number saying, correctly, that you cannot see the shape
+// of a speck at that distance.
+//
+// The streak is a speed, not a distance travelled this frame, so it is NOT
+// scaled by how long the frame was. Scaled, a slow machine would draw longer
+// streaks for the same wind, which is a picture of the frame rate rather than
+// of the weather.
+export let AIR_STREAK = 1.3;
 // And how far a mote is allowed to differ from the mote beside it. Small on
 // purpose: a fifth either way is enough that the field does not move like a
 // sheet of card, and not enough that any two of them ever plainly disagree.
@@ -202,6 +219,10 @@ export const WIND_MS = 9000;      // the slower of the swings the wind is made o
 // takes it down to a third and back, so a gust arrives out of quiet air and
 // dies away again, which is the part you actually recognise as weather.
 export const WIND_LULL = 0.45;
+// How hard the wind's middle is bent down for anything drawn being blown by it
+// -- see `gust` in wind.js. At 1 nothing is bent and the field reads as one
+// slow drift from end to end, which is what it did.
+export let WIND_GUST_POW = 1.3;
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is
@@ -210,6 +231,12 @@ export const WIND_LULL = 0.45;
 export const AIR_KNOBS = [
   { key: 'AIR_STIR', label: 'cursor draught', min: 0, max: 2, step: 0.02,
     get: () => AIR_STIR, set: v => { AIR_STIR = v; } },
+  { key: 'AIR_LEAN', label: 'dust carried', min: 0, max: 4, step: 0.05,
+    get: () => AIR_LEAN, set: v => { AIR_LEAN = v; } },
+  { key: 'AIR_STREAK', label: 'dust streak', min: 0, max: 4, step: 0.1,
+    get: () => AIR_STREAK, set: v => { AIR_STREAK = v; } },
+  { key: 'WIND_GUST_POW', label: 'gust bend', min: 1, max: 4, step: 0.1,
+    get: () => WIND_GUST_POW, set: v => { WIND_GUST_POW = v; } },
   { key: 'WIND', label: 'the wind', min: 0, max: 3, step: 0.05,
     get: () => WIND, set: v => { WIND = v; } }
 ];

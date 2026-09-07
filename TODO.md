@@ -1,39 +1,32 @@
 # Still to do
 
-## Seeing the wind — DESIGNED, NOT BUILT (2026-09-07)
+## Seeing the wind — BUILT, one part left (2026-09-07)
 
-The flags stopped overstating the wind (they were on a private pair of sines
-with no lull in it, and they flipped across the pole every time it came about;
-both fixed on main). What that left is the understatement underneath: the yard
-has 95-420 motes in three bands that all already take `wind()`, and none of
-them says anything about it, so a gust and a dead calm look the same
-everywhere except on four small pennants.
+The dust and the haze say what the wind is doing now. Two changes, both
+drawing, both off one shared shaped number (`gust` in wind.js, the wind's middle
+bent down so a lull goes quiet and a gust plainly moves):
 
-Two changes, in "Seeing the wind (design, not built)" in DESIGN.md:
+1. **Speed** -- a near mote is carried about 25 screen pixels a second in a
+   typical breeze, 62 in a strong one. It was 20 at the theoretical peak and
+   about 7 typically, which is a drift, and a drift is what the eye files as
+   "static field".
+2. **The streak** -- a mote is smeared along the wind, trailing behind itself, by
+   its own size times how much of the wind its band takes. The near band streaks
+   most; the far band works out at nothing and stays square without being told
+   to. The haze streaks too, on its own reach, **with its ink taken down exactly
+   as far as it goes wide** so a gust spreads the band instead of darkening it.
 
-1. **A mote elongates along the wind as the wind rises** -- a square at calm,
-   a two- or three-cell dash at full lean, leaning the way the signed wind
-   actually blows. No new motes, no state, no save key: one rule inside the
-   mote's own draw, on a number already in hand. This is the half carrying the
-   effect.
-2. **`windAt(t, x)`** -- the gust as a front crossing the yard rather than a
-   clock ticking everywhere at once, so you can watch one arrive. The flag's
-   private field had this (`FLAG_GUST_SPAN`) and it was a good idea in the
-   wrong module.
+**Still not built: the gust front** (`windAt(t, x)`, so a gust crosses the yard
+and you can watch it arrive). Same blocker as before -- every caller then needs
+an honest `x` and `report.js` has none.
 
-**The blocker on (2)** is that every caller then needs an `x` to pass, and
-`report.js` has no honest one -- a camera-middle default is exactly the guessed
-constant this codebase treats as a future bug. If that cannot be made honest,
-drop (2); (1) stands alone.
-
-Deliberately not doing: a new wind-mote kind (a second account of the air, on a
-field that is already dense and has a measured frame budget), any new number to
-buy, anything touching how the sky fouls or clears.
-
-Checked by eye, not by suite -- both halves are drawing, so a green run proves
-nothing. A `gust` scene in `tools/look.mjs`, seeded onto a strong lean and its
-opposite, wide enough to hold dust, a flag and the smoke in one frame: if the
-three do not lean together, that is the bug and it is one picture.
+Checked by eye and by measurement, not by a suite: the `gustR` / `gustL` scenes
+in `tools/look.mjs`, aimed at the times wind.js is actually strongest each way
+inside the first eighty seconds (it almost never reaches its peak, so a shot at
+a time that merely sounded windy is a shot of a lull). The ink conservation was
+measured on the same scene, same seed, same clock, main against the branch:
+four thousandths of a level out of 255. The browser `wind` group (24/24) and
+`test/sky-air.test.mjs` (6/6) are green.
 
 ## The drain — BUILT (2026-09-06)
 
