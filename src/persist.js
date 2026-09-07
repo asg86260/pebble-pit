@@ -427,8 +427,9 @@ export function restore() {
   // resting on nothing if anything about the arch had changed. It falls.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
-                          laid: s.shield.laid || 0, caught: 0,
-                          sag: 0, shove: 0, setting: false, cast: 0 } : null;
+                          laid: s.shield.laid || 0, caught: 0, held: 0,
+                          strain: 0, sag: 0, shove: 0,
+                          setting: false, cast: 0 } : null;
   // A pour picks up where it left off rather than starting again. The clock it
   // was started against does not survive a reload, so the start is worked back
   // out of how much of it is woven -- the progress is the fact, and the

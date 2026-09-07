@@ -678,6 +678,21 @@ export function drawShield() {
   const topY = S.groundY - s.h * P;
   const cols = s.w / P;
   ctx.fillStyle = '#000';
+
+  // A shield with a rock on it that it cannot take shakes, harder the nearer
+  // it is to going. It is done to the whole thing at once, in whole cells, by
+  // moving the canvas rather than every shape in it -- a structure that
+  // trembles in pieces is a structure coming apart, and this one has not come
+  // apart yet. Whole cells because half a cell of shudder is a hairline
+  // through the picture, and the lattice is the one thing that never bends.
+  const shake = s.strain && S.rockHeld
+    ? Math.round(Math.sin(now() / 42) * s.strain * 1.6) * P : 0;
+  if (shake) { ctx.save(); ctx.translate(shake, 0); }
+  drawShieldOf(s, done, topY, cols);
+  if (shake) ctx.restore();
+}
+
+function drawShieldOf(s, done, topY, cols) {
   if (s.kind === 'arch') return drawArch(s, done, topY, cols);
   if (s.kind === 'net') return drawNet(s, done, topY, cols);
   if (s.kind === 'jack') return drawJack(s, done, topY, cols);
@@ -733,35 +748,76 @@ function drawNet(s, done, topY, cols) {
   const span = Math.max(0, done * 2 - 1);
   if (span <= 0) return;
   const reach = Math.round(span * cols / 2);
-  const dip = 2 + (s.sag || 0);
+  // The sag is a float, and every column rounds it for itself. That is what
+  // keeps a deepening sag from stepping: the cells nearest the middle cross
+  // their rounding threshold first and the dip *rolls* outward a cell at a
+  // time, instead of the whole rope dropping a course in one frame.
+  const dip = 2 + Math.max(0, s.sag || 0);
+  // and the mesh hangs deeper the harder it is being stretched. Six courses is
+  // the shallowest that can show a whole diamond -- at three the strands never
+  // got to cross and the thing read as a fringe hanging off a wire.
+  const deep = 6 + Math.round(Math.max(0, s.sag || 0) / 3);
   for (let c = 0; c < cols; c++) {
     if (c > reach && cols - 1 - c > reach) continue;
     const t = (2 * c / (cols - 1)) - 1;
     const off = Math.round(dip * (1 - t * t));
-    // every other cell, so it reads as mesh rather than as a cable
-    if ((c + off) % 2) continue;
-    ctx.fillRect(s.x + c * P, topY + off * P, P, P);
+    for (let k = 0; k < deep; k++) {
+      // The head rope is solid all the way across -- that is the line the
+      // whole thing hangs from. Under it the strands run both diagonals and
+      // cross, which is what makes diamonds and what makes this read as a net:
+      // you can see the sky through it, which is why anybody believed in it.
+      if (k && (c + k) % 4 && (c - k + 4 * cols) % 4) continue;
+      ctx.fillRect(s.x + c * P, topY + (off + k) * P, P, P);
+    }
   }
 }
 
-// The jack: a steel plate carried on two rams. The plate is solid and heavy --
-// it is the one shield that looks like it might actually do it -- and the rams
-// under it are drawn as stacked cells with a gap, which is what says hydraulic
-// rather than post. `s.shove` lifts the whole assembly, so the beat where the
-// machine drives the rock back up is the plate visibly rising.
+// The jack: one enormous ram under a steel plate. Everything else in this arc
+// is a *structure* -- legs, ropes, piers -- and structures wait for the rock.
+// This does not wait, so it is not drawn like one: a bedplate bolted to the
+// ground, a cylinder standing on it, a rod telescoping out of that, and the
+// plate across the top. Read bottom to top it is a diagram of a push.
+//
+// The rod is the whole point. It is drawn from the cylinder's mouth up to
+// whatever height the plate has reached, so when `s.shove` drives the plate up
+// the rod *lengthens* to meet it -- the machine visibly extends rather than
+// the whole assembly sliding upward, which is what the last one did and what
+// made it read as furniture on stilts.
 function drawJack(s, done, topY, cols) {
   const lift = Math.round((s.shove || 0) / P) * P;
-  const ramC = Math.min(s.h, Math.round(Math.min(1, done * 2) * s.h));
-  const plate = Math.max(0, done * 2 - 1);
-  for (const x of [s.x + 2 * P, s.x + s.w - 5 * P]) {
-    for (let r = 0; r < ramC; r++) {
-      if (r % 3 === 2) continue;                 // the joints in the ram
-      ctx.fillRect(x, S.groundY - (r + 1) * P - (r > ramC - 3 ? lift : 0), 3 * P, P);
-    }
+  const cell = (cx, cy, w, h) => ctx.fillRect(cx, S.groundY - (cy + h) * P, w * P, h * P);
+  // Assembled from the ground up -- beds, then cylinders, then the platen --
+  // and the part that does the work is the part that arrives last.
+  const step = (from, to) => Math.max(0, Math.min(1, (done - from) / (to - from)));
+  // The rams stand at the ends, outside the footprint, for the same reason the
+  // props' legs do: the middle of this span is where the rock goes. A ram
+  // under the center would be standing inside the boulder.
+  const feet = [s.x, s.x + s.w - 6 * P];
+  const cylH = Math.max(2, Math.round((s.h - 5) * 0.5));
+  const top = s.h - 3 + Math.round(lift / P);
+
+  const bed = step(0, 0.25);
+  for (const x of feet) if (bed > 0) cell(x, 0, 6, Math.max(1, Math.round(2 * bed)));
+
+  const cyl = step(0.25, 0.6);
+  for (const x of feet) {
+    if (cyl <= 0) continue;
+    cell(x + P, 2, 4, Math.round(cylH * cyl));   // the cylinder
+    // the collar at its mouth, which is the thing a rod comes out of
+    if (cyl >= 1) cell(x, 2 + cylH, 6, 1);
   }
+
+  const plate = step(0.6, 1);
   if (plate <= 0) return;
-  const w = Math.round(plate * cols) * P;
-  ctx.fillRect(s.x + (s.w - w) / 2, topY - lift, w, 3 * P);
+  // The rods are the whole point: drawn from each collar up to the underside
+  // of the platen, so when the shove drives the platen up they *lengthen* to
+  // meet it. The machine extends. The last one slid its legs up with the top,
+  // which is furniture on stilts and not a press.
+  for (const x of feet) cell(x + 2 * P, 3 + cylH, 2, Math.max(0, top - 3 - cylH));
+  const w = Math.round(plate * cols);
+  cell(s.x + Math.round((cols - w) / 2) * P, top, w, 3);
+  // and the ribs under it, which is what says this face is meant to take a load
+  if (plate >= 1) for (let c = 3; c < cols - 3; c += 5) cell(s.x + c * P, top - 1, 1, 1);
 }
 
 // The dome: the only shield that is not black, because it is the only one that
@@ -773,21 +829,62 @@ function drawJack(s, done, topY, cols) {
 // It closes from both feet to the crown as the tower pours, so a half-cast
 // dome is two horns reaching up, and the last of the pour is the moment it
 // becomes a roof.
+// It is not a wall, it is a field, and a field that sits perfectly still is a
+// wall somebody painted purple. So nothing about it holds: light runs round the
+// shell, the shell itself breathes a cell in and out, and it sheds sparks that
+// rise and fade. Everything here is a function of the clock, so it can never
+// settle into a picture.
+//
+// The tones do the work rather than any new shape. Where the running light is,
+// the shell is drawn in the palest of the four magic tones; away from it, the
+// deepest -- so the band reads as brighter and dimmer round its length instead
+// of as a stripe traveling along a solid object. That is the difference between
+// a rope light and a charged surface.
 function drawDome(s, done, topY, cols) {
+  const t = now() / 1000;
   const a = cols / 2;
-  const R = a;                                  // a true half-circle: nothing carries it
   const T = 2;
   const total = Math.PI / 2;
+  // the shell breathes: the whole radius swells and settles by a cell
+  const R = a - 1 + Math.sin(t * 1.7) * 0.9;
   for (let c = 0; c < cols; c++) {
     const dx = Math.abs(c + 0.5 - a);
     for (let r = 0; r < s.h; r++) {
       const d = Math.hypot(dx, r);
       if (d < R - T || d > R) continue;
-      // round from the ground to the crown, so the reveal runs up both sides
-      if (Math.atan2(r, dx) > done * total) continue;
-      ctx.fillStyle = MAGIC_TONES[(c + r) % MAGIC_TONES.length];
+      const ang = Math.atan2(r, dx);
+      if (ang > done * total) continue;
+      // How lit this cell is: two waves of different speed and length running
+      // round the shell, so the pattern never repeats on itself and the eye
+      // cannot find the loop.
+      const along = ang / total;
+      const lit = Math.sin(along * 9 - t * 3.4) * 0.6 + Math.sin(along * 4 + t * 2.1) * 0.4;
+      const tone = lit > 0.55 ? 0 : lit > 0 ? 1 : lit > -0.55 ? 2 : 3;
+      ctx.fillStyle = MAGIC_TONES[tone];
       ctx.fillRect(s.x + c * P, S.groundY - (r + 1) * P, P, P);
     }
+  }
+
+  // The aura: cells thrown clear of the shell that drift out and fade. This is
+  // what makes it read as charged rather than painted -- a surface losing a
+  // little of itself into the air all the time. They are not kept anywhere,
+  // because there is nothing to remember: each one's whole life is a fraction
+  // of the clock, so the same eighteen sparks are reused for ever and none of
+  // them has to be born, stored or buried.
+  const SPARKS = 18;
+  for (let i = 0; i < SPARKS; i++) {
+    const life = (t * 0.5 + i * 0.137) % 1;           // 0 at the shell, 1 spent
+    if (life > 0.92) continue;
+    // spread them round the shell by an angle that never lines them up
+    const ang = (i * 2.399) % total;
+    if (ang > done * total) continue;
+    const rr = R + 1 + life * 5;
+    const side = i % 2 ? 1 : -1;
+    const cx = Math.round(a + Math.cos(ang) * rr * side);
+    const cy = Math.round(Math.sin(ang) * rr);
+    if (cx < -2 || cx > cols + 2 || cy < 0) continue;
+    ctx.fillStyle = MAGIC_TONES[life < 0.3 ? 1 : life < 0.65 ? 2 : 3];
+    ctx.fillRect(s.x + cx * P, S.groundY - (cy + 1) * P, P, P);
   }
   ctx.fillStyle = '#000';
 }

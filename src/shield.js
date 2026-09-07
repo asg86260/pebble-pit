@@ -24,7 +24,7 @@ import {
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { sendOn } from './crew.js';
-import { spawnSpoil } from './dust.js';
+import { spawnSpoil, spawnChip } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
 import { startRescue } from './intro.js';
@@ -89,7 +89,7 @@ export function raiseShield(kind) {
   // whether the rock needs that much room or not: the shape decides the
   // height, the same way the arch's rise does.
   const h = kind === 'dome' ? Math.max(clear, Math.round(w / P / 2)) : clear + rise;
-  S.shield = { kind, x, w, h, rise, laid: 0, caught: 0,
+  S.shield = { kind, x, w, h, rise, laid: 0, caught: 0, held: 0, strain: 0,
                sag: 0, shove: 0, setting: false, cast: KINDS[kind].cast ? now() : 0 };
   S.dirty = true;
 }
@@ -148,6 +148,28 @@ export function breakShield() {
   S.dirty = true;
 }
 
+// What a thing under a load it cannot take does before it goes: it shakes, and
+// it sheds. A cell of itself comes loose every so often and falls -- grit off
+// the arch's crown, dust off the jack's welds -- and `strain` climbs from
+// nought to one across the hold, so all of it gets worse the closer the thing
+// is to failing. The drawing reads `strain` for the shake; this is where the
+// shedding happens, because a falling cell is a chip and chips belong to the
+// yard rather than to the picture.
+//
+// It matters that the warning is honest: by the time the arch is trembling and
+// throwing grit, it *is* about to crack. Nothing here is atmosphere -- it is
+// the shield telling you what is about to happen, in the only vocabulary this
+// game has, which is stuff coming off things.
+function strainOn(s, kind) {
+  const held = kind.holds || 1;
+  s.strain = Math.max(0, Math.min(1, (now() - s.caught) / held));
+  // more of it, and faster, the nearer it is to going
+  if (Math.random() > 0.08 + s.strain * 0.5) return;
+  const top = shieldTopY(s) + (s.sag || 0) * P;
+  const px = s.x + Math.random() * s.w;
+  spawnChip(px, top, (Math.random() - 0.5) * 0.6, 0.2, shadeNear(3));
+}
+
 // The yard stops and looks up. Everybody on the ground -- the same set the
 // landing itself marks -- because a rock stopping in the air is the first time
 // in this game that the thing overhead has not simply arrived.
@@ -163,12 +185,21 @@ function lookUp(ms) {
 // place the kinds differ in behavior rather than in looks.
 function answer(s, kind) {
   const dt = frames() / 60;
+  // Everything that is going to fail complains first. The dome does not: it is
+  // not straining, it is holding, and a thing that is holding does not shed.
+  if (kind.answer !== 'hold') strainOn(s, kind);
   // Rope. It never really stopped the rock, it only slowed it: the sag deepens
   // as the rope pays out, and when it reaches the ground the rope has nothing
   // left to give and the rock finishes its arrival.
   if (kind.answer === 'sag') {
     S.rockFall = Math.max(0, S.rockFall - kind.rate * dt);
-    s.sag = Math.round((shieldTopY(s) - rockFootY()) / -P);
+    // How far the rope has been pulled below where it was slung, in courses,
+    // measured from where the rock was when it took hold -- and kept as a
+    // fraction of a course rather than rounded to whole cells. The drawing
+    // rounds it per column, so a deepening sag *rolls* down the span a cell at
+    // a time instead of the whole rope dropping a course at once. Round it
+    // here and every strand steps together, which is what rope does not do.
+    s.sag = (s.held - S.rockFall) / P;
     if (S.rockFall <= 0) { breakShield(); landRock(); }
     return;
   }
@@ -238,6 +269,7 @@ export function stepShield() {
     // first time in this game that the thing overhead has not simply arrived.
     s.caught = now();
     s.shove = 0;
+    s.held = S.rockFall;         // where it was when this took hold of it
     S.rockHeld = true;
     lookUp(kind.holds || 1200);
     S.dirty = true;
