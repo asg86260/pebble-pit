@@ -42,7 +42,34 @@ export const RIFT_INHALE_SHOW = 600;
 // the eye reads a well rather than a sticker.
 export const RIFT_HALO = 2;          // cells of paper cleared round the rim
 export const RIFT_STIPPLE = 2;       // and cells of thinning speckle past that
-// Nothing about the disc itself moves. It had a lensing rim that swelled and
+// --- what is on the other side ------------------------------------------------
+// It is a tear, not a dot. What the hole shows is somewhere else: a sky of
+// magic-coloured stars, layered, each layer keeping less pace with the yard
+// than the one in front of it.
+//
+// **The parallax is the whole idea.** Depth cannot be drawn on a flat black
+// circle -- every attempt at that read as a face -- but it can be *shown* by
+// having the far thing move less than the near one. So the stars answer the
+// camera rather than the clock: pan along the yard and they slide behind the
+// rim at a fraction of the yard's pace, and the hole reads as a window with a
+// long way behind it. Stand still and they stand still. That is the one kind
+// of motion this thing has earned -- it is a reply to the player, not an idle.
+export const RIFT_DEEP_LAYERS = 3;    // skies behind the tear
+export const RIFT_DEEP_NEAR = 0.55;   // how much of the yard's pace the nearest keeps
+export const RIFT_DEEP_FAR = 0.12;    // ...and the furthest
+export const RIFT_DEEP_SPACING = 11;  // world px between stars in the nearest sky
+
+// And the pull: a few motes of the wizards' own purple drawn in toward the rim
+// and gone at it. This is the one thing here that moves on its own, and it is
+// kept to a handful on purpose -- what it has to say is "this is pulling", and
+// a crowd says "this is busy" instead. Inward, never out: a ring going out of
+// a hole is a hole broadcasting, and this one takes.
+export const RIFT_PULL_MOTES = 6;     // in the air at once
+export const RIFT_PULL_MS = 3400;     // how long one takes to come in
+export const RIFT_PULL_FROM = 2.4;    // where it starts, in disc radii
+export const RIFT_PULL_INK = 0.9;     // and the strongest it is drawn
+
+// Nothing else about the disc moves. It had a lensing rim that swelled and
 // leaned, a speckle collar that turned, eight strands for ever spiralling in
 // whether or not anything was, and a song of purple rings going out of it --
 // RIFT_LENS, RIFT_STIPPLE_MS, the RIFT_STREAK_* family and the RIFT_SONG_*

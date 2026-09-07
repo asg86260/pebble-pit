@@ -20,6 +20,8 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
          RIFT_HALO, RIFT_STIPPLE,
+         RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
+         RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
@@ -298,8 +300,84 @@ const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
 // over them, so anything that has crossed the rim is gone behind it rather
 // than drawn on top of it -- which is what going *in* looks like.
 
+// A settled number in 0..1 from two small ones. No state, no list: a star is
+// where it is because of which star it is, so the sky is the same sky every
+// frame and does not boil.
+const spec = (i, n) => {
+  const h = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
+  return h - Math.floor(h);
+};
+
+// What is on the other side, cut to the hole.
+//
+// Layers of magic-coloured stars, each keeping less pace with the yard than
+// the one in front of it. A star's world position carries `camX * (1 - k)`, so
+// once the world transform has taken `camX` off it what is left slides at `k`
+// of the yard's pace -- near layers nearly keep up with the rim, far ones
+// hardly move, and the gap between them is the depth. Pan the yard and the sky
+// wheels slowly behind the tear; stand still and it stands still.
+//
+// The field is a lattice with a hash-jitter per cell rather than a list of
+// stars: it is endless, it costs nothing to keep, and it is identical frame to
+// frame. Only the cells that fall inside the rim are drawn, so this is a
+// window rather than a sprite.
+function drawThrough(cx, cy, rad) {
+  const inner = rad - P;                      // keep the rim's own edge clean
+  if (inner < P) return;
+  for (let L = 0; L < RIFT_DEEP_LAYERS; L++) {
+    const f = RIFT_DEEP_LAYERS === 1 ? 0 : L / (RIFT_DEEP_LAYERS - 1);
+    const k = RIFT_DEEP_NEAR + (RIFT_DEEP_FAR - RIFT_DEEP_NEAR) * f;
+    const sp = RIFT_DEEP_SPACING * (1 + L * 0.5);   // thinner further back
+    // The nearest sky is the brightest; the far ones fall away down the
+    // purples, which is the same "spending itself with distance" the rest of
+    // this game's ramps do.
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
+                                Math.round(f * (MAGIC_TONES.length - 1)))];
+    const baseX = S.camX * k, baseY = S.camY * k;
+    const i0 = Math.floor((baseX - inner) / sp), i1 = Math.ceil((baseX + inner) / sp);
+    const j0 = Math.floor((baseY - inner) / sp), j1 = Math.ceil((baseY + inner) / sp);
+    for (let i = i0; i <= i1; i++) {
+      for (let j = j0; j <= j1; j++) {
+        // a fraction of the lattice actually carries a star, so the sky is
+        // scattered rather than ruled
+        if (spec(i * 31 + L * 7, j) > 0.55) continue;
+        const ox = (i + spec(i, j + L)) * sp - baseX;
+        const oy = (j + spec(j + 40, i + L)) * sp - baseY;
+        if (ox * ox + oy * oy > inner * inner) continue;
+        ctx.fillRect(Math.round(cx + ox), Math.round(cy + oy), P, P);
+      }
+    }
+  }
+  ctx.fillStyle = '#000';
+}
+
+// The pull: a few motes of the wizards' purple drawn in toward the rim.
+//
+// The one thing here that moves on its own, and a handful on purpose -- what
+// it has to say is "this is pulling", and a crowd would say "this is busy"
+// instead, which is what the whole of the last pass was deleting. Inward,
+// never out: a ring going out of a hole is a hole broadcasting, and this one
+// takes.
+function drawPull(cx, cy, rad, t) {
+  for (let i = 0; i < RIFT_PULL_MOTES; i++) {
+    const k = ((t / (RIFT_PULL_MS * (0.75 + spec(i, 3) * 0.5))) + spec(i, 1)) % 1;
+    const a = spec(i, 2) * Math.PI * 2;
+    // In from RIFT_PULL_FROM to the rim, quickening as it arrives -- the
+    // squared term is the same "falling into something" shape the grains
+    // themselves have, and it is the only thing here that says which way the
+    // hole works.
+    const r = rad * (RIFT_PULL_FROM - (RIFT_PULL_FROM - 1) * k * k);
+    ctx.globalAlpha = RIFT_PULL_INK * (1 - k) * (0.5 + spec(i, 5) * 0.5);
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
+    ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), P, P);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#000';
+}
+
 export function drawRift() {
   if (!S.riftOpen || S.drowned) return;
+  const t = now();
   const { x, y, w, h } = rift;
   const across = Math.round(w / P), down = Math.round(h / P);
   const mid = (across - 1) / 2, midR = (down - 1) / 2;
@@ -338,6 +416,11 @@ export function drawRift() {
     }
   }
 
+  // The pull: a few motes drawn in toward the rim, outside it, where the page
+  // is white and a purple mark reads. Before the disc, so one that reaches the
+  // rim goes behind it rather than over it -- which is what arriving looks like.
+  drawPull(cx, cy, rad, t);
+
   // **The hole is a place, not a creature.**
   //
   // It does not breathe, ring, turn or spiral on its own, and every one of
@@ -348,13 +431,14 @@ export function drawRift() {
   // moving, and an endgame rift is idle most of the time because it is
   // keeping up.
   //
-  // What is left moving is the dust, which is the only thing that is actually
-  // doing anything -- grains the crew tipped in, on the spiral, going down.
-  // With nothing going in there is a hole in the air and it is still. That is
-  // the rule the rest of this yard runs on, a thing looks busy when it is
-  // busy, and it makes a grain going in an event again rather than one more
-  // mark in a churn.
+  // What moves now is the dust going in, the few motes being drawn in with
+  // it, and -- when you pan the yard -- the sky on the other side. The rest
+  // is still.
   disc(0, '#000');
+
+  // ...and then the other side, cut to the hole. A tear, not a dot: what is
+  // through it is somewhere else, and the way that is said is depth.
+  drawThrough(cx, cy, rad);
 
   // Each cell asks which side of the rim it is on and inks itself: the grain's
   // own colour out on the page, paper over the black inside. A grain crossing
