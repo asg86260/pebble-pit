@@ -2,7 +2,9 @@
 
 ## 6. The shields — the story arc
 
-**Status:** designed (DESIGN.md, "The shields"), not built.
+**Status:** stage 1 (the props) built — `src/props.js`, the `props` bench row,
+the plank walk on the kit-walk legs, the mid-air smash, `test/props.test.mjs`.
+Stages 2 (the arch) and 3 (the dome) remain.
 
 Three attempts to stop the next rock: timber props (bench, dust) the rock goes
 straight through; a stone arch (shards) that catches one for a held beat and
@@ -14,11 +16,13 @@ ever under a shield when it goes, and the wreckage flies out along the heap as
 
 **Build it in stages that each leave the game playable:**
 
-1. **The props.** A bench row, a built-plank-by-plank structure over the dig
-   (bodies walk and climb — no teleporting), a scripted smash on the next
-   landing, wreckage into the spoil arc. This stage proves the shield
-   scaffolding: a structure with a footprint, a build job for the crew, a
-   landing that consults what is standing there.
+1. **The props — DONE.** A bench row (`props`, dust, shown from the fourth
+   rock), a frame sized against the rock it stands over (next footprint wide,
+   current peak plus a body's daylight tall), raised one plank per round trip
+   from the bench on the kit walk's legs machinery (`sendOn`, a `'plank'`
+   leg), smashed in the air the frame the falling rock's foot crosses the
+   lid, wreckage out along the heap as `spawnSpoil` chips. Saved, reset,
+   reported; `test/props.test.mjs` runs the whole story through `__buy`.
 2. **The arch.** Same scaffolding, quarried stone, plus the two new pieces:
    the *caught* beat (a rock at rest on a shield, every body looking up) and
    the delayed collapse. The arch's stone lands minable.

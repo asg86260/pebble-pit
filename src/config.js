@@ -1597,3 +1597,16 @@ export const heapBase = key => Math.ceil(Math.sqrt(4 * PILE_LIMIT[key] / BANK_SL
 // picture made of whole black pixels -- so both numbers are small on purpose,
 // and the look is the pair of them rather than either one.
 export const PRESS_MIX = { scanlines: 0.2, vignette: 0.15 };
+
+// --- the props ----------------------------------------------------------------
+// The first shield (DESIGN.md, "The shields"): timber legs and a lid over the
+// rock, raised a plank at a time, and smashed through by the next rock to fall.
+// The frame's width and height are derived from the rock it stands over, so
+// only the story's own numbers live here.
+export const PROP_FROM = 4;         // rocks fallen before the yard thinks to look up
+export const PROP_COST = 400;       // dust for the timber
+export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives per walk
+export const PROP_LEG_W = 2;        // cells across a leg
+export const PROP_LID_T = 2;        // courses thick across the lid
+export const PROP_CLEAR_C = 4;      // courses of daylight kept over the rock's peak
+export const PROP_PLANK_DUST = 25;  // cells a plank breaks back into, so most of the spend comes home

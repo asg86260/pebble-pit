@@ -206,6 +206,8 @@ export function persist() {
     labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
+    props: S.props && { x: S.props.x, w: S.props.w, h: S.props.h, laid: S.props.laid },
+    propsDone: S.propsDone,
     buried: S.buried,
     casinoOpen: S.casinoOpen,
     scrubOpen: S.scrubOpen,
@@ -326,6 +328,8 @@ export function restore() {
     S.plots = [];
   S.plotTone = [];
     S.plotTone = [];
+    S.props = null;
+    S.propsDone = false;
     return;
   }
   S.stored = s.stored;
@@ -411,6 +415,9 @@ export function restore() {
   S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
   // and a save from before the second act existed has plainly had its first rock
   S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
+  // a save from before the shields existed has plainly not raised one
+  S.props = s.props ? { x: s.props.x, w: s.props.w, h: s.props.h, laid: s.props.laid || 0 } : null;
+  S.propsDone = !!s.propsDone;
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -613,6 +620,8 @@ export function reset() {
   S.introDone = false;
   S.reunionDone = false;
   S.buried = false;
+  S.props = null;
+  S.propsDone = false;
   makeBoulder();
   S.boulder = S.boulder.map(row => row.map(() => 0));
   S.coreBuried = false;

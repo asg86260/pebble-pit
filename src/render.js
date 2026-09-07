@@ -22,6 +22,7 @@ import { underground, quarryShape, ladder, quarryCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
+import { PROP_PLANKS, PROP_LEG_W, PROP_LID_T } from './config.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
 import { pot, potAt, sliceKeeps } from './casino.js';
@@ -664,6 +665,32 @@ export function overPitMark(mx, my) {
 // width at first, which put the door and the belfry slot a third of a pixel off
 // the lattice and drew them with a grey fringe -- the same hairline the whole
 // game is arranged to avoid.
+// The props, half-built or whole: two timber legs and a lid over the rock,
+// drawn in whole cells like every building on this ground. The legs rise
+// through the first half of the planks and the lid closes from both ends
+// through the second, so the frame visibly grows out of the trips that built
+// it rather than fading in. Drawn after the rock, because the lid stands over
+// it -- and before the crew, who walk in front of everything.
+export function drawProps() {
+  const p = S.props;
+  if (!p) return;
+  const done = Math.min(1, p.laid / PROP_PLANKS);
+  const lw = PROP_LEG_W * P;
+  const topY = S.groundY - p.h * P;
+  ctx.fillStyle = '#000';
+  const legC = Math.min(p.h, Math.round(Math.min(1, done * 2) * p.h));
+  if (legC > 0) {
+    ctx.fillRect(p.x, S.groundY - legC * P, lw, legC * P);
+    ctx.fillRect(p.x + p.w - lw, S.groundY - legC * P, lw, legC * P);
+  }
+  const span = Math.round(Math.max(0, done * 2 - 1) * (p.w / P)) * P;
+  if (span > 0) {
+    const half = Math.min(p.w, Math.ceil(span / 2 / P) * P);
+    ctx.fillRect(p.x, topY, half, PROP_LID_T * P);
+    ctx.fillRect(p.x + p.w - half, topY, half, PROP_LID_T * P);
+  }
+}
+
 export function drawSchool() {
   if (!S.schoolOpen) return;
   const { x, y, w, h } = school;
@@ -2506,6 +2533,8 @@ export function draw() {
   }
 
   ctx.fillStyle = '#000';
+
+  drawProps();
 
   // a chip is a grain in the air, drawn as whatever it is
   for (const ch of S.chips) drawMark(ch.s, Math.round(ch.x) + P / 2, Math.round(ch.y) + P / 2);

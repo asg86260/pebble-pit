@@ -27,6 +27,7 @@ import { sweepMuckAt, muckLeft, muckFor, nearestMuck, muckAtCol, pitLadder, pitS
          rockMuck, quarryMuck, plotMuck,
          pitSide, pastPit, muckPastPit, dropMuckAt, cleanSpotNear, NEAR, FAR } from './smog.js';
 import { doorAt } from './house.js';
+import { layPlank } from './props.js';
 
 // The crew take the hill off in layers. A miner does not stand in one spot and
 // bore a shaft: it walks the top layer, striking the rock under its feet as it
@@ -708,12 +709,26 @@ function nextLeg(w) {
   w.walking = true;
 }
 
+// Put a body on a commute somebody else has planned. The props build
+// (props.js) sends whoever is free to the bench and out to the frame with
+// this; the legs machinery is the kit walk's, so the walk obeys every rule a
+// commute does and the body settles back onto its own job at the end.
+export function sendOn(w, legs) {
+  w.legs = legs.slice();
+  nextLeg(w);
+}
+
 function arrive(w) {
   // put down where it was found, or picked up the same way -- and `kitOf`
   // travels with it, because what a body is wearing is a fact about the kit and
   // not about the job it happens to be on this second
   if (w.leg === 'drop') { w.trained = false; w.kitOf = null; }
   if (w.leg === 'wear') { w.trained = true; w.kitOf = w.wanting; w.wanting = null; }
+  // a plank is laid by the body that carried it here, and by nothing else --
+  // and the leg is cleared here because `settle` keeps whatever fields the
+  // job's factory does not hand out, and a body still marked 'plank' reads as
+  // a builder forever
+  if (w.leg === 'plank') { layPlank(); w.leg = null; }
   S.dirty = true;
   if (w.legs && w.legs.length) { nextLeg(w); return; }
   if (w.leg === 'back') { w.leg = null; w.legs = null; w.walkTo = null; w.walking = false; return; }

@@ -70,6 +70,9 @@ export const S = {
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
   rockFallV: 0,           // how fast it is coming
+  // --- the props: the first shield, and the rock's answer to it. props.js ---
+  props: null,            // { x, w, h, laid } while standing; null before and after
+  propsDone: false,       // raised and answered, once only -- the story moved on
   danceUntil: 0,          // the crew are celebrating the last one until this moment
   nextBoulderAt: 0,       // backstop, in case a core never falls clear
   peakRow: 0,             // the highest standing rock, recomputed each frame

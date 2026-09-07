@@ -13,6 +13,8 @@ import {
   TOWER_CORES, TOWER_DUST
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
+import { raiseProps } from './props.js';
+import { PROP_COST, PROP_FROM } from './config.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
@@ -558,6 +560,19 @@ export const UPGRADES = [
     buy: () => { S.schoolOpen = true; lookAt(school.x + school.w / 2); },
     show: () => S.seenShard && !S.schoolOpen
   },
+  // The first shield (DESIGN.md, "The shields"): timber over the yard, so the
+  // next rock has something to answer before it lands. It has to be buyable,
+  // and it has to fail -- the rocks are the game's income, and the story is
+  // the yard finding that out. One press, one structure, once ever: after the
+  // rock has answered, the row stays gone, because the lesson has been bought.
+  {
+    key: 'props',
+    name: 'raise the props',
+    note: () => 'timber legs and a lid over the rock, so the next one has something to answer',
+    cost: () => PROP_COST,
+    buy: () => raiseProps(),
+    show: () => !S.props && !S.propsDone && S.introDone && S.boulderNo >= PROP_FROM
+  },
   // The one building that undoes something instead of making something. It is
   // offered the first time the sky is visibly dirty rather than on a schedule:
   // the haze is the advertisement, and a row selling you a cure for a thing you
@@ -685,6 +700,7 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
+  { title: 'the shields', keys: ['props'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
