@@ -1,5 +1,33 @@
 # Still to do
 
+## Seeing the wind — BUILT, one part left (2026-09-07)
+
+The dust and the haze say what the wind is doing now. Two changes, both
+drawing, both off one shared shaped number (`gust` in wind.js, the wind's middle
+bent down so a lull goes quiet and a gust plainly moves):
+
+1. **Speed** -- a near mote is carried about 25 screen pixels a second in a
+   typical breeze, 62 in a strong one. It was 20 at the theoretical peak and
+   about 7 typically, which is a drift, and a drift is what the eye files as
+   "static field".
+2. **The streak** -- a mote is smeared along the wind, trailing behind itself, by
+   its own size times how much of the wind its band takes. The near band streaks
+   most; the far band works out at nothing and stays square without being told
+   to. The haze streaks too, on its own reach, **with its ink taken down exactly
+   as far as it goes wide** so a gust spreads the band instead of darkening it.
+
+**Still not built: the gust front** (`windAt(t, x)`, so a gust crosses the yard
+and you can watch it arrive). Same blocker as before -- every caller then needs
+an honest `x` and `report.js` has none.
+
+Checked by eye and by measurement, not by a suite: the `gustR` / `gustL` scenes
+in `tools/look.mjs`, aimed at the times wind.js is actually strongest each way
+inside the first eighty seconds (it almost never reaches its peak, so a shot at
+a time that merely sounded windy is a shot of a lull). The ink conservation was
+measured on the same scene, same seed, same clock, main against the branch:
+four thousandths of a level out of 255. The browser `wind` group (24/24) and
+`test/sky-air.test.mjs` (6/6) are green.
+
 ## The drain — BUILT (2026-09-06)
 
 feedback8 items 5, 6 and 7 (dust spreads before the rift takes it; no swirl;

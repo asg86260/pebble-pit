@@ -58,6 +58,28 @@ const SCENES = {
          window.__loo(); window.__assign('janitors',1); window.__fast(20);
          window.__look(window.__state().rockLeftX - 420);`,
 
+  // The question mark a held body says. Hovered for real -- the pause and the
+  // mark come off `pointermove` in pointer.js, and there is no hook that puts
+  // the mark up -- so the camera is put on the body first and the pointer sent
+  // to where it then stands.
+  asking: `window.__reset(); window.__crew(3,2,2,2);
+           window.__school({breakers:3,blasters:2,growers:2,carters:2});
+           window.__fast(20);
+           // In a frame, not now: the runner turns a whole second of clock after
+           // a scene and the hold is only nine hundred milliseconds, so a hover
+           // sent from here would have lapsed by the time of the shot -- and the
+           // body would have walked out from under it besides. The camera and the
+           // pointer are both put on the body as that frame opens.
+           requestAnimationFrame(() => {
+             const d = window.__state().crewDetail[0].split('|');
+             const wx = Number(d[2]), wy = Number(d[7].slice(1));
+             window.__look(wx - 400 / window.__state().zoom);
+             const s = window.__state();
+             document.getElementById('c').dispatchEvent(new PointerEvent('pointermove', {
+               clientX: (wx - s.camX) * s.zoom, clientY: (wy - s.camY) * s.zoom,
+               pointerId: 1, isPrimary: true, button: 0, buttons: 0, bubbles: true }));
+           });`,
+
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
@@ -495,6 +517,26 @@ const SCENES = {
 
   // The sky at four levels. The haze has the whole window now rather than a
   // strip along the top of it -- see DESIGN.md, "The sky is the band".
+  // The wind, seen. Dust, haze and a flag in one frame, because the whole claim
+  // is that the three of them lean together -- if they do not, that is the bug
+  // and it is visible in one picture.
+  //
+  // The clock is seeded (`__seed` restarts it), and the two times are not round
+  // numbers or guesses: they are where the wind actually is strongest each way
+  // inside the first eighty seconds, found by running wind.js. That matters,
+  // because the field almost never reaches its own peak -- the lull envelope
+  // sees to that -- so a shot at a time that merely sounded windy is a shot of
+  // a lull. Compare the pair side by side; one shot of weather says nothing,
+  // because there is nothing in it to be weather against.
+  gustR: `window.__seed(1); window.__crew(3,3,5,7); window.__fullSites();
+          window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+          window.__air({haze: 2100}); window.__fast(64.5);
+          window.__look(window.__state().rockLeftX - 300);`,
+  gustL: `window.__seed(1); window.__crew(3,3,5,7); window.__fullSites();
+          window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+          window.__air({haze: 2100}); window.__fast(50);
+          window.__look(window.__state().rockLeftX - 300);`,
+
   sky0: `${SKYAT} window.__air({haze: 0}); window.__fast(8);`,
   sky1: `${SKYAT} window.__air({haze: 900}); window.__fast(8);`,
   sky2: `${SKYAT} window.__air({haze: 2100}); window.__fast(8);`,

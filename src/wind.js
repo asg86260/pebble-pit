@@ -18,7 +18,7 @@
 // deviations on a shared number rather than motions of their own, which is the
 // difference between a crowd leaning in a gust and a crowd milling about.
 
-import { WIND, WIND_MS, WIND_LULL } from './config.js';
+import { WIND, WIND_MS, WIND_LULL, WIND_GUST_POW } from './config.js';
 import { now } from './clock.js';
 
 // How hard it is blowing, and which way, as one signed share: about -1 to 1 at
@@ -43,6 +43,29 @@ export function windAt(t) {
 // What it is doing this instant. Everything that asks within a frame gets the
 // same answer, because they all ask the same clock -- which is the point.
 export const wind = () => windAt(now());
+
+// The same wind, as a thing being *blown* feels it rather than as the air
+// measures it.
+//
+// `wind()` is the honest field and everything that needs the truth should keep
+// asking it. But the truth, drawn, was the problem: a mote's sideways travel is
+// straight off that number, so a middling wind moved the field a little, a
+// strong one moved it slightly more, and the whole range came out as one slow
+// drift with nothing to tell the ends of it apart. The eye does not read a
+// twenty percent difference in the speed of a speck; it reads *still* against
+// *going*.
+//
+// So this bends the middle down and leaves the ends alone: a power curve, sign
+// kept. A lull goes properly quiet and a gust properly moves, and the same
+// bend is applied to the dust, the haze and anything else that is drawn being
+// blown -- one shape, so the sky and the ground never disagree about whether
+// this is a strong moment. What it must not touch is anything that *is* the
+// wind rather than a thing in it: the flag's heading is the wind, and putting
+// this under it would only have made the flag hang longer.
+export const gust = () => {
+  const w = wind();
+  return (w < 0 ? -1 : 1) * Math.abs(w) ** WIND_GUST_POW;
+};
 
 // A mote's own share of it, from any number that is fixed for the mote's life: a
 // small spread about 1, never a sign flip. Two motes side by side differ by a few

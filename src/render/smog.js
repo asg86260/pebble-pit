@@ -4,9 +4,10 @@
 // module-private tones and helpers. ctx comes from ./ctx.js.
 
 import { now } from '../clock.js';
-import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, MUCK_SKIN, MUCK_TONE, P, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
+import { DRAUGHT_INK, FLIES_PER, FLY_BEAT, FLY_EVERY, FLY_ORBIT, HAZE_CA, HAZE_STREAK, MUCK_SKIN, MUCK_TONE, P, SMOG_TINTS, STINK_EVERY, STINK_LIFE, STINK_RISE } from '../config.js';
 import { at } from '../grid.js';
 import { DRAUGHT, DROPS, GOING, SKY, moteX, moteY, muckCols, muckFloor, poopCols } from '../smog.js';
+import { gust } from '../wind.js';
 import { S, floor } from '../state.js';
 import { ctx } from './ctx.js';
 
@@ -234,11 +235,27 @@ export function drawSmog() {
   // the mean of the sky by a tenth of a level out of 255 -- these are sparse
   // enough that overlaps are rare -- and it arguably reads better, because a
   // clump of smog being denser than a single speck is what smog does.
+  // The sky is blown too, and it has to say so with the same voice the dust
+  // does or the two read as two weathers over one yard. Same shaped number
+  // (`gust`), same trailing streak, one reach of its own.
+  //
+  // And the ink comes down exactly as far as the speck goes wide. A gust does
+  // not make more muck -- it spreads the muck that is there -- so a smeared
+  // speck has to lay down the same amount of ink over the longer mark, or the
+  // sky darkens every time it blows. That would be worse than merely wrong: how
+  // dark the band is, is how filthy the yard is, and it is a thing the player
+  // is meant to be reading and acting on. A weather effect that moved that
+  // reading would be lying about the game's state.
+  const g = gust();
+  const tail = Math.round(HAZE_STREAK * Math.abs(g));
+  const from = g > 0 ? -tail : 0;
+  const thin = P / (P + tail);
   const spill = (pts, colour, ink) => {
     if (!pts.length) return;
-    ctx.globalAlpha = ink;
+    ctx.globalAlpha = ink * thin;
     ctx.fillStyle = colour;
-    for (let i = 0; i < pts.length; i += 2) ctx.fillRect(pts[i], pts[i + 1], P, P);
+    for (let i = 0; i < pts.length; i += 2)
+      ctx.fillRect(pts[i] + from, pts[i + 1], P + tail, P);
   };
   spill(warm, CA_WARM, HAZE_INK * CA_INK);
   spill(cool, CA_COOL, HAZE_INK * CA_INK);

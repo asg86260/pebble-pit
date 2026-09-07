@@ -245,10 +245,8 @@ export function drawKitCounts(screenAt) {
 // and forth between two bodies facing each other is a conversation, which is a
 // thing you read off the pair rather than off either of them.
 //
-// All of it is cells, like everything else, and all of it stands a clear cell
-// above the head so it never touches the load a worker is carrying.
-// wave7-crew: the smallest thing that is unmistakably a question mark, in cells.
-const QUERY = ['111', '001', '011', '000', '010'];
+// All of it is small flat shapes on the cell grid, and all of it stands a clear
+// cell above the head so it never touches the load a worker is carrying.
 
 function drawSay(w) {
   const x = Math.round(w.x) + WORKER / 2;
@@ -311,11 +309,22 @@ function drawSay(w) {
   }
 
   // wave7-crew: a body held still under the cursor asks what you want of it.
+  //
+  // Drawn as a mark rather than as a cell glyph: on the P grid the smallest
+  // legible question mark was three cells across and five tall, which stood
+  // over the head like a sign rather than sitting there like a thought. The
+  // strokes are half a cell, so the whole thing is two cells wide and three
+  // and a half tall -- still crisp, because half of six is a whole pixel.
   if (w.say.mark === '?') {
-    for (let r = 0; r < QUERY.length; r++)
-      for (let c = 0; c < 3; c++)
-        if (QUERY[r][c] === '1')
-          ctx.fillRect(Math.round(x - P * 1.5 + c * P), top - P * 5 + r * P, P - 1, P - 1);
+    const u = P / 2;
+    const x0 = Math.round(x - P);
+    const y0 = top - u * 7;
+    ctx.fillRect(x0 + u, y0, u * 2, u);          // the top of the hook
+    ctx.fillRect(x0, y0 + u, u, u);              // its left shoulder
+    ctx.fillRect(x0 + u * 3, y0 + u, u, u * 2);  // and its right side, coming down
+    ctx.fillRect(x0 + u * 2, y0 + u * 3, u, u);  // the curve back in
+    ctx.fillRect(x0 + u, y0 + u * 4, u, u);      // the stem it lands on
+    ctx.fillRect(x0 + u, y0 + u * 6, u, u);      // and the dot, one gap under
     return;
   }
 

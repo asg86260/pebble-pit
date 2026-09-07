@@ -2,7 +2,7 @@ import { now } from '../clock.js';
 import { P, PUFF_FADE, SMOG_DRIFT, SMOG_LIFT, SMOG_RAIN_AT, SMOG_SINK, SMOKE_STIR_EASE, SWAY_LANES, SWAY_PACE, SWAY_X, SWAY_Y } from '../config.js';
 import { rand } from '../rng.js';
 import { S } from '../state.js';
-import { windAt } from '../wind.js';
+import { gust } from '../wind.js';
 import { ACTIVE, DROPS, SKY, bandLow, bandTop, creep, drift } from './band.js';
 import { motesWanted, reckon, skyMote, spread } from './vents.js';
 
@@ -194,7 +194,10 @@ export function clearSky() {
 
 export function place(secs) {
   const span = Math.max(P, S.worldW || 0);
-  const w = windAt(now());
+  // The bend, not the raw field: the band's creep and the dust's travel are the
+  // same wind seen twice, so they take the same shape of it. Off the raw number
+  // the haze went on sliding through a lull the dust had already stopped in.
+  const w = gust();
   swayNow(now() / 1000);
   // The band, this frame: where the top of it is and how deep it goes. Read off
   // the camera, so it is one pair of numbers for the whole sky and not a pair of
@@ -212,8 +215,10 @@ export function place(secs) {
   // haze raises it a few pixels and it settles back as the gust dies. Off the
   // same number as everything else in the air, so the band never rises on a wind
   // the dust is not in.
-  const gust = Math.abs(w);
-  fSpan = span; fTop = top; fDeep = deep; fGust = gust;
+  // Named for what it does, not for what it is off: `gust` is the shared field
+  // now (wind.js) and a local of that name shadowed it for the whole function.
+  const lift = Math.abs(w);
+  fSpan = span; fTop = top; fDeep = deep; fGust = lift;
 
   const fadeBy = secs / (PUFF_FADE / 1000);
   const unstir = Math.max(0, 1 - SMOKE_STIR_EASE * secs);
@@ -262,7 +267,7 @@ export function place(secs) {
     // and its lane's drift for this frame, which is the whole of the band's own
     // movement: one lookup, no arithmetic per mote worth speaking of.
     m.x = (x + roamOf(m) * span) % span + m.px + SWAY_DX[m.lane];
-    m.y = y - gust * m.give * SMOG_LIFT + m.py + SWAY_DY[m.lane];
+    m.y = y - lift * m.give * SMOG_LIFT + m.py + SWAY_DY[m.lane];
 
     // and however far the draught has dragged this one so far. It is carried on
     // the mote and added here, because a settled mote has no position of its

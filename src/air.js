@@ -10,7 +10,7 @@
 // born -- off the top of a real pile -- and after that they belong to the air.
 
 import { P, WORKER, AIR_BANDS, AIR_KINDS, AIR_TINTS, AIR_FLOOR, AIR_PER_DUST, AIR_CAP, AIR_RISE, AIR_SINK,
-         AIR_GRIT, AIR_LEAN, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
+         AIR_GRIT, AIR_LEAN, AIR_STREAK, AIR_GIVE, AIR_GRIT_LEAN, AIR_LOW, AIR_LOW_BAND,
          AIR_SITE, AIR_SITE_UP, AIR_STIR, AIR_STIR_R, AIR_STIR_CAP, AIR_STIR_EASE, AIR_STIR_SCATTER,
          RIFT_PULL, RIFT_PULL_R, RIFT_EAT, RIFT_FEED } from './config.js';
 import { pitDepth } from './pit.js';
@@ -19,7 +19,7 @@ import { at, surfaceY } from './grid.js';
 import { blocked, overPitMouth } from './world.js';
 import { ctx } from './render.js';
 import { now, frames } from './clock.js';
-import { windAt, give } from './wind.js';
+import { gust, give } from './wind.js';
 import { rand } from './rng.js';
 
 export const AIR = [];
@@ -202,7 +202,7 @@ const appetite = () => AIR_FLOOR + Math.round(dustAbout() / AIR_PER_DUST);
 export function stepAir() {
   const t = now();
   const want = Math.min(AIR_CAP, appetite());
-  const wind = windAt(t) * AIR_LEAN;      // the yard's wind, in the pixels dust travels in
+  const wind = gust() * AIR_LEAN;         // the yard's wind, in the pixels dust travels in
 
   // how far the field has to slide to stay put: the camera moved, and each band
   // takes its own share of that
@@ -444,6 +444,18 @@ function paint(front) {
     b.n++;
   }
 
+  // How hard it is blowing, once for the frame. A square has no direction in
+  // it: whatever the wind was doing the field looked identical, and the only
+  // thing telling a gust from a calm was a creep too slow for the eye to read
+  // as being blown. A speck smeared along its own travel says the speed in a
+  // still frame, which is what the eye actually needs -- motion alone is not
+  // enough at these sizes, and neither is the streak alone.
+  const g = gust();
+  // The streak trails BEHIND, because it is where the mote just was. Blowing
+  // right, it reaches back to the left of the mote's own square; blowing left,
+  // the square stays put and the tail runs off the other side.
+  const back = g > 0;
+
   for (let i = 0; i < AIR_BANDS.length; i++) {
     const band = AIR_BANDS[i];
     if (band.front !== front) continue;
@@ -453,8 +465,15 @@ function paint(front) {
       // the fill style is the expensive thing to change, and it is set once a
       // bucket -- and not at all for a bucket with nothing in it
       ctx.fillStyle = AIR_TINTS[AIR_KINDS[k]][i];
+      // A band's own reach: its size times how much of the wind it takes, which
+      // is the same one number the band's pallor, pace and parallax already come
+      // off. The far band works out at nothing and stays square without being
+      // told to.
+      const tail = Math.round(AIR_STREAK * Math.abs(g) * band.pace * band.size);
+      const from = back ? -tail : 0;
       ctx.beginPath();
-      for (let j = 0; j < b.n; j++) ctx.rect(b.xy[j * 2], b.xy[j * 2 + 1], band.size, band.size);
+      for (let j = 0; j < b.n; j++)
+        ctx.rect(b.xy[j * 2] + from, b.xy[j * 2 + 1], band.size + tail, band.size);
       ctx.fill();
     }
   }
