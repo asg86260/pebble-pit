@@ -1,20 +1,21 @@
 # Still to do
 
-## The drain — DESIGNED, not built (2026-09-06)
+## The drain — BUILT (2026-09-06)
 
 feedback8 items 5, 6 and 7 (dust spreads before the rift takes it; no swirl;
-the disc reads as chaotic) are one problem: three separate accounts of how a
+the disc reads as chaotic) were one problem: three separate accounts of how a
 thing falls into the hole — the hauler's aim, `orbit()` in game.js, and the
-sprite's streaks in render/cores.js — and the eye reads the disagreement. The
-design is one law of infall that all three read, with the angle accelerating as
-the radius shrinks (a drain conserves angular momentum, not angular speed). See
-"The drain: what falling into the rift looks like (design, not built)" in
-DESIGN.md. **Awaiting approval before any implementation code.**
+sprite's streaks in render/cores.js — and the eye read the disagreement. There
+is one law now, `riftFall` in rift.js, and all three read it: the radius comes
+in steadily and the angle is its log, so the turning accelerates as the radius
+shrinks. See "The drain: what falling into the rift looks like (built)" in
+DESIGN.md, including the two things building it turned up that the design had
+not foreseen. Covered by `test/drain.test.mjs` (3/3); the `grown` scene in
+tools/look.mjs is the eyes on it.
 
-Blocked on nothing but the sign-off. The other five feedback8 items (shop
-closing on a purchase, bar and done-tick above the flag, the resource card at
-the bottom of the glass, the pile mark under the pile) are built on
-`worktree-feedback8`.
+All eight feedback8 items are built. The other five (shop closing on a
+purchase, bar and done-tick above the flag, the resource card off the pit, the
+pile mark under the pile) landed on main earlier the same day.
 
 ## The pit's arc — BUILT (2026-09-06)
 

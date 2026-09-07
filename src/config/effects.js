@@ -60,11 +60,30 @@ export const RIFT_LENS_MS = 3400;    // and how long one breath takes
 // They run whether or not the hole is eating anything, which is most of the
 // endgame -- the pile is empty because the hole is doing its job, and a hole
 // that only moves when it is fed looks broken exactly when it is working.
-export let RIFT_STREAKS = 12;        // how many are falling in at once
-export const RIFT_STREAK_MS = 1100;  // how long one takes to reach the rim
-export const RIFT_STREAK_FROM = 2.6; // where it starts, in disc radii
-export const RIFT_STREAK_TURN = 0.8; // turns of the spiral it makes on the way
-export const RIFT_STREAK_LEN = 4;    // and how many cells long it is drawn
+// They fall along the one law (`riftFall` in rift.js) -- where a fall starts
+// and how many turns it makes belong to the drain now, not to the streaks, so
+// RIFT_STREAK_FROM and RIFT_STREAK_TURN are gone: see RIFT_FALL_FROM and
+// RIFT_TURNS in config/rift.js.
+// Five, not twelve. Only the stretch outside the rim is ever seen -- about a
+// turn and a half of the spiral -- so a dozen arms half a turn each is three
+// times more ink than there is track to lay it on, and they close up into
+// solid rings. Five leaves the gaps that make it read as turning.
+export let RIFT_STREAKS = 5;         // how many are falling in at once
+export const RIFT_STREAK_MS = 1800;  // how long one takes to reach the middle
+// How long one streak is, measured in turns of the spiral it lies on. Turns,
+// not a length and not a share of the fall: the spiral tightens as it goes, so
+// a fixed length is a short arc out at the rim and a coil of three wraps near
+// the middle -- which is what a share of the fall gave, and seven of those
+// filled the ring solid. Half a turn is an arm you can follow with your eye
+// and still see the gaps between.
+//
+// How MANY cells that takes is not written down: it is worked out from the
+// disc's radius so the cells land a cell apart whatever size the disc has
+// grown to (see drawRift). A spacing guessed here would be dotted at one size
+// and doubled at another, and the disc's whole life is growing from four cells
+// to twelve.
+export const RIFT_STREAK_TURN = 0.5;
+export const RIFT_STREAK_MAX = 90;   // cells one streak may spend, as a stop
 
 // And the smear on a grain that is actually going in: a few cells of tail
 // pointing back the way it came, so the stream reads as being pulled rather than

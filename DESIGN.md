@@ -4720,7 +4720,7 @@ hats are the game's feel and they stay); prices indexed to live income (a
 price that chases the player can never be beaten, and the sky is already
 the one live opponent); any new plant or sink outside the decided list.
 
-## The drain: what falling into the rift looks like (design, not built)
+## The drain: what falling into the rift looks like (built)
 
 Three notes from the ninth round of feedback, all about the same few hundred
 pixels: dust thrown into a torn pit spreads itself evenly across the hole
@@ -4816,3 +4816,38 @@ grain takes to fall, and the sprite's own streak count, length and turn — ever
 one already exists in `config/rift.js` or `config/effects.js`, so this adds a
 law and takes tuning away rather than the other way round. The `rift` and
 `grown` scenes in tools/look.mjs are the eyes on it.
+
+### Built (2026-09-06)
+
+`riftFall(from, u)` in rift.js is the law: the radius comes in at a steady
+rate and the angle is the log of how far in it has come, normalized so a whole
+fall spends `RIFT_TURNS` (now 4) and a thing joining nearer the rim spends
+proportionally fewer. `orbit()` in game.js and the streaks in `drawRift` both
+read it, and `riftEntry` in pit.js stamps every grain with the angle and radius
+it actually went in at — so `orbit`'s quarter-life lerp onto a curve it was not
+on is gone, along with the two exponents that made it necessary.
+
+The hauler aims at the disc rather than across the hole while the rift is open
+and the pit has not drowned, with a little scatter so grains do not go in
+single file. The speckle turns one way and sits on whole pixels rather than
+whole cells; the lens keeps one angular harmonic. Streaks are five, capped by
+**turns** rather than by length — the spiral tightens, so a fixed length is a
+short arc at the rim and a three-wrap coil near the middle.
+
+Two things fell out of building it that the design did not foresee:
+
+- **A streak's cell spacing has to be derived, not written down.** The law lays
+  down the same arc length for every equal step of `u` anywhere on the spiral
+  (the steady radius and the log angle cancel exactly), so one step size spaces
+  the cells evenly the whole way in — but that size depends on the disc's
+  radius, and the disc grows from four cells to twelve. Written down, it was a
+  dotted line at one size and a doubled smear at another. `drawRift` works it
+  out from `rad`.
+- **Only about a turn and a half of the spiral is ever visible**, the rest
+  being behind the disc. Twelve streaks of half a turn each is three times more
+  ink than there is track to carry it, and they close into solid rings.
+
+Covered by `test/drain.test.mjs` (3/3) — the law's shape, that a grain is
+stamped with where it really went in, and that it comes in the whole way rather
+than hanging and dropping — with `rift`, `pit` and `pit-arc` green alongside.
+Whether it *looks* right is a shot: the `grown` scene.

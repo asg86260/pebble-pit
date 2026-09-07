@@ -8,7 +8,7 @@
 
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-        RIFT_GULP, RIFT_SHAKE, ABYSS_DOWN, findKind, someFind } from './config.js';
+        RIFT_GULP, RIFT_SHAKE, RIFT_FALL_END, ABYSS_DOWN, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
@@ -275,6 +275,22 @@ function throughRift(x, shade) {
   return true;
 }
 
+// Where a grain joins the drain, from where it is standing: the angle off the
+// middle of the disc, and how far out that is in disc radii. Everything that
+// goes into `S.gulped` is stamped with this, so `orbit` in game.js can put it
+// on the spiral from exactly where it was rather than sliding it in from
+// nowhere. See `riftFall` in rift.js for the curve it then follows.
+//
+// The disc's rect is read off `rift` in the state rather than through rift.js's
+// own riftCenter/riftRadius: rift.js reads this file, and a hole that reads the
+// rift that reads the hole is a circle. It is the same rect either way.
+const riftEntry = (x, y) => {
+  const R = Math.max(1, rift.w * 0.5);
+  const dx = x - (rift.x + rift.w * 0.5), dy = y - (rift.y + rift.h * 0.5);
+  return { a0: Math.atan2(dy, dx),
+           from: Math.max(RIFT_FALL_END, Math.hypot(dx, dy) / R) };
+};
+
 // A grain thrown at a torn pit is the rift's from the moment it crosses the
 // mouth. It used to land on the pile first and be lifted straight back off it
 // the next frame -- the rift inhales everything in the hole, so with the rift
@@ -290,10 +306,19 @@ function throughRift(x, shade) {
 export function riftCatch(x, y, shade) {
   if (!throughRift(x, shade)) return false;
   if (S.gulped.length < SHOWN) {
-    // where on the ring it joins and which way round -- read by `orbit` in
-    // game.js while the disc hangs, ignored by the abyss's dive
+    // Where it joined the drain, in the drain's own terms: the angle it was
+    // caught at and how far out that was, in disc radii. `orbit` in game.js
+    // puts it on the spiral from exactly there, so a caught grain is already
+    // on the curve and there is nothing to slide it onto. (It used to take a
+    // random angle and a lerp from wherever it landed, which is why the throw
+    // and the swirl looked like two unrelated motions.)
+    //
+    // Which way round is still its own: a drain has a hand, but a grain that
+    // came in on the far side of one this coarse reads better going the short
+    // way. Ignored by the abyss's dive, which is not an orbit at all.
     S.gulped.push({ x0: x, y0: y, x, y, t: 0,
-                    a0: rand() * Math.PI * 2, spin: rand() < 0.5 ? -1 : 1, s: shade });
+                    ...riftEntry(x, y),
+                    spin: rand() < 0.5 ? -1 : 1, s: shade });
   }
   return true;
 }
@@ -442,9 +467,13 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
         t: near ? 0 : -rand() * 0.5,
         rate: 0.012 + rand() * 0.01,
         lift: 60 + rand() * 90,     // how high it arcs on the way
-        // and, for the ones going into the hanging rift, where on the ring
-        // they join it and which way round they go -- see `orbit` in game.js
-        a0: rand() * Math.PI * 2,
+        // ...and, for the ones going into the hanging rift, where they join
+        // the drain: the angle and the distance out, in disc radii, measured
+        // from where this grain actually lay. Both were a random angle and no
+        // distance at all, which put a grain lifted off the near lip on the
+        // far side of the ring -- a jump across the hole to start a fall that
+        // is supposed to begin where the grain is. See `riftFall` in rift.js.
+        ...riftEntry(pit.x + c * pit.p, bottomY(pit) - (r + 1) * pit.p),
         spin: rand() < 0.5 ? -1 : 1,
         // Where this grain is paying to -- the selling station, or null for the
         // bench. Stamped at lift so a grain keeps its destination however the
