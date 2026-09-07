@@ -1,5 +1,40 @@
 # Still to do
 
+## Seeing the wind — DESIGNED, NOT BUILT (2026-09-07)
+
+The flags stopped overstating the wind (they were on a private pair of sines
+with no lull in it, and they flipped across the pole every time it came about;
+both fixed on main). What that left is the understatement underneath: the yard
+has 95-420 motes in three bands that all already take `wind()`, and none of
+them says anything about it, so a gust and a dead calm look the same
+everywhere except on four small pennants.
+
+Two changes, in "Seeing the wind (design, not built)" in DESIGN.md:
+
+1. **A mote elongates along the wind as the wind rises** -- a square at calm,
+   a two- or three-cell dash at full lean, leaning the way the signed wind
+   actually blows. No new motes, no state, no save key: one rule inside the
+   mote's own draw, on a number already in hand. This is the half carrying the
+   effect.
+2. **`windAt(t, x)`** -- the gust as a front crossing the yard rather than a
+   clock ticking everywhere at once, so you can watch one arrive. The flag's
+   private field had this (`FLAG_GUST_SPAN`) and it was a good idea in the
+   wrong module.
+
+**The blocker on (2)** is that every caller then needs an `x` to pass, and
+`report.js` has no honest one -- a camera-middle default is exactly the guessed
+constant this codebase treats as a future bug. If that cannot be made honest,
+drop (2); (1) stands alone.
+
+Deliberately not doing: a new wind-mote kind (a second account of the air, on a
+field that is already dense and has a measured frame budget), any new number to
+buy, anything touching how the sky fouls or clears.
+
+Checked by eye, not by suite -- both halves are drawing, so a green run proves
+nothing. A `gust` scene in `tools/look.mjs`, seeded onto a strong lean and its
+opposite, wide enough to hold dust, a flag and the smoke in one frame: if the
+three do not lean together, that is the bug and it is one picture.
+
 ## The drain — BUILT (2026-09-06)
 
 feedback8 items 5, 6 and 7 (dust spreads before the rift takes it; no swirl;

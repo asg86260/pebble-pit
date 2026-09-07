@@ -4851,3 +4851,86 @@ Covered by `test/drain.test.mjs` (3/3) — the law's shape, that a grain is
 stamped with where it really went in, and that it comes in the whole way rather
 than hanging and dropping — with `rift`, `pit` and `pit-arc` green alongside.
 Whether it *looks* right is a shot: the `grown` scene.
+
+## Seeing the wind (design, not built)
+
+There is one wind. `wind.js` says so in its first line and it is right: the haze, the grit, the
+smoke, the balloon and — since the flag pass — the flags all lean on one signed number, and that
+shared motion is the whole of what makes a field of dots read as weather rather than as insects.
+
+The complaint that opened this is that **you cannot see it**. The flags were the only thing in the
+yard visibly moved by the wind, and because they were the only thing, they had to carry the whole
+impression on their own — which is exactly why they read as a gale. Calming them fixed the
+overstatement, and left the understatement behind it: a yard where a strong gust and a dead calm
+look the same everywhere except on four small pennants.
+
+So this is not "add motes". There are already 95 to 420 of them, in three parallax bands, and every
+one already takes `wind()`. They just do not *say* anything about it. The design is about making the
+wind legible in the air that is already there, and it is two changes.
+
+### 1. A mote's shape says how hard it is blowing
+
+A mote is drawn as a square of its band's size, and a square has no direction in it. Whatever the
+wind is doing, the field looks the same; only its slow sideways creep differs, at `AIR_LEAN` = 0.34
+screen pixels a frame — about twenty a second at full wind, which over a mote three pixels wide is
+below the speed at which the eye reads motion as *being blown* rather than as drifting.
+
+Instead: **a mote elongates along the wind as the wind rises.** At calm it is the square it is now.
+At full lean it is drawn two or three cells long and one high — a dash lying the way the air is
+going. Between, it is between; and because `wind()` is signed, the dash leans the way the wind
+actually blows, so the whole field turns over together when the gust comes about. The near band
+stretches most and the far band least, on the same one number that already settles a band's size,
+pace and pallor, so nothing new has to be decided per band.
+
+This is the cheap half and it is most of the effect. It adds no motes, no state, no field and no
+save key: it is one rule inside the mote's own draw, reading a number that is already in hand. It is
+also the reason to prefer it over spawning a new "wind mote" kind — a second field of specks whose
+only job is to say *wind* would be a second account of the air, and this codebase has paid for
+second accounts of one thing several times now.
+
+A grain of care: the dash must stay on the cell lattice and stay whole pixels, or it puts the
+hairline through the picture that everything else here is arranged to avoid. And the far band is one
+pixel; it cannot elongate without becoming the near band's weight, so the far band keeps its square
+and the effect lives in the two nearer ones. That is not a special case — it is the same
+"how far off is it" number saying, correctly, that you cannot see the shape of a speck at that
+distance.
+
+### 2. The wind is a front that crosses the yard, not a clock that ticks everywhere at once
+
+`windAt(t)` takes only time, so every mote and every flag in the yard turns at the same instant. Over
+a yard this wide that is subtly wrong, and it costs the one thing that would make a gust legible as
+an *event*: you cannot watch it arrive.
+
+Make the field spatial: `windAt(t, x)`, the same two swings with a phase that runs with `x`, so the
+gust is a wave crossing the yard at a speed you could measure. Then the dust over the quarry leans
+before the dust over the rock; the school's flag comes about a moment before the tower's; and a
+strong gust reads as something that *travels*, which is what makes weather feel like it is happening
+to a place rather than being a property of the clock.
+
+The flag's own field had exactly this (`FLAG_GUST_SPAN`) and I deleted it in the pass that put the
+flags on `wind()`. Deleting it was right and keeping the idea is also right: it was a good idea in
+the wrong module. One flag-private spatial wind is two skies; one spatial wind in `wind.js` is one
+sky with weather in it.
+
+**The cost, stated plainly, because it is the part worth arguing about:** every caller of `windAt`
+has to have an `x` to pass. The mote fields and the smog vents have one. The balloon has one.
+`report.js` does not obviously want one, and a default (the camera's middle) is the kind of guessed
+constant this codebase treats as a future bug. If that default cannot be made honest, this half is
+worth dropping and the first half stands on its own — it is the one carrying the effect.
+
+### What this deliberately does not do
+
+- **No new mote kind.** "More motes to show the wind" is the obvious reading of the ask and I think
+  it is the wrong one: the field is already dense, and doubling it costs frame time on a yard that
+  has a measured budget, to say a thing that shaping the existing motes says better.
+- **No new sink, no new number to buy.** The wind is not a resource and must not become one.
+- **Nothing that makes the sky beatable.** This is drawing only; it does not touch how the sky
+  fouls or clears, which is a decided question.
+
+### How it would be checked
+
+Both halves are drawing, so no test in either tier can see them and a green suite would prove
+nothing. The check is a shot: a `gust` scene in `tools/look.mjs` seeded so the clock lands on a
+strong lean, and its opposite a few seconds later, with the camera wide enough to hold the dust, a
+flag and the smoke in one frame. If the three do not lean together, that is the bug, and it is
+visible in one picture.
