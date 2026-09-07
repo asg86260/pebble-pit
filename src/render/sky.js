@@ -8,6 +8,7 @@ import { CORE_FLICK, FIND_COLOR, MAGIC_TONES, P, RAY_BEAT, RAY_MAX, RAY_MIN, RAY
 import { BOLTS, CORE as METEOR_CORE_CELL, SPARKLE, cellX, cellY, summonAt } from '../meteor.js';
 import { S, floor, sky } from '../state.js';
 import { ctx } from './ctx.js';
+import { domeRising, domeSpot, domeAt } from '../shield.js';
 import { cell } from './marks.js';
 
 // The thing in the sky is a star, and a small one: a dead black crust with fire
@@ -117,8 +118,12 @@ function drawCorona(hot) {
 // knot is the same red the core is drawn in, and the flash is a ring of cells
 // going out.
 function drawSummon() {
-  const at = summonAt();
-  const mid = { x: sky.x, y: sky.y };
+  // The beams point at whatever is being made: nearly always the star coming
+  // into an empty sky -- and, once in a game, the dome, which is the same act
+  // aimed at the ground. The brightness rides the making's own progress.
+  const dome = domeRising();
+  const at = dome ? domeAt() : summonAt();
+  const mid = dome ? domeSpot() : { x: sky.x, y: sky.y };
   const tones = FIND_COLOR[SPARK_CELL];
   const t = now() / 1000;
 
@@ -158,6 +163,11 @@ function drawSummon() {
     }
   }
   ctx.globalAlpha = 1;
+
+  // No knot for the dome: the thing being made is the dome itself, already on
+  // screen and already growing -- a second red disc at the crown would be the
+  // picture arguing with itself, and red is the star's color, not the ring's.
+  if (dome) { ctx.fillStyle = '#000'; return; }
 
   // And the knot in the middle: a solid disc of the star's own fire, opening out
   // as it takes. Its edge is an edge -- it was fraying cell by cell on its own

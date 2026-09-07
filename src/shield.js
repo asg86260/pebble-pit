@@ -20,11 +20,11 @@ import {
   NET_COST, NET_ROPES, NET_SLOW,
   ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS,
   JACK_COST, JACK_PARTS, JACK_HOLD_MS, JACK_PUSH, JACK_PUSH_RATE,
-  DOME_COST, DOME_RINGS, DOME_CAST_MS, DOME_HOLD_MS, DOME_SET_RATE
+  DOME_COST, DOME_RINGS, DOME_WORK, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
 import { workOn } from './works.js';
-import { spawnSpoil, spawnChip } from './dust.js';
+import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
 import { startRescue } from './intro.js';
@@ -52,10 +52,11 @@ export const KINDS = {
   // shield that gives ground back before it loses it.
   jack: { pieces: JACK_PARTS, cost: JACK_COST, money: 'spark', answer: 'buckle',
           holds: JACK_HOLD_MS, push: JACK_PUSH, rate: JACK_PUSH_RATE },
-  // Magic, and the end of the argument. Cast rather than carried: the tower
-  // pours it, so its build is a clock instead of a walk.
+  // Magic, and the end of the argument. Cast rather than carried: the wizards
+  // fly over and pour it, the way they pour a star into an empty sky, and its
+  // progress is their pouring -- see `pourDome`.
   dome: { pieces: DOME_RINGS, cost: DOME_COST, money: 'core', answer: 'hold',
-          cast: DOME_CAST_MS, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
+          cast: true, work: DOME_WORK, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
 };
 
 export const shieldKind = () => S.shield && KINDS[S.shield.kind];
@@ -99,8 +100,8 @@ export function raiseShield(kind) {
   // last of that labor is in. The dome is the exception both ways: nothing is
   // hammered and nobody is lent, the tower pours it on its own clock.
   const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
-  S.shield = { ...shieldPlan(kind), laid, caught: 0, held: 0, strain: 0,
-               sag: 0, shove: 0, setting: false, cast: KINDS[kind].cast ? now() : 0 };
+  S.shield = { ...shieldPlan(kind), laid, poured: 0, caught: 0, held: 0, strain: 0,
+               sag: 0, shove: 0, setting: false };
   S.dirty = true;
 }
 
@@ -166,7 +167,12 @@ function strainOn(s, kind) {
   if (Math.random() > 0.08 + s.strain * 0.5) return;
   const top = shieldTopY(s) + (s.sag || 0) * P;
   const px = s.x + Math.random() * s.w;
-  spawnChip(px, top, (Math.random() - 0.5) * 0.6, 0.2, shadeNear(3));
+  // Thrown along the heap like every other spoil, never dropped where it is.
+  // The grit used to fall straight down -- into the footprint, where it lay in
+  // a little pile *inside* the rock the moment the rock came the rest of the
+  // way down, until the landing's clearApron shoved it out. Aimed at the heap
+  // it can never be somewhere a rock is about to be.
+  spawnSpoil(px, top, shadeNear(3), 'rock');
 }
 
 // The yard stops and looks up. Everybody on the ground -- the same set the
@@ -274,15 +280,32 @@ export function stepShield() {
     S.dirty = true;
     return;
   }
-  if (s.laid >= kind.pieces) return;
-  // The dome is poured rather than built, so its progress is a clock. It is
-  // the one shield nobody works on -- what crosses the yard is the pour
-  // itself, off the tower's spire. Everything else is finished before it
-  // stands: the build is a work in works.js, hammered at under a bar.
-  if (kind.cast) {
-    const through = Math.min(1, (now() - s.cast) / kind.cast);
-    const was = s.laid;
-    s.laid = Math.floor(through * kind.pieces);
-    if (s.laid !== was) S.dirty = true;
-  }
+}
+
+// --- the dome's pour ----------------------------------------------------------
+// The one shield with no labor from the ground in it. The wizards fly over,
+// take a ring above the crown, and pour -- exactly the shape of a star's
+// summoning, because it is the same act: making something out of an empty
+// place with poured light. `pourDome` is fed from `stepSummon` in wizard.js,
+// once a frame for all of them, so what rises is one thing being made by
+// everybody in the ring rather than a share each.
+export const domeRising = () =>
+  !!S.shield && !!KINDS[S.shield.kind].cast && S.shield.laid < KINDS[S.shield.kind].pieces;
+
+// Where the ring hangs: just over the crown of the dome being made.
+export function domeSpot() {
+  const s = S.shield;
+  return { x: s.x + s.w / 2, y: S.groundY - (s.h + 4) * P };
+}
+export const domeOrbitR = () => P * 7;
+export const domeAt = () =>
+  S.shield ? Math.min(1, S.shield.laid / KINDS[S.shield.kind].pieces) : 0;
+
+export function pourDome(hands, secs) {
+  const s = S.shield;
+  if (!domeRising() || hands <= 0) return;
+  s.poured = (s.poured || 0) + hands * secs;
+  const laid = Math.min(KINDS.dome.pieces,
+                        Math.floor(KINDS.dome.pieces * s.poured / KINDS.dome.work));
+  if (laid !== s.laid) { s.laid = laid; S.dirty = true; }
 }

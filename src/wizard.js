@@ -25,6 +25,7 @@ import { S, sky } from './state.js';
 import { STEP } from './lab.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
+import { domeRising, domeSpot, domeOrbitR, pourDome } from './shield.js';
 import { rand } from './rng.js';
 import { critRoll } from './crit.js';
 import { critBoost, sparkBoost } from './apothecary.js';
@@ -60,10 +61,18 @@ export function newWizard() {
 // arrives, so a gang reads as a ring going round rather than as a knot.
 const angleOf = (w, now) => w.orb0 + now / 1000 * WIZ_SPIN;
 
+// What the ring is around, and how wide it rides. Nearly always the star --
+// and, once in a game, the dome: while one is rising the wizards are diverted
+// to it, a small halo over the crown of the thing they are pouring, because
+// the dome is a summoning that happens to point at the ground. See shield.js.
+const ringMid = () => domeRising() ? domeSpot() : { x: sky.x, y: sky.y };
+const ringR = () => domeRising() ? domeOrbitR() : orbitR();
+
 function ringSpot(w, now) {
   const a = angleOf(w, now);
-  return { x: sky.x + Math.cos(a) * orbitR(),
-           y: sky.y + Math.sin(a) * orbitR() };
+  const c = ringMid();
+  return { x: c.x + Math.cos(a) * ringR(),
+           y: c.y + Math.sin(a) * ringR() };
 }
 
 // How far apart they keep on the ring, in radians. Bodies arrive at the bottom
@@ -154,7 +163,7 @@ export function stepWizard(w, now) {
   // No hat, no flying. The hat is the job -- see the tower -- so a body put on
   // this before the tower has finished one stands under the meteor and waits for
   // it, which is exactly what `stepKit` is already walking it to the tower for.
-  if (!w.trained || (!meteorAlive() && !summoning())) {
+  if (!w.trained || (!meteorAlive() && !summoning() && !domeRising())) {
     if (!descend(w)) return;
     // and it waits under the sky rather than wandering off: this is its station,
     // the same as the face of the quarry is a quarrier's
@@ -170,7 +179,7 @@ export function stepWizard(w, now) {
   // that rose from wherever it happened to be standing would be a wizard
   // crossing the yard at four hundred feet, over the rock and the houses.
   if (!w.aloft) {
-    const d = (w.spot ?? underMeteor()) - w.x;
+    const d = (domeRising() ? domeSpot().x - WORKER / 2 : (w.spot ?? underMeteor())) - w.x;
     if (Math.abs(d) > 1) {
       w.x += Math.sign(d) * Math.min(1.6, Math.abs(d));
       w.y = walkY(w.x + WORKER / 2);
@@ -186,7 +195,7 @@ export function stepWizard(w, now) {
   // What it is working on. A cell is kept until it is gone, so the body is not
   // re-deciding every frame and drifting between two of them. With nothing up
   // there to work, there is nothing to pick: it is here to pour instead.
-  if (!meteorAlive()) w.cell = null;
+  if (domeRising() || !meteorAlive()) w.cell = null;
   else if (!w.cell || !cellLeft(w.cell)) {
     // Elbows first, and the bare cells if that leaves nothing: at the end of a
     // meteor there are a handful of cells and everybody's elbows are over all of
@@ -201,22 +210,23 @@ export function stepWizard(w, now) {
   // place on the far side and sent to it in a straight line flew through the
   // star to get there, which is a body inside the thing it is working, four
   // hundred feet up, on fire.
+  const mid = ringMid();
   const mx = w.x + WORKER / 2, my = w.y + WORKER / 2;
-  const out = Math.hypot(mx - sky.x, my - sky.y) || 1;
-  if (Math.abs(out - orbitR()) > WIZ_RISE) {
-    const want = orbitR() / out;
-    const tx = sky.x + (mx - sky.x) * want - WORKER / 2;
-    const ty = sky.y + (my - sky.y) * want - WORKER / 2;
+  const out = Math.hypot(mx - mid.x, my - mid.y) || 1;
+  if (Math.abs(out - ringR()) > WIZ_RISE) {
+    const want = ringR() / out;
+    const tx = mid.x + (mx - mid.x) * want - WORKER / 2;
+    const ty = mid.y + (my - mid.y) * want - WORKER / 2;
     const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy) || 1;
     w.x += (dx / d) * Math.min(WIZ_RISE, d);
     w.y += (dy / d) * Math.min(WIZ_RISE, d);
     w.next = Math.max(w.next, now + wizMs() / 2);   // no throwing while travelling
     // and it takes its place on the ring from where it got there, so there is
     // nothing to travel round to
-    w.orb0 = Math.atan2(my - sky.y, mx - sky.x) - now / 1000 * WIZ_SPIN;
+    w.orb0 = Math.atan2(my - mid.y, mx - mid.x) - now / 1000 * WIZ_SPIN;
     return;
   }
-  if (w.orb0 == null) w.orb0 = Math.atan2(my - sky.y, mx - sky.x) - now / 1000 * WIZ_SPIN;
+  if (w.orb0 == null) w.orb0 = Math.atan2(my - mid.y, mx - mid.x) - now / 1000 * WIZ_SPIN;
   spaceOut(w, 1 / 60);
 
   const to = ringSpot(w, now);
@@ -240,14 +250,14 @@ export function stepWizard(w, now) {
   // in and out along the radius, which is a thing floating rather than a thing
   // vibrating.
   const a = angleOf(w, now);
-  const r = orbitR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
-  w.x = sky.x + Math.cos(a) * r - WORKER / 2;
-  w.y = sky.y + Math.sin(a) * r - WORKER / 2;
+  const r = ringR() + Math.sin(now / 1000 * w.sp * 0.5 + w.ph) * WIZ_BOB;
+  w.x = mid.x + Math.cos(a) * r - WORKER / 2;
+  w.y = mid.y + Math.sin(a) * r - WORKER / 2;
 
   // Nothing there to work: they are making one. Everybody in the ring pours
   // into the middle for as long as they are up here -- see `summon` -- and the
   // channel is drawn off the same fact.
-  if (!meteorAlive()) {
+  if (domeRising() || !meteorAlive()) {
     w.channel = true;
     return;
   }
@@ -287,8 +297,11 @@ export function stepWizard(w, now) {
 // what it makes is one thing being made by all of them, and a share each would
 // be a different mechanic with the same name.
 export function stepSummon(dt) {
-  if (!summoning()) return;
   const hands = S.workers.filter(w => w.type === TYPE.WIZARD && w.aloft && w.channel).length;
+  // The dome first: while one is rising it is what every channel in the sky is
+  // pouring into, whether or not the sky is also empty.
+  if (domeRising()) { pourDome(hands, dt / 1000); return; }
+  if (!summoning()) return;
   summon(hands, dt / 1000);
 }
 

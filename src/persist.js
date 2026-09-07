@@ -268,8 +268,7 @@ export function persist() {
     reunionDone: S.reunionDone,
     rescued: S.rescued,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
-                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
-                          cast: S.shield.cast },
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid },
     shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     looPosts: S.looPosts,
@@ -616,14 +615,13 @@ export function restore() {
                           h: s.shield.h, rise: s.shield.rise || 0,
                           laid: s.shield.laid || 0, caught: 0, held: 0,
                           strain: 0, sag: 0, shove: 0,
-                          setting: false, cast: 0 } : null;
-  // A pour picks up where it left off rather than starting again. The clock it
-  // was started against does not survive a reload, so the start is worked back
-  // out of how much of it is woven -- the progress is the fact, and the
-  // timestamp is only how the progress was arrived at.
+                          setting: false, poured: 0 } : null;
+  // A pour picks up where it left off rather than starting again: what is
+  // woven is the fact, so the wizard-seconds behind it are worked back out of
+  // it and the ring carries on from there.
   if (S.shield && KINDS[S.shield.kind].cast) {
     const k = KINDS[S.shield.kind];
-    S.shield.cast = clockNow() - (S.shield.laid / k.pieces) * k.cast;
+    S.shield.poured = (S.shield.laid / k.pieces) * k.work;
   }
   S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
   S.rockHeld = false;

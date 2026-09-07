@@ -16,7 +16,7 @@ import { STEP } from './lab.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
-         DOME_COST, DOME_CAST_MS } from './config.js';
+         DOME_COST, DOME_WORK } from './config.js';
 import { raiseShield, shieldDone } from './shield.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
@@ -165,22 +165,25 @@ export const TOWER_UPGRADES = [
     // Once the tower is up, not once the sky is: this row is how the sky opens.
     show: () => S.towerOpen
   },
-  // And the last shield, which is the tower's and nobody else's. It is here
+  // And the last shield, which is the wizards' and nobody else's. It is here
   // rather than on the bench because it is not a thing the crew can carry out
-  // and put up: the tower pours it, the way it pours a hat, and the waiting is
-  // what makes it a spell. Priced in cores -- the coin that opens what you do
-  // not have, which by now is the one thing left.
+  // and put up: the wizards fly over and pour it, the way they pour a star
+  // into an empty sky, and the waiting is what makes it a spell. Priced in
+  // cores -- the coin that opens what you do not have, which by now is the one
+  // thing left. The clock on the bill is one body's pour; a ring of them
+  // shares it, the same as a summoning.
   {
     key: 'dome',
     name: 'raise the dome',
-    note: () => 'the spire pours it over the landing spot, and the sky stops being a thing that arrives',
-    bill: () => [['core', DOME_COST], ['time', DOME_CAST_MS]],
+    note: () => 'the wizards ring the landing spot and pour, and the sky stops being a thing that arrives',
+    bill: () => [['core', DOME_COST], ['time', DOME_WORK * 1000]],
     cost: () => DOME_COST,
     buy: () => raiseShield('dome'),
-    // The four before it have all been through, and there is a tower to cast
-    // it from. It leaves the board the moment it is bought, because unlike the
-    // hat there is only ever one of them.
-    show: () => !S.shield && shieldDone('jack') && S.towerOpen
+    // The four before it have all been through, and there is somebody who can
+    // fly to cast it. It leaves the board the moment it is bought, because
+    // unlike the hat there is only ever one of them.
+    show: () => !S.shield && shieldDone('jack') && S.towerOpen &&
+                (S.wizards > 0 || S.wizardHats > 0)
   }
 ];
 

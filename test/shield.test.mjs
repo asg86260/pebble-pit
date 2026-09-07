@@ -205,6 +205,7 @@ group('the jack pushes the rock back up before it buckles', async () => {
   const shoved = high >= low + JACK_PUSH * 0.6;
   const gave = state().shieldsDone.includes('jack');
   const landed = runUntil(() => state().rock > 0 && !state().rockFall, 120);
+  const wonders = !!window.__upgrades().find(u => u.key === 'askwizards')?.show();
 
   window.__reset();
   return [
@@ -213,7 +214,8 @@ group('the jack pushes the rock back up before it buckles', async () => {
     ok(caught, 'it catches the rock'),
     ok(shoved && high > low, 'and drives it back up', `${low} -> ${high}`),
     ok(gave, 'then the rams give out'),
-    ok(landed, 'and the rock comes down on the wreck')
+    ok(landed, 'and the rock comes down on the wreck'),
+    ok(wonders, 'and the bench wonders about the wizards')
   ];
 });
 
@@ -231,6 +233,7 @@ group('under the dome, the one underneath walks out', async () => {
   window.__meteor();
   window.__grant({ sparks: JACK_COST * 2, cores: 20 });
   through('jack');
+  window.__crew(2, 1, 0, 0, 0, 1);         // and somebody who can fly
 
   const before = state();
   window.__buy('dome');
@@ -276,13 +279,20 @@ group('the dome holds, and sets every rock down after it', async () => {
   const dome = () => TOWER_UPGRADES.find(u => u.key === 'dome');
   const before = !!dome()?.show();         // the machine has not failed yet
   through('jack');
+  const noFlyers = !!dome()?.show();       // nobody who can fly yet, either
+  window.__crew(2, 1, 0, 0, 0, 1);
   const offered = !!dome()?.show();
   const bought = window.__buy('dome');
   const nobodyCarries = state().shield?.laid === 0;
+  // The pour is the wizards': it only climbs while somebody is aloft and
+  // channeling over the crown, and nothing appears on the yard's own works.
+  let poured = false;
   const cast = runUntil(() => {
-    const sh = state().shield;
-    return sh && sh.laid >= sh.pieces;
-  }, 200);
+    const s = state();
+    if (s.aloft > 0 && s.shield && s.shield.laid > 0) poured = true;
+    return s.shield && s.shield.laid >= s.shield.pieces;
+  }, 240);
+  const noGroundWork = !state().works.yard;
 
   // the first rock it answers
   window.__next();
@@ -299,9 +309,11 @@ group('the dome holds, and sets every rock down after it', async () => {
   window.__reset();
   return [
     ok(!before, 'the dome is not offered until the machine has failed too'),
+    ok(!noFlyers, 'nor until somebody can fly'),
     ok(offered && bought, 'and is bought from the tower, in cores'),
     ok(nobodyCarries, 'nothing of it is carried across the yard'),
-    ok(cast, 'the tower pours it over time'),
+    ok(cast && poured, 'the wizards ring it and pour it up', `laid ${state().shieldsDone}`),
+    ok(noGroundWork, 'and no work of it ever touches the ground'),
     ok(caught && up > 0, 'it catches the rock overhead', `${up}px up`),
     ok(set, 'and lets it down rather than dropping it'),
     ok(after.shield && after.shield.kind === 'dome', 'the dome is still standing'),

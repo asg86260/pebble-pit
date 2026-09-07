@@ -868,7 +868,7 @@ export const SECTIONS = [
   { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'] },
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
-  { title: 'the shields', keys: ['props', 'net', 'arch', 'jack'] },
+  { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },

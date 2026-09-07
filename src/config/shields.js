@@ -49,12 +49,14 @@ export const JACK_PUSH = 48;        // world pixels it drives the rock back up
 export const JACK_PUSH_RATE = 22;   // and how fast, so the shove is visibly hard work
 
 // The dome: the tower's, and the only one that holds. It is cast rather than
-// carried -- the tower pours it over the landing spot -- so its build is a
-// clock instead of a walk, and it is priced in the coin that opens what you
-// don't have.
+// carried: the wizards fly over and pour it the way they pour a star into an
+// empty sky, and it is priced in the coin that opens what you don't have.
 export const DOME_COST = 4;         // cores
 export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
-export const DOME_CAST_MS = 45000;  // the tower is a while about it, the way a hat is
+// Wizard-seconds of pouring, the same shape as a star's summoning: one body in
+// the ring is three quarters of a minute, two is half that. Nobody on the
+// ground can put a second of this in.
+export const DOME_WORK = 45;
 export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
 export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second
 

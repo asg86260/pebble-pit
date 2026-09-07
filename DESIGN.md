@@ -1290,11 +1290,17 @@ last one available before magic: the yard's best machine is still a thing made
 out of the ground, and the ground has been losing this argument for four
 shields.
 
-**The dome.** The fifth try is the tower's, and it is the first shield not made out of the
-thing it is stopping. A spell on the spire, priced in cores — the tower is raised for cores,
-and cores open what you don't have, which by then is the one thing left: the sky staying shut.
-Cast, it pours the same purple the hats are made with, rings off the spire that close over the
-landing spot — the rule holds, what magic emits is purple and says so. And the choreography is
+**The dome.** The fifth try is the wizards', and it is the first shield not made out of the
+thing it is stopping. Sold on the tower's board and priced in cores — the tower is raised for
+cores, and cores open what you don't have, which by then is the one thing left: the sky staying
+shut. And it is not built, it is *summoned*: the wizards fly over from the star and ring the
+landing spot the way they ring an empty sky, and pour — the same act, aimed at the ground, in
+the same purple, sharing the same clock across however many of them are in the ring. The four
+shields before it were labor by somebody standing at the spot; this one is the only labor in
+the game done by bodies that never touch it — the rule holds, what magic emits is purple and
+says so. On the bench, where every material the ground makes has now failed, the last row costs
+nothing and only wonders: *maybe the wizards would know?* — and pressing it walks your eye out
+to the tower, where the answer is sold by the people who will cast it. And the choreography is
 the opening played back the right way round: the last of the rock goes, the one underneath is
 stood there on the bare ground saying the same dots they have said all game, the next rock
 comes down the way it always has — **and this time it stops.** Held overhead on the dome, the

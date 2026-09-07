@@ -1,6 +1,7 @@
 import { PROP_COST, PROP_FROM, NET_COST, ARCH_COST, JACK_COST,
          PROP_WORK, NET_WORK, ARCH_WORK, JACK_WORK } from '../config.js';
-import { S } from '../state.js';
+import { S, tower } from '../state.js';
+import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
 
 // The shields: what the yard puts between itself and the sky. Data only;
@@ -71,5 +72,21 @@ export const SHIELD_ROWS = [
     currency: 'spark',
     buy: () => raiseShield('jack'),
     show: () => !S.shield && shieldDone('arch') && !shieldDone('jack') && S.meteorOpen
+  },
+  // After the machine has failed, the bench has nothing left to sell -- every
+  // material the ground makes has been through. What it has instead is the
+  // thought. The row costs nothing, and pressing it does the one thing a
+  // thought can do: it walks your eye out to the tower. The dome itself is
+  // sold there, by the people who will actually be casting it.
+  {
+    key: 'askwizards',
+    name: 'maybe the wizards would know?',
+    note: () => 'everything of the ground has failed. what is left is not of the ground',
+    bill: () => [],
+    cost: () => 0,
+    buy: () => lookAt(tower.x + tower.w / 2),
+    // and it folds away for good once anything is standing over the yard,
+    // because the dome never comes down: the thought has been had
+    show: () => !S.shield && shieldDone('jack')
   }
 ];

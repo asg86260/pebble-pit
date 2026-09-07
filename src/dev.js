@@ -146,7 +146,7 @@ const SCENES = {
 // sparks in the hole.
 const shieldYard = () => {
   window.__reset();
-  window.__crew(2, 1);
+  window.__crew(2, 1, 0, 0, 0, 1);   // and one who can fly, for the dome
   window.__jump(PROP_FROM);
   window.__give(60000);
   window.__grant({ shards: ARCH_COST * 3, spores: NET_COST * 3,

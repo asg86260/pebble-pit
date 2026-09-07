@@ -92,7 +92,16 @@ function drawRoundRock(deep) {
       const dx = x + 0.5 - R, dy = y + 0.5 - R;
       const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
       if (d > 1) continue;
-      const tone = TONE[Math.max(1, Math.min(deep, Math.round(deep * Math.sqrt(1 - d * d))))];
+      // The bands are dithered, cell by cell, off a hash of where the cell is.
+      // Without it each band's edge runs flat for long stretches -- the depth
+      // changes slowest through the middle -- and the rock came down with
+      // straight lines through it, like contours on a map. The landed hill's
+      // bands are ragged because mining makes them so; a falling rock has no
+      // mining, so the raggedness has to be dealt. Hashed, not random: the
+      // same speckle every frame of one fall, or the whole face shimmers.
+      const jit = ((((x * 73) ^ (y * 151) ^ (S.boulderNo * 41)) % 7) - 3) * 0.13;
+      const tone = TONE[Math.max(1, Math.min(deep,
+                     Math.round(deep * Math.sqrt(1 - d * d) + jit)))];
       if (tone !== shade) { shade = tone; ctx.fillStyle = tone; }
       ctx.fillRect(left + x * P, py, P, P);
     }
