@@ -30,6 +30,7 @@ import { stepCutscene } from './cutscene.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
 import { stepCore } from './core.js';
+import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
 import { sampleRates, stepLab, stepSmoke, workFinished } from './lab.js';
@@ -219,6 +220,10 @@ export const STEPS = [
   { name: 'survey',  step: countTick },
   { name: 'boards',  step: tidyBoards },      // and no submenu outliving its board
   { name: 'rock',    step: stepRock },        // a new one on its way down
+  // and whatever is standing over the yard, and what the rock makes of it.
+  // Straight after the rock: it reads where the rock has got to this frame and
+  // may stop it there, so it has to run on the same frame the rock moved.
+  { name: 'shield',  step: stepShield },
   { name: 'crew',    step: c => updateWorkers(c.now, c.dt) },
   { name: 'restaff', step: drainRestaff },
   // Before `smog`, so the dirt a machine makes this frame is in this frame's

@@ -15,7 +15,9 @@ import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './lab.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
-         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS } from './config.js';
+         WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
+         DOME_COST, DOME_CAST_MS } from './config.js';
+import { raiseShield, shieldDone } from './shield.js';
 import { now } from './clock.js';
 import { rebalance } from './upgrades.js';
 import { syncWorkers } from './crew.js';
@@ -162,6 +164,23 @@ export const TOWER_UPGRADES = [
     buy: hatMade,
     // Once the tower is up, not once the sky is: this row is how the sky opens.
     show: () => S.towerOpen
+  },
+  // And the last shield, which is the tower's and nobody else's. It is here
+  // rather than on the bench because it is not a thing the crew can carry out
+  // and put up: the tower pours it, the way it pours a hat, and the waiting is
+  // what makes it a spell. Priced in cores -- the coin that opens what you do
+  // not have, which by now is the one thing left.
+  {
+    key: 'dome',
+    name: 'raise the dome',
+    note: () => 'the spire pours it over the landing spot, and the sky stops being a thing that arrives',
+    bill: () => [['core', DOME_COST], ['time', DOME_CAST_MS]],
+    cost: () => DOME_COST,
+    buy: () => raiseShield('dome'),
+    // The four before it have all been through, and there is a tower to cast
+    // it from. It leaves the board the moment it is bought, because unlike the
+    // hat there is only ever one of them.
+    show: () => !S.shield && shieldDone('jack') && S.towerOpen
   }
 ];
 
@@ -190,7 +209,10 @@ export const TOWER_SECTIONS = [
   { title: 'the tower', keys: [TYPE.WIZARD, 'wizspeed', 'wizpower'] },
   // And what the tower does for the rest of the yard, which is the only thing on
   // any board that is about somewhere else entirely.
-  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) }
+  { title: 'enchantments', keys: SPELLS.map(sp => 'spell' + sp.key) },
+  // The last shield is the tower's and nobody else's: it is not a thing the
+  // crew can carry out and put up, it is poured. See DESIGN.md, "The shields".
+  { title: 'the dome', keys: ['dome'] }
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a

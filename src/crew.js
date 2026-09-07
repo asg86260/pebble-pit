@@ -44,7 +44,7 @@ export { stand, duck, hireSpot, atHome, homeCount, upTop } from './crew/body.js'
 export { FACTORY } from './crew/jobs.js';
 export { findPeak, nearestInBand, elbowed } from './crew/rockhand.js';
 export { stepBuilder } from './crew/builders.js';
-export { stationX, nextLeg, errand, retask } from './crew/commute.js';
+export { stationX, nextLeg, errand, retask, sendOn } from './crew/commute.js';
 export { syncWorkers, wearKitOnLoad } from './crew/muster.js';
 export { stepHat } from './crew/falls.js';
 export { pitFree, unbook } from './crew/hole.js';

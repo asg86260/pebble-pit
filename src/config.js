@@ -137,3 +137,6 @@ export function tune(key, v) {
 
 // wave7-ui: the pulsing offer aura around a station with something affordable.
 export * from './config/aura.js';
+
+// the five shields, and the shape a rock is in while it is arriving
+export * from './config/shields.js';

@@ -42,6 +42,7 @@ import { drawBelt, drawDrill, drawRam, drawTiller } from './render/machines.js';
 import { drawAuras, drawFlags } from './render/aura.js';   // wave7-ui
 import { drawPileMarks } from './render/pilemarks.js';
 import { drawChips, drawRock } from './render/rock.js';
+import { drawShield } from './render/shield.js';
 import { drawScrub } from './render/scrub.js';
 import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
@@ -128,6 +129,10 @@ const LAYERS = [
   { name: 'smoke', draw: drawSmoke },
 
   { name: 'rock', draw: drawRock },
+  // and whatever the yard has put between itself and the sky. After the rock,
+  // because a shield stands over it and may be holding it up; before the crew,
+  // who walk in front of everything.
+  { name: 'shield', draw: drawShield },
   { name: 'rock sand', draw: drawRockSand },     // and whatever has come down on top of it
   { name: 'chips', draw: drawChips },            // and whatever is in the air off it
   // F4: and the ring and specks off a crit, over the chips it threw up -- the

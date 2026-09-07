@@ -43,6 +43,7 @@ import { skyReport } from './weather.js';
 import { houseReport } from './house.js';
 import { pot, spinning, pouring, stakeOf, chipName, potAt, tableWant } from './casino.js';
 import { buriedVisible } from './intro.js';
+import { KINDS } from './shield.js';
 import { rosterReport } from './roster.js';
 import { breakReport } from './break.js';
 import { smogReport, muckCols, GOING } from './smog.js';
@@ -253,6 +254,18 @@ export const snapshot = () => ({
   pair: S.pair.length,
   buried: S.buried,
   buriedVisible: buriedVisible(),
+  rescued: S.rescued,
+
+  // The shields: what is standing over the landing spot, how much of it is up,
+  // and whether it currently has a rock off the ground.
+  shield: S.shield && { kind: S.shield.kind, x: Math.round(S.shield.x), w: S.shield.w,
+                        h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                        pieces: KINDS[S.shield.kind].pieces, caught: !!S.shield.caught,
+                        setting: !!S.shield.setting, shove: Math.round(S.shield.shove || 0),
+                        sag: +(S.shield.sag || 0).toFixed(2),
+                        strain: +(S.shield.strain || 0).toFixed(2) },
+  shieldsDone: [...S.shieldsDone],
+  rockHeld: S.rockHeld,
 
   // The casino: the stake, the spin, and the pot.
   casinoOpen: S.casinoOpen,

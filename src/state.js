@@ -72,6 +72,8 @@ export const S = {
   introSaid: 0,
   pair: [],               // the two of them, before the rock
   buried: false,          // somebody is under it, and still alive
+  rescued: false,         // and, once the dome held one off them, they got out
+  rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
   // wave7-sky (A4): the square's core errand -- where it has walked to (null
@@ -81,7 +83,15 @@ export const S = {
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
+  landAt: 0,              // when the last one hit, for the spread it does on arriving
   rockFallV: 0,           // how fast it is coming
+  // --- the shields: what the yard puts between itself and the sky. shield.js ---
+  shield: null,           // { kind, x, w, h, laid, caught } while standing; null otherwise
+  shieldsDone: [],        // the kinds already raised and answered; a kind is offered once
+  // Something is holding the rock up. A fact rather than a call into
+  // shield.js, so rock.js can ask without knowing that shields exist -- the
+  // same bargain `sceneHolds` strikes for the scenes.
+  rockHeld: false,
   danceUntil: 0,          // the crew are celebrating the last one until this moment
   nextBoulderAt: 0,       // backstop, in case a core never falls clear
   peakRow: 0,             // the highest standing rock, recomputed each frame

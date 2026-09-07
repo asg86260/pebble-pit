@@ -12,7 +12,8 @@
 
 import { S } from './state.js';
 import { SKY } from './smog.js';
-import { TUNABLE, tune } from './config.js';
+import { TUNABLE, tune, PROP_FROM, PROP_COST, NET_COST, ARCH_COST,
+         JACK_COST, DOME_COST } from './config.js';
 import { relayout, beat } from './main.js';
 import { JOB } from './jobs.js';
 
@@ -123,6 +124,65 @@ line('boulder', box => {
 
 line('run on', box => {
   for (const s of [1, 5, 30]) button(box, `${s}s`, () => window.__fast(s));
+});
+
+// The story, one press a beat. Each button puts a fresh game at the top of a
+// scene, through the same hooks the checks use, so a beat can be watched in
+// seconds without playing the hour up to it. Fresh on purpose: a beat is a
+// fact about the story, not about whatever yard was standing when the button
+// was pressed. A new beat is one entry here, nothing else.
+const SCENES = {
+  opening: () => window.__reset(true),
+  // the one beat after the first rock: it is mined out, and somebody goes over
+  reunion: () => { window.__reset(); window.__crew(1, 0); window.__give(50); window.__next(); },
+  landing: () => { window.__reset(); window.__crew(2, 1); window.__next(); }
+};
+
+// The shields, beat by beat: the row on the bench, the thing going up a piece
+// at a time, and the rock reaching the finished one. Each is a fresh yard with
+// the coin for that shield already in hand.
+// The five shields run one per coin, so a scene about any of them needs all
+// five in hand -- there is no point standing the yard at the jack with no
+// sparks in the hole.
+const shieldYard = () => {
+  window.__reset();
+  window.__crew(2, 1);
+  window.__jump(PROP_FROM);
+  window.__give(60000);
+  window.__grant({ shards: ARCH_COST * 3, spores: NET_COST * 3,
+                   sparks: JACK_COST * 3, cores: DOME_COST * 3 });
+};
+// Raise one and run its build through rather than skipping it -- the pieces
+// still arrive by walking, only faster than watching.
+// The story is a chain -- each row is offered only once the one before has
+// failed -- so a scene about the fourth shield stands the yard where the first
+// three have already been through. Nothing is skipped that a player would see;
+// what is skipped is the waiting.
+const ORDER = ['props', 'net', 'arch', 'jack', 'dome'];
+const built = kind => {
+  shieldYard();
+  S.shieldsDone = ORDER.slice(0, ORDER.indexOf(kind));
+  S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
+  window.__buy(kind);
+  for (let i = 0; i < 900; i++) {
+    const sh = window.__state().shield;
+    if (!sh || sh.laid >= sh.pieces) break;
+    window.__fast(1);
+  }
+};
+const SHIELDS = Object.fromEntries(ORDER.flatMap(k => [
+  [k, () => built(k)],
+  [`${k}!`, () => { built(k); window.__next(); }]
+]));
+// and the beat the whole arc is for: the dome up, a rock on the way, and
+// somebody still under the spot it is coming down on
+SHIELDS.rescue = () => { built('dome'); S.buried = true; window.__next(); };
+
+line('scenes', box => {
+  for (const [name, fn] of Object.entries(SCENES)) button(box, name, fn);
+});
+line('shields', box => {
+  for (const [name, fn] of Object.entries(SHIELDS)) button(box, name, fn);
 });
 
 // the numbers themselves. Anything in TUNABLE turns up here without this file

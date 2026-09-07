@@ -321,6 +321,7 @@ import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
+import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
 
 // hats the station owns, hats actually on heads, and hats lying on the ground
@@ -848,7 +849,8 @@ export const UPGRADES = [
   ...TUNING_ROWS,
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
-  ...BUILDBENCH_ROWS
+  ...BUILDBENCH_ROWS,
+  ...SHIELD_ROWS
 ];
 
 // and the yard is told what these rows are, so a work coming back out of a save
@@ -864,6 +866,9 @@ export const SECTIONS = [
   { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'] },
   { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'] },
+  // What the yard puts between itself and the sky, in the order it thinks of
+  // them. The dome is the tower's and is on the tower's board.
+  { title: 'the shields', keys: ['props', 'net', 'arch', 'jack'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },
