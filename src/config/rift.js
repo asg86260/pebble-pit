@@ -76,14 +76,23 @@ export const RIFT_SPIN = 0.75;   // and how much of the pull goes round rather t
 // clear. At a bit over half, the ring holds what drifts into it and the sky
 // stays the sky.
 export const RIFT_FEED = 0.55;
-// How the swallowed grains go while the disc hangs: how many turns round it a
-// grain makes on its way in, and how long the whole orbit takes, in frames at
-// sixty. Both are what the suck is made of -- a grain is dragged round faster
-// the closer it gets, so it wants turns to spend and it wants to be quick
-// about them. Once the pit has drowned the orbit is gone and a grain dives to
-// the liquid instead -- see `sink` in game.js.
-export const RIFT_TURNS = 2.4;
-export const RIFT_ORBIT_FRAMES = 84;
+// --- the drain: the one law of infall -----------------------------------------
+// Everything that falls into the rift falls along one spiral, and these are its
+// three numbers. See `riftFall` in rift.js for the law itself and "The drain"
+// in DESIGN.md for why there is only one of them.
+//
+// Turns are counted for a thing falling the whole way in, from RIFT_FALL_FROM
+// to the middle; something that joins nearer the rim does proportionally
+// fewer, because the turning goes with the distance covered rather than with
+// the trip. It was 2.4 while the turning was buried at the end of the fall
+// where nothing could see it.
+export const RIFT_TURNS = 4;
+export const RIFT_FALL_FROM = 2.6;   // where a fall starts, in disc radii
+// ...and where it ends. Not zero: a grain is gone when it passes under the
+// disc, not when it reaches a point, and a spiral that has to reach the middle
+// spends its last turns in a space smaller than a cell.
+export const RIFT_FALL_END = 0.18;
+export const RIFT_ORBIT_FRAMES = 84; // frames at sixty for the whole fall
 // --- the cutscenes --------------------------------------------------------------
 // The two one-time transitions -- the tearing and the drowning -- are watched:
 // the camera goes to the pit, the moment plays, the camera comes back. One

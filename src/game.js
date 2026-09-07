@@ -16,7 +16,7 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
-         RIFT_TURNS, RIFT_ORBIT_FRAMES } from './config.js';
+         RIFT_ORBIT_FRAMES } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -24,7 +24,7 @@ import { at, put, addGrain, colOf, surfaceY, settleSome, resizeGrid, isDust, bot
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, pitFull, pitRefuses, riftCatch, abyssLine } from './pit.js';
-import { stepRift, riftCenter, riftRadius } from './rift.js';
+import { stepRift, riftCenter, riftRadius, riftFall } from './rift.js';
 import { stepCutscene } from './cutscene.js';
 import { wireCut } from './quarry.js';
 import { spawnChip, spawnSpoil, stepBelt, catchBelt } from './dust.js';
@@ -555,16 +555,19 @@ function orbit(list) {
     m.t += rate * f;
     if (m.t >= 1) { list.splice(i, 1); continue; }
     if (m.t <= 0) continue;
-    const t = m.t;
-    const a = m.a0 + m.spin * Math.pow(t, 1.8) * RIFT_TURNS * Math.PI * 2;
-    // Out past the rim, then a dive that ends at the middle -- which is under
-    // the disc, and gone.
-    const r = R * (1.32 - 1.25 * Math.pow(t, 2.2));
-    const ox = c.x + Math.cos(a) * r, oy = c.y + Math.sin(a) * r;
-    const join = Math.min(1, t / 0.25);           // torn off the pile
-    const e = join * join;
-    m.x = m.x0 + (ox - m.x0) * e;
-    m.y = m.y0 + (oy - m.y0) * e;
+    // The drain's own law (`riftFall` in rift.js), the same one the streaks
+    // round the disc are drawn on. A grain comes in at a steady rate and is
+    // whipped round faster the tighter it gets.
+    //
+    // It joins at the radius and angle it was actually caught at -- `riftCatch`
+    // stamps those on it -- so there is nothing to ease onto. The quarter of
+    // its life this used to spend lerping from where it landed onto a curve it
+    // was not on is gone with the two exponents that made that necessary.
+    const fall = riftFall(m.from, m.t);
+    const a = m.a0 + m.spin * fall.turns * Math.PI * 2;
+    const r = R * fall.r;
+    m.x = c.x + Math.cos(a) * r;
+    m.y = c.y + Math.sin(a) * r;
   }
 }
 

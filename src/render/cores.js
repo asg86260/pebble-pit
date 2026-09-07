@@ -20,13 +20,15 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
          RIFT_HALO, RIFT_STIPPLE, RIFT_STIPPLE_MS, RIFT_LENS, RIFT_LENS_MS,
-         RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_FROM, RIFT_STREAK_TURN,
-         RIFT_STREAK_LEN, RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
+         RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_TURN, RIFT_STREAK_MAX,
+         RIFT_FALL_FROM, RIFT_FALL_END, RIFT_TURNS,
+         RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
 import { abyssLine, pitDepth } from '../pit.js';
 import { S, floor, pit, rift } from '../state.js';
+import { riftFall } from '../rift.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawCircle, drawMark } from './marks.js';
@@ -298,12 +300,27 @@ const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
 // over them, so anything that has crossed the rim is gone behind it rather
 // than drawn on top of it -- which is what going *in* looks like.
 
-// How far out of round the rim is at a given angle, this instant. One slow
-// breath plus a second one at a third the size and twice the rate, which is
-// enough to keep it from ever being a circle pulsing on a metronome.
+// A settled number in 0..1 for a strand and a place along it. Settled is the
+// whole point: what is drawn round this hole has to be ragged without being
+// *restless*, and those are not the same thing. A raggedness redrawn every
+// frame is the boil this pass was called to get rid of; one keyed to the
+// strand travels with the strand, so the picture is torn cloth turning rather
+// than static on a screen. No state, no list -- a hash of two small numbers.
+const wisp = (i, n) => {
+  const h = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
+  return h - Math.floor(h);
+};
+
+// How far out of round the rim is at a given angle, this instant.
+//
+// One harmonic, not two. It carried a second at `a * 3` as well, and two
+// angular harmonics beating against each other put three or four lobes round
+// the rim that swelled and collapsed independently -- the rim *churned*, which
+// was the third of what read as chaos. With one term the whole rim leans one
+// way and slowly comes back, which is a shape breathing rather than a blob
+// throbbing. The slow drift in time stays: it must never be a metronome.
 const lensAt = (a, t) =>
-  1 + RIFT_LENS * (Math.sin(t / RIFT_LENS_MS * Math.PI * 2 + a * 2) * 0.75
-                 + Math.sin(t / RIFT_LENS_MS * Math.PI * 4 + a * 3) * 0.25);
+  1 + RIFT_LENS * Math.sin(t / RIFT_LENS_MS * Math.PI * 2 + a);
 
 export function drawRift() {
   if (!S.riftOpen || S.drowned) return;
@@ -349,34 +366,84 @@ export function drawRift() {
     // fewer the further out, which is the thinning
     const n = Math.max(4, Math.round((Math.PI * 2 * r) / P / (3 + ring * 3)));
     for (let i = 0; i < n; i++) {
-      const a = turn * (ring % 2 ? -1 : 1) + (i / n) * Math.PI * 2;
+      // One way round, all of it. The rings used to counter-rotate, which at
+      // this spacing reads as two collars grinding against each other rather
+      // than as one thing being drawn in -- and it disagreed with every other
+      // moving part of the drain, all of which turn the same way.
+      const a = turn + (i / n) * Math.PI * 2;
       const px = cx + Math.cos(a) * r * lensAt(a, t);
       const py = cy + Math.sin(a) * r * lensAt(a, t);
-      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
+      // Whole pixels rather than whole cells: see the streaks below. Snapped
+      // to the lattice, each speck jumped a cell at a time as its ring turned,
+      // and a ring of specks all jumping is the boil that read as chaos.
+      ctx.fillRect(Math.round(px), Math.round(py), P, P);
     }
   }
 
-  // The infall. Each streak is a spiral from RIFT_STREAK_FROM radii out to the
-  // rim, its position derived from the clock and its own slot -- no list, no
-  // stepping and nothing to save. They are spaced round the clock as well as
-  // round the disc, so the ring is a stream rather than a wheel of spokes.
-  // The square puts most of the journey out at the far end and makes the last
-  // stretch quick, which is what falling into something looks like.
-  const reach = RIFT_STREAK_FROM - 1;
+  // The infall, drawn on the drain's own law (`riftFall` in rift.js) -- the
+  // same curve the real grains being swallowed are moving along, so what you
+  // see falling and what is actually falling agree. Position comes off the
+  // clock and the streak's own slot: no list, no stepping, nothing to save.
+  //
+  // Each streak is drawn as a run of cells *along the spiral behind its head*
+  // rather than as a line of cells stepping straight outward. That is the
+  // difference between a curve and a tick mark: the tail now bends the way the
+  // path bends, and the ring reads as a stream turning rather than as a wheel
+  // of spokes. They were twelve short marks on a third of a turn; they are
+  // fewer, longer, and given the whole spiral to lie on.
+  // How far back along the fall one cell of tail sits. Derived, not tuned: the
+  // law lays the same arc length down for every equal step of `u` anywhere on
+  // the spiral (the radius comes in at a steady rate and the angle is its log,
+  // and those cancel), so ONE step size puts the cells a cell apart the whole
+  // way in. It falls out of the disc's radius, so it stays right as the disc
+  // grows from four cells to twelve -- where a written-down step was a dotted
+  // line at one size and a doubled-up smear at another.
+  const arc = Math.PI * 2 * RIFT_TURNS * (RIFT_FALL_FROM - RIFT_FALL_END)
+            / Math.log(RIFT_FALL_FROM / RIFT_FALL_END) * rad;
+  const step = P / Math.max(1, arc);
   for (let i = 0; i < RIFT_STREAKS; i++) {
-    const k = ((t / RIFT_STREAK_MS) + i / RIFT_STREAKS) % 1;
-    const a0 = (i / RIFT_STREAKS) * Math.PI * 2;
-    const head = rad * (1 + reach * (1 - k) * (1 - k));
-    // The tail is measured in **cells behind the head**, not in fractions of
-    // the journey -- spaced by k it bunched into a knot of soot at the rim.
-    for (let c = 0; c < RIFT_STREAK_LEN; c++) {
-      const d = head + c * P;
-      if (d > rad * RIFT_STREAK_FROM) break;             // off the end of its run
-      const kk = 1 - Math.sqrt(Math.max(0, (d / rad - 1) / reach));
-      const a = a0 + kk * kk * RIFT_STREAK_TURN * Math.PI * 2;
+    // Each strand is its own: its own pace, its own place on the ring, its own
+    // length, its own distance out. Five identical arcs at five even angles is
+    // a pinwheel -- correct arithmetic and a machined picture, which is the
+    // other way of getting this wrong from the boil it replaced. Off `wisp`,
+    // so a strand keeps the same character frame to frame.
+    const sp = wisp(i, 0);
+    const k = ((t / (RIFT_STREAK_MS * (0.8 + sp * 0.5))) + wisp(i, 1)) % 1;
+    const a0 = wisp(i, 2) * Math.PI * 2;
+    const from = RIFT_FALL_FROM * (0.85 + wisp(i, 3) * 0.3);
+    const long = RIFT_STREAK_TURN * (0.6 + sp * 0.8);
+    const head = riftFall(from, k).turns;
+    for (let c = 0; c < RIFT_STREAK_MAX; c++) {
+      // a cell of the tail is a step back along the fall, not a step outward
+      const u = k - c * step;
+      if (u < 0) break;                                  // not born yet
+      const f = riftFall(from, u);
+      if (head - f.turns > long) break;                  // the tail's whole length
+      // ...and it frays, but only at the end of itself. A strand holds
+      // together for most of its length and comes apart behind, so the tail
+      // thins into nothing instead of stopping dead at a line -- and the part
+      // you actually follow with your eye stays a line you can follow.
+      //
+      // Dropping cells from the head as well (which is what a flat rate over
+      // the whole length does) takes the curve apart into a scatter of dots,
+      // which is the picture this started from. Keyed on the cell rather than
+      // the clock, so the gaps belong to the strand and travel with it: a gap
+      // redrawn every frame is the flicker this whole pass is about.
+      const along = (head - f.turns) / long;
+      if (along > 0.55 && wisp(i, 7 + c) < (along - 0.55) / 0.45 * 0.8) continue;
+      // and it wanders off the perfect curve -- by a third of a cell, which is
+      // enough that no strand is a drawn arc and little enough that it is
+      // still one strand rather than a line of crumbs
+      const wob = (wisp(i, 300 + c) - 0.5) * P * 0.7;
+      const a = a0 + f.turns * Math.PI * 2;
+      const d = f.r * rad + wob;
       const px = cx + Math.cos(a) * d * lensAt(a, t);
       const py = cy + Math.sin(a) * d * lensAt(a, t);
-      ctx.fillRect(Math.round(px / P) * P, Math.round(py / P) * P, P, P);
+      // Whole pixels, not whole cells. Snapping a turning thing to the cell
+      // lattice makes each mark hop six pixels at a time -- a boil rather than
+      // a drift, and half of what read as chaos here. The flag's pole settled
+      // this same argument the same way.
+      ctx.fillRect(Math.round(px), Math.round(py), P, P);
     }
   }
 

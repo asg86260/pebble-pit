@@ -7,7 +7,7 @@
 
 import { P, WORKER, CORE_SIZE, CORE_LOB_H, HAUL_EMPTY, HOME_AFTER, HOME_WALK,
          PILE_LIMIT } from '../config.js';
-import { S, floor, pit, cut } from '../state.js';
+import { S, floor, pit, cut, rift } from '../state.js';
 import { at, put, colOf } from '../grid.js';
 import { walkY, yardLeft } from '../world.js';
 import { ways, wayAt, wayOver, standTop, rockTop } from '../route.js';
@@ -443,9 +443,22 @@ export function haulerWork(w, c) {
         S.dirty = true;
       }
       for (let i = 0; i < w.carry; i++) {
-        // most of it near the lip, where they are standing, tailing away down
-        // the hole -- which is the shape the pile has always had
-        const land = Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
+        // Where it is thrown depends on what is down there to throw it at.
+        //
+        // Onto the pile: most of it near the lip where they are standing,
+        // tailing away down the hole, which is the shape a pile has always had.
+        //
+        // Into the drain: at the disc. With the rift open there is no pile --
+        // `riftCatch` takes every grain the moment it crosses the mouth -- and
+        // aiming a spread across a floor that is not there gave the fan of
+        // dust flung over the hole and then dragged back to one point, two
+        // motions with nothing to do with each other. Thrown at the thing that
+        // is going to eat it, the arc and the swirl are one movement. It still
+        // scatters a little: a hand throwing at a target is not a machine, and
+        // grains landing on the same pixel would go round in a single file.
+        const land = S.riftOpen && !S.drowned
+          ? rift.x + rift.w / 2 + bell() * rift.w * 0.4
+          : Math.min(far, pit.x + P * 2 + Math.abs(bell()) * (far - pit.x) * 0.45);
         const v = aim(from, up, land, P);
         spawnChip(from, up, v.vx, v.vy, w.load?.[i] || 1);
       }
