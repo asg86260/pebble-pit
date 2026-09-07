@@ -11,11 +11,30 @@ export const AURA_BREATH = 4;        // reach of the (now unused) outward swell
 // the roof peak, a black pennant rippling in the wind. The numbers are cells.
 export const FLAG_POLE = 8;          // cells of pole above the roofline
 export const FLAG_W = 5;             // the pennant, cells across
-export const FLAG_H = 3;             // and down -- deep enough that a column a
-                                     // cell out of step still shares two cells
-                                     // with its neighbor, so the cloth holds
-                                     // together instead of tearing into blocks
+export const FLAG_H = 3;             // and deep -- the measure across the walk,
+                                     // so it is the cloth's height while the
+                                     // flag flies level and its width while the
+                                     // flag hangs
 export const FLAG_RIPPLE_MS = 700;   // one wave traveling the pennant's length
+export const FLAG_SWING = 0.95;      // radians the ripple turns the cloth by at
+                                     // the loose end. It is an angle now, not a
+                                     // shift: the cloth is walked out from the
+                                     // knot a half cell at a time and the wave
+                                     // steers the walk, so the ripple bends the
+                                     // whole sheet instead of sliding columns
+                                     // of it up and down past each other
+export const FLAG_WAVES = 0.75;      // waves standing on the cloth at once. A
+                                     // third of one moved the whole pennant
+                                     // together -- one flap, not a ripple
+export const FLAG_FILL = 2.2;        // how fast the cloth lifts as the wind
+                                     // rises. Steeper than the wind, so the
+                                     // flag flies level for most of a gust and
+                                     // hangs only around the turn
+export const FLAG_SAG = 0.18;        // how much of the slack the cloth carries
+                                     // right at the knot. The knot holds its
+                                     // own end up whatever the wind does, so
+                                     // the sag is small there and grows out
+                                     // along the length toward the loose end
 export const FLAG_GUST_MS = 7000;    // the slow swell of the wind's strength;
                                      // its sign is the way the cloth flies
 export const FLAG_GUST_SPAN = 2400;  // world px a gust front spans: the wind
