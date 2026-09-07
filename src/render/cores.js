@@ -19,7 +19,7 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
-         RIFT_HALO, RIFT_STIPPLE,
+         RIFT_HALO, RIFT_WAVER, RIFT_WAVER_MS, RIFT_BEND, RIFT_TWINKLE_MS,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
@@ -308,6 +308,15 @@ const spec = (i, n) => {
   return h - Math.floor(h);
 };
 
+// How far out of round the rim is at a given angle, this instant. One harmonic
+// and one slow drift: two beating against each other put lobes round the edge
+// that swelled and collapsed on their own and the rim *churned*, which was
+// half of what read as chaos the last time this was tried. With one term the
+// whole edge leans one way and comes back, which is a tear breathing rather
+// than a blob throbbing.
+const waver = (a, t) =>
+  1 + RIFT_WAVER * Math.sin(t / RIFT_WAVER_MS * Math.PI * 2 + a);
+
 // What is on the other side, cut to the hole.
 //
 // Layers of magic-coloured stars, each keeping less pace with the yard than
@@ -321,7 +330,7 @@ const spec = (i, n) => {
 // stars: it is endless, it costs nothing to keep, and it is identical frame to
 // frame. Only the cells that fall inside the rim are drawn, so this is a
 // window rather than a sprite.
-function drawThrough(cx, cy, rad) {
+function drawThrough(cx, cy, rad, t) {
   const inner = rad - P;                      // keep the rim's own edge clean
   if (inner < P) return;
   for (let L = 0; L < RIFT_DEEP_LAYERS; L++) {
@@ -331,8 +340,8 @@ function drawThrough(cx, cy, rad) {
     // The nearest sky is the brightest; the far ones fall away down the
     // purples, which is the same "spending itself with distance" the rest of
     // this game's ramps do.
-    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
-                                Math.round(f * (MAGIC_TONES.length - 1)))];
+    const tone = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1,
+                             Math.round(f * (MAGIC_TONES.length - 1)))];
     const baseX = S.camX * k, baseY = S.camY * k;
     const i0 = Math.floor((baseX - inner) / sp), i1 = Math.ceil((baseX + inner) / sp);
     const j0 = Math.floor((baseY - inner) / sp), j1 = Math.ceil((baseY + inner) / sp);
@@ -341,13 +350,31 @@ function drawThrough(cx, cy, rad) {
         // a fraction of the lattice actually carries a star, so the sky is
         // scattered rather than ruled
         if (spec(i * 31 + L * 7, j) > 0.55) continue;
-        const ox = (i + spec(i, j + L)) * sp - baseX;
-        const oy = (j + spec(j + 40, i + L)) * sp - baseY;
-        if (ox * ox + oy * oy > inner * inner) continue;
+        let ox = (i + spec(i, j + L)) * sp - baseX;
+        let oy = (j + spec(j + 40, i + L)) * sp - baseY;
+        const d = Math.hypot(ox, oy);
+        if (d > inner || d < 0.001) continue;
+        // **The bending.** Light coming past something this heavy does not
+        // come straight, and the sky through the tear is the one place it can
+        // be shown: every star is pushed outward along its own ray, hard near
+        // the rim and hardly at all in the middle, so the field piles up round
+        // the edge and thins out of the centre the way an image does round a
+        // lens. It also keeps the middle dark, which is the one thing about a
+        // hole that must never be in question.
+        const bent = inner * Math.pow(d / inner, RIFT_BEND);
+        ox *= bent / d; oy *= bent / d;
+        // ...and each one sparkles on its own phase, so the sky is alive
+        // without anything travelling across it. Keyed to the star rather than
+        // to the clock alone: they must not blink together.
+        const tw = 0.5 + 0.5 * Math.sin(t / RIFT_TWINKLE_MS * Math.PI * 2
+                                        + spec(i + L * 13, j) * Math.PI * 2);
+        ctx.globalAlpha = 0.35 + tw * 0.65;
+        ctx.fillStyle = tone;
         ctx.fillRect(Math.round(cx + ox), Math.round(cy + oy), P, P);
       }
     }
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
@@ -388,11 +415,19 @@ export function drawRift() {
   // rather than written down as a table, so the shape follows the derived size
   // wherever the growth takes it. `grow` widens it in cells, which is how the
   // halo is cut: the same disc, a couple of cells fatter, in paper.
+  //
+  // ...and the edge creeps, by `waver`: a tear in the world has no business
+  // having a compass edge. The warp is a function of the ROW's own angle, so
+  // it is a shape that leans and comes back rather than a size that pulses --
+  // the rim runs out on one side while it comes in on the other. Both passes
+  // read the same waver, so the paper ring keeps its width all the way round
+  // instead of pinching where the black bulges.
   const disc = (grow, style) => {
     ctx.fillStyle = style;
     for (let r = -grow; r < down + grow; r++) {
       const dy = (r - midR) / (midR + 0.5 + grow);
-      const half = Math.floor((mid + grow) * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
+      const half = Math.floor((mid + grow) * waver(Math.asin(Math.max(-1, Math.min(1, dy))), t)
+                              * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
       if (half < 0) continue;
       const left = x + Math.round(mid - half) * P;
       ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
@@ -402,19 +437,11 @@ export function drawRift() {
   // Paper first, so whatever the disc is standing over -- the pile, the ground
   // line, a grain on its last turn -- is cleared away from the rim: with the
   // page showing round it, it is a hole *in* the world.
+  //
+  // (A ring of speckle used to sit outside this, and it is gone: at a distance
+  // it read as a dotted collar printed round the hole, and the waver says
+  // "torn" far better than a scatter of dots ever did.)
   disc(RIFT_HALO, '#fff');
-
-  // ...and a ring of speckle thinning outward through that paper, so the eye
-  // reads a well rather than a sticker. It does not turn. Nothing here does.
-  ctx.fillStyle = '#000';
-  for (let ring = 0; ring < RIFT_STIPPLE; ring++) {
-    const r = rad + (RIFT_HALO + ring + 0.5) * P;
-    const n = Math.max(4, Math.round((Math.PI * 2 * r) / P / (3 + ring * 3)));
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + ring * 0.7;   // offset, so rings do not line up
-      ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), P, P);
-    }
-  }
 
   // The pull: a few motes drawn in toward the rim, outside it, where the page
   // is white and a purple mark reads. Before the disc, so one that reaches the
@@ -438,14 +465,15 @@ export function drawRift() {
 
   // ...and then the other side, cut to the hole. A tear, not a dot: what is
   // through it is somewhere else, and the way that is said is depth.
-  drawThrough(cx, cy, rad);
+  drawThrough(cx, cy, rad, t);
 
   // Each cell asks which side of the rim it is on and inks itself: the grain's
   // own colour out on the page, paper over the black inside. A grain crossing
   // does not vanish behind the disc, it changes colour and carries on -- the
   // rim is where the picture turns over, not a lid. The last and fastest part
   // of a fall used to happen behind the ink.
-  const inDisc = (px, py) => Math.hypot(px - cx, py - cy) < rad;
+  const inDisc = (px, py) =>
+    Math.hypot(px - cx, py - cy) < rad * waver(Math.atan2(py - cy, px - cx), t);
 
   for (const m of S.gulped) {
     const dx = cx - m.x, dy = cy - m.y;

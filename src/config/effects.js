@@ -41,7 +41,32 @@ export const RIFT_INHALE_SHOW = 600;
 // away from around it: two cells of bare paper, and then a thinning stipple, so
 // the eye reads a well rather than a sticker.
 export const RIFT_HALO = 2;          // cells of paper cleared round the rim
-export const RIFT_STIPPLE = 2;       // and cells of thinning speckle past that
+
+// The rim wavers: the edge of the tear is not a drawn circle, it creeps in and
+// out by a cell or so on a slow drift. A tear in the world has no business
+// having a compass edge -- and this is the one motion the disc itself is
+// allowed, because it is the disc saying it is a rip rather than a hole
+// somebody cut. Slow enough that you notice it is never quite still rather
+// than watching it pulse.
+//
+// (A ring of speckle used to sit outside the rim -- RIFT_STIPPLE -- and it is
+// gone: it read as a dotted collar printed round the hole, and the waver says
+// "torn" far better than a scatter of dots did.)
+export const RIFT_WAVER = 0.055;     // share of the radius the edge creeps
+export const RIFT_WAVER_MS = 5200;   // and how long one drift takes
+
+// The bending. Light coming past something this heavy does not come straight,
+// and the one place that can be shown here is the sky seen through the tear:
+// stars are crowded outward toward the rim and thinned out of the middle, the
+// way a lens piles an image up round its own edge. BELOW one pushes the field
+// out to the rim; at one it is a flat window with no lens in it; above one it
+// drags everything into the middle, which is what the first pass did -- the
+// exponent the wrong side of one, and a hole with a clot in it.
+export const RIFT_BEND = 0.55;
+
+// ...and they sparkle. Each star's own slow fade, on its own phase, so the sky
+// behind the tear is alive without anything travelling across it.
+export const RIFT_TWINKLE_MS = 2800;
 // --- what is on the other side ------------------------------------------------
 // It is a tear, not a dot. What the hole shows is somewhere else: a sky of
 // magic-coloured stars, layered, each layer keeping less pace with the yard
