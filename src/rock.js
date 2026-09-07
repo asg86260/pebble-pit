@@ -7,7 +7,7 @@
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
   ROCK_W_MAX, ROCK_H_MAX, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
-  ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CLEAR
+  ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CLEAR, SQUASH_MS
 } from './config.js';
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
@@ -150,14 +150,32 @@ export function fallMs() {
 // ground it needs, and knocks a few grains off the tops of the two banks.
 export function stepRock() {
   if (S.rockFall <= 0) return;
+  // Something is holding it. The arch catches one rock and stands under it for
+  // a beat before the crack runs (shield.js), and for that beat the rock is
+  // not falling -- it is resting on something, which is a thing that has never
+  // happened in this game before and is the whole point of the beat.
+  if (S.rockHeld) { placeRock(); return; }
   // A rock takes the same time to come down whatever the machine is drawing at
   const f = frames();
   S.rockFallV += DROP_GRAV * f;
   S.rockFall -= S.rockFallV * f;
-  if (S.rockFall <= 0) {
-    S.rockFall = 0;
-    S.rockFallV = 0;
-    clearApron();
+  if (S.rockFall <= 0) landRock();
+  placeRock();
+}
+
+// It is down. Everything the yard does about that, in one place, because a
+// rock that arrives is a rock that arrives however it got here -- dropped, or
+// let down by the dome, which is the one way of arriving that is *gentle*: no
+// jolt off the banks, no shake, and nobody shouting about it. Being set down
+// softly and being dropped are the same event with the violence taken out.
+export function landRock(gentle = false) {
+  S.rockFall = 0;
+  S.rockFallV = 0;
+  // when it stopped being a falling rock and started being a hill -- see
+  // `rockShape`. A rock set down by the dome does not splat: it is placed.
+  S.landAt = gentle ? 0 : now();
+  clearApron();
+  if (!gentle) {
     jolt();
     // and the yard takes the weight of it. A taller rock is a heavier one, so
     // the knock is measured against the first rock rather than being one size
@@ -175,9 +193,8 @@ export function stepRock() {
         w.say = { mark: 'bang', until: at + LAND_SAY_MS };
       }
     }
-    S.dirty = true;
   }
-  placeRock();
+  S.dirty = true;
 }
 
 // The landing shakes the banks: a grain hops off the top of each heap either
@@ -445,6 +462,29 @@ export function gridFromString(s, w, h) {
 
 // the rock is anchored by its foot, not its middle: it grows upwards and outwards
 export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S.gh - y) * P });
+
+// What shape the rock is in at this instant.
+//
+// A boulder is stored as a heightfield -- a hill with a flat bottom -- because
+// that is what it is once it is lying in the yard being mined. But a hill is
+// not what a thing falling out of the sky looks like. In the air it is a rock:
+// round, with nothing flat about it. So the same cells are drawn two ways, and
+// the moment it arrives is the moment it stops being one and becomes the
+// other.
+//
+// `round` is 1 all the way down and drops to 0 on impact. `squash` runs the
+// other way for a fraction of a second afterwards: the rock spreads and
+// settles, which is the whole of why the change of shape reads as an impact
+// rather than as a substitution. Nothing about either is stored -- they are
+// both read off the clock and `rockFall`, so nothing has to be saved, reset,
+// or put back after a reload.
+export const rockShape = () => {
+  if (S.rockFall > 0) return { round: 1, squash: 0 };
+  const since = now() - (S.landAt || 0);
+  if (since >= SQUASH_MS) return { round: 0, squash: 0 };
+  const k = 1 - since / SQUASH_MS;
+  return { round: 0, squash: k * k };            // spreads hardest at the first frame
+};
 
 // Whether there is any rock left. Read off `rockTops`, which `refreshRockTops`
 // keeps for every column after every swing, rather than by walking the grid: it

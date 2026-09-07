@@ -22,6 +22,7 @@ import { resite } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, clearBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores, rehomeDust } from './pit.js';
+import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
@@ -265,6 +266,11 @@ export function persist() {
     plotLevel: S.plotLevel,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
+    rescued: S.rescued,
+    shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                          cast: S.shield.cast },
+    shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     looPosts: S.looPosts,
     // The machines, as facts only: whether each was bought, whether it is driven,
@@ -492,6 +498,10 @@ export function restore() {
     for (const k of Object.keys(S.mult)) S.mult[k] = 0;
     S.plots = [];
     S.plotTone = [];
+    S.shield = null;
+    S.shieldsDone = [];
+    S.rockHeld = false;
+    S.rescued = false;
     return;
   }
   // Everything the save keeps as it stands, in one pass off the list in
@@ -598,6 +608,25 @@ export function restore() {
   S.introDone = !!s.introDone || (s.crew ?? 0) > 0;
   // and a save from before the second act existed has plainly had its first rock
   S.reunionDone = s.reunionDone ?? ((s.boulderNo ?? 1) > 1);
+  // A save from before the shields existed has plainly not raised one. The
+  // catch is not restored: a rock held in the air is a beat a few seconds
+  // long, and a save reloaded into the middle of it would come back to a rock
+  // resting on nothing if anything about the arch had changed. It falls.
+  S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
+                          h: s.shield.h, rise: s.shield.rise || 0,
+                          laid: s.shield.laid || 0, caught: 0, held: 0,
+                          strain: 0, sag: 0, shove: 0,
+                          setting: false, cast: 0 } : null;
+  // A pour picks up where it left off rather than starting again. The clock it
+  // was started against does not survive a reload, so the start is worked back
+  // out of how much of it is woven -- the progress is the fact, and the
+  // timestamp is only how the progress was arrived at.
+  if (S.shield && KINDS[S.shield.kind].cast) {
+    const k = KINDS[S.shield.kind];
+    S.shield.cast = clockNow() - (S.shield.laid / k.pieces) * k.cast;
+  }
+  S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
+  S.rockHeld = false;
   S.intro = null;
   S.camLockY = null;
   S.pair = [];
@@ -609,6 +638,9 @@ export function restore() {
   // A save from when only the lab announced a finish carries `labDone`; it is
   // the same news under the per-site name now.
   if (s.labDone) S.siteDone = { ...S.siteDone, lab: s.labDone };
+  // A save from before the dome existed has plainly not got anybody out yet.
+  S.rescued = !!s.rescued;
+  if (S.rescued) S.buried = false;
   S.seenSpark = !!s.seenSpark || S.sparks > 0;
   S.wizards = Math.min(s.wizards || 0, S.wizardHats);
   // and whatever was being built. Only the sites this build knows about and only
@@ -991,6 +1023,10 @@ export function reset(fresh = true) {
   S.introDone = false;
   S.reunionDone = false;
   S.buried = false;
+  S.rescued = false;
+  S.shield = null;
+  S.shieldsDone = [];
+  S.rockHeld = false;
   makeBoulder();
   clearBoulder();
   S.coreBuried = false;

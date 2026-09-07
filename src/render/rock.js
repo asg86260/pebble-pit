@@ -2,9 +2,9 @@
 // own body in render.js; behavior unchanged. Owns drawRock and drawChips. ctx
 // comes from ./ctx.js and the mark from ./marks.js.
 
-import { MARK_SIZE, MAX_DEPTH, P } from '../config.js';
+import { MARK_SIZE, MAX_DEPTH, P, SQUASH_WIDE, SQUASH_FLAT } from '../config.js';
 import { depthShade, shadeOf } from '../grid.js';
-import { depthOf, rockFootY } from '../rock.js';
+import { depthOf, rockFootY, rockShape } from '../rock.js';
 import { S } from '../state.js';
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
@@ -32,7 +32,21 @@ export function drawRock() {
 
   const deep = depthOf();
   for (let v = 0; v <= MAX_DEPTH; v++) TONE[v] = shadeOf(depthShade(v, deep));
+  const { round, squash } = rockShape();
+  if (round > 0) return drawRoundRock(deep);
+
   const left = rockLeft(), foot = rockFootY();
+  // Wider and flatter for a moment after it lands, easing back to itself --
+  // see `rockShape`. Both scales are whole cells, so the rock never leaves the
+  // lattice: a boulder drawn at a fraction of a cell is a boulder with a soft
+  // edge, and this one is made of pixels like everything else.
+  //
+  // A scaled grid is drawn by mapping each run's *edges* and filling between
+  // them, never by moving a run and leaving it its old width. Move it and a
+  // stretch opens a hairline of white between every column.
+  const half = S.gw / 2;
+  const ex = i => Math.round((i - half) * (1 + SQUASH_WIDE * squash) + half);
+  const ey = j => Math.round(j * (1 - SQUASH_FLAT * squash));
   let shade = null;
   for (let y = 0; y < S.gh; y++) {
     const row = S.boulder[y], py = foot - (S.gh - y) * P;
@@ -43,8 +57,44 @@ export function drawRock() {
       let e = x + 1;
       while (e < S.gw && row[e] && TONE[row[e]] === tone) e++;
       if (tone !== shade) { shade = tone; ctx.fillStyle = tone; }
-      ctx.fillRect(left + x * P, py, (e - x) * P, P);
+      if (!squash) ctx.fillRect(left + x * P, py, (e - x) * P, P);
+      else {
+        const top = ey(S.gh - y), bot = ey(S.gh - y - 1);
+        ctx.fillRect(left + ex(x) * P, foot - top * P,
+                     (ex(e) - ex(x)) * P, Math.max(P, (top - bot) * P));
+      }
       x = e;
+    }
+  }
+}
+
+// A rock in the air: round, and nothing about it flat -- but not a circle. A
+// circle is a ball, and a ball is a different object from the cragged hill it
+// turns into on the ground. So the rim is knocked about by three sines of the
+// angle, the same trick the crest is roughed with in `makeBoulder`, seeded off
+// the boulder's own number so it is the same lump every frame of one fall and
+// a different one for the next rock.
+//
+// It is shaded the way the hill is -- deepest through the middle, thinning to
+// the rim -- so the two shapes are plainly the same object. It carries no
+// mining, because a rock that is still falling has never been touched.
+function drawRoundRock(deep) {
+  const R = S.gw / 2;
+  const foot = rockFootY(), left = rockLeft();
+  const seed = S.boulderNo * 1.7;
+  const rim = ang => 1 + 0.07 * Math.sin(ang * 3 + seed)
+                       + 0.05 * Math.sin(ang * 5.7 - seed * 2)
+                       + 0.03 * Math.sin(ang * 9.1 + seed * 3);
+  let shade = null;
+  for (let y = 0; y < S.gw; y++) {
+    const py = foot - (S.gw - y) * P;
+    for (let x = 0; x < S.gw; x++) {
+      const dx = x + 0.5 - R, dy = y + 0.5 - R;
+      const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
+      if (d > 1) continue;
+      const tone = TONE[Math.max(1, Math.min(deep, Math.round(deep * Math.sqrt(1 - d * d))))];
+      if (tone !== shade) { shade = tone; ctx.fillStyle = tone; }
+      ctx.fillRect(left + x * P, py, P, P);
     }
   }
 }
