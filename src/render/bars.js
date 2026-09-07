@@ -100,21 +100,20 @@ export function barSpot(site, w = null) {
   // the ground and goes down -- so the bar hangs off the ground line for those,
   // which is the top of them as far as anybody looking at the yard is concerned.
   let top = Math.min(box.y ?? S.groundY, S.groundY);
-  // A building rising out of the yard is only as tall as its progress -- withRise
-  // clips the sprite to the risen slice -- so the bar tracks the slice's current
-  // top rather than the ground line. The yard's own box carries no `y` for an
-  // unlock (the ground is reserved by x alone), so the finished height is read
-  // off the PLACE the work is raising: the same station rect the sprite is
-  // clipped against, so the bar stays BAR_CLEAR ahead of the rising edge at any
-  // progress and can never end up inside the drawing. (feedback7, item 15)
+  // A bar hangs over the WHOLE station, at the height the station will be when
+  // it is finished -- not over the slice of it that has risen so far.
+  //
+  // It used to ride the rising edge (feedback7 item 15), which kept it clear of
+  // the drawing at every moment and made the bar itself climb the screen while
+  // you watched it. Two things moving at once, and the one you are reading is
+  // the one that should hold still: a bar that creeps up as it fills is a bar
+  // you cannot glance at twice from the same place. The yard's own box carries
+  // no `y` for an unlock (the ground is reserved by x alone), so the finished
+  // height comes off the PLACE the work is raising.
   if (site === 'yard' && w) {
     const place = placeOf(w);
     const b = place && (RISING_BOX[place] ? RISING_BOX[place]() : null);
-    if (b) {
-      const p = Math.max(0, Math.min(1, progressOf(w)));
-      const roof = Math.min(b.y ?? S.groundY, S.groundY);
-      top = S.groundY - (S.groundY - roof) * p;
-    }
+    if (b) top = Math.min(b.y ?? S.groundY, S.groundY);
   }
   // ...and above the station's flag, where it flies one. The flag stands off
   // the building's own topmost feature and reaches well past BAR_CLEAR, so a

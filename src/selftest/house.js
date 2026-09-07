@@ -219,16 +219,20 @@ export const TESTS = [
     ];
   }],
 
-  // A rung is not the end of the visit: you buy speed, and the board is still
-  // there with strength under your hand. Every press leaves it up.
+  // Buying puts the board away, rung or place (feedback8 item 1). Every press
+  // that takes money shuts the sheet, because what you bought happens out in
+  // the yard the sheet is covering -- the dust arcs to the station, the gang
+  // walks out to build, the flag comes down.
   //
-  // A place used to be the exception: its row sent the view to what you had just
-  // bought, and the sheet would have been sitting over it. Nothing appears on
-  // the press any more -- everything past the bench is built, see works.js -- so
-  // there is nothing for the board to be in the way of, and it stays up with the
-  // row on it greyed and its clock counting down. Which is the better answer to
-  // "did that do anything" than the board vanishing ever was.
-  ['buying anything leaves the board up, rung or place', async () => {
+  // The board used to stay up for a rung, so a ladder could be climbed without
+  // walking back; that lost to seeing what you paid for, with the cost of a
+  // walk-up per rung on the table when it was decided.
+  //
+  // A press that buys NOTHING is the other half of the rule and the half worth
+  // guarding: no money, maxed out, a site already busy. The sheet has to stay
+  // up for those, because a board that shuts on a bill you could not pay looks
+  // exactly like a board that took your money.
+  ['buying puts the board away; a press that buys nothing leaves it up', async () => {
     newRun();
     await settle();
     window.__crew(2, 2);
@@ -237,28 +241,43 @@ export const TESTS = [
     // with dust.
     window.__grant({ cores: 5 });
     run(20);
-    await hoverBench();
+    // Each press reports what it cost as well as what the board did, because
+    // the rule is about the pair: away IF it bought, up if it did not. Reading
+    // the board alone would pass a build that shut the sheet and took nothing.
     const press = async key => {
+      await hoverBench();                    // walk back up: the last press shut it
+      await sleep(250);
       const b = document.querySelector(`#shop button[data-key="${key}"]`);
       if (!b) return null;
+      const before = state().stored;
       b.click();
       await sleep(200);
-      return state().boardOpen;
+      return { open: state().boardOpen, spent: before - state().stored };
     };
-    const rungs = [];
-    for (const key of ['carry', 'auto', 'speed', 'haulpace']) {
-      const up = await press(key);
-      if (up !== null) rungs.push([key, up]);
-    }
-    const ordered = await press('unlockfarm');
+
+    const bought = await press('carry');
+    // The bench works one thing at a time (`siteBusy` -- see works.js), so the
+    // very next rung is a press that cannot go through. That is the refusal
+    // this needs, and it is a truer one than an empty purse: the row is lit,
+    // the money is there, and the yard still says no.
+    const refused = await press('haulpace');
+    const place = await press('unlockfarm');
+
     await hoverAway();
     newRun();
     return [
-      ok(rungs.length >= 3, 'there were rungs to buy', rungs.map(r => r[0]).join(', ')),
-      ok(rungs.every(r => r[1]), 'and the board is still up after every one',
-         rungs.filter(r => !r[1]).map(r => r[0]).join(', ') || 'all of them'),
-      ok(ordered === true, 'and ordering a place leaves it up as well',
-         `${ordered}`)
+      ok(!!bought && bought.spent > 0, 'a rung takes the money',
+         bought ? `${bought.spent}` : 'no row'),
+      ok(!!bought && bought.open === false, 'and the board goes away with it',
+         `${bought && bought.open}`),
+      // Not `=== 0`: the crew are hauling while this runs, so the purse
+      // creeps *up* under the press. What matters is that nothing was taken.
+      ok(!!refused && refused.spent <= 0, 'the next rung is refused, the bench being busy',
+         refused ? `${refused.spent} taken` : 'no row'),
+      ok(!!refused && refused.open === true, 'and a press that bought nothing leaves the board up',
+         `${refused && refused.open}`),
+      ok(!!place && place.open === false, 'and ordering a place puts it away as well',
+         `${place && place.open}`)
     ];
   }],
 
@@ -586,13 +605,19 @@ export const TESTS = [
     const ghosts = drawn.filter(k => !bench.has(k) || !offered.includes(k));
     const grew = window.__boardFit();
 
-    // ...and now a row that starts a piece of work. It stays on the board and
-    // says what it is doing, which is a different width of row.
+    // ...and now a row that starts a piece of work. The purchase puts the board
+    // away (feedback8 item 1), so this walks back up to it -- and the row is
+    // still there, saying what it is doing, which is a different width of row.
+    // Re-queried rather than kept: the board is rebuilt on the way back in, so
+    // the element from before the press is a stale one hanging off nothing.
     const row = shop().querySelector('[data-key="auto"]');
     row?.click();
     run(0.5);
     await sleep(80);
-    const said = row?.querySelector('.gain')?.textContent || '';
+    await hoverBench();
+    await sleep(250);
+    const again = shop().querySelector('[data-key="auto"]');
+    const said = again?.querySelector('.gain')?.textContent || '';
     const fit = window.__boardFit();
     const r = panel().getBoundingClientRect();
     const left = shop().querySelectorAll('[data-key]').length;
@@ -604,7 +629,7 @@ export const TESTS = [
       ok(Math.abs(grew.h - grew.realH) < 2 && Math.abs(grew.w - grew.realW) < 2,
          'and it is seated by the size those rows make it',
          `seated ${grew.w}x${grew.h}, really ${grew.realW}x${grew.realH}`),
-      ok(!!row && left === drawn.length, 'starting a build leaves the row where it is',
+      ok(!!again && left === drawn.length, 'starting a build leaves the row where it is',
          `${drawn.length} -> ${left} rows`),
       ok(/on the way|building|nobody on it/.test(said),
          'and the row says what the yard is doing about it', said || 'nothing'),

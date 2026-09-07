@@ -5,7 +5,7 @@
 
 import { fmt, openBoardRect } from '../board.js';
 import { CORE_CELL, P, SHARD_CELL, SPARK_CELL, SPORE_CELL } from '../config.js';
-import { S, floor, pit, rift } from '../state.js';
+import { S, floor, pit } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawMark } from './marks.js';
 
@@ -79,13 +79,20 @@ export function drawCount() {
   // off the yard entirely and sits at the bottom edge of the window, where
   // nothing in the yard is ever drawn and it cannot be in front of anything.
   //
-  // It still slides along to stay with the pit, because the numbers and the
-  // hole they are about belong within a glance of each other.
+  // And left of the hole, never over it. It slides along to stay with the pit
+  // -- the numbers and the hole they are about belong within a glance of each
+  // other -- but the near lip is a wall it does not cross: everything past
+  // that is the pit, the disc and whatever is falling in, and the card would
+  // be standing in front of the one part of this screen worth watching. So it
+  // stands on the last of the ground, as near the lip as it can get.
+  //
+  // The floor at EDGE is the degenerate case -- the lip scrolled off the left
+  // of the glass, so there is no ground in view to stand on. It rides the edge
+  // rather than being pushed off the window entirely.
+  const lip = (pit.x - S.camX) * S.zoom;
   const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
-  const atPit = oldX > EDGE && oldX < S.W - wide;   // the pit mouth is in view
-  const mid = (rift.x + rift.w / 2 - S.camX) * S.zoom;
-  let x = atPit ? Math.max(EDGE, Math.min(mid - wide / 2, S.W - wide))
-                : Math.max(EDGE, Math.min(oldX, S.W - wide));
+  let x = Math.min(oldX, S.W - wide, lip - CLEAR - wide);
+  x = Math.max(EDGE, x);
   // `y` is the bottom row's baseline and the box hangs above it (see below),
   // so the card's own bottom edge is `y + PAD`: this seats that on the glass.
   const y = S.H - EDGE - PAD;
