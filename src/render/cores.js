@@ -22,7 +22,8 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          RIFT_HALO, RIFT_STIPPLE, RIFT_STIPPLE_MS, RIFT_LENS, RIFT_LENS_MS,
          RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_TURN, RIFT_STREAK_MAX,
          RIFT_FALL_FROM, RIFT_FALL_END, RIFT_TURNS,
-         RIFT_CORE_SHADOW, RIFT_CORE_TILT, RIFT_CORE_BAND, RIFT_CORE_MS,
+         RIFT_CORE_SHADOW,
+         RIFT_THROAT_MIN,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
@@ -467,95 +468,62 @@ export function drawRift() {
 
   disc(0, '#000');
 
-  // --- the core -----------------------------------------------------------
-  // TEMP: shapes for the middle of it, to be looked at side by side.
-  if ((globalThis.__riftCore || 'hole') !== 'none') drawHoleCore(cx, cy, rad, t);
+  // --- the throat ---------------------------------------------------------
+  // The fall does not stop at the rim, so the picture of it does not either.
+  // The same strands, on the same law, carried on inside the disc and drawn in
+  // paper instead of ink: the drain seen from above, going down.
+  //
+  // This is what the middle of it wanted. It was a flat black blob -- all the
+  // motion in the ring outside and nothing at the centre, which is the one
+  // place a hole should be busiest. Everything tried across the face of it
+  // instead read as a face: a white arc inside a black circle is an eye or a
+  // mouth, and at a dozen cells across there is no drawing your way out of
+  // that. A spiral cannot be read as an expression, so a spiral is what goes
+  // there -- and it is not a new invention, it is the one already running.
+  //
+  // Inverted, because the disc is ink and the page is paper: outside the rim
+  // the strands are black on white, inside it they are white on black, and
+  // they are the same strands. The rim is where the picture turns over.
+  drawThroat(cx, cy, rad, t, step);
   ctx.fillStyle = '#000';
 }
 
-// The core, borrowed from what a black hole actually looks like.
-//
-// The disc was a flat black blob: correct as a silhouette and with nothing
-// going on inside it, so the whole picture's motion lived in the ring outside
-// and the middle was dead. A real one is not featureless, and the two features
-// everybody has seen are worth having here.
-//
-// **Everything is inverted.** Out there a black hole is a bright disk round a
-// dark shadow on dark sky; here the page is white and the hole is ink, so the
-// bright parts are the ones cut back OUT of the black. That is the whole trick
-// of putting this in a black-and-white yard: what is light out there is paper
-// here, and paper is what this game has most of.
-//
-// - **The photon ring**: a thin gap just inside the rim, where light going
-//   round the thing more than once piles up. In paper it reads as the shadow
-//   being a shade smaller than the hole -- an edge to the middle rather than a
-//   blob that stops.
-// - **The lensed disk**: the far side of the accretion disk, bent up over the
-//   top of the shadow and down under the bottom, so a flat ring seen edge-on
-//   reads as a band across the face. This is the shape from the photographs
-//   and it is the one thing that says *hole* rather than *dot*.
-// - **Doppler**: the side turning toward you is brighter. One side of the band
-//   is drawn wide and clean, the other narrows to nothing -- and the bright
-//   side goes slowly round, which is the motion the middle was missing.
-function drawHoleCore(cx, cy, rad, t) {
-  const spin = t / RIFT_CORE_MS * Math.PI * 2;
+// The strands, carried on under the disc. Same law, same seeds, same fraying
+// -- it is the outer loop again with two differences: it draws the stretch of
+// the fall that is inside the rim rather than the stretch outside it, and it
+// draws in paper.
+function drawThroat(cx, cy, rad, t, step) {
   ctx.fillStyle = '#fff';
-
-  // Lines, a cell thick, not bands. A filled band on a disc this size is a
-  // white stripe and the middle reads as a barcode: there are only twenty-odd
-  // cells across the whole shadow, and structure at that scale has to be drawn
-  // the way the rest of this game draws it -- as an edge, not as an area.
-  const ring = (rx, ry, weight) => {
-    const n = Math.max(16, Math.round((Math.PI * 2 * Math.max(rx, ry)) / P));
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      // Doppler: the limb running toward you is bright and the far one falls
-      // away to nothing. `weight` says how hard that bites; `spin` walks it
-      // round, which is the motion the middle of this was missing -- nothing
-      // moves except which side is lit.
-      const beam = 0.5 + 0.5 * Math.cos(a - spin);
-      if (beam < weight) continue;
-      ctx.fillRect(Math.round(cx + Math.cos(a) * rx), Math.round(cy + Math.sin(a) * ry), P, P);
+  for (let i = 0; i < RIFT_STREAKS; i++) {
+    const sp = wisp(i, 0);
+    const k = ((t / (RIFT_STREAK_MS * (0.8 + sp * 0.5))) + wisp(i, 1)) % 1;
+    const a0 = wisp(i, 2) * Math.PI * 2;
+    const from = RIFT_FALL_FROM * (0.85 + wisp(i, 3) * 0.3);
+    // The throat is drawn from the head of the strand down, however far in the
+    // head has got -- so a strand only shows inside once it has actually
+    // arrived, and the middle fills and empties as the strands come round.
+    for (let c = 0; c < RIFT_STREAK_MAX; c++) {
+      const u = k + c * step;
+      if (u > 1) break;                                  // gone
+      const f = riftFall(from, u);
+      if (f.r > RIFT_CORE_SHADOW) continue;              // still outside; the black pass has it
+      // ...and it stops well short of the middle. The spiral tightens as it
+      // goes, so past a point its own successive turns are closer together
+      // than a cell and the tracery welds into a solid disc of paper -- which
+      // turns the hole inside out and reads as a ring with a white eye in it.
+      // The heart of it stays ink, which is the one thing about a hole that
+      // must never be in question.
+      if (f.r < RIFT_THROAT_MIN) break;
+      // Sparse the whole way and sparser as it goes down: a tracery of paper
+      // over the ink, not a fill. At the rim it keeps two cells in three and
+      // by the bottom of its run almost none.
+      const deep = 1 - (f.r - RIFT_THROAT_MIN) / (RIFT_CORE_SHADOW - RIFT_THROAT_MIN);
+      if (wisp(i, 900 + c) < 0.35 + deep * 0.6) continue;
+      const a = a0 + f.turns * Math.PI * 2;
+      const d = f.r * rad;
+      ctx.fillRect(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), P, P);
     }
-  };
-
-  // The photon ring: light that went round more than once, piled up just off
-  // the shadow. A circle, because it is the one part of this that is not the
-  // disk and so is not flattened by the angle you are looking from.
-  ring(rad * RIFT_CORE_SHADOW, rad * RIFT_CORE_SHADOW, 0.42);
-
-  // TEMP: 'ring' stops here -- the shadow with one lit arc turning round it,
-  // and nothing crossing the face.
-  if (globalThis.__riftCore === 'ring') return;
-
-  // TEMP: 'well' -- the drain's own law turned inward. Arcs cut in the shadow,
-  // each turning faster the further in it is, which is the one thing this
-  // whole pass is about: a drain conserves angular momentum, so the inside
-  // goes round quicker than the outside. Nothing crosses the face, so there is
-  // no flattened oval to read as a mouth.
-  if (globalThis.__riftCore === 'well') {
-    for (let ringN = 1; ringN <= 3; ringN++) {
-      const rr = rad * RIFT_CORE_SHADOW * (1 - ringN * 0.22);
-      if (rr < P) break;
-      // faster the tighter, the same way a grain is
-      const own = spin * (1 + ringN * 0.9);
-      const n = Math.max(10, Math.round((Math.PI * 2 * rr) / P));
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2;
-        if (0.5 + 0.5 * Math.cos(a - own) < 0.62) continue;   // one lit arc
-        ctx.fillRect(Math.round(cx + Math.cos(a) * rr), Math.round(cy + Math.sin(a) * rr), P, P);
-      }
-    }
-    return;
   }
-
-  // ...and the accretion disk, near enough edge-on: a circle flattened to a
-  // sliver by the angle. In the photographs its FAR side is bent up over the
-  // top of the shadow and its near side runs under the bottom, so a flat ring
-  // reads as a band across the face -- that lensed arc is the single thing
-  // that says hole rather than dot, and it costs one squashed ellipse.
-  ring(rad * 0.92, rad * RIFT_CORE_TILT, 0.18);
-  ring(rad * 0.92, rad * RIFT_CORE_TILT * 0.45, 0.5);
 }
 
 export function drawAbyss() {

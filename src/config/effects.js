@@ -56,15 +56,23 @@ export const RIFT_STIPPLE_MS = 2600; // how long the speckle takes to turn once
 export let RIFT_LENS = 0.09;         // share of the radius it swells by
 export const RIFT_LENS_MS = 3400;    // and how long one breath takes
 
-// The core: the middle of the disc, borrowed from what a black hole actually
-// looks like -- the shadow, the photon ring round it, and the far side of the
-// accretion disk lensed up over the top. Everything is inverted here: out
-// there it is a bright disk on dark sky, and on this page the bright parts are
-// the ones cut back out of the ink. See `drawHoleCore` in render/cores.js.
-export const RIFT_CORE_SHADOW = 0.62; // the shadow, as a share of the rim
-export const RIFT_CORE_TILT = 0.42;   // how far the lensed arcs sit off center
-export const RIFT_CORE_BAND = 0.30;   // and how thick they are at their widest
-export const RIFT_CORE_MS = 5200;     // one turn of the bright limb
+// The throat: the middle of the disc, which is the same fall carried on under
+// it. Drawn in paper, because the disc is ink -- the rim is where the picture
+// turns over. See `drawThroat` in render/cores.js.
+//
+// A literal black hole was tried here first -- the shadow, the photon ring,
+// the accretion disk lensed up over the top -- and it does not survive this
+// size. A flattened white ellipse inside a black circle is the shape of a
+// cartoon mouth, and at a dozen cells across that is what it reads as, teeth
+// and all; every arc across the face read as an eye or a smile. The palette
+// has no greys to soften it with. A spiral cannot be read as an expression,
+// which is why the throat is one.
+export const RIFT_CORE_SHADOW = 0.62; // where the throat starts, off the rim
+// How far down the throat the tracery goes before it stops, as a share of the
+// rim. The spiral tightens, so below this its own turns sit closer together
+// than a cell and the tracery welds into a solid disc of paper -- a hole with
+// a white eye in it. Everything under this stays ink.
+export const RIFT_THROAT_MIN = 0.30;
 
 // The infall streaks: short trails of stuff falling in, spiralling to the rim.
 // They run whether or not the hole is eating anything, which is most of the

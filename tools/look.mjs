@@ -430,16 +430,6 @@ const SCENES = {
   grown: `${RICH} window.__meteor(); window.__tear(400000); window.__give(30000);
           window.__fast(3); window.__look(window.__state().pitX - 300);`,
 
-  // TEMP: the two core treatments, on a disc grown near its full size.
-  corehole: `globalThis.__riftCore = 'hole'; ${RICH} window.__meteor();
-          window.__tear(900000); window.__give(30000);
-          window.__fast(3); window.__look(window.__state().pitX - 300);`,
-  corering: `globalThis.__riftCore = 'ring'; ${RICH} window.__meteor();
-          window.__tear(900000); window.__give(30000);
-          window.__fast(3); window.__look(window.__state().pitX - 300);`,
-  corewell: `globalThis.__riftCore = 'well'; ${RICH} window.__meteor();
-          window.__tear(900000); window.__give(30000);
-          window.__fast(3); window.__look(window.__state().pitX - 300);`,
 
   // The drowning: a disc at its full size crosses the threshold and gives
   // way; the runner's second before the shot lands this mid-liquefy, with
