@@ -759,6 +759,12 @@ export const TESTS = [
     window.__grant({ cores: 3, dust: 8000, spores: 3000, shards: 300 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    // `anotherpot` is the row this check watches for movement, and it is an
+    // earned one -- five batches, or it is not on the board at all. When it was
+    // missing the two measurements below were taken off nothing and the check
+    // reported `NaN -> NaN`, which says the row did not move and means the row
+    // was not there.
+    window.__brews(5);
     window.__board('apothecary');
     await sleep(120);
 
@@ -906,6 +912,12 @@ export const TESTS = [
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    // The second pot is an earned row: it does not appear until the craft has
+    // five batches behind it. Without this the purchase below quietly bought
+    // nothing, the yard kept one cauldron, and the check failed further down
+    // with a menu that would not open -- because `__potSpot` answers for a pot
+    // the yard does not have, so the hover was aimed at bare ground.
+    window.__brews(5);
     window.__buy('anotherpot'); window.__finish();
     window.__pot('stew', 0);                     // the first pot is set and stays set
     window.__look(state().apothecaryX - 200);    // both pots on the glass
@@ -932,7 +944,11 @@ export const TESTS = [
       .map(sp => `${sp.querySelector('i')?.className} ${sp.textContent.trim()}`);
     const said = k => `${k}: ${billOfRow(pop().querySelector(`.opt[data-opt="${k}"]`)).join(', ')}`;
     const charged = k => `${k}: ${window.__brewCost(k).map(([m, n]) => `${m} ${n}`).join(', ')}`;
-    const priced = ['stew', 'brace', 'strong'];
+    // The recipes the yard says it has, rather than three keys typed in here.
+    // Only the shown ones have a bill to compare: a shard recipe is off the
+    // list until the quarry opens, and asking a hidden row what it costs is
+    // asking about a row that is not on the picker.
+    const priced = window.__tonics().filter(t => t.shown).map(t => t.key);
     const wrong = priced.filter(k => said(k) !== charged(k));
     const free = billOfRow(pop().querySelector('.opt[data-opt=""]')).length;
 
@@ -997,8 +1013,9 @@ export const TESTS = [
 
     return [
       ok(open, 'standing at a cauldron drops its picker open, with no press'),
-      ok(swatches === 4, 'with a swatch for each brew and one for nothing',
-         `${swatches} options`),
+      ok(swatches === window.__tonics().length + 1,
+         'with a swatch for each brew and one for nothing',
+         `${swatches} options for ${window.__tonics().length} brews`),
       ok(marked === '', 'the pot it opened over reads as set to nothing',
          String(marked)),
       ok(wrong.length === 0, 'every brew says what the pot will actually be charged',

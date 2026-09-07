@@ -47,7 +47,7 @@ import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
-         brewCost } from './apothecary.js';
+         brewCost, TONICS, tonicShown } from './apothecary.js';
 import { CASINO_UPGRADES } from './casino.js';
 import { persist, restore, reset as resetGame } from './persist.js';
 import { skipIntro } from './intro.js';
@@ -993,6 +993,32 @@ export const HANDLES = {
   // job and it does it by brewing. This is for looking at a full shelf without
   // waiting twenty batches for one.
   __stock: (key, n) => setStock(key, n),
+  // How many batches the place has behind it, set outright. Three of this
+  // board's rows are revealed by the count rather than bought -- the deeper
+  // rungs, the potency ladders, and the second pot at five -- and a check about
+  // what one of those rows *does* would otherwise have to stand a stirrer up,
+  // set a pot, buy the spores and turn the clock through five whole batches to
+  // reach it. That is the setup the check is not about, which is what a handle
+  // is for; the earning itself is proved where it belongs, by the apothecary's
+  // own checks that brew.
+  //
+  // `__potSpot` will answer for a pot the yard does not have, so a check that
+  // wants two cauldrons has to actually get the second one: the picker asks
+  // `S.apothPots` and ignores a point outside it, and the failure looks like a
+  // menu that will not open rather than like a purchase that did not happen.
+  __brews: n => { S.brews = n; buildShop(); S.dirty = true; return true; },
+  // The recipes there are, and which of them the player can see yet. The pot's
+  // picker draws a row per recipe plus one for nothing, so a check counting
+  // swatches needs the number from the place that decides it -- it was typed
+  // into the check as a 4, and when the book gained two recipes the check said
+  // the picker was broken. The same trap this file's own comments keep naming:
+  // a constant copied into a check only proves that two people copied it.
+  //
+  // `shown` is the second half and not a detail: a shard recipe stays off the
+  // list until the quarry opens, so "how many rows" and "how many rows with a
+  // price to compare" are different questions and a check has to be able to ask
+  // for the one it means.
+  __tonics: () => TONICS.map(t => ({ key: t.key, shown: tonicShown(t) })),
   // Where a cauldron stands, in world pixels. A check that wants to CLICK a pot
   // has to aim at it, and the yard is the only thing that knows where it put its
   // pots -- so it says, and the pointer does the rest.

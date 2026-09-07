@@ -376,6 +376,13 @@ export const snapshot = () => ({
   potKeep: S.potKeep,
   potSpent: S.potSpent,
   apothPots: S.apothPots,
+  // How many batches the place has ever finished. Three rows on this board are
+  // revealed by it -- the deeper rungs, the potency ladders and the second pot
+  // -- so a check that wants one of them has to be able to see how close the
+  // craft is to earning it. Without this the only way to reach an earned row
+  // was to set the count by hand, which proves nothing about how a player gets
+  // there.
+  brews: S.brews,
   casinoX: Math.round(casino.x),
   wheel: +S.wheel.toFixed(2),
 
