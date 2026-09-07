@@ -286,11 +286,15 @@ group('a station standing empty is lent a body', async () => {
 
   const rockhands0 = state().rockhands;
   window.__buy('quarrybench');
-  // Eight, not six: wave7b-build added the construction bench's slot to the
-  // walk, so the yard is a station-gap wider and the lent body's commute from
-  // the rock to the cut is about half a second longer. The margin, not the
-  // mechanic.
-  run(8);
+  // Wait for the digging, not for a number of seconds. This was `run(6)`, then
+  // `run(8)` when wave7b-build put the construction bench's slot into the walk,
+  // and it went red again when the rift grew and pushed the cut further from
+  // the rock -- each time the yard got wider, and each time the margin was
+  // re-guessed rather than the question being asked directly. The question is
+  // whether the lent body arrives and works, so ask that: the loan is still
+  // outstanding at the moment the first spadeful lands, which is the state the
+  // checks below want to read.
+  const dug = runUntil(() => (state().works?.quarry?.done || 0) > 0, 30);
   const going = state();
   const done = runUntil(() => !state().works?.quarry, 60);
   const back = state();
@@ -299,7 +303,7 @@ group('a station standing empty is lent a body', async () => {
     ok(going.lent.length === 1 && going.rockhands === rockhands0 - 1,
        'somebody is taken off the rock for it',
        `${going.rockhands} rockhands, owed ${JSON.stringify(going.lent)}`),
-    ok((going.works?.quarry?.done || 0) > 0, 'and the bench is actually being dug',
+    ok(dug, 'and the bench is actually being dug',
        JSON.stringify(going.works?.quarry)),
     ok(done, 'it finishes'),
     ok(back.rockhands === rockhands0 && back.lent.length === 0,
