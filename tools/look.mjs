@@ -58,6 +58,28 @@ const SCENES = {
          window.__loo(); window.__assign('janitors',1); window.__fast(20);
          window.__look(window.__state().rockLeftX - 420);`,
 
+  // The question mark a held body says. Hovered for real -- the pause and the
+  // mark come off `pointermove` in pointer.js, and there is no hook that puts
+  // the mark up -- so the camera is put on the body first and the pointer sent
+  // to where it then stands.
+  asking: `window.__reset(); window.__crew(3,2,2,2);
+           window.__school({breakers:3,blasters:2,growers:2,carters:2});
+           window.__fast(20);
+           // In a frame, not now: the runner turns a whole second of clock after
+           // a scene and the hold is only nine hundred milliseconds, so a hover
+           // sent from here would have lapsed by the time of the shot -- and the
+           // body would have walked out from under it besides. The camera and the
+           // pointer are both put on the body as that frame opens.
+           requestAnimationFrame(() => {
+             const d = window.__state().crewDetail[0].split('|');
+             const wx = Number(d[2]), wy = Number(d[7].slice(1));
+             window.__look(wx - 400 / window.__state().zoom);
+             const s = window.__state();
+             document.getElementById('c').dispatchEvent(new PointerEvent('pointermove', {
+               clientX: (wx - s.camX) * s.zoom, clientY: (wy - s.camY) * s.zoom,
+               pointerId: 1, isPrimary: true, button: 0, buttons: 0, bubbles: true }));
+           });`,
+
   // The cut, worked by machine: the jaw on the floor of it and the hoist over.
   quarry: `${RICH} window.__buy('jaw'); window.__finish(); window.__look(window.__state().quarryX - 220);`,
 
