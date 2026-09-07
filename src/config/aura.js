@@ -15,31 +15,50 @@ export const FLAG_H = 3;             // and deep -- the measure across the walk,
                                      // so it is the cloth's height while the
                                      // flag flies level and its width while the
                                      // flag hangs
-export const FLAG_RIPPLE_MS = 700;   // one wave traveling the pennant's length
-export const FLAG_SWING = 0.95;      // radians the ripple turns the cloth by at
-                                     // the loose end. It is an angle now, not a
-                                     // shift: the cloth is walked out from the
-                                     // knot a half cell at a time and the wave
-                                     // steers the walk, so the ripple bends the
-                                     // whole sheet instead of sliding columns
-                                     // of it up and down past each other
+export const FLAG_RIPPLE_MS = 1500;  // one wave traveling the pennant's length.
+                                     // It was 700, which put two waves through
+                                     // the cloth a second: at this size that is
+                                     // not cloth in a breeze, it is a shiver
+export const FLAG_SWING = 0.55;      // radians the ripple turns the cloth by at
+                                     // the loose end. An angle, not a shift: the
+                                     // cloth is walked out from the knot half a
+                                     // cell at a time and the wave steers the
+                                     // walk, so the ripple bends the whole sheet
+                                     // instead of sliding columns of it past
+                                     // each other
 export const FLAG_WAVES = 0.75;      // waves standing on the cloth at once. A
                                      // third of one moved the whole pennant
                                      // together -- one flap, not a ripple
-export const FLAG_FILL = 2.2;        // how fast the cloth lifts as the wind
-                                     // rises. Steeper than the wind, so the
-                                     // flag flies level for most of a gust and
-                                     // hangs only around the turn
-export const FLAG_SAG = 0.18;        // how much of the slack the cloth carries
-                                     // right at the knot. The knot holds its
-                                     // own end up whatever the wind does, so
-                                     // the sag is small there and grows out
-                                     // along the length toward the loose end
-export const FLAG_GUST_MS = 7000;    // the slow swell of the wind's strength;
-                                     // its sign is the way the cloth flies
-export const FLAG_GUST_SPAN = 2400;  // world px a gust front spans: the wind
-                                     // is a wave crossing the yard, so flags
-                                     // far apart turn at different moments
+export const FLAG_FILL = 2.0;        // how much of the yard's wind the cloth
+                                     // takes, as a share of a right angle. The
+                                     // wind peaks near 0.94, so at this the flag
+                                     // stands right out about a third of the
+                                     // time, hangs about a fifth, and is
+                                     // somewhere between for the rest. Lower
+                                     // read calmer and cost too much: this flag
+                                     // is a SIGNAL -- it says a station has
+                                     // something you can afford -- so time spent
+                                     // furled is time the sign cannot be read.
+                                     // The calm came out of the ripple instead,
+                                     // which is where the gale actually was
+export const FLAG_SAG = 0.35;        // how far the loose end falls back toward
+                                     // vertical when the wind is less than full.
+                                     // The knot goes on holding its own end up
+                                     // whatever the wind does, so the sag is
+                                     // nothing there and gathers along the length
+export const FLAG_LIMP = 0.35;       // the share of its ripple the cloth keeps
+                                     // with no wind in it at all. Cloth is never
+                                     // rigid: a furled flag still stirs, and
+                                     // without this the hang drew as a straight
+                                     // vertical bar on a vertical pole -- three
+                                     // cells of nothing you could tell from the
+                                     // mast, on the one mark that has to stay
+                                     // legible the whole time it is up
+export const FLAG_GIVE = 0.12;       // a flag's own share of the one wind, a
+                                     // spread either way. Two flags differ by a
+                                     // few percent and never disagree about which
+                                     // way it is blowing -- the same bargain
+                                     // wind.js strikes for every mote in the air
 
 
 // When an offer first opens, one ring of ink breathes off the flag's tip --
