@@ -49,16 +49,28 @@ canvas {
    So the sheet is the grid and a row is a subgrid of it. `max-content` measures
    the longest name on this board and gives it exactly that, every row on the
    board lines up under it because they share the tracks, and a new row that is
-   longer than all of them widens the column instead of running out of it. */
+   longer than all of them widens the column instead of running out of it.
+
+   A ROW IS A CARD NOW, and the sheet's tracks went with the change. See
+   DESIGN.md, "A row becomes a card". The short of it: the rows on these boards
+   are independent purchases, not a series to be read down -- a rung inside a row
+   is sequential with no choice in it, and two rows under one heading buy
+   different things. A subgrid asserts that its rows are a column to be read
+   together, which was never true; a card's edge says the truer thing, that this
+   is one whole item. Scanning survives because the names still line up in two
+   columns, and two columns is also what pays for the second line. */
 .rows {
   display: grid;
-  grid-template-columns: max-content max-content minmax(0, 1fr);
+  /* Two cards across. Not `max-content` any more: a card is a box with a bill
+     in it rather than a name in a shared track, so the pair share the sheet
+     evenly and the sheet is as wide as the widest card needs. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
-  gap: 3px 6px;
+  gap: 4px;
 }
-/* Headings, rows, notes: everything on the sheet spans the whole width of it,
-   and only the rows themselves take the tracks. */
+/* Headings and anything else loose span the sheet; a card takes one cell of it. */
 .rows > * { grid-column: 1 / -1; }
+.rows > button, .rows > .job { grid-column: auto; }
 
 .rows .sect {
   margin-top: 6px;
@@ -133,12 +145,12 @@ canvas {
 
 .rows button {
   display: grid;
-  /* Three things on a line: what it is, what the next one changes, and what it
-     costs -- in the sheet's own tracks, so that every row on the board agrees
-     about where each of them starts. How far up the ladder you are is a fourth
-     thing, and it is under the name rather than beside it: as a column of its
-     own it was two numbers about different things sitting a character apart. */
-  grid-template-columns: subgrid;
+  /* The card: the name and its rungs on top, what it gives and what it costs
+     underneath. Two columns inside the card rather than the sheet's tracks --
+     the gain takes what it needs on the left and the bill sits hard right, and
+     because the card owns its own tracks a long bill in one card cannot push
+     every other card's price across the board. */
+  grid-template-columns: 1fr auto;
   align-items: baseline;
   font: inherit;
   letter-spacing: .1em;
@@ -146,8 +158,8 @@ canvas {
   text-align: left;
   color: #000;
   background: none;
-  border: 0;
-  padding: 2px 3px;
+  border: 1px solid #000;
+  padding: 6px 8px;
   cursor: pointer;
 }
 .rows button:hover:not(:disabled) { color: #fff; background: #000; }
@@ -281,7 +293,18 @@ canvas {
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
 .rows button .gain { opacity: .75; }
-.rows button .cost { grid-column: 3 / -1; text-align: right; opacity: .7; }
+/* Hard right on the card's second line. `min-width: 0` so a bill wider than the
+   card can wrap inside its own cell rather than stretching the card past its
+   neighbor -- only four rows in the game are that wide (the ram, the drill, the
+   tiller, a wizard) and each of them is a machine, so the rare second line lands
+   exactly where a bigger purchase is being read more slowly anyway. */
+.rows button .cost {
+  grid-column: 2;
+  min-width: 0;
+  text-align: right;
+  opacity: .7;
+  white-space: normal;
+}
 
 /* The row's description, in its own line under the name-gain-price line rather
    than in a box on hover -- a menu you can read without a mouse and without
@@ -308,7 +331,7 @@ canvas {
    so that a row which moves bodies and a row which spends dust are the same
    shape and can share the sheet's columns. */
 .rows .job .step {
-  grid-column: 2 / -1;
+  grid-column: 2;
   display: inline-grid;
   grid-template-columns: auto minmax(1.8em, auto) auto;
   align-items: baseline;
@@ -329,7 +352,19 @@ canvas {
    two coins is two lines tall, which pushed them down clear of the words they
    belong to. Inside the name they sit under the title whatever the rest of the
    row is doing. */
-.rows .name { display: flex; flex-direction: column; align-items: flex-start; }
+/* The card's top line, spanning both of its columns: the name on the left and
+   how far up the ladder on the right. The pips used to sit UNDER the words,
+   because a stacked bill in a shared track had pushed them off the line they
+   belong to. The card has its own tracks and its own second line, so they come
+   back up beside the name where they read as part of it. */
+.rows .name {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
 .rows .name .what { font-style: normal; }
 .rows .ladder {
   font-style: normal;
@@ -351,13 +386,14 @@ canvas {
 .rows button:hover:not(:disabled) .ladder {
   opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
 }
-/* A row with no ladder keeps the ladder's line anyway. The pips are half a line
-   under the name, and a board where some rows have them and some do not is a
-   board whose names sit at a different height in every row -- which is the thing
-   you notice before you notice any of the words. The space is held and left
-   blank instead, so every row on every board is exactly as tall as every other
-   and the names come down the sheet on one rhythm. */
-.rows .ladder { display: block; min-height: 1em; }
+/* A card with no ladder simply has nothing to the right of its name, and needs
+   no held space to stay the same height as its neighbors: a card is two lines
+   because it has a name line and a price line, whether or not there are pips on
+   the first one. This rule used to hold a blank line UNDER every name -- the
+   pips sat there, and a board where some rows had them and some did not was a
+   board whose names sat at a different height in every row. On the card they
+   are beside the name, so the problem and the workaround both go. */
+.rows .ladder { display: block; }
 .rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
@@ -365,11 +401,16 @@ canvas {
    it is not a price row and does not look like one. */
 .rows .job {
   display: grid;
-  grid-template-columns: subgrid;
+  /* The same card as a price row, and deliberately: the stepper sits in the
+     cell a bill would fill, which is the trick that let job rows and price rows
+     share a set of tracks before the card existed and is what keeps them one
+     shape now. */
+  grid-template-columns: 1fr auto;
   align-items: baseline;
   letter-spacing: .1em;
   text-transform: uppercase;
-  padding: 2px 3px;
+  border: 1px solid #000;
+  padding: 6px 8px;
 }
 .rows .job .count { text-align: center; }
 
@@ -380,7 +421,7 @@ canvas {
    an OS menu in the middle of this yard is the one thing on the screen that
    would not be black and white. */
 .rows .job.pickrow .chosen {
-  grid-column: 2 / -1;
+  grid-column: 2;
   justify-self: end;
   text-align: right;
   letter-spacing: .1em;
@@ -553,25 +594,23 @@ canvas {
    thing rather than a rate, so the gain column had nothing to put in it. */
 #shop button[data-key="unlocktower"] .gain { display: none; }
 
-/* A bill of three or four, two to a line.
-   Written as one line of words it ran off the edge of the sheet and sat on top
-   of the row's own name. Each price is its own cell now, and past two of them
-   the cell becomes a little grid: it grows downwards, where a menu has room,
-   instead of sideways, where it has none. Right-aligned within each column, the
-   way every other number on these boards is, and the columns are sized off the
-   widest of them so the marks line up under each other. */
-/* A bill of two stays on one line, but the marks still need air between them:
-   written as bare spans they abutted, and "1" and the mark after it read as one
-   token. */
-.rows button .cost span + span { margin-left: .9em; }
+/* The bill wraps inside its own cell, right-aligned, filling from the right.
+   It used to be counted and then stacked one coin to a line past four of them,
+   because the price COLUMN was a track shared by the whole sheet and a bill
+   that outgrew it ran over the next row's name. A card owns its own tracks, so
+   the bill can simply wrap when it runs out of card -- which happens on four
+   rows in the game, all of them machines -- and every other bill stays on the
+   one line it always fitted on. Counting the coins to decide the layout was a
+   guess about content; wrapping is a measurement of it.
 
-.rows button .cost.split span + span { margin-left: 0; }
-.rows button .cost.split {
-  display: inline-grid;
-  grid-template-columns: max-content;
-  gap: 0;
-  justify-content: end;
-  justify-items: end;
+   `gap` rather than a margin between spans, so the wrapped line is spaced like
+   the first one and a lone coin carries no stray indent. */
+.rows button .cost {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 0 .9em;
 }
 
 /* The tower's rows are bills too, and longer ones: three currencies for a hat

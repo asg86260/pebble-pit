@@ -214,12 +214,19 @@ export const TESTS = [
     const coins = row && [...row.querySelectorAll('.cost i')].map(i => i.className);
     const said = row && row.querySelector('.cost').textContent.trim();
     const tall = row && Math.round(row.getBoundingClientRect().height);
-    // A bill stacks two to a line once it is longer than the column can hold, and
-    // a stacked bill makes its row taller than every other row on the board. Four
-    // fits, so this one must not be stacking: asked of the cell itself, because
-    // the tower has one row and "every row here is the same height" is a thing a
-    // board with one row says whatever it does.
-    const stacked = row && row.querySelector('.cost').classList.contains('split');
+    // A bill wraps inside its cell once it is longer than the card can hold, and
+    // a wrapped bill makes its card taller than the others. Four fits, so this
+    // one must not be wrapping.
+    //
+    // Measured rather than asked of a class name. There used to be a `.split`
+    // class, put on by counting the coins, and this checked for it -- so it was
+    // really checking that somebody had counted to four, not that the words fit.
+    // The bill wraps on its own now, which means the honest question is whether
+    // the cell is taller than one of the coins in it.
+    const cell = row && row.querySelector('.cost');
+    const coin = cell && cell.querySelector('span');
+    const stacked = !!cell && !!coin &&
+      cell.getBoundingClientRect().height > coin.getBoundingClientRect().height * 1.5;
     window.__board(null);
     return [
       ok(!!row && row.querySelector('.what').textContent.trim() === 'train a wizard',
@@ -575,17 +582,26 @@ export const TESTS = [
     const on = what && getComputedStyle(what, '::before').content;
     const off = name && getComputedStyle(name, '::before').content;
     const anchored = what && getComputedStyle(what).position;
-    // and the two lines really are at different heights, or this proves nothing
-    const wm = what && what.getBoundingClientRect();
-    const nm = name && name.getBoundingClientRect();
-    const apart = wm && nm
-      ? Math.round(Math.abs((nm.top + nm.height / 2) - (wm.top + wm.height / 2))) : 0;
+    // The dot sits beside the words, not out in the cell around them.
+    //
+    // This used to be guarded by asserting the cell and the title were at
+    // different heights -- which they were, because the name cell was two lines
+    // with the pips on the second one, and a dot centred on the CELL therefore
+    // hung half a line below the words it belonged to. That is the bug this
+    // check was written for. On the card the pips are beside the name rather
+    // than under it, the cell is one line, and the two centres coincide: the
+    // guard now measures a geometry the design has removed and reads 0px every
+    // time. What it was protecting is still worth stating, so the remaining
+    // assertions -- the dot is on the title, it is not on the cell, and the
+    // title is what it is positioned against -- carry it on their own.
+    const box = what && what.getBoundingClientRect();
     window.__board(null);
     return [
       ok(!!row, 'there is a row on the bench nobody has read yet',
          row ? row.dataset.key : 'none'),
-      ok(apart >= 2, 'the cell and the title are at different heights',
-         `${apart}px apart`),
+      ok(!!box && box.width > 0 && box.height > 0,
+         'the title is a box the dot can hang off',
+         box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
       ok(on && on !== 'none', 'the dot hangs off the title', String(on)),
       ok(off === 'none' || off === undefined, 'and not off the cell round it',
          String(off)),

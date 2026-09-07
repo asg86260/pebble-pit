@@ -530,10 +530,10 @@ export function refresh(el, list, headcount) {
     const bill = parts.join('');
     const [name, gain, price] = row.children;
     const what = name.firstElementChild, ladder = name.lastElementChild;
-    // Five or more is a bill nobody has written yet; if one is ever written it can
-    // stack again, and until then every row on a board is one line tall. Four is
-    // written: a wizard costs dust, stone, crop and two minutes.
-    price.classList.toggle('split', parts.length > 4);   // `price` is the .cost cell
+    // Nothing counts the coins any more. The bill wraps inside the card's own
+    // price cell when it runs out of room, which is a measurement of the words
+    // actually in it rather than a guess about how many there will be -- see the
+    // note by `.rows button .cost` in style.css.
 
     // A piece of research under way says so in place of its numbers, and
     // nothing else on that board can be started until it is finished.
