@@ -336,8 +336,18 @@ function intoTheRift(m, s, f) {
   // middle and would throw a mote across the yard in one frame.
   const g = RIFT_PULL * (s.r * s.r) / Math.max(d * d, s.r * s.r);
   const k = g * m.b.take * f;
-  m.sx = (m.sx || 0) + (dx / d) * k;
-  m.sy = (m.sy || 0) + (dy / d) * k;
+  // Clamped to AIR_STIR_CAP, the same ceiling the cursor's draught keeps.
+  //
+  // Without it this pulls a mote to a terminal speed of the pull over the
+  // decay -- about thirteen pixels a frame, which crosses the window in a
+  // second. What that looked like was the sky being flung past the hole and
+  // off the bottom of the screen. A force added to a *speed* needs a ceiling
+  // in a way a shove straight into a position never did, and the air already
+  // had the ceiling: this is the second thing to push a mote about and it
+  // obeys the same limit as the first.
+  const cap = AIR_STIR_CAP;
+  m.sx = Math.max(-cap, Math.min(cap, (m.sx || 0) + (dx / d) * k));
+  m.sy = Math.max(-cap, Math.min(cap, (m.sy || 0) + (dy / d) * k));
   return false;
 }
 
