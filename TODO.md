@@ -2,11 +2,10 @@
 
 ## 6. The shields — the story arc
 
-**Status:** all five shields built. `src/shield.js` owns every kind through one
+**Status:** built, end to end. `src/shield.js` owns every kind through one
 `KINDS` table — material, price, coin, and how it answers a rock — with the
 four bench rows, the dome on the tower's board, the piece walk on the kit-walk
-legs, and six groups in `test/shield.test.mjs`. What remains is the rescue
-choreography: the buried mate walking out under the dome.
+legs, the rescue in `intro.js`, and seven groups in `test/shield.test.mjs`.
 
 Three attempts to stop the next rock: timber props (bench, dust) the rock goes
 straight through; a stone arch (shards) that catches one for a held beat and
@@ -39,15 +38,14 @@ ever under a shield when it goes, and the wreckage flies out along the heap as
    sets the rock down gently (`landRock(gentle)`) and stays standing for every
    rock after.
 
-4. **The rescue — still to do.** The one beat left, and the point of the whole
-   arc: under the dome the buried mate walks out. The buried-body system
-   (`rock.test.mjs` "the one underneath") changes meaning here — after this
-   there is nobody under any rock, and the says-dots loop moves to two bodies
-   on the surface. It belongs in `intro.js`, which already owns `S.buried`,
-   `S.pair` and `sceneHolds`; `shield.js` triggers it on the dome's first
-   catch. Watch `buriedVisible()`, the opening's promise, and the glimpses
-   between rocks — all three read the buried state and must still mean
-   something afterwards.
+4. **The rescue — DONE.** `startRescue` in `intro.js` as a `'rescue'` scene
+   phase, triggered by `shield.js` the first time the dome holds a rock with
+   somebody still under the spot. The rock waits overhead until they are clear;
+   they walk out on their own legs toward the pit — the working end of the yard
+   — the camera pans with them, somebody comes to meet them, and then they
+   **join the crew**, which is the whole of the reward. `S.buried` goes false
+   at the start of the walk (so the square is drawn once, out of `S.pair`) and
+   `S.rescued` is saved, so the beat cannot play twice.
 
 **The hard parts, in order:** what the landing code consults (a shield is the
 first thing with a say in where a rock stops); how the buried-mate state ends

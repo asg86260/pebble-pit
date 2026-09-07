@@ -207,6 +207,7 @@ export function persist() {
     labOpen: S.labOpen,
     introDone: S.introDone,
     reunionDone: S.reunionDone,
+    rescued: S.rescued,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
                           h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
                           cast: S.shield.cast },
@@ -334,6 +335,7 @@ export function restore() {
     S.shield = null;
     S.shieldsDone = [];
     S.rockHeld = false;
+    S.rescued = false;
     return;
   }
   S.stored = s.stored;
@@ -441,6 +443,9 @@ export function restore() {
   S.camLockY = null;
   S.pair = [];
   S.buried = s.buried ?? !!s.introDone;
+  // A save from before the dome existed has plainly not got anybody out yet.
+  S.rescued = !!s.rescued;
+  if (S.rescued) S.buried = false;
   S.casinoOpen = !!s.casinoOpen;
   S.scrubOpen = !!s.scrubOpen;
   S.towerOpen = !!s.towerOpen;
@@ -639,6 +644,7 @@ export function reset() {
   S.introDone = false;
   S.reunionDone = false;
   S.buried = false;
+  S.rescued = false;
   S.shield = null;
   S.shieldsDone = [];
   S.rockHeld = false;

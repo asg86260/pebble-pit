@@ -64,6 +64,8 @@ export const S = {
   introSaid: 0,
   pair: [],               // the two of them, before the rock
   buried: false,          // somebody is under it, and still alive
+  rescued: false,         // and, once the dome held one off them, they got out
+  rescueTo: 0,            // where they are walking to while they do
   buriedSay: null,
   buriedSayAt: 0,
   boulderNo: 1,           // how many rocks in; each one is bigger than the last

@@ -27,6 +27,7 @@ import { sendOn } from './crew.js';
 import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
+import { startRescue } from './intro.js';
 
 // What each shield is, and the whole of what makes it different from the
 // others: what it is made of, what it costs, and how it answers a rock. A new
@@ -192,6 +193,11 @@ function answer(s, kind) {
   // its own state is put back rather than thrown away.
   if (kind.answer === 'hold') {
     if (!s.setting) {
+      // And the first time it holds one, whoever is under that spot walks out
+      // from under it -- which is the beat this whole arc was built to reach,
+      // so the rock waits overhead until they are clear. See `startRescue`.
+      if (S.buried && !S.rescued) { startRescue(now()); return; }
+      if (S.intro === 'rescue') return;
       if (now() - s.caught >= kind.holds) { s.setting = true; S.dirty = true; }
       return;
     }

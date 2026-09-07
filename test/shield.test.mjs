@@ -207,6 +207,50 @@ group('the jack pushes the rock back up before it buckles', async () => {
   ];
 });
 
+// The beat the arc was built to reach. It is checked for the things that make
+// it mean anything -- that somebody was under there, that they are not any
+// more, that they walked rather than vanished, and that they are one of the
+// crew afterwards -- rather than for how it looked while it happened.
+group('under the dome, the one underneath walks out', async () => {
+  ready();
+  openSites();
+  window.__crew(2, 1);
+  through('props', PROP_PLANKS);
+  through('net', NET_ROPES);
+  through('arch', ARCH_BLOCKS);
+  window.__meteor();
+  window.__grant({ sparks: JACK_COST * 2, cores: 20 });
+  through('jack', JACK_PARTS);
+
+  const before = state();
+  window.__buy('dome');
+  runUntil(() => {
+    const sh = state().shield;
+    return sh && sh.laid >= sh.pieces;
+  }, 200);
+
+  window.__next();
+  const caught = runUntil(() => state().rockHeld, 240);
+  // the rock waits overhead while they get clear
+  const walking = runUntil(() => state().intro === 'rescue', 30);
+  const heldFor = state().rockHeld;
+  const out = runUntil(() => state().rescued && !state().intro, 60);
+  const after = state();
+  const set = runUntil(() => !state().rockHeld && !state().rockFall, 60);
+
+  window.__reset();
+  return [
+    ok(before.buried, 'somebody has been under every rock until now'),
+    ok(caught && walking, 'the dome holds one and the beat starts', `intro ${state().intro}`),
+    ok(heldFor, 'the rock is still up there while they walk out'),
+    ok(out, 'they get out'),
+    ok(!after.buried && after.rescued, 'and nobody is under the rock any more'),
+    ok(after.crew > before.crew, 'they join the crew',
+       `${before.crew} -> ${after.crew}`),
+    ok(set, 'and only then is the rock set down')
+  ];
+});
+
 group('the dome holds, and sets every rock down after it', async () => {
   ready();
   openSites();

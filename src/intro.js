@@ -28,11 +28,12 @@ import { P, WORKER, GRAV, INTRO_ZOOM, INTRO_CHAT_MS, INTRO_HEART_MS, INTRO_DOWN_
          INTRO_UP_MS, INTRO_BEAT, INTRO_APART, INTRO_HURL,
          INTRO_SHOW_DUST, INTRO_SHOW_MAX,
          MEET_IN_MS, MEET_MS, PART_MS } from './config.js';
+import { COMMUTE_PACE, ROCK_CLEAR } from './config.js';
 import { S, pit } from './state.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 import { makeBoulder, boulderAlive } from './rock.js';
 import { spawnChip, aim } from './dust.js';
-import { walkY, setZoom, clampCam } from './world.js';
+import { walkY, setZoom, clampCam, lookAt } from './world.js';
 import { rebalance, assign } from './upgrades.js';
 import { syncWorkers } from './crew.js';
 
@@ -44,7 +45,8 @@ const pairX = i => Math.round((S.cx + (i ? INTRO_APART : -INTRO_APART) - WORKER 
 export const introRunning = () => !!S.intro;
 // The phases that own the yard: nothing rolls in on its own while one of these
 // is running, because the rock arriving is a thing the scene does itself.
-export const introHolds = () => S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part';
+export const introHolds = () =>
+  S.intro === 'chat' || S.intro === 'meet' || S.intro === 'part' || S.intro === 'rescue';
 
 // A fresh game, and nothing has happened yet.
 export function startIntro() {
@@ -91,6 +93,7 @@ export function stepIntro(t) {
   if (S.intro === 'show') return show(t);
   if (S.intro === 'meet') return meet(t);
   if (S.intro === 'part') return part(t);
+  if (S.intro === 'rescue') return rescue(t);
 }
 
 // --- the second act -----------------------------------------------------------
@@ -129,6 +132,100 @@ export function maybeReunion(t) {
     who.walking = true;
     who.met = true;
   }
+  S.dirty = true;
+}
+
+// --- and, once, somebody gets out ---------------------------------------------
+// The beat the whole game has been owed, and the only one that ever pays the
+// opening back. The dome catches a rock and holds it there -- and while it is
+// held, the person who has been under every rock in this yard walks out from
+// under the shadow of one.
+//
+// It is the opening played back the right way round. There, two squares stood
+// talking and a rock came down on one of them; here a rock comes down and does
+// not, and the two of them stand talking again. Nothing about it is new
+// vocabulary: the same square, the same dots, the same heart.
+//
+// They do not vanish into a cutscene afterwards -- they join the crew, because
+// what this game is about is the people in the yard and there is one more of
+// them now. That is the whole of the reward, and it is a better one than a
+// number: every rock after this is dug out by somebody who was under one.
+export function startRescue(t) {
+  if (S.rescued || !S.buried) return;
+  const at = buriedAt();
+  S.intro = 'rescue';
+  S.introAt = t;
+  S.introSaid = 0;
+  // Out from under, and clear of the footprint the rock is going to be set
+  // down on -- it walks out of the way of the thing overhead rather than out
+  // of the picture. Toward the pit, which is to say toward the working end of
+  // the yard: the way it goes is the way everybody else already is, because
+  // where it is walking to is the crew.
+  const half = Math.round((S.gw / 2) * P);
+  S.rescueTo = at.x + half + ROCK_CLEAR + WORKER;
+  // And the view goes with it. This is the one beat the whole arc was built to
+  // reach, and a beat played off the side of the window is a beat nobody sees;
+  // it is the same gentle pan a purchase gets, not a cut and not a zoom.
+  lookAt(S.rescueTo + WORKER / 2);
+  // It stops being buried the moment it starts walking: from here it is a
+  // square on the ground like any other, and `S.pair` is where the scenes keep
+  // those. Marked now rather than at the end, so a save in the middle of the
+  // walk cannot play the beat a second time.
+  S.buried = false;
+  S.buriedSay = null;
+  S.rescued = true;
+  S.pair = [{ x: at.x, y: at.y, say: null }];
+
+  // and somebody comes to meet them, the same way somebody did after the first
+  // rock -- one of the crew, sent on an ordinary walk, stopping beside them
+  let who = null, near = Infinity;
+  for (const w of S.workers) {
+    if (w.inside || w.inPit || w.aloft || w.walking) continue;
+    const d = Math.abs(w.x - S.rescueTo);
+    if (d < near) { near = d; who = w; }
+  }
+  if (who) {
+    who.walkTo = S.rescueTo - WORKER * 1.7;
+    who.leg = 'back';                          // it never left its job
+    who.walking = true;
+    who.met = true;
+  }
+  S.dirty = true;
+}
+
+// One frame of it: the walk out, then the two of them, then back to work.
+function rescue(t) {
+  const b = S.pair[0];
+  if (!b) { S.intro = null; return; }
+  const d = S.rescueTo - b.x;
+  if (Math.abs(d) > 1) {
+    // its own legs, at the pace anybody crosses the yard at
+    b.x += Math.sign(d) * Math.min(COMMUTE_PACE * frames(), Math.abs(d));
+    b.y = walkY(b.x + WORKER / 2);
+    S.introAt = t;                             // the beat starts when it arrives
+    return;
+  }
+  b.y = walkY(b.x + WORKER / 2);
+  if (t >= (S.introSaid || 0)) {
+    S.introSaid = t + INTRO_BEAT * 1.4;
+    b.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
+    const who = S.workers.find(w => w.met);
+    if (who && !who.walking) who.say = { mark: 'heart', until: t + INTRO_BEAT * 1.3 };
+  }
+  if (t - S.introAt < MEET_MS) return;
+
+  // And then it is one of the crew. Where it is standing is where it walked to,
+  // which is the same bargain `begin` strikes at the end of the opening: the
+  // body you were watching is the body that carries on.
+  const had = new Set(S.workers);
+  S.crew++;
+  rebalance();
+  syncWorkers();
+  const fresh = S.workers.find(w => !had.has(w));
+  if (fresh) { fresh.x = b.x; fresh.y = walkY(b.x + WORKER / 2); }
+  for (const w of S.workers) { w.met = false; w.say = null; }
+  S.pair = [];
+  S.intro = null;
   S.dirty = true;
 }
 
@@ -179,7 +276,11 @@ const ease = k => 1 - Math.pow(1 - k, 3);
 function hold(t) {
   // The last stretch is not held at all: the view is back to its own size and
   // walking with whoever is doing the showing. See `show`.
-  if (S.intro === 'show') return;
+  //
+  // Nor is the rescue. It happens in a working yard, and pulling the camera in
+  // on it would say "watch this" -- the whole point of the beat is that it
+  // happens where everything else in this game happens, at the same size.
+  if (S.intro === 'show' || S.intro === 'rescue') return;
 
   // How far out the view is, nought being right in on them. The opening pulls
   // out at the end of it; the second act pulls back *in* and then out again.

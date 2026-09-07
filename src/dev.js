@@ -173,6 +173,9 @@ const SHIELDS = Object.fromEntries(ORDER.flatMap(k => [
   [k, () => built(k)],
   [`${k}!`, () => { built(k); window.__next(); }]
 ]));
+// and the beat the whole arc is for: the dome up, a rock on the way, and
+// somebody still under the spot it is coming down on
+SHIELDS.rescue = () => { built('dome'); S.buried = true; window.__next(); };
 
 line('scenes', box => {
   for (const [name, fn] of Object.entries(SCENES)) button(box, name, fn);
