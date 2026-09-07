@@ -1,5 +1,29 @@
 # Still to do
 
+## The pot picker: two reds, both older than they look (2026-09-07)
+
+Found while landing the rim ripple. The browser group "standing at a pot picks
+what that pot brews" was throwing on its third check, which hid everything after
+it; with the throw fixed the group is 13/15 and two real failures are now
+visible. Neither is from the rift work.
+
+1. **A press does not open the picker.** `ok(pressed, ...)` is red. Diagnosed as
+   far as: a hover at the *same* point does open it, so `potAt` and the
+   coordinates are right and the picker itself is fine; no crew count moves on
+   the press, so `rosterHit` is not swallowing it either (and the roster sits at
+   `groundY + P*10`, below the cauldrons at 1938–1998). Something else in the
+   `pointerdown` handler returns before `potPick` at input.js:154 — the
+   remaining suspects are `skipCutscene()` and `startle()`, neither ruled out.
+   **Worth fixing rather than deleting the check: a press is the only way into
+   that menu on a touchscreen**, so this is a real control that does not work,
+   not just a red line.
+2. **A potency rung does not move its recipe's line.** The last check buys
+   `potency-stew` off the board and expects the stew's note to change and the
+   other recipes' notes to stay put; nothing moves at all
+   (`+25% work, 60 -> +25% work, 60`). Not diagnosed. Could be the purchase not
+   landing or the note not being rebuilt on reopen — the board closes itself on
+   a purchase now, which is the thing that changed most recently near it.
+
 ## Seeing the wind — BUILT, one part left (2026-09-07)
 
 The dust and the haze say what the wind is doing now. Two changes, both
