@@ -1,0 +1,8 @@
+- close shop menus after purchases
+-  raise the progress bar above the flag.
+- raise the job done check above the flag as well.
+- the rift and resource menu overlap. lets move the resource card to the bottom of the screen.
+- when throwing into the pit after the rift opens, the dust spreads evenly across the pit, then gets sucked into the rift. the dust should immediately be affected by the rift when its thrown.
+- lets make the dust swirl around the rift like a water down a drain. 
+- update the rift sprite to be a little less chaotic, and more flowly and smooth.
+- the pile full indicator overlaps the new potision of the worker count. lets move the pile full indicator to underneath the pile.

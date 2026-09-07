@@ -172,8 +172,8 @@ export const TOWER_UPGRADES = [
   // not have, which by now is the one thing left.
   {
     key: 'dome',
-    name: 'raise the dome',
-    note: () => 'the spire pours it over the landing spot, and the sky stops being a thing that arrives',
+    name: 'conjure the barrier',
+    note: () => 'nothing can get past this thing.',
     bill: () => [['core', DOME_COST], ['time', DOME_CAST_MS]],
     cost: () => DOME_COST,
     buy: () => raiseShield('dome'),

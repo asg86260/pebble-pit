@@ -22,8 +22,8 @@ import { raiseShield, shieldDone } from '../shield.js';
 export const SHIELD_ROWS = [
   {
     key: 'props',
-    name: 'raise the props',
-    note: () => 'timber legs and a lid over the rock, so the next one has something to answer',
+    name: 'wooden barrier',
+    note: () => 'quickly try to build a barrier to save your sqwife',
     cost: () => PROP_COST,
     buy: () => raiseShield('props'),
     show: () => !S.shield && !shieldDone('props') && S.introDone && S.boulderNo >= PROP_FROM
@@ -31,8 +31,8 @@ export const SHIELD_ROWS = [
   // Rope off the farm, and the first idea that is not "build it stronger".
   {
     key: 'net',
-    name: 'sling the net',
-    note: () => 'rope between two masts. if it cannot be stopped, it can be caught',
+    name: 'the net',
+    note: () => 'that didn\'t work, try catching the rock with a net?',
     cost: () => NET_COST,
     currency: 'spore',
     buy: () => raiseShield('net'),
@@ -43,7 +43,7 @@ export const SHIELD_ROWS = [
   {
     key: 'arch',
     name: 'cut the arch',
-    note: () => 'stone over the landing spot. rock against rock, and this one is ours',
+    note: () => 'still not sturdy enough. lets build a stone arch.',
     cost: () => ARCH_COST,
     currency: 'shard',
     buy: () => raiseShield('arch'),
@@ -54,7 +54,7 @@ export const SHIELD_ROWS = [
   {
     key: 'jack',
     name: 'build the jack',
-    note: () => 'a steel plate on rams. it does not wait for the rock, it pushes back',
+    note: () => 'a steel plate on posts. surely this can push the rock back',
     cost: () => JACK_COST,
     currency: 'spark',
     buy: () => raiseShield('jack'),
