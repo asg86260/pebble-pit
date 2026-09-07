@@ -174,8 +174,8 @@ export const TOWER_UPGRADES = [
   // shares it, the same as a summoning.
   {
     key: 'dome',
-    name: 'raise the dome',
-    note: () => 'the wizards ring the landing spot and pour, and the sky stops being a thing that arrives',
+    name: 'conjure the barrier',
+    note: () => 'nothing can get past this thing.',
     bill: () => [['core', DOME_COST], ['time', DOME_WORK * 1000]],
     cost: () => DOME_COST,
     buy: () => raiseShield('dome'),
