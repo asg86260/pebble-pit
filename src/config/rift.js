@@ -134,9 +134,41 @@ export const RIFT_DRAG = 0.985;      // speed kept per frame: orbits decay, so
 //
 // It is an initial condition, not a path. Nothing is steered after this.
 export const RIFT_SWING = 0.55;
-export const RIFT_EAT = 0.35;        // swallowed inside this, in disc radii
-export const RIFT_VMAX = 14;         // px a frame, a ceiling near the middle
-                                     // where the square would otherwise blow up
+export const RIFT_EAT = 0.35;        // the horizon, in disc radii
+// Where a grain begins to slow, as a multiple of the horizon.
+//
+// **A grain does not pop out of existence at the mouth; it slows, dims and is
+// gone.** Which is both what this needs to look like and what actually
+// happens: close to something heavy a falling thing appears to take longer and
+// longer to arrive and fades as it goes, and nothing is ever seen to cross.
+//
+// It is also the fix for the flicker. A grain at full speed near the disc
+// steps two or three cells a frame, and a mark that jumps two cells is a mark
+// that blinks -- the faster it went, the worse it read, so the picture was
+// worst exactly where it was meant to be best. Slowing the last stretch is
+// the one change that cures that without slowing anything you can see.
+//
+// The slowing is a local clock: the grain's own frame is shortened, so its
+// pull, its speed and its step all ease off together and the fall stays a fall
+// rather than becoming a hover with a normal-speed drift on top.
+export const RIFT_SLOW_FROM = 2.6;   // in horizons: outside this, no slowing
+export const RIFT_GONE = 0.05;       // dimmer than this and it is taken off the list
+// The ceiling on a grain's speed. A backstop, and it must stay one.
+//
+// **A speed cap destroys angular momentum.** Clamping the whole velocity every
+// frame while a central force keeps pushing turns the direction radial within
+// a handful of frames -- the pull adds inward speed, the clamp scales the lot
+// back, and what is scaled away is mostly the sideways part because that is
+// the part nothing is replenishing. Set to 6.5 (about a cell a frame, to cure
+// the flicker) it bound constantly, because the natural orbital speed at the
+// rim is `sqrt(g·r)` -- about 6 px a frame at this pull. Every orbit flattened
+// into a plunge and RIFT_SWING stopped meaning anything: measured 0 grains of
+// 1400 with any sideways speed left.
+//
+// So it sits well clear of the speeds this thing actually produces, and the
+// flicker is dealt with where it comes from instead -- by the slowing at the
+// horizon, which is where a grain was fast enough to jump two cells.
+export const RIFT_VMAX = 16;         // px a frame: a backstop, not a governor
 
 // --- the cutscenes --------------------------------------------------------------
 // The two one-time transitions -- the tearing and the drowning -- are watched:

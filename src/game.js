@@ -16,7 +16,8 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
-         RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX } from './config.js';
+         RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX,
+         RIFT_SLOW_FROM, RIFT_GONE } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -564,11 +565,24 @@ function orbit(list) {
   const c = riftCenter(), R = riftRadius();
   const eat = R * RIFT_EAT;
   const drag = RIFT_DRAG ** f;
+  const slowFrom = eat * RIFT_SLOW_FROM;
   for (let i = list.length - 1; i >= 0; i--) {
     const m = list[i];
     const dx = c.x - m.x, dy = c.y - m.y;
     const d = Math.hypot(dx, dy);
-    if (d < eat) { list.splice(i, 1); continue; }        // through, and gone
+    // Near the horizon the grain's own clock slows: its frame is shortened,
+    // so the pull, the speed and the step all ease off together and it creeps
+    // the last stretch instead of leaping it. `dim` is that same number, and
+    // the drawing fades on it -- a thing falling into something this heavy
+    // takes longer and longer to arrive and dims as it goes, and is never
+    // seen to cross. It is also what cures the flicker: a grain at full speed
+    // here stepped two or three cells a frame, and a mark that jumps two
+    // cells blinks.
+    const ease = d <= eat ? 0
+               : Math.min(1, (d - eat) / Math.max(1, slowFrom - eat)) ** 1.5;
+    m.dim = ease;
+    if (ease < RIFT_GONE) { list.splice(i, 1); continue; }   // faded out, and gone
+    const fe = f * ease;
     // The pull. Held at its value on the rim below that, because a true square
     // goes to infinity at the middle and would fling a grain across the yard
     // in the frame it got close.
@@ -578,13 +592,13 @@ function orbit(list) {
     // end sits at forty radii and would feel nothing at all. See RIFT_G_MIN.
     const g = Math.max(RIFT_G_MIN,
                        RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT));
-    m.vx = (m.vx || 0) + (dx / d) * g * f;
-    m.vy = (m.vy || 0) + (dy / d) * g * f;
+    m.vx = (m.vx || 0) + (dx / d) * g * fe;
+    m.vy = (m.vy || 0) + (dy / d) * g * fe;
     m.vx *= drag; m.vy *= drag;
     const sp = Math.hypot(m.vx, m.vy);
     if (sp > RIFT_VMAX) { m.vx *= RIFT_VMAX / sp; m.vy *= RIFT_VMAX / sp; }
-    m.x += m.vx * f;
-    m.y += m.vy * f;
+    m.x += m.vx * fe;
+    m.y += m.vy * fe;
   }
 }
 

@@ -547,6 +547,12 @@ export function drawRift() {
   for (const m of S.gulped) {
     const dx = cx - m.x, dy = cy - m.y;
     const d = Math.hypot(dx, dy);
+    // It fades as it slows. `dim` is the grain's own slowed clock (see `orbit`
+    // in game.js): the nearer the horizon the less of a frame it gets, and the
+    // fainter it is drawn, so it eases out of the picture instead of being
+    // deleted mid-stride. Nothing here decides when -- the same number does
+    // both, so what you see going dim IS what is slowing down.
+    ctx.globalAlpha = m.dim === undefined ? 1 : Math.max(0, Math.min(1, m.dim));
     ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
     ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
     if (!d || d > rad * RIFT_TAIL_R) continue;
@@ -558,6 +564,7 @@ export function drawRift() {
       ctx.fillRect(Math.round(tx / P) * P, Math.round(ty / P) * P, P, P);
     }
   }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#000';
 }
 
