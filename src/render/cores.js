@@ -20,6 +20,7 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
          RIFT_HALO, RIFT_WAVER, RIFT_WAVER_MS, RIFT_BEND, RIFT_TWINKLE_MS,
+         RIFT_BEND_RINGS, RIFT_BEND_R, RIFT_BEND_AMT, RIFT_RING_W, RIFT_RING_INK,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
@@ -370,7 +371,14 @@ function drawThrough(cx, cy, rad, t) {
                                         + spec(i + L * 13, j) * Math.PI * 2);
         ctx.globalAlpha = 0.35 + tw * 0.65;
         ctx.fillStyle = tone;
-        ctx.fillRect(Math.round(cx + ox), Math.round(cy + oy), P, P);
+        // Round, and off the lattice, like the tear that frames them. The sky
+        // is the other side: it is no more made of this world's cells than the
+        // rim is. Sizes vary with the layer and with the star -- a field of
+        // identical dots is a texture, and this is meant to be a distance.
+        const size = P * (0.30 + spec(i + 5, j + L * 3) * 0.30) * (1 - f * 0.35);
+        ctx.beginPath();
+        ctx.arc(cx + ox, cy + oy, size, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
   }
@@ -402,76 +410,133 @@ function drawPull(cx, cy, rad, t) {
   ctx.fillStyle = '#000';
 }
 
+// The rim, as a true circle wavering slowly -- a path, not a run of cell rows.
+//
+// **This is the one thing in the yard that is not on the cell grid, and that is
+// the point of it.** The lattice is not a style here, it is the fabric the
+// world is made of: everything that belongs to the yard is built out of whole
+// six-pixel cells, and half a cell off puts a hairline through the picture.
+// The rift is the one object whose whole identity is that it does NOT belong
+// -- it is a hole in that fabric. So it is drawn round, smoothly, with an edge
+// with no cells in it at all, and it looks out of place in exactly the way it
+// ought to. The contrast does more work than the smoothness: a true circle
+// with blocky dust falling into it says "tear" better than any amount of
+// drawing on the disc ever did.
+//
+// The boundary is at the rim and nowhere else. Everything of the yard stays
+// blocky -- the grains, their tails, the motes being pulled in -- and only the
+// tear and the sky through it are smooth. Smoothness leaking onto the yard's
+// own things would read as a different renderer rather than a different place.
+function rimPath(cx, cy, rad, t, grow) {
+  const n = Math.max(48, Math.round(rad));
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    const r = rad * waver(a, t) + grow;
+    const px = cx + Math.cos(a) * r, py = cy + Math.sin(a) * r;
+    if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+  }
+  ctx.closePath();
+}
+
+// The light bending, and it is the real thing rather than a picture of one:
+// the yard already drawn behind the hole is sampled and put back magnified
+// about the rift's middle, inside a few thin rings just outside the rim. A
+// point that truly sits at some distance out is shown further out than it is,
+// which is what a lens does -- so the ground line, the pile and a passing body
+// all bow outward as they go past the hole and snap straight once clear of it.
+//
+// Done in screen pixels rather than world ones, because it is a warp of the
+// *picture*: the transform is dropped to the page for the length of it and the
+// world's restored after. Only each ring's own box is sampled, so this is a
+// handful of small blits rather than four copies of the window.
+function drawBend(cx, cy, rad) {
+  const sx = (cx - S.camX + S.shakeX) * S.zoom;
+  const sy = (cy - S.camY + S.shakeY) * S.zoom;
+  const sr = rad * S.zoom;
+  const can = ctx.canvas;
+  const wide = can.width / S.dpr;
+  // off the glass entirely: nothing to bend and nothing to sample
+  if (sx + sr * RIFT_BEND_R < 0 || sx - sr * RIFT_BEND_R > wide) return;
+
+  ctx.save();
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
+  for (let i = 0; i < RIFT_BEND_RINGS; i++) {
+    const f = i / RIFT_BEND_RINGS;
+    const r0 = sr * (1 + f * (RIFT_BEND_R - 1));
+    const r1 = sr * (1 + ((i + 1) / RIFT_BEND_RINGS) * (RIFT_BEND_R - 1));
+    // hardest at the rim and gone by the outside, so the world eases back to
+    // straight instead of stopping at a seam
+    const m = 1 + RIFT_BEND_AMT * (1 - f) * (1 - f);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(sx, sy, r1, 0, Math.PI * 2);
+    ctx.arc(sx, sy, r0, 0, Math.PI * 2, true);
+    ctx.clip('evenodd');
+    // the ring's own box, and the patch of picture that lands in it once that
+    // patch is blown up by `m` about the middle
+    const bx = sx - r1, by = sy - r1, bw = r1 * 2, bh = r1 * 2;
+    const px = sx + (bx - sx) / m, py = sy + (by - sy) / m;
+    ctx.drawImage(can, px * S.dpr, py * S.dpr, (bw / m) * S.dpr, (bh / m) * S.dpr,
+                  bx, by, bw, bh);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
 export function drawRift() {
   if (!S.riftOpen || S.drowned) return;
   const t = now();
   const { x, y, w, h } = rift;
-  const across = Math.round(w / P), down = Math.round(h / P);
-  const mid = (across - 1) / 2, midR = (down - 1) / 2;
-  const cx = x + (mid + 0.5) * P, cy = y + (midR + 0.5) * P;
-  const rad = (mid + 0.5) * P;
+  const cx = x + w / 2, cy = y + h / 2;
+  const rad = w / 2;
 
-  // A disc: the half-width of each row off the circle, worked out from the row
-  // rather than written down as a table, so the shape follows the derived size
-  // wherever the growth takes it. `grow` widens it in cells, which is how the
-  // halo is cut: the same disc, a couple of cells fatter, in paper.
-  //
-  // ...and the edge creeps, by `waver`: a tear in the world has no business
-  // having a compass edge. The warp is a function of the ROW's own angle, so
-  // it is a shape that leans and comes back rather than a size that pulses --
-  // the rim runs out on one side while it comes in on the other. Both passes
-  // read the same waver, so the paper ring keeps its width all the way round
-  // instead of pinching where the black bulges.
-  const disc = (grow, style) => {
-    ctx.fillStyle = style;
-    for (let r = -grow; r < down + grow; r++) {
-      const dy = (r - midR) / (midR + 0.5 + grow);
-      const half = Math.floor((mid + grow) * waver(Math.asin(Math.max(-1, Math.min(1, dy))), t)
-                              * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
-      if (half < 0) continue;
-      const left = x + Math.round(mid - half) * P;
-      ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
-    }
-  };
+  // The bend goes first of all, on the picture as it stands: the yard behind
+  // the hole, bowed outward as it passes.
+  drawBend(cx, cy, rad);
 
-  // Paper first, so whatever the disc is standing over -- the pile, the ground
-  // line, a grain on its last turn -- is cleared away from the rim: with the
-  // page showing round it, it is a hole *in* the world.
-  //
-  // (A ring of speckle used to sit outside this, and it is gone: at a distance
-  // it read as a dotted collar printed round the hole, and the waver says
-  // "torn" far better than a scatter of dots ever did.)
-  disc(RIFT_HALO, '#fff');
+  // Then paper cleared round the rim, so whatever the disc stands over -- the
+  // pile, the ground line, a grain on its last turn -- is taken away from the
+  // edge, and the hole is a hole *in* the world rather than a sticker on it.
+  ctx.fillStyle = '#fff';
+  rimPath(cx, cy, rad, t, RIFT_HALO * P);
+  ctx.fill();
 
-  // The pull: a few motes drawn in toward the rim, outside it, where the page
-  // is white and a purple mark reads. Before the disc, so one that reaches the
-  // rim goes behind it rather than over it -- which is what arriving looks like.
+  // The pull: a few motes drawn in toward the rim, out where the page is white
+  // and a purple mark reads. Cells, because they are of the yard.
   drawPull(cx, cy, rad, t);
 
-  // **The hole is a place, not a creature.**
-  //
-  // It does not breathe, ring, turn or spiral on its own, and every one of
-  // those was here: a rim that swelled and leaned, a speckle collar that
-  // rotated, eight strands for ever falling in whether or not anything was,
-  // and a song in the wizards' purple that rang out of it. Each was
-  // defensible on its own; together they were an ornament that never stopped
-  // moving, and an endgame rift is idle most of the time because it is
-  // keeping up.
-  //
-  // What moves now is the dust going in, the few motes being drawn in with
-  // it, and -- when you pan the yard -- the sky on the other side. The rest
-  // is still.
-  disc(0, '#000');
+  // The tear itself.
+  ctx.fillStyle = '#000';
+  rimPath(cx, cy, rad, t, 0);
+  ctx.fill();
 
-  // ...and then the other side, cut to the hole. A tear, not a dot: what is
-  // through it is somewhere else, and the way that is said is depth.
+  // ...and the light piled up at its edge. The one feature off a real
+  // photograph that survives here, because it lies ON the boundary: everything
+  // tried across the middle read as a face.
+  ctx.save();
+  rimPath(cx, cy, rad, t, 0);
+  ctx.clip();
+  ctx.strokeStyle = MAGIC_TONES[0];
+  ctx.lineWidth = RIFT_RING_W;
+  ctx.globalAlpha = RIFT_RING_INK;
+  rimPath(cx, cy, rad, t, 0);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // and the sky on the other side, cut to the hole
+  ctx.save();
+  rimPath(cx, cy, rad, t, -P * 0.5);
+  ctx.clip();
   drawThrough(cx, cy, rad, t);
+  ctx.restore();
 
-  // Each cell asks which side of the rim it is on and inks itself: the grain's
-  // own colour out on the page, paper over the black inside. A grain crossing
-  // does not vanish behind the disc, it changes colour and carries on -- the
-  // rim is where the picture turns over, not a lid. The last and fastest part
-  // of a fall used to happen behind the ink.
+  // The grains, which ARE of the yard and stay on cells. Each cell asks which
+  // side of the rim it is on and inks itself: its own colour out on the page,
+  // paper over the black inside. A grain crossing does not vanish behind the
+  // disc, it changes colour and carries on -- and a square grain against a
+  // round rim is the whole idea in one mark.
   const inDisc = (px, py) =>
     Math.hypot(px - cx, py - cy) < rad * waver(Math.atan2(py - cy, px - cx), t);
 
@@ -480,9 +545,6 @@ export function drawRift() {
     const d = Math.hypot(dx, dy);
     ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
     ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
-    // and a tail pointing back the way it came, growing as it nears the rim
-    // where it is being pulled hardest: one grain is a speck, a grain with
-    // three cells behind it is a grain being taken.
     if (!d || d > rad * RIFT_TAIL_R) continue;
     const near = 1 - d / (rad * RIFT_TAIL_R);
     const n = Math.round(RIFT_TAIL * near);
@@ -494,7 +556,6 @@ export function drawRift() {
   }
   ctx.fillStyle = '#000';
 }
-
 
 export function drawAbyss() {
   if (!S.drowned) return;   // while the pit is merely torn, the disc is the picture

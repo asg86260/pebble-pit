@@ -67,6 +67,21 @@ export const RIFT_BEND = 0.55;
 // ...and they sparkle. Each star's own slow fade, on its own phase, so the sky
 // behind the tear is alive without anything travelling across it.
 export const RIFT_TWINKLE_MS = 2800;
+
+// --- the light bending --------------------------------------------------------
+// The yard behind the hole, sampled and put back magnified in a few thin rings
+// just outside the rim, so the ground line and the pile bow outward as they
+// pass it and snap straight once clear. It is the real warp rather than a
+// picture of one -- see `drawBend` in render/cores.js -- which is why it looks
+// out of place: nothing else in this game bends.
+export const RIFT_BEND_RINGS = 5;    // rings the warp is stepped through
+export const RIFT_BEND_R = 1.75;     // how far out it reaches, in disc radii
+export const RIFT_BEND_AMT = 0.55;   // and how hard it magnifies at the rim
+
+// The light piled up at the very edge. On the boundary, never across the
+// middle: everything tried across the middle read as a face.
+export const RIFT_RING_W = 2;        // screen px of it
+export const RIFT_RING_INK = 0.75;
 // --- what is on the other side ------------------------------------------------
 // It is a tear, not a dot. What the hole shows is somewhere else: a sky of
 // magic-coloured stars, layered, each layer keeping less pace with the yard
