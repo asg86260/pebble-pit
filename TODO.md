@@ -32,9 +32,18 @@ those levels on the inheriting rows, with a fixture save in `test/fixtures/`.
 **Open, small:** what the multiplier row is called where it now sits beside its
 base rung. Proposal is `speed ×`.
 
-**Open, separate:** which row layout to take. Four are drawn (one line a row,
-folded, spine and pane, two columns); none is chosen. Independent of the above
-and not blocking it.
+**Decided since:** a row becomes a card -- two lines in a one-pixel edge, two
+across the sheet. Measured off a real page first: every bill in the game carries
+a clock (32 of 32), and with the clock counted apart 88% of bills are one or two
+currencies, so time is a column rather than a coin. Every state was drawn and
+holds; the stepper and the picker sit in the cell a bill would fill, and a build
+in progress wears its bar on the card's own bottom edge. It costs height --
+about 700 px against 500 for a plain one-line list -- which gives back most of
+what collapsing the ten unlock headings won.
+
+**Open, small:** whether twenty-five one-pixel edges read busy at full size. The
+alternative is no border, with the grid gaps and a hairline doing the work. A
+shot settles it, not an argument.
 
 **Not a defect:** `askwizards` is not a dead key. It is a signpost row in
 `src/upgrades/rows-shields.js` -- `sign: true`, empty bill, `lookAt(tower)` --

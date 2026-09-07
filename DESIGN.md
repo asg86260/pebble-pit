@@ -5167,13 +5167,44 @@ same rate. The proposal is `speed ×`, which reads as what it is and needs no ex
 add a character to the boards' alphabet, which is the reason to say it out loud rather than assume
 it.
 
-### The height fix is separate, and still open
+### A row becomes a card
 
-Redistribution takes the bench from 1,600 px to roughly 640, which is the fix. The four row-layout
-options drawn beside this — one line a row, folded sections, a spine and a pane, two columns — are
-independent of it and none is chosen yet. `one line a row` is what the after-picture is drawn with,
-because the pip line and the stacked bill are the two things that make a row taller than it needs
-to be, and neither is load-bearing.
+Two lines inside a one-pixel edge, two across the sheet: the name and its pips on top, what it
+gives and what it costs underneath.
+
+**The measurement came first, and it changed the answer twice.** Read off a real page — every board
+open, every building up, the ink in each cell measured with a Range, because a cell is a grid track
+and its own rect is the column width — **every bill in the game carries a clock, all thirty-two of
+them**, and with the clock counted apart **88% of bills are one or two currencies**. Only four rows
+cost three or more, and they are exactly the four machines. So time is not an occasional coin to be
+squeezed in beside the money; it is on every row, which makes it a column by definition rather than
+a special case. That is what makes one line a row possible at all, and it is why the widest sheet
+in the game comes to 475 px against the 440 it already renders — the width this was feared to cost
+is thirty-five pixels.
+
+**And a card is the right shape because the rows are independent.** The argument for the shared
+subgrid was that it lets the page be *scanned* — which is what this file has always claimed, and it
+is true. It was never that rows are compared with one another: a rung inside a row is sequential,
+with no choice in it, and two rows under one heading are separate purchases with different effects.
+The only thing weighed across rows is the price. A subgrid asserts that its rows are a series to be
+read as a column; independent things do not need that, and the card's edge says the truer thing —
+this is one whole item. Scanning survives, because the names still line up in two columns.
+
+**Every state holds, and two of them are better than the row managed.** The stepper on a job row and
+the picker on a dial both sit in the cell a bill would fill, which is the same trick that let those
+rows share a grid with price rows in the first place. A build in progress wears its bar on the
+card's own bottom edge rather than growing a line to hold one — a row had nowhere to put that. And a
+finished card kept on the board reads as a ladder you have climbed rather than as dead space, which
+is a small argument against folding finished rows away by default.
+
+**What it costs, plainly.** The bench comes to about 700 px against roughly 500 for the same rows as
+a plain one-line list in one column. Cards give back most of what collapsing the ten unlock headings
+won. That is the price of the look and it is worth being deliberate about rather than discovering
+later.
+
+**Left open:** whether twenty-five one-pixel edges read busy at full size. The alternative is no
+border at all — the grid gaps and a hairline doing the same work — and it is a thing to look at in a
+shot rather than argue about here.
 
 ### How it would be checked
 
