@@ -1,5 +1,45 @@
 # Still to do
 
+## The bench is a catch-all, and the lab goes (2026-09-07)
+
+**Designed, not built.** See "The bench is a catch-all, and the lab is its
+multiplier column" at the end of DESIGN.md, and the drawings at
+https://claude.ai/code/artifact/e02a45cb-083e-4d34-bc3a-5a71fd1f25c7 (page two).
+
+Diagnosed: the bench is 32 rows under 15 headings, about 1,600 px on a window
+that is often 700, and desktop boards do not scroll. Length is the symptom; the
+cause is that it is the one board that is not about anywhere.
+
+Decided: the crew's six rows go to the houses; `posts` and `pace` go to the
+construction bench (a registered site wanting only a board); the ten one-row
+unlock headings collapse to one `put up` group; the rock's rows and `you` stay,
+because the bench *is* the rock's board. Bench lands at 25 rows under 5
+headings, roughly 640 px.
+
+Decided: the lab is deleted. Its multipliers move under the ladders they
+multiply, and buying one stays a piece of work bodies have to finish -- as a
+*build*, because `registerSite('lab', ...)` and `registerSite('yard', ...)`
+already run through one engine in works.js and the lab was a second name for it.
+`instruments` and `another bench` fold into `pace` and `posts`. `watch the sky`
+is deleted rather than rehomed.
+
+**Blockers, both real.** Builders become the only bottleneck on every timed
+purchase, so `posts` and `pace` carry weight two ladders used to -- that wants a
+tuning pass, not just the move. And old saves carry `labOpen`, `labRooms`,
+`labKitLevel` and scholar assignments, so the move needs a migration landing
+those levels on the inheriting rows, with a fixture save in `test/fixtures/`.
+
+**Open, small:** what the multiplier row is called where it now sits beside its
+base rung. Proposal is `speed ×`.
+
+**Open, separate:** which row layout to take. Four are drawn (one line a row,
+folded, spine and pane, two columns); none is chosen. Independent of the above
+and not blocking it.
+
+**Not a defect:** `askwizards` is not a dead key. It is a signpost row in
+`src/upgrades/rows-shields.js` -- `sign: true`, empty bill, `lookAt(tower)` --
+that appears once the jack has failed. It stays as it is.
+
 ## `__give` costs a second per hundred thousand, and used to cost nothing (2026-09-07)
 
 `give` in hooks.js banks one grain per turn of a loop and breaks when the hole
