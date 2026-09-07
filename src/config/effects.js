@@ -64,11 +64,13 @@ export const RIFT_LENS_MS = 3400;    // and how long one breath takes
 // and how many turns it makes belong to the drain now, not to the streaks, so
 // RIFT_STREAK_FROM and RIFT_STREAK_TURN are gone: see RIFT_FALL_FROM and
 // RIFT_TURNS in config/rift.js.
-// Five, not twelve. Only the stretch outside the rim is ever seen -- about a
-// turn and a half of the spiral -- so a dozen arms half a turn each is three
-// times more ink than there is track to lay it on, and they close up into
-// solid rings. Five leaves the gaps that make it read as turning.
-export let RIFT_STREAKS = 5;         // how many are falling in at once
+// Only the stretch outside the rim is ever seen -- about a turn and a half of
+// the spiral -- so a dozen arms half a turn each is three times more ink than
+// there is track to lay it on, and they close up into solid rings. Eight
+// ragged ones leave the gaps that make it read as turning: they are not the
+// twelve clean ones, because each of these has its own pace, length, radius
+// and fraying and no two lie on top of each other.
+export let RIFT_STREAKS = 8;         // how many are falling in at once
 export const RIFT_STREAK_MS = 1800;  // how long one takes to reach the middle
 // How long one streak is, measured in turns of the spiral it lies on. Turns,
 // not a length and not a share of the fall: the spiral tightens as it goes, so
