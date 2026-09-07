@@ -80,10 +80,11 @@ export const SHIELD_ROWS = [
   // sold there, by the people who will actually be casting it.
   {
     key: 'askwizards',
-    name: 'maybe the wizards would know?',
-    note: () => 'everything of the ground has failed. what is left is not of the ground',
+    sign: true,
     bill: () => [],
     cost: () => 0,
+    name: 'maybe the wizards would know?',
+    note: () => 'everything of the ground has failed. what is left is not of the ground',
     buy: () => lookAt(tower.x + tower.w / 2),
     // and it folds away for good once anything is standing over the yard,
     // because the dome never comes down: the thought has been had

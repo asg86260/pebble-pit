@@ -38,11 +38,13 @@ const BOARDS = Object.entries({
 //   job   -- moves bodies between stations; nothing is paid
 //   dial  -- sets a number, like the fold switch
 //   price -- the casino's two rows, which pay *out* rather than being bought
+//   sign  -- a signpost with a thought on it, like the bench wondering about
+//            the wizards; pressing it points, and takes nothing
 //
 // Named here rather than tested for one at a time, because `buy` in upgrades.js
 // turns each of them away at the top for exactly these reasons, and the two
 // lists have to say the same thing.
-const notSold = u => u.job || u.dial || u.price;
+const notSold = u => u.job || u.dial || u.price || u.sign;
 
 test('every bill carries dust', () => {
   window.__seed(20260901);

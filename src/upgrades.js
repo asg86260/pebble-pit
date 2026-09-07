@@ -1020,6 +1020,12 @@ export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 // took the money.
 export function buy(u) {
   if (u.job || u.dial) return false;   // a job row moves bodies and a dial sets a number
+  // A signpost: a row with a thought on it rather than a thing for sale. It
+  // costs nothing and takes nothing; pressing it only does whatever pointing
+  // is worth doing -- the shields' "maybe the wizards would know?" pans out to
+  // the tower. Turned away here beside job and dial, and excused from the
+  // bill checks for the same reason, because the two lists say the same thing.
+  if (u.sign) { if (u.show() && !u.dead?.()) u.buy(); return false; }
   // A row with a payout on it instead of a price is not a purchase: nothing is
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.
