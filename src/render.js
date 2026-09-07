@@ -679,6 +679,9 @@ export function drawShield() {
   const cols = s.w / P;
   ctx.fillStyle = '#000';
   if (s.kind === 'arch') return drawArch(s, done, topY, cols);
+  if (s.kind === 'net') return drawNet(s, done, topY, cols);
+  if (s.kind === 'jack') return drawJack(s, done, topY, cols);
+  if (s.kind === 'dome') return drawDome(s, done, topY, cols);
 
   // The props: two braced timber legs and a sagging lid. The legs rise through
   // the first half of the planks and the lid closes from both ends through the
@@ -713,6 +716,80 @@ export function drawShield() {
       ctx.fillRect(s.x + c * P, topY + off * P, P, SHIELD_LID_T * P);
     }
   }
+}
+
+// The net: two masts and a rope slung between them. It is drawn as a line of
+// separate cells rather than a solid band, because that is what tells you it
+// is rope and not another lid -- you can see the sky through it, which is the
+// whole of why anybody believed it would work.
+//
+// The sag is not decoration here, it is the state: `s.sag` deepens while the
+// rock rides it down, so the picture of the failure *is* the rope paying out.
+function drawNet(s, done, topY, cols) {
+  const mast = Math.min(s.h, Math.round(Math.min(1, done * 2) * s.h));
+  for (const x of [s.x, s.x + s.w - P]) {
+    if (mast > 0) ctx.fillRect(x, S.groundY - mast * P, P, mast * P);
+  }
+  const span = Math.max(0, done * 2 - 1);
+  if (span <= 0) return;
+  const reach = Math.round(span * cols / 2);
+  const dip = 2 + (s.sag || 0);
+  for (let c = 0; c < cols; c++) {
+    if (c > reach && cols - 1 - c > reach) continue;
+    const t = (2 * c / (cols - 1)) - 1;
+    const off = Math.round(dip * (1 - t * t));
+    // every other cell, so it reads as mesh rather than as a cable
+    if ((c + off) % 2) continue;
+    ctx.fillRect(s.x + c * P, topY + off * P, P, P);
+  }
+}
+
+// The jack: a steel plate carried on two rams. The plate is solid and heavy --
+// it is the one shield that looks like it might actually do it -- and the rams
+// under it are drawn as stacked cells with a gap, which is what says hydraulic
+// rather than post. `s.shove` lifts the whole assembly, so the beat where the
+// machine drives the rock back up is the plate visibly rising.
+function drawJack(s, done, topY, cols) {
+  const lift = Math.round((s.shove || 0) / P) * P;
+  const ramC = Math.min(s.h, Math.round(Math.min(1, done * 2) * s.h));
+  const plate = Math.max(0, done * 2 - 1);
+  for (const x of [s.x + 2 * P, s.x + s.w - 5 * P]) {
+    for (let r = 0; r < ramC; r++) {
+      if (r % 3 === 2) continue;                 // the joints in the ram
+      ctx.fillRect(x, S.groundY - (r + 1) * P - (r > ramC - 3 ? lift : 0), 3 * P, P);
+    }
+  }
+  if (plate <= 0) return;
+  const w = Math.round(plate * cols) * P;
+  ctx.fillRect(s.x + (s.w - w) / 2, topY - lift, w, 3 * P);
+}
+
+// The dome: the only shield that is not black, because it is the only one that
+// is not a thing. What magic emits is purple, all game -- the bolts, the
+// summoning, the rings off the spire -- and this is the largest piece of it
+// the yard ever sees. It is a band rather than a fill so you can see the sky
+// through it: what is overhead has not been walled off, it has been answered.
+//
+// It closes from both feet to the crown as the tower pours, so a half-cast
+// dome is two horns reaching up, and the last of the pour is the moment it
+// becomes a roof.
+function drawDome(s, done, topY, cols) {
+  const a = cols / 2;
+  const R = a;                                  // a true half-circle: nothing carries it
+  const T = 2;
+  const total = Math.PI / 2;
+  for (let c = 0; c < cols; c++) {
+    const dx = Math.abs(c + 0.5 - a);
+    for (let r = 0; r < s.h; r++) {
+      const d = Math.hypot(dx, r);
+      if (d < R - T || d > R) continue;
+      // round from the ground to the crown, so the reveal runs up both sides
+      if (Math.atan2(r, dx) > done * total) continue;
+      ctx.fillStyle = MAGIC_TONES[(c + r) % MAGIC_TONES.length];
+      ctx.fillRect(s.x + c * P, S.groundY - (r + 1) * P, P, P);
+    }
+  }
+  ctx.fillStyle = '#000';
 }
 
 // The arch: two piers and a shallow segmental curve across them. One law draws

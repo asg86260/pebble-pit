@@ -2,10 +2,11 @@
 
 ## 6. The shields — the story arc
 
-**Status:** stages 1 and 2 built — `src/shield.js` owns all three kinds through
-one `KINDS` table, with the `props` and `arch` bench rows, the piece walk on
-the kit-walk legs, the catch, the collapse and `test/shield.test.mjs`. Stage 3
-(the dome) remains.
+**Status:** all five shields built. `src/shield.js` owns every kind through one
+`KINDS` table — material, price, coin, and how it answers a rock — with the
+four bench rows, the dome on the tower's board, the piece walk on the kit-walk
+legs, and six groups in `test/shield.test.mjs`. What remains is the rescue
+choreography: the buried mate walking out under the dome.
 
 Three attempts to stop the next rock: timber props (bench, dust) the rock goes
 straight through; a stone arch (shards) that catches one for a held beat and
@@ -31,12 +32,22 @@ ever under a shield when it goes, and the wreckage flies out along the heap as
    delayed collapse (`ARCH_HOLD_MS`) that drops both. Drawn as a segmental
    arch on two piers, one circle-band law from foot to crown, closing at the
    crown on the trip that finishes it.
-3. **The dome.** The tower's fifth spell. Purple rings close over the landing
-   spot; the catch is permanent. The choreography of the mate walking out —
-   the buried-body system (`rock.test.mjs` "the one underneath") changes
-   meaning here: after this beat there is nobody under any rock, and the
-   says-dots loop moves to two bodies on the surface. Every later rock is
-   caught, held a breath, set down.
+3. **The net, the jack and the dome — DONE.** Rope in spores that catches the
+   rock and pays out under it to the ground; a sparks-priced machine that
+   catches it and drives it back up before the rams give out; and the tower's
+   dome in cores, cast on a clock rather than carried, which holds and then
+   sets the rock down gently (`landRock(gentle)`) and stays standing for every
+   rock after.
+
+4. **The rescue — still to do.** The one beat left, and the point of the whole
+   arc: under the dome the buried mate walks out. The buried-body system
+   (`rock.test.mjs` "the one underneath") changes meaning here — after this
+   there is nobody under any rock, and the says-dots loop moves to two bodies
+   on the surface. It belongs in `intro.js`, which already owns `S.buried`,
+   `S.pair` and `sceneHolds`; `shield.js` triggers it on the dome's first
+   catch. Watch `buriedVisible()`, the opening's promise, and the glimpses
+   between rocks — all three read the buried state and must still mean
+   something afterwards.
 
 **The hard parts, in order:** what the landing code consults (a shield is the
 first thing with a say in where a rock stops); how the buried-mate state ends

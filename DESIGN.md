@@ -1027,9 +1027,15 @@ taken away to make you start again.
 The story so far has one engine and it turns one way: rocks land on people, and everything the
 yard does about it happens after the fact. You dig. In the whole run nobody has yet done the
 obvious thing, which is to look up. That is the arc: **the yard tries to stop the next one.**
-Three tries, spread across the run, and the first two fail — not for story reasons alone. The
+Five tries, spread across the run, and the first four fail — not for story reasons alone. The
 rocks are the game's entire income, and a wall that worked in the mid-game would starve the yard
 that built it. The failures are load-bearing.
+
+They also escalate, which is what keeps four failures from being one failure told four times.
+Each shield gets further than the last: the timber is not noticed, the net slows it, the arch
+stops it dead for a moment, the jack stops it and pushes it back — and only then does something
+hold. By the fourth you are not asking whether this one will work, you are watching how close it
+gets, which is a different and better question for a beat to ask.
 
 **A shield failing is a beat, never a bill.** No fail state is a pillar, and a thing you saved
 up for being smashed reads as punishment unless the game goes out of its way to say otherwise.
@@ -1045,7 +1051,26 @@ rock comes through it as if it were not there, the planks go out over the heap, 
 back to digging before the dust settles. The lesson is cheap and the game makes sure it is:
 this one is priced to sting for a minute, not an hour.
 
-**The arch.** The second try is stone — a proper arch over the landing spot, cut white out of
+**One try per coin, and each fails the way its material has to.** The five
+shields run dust, spore, shard, spark, core — which is every currency the yard
+makes, spent once each on the same question. That is not a tidy pattern laid
+over the story; it is the story. Each attempt is the yard reaching for the best
+thing it has and finding out what that thing is worth against the sky, and the
+order is the order the yard learns to make them. Two of those coins had no real
+sink before this — spores and sparks piled up unspent, which is what makes a
+currency flavor rather than a decision — and a beat you can only buy with them
+is a better answer than another multiplier.
+
+**The net.** The second try is rope off the farm, slung between two masts and
+priced in spores. It is the first idea that is not "build it stronger": if you
+cannot stop the thing, catch it. And it half works — the net takes the rock and
+*slows* it, sagging and sagging as it stretches, and for a few seconds the yard
+is watching a boulder come down gently for the first time. Then the rope pays
+out to the ground and lets it through anyway. The lesson is the one the arch
+will spend stone learning again from the other side: soft catches but does not
+hold.
+
+**The arch.** The third try is stone — a proper arch over the landing spot, cut white out of
 the quarry and priced in the quarry's own shards, because it is built of the quarry's own coin.
 And it nearly works. **The arch catches one.** The rock comes down, the arch takes it, and for
 a held beat the yard has won — long enough for every body on the ground to stop and look up,
@@ -1055,7 +1080,18 @@ everything else. The lesson is the game's own color rule said out loud: everythi
 ground is grey and goes back to the ground. Rock cannot hold rock. Stacking the yard higher is
 still the yard.
 
-**The dome.** The third try is the tower's, and it is the first shield not made out of the
+**The jack.** The fourth try is the machines': a steel plate on hydraulic rams,
+priced in sparks, because sparks buy every machine and this is a machine. It is
+the yard's best technology and the only shield that does not merely receive the
+rock — it *pushes back*. The plate takes the weight, holds, and then rises,
+shoving the boulder a few feet back up toward the sky while the whole yard
+watches. It is the closest the game comes to winning. Then the rams give out,
+the plate folds, and the rock comes down on top of the wreck. The lesson is the
+last one available before magic: the yard's best machine is still a thing made
+out of the ground, and the ground has been losing this argument for four
+shields.
+
+**The dome.** The fifth try is the tower's, and it is the first shield not made out of the
 thing it is stopping. A spell on the spire, priced in cores — the tower is raised for cores,
 and cores open what you don't have, which by then is the one thing left: the sky staying shut.
 Cast, it pours the same purple the hats are made with, rings off the spire that close over the

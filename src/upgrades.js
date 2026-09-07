@@ -14,7 +14,7 @@ import {
 } from './config.js';
 import { scrubCost } from './scrubhouse.js';
 import { raiseShield, shieldDone } from './shield.js';
-import { PROP_COST, PROP_FROM, ARCH_COST } from './config.js';
+import { PROP_COST, PROP_FROM, NET_COST, ARCH_COST, JACK_COST } from './config.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, school, casino, scrub, tower, outhouse } from './state.js';
 import { spend, takeCoreCells, pitCapacity, packPit, canPack, packCost, packGain } from './pit.js';
@@ -573,12 +573,24 @@ export const UPGRADES = [
     buy: () => raiseShield('props'),
     show: () => !S.shield && !shieldDone('props') && S.introDone && S.boulderNo >= PROP_FROM
   },
-  // The second try, and the one that nearly works. Stone, and priced in the
-  // quarry's own coin because it is cut from the quarry: the yard answering
-  // the sky with the best thing it has out of the ground. It is offered only
-  // after the timber has been through, because the arch is an argument with
-  // what just happened -- build it heavier, out of the real stuff -- and an
-  // argument offered before the thing it answers is a row about nothing.
+  // Every shield after the first is an argument with the one that just failed,
+  // so each is offered only once its predecessor has been answered -- an
+  // argument offered before the thing it answers is a row about nothing. And
+  // each is priced in a different coin, because each is the yard reaching for
+  // a different one of the things it makes. See DESIGN.md, "The shields".
+  //
+  // Rope off the farm, and the first idea that is not "build it stronger".
+  {
+    key: 'net',
+    name: 'sling the net',
+    note: () => 'rope between two masts. if it cannot be stopped, it can be caught',
+    cost: () => NET_COST,
+    currency: 'spore',
+    buy: () => raiseShield('net'),
+    show: () => !S.shield && shieldDone('props') && !shieldDone('net') && S.farmOpen
+  },
+  // Stone, priced in the quarry's own coin because it is cut from the quarry:
+  // the yard answering the sky with the best thing it has out of the ground.
   {
     key: 'arch',
     name: 'cut the arch',
@@ -586,7 +598,18 @@ export const UPGRADES = [
     cost: () => ARCH_COST,
     currency: 'shard',
     buy: () => raiseShield('arch'),
-    show: () => !S.shield && shieldDone('props') && !shieldDone('arch') && S.quarryOpen
+    show: () => !S.shield && shieldDone('net') && !shieldDone('arch') && S.quarryOpen
+  },
+  // A machine, so it is bought with what every machine is bought with. The
+  // last thing the yard can try before it stops arguing with the ground.
+  {
+    key: 'jack',
+    name: 'build the jack',
+    note: () => 'a steel plate on rams. it does not wait for the rock, it pushes back',
+    cost: () => JACK_COST,
+    currency: 'spark',
+    buy: () => raiseShield('jack'),
+    show: () => !S.shield && shieldDone('arch') && !shieldDone('jack') && S.meteorOpen
   },
   // The one building that undoes something instead of making something. It is
   // offered the first time the sky is visibly dirty rather than on a schedule:
@@ -715,7 +738,7 @@ export const SECTIONS = [
   { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
   { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   { title: 'the rock', keys: ['minerpick', 'minerspeed'] },
-  { title: 'the shields', keys: ['props', 'arch'] },
+  { title: 'the shields', keys: ['props', 'net', 'arch', 'jack'] },
   { title: 'the quarry', keys: ['unlockquarry'] },
   { title: 'the farm', keys: ['unlockfarm'] },
   { title: 'the lab', keys: ['unlocklab'] },

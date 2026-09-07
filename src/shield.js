@@ -17,22 +17,44 @@ import {
   P, WORKER, ROCK_CLEAR,
   SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST,
   PROP_FROM, PROP_COST, PROP_PLANKS,
-  ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS
+  NET_COST, NET_ROPES, NET_SLOW,
+  ARCH_COST, ARCH_BLOCKS, ARCH_HOLD_MS,
+  JACK_COST, JACK_PARTS, JACK_HOLD_MS, JACK_PUSH, JACK_PUSH_RATE,
+  DOME_COST, DOME_RINGS, DOME_CAST_MS, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
-import { rockSize, rockFootY } from './rock.js';
+import { rockSize, rockFootY, landRock } from './rock.js';
 import { sendOn } from './crew.js';
 import { spawnSpoil } from './dust.js';
 import { shadeNear } from './grid.js';
-import { now } from './clock.js';
+import { now, frames } from './clock.js';
 
 // What each shield is, and the whole of what makes it different from the
-// others. A new one is an entry here and a case in the drawing.
+// others: what it is made of, what it costs, and how it answers a rock. A new
+// one is an entry here and a case in the drawing -- nothing below asks which
+// kind it is holding.
+//
+// The five run dust, spore, shard, spark, core: every coin the yard makes,
+// spent once each on the same question. And the answers escalate, which is
+// what keeps four failures from being one failure told four times -- not
+// noticed, slowed, stopped, shoved back, held.
 export const KINDS = {
   // Timber. It does not even slow the rock down.
-  props: { pieces: PROP_PLANKS, cost: PROP_COST, money: 'dust', holds: 0 },
+  props: { pieces: PROP_PLANKS, cost: PROP_COST, money: 'dust', answer: 'through' },
+  // Rope. It catches the rock and then pays out under it, all the way to the
+  // ground: the first time a boulder comes down gently, and it arrives anyway.
+  net: { pieces: NET_ROPES, cost: NET_COST, money: 'spore', answer: 'sag', rate: NET_SLOW },
   // Quarried stone. It catches one -- the yard has a moment of having won --
   // and then the crack runs and it comes down with the rock on top of it.
-  arch: { pieces: ARCH_BLOCKS, cost: ARCH_COST, money: 'shard', holds: ARCH_HOLD_MS }
+  arch: { pieces: ARCH_BLOCKS, cost: ARCH_COST, money: 'shard',
+          answer: 'crack', holds: ARCH_HOLD_MS },
+  // A machine, so it is bought with what machines are bought with. The only
+  // shield that gives ground back before it loses it.
+  jack: { pieces: JACK_PARTS, cost: JACK_COST, money: 'spark', answer: 'buckle',
+          holds: JACK_HOLD_MS, push: JACK_PUSH, rate: JACK_PUSH_RATE },
+  // Magic, and the end of the argument. Cast rather than carried: the tower
+  // pours it, so its build is a clock instead of a walk.
+  dome: { pieces: DOME_RINGS, cost: DOME_COST, money: 'core', answer: 'hold',
+          cast: DOME_CAST_MS, holds: DOME_HOLD_MS, rate: DOME_SET_RATE }
 };
 
 export const shieldKind = () => S.shield && KINDS[S.shield.kind];
@@ -62,7 +84,12 @@ export function raiseShield(kind) {
   // above them. A flat arch is a lintel and a tall one is a tunnel; a quarter
   // is the shallow segmental curve a mason gets away with over a wide opening.
   const rise = kind === 'arch' ? Math.round(w / P / 4) : 0;
-  S.shield = { kind, x, w, h: clear + rise, rise, laid: 0, caught: 0 };
+  // A dome is a half-circle on the span, so its crown is half the span up
+  // whether the rock needs that much room or not: the shape decides the
+  // height, the same way the arch's rise does.
+  const h = kind === 'dome' ? Math.max(clear, Math.round(w / P / 2)) : clear + rise;
+  S.shield = { kind, x, w, h, rise, laid: 0, caught: 0,
+               sag: 0, shove: 0, setting: false, cast: KINDS[kind].cast ? now() : 0 };
   S.dirty = true;
 }
 
@@ -131,30 +158,95 @@ function lookUp(ms) {
   }
 }
 
+// What a shield does once it has hold of a rock. One frame of it, and the only
+// place the kinds differ in behavior rather than in looks.
+function answer(s, kind) {
+  const dt = frames() / 60;
+  // Rope. It never really stopped the rock, it only slowed it: the sag deepens
+  // as the rope pays out, and when it reaches the ground the rope has nothing
+  // left to give and the rock finishes its arrival.
+  if (kind.answer === 'sag') {
+    S.rockFall = Math.max(0, S.rockFall - kind.rate * dt);
+    s.sag = Math.round((shieldTopY(s) - rockFootY()) / -P);
+    if (S.rockFall <= 0) { breakShield(); landRock(); }
+    return;
+  }
+  // The machine. Braced under the weight for a moment, then the rams drive the
+  // rock back up -- the closest the yard comes to winning -- and then they give
+  // out all at once.
+  if (kind.answer === 'buckle') {
+    if (now() - s.caught < kind.holds) return;
+    if (s.shove < kind.push) {
+      const by = Math.min(kind.rate * dt, kind.push - s.shove);
+      s.shove += by;
+      S.rockFall += by;
+      S.dirty = true;
+      return;
+    }
+    breakShield();
+    return;
+  }
+  // The dome. It holds the rock overhead for a beat and then lets it down --
+  // gently, which is the one arrival in this game with no shake and no shout
+  // in it. The dome is still standing afterwards, ready for the next one, so
+  // its own state is put back rather than thrown away.
+  if (kind.answer === 'hold') {
+    if (!s.setting) {
+      if (now() - s.caught >= kind.holds) { s.setting = true; S.dirty = true; }
+      return;
+    }
+    S.rockFall = Math.max(0, S.rockFall - kind.rate * dt);
+    if (S.rockFall <= 0) {
+      landRock(true);
+      S.rockHeld = false;
+      s.setting = false;
+      s.caught = 0;
+      S.dirty = true;
+    }
+    return;
+  }
+  // Stone. It stops the rock dead, and then the crack runs.
+  if (now() - s.caught >= kind.holds) breakShield();
+}
+
 // One frame of a shield's life. While a rock is falling, watch for its foot
 // reaching the top -- the answer happens where the picture says it does, in
-// the air, not at the ground. Otherwise keep a builder on the job.
+// the air, not at the ground. Otherwise the thing is still going up: cast by
+// the tower on a clock, or carried out by the crew a piece at a time.
 export function stepShield() {
   const s = S.shield;
   if (!s) return;
   const kind = KINDS[s.kind];
   if (S.rockFall > 0 || S.rockHeld) {
-    // Caught, and being held. The rock does not move while this runs -- see
-    // `rockHeld` in state.js -- and when the hold is up, the crack runs: the
-    // shield comes apart and the rock carries on down from where it stopped.
-    if (s.caught) {
-      if (now() - s.caught >= kind.holds) breakShield();
+    if (s.caught) { answer(s, kind); return; }
+    if (rockFootY() < shieldTopY(s) - P) return;
+    // A shield that is not finished is not there yet. The physical ones are
+    // simply in the way and are smashed for it; the dome is a spell half
+    // woven, and a rock goes through where it is not yet.
+    if (s.laid < kind.pieces) {
+      if (kind.answer !== 'hold') breakShield();
       return;
     }
-    if (rockFootY() < shieldTopY(s) - P) return;
-    if (!kind.holds || s.laid < kind.pieces) { breakShield(); return; }
-    // A finished shield that catches: the one beat in the game where the thing
-    // coming down stops before the ground.
+    if (kind.answer === 'through') { breakShield(); return; }
+    // Everything else gets hold of it, and the yard stops and looks up: the
+    // first time in this game that the thing overhead has not simply arrived.
     s.caught = now();
+    s.shove = 0;
     S.rockHeld = true;
-    lookUp(kind.holds);
+    lookUp(kind.holds || 1200);
     S.dirty = true;
     return;
   }
-  if (s.laid < kind.pieces) sendBuilder();
+  if (s.laid >= kind.pieces) return;
+  // The dome is poured rather than carried, so its progress is a clock. It is
+  // the one shield nobody walks a piece of across the yard -- what crosses the
+  // yard instead is the pour itself, off the tower's spire.
+  if (kind.cast) {
+    const through = Math.min(1, (now() - s.cast) / kind.cast);
+    const was = s.laid;
+    s.laid = Math.floor(through * kind.pieces);
+    if (s.laid !== was) S.dirty = true;
+    return;
+  }
+  sendBuilder();
 }

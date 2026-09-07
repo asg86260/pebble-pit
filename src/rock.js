@@ -131,10 +131,20 @@ export function stepRock() {
   const f = frames();
   S.rockFallV += DROP_GRAV * f;
   S.rockFall -= S.rockFallV * f;
-  if (S.rockFall <= 0) {
-    S.rockFall = 0;
-    S.rockFallV = 0;
-    clearApron();
+  if (S.rockFall <= 0) landRock();
+  placeRock();
+}
+
+// It is down. Everything the yard does about that, in one place, because a
+// rock that arrives is a rock that arrives however it got here -- dropped, or
+// let down by the dome, which is the one way of arriving that is *gentle*: no
+// jolt off the banks, no shake, and nobody shouting about it. Being set down
+// softly and being dropped are the same event with the violence taken out.
+export function landRock(gentle = false) {
+  S.rockFall = 0;
+  S.rockFallV = 0;
+  clearApron();
+  if (!gentle) {
     jolt();
     // and the yard takes the weight of it. A taller rock is a heavier one, so
     // the knock is measured against the first rock rather than being one size
@@ -152,9 +162,8 @@ export function stepRock() {
         w.say = { mark: 'bang', until: at + LAND_SAY_MS };
       }
     }
-    S.dirty = true;
   }
-  placeRock();
+  S.dirty = true;
 }
 
 // The landing shakes the banks: a grain hops off the top of each heap either

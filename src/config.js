@@ -1614,9 +1614,34 @@ export const PROP_FROM = 4;         // rocks fallen before the yard thinks to lo
 export const PROP_COST = 400;       // dust for the timber
 export const PROP_PLANKS = 12;      // trips from the bench; one plank arrives per walk
 
+// The net: rope off the farm, and the first idea that is not "build it
+// stronger". It catches the rock and pays out under it, all the way down.
+export const NET_COST = 12;         // spores
+export const NET_ROPES = 10;
+export const NET_SLOW = 26;         // world pixels a second the rock sinks through it
+
 // The arch: quarried stone, priced in the quarry's own coin. It catches one --
 // the hold is long enough for the yard to believe it has won, and short enough
 // that the belief is the beat rather than a pause in the game.
 export const ARCH_COST = 20;        // shards
 export const ARCH_BLOCKS = 16;      // heavier than timber, so more trips
 export const ARCH_HOLD_MS = 2600;   // how long the rock rests on it before the crack runs
+
+// The jack: a steel plate on rams, and the only shield that pushes back. The
+// shove is the beat -- it is the closest the yard comes to winning -- so it is
+// slow enough to read as effort rather than as a bounce.
+export const JACK_COST = 30;        // sparks
+export const JACK_PARTS = 14;
+export const JACK_HOLD_MS = 1200;   // braced under the weight before it starts to lift
+export const JACK_PUSH = 48;        // world pixels it drives the rock back up
+export const JACK_PUSH_RATE = 22;   // and how fast, so the shove is visibly hard work
+
+// The dome: the tower's, and the only one that holds. It is cast rather than
+// carried -- the tower pours it over the landing spot -- so its build is a
+// clock instead of a walk, and it is priced in the coin that opens what you
+// don't have.
+export const DOME_COST = 4;         // cores
+export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
+export const DOME_CAST_MS = 45000;  // the tower is a while about it, the way a hat is
+export const DOME_HOLD_MS = 2200;   // the rock rests overhead before it is let down
+export const DOME_SET_RATE = 34;    // and comes down this gently, in world pixels a second

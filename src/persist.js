@@ -17,6 +17,7 @@ import { resite } from './world.js';
 import { startIntro } from './intro.js';
 import { gridToString, gridFromString, makeBoulder, boulderAlive } from './rock.js';
 import { setPitGrain, seedPitCores } from './pit.js';
+import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance } from './upgrades.js';
 import { buildShop } from './shop.js';
@@ -207,7 +208,8 @@ export function persist() {
     introDone: S.introDone,
     reunionDone: S.reunionDone,
     shield: S.shield && { kind: S.shield.kind, x: S.shield.x, w: S.shield.w,
-                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid },
+                          h: S.shield.h, rise: S.shield.rise, laid: S.shield.laid,
+                          cast: S.shield.cast },
     shieldsDone: [...S.shieldsDone],
     buried: S.buried,
     casinoOpen: S.casinoOpen,
@@ -423,7 +425,16 @@ export function restore() {
   // resting on nothing if anything about the arch had changed. It falls.
   S.shield = s.shield ? { kind: s.shield.kind, x: s.shield.x, w: s.shield.w,
                           h: s.shield.h, rise: s.shield.rise || 0,
-                          laid: s.shield.laid || 0, caught: 0 } : null;
+                          laid: s.shield.laid || 0, caught: 0,
+                          sag: 0, shove: 0, setting: false, cast: 0 } : null;
+  // A pour picks up where it left off rather than starting again. The clock it
+  // was started against does not survive a reload, so the start is worked back
+  // out of how much of it is woven -- the progress is the fact, and the
+  // timestamp is only how the progress was arrived at.
+  if (S.shield && KINDS[S.shield.kind].cast) {
+    const k = KINDS[S.shield.kind];
+    S.shield.cast = clockNow() - (S.shield.laid / k.pieces) * k.cast;
+  }
   S.shieldsDone = Array.isArray(s.shieldsDone) ? s.shieldsDone : [];
   S.rockHeld = false;
   S.intro = null;
