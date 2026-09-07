@@ -382,6 +382,19 @@ export function drawRift() {
     }
   }
 
+  // The disc goes down HERE, before anything that falls in, and everything
+  // after it is drawn over it. The order used to be the other way about --
+  // streaks and grains first, the disc on top -- so the rim was a lid: a grain
+  // you were following winked out the moment it crossed, at exactly the point
+  // it was moving fastest and was most worth watching.
+  //
+  // It is not a lid, it is where the picture turns over. Each cell laid after
+  // this asks which side of the rim it is on and inks itself accordingly:
+  // black on the paper outside, paper on the black inside. Same strand, same
+  // grain, same law, straight through -- what changes at the rim is the colour
+  // of the ink and nothing else.
+  disc(0, '#000');
+
   // The infall, drawn on the drain's own law (`riftFall` in rift.js) -- the
   // same curve the real grains being swallowed are moving along, so what you
   // see falling and what is actually falling agree. Position comes off the
@@ -413,8 +426,14 @@ export function drawRift() {
     const k = ((t / (RIFT_STREAK_MS * (0.8 + sp * 0.5))) + wisp(i, 1)) % 1;
     const a0 = wisp(i, 2) * Math.PI * 2;
     const from = RIFT_FALL_FROM * (0.85 + wisp(i, 3) * 0.3);
-    const long = RIFT_STREAK_TURN * (0.6 + sp * 0.8);
-    const head = riftFall(from, k).turns;
+    // Longer once it is over the disc. The spiral turns fastest at the bottom,
+    // so a strand measured in TURNS is a long arc out at the rim and almost
+    // nothing once it is inside -- and inside is exactly the stretch the
+    // inversion exists to show. It grows its tail as its head goes down.
+    const at = riftFall(from, k);
+    const deep = Math.max(0, 1 - at.r);
+    const long = RIFT_STREAK_TURN * (0.6 + sp * 0.8) * (1 + deep * 3);
+    const head = at.turns;
     for (let c = 0; c < RIFT_STREAK_MAX; c++) {
       // a cell of the tail is a step back along the fall, not a step outward
       const u = k - c * step;
@@ -433,6 +452,18 @@ export function drawRift() {
       // redrawn every frame is the flicker this whole pass is about.
       const along = (head - f.turns) / long;
       if (along > 0.55 && wisp(i, 7 + c) < (along - 0.55) / 0.45 * 0.8) continue;
+      // Inside the rim it also thins as it goes down, and stops short of the
+      // middle: the spiral tightens, so past a point its own turns sit closer
+      // together than a cell and the tracery welds into a solid disc of paper
+      // -- a hole with a white eye in it, which is this picture inside out.
+      // The heart of it stays ink, which is the one thing about a hole that
+      // must never be in question.
+      const inside = f.r < 1;
+      if (inside) {
+        if (f.r < RIFT_THROAT_MIN) break;
+        const down = 1 - (f.r - RIFT_THROAT_MIN) / (1 - RIFT_THROAT_MIN);
+        if (wisp(i, 900 + c) < down * 0.45) continue;
+      }
       // and it wanders off the perfect curve -- by a third of a cell, which is
       // enough that no strand is a drawn arc and little enough that it is
       // still one strand rather than a line of crumbs
@@ -445,6 +476,7 @@ export function drawRift() {
       // lattice makes each mark hop six pixels at a time -- a boil rather than
       // a drift, and half of what read as chaos here. The flag's pole settled
       // this same argument the same way.
+      ctx.fillStyle = inside ? '#fff' : '#000';
       ctx.fillRect(Math.round(px), Math.round(py), P, P);
     }
   }
@@ -453,77 +485,37 @@ export function drawRift() {
   // The tail grows as the grain nears the rim, which is where it is being
   // pulled hardest -- one grain is a speck, a grain with three cells behind it
   // is a grain being taken.
-  drawLeaving(S.gulped);
-  ctx.fillStyle = '#000';
+  // The grains turn over at the rim the same way the strands do, and this is
+  // the half of it that is real: these are the dust you watched a hauler tip
+  // in. They used to be swallowed by the disc a good second before their fall
+  // was over -- the last and fastest part of a grain's life, the part the
+  // whole law was written for, happened behind a lid.
+  //
+  // Each cell of a grain and of its tail asks which side of the rim it is on.
+  // A grain crossing does not disappear; it changes colour and carries on.
+  // Inside the rim everything goes to paper. A grain keeps its own colour out
+  // on the page -- a shard is blue, a spore green, and that is how you know
+  // what the hole is being fed -- but a dark blue speck on ink is no speck at
+  // all, so over the disc it turns to paper like everything else.
+  const inDisc = (px, py) =>
+    Math.hypot(px - cx, py - cy) < rad * lensAt(Math.atan2(py - cy, px - cx), t);
+
   for (const m of S.gulped) {
     const dx = cx - m.x, dy = cy - m.y;
     const d = Math.hypot(dx, dy);
+    ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
+    ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
     if (!d || d > rad * RIFT_TAIL_R) continue;
     const near = 1 - d / (rad * RIFT_TAIL_R);
     const n = Math.round(RIFT_TAIL * near);
-    for (let c = 1; c <= n; c++)
-      ctx.fillRect(Math.round((m.x - dx / d * c * P) / P) * P,
-                   Math.round((m.y - dy / d * c * P) / P) * P, P, P);
-  }
-
-  disc(0, '#000');
-
-  // --- the throat ---------------------------------------------------------
-  // The fall does not stop at the rim, so the picture of it does not either.
-  // The same strands, on the same law, carried on inside the disc and drawn in
-  // paper instead of ink: the drain seen from above, going down.
-  //
-  // This is what the middle of it wanted. It was a flat black blob -- all the
-  // motion in the ring outside and nothing at the centre, which is the one
-  // place a hole should be busiest. Everything tried across the face of it
-  // instead read as a face: a white arc inside a black circle is an eye or a
-  // mouth, and at a dozen cells across there is no drawing your way out of
-  // that. A spiral cannot be read as an expression, so a spiral is what goes
-  // there -- and it is not a new invention, it is the one already running.
-  //
-  // Inverted, because the disc is ink and the page is paper: outside the rim
-  // the strands are black on white, inside it they are white on black, and
-  // they are the same strands. The rim is where the picture turns over.
-  drawThroat(cx, cy, rad, t, step);
-  ctx.fillStyle = '#000';
-}
-
-// The strands, carried on under the disc. Same law, same seeds, same fraying
-// -- it is the outer loop again with two differences: it draws the stretch of
-// the fall that is inside the rim rather than the stretch outside it, and it
-// draws in paper.
-function drawThroat(cx, cy, rad, t, step) {
-  ctx.fillStyle = '#fff';
-  for (let i = 0; i < RIFT_STREAKS; i++) {
-    const sp = wisp(i, 0);
-    const k = ((t / (RIFT_STREAK_MS * (0.8 + sp * 0.5))) + wisp(i, 1)) % 1;
-    const a0 = wisp(i, 2) * Math.PI * 2;
-    const from = RIFT_FALL_FROM * (0.85 + wisp(i, 3) * 0.3);
-    // The throat is drawn from the head of the strand down, however far in the
-    // head has got -- so a strand only shows inside once it has actually
-    // arrived, and the middle fills and empties as the strands come round.
-    for (let c = 0; c < RIFT_STREAK_MAX; c++) {
-      const u = k + c * step;
-      if (u > 1) break;                                  // gone
-      const f = riftFall(from, u);
-      if (f.r > RIFT_CORE_SHADOW) continue;              // still outside; the black pass has it
-      // ...and it stops well short of the middle. The spiral tightens as it
-      // goes, so past a point its own successive turns are closer together
-      // than a cell and the tracery welds into a solid disc of paper -- which
-      // turns the hole inside out and reads as a ring with a white eye in it.
-      // The heart of it stays ink, which is the one thing about a hole that
-      // must never be in question.
-      if (f.r < RIFT_THROAT_MIN) break;
-      // Sparse the whole way and sparser as it goes down: a tracery of paper
-      // over the ink, not a fill. At the rim it keeps two cells in three and
-      // by the bottom of its run almost none.
-      const deep = 1 - (f.r - RIFT_THROAT_MIN) / (RIFT_CORE_SHADOW - RIFT_THROAT_MIN);
-      if (wisp(i, 900 + c) < 0.35 + deep * 0.6) continue;
-      const a = a0 + f.turns * Math.PI * 2;
-      const d = f.r * rad;
-      ctx.fillRect(Math.round(cx + Math.cos(a) * d), Math.round(cy + Math.sin(a) * d), P, P);
+    for (let c = 1; c <= n; c++) {
+      const tx = m.x - dx / d * c * P, ty = m.y - dy / d * c * P;
+      ctx.fillStyle = inDisc(tx, ty) ? '#fff' : '#000';
+      ctx.fillRect(Math.round(tx / P) * P, Math.round(ty / P) * P, P, P);
     }
   }
+
+  ctx.fillStyle = '#000';
 }
 
 export function drawAbyss() {
