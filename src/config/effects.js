@@ -32,10 +32,9 @@ export let RIFT_INHALE_MAX = 3000;   // grains it may take in one frame
 export const RIFT_INHALE_SHOW = 600;
 
 // --- and what it looks like ---------------------------------------------------
-// A disc is an absence; a black hole is an absence that is *pulling*. Three
-// things say so, and all three are flat cells on the same grid as everything
-// else: a rim of cleared paper so the core reads as the darkest thing on the
-// page, streaks of stuff falling in around it, and a slow warp of the edge.
+// A disc is an absence; a black hole is an absence that is *pulling*. What says
+// so is the rim of cleared paper that makes the core the darkest thing on the
+// page -- and the dust going into it, which is drawn where it actually is.
 //
 // The halo is what makes the core dark. There is no darker black available --
 // the disc is already ink -- so the way to deepen it is to take everything else
@@ -43,91 +42,14 @@ export const RIFT_INHALE_SHOW = 600;
 // the eye reads a well rather than a sticker.
 export const RIFT_HALO = 2;          // cells of paper cleared round the rim
 export const RIFT_STIPPLE = 2;       // and cells of thinning speckle past that
-// How far round the ring of stipple a cell has to be to be drawn at all: the
-// speckle is denser at the sides the infall comes from and thin at the top, so
-// the ring is not a printed collar.
-export const RIFT_STIPPLE_MS = 2600; // how long the speckle takes to turn once
-
-// The lensing: the rim swells and shrinks, slowly, and not evenly round itself.
-// Light bending round a thing this heavy is the one property of a black hole
-// everybody knows by sight, and in a grid this coarse it can only be a warp of
-// the silhouette. Slow, because a rim that pulses at a readable rate is a
-// throbbing blob -- this should be something you notice is never quite still.
-export let RIFT_LENS = 0.09;         // share of the radius it swells by
-export const RIFT_LENS_MS = 3400;    // and how long one breath takes
-
-// The throat: the middle of the disc, which is the same fall carried on under
-// it. Drawn in paper, because the disc is ink -- the rim is where the picture
-// turns over. See `drawThroat` in render/cores.js.
-//
-// A literal black hole was tried here first -- the shadow, the photon ring,
-// the accretion disk lensed up over the top -- and it does not survive this
-// size. A flattened white ellipse inside a black circle is the shape of a
-// cartoon mouth, and at a dozen cells across that is what it reads as, teeth
-// and all; every arc across the face read as an eye or a smile. The palette
-// has no greys to soften it with. A spiral cannot be read as an expression,
-// which is why the throat is one.
-export const RIFT_CORE_SHADOW = 0.62; // where the throat starts, off the rim
-// How far down the throat the tracery goes before it stops, as a share of the
-// rim. The spiral tightens, so below this its own turns sit closer together
-// than a cell and the tracery welds into a solid disc of paper -- a hole with
-// a white eye in it. Everything under this stays ink.
-export const RIFT_THROAT_MIN = 0.30;
-
-// --- the song -----------------------------------------------------------------
-// The hole rings. Slow bands of the wizards' own purple going out from the rim
-// and spending themselves on the air -- the same gesture the tower makes when
-// it is casting (`drawTowerWaves`), which is the point of borrowing it: the
-// tower is where this thing was summoned from, and a family resemblance is the
-// cheapest way to say so.
-//
-// It is a readout as well as a noise. The rings come faster and darker while
-// the hole is actually swallowing and fall back to a slow idle when the yard
-// stops feeding it, so a glance at the pit says whether anything is going in
-// without counting anything -- the same bargain the tower's own waves strike.
-//
-// Colour at all, in a black-and-white yard, because magic is the one thing
-// here that has always been allowed it: the tower's waves, the abyss's depths
-// and this are one family, and a purple ring is what says *wizard* rather than
-// *machine*. Faint enough to be the air over the thing rather than the thing.
-export const RIFT_SONG_MS = 2600;    // one ring, rim to gone, while it is fed
-export const RIFT_SONG_IDLE = 2.4;   // and how much slower when nothing is
-export const RIFT_SONG_RINGS = 3;    // in the air at once
-export const RIFT_SONG_R = 3.2;      // how far one gets, in disc radii
-export const RIFT_SONG_INK = 0.85;   // the darkest a ring ever is, when fed
-export const RIFT_SONG_QUIET = 0.32; // ...and when the hole has nothing to eat
-export const RIFT_SONG_FULL = 40;    // grains in flight that count as full song
-
-// The infall streaks: short trails of stuff falling in, spiralling to the rim.
-// They run whether or not the hole is eating anything, which is most of the
-// endgame -- the pile is empty because the hole is doing its job, and a hole
-// that only moves when it is fed looks broken exactly when it is working.
-// They fall along the one law (`riftFall` in rift.js) -- where a fall starts
-// and how many turns it makes belong to the drain now, not to the streaks, so
-// RIFT_STREAK_FROM and RIFT_STREAK_TURN are gone: see RIFT_FALL_FROM and
-// RIFT_TURNS in config/rift.js.
-// Only the stretch outside the rim is ever seen -- about a turn and a half of
-// the spiral -- so a dozen arms half a turn each is three times more ink than
-// there is track to lay it on, and they close up into solid rings. Eight
-// ragged ones leave the gaps that make it read as turning: they are not the
-// twelve clean ones, because each of these has its own pace, length, radius
-// and fraying and no two lie on top of each other.
-export let RIFT_STREAKS = 8;         // how many are falling in at once
-export const RIFT_STREAK_MS = 1800;  // how long one takes to reach the middle
-// How long one streak is, measured in turns of the spiral it lies on. Turns,
-// not a length and not a share of the fall: the spiral tightens as it goes, so
-// a fixed length is a short arc out at the rim and a coil of three wraps near
-// the middle -- which is what a share of the fall gave, and seven of those
-// filled the ring solid. Half a turn is an arm you can follow with your eye
-// and still see the gaps between.
-//
-// How MANY cells that takes is not written down: it is worked out from the
-// disc's radius so the cells land a cell apart whatever size the disc has
-// grown to (see drawRift). A spacing guessed here would be dotted at one size
-// and doubled at another, and the disc's whole life is growing from four cells
-// to twelve.
-export const RIFT_STREAK_TURN = 0.5;
-export const RIFT_STREAK_MAX = 90;   // cells one streak may spend, as a stop
+// Nothing about the disc itself moves. It had a lensing rim that swelled and
+// leaned, a speckle collar that turned, eight strands for ever spiralling in
+// whether or not anything was, and a song of purple rings going out of it --
+// RIFT_LENS, RIFT_STIPPLE_MS, the RIFT_STREAK_* family and the RIFT_SONG_*
+// family, all gone. Each was defensible alone and together they were an
+// ornament that never stopped moving, on a thing that is idle most of the
+// endgame because it is keeping up. The hole is a place, not a creature: what
+// moves is the dust going into it. See `drawRift` in render/cores.js.
 
 // And the smear on a grain that is actually going in: a few cells of tail
 // pointing back the way it came, so the stream reads as being pulled rather than
@@ -198,10 +120,6 @@ export let DANCE_JUMP_H = 3.5;       // and how many cells it clears at the top
 export const EFFECT_KNOBS = [
   { key: 'RIFT_INHALE_MAX', label: 'rift bite', min: 100, max: 20000, step: 100,
     get: () => RIFT_INHALE_MAX, set: v => { RIFT_INHALE_MAX = v; } },
-  { key: 'RIFT_LENS', label: 'rift lensing', min: 0, max: 0.4, step: 0.01,
-    get: () => RIFT_LENS, set: v => { RIFT_LENS = v; } },
-  { key: 'RIFT_STREAKS', label: 'rift streaks', min: 0, max: 48, step: 1,
-    get: () => RIFT_STREAKS, set: v => { RIFT_STREAKS = v; } },
   // The dial is how near the buzz the quickest body is allowed to get, not the
   // beat itself: whatever this is set to, the bound holds by construction.
   { key: 'DANCE_JUMP_ROOM', label: 'jump tempo', min: 0.3, max: 1, step: 0.01,

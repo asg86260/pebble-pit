@@ -19,20 +19,14 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
-         RIFT_HALO, RIFT_STIPPLE, RIFT_STIPPLE_MS, RIFT_LENS, RIFT_LENS_MS,
-         RIFT_STREAKS, RIFT_STREAK_MS, RIFT_STREAK_TURN, RIFT_STREAK_MAX,
-         RIFT_FALL_FROM, RIFT_FALL_END, RIFT_TURNS,
-         RIFT_CORE_SHADOW,
-         RIFT_THROAT_MIN,
-         RIFT_SONG_MS, RIFT_SONG_IDLE, RIFT_SONG_RINGS, RIFT_SONG_R,
-         RIFT_SONG_INK, RIFT_SONG_QUIET, RIFT_SONG_FULL,
+         RIFT_HALO, RIFT_STIPPLE,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
 import { boulderAlive, sandTopY } from '../rock.js';
 import { abyssLine, pitDepth } from '../pit.js';
 import { S, floor, pit, rift } from '../state.js';
-import { riftFall } from '../rift.js';
+
 import { rockLeft } from '../world.js';
 import { ctx } from './ctx.js';
 import { drawCircle, drawMark } from './marks.js';
@@ -304,254 +298,79 @@ const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
 // over them, so anything that has crossed the rim is gone behind it rather
 // than drawn on top of it -- which is what going *in* looks like.
 
-// The song: rings of the wizards' purple going out from the rim and spending
-// themselves on the air. The tower's own gesture (`drawTowerWaves`), borrowed
-// deliberately -- this hole was summoned from that tower, and the resemblance
-// is the cheapest way for the yard to say so.
-//
-// It sings louder while it is eating. `S.gulped` is what is actually in flight
-// down the drain, so the rings quicken and darken exactly when the hole is
-// working and settle back to a slow idle when the yard stops feeding it. A
-// glance at the pit says whether anything is going in, without a number.
-//
-// No list and nothing stepped: each ring's place comes off the clock and its
-// own slot, the way the streaks do.
-function drawSong(cx, cy, rad, t) {
-  const fed = Math.min(1, S.gulped.length / RIFT_SONG_FULL);
-  const pace = RIFT_SONG_MS * (RIFT_SONG_IDLE - (RIFT_SONG_IDLE - 1) * fed);
-  const ink = RIFT_SONG_QUIET + (RIFT_SONG_INK - RIFT_SONG_QUIET) * fed;
-  for (let i = 0; i < RIFT_SONG_RINGS; i++) {
-    const k = ((t / pace) + i / RIFT_SONG_RINGS) % 1;
-    // Out from the rim, not from the middle: what is inside the rim is the
-    // hole, and a ring born in there would be a ring drawn over the one thing
-    // on this screen that has to stay ink.
-    const r = rad * (1 + k * (RIFT_SONG_R - 1));
-    // fainter as it goes, and deeper down the purples with it -- a ring that
-    // held its colour to the end reads as a hoop rather than as something
-    // spending itself on the air. The tower's waves settled this.
-    ctx.globalAlpha = (1 - k) * ink;
-    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
-    const n = Math.max(12, Math.round((Math.PI * 2 * r) / P));
-    for (let j = 0; j < n; j++) {
-      const a = (j / n) * Math.PI * 2;
-      // On the lens, like everything else round this rim, so the song leans
-      // with the shape rather than hanging beside it as a true circle.
-      const w = lensAt(a, t);
-      ctx.fillRect(Math.round(cx + Math.cos(a) * r * w),
-                   Math.round(cy + Math.sin(a) * r * w), P, P);
-    }
-  }
-  ctx.globalAlpha = 1;
-}
-
-// A settled number in 0..1 for a strand and a place along it. Settled is the
-// whole point: what is drawn round this hole has to be ragged without being
-// *restless*, and those are not the same thing. A raggedness redrawn every
-// frame is the boil this pass was called to get rid of; one keyed to the
-// strand travels with the strand, so the picture is torn cloth turning rather
-// than static on a screen. No state, no list -- a hash of two small numbers.
-const wisp = (i, n) => {
-  const h = Math.sin(i * 127.1 + n * 311.7) * 43758.5453;
-  return h - Math.floor(h);
-};
-
-// How far out of round the rim is at a given angle, this instant.
-//
-// One harmonic, not two. It carried a second at `a * 3` as well, and two
-// angular harmonics beating against each other put three or four lobes round
-// the rim that swelled and collapsed independently -- the rim *churned*, which
-// was the third of what read as chaos. With one term the whole rim leans one
-// way and slowly comes back, which is a shape breathing rather than a blob
-// throbbing. The slow drift in time stays: it must never be a metronome.
-const lensAt = (a, t) =>
-  1 + RIFT_LENS * Math.sin(t / RIFT_LENS_MS * Math.PI * 2 + a);
-
 export function drawRift() {
   if (!S.riftOpen || S.drowned) return;
-  const t = now();
   const { x, y, w, h } = rift;
   const across = Math.round(w / P), down = Math.round(h / P);
   const mid = (across - 1) / 2, midR = (down - 1) / 2;
   const cx = x + (mid + 0.5) * P, cy = y + (midR + 0.5) * P;
   const rad = (mid + 0.5) * P;
 
-  // A disc, warped by the lens: the half-width of each row off the circle,
-  // worked out from the row rather than written down as a table, so the shape
-  // follows the derived size wherever the growth takes it. `grow` widens it in
-  // cells, which is how the halo is cut: the same disc, a couple of cells
-  // fatter, in paper.
+  // A disc: the half-width of each row off the circle, worked out from the row
+  // rather than written down as a table, so the shape follows the derived size
+  // wherever the growth takes it. `grow` widens it in cells, which is how the
+  // halo is cut: the same disc, a couple of cells fatter, in paper.
   const disc = (grow, style) => {
     ctx.fillStyle = style;
     for (let r = -grow; r < down + grow; r++) {
       const dy = (r - midR) / (midR + 0.5 + grow);
-      // The row's own angle, so the warp is a shape rather than a size: the rim
-      // leans out on one side while it comes in on the other.
-      const half = Math.floor((mid + grow) * lensAt(Math.asin(Math.max(-1, Math.min(1, dy))), t)
-                              * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
+      const half = Math.floor((mid + grow) * Math.sqrt(Math.max(0, 1 - dy * dy)) + 0.5);
       if (half < 0) continue;
       const left = x + Math.round(mid - half) * P;
       ctx.fillRect(left, y + r * P, (half * 2 + 1) * P, P);
     }
   };
 
-  // The song goes down first of all, so the halo's paper cuts a clean gap
-  // through it and the rings read as coming off the rim rather than as a
-  // pattern printed under the hole.
-  drawSong(cx, cy, rad, t);
-
-  // Paper next, so whatever the disc is standing over -- the pile, the ground
+  // Paper first, so whatever the disc is standing over -- the pile, the ground
   // line, a grain on its last turn -- is cleared away from the rim: with the
   // page showing round it, it is a hole *in* the world.
   disc(RIFT_HALO, '#fff');
 
-  // ...and then the speckle, thinning outward through the halo: the last of
-  // what is being dragged in, too far gone to be a grain any more. Laid on a
-  // ring of cells rather than at random so it holds still enough to read as
-  // one thing, and turned slowly so it is never a printed collar.
+  // ...and a ring of speckle thinning outward through that paper, so the eye
+  // reads a well rather than a sticker. It does not turn. Nothing here does.
   ctx.fillStyle = '#000';
-  const turn = t / RIFT_STIPPLE_MS * Math.PI * 2;
   for (let ring = 0; ring < RIFT_STIPPLE; ring++) {
     const r = rad + (RIFT_HALO + ring + 0.5) * P;
-    // fewer the further out, which is the thinning
     const n = Math.max(4, Math.round((Math.PI * 2 * r) / P / (3 + ring * 3)));
     for (let i = 0; i < n; i++) {
-      // One way round, all of it. The rings used to counter-rotate, which at
-      // this spacing reads as two collars grinding against each other rather
-      // than as one thing being drawn in -- and it disagreed with every other
-      // moving part of the drain, all of which turn the same way.
-      const a = turn + (i / n) * Math.PI * 2;
-      const px = cx + Math.cos(a) * r * lensAt(a, t);
-      const py = cy + Math.sin(a) * r * lensAt(a, t);
-      // Whole pixels rather than whole cells: see the streaks below. Snapped
-      // to the lattice, each speck jumped a cell at a time as its ring turned,
-      // and a ring of specks all jumping is the boil that read as chaos.
-      ctx.fillRect(Math.round(px), Math.round(py), P, P);
+      const a = (i / n) * Math.PI * 2 + ring * 0.7;   // offset, so rings do not line up
+      ctx.fillRect(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), P, P);
     }
   }
 
-  // The disc goes down HERE, before anything that falls in, and everything
-  // after it is drawn over it. The order used to be the other way about --
-  // streaks and grains first, the disc on top -- so the rim was a lid: a grain
-  // you were following winked out the moment it crossed, at exactly the point
-  // it was moving fastest and was most worth watching.
+  // **The hole is a place, not a creature.**
   //
-  // It is not a lid, it is where the picture turns over. Each cell laid after
-  // this asks which side of the rim it is on and inks itself accordingly:
-  // black on the paper outside, paper on the black inside. Same strand, same
-  // grain, same law, straight through -- what changes at the rim is the colour
-  // of the ink and nothing else.
+  // It does not breathe, ring, turn or spiral on its own, and every one of
+  // those was here: a rim that swelled and leaned, a speckle collar that
+  // rotated, eight strands for ever falling in whether or not anything was,
+  // and a song in the wizards' purple that rang out of it. Each was
+  // defensible on its own; together they were an ornament that never stopped
+  // moving, and an endgame rift is idle most of the time because it is
+  // keeping up.
+  //
+  // What is left moving is the dust, which is the only thing that is actually
+  // doing anything -- grains the crew tipped in, on the spiral, going down.
+  // With nothing going in there is a hole in the air and it is still. That is
+  // the rule the rest of this yard runs on, a thing looks busy when it is
+  // busy, and it makes a grain going in an event again rather than one more
+  // mark in a churn.
   disc(0, '#000');
 
-  // The infall, drawn on the drain's own law (`riftFall` in rift.js) -- the
-  // same curve the real grains being swallowed are moving along, so what you
-  // see falling and what is actually falling agree. Position comes off the
-  // clock and the streak's own slot: no list, no stepping, nothing to save.
-  //
-  // Each streak is drawn as a run of cells *along the spiral behind its head*
-  // rather than as a line of cells stepping straight outward. That is the
-  // difference between a curve and a tick mark: the tail now bends the way the
-  // path bends, and the ring reads as a stream turning rather than as a wheel
-  // of spokes. They were twelve short marks on a third of a turn; they are
-  // fewer, longer, and given the whole spiral to lie on.
-  // How far back along the fall one cell of tail sits. Derived, not tuned: the
-  // law lays the same arc length down for every equal step of `u` anywhere on
-  // the spiral (the radius comes in at a steady rate and the angle is its log,
-  // and those cancel), so ONE step size puts the cells a cell apart the whole
-  // way in. It falls out of the disc's radius, so it stays right as the disc
-  // grows from four cells to twelve -- where a written-down step was a dotted
-  // line at one size and a doubled-up smear at another.
-  const arc = Math.PI * 2 * RIFT_TURNS * (RIFT_FALL_FROM - RIFT_FALL_END)
-            / Math.log(RIFT_FALL_FROM / RIFT_FALL_END) * rad;
-  const step = P / Math.max(1, arc);
-  for (let i = 0; i < RIFT_STREAKS; i++) {
-    // Each strand is its own: its own pace, its own place on the ring, its own
-    // length, its own distance out. Five identical arcs at five even angles is
-    // a pinwheel -- correct arithmetic and a machined picture, which is the
-    // other way of getting this wrong from the boil it replaced. Off `wisp`,
-    // so a strand keeps the same character frame to frame.
-    const sp = wisp(i, 0);
-    const k = ((t / (RIFT_STREAK_MS * (0.8 + sp * 0.5))) + wisp(i, 1)) % 1;
-    const a0 = wisp(i, 2) * Math.PI * 2;
-    const from = RIFT_FALL_FROM * (0.85 + wisp(i, 3) * 0.3);
-    // Longer once it is over the disc. The spiral turns fastest at the bottom,
-    // so a strand measured in TURNS is a long arc out at the rim and almost
-    // nothing once it is inside -- and inside is exactly the stretch the
-    // inversion exists to show. It grows its tail as its head goes down.
-    const at = riftFall(from, k);
-    const deep = Math.max(0, 1 - at.r);
-    const long = RIFT_STREAK_TURN * (0.6 + sp * 0.8) * (1 + deep * 3);
-    const head = at.turns;
-    for (let c = 0; c < RIFT_STREAK_MAX; c++) {
-      // a cell of the tail is a step back along the fall, not a step outward
-      const u = k - c * step;
-      if (u < 0) break;                                  // not born yet
-      const f = riftFall(from, u);
-      if (head - f.turns > long) break;                  // the tail's whole length
-      // ...and it frays, but only at the end of itself. A strand holds
-      // together for most of its length and comes apart behind, so the tail
-      // thins into nothing instead of stopping dead at a line -- and the part
-      // you actually follow with your eye stays a line you can follow.
-      //
-      // Dropping cells from the head as well (which is what a flat rate over
-      // the whole length does) takes the curve apart into a scatter of dots,
-      // which is the picture this started from. Keyed on the cell rather than
-      // the clock, so the gaps belong to the strand and travel with it: a gap
-      // redrawn every frame is the flicker this whole pass is about.
-      const along = (head - f.turns) / long;
-      if (along > 0.55 && wisp(i, 7 + c) < (along - 0.55) / 0.45 * 0.8) continue;
-      // Inside the rim it also thins as it goes down, and stops short of the
-      // middle: the spiral tightens, so past a point its own turns sit closer
-      // together than a cell and the tracery welds into a solid disc of paper
-      // -- a hole with a white eye in it, which is this picture inside out.
-      // The heart of it stays ink, which is the one thing about a hole that
-      // must never be in question.
-      const inside = f.r < 1;
-      if (inside) {
-        if (f.r < RIFT_THROAT_MIN) break;
-        const down = 1 - (f.r - RIFT_THROAT_MIN) / (1 - RIFT_THROAT_MIN);
-        if (wisp(i, 900 + c) < down * 0.45) continue;
-      }
-      // and it wanders off the perfect curve -- by a third of a cell, which is
-      // enough that no strand is a drawn arc and little enough that it is
-      // still one strand rather than a line of crumbs
-      const wob = (wisp(i, 300 + c) - 0.5) * P * 0.7;
-      const a = a0 + f.turns * Math.PI * 2;
-      const d = f.r * rad + wob;
-      const px = cx + Math.cos(a) * d * lensAt(a, t);
-      const py = cy + Math.sin(a) * d * lensAt(a, t);
-      // Whole pixels, not whole cells. Snapping a turning thing to the cell
-      // lattice makes each mark hop six pixels at a time -- a boil rather than
-      // a drift, and half of what read as chaos here. The flag's pole settled
-      // this same argument the same way.
-      ctx.fillStyle = inside ? '#fff' : '#000';
-      ctx.fillRect(Math.round(px), Math.round(py), P, P);
-    }
-  }
-
-  // And the grains themselves, each with a tail pointing back the way it came.
-  // The tail grows as the grain nears the rim, which is where it is being
-  // pulled hardest -- one grain is a speck, a grain with three cells behind it
-  // is a grain being taken.
-  // The grains turn over at the rim the same way the strands do, and this is
-  // the half of it that is real: these are the dust you watched a hauler tip
-  // in. They used to be swallowed by the disc a good second before their fall
-  // was over -- the last and fastest part of a grain's life, the part the
-  // whole law was written for, happened behind a lid.
-  //
-  // Each cell of a grain and of its tail asks which side of the rim it is on.
-  // A grain crossing does not disappear; it changes colour and carries on.
-  // Inside the rim everything goes to paper. A grain keeps its own colour out
-  // on the page -- a shard is blue, a spore green, and that is how you know
-  // what the hole is being fed -- but a dark blue speck on ink is no speck at
-  // all, so over the disc it turns to paper like everything else.
-  const inDisc = (px, py) =>
-    Math.hypot(px - cx, py - cy) < rad * lensAt(Math.atan2(py - cy, px - cx), t);
+  // Each cell asks which side of the rim it is on and inks itself: the grain's
+  // own colour out on the page, paper over the black inside. A grain crossing
+  // does not vanish behind the disc, it changes colour and carries on -- the
+  // rim is where the picture turns over, not a lid. The last and fastest part
+  // of a fall used to happen behind the ink.
+  const inDisc = (px, py) => Math.hypot(px - cx, py - cy) < rad;
 
   for (const m of S.gulped) {
     const dx = cx - m.x, dy = cy - m.y;
     const d = Math.hypot(dx, dy);
     ctx.fillStyle = inDisc(m.x, m.y) ? '#fff' : shadeOf(m.s);
     ctx.fillRect(Math.round(m.x), Math.round(m.y), P, P);
+    // and a tail pointing back the way it came, growing as it nears the rim
+    // where it is being pulled hardest: one grain is a speck, a grain with
+    // three cells behind it is a grain being taken.
     if (!d || d > rad * RIFT_TAIL_R) continue;
     const near = 1 - d / (rad * RIFT_TAIL_R);
     const n = Math.round(RIFT_TAIL * near);
@@ -561,9 +380,9 @@ export function drawRift() {
       ctx.fillRect(Math.round(tx / P) * P, Math.round(ty / P) * P, P, P);
     }
   }
-
   ctx.fillStyle = '#000';
 }
+
 
 export function drawAbyss() {
   if (!S.drowned) return;   // while the pit is merely torn, the disc is the picture
