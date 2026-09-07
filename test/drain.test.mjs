@@ -110,6 +110,20 @@ group('a grain thrown at a torn hole keeps the speed it arrived with', async () 
   const flying = S.gulped.slice();
   const moving = flying.filter(m => Math.hypot(m.vx || 0, m.vy || 0) > 0.01);
 
+  // ...and how much of that speed is ACROSS the pull rather than along it,
+  // which is the whole of whether the stuff swirls or plunges. `enterDrain`
+  // gives every grain a share of the circular speed for where it joined (see
+  // RIFT_SWING), so a grain lifted off the pile is not on a collision course
+  // with the middle even though it was lying still.
+  const c = mid();
+  const sideways = flying.map(m => {
+    const d = Math.hypot(m.x - c.x, m.y - c.y) || 1;
+    const ux = (c.x - m.x) / d, uy = (c.y - m.y) / d;      // toward the middle
+    const across = Math.abs((m.vx || 0) * -uy + (m.vy || 0) * ux);
+    return across / (Math.hypot(m.vx || 0, m.vy || 0) || 1);
+  });
+  const swirling = sideways.filter(s => s > 0.2).length;
+
   return [
     ok(flying.length > 0, 'the hole is eating what the crew tip in', `${flying.length}`),
     ok(flying.every(m => Number.isFinite(m.vx) && Number.isFinite(m.vy)),
@@ -117,6 +131,9 @@ group('a grain thrown at a torn hole keeps the speed it arrived with', async () 
     // The throws arrive moving; grains lifted off the pile were lying still.
     // Both are in the list, so this only asks that the thrown ones kept theirs.
     ok(moving.length > 0, 'and the thrown ones came in with theirs still on them',
-       `${moving.length} of ${flying.length} moving`)
+       `${moving.length} of ${flying.length} moving`),
+    ok(swirling > flying.length * 0.5,
+       'and most of them are going ACROSS the pull, not straight down it',
+       `${swirling} of ${flying.length} with real sideways speed`)
   ];
 });

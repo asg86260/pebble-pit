@@ -117,6 +117,23 @@ export const RIFT_G = 0.55;          // px a frame squared, at one radius out
 export const RIFT_G_MIN = 0.15;      // px a frame squared, anywhere in the hole
 export const RIFT_DRAG = 0.985;      // speed kept per frame: orbits decay, so
                                      // nothing circles for ever
+// How much sideways speed a grain has as it enters the drain, as a share of
+// what it would take to hold a circular orbit where it entered.
+//
+// This is THE knob for how much the stuff swirls, and it is a real one: a
+// thing falls dead straight into a hole only if it has no sideways speed at
+// all, and swirls exactly to the extent that it has some. Nought is a stone
+// dropped down a well. One would circle for ever. In between it swings round
+// once or twice, losing to the drag, and comes in -- which is what an
+// accretion disc is and why real ones spiral rather than plunge.
+//
+// A share of the CIRCULAR speed rather than a flat number of pixels, so it
+// means the same thing wherever the grain joined: near the rim that is a small
+// number and far out a large one, which is the arithmetic doing the work
+// instead of a constant that is right at one distance.
+//
+// It is an initial condition, not a path. Nothing is steered after this.
+export const RIFT_SWING = 0.55;
 export const RIFT_EAT = 0.35;        // swallowed inside this, in disc radii
 export const RIFT_VMAX = 14;         // px a frame, a ceiling near the middle
                                      // where the square would otherwise blow up

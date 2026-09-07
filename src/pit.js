@@ -8,7 +8,8 @@
 
 import { P, WORKER, PIT_W_MAX,
         PIT_H, PIT_HEAP, PIT_HEAP_SLOPE, PIT_GRAINS, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL,
-        RIFT_GULP, RIFT_SHAKE, ABYSS_DOWN, findKind, someFind } from './config.js';
+        RIFT_GULP, RIFT_SHAKE, RIFT_G, RIFT_G_MIN, RIFT_EAT, RIFT_SWING,
+        ABYSS_DOWN, findKind, someFind } from './config.js';
 import { S, pit, rift } from './state.js';
 import { at, put, addGrain, count, countDust, dustIn, isDust, roomFor, recount, bottomY, settleSome, wakeGrid,
          surfaceY, colOf, topRow } from './grid.js';
@@ -275,6 +276,36 @@ function throughRift(x, shade) {
   return true;
 }
 
+// The speed a grain enters the drain with: whatever it already had, plus a
+// sideways nudge.
+//
+// The nudge is what makes the stuff swirl instead of plunging, and it is an
+// initial condition rather than a path -- once it is given, gravity has the
+// grain and nothing steers it again. A share of the CIRCULAR speed for where
+// it joined (`sqrt(g·d)`, the speed that would hold an orbit there), so it
+// means the same thing at any distance: small near the rim, large far out,
+// worked out rather than written down.
+//
+// Which way round is the grain's own. A hole where everything turned the same
+// way would be a wheel; a few going against the run is what a heap being
+// dragged into something looks like.
+//
+// The disc's rect is read off `rift` in the state rather than through rift.js,
+// which reads this file: a hole that reads the rift that reads the hole is a
+// circle.
+function enterDrain(x, y, vx, vy) {
+  const R = Math.max(1, rift.w * 0.5);
+  const dx = (rift.x + rift.w * 0.5) - x, dy = (rift.y + rift.h * 0.5) - y;
+  const d = Math.hypot(dx, dy);
+  if (!d) return { vx, vy };
+  // the same pull `orbit` in game.js will apply, so the two agree about what a
+  // circular orbit here would need
+  const g = Math.max(RIFT_G_MIN,
+                     RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT));
+  const v = RIFT_SWING * Math.sqrt(g * d) * (rand() < 0.5 ? -1 : 1);
+  return { vx: vx + (-dy / d) * v, vy: vy + (dx / d) * v };
+}
+
 // A grain thrown at a torn pit is the rift's from the moment it crosses the
 // mouth. It used to land on the pile first and be lifted straight back off it
 // the next frame -- the rift inhales everything in the hole, so with the rift
@@ -305,7 +336,7 @@ export function riftCatch(x, y, shade, vx = 0, vy = 0) {
     // grain does about it depends on how fast it was going and which way, so a
     // hauler's throw swings round the hole and a grain that was lying still
     // drops. Nothing here decides which; the throw already did.
-    S.gulped.push({ x0: x, y0: y, x, y, t: 0, vx, vy, s: shade });
+    S.gulped.push({ x0: x, y0: y, x, y, t: 0, ...enterDrain(x, y, vx, vy), s: shade });
   }
   return true;
 }
@@ -454,10 +485,10 @@ function lift(n, leaving, takes = isDust, took = null, near = null, show = SHOWN
         t: near ? 0 : -rand() * 0.5,
         rate: 0.012 + rand() * 0.01,
         lift: 60 + rand() * 90,     // how high it arcs on the way
-        // A grain lifted off the pile was lying there: it goes into the rift's
-        // pull with no speed of its own and falls straight in, which is what
-        // something released at rest does. Only a thrown one swings.
-        vx: 0, vy: 0,
+        // A grain lifted off the pile was lying there, so it brings nothing of
+        // its own -- and `enterDrain` gives it the sideways nudge that decides
+        // whether it swings round the hole or drops down it. See RIFT_SWING.
+        ...enterDrain(pit.x + c * pit.p, bottomY(pit) - (r + 1) * pit.p, 0, 0),
         // Where this grain is paying to -- the selling station, or null for the
         // bench. Stamped at lift so a grain keeps its destination however the
         // list is stepped. See `fly` in game.js.
