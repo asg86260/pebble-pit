@@ -665,29 +665,48 @@ export function overPitMark(mx, my) {
 // width at first, which put the door and the belfry slot a third of a pixel off
 // the lattice and drew them with a grey fringe -- the same hairline the whole
 // game is arranged to avoid.
-// The props, half-built or whole: two timber legs and a lid over the rock,
-// drawn in whole cells like every building on this ground. The legs rise
-// through the first half of the planks and the lid closes from both ends
-// through the second, so the frame visibly grows out of the trips that built
-// it rather than fading in. Drawn after the rock, because the lid stands over
-// it -- and before the crew, who walk in front of everything.
+// The props, half-built or whole: two braced timber legs and a sagging lid
+// over the rock, drawn in whole cells like every building on this ground. The
+// legs rise through the first half of the planks and the lid closes from both
+// ends through the second, so the frame visibly grows out of the trips that
+// built it rather than fading in. Drawn after the rock, because the lid stands
+// over it -- and before the crew, who walk in front of everything.
 export function drawProps() {
   const p = S.props;
   if (!p) return;
   const done = Math.min(1, p.laid / PROP_PLANKS);
   const lw = PROP_LEG_W * P;
   const topY = S.groundY - p.h * P;
+  const cols = p.w / P;
   ctx.fillStyle = '#000';
   const legC = Math.min(p.h, Math.round(Math.min(1, done * 2) * p.h));
+  const span = Math.round(Math.max(0, done * 2 - 1) * cols) * P;
+  const half = span > 0 ? Math.min(p.w, Math.ceil(span / 2 / P) * P) : 0;
+
   if (legC > 0) {
     ctx.fillRect(p.x, S.groundY - legC * P, lw, legC * P);
     ctx.fillRect(p.x + p.w - lw, S.groundY - legC * P, lw, legC * P);
+    // a diagonal shore leaning into each leg, one cell a course
+    const brace = Math.min(legC - 1, 5);
+    for (let i = 0; i < brace; i++) {
+      ctx.fillRect(p.x + lw + i * P, S.groundY - (brace - i) * P, P, P);
+      ctx.fillRect(p.x + p.w - lw - (i + 1) * P, S.groundY - (brace - i) * P, P, P);
+    }
   }
-  const span = Math.round(Math.max(0, done * 2 - 1) * (p.w / P)) * P;
-  if (span > 0) {
-    const half = Math.min(p.w, Math.ceil(span / 2 / P) * P);
-    ctx.fillRect(p.x, topY, half, PROP_LID_T * P);
-    ctx.fillRect(p.x + p.w - half, topY, half, PROP_LID_T * P);
+  if (half > 0) {
+    // The lid sags. Drawn a column at a time so the whole thing bends: each
+    // column rides lower the nearer it is to the middle, a shallow bow of
+    // whole-cell steps -- deepest where the span is widest, and never more
+    // than a few courses, because a lid that has already given up is not a
+    // lid anybody believed in.
+    const sag = Math.max(1, Math.min(3, Math.round(cols / 14)));
+    for (let c = -1; c <= cols; c++) {
+      const from = (c + 1) * P <= half ? true : (cols - c) * P <= half;
+      if (!from) continue;
+      const t = (2 * c / cols) - 1;                 // -1 at one end, 1 at the other
+      const off = Math.round(sag * (1 - t * t));    // the bow, in whole courses
+      ctx.fillRect(p.x + c * P, topY + off * P, P, PROP_LID_T * P);
+    }
   }
 }
 
