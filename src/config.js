@@ -675,6 +675,12 @@ export const ROCK_H = 20;        // and this tall
 export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
+// How long a landed rock spends spreading and settling back into its own
+// shape. Long enough to see it happen, short enough that it is over before you
+// could reach for it -- an impact, not an animation.
+export const SQUASH_MS = 260;
+export const SQUASH_WIDE = 0.16; // how much wider it goes at the worst of it
+export const SQUASH_FLAT = 0.26; // and how much of its height it gives up
 export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.

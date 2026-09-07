@@ -11,8 +11,8 @@ import { P, SMOKE_LIFE, SHADES, MARK_SIZE, FIND_COLOR, findKind, CORE_CELL, CORE
         TOWER_WAVE_MS, TOWER_WAVE_N, TOWER_WAVE_R, TOWER_SHAFT } from './config.js';
 import { S, floor, pit, bench, quarry, farm, lab, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { at, bottomY, shadeOf, isDust, depthShade, count } from './grid.js';
-import { bridgeSpan } from './world.js';
-import { boulderAlive, depthOf, cellPos } from './rock.js';
+import { bridgeSpan, rockLeft } from './world.js';
+import { boulderAlive, depthOf, cellPos, rockShape, rockFootY } from './rock.js';
 import { coreHome } from './core.js';
 import { brewing, brewAt } from './tower.js';
 import { cellX, cellY, BOLTS, SPARKLE, summoning, summonAt, CORE as METEOR_CORE_CELL } from './meteor.js';
@@ -22,7 +22,7 @@ import { underground, quarryShape, ladder, quarryCells } from './quarry.js';
 import { indoors, progress } from './lab.js';
 import { inHouse, inScrub } from './scrubhouse.js';
 import { DOOR_W, DOOR_H, LAB_FLUE, SCRUB_CHUTE, SCRUB_ARM, MUCK_TONE, MUCK_SKIN, SMOG_TINTS } from './config.js';
-import { SHIELD_LEG_W, SHIELD_LID_T } from './config.js';
+import { SHIELD_LEG_W, SHIELD_LID_T, SQUASH_WIDE, SQUASH_FLAT } from './config.js';
 import { KINDS } from './shield.js';
 import { HAZE_CA } from './config.js';
 import { SKY, DROPS, DRAUGHT, muckCols, poopCols, muckFloor } from './smog.js';
@@ -671,6 +671,91 @@ export function overPitMark(mx, my) {
 // that built it rather than fading in, so a frame at six planks is visibly six
 // planks. Drawn after the rock, because a shield stands over it -- and before
 // the crew, who walk in front of everything.
+// The boulder, in whichever of its two shapes it is currently in.
+//
+// Lying in the yard it is a heightfield -- a hill with a flat bottom, which is
+// what it has to be, because it is the thing the crew stand on and mine into,
+// and every one of those systems reads a column's height. In the air it is a
+// rock, and a rock is round. Both are drawn out of the same cells; what
+// changes is where those cells are put.
+//
+// The seam between them is the landing, and the landing is covered by the
+// spread: for a quarter of a second after it hits, the hill is drawn wider and
+// flatter and eases back. So you never see it change shape -- you see it
+// splat, which is the same information delivered as an event.
+function drawBoulder() {
+  const deep = depthOf();
+  const { round, squash } = rockShape();
+  if (round > 0) return drawRoundRock(deep);
+
+  // Wider and flatter for a moment after it lands, easing back to itself. Both
+  // scales are applied in whole cells, so the rock never leaves the lattice --
+  // a boulder drawn at a fraction of a cell is a boulder with a soft edge, and
+  // this one is made of pixels like everything else.
+  const kx = 1 + SQUASH_WIDE * squash;
+  const ky = 1 - SQUASH_FLAT * squash;
+  const half = S.gw / 2;
+  const foot = rockFootY();
+  const left = rockLeft();
+  // A scaled grid is drawn by mapping each cell's *edges* and filling between
+  // them, never by moving the cell and leaving it the same size. Move it and a
+  // stretch opens a hairline of white between every column -- which is exactly
+  // what the first cut of this did, and it looked like the rock had been
+  // sliced. Edge to edge, the cells tile at any scale.
+  const ex = i => Math.round((i - half) * kx + half);
+  const ey = j => Math.round(j * ky);
+  let shade = 0;
+  for (let y = 0; y < S.gh; y++) {
+    for (let x = 0; x < S.gw; x++) {
+      const v = S.boulder[y][x];
+      if (!v) continue;
+      const band = depthShade(v, deep);
+      if (band !== shade) { shade = band; ctx.fillStyle = shadeOf(band); }
+      if (!squash) {
+        const { px, py } = cellPos(x, y);
+        ctx.fillRect(px, py, P, P);
+        continue;
+      }
+      const x0 = ex(x), x1 = ex(x + 1);
+      const top = ey(S.gh - y), bot = ey(S.gh - y - 1);
+      ctx.fillRect(left + x0 * P, foot - top * P, (x1 - x0) * P, (top - bot) * P);
+    }
+  }
+}
+
+// A rock in the air: round, and nothing about it flat -- but not a circle. A
+// circle is a ball, and a ball is a different object from the cragged hill it
+// turns into on the ground. So the rim is knocked about by three sines of the
+// angle, the same trick the crest is roughed with in `makeBoulder`, seeded off
+// the boulder's own number so it is the same lump every frame of its fall and
+// a different one for the next rock.
+//
+// It is shaded the way the hill is -- deepest through the middle, thinning to
+// the rim -- so the two shapes are plainly the same object. It carries no
+// mining, because a rock that is still falling has never been touched.
+function drawRoundRock(deep) {
+  const R = S.gw / 2;
+  const foot = rockFootY();
+  const left = rockLeft();
+  const seed = S.boulderNo * 1.7;
+  const rim = ang => 1 + 0.07 * Math.sin(ang * 3 + seed)
+                       + 0.05 * Math.sin(ang * 5.7 - seed * 2)
+                       + 0.03 * Math.sin(ang * 9.1 + seed * 3);
+  let shade = 0;
+  for (let y = 0; y < S.gw; y++) {
+    for (let x = 0; x < S.gw; x++) {
+      const dx = x + 0.5 - R, dy = y + 0.5 - R;
+      const d = Math.hypot(dx, dy) / R / rim(Math.atan2(dy, dx));
+      if (d > 1) continue;
+      const band = depthShade(Math.max(1, Math.round(deep * Math.sqrt(1 - d * d))), deep);
+      if (band !== shade) { shade = band; ctx.fillStyle = shadeOf(band); }
+      // its foot is where the hill's foot would be, so it comes down on to the
+      // same line it will lie on
+      ctx.fillRect(left + x * P, foot - (S.gw - y) * P, P, P);
+    }
+  }
+}
+
 export function drawShield() {
   const s = S.shield;
   if (!s) return;
@@ -2767,18 +2852,7 @@ export function draw() {
   drawSmoke();
   ctx.fillStyle = '#000';
 
-  const deep = depthOf();
-  let shade = 0;
-  for (let y = 0; y < S.gh; y++) {
-    for (let x = 0; x < S.gw; x++) {
-      const v = S.boulder[y][x];
-      if (!v) continue;
-      const band = depthShade(v, deep);
-      if (band !== shade) { shade = band; ctx.fillStyle = shadeOf(band); }
-      const { px, py } = cellPos(x, y);
-      ctx.fillRect(px, py, P, P);
-    }
-  }
+  drawBoulder();
 
   ctx.fillStyle = '#000';
 

@@ -7,7 +7,7 @@
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
   ROCK_W_MAX, ROCK_H_MAX, TO_BENCH, BENCH_W, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
-  ROCK_CLEAR, SHAKE_LAND
+  ROCK_CLEAR, SHAKE_LAND, SQUASH_MS
 } from './config.js';
 import { foul, throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
@@ -143,6 +143,9 @@ export function stepRock() {
 export function landRock(gentle = false) {
   S.rockFall = 0;
   S.rockFallV = 0;
+  // when it stopped being a falling rock and started being a hill -- see
+  // `rockShape`. A rock set down by the dome does not splat: it is placed.
+  S.landAt = gentle ? 0 : now();
   clearApron();
   if (!gentle) {
     jolt();
@@ -290,6 +293,29 @@ export function gridFromString(s, w, h) {
 
 // the rock is anchored by its foot, not its middle: it grows upwards and outwards
 export const cellPos = (x, y) => ({ px: rockLeft() + x * P, py: rockFootY() - (S.gh - y) * P });
+
+// What shape the rock is in at this instant.
+//
+// A boulder is stored as a heightfield -- a hill with a flat bottom -- because
+// that is what it is once it is lying in the yard being mined. But a hill is
+// not what a thing falling out of the sky looks like. In the air it is a rock:
+// round, with nothing flat about it. So the same cells are drawn two ways, and
+// the moment it arrives is the moment it stops being one and becomes the
+// other.
+//
+// `round` is 1 all the way down and drops to 0 on impact. `squash` runs the
+// other way for a fraction of a second afterwards: the rock spreads and
+// settles, which is the whole of why the change of shape reads as an impact
+// rather than as a substitution. Nothing about either is stored -- they are
+// both read off the clock and `rockFall`, so nothing has to be saved, reset,
+// or put back after a reload.
+export const rockShape = () => {
+  if (S.rockFall > 0) return { round: 1, squash: 0 };
+  const since = now() - (S.landAt || 0);
+  if (since >= SQUASH_MS) return { round: 0, squash: 0 };
+  const k = 1 - since / SQUASH_MS;
+  return { round: 0, squash: k * k };            // spreads hardest at the first frame
+};
 
 export function boulderAlive() {
   for (const row of S.boulder) for (const v of row) if (v) return true;

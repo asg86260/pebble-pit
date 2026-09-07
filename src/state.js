@@ -71,6 +71,7 @@ export const S = {
   boulderNo: 1,           // how many rocks in; each one is bigger than the last
   coreBuried: true,       // this rock still has its core inside it
   rockFall: 0,            // world pixels a new rock still has to come down
+  landAt: 0,              // when the last one hit, for the spread it does on arriving
   rockFallV: 0,           // how fast it is coming
   // --- the shields: what the yard puts between itself and the sky. shield.js ---
   shield: null,           // { kind, x, w, h, laid, caught } while standing; null otherwise
