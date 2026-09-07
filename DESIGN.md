@@ -160,6 +160,11 @@ nothing at the end of it.
 
 ## The lab
 
+> **Superseded.** See "The bench is a catch-all, and the lab is its multiplier column" at the end
+> of this file: the lab is to be deleted and its multipliers moved to the stations they multiply.
+> This section is kept because it is the argument that section is answering — the reason the lab
+> existed is the reason the *time cost* has to survive it.
+
 The bench sells you **more**: another worker, another body on the rock. The lab sells you
 **faster**, across the whole operation at once, and it is the only place a multiplier lives.
 Everything it sells is a rate — a pixel of rock is worth exactly one dust wherever it came from,
@@ -5074,3 +5079,145 @@ nothing. The check is a shot: a `gust` scene in `tools/look.mjs` seeded so the c
 strong lean, and its opposite a few seconds later, with the camera wide enough to hold the dust, a
 flag and the smoke in one frame. If the three do not lean together, that is the bug, and it is
 visible in one picture.
+
+## The bench is a catch-all, and the lab is its multiplier column (design, not built)
+
+The bench is thirty-two rows under fifteen headings and stands about 1,600 px tall on a window
+that is often 700; boards do not scroll on desktop, so the foot of it is simply off the top of the
+screen. But length is the symptom. The bench is the only board in the game that is not *about*
+anywhere: it sells your own gear, the crew's gear, the rock's ladders, the shields, the build
+yard's ladders, and ten buildings that do not exist yet. A board that is about everywhere is a
+board you search rather than read.
+
+The rule that fixes it is already written down, at the janitor's closet:
+
+> the same reason the lab's and the school's rows left the bench: a decision about a place is made
+> at the place. This one cannot be, because the place is what it buys.
+
+So the question is only which rows still have a place to go.
+
+**What moves.** The crew's six rows — strength, speed, harness, boots, the belt, tune the belt —
+go to the houses, where the crew live and where the board already stands. The build yard's `posts`
+and `pace` go to the construction bench, which is already a registered site and only wants a board.
+`build the bench` itself stays, by the rule above.
+
+**What does not, and why that is not a failure.** `you` has no station because you are the cursor.
+The shields stand in the yard but are not buildings you walk up to. And the rock's rows stay, which
+is the one that looks wrong and is not: **the bench is the rock's board.** It stands on the ground
+off the rock's left flank, sixty pixels clear on either side, and the biggest rock in the game is
+measured off it. Giving the rock a board of its own would mean opening a sheet on the one thing in
+this game you click constantly — and a press on the yard puts an open board away, so it would close
+itself on every swing.
+
+**The ten unlock rows lose their headings, not their place.** Ten headings each carrying a single
+`build the X` is about 600 px spent on a table of contents. They become one group, `put up`, where
+the building's name is the row; a heading over one row was never telling you anything the row did
+not.
+
+That leaves the bench at twenty-five rows under five headings — your gear, the rock, and what you
+can put up — and it is a board about something again.
+
+### The lab goes
+
+The lab's bargain is stated in its own section above: it sells *faster* where the bench sells
+*more*, and it is "the only place a multiplier lives". That is the whole building. The multipliers
+are not rows the lab happens to hold, they are what the lab is — so moving them out and keeping the
+room was never one of the options on offer. It is delete or don't.
+
+Delete. Each multiplier goes to the station it multiplies and sits directly under the ladder it
+multiplies: `swing ×` under the rock on the bench, `speed ×` under the crew at the houses, under
+the quarry at the quarry, under the farm at the farm. Three boards selling a row called *speed* for
+the crew, under a heading called *the crew*, is a comparison the player has to hold in their head
+across a walk. Under one heading it is a comparison you can see.
+
+**The time cost survives the building, and this is why deleting it is cheap.** `works.js` already
+drives both:
+
+```
+registerSite('lab',  { room: labRooms, effort: labPace, started: () => begin() });
+registerSite('yard', { room: () => (S.buildbenchOpen ? buildPosts() + 1 : 1) });
+```
+
+Both run through `handsAt(site) * effortAt(site)`. Research and building are one mechanic
+implemented twice under two worker names, and the lab's `instruments` and `another bench` are
+`pace` and `posts` with different labels. So buying a multiplier still starts a piece of work that
+bodies have to stand and finish; it is a build, done by builders, through the machinery that
+already exists. The decision the lab was there to create — a multiplier that costs you bodies off
+the rock rather than a number you simply buy — is kept intact. What goes is the second
+implementation of it.
+
+The scholar job, the lab room, the chimney and the finished-work tick go with the building.
+`watch the sky` is deleted outright rather than rehomed: it is a one-shot spore unlock for a
+readout that never earned its row.
+
+### What this costs, said plainly
+
+**Builders become the only bottleneck on everything that takes time.** Every timed purchase in the
+game now queues at one bench with one ladder, where there used to be two. That makes `posts` and
+`pace` much more load-bearing than they were, and it is a balance question rather than a layout
+one — it wants the tuning pass, not just the move.
+
+**Old saves carry a lab.** `labOpen`, `labRooms`, `labKitLevel` and the scholar assignments all
+need a migration that lands their levels on the rows that inherit them, or a player who has bought
+the lab out loses what they bought.
+
+**The yard loses a building and a worker type**, which is a smaller world. The case for it is that
+the building was a second name for a mechanic the yard already had, and the worker type was a
+second name for a builder.
+
+### The one wording call left
+
+A station now shows a base rung and its multiplier on the same sheet, and they cannot both be
+called *speed* — the rule is one word one meaning, and these are two different things about the
+same rate. The proposal is `speed ×`, which reads as what it is and needs no explaining; it does
+add a character to the boards' alphabet, which is the reason to say it out loud rather than assume
+it.
+
+### A row becomes a card
+
+Two lines inside a one-pixel edge, two across the sheet: the name and its pips on top, what it
+gives and what it costs underneath.
+
+**The measurement came first, and it changed the answer twice.** Read off a real page — every board
+open, every building up, the ink in each cell measured with a Range, because a cell is a grid track
+and its own rect is the column width — **every bill in the game carries a clock, all thirty-two of
+them**, and with the clock counted apart **88% of bills are one or two currencies**. Only four rows
+cost three or more, and they are exactly the four machines. So time is not an occasional coin to be
+squeezed in beside the money; it is on every row, which makes it a column by definition rather than
+a special case. That is what makes one line a row possible at all, and it is why the widest sheet
+in the game comes to 475 px against the 440 it already renders — the width this was feared to cost
+is thirty-five pixels.
+
+**And a card is the right shape because the rows are independent.** The argument for the shared
+subgrid was that it lets the page be *scanned* — which is what this file has always claimed, and it
+is true. It was never that rows are compared with one another: a rung inside a row is sequential,
+with no choice in it, and two rows under one heading are separate purchases with different effects.
+The only thing weighed across rows is the price. A subgrid asserts that its rows are a series to be
+read as a column; independent things do not need that, and the card's edge says the truer thing —
+this is one whole item. Scanning survives, because the names still line up in two columns.
+
+**Every state holds, and two of them are better than the row managed.** The stepper on a job row and
+the picker on a dial both sit in the cell a bill would fill, which is the same trick that let those
+rows share a grid with price rows in the first place. A build in progress wears its bar on the
+card's own bottom edge rather than growing a line to hold one — a row had nowhere to put that. And a
+finished card kept on the board reads as a ladder you have climbed rather than as dead space, which
+is a small argument against folding finished rows away by default.
+
+**What it costs, plainly.** The bench comes to about 700 px against roughly 500 for the same rows as
+a plain one-line list in one column. Cards give back most of what collapsing the ten unlock headings
+won. That is the price of the look and it is worth being deliberate about rather than discovering
+later.
+
+**Left open:** whether twenty-five one-pixel edges read busy at full size. The alternative is no
+border at all — the grid gaps and a hairline doing the same work — and it is a thing to look at in a
+shot rather than argue about here.
+
+### How it would be checked
+
+Most of this is rows moving between boards, which both tiers can see. Each station that inherits a
+multiplier gets a check that buys it **the player's way** — through the shop row at that station,
+not through a `__` hook — and asserts the work starts, a builder walks to it, and the rate moves
+only once the work is finished. The bench gets a check that its section list is the five it should
+be. The save migration gets a fixture: a save with a bought-out lab in `test/fixtures/`, loaded,
+with a check that the levels landed on the inheriting rows. The boards' own look is a shot, not a
+suite.

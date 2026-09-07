@@ -219,21 +219,32 @@ canvas {
   border: 1px solid currentColor;
   border-radius: 50%;
 }
-/* Both hands sit on whole pixels of the face's 7px inner box -- no rotation, no
-   fractional offsets. Rotated hands were painted with antialiased fringes at
-   every zoom, which at coin size is a smudge, not a clock. Nine o'clock: the
-   minute hand straight up from the middle pixel, the hour hand out to the left,
-   at a right angle -- two hands of plainly different lengths is the whole of
-   what makes a circle a clock. */
+/* Both hands sit on whole pixels of the face -- no rotation, no fractional
+   offsets. Rotated hands were painted with antialiased fringes at every zoom,
+   which at coin size is a smudge, not a clock. Nine o'clock: the minute hand
+   straight up from the middle pixel, the hour hand out to the left, at a right
+   angle -- two hands of plainly different lengths is the whole of what makes a
+   circle a clock.
+
+   The face is NINE pixels, not seven. `.clock` is content-box like every other
+   mark here, so `width: 9px` is the face and the border is outside it -- and
+   the hands had been placed for a 7px face, which put their pivot a pixel up
+   and a pixel left of the middle. Blown up it read as a bracket in the corner
+   of a ring rather than as two hands on a spindle. Worse, both hands then
+   reached exactly two pixels from that corner, so the one cue that says clock
+   -- a long hand and a short one -- was not being given at all.
+
+   So the middle pixel is 4, both hands are drawn THROUGH it, and they differ:
+   the minute hand reaches three pixels up, the hour hand two to the left. */
 .clock::before, .clock::after {
   content: '';
   position: absolute;
   background: currentColor;
 }
-/* the minute hand: long, and straight up from the middle pixel */
-.clock::after { left: 3px; top: 1px; width: 1px; height: 3px; }
-/* and the hour hand: short, out to nine */
-.clock::before { left: 1px; top: 3px; width: 2px; height: 1px; }
+/* the minute hand: long, and straight up through the middle pixel */
+.clock::after { left: 4px; top: 1px; width: 1px; height: 4px; }
+/* and the hour hand: short, out to nine, through the same pixel */
+.clock::before { left: 2px; top: 4px; width: 3px; height: 1px; }
 .dust { width: 7px; height: 7px; background: currentColor; }
 .core {
   width: 8px; height: 8px;
