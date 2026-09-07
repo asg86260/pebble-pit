@@ -1,5 +1,30 @@
 # Still to do
 
+## `__give` costs a second per hundred thousand, and used to cost nothing (2026-09-07)
+
+`give` in hooks.js banks one grain per turn of a loop and breaks when the hole
+refuses one. **The hole does not refuse any more.** Since the pit arc landed,
+the first grain it cannot take tears it open and everything after goes through
+the rift (`throughRift` in pit.js, and that is the design working -- nothing is
+lost). The loop's only remaining stop is `n`.
+
+So an over-large number stopped being a harmless way of saying "make me rich".
+Measured, fresh yard, browser: 10k grains 3 ms, 100k 632 ms, 1M 9.2 s -- linear,
+and the hole itself fills at 37,566. One check asked for a hundred million and
+took about a quarter of an hour, which is why no full browser run finished all
+session; that one is fixed at the call site. What is left is the general cost:
+**thirteen other checks and the dev panel's own fill button ask for 999999, and
+each of them now waits about nine seconds where it used to wait milliseconds.**
+That is most of the browser tier's 294-second wall clock.
+
+The fix belongs in `give`, not in the callers. Past the point where `addGrain`
+starts failing, every remaining grain takes an identical path through the rift,
+so they can be booked in one go instead of one at a time. The blocker is that
+`throughRift` does per-grain bookkeeping (`S.stored`, `S.banked`, `S.rift`,
+`S.riftAte`, and the per-kind counters) and a bulk version has to keep every one
+of those exact -- it is pit.js's account and worth doing carefully rather than
+quickly.
+
 ## The pot picker: two reds, both older than they look (2026-09-07)
 
 Found while landing the rim ripple. The browser group "standing at a pot picks
