@@ -102,6 +102,19 @@ export const RIFT_FEED = 0.55;
 // The strength is quoted at ONE DISC RADIUS and falls off as the square, so it
 // follows the disc as it grows without a second number to keep in step.
 export const RIFT_G = 0.55;          // px a frame squared, at one radius out
+// ...and the least it ever pulls, however far off the grain is.
+//
+// A true square is the wrong law for this thing over the length of the hole.
+// The pit is three and a half thousand pixels long and the disc is a hundred
+// across, so a grain lifted off the far end sits at forty radii and feels
+// 0.0003 px a frame squared -- nothing. They hung in the air where the pile
+// had been, for ever, and the list filled up with them.
+//
+// The floor is not a fudge, it is the other half of what this thing is: the
+// rift does not merely attract the pile, it INHALES it (see `riftBite`), and a
+// draw that reaches the whole hole is what "everything in it goes" means. Near
+// the disc the square takes over and the floor never bites.
+export const RIFT_G_MIN = 0.15;      // px a frame squared, anywhere in the hole
 export const RIFT_DRAG = 0.985;      // speed kept per frame: orbits decay, so
                                      // nothing circles for ever
 export const RIFT_EAT = 0.35;        // swallowed inside this, in disc radii

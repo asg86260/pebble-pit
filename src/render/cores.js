@@ -491,8 +491,16 @@ export function drawRift() {
   const cx = x + w / 2, cy = y + h / 2;
   const rad = w / 2;
 
-  // The bend goes first of all, on the picture as it stands: the yard behind
-  // the hole, bowed outward as it passes.
+  // The motes being drawn in go down FIRST, before the bend, so the bend has
+  // them to work on: they are as much a part of the picture near the hole as
+  // the haze and the ground are, and light coming past does not pick and
+  // choose. Drawn straight and then warped with everything else, they stretch
+  // and swing as they cross the band, which is the whole point of having a
+  // lens rather than a drawing of one.
+  drawPull(cx, cy, rad, t);
+
+  // ...and the bend, on the picture as it now stands: the yard behind the
+  // hole, and those motes, bowed outward as they pass.
   drawBend(cx, cy, rad);
 
   // Then paper cleared round the rim, so whatever the disc stands over -- the
@@ -501,10 +509,6 @@ export function drawRift() {
   ctx.fillStyle = '#fff';
   rimPath(cx, cy, rad, t, RIFT_HALO * P);
   ctx.fill();
-
-  // The pull: a few motes drawn in toward the rim, out where the page is white
-  // and a purple mark reads. Cells, because they are of the yard.
-  drawPull(cx, cy, rad, t);
 
   // The tear itself.
   ctx.fillStyle = '#000';

@@ -16,7 +16,7 @@
 // frame loop in the shell, or as fast as it will go by a check.
 
 import { P, GRAV, SETTLE_BUDGET, PILE_LIMIT, ABYSS_DIVE_FRAMES, ABYSS_RIPPLE_MS,
-         RIFT_G, RIFT_DRAG, RIFT_EAT, RIFT_VMAX } from './config.js';
+         RIFT_G, RIFT_G_MIN, RIFT_DRAG, RIFT_EAT, RIFT_VMAX } from './config.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
@@ -572,7 +572,12 @@ function orbit(list) {
     // The pull. Held at its value on the rim below that, because a true square
     // goes to infinity at the middle and would fling a grain across the yard
     // in the frame it got close.
-    const g = RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT);
+    // Held at its rim value inside the mouth, because a true square goes to
+    // infinity at the middle -- and floored everywhere, because over the
+    // length of this hole a true square is the wrong law: a grain off the far
+    // end sits at forty radii and would feel nothing at all. See RIFT_G_MIN.
+    const g = Math.max(RIFT_G_MIN,
+                       RIFT_G * (R * R) / Math.max(d * d, R * R * RIFT_EAT * RIFT_EAT));
     m.vx = (m.vx || 0) + (dx / d) * g * f;
     m.vy = (m.vy || 0) + (dy / d) * g * f;
     m.vx *= drag; m.vy *= drag;
