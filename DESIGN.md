@@ -4719,3 +4719,100 @@ Not doing: income nerfs (the crew doubling, the lab multipliers and the
 hats are the game's feel and they stay); prices indexed to live income (a
 price that chases the player can never be beaten, and the sky is already
 the one live opponent); any new plant or sink outside the decided list.
+
+## The drain: what falling into the rift looks like (design, not built)
+
+Three notes from the ninth round of feedback, all about the same few hundred
+pixels: dust thrown into a torn pit spreads itself evenly across the hole
+before the rift takes it; the grains it takes do not swirl; and the disc reads
+as chaotic rather than as something flowing.
+
+They are one problem. There is no single account of *how a thing falls into
+this hole* — there are three, invented separately, and the eye sees the
+disagreement between them long before it can name it.
+
+### What is there now, and why each piece looks wrong
+
+**The throw.** A hauler at the lip aims each grain with
+`land = pit.x + P*2 + |bell()| * (far - pit.x) * 0.45` — a spread across the
+width of the hole, tailing away from the lip. That is the right throw for
+building a pile, and it is the throw the yard has always used. With the rift
+open there is no pile: `riftCatch` takes every grain the moment it crosses the
+mouth. So the yard is still aiming at a floor that no longer exists, and the
+picture is a fan of dust flung across a hole followed by a second, unrelated
+motion dragging it all back to one point. Nothing is wrong with the physics;
+the *aim* is answering a question the rift already settled.
+
+**The orbit.** `orbit()` in game.js moves a caught grain by
+`a = a0 + spin * t^1.8 * RIFT_TURNS * 2π` and `r = R * (1.32 - 1.25 * t^2.2)`,
+with the first quarter of its life spent lerping from where it was caught onto
+that curve (`join`, eased `e = join²`). Two exponents above 1 mean it barely
+turns and barely descends for most of its life, then does both at once at the
+end: a grain hangs at the rim and then drops. Water in a drain does the
+opposite — it circles slowly while it is wide and *faster* as it narrows,
+because what is conserved is angular momentum, not angular speed.
+
+**The sprite.** The disc is drawn well, and three things on top of it are the
+"chaos": the speckle rings counter-rotate (`ring % 2 ? -1 : 1`) and are snapped
+to the cell lattice (`Math.round(px/P)*P`), so each cell *jumps* between lattice
+sites as its ring turns — a boil, not a drift; the lens warp carries two angular
+harmonics (`a*2` and `a*3`), so the rim lobes rather than breathes; and twelve
+short streaks at 0.8 turns read as a wheel of spokes rather than as flow.
+
+### The rule: one spiral, and everything falls along it
+
+**A single law of infall, in one place, read by everything that falls in.**
+Given a distance from the center in disc radii, it answers where a thing is on
+its way down. The sprite's streaks and the grains' orbit both read it, so the
+drawn infall and the real dust are on the same curve — which is the whole of
+what makes a drain read as a drain rather than as decoration over a hole.
+
+The law is the drain's own: **angle accelerates as radius shrinks.** Radius
+falls smoothly and steadily from the outside in; the angle advances as the
+inverse of the radius, so a grain sweeps slowly while it is wide and whips
+round several times in the last stretch before it goes under the disc. One
+constant says how many turns the whole fall takes; nothing else is tuned
+per-caller.
+
+Three consequences, each one a note answered:
+
+1. **The throw aims at the drain.** With the rift open, the hauler at the lip
+   throws *at the disc* rather than across the hole — the same `aim` and the
+   same arc, a different target. The grain leaves their hands on a line to the
+   thing that is going to eat it, is caught at the mouth as it already is, and
+   joins the spiral near where it entered. There is no fan and no second
+   motion; there is one throw that goes in.
+2. **The grains swirl.** `orbit` reads the law instead of its two exponents,
+   and the `join` lerp goes with it: a grain caught at the mouth is *already*
+   on the curve at its own radius, so there is nothing to ease onto. It circles
+   in, faster and faster, and passes under the disc.
+3. **The disc calms down.** The speckle stops counter-rotating and stops
+   snapping to the lattice (whole pixels are fine — the rule the flag's pole
+   already follows — but it must not hop a cell at a time); the lens keeps one
+   harmonic so the rim breathes as a shape instead of lobing; the streaks get
+   fewer, longer and given more turns, so each is a curve the eye can follow
+   rather than a tick mark. The disc itself, the halo and the paint order are
+   untouched — the silhouette is right and this is not about the silhouette.
+
+### What this must not break
+
+- **Nothing teleports.** The grain still crosses the yard, still arcs off the
+  lip, still enters at the mouth. The law governs what happens *after* it is
+  caught, which is the one stretch of its life that was already an animation.
+- **The count is not touched.** `throughRift` books every grain exactly as it
+  does today. This is the picture of the fall, not the accounting of it, and
+  `S.gulped`'s cap stays a drawing budget.
+- **The drowning still reads.** The abyss's dive ignores the orbit today and
+  keeps ignoring it; the drowned pit's own motion is settled and is not
+  reopened here.
+- **The rift's growth and its bargain are unchanged.** No ladder, no new sink,
+  nothing bought — the disc still grows only by being fed. See the pit's arc.
+
+### The numbers, to tune against a shot
+
+One constant for the turns of the whole fall (`RIFT_TURNS` is 2.4 and wants to
+be nearer 4 once the turning is where the eye can see it), one for how long a
+grain takes to fall, and the sprite's own streak count, length and turn — every
+one already exists in `config/rift.js` or `config/effects.js`, so this adds a
+law and takes tuning away rather than the other way round. The `rift` and
+`grown` scenes in tools/look.mjs are the eyes on it.
