@@ -119,12 +119,11 @@ export function flagReach(which) {
 
 // The cells the cloth can ride above the knot, derived rather than guessed:
 // integrating a turn of FLAG_SWING radians over the quarter-wave that fits on
-// FLAG_W cells at FLAG_WAVES waves gives the crest's height, and the cloth is
-// stamped centered on its walk, so half its depth clears it again. Anything
-// that hangs over a station clears the flag by this, so a wider swing carries
-// those marks up with it instead of being drawn through.
-// The cloth hangs from the masthead, so its own depth clears nothing extra --
-// only the crest itself lifts it past the pole's top.
+// FLAG_W cells at FLAG_WAVES waves gives the crest's height. The cloth hangs
+// from the masthead rather than straddling it, so its own depth clears nothing
+// extra -- only the crest itself lifts it past the pole's top. Anything that
+// hangs over a station clears the flag by this, so a wider swing carries those
+// marks up with it instead of being drawn through.
 const FLAG_CREST = Math.ceil(FLAG_SWING * FLAG_W / (2 * Math.PI * FLAG_WAVES));
 
 // A stable per-station number in 0..1, so every flag flutters out of step with
