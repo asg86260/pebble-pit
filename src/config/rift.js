@@ -69,7 +69,7 @@ export const RIFT_SHAKE = 22;        // and how hard the yard is rocked: the big
 // air.js. RIFT_SPIN is gone with the shove it belonged to: a fixed share of
 // the pull pushed sideways to make a vortex, which moved every mote the same
 // way whatever it was doing.
-export const RIFT_PULL = 0.5;    // px a frame squared, at one radius out
+export const RIFT_PULL = 1.2;    // px a frame squared, at one radius out
 export const RIFT_PULL_R = 4.5;  // how far the pull reaches, in radii
 // What share of the dust it eats is put back at the edge of its own reach rather
 // than anywhere in the yard.
@@ -101,7 +101,7 @@ export const RIFT_FEED = 0.55;
 //
 // The strength is quoted at ONE DISC RADIUS and falls off as the square, so it
 // follows the disc as it grows without a second number to keep in step.
-export const RIFT_G = 0.55;          // px a frame squared, at one radius out
+export const RIFT_G = 1.3;           // px a frame squared, at one radius out
 // ...and the least it ever pulls, however far off the grain is.
 //
 // A true square is the wrong law for this thing over the length of the hole.
@@ -114,7 +114,7 @@ export const RIFT_G = 0.55;          // px a frame squared, at one radius out
 // rift does not merely attract the pile, it INHALES it (see `riftBite`), and a
 // draw that reaches the whole hole is what "everything in it goes" means. Near
 // the disc the square takes over and the floor never bites.
-export const RIFT_G_MIN = 0.15;      // px a frame squared, anywhere in the hole
+export const RIFT_G_MIN = 0.36;      // px a frame squared, anywhere in the hole
 export const RIFT_DRAG = 0.985;      // speed kept per frame: orbits decay, so
                                      // nothing circles for ever
 // How much sideways speed a grain has as it enters the drain, as a share of
