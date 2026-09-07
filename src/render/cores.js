@@ -24,6 +24,8 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          RIFT_FALL_FROM, RIFT_FALL_END, RIFT_TURNS,
          RIFT_CORE_SHADOW,
          RIFT_THROAT_MIN,
+         RIFT_SONG_MS, RIFT_SONG_IDLE, RIFT_SONG_RINGS, RIFT_SONG_R,
+         RIFT_SONG_INK, RIFT_SONG_QUIET, RIFT_SONG_FULL,
          RIFT_TAIL, RIFT_TAIL_R } from '../config.js';
 import { coreHome } from '../core.js';
 import { shadeOf } from '../grid.js';
@@ -302,6 +304,46 @@ const rungFor = (ramp, k) => Math.max(0, Math.min(ramp.length - 1,
 // over them, so anything that has crossed the rim is gone behind it rather
 // than drawn on top of it -- which is what going *in* looks like.
 
+// The song: rings of the wizards' purple going out from the rim and spending
+// themselves on the air. The tower's own gesture (`drawTowerWaves`), borrowed
+// deliberately -- this hole was summoned from that tower, and the resemblance
+// is the cheapest way for the yard to say so.
+//
+// It sings louder while it is eating. `S.gulped` is what is actually in flight
+// down the drain, so the rings quicken and darken exactly when the hole is
+// working and settle back to a slow idle when the yard stops feeding it. A
+// glance at the pit says whether anything is going in, without a number.
+//
+// No list and nothing stepped: each ring's place comes off the clock and its
+// own slot, the way the streaks do.
+function drawSong(cx, cy, rad, t) {
+  const fed = Math.min(1, S.gulped.length / RIFT_SONG_FULL);
+  const pace = RIFT_SONG_MS * (RIFT_SONG_IDLE - (RIFT_SONG_IDLE - 1) * fed);
+  const ink = RIFT_SONG_QUIET + (RIFT_SONG_INK - RIFT_SONG_QUIET) * fed;
+  for (let i = 0; i < RIFT_SONG_RINGS; i++) {
+    const k = ((t / pace) + i / RIFT_SONG_RINGS) % 1;
+    // Out from the rim, not from the middle: what is inside the rim is the
+    // hole, and a ring born in there would be a ring drawn over the one thing
+    // on this screen that has to stay ink.
+    const r = rad * (1 + k * (RIFT_SONG_R - 1));
+    // fainter as it goes, and deeper down the purples with it -- a ring that
+    // held its colour to the end reads as a hoop rather than as something
+    // spending itself on the air. The tower's waves settled this.
+    ctx.globalAlpha = (1 - k) * ink;
+    ctx.fillStyle = MAGIC_TONES[Math.min(MAGIC_TONES.length - 1, Math.floor(k * 3))];
+    const n = Math.max(12, Math.round((Math.PI * 2 * r) / P));
+    for (let j = 0; j < n; j++) {
+      const a = (j / n) * Math.PI * 2;
+      // On the lens, like everything else round this rim, so the song leans
+      // with the shape rather than hanging beside it as a true circle.
+      const w = lensAt(a, t);
+      ctx.fillRect(Math.round(cx + Math.cos(a) * r * w),
+                   Math.round(cy + Math.sin(a) * r * w), P, P);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
 // A settled number in 0..1 for a strand and a place along it. Settled is the
 // whole point: what is drawn round this hole has to be ragged without being
 // *restless*, and those are not the same thing. A raggedness redrawn every
@@ -352,7 +394,12 @@ export function drawRift() {
     }
   };
 
-  // Paper first, so whatever the disc is standing over -- the pile, the ground
+  // The song goes down first of all, so the halo's paper cuts a clean gap
+  // through it and the rings read as coming off the rim rather than as a
+  // pattern printed under the hole.
+  drawSong(cx, cy, rad, t);
+
+  // Paper next, so whatever the disc is standing over -- the pile, the ground
   // line, a grain on its last turn -- is cleared away from the rim: with the
   // page showing round it, it is a hole *in* the world.
   disc(RIFT_HALO, '#fff');

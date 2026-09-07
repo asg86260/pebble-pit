@@ -74,6 +74,30 @@ export const RIFT_CORE_SHADOW = 0.62; // where the throat starts, off the rim
 // a white eye in it. Everything under this stays ink.
 export const RIFT_THROAT_MIN = 0.30;
 
+// --- the song -----------------------------------------------------------------
+// The hole rings. Slow bands of the wizards' own purple going out from the rim
+// and spending themselves on the air -- the same gesture the tower makes when
+// it is casting (`drawTowerWaves`), which is the point of borrowing it: the
+// tower is where this thing was summoned from, and a family resemblance is the
+// cheapest way to say so.
+//
+// It is a readout as well as a noise. The rings come faster and darker while
+// the hole is actually swallowing and fall back to a slow idle when the yard
+// stops feeding it, so a glance at the pit says whether anything is going in
+// without counting anything -- the same bargain the tower's own waves strike.
+//
+// Colour at all, in a black-and-white yard, because magic is the one thing
+// here that has always been allowed it: the tower's waves, the abyss's depths
+// and this are one family, and a purple ring is what says *wizard* rather than
+// *machine*. Faint enough to be the air over the thing rather than the thing.
+export const RIFT_SONG_MS = 2600;    // one ring, rim to gone, while it is fed
+export const RIFT_SONG_IDLE = 2.4;   // and how much slower when nothing is
+export const RIFT_SONG_RINGS = 3;    // in the air at once
+export const RIFT_SONG_R = 3.2;      // how far one gets, in disc radii
+export const RIFT_SONG_INK = 0.85;   // the darkest a ring ever is, when fed
+export const RIFT_SONG_QUIET = 0.32; // ...and when the hole has nothing to eat
+export const RIFT_SONG_FULL = 40;    // grains in flight that count as full song
+
 // The infall streaks: short trails of stuff falling in, spiralling to the rim.
 // They run whether or not the hole is eating anything, which is most of the
 // endgame -- the pile is empty because the hole is doing its job, and a hole
