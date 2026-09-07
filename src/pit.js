@@ -682,7 +682,17 @@ export function swallow(n, show, everywhere) {
     if (isDust(v)) { dust++; return; }
     const key = HELD_OF[v === CORE_CELL ? CORE_CELL : findKind(v)];
     if (key) held[key]++;
-  }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h * 0.5 }, show);
+    // The grains go to the nearest part of the hole, which is its UNDERSIDE --
+    // not its middle. The difference is the disc's own radius, and that used
+    // to be small enough not to matter; it is not now. Measured from the
+    // middle, a bigger disc sits its attractor higher above the pile, the
+    // distances to neighbouring columns even out, and the hollow it eats
+    // flattens into a wide shallow scoop instead of a well under the mouth --
+    // caught by `it eats the pile under it` in rift.test.mjs the moment the
+    // disc was made half again as wide. The underside stands RIFT_UP cells
+    // over the ground whatever size the disc grows to, so the bite is the same
+    // shape at every size.
+  }, everywhere ? null : { x: rift.x + rift.w * 0.5, y: rift.y + rift.h }, show);
   S.rift = (S.rift || 0) + dust;
   // What it has eaten, ever. Monotonic -- spending reads `riftHeld` and never
   // shrinks this -- and it is what the disc's size and the drowning are

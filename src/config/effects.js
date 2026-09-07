@@ -57,7 +57,7 @@ export const RIFT_STIPPLE = 2;       // and cells of thinning speckle past that
 export const RIFT_DEEP_LAYERS = 3;    // skies behind the tear
 export const RIFT_DEEP_NEAR = 0.55;   // how much of the yard's pace the nearest keeps
 export const RIFT_DEEP_FAR = 0.12;    // ...and the furthest
-export const RIFT_DEEP_SPACING = 11;  // world px between stars in the nearest sky
+export const RIFT_DEEP_SPACING = 21;  // world px between stars in the nearest sky
 
 // And the pull: a few motes of the wizards' own purple drawn in toward the rim
 // and gone at it. This is the one thing here that moves on its own, and it is

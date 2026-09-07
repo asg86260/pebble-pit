@@ -211,7 +211,21 @@ group('it eats the pile under it, not the whole top of it', async () => {
   // clock, so it is one known number of grains rather than however many a
   // second of game happened to be worth.
   const high = c => topRow(pit, c) + 1;
-  const cols = [mid, mid + 4, Math.floor(pit.cols / 2), pit.cols - 3];
+  // The far shoulder of the hollow, measured in disc widths rather than in a
+  // flat number of columns.
+  //
+  // This was `mid + 4`, and four columns is INSIDE the bite's own flat top: a
+  // three-thousand-grain swallow digs a well about a hundred columns across,
+  // and along the middle of that the columns differ by a grain or two of
+  // nothing. It passed on which way that grain fell, and it fell the other way
+  // the moment the disc was made wider -- forty-four under the mouth against
+  // forty-five four columns out, on a profile that runs 11, 38, 44, 42, 21, 0
+  // as you walk out from it. The shape was never wrong; the ruler was too
+  // short. Two disc widths out is off the plateau and on the slope, where
+  // "deepest at the mouth" is a claim about the hollow rather than about
+  // rounding.
+  const wide = Math.round(rift.w / pit.p);
+  const cols = [mid, mid + wide * 2, Math.floor(pit.cols / 2), pit.cols - 3];
   const before = cols.map(high);
   const took = yard.pitMod.swallow(3000);
   const after = cols.map(high);
@@ -221,8 +235,8 @@ group('it eats the pile under it, not the whole top of it', async () => {
     ok(took === 3000, 'the rift took what it was asked for', `${took}`),
     ok(lost[0] > 0, 'the column under the mouth is lower than it was',
        `${before[0]} -> ${after[0]}`),
-    ok(lost[0] >= lost[1], 'the hollow is deepest at the mouth',
-       `${lost[0]} under it, ${lost[1]} four columns out`),
+    ok(lost[0] > lost[1], 'the hollow is deepest at the mouth',
+       `${lost[0]} under it, ${lost[1]} two disc widths out`),
     // And the far end of a six-hundred-column pile is not touched at all, which
     // is the whole difference: the old walk took the top row end to end and wore
     // the pile down flat while the disc hung over one column of it.

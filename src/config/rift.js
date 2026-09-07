@@ -20,8 +20,13 @@ import { P } from './yard.js';
 // front-loads the visible growth and slows toward the ceiling, which is the
 // shape of a thing straining. Sizes are in cells; `riftCells` in rift.js is
 // the one reader.
-export let RIFT_W0 = 4;              // cells across, the day it tears
-export let RIFT_WMAX = 12;           // and the size it gives way at
+// Bigger than it was (4 and 12). What is through the tear is a sky with depth
+// in it, and depth needs room: at a dozen cells across, the far layer had two
+// or three stars in it and the parallax had nothing to read against. The disc
+// is the frame the other side is seen through, so the frame has to be worth
+// looking through.
+export let RIFT_W0 = 7;              // cells across, the day it tears
+export let RIFT_WMAX = 20;           // and the size it gives way at
 export let ABYSS_AT = 1000000;       // grains eaten when the drowning comes
 // A fraction of the hole rather than a count of cells: the hole is 3,600 across
 // and the disc belongs at the end of it that is on screen, whatever that end
