@@ -412,7 +412,14 @@ export const TESTS = [
   ['hiding the finished ladders takes them off the board', async () => {
     newRun();
     await settle();
-    window.__give(99999999);
+    // The same million every other check in the suite asks for, not a hundred
+    // of them. `__give` banks one grain per turn of its loop and the hole no
+    // longer refuses one: since the pit gives way instead of saying no, an
+    // over-large number is not a harmless "make me rich", it is that many
+    // iterations. This check asked for a hundred million and took a quarter of
+    // an hour, which is why the whole browser tier never finished -- see
+    // TODO.md. A million is already far more than eighteen rungs cost.
+    window.__give(999999);
     window.__grant({ cores: 9, shards: 9000, spores: 9000 });
     run(20);
     for (let i = 0; i < 9; i++) { window.__buy('carry'); window.__finish(); window.__buy('pick'); window.__finish(); }

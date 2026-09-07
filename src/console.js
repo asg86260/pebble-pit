@@ -14,7 +14,7 @@ import './selftest.js';        // adds __test() to the console
 import * as hooks from './hooks.js';
 import { snapshot } from './report.js';
 import { seatBoard, boardFit, showPanel } from './board.js';
-import { barSpot } from './render.js';
+import { barSpot, pileMarkAt } from './render.js';
 import { siteBox } from './works.js';
 
 // Everything hooks.js offers, under the name the checks call it by.
@@ -33,6 +33,14 @@ Object.assign(window, {
 // the one is clear of the other rather than reading it off a screenshot.
 window.__barAt = barSpot;
 window.__siteBox = siteBox;
+// Where a station's pile-full mark hangs, from the function that puts it there.
+// A check had the spot written into it -- the station's x, seven cells under the
+// ground -- and that was true until the mark moved under the PILE, which is a
+// different x for every station and not the station's at all. The check then
+// hovered over bare ground and reported that the mark says nothing. The same
+// rule as `__barAt` above and for the same reason: a check that copies the
+// layout is a check that goes red the next time the layout is right.
+window.__pileMarkAt = pileMarkAt;
 
 window.__state = () => ({
   ...snapshot(),

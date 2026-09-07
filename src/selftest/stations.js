@@ -183,7 +183,10 @@ export const TESTS = [
       run(1);
     }
     runUntil(() => state().pileFull.rock, 60);
-    const onMark = await hover(state().rockX, state().groundY + P * 7);
+    // Asked of the thing that places it. The mark hangs under the rock's PILE
+    // now, not under the rock, so the station's own x is bare ground.
+    const spot = window.__pileMarkAt('rock');
+    const onMark = await hover(spot.x, spot.y);
     const away = await hover(state().rockX - 300, state().groundY - P * 20);
 
     // and a full hole
