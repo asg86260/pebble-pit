@@ -52,8 +52,25 @@ export const RIFT_HALO = 2;          // cells of paper cleared round the rim
 // (A ring of speckle used to sit outside the rim -- RIFT_STIPPLE -- and it is
 // gone: it read as a dotted collar printed round the hole, and the waver says
 // "torn" far better than a scatter of dots did.)
-export const RIFT_WAVER = 0.055;     // share of the radius the edge creeps
-export const RIFT_WAVER_MS = 5200;   // and how long one drift takes
+export const RIFT_WAVER = 0.11;      // share of the radius the ripple is deep
+
+// The ripple, as modes: [lobes round the rim, ms for one lap, share of the
+// depth]. Lobes is the number that matters and it must be two or more -- one
+// lobe does not bend a circle, it *moves* it, so the first pass at this (a
+// single sine at one cycle per turn) wandered the rim about and left it exactly
+// as round as it started, which is what "it's still just a circle" meant.
+//
+// Three of them, at 2, 3 and 5. The counts are coprime and the lap times divide
+// into one another nowhere, so the sum never returns to an outline it has
+// already had: the edge keeps rippling rather than breathing on a loop. A
+// negative lap runs the other way round, so the modes cross each other instead
+// of travelling as one wave. The shares add to one, so RIFT_WAVER stays the
+// whole depth of the thing however many modes there turn out to be.
+export const RIFT_RIM_MODES = [
+  [2, -7300, 0.34],
+  [3,  4900, 0.38],
+  [5, -3100, 0.28],
+];
 
 // The bending. Light coming past something this heavy does not come straight,
 // and the one place that can be shown here is the sky seen through the tear:

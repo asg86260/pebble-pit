@@ -19,7 +19,7 @@ import { CORE_FROM, CORE_SIZE, P, MAGIC_TONES,
          ABYSS_VEIL_AT, ABYSS_VEIL_EVERY, ABYSS_VEIL_JITTER, ABYSS_VEIL_LIT, ABYSS_VEIL_DEEP,
          ABYSS_FLOW_LIFT,
          ABYSS_WISP_EVERY, ABYSS_WISP_RISE, ABYSS_WISP_MS,
-         RIFT_HALO, RIFT_WAVER, RIFT_WAVER_MS, RIFT_BEND, RIFT_TWINKLE_MS,
+         RIFT_HALO, RIFT_WAVER, RIFT_RIM_MODES, RIFT_BEND, RIFT_TWINKLE_MS,
          RIFT_BEND_RINGS, RIFT_BEND_R, RIFT_BEND_AMT, RIFT_RING_W, RIFT_RING_INK,
          RIFT_DEEP_LAYERS, RIFT_DEEP_NEAR, RIFT_DEEP_FAR, RIFT_DEEP_SPACING,
          RIFT_PULL_MOTES, RIFT_PULL_MS, RIFT_PULL_FROM, RIFT_PULL_INK,
@@ -309,14 +309,28 @@ const spec = (i, n) => {
   return h - Math.floor(h);
 };
 
-// How far out of round the rim is at a given angle, this instant. One harmonic
-// and one slow drift: two beating against each other put lobes round the edge
-// that swelled and collapsed on their own and the rim *churned*, which was
-// half of what read as chaos the last time this was tried. With one term the
-// whole edge leans one way and comes back, which is a tear breathing rather
-// than a blob throbbing.
-const waver = (a, t) =>
-  1 + RIFT_WAVER * Math.sin(t / RIFT_WAVER_MS * Math.PI * 2 + a);
+// How far out of round the rim is at a given angle, this instant.
+//
+// This was one harmonic at one lobe per turn, chosen to stop the rim churning
+// the way an earlier pass did. It did stop the churn, and it also could not do
+// the job: `1 + w*sin(a + t)` is, to first order, a circle shifted a little
+// sideways -- the amplitude went into moving the disc rather than bending its
+// edge, so the tear stayed exactly as round as a compass and only wandered. A
+// single lobe is the one mode that cannot deform a circle.
+//
+// So the shape comes from modes with two or more lobes (RIFT_RIM_MODES), and
+// the churn is kept off by the other knob: laps of three to seven seconds, not
+// by refusing to have more than one term. What churned before was fast modes
+// beating; slow ones crossing each other is a ripple travelling round the edge,
+// which is what a tear in something under tension does.
+const waver = (a, t) => {
+  let r = 1;
+  for (let i = 0; i < RIFT_RIM_MODES.length; i++) {
+    const [lobes, ms, share] = RIFT_RIM_MODES[i];
+    r += RIFT_WAVER * share * Math.sin(lobes * a + (t / ms) * Math.PI * 2);
+  }
+  return r;
+};
 
 // What is on the other side, cut to the hole.
 //
@@ -428,7 +442,15 @@ function drawPull(cx, cy, rad, t) {
 // tear and the sky through it are smooth. Smoothness leaking onto the yard's
 // own things would read as a different renderer rather than a different place.
 function rimPath(cx, cy, rad, t, grow) {
-  const n = Math.max(48, Math.round(rad));
+  // Enough segments for the roundness AND for the ripple. One per world pixel
+  // of radius is plenty for a circle, and it was all this needed while the rim
+  // was one; a five-lobed edge at that rate gets a dozen points a lobe and the
+  // crests come out as corners. So take whichever is more: the radius, or
+  // sixteen a lobe for the busiest mode there is. Derived from the modes rather
+  // than a number raised until it looked smooth -- add a sixth lobe to the
+  // table and the path keeps up on its own.
+  const lobes = Math.max(...RIFT_RIM_MODES.map(m => m[0]));
+  const n = Math.max(48, Math.round(rad), lobes * 16);
   ctx.beginPath();
   for (let i = 0; i <= n; i++) {
     const a = (i / n) * Math.PI * 2;

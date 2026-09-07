@@ -452,6 +452,15 @@ const SCENES = {
   grown: `${RICH} window.__meteor(); window.__tear(400000); window.__give(30000);
           window.__fast(3); window.__look(window.__state().pitX - 300);`,
 
+  // The rim, as close as the camera will come. `grown` looks at the pit, which
+  // puts the disc small and off to one side -- fine for the hole in its yard,
+  // not enough to read the shape of the outline. This asks for the camera as
+  // far right as it goes; the pan clamps at the end of the world, so the disc
+  // sits against the right edge however much further you ask for, and `--zoom 2`
+  // is the closest look that still holds the whole of the rim.
+  rim: `${RICH} window.__meteor(); window.__tear(400000); window.__give(30000);
+        window.__fast(3); window.__look(window.__state().pitX - 155);`,
+
 
   // The drowning: a disc at its full size crosses the threshold and gives
   // way; the runner's second before the shot lands this mid-liquefy, with
