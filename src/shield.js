@@ -12,9 +12,9 @@
 // What a shield failing owes the player is that it is never a bill: nobody is
 // under it when it goes -- `dropZone` has already walked the crew clear -- and
 // the wreck flies out along the heap as ordinary spoil and mines back as dust.
-import { S, bench } from './state.js';
+import { S } from './state.js';
 import {
-  P, WORKER, ROCK_CLEAR,
+  P, ROCK_CLEAR,
   SHIELD_LEG_W, SHIELD_LID_T, SHIELD_CLEAR_C, SHIELD_PIECE_DUST,
   PROP_FROM, PROP_COST, PROP_PLANKS,
   NET_COST, NET_ROPES, NET_SLOW,
@@ -23,7 +23,7 @@ import {
   DOME_COST, DOME_RINGS, DOME_CAST_MS, DOME_HOLD_MS, DOME_SET_RATE
 } from './config.js';
 import { rockSize, rockFootY, landRock } from './rock.js';
-import { sendOn } from './crew.js';
+import { workOn } from './works.js';
 import { spawnSpoil, spawnChip } from './dust.js';
 import { shadeNear } from './grid.js';
 import { now, frames } from './clock.js';
@@ -72,7 +72,7 @@ export const shieldTopY = (s = S.shield) => S.groundY - s.h * P;
 // bigger of the rock here now and the one coming -- with a body's worth of
 // daylight over the peak, so the crew climb under it rather than into it.
 // Measured, never tuned: a later rock cannot outgrow sums taken against it.
-export function raiseShield(kind) {
+export function shieldPlan(kind) {
   const was = S.boulderNo;
   S.boulderNo = was + 1;
   const size = rockSize();
@@ -89,42 +89,41 @@ export function raiseShield(kind) {
   // whether the rock needs that much room or not: the shape decides the
   // height, the same way the arch's rise does.
   const h = kind === 'dome' ? Math.max(clear, Math.round(w / P / 2)) : clear + rise;
-  S.shield = { kind, x, w, h, rise, laid: 0, caught: 0, held: 0, strain: 0,
+  return { kind, x, w, h, rise };
+}
+
+export function raiseShield(kind) {
+  // A built shield arrives finished, because the building already happened: it
+  // is a work like any other now (works.js) -- paid for, fenced, hammered at
+  // by a lent body under a bar, and this is the row's `buy` running when the
+  // last of that labor is in. The dome is the exception both ways: nothing is
+  // hammered and nobody is lent, the tower pours it on its own clock.
+  const laid = KINDS[kind].cast ? 0 : KINDS[kind].pieces;
+  S.shield = { ...shieldPlan(kind), laid, caught: 0, held: 0, strain: 0,
                sag: 0, shove: 0, setting: false, cast: KINDS[kind].cast ? now() : 0 };
   S.dirty = true;
 }
 
-// One trip is one piece: fetched from the bench and walked out to whichever
-// side is next, so the material visibly arrives from somewhere. One builder at
-// a time, like the kit walk -- the build is a story beat, not a race, and a
-// gang filing across the yard in step reads as a procession.
-function sendBuilder() {
-  const s = S.shield;
-  if (S.workers.some(w => w.leg === 'piece' || (w.legs && w.legs.some(l => l.do === 'piece')))) return;
-  let who = null, near = Infinity;
-  for (const w of S.workers) {
-    if (w.inside || w.inPit || w.aloft || w.walking || w.carry || w.resting) continue;
-    if (w.legs && w.legs.length) continue;   // already on a commute of its own
-    const d = Math.abs(w.x - bench.x);
-    if (d < near) { near = d; who = w; }
-  }
-  if (!who) return;
-  const side = s.laid % 2 ? 1 : -1;
-  const at = side < 0 ? s.x - WORKER : s.x + s.w;
-  sendOn(who, [
-    { to: bench.x + Math.round(bench.w / 2), do: 'fetch' },
-    { to: at, do: 'piece' }
-  ]);
+// The ground a shield's build stands on, for the fence, the bar and the
+// builder (siteBox in works.js): the same footprint `raiseShield` will use,
+// worked out the same way, so the tape goes up around exactly the ground the
+// thing will stand on.
+export function shieldGround() {
+  const { x, w } = shieldPlan('props');
+  return { x, w };
 }
 
-// A piece is laid by the body that carried it -- crew.js calls this from the
-// walk's last leg, and nothing else moves the count, so a shield cannot grow
-// except by somebody crossing the yard.
-export function layPiece() {
-  const s = S.shield;
-  if (!s || s.laid >= KINDS[s.kind].pieces) return;
-  s.laid++;
-  S.dirty = true;
+// The shield going up right now, if any: which kind, and how far through its
+// work the builders are. The drawing reads this to raise the thing in step
+// with the labor -- the legs climb as the work climbs -- so what you watch is
+// the actual progress, not an animation with the same length.
+export function risingShield() {
+  for (const kind of Object.keys(KINDS)) {
+    if (KINDS[kind].cast) continue;                 // the dome rises off its own clock
+    const w = workOn(kind);
+    if (w) return { ...shieldPlan(kind), done: w.of ? Math.min(1, w.done / w.of) : 0 };
+  }
+  return null;
 }
 
 // It comes apart. Every piece laid breaks into spoil thrown along the heap in
@@ -276,15 +275,14 @@ export function stepShield() {
     return;
   }
   if (s.laid >= kind.pieces) return;
-  // The dome is poured rather than carried, so its progress is a clock. It is
-  // the one shield nobody walks a piece of across the yard -- what crosses the
-  // yard instead is the pour itself, off the tower's spire.
+  // The dome is poured rather than built, so its progress is a clock. It is
+  // the one shield nobody works on -- what crosses the yard is the pour
+  // itself, off the tower's spire. Everything else is finished before it
+  // stands: the build is a work in works.js, hammered at under a bar.
   if (kind.cast) {
     const through = Math.min(1, (now() - s.cast) / kind.cast);
     const was = s.laid;
     s.laid = Math.floor(through * kind.pieces);
     if (s.laid !== was) S.dirty = true;
-    return;
   }
-  sendBuilder();
 }

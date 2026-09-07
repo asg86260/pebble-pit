@@ -14,7 +14,6 @@ import { postOf } from './tenders.js';
 // kitwalk.js borrows four names back off this file; the cycle is fine because
 // neither side reads the other while the modules are being evaluated.
 import { grabHat, kitFree } from './kitwalk.js';
-import { layPiece } from '../shield.js';
 import { spareKit } from '../upgrades.js';
 import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
@@ -152,15 +151,6 @@ export function settle(w) {
 // So a commute is a list of legs rather than one destination. Each leg is
 // somewhere to stand and one thing to do when you get there, and the last of
 // them is always the work itself.
-// Put a body on a commute somebody else has planned. A shield's build
-// (shield.js) sends whoever is free to the bench and out to the frame with
-// this; the legs are the kit walk's own, so the walk obeys every rule a
-// commute does and the body settles back on to its job at the end.
-export function sendOn(w, legs) {
-  w.legs = legs.slice();
-  nextLeg(w);
-}
-
 export function nextLeg(w) {
   const leg = w.legs && w.legs.shift();
   if (!leg) { settle(w); return; }
@@ -193,12 +183,6 @@ function arrive(w) {
   // `retask` -- in its new job, if the hat came with one -- so there is no leg
   // left to walk and this returns rather than falling through to one.
   if (w.leg === 'grab' && grabHat(w)) { S.dirty = true; return; }
-  // Somebody has carried a piece of a shield out to it and is standing where it
-  // goes. This is the only thing that makes a shield grow -- see shield.js --
-  // so a frame with no arrival is a frame with no more of it built. The leg is
-  // cleared because `settle` keeps whatever fields the job's factory does not
-  // hand out, and a body still marked 'piece' reads as a builder for ever.
-  if (w.leg === 'piece') { layPiece(); w.leg = null; }
   // Somebody has walked to a lever and is standing at it. This is the only place
   // in the game a machine starts or stops, which is the point of the walk.
   S.dirty = true;

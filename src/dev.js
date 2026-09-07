@@ -164,9 +164,11 @@ const built = kind => {
   S.shieldsDone = ORDER.slice(0, ORDER.indexOf(kind));
   S.quarryOpen = S.farmOpen = S.towerOpen = S.meteorOpen = true;
   window.__buy(kind);
+  // run the build through rather than skipping it: the work is done by a lent
+  // body at the site (works.js), only faster than watching
   for (let i = 0; i < 900; i++) {
     const sh = window.__state().shield;
-    if (!sh || sh.laid >= sh.pieces) break;
+    if (sh && sh.laid >= sh.pieces) break;
     window.__fast(1);
   }
 };

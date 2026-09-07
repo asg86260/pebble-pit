@@ -12,6 +12,15 @@ export const SHIELD_LID_T = 2;       // courses thick across the lid, and the ar
 export const SHIELD_CLEAR_C = 4;     // courses of daylight kept over the rock's peak
 export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most of the spend comes home
 
+// What each one costs in labor, in worker-seconds at the site (works.js).
+// They climb with the material: timber goes up in half a minute, rope is quick,
+// stone and steel are most of the yard's afternoon. The dome has no figure here
+// because nobody works on it -- the tower pours it on its own clock.
+export const PROP_WORK = 30;
+export const NET_WORK = 20;
+export const ARCH_WORK = 70;
+export const JACK_WORK = 85;
+
 // The props: timber, and the rock does not even slow down for it.
 export const PROP_FROM = 4;         // rocks fallen before the yard thinks to look up
 export const PROP_COST = 400;       // dust for the timber

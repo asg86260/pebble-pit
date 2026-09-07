@@ -10,13 +10,24 @@
 import { P, SHIELD_LEG_W, SHIELD_LID_T, MAGIC_TONES } from '../config.js';
 import { S } from '../state.js';
 import { now } from '../clock.js';
-import { KINDS } from '../shield.js';
+import { KINDS, risingShield } from '../shield.js';
 import { ctx } from './ctx.js';
 
 export function drawShield() {
-  const s = S.shield;
-  if (!s) return;
-  const done = Math.min(1, s.laid / KINDS[s.kind].pieces);
+  let s = S.shield;
+  let done;
+  if (s) done = Math.min(1, s.laid / KINDS[s.kind].pieces);
+  else {
+    // Nothing standing -- but something may be going up. A shield under
+    // construction is a work in works.js, hammered at under the yard's own
+    // bar and tape; what is drawn rises in step with that labor, so a
+    // half-done bar is a half-raised frame and never an animation that merely
+    // lasts as long. The finished thing lands in `S.shield` the frame the
+    // work does.
+    s = risingShield();
+    if (!s) return;
+    done = s.done;
+  }
   const topY = S.groundY - s.h * P;
   const cols = s.w / P;
   ctx.fillStyle = '#000';

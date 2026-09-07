@@ -1,7 +1,7 @@
-// The shields. Bought the player's way -- through the bench row -- raised a
-// piece at a time by bodies crossing the yard, and answered by the next rock.
-// Two groups because there are two answers: the timber is come straight
-// through, and the stone catches one before it cracks.
+// The shields. Bought the player's way -- through the bench row -- built the
+// yard's way: paying starts a work (works.js), a spare body is lent and stands
+// at the landing spot putting the labor in under a bar, and the shield stands
+// when the last of it is in. Then the next rock answers it.
 import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
 import { SHIELD_PIECE_DUST, PROP_FROM, PROP_COST, PROP_PLANKS,
          NET_COST, NET_ROPES, ARCH_COST, ARCH_BLOCKS,
@@ -26,28 +26,36 @@ const ready = () => {
 // next rock answer it. The story is a chain -- each row is offered only once
 // the one before has failed -- so a check about the fourth shield has to have
 // been through the first three, the way a player would.
-const through = (kind, pieces) => {
+const through = (kind) => {
   window.__buy(kind);
-  runUntil(() => (state().shield?.laid ?? 0) >= pieces, 400);
+  runUntil(() => !!state().shield, 400);
   window.__next();
   const done = runUntil(() => state().shieldsDone.includes(kind), 240);
   runUntil(() => state().rock > 0 && !state().rockFall && state().chips === 0, 240);
   return done;
 };
 
-// Raise one and let the crew walk it up, a piece per trip.
-const raise = (kind, pieces) => {
+// Raise one and watch it built: the buy starts a work on the yard, nothing is
+// standing while the work is unfinished, and the most hands seen at it says
+// whether anybody actually built it -- a shield nobody works on does not go up.
+const raise = (kind) => {
   const bought = window.__buy(kind);
-  const atOnce = state().shield?.laid ?? -1;
-  const up = runUntil(() => (state().shield?.laid ?? 0) >= pieces, 400);
-  return { bought, atOnce, up };
+  const w0 = state().works.yard;
+  const started = !!w0 && w0.key === kind && !state().shield;
+  let hands = 0;
+  const up = runUntil(() => {
+    const w = state().works.yard;
+    if (w && w.key === kind) hands = Math.max(hands, w.hands || 0);
+    return !!state().shield;
+  }, 400);
+  return { bought, started, hands, up };
 };
 
-group('the props go up by somebody walking, and the next rock comes through', async () => {
+group('the props are built by somebody standing at them, and the next rock comes through', async () => {
   ready();
   const row = () => window.__upgrades().find(u => u.key === 'props');
   const offered = !!row()?.show();
-  const { bought, atOnce, up } = raise('props', PROP_PLANKS);
+  const { bought, started, hands, up } = raise('props');
   const whole = state();
 
   // Finish the rock and let the next one fall on the finished frame. The fall
@@ -63,8 +71,9 @@ group('the props go up by somebody walking, and the next rock comes through', as
   return [
     ok(offered, 'the row is on the bench once enough rocks have fallen'),
     ok(bought, 'and it buys, the way a player buys it'),
-    ok(atOnce === 0, 'nothing is standing at the moment of purchase', `laid ${atOnce}`),
-    ok(up, 'the crew raise it a plank at a time', `laid ${whole.shield?.laid}/${PROP_PLANKS}`),
+    ok(started, 'paying starts a work on the yard, and nothing is standing yet'),
+    ok(hands > 0, 'somebody actually stands at it and builds', `${hands} hands`),
+    ok(up, 'and it stands when the labor is in'),
     ok(answered && !smashed.shield, 'the next rock comes down and straight through it'),
     ok(!smashed.rockHeld, 'timber never holds a rock up'),
     ok(landed && (after.floor + after.pit) - (whole.floor + whole.pit) >=
@@ -75,27 +84,26 @@ group('the props go up by somebody walking, and the next rock comes through', as
   ];
 });
 
-// A half-built shield is a thing the yard is in the middle of, so it has to
-// survive being put down and picked up. The catch deliberately does not: a
-// rock held in the air is a beat a few seconds long, and a save reloaded into
-// the middle of one comes back to a rock resting on nothing.
+// A half-built shield is a work the yard is in the middle of, so it has to
+// survive being put down and picked up -- which works.js already promises for
+// every work; this holds it to that promise for a shield in particular.
 group('a shield still going up is still there after a reload', async () => {
   ready();
   window.__buy('props');
-  runUntil(() => (state().shield?.laid ?? 0) >= 3, 200);
-  const before = state().shield;
+  runUntil(() => (state().works.yard?.done ?? 0) > 2 && !state().shield, 200);
+  const before = state().works.yard;
 
   window.__reload();
-  const after = state().shield;
+  const after = state().works.yard;
+  const finished = runUntil(() => !!state().shield, 400);
 
   window.__reset();
   return [
-    ok(before && before.laid >= 3, 'some of it is up', `laid ${before?.laid}`),
-    ok(!!after, 'and it is still standing after the reload'),
-    ok(after && after.kind === before.kind && after.laid === before.laid &&
-       after.x === before.x && after.w === before.w && after.h === before.h,
-       'with every measurement it had', JSON.stringify(after)),
-    ok(after && !after.caught && !state().rockHeld, 'and nothing is held up')
+    ok(before && before.key === 'props' && before.done > 2,
+       'some of the labor is in', JSON.stringify(before)),
+    ok(after && after.key === 'props' && after.done >= before.done - 1,
+       'and none of it is lost to a reload', JSON.stringify(after)),
+    ok(finished, 'and the build carries on to the end')
   ];
 });
 
@@ -107,10 +115,10 @@ group('the arch catches one, and then the crack runs', async () => {
   // through the timber and the rope first, the way the story goes
   openSites();                             // the farm's rope and the quarry's stone
   window.__crew(2, 1);
-  through('props', PROP_PLANKS);
-  through('net', NET_ROPES);
+  through('props');
+  through('net');
   const offered = !!arch()?.show();
-  const { bought, up } = raise('arch', ARCH_BLOCKS);
+  const { bought, up } = raise('arch');
   const whole = state();
 
   // The catch: the rock stops in the air and is held there. It is a couple of
@@ -128,8 +136,7 @@ group('the arch catches one, and then the crack runs', async () => {
   return [
     ok(!early, 'the arch is not offered before the timber has failed'),
     ok(offered, 'and is offered once it has'),
-    ok(bought && up, 'the crew cut it up a block at a time',
-       `laid ${whole.shield?.laid}/${ARCH_BLOCKS}`),
+    ok(bought && up, 'somebody builds it and it stands'),
     ok(caught && held.shield?.caught, 'it catches the rock in the air'),
     ok(restY > 0, 'and the rock rests above the ground while it holds', `${restY}px up`),
     ok(stayed, 'then the crack runs'),
@@ -144,10 +151,10 @@ group('the net slows the rock and lets it through anyway', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
-  through('props', PROP_PLANKS);
+  through('props');
 
   const offered = !!window.__upgrades().find(u => u.key === 'net')?.show();
-  const { bought, up } = raise('net', NET_ROPES);
+  const { bought, up } = raise('net');
 
   // It takes hold of the rock like the arch does -- and then, unlike the arch,
   // the rock keeps coming down the whole time it is holding it.
@@ -162,7 +169,7 @@ group('the net slows the rock and lets it through anyway', async () => {
   window.__reset();
   return [
     ok(offered, 'the net is offered once the timber has failed'),
-    ok(bought && up, 'and the crew sling it a rope at a time'),
+    ok(bought && up, 'somebody builds it and it stands'),
     ok(caught, 'it takes hold of the rock'),
     ok(sank && low < high, 'and the rock keeps sinking through it', `${high} -> ${low}`),
     ok(gone, 'the rope pays out and gives up'),
@@ -174,14 +181,14 @@ group('the jack pushes the rock back up before it buckles', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
-  through('props', PROP_PLANKS);
-  through('net', NET_ROPES);
-  through('arch', ARCH_BLOCKS);
+  through('props');
+  through('net');
+  through('arch');
 
   window.__meteor();                       // sparks come off the star
   window.__grant({ sparks: JACK_COST * 2 });
   const offered = !!window.__upgrades().find(u => u.key === 'jack')?.show();
-  const { bought, up } = raise('jack', JACK_PARTS);
+  const { bought, up } = raise('jack');
 
   // Watched rather than sampled. The whole shove is under three seconds, so a
   // check that looks once a game-second can land either side of it -- what has
@@ -202,7 +209,7 @@ group('the jack pushes the rock back up before it buckles', async () => {
   window.__reset();
   return [
     ok(offered, 'the jack is offered once the stone has failed'),
-    ok(bought && up, 'and the crew build it a part at a time'),
+    ok(bought && up, 'somebody builds it and it stands'),
     ok(caught, 'it catches the rock'),
     ok(shoved && high > low, 'and drives it back up', `${low} -> ${high}`),
     ok(gave, 'then the rams give out'),
@@ -218,12 +225,12 @@ group('under the dome, the one underneath walks out', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
-  through('props', PROP_PLANKS);
-  through('net', NET_ROPES);
-  through('arch', ARCH_BLOCKS);
+  through('props');
+  through('net');
+  through('arch');
   window.__meteor();
   window.__grant({ sparks: JACK_COST * 2, cores: 20 });
-  through('jack', JACK_PARTS);
+  through('jack');
 
   const before = state();
   window.__buy('dome');
@@ -258,9 +265,9 @@ group('the dome holds, and sets every rock down after it', async () => {
   ready();
   openSites();
   window.__crew(2, 1);
-  through('props', PROP_PLANKS);
-  through('net', NET_ROPES);
-  through('arch', ARCH_BLOCKS);
+  through('props');
+  through('net');
+  through('arch');
   window.__meteor();                       // which also raises the tower
   window.__grant({ sparks: JACK_COST * 2, cores: 20 });
 
@@ -268,7 +275,7 @@ group('the dome holds, and sets every rock down after it', async () => {
   // is the bench's board -- so it is asked for where it actually lives.
   const dome = () => TOWER_UPGRADES.find(u => u.key === 'dome');
   const before = !!dome()?.show();         // the machine has not failed yet
-  through('jack', JACK_PARTS);
+  through('jack');
   const offered = !!dome()?.show();
   const bought = window.__buy('dome');
   const nobodyCarries = state().shield?.laid === 0;
