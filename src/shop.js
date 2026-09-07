@@ -380,19 +380,24 @@ function build(el, list, sections, empty) {
       // takes the cursor and the hover off in the stylesheet, and there is no
       // click to hang on it in the first place.
       if (u.read) b.classList.add('stat');
-      // A rung leaves the board where it is. You are on a ladder and the next
-      // rung is right there, and a sheet that shuts itself after every press
-      // makes buying three of something a chore of re-opening.
+      // A purchase puts the board away. Buying is a thing you do to the yard,
+      // and the yard is what the sheet is covering: the dust arcs to the
+      // station, the gang walks out to build, the flag comes down -- and none
+      // of that is worth watching through a menu. Walking back up is one step.
       //
-      // A row that opens a *place* is the exception, and it closes the board
-      // for the same reason it exists: the view is on its way to the thing you
-      // just paid for, and the sheet would be sitting over it. Those rows are
-      // exactly the ones that send the view, so that is what we ask -- rather
-      // than a list of keys here that the next new site would fall off of.
+      // Rungs used to leave the board up, so a ladder could be climbed without
+      // re-opening it. That is the case for staying, and it loses to seeing
+      // what you paid for; a ladder is still two steps a rung.
+      //
+      // Only an actual purchase closes it. A press that bought nothing -- no
+      // money, maxed out, a site already busy -- leaves the board where it is,
+      // because a sheet that shuts on a bill you could not pay looks exactly
+      // like a sheet that took your money.
       else b.addEventListener('click', () => {
         tookLook();                            // anything the yard sent earlier
-        buy(u);
-        if (tookLook()) closeBoard();
+        const bought = buy(u);
+        tookLook();                            // and whatever this purchase sent
+        if (bought) closeBoard();
       });
       // A row that has something to say says it on hover, in the same words in
       // the same box the yard uses for a mark you went and looked at. It is the

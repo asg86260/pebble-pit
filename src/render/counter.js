@@ -69,26 +69,26 @@ export function drawCount() {
   const wide = Math.round(MARK * 2 + widest + PAD * 2);
   const tall = Math.round(MARK + (lines.length - 1) * ROW + PAD * 2);
 
-  // Where it stands (wave6-sky, item 7). With the camera at the pit the card
-  // used to seat at the pit mouth, which since the rift moved to the near end
-  // of the hole put it nearly on top of the thing the near end is about. So:
-  // when the pit is in view -- the card not pinned to the left edge -- it seats
-  // centered above the rift, clear of the disc by a couple of cells; scrolled
-  // over the yard it pins to the edge and stands at the ground line as it
-  // always has.
+  // Where it stands. On the floor of the glass, always.
+  //
+  // It used to seat itself against the yard -- at the ground line out over the
+  // yard, and centered just above the rift with the pit in view. Both of those
+  // put it in front of something: the second one squarely over the rift, which
+  // is the one thing on this screen that is worth watching. A reading is not
+  // furniture and has no business standing in the picture at all. So it comes
+  // off the yard entirely and sits at the bottom edge of the window, where
+  // nothing in the yard is ever drawn and it cannot be in front of anything.
+  //
+  // It still slides along to stay with the pit, because the numbers and the
+  // hole they are about belong within a glance of each other.
   const oldX = (pit.x + P * 4 - S.camX) * S.zoom;
   const atPit = oldX > EDGE && oldX < S.W - wide;   // the pit mouth is in view
-  let x, y;
-  if (atPit) {
-    const mid = (rift.x + rift.w / 2 - S.camX) * S.zoom;
-    x = Math.max(EDGE, Math.min(mid - wide / 2, S.W - wide));
-    // the card's bottom edge sits P*2 over the top of the rift
-    const seat = (rift.y - P * 2 - S.camY) * S.zoom - PAD;
-    y = Math.max(Math.min(seat, S.H - EDGE), EDGE + MARK + (lines.length - 1) * ROW + PAD);
-  } else {
-    x = Math.max(EDGE, Math.min(oldX, S.W - wide));
-    y = Math.min((S.groundY - P * 3 - S.camY) * S.zoom, S.H - EDGE);
-  }
+  const mid = (rift.x + rift.w / 2 - S.camX) * S.zoom;
+  let x = atPit ? Math.max(EDGE, Math.min(mid - wide / 2, S.W - wide))
+                : Math.max(EDGE, Math.min(oldX, S.W - wide));
+  // `y` is the bottom row's baseline and the box hangs above it (see below),
+  // so the card's own bottom edge is `y + PAD`: this seats that on the glass.
+  const y = S.H - EDGE - PAD;
 
   const box = { x: Math.round(x - PAD), y: Math.round(y - MARK - (lines.length - 1) * ROW - PAD),
                 w: wide, h: tall };

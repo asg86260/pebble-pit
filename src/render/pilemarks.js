@@ -1,13 +1,12 @@
 // The ground each station pays out onto, and the marks that hang over a station:
 // the pegged pile strips, the pile-full warning triangle and the offer diamond.
 // Extracted verbatim from render.js; behavior unchanged. Owns stripMark,
-// drawPileMarks, warning, marksOn, markAnchor, markAt,
-// pileMarkAt and overPileMark. The shared primitives come from this folder's own
+// drawPileMarks, warning, pileMarkAt and overPileMark. The shared primitives come from this folder's own
 // leaves: ctx from ./ctx.js and drawTriangle from ./marks.js.
 
-import { STATIONS, hasOffer, stationFoot } from '../board.js';
+import { stationFoot } from '../board.js';
 import { P } from '../config.js';
-import { S, farm, scrub, sky } from '../state.js';
+import { S, farm, sky } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawTriangle } from './marks.js';
 
@@ -109,74 +108,33 @@ function warning(x, y, r = WARN_R) {
 // or not the bar is showing, so a mark never moves because a different mark
 // appeared. That is the whole of what makes a row of icons readable -- you learn
 // where to look once.
-// How far apart the slots sit, and it follows the marks rather than leading
-// them. Six cells was the gap the old, larger signs needed; with smaller ones in
-// the same slots the pair stopped reading as a row and started reading as two
-// marks that happened to be near each other. Four and a half went too far the
-// other way -- the triangle is 5.2 cells across and the diamond 3.2, so their
-// half-widths alone come to 4.2 and the two were all but touching.
+// How wide a mark's own patch of ground is, for the hover test below.
 const SLOT_W = P * 5.5;
-// A mark never moves because a different mark appeared, so a new slot may only
-// ever be appended. ('short' sat on the right until review dropped that mark.)
-const SLOTS = ['stopped', 'offer'];   // left to right, and never reordered
 
-// Which of them a station is showing right now.
+// Where the stopped mark hangs: under the PILE, in the middle of the strip
+// that has filled up.
 //
-// They used to sit in fixed places whether or not the other was there, on the
-// argument that a mark which never moves is a mark you learn the position of.
-// That is true of a row of controls and wrong for a pair of signs: one sign
-// hanging off to the left of nothing reads as a thing that has come loose. So
-// they are centred as a group -- one in the middle, two side by side about the
-// middle -- which is what anybody drawing this by hand would have done.
-function marksOn(key) {
-  const on = [];
-  if (S.pileFull[key]) on.push('stopped');
-  if (STATIONS.includes(key) && hasOffer(key)) on.push('offer');
-  return on;
-}
-
-// The middle of a station's row of slots. Everything that hangs under a station
-// is measured from here, so moving a station moves its marks with it.
-export function markAnchor(key) {
-  const box = key === 'scrub' ? scrub : null;
+// There was a row of slots here, and a table deciding which mark took which
+// place in it. Both other marks are gone -- the offer diamond became the flag
+// on the roof, the under-staffed figure was dropped -- and one mark does not
+// need a row: what is left is one sign with one place to be.
+//
+// That place is the pile, not the station. It used to hang under the station,
+// which was right for a sign about a board and wrong for this one: what has
+// stopped is the gang, and why is a heap of stone lying somewhere else. The
+// heap is the thing to walk to and the thing to look at, and the station's own
+// ground is where the roster stands now -- the two were overlapping there.
+export function pileMarkAt(key) {
   const strip = S.piles.find(p => p.key === key);
-  // A station's signs hang under the station, and for the quarry and the farm
-  // the station is the SHACK. That is where its board hangs and where you stand
-  // to open it (`standAt` in board.js), and a sign about what is on that board
-  // belongs with it -- a diamond out beside a hole is a diamond about nothing
-  // you can walk up to. `stationFoot` is the same answer board.js gives to the
-  // same question, so the two can no longer drift apart: this used to reach
-  // past the mouth of the quarry with a slot's clearance and to the middle of
-  // the plots, both worked out here and neither known to the board.
-  const x = key === 'rock' ? S.cx
-          : key === 'sky' ? sky.x
-          : box ? box.x + box.w / 2
-          : (f => f != null ? f
-                 : strip ? (strip.from + strip.to) / 2
-                 : farm.x + farm.w / 2)(stationFoot(key));
-  // Clear of the station itself. The star is four hundred pixels up with no
-  // ground under it at all, so its marks hang beneath it where the wizards are;
-  // everything else stands on the floor of the yard -- the quarry included,
-  // whose signs are under its shack now rather than out over the hole.
+  // The star's dust hangs in the air with no ground under it, so its mark
+  // stays under the meteor where the wizards are. Everything else has a strip
+  // on the floor of the yard; a key with neither falls back to the station.
+  const x = key === 'sky' ? sky.x
+          : strip ? (strip.from + strip.to) / 2
+          : key === 'rock' ? S.cx
+          : (f => f != null ? f : farm.x + farm.w / 2)(stationFoot(key));
   const y = key === 'sky' ? sky.y + sky.r + P * 9 : S.groundY + P * 7;
   return { x: Math.round(x / P) * P, y: Math.round(y / P) * P };
-}
-
-// One slot of that row.
-export function markAt(key, kind) {
-  const at = markAnchor(key);
-  // Centred as a group, in the order the slots are declared -- so with one up it
-  // is in the middle, and when the second appears they part about the middle
-  // rather than one of them staying put and the other arriving beside it.
-  const on = marksOn(key);
-  const i = on.indexOf(kind);
-  if (i < 0) return { x: at.x, y: at.y };     // asked about one that is not up
-  const left = at.x - (on.length * SLOT_W) / 2 + SLOT_W / 2;
-  return { x: Math.round((left + i * SLOT_W) / P) * P, y: at.y };
-}
-
-export function pileMarkAt(key) {
-  return markAt(key, 'stopped');
 }
 
 // where the cursor has to be to be asking about one

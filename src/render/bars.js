@@ -7,6 +7,7 @@ import { S, casino, lab, outhouse, school, scrub, tower } from '../state.js';
 import { OPENS_PLACE, SITES, progressOf, rowFor, siteBox, worksAt } from '../works.js';
 import { farmShed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
+import { flagReach } from './aura.js';
 import { ctx } from './ctx.js';
 
 // One bar, drawn wherever something is being worked through. The lab has had
@@ -115,6 +116,13 @@ export function barSpot(site, w = null) {
       top = S.groundY - (S.groundY - roof) * p;
     }
   }
+  // ...and above the station's flag, where it flies one. The flag stands off
+  // the building's own topmost feature and reaches well past BAR_CLEAR, so a
+  // bar measured from the roof alone was drawn straight through the pole. The
+  // reach is the flag's, asked of the thing that draws it -- a clearance
+  // guessed here would be a second opinion about how tall a flag is.
+  const reach = flagReach(site);
+  if (reach != null) top = Math.min(top, reach);
   return { x: box.x + box.w / 2, y: top - BAR_CLEAR };
 }
 

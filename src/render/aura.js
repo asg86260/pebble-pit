@@ -97,6 +97,18 @@ function flagBase(rect, which) {
   return { x: Math.round(spot.x * k) / k, y: spot.y };
 }
 
+// The highest pixel a station's flag can reach -- the pole's top, less the
+// cell the pennant's crest rides up on. Answered whether or not the station is
+// flying one this second: anything hanging above a station (its work bar, its
+// done tick) clears the flag by this, and a clearance that came and went with
+// the offer would make those marks hop every time a board changed. Null for a
+// station that is not standing, which has nothing to clear.
+export function flagReach(which) {
+  const r = standRect(which);
+  if (!r) return null;
+  return flagBase(r, which).y - (FLAG_POLE + 1) * P;
+}
+
 // A stable per-station number in 0..1, so every flag flutters out of step with
 // its neighbors without anything being stored or saved.
 const seedOf = which => {

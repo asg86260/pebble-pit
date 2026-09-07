@@ -465,10 +465,16 @@ export const TESTS = [
     // Bought the way a player buys it: the row is pressed until it will not be
     // pressed again. Setting the count through a hook would prove nothing about
     // the thing that goes wrong, which is what the board does on the purchase.
+    //
+    // A purchase puts the board away now (feedback8 item 1), so a set of three
+    // is three walk-ups -- which is exactly what a player does, and the loop
+    // walks back up the same way rather than reaching past the board.
     const row = () => [...document.querySelectorAll('#schoolshop button[data-key]')]
       .filter(b => b.offsetParent).find(b => b.dataset.key === 'breaker');
     let presses = 0;
     for (let i = 0; i < 6; i++) {
+      window.__board('school');
+      await sleep(120);
       const b = row();
       if (!b || b.disabled) break;
       b.click();
@@ -480,6 +486,8 @@ export const TESTS = [
       await sleep(120);
     }
     const bought = state().breakers;
+    window.__board('school');                  // and back up to read the finished row
+    await sleep(200);
 
     const hide = document.getElementById('hidedone');
     hide.click();

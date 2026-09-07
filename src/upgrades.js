@@ -1008,19 +1008,30 @@ export const priceText = (money, n) =>
 
 export const canPay = u => billOf(u).every(([money, n]) => purse(money) >= n);
 
+// True when something was actually bought, false when the press came to
+// nothing -- no money, maxed out, the site already busy. The board reads it to
+// decide whether to put itself away, and a press that bought nothing must
+// leave it open: a sheet that shuts on a bill you cannot pay looks like it
+// took the money.
 export function buy(u) {
-  if (u.job || u.dial) return;   // a job row moves bodies and a dial sets a number
+  if (u.job || u.dial) return false;   // a job row moves bodies and a dial sets a number
   // A row with a payout on it instead of a price is not a purchase: nothing is
   // taken, and what it does is its own business. The casino's two decisions are
   // the only ones in the game.
-  if (u.price) { if (u.show() && !u.dead?.()) { u.buy(); S.dirty = true; buildShop(); } return; }
+  if (u.price) {
+    if (!u.show() || u.dead?.()) return false;
+    u.buy(); S.dirty = true; buildShop();
+    // A payout row is the casino's two decisions: it is a thing you do at the
+    // table, not a thing you take away, so the board stays up for the next hand.
+    return false;
+  }
   // A row that is greyed out for a reason of its own -- the tower already has a
   // hat on the go -- takes nothing and does nothing. Without this the money went
   // and the row shrugged.
-  if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return;
+  if (!u.show() || u.dead?.() || maxed(u) || !canPay(u)) return false;
   // and not while the site is already putting something up. One work per site is
   // the whole of what makes the waiting a decision -- see works.js.
-  if (siteBusy(u)) return;
+  if (siteBusy(u)) return false;
   // What is spent flies to the station that sold the row, not to the bench: buy a
   // rung of the farm and the dust arcs to the farm, buy a brew rung and it arcs
   // to the cauldron. The destination is the row's own site (`siteBox`), and it is
@@ -1043,4 +1054,5 @@ export function buy(u) {
   else u.buy();
   S.dirty = true;
   buildShop();
+  return true;
 }

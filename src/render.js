@@ -71,7 +71,7 @@ export { drawSky } from './render/sky.js';
 export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } from './render/cores.js';
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
-export { drawPileMarks, markAnchor, markAt, overPileMark, pileMarkAt } from './render/pilemarks.js';   // wave7-ui
+export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';   // wave7-ui
 export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
