@@ -150,7 +150,6 @@ const LAYERS = [
   { name: 'pit', draw: drawPit },
   { name: 'muck', draw: drawMuck },              // and whatever the last rain left on top of the lot
   { name: 'abyss', draw: drawAbyss },            // the drowned pit: the liquid, its ripples and the plank
-  { name: 'rift', draw: drawRift },              // or, through the torn era, the disc growing over the mouth
 
   { name: 'pit outline', draw: drawPitOutline },
 
@@ -174,6 +173,21 @@ const LAYERS = [
   { name: 'says', draw: drawSays },              // and what any of them stood about is saying
   { name: 'puffs', draw: drawPuffs },            // what the crew are putting up there right now
   { name: 'smog', draw: drawSmog },              // and what it has gathered into up there
+
+  // The tear goes here, near the front, and it is a move worth explaining: it
+  // used to sit back with the pit, painted before the outline of the hole and
+  // before the whole sky. That was fine while it was a disc, and wrong the
+  // moment it started BENDING what is behind it -- a lens can only bend what
+  // has already been drawn, and what had been drawn at that point was blank
+  // page. It read as a plain circle because the world it was supposed to be
+  // warping was still to come.
+  //
+  // Here, everything of the world is under it: the lip and the outline of the
+  // hole, the ground, the buildings, the bodies, the smoke and the haze. It
+  // does cover anything that happens to be behind it, which is what a hole in
+  // the world does, and nothing that has to stay readable is ever over the
+  // pit's near end.
+  { name: 'rift', draw: drawRift },              // through the torn era, the disc growing over the mouth
   { name: 'balloons', draw: drawBalloons },      // and the craft crossing it
   { name: 'brollies', draw: drawBrollies },      // and anybody who has stepped out of one
   { name: 'rain', draw: drawRain },              // and whatever is coming down out of it, or going into the house

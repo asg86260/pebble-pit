@@ -74,9 +74,14 @@ export const RIFT_TWINKLE_MS = 2800;
 // pass it and snap straight once clear. It is the real warp rather than a
 // picture of one -- see `drawBend` in render/cores.js -- which is why it looks
 // out of place: nothing else in this game bends.
-export const RIFT_BEND_RINGS = 5;    // rings the warp is stepped through
-export const RIFT_BEND_R = 1.75;     // how far out it reaches, in disc radii
-export const RIFT_BEND_AMT = 0.55;   // and how hard it magnifies at the rim
+// Four, and the number is a budget rather than a taste. Each ring is a clipped
+// blit of the picture and they cost about 0.7 ms apiece on this machine: ten
+// of them is 6.8 ms, over a third of a frame, on the one part of the game that
+// is already the heaviest. Four is 2.8 ms and the stepping between them still
+// reads as a smear rather than as bands.
+export const RIFT_BEND_RINGS = 4;    // rings the warp is stepped through
+export const RIFT_BEND_R = 2.1;      // how far out it reaches, in disc radii
+export const RIFT_BEND_AMT = 0.7;    // and how hard it magnifies at the rim
 
 // The light piled up at the very edge. On the boundary, never across the
 // middle: everything tried across the middle read as a face.
