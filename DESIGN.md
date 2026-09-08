@@ -5313,3 +5313,128 @@ once the mechanism is known: bought through `__buy`/`__assign` the way a player 
 asserting utilization at the bench stays above some floor once several works are queued together (a
 regression guard, not a balance target by itself). Until the mechanism is found, a check would only
 pin down today's number rather than the cause.
+
+## A board has a size (design, not built)
+
+The complaint: *the shop menus shift layout way too often. Things are constantly
+changing, disabling because no worker is available, new text showing up and
+causing shifts.*
+
+Measured on the bench board, headless, a frame at a time.
+
+| what happens | what the sheet does |
+|---|---|
+| a card's status line reads `busy: the next bench` | 525 → 529 px wide |
+| ...naming two works | 525 → **731** px |
+| ...naming three | 525 → **1167** px |
+| a row arrives when something unlocks | 363×350 → **525×481** |
+| the status line swaps `building` / `on the way` / `nobody on it` | no change |
+| a section badge appears | no change |
+
+So the card height is fine and the badge is fine. Two things move the board, and
+they are both the same defect wearing different clothes: **the board has no size
+of its own.** It is whatever its content measures this frame, `remeasure` reads
+that back, and `place` re-seats the panel by it -- so any word that arrives
+anywhere on the sheet walks the whole board sideways, taking every row out from
+under the cursor.
+
+The rule this design asserts:
+
+> **Nothing a board *says* may change the size of the board. Only what a board
+> *holds* may.**
+
+A row arriving is a change to what the board holds, and the board is allowed to
+grow for it. A card telling you the cut is busy is a thing the board is saying,
+and it must fit in the board that already stands there.
+
+### 1. The sheet is `nowrap`, and that is the mechanism
+
+`.panel .sheet` sets `white-space: nowrap`. Two things already opt back out of
+it -- `.rows button .cost`, so a three-coin bill wraps inside its own cell, and
+`.rows .note`, so a description wraps as prose. Both of those opt-outs were
+written for exactly this bug, one card at a time.
+
+`.rows button .gain` did not opt out, and `.gain` is the cell `refresh` writes
+every transient status into: `building`, `on the way`, `nobody on it`, and
+`busy: <every work at this site, by name>`. That last one has no bound on its
+length -- it is a join over `worksAt(u.site)` -- so one card can demand any width
+it likes and the sheet hands it over.
+
+Patching `.gain` the way `.cost` and `.note` were patched would be the third
+per-cell exception in the same file for the same reason, which is the shape of
+bug this codebase has a rule about. The mechanism is that **the sheet takes its
+width from its longest line**, and the fix is to stop it doing that at all.
+
+### 2. The sheet's width is measured from the rows, once, and pinned
+
+After `build` changes the row set -- and only then -- the sheet is measured and
+that width is set on it explicitly, for as long as that row set stands. The
+number is measured, never guessed: it is what the browser makes of the rows that
+are actually there, which is the same reading `max-content` gives today, taken
+once instead of continuously.
+
+With a pinned width, every cell inside is laid out against a box that does not
+move. `refresh` can write anything it likes into a `.gain` and the board stays
+where it is. `remeasure` stops being a thing that fires on words -- `boardReworded`
+survives only for the height, which nothing in the measurements above moves.
+
+A row set changing still resizes the board, which is right: the board holds
+something new. It happens on a purchase or an unlock, which is a moment the
+player caused and is watching.
+
+### 3. `show()` must be monotonic until the row is consumed
+
+A row may leave a board because you bought it or finished it. A row may not
+leave because a number dipped, a machine stopped, or a hand is in play -- that is
+the board rearranging itself behind you over something you did not do.
+
+Three predicates in the game do the second thing:
+
+| where | predicate | what makes it flip back |
+|---|---|---|
+| `rows-farm.js` | `nearly(FARM_DUST)` | `S.stored` falls when you spend |
+| `rows-scrub.js` | `MACHINES.some(m => running(m.key))` | a machine stops |
+| `casino.js` (four rows) | `!busy() && !S.paying` | every hand, twice |
+
+So `show` splits in two:
+
+- **`show`** -- has this been revealed. Latched: once it has ever been true it
+  stays true, until the row is bought or finished, which is what already takes
+  the row away.
+- **`ready`** -- can this be acted on right now. A row that is revealed and not
+  ready is **greyed, in place, with the reason where its price goes.**
+
+The latch is one line in `shape`/`build` over a new `S.shownRows` (SAVED, like
+`S.seenRows` beside it), not three edits in three files. And greying is strictly
+more information than vanishing: *the table is mid-spin* and *the row is not on
+this board* look identical when the row is simply gone, which is the same
+argument `refresh` already makes for `busy:` over a bare grey row.
+
+### The one open call: an over-long status, in a box that cannot grow
+
+With the width pinned, `busy: break the ground, put up the school, the next
+furrow` no longer fits the card. Three shapes, and the choice is the user's:
+
+**(a) Truncate.** `overflow: hidden; text-overflow: ellipsis` on `.gain`. The
+board never changes size at all, and the full reason is a hover away. Costs
+nothing and hides something.
+
+**(b) Reserve the line.** The card's second line is always two lines tall, so a
+status may wrap into room that was already there. Nothing ever moves and nothing
+is hidden; the board stands about a hundred pixels taller for ever, including on
+the boards where no row is ever a build.
+
+**(c) Write it short.** `busy`, or `busy (2)`, and *which* works is the note or
+the tooltip. A vocabulary with a known longest word, which is the only kind that
+fits a fixed box by construction. Costs the sentence `refresh`'s comment argues
+for.
+
+### Checks
+
+- `test/boards.test.mjs`: every row's `show()` is monotonic under a purse that
+  goes up and back down, a machine that stops, and a hand that spins -- asserted
+  over `__rows()` rather than over a list of the three known offenders, so a
+  fourth cannot be written.
+- `src/selftest/boards.js`: open the bench board, start a build the player's way
+  (`__buy`), and assert the sheet's `offsetWidth` and `offsetHeight` are the same
+  before, during and after -- the page tier, because it is a fact about layout.

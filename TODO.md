@@ -1,5 +1,29 @@
 # Still to do
 
+## The shop boards resize while you read them (2026-09-08)
+
+**Designed, not built.** See "A board has a size" at the end of DESIGN.md.
+
+Measured headless on the bench board: a card's `busy: <works>` status line takes
+the sheet from 525 px wide to 731 with two works named and 1167 with three, and
+snaps back when the build lands. A row arriving takes it from 363x350 to
+525x481. Card height and section badges move nothing.
+
+One cause behind both: `.panel .sheet` is `white-space: nowrap` and the sheet is
+content-sized, so `remeasure`/`place` re-seat the whole panel on any word that
+arrives. `.cost` and `.note` already opt out of `nowrap` one cell at a time --
+`.gain` is the third case, and the design pins the sheet's width after a rebuild
+instead of adding another exception.
+
+Second, smaller cause: three `show()` predicates flip back off on their own --
+`nearly(FARM_DUST)` (rows-farm.js), `MACHINES.some(running)` (rows-scrub.js) and
+`!busy() && !S.paying` (casino.js, four rows). Those become a latched `show`
+plus a `ready`, with a not-ready row greyed in place rather than removed.
+
+Blocked on one call: what an over-long status does in a box that cannot grow --
+truncate, reserve a second line always, or shorten the wording. The three are
+laid out at the end of the DESIGN.md section.
+
 ## Everything that is not content (2026-09-08)
 
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
