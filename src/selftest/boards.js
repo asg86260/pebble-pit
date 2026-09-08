@@ -946,14 +946,21 @@ export const TESTS = [
     window.__look(state().apothecaryX - 200);    // both pots on the glass
     await raf();
 
+    // Asked again every time, never held. `onScreen` is a world point through
+    // the camera, and the camera moves -- opening a board and buying a rung
+    // between two hovers was enough to slide it, and the second half of this
+    // check was then pointing at bare ground several thousand pixels from the
+    // pots while reading a picker that had simply never reopened. The yard says
+    // where its pots are; a check that copies the answer down is holding a copy
+    // of the layout, which is the thing kit.js exists to stop.
     const mid = b => onScreen(b.x + b.w / 2, b.y + b.h / 2);
-    const one = mid(window.__potSpot(0));        // the yard says where its pots are
-    const two = mid(window.__potSpot(1));
+    const one = () => mid(window.__potSpot(0));
+    const two = () => mid(window.__potSpot(1));
     const pop = () => document.querySelector('[data-potpick]');
 
     // Standing at the second cauldron is enough: no press, the way a station's
     // board opens when you walk up to it.
-    point('pointermove', ...two, 0);
+    point('pointermove', ...two(), 0);
     await sleep(40);
     const open = !!pop() && !pop().hidden;
     const swatches = pop() ? pop().querySelectorAll('.opt .swatch').length : 0;
@@ -977,12 +984,12 @@ export const TESTS = [
 
     // Crossing to the other cauldron moves the list with the cursor rather than
     // leaving it standing over the one you have left.
-    point('pointermove', ...one, 0);
+    point('pointermove', ...one(), 0);
     await sleep(40);
     const movedOn = pop()?.querySelector('.opt.on')?.dataset.opt;
 
     // ...and back, to set the one this check is about.
-    point('pointermove', ...two, 0);
+    point('pointermove', ...two(), 0);
     await sleep(40);
     pop()?.querySelector('.opt[data-opt="brace"]')?.click();
     await sleep(40);
@@ -992,18 +999,25 @@ export const TESTS = [
     // Wandering off puts it away -- after a breath, not on the instant, because
     // the gap between a control and its list is a place the pointer is briefly
     // outside both. Same grace the boards' own dials run on.
-    point('pointermove', ...two, 0);
+    point('pointermove', ...two(), 0);
     await sleep(40);
     const upAgain = !!pop() && !pop().hidden;
-    point('pointermove', two[0], two[1] + 260, 0);   // bare ground below the yard
+    point('pointermove', two()[0], two()[1] + 260, 0);   // bare ground below the yard
     await sleep(80);
     const heldOn = !!pop() && !pop().hidden;
     await sleep(700);
     const wanderedOff = !!pop() && pop().hidden;
 
     // And a press still opens it, which is the only way in on a touchscreen.
-    point('pointerdown', ...two);
-    point('pointerup', ...two);
+    //
+    // With no scene running. The purse this check grants in setup is more than
+    // the hole holds, so it tears the rift and the tear plays -- and a press
+    // during a scene skips the scene and does nothing else, which is the rule
+    // (see the note over `skipCutscene` in input.js). Left standing, this check
+    // pressed the skip and reported that a press does not open the picker.
+    window.__nocine();
+    point('pointerdown', ...two());
+    point('pointerup', ...two());
     await sleep(60);
     const pressed = !!pop() && !pop().hidden;
 
@@ -1027,9 +1041,9 @@ export const TESTS = [
     window.__board(null);
     await sleep(40);
 
-    point('pointermove', two[0], two[1] + 260, 0);   // off every pot, so that...
+    point('pointermove', two()[0], two()[1] + 260, 0);   // off every pot, so that...
     await sleep(40);
-    point('pointermove', ...two, 0);                 // ...moving back reopens it
+    point('pointermove', ...two(), 0);                 // ...moving back reopens it
     await sleep(60);
     const deeper = linesNow();
     const moved = priced.filter(k => before[k] !== deeper[k]);

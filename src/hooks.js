@@ -43,6 +43,7 @@ import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
+import { skipCutscene } from './cutscene.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
@@ -981,6 +982,15 @@ export const HANDLES = {
   __upgrades: upgrades, __buy: buyRowByKey, __pitProfile: pitProfile, __dig: dig,
   __digCut: digCut, __pileCut: pileCut, __pileRock: pileRock,
   __tip: tip, __give: give, __finish: finishWorks,
+  // dev: end whatever scene is running, without pressing anything.
+  //
+  // A press in the yard while a cutscene is on screen skips the scene and does
+  // nothing else, which is the rule and is right. It is also a trap for a check:
+  // a purse granted in setup can overfill the hole, which tears the rift, which
+  // plays a scene -- so a check that banks money and then presses a control an
+  // instant later is really testing the skip. This ends the scene the way its
+  // own clock would, so the press that follows is the press the check meant.
+  __nocine: skipCutscene,
   __skyX: skyX, __puffFades: puffFades, __skyFades: skyFades,
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
