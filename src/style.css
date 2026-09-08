@@ -300,11 +300,12 @@ canvas {
 /* `min-width: 0` and the clip are the belt to `pinWidth`'s braces (board.js).
    The sheet is a fixed box now, so a line longer than this cell can only spill
    over the card's own border -- it can no longer push the whole board wider.
-   Every word this cell is ever given fits: the widest status in the vocabulary
-   is "nobody on it" at 101 pixels against 166 of room on the narrowest card in
-   the game, and the widest gain any row prints is 59. The clip is here for the
-   word nobody has written yet, so that it truncates rather than bleeding into
-   the card beside it. */
+   Every word this cell is ever given fits: measured across every board, the
+   widest status in the vocabulary is "nobody on it" at 101 pixels and the
+   tightest cell one can land in holds 102 (see the rule for `.waiting` below,
+   which is what buys the room). The clip is here for the word nobody has written
+   yet, so that it truncates rather than bleeding into the card beside it -- and
+   the check in selftest/boards.js is what actually holds the margin. */
 .rows button .gain {
   grid-column: 1;
   grid-row: 2;
@@ -321,6 +322,14 @@ canvas {
    the sheet is set in, so it stays right if the type changes, where a number
    here would be one more thing to retune. */
 .rows button .gain::before { content: ''; display: inline-block; }
+/* A card whose site is busy says so across the whole of its second line. What
+   the row GIVES you shares that line with a bill, so its column is `1fr` against
+   the bill's `auto` and can come out very narrow -- 82 pixels on the crew's
+   `labhaul`, against 101 for "nobody on it". A status is a fact about the card
+   rather than an entry in that column, and the cell beside it on that row is
+   empty, so it can simply have the line. Nothing moves for it: the sheet's width
+   is pinned (see `pinWidth` in board.js) and the row's height does not change. */
+.rows button.waiting .gain { grid-column: 1 / -1; }
 /* Hard right on the card's FIRST line, beside the title. `min-width: 0` so a
    bill wider than the card can wrap inside its own cell rather than stretching
    the card past its neighbor -- only four rows in the game are that wide (the

@@ -1225,9 +1225,39 @@ export const TESTS = [
     // first and the last happen to agree.
     const seen = new Set([size()]);
     for (let i = 0; i < 12; i++) { await settle(0.5); seen.add(size()); }
-    // ...and however many are queued behind it, the words stay inside the box.
-    const spill = [...shop().querySelectorAll('button[data-key] .gain')]
-      .filter(g => g.scrollWidth > g.clientWidth + 1).length;
+    // ...and no card on ANY board can be given a status it cannot hold.
+    //
+    // Not the bench alone, and not the statuses that happen to be up: every card
+    // in the game, tried with every word in the vocabulary, in the state a
+    // status is actually shown in. The gain column is `1fr` against the bill's
+    // `auto`, so a card with a wide bill leaves it very little -- five cards
+    // measured narrower than "nobody on it" before the status was given the
+    // whole of the card's second line, and the margin on the tightest of them is
+    // one pixel now. A number that close is not a thing to leave to a comment.
+    const SAYS = ['busy', 'busy (9)', 'building', 'on the way', 'nobody on it'];
+    const spills = [];
+    for (const which of ['bench', 'casino', 'quarry', 'farm', 'stats',
+                         'outhouse', 'buildbench', 'house']) {
+      window.__board(which);
+      await settle(0.1);
+      const page = document.querySelector('#panel .page:not([hidden])');
+      for (const card of page?.querySelectorAll('.rows button[data-key]') || []) {
+        const g = card.querySelector('.gain');
+        if (!g || getComputedStyle(g).display === 'none') continue;
+        const said = g.textContent;
+        card.classList.add('waiting');
+        let need = 0;
+        for (const t of SAYS) { g.textContent = t; need = Math.max(need, g.scrollWidth); }
+        g.textContent = 'busy';
+        const room = g.clientWidth;
+        card.classList.remove('waiting');
+        g.textContent = said;
+        if (need > room) spills.push(`${which}:${card.dataset.key} ${need}>${room}`);
+      }
+    }
+    window.__board('bench');
+    await settle(0.5);
+    const spill = spills.length;
 
     // ...and the guarantee under the wording. `busy (3)` is short by design, so
     // the check above would pass on the wording alone even with the sheet still
@@ -1256,7 +1286,8 @@ export const TESTS = [
          'and the sheet is the same size on every frame the build runs',
          [...seen].join(' / ')),
       ok(spill === 0,
-         'and no status is wider than the cell holding it', `${spill} spilling`),
+         'and no card on any board is given a status it cannot hold',
+         spills.join(', ') || 'none spill'),
       ok(shouted === before,
          'a line far too long for a card cannot widen the board either',
          `${before} -> ${shouted}`),

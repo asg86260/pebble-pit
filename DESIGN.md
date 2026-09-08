@@ -5449,10 +5449,21 @@ With the width pinned, `busy: break the ground, put up the school, the next
 furrow` no longer fits the card, and a truncation is a sentence with its end cut
 off rather than a fact. So the vocabulary is closed instead, and every word in
 it fits by construction: **`busy`**, **`busy (n)`**, `building`, `on the way`,
-`nobody on it`. The longest of those measures 101 pixels against 166 of room on
-the narrowest card in the game, and the widest gain any row prints is 59, so
-this cell can no longer be the widest line on a sheet whatever it is asked to
-say.
+`nobody on it`. The longest of those measures 101 pixels, and the widest gain
+any row prints is 59, so this cell can no longer be the widest line on a sheet
+whatever it is asked to say.
+
+The cell it lands in had to be widened to take even that. The gain column is
+`1fr` against the bill's `auto`, so a card with a wide bill leaves it very
+little: measured across every board, five cards had a gain column narrower than
+`nobody on it` -- 82 pixels on the crew's `labhaul`. Widening the column on all
+of them would have moved every bill in the game. But a status is a fact about the
+card rather than an entry in that column, and the cell beside it on that row is
+empty, so while one is up it simply takes the line (`.waiting` in style.css).
+Nothing moves for it, and the tightest cell a status can now land in holds 102
+against the 101 it needs. That margin is one pixel, which is why it is held by a
+check that tries every word against every card on every board rather than by
+this paragraph.
 
 The count is the part worth having on the face of the card in any case: how many
 works are ahead of yours is the thing you would act on. *Which* ones they are
@@ -5473,6 +5484,9 @@ moves for a height that does.
   write straight into a gain cell and measure again -- because the short
   vocabulary alone passes the first half, and it is `pinWidth` that has to hold
   the second. Verified to bite: without the pin the sheet goes 525 -> 1167.
+  The same group tries every word in the vocabulary against every card on every
+  board and fails on any that would spill -- which is what holds the one-pixel
+  margin the `.waiting` rule buys.
 
 This is the page tier for both halves of the size question, because a sheet's
 width is a fact about layout and there is nothing in the yard that knows it.

@@ -615,12 +615,21 @@ export function refresh(el, list, headcount) {
         //
         // So the vocabulary is closed, and every word in it fits: "busy",
         // "busy (7)", "building", "on the way", "nobody on it" -- the longest
-        // of them is 101 pixels against 166 of room on the narrowest card in
-        // the game. What is *at* the site goes in the row's tooltip, which
-        // hangs over the board and cannot move it. The count is the part worth
-        // having on the face of the card anyway: how many are ahead of you is
-        // the thing you would act on, and which ones they are is written over
-        // the site itself, out in the yard.
+        // of them is 101 pixels, and the tightest cell one can land in across
+        // every board holds 102. What is *at* the site goes in the row's
+        // tooltip, which hangs over the board and cannot move it. The count is
+        // the part worth having on the face of the card anyway: how many are
+        // ahead of you is the thing you would act on, and which ones they are is
+        // written over the site itself, out in the yard.
+        // A status is about the whole card, not about the column the gain sits
+        // in -- so while one is up the cell takes the card's full width. The
+        // gain column is `1fr` against the bill's `auto`, and on a card with a
+        // wide bill that leaves as little as 82 pixels: measured across every
+        // board, five cards had a gain column narrower than "nobody on it".
+        // Widening the column for all of them would move the bills; letting the
+        // status span the line it already has to itself moves nothing, because
+        // the cell beside it on that row is empty.
+        row.classList.add('waiting');
         const queue = mine ? [] : worksAt(u.site).map(w => rowFor(w.key)?.name || w.key);
         sayHTML(gain, !mine ? (queue.length > 1 ? `busy (${queue.length})` : 'busy') :
                 !stalled(u.site) ? 'building' :
@@ -632,7 +641,9 @@ export function refresh(el, list, headcount) {
         continue;
       }
     }
-    // ...and the site is clear again, so the note about what was on it goes.
+    // ...and the site is clear again, so the card goes back to a gain in a
+    // column and the note about what was on it goes.
+    if (row.classList.contains('waiting')) row.classList.remove('waiting');
     if (row.title) row.title = '';
 
     // and a dot on anything that has not been on a board you have looked at
