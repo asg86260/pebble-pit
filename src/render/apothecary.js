@@ -8,7 +8,8 @@ import { P, APOTH_HUT_W, APOTH_HUT_H, APOTH_SHELF_W, APOTH_SHELF_H,
          APOTH_SHELF_ROWS, APOTH_GAP, APOTH_POT_ROW, POT_PITCH,
          BOTTLE_W, BOTTLE_H, BOTTLE_PITCH, SHELF_CAP,
          SHELF_NUM_W, SHELF_NUM_WIDE, SHELF_NUM_MIN, SHELF_PAD,
-         FLAME_HOT, FLAME_TIP, FLAME_STEAM } from '../config.js';
+         FLAME_HOT, FLAME_TIP, FLAME_STEAM,
+         POT_SWATCH, POT_SWATCH_EDGE, POT_SWATCH_DROP } from '../config.js';
 import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
@@ -404,34 +405,33 @@ export function drawStockCount(screenAt) {
   ctx.textBaseline = 'alphabetic';
 }
 
-// The tonic's short name under each pot that has a brew set (item 23). The flame
-// already says which brew from across the yard, but only while a batch is going;
-// the word under the belly says it always, and says it to a player who has not
-// learned the colors yet. Screen-space, the same bargain `drawStockCount`
-// strikes: the glyph is drawn at a size measured off the yard's own cells, so it
-// grows and shrinks with the pot over it rather than holding a CSS size the
-// picture does not agree with.
+// What each pot is set to, said under its belly as a block of that brew's color
+// (item 23). The flame already says it from across the yard, but only while a
+// batch is going; the block says it always -- and says it about a pot set to
+// nothing too, as an empty block, which the brew's name could not: a pot with no
+// word under it read as a pot the label had forgotten rather than as one waiting
+// to be told what to make. Screen-space, the same bargain `drawStockCount`
+// strikes: the block is sized off the yard's own cells, so it grows and shrinks
+// with the pot over it rather than holding a CSS size the picture disagrees with.
 export function drawPotLabels() {
   if (!S.apothecaryOpen) return;
   for (let i = 0; i < S.apothPots; i++) {
     const t = tonicOf(potTonicOf(i));
-    if (!t) continue;
     const b = potBox(i);
     // One cell in screen pixels, off two points a cell apart -- zoom-proof.
     const cell = screenAt(b.x + P, 0).x - screenAt(b.x, 0).x;
     const at = screenAt(b.x + b.w / 2, S.groundY);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.font = `${cell * 2}px ui-monospace, "Courier New", monospace`;
-    // A white slab under the word, so it reads over the dust the ground under a
-    // pot gathers -- the count over the shelf makes the same choice.
-    const w = ctx.measureText(t.short).width + cell;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(Math.round(at.x - w / 2), Math.round(at.y + cell / 2), Math.round(w), Math.round(cell * 2.4));
+    const side = Math.round(cell * POT_SWATCH);
+    const x = Math.round(at.x - side / 2);
+    const y = Math.round(at.y + cell * POT_SWATCH_DROP);
+    // Ink first and the fill inside it, so the border is one shape rather than
+    // four strokes -- a pale brew still reads as a block against the dust the
+    // ground under a pot gathers, and an unset pot is the same block empty.
+    const edge = Math.max(1, Math.round(cell * POT_SWATCH_EDGE));
     ctx.fillStyle = '#000';
-    ctx.fillText(t.short, Math.round(at.x), Math.round(at.y + cell * 0.7));
+    ctx.fillRect(x, y, side, side);
+    ctx.fillStyle = t ? t.color : '#fff';
+    ctx.fillRect(x + edge, y + edge, side - edge * 2, side - edge * 2);
   }
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#000';
 }

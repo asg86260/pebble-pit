@@ -93,8 +93,8 @@ export const APOTH_HUT_W = P * 10;     // the main building: the door, the sign,
 export const APOTH_HUT_H = P * 10;     // and how tall it stands, gable and all
 // --- the shelf of stock -------------------------------------------------------
 // A shelf of potions, said as potions: a bottle standing on a plank for every
-// dose in stock, one plank to a tonic, the brew's own colour in the glass. It
-// was a narrow seven-cell case with a coloured tick and a run of single cells on
+// dose in stock, one plank to a tonic, the brew's own color in the glass. It
+// was a narrow seven-cell case with a colored tick and a run of single cells on
 // each board, and it read as a ladder with paint on it -- taller than it was
 // wide, and nothing about it shaped like a bottle.
 //
@@ -157,16 +157,27 @@ export const DOSE_MARK_CELLS = 3;      // the mark on a buffed body, in cells
 // the farmhand's amble between plots and slower than a laden hauler's trudge.
 export const APOTH_WALK = 2.4;
 
-// The tonic burning off a dosed body -- a plume of coloured motes off the head.
+// The tonic burning off a dosed body -- a plume of colored motes off the head.
 // See `stepDoseMotes` in apothecary.js.
 export const DOSE_MOTE_MS = 90;        // between one little puff and the next
 export const DOSE_MOTE_RISE = 0.38;    // pixels a frame, well under the chimney's
 export const DOSE_MOTE_LIFE = 0.55;    // seconds before it has gone into the page
 export const DOSE_MOTE_HUE = 26;       // degrees of hue a mote may vary from its tonic
 
-// How much of a tonic's own colour the fire under its pot takes. The flame runs
-// hot at the foot and cools into the brew's colour at the tip, so which pot is
+// How much of a tonic's own color the fire under its pot takes. The flame runs
+// hot at the foot and cools into the brew's color at the tip, so which pot is
 // on which tonic reads from across the yard without a label (item 18).
 export const FLAME_HOT = 0.62;         // how far the foot is washed toward white
 export const FLAME_TIP = 0.28;         // and how far the middle of it is
 export const FLAME_STEAM = 0.35;       // the tint the steam off that pot carries
+
+// The swatch under a pot -- the block of the brew's own color that says what
+// that cauldron is set to. It used to be the brew's name spelled out, which was
+// a word to read in a yard where nothing else is read, and five words in a row
+// once the pots were bought. The color is the register the building already
+// says tonics in -- the bottles, the flame, the plume off a dosed body -- so the
+// block says it in one glance and in the same language, and an empty block says
+// the pot is set to nothing, which the name had no way of saying at all.
+export const POT_SWATCH = 3;           // the block, in cells on a side
+export const POT_SWATCH_EDGE = 0.4;    // its ink border, in cells
+export const POT_SWATCH_DROP = 0.5;    // cells of air between the ground and it

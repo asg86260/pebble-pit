@@ -198,6 +198,7 @@ const SCENES = {
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);               // a second pot is only offered after five batches
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
@@ -214,12 +215,13 @@ const SCENES = {
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);               // a second pot is only offered after five batches
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__assign('stirrers', 4);
     window.__pot('stew', 0); window.__pot('brace', 1);
-    window.__pot('strong', 2); window.__pot('stew', 3);
+    window.__pot('strong', 2);   // and the fourth left unset, for the empty block
     window.__fast(50);
     window.__look(window.__state().apothecaryX - 320);`,
 
@@ -233,6 +235,7 @@ const SCENES = {
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);               // a second pot is only offered after five batches
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
@@ -260,6 +263,7 @@ const SCENES = {
     window.__grant({ cores: 8, dust: 60000, spores: 9000, shards: 3000 });
     window.__buy('unlockfarm'); window.__finish();
     window.__buy('unlockapothecary'); window.__finish();
+    window.__brews(5);               // a second pot is only offered after five batches
     window.__buy('anotherpot'); window.__finish();
     window.__buy('anotherpot'); window.__finish();
     window.__pot('stew', 0); window.__pot('brace', 1);

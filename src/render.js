@@ -208,7 +208,7 @@ const LAYERS = [
   { name: 'roster counts', draw: drawRosterBadgeCounts },
   { name: 'kit counts', draw: drawKitStandCounts },   // and how many are waiting on each stand
   { name: 'stock count', draw: drawStockCounts },     // and how many doses stand ready on the apothecary table
-  { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, said under it
+  { name: 'pot labels', draw: drawPotLabels },        // wave7-brew: the brew each pot is set to, as a color block under it
 
   { name: 'counter', draw: drawCount },          // last, and in screen pixels: it is read, not looked at
 
