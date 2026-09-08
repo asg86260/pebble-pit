@@ -299,6 +299,13 @@ const SCENES = {
   rock: `${RICH} window.__buy('ram'); window.__finish(); window.__jump(6);
          window.__look(window.__state().rockLeftX - 200);`,
 
+  // The gang's hut off the rock's left flank, with the helmets on the stand
+  // outside it and the bench out behind. The ram is bought and the rock jumped
+  // on, because the clearance between the hut's wall and a parked ram at a big
+  // boulder is the one thing about this layout that arithmetic cannot settle.
+  shack: `${RICH} window.__school({breakers:3}); window.__shack(); window.__buy('ram'); window.__finish(); window.__jump(8);
+          window.__fast(6); window.__look(window.__state().shackX - 400);`,
+
   // Everything at once, every machine running, for the shape of the whole thing.
   yard: `${RICH} ${LIP} window.__buy('jaw'); window.__finish(); window.__buy('tiller'); window.__finish();
          window.__buy('ram'); window.__finish(); window.__buy('belt'); window.__finish(); window.__fast(6);

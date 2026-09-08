@@ -75,8 +75,12 @@ group('no multiplier is for sale before there is a bench to work at', async () =
 });
 
 // Each of the four is sold at the board of the thing it multiplies, which is the
-// change the lab's deletion was for: the bench, the houses, the quarry and the
+// change the lab's deletion was for: the shack, the houses, the quarry and the
 // farm, rather than four rows on one sheet across the yard from all of them.
+//
+// The swing's used to be on the bench, which was the nearest thing the rock had
+// to a board of its own. The gang has a hut now, so it is on that -- see
+// "The shack at the rock" in DESIGN.md.
 group('each multiplier sits on the board of the thing it multiplies', async () => {
   window.__reset();
   openSites();
@@ -84,7 +88,7 @@ group('each multiplier sits on the board of the thing it multiplies', async () =
   const boards = window.__boards();
   const at = key => boards.filter(b => b.sections.flat().includes(key)).map(b => b.name);
   return [
-    ok(at('labswing').join() === 'bench', 'the swing multiplier is on the bench, with the rock',
+    ok(at('labswing').join() === 'shack', "the swing multiplier is at the shack, with the rock's own ladder",
        at('labswing').join() || 'nowhere'),
     ok(at('labhaul').join() === 'house', "the crew's is where the crew live",
        at('labhaul').join() || 'nowhere'),

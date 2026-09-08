@@ -15,7 +15,7 @@
 
 import { P, PIT_H, PILE_LIMIT, HAUL_EMPTY, findKind,
          CORE_CELL, SHARD_CELL, SPORE_CELL, SMOG_TOP, SMOG_BAND, WORKER } from './config.js';
-import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, sky } from './state.js';
+import { S, floor, pit, cut, bench, quarry, farm, lab, apothecary, school, casino, scrub, table , tower, outhouse, shack, sky } from './state.js';
 import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
@@ -332,6 +332,11 @@ export const snapshot = () => ({
   towerX: Math.round(tower.x),
   outhouseOpen: S.outhouseOpen,
   outhouseX: Math.round(outhouse.x),
+  // The gang's hut, and where it stands: a check about the rock's own board and
+  // about the walk having moved out to make room for it reads both from here.
+  shackOpen: S.shackOpen,
+  shackX: Math.round(shack.x),
+  shackW: Math.round(shack.w),
   offers: STATIONS.filter(k => hasOffer(k)),
   stands: Object.fromEntries(STATIONS.map(k => [k, (r => r && { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) })(standRect(k))]).filter(([, v]) => v)),
   inLoo: S.workers.filter(w => w.inLoo).length,

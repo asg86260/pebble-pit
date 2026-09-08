@@ -14,7 +14,7 @@
 // the break code was already able to have and almost never got the chance to.
 
 import { WORKER, ROCK_CLEAR } from '../config.js';
-import { S, pit } from '../state.js';
+import { S, pit, shack } from '../state.js';
 import { rockLeft, yardLeft } from '../world.js';
 import { TYPE } from '../jobs.js';
 import { frames } from '../clock.js';
@@ -46,9 +46,13 @@ export function strollTo(w) {
   // over to somebody, and stopping beside them rather than on them
   const mate = nearIdle(w);
   add(4, mate ? mate.x + Math.sign(w.x - mate.x) * ROAM_ELBOW : null);
-  // and the two things in this yard worth going and looking at
+  // and the things in this yard worth going and looking at
   add(2, rockLeft() - ROCK_CLEAR - WORKER * 2);
   add(2, pit.x - WORKER * 3);
+  // The gang's hut, once there is one: a door people go in and out of is
+  // somewhere to stand about near, and a building nobody ever drifts past reads
+  // as scenery however carefully it is drawn. Weighted like the other two.
+  add(2, S.shackOpen ? shack.x + shack.w + WORKER : null);
 
   const lo = yardLeft(), hi = pit.x - WORKER;
   return Math.max(lo, Math.min(hi, spots[Math.floor(rand() * spots.length)]));

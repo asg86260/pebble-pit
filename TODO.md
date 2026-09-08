@@ -1,23 +1,35 @@
 # Still to do
 
-## A shack at the rock, and the rock's rows in it (2026-09-08)
+## A shack at the rock — built (2026-09-08)
 
-**Designed, not built.** See "The shack at the rock" at the end of DESIGN.md. The rockhands get the
-one thing every other trade in the yard has — a building — and the gang's two ladders, the rock's
-`swing ×` and the ram move off the bench and into it.
+**Built**, on `worktree-rock-shack-design`. See "The shack at the rock" at the
+end of DESIGN.md, whose last subsection records the five things the build
+changed about the design.
 
-This supersedes one paragraph of "The bench is a catch-all": that section kept the rock's rows on
-the bench because a board opened by clicking the rock would close itself on every swing. True of
-the rock as the door, and silent about a door of its own.
+The rockhands have a hut off the rock's left flank, and the gang's two ladders,
+the rock's `swing ×`, the ram and the ram's tuning ladder are sold on its board
+rather than the bench's. Your own pickaxe, swing and hold-to-mine stay on the
+bench, because you are the cursor. `put up the shack` is a bench row at 150 dust
+and a third of a building's work, offered once the price is within reach. The
+helmets and the headcount moved off the middle of the rock to the hut's door.
 
-**The expensive part is the ground, not the rows.** There is no bare land on the rock's left flank
-— the sixty pixels there is the slack the biggest rock is measured off. The shack takes the bench's
-distance, the bench and everything left of it moves out by its width, and the rock's size rule is
-re-pointed off "the bench" to "the nearest building on its left flank" so the hill is unchanged.
-The ram's clearance at full rock size is a screenshot, not an argument.
+The layout cost nothing it was feared to: `SITES` is a declarative table, so the
+shack is one row at the front of it, and the rock's size rule and the ram's
+parking clamp both read `flankX()` — the nearest building — instead of naming the
+bench.
 
-**Open when it is built:** the shack's price and build length (they set how much the new gate costs
-the opening ten minutes), and whether `the shack` or `the hut` is the word.
+**Checked:** test/shack.test.mjs (7 groups, all green), test/mult.test.mjs
+re-pointed, test/kit.test.mjs's fallen-helmet race fixed (it was passing by
+geometric coincidence -- see the end of the DESIGN.md section; the fix passes
+with and without the shack), test/golden, test/boards, test/machines,
+test/persist-roundtrip, test/wave3-buildings green, browser
+boards/places/cursor/press groups green, and the layout read off
+`shots/shack.png` at the biggest boulder.
+
+**Known red, not mine:** `every field on S is accounted for` in
+test/persist-roundtrip.test.mjs fails on `rescued`, `rescueTo`, `landAt`,
+`shield`, `shieldsDone` and `rockHeld` — six fields in none of state.js's three
+lists. It is red on main too; the shack's own fields are listed.
 
 ## Everything that is not content (2026-09-08)
 

@@ -20,6 +20,7 @@ import { APOTHECARY_UPGRADES, APOTHECARY_SECTIONS } from './apothecary.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
 import { STATS_UPGRADES, STATS_SECTIONS } from './stats.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
+import { shackRows, shackSections } from './shack.js';
 import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
@@ -35,6 +36,7 @@ const apothEl = document.getElementById('apothshop');
 const towerEl = document.getElementById('towershop');
 const statsEl = document.getElementById('statsshop');
 const looEl = document.getElementById('looshop');
+const shackEl = document.getElementById('shackshop');
 const buildEl = document.getElementById('buildshop');
 
 // What is on the board right now, as a string. If it has not changed there is
@@ -683,6 +685,10 @@ const BOARDS = {
   // Nothing on it until there is mess on the ground to want a janitor for --
   // see `show` on the outhouse row, which is the board's whole first offer.
   outhouse: () => [looEl, OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS, 'the brooms are all on their hooks'],
+  // The rock's board. Its rows are gathered from UPGRADES when asked rather
+  // than held -- see shack.js -- so this row asks for them the same way the
+  // house's does.
+  shack:  () => [shackEl, shackRows(), shackSections(), 'the tools are all on the rock'],
   // The trestle's own two ladders. It is never empty once it stands -- both rows
   // show on `buildbenchOpen` -- but the line is there for the same reason every
   // other board has one: a blank sheet is a bug you would have to rule out.

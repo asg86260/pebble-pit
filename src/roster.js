@@ -13,7 +13,7 @@
 // a sum you do in your head.
 
 import { P, WORKER } from './config.js';
-import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, school } from './state.js';
+import { S, quarry, farm, lab, apothecary, scrub, sky, outhouse, school, shack } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { doorAt } from './house.js';
 import { JOB_MACHINE, machine } from './machines.js';
@@ -102,8 +102,16 @@ export const POSTS = [
   // roster in the yard nobody could stand next to.
   { key: 'skyjob', job: JOB.WIZARD,
     at: () => sky.x, show: () => S.meteorOpen, kit: true },
+  // The gang's, outside their hut once it stands. It used to be `S.cx` always --
+  // the middle of the rock -- which put the headcount and the stand of helmets
+  // that hangs off it on top of the one thing in the yard you are clicking. The
+  // hut is where their gear comes from, so it is where the count stands too; the
+  // two are one drawing and neither moves without the other.
+  //
+  // Both answers, because the row is here from the first hire and the shack is
+  // not. See `kitX` in world.js, which answers the stand the same way.
   { key: 'mine', job: JOB.ROCK,
-    at: () => S.cx, show: () => S.crew > 0, kit: true },
+    at: () => (S.shackOpen ? shack.x + shack.w / 2 : S.cx), show: () => S.crew > 0, kit: true },
   // The haulers stand under the houses. Every other post is written under the
   // place its work is done, and carrying has no such place -- the dust is
   // wherever it fell, and the lip is only where the trip ends. What this number

@@ -5318,7 +5318,7 @@ asserting utilization at the bench stays above some floor once several works are
 regression guard, not a balance target by itself). Until the mechanism is found, a check would only
 pin down today's number rather than the cause.
 
-## The shack at the rock (design, not built)
+## The shack at the rock (built)
 
 The bench section above ruled that the rock's rows could not leave, and the reason it gave was a
 door:
@@ -5456,3 +5456,78 @@ to move four fields.
 - **The layout is a shot, not a suite.** `tools/look.mjs rock` at the biggest rock: the shack, the
   bench's new distance, the ram's clearance, and the hill still the size it was. No check in either
   tier can see any of that.
+
+### What changed on the way in
+
+Five things the design got wrong or left open, settled by building it. They are
+here rather than folded silently into the prose above, because each one is a
+thing the next section like this should not have to find out again.
+
+**The layout was one row in a table, not a coordinated edit.** The section above
+says the shack's ground costs "one coordinated edit to the constants in
+`config/yard.js`" — moving `TO_BENCH` and everything behind it. That was true of
+a yard that has not existed for some time. `SITES` in `config/sites.js` is a
+declarative table and placement is a walk (`placeSites` in world.js), so the
+whole of the layout change is one row at the front of that table plus `'shack'`
+in `PINNED_FIRST`. The bench and everything behind it move because the walk
+walks, `GROUND_LEFT` grows because it is summed off the same table, and the
+world's own widening migration (`floorShift` in persist.js) was already written.
+
+**The rock's size rule was two rules, not one.** `rockSize` measured off
+`bench.x + bench.w` — the flank the design named — and so did `ramTargetX`, which
+parks the ram clear of the building behind it. Both are `flankX()` now (world.js:
+the greatest right-hand edge among the placed sites). Re-pointing only the first
+would have put the ram inside the hut, which is the same class of bug one level
+down: a rule that names one building goes wrong the next time the walk is
+reordered, and here the reorder was in the same commit.
+
+**Dust alone, no shards.** The design priced it in "dust and shards". Shards come
+out of banking rock cells, so they are early enough — but the shack is the first
+thing a player puts up, and a bill in a second currency is a second thing to
+understand before the first building. `SHACK_DUST` is 150 and there is nothing
+else on the row. The gate that actually matters turned out to be `nearly()`, the
+rule every other door on the bench follows: the row appears at 75 grains in the
+hole. The crew clause is kept and is nearly always true — the yard starts with
+one pair of hands — so it only ever speaks for a save that has none.
+
+**The lean-to did not survive the shot.** A roof falling three courses across
+eight columns is a step every two and a half cells, and a stepped *silhouette* at
+this size reads as a staircase. It is flat with a course of eave standing a cell
+proud each side. The mark over the door went the same way twice: a pickaxe stood
+beside the wall read as a post with a hat on, and the same pick cut into the
+front read as a face. What is over the door is a small white hill — the thing the
+gang works rather than the thing they work it with — built out of even courses,
+because the front is eight cells and its middle is a seam rather than a column.
+
+**The muster is the kit walk, and that is all it should have been.** The design
+promised bodies drifting back to the door "when the rock is gone". The rock is
+never gone for long: `dancing` in crew/step.js holds the gang celebrating for the
+whole gap between boulders, so the window the promise described barely exists.
+And the one time a rockhand genuinely has nothing to do — its pile full, waiting
+on the haulers — it stands down *at the face*, deliberately and rightly, because
+that is where it will start again. So what makes the door a door is the walk that
+was already there: the helmets hang at the shack (`kitX`), and every breaker
+walks to it for one before it walks to the rock. Idle spare hands have the hut
+added to the handful of places they will wander to (`strollTo` in crew/idle.js),
+so there are people about it. Nothing was added that fights a behavior that was
+already correct.
+
+**One check elsewhere was passing by coincidence, and the move exposed it.** `a
+hauler that picks the helmet up is a rockhand` in test/kit.test.mjs shakes a
+rockhand's helmet off and expects a hauler to claim it. It carried the owner
+"across the yard" first so the race would be a race — and that gesture did
+nothing at all: `lift`, move, `drop` puts the body straight back down, and a
+rockhand walks briskly back to its own layer, so the owner was standing over its
+own helmet again before its stars cleared. The owner is then the nearest body to
+it and wins by the yard's own rule (`ownerRacing` in crew/kitwalk.js). What the
+check actually turned on was whether a hauler's errand happened to have it near
+the rock in that second and a half — a fact about how far apart the buildings
+stand — and moving every hauler's errands one slot further out is exactly what
+adding a site at the head of the walk does.
+
+It is fixed rather than re-tuned: the owner is now *held up* while the race runs
+(a body in the air is not in the race, which is the rule that makes the helmet
+genuinely up for grabs), and the check waits for the swap with `runUntil` instead
+of reading whatever is true twenty seconds later — the helmet changes hands more
+than once in that window. The fixed check passes on a tree with the shack and on
+one without, which is the point: it is not a fact about a layout any more.

@@ -50,6 +50,7 @@ import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 import { drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
+import { drawShack } from './render/shack.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
 // game imports every one of these from render.js and has no business knowing
@@ -65,6 +66,7 @@ export { drawCursor } from './render/cursor.js';
 export { CAULDRON, CAULDRON_BREW_ROW, drawApothecary } from './render/apothecary.js';
 export { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
 export { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
+export { drawShack } from './render/shack.js';
 export { drawBalloons, drawBrollies } from './render/balloon.js';
 export { drawScrub } from './render/scrub.js';
 export { casinoMarkAt, drawCasino, drawCasinoMark, drawPotPile, drawSparks } from './render/casino.js';
@@ -115,6 +117,8 @@ const LAYERS = [
   { name: 'farm shed', draw: drawFarmShed },     // the shed beside it, holding its board
   { name: 'apothecary', draw: drawApothecary },  // the pot on the fire, standing right past the farm
   { name: 'tiller', draw: drawTiller },
+  // The gang's hut, before the ram that parks between it and the rock.
+  { name: 'shack', draw: drawShack },
   { name: 'ram', draw: drawRam },                // before the rock, so the hill stands in front of it
   { name: 'belt', draw: drawBelt },              // the road from the rock to the hole
   { name: 'sky', draw: drawSky },

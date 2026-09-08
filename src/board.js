@@ -2,7 +2,7 @@
 // above the pit that chases the number.
 
 import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } from './config.js';
-import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse } from './state.js';
+import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse, shack } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
@@ -16,6 +16,7 @@ import { APOTHECARY_UPGRADES, apothHut } from './apothecary.js';
 import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
+import { shackRows } from './shack.js';
 import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
 import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
@@ -34,6 +35,7 @@ const apothShopEl = document.getElementById('apothshop');
 const towerShopEl = document.getElementById('towershop');
 const statsShopEl = document.getElementById('statsshop');
 const looShopEl = document.getElementById('looshop');
+const shackShopEl = document.getElementById('shackshop');
 const buildShopEl = document.getElementById('buildshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
@@ -47,6 +49,7 @@ const pages = { bench: document.getElementById('board'),
                 tower: document.getElementById('towerboard'),
                 stats: document.getElementById('statsboard'),
                 outhouse: document.getElementById('looboard'),
+                shack: document.getElementById('shackboard'),
                 buildbench: document.getElementById('buildboard') };
 
 // How far up a ladder you are is a row of pips, and how big and how dark they
@@ -82,7 +85,7 @@ const booksRect = () => ({ x: pit.x, y: S.groundY,
 // it. That read wrong -- the shed is what looks like the sign, so it is what
 // the hand goes to. It is the whole answer now: the hover target, the click
 // target, and the anchor the board hangs from, for both of them.
-const standAt = { bench, lab, school, casino, scrub, tower,
+const standAt = { bench, lab, school, casino, scrub, tower, shack,
                   // The hut is the station (item 17): the whole plot is 408px of
                   // hut, shelves and pots, and a board centered over all of it
                   // hangs off the window on a narrow view. Hover, click and the
@@ -122,6 +125,8 @@ const listFor = which =>
   which === 'tower' ? TOWER_UPGRADES :
   which === 'stats' ? STATS_UPGRADES :
   which === 'outhouse' ? OUTHOUSE_UPGRADES :
+  // Gathered when asked, like the house's -- see shack.js.
+  which === 'shack' ? shackRows() :
   which === 'buildbench' ? BUILDBENCH_UPGRADES :
   which === 'house' ? crewRows() : [];
 
@@ -130,7 +135,7 @@ const listFor = which =>
 // next station gets it by being added here.
 export const STATIONS = ['bench', 'school', 'casino', 'scrub', 'quarry',
                          'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
-                         'buildbench'];
+                         'buildbench', 'shack'];
 
 // whether a station is there at all yet
 const standing = which =>
@@ -149,6 +154,7 @@ const standing = which =>
   // The outhouse's board arrives with the building, like every station's; the
   // row that puts the building up is on the bench with the other unlocks.
   which === 'outhouse' ? S.outhouseOpen :
+  which === 'shack' ? S.shackOpen :
   which === 'buildbench' ? S.buildbenchOpen :
   which === 'stats' ? S.banked > 0 :
   which === 'house' ? S.crew > 0 : false;
@@ -235,6 +241,10 @@ export const nearFarm = (x, y) => S.farmOpen && near(farmShed(), x, y);
 export const nearTower = (x, y) => S.towerOpen && near(tower, x, y);
 // And the cupboard by the rooms, once there is a crew to keep a broom for.
 export const nearOuthouse = (x, y) => S.outhouseOpen && near(outhouse, x, y);
+// And the gang's hut off the rock's flank. It is asked BEFORE the rock in the
+// cascade (see input.js): the hut stands on ground the rock's own reach covers,
+// and a building you can walk up to beats a hill you swing at.
+export const nearShack = (x, y) => S.shackOpen && near(shack, x, y);
 // And the books, over the pit mouth. Asked after every building in the cascade
 // -- see input.js -- for the same reason the house is: this is a patch of open
 // air rather than a thing standing on the ground, so anything actually built
@@ -792,6 +802,7 @@ function settle(want) {
   S.towerBoardOpen = want === 'tower';
   S.statsBoardOpen = want === 'stats';
   S.looBoardOpen = want === 'outhouse';
+  S.shackBoardOpen = want === 'shack';
 
   if (!want) {                                   // fade out where it stands
     // Whatever was on it has now been seen. On the way out rather than on the
@@ -932,6 +943,7 @@ function fill(which) {
   // yard used to be earning.
   if (which === 'stats') refresh(statsShopEl, STATS_UPGRADES, null);
   if (which === 'outhouse') refresh(looShopEl, OUTHOUSE_UPGRADES, null);
+  if (which === 'shack') refresh(shackShopEl, shackRows(), null);
   if (which === 'buildbench') refresh(buildShopEl, BUILDBENCH_UPGRADES, null);
   // rebuilt as well as refreshed: the crew is a list that changes length, and
   // the other boards are lists that do not

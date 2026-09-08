@@ -318,6 +318,7 @@ import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
 import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
+import { SHACK_ROWS } from './upgrades/rows-shack.js';
 import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
 import { MULT_ROWS } from './upgrades/rows-mult.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
@@ -845,6 +846,7 @@ export const UPGRADES = [
   ...TUNING_ROWS,
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
+  ...SHACK_ROWS,
   ...BUILDBENCH_ROWS,
   ...MULT_ROWS,
   ...SHIELD_ROWS
@@ -865,8 +867,10 @@ export const SECTIONS = [
   // sold at the block they live in, under "their gear" -- see crewboard.js. The
   // rows themselves are still in UPGRADES below, because moving a row between
   // boards is a question of which sheet draws it and nothing else.
-  // `labswing` is the multiplier over the swing, beside the rung it multiplies.
-  { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'labswing', 'ram', 'tuneram'] },
+  // "the rock" is not here any more either: the gang's ladders, the multiplier
+  // over their swing and their machine are sold at the hut they work out of --
+  // see shack.js. What is left under "you" above is your own gear, which has no
+  // station because you are the cursor.
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
   { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
@@ -889,7 +893,8 @@ export const SECTIONS = [
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'put up', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
-    'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool', 'unlockscrub'
+    'unlockshack', 'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool',
+    'unlockscrub'
   ] }
 ];
 

@@ -396,6 +396,8 @@ export const S = {
   crewListOpen: false,    // whose submenu of names is out beside it
   quarryBoardOpen: false,
   farmBoardOpen: false,
+  shackOpen: false,       // the gang has a hut, and the rock has a board
+  shackBoardOpen: false,  // and whether it is open right now
   outhouseOpen: false,    // there is somewhere to go
   looPosts: LOO_POSTS,    // how many caps the outhouse's stand has; `loopost` sells the second
   towerOpen: false,       // the tower is up
@@ -572,6 +574,10 @@ export const SAVED = [
   'scrubOpen',
   'towerOpen',
   'outhouseOpen',
+  // The gang's hut. Nothing else about the rock's ladders moves with it -- the
+  // levels were always on S and stay there -- so a save that opens this flag
+  // finds every rung it had already bought sitting on the shack's board.
+  'shackOpen',
   'labKitLevel',
   'fanLevel',
   'spells',
@@ -730,6 +736,7 @@ export const EPHEMERAL = [
   'houseBoardOpen', 'crewListOpen', 'quarryBoardOpen', 'farmBoardOpen',
   'towerBoardOpen', 'scrubBoardOpen', 'mouse', 'mining', 'paused', 'dragging',
   'statsBoardOpen', 'looBoardOpen',        // Track F3 (wave5)
+  'shackBoardOpen',                        // and the rock's own, at the shack
   'nextHit', 'resetArmed',
   // worked out again from the counts, or only true for a few lines of a frame.
   // (wave7b-build: `builders` moved to SAVED -- once the construction bench is
@@ -792,6 +799,11 @@ export const cut = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: nu
                      n: 0, rock: 0, blocked: null, ceiling: null, region: null, fixed: null,
                      repose: false, onPut: null, settleAt: 0,
                      awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+// The rockhands' shack, standing off the rock's left flank: the gang's own
+// building, where their helmets hang on the stand outside and their board is
+// read. The one trade that was here from the first frame was the last to get a
+// roof. See DESIGN.md, "The shack at the rock".
+export const shack = { x: 0, y: 0, w: 0, h: 0 };
 export const bench = { x: 0, y: 0, w: 0, h: 0 };
 export const quarry = { x: 0, y: 0, w: 0, h: 0 };
 export const farm = { x: 0, y: 0, w: 0, h: 0 };
