@@ -69,6 +69,7 @@ import { canAfford, mineMs, restaff, staffSheds, take } from './upgrades.js';
 // upgrades. See `setTake`.
 setTake(take);
 import { stepMachineSmoke } from './render.js';
+import { stepSmoke } from './puff.js';
 import { now as clockNow, setFrames, frames } from './clock.js';
 import { stepSmog, sampleAir, slumpMess } from './smog.js';
 import { stepBalloons } from './balloon.js';
@@ -241,6 +242,7 @@ export const STEPS = [
   // noticed. The hole is there when you next look at it.
   { name: 'works',        step: c => stepWorks(c.dt) },   // and whatever the yard is building
   { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
+  { name: 'smoke',        step: c => stepSmoke(c.dt) },   // and every mote of it climbing and going out
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table

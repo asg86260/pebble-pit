@@ -9,6 +9,7 @@
 import { yard, group, ok, state, run, runUntil, quickCrew, openSites, haveRock, P, WORKER, buyBuilt } from './helpers.mjs';
 import { ramX, rockFaceX, RAM_REACH } from '../src/rock.js';
 import { specOf } from '../src/machines.js';
+import { MACHINE_PUFF_LIFE } from '../src/config.js';
 import { RAM, TILLER, stackCol, spriteW, spriteH } from '../src/sprites.js';
 
 // The two boards nobody could buy from.
@@ -179,6 +180,59 @@ group('the ram advances into the hill as it eats it', async () => {
 // from one end of the picture to the other, and a literal offset went on
 // pointing at the fender. So the claim is the one that survives a redraw --
 // whatever cell the smoke comes out of, there is pipe drawn in it.
+// Smoke goes out again.
+//
+// `stepSmoke` -- the one thing that aged a mote, climbed it and expired it --
+// lived in lab.js, and was deleted along with the building. Nothing else touches
+// `S.smoke`, so from that commit on every puff in the game spawned and then hung
+// where it was let go, for good: the hearth, a cigarette, a machine's stack and
+// a tonic burning off a body all froze into a speckle that only ever got denser,
+// on a list that never stopped growing.
+//
+// What makes that a check rather than a drawing note is the second half: it is
+// also a leak. So this asserts the whole life of a mote against the clock --
+// there is smoke while the machine works, it does not pile up while it keeps
+// working, and the air is clear again a life after the machine stops. Nothing
+// here reads a position; it reads how many are still in the air, which is the
+// fact the bug got wrong.
+group('smoke rises and goes out, and does not pile up', async () => {
+  window.__reset();
+  openSites();
+  window.__fullSites();
+  window.__crew(0, 0, 5);
+  window.__grant({ spores: 999, shards: 999, sparks: 999 });
+  window.__tip(90000);
+  buyBuilt('jaw');
+
+  await run(10);
+  const early = state().machSmoke;
+  // Long enough that a leak would be plain: the stack puffs about four motes
+  // every second and a half, so an hour's worth of frames with nothing expiring
+  // runs into the hundreds while a healthy yard sits at a handful.
+  await run(40);
+  const late = state().machSmoke;
+  // The oldest mote in the air, in seconds. A stuck mote's age climbs forever.
+  const oldest = Math.max(0, ...yard.S.smoke.map(m => m.t));
+
+  // Take the tender off and the stack stops. A life and a bit later, nothing of
+  // it should be left in the air.
+  window.__assign('quarriers', -1);
+  await run(MACHINE_PUFF_LIFE + 1);
+  const cleared = state().machSmoke;
+
+  window.__crew(0, 0, 0);
+  return [
+    ok(early > 0, 'a working machine puts smoke in the air', `${early} motes`),
+    ok(late <= early * 2, 'and four times as long later there is not four times as much',
+       `${early} -> ${late} after another 40s`),
+    ok(oldest <= MACHINE_PUFF_LIFE + 0.1,
+       'no mote is older than the life it was let go with',
+       `oldest ${oldest.toFixed(2)}s vs life ${MACHINE_PUFF_LIFE}s`),
+    ok(cleared === 0, 'and the stack stopping clears the air',
+       `${late} -> ${cleared}`)
+  ];
+});
+
 group('a machine smokes out of its own chimney, whichever way it faces', async () => {
   window.__reset();
   openSites();
