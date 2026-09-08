@@ -5,7 +5,11 @@
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
 save, the clock, the window, the tab, the build and the deploy, with file
 references, and then a prioritized list of what is left before this is a thing
-you can hand somebody.
+you can hand somebody. The working list is docs/release-checklist.md — one box
+per item in priority order, each with what done looks like and a pointer back
+to the report's reasoning; check things off there. Note the target has since
+changed to an Electron desktop app, and the checklist reflects that where the
+report still argues the web case.
 
 The three that matter. A throw inside frame() stops the loop for good *and*
 leaves setInterval(persist) writing the thrown state over the good save once a
