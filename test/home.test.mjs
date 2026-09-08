@@ -2,7 +2,7 @@
 // home, and turn a light on behind a window.
 
 import { group, ok, state, run, runUntil, quickCrew, haveRock, openSites, P, WORKER } from './helpers.mjs';
-import { STATION_GAP } from '../src/config.js';
+import { SLOT_PAD, STATION_GAP } from '../src/config.js';
 // A yard with nothing in it to carry is a yard nobody needs to be stood in.
 // The one thing that has to be true is that letting them go is never a
 // decision you regret: they are all back the moment there is dust.
@@ -146,9 +146,15 @@ group('the crew have somewhere to live', async () => {
     // shrunk to centre a bench.
     //
     // So each side is checked against the rule that actually decides it.
-    ok(big.ofBench === STATION_GAP,
+    //
+    // And that rule grew a second half after this was written: every site owns
+    // an apron of SLOT_PAD as well, whether or not it has a heap to park there,
+    // so what `placeSites` spends between one wall and the next is the apron
+    // plus the walk. STATION_GAP alone was the whole separation once; it has
+    // been the smaller half of it since the apron was derived.
+    ok(big.ofBench === SLOT_PAD + STATION_GAP,
        'the block stands a station\'s padding off the bench, like every neighbour',
-       `${big.ofBench}px, gap ${STATION_GAP}`),
+       `${big.ofBench}px, apron ${SLOT_PAD} plus gap ${STATION_GAP}`),
     ok(big.benchOfApron > 0, 'and the bench clears the apron at the biggest rock',
        `${big.benchOfApron}px`),
     ok(big.ofApron > 0, 'with the block further out again',

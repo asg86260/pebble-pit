@@ -4,7 +4,7 @@
 // Node checks: the yard is run rather than watched, so a walk the length of the
 // world costs a few milliseconds instead of the half minute it takes to happen.
 
-import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFloorAt, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, runUntil, quickCrew, haveRock, bankCore, openSites, quarryFeetY, P, WORKER } from './helpers.mjs';
 // The yard's own chance, for the dust a check heaps itself. `Math.random` here
 // would hand each run a differently-shaped pile out of the same seed, which is
 // the seed's whole point undone from the test side. Every group is seeded
@@ -134,8 +134,16 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // samples and the check reported nought rising samples for a body that had
   // climbed perfectly well. The cadence has to be finer than the fastest thing
   // it is watching, not tuned to whatever the pace happened to be.
+  // Each sample carries the floor it was taken over. The cut's surface is not
+  // a fixed shape -- dust settles into it and is thrown out of it while the
+  // walk is happening -- so asking where the floor was, after the run is over,
+  // asks about a floor the body never walked on.
   const trail = [];
-  for (let i = 0; i < 150; i++) { run(1 / 30); trail.push(body()); }
+  for (let i = 0; i < 150; i++) {
+    run(1 / 30);
+    const p = body();
+    trail.push({ ...p, feet: quarryFeetY(p.x) });
+  }
   const arrived = runUntil(() => state().commuting.length === 0, 200);
   const home = body();
   const after = state();
@@ -153,7 +161,19 @@ group('a body walks to its new work instead of appearing at it', async () => {
   // the ladder. That is the floor carrying it, not the body climbing the wall --
   // so a rise counts if the body is standing on the quarry's floor where it
   // happens to be, and is a fault if it is somewhere in the air.
-  const onFloor = p => Math.abs(p.y - (quarryFloorAt(p.x + WORKER / 2) - WORKER)) <= 3;
+  // Asked the way the yard asks it -- `quarryFeetY`, which is `standTop` over
+  // `cutTop`. This used to sample `quarryFloor` at the body's middle, and both
+  // halves of that were out of date: a body stands on the HIGHEST ground under
+  // any part of it, not on the ground under its navel, and the surface it
+  // stands on is the dust lying in the column rather than the rock beneath.
+  //
+  // Within a cell, not within three pixels. The floor is made of six-pixel
+  // cells and it moves under the walk as dust settles into the cut, so a body
+  // can spend a frame or two coming back down on to a column that shifted
+  // beneath it. That is the ground moving, not the body leaving it. The fault
+  // this is here to catch -- rising through the wall wherever it happened to be
+  // standing -- is tens of pixels of air, not one cell of it.
+  const onFloor = p => Math.abs(p.y - p.feet) <= P;
   const steps = trail.slice(1).map((p, i) => Math.abs(p.x - trail[i].x));
   return [
     ok(digging.t === 'q' && digging.y > s0.groundY,

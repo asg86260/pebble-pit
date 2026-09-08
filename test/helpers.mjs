@@ -148,9 +148,23 @@ export function bankCore() {
 // Where the ground is at some x -- and, down in the quarry, where the quarry's own
 // benched floor is. They are two different answers: `groundAt` is the surface a
 // body walks along up top, and the quarry is a hole in that surface.
-const { quarryFloor } = await import('../src/quarry.js');
+const { quarryFloor, cutTop } = await import('../src/quarry.js');
+const { standTop } = await import('../src/route.js');
 export const groundAt = x => yard.world.groundAt(x);
 export const quarryFloorAt = x => quarryFloor(x);
+
+// Where a body's top edge is when it is standing on the cut's floor at leftX --
+// the game's own answer, not a re-derivation of it.
+//
+// A check that wants to say "it is standing on the floor" has to ask the
+// question the way the yard asks it, and the yard asks it twice over: the
+// surface is `cutTop` (the dust lying in a column, not the rock under it) and
+// the height is `standTop` (the HIGHEST surface under any part of a body three
+// cells wide, so a body at the foot of a bench stands on the bench). Sampling
+// `quarryFloor` at a body's middle instead gets both wrong, and on a benched
+// floor it is out by a whole cell -- which reads as a body six pixels up in the
+// air when it is walking perfectly ordinary ground.
+export const quarryFeetY = leftX => standTop(leftX, cutTop) - WORKER;
 
 export const P = 6;               // a cell, for the piles
 export const WORKER = 18;         // a worker square, for tolerances
