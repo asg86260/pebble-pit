@@ -1,38 +1,49 @@
 # Still to do
 
-## `wave31-order` needs two doors the yard has not already opened (2026-09-07)
+## The suite is green again (2026-09-08)
 
-One check left red by the lab's deletion, and the only one I could not
-re-point: `a building stands where it was bought, not where the table lists
-it` in test/wave31-order.test.mjs. It buys two buildings in each order and
-asserts the one bought first stands nearer the rock. It used the school and
-the lab, because those were the two doors that waited on nothing but a coin.
+Ten reds, none of them a game defect. Written down because the shapes
+repeat and the next one will be one of these again.
 
-Diagnosed as far as: after `__seed` plus `__crew`/`__grant`, the only unlock
-rows still showing are the apothecary and the work bench -- the school and the
-plots are already open, and `__reset` is `newGame`, which leaves buildings
-standing, so the helper's second run inherited the first's yard (`__seed` is
-the wipe). Pairing the apothecary with the work bench then hits a second
-wall, and it is the interesting one: **standing the trestle up is not
-scenery.** Before it, the yard derives a builder from the spare hands; after
-it, building is a post you hire, and a work with nobody assigned waits,
-fenced. So any check that opens the construction bench has to staff it too --
-that is what `the tower goes up bare` in sky-work.test.mjs was failing on, and
-one `__assign('builders', 1)` fixed it. The same move inside this file's
-`build()` did not settle it -- staffed before the press rather than after,
-which is the right frame, the apothecary still does not rise and
-`stands.apothecary` comes back undefined. Two timeboxed attempts, reverted
-both times rather than leave the file half-migrated.
+**Four checks were measuring the yard with a stopwatch.** The tower was
+timed from the purchase rather than from the frame somebody is standing
+in it; the gang were given ten seconds to get back to the rock when the
+muck beside it goes on slumping over their columns for another half
+minute; the muck on the rock was read off the single frame the yard as a
+whole was wettest, on the one surface in the game with a gang shovelling
+it clear; and the pot picker's press landed during the rift's tear
+cutscene, so it skipped the scene instead of opening the menu. Each is
+now waited for rather than counted out.
 
-**What it needs:** two buildings that are open to be bought in either order in
-a fresh yard and neither of which is the trestle. There may not be a pair left,
-in which case the honest move is to give the check its own yard with two doors
-forced open, or to test the placement rule directly against `buildOrder`
-rather than by buying anything.
+**Three were measuring against a surface that had moved.** The yard's
+pitch is `SLOT_PAD + STATION_GAP` wall to wall, not STATION_GAP between
+drawn extents -- every site owns the same apron now, heap or no heap. A
+body's feet answer to `standTop` over `cutTop`, not to a point sample of
+`quarryFloor`. And a body's footing is `surfaceUnder`, not `walkY`, which
+is documented as not knowing the rock is there.
 
-## The bench is a catch-all, and the lab goes (2026-09-07)
+**Two were holding a copy of something live.** The pot check worked its
+screen coordinates out once and then opened a board, which moved the
+camera; it spent the second half pointing at bare ground. And
+`wave31-order` reset with `__reset`, which is `newGame` and leaves the
+buildings standing, so its second yard was its first one.
 
-**Designed, not built.** See "The bench is a catch-all, and the lab is its
+**One needed new doors.** `wave31-order` used the school and the lab; the
+lab is gone. It is the school and the plots now -- on a blank yard with a
+crew and a purse those are the only two unlock rows showing, and neither
+is the construction bench, which cannot be half of that pair because
+standing it up turns building into a post you have to hire for.
+
+New hook: `__nocine()` ends a running scene without pressing anything. A
+grant big enough to matter overfills the hole, tears the rift and plays
+the tear, so any check that banks a purse and then presses a control is
+otherwise pressing the skip.
+
+## The bench is a catch-all, and the lab goes -- BUILT (2026-09-07)
+
+Built on `worktree-green-suite`: the cards, the redistribution, the lab's
+deletion and its fallout. What follows is the design entry it was built
+from, kept for the reasoning. See "The bench is a catch-all, and the lab is its
 multiplier column" at the end of DESIGN.md, and the drawings at
 https://claude.ai/code/artifact/e02a45cb-083e-4d34-bc3a-5a71fd1f25c7 (page two).
 
@@ -103,30 +114,6 @@ so they can be booked in one go instead of one at a time. The blocker is that
 `S.riftAte`, and the per-kind counters) and a bulk version has to keep every one
 of those exact -- it is pit.js's account and worth doing carefully rather than
 quickly.
-
-## The pot picker: two reds, both older than they look (2026-09-07)
-
-Found while landing the rim ripple. The browser group "standing at a pot picks
-what that pot brews" was throwing on its third check, which hid everything after
-it; with the throw fixed the group is 13/15 and two real failures are now
-visible. Neither is from the rift work.
-
-1. **A press does not open the picker.** `ok(pressed, ...)` is red. Diagnosed as
-   far as: a hover at the *same* point does open it, so `potAt` and the
-   coordinates are right and the picker itself is fine; no crew count moves on
-   the press, so `rosterHit` is not swallowing it either (and the roster sits at
-   `groundY + P*10`, below the cauldrons at 1938–1998). Something else in the
-   `pointerdown` handler returns before `potPick` at input.js:154 — the
-   remaining suspects are `skipCutscene()` and `startle()`, neither ruled out.
-   **Worth fixing rather than deleting the check: a press is the only way into
-   that menu on a touchscreen**, so this is a real control that does not work,
-   not just a red line.
-2. **A potency rung does not move its recipe's line.** The last check buys
-   `potency-stew` off the board and expects the stew's note to change and the
-   other recipes' notes to stay put; nothing moves at all
-   (`+25% work, 60 -> +25% work, 60`). Not diagnosed. Could be the purchase not
-   landing or the note not being rebuilt on reopen — the board closes itself on
-   a purchase now, which is the thing that changed most recently near it.
 
 ## Seeing the wind — BUILT, one part left (2026-09-07)
 
