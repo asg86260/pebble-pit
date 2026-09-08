@@ -17,7 +17,7 @@ import { TOWER_UPGRADES } from './tower.js';
 import { STATS_UPGRADES } from './stats.js';
 import { OUTHOUSE_UPGRADES } from './outhouse.js';
 import { BUILDBENCH_UPGRADES } from './upgrades/rows-buildbench.js';
-import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
+import { refresh, buildCrew, buildCrewList, buildShop, buildBoard, boardMoved,
          boardReworded, shutOpts } from './shop.js';
 import { now } from './clock.js';
 
@@ -794,10 +794,10 @@ function settle(want) {
   S.looBoardOpen = want === 'outhouse';
 
   if (!want) {                                   // fade out where it stands
-    // Whatever was on it has now been seen. On the way out rather than on the
-    // way in: a dot cleared as the board opened would be cleared in the frame it
-    // was drawn -- see `markRowsSeen`.
-    if (wasAt) markRowsSeen(listFor(wasAt));
+    // Closing the board used to mark every row on it seen. It does not any
+    // more: a row is cleared by being hovered, one at a time, because having a
+    // row on the screen is not the same as having read it -- see the listeners
+    // in shop.js's `build`.
     panelEl.classList.remove('open');
     clearTimeout(closing);
     closing = setTimeout(() => {

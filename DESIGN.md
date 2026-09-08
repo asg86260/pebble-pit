@@ -5197,6 +5197,18 @@ a special case. That is what makes one line a row possible at all, and it is why
 in the game comes to 475 px against the 440 it already renders — the width this was feared to cost
 is thirty-five pixels.
 
+**The new-card mark is made of the card, and it comes off one card at a time.** It was a dot hung
+nine pixels off the left of the title — right while rows were names in one shared column with no
+boxes around them, because the mark stood in the margin that column left. On a card that margin is
+the card's own border, and the dot read as a blemish on the box. A turned-down corner is made of the
+card instead: it takes no room from the title, so nothing re-wraps when a card stops being new, and
+it is the same ink as the words, so it inverts under the cursor and pales with a card you cannot
+pay for. What clears it changed with it. Closing the board used to clear every mark on it, which
+says *it was on the screen* when the question is *did you read it* — on a board of a dozen, the one
+row you came for is the one you looked at, and clearing the rest throws away the answer to "what is
+new here" for every card you scrolled past. Hovering is the cheapest true evidence the page has that
+a card was read, so hovering is what clears it; a press does too, because a finger cannot hover.
+
 **And a card is the right shape because the rows are independent.** The argument for the shared
 subgrid was that it lets the page be *scanned* — which is what this file has always claimed, and it
 is true. It was never that rows are compared with one another: a rung inside a row is sequential,

@@ -209,8 +209,8 @@ canvas {
   height: 0;
   /* A right triangle out of two borders: the solid one is the face, the clear
      one is the diagonal cut across it. */
-  border-top: 7px solid currentColor;
-  border-right: 7px solid transparent;
+  border-top: 10px solid currentColor;
+  border-right: 10px solid transparent;
 }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
@@ -298,6 +298,14 @@ canvas {
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
 .rows button .gain { grid-column: 1; grid-row: 2; opacity: .75; }
+/* The second line is a line whether or not there are words on it. A card with
+   nothing to say about what it gives -- the row that opens the crew list, say --
+   used to come out a whole line shorter than the card beside it, and a board of
+   two heights is a board you read one row at a time.
+   An empty inline box rather than a height: it is the line box of whatever type
+   the sheet is set in, so it stays right if the type changes, where a number
+   here would be one more thing to retune. */
+.rows button .gain::before { content: ''; display: inline-block; }
 /* Hard right on the card's FIRST line, beside the title. `min-width: 0` so a
    bill wider than the card can wrap inside its own cell rather than stretching
    the card past its neighbor -- only four rows in the game are that wide (the

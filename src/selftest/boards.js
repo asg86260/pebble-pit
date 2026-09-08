@@ -61,10 +61,15 @@ export const TESTS = [
   // The check above says today's names fit. This one says the board would still
   // fit a name nobody has written yet, which is the thing that kept breaking:
   // for a long time every board carried a hand-cut column width, and a name
-  // longer than somebody's guess ran over the price. So the column is measured
-  // now -- and what proves it is measured rather than merely wide enough is that
-  // making a name longer makes the column wider.
-  ['a longer name widens the column instead of running out of it', async () => {
+  // longer than somebody's guess ran over the price.
+  //
+  // The answer used to be that the column measured itself and grew. It does not
+  // grow any more -- the sheet has a ceiling over it now, because with the bill
+  // up on the title's line an unbounded sheet answered a long name by getting
+  // wider and ran off the side of the window. So the title WRAPS instead, and
+  // what has to be true is the same thing it always was, said about a card: the
+  // words never leave their cell, and they never move the bill.
+  ['a longer name wraps instead of running out of its card', async () => {
     newRun();
     await settle();
     window.__give(999999);
@@ -75,47 +80,63 @@ export const TESTS = [
     // anything.
     await sleep(400);
     const rows = () => [...document.querySelectorAll('#shop button')].filter(b => b.offsetParent);
-    const nameW = () => Math.round(rows()[0].querySelector('.name').getBoundingClientRect().width);
-    const over = b => {
-      const cell = b.querySelector('.name');
+    const sheetW = () => Math.round(
+      document.querySelector('.panel .sheet').getBoundingClientRect().width);
+    // How far the ink in a cell reaches past the cell that is meant to hold it.
+    // A Range, because a grid cell's own rect is the track and says nothing
+    // about where the words inside it actually end.
+    const over = el => {
       const range = document.createRange();
-      range.selectNodeContents(cell);
-      return Math.round(range.getBoundingClientRect().right - cell.getBoundingClientRect().right);
+      range.selectNodeContents(el);
+      return Math.round(range.getBoundingClientRect().right - el.getBoundingClientRect().right);
     };
 
-    const was = nameW();
-    // every row shares the tracks, so one width is the board's width
-    const shared = new Set(rows().map(b => Math.round(b.querySelector('.name').getBoundingClientRect().width)));
-
+    const wasWide = sheetW();
     const victim = rows().find(b => b.querySelector('.what'));
-    const said = victim.querySelector('.what').textContent;
-    victim.querySelector('.what').textContent = said + ' of the everlasting stone';
-    await raf();
-    await raf();
-    const now = nameW();
-    const spilled = rows().filter(b => over(b) > 1).length;
+    const what = victim.querySelector('.what');
+    const said = what.textContent;
+    const wasTall = Math.round(victim.getBoundingClientRect().height);
+    const billAt = Math.round(victim.querySelector('.cost').getBoundingClientRect().right);
 
-    victim.querySelector('.what').textContent = said;
+    what.textContent = said + ' of the everlasting stone';
     await raf();
-    const back = nameW();
+    await raf();
+    const nowWide = sheetW();
+    const nowTall = Math.round(victim.getBoundingClientRect().height);
+    const billNow = Math.round(victim.querySelector('.cost').getBoundingClientRect().right);
+    const spilled = rows().filter(b => over(b.querySelector('.what')) > 1).length;
+
+    what.textContent = said;
+    await raf();
+    const backWide = sheetW();
+    const backTall = Math.round(victim.getBoundingClientRect().height);
     window.__board(null);
     return [
-      ok(shared.size === 1, 'every row on a board shares one name column',
-         `${shared.size} widths: ${[...shared].join(', ')}`),
-      ok(now > was, 'a longer name makes that column wider', `${was}px -> ${now}px`),
-      ok(spilled === 0, 'and none of the names run out of it', `${spilled} spilled`),
-      ok(Math.abs(back - was) <= 1, 'and taking the words back takes the width back',
-         `${now}px -> ${back}px, from ${was}px`)
+      ok(spilled === 0, 'none of the names run out of their card', `${spilled} spilled`),
+      ok(nowTall > wasTall, 'a longer name takes another line of the card',
+         `${wasTall}px -> ${nowTall}px`),
+      ok(nowWide === wasWide, 'and does not widen the sheet to do it',
+         `${wasWide}px -> ${nowWide}px`),
+      ok(Math.abs(billNow - billAt) <= 1, 'and the bill does not move for it',
+         `${billAt}px -> ${billNow}px`),
+      ok(Math.abs(backTall - wasTall) <= 1 && backWide === wasWide,
+         'and taking the words back takes the line back',
+         `${nowTall}px -> ${backTall}px, from ${wasTall}px`)
     ];
   }],
 
-  // Down the sheet as well as across it. A board whose rows are all different
-  // heights is a board you read one row at a time, because there is no rhythm to
-  // run your eye down -- and the heights were different for two reasons that
-  // both used to be necessary and are not any more: a bill of two coins stacked
-  // to fit a column that could not hold it, and a row with no ladder dropped the
-  // half-line the pips sit on.
-  ['every row on a board is the same height as every other', async () => {
+  // Down the sheet as well as across it. A board whose cards are all different
+  // heights is a board you read one card at a time, because there is no rhythm
+  // to run your eye down.
+  //
+  // One card in two is now allowed to be taller, and only one thing may make it
+  // so: a title that took a second line. That is the bargain of putting the bill
+  // up on the title's line -- the price holds its corner and the name is what
+  // gives way -- and it is worth being exact about, because everything else that
+  // used to make cards ragged was a bug. A bill that stacked to fit a column too
+  // narrow for it, a card with no gain dropping the line its neighbor held: both
+  // of those are still failures here, which is what the whole-lines rule says.
+  ['a card is only ever taller by a whole line of title', async () => {
     newRun();
     await settle();
     window.__give(999999);
@@ -136,16 +157,39 @@ export const TESTS = [
         .filter(e => e.offsetParent && !e.closest('.step'));
       if (rows.length < 2) continue;
       seen += rows.length;
-      const heights = [...new Set(rows.map(e => Math.round(e.getBoundingClientRect().height)))];
-      if (heights.length > 1) {
-        bad.push(`${name}: ${heights.sort((a, b) => a - b).join(', ')}px`);
+      const h = e => Math.round(e.getBoundingClientRect().height);
+      // How many lines the title of a card takes. Measured off the words rather
+      // than assumed from the height, so the two readings are independent and
+      // the check is not comparing a number with itself.
+      const lines = e => {
+        const t = e.querySelector('.what');
+        if (!t) return 1;
+        const r = document.createRange();
+        r.selectNodeContents(t);
+        return Math.max(1, r.getClientRects().length);
+      };
+      // A card whose title is one line is the board's step. Anything taller has
+      // to be taller by exactly the lines its title gained.
+      const one = rows.filter(e => lines(e) === 1).map(h);
+      if (!one.length) continue;
+      const step = Math.min(...one);
+      const ragged = one.filter(x => x !== step).length;
+      if (ragged) bad.push(`${name}: ${ragged} one-line cards off ${step}px`);
+      const line = Math.round((Math.max(...rows.map(h)) - step) /
+                              Math.max(1, Math.max(...rows.map(lines)) - 1));
+      for (const e of rows) {
+        const want = step + (lines(e) - 1) * (line || 0);
+        if (Math.abs(h(e) - want) > 1) {
+          bad.push(`${name}: ${h(e)}px on ${lines(e)} title lines, wanted ${want}px`);
+        }
       }
     }
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(seen > 20, 'there are rows on the boards to measure', `${seen} rows`),
-      ok(bad.length === 0, 'and each board comes down in one step',
+      ok(seen > 20, 'there are cards on the boards to measure', `${seen} cards`),
+      ok(bad.length === 0,
+         'and every one of them is its board\'s step, plus a line per line of title',
          bad.join(' | ') || 'all level')
     ];
   }],
@@ -567,12 +611,16 @@ export const TESTS = [
     ];
   }],
 
-  // The dot that marks a row you have never had on an open board hangs off the
-  // *title*, not off the cell. The name cell is two lines -- the words, and the
-  // line the ladder's pips sit on, which is held whether or not there are pips --
-  // so a dot centred on the cell sits half a line below the words it belongs to,
-  // pointing at the gap under them.
-  ['the new-row dot is level with the name it marks', async () => {
+  // The mark for a card nobody has read is made OF the card: a turned-down
+  // corner, inside its own border. It was a dot hung nine pixels off the left of
+  // the title, which was right while the rows were names in one shared column
+  // with no boxes round them -- the mark stood in the margin the column left.
+  // A row is a card now and that margin is the card's own edge, so the dot
+  // landed on the line and read as a blemish on the box. What this guards is
+  // that the mark belongs to the card and takes nothing from the title: a mark
+  // that cost the title room would re-wrap a name the moment it stopped being
+  // new, and the card would change shape for a reason the player cannot see.
+  ['the new-card mark is a corner of the card itself', async () => {
     newRun();
     await settle();
     window.__give(400);
@@ -582,35 +630,86 @@ export const TESTS = [
     await sleep(500);
     const row = document.querySelector('#shop button.new');
     const what = row && row.querySelector('.what');
-    const name = row && row.querySelector('.name');
-    const on = what && getComputedStyle(what, '::before').content;
-    const off = name && getComputedStyle(name, '::before').content;
-    const anchored = what && getComputedStyle(what).position;
-    // The dot sits beside the words, not out in the cell around them.
-    //
-    // This used to be guarded by asserting the cell and the title were at
-    // different heights -- which they were, because the name cell was two lines
-    // with the pips on the second one, and a dot centred on the CELL therefore
-    // hung half a line below the words it belonged to. That is the bug this
-    // check was written for. On the card the pips are beside the name rather
-    // than under it, the cell is one line, and the two centres coincide: the
-    // guard now measures a geometry the design has removed and reads 0px every
-    // time. What it was protecting is still worth stating, so the remaining
-    // assertions -- the dot is on the title, it is not on the cell, and the
-    // title is what it is positioned against -- carry it on their own.
-    const box = what && what.getBoundingClientRect();
+    const corner = row && getComputedStyle(row, '::before');
+    const onTitle = what && getComputedStyle(what, '::before').content;
+    const anchored = row && getComputedStyle(row).position;
+    const card = row && row.getBoundingClientRect();
+    const title = what && what.getBoundingClientRect();
+    // The notch is drawn out of two borders, so its size is the border width
+    // rather than a width and a height -- and the face of it is the same ink as
+    // the words, which is what makes it invert with the card under the cursor.
+    const size = corner ? parseFloat(corner.borderTopWidth) : 0;
+    const ink = corner ? corner.borderTopColor : '';
+    const words = row ? getComputedStyle(row).color : '';
+    // Where the title starts is set by the card's padding alone. If the mark
+    // ever took room in the flow this would move, and every name on the board
+    // would sit at a different place depending on whether it was new.
+    const inset = card && title ? Math.round(title.left - card.left) : -1;
+    row.classList.remove('new');
+    await raf();
+    const settled = what ? Math.round(what.getBoundingClientRect().left - card.left) : -2;
     window.__board(null);
     return [
-      ok(!!row, 'there is a row on the bench nobody has read yet',
+      ok(!!row, 'there is a card on the bench nobody has read yet',
          row ? row.dataset.key : 'none'),
-      ok(!!box && box.width > 0 && box.height > 0,
-         'the title is a box the dot can hang off',
-         box ? `${Math.round(box.width)}x${Math.round(box.height)}` : 'none'),
-      ok(on && on !== 'none', 'the dot hangs off the title', String(on)),
-      ok(off === 'none' || off === undefined, 'and not off the cell round it',
-         String(off)),
-      ok(anchored === 'relative', 'which is what it is positioned against',
-         String(anchored))
+      ok(size >= 8, 'the corner is turned down far enough to see', `${size}px`),
+      ok(ink === words, 'in the same ink as the words, so it inverts with them',
+         `${ink} against ${words}`),
+      ok(anchored === 'relative', 'and it is placed against the card',
+         String(anchored)),
+      ok(!onTitle || onTitle === 'none', 'nothing hangs off the title any more',
+         String(onTitle)),
+      ok(inset === settled, 'and the title starts in the same place either way',
+         `${inset}px new, ${settled}px read`)
+    ];
+  }],
+
+  // And it comes off the card you went and looked at, not off every card on the
+  // board when the board shuts. "It was on the screen" is not "you read it": on
+  // a board of a dozen, the one row you came for is the one you looked at, and
+  // clearing the rest throws away the answer to "what is new here" for every
+  // card you scrolled past.
+  ['a card stops being new when you hover it, and only then', async () => {
+    newRun();
+    await settle();
+    window.__give(400);
+    run(20);
+    window.__build();
+    window.__board('bench');
+    await sleep(500);
+    const newOnes = () => [...document.querySelectorAll('#shop button.new')];
+    const before = newOnes().length;
+    const mark = newOnes()[0];
+    const key = mark && mark.dataset.key;
+    const others = before - 1;
+
+    // Hovered for real -- the listener is on `pointerenter`, and the point of
+    // the check is that the hover is what does it.
+    mark.dispatchEvent(new PointerEvent('pointerenter',
+      { pointerId: 1, isPrimary: true, bubbles: false }));
+    await raf();
+    await raf();
+    const hoveredGone = !mark.classList.contains('new');
+    const leftAlone = newOnes().length;
+
+    // Shut the board and open it again. What was never hovered is still new.
+    window.__board(null);
+    await sleep(300);
+    window.__board('bench');
+    await sleep(500);
+    const after = newOnes().length;
+    const cameBack = newOnes().some(b => b.dataset.key === key);
+    window.__board(null);
+    return [
+      ok(before > 1, 'the bench opens with several cards nobody has read',
+         `${before} new`),
+      ok(hoveredGone, 'the card under the cursor stops being new', key || 'none'),
+      ok(leftAlone === others, 'and none of its neighbors do',
+         `${leftAlone} left, expected ${others}`),
+      ok(!cameBack, 'the one that was read stays read across a close and re-open',
+         cameBack ? `${key} came back` : 'stayed read'),
+      ok(after === others, 'and closing the board reads nothing on its own',
+         `${after} still new, expected ${others}`)
     ];
   }],
 
