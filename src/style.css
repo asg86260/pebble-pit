@@ -187,26 +187,31 @@ canvas {
    are short of, which is the question you were asking. */
 .rows button:disabled .cost .have { color: #000; opacity: .7; }
 
-/* A row you have never had on an open board. The mark is the one the yard
-   already uses for "there is something here": the dot on the bench itself, at
-   the size a line of type can carry. It sits in the margin rather than in the
-   name, so the names stay in one column and the board still scans down. */
-.rows button.new .what::before {
+/* A card you have never had on an open board: the corner is turned down.
+   It was a dot hung nine pixels off the left of the title, which was the right
+   answer while the rows were names in one shared column with no boxes around
+   them -- the mark stood in the margin the column left, and the names still
+   lined up. A row is a card now, and that margin is the card's own border: the
+   dot landed on the line and read as a blemish on the box rather than as a note
+   about the item.
+   So the mark is made of the card instead of laid over it. A filled triangle in
+   the top-left corner takes no room from the title -- nothing re-wraps when a
+   card is new and un-wraps when it stops being -- and it is the same ink as the
+   words, so it inverts under the cursor and pales with a card you cannot pay
+   for, exactly as the dot did. */
+.rows button.new { position: relative; }
+.rows button.new::before {
   content: '';
   position: absolute;
-  left: -9px;
-  top: 50%;
-  width: 5px;
-  height: 5px;
-  margin-top: -2px;
-  border-radius: 50%;
-  background: currentColor;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  /* A right triangle out of two borders: the solid one is the face, the clear
+     one is the diagonal cut across it. */
+  border-top: 7px solid currentColor;
+  border-right: 7px solid transparent;
 }
-/* Against the *title*, not against the cell. The name cell is two lines -- the
-   words, and the line the ladder's pips sit on, which is held whether or not
-   there are pips -- so a dot centred on the cell hangs half a line below the
-   words it belongs to, pointing at nothing. */
-.rows button.new .what { position: relative; }
 /* The same marks the game draws in the yard, in the same colours: a grain of
    dust, a core, a shard, a spore. The board and the world speak one alphabet,
    so what you buy something with looks like the thing you have been watching
@@ -292,14 +297,16 @@ canvas {
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
-.rows button .gain { opacity: .75; }
-/* Hard right on the card's second line. `min-width: 0` so a bill wider than the
-   card can wrap inside its own cell rather than stretching the card past its
-   neighbor -- only four rows in the game are that wide (the ram, the drill, the
-   tiller, a wizard) and each of them is a machine, so the rare second line lands
-   exactly where a bigger purchase is being read more slowly anyway. */
+.rows button .gain { grid-column: 1; grid-row: 2; opacity: .75; }
+/* Hard right on the card's FIRST line, beside the title. `min-width: 0` so a
+   bill wider than the card can wrap inside its own cell rather than stretching
+   the card past its neighbor -- only four rows in the game are that wide (the
+   ram, the drill, the tiller, a wizard) and each of them is a machine, so the
+   rare second line lands exactly where a bigger purchase is being read more
+   slowly anyway. */
 .rows button .cost {
   grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   text-align: right;
   opacity: .7;
@@ -312,6 +319,7 @@ canvas {
    row it explains, and a row with nothing to say has no such line. */
 .rows .note {
   grid-column: 1 / -1;
+  grid-row: 3;
   /* Readable at rest, not merely findable: half-strength ink at .82em was a
      line you had to lean into. Hover still lifts it brighter than this. */
   opacity: .72;
@@ -332,6 +340,7 @@ canvas {
    shape and can share the sheet's columns. */
 .rows .job .step {
   grid-column: 2;
+  grid-row: 1;
   display: inline-grid;
   grid-template-columns: auto minmax(1.8em, auto) auto;
   align-items: baseline;
@@ -347,26 +356,34 @@ canvas {
    is two numbers about different things sitting a character apart -- the eye has
    to stop and read it, and it made an already busy line busier. Pips are counted
    at a glance, and under the row they cost no width at all. */
-/* The name is two lines when it is a ladder: the words, and the pips under them.
-   As a cell of its own the pips were placed after the price -- and a price of
-   two coins is two lines tall, which pushed them down clear of the words they
-   belong to. Inside the name they sit under the title whatever the rest of the
-   row is doing. */
-/* The card's top line, spanning both of its columns: the name on the left and
-   how far up the ladder on the right. The pips used to sit UNDER the words,
-   because a stacked bill in a shared track had pushed them off the line they
-   belong to. The card has its own tracks and its own second line, so they come
-   back up beside the name where they read as part of it. */
-.rows .name {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+/* The name holds no tracks of its own: `display: contents` hands the words and
+   the pips straight to the card's grid, so each of them can be placed against
+   the card rather than against a box inside it. The span stays in the markup
+   because the row builder reaches for the cells by position. */
+.rows .name { display: contents; }
+/* The title, top left, and it WRAPS. It used to take the whole width of the card
+   with the bill under it, which meant a name of three words pushed the price on
+   to a line of its own -- the card grew a line for the sake of the name, and the
+   price stopped sitting where the eye had learned to find it. The bill is the
+   thing that has to stay put; a long title is the thing that can afford to take
+   a second line. `min-width: 0` is what lets it: without it the track refuses to
+   go narrower than the longest word and the title shoves the bill instead. */
+.rows .what {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  font-style: normal;
+  white-space: normal;
 }
-.rows .name .what { font-style: normal; }
+/* The pips take the corner the bill has left: bottom right, on the gain's line.
+   They and the price have swapped places. The price is the answer to the
+   question you open a board to ask and belongs on the title's line where it is
+   read first; how far up a ladder you have got is a glance, and a glance is
+   happy at the far corner. */
 .rows .ladder {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
   font-style: normal;
   /* Big enough that a filled pip and a hollow one are plainly different, and
      dark enough to be counted rather than merely noticed -- at eight tenths of
@@ -386,14 +403,12 @@ canvas {
 .rows button:hover:not(:disabled) .ladder {
   opacity: calc(var(--pip-tone, .78) + (1 - var(--pip-tone, .78)) * var(--pip-hover, .5));
 }
-/* A card with no ladder simply has nothing to the right of its name, and needs
-   no held space to stay the same height as its neighbors: a card is two lines
-   because it has a name line and a price line, whether or not there are pips on
-   the first one. This rule used to hold a blank line UNDER every name -- the
-   pips sat there, and a board where some rows had them and some did not was a
-   board whose names sat at a different height in every row. On the card they
-   are beside the name, so the problem and the workaround both go. */
-.rows .ladder { display: block; }
+/* A card with no ladder simply has nothing in that corner, and needs no held
+   space to stay the same height as its neighbors: a card is two lines because it
+   has a title-and-bill line and a gain line, whether or not there are pips in
+   the corner. This rule used to hold a blank line under every name for the pips
+   to sit on, which made a board of mixed rows a board whose names sat at a
+   different height in every one; placed against the card, both go. */
 .rows button:hover:not(:disabled) .gain,
 .rows button:hover:not(:disabled) .cost { opacity: 1; }
 
@@ -422,6 +437,7 @@ canvas {
    would not be black and white. */
 .rows .job.pickrow .chosen {
   grid-column: 2;
+  grid-row: 1;
   justify-self: end;
   text-align: right;
   letter-spacing: .1em;
@@ -876,6 +892,16 @@ canvas {
      shifting boards of feedback7 items 2 and 3. Wide enough for the ordinary
      row; a board with longer rows still grows past it and stays there. */
   min-width: 34ch;
+  /* And a ceiling over it, which the sheet never had: it was shrink-to-fit with
+     nothing above, and simply grew to whatever the longest row asked for. That
+     was survivable while a card stacked its name over its bill, because the
+     widest thing on the board was a bill. With the bill up beside the title the
+     two ask for their widths at once, and an unbounded sheet answers by getting
+     wider instead of by wrapping -- the bench ran off the side of the window.
+     The ceiling is what turns "no room" into a second line of title, which is
+     the whole point of putting them on one row. In `ch`, so it is a count of the
+     sheet's own characters rather than a pixel guess about the type. */
+  max-width: 84ch;
   display: flex; flex-direction: column; gap: 6px;
   padding: 10px 12px;
   background: #fff;
