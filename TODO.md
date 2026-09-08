@@ -1,5 +1,25 @@
 # Still to do
 
+## The builder-throughput tuning pass — measured, not yet fixed (2026-09-08)
+
+**Designed, not built.** See "The one bench carries two ladders' worth of waiting" at the end of
+DESIGN.md. This is the tuning pass "The bench is a catch-all, and the lab goes" flagged as a real
+blocker: `buildposts` and `buildpace` now gate every timed purchase in the game.
+
+Measured with `tools/node/yard.mjs`, bought the player's way (`__buy`/`__assign`): a solo build at
+max posts+pace matches its effort math almost exactly (20s measured against 18.3s predicted). But
+a representative backlog — every building, both machines, all four multiplier ladders, 2,332
+worker-seconds total — did not clear in 2,000 game-seconds (over half an hour, against a 90–120
+minute run) even at the very top of both ladders, and builders were measured doing useful work only
+about 37% of the time while three or four works sat queued together.
+
+**Not root-caused.** The gap is roughly 4x what the ladders' own numbers predict, and it shows up
+only once several works compete, which means retuning `buildpace`'s price or step is not obviously
+the fix — a builder who swings faster and is idle two-thirds of the time is still idle two-thirds
+of the time. Next step is instrumenting `handsAt('yard')` against builder positions to find out
+whether the missing time is walking between scattered sites, `slotFor` reassignment thrash, or
+`stepWorks`'s own accounting, before any number in `src/config/build.js` is touched.
+
 ## `wave31-order` needs two doors the yard has not already opened (2026-09-07)
 
 One check left red by the lab's deletion, and the only one I could not
