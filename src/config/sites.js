@@ -107,7 +107,10 @@ export const SITES = [
   { key: 'quarry',   w: () => QUARRY_W,                    standoff: PILE_STANDOFF.quarry, pile: 'quarry' },
   { key: 'farm',     w: () => (FARM_PLOTS_MAX - 1) * FARM_GAP, standoff: PILE_STANDOFF.farm, pile: 'farm' },
   { key: 'apothecary', w: () => APOTHECARY_W,             standoff: 0,  pile: null },
-  { key: 'lab',      w: () => LAB_W,                       standoff: 0,  pile: null },
+  // The lab had a row here. It is deleted, and a building that is gone must not
+  // go on holding ground: left in the table it kept its own width plus a
+  // station's padding of empty yard, which is a hole in the walk where a
+  // building used to be. See DESIGN.md, "The lab is deleted".
   { key: 'scrub',    w: () => SCRUB_W,                     standoff: P,  pile: 'scrub',  side: 'left' },
   { key: 'casino',   w: () => CASINO_W,                    standoff: 0,  pile: null },
   // The tower carries the star's ground on its own far side, which is what puts

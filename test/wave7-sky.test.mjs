@@ -6,7 +6,14 @@ import { group, ok, run, runUntil, state, yard, P, WORKER } from './helpers.mjs'
 const { skyMote, foul } = await import('../src/smog/vents.js');
 const { SKY } = await import('../src/smog/band.js');
 const { nearestMuck, muckCols, MUCK_ELBOW, colAt } = await import('../src/smog/layer.js');
-const { walkY } = await import('../src/world.js');
+// `surfaceUnder`, not `walkY`. The ground line does not know the rock is there
+// (see the note over `surfaceUnder` in crew/body.js): a body standing perfectly
+// well on the hill's face reads as five cells of air when it is measured against
+// the yard's floor, which is what this check used to do. `surfaceUnder` asks the
+// way the body is actually on -- the yard, a working, or the hill -- and a body
+// genuinely hovering over open yard still answers with the floor, so the fault
+// this is here to catch is caught as squarely as it ever was.
+const { surfaceUnder } = await import('../src/crew/body.js');
 const { CORE_SIZE, DUCK_PACE } = await import('../src/config.js');
 
 // --- A1: motes fade in, and the plume is born wide -----------------------------
@@ -61,8 +68,10 @@ group('wave7 A2: the first-rock reunion has no bodies in the air', () => {
     run(0.1);
     for (const w of yard.S.workers) {
       if (w.walking || w.inside || w.floating) continue;
-      const foot = walkY(w.x + WORKER / 2);
-      if (foot - w.y > 1.5) rose = `worker at x ${w.x.toFixed(0)} is ${(foot - w.y).toFixed(1)}px up`;
+      // `surfaceUnder` answers with a body's TOP edge, which is what `w.y` is.
+      const stood = surfaceUnder(w);
+      if (stood - w.y > 1.5)
+        rose = `worker at x ${w.x.toFixed(0)} is ${(stood - w.y).toFixed(1)}px up`;
     }
   }
   checks.push(ok(!rose, 'no standing body leaves the ground during the meeting', rose || ''));

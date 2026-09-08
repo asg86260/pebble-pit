@@ -143,13 +143,13 @@ const SCENES = {
   // scene here calls, and it is the one thing that would skip the whole of what
   // this scene is for. It is shot partway through instead, which is the only
   // state the rise, the tape and the hammer exist in.
-  build: `${RICH} window.__buy('unlocklab'); window.__fast(35);
-          window.__look(window.__state().labX - 380);`,
+  build: `${RICH} window.__buy('unlockapothecary'); window.__fast(35);
+          window.__look(window.__state().apothecaryX - 380);`,
 
   // The same, later: far enough on that the building is most of the way up, to
   // see the clip actually moving rather than to trust one frame of it.
-  build2: `${RICH} window.__buy('unlocklab'); window.__fast(70);
-           window.__look(window.__state().labX - 380);`,
+  build2: `${RICH} window.__buy('unlockapothecary'); window.__fast(70);
+           window.__look(window.__state().apothecaryX - 380);`,
 
   // wave7b-build: the build yard proper -- the construction bench open, a
   // second post bought, two builders hired, and the lab and the school rising
@@ -465,6 +465,15 @@ const SCENES = {
   // the dust goes in: a widening is paid in dust, and paid out of the very
   // pile the scene is about. The camera is on the lip, so the air between the
   // brim and the surface is in shot.
+  // The pot on the ground beside the wheel. The table's own plot of sand is
+  // measured off whatever stands next along on the casino's right, and it once
+  // came back one column wide -- a hundred-grain stake put twenty grains down
+  // and the rest were simply not there. A stake this size is a heap you can
+  // read the width of at a glance, which is what the scene is for.
+  casino: `window.__reset(); window.__casino(true); window.__give(6000);
+           window.__buy('stakedust'); window.__fast(3);
+           window.__look(window.__state().casinoX - 380);`,
+
   rift: `${RICH} window.__meteor(); window.__rift(); window.__give(60000);
          window.__give(12000);
          window.__fast(4); window.__look(window.__state().pitX - 260);`,

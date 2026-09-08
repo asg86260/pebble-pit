@@ -10,11 +10,22 @@ import { yard, group, ok, state, run, runUntil, openSites, P } from './helpers.m
 import { S, floor, sky, tower } from '../src/state.js';
 import { at as cellAt } from '../src/grid.js';
 import { placeSites, bankCeiling } from '../src/world.js';
-import { PILE_LIMIT, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
+import { PILE_LIMIT, SLOT_PAD, STATION_GAP, SUN_GAP, SITES, YARD_MARGIN } from '../src/config.js';
 
-// What ground a site has spoken for: its own box and its heap's strip as one
-// run, because the bare gap between a station and its own heap is that
-// station's business and not padding between neighbours.
+// What ground a site has spoken for, in two readings.
+//
+// `from`/`to` are its wall to wall -- the building alone -- and that is what
+// the walk in `placeSites` spaces. `runFrom`/`runTo` take in its heap as well,
+// which is what is actually drawn on the ground.
+//
+// The two used to be one, and the check below asked for STATION_GAP between
+// drawn extents. That stopped being the rule when every site was given the same
+// apron (`SLOT_PAD`, derived in config/sites.js from the widest heap any site
+// parks beside itself): the walk now spends SLOT_PAD + STATION_GAP between
+// every pair of walls, and a heap lies inside its own site's apron rather than
+// eating the walk. So a site with a small heap -- or none at all -- leaves the
+// rest of its apron bare, and measuring extent to extent read that spare apron
+// as an uneven gap. The rhythm is even; it is even wall to wall.
 function extents() {
   const { at, strips } = placeSites();
   return SITES.map(row => {
@@ -22,26 +33,41 @@ function extents() {
     const strip = strips.find(p => p.key === row.pile);
     return {
       key: row.key,
-      from: Math.min(box.x, strip ? strip.from : Infinity),
-      to: Math.max(box.x + box.w, strip ? strip.to : -Infinity)
+      from: box.x,
+      to: box.x + box.w,
+      runFrom: Math.min(box.x, strip ? strip.from : Infinity),
+      runTo: Math.max(box.x + box.w, strip ? strip.to : -Infinity)
     };
   }).sort((a, b) => a.from - b.from);
 }
+
+// The one separation the walk spends between a pair of neighbouring walls.
+const PITCH = SLOT_PAD + STATION_GAP;
 
 group('one gap, and the same one, between every pair of stations', () => {
   openSites();
   const runs = extents();
   const gaps = runs.slice(1).map((r, i) => ({ pair: `${runs[i].key}->${r.key}`,
-                                              gap: r.from - runs[i].to }));
-  const odd = gaps.filter(g => g.gap !== STATION_GAP);
+                                              gap: r.from - runs[i].to,
+                                              bare: r.runFrom - runs[i].runTo }));
+  const odd = gaps.filter(g => g.gap !== PITCH);
+  // A heap that has been given more ground than its own site's apron holds
+  // would show up here and nowhere else: it would reach across the walk into
+  // the neighbour's apron, and the bare ground between two drawn runs would
+  // fall under a station's padding. That is the fault the extent-to-extent
+  // reading was really guarding, and it is worth keeping on its own terms.
+  const crowded = gaps.filter(g => g.bare < STATION_GAP);
   return [
     ok(runs.length === SITES.length, 'every site in the table stood somewhere',
        `${runs.length} of ${SITES.length}`),
-    ok(!odd.length, 'and each one is exactly STATION_GAP from the next',
-       odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${STATION_GAP} throughout`),
-    // At least the margin. `GROUND_LEFT` still sums every site's *reserved*
-    // width (config/sites.js), but the walk now spaces *drawn* extents
-    // (wave6-sky, item 3), so ground reserved for growth a station has not
+    ok(!odd.length, 'and each pair of walls stands the same distance apart',
+       odd.map(g => `${g.pair} ${g.gap}`).join(', ') || `${PITCH} throughout`),
+    ok(!crowded.length, 'with no heap reaching out of its own apron into the walk',
+       crowded.map(g => `${g.pair} ${g.bare}`).join(', ')
+       || `at least ${STATION_GAP} bare between every drawn pair`),
+    // At least the margin. `GROUND_LEFT` sums every site's *reserved* width
+    // (config/sites.js), but the walk stands each one at its *drawn* width
+    // (`DRAWN_W` in world.js), so ground reserved for growth a station has not
     // bought yet -- the apothecary's unbought pots -- collects as slack past
     // the far end of the walk. Exactly the margin only holds fully grown; a
     // station drawn wider than it reserved would still push the walk past the
@@ -182,8 +208,10 @@ group('a save from before the move loads, and its crew walk to the new spots', (
     ok(floor.cols === Math.ceil(S.worldW / P),
        'the ground it saved still fits the world it is laid on',
        `${floor.cols} columns`),
-    ok(runs.every((r, i) => !i || r.from - runs[i - 1].to === STATION_GAP),
-       'and it is laid out on the new spacing, not the one it was saved under'),
+    ok(runs.every((r, i) => !i || r.from - runs[i - 1].to === PITCH),
+       'and it is laid out on the new spacing, not the one it was saved under',
+       runs.slice(1).map((r, i) => `${runs[i].key}->${r.key} ${r.from - runs[i].to}`)
+         .join(', ')),
     ok(!strayed.length, 'no body is left standing outside the yard',
        strayed.map(w => `${w.type} at ${Math.round(w.x)}`).join(', ')),
     // The proof that they got where they were going: the yard is still paying

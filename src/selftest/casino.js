@@ -75,9 +75,19 @@ export const TESTS = [
     newRun();
     await sleep(300);
     return [
-      ok(open.casinoOpen, 'cores build it, out past the lab',
-         `${open.casinoX} vs lab ${open.labX}`),
-      ok(open.casinoX < open.labX, 'and it is the last thing on the ground'),
+      // The far end of the walk, asked of every building rather than of the
+      // one that used to stand next to it. It read `casinoX < labX`, and the
+      // lab is deleted -- a building that is gone is never seated, so `labX`
+      // came back 0 and the casino was "not past" a building that is not
+      // there. `siteOrder` pins the casino last on purpose (the one place in
+      // the yard that makes nothing should be a place you went to), and what
+      // that means is exactly this: nothing stands further out.
+      ok(open.casinoOpen, 'cores build it',
+         `casino at ${open.casinoX}`),
+      ok(Object.entries(open.stands).every(([k, r]) => k === 'casino' || r.x > open.casinoX),
+         'and it is the last thing on the ground',
+         Object.entries(open.stands).filter(([k, r]) => k !== 'casino' && r.x <= open.casinoX)
+           .map(([k, r]) => `${k} at ${r.x}`).join(', ')),
       ok(chips.join(',') === '10,100,1000,all in',
          'the chips run from ten to everything you have', chips.join(',')),
       ok(down.stored === held - stake,

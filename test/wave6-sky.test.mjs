@@ -55,14 +55,27 @@ group('buying a pot re-walks the yard rather than spending reserved ground', asy
   run(1);
   const after = state();
   const step = before.apothecaryX - after.apothecaryX;
+  // Everything standing past the apothecary, which is everything left of it:
+  // the yard is walked leftwards from the rock, so a station that grows pushes
+  // its far-side neighbours along and leaves the rock side alone.
+  //
+  // This named the lab, which is deleted -- and a deleted building's rect is
+  // never seated, so it read 0 -> 0 and the check compared nothing with
+  // nothing. Every site out there is asked now instead of one: naming a
+  // neighbour was the fault, and picking a different name would be the same
+  // fault waiting for the next building to go.
+  const past = Object.keys(before.stands)
+    .filter(k => before.stands[k].x < before.apothecaryX && after.stands[k]);
+  const stayed = past.filter(k => before.stands[k].x - after.stands[k].x !== step);
   window.__crew(0, 0);
   return [
     ok(opened && bought, 'the pot is bought like a player, through the row'),
     ok(step > 0, 'the apothecary grows into fresh ground on its far side',
        `${before.apothecaryX} -> ${after.apothecaryX}`),
-    ok(before.labX - after.labX === step,
+    ok(past.length > 0 && !stayed.length,
        'and everything past it steps along by the same distance',
-       `lab ${before.labX} -> ${after.labX} against a step of ${step}`),
+       stayed.map(k => `${k} ${before.stands[k].x} -> ${after.stands[k].x}`).join(', ')
+       || `${past.join(', ')} all moved ${step}`),
     ok(after.benchX === before.benchX,
        'while nothing on the rock side of it moves',
        `bench ${before.benchX} -> ${after.benchX}`)

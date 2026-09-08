@@ -15,7 +15,28 @@ import { ctx } from './ctx.js';
 // stopped. It bobs, because it is asking to be come and looked at rather than
 // reporting a state, and it stays there until somebody opens that station's
 // board.
-const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
+export const TICK = [[-2, 0], [-1, 1], [0, 0], [1, -1], [2, -2]];
+
+// The box itself, and whichever glyph goes in it. Two places draw one of these
+// -- here, and over the casino when a hand settles -- and they were two copies
+// of the same eleven lines. The second copy had lost the line that says what a
+// tick is, so every winning hand threw `TICK is not defined` out of the render
+// loop and took the frame with it. Neither tier can see a drawing, so nothing
+// said a word; `tools/look.mjs` did, the first time a scene staked a chip.
+//
+// `y` rather than `at.y`: the bob is the caller's, because what bobs and how
+// fast is a thing about the mark and not about the box.
+export function drawMarkBox(at, y, glyph) {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+  ctx.lineWidth = Math.max(1, P / 3);
+  ctx.strokeStyle = '#000';
+  ctx.strokeRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
+
+  ctx.fillStyle = '#000';
+  for (const [dx, dy] of glyph)
+    ctx.fillRect(at.x + dx * P - P / 2, y + dy * P - P / 2, P, P);
+}
 
 export function drawDoneMarks() {
   for (const site in S.siteDone) {
@@ -23,16 +44,7 @@ export function drawDoneMarks() {
     const at = doneMarkAt(site);
     if (!at) continue;
     const y = at.y + Math.round(Math.sin(now() / 500)) * P;   // one cell, never half
-
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
-    ctx.lineWidth = Math.max(1, P / 3);
-    ctx.strokeStyle = '#000';
-    ctx.strokeRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
-
-    ctx.fillStyle = '#000';
-    for (const [dx, dy] of TICK)
-      ctx.fillRect(at.x + dx * P - P / 2, y + dy * P - P / 2, P, P);
+    drawMarkBox(at, y, TICK);
   }
 }
 
