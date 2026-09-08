@@ -442,6 +442,11 @@ export const S = {
   seenBench: false,       // the bench has been earned and stays from then on
   seenSects: [],          // headings that were on the board last time it was open
   seenRows: [],           // and the rows themselves, so a new one can say so
+  // Rows whose reveal has fired. Revealing is one-way: a door that appeared
+  // because you were nearly rich enough for it does not go away again when you
+  // spend, and a house that appeared because a machine was running does not go
+  // away when the machine stops. See `revealed` in shop.js.
+  shownRows: [],
   boardOpen: false,       // the workbench board is showing
   resetArmed: 0,          // the reset button wants a second click
 
@@ -515,6 +520,7 @@ export const SAVED = [
   'seenBench',
   'seenSects',
   'seenRows',
+  'shownRows',
   // The rift, and whether the hole has ever turned a grain away. What is
   // actually *through* it is `rift`/`riftHeld`, which are clamped on the way in
   // and so are hand-read -- see persist.js.

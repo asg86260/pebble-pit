@@ -11,7 +11,7 @@
 // invisible for as long as they had existed. Nothing failed. There was simply
 // nothing to click.
 
-import { group, ok, state, openSites } from './helpers.mjs';
+import { group, ok, run, state, openSites } from './helpers.mjs';
 
 // The row arrays themselves, for the grammar check at the foot of this file. It
 // reads the static shape of every row -- `kind`, `name`, `unit` -- so it takes
@@ -157,5 +157,55 @@ group('the shop keeps to one grammar per kind', async () => {
     ok(genreBad.length === 0,
        'no row says "upgrade" -- every row is one, so the word carries nothing',
        genreBad.join(', ') || 'none')
+  ];
+});
+
+// A row that has been revealed stays revealed.
+//
+// The complaint was that the boards shift while you read them, and this is the
+// half of it that is not about pixels: the farm's door was gated on
+// `nearly(FARM_DUST)`, which reads the dust in the hole -- so it appeared as you
+// saved up and vanished the moment you spent, on something else, on another
+// board entirely. Nothing about that is you changing your mind about the farm.
+//
+// So a reveal is one-way now (`once` on the row, `revealed` in shop.js) and this
+// holds every row in the game to it: whatever is on the boards while the yard is
+// rich and dirty and raining is still on the boards when it is broke and clean
+// and dry. Nothing done to it here is a purchase, so no row has been consumed
+// and none of them has any business leaving.
+//
+// It reads `__rows`, which asks the same gate a board does, so a row written
+// tomorrow with a two-way `show` is caught without anybody adding its key to a
+// list in here.
+group('a row that has been revealed stays revealed', async () => {
+  window.__reset();
+  // Deliberately NOT `openSites`: the row this was written for is the *door* to
+  // the farm, and a yard with the farm already open has no such row on it.
+  window.__buildbench(true);
+  // Rich, dirty and raining: everything a two-way gate could be waiting on is
+  // true at once, so the widest set of rows any of them would reveal is on the
+  // boards to be counted.
+  window.__grant({ dust: 200000, cores: 40, stone: 2000, shards: 2000, spores: 2000, sparks: 2000 });
+  window.__crew(4, 3, 0, 0, 2);
+  window.__air({ rains: 3 });
+  window.__poopSet(() => 40);
+  window.__build();
+  run(2);
+  const rich = window.__rows().filter(r => r.shown).map(r => r.key);
+
+  // ...and now broke, clean and dry.
+  window.__spend(200000);
+  window.__air({ rains: 0 });
+  window.__poopSet(() => 0);
+  window.__build();
+  run(2);
+  const broke = new Set(window.__rows().filter(r => r.shown).map(r => r.key));
+
+  const lost = rich.filter(k => !broke.has(k));
+  return [
+    ok(rich.length > 8, 'the rich yard put rows on the boards to lose', `${rich.length}`),
+    ok(lost.length === 0,
+       'and spending the purse and cleaning the yard takes none of them away',
+       lost.join(', ') || 'none')
   ];
 });

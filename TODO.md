@@ -2,27 +2,26 @@
 
 ## The shop boards resize while you read them (2026-09-08)
 
-**Designed, not built.** See "A board has a size" at the end of DESIGN.md.
+**Built.** See "A board has a size" at the end of DESIGN.md.
 
-Measured headless on the bench board: a card's `busy: <works>` status line takes
+Measured headless on the bench board: a card's `busy: <works>` status line took
 the sheet from 525 px wide to 731 with two works named and 1167 with three, and
-snaps back when the build lands. A row arriving takes it from 363x350 to
-525x481. Card height and section badges move nothing.
+snapped back when the build landed. `.panel .sheet` is `white-space: nowrap` and
+was content-sized, so `remeasure`/`place` re-seated the whole panel on any word
+that arrived; `.cost` and `.note` had already been let out of `nowrap` one cell
+at a time for the same reason, and the status line would have been the third.
+The sheet's width is pinned to its row set now (`pinWidth`, board.js), the
+status vocabulary is closed and short, and both are held by checks.
 
-One cause behind both: `.panel .sheet` is `white-space: nowrap` and the sheet is
-content-sized, so `remeasure`/`place` re-seat the whole panel on any word that
-arrives. `.cost` and `.note` already opt out of `nowrap` one cell at a time --
-`.gain` is the third case, and the design pins the sheet's width after a rebuild
-instead of adding another exception.
+The one row whose reveal could flip back off -- the farm's door, gated on the
+dust in the hole -- reveals through `once` and stays. `test/boards.test.mjs`
+holds every row in the game to that, so the next one written the old way is
+caught by the check rather than by a player.
 
-Second, smaller cause: three `show()` predicates flip back off on their own --
-`nearly(FARM_DUST)` (rows-farm.js), `MACHINES.some(running)` (rows-scrub.js) and
-`!busy() && !S.paying` (casino.js, four rows). Those become a latched `show`
-plus a `ready`, with a not-ready row greyed in place rather than removed.
-
-Blocked on one call: what an over-long status does in a box that cannot grow --
-truncate, reserve a second line always, or shorten the wording. The three are
-laid out at the end of the DESIGN.md section.
+Left alone deliberately: the casino's four table rows come and go between hands,
+which is a table doing what a table does, and a row leaving because its build
+landed still resizes the board -- that is a change to what the board holds, and
+the design says a board may resize for those.
 
 ## Everything that is not content (2026-09-08)
 

@@ -292,7 +292,20 @@ canvas {
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
-.rows button .gain { opacity: .75; }
+/* `min-width: 0` and the clip are the belt to `pinWidth`'s braces (board.js).
+   The sheet is a fixed box now, so a line longer than this cell can only spill
+   over the card's own border -- it can no longer push the whole board wider.
+   Every word this cell is ever given fits: the widest status in the vocabulary
+   is "nobody on it" at 101 pixels against 166 of room on the narrowest card in
+   the game, and the widest gain any row prints is 59. The clip is here for the
+   word nobody has written yet, so that it truncates rather than bleeding into
+   the card beside it. */
+.rows button .gain {
+  opacity: .75;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 /* Hard right on the card's second line. `min-width: 0` so a bill wider than the
    card can wrap inside its own cell rather than stretching the card past its
    neighbor -- only four rows in the game are that wide (the ram, the drill, the

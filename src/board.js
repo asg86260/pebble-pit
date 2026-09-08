@@ -350,7 +350,41 @@ function flyLead() {
   return crewListEl.offsetWidth + panelGap();
 }
 
-export function remeasure() {
+// A board is as wide as what it HOLDS, not as wide as what it happens to be
+// SAYING this frame.
+//
+// The sheet is `white-space: nowrap` and sized by its content, so until this
+// existed the widest line anywhere on it set the width of the whole panel --
+// and `place` re-seats the panel by that width, so a word arriving walked the
+// board sideways and took every row out from under the cursor. Measured on the
+// bench: a card whose status read `busy: the next bench, the tiller` took the
+// sheet from 525 pixels to 731, and three works took it to 1167. It snapped
+// back when the build landed.
+//
+// Two cells had already been let out of `nowrap` one at a time for exactly this
+// -- the bill, so three coins wrap inside their own cell, and the note, so a
+// description wraps as prose -- and the status line would have been the third.
+// A third exception is the tell that the mechanism is wrong: the sheet should
+// not be taking its width from its longest line at all.
+//
+// So the width is measured once, from the rows that are actually there, and
+// pinned. It is the same reading `max-content` was giving, taken when the set
+// of rows changes rather than continuously. Everything inside then lays out
+// against a box that does not move, and `refresh` can write whatever it likes.
+//
+// Cleared before it is read, or every measurement after the first is a
+// measurement of the pin.
+function pinWidth() {
+  const sheet = panelEl.querySelector(':scope > .sheet:not(.flyout)');
+  if (!sheet) return;
+  sheet.style.width = '';
+  sheet.style.width = `${sheet.offsetWidth}px`;      // border-box, so this is exact
+}
+
+// `repin: false` is for the one caller that knows the rows did not move -- a
+// hover rewriting a note, a price ticking over. Re-pinning there would hand the
+// width back to the words, which is the bug.
+export function remeasure(repin = true) {
   // A board nobody is looking at measures nothing: a hidden element is zero by
   // zero, and taking that as the size would seat the next open board off the
   // bottom corner of the window. Rows are rebuilt whether or not the panel is
@@ -358,6 +392,7 @@ export function remeasure() {
   // at the bench -- so this has to be able to say no. Opening measures it
   // again, which is where a board that was rebuilt out of sight gets its size.
   if (panelEl.hidden) return;
+  if (repin) pinWidth();
   full = { w: panelEl.offsetWidth, h: panelEl.offsetHeight };
   sized = { w: mainWidth(), h: full.h };
 }
@@ -1058,7 +1093,7 @@ export function hud() {
   // the same the old seat stands, height nudges and all. (feedback7, items 2-3)
   else if (boardReworded()) {
     const was = sized;
-    remeasure();
+    remeasure(false);                      // words do not get to set the width
     if (sized.w === was.w) sized = was;
   }
   // A board is placed when it opens, and it is empty at that moment: its rows

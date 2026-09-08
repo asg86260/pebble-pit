@@ -16,7 +16,7 @@ import { lookAt } from '../world.js';
 // A place costs a core *and* dust. The core is what says this is a place rather
 // than a rung -- see the tier table in DESIGN.md -- and the dust is what keeps
 // the rock worth digging after it, which every bill above tier one does.
-export const site = ({ key, name, cores, dust, more, open, at, show, then }) => ({
+export const site = ({ key, name, cores, dust, more, open, at, once, show, then }) => ({
   key, name,
   // A place is a building like the rest of them: the yard's spare hands go out
   // and put it up, and the view does not glide to it until it is standing.
@@ -28,6 +28,10 @@ export const site = ({ key, name, cores, dust, more, open, at, show, then }) => 
   // `then` is anything else the door does the moment it opens -- the quarry
   // sends its first body over, so the place is never bought and then dead.
   buy: () => { S[open] = true; lookAt(at()); if (then) then(); },
+  // `once` is the door's reveal, and it is optional: a door with none is
+  // revealed by `show` alone. See `revealed` in shop.js -- a condition that can
+  // stop being true belongs here, so the door does not come off the board again.
+  once,
   show
 });
 
