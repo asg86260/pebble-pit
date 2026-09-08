@@ -6,7 +6,12 @@ const FARM = site({
   key: 'unlockfarm', name: 'break the ground',
   cores: FARM_CORES, dust: FARM_DUST, open: 'farmOpen',
   at: () => farm.x + farm.w / 2,                   // show them what they just bought
-  show: () => !S.farmOpen && seenACore() && nearly(FARM_DUST)
+  // Revealed once you have been within reach of the price, and then it stays:
+  // `nearly` reads the dust in the hole, so before this was split the door came
+  // and went every time you spent, which walked the whole bench board sideways
+  // for a reason that had nothing to do with the farm. See `revealed` in shop.js.
+  once: () => seenACore() && nearly(FARM_DUST),
+  show: () => !S.farmOpen
 });
 
 // The bench's farm rows. Data only: upgrades.js strings the files together

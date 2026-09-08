@@ -59,6 +59,31 @@ const grouped = (list, sections) => {
   return rest.length ? [...sections, { title: 'and', keys: rest }] : sections;
 };
 
+// Revealing is a one-way door.
+//
+// A row may leave a board because you bought it or because you finished it.
+// A row may NOT leave because a number dipped or a machine stopped -- that is
+// the board rearranging itself behind you over something you did not do, and it
+// is the second of the two ways these boards moved while you were reading them.
+// The farm's door came and went with the dust in the hole, so spending walked it
+// off the board; the scrubbing house's came and went with whether a machine
+// happened to be turning.
+//
+// So the condition that REVEALS a row is written as `once`, and it is asked only
+// until it is true. `show` is then about whether the row has been consumed,
+// which is the one reason a row is allowed to go. A row with no `once` is
+// unchanged: most rows' `show` is already monotonic until they are bought, and
+// this is for the ones that are not.
+export const revealed = u => {
+  if (!u.once) return u.show();
+  if (!S.shownRows.includes(u.key)) {
+    if (!u.once()) return false;
+    S.shownRows = [...S.shownRows, u.key];
+    S.dirty = true;
+  }
+  return u.show();
+};
+
 function shape(list, sections) {
   const out = [];
   for (const sect of grouped(list, sections)) {
@@ -69,7 +94,7 @@ function shape(list, sections) {
       // a different board. Folding the finished rows away used to do nothing at
       // all for exactly that reason: the switch flipped, the label changed, and
       // this said "same rows as last time" and never rebuilt them.
-      return u && u.show() && !(S.hideDone && folds(u));
+      return u && revealed(u) && !(S.hideDone && folds(u));
     });
     if (rows.length) out.push(sect.title, ...rows);
   }
@@ -268,7 +293,7 @@ function build(el, list, sections, empty) {
   for (const sect of grouped(list, sections)) {
     const rows = sect.keys
       .map(k => list.find(u => u.key === k))
-      .filter(u => u && u.show())
+      .filter(u => u && revealed(u))
       // and, if asked, without the ones that are finished. A section with
       // nothing left in it goes with them -- a heading over an empty space is
       // worse than the rows were.
@@ -574,18 +599,41 @@ export function refresh(el, list, headcount) {
         // ...except at a builders' site, where there is always somebody: the
         // nearest body is lent if nobody is spare, and while it is walking over
         // the row says so rather than claiming the yard has given up.
-        // A row greyed because its site is putting up something *else* says
-        // what that something is. A grey row with a price you can afford and
-        // no word of why reads as broken -- "the cut is busy with the next
-        // bench" is the actual reason, and it is one nobody could see.
-        sayHTML(gain, !mine ? `busy: ${worksAt(u.site).map(w => rowFor(w.key)?.name || w.key).join(', ')}` :
+        // A row greyed because its site is putting up something *else* says so,
+        // and says how much of it there is. A grey row with a price you can
+        // afford and no word of why reads as broken.
+        //
+        // It used to name every work at the site, joined with commas, and that
+        // was the single worst thing on these boards for standing still. The
+        // yard holds `buildPosts() + 1` works at once -- up to seven -- so this
+        // one cell could ask for any width it liked, and the sheet, being
+        // content-sized, handed it over: measured on the bench, two names took
+        // the board from 525 pixels wide to 731 and three took it to 1167, and
+        // it all snapped back when the build landed. The board is pinned now
+        // (see `pinWidth` in board.js), so a line this long would simply be
+        // clipped -- which is a truncated sentence rather than a fact.
+        //
+        // So the vocabulary is closed, and every word in it fits: "busy",
+        // "busy (7)", "building", "on the way", "nobody on it" -- the longest
+        // of them is 101 pixels against 166 of room on the narrowest card in
+        // the game. What is *at* the site goes in the row's tooltip, which
+        // hangs over the board and cannot move it. The count is the part worth
+        // having on the face of the card anyway: how many are ahead of you is
+        // the thing you would act on, and which ones they are is written over
+        // the site itself, out in the yard.
+        const queue = mine ? [] : worksAt(u.site).map(w => rowFor(w.key)?.name || w.key);
+        sayHTML(gain, !mine ? (queue.length > 1 ? `busy (${queue.length})` : 'busy') :
                 !stalled(u.site) ? 'building' :
                 BUILDER_SITES.includes(u.site) ? 'on the way' : 'nobody on it');
+        const why = queue.length ? `busy with ${queue.join(', ')}` : '';
+        if (row.title !== why) row.title = why;
         sayHTML(price, bill);
         grey(row, true);
         continue;
       }
     }
+    // ...and the site is clear again, so the note about what was on it goes.
+    if (row.title) row.title = '';
 
     // and a dot on anything that has not been on a board you have looked at
     const fresh = !S.seenRows.includes(u.key);

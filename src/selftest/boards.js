@@ -1182,4 +1182,90 @@ export const TESTS = [
          `${moved.join(',') || 'nothing'} moved -- ${before.stew} -> ${deeper.stew}`)
     ];
   }],
+  // A board does not change size while it is saying something.
+  //
+  // This is the page half of "A board has a size" in DESIGN.md. The sheet is
+  // `white-space: nowrap` and used to be content-sized, so any word that arrived
+  // anywhere on it set the width of the whole panel -- and `place` re-seats the
+  // panel by that width, so a card telling you the site was busy walked the
+  // board sideways and took every row out from under the cursor. Measured on the
+  // bench at the time: a status naming two works took the sheet from 525 pixels
+  // to 731, and three took it to 1167, and it all snapped back when the build
+  // landed.
+  //
+  // Bought the player's way, through the row, because what starts the status is
+  // a purchase and a `__` hook that set a work would prove nothing about the
+  // press. The size is read off the page rather than off the game, because it is
+  // a fact about layout and there is nothing in the yard that knows it.
+  ['a board holds its size while a build is running', async () => {
+    window.__crew(3, 2, 0, 0, 2);
+    window.__grant({ shards: 60, dust: 20000, cores: 6 });
+    window.__board('bench');
+    await settle(1);
+    const sheet = document.querySelector('#panel > .sheet:not(.flyout)');
+    const size = () => `${sheet.offsetWidth}x${sheet.offsetHeight}`;
+    const before = size();
+
+    // A row that has to be built, pressed the way a finger presses it. The
+    // press puts the board away -- buying is a thing you do to the yard and the
+    // sheet gets out of the light -- so walking back up to it is part of the
+    // route, and it is the board you walk back up to that this is about.
+    const row = [...shop().querySelectorAll('[data-key]')]
+      .find(r => r.dataset.key === 'unlockschool');
+    row?.click();
+    await settle(1);
+    window.__board('bench');
+    await settle(1);
+    const back = [...shop().querySelectorAll('[data-key]')]
+      .find(r => r.dataset.key === 'unlockschool');
+    const status = back?.querySelector('.gain')?.textContent || '';
+    // Sampled across the build rather than looked at once: the status is
+    // rewritten every frame -- the clock in the bill is counting down -- so the
+    // question is whether ANY of those writes moved the board, not whether the
+    // first and the last happen to agree.
+    const seen = new Set([size()]);
+    for (let i = 0; i < 12; i++) { await settle(0.5); seen.add(size()); }
+    // ...and however many are queued behind it, the words stay inside the box.
+    const spill = [...shop().querySelectorAll('button[data-key] .gain')]
+      .filter(g => g.scrollWidth > g.clientWidth + 1).length;
+
+    // ...and the guarantee under the wording. `busy (3)` is short by design, so
+    // the check above would pass on the wording alone even with the sheet still
+    // sizing itself to its content. This is the other half: a line nobody would
+    // write, put straight into the cell, to prove that the box does not grow for
+    // it. Without `pinWidth` this takes the bench from 525 pixels to over 1100.
+    const anyGain = shop().querySelector('button[data-key] .gain');
+    const said = anyGain.textContent;
+    anyGain.textContent = 'busy: break the ground, put up the school, the next furrow';
+    const shouted = size();
+    anyGain.textContent = said;
+
+    const rowsThen = shop().querySelectorAll('[data-key]').length;
+    window.__finish();                 // the yard puts it up
+    await settle(1);
+    const rowsNow = shop().querySelectorAll('[data-key]').length;
+
+    window.__board(null);
+    window.__crew(0, 0);
+
+    return [
+      ok(!!row, 'the bench has a row that takes time to build'),
+      ok(/busy|building|on the way|nobody on it/.test(status),
+         'and pressing it puts a status where the gain was', status || 'nothing'),
+      ok(seen.size === 1 && seen.has(before),
+         'and the sheet is the same size on every frame the build runs',
+         [...seen].join(' / ')),
+      ok(spill === 0,
+         'and no status is wider than the cell holding it', `${spill} spilling`),
+      ok(shouted === before,
+         'a line far too long for a card cannot widen the board either',
+         `${before} -> ${shouted}`),
+      // And then the row goes, which is a change to what the board HOLDS rather
+      // than to what it is saying -- so the board is allowed to resize for it,
+      // and that is the whole distinction this design rests on.
+      ok(rowsNow === rowsThen - 1,
+         'the row leaves when the build lands, and that is the one thing that may resize it',
+         `${rowsThen} rows -> ${rowsNow}`)
+    ];
+  }],
 ];

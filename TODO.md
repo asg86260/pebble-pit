@@ -1,5 +1,28 @@
 # Still to do
 
+## The shop boards resize while you read them (2026-09-08)
+
+**Built.** See "A board has a size" at the end of DESIGN.md.
+
+Measured headless on the bench board: a card's `busy: <works>` status line took
+the sheet from 525 px wide to 731 with two works named and 1167 with three, and
+snapped back when the build landed. `.panel .sheet` is `white-space: nowrap` and
+was content-sized, so `remeasure`/`place` re-seated the whole panel on any word
+that arrived; `.cost` and `.note` had already been let out of `nowrap` one cell
+at a time for the same reason, and the status line would have been the third.
+The sheet's width is pinned to its row set now (`pinWidth`, board.js), the
+status vocabulary is closed and short, and both are held by checks.
+
+The one row whose reveal could flip back off -- the farm's door, gated on the
+dust in the hole -- reveals through `once` and stays. `test/boards.test.mjs`
+holds every row in the game to that, so the next one written the old way is
+caught by the check rather than by a player.
+
+Left alone deliberately: the casino's four table rows come and go between hands,
+which is a table doing what a table does, and a row leaving because its build
+landed still resizes the board -- that is a change to what the board holds, and
+the design says a board may resize for those.
+
 ## Everything that is not content (2026-09-08)
 
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the

@@ -36,7 +36,7 @@ import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './cr
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
 import { rebalance, assign as assignJob, restaff, kitCap } from './upgrades.js';
-import { buildShop, refresh } from './shop.js';
+import { buildShop, refresh, revealed } from './shop.js';
 import { machine, MACHINES } from './machines.js';
 import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
@@ -649,7 +649,10 @@ export const boards = () => [
 export const allRows = () => everyRow().map(u => ({
   key: u.key,
   name: u.name,
-  shown: !!u.show(),
+  // Through the same gate a board uses, not `show` on its own: a row whose
+  // reveal has not fired yet is a row no board would draw, and a check asking
+  // what is on the boards should be told what is on the boards. See `revealed`.
+  shown: !!revealed(u),
   // Not every row has a price. A job row moves bodies, a dial sets a number and
   // a payout row hands something over -- `billOf` would ask all three what they
   // cost and get an exception.
