@@ -5221,3 +5221,95 @@ only once the work is finished. The bench gets a check that its section list is 
 be. The save migration gets a fixture: a save with a bought-out lab in `test/fixtures/`, loaded,
 with a check that the levels landed on the inheriting rows. The boards' own look is a shot, not a
 suite.
+
+## The one bench carries two ladders' worth of waiting (design, not built)
+
+"The lab is deleted" named this as a real blocker rather than a detail: once every timed purchase
+in the game — every building, both machines, all four multiplier ladders, and the bench's own kit
+rows (`carry`, `auto`, ...) — queues through one site (`SITE_JOB.yard === SITE_JOB.bench ===
+JOB.BUILD`), `buildposts` and `buildpace` are carrying weight that used to be split across the
+lab's `instruments` and `another bench` on one side and the bench's own ladders on the other. This
+section is the measurement that was promised, not a redesign.
+
+### What was measured
+
+`node tools/node/yard.mjs`, driven by hand: bench opened, `buildPostLevel` and `buildPaceLevel`
+set directly, builders assigned through `__assign` (the player's button), and a representative
+backlog queued through `__buy` the way a player would press the rows. The backlog is the eight
+one-off buildings plus both machines plus all four multiplier ladders run to their cap —
+everything that would ever compete for the bench's room in one run:
+
+```
+buildings (8 x 45)                                           360 worker-seconds
+machines  (2 x 90)                                            180 worker-seconds
+4 mult ladders, 5 rungs each, LAB_WORK=45 x 1.35^level      1,792 worker-seconds
+                                                             -----
+representative backlog                                      2,332 worker-seconds
+```
+
+`buildposts` tops out at 3 slots (`BUILD_POST_RUNGS = 2`), `buildpace` at x2.46
+(`BUILD_PACE_RUNGS = 3`, `1.35^3`). At the very top of both ladders, with three builders assigned
+(matching the three slots — a fourth or fifth body assigned is clamped straight back down by
+`rebalance`, so posts is a hard cap on builder headcount as well as concurrency):
+
+- **A single work with no competition costs almost exactly what the math says.** The school,
+  alone, at max pace, took 20 game-seconds against a predicted 45 / 2.46 = 18.3. The formula is
+  right and the one-body case is healthy.
+- **The full backlog — all four multiplier ladders plus every building open at once, the shape the
+  yard is actually in once the bench and a few stations are up — did not finish in 2,000
+  game-seconds**, over half an hour against a 90–120 minute run, at maxed posts and pace. Lower
+  configurations (posts=0/pace=0; posts maxed/pace 0; posts 0/pace maxed) all hit the same ceiling
+  worse.
+- **Measured utilization at the top of both ladders: builders were doing useful work at the yard
+  about 37% of the time** — three bodies assigned, three slots open, three or four distinct works
+  queued. That is the finding that changes the shape of the fix. Raw effort math
+  (2,332 / (3 x 2.46) ≈ 315s) says the backlog should clear in about five minutes; measured, it
+  does not clear in half an hour. The gap is not the ladders' own numbers — it is time builders
+  spend not attached to any work while several are queued at once, which the solo-work case never
+  exercises. This was not root-caused further (candidate causes not yet distinguished: walking
+  between the yard's scattered site coordinates, `slotFor`'s per-frame reassignment, or the
+  `each`/`own` split in `stepWorks` under-crediting a body mid-transition) and is flagged rather
+  than guessed at.
+
+### What this means for `buildposts` and `buildpace`
+
+**Retuning the two ladders' price or step is not obviously the fix, and might be the wrong fix
+entirely.** The measured shortfall is roughly 4x (half an hour observed against five minutes
+predicted from the ladders' own numbers), and it shows up precisely when several works are queued
+together, not in the one-body case the ladders were presumably tuned against. Cutting
+`buildpace`'s price or raising its cap moves the effort-math prediction, which is not the number
+that is wrong. If the gap is a body spending most of a queued build walking rather than swinging,
+no amount of `buildpace` fixes that — a builder who is faster *while working* and idle two-thirds
+of the time is still idle two-thirds of the time.
+
+**The honest next step is root-causing the 37%, not re-costing the ladders.** Candidates, in the
+order they are cheapest to rule out:
+
+1. Instrument `handsAt('yard')` per frame against `S.workers` positions for the three assigned
+   builders, across one run of the representative backlog, and see whether the gap is walking
+   (bodies in transit), reassignment thrash (`slotFor` moving a body off a work it just reached),
+   or something in `stepWorks`'s own accounting.
+2. If it is walking: the sites a builder is asked to cover at once (the school, the tower, the
+   mult ladders' `siteX` fallback, which for a multiplier row with no station box centers on
+   `S.cx`) may simply be far enough apart that three builders queued on four to eight scattered
+   targets spend more time in transit than any pace number can buy back — which would make this a
+   placement question (how far apart builder-manned sites stand) rather than a ladder-pricing one.
+3. Only once the mechanism is known does re-pricing `buildposts` / `buildpace` — or adding a rung
+   to either — become a number to argue about rather than a guess.
+
+### What is NOT proposed here
+
+No change to `BUILD_POST_RUNGS`, `BUILD_PACE_RUNGS`, `BUILDPOSTS_SPARKS0`, `BUILDPACE_SPORES0`,
+`BUILD_PACE_STEP` or `WORK_STEP` is proposed in this section. Guessing a new number against a
+mechanism that has not been found would be exactly the kind of tuned-constant bug CLAUDE.md warns
+against — a constant right about today's content and wrong the moment a ninth building or a fifth
+mult ladder is added. The measurement says there is real debt; it does not yet say which file owns
+the fix.
+
+### How it would be checked
+
+A node-tier check belongs in `test/wave7b-build.test.mjs` or a new `test/build-throughput.test.mjs`
+once the mechanism is known: bought through `__buy`/`__assign` the way a player reaches it,
+asserting utilization at the bench stays above some floor once several works are queued together (a
+regression guard, not a balance target by itself). Until the mechanism is found, a check would only
+pin down today's number rather than the cause.
