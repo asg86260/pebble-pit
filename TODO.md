@@ -1,5 +1,30 @@
 # Still to do
 
+## Audio — the rule is written, nothing is built (2026-09-08)
+
+**Designed, not built. Awaiting approval before any code.** See "The sound of the yard
+(design, not built)" at the end of DESIGN.md, which replaces the one-line seed that used to sit
+under "Open questions". This is the release-checklist audio item, done as the checklist asks: the
+rule first, of the "black and white, flat shapes" kind, approved before a line of it is written.
+
+The law is *you hear the yard, not the game; everything is struck, and nothing is played* — a sound
+only exists where a body moved material, so no UI chrome sounds at all, and every voice is a short
+percussive event or a slow bed of air, nothing bright and nothing long. Six voices off one signal
+chain (stone, wood, metal, water, air, the rift), four density classes (the player's click always
+sounds; the yard's bulk folds into one sound per short window with a hard drop past the ceiling;
+beds are driven from state once a frame, never by events; punctuation is rare and may duck), and a
+mix that is quiet, limited, enveloped end to end and nearly mono.
+
+**Blocked on three answers**, all in that section: whether there is music and whether the sky is it;
+whether it ships off by default or on and quiet; and whether the tower and the rift get the game's
+one non-percussive voice or stay silent. The first of those decides whether an hour has an arc, so
+it is not a detail to settle during the build.
+
+No test tier can hear anything, so the ear is the check the way a shot is the check for drawing —
+but the *decision* half (how many voices a burst of forty grains fires, whether a bed's level
+tracks the storm) is a fact about the yard and gets a node-tier file if audio.js keeps its decisions
+away from its `AudioContext`.
+
 ## Everything that is not content (2026-09-08)
 
 **Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
