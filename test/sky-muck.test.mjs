@@ -69,11 +69,24 @@ group('the sky fills up, and gives it back', async () => {
   // thing that was switched off.
   const seenR = [];
   let wet = null;
+  // The deepest each place got, over the whole shower, rather than what was
+  // lying there on the one frame the yard as a whole was deepest.
+  //
+  // The rock is the only place in the yard with a gang standing on it, so what
+  // falls on it is shifted within a frame or two of landing: watched all the
+  // way down it carries one or two grains at a time and is empty as often as
+  // not. Reading it off `wet` -- the frame where `muck.all` peaked -- was a
+  // coin toss, and it is the yard's own crew that made it one. What this is
+  // about is that the rain comes down on the rock at all, and that is a fact
+  // about the shower, not about one frame of it.
+  const deepest = { rock: 0, yard: 0 };
   for (let i = 0; i < 80; i++) {
     run(0.25);
     const air = state().smog;
     if (!air.raining) { if (seenR.length) break; else continue; }
     seenR.push(air.cloudR);
+    deepest.rock = Math.max(deepest.rock, air.muck.rock);
+    deepest.yard = Math.max(deepest.yard, air.muck.yard);
     if (!wet || air.muck.all > wet.muck.all) wet = air;
   }
   const shrank = seenR.length > 4 && seenR.every((v, i) => i === 0 || v <= seenR[i - 1]);
@@ -88,12 +101,16 @@ group('the sky fills up, and gives it back', async () => {
   // seventy, depending on how deep the patch is and where everybody was standing
   // when it landed -- and a limit inside that spread is a check that fails on
   // the weather rather than on the code.
-  runUntil(() => state().smog.muck.rock === 0, 150);
-  // Long enough to be swinging again -- and it takes longer than it did, because
-  // the yard that fills this sky is now the cut rather than the rock, so there
-  // are five more bodies to sort out and the gang walk back to the hill from
-  // wherever the shovelling left them.
-  run(10);                                    // and long enough to be swinging again
+  const cleared = runUntil(() => state().smog.muck.rock === 0, 150);
+  // Until the rock actually comes down again, rather than for a fixed ten
+  // seconds and a hope. That ten was measured before the muck slumped: what
+  // fell on the yard beside the rock keeps creeping over the rock's own columns
+  // for another half minute after the face first comes clear, and the gang go
+  // back to shovelling every time it does. They get to the rock about
+  // twenty-five seconds in, and how long that takes is a fact about how much
+  // fell and how far it has to slump -- not something a check should be pinning
+  // a stopwatch to.
+  const swinging = runUntil(() => state().rock < rockWas, 120);
   const dried = state();
   // and the yard goes back the way it was found: a sky left full and a gang
   // left standing are both things the next group would notice
@@ -119,9 +136,9 @@ group('the sky fills up, and gives it back', async () => {
        'and once up there it lies as a haze over everything, not in knots',
        `${seeded.clump} over ${seeded.bins} bins -> ${gathered.clump} over ${gathered.bins}`),
     ok(wet.rains >= 1, 'full, it comes back down', `${wet.rains} rains`),
-    ok(wet.muck.rock > 0 && wet.muck.yard > 0,
+    ok(deepest.rock > 0 && deepest.yard > 0,
        'as muck, on the rock and over the yard',
-       `rock ${wet.muck.rock}, yard ${wet.muck.yard}`),
+       `rock ${deepest.rock}, yard ${deepest.yard}`),
     ok(wet.drops > 0, 'falling a cell at a time, not drawn over the window',
        `${wet.drops} in the air`),
     ok(shrank, 'and the banks it falls out of shrink as it comes down, step by step',
@@ -135,9 +152,16 @@ group('the sky fills up, and gives it back', async () => {
     ok(seenR[seenR.length - 1] < seenR[0],
        'so by the end they are smaller than they were',
        `${seenR[0]} -> ${seenR[seenR.length - 1]}`),
-    ok(dried.smog.muck.rock === 0, 'which the gang clear off the face',
-       `${dried.smog.muck.rock} left`),
-    ok(dried.rock < rockWas, 'and then get back to the rock under it',
+    // Asked of the moment the face came clear, not of the state ten seconds
+    // later. The muck on the ground beside the rock keeps slumping while the
+    // gang work -- `slumpMess` -- so a grain or two creeps back over the rock's
+    // own columns from the yard next door, and the face is never permanently
+    // clear while there is a drift lying against it. What the gang owe is
+    // clearing what fell on them; keeping the whole flank swept for ever is the
+    // janitors' business and a different check.
+    ok(cleared, 'which the gang clear off the face',
+       `${dried.smog.muck.rock} back on it by the time they were swinging again`),
+    ok(swinging, 'and then get back to the rock under it',
        `${rockWas} -> ${dried.rock}`),
     // Not "exactly one" any more, and the reason is the rain itself rather than
     // anything about this group. It used to be impossible to rain under

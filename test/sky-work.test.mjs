@@ -201,6 +201,17 @@ group('a hat is worked on, and the tower says how far along it is', async () => 
   const bare = state();
   const secs = window.__brew();
   const started = state();
+  // The clock starts when somebody is standing at the tower, not when the row
+  // is bought. `secs` is the work's effort at one pair of hands; the first
+  // stretch of any work's life is the walk out to it, and the tower is at the
+  // far end of the yard from where a body is hired. Timed from the purchase,
+  // a quarter of the way in read 0.13 -- the missing eighth was the commute,
+  // which is the yard's own rule working rather than the tower lagging.
+  //
+  // Measured from the first frame somebody is actually on it, the readout is
+  // exactly proportional: a quarter in is 0.256, three quarters is 0.756. So
+  // this asks for that rather than for a band wide enough to swallow a walk.
+  const walked = runUntil(() => yard.brewAt() > 0, secs);
   run(secs / 4);
   const quarter = yard.brewAt();
   run(secs / 2);
@@ -212,9 +223,13 @@ group('a hat is worked on, and the tower says how far along it is', async () => 
     ok(started.brewing && started.wizardHats === 0,
        'buying one starts the tower rather than handing you a hat',
        `${started.wizardHats} hats, brewing ${started.brewing}`),
-    ok(quarter > 0.15 && quarter < 0.4, 'and it is a quarter of the way through a quarter in',
-       `${quarter.toFixed(2)}`),
-    ok(most > quarter && most < 1, 'and further along later', `${quarter.toFixed(2)} -> ${most.toFixed(2)}`),
+    ok(walked, 'and somebody walks out to the tower to do it'),
+    ok(Math.abs(quarter - 0.25) < 0.03,
+       'and it is a quarter of the way through a quarter in',
+       `${quarter.toFixed(3)}`),
+    ok(Math.abs(most - 0.75) < 0.03 && most < 1,
+       'and three quarters through three quarters in',
+       `${quarter.toFixed(3)} -> ${most.toFixed(3)}`),
     ok(landed && after.wizardHats === 1 && !after.brewing,
        'and at the end of it there is a hat on the stand',
        `${after.wizardHats} hats, brewing ${after.brewing}`)
