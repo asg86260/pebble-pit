@@ -15,7 +15,7 @@ import { throughPlotMuck } from './smog.js';
 import { FARM_FOUL } from './config.js';
 import { S, farm, floor } from './state.js';
 import { walkY, plotCount, resite, pileAt } from './world.js';
-import { keepTo, stepRoute, ways } from './route.js';
+import { climbTo, keepTo, stepRoute, ways } from './route.js';
 import { defineMachine, buyMachine, canBuy } from './machines.js';
 import { rebalance, kitFull, commutePace, swing, rungCost } from './upgrades.js';
 import { frames } from './clock.js';
@@ -181,7 +181,16 @@ export function stepFarmhand(w, now, dt, c = null) {
   // a plot that is not there any more -- a save from a wider plot -- is not a
   // plot anybody can stand at
   if (w.plot >= S.plots.length) { w.plot = pickPlot(w); w.goal = 'to'; }
-  w.y = walkY(w.x + WORKER / 2);
+  // Through the climber, not straight on to the line. This was a bare
+  // assignment, and a bare assignment is a teleport whenever the body is not
+  // already there: a farmhand handed back from anything that held it off the
+  // ground -- the celebration, which latches a body's own y as the floor it
+  // dances on -- dropped four cells in a single frame, which is most of its own
+  // height. `climbTo` gives the same answer within half a cell and takes at
+  // most a cell a frame to get there, which is the rule every other walk in the
+  // yard already obeys. See the note at the foot of `climbTo` in route.js: fix
+  // the mover, not the law of walking.
+  w.y = climbTo(w, walkY(w.x + WORKER / 2));
 
   if (w.goal === 'to') {
     // stand beside the plot, not on top of it, so the crop can be seen growing

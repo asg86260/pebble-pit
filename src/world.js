@@ -15,7 +15,7 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, lab, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
 import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
@@ -749,15 +749,29 @@ export function resize(after) {
   seatSites();
 
   // And the ground the pot stands on: everything from the left-hand end of the
-  // world to the lab, which is both sides of the casino. A heap goes down beside
-  // the building and walks *left* past it when the right-hand side is full,
-  // because that is where the empty ground is.
-  // The pot's ground runs from the left-hand end of the world to the lab, and
-  // stops short of the scrubbing house once that is standing: a heap is allowed
-  // to walk left past the casino, and a heap walking into somebody's wall is a
-  // heap drawn through a building.
+  // world to whatever stands next along on the casino's right. A heap goes down
+  // beside the building and walks *left* past it when the right-hand side is
+  // full, because that is where the empty ground is -- and a heap walking into
+  // somebody's wall is a heap drawn through a building.
+  //
+  // The far end is DERIVED from the walk rather than named. It used to be the
+  // lab, and then the lab or the scrubbing house, whichever came first -- two
+  // buildings named by hand as the casino's neighbour, when who stands beside
+  // the casino is a thing `siteOrder` decides from what the player bought. When
+  // the lab was deleted it stopped being seated at all, so `lab.x` stayed 0,
+  // `potTo` came back 0, and the table was ONE COLUMN wide: a hundred-grain pot
+  // put twenty grains on the ground, the wheel waited for a pile that could
+  // never arrive, and nothing in the yard said a word about it.
+  //
+  // So it is the nearest edge to the casino's right, of anybody's box or
+  // anybody's heap. A new station out that way narrows the table by standing
+  // there, which is the right answer without anyone having to remember.
   table.x = 0;
-  const potTo = S.scrubOpen ? Math.min(lab.x, scrub.x) : lab.x;
+  const potFrom = casino.x + casino.w;
+  const edges = [...SITES.map(row => (S.placed[row.key] || {}).x),
+                 ...(S.strips || []).map(p => p.from)]
+    .filter(x => x != null && x > potFrom);
+  const potTo = edges.length ? Math.min(...edges) : S.cx;
   table.cols = Math.max(1, Math.floor((potTo - P * 4) / P));
   table.y = S.groundY - table.rows * P;
 
