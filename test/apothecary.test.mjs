@@ -231,16 +231,20 @@ group('the pot remembers what it was set to across a reload', async () => {
 // applied twice. A second stew refreshes the first.
 group('a body wears one tonic of each kind, and a repeat refreshes rather than stacks', async () => {
   standApothecary();
-  window.__pot('stew');
+  buyNow('anotherpot');
+  window.__pot('stew', 0);
   window.__assign('stirrers', 1);
   runUntil(() => dosed().some(w => w.type === 'farmhand'), 200);
   const fh = dosed().find(w => w.type === 'farmhand');
   const stewOnly = workBoost(fh);
   const critBefore = critBoost(fh);
 
-  // ...and now the pot goes on to something that lifts a different thing
-  window.__pot('stew');                        // off
-  window.__pot('brace');
+  // ...and the second pot goes on something that lifts a different thing. The
+  // second tonic comes off a second pot rather than by turning this one
+  // mid-brew: a batch belongs to the tonic it was bought as, so turning a pot
+  // while it cooks changes what it lights NEXT, not what is on the fire.
+  window.__pot('brace', 1);
+  window.__assign('stirrers', 2);
   const both = runUntil(() => fh.doses.length > 1, 300);
   const workAfter = workBoost(fh);
   const critAfter = critBoost(fh);
@@ -250,7 +254,6 @@ group('a body wears one tonic of each kind, and a repeat refreshes rather than s
   const was = fh.doses.length;
   const stew = { tonic: 'stew', until: 1 };    // a spent one to be replaced
   fh.doses = [...fh.doses.filter(d => d.tonic !== 'stew'), stew];
-  window.__pot('brace'); window.__pot('stew');
   const again = runUntil(() => fh.doses.some(d => d.tonic === 'stew' && d.until > 1), 300);
   const doubled = workBoost(fh);
 
