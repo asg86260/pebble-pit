@@ -419,6 +419,19 @@ function build(el, list, sections, empty) {
       // list, and hovering a body to read it shut the sheet it was written on.
       if (u.over) b.addEventListener('pointerenter', () => u.over());
       else if (!inSubmenu) b.addEventListener('pointerenter', () => closeSubmenu());
+      // And the corner comes off the card you actually went and looked at.
+      // Closing the board used to take every mark on it off at once, on the
+      // grounds that the board had been open with the rows on it -- but "it was
+      // on the screen" is not the same as "you read it", and on a board of a
+      // dozen the one row you came for is the only one you looked at. Marking
+      // the rest seen throws away the answer to "what is new here" for every row
+      // you scrolled past. Hovering is the cheapest true evidence the page has
+      // that a row was read, so it is the thing that clears it.
+      //
+      // A finger cannot hover, so the press clears it too -- the same pairing
+      // the submenu rows use a few lines up, and for the same reason.
+      b.addEventListener('pointerenter', () => markRowSeen(u));
+      b.addEventListener('pointerdown', () => markRowSeen(u));
       // A board row wears its description inline (see the `.note` line above and
       // `sayNote`); the crew submenu keeps the hover, because a roster of a dozen
       // bodies is long enough without a line of prose under each -- and it is a
@@ -624,20 +637,19 @@ export function refresh(el, list, headcount) {
 // and invisible otherwise: the board is a dozen rows and they are all the same
 // shape, so a new one among them is a needle.
 //
-// So a row you have never had on a board carries a dot until you have had the
-// board open with it on. Marked when the board *closes*, not when it opens --
-// clearing it on open would clear it in the same frame it was drawn, and you
-// would never once see one.
-export function markRowsSeen(list) {
-  const seen = new Set(S.seenRows);
-  let added = false;
-  for (const u of list) {
-    if (!u.show || !u.show() || seen.has(u.key)) continue;
-    seen.add(u.key);
-    added = true;
-  }
-  if (!added) return;
-  S.seenRows = [...seen];
+// So a card you have never had on a board carries a turned-down corner until you
+// have gone and looked at it. Cleared by the hover on that one card and by
+// nothing else: it used to be cleared for every row on the board when the board
+// closed, which said "it was on the screen" when the question was "did you read
+// it". The first thing that had to be avoided is still avoided -- a mark cleared
+// as the board opened would go in the frame it was drawn, and you would never
+// once see one -- because a hover cannot happen before the card is under the
+// cursor.
+export function markRowSeen(u) {
+  if (!u || S.seenRows.includes(u.key)) return;
+  // A fresh array rather than a push: `seenRows` is a saved field, and the save
+  // notices a new array where it can miss a mutation in place.
+  S.seenRows = [...S.seenRows, u.key];
   S.dirty = true;
 }
 
