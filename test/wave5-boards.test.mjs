@@ -11,7 +11,7 @@
 
 import { group, ok, state, run, yard } from './helpers.mjs';
 import { gainText, unitText, MARK, UPGRADES } from '../src/upgrades.js';
-import { LAB_UPGRADES } from '../src/lab.js';
+import { BUILDBENCH_UPGRADES } from '../src/upgrades/rows-buildbench.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
@@ -21,7 +21,7 @@ import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 import { bookRate, bookSpan } from '../src/stats.js';
 import { showPanel, hud } from '../src/board.js';
 
-const ALL_ROWS = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
+const ALL_ROWS = [...UPGRADES, ...BUILDBENCH_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
                   ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                   ...APOTHECARY_UPGRADES];
 
@@ -33,7 +33,7 @@ const ALL_ROWS = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPG
 group('no row spells a second with the letter s', async () => {
   window.__reset();
   window.__fullSites();
-  window.__lab(true);
+  window.__buildbench(true);
 
   const bad = [];
   for (const u of ALL_ROWS) {

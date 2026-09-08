@@ -46,8 +46,6 @@ const WIDE = BTN + GAP + WORKER + GAP + NUM + GAP + BTN;
 export const POSTS = [
   { key: 'scrubjob', job: JOB.PURIFY,
     at: () => scrub.x + scrub.w / 2, show: () => S.scrubOpen },
-  { key: 'labjob', job: JOB.SCHOLAR,
-    at: () => lab.x + lab.w / 2, show: () => S.labOpen },
   // One body to a pot, stood under the apothecary it stirs.
   { key: 'stirjob', job: JOB.STIR,
     at: () => apothecary.x + apothecary.w / 2, show: () => S.apothecaryOpen },

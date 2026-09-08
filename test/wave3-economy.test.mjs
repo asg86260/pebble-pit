@@ -2,9 +2,10 @@
 // hour, and four rows that were simply misfiled. See docs/wave-feedback3.md,
 // "Track A -- economy & fixes" (A1-A8).
 
+import { BUILDBENCH_CORES } from '../src/config/build.js';
 import { yard, group, ok, state, run, runUntil, openSites, buyBuilt } from './helpers.mjs';
 import { priceText, billOf, UPGRADES, rockhandBite } from '../src/upgrades.js';
-import { LAB_UPGRADES } from '../src/lab.js';
+import { BUILDBENCH_UPGRADES } from '../src/upgrades/rows-buildbench.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
@@ -133,18 +134,25 @@ group('the rockhand pick bites a whole pixel more per rung, and no further', asy
 });
 
 // --- A7: the lab costs a core -------------------------------------------------
-group('the lab is a place, and a place costs a core', async () => {
+group('the work bench is a place, and a place costs a core', async () => {
   window.__reset();
   window.__grant({ shards: 400, cores: 5, dust: 30000, spores: 100 });
   window.__crew(0, 2);
+  window.__jump(2);                       // the trestle is offered from the second rock
   const before = state().cores;
-  const built = buyBuilt('unlocklab');
+  const built = buyBuilt('unlockbuildbench');
   const after = state().cores;
   return [
-    ok(built, 'the lab can still be built'),
-    // One core since the grind pass -- the second core was a second rock's
-    // worth of waiting; the dust and spore legs carry the weight now.
-    ok(before - after === 1, 'and it costs a core, not none', `${before} -> ${after}`)
+    // This was the lab, which is gone -- see DESIGN.md, "The lab is deleted".
+    // The construction bench inherited its place in the run: it lands at about
+    // the same tier and it is what the yard's multipliers now wait on.
+    ok(built, 'the work bench can be built'),
+    // Two, where the lab asked one. The claim this group has always made is that
+    // a PLACE is bought with cores and never with dust alone -- see DESIGN.md,
+    // "cores buy places, and only places" -- so what matters is that it costs
+    // them at all, and the count is read off the row rather than guessed.
+    ok(before - after === BUILDBENCH_CORES, 'and it costs cores, not none',
+       `${before} -> ${after}, of ${BUILDBENCH_CORES}`)
   ];
 });
 
@@ -156,10 +164,10 @@ group('the lab is a place, and a place costs a core', async () => {
 // shown yet.
 group('nothing shard-, spore- or quarry-priced shows before its coin has been seen', async () => {
   window.__reset();
-  window.__lab(true);
+  window.__buildbench(true);
 
   const boards = {
-    bench: UPGRADES, lab: LAB_UPGRADES, quarry: QUARRY_UPGRADES, farm: FARM_UPGRADES,
+    bench: UPGRADES, buildbench: BUILDBENCH_UPGRADES, quarry: QUARRY_UPGRADES, farm: FARM_UPGRADES,
     school: SCHOOL_UPGRADES, scrub: SCRUB_UPGRADES, tower: TOWER_UPGRADES, casino: CASINO_UPGRADES
   };
   const notSold = u => u.job || u.dial || u.price;

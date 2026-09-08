@@ -24,7 +24,7 @@ const { billOf } = await import('../src/upgrades.js');
 // builds each of these into a panel; anything sold anywhere is in one of them.
 const BOARDS = Object.entries({
   bench: (await import('../src/upgrades.js')).UPGRADES,
-  lab: (await import('../src/lab.js')).LAB_UPGRADES,
+  buildbench: (await import('../src/upgrades/rows-buildbench.js')).BUILDBENCH_UPGRADES,
   school: (await import('../src/school.js')).SCHOOL_UPGRADES,
   casino: (await import('../src/casino.js')).CASINO_UPGRADES,
   'scrubbing house': (await import('../src/scrubhouse.js')).SCRUB_UPGRADES,

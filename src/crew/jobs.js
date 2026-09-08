@@ -58,7 +58,6 @@ import { newBuilder, stepBuilder } from './builders.js';
 import { upTop } from './body.js';
 import { newQuarrier, stepQuarrier } from '../quarry.js';
 import { newFarmhand, stepFarmhand } from '../farm.js';
-import { newScholar, stepScholar } from '../lab.js';
 import { newPurifier, stepPurifier } from '../scrubhouse.js';
 import { newStirrer, stepStirrer } from '../apothecary.js';
 import { newWizard, stepWizard } from '../wizard.js';
@@ -117,15 +116,10 @@ export const JOBS = {
     }
   },
 
-  // A body in the lab stays in the lab. Research is one job being worked on by
-  // one pair of hands, and a scholar that wandered out to shovel and back left
-  // the bench cold for the length of two commutes while the chimney went on
-  // smoking, which is the building claiming something the crew deny.
-  [TYPE.SCHOLAR]: {
-    factory: newScholar,
-    want: () => S.scholars,
-    step: { work: stepScholar, shutIn: w => w.goal === 'in' }
-  },
+  // The scholar is gone with the lab. Research is a build now, done by builders
+  // at the construction bench, because works.js always drove the lab and the
+  // yard through one engine and the lab was a second name for it. See DESIGN.md,
+  // "The lab is deleted".
 
   // A purifier is behind a door, and a balloon is a door too.
   //

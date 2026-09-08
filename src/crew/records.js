@@ -7,7 +7,6 @@
 import { S } from '../state.js';
 import { now } from '../clock.js';
 import { rand } from '../rng.js';
-import { indoors } from '../lab.js';
 import { inHouse } from '../scrubhouse.js';
 import { JOB_OF } from '../upgrades.js';
 
@@ -137,7 +136,7 @@ export function wearRecord(w, from) {
 // exactly the bug that was just fixed for a body asleep behind its own door,
 // arriving by a road that fix did not cover.
 export const outOfYard = w =>
-  !!(w.inside || w.aloft || indoors(w) || inHouse(w) ||
+  !!(w.inside || w.aloft || inHouse(w) ||
      w.lifted || w.falling || w.dizzyUntil);
 
 // one frame of getting older, and of being somewhere

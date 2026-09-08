@@ -182,38 +182,11 @@ group('a hat is still on after a reload', async () => {
 
 // A lab with nothing to research is a room of people doing nothing, and there
 // is no button that takes them off it. So they take themselves off.
-group('a body put in the lab stays in the lab', async () => {
-  window.__abandon();                         // nothing for them to work on
-  window.__crew(0, 1);
-  window.__lab(true);
-  window.__assign('scholars', 1);
-  const sent = state();
-  const inside = runUntil(() => state().crewDetail.some(d => d.startsWith('s|in')), 200);
-  // LAB_IDLE_MS is twenty seconds: the grace to get some work started before
-  // the people you sent over give up on you
-  run(10);                                     // half way: still standing there
-  const waiting = state();
-  run(15);                                     // and well past it
-  const gone = state();
-  window.__crew(0, 0);
-  return [
-    ok(sent.scholars === 1, 'a body can be put on the lab', `${sent.scholars}`),
-    ok(inside, 'and it walks over and goes in'),
-    ok(waiting.scholars === 1,
-       'an empty lab does not turn people out the moment they arrive',
-       `${waiting.scholars}`),
-    // It keeps them. The lab used to turn its own people out after a while with
-    // nothing to research, which reads as thoughtful and is the building
-    // overruling the roster: you put somebody in, and some time later they were
-    // somewhere else without your having said so. An idle bench is a thing for
-    // you to notice, and the counter under the lab is where you act on it.
-    ok(gone.scholars === 1, 'and it keeps them until you say otherwise',
-       `${gone.scholars}`),
-    ok(gone.haulers === 0,
-       'and nobody is handed back to carrying without you saying so',
-       `${gone.haulers} carrying of ${gone.crew}`)
-  ];
-});
+// The lab's own group stood here: a body put in the lab stayed in the lab, an
+// empty lab did not turn its people out, and only the roster moved them. It is
+// gone with the building -- research is a build now, done by builders at the
+// construction bench, and what used to be a scholar is covered by the builder
+// checks in wave7b-build.test.mjs. See DESIGN.md, "The lab is deleted".
 
 group('the books report what was made, not what is left', async () => {
   window.__crew(6, 3);

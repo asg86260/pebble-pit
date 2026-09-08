@@ -470,3 +470,34 @@ export function stepWorks(dt) {
     }
   }
 }
+
+// --- the mark a finished work leaves -------------------------------------------
+// What a site does when one of its works lands, which is not what the row does:
+// the row's own `buy` is the rung going up. This is the announcing. It was the
+// lab's alone -- its work happened behind a door -- but a rung landing anywhere
+// usually lands while you are looking somewhere else, so every site leaves the
+// same tick over its building until its board is read. Wired in game.js through
+// `setDone`.
+//
+// It lived in lab.js, and moved here with the lab's deletion: a mark over a
+// station is a fact about a site, and sites are this file's business.
+//
+// The yard's own builds are the exception: a building arriving is its own
+// announcement -- it is standing there -- and a tick centered on the camera (the
+// yard has no box until something is rising) said nothing.
+export function workFinished(site, key) {
+  if (site !== 'yard') S.siteDone[site] = key;
+}
+
+// what finished at a site, in the words the row used
+export const doneName = site => {
+  const u = rowFor(S.siteDone[site]);
+  return u ? `${u.name} done` : 'work done';
+};
+
+// and reading that station's board is what clears its mark
+export function markDoneSeen(site) {
+  if (!S.siteDone[site]) return;
+  delete S.siteDone[site];
+  S.dirty = true;
+}

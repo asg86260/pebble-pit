@@ -48,7 +48,7 @@ import { drawShocks } from './render/shock.js';          // F4
 import { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 import { drawSky } from './render/sky.js';
 import { drawDraught, drawMuck, drawPuffs, drawRain, drawSmog } from './render/smog.js';
-import { drawLab, drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
+import { drawSchool, drawSmoke, drawBuildBench } from './render/stations.js';
 import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 
 // The drawing side's public surface, kept exactly as it was: the rest of the
@@ -73,7 +73,7 @@ export { drawCore, drawCoreAt, drawCoreBehind, drawPaid, drawAbyss, drawRift } f
 export { drawCount } from './render/counter.js';
 export { drawBelt, drawDrill, drawRam, drawRunSwitch, drawTiller, stepMachineSmoke } from './render/machines.js';
 export { drawPileMarks, overPileMark, pileMarkAt } from './render/pilemarks.js';   // wave7-ui
-export { drawLab, drawSchool, drawSmoke } from './render/stations.js';
+export { drawSchool, drawSmoke } from './render/stations.js';
 export { drawBridge, drawCut, drawFarm, drawFarmShed, drawQuarry, drawQuarryShed } from './render/sites.js';
 export { drawBench, drawBody, drawCart, drawDroppedHats, drawHat, drawIntro, drawKitStands,
          drawPointed, drawSays, drawWorkers } from './render/crew.js';
@@ -118,7 +118,6 @@ const LAYERS = [
   { name: 'ram', draw: drawRam },                // before the rock, so the hill stands in front of it
   { name: 'belt', draw: drawBelt },              // the road from the rock to the hole
   { name: 'sky', draw: drawSky },
-  { name: 'lab', draw: drawLab },
   { name: 'casino', draw: drawCasino },
   { name: 'scrub house', draw: drawScrub },
   { name: 'tower', draw: drawTower },

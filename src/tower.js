@@ -12,7 +12,7 @@
 // spell.
 
 import { wizMs, wizBite } from './wizard.js';
-import { STEP } from './lab.js';
+import { STEP } from './mult.js';
 import { S } from './state.js';
 import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,

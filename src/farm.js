@@ -22,7 +22,8 @@ import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
-import { mult } from './lab.js';
+import { mult } from './mult.js';
+import { FARM_MULT } from './upgrades/rows-mult.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -254,6 +255,8 @@ export function stepFarmhand(w, now, dt, c = null) {
 // ground standing on the ground you are breaking. The row that opens the farm
 // stays on the bench, because there is nowhere to walk to until it is bought.
 export const FARM_UPGRADES = [
+  // The plots' multiplier, which the lab used to sell from across the yard.
+  FARM_MULT,
   {
     key: 'farmplot',
     // A place, broken by the hands that work the row. See works.js.
@@ -327,7 +330,8 @@ export const FARM_UPGRADES = [
 ];
 
 export const FARM_SECTIONS = [
-  { title: 'the farm', keys: ['farmplot', 'tend', 'tiller', 'tunetiller'] }
+  // `labtend` is the multiplier over tending, beside the rung it multiplies.
+  { title: 'the farm', keys: ['farmplot', 'tend', 'labtend', 'tiller', 'tunetiller'] }
 ];
 
 

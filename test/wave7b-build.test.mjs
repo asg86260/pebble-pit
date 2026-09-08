@@ -19,6 +19,10 @@ const rich = () => {
   // The bench's door shows from the second rock -- the one piece of setup the
   // rows' own `show` asks about that the coin cannot buy.
   S.boulderNo = 2;
+  // These groups want any building to put up, and used the lab -- whose gate was
+  // the loosest in the game. The school's is the same shape; the apothecary is
+  // the second one they need and it wants the plots broken first.
+  S.farmOpen = true;
 };
 
 const yardWork = key => worksAt('yard').find(w => w.key === key) || null;
@@ -31,12 +35,12 @@ const openBench = () => {
 group('before the bench, a building rises exactly as today', async () => {
   rich();
   run(1);
-  const bought = window.__buy('unlocklab');
+  const bought = window.__buy('unlockschool');
   // The derived gang: a spare body walks over and puts it up, with nobody
   // assigned to anything -- which is the whole of the pre-bench behavior.
-  const landed = runUntil(() => S.labOpen, 300);
+  const landed = runUntil(() => S.schoolOpen, 300);
   return [
-    ok(bought, 'the lab row answers when it is pressed'),
+    ok(bought, 'the school row answers when it is pressed'),
     ok(landed, 'and the yard raises it with nobody assigned to building'),
     ok(S.builders === 0, 'and the derived gang stands down after it lands',
        `${S.builders}`)
@@ -48,9 +52,9 @@ group('with the bench open, a build waits fenced until a builder is assigned', a
   run(1);
   const benched = openBench();
   const zero = S.builders;
-  const bought = window.__buy('unlocklab');
+  const bought = window.__buy('unlockschool');
   run(30);
-  const waited = yardWork('unlocklab');
+  const waited = yardWork('unlockschool');
   const stood = waited ? waited.done : -1;
 
   // Assign one through the roster's own move, and watch the body WALK: its x
@@ -69,10 +73,10 @@ group('with the bench open, a build waits fenced until a builder is assigned', a
     }
     arrived = !!b && inBuildSite(b);
   }
-  const before = yardWork('unlocklab')?.done ?? 0;
+  const before = yardWork('unlockschool')?.done ?? 0;
   run(10);
-  const after = yardWork('unlocklab')?.done ?? 0;
-  const landed = runUntil(() => S.labOpen, 300);
+  const after = yardWork('unlockschool')?.done ?? 0;
+  const landed = runUntil(() => S.schoolOpen, 300);
 
   return [
     ok(benched, 'the construction bench is bought and raises itself'),
@@ -94,12 +98,12 @@ group('two builds and one post finish in sequence; a second post runs them at on
   run(1);
   openBench();
   window.__assign('builders', 1);
-  const b1 = window.__buy('unlocklab');
-  const b2 = window.__buy('unlockschool');
-  runUntil(() => (yardWork('unlocklab')?.done ?? 0) > 0, 60);
+  const b1 = window.__buy('unlockschool');
+  const b2 = window.__buy('unlockapothecary');
+  runUntil(() => (yardWork('unlockschool')?.done ?? 0) > 0, 60);
   run(5);
-  const first = yardWork('unlocklab')?.done ?? 0;
-  const queued = yardWork('unlockschool')?.done ?? 0;
+  const first = yardWork('unlockschool')?.done ?? 0;
+  const queued = yardWork('unlockapothecary')?.done ?? 0;
 
   // The ladder: a `buildposts` rung and a second builder, and both rise at
   // once. Sampled the moment the second body starts the queued one, while the
@@ -107,13 +111,13 @@ group('two builds and one post finish in sequence; a second post runs them at on
   // whole of the claim.
   const rung = window.__buy('buildposts');
   window.__assign('builders', 1);
-  runUntil(() => progressOfKey('yard', 'unlockschool') > 0 || !yardWork('unlocklab'), 60);
-  const a1 = yardWork('unlocklab')?.done ?? null;
-  const a2 = yardWork('unlockschool')?.done ?? null;
+  runUntil(() => progressOfKey('yard', 'unlockapothecary') > 0 || !yardWork('unlockschool'), 60);
+  const a1 = yardWork('unlockschool')?.done ?? null;
+  const a2 = yardWork('unlockapothecary')?.done ?? null;
   run(3);
-  const d1 = a1 != null && (yardWork('unlocklab')?.done ?? Infinity) > a1;
-  const d2 = a2 != null && (yardWork('unlockschool')?.done ?? Infinity) > a2;
-  const both = runUntil(() => S.labOpen && S.schoolOpen, 600);
+  const d1 = a1 != null && (yardWork('unlockschool')?.done ?? Infinity) > a1;
+  const d2 = a2 != null && (yardWork('unlockapothecary')?.done ?? Infinity) > a2;
+  const both = runUntil(() => S.schoolOpen && S.schoolOpen, 600);
 
   return [
     ok(b1 && b2, 'the yard takes a second build into its queue with one post'),

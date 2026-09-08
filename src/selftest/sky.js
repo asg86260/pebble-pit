@@ -14,7 +14,7 @@ export const TESTS = [
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
-    window.__lab(true);
+    window.__buildbench(true);
     const has = () => { buildShopFromTest(); return !!shop().querySelector('[data-key="unlockscrub"]'); };
 
     run(2);
@@ -66,7 +66,7 @@ export const TESTS = [
     await settle();
     window.__crew(4, 4);
     window.__grant({ cores: 9, spores: 40 });
-    window.__lab(true);
+    window.__buildbench(true);
     // To the brim rather than a hair over the line: a sky at the line only
     // *might* rain now -- the yard takes a look every few seconds and rolls for
     // it -- and a sky at the brim is certain to break at the next look.

@@ -14,7 +14,6 @@ import {
 } from './config.js';
 import { fmt } from './board.js';
 import { scrubCost } from './scrubhouse.js';
-import { labRooms } from './lab.js';
 import { craftCount } from './balloon.js';
 import { poopLeft } from './smog.js';
 import { S, pit, quarry, farm, lab, apothecary, school, casino, scrub, tower, outhouse } from './state.js';
@@ -34,7 +33,7 @@ import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
 import { syncWorkers } from './crew.js';
-import { mult } from './lab.js';
+import { mult } from './mult.js';
 import { buildShop } from './shop.js';
 import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows,
          busyBuilderSites, siteX, siteBox } from './works.js';
@@ -315,12 +314,12 @@ import { SCHOOL_ROWS } from './upgrades/rows-school.js';
 import { SCRUB_ROWS } from './upgrades/rows-scrub.js';
 import { TOWER_ROWS } from './upgrades/rows-tower.js';
 import { CASINO_ROWS } from './upgrades/rows-casino.js';
-import { LAB_ROWS } from './upgrades/rows-lab.js';
 import { APOTHECARY_ROWS } from './upgrades/rows-apothecary.js';
 import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
+import { MULT_ROWS } from './upgrades/rows-mult.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
 
@@ -369,14 +368,12 @@ const capOfBare = job =>
   // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
   // apothecary has broken standing room for. A second pot is a second body's.
   job === JOB.STIR ? S.apothPots :
-  // One body in the lab. It is a room with a bench in it, not a floor plan, and
-  // research is one thing being looked into at a time -- a second body standing
-  // in there was a second pair of hands on a job that has no second pair.
-  // One body per bench. It has always been one, and the note below is still the
-  // argument for it -- research is one thing being looked into at a time, and a
-  // second pair of hands on *one* bench is a queue. What the second bench buys
-  // is a second *thing*, not a second helper.
-  job === JOB.SCHOLAR ? labRooms() :
+  // No room for a scholar anywhere, because there is no lab: research is a build
+  // now and the bodies that do it are builders. Kept as a nought rather than
+  // deleted so a save written before the lab went can still be read -- it lands
+  // its scholars in the spare pool through `rebalance`, which is what a job with
+  // no room does. See DESIGN.md, "The lab is deleted".
+  job === JOB.SCHOLAR ? 0 :
   // One body in the scrubbing house too, and for the same reason: it is a shed
   // with a fan in it. A second body was a second pair of hands on a machine
   // that runs itself once somebody is standing in it -- the draught it makes is
@@ -844,12 +841,12 @@ export const UPGRADES = [
   ...SCRUB_ROWS,
   ...TOWER_ROWS,
   ...CASINO_ROWS,
-  ...LAB_ROWS,
   ...APOTHECARY_ROWS,
   ...TUNING_ROWS,
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
   ...BUILDBENCH_ROWS,
+  ...MULT_ROWS,
   ...SHIELD_ROWS
 ];
 
@@ -868,7 +865,8 @@ export const SECTIONS = [
   // sold at the block they live in, under "their gear" -- see crewboard.js. The
   // rows themselves are still in UPGRADES below, because moving a row between
   // boards is a question of which sheet draws it and nothing else.
-  { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'ram', 'tuneram'] },
+  // `labswing` is the multiplier over the swing, beside the rung it multiplies.
+  { title: 'the rock', keys: ['rockhandpick', 'rockhandspeed', 'labswing', 'ram', 'tuneram'] },
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
   { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
@@ -890,7 +888,7 @@ export const SECTIONS = [
   // about a place is made at the place, and these cannot be, because the place
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'put up', keys: [
-    'unlockquarry', 'unlockfarm', 'unlocklab', 'unlockapothecary', 'unlockcasino',
+    'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool', 'unlockscrub'
   ] }
 ];

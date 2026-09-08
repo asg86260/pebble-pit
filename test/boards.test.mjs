@@ -20,7 +20,7 @@ import { group, ok, state, openSites } from './helpers.mjs';
 // definitions, so a direct import is the same table the game builds from; helpers
 // already reaches for `src/quarry.js` this way.
 import { UPGRADES } from '../src/upgrades.js';
-import { LAB_UPGRADES } from '../src/lab.js';
+import { BUILDBENCH_UPGRADES } from '../src/upgrades/rows-buildbench.js';
 import { TOWER_UPGRADES } from '../src/tower.js';
 import { SCHOOL_UPGRADES } from '../src/school.js';
 import { SCRUB_UPGRADES } from '../src/scrubhouse.js';
@@ -32,7 +32,7 @@ import { APOTHECARY_UPGRADES } from '../src/apothecary.js';
 group('every row on every board has somewhere to be drawn', async () => {
   window.__reset();
   openSites();
-  window.__lab(true);
+  window.__buildbench(true);
 
   const boards = window.__boards();
   const orphans = [];
@@ -65,7 +65,7 @@ group('every row on every board has somewhere to be drawn', async () => {
 group('a row no section names is still drawn', async () => {
   window.__reset();
   openSites();
-  window.__lab(true);
+  window.__buildbench(true);
   window.__grant({ shards: 400, spores: 400, cores: 9 });
   window.__tip(20000);
 
@@ -94,7 +94,7 @@ group('a row no section names is still drawn', async () => {
 // It reads the static shape, not a running yard: no seed, no frames. `group`
 // still wraps it so a fistful of violations reports as a fistful.
 group('the shop keeps to one grammar per kind', async () => {
-  const rows = [...UPGRADES, ...LAB_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
+  const rows = [...UPGRADES, ...BUILDBENCH_UPGRADES, ...TOWER_UPGRADES, ...SCHOOL_UPGRADES,
                 ...SCRUB_UPGRADES, ...QUARRY_UPGRADES, ...FARM_UPGRADES,
                 ...APOTHECARY_UPGRADES];
 

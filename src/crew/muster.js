@@ -37,7 +37,6 @@ const ARRIVED = {
   builders: w => w.type === TYPE.BUILD && w.goal === 'at',
   // Through the door and at the bench. A scholar crossing the yard is not doing
   // research yet, which is the same rule the purifiers keep.
-  scholars: w => w.type === TYPE.SCHOLAR && w.goal === 'in',
   // Through the door and teaching -- the scholar's rule at the school. The
   // trades on the school's board accrue only against this. (wave6-sim, item 1)
   teachers: w => w.type === TYPE.TEACH && w.goal === 'in'

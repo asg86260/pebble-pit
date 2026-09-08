@@ -9,7 +9,6 @@ import { now } from '../clock.js';
 import { DIZZY_MS, HOVER_PAUSE_MS, HURL, HURL_MAX, P, SHAKE_FLING, SHAKE_LIFT, SHAKE_SCATTER, SHAKE_SHED, SHAKE_TURNS, SHAKE_WINDOW, WORKER } from '../config.js';
 import { bell, spawnChip } from '../dust.js';
 import { throwVel } from '../hands.js';
-import { indoors } from '../lab.js';
 import { underground } from '../quarry.js';
 import { inHouse } from '../scrubhouse.js';
 import { S } from '../state.js';
@@ -35,7 +34,7 @@ export function workerAt(x, y) {
   const pad = P * 1.5;
   for (let i = S.workers.length - 1; i >= 0; i--) {
     const w = S.workers[i];
-    if (w.inside || indoors(w) || inHouse(w) || underground(w)) continue;
+    if (w.inside || inHouse(w) || underground(w)) continue;
     if (x < w.x - pad || x > w.x + WORKER + pad) continue;
     if (y < w.y - pad || y > w.y + WORKER + pad) continue;
     return w;

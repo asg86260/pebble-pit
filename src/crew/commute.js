@@ -18,7 +18,6 @@ import { spareKit } from '../upgrades.js';
 import { bailOut } from '../balloon.js';
 import { quarryFace } from '../quarry.js';
 import { plotX } from '../farm.js';
-import { labDoor } from '../lab.js';
 import { scrubDoor } from '../scrubhouse.js';
 import { schoolDoor } from './teacher.js';
 import { apothecaryDoor } from '../apothecary.js';
@@ -53,7 +52,6 @@ function handStationX(type) {
   if (type === TYPE.ROCK) return S.cx - WORKER / 2;
   if (type === TYPE.QUARRY) return quarryFace();
   if (type === TYPE.FARM) return plotX(0);
-  if (type === TYPE.SCHOLAR) return labDoor() - WORKER / 2;
   if (type === TYPE.PURIFY) return scrubDoor() - WORKER / 2;
   if (type === TYPE.TEACH) return schoolDoor() - WORKER / 2;
   if (type === TYPE.STIR) return apothecaryDoor() - WORKER / 2;

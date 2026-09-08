@@ -26,7 +26,7 @@ import { KINDS } from './shield.js';
 import { syncWorkers, wearKitOnLoad, keepOf, wearRecord, newRecord, FACTORY } from './crew.js';
 import { rebalance, JOBS } from './upgrades.js';
 import { buildShop } from './shop.js';
-import { resetRates } from './lab.js';
+import { resetRates } from './stats.js';
 import { seed, reseed, rngState, setRngState } from './rng.js';
 import { JOB, TYPE } from './jobs.js';
 
@@ -543,11 +543,26 @@ export function restore() {
   // them: the game does not take a body off a plot it used to have.
   S.benchLevel = Math.max(+s.benchLevel || 0, (s.quarriers ?? s.spelunkers ?? 0) - QUARRY_BENCH0);
   S.plotLevel = Math.max(+s.plotLevel || 0, (s.farmhands || 0) - FARM_PLOTS0);
-  S.scholars = s.scholars ?? s.labbers ?? 0;
+  // The lab is gone, so nobody is a scholar any more. The bodies are not: they
+  // are read out of the save like everybody else and `rebalance` below hands
+  // them to the spare pool, because a job whose room is nought is a job with
+  // nobody in it. Read rather than dropped so the headcount still adds up --
+  // `S.crew` below counts them -- or a save with four in the lab would come back
+  // four bodies short. See DESIGN.md, "The lab is deleted".
+  S.scholars = 0;
+  const wasScholars = s.scholars ?? s.labbers ?? 0;
+  // And what the lab's own two ladders were worth is handed to the trestle's,
+  // which are the same two things under new names: a bench held a piece of
+  // research, a post holds a build, and instruments and a better hammer are both
+  // how fast one pair of hands gets through it. A player who bought the lab out
+  // keeps what they paid for.
+  if (s.labRooms > 1) S.buildPostLevel = Math.max(+s.buildPostLevel || 0, s.labRooms - 1);
+  if (s.labKitLevel) S.buildPaceLevel = Math.max(+s.buildPaceLevel || 0, +s.labKitLevel || 0);
   // A save from before the crew was one pool has a headcount per job and no
   // total. Adding them up is the whole migration: the same bodies, on the same
   // jobs, and now they can be moved.
-  S.crew = s.crew ?? (s.rockhands ?? s.miners ?? 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0);
+  S.crew = s.crew ?? (s.rockhands ?? s.miners ?? 0) + (s.haulers || 0) + (S.quarriers || 0) + (s.farmhands || 0)
+                     + wasScholars;
   // Before the `rebalance()` below, and that ordering is the whole point: a
   // restored machine changes what its station's cap *is*, and a rebalance run
   // against the old cap leaves five bodies standing at a cut that now holds one.

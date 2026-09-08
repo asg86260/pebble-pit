@@ -33,7 +33,8 @@ import { stepCore } from './core.js';
 import { stepShield } from './shield.js';
 import { stepMeteor, stepSparkle } from './meteor.js';
 import { stepSummon } from './wizard.js';
-import { sampleRates, stepLab, stepSmoke, workFinished } from './lab.js';
+import { sampleRates } from './stats.js';
+import { workFinished } from './works.js';
 import { stepGrit } from './grit.js';
 import { stepShocks } from './shock.js';        // F4
 import { stepWorks, setGround, setDone, setFoot, setRooms } from './works.js';
@@ -232,7 +233,6 @@ export const STEPS = [
   { name: 'machines', step: c => stepMachines(c.now) },   // and whatever the machines got through
   { name: 'records',  step: c => stepRecords(c.dt) },     // and everybody gets a little older
   { name: 'breaks',   step: c => stepBreaks(c.now) },     // and what the stopped ones get up to
-  { name: 'lab',      step: c => stepLab(c.dt) },         // and whatever the lab is working on
   // The collapse does NOT take the camera. It was tempting -- it is the one
   // thing that happens to you rather than because you pressed something -- but
   // the view is where you put it, and a yard that yanks it away is a yard
@@ -241,7 +241,6 @@ export const STEPS = [
   // noticed. The hole is there when you next look at it.
   { name: 'works',        step: c => stepWorks(c.dt) },   // and whatever the yard is building
   { name: 'machinesmoke', step: c => stepMachineSmoke(c.now) },  // and the stacks over the machines
-  { name: 'smoke',        step: c => stepSmoke(c.now, c.dt) },   // which the chimney says out loud
   { name: 'grit',         step: c => stepGrit(c.dt) },    // and the chips off a builder's hammer
   { name: 'shocks',       step: c => stepShocks(c.dt) },  // F4: and the ring a crit left going out
   { name: 'casino',       step: c => stepCasino(c.dt) },  // and the wheel, if there is anything on the table

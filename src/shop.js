@@ -11,7 +11,6 @@ import { UPGRADES, SECTIONS, MARK, buy, gainText, billOf, canPay, purse, priceTe
 import { takesTime, stalled, BUILDER_SITES, worksAt, rowFor } from './works.js';
 import { closeBoard, closeSubmenu } from './board.js';
 import { tookLook } from './world.js';
-import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { CASINO_UPGRADES, CASINO_SECTIONS } from './casino.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
@@ -25,7 +24,6 @@ import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildb
 import { crewRows, crewSections, crewList, crewListSections } from './crewboard.js';
 
 const shopEl = document.getElementById('shop');
-const labEl = document.getElementById('labshop');
 const schoolEl = document.getElementById('schoolshop');
 const casinoEl = document.getElementById('casinoshop');
 const crewEl = document.getElementById('crewshop');
@@ -537,16 +535,11 @@ export function refresh(el, list, headcount) {
     // actually in it rather than a guess about how many there will be -- see the
     // note by `.rows button .cost` in style.css.
 
-    // A piece of research under way says so in place of its numbers, and
-    // nothing else on that board can be started until it is finished.
-    if (S.research && list === LAB_UPGRADES) {
-      const mine = S.research.key === u.key;
-      say(what, u.name);
-      sayHTML(gain, mine ? 'working' : '');   // how far along is a bar over the lab now
-      sayHTML(price, mine ? '' : bill);
-      grey(row, true);
-      continue;
-    }
+    // The lab's own branch stood here: a piece of research under way said so in
+    // place of its numbers, and nothing else on that board could be started
+    // until it landed. It went with the lab, and nothing replaced it because
+    // nothing had to -- a multiplier is a build now, so the branch below, which
+    // every other site has always used, says the same thing about it.
 
     // A row past the bench is a thing the yard has to build, and while it is
     // building the row says so where the numbers go -- the same shape the lab
@@ -677,7 +670,6 @@ const BOARDS = {
   bench:  () => [shopEl, UPGRADES.filter(u => !u.board), SECTIONS, 'nothing to sell'],
   // The table is empty between hands, and says so rather than standing blank.
   casino: () => [casinoEl, CASINO_UPGRADES, CASINO_SECTIONS, 'nothing on the table'],
-  lab:    () => [labEl, LAB_UPGRADES, LAB_SECTIONS, 'nothing to look into'],
   scrub:  () => [scrubEl, SCRUB_UPGRADES, SCRUB_SECTIONS, 'nothing to fit'],
   // The quarry and the plots run out: there is only so far down and only so much
   // ground. A board with nothing left on it says so rather than standing blank.
@@ -729,4 +721,4 @@ export function buildShop() {
 
 
 
-export { UPGRADES, LAB_UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };
+export { UPGRADES, SCHOOL_UPGRADES, CASINO_UPGRADES, QUARRY_UPGRADES, FARM_UPGRADES };

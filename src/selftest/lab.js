@@ -65,7 +65,7 @@ export const TESTS = [
 
   ['the lab smokes while it is being worked', async () => {
     window.__grant({ shards: 20, cores: 9, dust: 30000 });
-    window.__lab(true);
+    window.__buildbench(true);
     window.__crew(0, 2);
     run(1);
     const idle = state();
@@ -157,7 +157,7 @@ export const TESTS = [
   ['research is started with shards and finished with people', async () => {
     window.__abandon();                          // whatever ran before us
     window.__crew(0, 3);
-    window.__lab(true);
+    window.__buildbench(true);
     window.__grant({ shards: 60, spores: 60, dust: 30000 });
     run(1);
 
@@ -236,7 +236,7 @@ export const TESTS = [
 
     window.__abandon();
     window.__crew(0, 3);
-    window.__lab(true);
+    window.__buildbench(true);
     window.__grant({ shards: 60, spores: 60, dust: 30000 });
     run(1);
 

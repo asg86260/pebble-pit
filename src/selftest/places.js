@@ -35,7 +35,7 @@ export const TESTS = [
     await sleep(150);
     const withShard = { lab: has('unlocklab') };
 
-    window.__lab(true);
+    window.__buildbench(true);
     await sleep(150);
 
     window.__crew(0, 0);

@@ -6,7 +6,7 @@ import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse 
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
-import { LAB_UPGRADES, markDoneSeen } from './lab.js';
+import { markDoneSeen } from './works.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
@@ -22,7 +22,6 @@ import { refresh, markRowsSeen, buildCrew, buildCrewList, buildShop, buildBoard,
 import { now } from './clock.js';
 
 const shopEl = document.getElementById('shop');
-const labShopEl = document.getElementById('labshop');
 const schoolShopEl = document.getElementById('schoolshop');
 const casinoShopEl = document.getElementById('casinoshop');
 const crewShopEl = document.getElementById('crewshop');
@@ -38,7 +37,7 @@ const looShopEl = document.getElementById('looshop');
 const buildShopEl = document.getElementById('buildshop');
 const panelEl = document.getElementById('panel');
 const purseEl = document.getElementById('purse');
-const pages = { bench: document.getElementById('board'), lab: document.getElementById('lab'),
+const pages = { bench: document.getElementById('board'),
                 school: document.getElementById('school'), casino: document.getElementById('casino'),
                 house: document.getElementById('house'),
                 scrub: document.getElementById('scrub'),
@@ -114,7 +113,6 @@ const listFor = which =>
   // it belongs to and the bench takes the rest, which is what every row used to
   // be -- see the note by `CREW_GEAR` in crewboard.js.
   which === 'bench' ? UPGRADES.filter(u => !u.board) :
-  which === 'lab' ? LAB_UPGRADES :
   which === 'school' ? SCHOOL_UPGRADES :
   which === 'casino' ? CASINO_UPGRADES :
   which === 'scrub' ? SCRUB_UPGRADES :
@@ -130,14 +128,13 @@ const listFor = which =>
 // Every station that has a board. One list, so that a thing which is true of all
 // of them -- the mark under the foot of it, for one -- is written once, and the
 // next station gets it by being added here.
-export const STATIONS = ['bench', 'lab', 'school', 'casino', 'scrub', 'quarry',
+export const STATIONS = ['bench', 'school', 'casino', 'scrub', 'quarry',
                          'farm', 'apothecary', 'tower', 'house', 'stats', 'outhouse',
                          'buildbench'];
 
 // whether a station is there at all yet
 const standing = which =>
   which === 'bench' ? S.seenBench :
-  which === 'lab' ? S.labOpen :
   which === 'school' ? S.schoolOpen :
   which === 'casino' ? S.casinoOpen :
   which === 'scrub' ? S.scrubOpen :
@@ -203,7 +200,6 @@ const near = (r, x, y) => x > r.x - P * 8 && x < r.x + r.w + P * 8 &&
                           y > r.y - P * 8 && y < r.y + r.h + P * 4;
 
 export const nearBench = (x, y) => S.seenBench && near(bench, x, y);
-export const nearLab = (x, y) => S.labOpen && near(lab, x, y);
 export const nearSchool = (x, y) => S.schoolOpen && near(school, x, y);
 export const nearCasino = (x, y) => S.casinoOpen && near(casino, x, y);
 export const nearScrub = (x, y) => S.scrubOpen && near(scrub, x, y);
@@ -786,7 +782,6 @@ function settle(want) {
   const wasAt = at;
   at = want;
   S.boardOpen = want === 'bench';
-  S.labBoardOpen = want === 'lab';
   S.schoolBoardOpen = want === 'school';
   S.casinoBoardOpen = want === 'casino';
   S.houseBoardOpen = want === 'house';
@@ -922,7 +917,6 @@ function fill(which) {
   // finished or you walked over because of the mark
   markDoneSeen(which);
   if (which === 'bench') refresh(shopEl, UPGRADES, headcount);
-  if (which === 'lab') refresh(labShopEl, LAB_UPGRADES, null);
   // and the school's headings count kit rather than bodies: what is on the
   // stand there is the thing you are deciding about
   if (which === 'school') refresh(schoolShopEl, SCHOOL_UPGRADES, kitCount);

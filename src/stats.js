@@ -141,3 +141,44 @@ export const STATS_UPGRADES = BOOKS.map(b => ({
 export const STATS_SECTIONS = [
   { title: 'coming in', keys: STATS_UPGRADES.map(u => u.key) }
 ];
+
+// --- what the books are reading ------------------------------------------------
+// Smoothed, because a raw per-second count of something that arrives in lumps
+// reads as noise.
+//
+// This lived at the bottom of lab.js, which it never had anything to do with:
+// what the yard earns a minute is the books' business, and the books are here.
+// It moved when the lab was deleted -- see DESIGN.md, "The lab is deleted".
+
+// All of these only ever go up: a rate is what the operation *made*, and reading
+// it off the balance meant a big purchase showed as forty thousand dust a minute
+// of negative production.
+const WATCH = ['banked', 'shards', 'spores', 'cores'];
+const EASE = 0.25;                         // how fast the reading follows reality
+
+export const rates = { banked: 0, shards: 0, spores: 0, cores: 0 };
+let lastBooks = null, lastBooksAt = 0;
+
+// after a reset the books are meaningless: a counter going to zero is not a
+// negative rate
+export function resetRates() {
+  lastBooks = null;
+  for (const k of WATCH) rates[k] = 0;
+}
+
+export function sampleRates(now) {
+  if (!lastBooks) { lastBooks = snapshot(); lastBooksAt = now; return; }
+  const dt = now - lastBooksAt;
+  if (dt < 500) return;                    // often enough to feel live, rarely enough to be steady
+
+  const nowVals = snapshot();
+  for (const k of WATCH) {
+    const perMin = (nowVals[k] - lastBooks[k]) * 60000 / dt;
+    rates[k] += (perMin - rates[k]) * EASE;
+    if (Math.abs(rates[k]) < 0.001) rates[k] = 0;
+  }
+  lastBooks = nowVals;
+  lastBooksAt = now;
+}
+
+const snapshot = () => ({ banked: S.banked, shards: S.shards, spores: S.spores, cores: S.cores });

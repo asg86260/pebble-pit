@@ -438,7 +438,7 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   // finished yard buys -- so its row is not offered until the plots, the cut and
   // the lab are all up.
   openSites();
-  window.__lab(true);
+  window.__buildbench(true);
   // Hands spare to put it up: a building past the bench is built by the yard,
   // and a yard with nobody in it builds nothing. See works.js.
   window.__crew(0, 3);

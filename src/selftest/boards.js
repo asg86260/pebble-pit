@@ -123,7 +123,7 @@ export const TESTS = [
     window.__crew(4, 3, 2, 2);
     window.__air({ janitors: 1 });
     run(20);
-    const boards = ['bench', 'house', 'quarry', 'farm', 'school', 'scrub', 'lab',
+    const boards = ['bench', 'house', 'quarry', 'farm', 'school', 'scrub',
                     'tower', 'casino'];
     const bad = [];
     let seen = 0;
@@ -201,7 +201,7 @@ export const TESTS = [
     // finished yard buys -- so its row does not appear until the plots, the cut
     // and the lab are all standing.
     window.__crew(0, 0, 1, 1);
-    window.__lab(true);
+    window.__buildbench(true);
     window.__crew(0, 0);
     run(30);
     window.__build();
@@ -616,7 +616,7 @@ export const TESTS = [
     // enough of everything that every row on every board is showing
     window.__crew(4, 3);
     window.__grant({ cores: 6, shards: 4000, spores: 4000, sparks: 400 });
-    window.__lab(true);
+    window.__buildbench(true);
     window.__school({ open: true });
     window.__loo(true);
     window.__air({ open: true, purifiers: 1 });

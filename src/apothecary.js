@@ -797,7 +797,7 @@ export const APOTHECARY_SECTIONS = [
 
 // The jobs a dose can favor, in the order the dial walks them. Null (whoever is
 // nearest) is the step before the first and after the last.
-const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
+const PREFER_JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.PURIFY, JOB.HAUL, JOB.WIZARD];
 // The jobs the dial actually offers right now: only those some tonic a pot is
 // SET to can land on (item 22). A dial listing "haulers" while every pot is on
 // stew would be offering a preference no dose can honor. With no pot set, the

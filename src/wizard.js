@@ -22,7 +22,7 @@ import { P, WORKER, WIZ_MS, WIZ_RISE, WIZ_BOB, WIZ_SPIN,
          WIZ_TRAIL_MS, WIZ_TRAIL_LIFE, BROLLY_FALL } from './config.js';
 import { frames } from './clock.js';
 import { S, sky } from './state.js';
-import { STEP } from './lab.js';
+import { STEP } from './mult.js';
 import { walkY } from './world.js';
 import { meteorAlive, nextCell, fire, orbitR, summoning, summon, sparkle } from './meteor.js';
 import { domeRising, domeSpot, domeOrbitR, pourDome } from './shield.js';

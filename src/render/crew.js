@@ -13,7 +13,6 @@ import { MUCK_TONE, P, SHARD_CELL, WORKER } from '../config.js';
 import { atHome } from '../crew.js';
 import { buriedAt, buriedVisible } from '../intro.js';
 import { HAT_TALL, KIT_MARK, wearing } from '../kit.js';
-import { indoors } from '../lab.js';
 import { underground } from '../quarry.js';
 import { drawCoreGlow } from '../render/cores.js';
 import { drawRoster, kitStands } from '../roster.js';
@@ -350,7 +349,7 @@ export function drawPointed() {
   const t = now();
   for (const w of S.workers) {
     if (!w.pointed || w.pointed < t) continue;
-    if (underground(w) || indoors(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
+    if (underground(w) || inHouse(w) || atPot(w) || atHome(w)) continue;
     const bob = Math.round(Math.sin(t / 140) * 1.5) * P;
     const x = Math.round(w.x) + WORKER / 2;
     const top = Math.round(w.y) - P * 5 + bob;
@@ -364,7 +363,7 @@ export function drawPointed() {
 
 export function drawSays() {
   for (const w of S.workers) {
-    if (!w.say || underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
+    if (!w.say || underground(w) || inHouse(w) || atHome(w)) continue;
     drawSay(w);
   }
   ctx.fillStyle = '#000';
@@ -496,7 +495,7 @@ export function drawWorkers() {
     // stirrer is NOT hidden -- it stands at the pot's left and stirs in plain
     // sight, so `atPot` is not a reason to skip it here (it still gates the
     // brew clock and the count in apothecary.js).
-    if (underground(w) || indoors(w) || inHouse(w) || atHome(w)) continue;
+    if (underground(w) || inHouse(w) || atHome(w)) continue;
 
     const look = LOOK[w.type] || PLAIN;
     const throwOn = w.lunge || 0;

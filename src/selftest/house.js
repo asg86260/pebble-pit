@@ -419,7 +419,7 @@ export const TESTS = [
     // The ground up, so the rows that carry a note are on the bench: the tower
     // is one of them and it is the last thing the chain offers now.
     window.__crew(0, 0, 1, 1);
-    window.__lab(true);
+    window.__buildbench(true);
     window.__crew(4, 2);
     run(30);
     window.__board('bench');

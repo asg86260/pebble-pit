@@ -31,7 +31,7 @@ import { makeMeteor } from './meteor.js';
 import { WIZ_BREW_MS, WORKER } from './config.js';
 import { seatRift } from './rift.js';
 import { now as clockNow } from './clock.js';
-import { finish } from './lab.js';
+import { finish } from './mult.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
 import { rosterReport, rosterHit } from './roster.js';
 import { JOB_MACHINE } from './machines.js';
@@ -40,7 +40,6 @@ import { buildShop, refresh } from './shop.js';
 import { machine, MACHINES } from './machines.js';
 import { UPGRADES, SECTIONS, buy as buyRow, rungOf, maxed, billOf, take, HOUSE_ROW } from './upgrades.js';
 import { TOWER_UPGRADES, TOWER_SECTIONS } from './tower.js';
-import { LAB_UPGRADES, LAB_SECTIONS } from './lab.js';
 import { SCHOOL_UPGRADES, SCHOOL_SECTIONS } from './school.js';
 import { SCRUB_UPGRADES, SCRUB_SECTIONS } from './scrubhouse.js';
 import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
@@ -471,7 +470,13 @@ export const coldReload = () => {
   S.dirty = true;
 };
 
-export const openLab = (open = true) => { S.labOpen = open; buildShop(); S.dirty = true; };
+
+// dev: the trestle up, without paying for it.
+//
+// It replaced `__lab`, and the checks that called that one now call this: what
+// they wanted was the multiplier rows on a board, and the construction bench is
+// what gates them since the lab went. See DESIGN.md, "The lab is deleted".
+export const openBuildBench = (open = true) => { S.buildbenchOpen = open; buildShop(); S.dirty = true; };
 
 // dev: the shed, without paying for it -- for a look at what the crew do with it
 export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
@@ -602,7 +607,7 @@ export const upgrades = () => UPGRADES;
 // `null` puts them all back. Only a check ever calls this.
 let unsectioned = null;
 export const unsection = key => {
-  const all = [SECTIONS, LAB_SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
+  const all = [SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
                SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS];
   if (unsectioned) {
     for (const [sect, keys] of unsectioned) sect.keys = keys;
@@ -632,7 +637,6 @@ export const boards = () => [
   { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
   { name: 'buildbench', keys: BUILDBENCH_UPGRADES.map(u => u.key),
                                                           sections: BUILDBENCH_SECTIONS.map(x => x.keys) },
-  { name: 'lab',    keys: LAB_UPGRADES.map(u => u.key),    sections: LAB_SECTIONS.map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
   { name: 'school', keys: SCHOOL_UPGRADES.map(u => u.key), sections: SCHOOL_SECTIONS.map(x => x.keys) },
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
@@ -663,7 +667,7 @@ export const allRows = () => everyRow().map(u => ({
 // The casino's rows are in here too, for the same reason the station boards
 // were added: a check that wants to put a chip down should put it down through
 // the row that puts it down, prices and rules and dead states and all.
-const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...LAB_UPGRADES,
+const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...BUILDBENCH_UPGRADES,
                         // The outhouse board's own rows -- `unlockouthouse`
                         // itself is a bench row in UPGRADES above -- and
                         // `__buy('loopost')` has to keep reaching them or every
@@ -967,7 +971,7 @@ export const HANDLES = {
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection,
-  __lab: openLab, __research: finishResearch, __grant: grant, __dose: dose,
+  __buildbench: openBuildBench, __research: finishResearch, __grant: grant, __dose: dose,
   __spend: spendDust,
   // Pay a price in any coin, through the very function every row's bill goes
   // through. Not a way of setting a counter: what a check using this is about

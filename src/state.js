@@ -633,6 +633,11 @@ export const SAVED_BY_HAND = [
   JOB.ROCK,            // renamed from miners, and read under both names
   'rockhandSpeedLevel',
   'rockhandPickLevel',    // and from when one pick row bought both
+  // The lab is gone and nobody is ever a scholar again, but the field stays
+  // saved so a save written before it went still round-trips: `restore` reads
+  // the old count to keep the headcount right and then lands those bodies in
+  // the spare pool. See DESIGN.md, "The lab is deleted".
+  JOB.SCHOLAR,
   'seenShard',
   'quarryOpen',           // renamed from the cave, along with the three below
   JOB.QUARRY,
@@ -641,7 +646,6 @@ export const SAVED_BY_HAND = [
   'quarryCells',          // how deep each column has been dug
   'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save
   'seenSpore',
-  JOB.SCHOLAR,             // renamed from labbers
   'plotLevel',            // grandfathered, the way `benchLevel` is
   'introDone',            // an old save with anybody hired has plainly had its opening
   'reunionDone',

@@ -12,7 +12,7 @@ export const TESTS = [
   ['a body put in the lab stays in it, work or no work', async () => {
     newRun();
     await settle();
-    window.__lab(true);
+    window.__buildbench(true);
     window.__crew(0, 3, 0, 0, 2);                // two of the five in the lab
     // Stone and dust: `labswing` is priced in both, like every row -- see
     // `billOf` in upgrades.js -- so a purse with only stone in it cannot start

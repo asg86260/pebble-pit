@@ -17,7 +17,6 @@ import { HOUSE_CUBE } from './config.js';
 import { JOB_OF as JOBS_AT, HOUSE_ROW, UPGRADES } from './upgrades.js';
 import { follow, atStation } from './world.js';
 import { showCrewList } from './board.js';
-import { indoors } from './lab.js';
 import { inHouse as inScrubHouse } from './scrubhouse.js';
 import { now } from './clock.js';
 import { POINT_MS } from './config.js';
@@ -54,7 +53,7 @@ export function houseRect() {
 // the scrubbing house was added without one -- read as `undefined` on its row,
 // which is the board saying it does not know where one of its own people is.
 const AT = { rockhands: 'on the rock', haulers: 'at the pit', quarriers: 'in the quarry',
-             farmhands: 'at the farm plots', scholars: 'in the lab',
+             farmhands: 'at the farm plots',
              purifiers: 'at the scrubbing house',
              janitors: 'clearing up' };
 
@@ -65,7 +64,6 @@ export function whereIs(w) {
   // Through a door is not the same as standing at one, and it is the answer to
   // "where is it" for the two jobs that have a door: a body you cannot see is a
   // body the board has to account for, or you go looking for them in the yard.
-  if (indoors(w)) return 'inside the lab';
   if (inScrubHouse(w)) return 'inside the scrubbing house';
 
   // Standing on it beats what it is doing on it. A rockhand between swings, one
@@ -196,7 +194,7 @@ function point(w) {
 // Read from UPGRADES rather than copied, so these are the same row objects the
 // game already prices, gates and builds -- moving a row between boards is a
 // question of which sheet draws it, and nothing else.
-export const CREW_GEAR = ['haulcarry', 'haulpace', 'harness', 'boots', 'belt', 'tunebelt'];
+export const CREW_GEAR = ['haulcarry', 'haulpace', 'labhaul', 'harness', 'boots', 'belt', 'tunebelt'];
 // Read when asked, never at load: upgrades.js reaches this file on the way to
 // building UPGRADES, so the ring is still closing while this module's body runs
 // and a list gathered here would be `undefined`. Same trick, same reason, as

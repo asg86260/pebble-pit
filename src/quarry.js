@@ -21,7 +21,8 @@ import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
-import { mult } from './lab.js';
+import { mult } from './mult.js';
+import { QUARRY_MULT } from './upgrades/rows-mult.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -821,6 +822,8 @@ export function cellMs() {
 // The row that *opens* it stays on the bench, because you cannot walk up to a
 // quarry that has not been dug yet.
 export const QUARRY_UPGRADES = [
+  // The cut's multiplier, which the lab used to sell from across the yard.
+  QUARRY_MULT,
   {
     key: 'quarrybench',
     // A place, and the cut's own gang takes it out. While the quarriers are
@@ -899,7 +902,10 @@ export const QUARRY_UPGRADES = [
 // One heading. The quarry is one place and everything on this board is about the
 // same hole, so a second would be a heading for the sake of having two.
 export const QUARRY_SECTIONS = [
-  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'jaw', 'tunejaw'] }
+  // `labcave` is the multiplier over the cut's pace, beside the rung it
+  // multiplies -- it was the lab's, one board and one walk away. See DESIGN.md,
+  // "The lab is deleted".
+  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'labcave', 'jaw', 'tunejaw'] }
 ];
 
 

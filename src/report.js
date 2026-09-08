@@ -36,7 +36,11 @@ import { rockFootY, dropZone, depthOf } from './rock.js';
 import { pitCapacity, pitDepth, pitFull } from './pit.js';
 import { quarryFace, quarryShape, ladder, seamShards, dugShare, quarryDone } from './quarry.js';
 import { coreHome } from './core.js';
-import { mult, rates, workFor, onTheGo, labRooms, labPace } from './lab.js';
+import { mult, workFor, FIELD } from './mult.js';
+// What multipliers are being worked on right now. They are builds at the yard's
+// site, so this picks the multiplier rows out of whatever the yard is putting up.
+const research = () => worksAt('yard').filter(w => FIELD[w.key]);
+import { rates } from './stats.js';
 import { pitFree, lifted, commutePace } from './crew.js';
 import { AIR, airReport } from './air.js';
 import { skyReport } from './weather.js';
@@ -294,15 +298,14 @@ export const snapshot = () => ({
   grit: S.grit.length,        // chips in the air off a builder's hammer
   houseSmoke: S.smoke.filter(p => p.house).length,
   shutters: [...S.shutters].sort((a, b) => a - b),
-  // The lab's pieces, off the works the whole yard uses. Reported under the old
-  // names because what a check asks about is the lab, not where the field lives.
-  research: onTheGo()[0] ? { key: onTheGo()[0].key, done: onTheGo()[0].done,
-                             need: onTheGo()[0].of, at: +progressOf(onTheGo()[0]).toFixed(3) } : null,
-  research2: onTheGo()[1] ? { key: onTheGo()[1].key, done: onTheGo()[1].done,
-                              need: onTheGo()[1].of } : null,
-  labRooms: labRooms(),
-  labKitLevel: S.labKitLevel || 0,
-  labPace: +labPace().toFixed(3),
+  // A multiplier being worked on, off the works the whole yard uses. It is a
+  // build at the yard's own site now that the lab has gone, and it keeps the
+  // name `research` because that is what a check asks about -- what it is
+  // called, not which site it runs at.
+  research: research()[0] ? { key: research()[0].key, done: research()[0].done,
+                              need: research()[0].of, at: +progressOf(research()[0]).toFixed(3) } : null,
+  research2: research()[1] ? { key: research()[1].key, done: research()[1].done,
+                               need: research()[1].of } : null,
   // per-site now; `labDone` is kept as the lab's own reading of it
   siteDone: S.siteDone,
   labDone: S.siteDone?.lab ?? null,

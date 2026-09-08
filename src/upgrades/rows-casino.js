@@ -11,6 +11,9 @@ export const CASINO_ROWS = [
     name: 'build the casino',
     cost: () => CASINO_DUST,
     buy: () => { S.casinoOpen = true; lookAt(casino.x + casino.w / 2); },
-    show: () => S.labOpen && !S.casinoOpen
+    // Gated on the trestle rather than on the lab, which is gone. It lands at
+    // about the tier the lab used to and is now the yard's "you have invested
+    // in this place" beat -- the same thing the lab was doing here.
+    show: () => S.buildbenchOpen && !S.casinoOpen
   }
 ];
