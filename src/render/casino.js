@@ -12,6 +12,7 @@ import { S, casino, floor, table } from '../state.js';
 import { ctx } from './ctx.js';
 import { drawGrid } from './ground.js';
 import { drawMark } from './marks.js';
+import { TICK, drawMarkBox } from './donemarks.js';
 import { rising as risingAt, withRise } from './rise.js';
 
 // The casino: a block with one big round hole knocked out of it, and a wheel in
@@ -280,15 +281,7 @@ export function drawCasinoMark() {
   const y = at.y + Math.round(Math.sin(now() / 500)) * P;
   const won = S.hand.won;
 
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
-  ctx.lineWidth = Math.max(1, P / 3);
-  ctx.strokeStyle = '#000';
-  ctx.strokeRect(at.x - P * 3.5, y - P * 3.5, P * 7, P * 7);
-
-  ctx.fillStyle = '#000';
-  for (const [dx, dy] of (won ? TICK : CROSS))
-    ctx.fillRect(at.x + dx * P - P / 2, y + dy * P - P / 2, P, P);
+  drawMarkBox(at, y, won ? TICK : CROSS);
 
   // and what is on the table now, under the mark, in the mark of whatever was
   // staked -- a win is a number as much as it is a yes
