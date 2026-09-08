@@ -286,6 +286,10 @@ export const TESTS = [
     // check that filled only half the purse was still a check about a yard that
     // could not afford anything.
     window.__grant({ shards: 900, dust: 30000 });
+    // The flag raises on the game's own clock (see `raised` in render/aura.js),
+    // and under headless rAF the sim does not advance on its own -- so turn the
+    // clock past the whole raise, then give the page a beat to paint it.
+    run(2);
     await sleep(300);
     const rich = { has: state().offers.includes('school'), ink: ink('school') };
 
