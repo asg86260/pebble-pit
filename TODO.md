@@ -1,5 +1,26 @@
 # Still to do
 
+## Everything that is not content (2026-09-08)
+
+**Surveyed, nothing built.** See docs/release-readiness.md: an inventory of the
+save, the clock, the window, the tab, the build and the deploy, with file
+references, and then a prioritized list of what is left before this is a thing
+you can hand somebody.
+
+The three that matter. A throw inside frame() stops the loop for good *and*
+leaves setInterval(persist) writing the thrown state over the good save once a
+second, so one bug can cost a run rather than a reload. There is no way for a
+player to get their save out of the browser -- the copy-save button exists but
+is behind import.meta.env.DEV. And the built index.html references its assets
+absolutely, so dist/ 404s from any subpath and cannot be uploaded to itch or a
+Pages project path as it stands.
+
+One real defect rather than an absence: rAF does not run in a hidden tab, so
+clock.js adds the whole away duration on the first frame back while game.js
+clamps dt to 100 ms. The yard does no work and every now()-based deadline --
+doses, a spin, a break, nextBoulderAt -- resolves at once. Pillar 2 says no
+punishment for walking away.
+
 ## `wave31-order` needs two doors the yard has not already opened (2026-09-07)
 
 One check left red by the lab's deletion, and the only one I could not
