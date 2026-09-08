@@ -1,5 +1,42 @@
 # Still to do
 
+## Seven movers still write `y` as a position (2026-09-08)
+
+Found while clearing the suite. `stepFarmhand` set `w.y = walkY(...)`
+outright every frame, which is a teleport whenever the body is not already
+on that line -- and one was, because the celebration latches a body's own
+y as the floor it dances on. It fell twenty-four pixels in a single frame,
+most of its own height. Fixed there by going through `climbTo`.
+
+The same line is written seven more times:
+
+```
+src/crew/teacher.js:28    src/crew/tenders.js:94, 115, 126
+src/apothecary.js:443, 467                src/balloon.js:352
+src/intro.js:207, 211
+```
+
+`route.js` names this class out loud at the foot of `climbTo`: "What made
+a body float off the crest was never the climber: it was movers that never
+asked it (a roam that moved x and left y) or overrode it (a sway written
+as a position). Fix the mover, not the law of walking." These are the
+overriders.
+
+**Not done as one sweep, deliberately.** `climbTo` keeps state on the body
+(`foot`, `footAt`, `scaleAt`) and the tenders' and the balloon's cases are
+bodies going through doors and up into baskets, where "the ground under it"
+is not the question being asked. Each one wants looking at on its own, with
+a shot, and probably a check per mover. It is a small pass, not a
+one-liner, and it is worth doing: every one of them is a body that can pop.
+
+**Also open, from the same hunt.** A body joining the dance out of a walk
+runs `w.y = stand(w)` on that frame (`jig` in crew/dance.js), and a body
+mid-climb is legitimately behind its own footing -- measured, up to
+seventeen pixels of snap. `stand` is `climbTo`, so it cannot move more than
+a cell a frame; what jumps is `w.foot` being re-taken from the new y on the
+same frame. It only shows up if the beat starts while the crew are
+commuting, which `dance.test.mjs` does not currently arrange.
+
 ## The suite is green again (2026-09-08)
 
 Ten reds, none of them a game defect. Written down because the shapes
@@ -38,6 +75,13 @@ New hook: `__nocine()` ends a running scene without pressing anything. A
 grant big enough to matter overfills the hole, tears the rift and plays
 the tear, so any check that banks a purse and then presses a control is
 otherwise pressing the skip.
+
+**And three more the full tier turned up, in files nobody had run.** Two
+were one game defect: the casino's table ground was measured to the lab,
+which is deleted and therefore never seated, so `potTo` came back 0 and
+the pot's plot was one column wide -- a hundred-grain stake put twenty on
+the ground. Derived from the walk now. The third was `stepFarmhand`
+writing `y` as a position; see the entry above it.
 
 ## The bench is a catch-all, and the lab goes -- BUILT (2026-09-07)
 
