@@ -87,6 +87,28 @@ group('turning a pot to another brew does not throw away what it made', async ()
   ];
 });
 
+// A batch belongs to the tonic it was bought as. Turning the pot while it cooks
+// used to swap what came off the fire without swapping what had been paid, so a
+// stew's price bought a brace you could not otherwise afford.
+group('a batch lands as the brew that was paid for, not the one the pot ended on', async () => {
+  standApothecary();
+  window.__assign('stirrers', 1);
+  setPot(0, 'stew');                           // a stew's bill: spore and dust
+  const lit = runUntil(() => (yard.S.brewAt[0] || 0) > 0, 200);
+  const brewsWas = yard.S.brews;
+
+  setPot(0, 'brace');                          // turned mid-batch to a shard recipe
+  const landed = runUntil(() => yard.S.brews > brewsWas, 400);
+
+  return [
+    ok(lit, 'a stew batch is lit and paid for', String(yard.S.brewAt[0] | 0)),
+    ok(landed, 'and a batch comes off the fire', `${brewsWas} -> ${yard.S.brews}`),
+    ok(doseStock('brace') === 0,
+       'it is not the bracing tonic the pot was turned to',
+       `brace ${doseStock('brace')}, stew ${doseStock('stew')}`)
+  ];
+});
+
 // --- the potency ladders, one to a recipe -------------------------------------
 group('a potency rung deepens one brew and leaves the others alone', async () => {
   standApothecary();
