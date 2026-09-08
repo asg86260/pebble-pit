@@ -25,28 +25,30 @@ export const TESTS = [
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
     const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
-                       lab: has('unlocklab') };
+                       bench: has('unlockbuildbench') };
 
     window.__crew(1, 1, 0, 1);               // the plots broken
     await sleep(150);
-    const withPlots = { quarry: has('unlockquarry'), lab: has('unlocklab') };
+    const withPlots = { quarry: has('unlockquarry'), bench: has('unlockbuildbench') };
 
-    window.__grant({ shards: 3 });
+    // The third beat was the lab, revealed by the first shard. The lab is gone,
+    // and what stands in its place in the run is the construction bench -- which
+    // is revealed by getting to the second rock rather than by a coin. See
+    // DESIGN.md, "The lab is deleted".
+    window.__jump(2);
+    window.__build();                      // as above: the yard moved, the sheet has not
     await sleep(150);
-    const withShard = { lab: has('unlocklab') };
-
-    window.__buildbench(true);
-    await sleep(150);
+    const withRock = { bench: has('unlockbuildbench') };
 
     window.__crew(0, 0);
     return [
       ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withDust.farm && !withDust.quarry && !withDust.lab,
+      ok(withDust.farm && !withDust.quarry && !withDust.bench,
          'a rock and a pile of dust offer the plots, and only the plots',
          JSON.stringify(withDust)),
-      ok(withPlots.quarry && !withPlots.lab, 'breaking the ground offers the quarry'),
-      ok(withShard.lab, 'a shard in hand offers the lab')
+      ok(withPlots.quarry && !withPlots.bench, 'breaking the ground offers the quarry'),
+      ok(withRock.bench, 'and the second rock offers the work bench')
     ];
   }],
 

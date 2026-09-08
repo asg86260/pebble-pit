@@ -39,6 +39,12 @@ export const TOWER_ROWS = [
     // Each of the three earns the next -- see the doors above -- and this is the
     // end of that chain rather than a fourth thing competing with it.
     show: () => !S.towerOpen && S.seenCore
-              && S.farmOpen && S.quarryOpen && S.labOpen
+              // The last thing the chain offers, so it waits on the places
+              // before it. That used to include the lab, which is gone -- and a
+              // gate on a flag nothing can set any more is a building that never
+              // comes up for sale, which is what this was. The construction
+              // bench took the lab's place in the run: it lands at about the
+              // same tier, and it is what the multipliers wait on too.
+              && S.farmOpen && S.quarryOpen && S.buildbenchOpen
   }
 ];

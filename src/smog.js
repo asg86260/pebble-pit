@@ -91,6 +91,19 @@ export function stepSmog(dt) {
   // sky that keeps being dirtied ought to look like.
   if (breaks(secs)) {
     S.stormFor = 0; S.rains++;
+    // The first rain is what shows you the sky's reading.
+    //
+    // It used to be bought, at the lab, as "watch the sky" -- and when the lab
+    // was deleted that row went with it and nothing set `seenAir` at all, which
+    // left the scrubbing house gated on a flag no longer reachable: an entire
+    // building, and the whole pollution arc behind it, unreachable in a real
+    // game. See DESIGN.md, "The lab is deleted".
+    //
+    // Told rather than sold, which is the rule every currency on these boards
+    // already goes by: nothing is named until you have met one. Rain on your
+    // head is meeting it -- you do not need to have paid somebody to notice
+    // that the sky has just emptied itself on the yard.
+    if (!S.seenAir) { S.seenAir = true; S.dirty = true; }
     let marked = 0;
     for (const m of SKY) if (settled(m)) { m.rain = S.rains; marked++; }
     markStorm(marked);

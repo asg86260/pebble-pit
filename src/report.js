@@ -248,6 +248,11 @@ export const snapshot = () => ({
   cores: S.cores,
   shards: S.shards,
   seenShard: S.seenShard,
+  // Whether the sky's reading is showing. It was only ever handed back by the
+  // lab's own hook, because buying it at the lab was the only way to get it;
+  // the first rain sets it now, so it is a fact about the yard like the other
+  // two beside it.
+  seenAir: S.seenAir,
 
   // What has been opened, and how far through the opening story the yard is.
   quarryOpen: S.quarryOpen,

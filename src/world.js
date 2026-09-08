@@ -101,7 +101,6 @@ export function resite() {
 // reach the boards use to decide you are standing at one: what you can walk up
 // to and open is what you can be put down on and carry on working at.
 export function atStation(job, x) {
-  if (job === JOB.SCHOLAR) return S.labOpen && x > lab.x - P * 6 && x < lab.x + lab.w + P * 6;
   if (job === JOB.PURIFY) return S.scrubOpen && x > scrub.x - P * 6 && x < scrub.x + scrub.w + P * 6;
   if (job === JOB.FARM) return S.farmOpen && x > farm.x - P * 10 && x < farm.x + farm.w + P * 10;
   if (job === JOB.STIR) return S.apothecaryOpen && x > apothecary.x - P * 6 && x < apothecary.x + apothecary.w + P * 6;

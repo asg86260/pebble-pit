@@ -899,14 +899,26 @@ export function restore() {
 // What a job used to be called, for saves written before it was renamed. The
 // rift-holder is the old one: a job that stopped existing, whose bodies come
 // back as haulers. The other three are the same word for the same job.
+//
+// The scholar is the second job to stop existing, and it comes back the same way
+// the rift-holder does: as a carter. The lab is gone, so there is no room to put
+// one in -- and a body whose type this build has no factory for is dropped on the
+// line below, which is a body lost out of somebody's save. It was: a fixture with
+// twenty-five people in it came back with twenty-four. Both of its old names map
+// here, because `labber` was what a scholar was called before the rename.
 const OLD_TYPE = { rifter: TYPE.HAUL, miner: TYPE.ROCK,
-                   labber: TYPE.SCHOLAR, scrubber: TYPE.PURIFY };
+                   labber: TYPE.HAUL, scholar: TYPE.HAUL,
+                   scrubber: TYPE.PURIFY };
 // And the same renaming again on the *job*, because a body does not only say
 // what it is -- it says which station's hat it is wearing (`kitOf`), and that is
 // a job name. A save written before the rename has a body in a "miners" hat,
 // which is a hat no station keeps any more: `verifyWorld` calls that out as kit
 // that is not in the table, and rightly.
-const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.SCHOLAR, scrubbers: JOB.PURIFY };
+// ...and the hat, for the same reason. A scholar's hat is a hat no station keeps
+// any more, so it comes off with the job: `verifyWorld` calls out kit that is not
+// in the table, and rightly.
+const OLD_JOB = { miners: JOB.ROCK, labbers: JOB.HAUL, scholars: JOB.HAUL,
+                  scrubbers: JOB.PURIFY };
 
 function restoreCrew(who) {
   S.workers = [];
@@ -927,7 +939,25 @@ function restoreCrew(who) {
     const type = OLD_TYPE[k.type] || k.type;
     const made = FACTORY(type);
     if (!made.type) continue;                  // a trade this build does not have
-    const rec = OLD_JOB[k.kitOf] ? { ...k, kitOf: OLD_JOB[k.kitOf] } : k;
+    let rec = OLD_JOB[k.kitOf] ? { ...k, kitOf: OLD_JOB[k.kitOf] } : k;
+    // A body that was standing inside a building this build no longer has.
+    //
+    // The rift-holder above comes back "where it stood", and that works because
+    // the strip it stood on is still there to stand on. A scholar's was the
+    // inside of the lab, and the lab is gone: kept, the body loads at the door of
+    // a building that is not there -- `verifyWorld` caught it two hundred and
+    // seventy-six pixels under the ground line, which is a person buried in the
+    // yard. So the position goes and the factory's own is used, which puts it on
+    // its feet on the ground; it then walks wherever the roster sends it, and
+    // nothing teleports because nothing was anywhere to teleport from.
+    // `TYPE.SCHOLAR` rather than the word: job names are spelled in jobs.js and
+    // nowhere else, which vocabulary.test.mjs holds the line on. `labber` has no
+    // constant -- it is a name from before the rename, like the keys of the map
+    // above -- so it stays a literal.
+    if (k.type === TYPE.SCHOLAR || k.type === 'labber') {
+      const { x, y, goal, inside, site, ...rest } = rec;
+      rec = rest;
+    }
     S.workers.push(wearRecord(Object.assign(made, newRecord()), rec));
   }
 }

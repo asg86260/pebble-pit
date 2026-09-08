@@ -9,40 +9,13 @@ export const TESTS = [
   // The lab empties itself when there is nothing to research. That is the game
   // tidying up after you, and making you go and undo it before anything can
   // happen is a chore rather than a decision.
-  ['a body put in the lab stays in it, work or no work', async () => {
-    newRun();
-    await settle();
-    window.__buildbench(true);
-    window.__crew(0, 3, 0, 0, 2);                // two of the five in the lab
-    // Stone and dust: `labswing` is priced in both, like every row -- see
-    // `billOf` in upgrades.js -- so a purse with only stone in it cannot start
-    // the piece this check is about.
-    window.__grant({ shards: 50, dust: 20000 });
-    run(3);
-    const staffed = state();
-    run(40);                                     // long enough for them to drift off
-    const empty = state();
-    buildShopFromTest();
-    document.querySelector('#labshop button[data-key="labswing"]').click();
-    run(1);
-    const back = state();
-    window.__abandon();
-    window.__crew(0, 0);
-    return [
-      ok(staffed.scholars === 1, 'one is put in the lab', `${staffed.scholars}`),
-      // It keeps them. The lab used to turn its own people out after a while
-      // with nothing to research, and call them back when work arrived -- which
-      // reads as thoughtful and is the building overruling the roster: you put
-      // somebody in, and later they were somewhere else without your having said
-      // so. An idle bench is a thing for you to notice, and the counter under
-      // the lab is where you act on it.
-      ok(empty.scholars === 1, 'and with nothing to work on it keeps them anyway',
-         `${empty.scholars} left in`),
-      ok(back.scholars === 1, 'and they are still there when work arrives',
-         `${back.scholars} in`),
-      ok(!!back.research, 'with the work actually started', JSON.stringify(back.research))
-    ];
-  }],
+  // A group about the lab stood here: a body put in it stayed in it whether
+  // there was research on or not, because the building must not overrule the
+  // roster. The lab is gone -- research is a build now, done by builders at the
+  // construction bench, and a build with nobody assigned waits, fenced, which is
+  // the same promise kept by the same means. Covered by wave7b-build.test.mjs.
+  // See DESIGN.md, "The lab is deleted".
+
 
   // Picking somebody up moves them and does nothing else. It is the right
   // button because the left one is the whole game -- swinging, sweeping,

@@ -436,12 +436,18 @@ group('the tower goes up bare, and the first hat calls the first star', async ()
   window.__grant({ cores: 9, shards: 9000, spores: 9000 });
   // The ground standing first. The tower is the end of the chain now -- what a
   // finished yard buys -- so its row is not offered until the plots, the cut and
-  // the lab are all up.
+  // the work bench are all up. (It waited on the lab; the lab is gone and the
+  // trestle took its place in the run. See DESIGN.md, "The lab is deleted".)
   openSites();
   window.__buildbench(true);
   // Hands spare to put it up: a building past the bench is built by the yard,
   // and a yard with nobody in it builds nothing. See works.js.
   window.__crew(0, 3);
+  // ...and one of them actually ON building. Standing the trestle up is not
+  // scenery: before it, the yard derives a builder from the spare hands; after
+  // it, building is a post you hire, and a work with nobody assigned waits,
+  // fenced. So a check that opens the bench has to staff it too.
+  window.__assign('builders', 1);
   window.__build();
   // B1 (wave-feedback3.md, Track B): BUILD_GANG is one body now, not three,
   // so a 90-worker-second building plus the walk over needs more than the

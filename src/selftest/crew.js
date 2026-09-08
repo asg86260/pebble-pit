@@ -468,23 +468,27 @@ export const TESTS = [
   ['the headcount rides on the section as a badge', async () => {
     await hoverBench();
     window.__crew(3, 2, 2, 0, 0);
-    // Enough dust that the plots are on offer, so that there is a farm heading to
-    // look at: a section is only there while it has a row under it, and the one
-    // farm row a fresh yard has is the door.
+    // Enough dust that the plots are on offer, so that there is a second heading
+    // to look at: a section is only there while it has a row under it.
+    //
+    // That heading used to be "the farm" -- the bench carried one per building it
+    // could sell you. The ten of them are one group called "put up" now, so the
+    // section with nobody under it is that one. See DESIGN.md, "The bench is a
+    // catch-all".
     window.__give(600);                      // the price of the plots
     window.__build();
     await sleep(50);
     const rows = [...shop().children].filter(el => el.dataset.sect);
     const rock = rows.find(el => el.dataset.sect === 'the rock');
-    const farm = rows.find(el => el.dataset.sect === 'the farm');
+    const idle = rows.find(el => el.dataset.sect === 'put up');
     const rockBadge = rock && rock.querySelector('.badge');
-    const farmBadge = farm && farm.querySelector('.badge');
+    const idleBadge = idle && idle.querySelector('.badge');
     const s = state();
     return [
       ok(!!rockBadge, 'a section with people under it carries a badge'),
       ok(rockBadge && rockBadge.textContent === String(s.rockhands),
          'the badge is the bare number, no x and no word', rockBadge && rockBadge.textContent),
-      ok(!!farm && !farmBadge, 'a section with nobody has no badge'),
+      ok(!!idle && !idleBadge, 'a section with nobody has no badge'),
       ok(rockBadge && rockBadge.parentElement === rock, 'the badge is a span inside the heading'),
       ok(rockBadge && rock.firstChild.nodeValue === 'the rock',
          'the heading keeps its own title as plain text', rock.firstChild.nodeValue),

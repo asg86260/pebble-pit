@@ -6,10 +6,17 @@
 import { newRun, settle, state, buildShopFromTest, ok, shop, run, runUntil, buy } from './kit.js';
 
 export const TESTS = [
-  // The problem, then the diagnosis, then the cure. The rain has to have come
-  // down once, and the lab has to have been told to watch the sky, before the
-  // yard will sell you anything to do about it.
-  ['the scrubbing house is offered after the rain and the readout', async () => {
+  // The problem, then the cure. The rain has to have come down on you once, and
+  // something that dirties the sky has to be running, before the yard will sell
+  // you anything to do about it.
+  //
+  // It used to be three things: the rain, a readout bought at the lab, and a
+  // machine. The lab is gone and the readout is not bought any more -- the first
+  // rain is what shows you the sky's reading, because rain on your head is
+  // meeting the thing, and nothing in this game is named before you have met one.
+  // So the first two conditions are one condition now. See DESIGN.md, "The lab is
+  // deleted".
+  ['the scrubbing house is offered after the rain and a machine', async () => {
     newRun();
     await settle();
     window.__crew(4, 4);
@@ -19,8 +26,9 @@ export const TESTS = [
 
     run(2);
     const clean = has();
+    const blind = state().seenAir;
 
-    // it has rained, and nobody has looked into why
+    // it has rained, which is also how you come to be reading the sky
     // To the brim rather than a hair over the line: a sky at the line only
     // *might* rain now -- the yard takes a look every few seconds and rolls for
     // it -- and a sky at the brim is certain to break at the next look.
@@ -28,12 +36,9 @@ export const TESTS = [
     runUntil(() => state().smog.rains > 0, 60);
     run(20);
     const rained = has();
+    const told = state().seenAir;
 
-    // and now the lab is told to watch it
-    window.__research('labair');
-    const told = has();
-
-    // ...and the third thing: a machine running. Hand labour dirties the sky
+    // ...and the second thing: a machine running. Hand labour dirties the sky
     // slowly, and a house sold against that is a cure for a number that was
     // creeping. A machine dirties it three times over per unit of work, so the
     // house is the bill for the thing you have just switched on -- problem and
@@ -49,14 +54,14 @@ export const TESTS = [
     window.__clearFloor();
     return [
       ok(!clean, 'a yard that has never been rained on is offered nothing', `${clean}`),
-      ok(!rained, 'and a yard that has been rained on but never looked into it, nothing either',
-         `${air.rains} rains, row ${rained}`),
-      ok(!told, 'nor one that has read the sky but has nothing running that dirties it',
-         `${told}`),
-      ok(both, 'the rain, the readout and a machine are what open it', `${both}`),
+      ok(!blind, 'and has no reading of the sky to go on either', `${blind}`),
+      ok(told, 'the first rain is what gives you the reading', `${told}`),
+      ok(!rained, 'which on its own is still not enough to sell you the house', `${rained}`),
+      ok(both, 'the rain and a machine are what open it', `${both}`),
       ok(air.rains > 0, 'and it took a real rain to get there', `${air.rains}`)
     ];
   }],
+
 
   // The one row in the game that is a reading rather than a purchase. It sits on
   // a board of things you press, so the only way to say it is not one of them is

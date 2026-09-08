@@ -30,7 +30,7 @@ import { TESTS as crew } from './selftest/crew.js';
 import { TESTS as stations } from './selftest/stations.js';
 import { TESTS as view } from './selftest/view.js';
 import { TESTS as dust } from './selftest/dust.js';
-import { TESTS as lab } from './selftest/lab.js';
+import { TESTS as work } from './selftest/work.js';
 import { TESTS as places } from './selftest/places.js';
 import { TESTS as casino } from './selftest/casino.js';
 import { TESTS as carry } from './selftest/carry.js';
@@ -47,7 +47,7 @@ const TESTS = [
   ...stations,
   ...view,
   ...dust,
-  ...lab,
+  ...work,
   ...places,
   ...casino,
   ...carry,

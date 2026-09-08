@@ -260,7 +260,11 @@ export const TESTS = [
     // very next rung is a press that cannot go through. That is the refusal
     // this needs, and it is a truer one than an empty purse: the row is lit,
     // the money is there, and the yard still says no.
-    const refused = await press('haulpace');
+    //
+    // It used to press `haulpace`, which is the crew's and is sold where the
+    // crew live now. What this wants is any second rung fitted AT THE BENCH,
+    // and `auto` is one. See DESIGN.md, "The bench is a catch-all".
+    const refused = await press('auto');
     const place = await press('unlockfarm');
 
     await hoverAway();
@@ -324,8 +328,14 @@ export const TESTS = [
     window.__board(null);
     window.__crew(0, 0);
     return [
-      ok(rows.length === 2 && rows[rows.length - 1].dataset.key === 'house',
-         'the row you press is the one nearest the yard',
+      // The rule, stated directly rather than as a row count: whatever the
+      // cursor crosses first coming in off the yard must not be the door
+      // through to the settlement, because that one opens on hover and would
+      // throw the sheet open sideways on every walk up to the block. The board
+      // used to be two rows, so "the last one is `house`" said the same thing;
+      // it carries the crew's gear now and the count no longer describes it.
+      ok(rows.length > 0 && rows[rows.length - 1].dataset.key !== 'crewlist',
+         'the row nearest the yard is not the one that opens the settlement',
          rows.map(r => r.dataset.key).join(' then ')),
       ok(!opened, 'and reaching it never puts the settlement up'),
       ok(arrived.houseBoardOpen, 'and the board is still there when you get there')

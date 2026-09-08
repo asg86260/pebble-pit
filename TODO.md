@@ -1,5 +1,35 @@
 # Still to do
 
+## `wave31-order` needs two doors the yard has not already opened (2026-09-07)
+
+One check left red by the lab's deletion, and the only one I could not
+re-point: `a building stands where it was bought, not where the table lists
+it` in test/wave31-order.test.mjs. It buys two buildings in each order and
+asserts the one bought first stands nearer the rock. It used the school and
+the lab, because those were the two doors that waited on nothing but a coin.
+
+Diagnosed as far as: after `__seed` plus `__crew`/`__grant`, the only unlock
+rows still showing are the apothecary and the work bench -- the school and the
+plots are already open, and `__reset` is `newGame`, which leaves buildings
+standing, so the helper's second run inherited the first's yard (`__seed` is
+the wipe). Pairing the apothecary with the work bench then hits a second
+wall, and it is the interesting one: **standing the trestle up is not
+scenery.** Before it, the yard derives a builder from the spare hands; after
+it, building is a post you hire, and a work with nobody assigned waits,
+fenced. So any check that opens the construction bench has to staff it too --
+that is what `the tower goes up bare` in sky-work.test.mjs was failing on, and
+one `__assign('builders', 1)` fixed it. The same move inside this file's
+`build()` did not settle it -- staffed before the press rather than after,
+which is the right frame, the apothecary still does not rise and
+`stands.apothecary` comes back undefined. Two timeboxed attempts, reverted
+both times rather than leave the file half-migrated.
+
+**What it needs:** two buildings that are open to be bought in either order in
+a fresh yard and neither of which is the trestle. There may not be a pair left,
+in which case the honest move is to give the check its own yard with two doors
+forced open, or to test the placement rule directly against `buildOrder`
+rather than by buying anything.
+
 ## The bench is a catch-all, and the lab goes (2026-09-07)
 
 **Designed, not built.** See "The bench is a catch-all, and the lab is its
