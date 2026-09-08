@@ -9,7 +9,7 @@
 // -- is a module that half the yard already imports, and a helper this widely
 // called has to be somewhere nothing can close a ring through.
 
-import { P, PUFF_MOTES, PUFF_SPREAD } from './config.js';
+import { P, PUFF_MOTES, PUFF_SPREAD, SMOKE_LIFE, SMOKE_RISE } from './config.js';
 import { S } from './state.js';
 import { rand } from './rng.js';
 
@@ -64,5 +64,28 @@ export function puff(x, y, o = {}) {
       v: ((Math.sin((x + y * 3 + i) * 12.9898) * 43758.5453) % 1 + 1) % 1,
       ...(o.flag ? { [o.flag]: true } : {})
     });
+  }
+}
+
+// And what happens to a mote once it has been let go: it climbs, it leans on
+// whatever drift it was given, it gets older, and then it is gone.
+//
+// This was the tail of `stepSmoke` in lab.js, and it was deleted along with the
+// building. Nothing else ages `S.smoke`, so every puff in the yard -- the
+// hearth, a cigarette, a machine's stack, a tonic burning off a body -- has been
+// spawning and then hanging in the air for good: a frozen speckle that only ever
+// gets denser, and a list that never stops growing. The lab's own half of that
+// function (when the chimney puffs) went with the lab correctly; this half is
+// about smoke, so it belongs where smoke does.
+//
+// `rise` and `life` are per-mote because a machine's stack is not a chimney --
+// see MACHINE_PUFF_RISE. A mote that was not told falls back to the wisp.
+export function stepSmoke(dt) {
+  for (let i = S.smoke.length - 1; i >= 0; i--) {
+    const p = S.smoke[i];
+    p.t += dt / 1000;
+    p.y -= p.rise ?? SMOKE_RISE;
+    p.x += p.drift;
+    if (p.t > (p.life ?? SMOKE_LIFE)) S.smoke.splice(i, 1);
   }
 }

@@ -22,13 +22,8 @@ export const BENCH_KIT_RATE = 1.8;
 // at each. It is a *place*, not a rung -- see `capOf` -- and it is the only
 // thing in the game that widens a station that has always held one.
 export const LAB_ROOM_COST = 14;
-// The crew go *inside* the lab, so there is nothing to watch. What tells you it
-// is being worked is the chimney: it smokes while somebody is in there on a
-// piece of research, and harder the more of them there are. An idle lab, or a
-// lab with research paid for and nobody in it, does not smoke at all.
-export const SMOKE_MS = 380;      // between puffs, with one body in there
-export const SMOKE_LIFE = 2.4;    // seconds a puff lasts
-export const SMOKE_RISE = 0.4;    // and how fast it goes up
+// The chimney's own numbers went with the chimney: SMOKE_LIFE and SMOKE_RISE
+// are in config/machines.js now, beside the rest of what a puff is made of.
 
 // The dev panel's rows for the knobs above. A row lives beside the binding it
 // moves because nothing but this file can assign to one: an imported `let` is

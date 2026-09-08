@@ -116,6 +116,15 @@ export const MACHINE_PUFF_LIFE = 1.5;
 // between one puff and the next.
 export const PUFF_MOTES = 3;         // motes let go together
 export const PUFF_SPREAD = 0.8;      // how far apart they start, in cells
+// What a mote does when nobody has said otherwise: a wisp over a roof, which is
+// the hearth, a cigarette and a tonic burning off. A caller that wants its own
+// pace passes `rise` and `life` -- the machines do, just above.
+//
+// These two used to live in config/lab.js because the lab's chimney was the
+// first thing that smoked. The lab is gone and the smoke is not, so they sit
+// here with the rest of what a puff is made of.
+export const SMOKE_LIFE = 2.4;       // seconds a puff lasts
+export const SMOKE_RISE = 0.4;       // and how fast it goes up
 
 // What the three of them cost.
 //
