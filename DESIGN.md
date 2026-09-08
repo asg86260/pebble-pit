@@ -5109,6 +5109,10 @@ measured off it. Giving the rock a board of its own would mean opening a sheet o
 this game you click constantly — and a press on the yard puts an open board away, so it would close
 itself on every swing.
 
+> **Superseded, this paragraph only.** See "The shack at the rock" at the end of this file: the
+> rock gets a hut a few cells off its flank, and the door you press is the hut's rather than the
+> rock's. The rest of this section stands.
+
 **The ten unlock rows lose their headings, not their place.** Ten headings each carrying a single
 `build the X` is about 600 px spent on a table of contents. They become one group, `put up`, where
 the building's name is the row; a heading over one row was never telling you anything the row did
@@ -5313,3 +5317,142 @@ once the mechanism is known: bought through `__buy`/`__assign` the way a player 
 asserting utilization at the bench stays above some floor once several works are queued together (a
 regression guard, not a balance target by itself). Until the mechanism is found, a check would only
 pin down today's number rather than the cause.
+
+## The shack at the rock (design, not built)
+
+The bench section above ruled that the rock's rows could not leave, and the reason it gave was a
+door:
+
+> Giving the rock a board of its own would mean opening a sheet on the one thing in this game you
+> click constantly — and a press on the yard puts an open board away, so it would close itself on
+> every swing.
+
+That is an argument about the rock being the door, and it is right. It says nothing against the
+rock having a door somewhere else. A shack a few cells off the rock's flank is pressed the way the
+outhouse and the school are pressed — you walk to it and you click *it* — and the rock stays the one
+thing in the yard you only ever hit. So the rows can go where they belong after all, and this
+section supersedes that paragraph and nothing else in it.
+
+**What it is: the rockhands' hut.** The gang has worked this whole game out of nowhere. Every other
+trade has a building — the growers have the plots, the blasters have the cut, the janitor has the
+shed — and the one trade that was here first works out of thin air, with its helmets standing in
+the middle of the rock it is trying to take down. The shack is the smallest building on the ground
+after the outhouse: a board, a stand with the helmets on it, and a door the gang comes out of.
+
+### Where it stands, and why that is the expensive part
+
+There is no bare ground on the rock's left flank. `TO_BENCH` is -336, the bench keeps sixty pixels
+of clear ground on the rock's apron side, and **the biggest rock in the game is measured off the
+bench** — it grows until it is a hand's width from it and stops there. Wedging a shack into that
+gap takes the room out of the rock, which is the one thing on this ground that must not get
+smaller.
+
+So the shack takes the bench's distance and **the bench moves out by the shack's width plus one
+gap**, with the quarry, the plots, the casino, the tower and the sky moving with it — one
+coordinated edit to the constants in `config/yard.js`, which is exactly what those constants are
+for. The world already runs away to the left as sites open; this is one more step of that.
+
+And the size rule is re-pointed while it is being touched: the rock is measured off **the nearest
+building on its left flank**, not off the bench by name. That is the systemic form of the rule the
+code already means, it is what makes this move cost the rock nothing, and it is what stops the next
+building put down there from silently shrinking the hill.
+
+**The right-hand side was the other option and it is worse.** The strip to the rock's right is
+where the rock's own spoil piles; a building standing in it bars grain, pushes the heap outward,
+and would have the pile-full mark firing for a reason that is architecture rather than backlog.
+
+**One thing to settle in a shot rather than argue here:** the ram stands at `rockEdge(-1)`, the
+rock's own left edge, and at full rock size that edge comes a long way out. The shack's inner face
+and a standing ram must not overlap. It is a clearance, so it is measured off a screenshot at the
+biggest rock, not reasoned about from the numbers.
+
+### What moves in
+
+| row | from | why it can move now |
+|---|---|---|
+| `rockhandpick` — pickaxe | the bench, under *the rock* | it is the gang's tool, and the gang has a hut |
+| `rockhandspeed` — swing | the bench, under *the rock* | the same |
+| the rock's `swing ×` | `rows-mult.js` | its own comment says the bench draws it because "the rock has no board of its own" |
+| `ram` | `rows-bench.js` | its own comment says it is "the only one of the three sold from the bench — because the rock is the one station with no board of its own" |
+
+Those two comments are the same sentence, and this section is what makes it false. The two machines
+that had a home were always sold at it; the ram is coming into line rather than being moved.
+Where the ram is *built* does not change — the row still points at `specOf('ram').at()` and the
+builders still walk to the rock's edge to stand it up. Only which sheet sells it.
+
+**What does not move: your own gear.** `pickaxe`, `swing` and `hold to mine` stay on the bench, on
+the rule the bench section set — you are the cursor, not a body, and the cursor has no station.
+That leaves two rows called *pickaxe* and two called *swing* on two boards, and that is right
+rather than a collision: they are one idea bought for two different pairs of hands, and each is
+sold at the place its hands belong. It is the same doubling the crew's *strength* and your
+*strength* already live with.
+
+### How it arrives
+
+**A `put up the shack` row on the bench, the cheapest building in the game.** Dust and shards, no
+core — a core opens a *place*, in the sense of somewhere new to send people, and this is a shed for
+people who are already there. It goes up the way everything goes up: a work at the site, builders
+walking out, a bar over the ground. Nothing appears.
+
+It is offered once there is a crew (`S.crew > 0`), which is the condition the rockhand rows already
+carry, so a player who has hired nobody is not sold a hut for a gang that does not exist. The rows
+inside keep their own `show` unchanged.
+
+**What this costs the opening, said plainly.** The gang's two ladders now sit behind a purchase and
+a walk that were not there before, and they are among the first things a new player climbs after
+the houses. The mitigation is the price and the length of the build, both of which should be the
+smallest in the game — and if playtesting says the first ten minutes drag, the fix is those two
+numbers, not putting the rows back on the bench. The gate buys something real: the first building
+you ever put up is now one you have an immediate reason to want, rather than the school.
+
+### The helmets, and somewhere to stand
+
+**The stand moves to the door.** `KIT[JOB.ROCK]` is a trade, and a trade's hats stand where its
+roster stands, which for `mine` is `S.cx` — the middle of the rock. So today the helmets, and the
+headcount over them, are drawn on top of the thing you are clicking. Once the hut is up they stand
+outside it, the way the caps hang outside the outhouse: `mine`'s `at` answers the shack's middle
+when it stands and `S.cx` when it does not, because the row exists from the first hire and the
+building does not. The count and the stand travel together — they are one drawing — and the rock
+gets its face back.
+
+**And the gang musters at it.** A rockhand with nothing to do idles on the rock face. Once the hut
+stands, its idle anchor is the door: bodies come out of it to work and drift back to it when the
+rock is gone. That is the difference between a hut and a picture of one, and it is the same
+sentence `kit.js` already makes about hats — a thing that belongs to a station is a thing you watch
+somebody walk to. Nothing about the work itself changes: they still climb the hill and take the
+crest off in layers.
+
+**What the shack joins unasked.** No strip in `S.piles`, because it produces nothing, so no
+pile-full mark. Drawn like the outhouse — a flat black block, a white doorway, on the cell grid,
+with `shadeNear` where it meets the ground, because a flat fill reads as printed paint.
+
+### The wording call
+
+The row, the board title and the hover all want one word. `the shack` is the proposal: it is what a
+shed for a gang is called, it is one syllable among `the school` and `the casino`, and it needs no
+gloss. `the hut` reads the same and is no better. Said out loud here rather than assumed, the way
+`speed ×` was.
+
+### What the save carries
+
+`shackOpen` in `SAVED`, and a `shack` box in `state.js`. **No migration.** Nothing about a level
+changes — `rockhandPickLevel`, `rockhandSpeedLevel`, the mult level and the ram's own state are all
+untouched, and a save that has bought them out opens the shack with its ladders already climbed.
+That is the cheap axis of this change, and it is worth naming beside the lab's deletion, which had
+to move four fields.
+
+### How it would be checked
+
+- **Bought the player's way**, in a new `test/shack.test.mjs`: press the bench row through `__buy`,
+  assert a work starts at the site, a builder walks to it, and the building stands — never a hook
+  that sets `shackOpen`.
+- **The rows landed**: once it stands, the shack's section list is the four rows above and the
+  bench's no longer holds them. `hooks.js` already keeps a board/section registry, so this is a
+  list assertion rather than a DOM one.
+- **The helmets**: the stand's world x is the shack's middle once it stands, and `S.cx` before it.
+- **The muster**: a rockhand with no rock left to work ends up within a cell of the door, driven
+  with `runUntil` in game seconds.
+- **`test/persist-roundtrip.test.mjs`** covers `shackOpen` the moment it is in a list.
+- **The layout is a shot, not a suite.** `tools/look.mjs rock` at the biggest rock: the shack, the
+  bench's new distance, the ram's clearance, and the hill still the size it was. No check in either
+  tier can see any of that.
