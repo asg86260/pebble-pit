@@ -24,16 +24,15 @@ import { now } from '../clock.js';
 import { give, wind } from '../wind.js';
 import { chimneyAt } from '../house.js';
 import { S, bench, lab, school, tower } from '../state.js';
-import { benchMark } from '../upgrades.js';
 import { holdOptions, holdTarget } from '../crew/assign.js';   // wave7b-assign
 import { ctx } from './ctx.js';
 import { cell } from './marks.js';
 
-// Whether a station is offering. The bench answers through its own mark --
-// benchMark() also counts an unread heading, which is the bench's older, richer
-// version of the same question -- and everything else through hasOffer.
-const offering = which =>
-  which === 'bench' ? !!benchMark() : hasOffer(which);
+// Whether a station is offering. One rule for every station, hasOffer, the
+// bench included: it used to answer through benchMark() instead, which counts
+// an unread heading as well, so the bench flew a flag over an empty purse --
+// the one thing a flag is supposed to mean is that there is something down
+// there you could buy this second.
 
 // One ring, at one point of the breath. `phase` is 0..1 through the swell:
 // 0 is the line fully inset on the walls, 1 fully out past them. The caller
@@ -299,7 +298,7 @@ export function drawFlags() {
   ctx.save();
   ctx.fillStyle = '#000';
   for (const which of STATIONS) {
-    const on = offering(which);
+    const on = hasOffer(which);
     const r = standRect(which);
     // A station that is not standing has no roofline to raise a pole out of, so
     // its raise is forgotten rather than lowered: there is nothing to lower it

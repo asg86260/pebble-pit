@@ -11,7 +11,7 @@
 // invisible for as long as they had existed. Nothing failed. There was simply
 // nothing to click.
 
-import { group, ok, state, openSites } from './helpers.mjs';
+import { group, ok, state, run, openSites } from './helpers.mjs';
 
 // The row arrays themselves, for the grammar check at the foot of this file. It
 // reads the static shape of every row -- `kind`, `name`, `unit` -- so it takes
@@ -157,5 +157,33 @@ group('the shop keeps to one grammar per kind', async () => {
     ok(genreBad.length === 0,
        'no row says "upgrade" -- every row is one, so the word carries nothing',
        genreBad.join(', ') || 'none')
+  ];
+});
+
+// A flag means one thing: there is a row down there you could buy this second.
+//
+// "Could buy" has to include being able to press it. A station's site can only
+// have so much going up at once, so while a build is on the ground every timed
+// row on that board comes back refused however full the purse is -- and a flag
+// promising them is the station telling you to walk over for nothing. The
+// bench's own mark (`canAfford`) had always said so; the flag, which asks
+// `hasOffer`, had not.
+//
+// Bought the player's way: a full purse, and the quarry's own build row pressed
+// through the row that presses it.
+group('a flag comes down while the site it sells from is busy', async () => {
+  window.__reset();
+  window.__fullSites();
+  window.__grant({ dust: 5e6, shards: 5000, spores: 5000, sparks: 5000, cores: 500 });
+  run(1);
+  const before = state().offers.includes('quarry');
+  const bought = window.__buy('jaw');
+  run(0.5);
+  const during = state().offers.includes('quarry');
+  return [
+    ok(before, 'a full purse flies the quarry a flag'),
+    ok(bought, 'and the build row can be pressed'),
+    ok(!during, 'and the flag comes down while the yard is putting that build up',
+       `offers: ${state().offers.join(', ') || 'none'}`)
   ];
 });

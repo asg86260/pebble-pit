@@ -7,6 +7,26 @@
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen,
   hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
 
+// The ink standing in the band of sky over a station -- where nothing else
+// black stands, so it counts the flag and very little else. Measured in the
+// pixels the yard really paints, because a mark the yard does not actually
+// draw is a mark nobody sees. Shared, so the two flag groups below are asking
+// the canvas the same question.
+const flagInk = which => {
+  const s = state(), r = s.stands[which];
+  if (!r) return 0;
+  const dpr = window.devicePixelRatio || 1;
+  const x0 = Math.round((r.x - 12 - s.camX) * s.zoom * dpr);
+  const y0 = Math.round((r.y - 72 - s.camY) * s.zoom * dpr);
+  const w = Math.max(1, Math.round((r.w + 24) * s.zoom * dpr));
+  const h = Math.max(1, Math.round(70 * s.zoom * dpr));
+  if (x0 < 0 || y0 < 0) return -1;
+  const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
+  let n = 0;
+  for (let i = 0; i < d.length; i += 4) if (d[i] < 128) n++;
+  return n;
+};
+
 export const TESTS = [
   ['the school is a place you walk to', async () => {
     window.__crew(2, 2, 2, 2);
@@ -264,23 +284,8 @@ export const TESTS = [
     // pennant on it. Ink is counted in the band of sky over the station --
     // where nothing else black stands -- rather than under it, where the old
     // diamond hung.
-    const ink = which => {
-      const s = state(), r = s.stands[which];
-      if (!r) return 0;
-      const dpr = window.devicePixelRatio || 1;
-      const x0 = Math.round((r.x - 12 - s.camX) * s.zoom * dpr);
-      const y0 = Math.round((r.y - 72 - s.camY) * s.zoom * dpr);
-      const w = Math.max(1, Math.round((r.w + 24) * s.zoom * dpr));
-      const h = Math.max(1, Math.round(70 * s.zoom * dpr));
-      if (x0 < 0 || y0 < 0) return -1;
-      const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
-      let n = 0;
-      for (let i = 0; i < d.length; i += 4) if (d[i] < 128) n++;
-      return n;
-    };
-
     // nothing in the purse: the school sells kit and cannot sell you any
-    const broke = { has: state().offers.includes('school'), ink: ink('school') };
+    const broke = { has: state().offers.includes('school'), ink: flagInk('school') };
     // Stone AND dust. Every row in the game is priced in both -- see `billOf` in
     // upgrades.js -- so "money in the purse" stopped meaning one coin, and a
     // check that filled only half the purse was still a check about a yard that
@@ -291,12 +296,12 @@ export const TESTS = [
     // clock past the whole raise, then give the page a beat to paint it.
     run(2);
     await sleep(300);
-    const rich = { has: state().offers.includes('school'), ink: ink('school') };
+    const rich = { has: state().offers.includes('school'), ink: flagInk('school') };
 
     // and standing at it changes nothing: what the arrow says is still true
     await hoverStation('school');
     await sleep(300);
-    const there = ink('school');
+    const there = flagInk('school');
     await hoverAway();
     await sleep(300);
 
@@ -314,6 +319,52 @@ export const TESTS = [
       // mark flickering off under the cursor, and what it says is still true.
       ok(there > broke.ink + 150, 'and stays up while you are standing there reading it',
          `${there} px`)
+    ];
+  }],
+
+  // The flag means one thing, and the bench is not allowed a second meaning for
+  // it. The bench used to answer the offer question through its own older mark,
+  // which counts a heading you have never read as well -- so a bench with an
+  // empty purse and an unopened board flew a flag saying there was something
+  // down there to buy, and there was not. One rule for every station now
+  // (`hasOffer`), and this is the case that told the two rules apart: headings
+  // unread throughout, purse full and then spent.
+  ['a flag is about the purse, not about what you have read', async () => {
+    newRun();
+    await settle();
+    await hoverAway();
+
+    // The bench arrives with the first row you can afford, so a purse is what
+    // puts it there -- and its headings have still never been opened. It has no
+    // stand box at all before that, which is why the view is aimed at it after
+    // the grant rather than before.
+    window.__grant({ dust: 3000 });
+    run(2);
+    window.__look(state().stands.bench.x - 400);
+    await sleep(300);
+    const rich = { has: state().offers.includes('bench'), ink: flagInk('bench') };
+
+    // Spend it back down through the rows themselves, until the boards will
+    // sell nothing. The headings stay unread: nothing here opens a board.
+    for (let i = 0; i < 40 && state().offers.includes('bench'); i++) {
+      if (!window.__rows().some(r => r.shown && window.__buy(r.key))) break;
+      run(1);
+    }
+    run(2);
+    await sleep(300);
+    const broke = { has: state().offers.includes('bench'), ink: flagInk('bench') };
+    const unread = state().benchMark;
+
+    newRun();
+    return [
+      ok(rich.has === true, 'a purse that can buy a bench row flies the bench a flag'),
+      ok(broke.has === false, 'and spending it takes the offer away'),
+      ok(rich.ink > broke.ink + 150, 'and the flag comes down with it',
+         `${rich.ink} -> ${broke.ink} px`),
+      // The bench's own older mark still says 'flag' here -- that is exactly the
+      // reading the pole is no longer allowed to take.
+      ok(unread === 'flag', 'with the headings still unread the whole way through',
+         `${unread}`)
     ];
   }],
 
