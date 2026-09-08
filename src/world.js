@@ -665,10 +665,15 @@ export function seatSites() {
 
   seat(school, 'school', SCHOOL_H);
 
-  seat(lab, 'lab', LAB_H);
+  // The lab is not seated any more: it is deleted, and a deleted building must
+  // not go on holding ground. Left in, it kept a station's width and a
+  // station's padding of empty yard between the scrubbing house and the
+  // apothecary -- a gap in the walk where a building used to be, which is what
+  // wave5-yard's spacing check was reading. See DESIGN.md, "The lab is
+  // deleted".
 
   // The apothecary, standing right after the farm whose crop it takes. A plain
-  // rect like the lab, seated off the same walk.
+  // rect, seated off the same walk.
   seat(apothecary, 'apothecary', APOTHECARY_H);
 
   // Past the lab, at the quiet end of the walk. What it does is about the sky

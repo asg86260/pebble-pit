@@ -684,6 +684,20 @@ export const SAVED_BY_HAND = [
   // leavings live in `S.muck`, under a kind. A leftover the format still
   // carries; kept for the same reason `haulers` is.
   'poop',
+  // --- the shields, and getting out from under the rock ---------------------
+  // Written and read by hand in persist.js rather than plainly copied, which is
+  // what puts them here: the standing shield is serialized field by field (the
+  // live one carries more than a save should), `shieldsDone` is guarded back into
+  // an array, and `rescued` is coerced and then used to settle `buried`.
+  //
+  // They were in none of the three lists, which persist-roundtrip.test.mjs has
+  // been red about: the save was writing them and no list admitted to it, so
+  // nothing held the format to them. A shield you have raised is a thing you
+  // paid for and watched go up, and a kind is offered once -- losing either on
+  // a reload is losing the yard's answer to the sky.
+  'shield',
+  'shieldsDone',
+  'rescued',
   // Not fields on S: the grids, the sky, the chance and the craft.
   'floor', 'pit', 'cut', 'meteorCells', 'rngState', 'craft',
 ];
@@ -707,6 +721,16 @@ export const EPHEMERAL = [
   'introThrew',
   // a rock on its way down, and the celebration for the last one
   'rockFall', 'rockFallV', 'danceUntil', 'nextBoulderAt',
+  // ...and when the last one hit, which is only read for the spread it does on
+  // arriving: a reload has no arrival to be moments after.
+  'landAt',
+  // Whether something is holding the rock up. A fact worked out again from the
+  // shield that is standing -- see the note beside it in the declarations -- so
+  // saving it would be saving an answer whose question is already saved.
+  'rockHeld',
+  // Where somebody dug out from under the rock is walking to. `rescued` is the
+  // fact and is saved; this is the walk, and a reload has no walk in progress.
+  'rescueTo',
   // dust in the air: a grain mid-flight has no beginning to come back to
   'chips', 'belt', 'paid', 'gulped', 'ripples', 'motes', 'trail', 'held', 'falling',
   // the counter chasing the real number
