@@ -103,6 +103,28 @@ const SCENES = {
          window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
          window.__fast(2); window.__look(4930);`,
 
+  // The raise, caught halfway. A flag does not appear: the mast slides out of
+  // the roofline over FLAG_RAISE_MS and the cloth is run up it over
+  // FLAG_HOIST_MS. Both scenes set a yard that can afford nothing, then pay for
+  // it in a frame -- the grant has to land AFTER the runner's own second of
+  // clock, or the raise is long over by the shot -- and turn the handle by just
+  // enough that the next frame drawn is the middle of the move. The draw reads
+  // its own clock, so the fraction is exactly the number of seconds asked for
+  // here, not whatever the machine happened to manage.
+  flagraise: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+              window.__fast(2); window.__look(4930);
+              requestAnimationFrame(() => {
+                window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+                window.__fast(0.3);
+              });`,
+
+  flaghoist: `window.__reset(); window.__crew(3,3,5,7); window.__fullSites();
+              window.__fast(2); window.__look(4930);
+              requestAnimationFrame(() => {
+                window.__grant({sparks:999,shards:999,spores:999,cores:9,dust:5000});
+                window.__fast(0.95);
+              });`,
+
   // The assignment ring (wave7b-assign): a body held over the farm, so the
   // station under it wears the steady solid ring while the offer auras breathe
   // around it. The held body hangs off the cursor; __hold is the same lift.

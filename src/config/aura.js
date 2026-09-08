@@ -78,3 +78,15 @@ export const ASSIGN_PAD = P * 2;     // either side of the stand rect (the top
 // down at the place, bobbing so it reads as an invitation rather than a stain.
 export const DROP_MARK_LIFT = 10;    // cells above the station's top
 export const DROP_MARK_BOB_MS = 1000;
+
+// --- raising and striking the flag -------------------------------------------
+// A flag does not appear. When a station's board first holds something you can
+// afford, the pole slides up out of the roofline and the pennant is then run up
+// it; when the offer closes the same two moves run backwards. Instant is the
+// one reading that is wrong here: the flag is the yard telling you something
+// has just changed, and a mark that is simply there on the next frame reads as
+// a mark that was always there.
+export const FLAG_RAISE_MS = 700;    // the pole, out of nothing to full height
+export const FLAG_HOIST_MS = 550;    // then the cloth, base to masthead. Shorter
+                                     // than the pole: the pole is being pushed
+                                     // up, the cloth is being pulled on a rope

@@ -1,7 +1,9 @@
 // The offer flag: a station whose board holds something you could buy this
 // second flies a flag off its roof peak -- a pole, a black pennant rippling in
-// the wind, and, the moment the offer first opens, one ring of ink breathing
-// off the tip (the tower's own gesture at a whisper). It replaces the dashed
+// the wind, and, once it is up, one ring of ink breathing off the tip (the
+// tower's own gesture at a whisper). The flag does not appear: the mast slides
+// up out of the roofline and the cloth is then run up it, and a closing offer
+// plays the same two moves backwards. It replaces the dashed
 // breathing outline, which was the one thing in the yard that was an effect
 // laid over a building rather than a thing standing in it; a flag is an object
 // the wind moves, which is the register everything else here works in.
@@ -13,7 +15,8 @@ import { STATIONS, hasOffer, standRect } from '../board.js';
 import {
   AURA_BREATH, AURA_IN,
   DROP_MARK_BOB_MS, DROP_MARK_LIFT,
-  FLAG_FILL, FLAG_GIVE, FLAG_H, FLAG_LIMP, FLAG_POLE, FLAG_RIPPLE_MS,
+  FLAG_FILL, FLAG_GIVE, FLAG_H, FLAG_HOIST_MS, FLAG_LIMP, FLAG_POLE,
+  FLAG_RAISE_MS, FLAG_RIPPLE_MS,
   FLAG_SAG, FLAG_SWING, FLAG_W, FLAG_WAVES,
   OFFER_WAVE_INK, OFFER_WAVE_MS, OFFER_WAVE_R, P, TOWER_SHAFT,
 } from '../config.js';
@@ -162,16 +165,32 @@ const seedOf = which => {
 // step, a slope, a turret off center -- covers the pole's lower run and the
 // pole reads as standing on the silhouette. Anchoring it by arithmetic on the
 // stand box put it floating over every roof that was not flat.
-function drawFlag(rect, which, t) {
+//
+// `pole` and `hoist` are the two halves of the raise, each 0..1: how much of
+// the mast is out of the roof, and how far up it the knot has been pulled. Both
+// move in whole DEVICE pixels rather than whole cells -- a mast that grew a
+// cell at a time would climb in eight jerks of six pixels, which is the same
+// glitch the aura's breath is arranged to avoid, and a rect on a fractional
+// pixel draws as a grey fringe down its edge instead of a black line.
+function drawFlag(rect, which, t, pole, hoist) {
   // The pole stands on the station's own topmost feature where one is named
   // (SPOT, above), and on the middle of the box's top edge otherwise.
   const { x, y } = flagBase(rect, which);
-  const top = y - FLAG_POLE * P;
+  const k = S.zoom * S.dpr;
+  const snap = v => Math.round(v * k) / k;
+  const peak = snap(y - FLAG_POLE * P * pole);
   // Two cells past the base, into the feature it stands on -- enough to bury
   // the foot in the chimney or the roof mass. It ran to the ground for a
   // while, trusting the silhouette to cover it, and the bench is mostly air:
-  // the pole showed straight through between its legs.
-  ctx.fillRect(x, top, P, FLAG_POLE * P + P * 2);
+  // the pole showed straight through between its legs. That buried foot is
+  // also what the mast rises out of: at pole 0 there is two cells of it, all
+  // of them inside the roof, so the flag starts as nothing.
+  ctx.fillRect(x, peak, P, y - peak + P * 2);
+  if (hoist <= 0) return;
+  // The knot, somewhere between the foot and the masthead. The cloth is the
+  // same cloth the whole way up -- it flies while it is being run up, because
+  // that is what cloth on a rope in a wind does.
+  const top = snap(y - (y - peak) * hoist);
   const seed = seedOf(which);
   // The yard's own wind, not a second one. The flags kept a private pair of
   // sines for a while, and it was why they read as a gale over a yard whose
@@ -231,9 +250,9 @@ function drawFlag(rect, which, t) {
   }
 }
 
-// When an offer first opens, one ring of ink breathes off the flag's tip and
-// spends itself -- the tower's rings-going-out gesture at a whisper. The flag
-// alone carries the standing state after; the ring marks the moment.
+// When a raised flag reaches the masthead, one ring of ink breathes off its tip
+// and spends itself -- the tower's rings-going-out gesture at a whisper. The
+// flag alone carries the standing state after; the ring marks the moment.
 const openedAt = new Map();
 function drawOpeningWave(rect, which, since, t) {
   const k = (t - since) / OFFER_WAVE_MS;
@@ -253,18 +272,50 @@ function drawOpeningWave(rect, which, since, t) {
   ctx.globalAlpha = 1;
 }
 
+// How far into its raise each station's flag is, in milliseconds: up while the
+// station is offering, back down while it is not. One number rather than a
+// state machine, because the strike is the raise run backwards and an offer
+// that closes halfway through the hoist should lower the cloth from where it
+// actually got to, not from the top.
+const raised = new Map();
+const RAISE_TOTAL = FLAG_RAISE_MS + FLAG_HOIST_MS;
+let lastFrame = 0;
+
+// Nought to one with the corners taken off, so the mast eases out of the roof
+// and settles at the top instead of starting and stopping at full speed.
+const ease = k => k * k * (3 - 2 * k);
+
 // The flags, painted before the buildings so the poles stand behind the
 // rooflines (see drawFlag). The hold ring stays in drawAuras, over everything.
 export function drawFlags() {
   const t = now();
+  // The game's own clock, so a flag raises in game time like everything else --
+  // turn the handle and the flag goes up with the yard. Deliberately NOT
+  // clamped: on the first frame after a load `lastFrame` is nought, so the
+  // whole raise resolves at once and a yard that was already flying its flags
+  // comes back flying them, rather than hoisting the lot at you on arrival.
+  const dt = Math.max(0, t - lastFrame);
+  lastFrame = t;
   ctx.save();
   ctx.fillStyle = '#000';
   for (const which of STATIONS) {
     const on = offering(which);
-    const r = on && standRect(which);
-    if (!on || !r) { openedAt.delete(which); continue; }
+    const r = standRect(which);
+    // A station that is not standing has no roofline to raise a pole out of, so
+    // its raise is forgotten rather than lowered: there is nothing to lower it
+    // against.
+    if (!r) { raised.delete(which); openedAt.delete(which); continue; }
+    const e = Math.max(0, Math.min(RAISE_TOTAL, (raised.get(which) || 0) + (on ? dt : -dt)));
+    if (e <= 0) { raised.delete(which); openedAt.delete(which); continue; }
+    raised.set(which, e);
+    drawFlag(r, which, t,
+             ease(Math.min(1, e / FLAG_RAISE_MS)),
+             ease(Math.max(0, (e - FLAG_RAISE_MS) / FLAG_HOIST_MS)));
+    // The ring marks the moment the flag reaches the masthead, not the moment
+    // the board changed: it is the punctuation on the raise, and fired at the
+    // start it went off around a pole that was still a stub in the roof.
+    if (e < RAISE_TOTAL) { openedAt.delete(which); continue; }
     if (!openedAt.has(which)) openedAt.set(which, t);
-    drawFlag(r, which, t);
     drawOpeningWave(r, which, openedAt.get(which), t);
   }
   ctx.restore();
