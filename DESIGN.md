@@ -5175,8 +5175,17 @@ it.
 
 ### A row becomes a card
 
-Two lines inside a one-pixel edge, two across the sheet: the name and its pips on top, what it
-gives and what it costs underneath.
+Two lines inside a one-pixel edge, two across the sheet: the name and what it costs on top, what it
+gives and how far up the ladder underneath.
+
+**The bill and the pips have swapped corners since, and the title wraps.** As first built the name
+took the whole top line with the bill under it, which meant a title of three words pushed the price
+down — the card grew a line for the sake of the name, and the price stopped sitting where the eye
+had learned to find it. The price is the answer to the question you open a board to ask, so it holds
+the top-right corner; how far up a ladder you have got is a glance, and a glance is happy at the far
+corner. A title with no room left takes a second line instead, which is what a title can afford to
+do and a bill cannot. Making that possible needed a ceiling over the sheet — it was shrink-to-fit
+with nothing above it and answered "no room" by getting wider, right off the side of the window.
 
 **The measurement came first, and it changed the answer twice.** Read off a real page — every board
 open, every building up, the ink in each cell measured with a Range, because a cell is a grid track
