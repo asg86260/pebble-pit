@@ -367,6 +367,11 @@ export const S = {
   // Per-pot runtime, indexed by pot: how far a batch has come, and how many
   // doses are minted and waiting for the stirrer to deal out.
   brewAt: [],             // worker-milliseconds into the current batch, per pot
+  // What each lit batch was paid for, by pot. A batch belongs to the tonic it
+  // was bought as, not to whatever the pot is set to when it lands -- see
+  // `stepApothecary`. Without it, turning a pot to a dearer tonic mid-batch
+  // shelved the dear one for the cheap one's price.
+  brewKeys: [],
   // Batches ever landed, across the run. The building's deeper rows reveal
   // themselves against this rather than all at once on the frame the door opens
   // -- an earned reveal, in the seenX pattern (the grind pass, DESIGN.md).
@@ -555,6 +560,7 @@ export const SAVED = [
   'potPrefer',
   'potSpent',
   'brewAt',
+  'brewKeys',
   'doseHold',
   'brewLevel',
   'lengthLevel',

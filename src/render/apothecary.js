@@ -13,7 +13,7 @@ import { S, apothecary } from '../state.js';
 import { drawSprite } from '../sprites.js';
 import { now } from '../clock.js';
 import { vnoise } from './flicker.js';
-import { potBoiling, brewFracOf, potTonicOf, doseStock, potBox, TONICS,
+import { potBoiling, brewFracOf, potTonicOf, brewKeyOf, doseStock, potBox, TONICS,
          tonicOf, tonicShown } from '../apothecary.js';
 import { screenAt } from './frame.js';
 import { bar } from './bars.js';
@@ -220,7 +220,10 @@ function drawPot(i, g) {
   // it is being worked. See `potBoiling`.
   if (!potBoiling(i)) return;
   const t = now();
-  const fire = flameOf(potTonicOf(i));
+  // The fire is colored by what is ON it -- the batch that was lit and paid for
+  // -- not by what the pot is set to. Turn a pot mid-batch and the flame stays
+  // the brew it is actually cooking; the new setting takes the next one.
+  const fire = flameOf(brewKeyOf(i));
 
   // The fire is ONE body of flame, not three fingers: a continuous bed of cells
   // across the foot of the pot whose top edge is jagged and living. Driven by

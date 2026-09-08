@@ -238,6 +238,12 @@ export function stepDoses() {
 // every save written before a pot was bought holds -- reads as "off" and
 // "nothing" rather than as undefined.
 export const potTonicOf = i => (S.potTonics || [])[i] || null;
+// What the batch on a given pot was lit and PAID for. A batch belongs to the
+// tonic it was bought as: the price is taken when it lights, so turning the pot
+// to another tonic while it cooks must not change what comes off it, or a cheap
+// brew buys a dear one. Falls back to the pot's setting for a save written
+// before batches carried their own key.
+export const brewKeyOf = i => (S.brewKeys || [])[i] || potTonicOf(i);
 export const potSpentOf = i => !!(S.potSpents || [])[i];
 export const doseStock = key => Math.max(0, (S.shelf || {})[key] | 0);
 export const doseStockTotal = () => TONICS.reduce((n, t) => n + doseStock(t.key), 0);
@@ -268,6 +274,7 @@ export function migrateApothecary() {
   // full recipe book from then on (items 21 and 25).
   S.potency = S.potency || {};
   S.shelf = S.shelf || {};
+  S.brewKeys = S.brewKeys || [];
   for (const t of TONICS) {
     if (S.potency[t.key] == null) S.potency[t.key] = 0;
     if (S.shelf[t.key] == null) S.shelf[t.key] = 0;
@@ -532,6 +539,10 @@ export const setTake = fn => { take = fn; };
 // off dealing, not only while it stands and stirs.
 export const potBoiling = i =>
   i < S.apothPots && i < stirrers().length && (S.brewAt[i] || 0) > 0;
+// Turning a pot mid-batch cannot un-buy the batch on it -- the crop is spent and
+// the fire is lit -- so the pot goes on cooking what it was lit for and the new
+// setting takes over at the next lighting. Clearing the setting outright is the
+// same: the batch you paid for still lands.
 // And whether anything in the building is on the boil at all.
 export const boiling = () => {
   for (let i = 0; i < S.apothPots; i++) if (potBoiling(i)) return true;
@@ -603,17 +614,20 @@ export function stepApothecary(dt) {
   for (let i = 0; i < S.apothPots; i++) {
     if (S.brewAt[i] == null) S.brewAt[i] = 0;
     const body = list[i];
-    const key = potTonicOf(i);
-    if (!body || !key) continue;                 // no keeper, or this pot is off
+    if (!body) continue;                         // no keeper
 
-    // A one-off that has already put its batch up does not start another. Its
-    // doses are still on the shelf to be dealt; once they are gone the pot idles.
-    if (!S.potKeep && potSpentOf(i)) continue;
-
-    if (S.brewAt[i] === 0) {                      // lighting a fresh batch
+    if (S.brewAt[i] === 0) {                     // lighting a fresh batch
+      const key = potTonicOf(i);
+      if (!key) continue;                        // this pot is off
+      // A one-off that has already put its batch up does not start another. Its
+      // doses are still on the shelf to be dealt; once they are gone it idles.
+      if (!S.potKeep && potSpentOf(i)) continue;
       if (body.goal !== 'in') continue;          // the keeper lights it, stood at the pot...
       if (!canAffordBrew(key)) continue;         // ...and only if there is crop to start on
       spendBrew(key);
+      // The batch is now this tonic's, whatever the pot is turned to next. What
+      // was paid for is what comes off the fire.
+      S.brewKeys[i] = key;
     }
     // Once lit, the batch brews on its own -- the keeper is free to walk doses
     // out and deal them, and the clock does not pause for its absence. It comes
@@ -623,7 +637,8 @@ export function stepApothecary(dt) {
       S.brewAt[i] = 0;
       // Onto the shelf for what it IS, not for the pot that made it: turn this
       // pot to another tonic tomorrow and today's batch is still standing there.
-      shelve(key, dosesPer());
+      shelve(brewKeyOf(i), dosesPer());
+      S.brewKeys[i] = null;
       S.brews++;                                 // and the craft is one batch deeper
       if (!S.potKeep) S.potSpents[i] = true;     // this pot's one-off is spent
       S.dirty = true;
