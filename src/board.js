@@ -5,7 +5,7 @@ import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, BOOKS_STAND_W, BOOKS_STAND_H } fro
 import { S, bench, lab, apothecary, school, casino, scrub, tower, pit, outhouse } from './state.js';
 import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
-import { UPGRADES, markSectionsSeen, canPay, maxed } from './upgrades.js';
+import { UPGRADES, markSectionsSeen, canPay, maxed, siteBusy } from './upgrades.js';
 import { markDoneSeen } from './works.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
@@ -190,9 +190,12 @@ export function hasOffer(which) {
   //
   // A row that moves bodies about spends nothing, and a ladder at the top of
   // itself cannot be bought however much you are holding: neither is something
-  // you would cross the yard for.
+  // you would cross the yard for. Nor is a row whose site is already putting
+  // something up -- the press comes to nothing while it is busy, so a flag
+  // promising it is the station telling you to walk over for no reason.
   return listFor(which).some(u => u.show && u.show() && !u.job && !u.dial &&
-                                  !u.price && !maxed(u) && !u.dead?.() && canPay(u));
+                                  !u.price && !maxed(u) && !u.dead?.() &&
+                                  canPay(u) && !siteBusy(u));
 }
 
 // near enough to a thing on the ground to be interested in it
