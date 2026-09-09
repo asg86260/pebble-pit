@@ -5998,3 +5998,243 @@ and nothing else.
 - One check, bought the player's way: mine to the first affordable row, assert no
   bench, click the call, run the yard until the work lands, assert the bench and
   assert the digger went back to the rock.
+
+## The noticeboard, and the record on it (design, not built)
+
+The yard has kept a great many facts about itself since the first rock and has
+never once said any of them back. `banked` counts every grain that ever went in
+the hole; `boulderNo` counts the rocks; a body carries its own name, its age and
+what it has mined, quarried, farmed and stored. None of it is shown anywhere. The
+books over the pit mouth are the one exception, and they only report the last
+thirty seconds.
+
+So: a board in the yard that says what you have done. Not a currency, not a
+ladder, not a rung -- a record.
+
+### The bargain
+
+**Recognition, and nothing else.** No notice pays out, no notice unlocks a row,
+no notice makes anything faster. This is the one decision the whole feature hangs
+off, and it is the same bargain the crew's own records already strike (see
+`records.js`: "None of it does anything -- no number here feeds a rate"). A yard
+of forty-eight little payouts is forty-eight balance decisions, and every one of
+them turns into a number you buy once and stop thinking about -- the thing the
+sky rule already refuses. A record that pays is a quest log. A record that does
+not is a record.
+
+What it costs the player is therefore nothing, and what it is worth is that the
+game noticed. That has to be enough, and it is only enough if the things
+recognized are things worth noticing -- which is what makes the catalog below the
+part of this document to argue with, rather than the mechanism.
+
+### Where it stands
+
+**A noticeboard, between the work bench and the houses.** One row in `SITES`
+(`config/sites.js`), placed between `buildbench` and `house`, so the walk reserves
+its ground from the moment the table names it -- like every other station, whether
+or not anything has been earned yet.
+
+That spot is chosen and not arbitrary: it is where the crew already pass. The
+houses are where they live, the bench is where they are kitted, and the strip
+between the two is the busiest ground in the yard. A board nobody walks past is a
+board nobody reads.
+
+**The books move onto it.** The income sheet is currently the only board in the
+game with no building under it -- an invisible ten-by-five rectangle at the near
+lip of the pit (`booksRect` in board.js), with a hand-tightened hit patch because
+the ordinary eight cells of padding reach into the rift's air. That was the best
+available answer while the books had nowhere to live. They have somewhere now.
+`standAt.stats` becomes the noticeboard's rect, `nearStats` becomes the ordinary
+`near()` every other station uses, and `booksRect`, `BOOKS_STAND_W` and
+`BOOKS_STAND_H` are deleted. The tight patch and the rift no longer have to be
+kept out of each other's way, because they are no longer in the same place.
+
+**Two sheets, one board**, exactly as the house already does it: the house board
+carries the crew, and the list of names opens off it (`crewListOpen`,
+`buildCrewList`). The noticeboard carries the income books, and the record opens
+off it the same way. Nothing new is invented for this -- it is the second use of
+a mechanism that already has one.
+
+**It is not bought.** No core price, no row on the bench, no unlock. Recognition
+is not for sale, and a board you have to pay to be told what you have done is the
+feature disagreeing with its own bargain in its first minute. It goes up the way
+everything here goes up -- somebody builds it -- the first time a notice is
+earned, which in practice is the first grain in the hole. A free `place`-sized
+work in `S.works.yard`, a builder walks over, and the board stands. Nothing
+teleports and nothing is charged.
+
+### What a notice is
+
+One object, in the shape the boards already read:
+
+```js
+{ key:  'firstcore',
+  name: 'a core in the hole',
+  note: 'the first thing the rock was hiding',
+  when: () => S.seenCore }
+```
+
+`when` is a predicate over the game, asked a couple of times a second by the same
+sampler that already drives the books (`sampleBooks`), never per frame. Forty-odd
+predicates at two hertz is nothing; forty-odd at sixty hertz is a thing to
+measure, and there is no reason to find out.
+
+**A rule reads a standing fact, or it declares its witness.** Most of the catalog
+below is free: the fact is already on `S` and the predicate is one comparison. A
+feat that cannot be read off a standing fact -- "cleared a rock without hiring
+anybody" -- needs somebody to have been watching, and the answer is **one** saved
+object, `S.tally`, whose keys are bumped at the one place the event happens. A new
+witness is a key in that object and a line at the event site; it is never a new
+field on `S`, and it is never a second place that knows about achievements. The
+alternative -- a counter per feat, scattered across fourteen modules -- is the
+hand-cut-constant-per-case bug wearing a different hat.
+
+Three fields are saved, and all three go in `SAVED`: `S.won` (the keys earned, an
+array), `S.wonAt` (when each landed, so the sheet can read newest first), and
+`S.tally`.
+
+### How one announces itself
+
+**The bobbing tick over the station, and nothing new.** `drawDoneMarks` already
+draws exactly this signal for exactly this reason: "a rung usually lands while you
+are looking somewhere else, and the bar coming down is a signal made of nothing
+happening". A notice landing is the same event -- something finished while you
+were looking at the rock -- so it wears the same mark, over the noticeboard,
+until you go and open it. `doneMarkAt` derives the spot from the station, so the
+noticeboard is covered by being a station.
+
+No toast, no banner, no card sliding in over the yard. Every other thing this
+game has to tell you, it tells you by putting a mark on the ground where the thing
+is, and asking you to walk over. This is not the one to break that with.
+
+**The flourish, if it is affordable:** a body walks from the houses and stands at
+the board for a beat when a notice lands, the way the crew already dance when a
+rock comes down (`danceUntil`). It is the most in-register version of "the yard
+noticed" that this game could have. It is also an errand, a route and a state,
+for a thing that is already legible without it -- so it is the first thing to cut
+if it turns out to cost more than a couple of dozen lines. Build the mark first
+and look at it before deciding.
+
+### What the sheet shows
+
+**What you have done, and how much board there is left.** Earned notices, newest
+first, each with its name and its note. Under them, one line: `14 of 48`.
+
+Unearned notices are **not named**. That is the rule the whole game already
+follows -- the books show only currencies you have seen, the counter names nothing
+you have not met -- and a locked list is that rule broken forty times on one
+sheet, in the one place a new player will read it end to end. It also spoils the
+rock: half the catalog below is a thing you have not yet found out is in here.
+
+This is the call in the design most worth overturning, and it is flagged as such:
+a great many players like a locked list to work through, and the count alone may
+read as coy rather than as restraint. It is cheap to change -- one predicate on
+the row's `show` -- so it is worth looking at on a real sheet before settling.
+
+### What is recognized
+
+Three kinds, and deliberately not a fourth. **Not** one notice per station opened,
+per trade taught, per tonic brewed: a completionist map of the game's own menu is
+a checklist of purchases, and the yard already has a board that lists what you
+have bought. A notice should be about something that *happened*.
+
+**Things you pass anyway.** These land on their own, they are the spine of the
+suite, and every one is a standing fact already on `S`.
+
+| notice | reads |
+|---|---|
+| the first grain | `banked > 0` |
+| the first rock off | `boulderNo >= 2` |
+| they got out | `rescued` |
+| something was inside it | `seenCore` |
+| somebody else in the yard | `crew >= 1` |
+| stone, crop, sparks | `seenShard`, `seenSpore`, `seenSpark` |
+| the hole turned a grain away | `seenFullPit` |
+| the rift torn | `riftOpen` |
+| the pit drowned | `drowned` |
+| everything the sky threw, answered | every kind in `shieldsDone` |
+| a star called down | `meteorOpen` |
+| a hat off the stand | `wizardHats >= 1` |
+| the first batch | `brews >= 1` |
+| somebody taught a trade | any of the four trade counts |
+| every trade taught | all four at their cap |
+| every building standing | the `*Open` flags, all of them |
+
+**Numbers, for the long tail.** The late yard runs itself and there is nothing
+left ticking; these are what tick. Every threshold here is a placeholder to be
+argued with on a played yard, and every one is an `export let` with a `TUNABLE`
+row so it can be.
+
+| notice | reads |
+|---|---|
+| 5, 10, 25, 50, 100 rocks | `boulderNo` |
+| 10k, 100k, 1M, 10M, 100M grains | `banked` |
+| a crew of 5, 10, 25, 50 | `crew` |
+| 1k and 10k cells out of the cut | `quarryTotal` |
+| a million through the rift | `riftAte` |
+| a hundred batches | `brews` |
+| an hour, then ten, on one body's clock | `records.lived`, the eldest |
+| the yard's oldest hand, by what they have mined | `records.mined`, the highest |
+
+**Feats you would have to set out for.** These are the ones worth having, they are
+the ones that change how somebody plays for an evening, and each names the witness
+it needs. This is where the work is.
+
+| notice | witness |
+|---|---|
+| a rock cleared with nobody hired | `boulderNo` steps while `crew === 0` |
+| a rock cleared by your own hand alone | tally: no worker mined this rock |
+| a rock cleared without you touching it | tally: no swing of yours this rock |
+| a rock off in under a minute | tally: the stamp of the last step |
+| the hole filled before the cut was opened | `seenFullPit && !quarryOpen` |
+| every job staffed at once | every count in `JOBS` above nought |
+| one body that has done every job | every key present in a record's `at` |
+| the yard buried: every pile full at once | `pileFull`, all of them |
+| a spotless yard with nobody sweeping | `floorGrains === 0 && janitors === 0` |
+| a crit streak | tally |
+| the table beaten, and the table ruinous | tally: hands won and lost running |
+| broke, having been rich | tally: a million held, then nothing of any of them |
+
+Call it forty-eight. The count is not a target -- it is what fell out of asking
+what this yard can honestly recognize -- and the right response to "that is too
+many" is to cut the ones that are not worth noticing, not to spread the
+thresholds thinner.
+
+### The veteran save
+
+The first load after this lands is the one interesting case: a yard forty rocks
+in satisfies thirty rules at once, and thirty ticks and thirty notices is a
+feature introducing itself by shouting. So on that first load every rule is
+evaluated **silently** -- earned, stamped, and marked already read. No mark, no
+walk, no beat. You open the board and find your record already written, which is
+what it should say: these are things you did, and the board is late, not you.
+
+That is one flag and one pass, and it is the same shape as the migrations
+`persist.js` already runs for `banked` and `riftAte`.
+
+### What it must not become
+
+- **A payout.** See the bargain. If a notice ever pays, the catalog stops being a
+  question about what is worth noticing and becomes a question about balance,
+  and it never comes back.
+- **A second scoreboard.** The books say what the yard earns; the record says what
+  it has done. A rate does not belong on the record sheet and a lifetime total
+  does not belong on the books.
+- **A reason to add a counter.** Every rule reads a standing fact or bumps a key
+  in the one tally. The moment a notice wants a field of its own on `S`, the
+  notice is wrong, not the rule.
+
+### Open questions
+
+- **The locked list.** Named-and-greyed, or not named at all. Worth a shot of a
+  real sheet both ways before settling; the design's answer is "not named" and
+  it is the softest call in here.
+- **The walk.** Whether a body goes and stands at the board when a notice lands,
+  or whether the tick is the whole of it.
+- **Every threshold in the second table**, which are placeholders and want a
+  played yard and the dev panel, not an argument.
+- **Whether the record sheet is where a body's own record is finally shown.**
+  `records.js` has kept a name, an age and four counters per body since the crew
+  were made people, and nothing in the game has ever displayed them. The crew list
+  off the house board is the other candidate. This is a separate feature and is
+  named here only so it is not solved twice.

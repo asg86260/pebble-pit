@@ -1,5 +1,33 @@
 # Still to do
 
+## The noticeboard and the record on it (2026-09-09)
+
+**Designed, not built.** DESIGN.md, "The noticeboard, and the record on it".
+A board between the work bench and the houses that says what you have done:
+forty-odd notices in three kinds -- things you pass anyway, numbers for the long
+tail, and feats you would have to set out for. The income books move off the pit
+mouth and onto it as its second sheet, which retires `booksRect` and the
+hand-tightened hit patch that had to be kept out of the rift's air.
+
+**Recognition only.** No notice pays out, unlocks a row or changes a rate. That
+is the decision the whole feature hangs off, and it is the same bargain
+`records.js` already strikes with the crew's own histories.
+
+**Blocked on:** approval of the design, and three calls inside it that a shot
+would settle faster than an argument --
+
+- **The locked list.** The design says unearned notices are not named, only
+  counted (`14 of 48`), which is the rule the books and the counter already
+  follow. Many players want a list to work through. One predicate either way.
+- **The walk.** Whether a body comes over and stands at the board when a notice
+  lands, or whether the bobbing tick over the station is the whole of it.
+- **Every threshold in the long-tail table**, which are placeholders wanting a
+  played yard and the dev panel.
+
+Not a fix, and big enough for the wave treatment: the catalog, the board and its
+two sheets, the site row, and the witnesses at their event sites are four tracks
+with nearly disjoint ownership.
+
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
 **Open. Six browser checks red on main; the node tier is green.** The shack was
