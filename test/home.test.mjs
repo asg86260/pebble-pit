@@ -45,7 +45,19 @@ group('a body with no work goes home, and the lights say who is in', async () =>
 // out of the house went down the quarry, worked the face, brought shards up and
 // was invisible the whole time.
 group('a body put to work comes out of the house first', async () => {
-    run(0.4);
+  run(0.4);
+  // A quarry for them to be sent to, before there is anybody to send. This is
+  // `openSites`' own idiom -- ask for a body down there, then take the crew
+  // back -- and it is here because the check assigns quarriers further down and
+  // never opened one.
+  //
+  // It went unnoticed because the yard used to let it: `benches()` counts the
+  // benches a quarry WOULD hold, so a hole nobody had dug reported standing
+  // room and `assignJob` filled it. The two bodies walked to where the cut will
+  // be and stood under the ground line in a working that does not exist. The
+  // floor plan asks whether the place is standing now (`STANDING`, upgrades.js),
+  // so this setup has to say so.
+  window.__crew(0, 0, 1);
   window.__crew(0, 3);
   window.__clearFloor();
   const away = runUntil(() => state().houses.home === 3, 300);
