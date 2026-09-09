@@ -5,7 +5,7 @@
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, state, ok, canvas, point, onScreen, hoverBench, run, runUntil, raf,
-         pressRaise, raiseEl, haveRock, asScreen } from './kit.js';
+         pressRaise, raiseEl, haveRock, asScreen, shop } from './kit.js';
 
 export const TESTS = [
   // Nothing is shown before it can be used: the bench is not in the yard until
@@ -25,6 +25,14 @@ export const TESTS = [
     const earned = state();
     await hoverBench();                       // reading the board marks it read
     await sleep(150);
+    // What the board is actually showing, taken off the board while it is open
+    // rather than typed in here. This used to name a heading -- `includes('you')`
+    // -- and renaming that heading turned a check about whether reading marks a
+    // board read into a check about one word. What it is asking is that every
+    // heading the bench just showed you counts as read, and that is a question
+    // the board itself can answer.
+    const shown = [...shop().children].filter(el => el.dataset.sect)
+      .map(el => el.dataset.sect);
     point('pointermove', 4, 4, 0);
     await sleep(250);
     const read = state();
@@ -44,8 +52,10 @@ export const TESTS = [
          `${earned.benchMark}`),
       ok(read.benchMark === 'dot', 'once read it is back to a dot for what you can afford',
          `${read.benchMark}`),
-      ok(read.seenSects.includes('your gear'), 'the heading counts as read',
-         JSON.stringify(read.seenSects))
+      ok(shown.length > 0, 'the board had headings on it to read',
+         JSON.stringify(shown)),
+      ok(shown.every(t => read.seenSects.includes(t)), 'every heading counts as read',
+         `showed ${JSON.stringify(shown)}, read ${JSON.stringify(read.seenSects)}`)
     ];
   }],
 

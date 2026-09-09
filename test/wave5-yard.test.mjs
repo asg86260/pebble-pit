@@ -191,6 +191,81 @@ group('a save from before the world widened keeps its dust where it lay', () => 
   ];
 });
 
+// ...and the same thing the other way, which is new. The world had only ever
+// grown at its left-hand end, so `gridSlide` only ever slid right; then the
+// shack moved in against the rock and the yard gave nineteen columns back (see
+// TO_FIRST_SITE, config/sites.js). A save from the wider world took the
+// `fillFlat` path -- the same grains, re-packed flat as middling grey, with
+// where each lay and what it was thrown away.
+//
+// There is no fixture from a wider world, because the world that wrote one is
+// gone. So one is made from a real save: the same yard with columns added at
+// the end everything is measured away from, and its anchor moved by exactly as
+// many. Restoring it has to put every grain in the same column of today's yard
+// as the unwidened save does -- which is the whole claim, checked against the
+// other save rather than against a number typed in here.
+group('a save from a world wider than today keeps its dust where it lay', () => {
+  const raw = readFileSync(new URL('./fixtures/stuck-yard.json', import.meta.url), 'utf8');
+
+  // What is on the ground, as columns and as what each grain is made of.
+  const columns = () => {
+    const m = new Map(), shades = new Set();
+    for (let r = 0; r < floor.rows; r++)
+      for (let c = 0; c < floor.cols; c++) {
+        const v = cellAt(floor, c, r);
+        if (!v) continue;
+        m.set(c, (m.get(c) || 0) + 1);
+        shades.add(v);
+      }
+    return { m, shades };
+  };
+
+  // A real save, restored the ordinary way. Where its dust ends up in today's
+  // yard is the answer the made-up one has to reproduce.
+  localStorage.setItem('boulder-clicker/v4', raw);
+  yard.restore();
+  const want = columns();
+
+  // ...and now the same ground as it would have been written down in a world
+  // nineteen columns wider: everything shifted along by nineteen, with the
+  // anchor moved by exactly as much, so the two describe the same yard. Built
+  // off the restored floor rather than off the fixture's own cells, because
+  // this fixture is old enough to have no anchor in it at all.
+  const GAVE = 19;
+  const cols = floor.cols + GAVE;
+  const wide = new Uint8Array(cols * floor.rows);
+  for (let r = 0; r < floor.rows; r++)
+    for (let c = 0; c < floor.cols; c++)
+      wide[r * cols + c + GAVE] = cellAt(floor, c, r);
+  let packed = '', v = wide[0], n = 0;         // run-length, the way persist.js writes it
+  for (const x of wide) { if (x === v) n++; else { packed += `${v}x${n}.`; v = x; n = 1; } }
+  packed += `${v}x${n}`;
+
+  const save = JSON.parse(raw);
+  save.floor = { cols, rows: floor.rows, cx: S.cx + GAVE * P, cells: packed };
+  localStorage.setItem('boulder-clicker/v4', JSON.stringify(save));
+  yard.restore();
+  const got = columns();
+
+  const sum = m => [...m.values()].reduce((a, b) => a + b, 0);
+  const same = want.m.size === got.m.size
+            && [...want.m].every(([c, k]) => got.m.get(c) === k);
+  return [
+    ok(cols > floor.cols, 'the world this save was written in was wider than the one today lays',
+       `${cols} columns then, ${floor.cols} now`),
+    ok(sum(want.m) > 0, 'the save it was made from had dust on the ground',
+       `${sum(want.m)} grains`),
+    ok(sum(got.m) === sum(want.m), 'every grain it was carrying came back',
+       `${sum(got.m)} of ${sum(want.m)}`),
+    ok(same, 'and each one is in the column of the yard it belongs to',
+       `${got.m.size} columns holding dust, wanted ${want.m.size}`),
+    // Re-packed flat, every grain comes back as one middling grey. What the
+    // shades say is what the ground is made of.
+    ok(got.shades.size > 1, 'still made of what it was made of',
+       [...got.shades].join(','))
+  ];
+});
+
 // A save made before any of this moved. Every building in it stands somewhere
 // else now, and the one thing that must not happen is a body left holding an
 // errand to a place that has moved out from under it.

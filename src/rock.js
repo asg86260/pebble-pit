@@ -6,7 +6,7 @@
 
 import {
   P, MAX_DEPTH, ROCK_W, ROCK_H, ROCK_GROW_W, ROCK_GROW_H, ROCK_SINK, ROCK_SKY,
-  ROCK_W_MAX, ROCK_H_MAX, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
+  ROCK_W_MAX, ROCK_H_MAX, ROCK_FLANK_CLEAR, ROCK_DROP, ROCK_DROP_CLEAR, DROP_GRAV, JOLT_GRAINS, LAND_SAY_MS,
   ROCK_CLEAR, SHAKE_LAND, WORKER, RAM_CRAWL, RAM_BACK, RAM_CLEAR, SQUASH_MS
 } from './config.js';
 import { throughRockMuck } from './smog.js';
@@ -52,8 +52,17 @@ export function rockSize() {
   // out of the SITES table, an edit to that table would have let the rock grow
   // quietly into a wall -- which is exactly what adding the shack in front of
   // the bench would have done. `flankX` (world.js) asks the yard instead.
+  //
+  // `ROCK_FLANK_CLEAR` was `P * 14` written here, and the walk that has to leave
+  // room for it was a hand-measured 264 over in config/sites.js. Two numbers,
+  // one decision, in two files that could not be read against each other -- and
+  // the spacing was the one that turned out to be wrong. `TO_FIRST_SITE` is now
+  // derived from this, so the nearest building stands exactly where the rock
+  // stops needing the ground, and this clamp only ever bites in a yard whose
+  // table has been edited.
   const toFlank = Math.abs(S.cx - flankX());
-  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((toFlank - P * 14) * 2 / P)));
+  const wide = Math.max(10, Math.min(w, ROCK_W_MAX,
+                                     Math.floor((toFlank - ROCK_FLANK_CLEAR) * 2 / P)));
   return {
     w: wide - (wide % 2),
     h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))

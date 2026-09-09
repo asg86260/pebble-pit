@@ -477,6 +477,17 @@ const SCENES = {
   // place -- the shack's "rock miners", the house's "housing" and "crew gear",
   // the school's four trades. Headings are the only thing these shots are for,
   // and no suite can read one, so they are shot rather than asserted.
+  // The shack against the rock, at both ends of the rock's growth: the walk
+  // leaves it exactly the room `rockSize` needs off its flank and no more, so
+  // these two are what "no more" looks like at boulder one and at the ceiling.
+  // Jumped and then run, the same as the `shack` scene above: RICH leaves the
+  // first rock still falling and nine cores tearing the rift, and neither of
+  // those is a flank to stand a hut against.
+  shackrock: `${RICH} window.__school({breakers:3}); window.__shack(); window.__jump(1);
+              window.__fast(6); window.__look(window.__state().shackX - 200);`,
+  shackrockbig: `${RICH} window.__school({breakers:3}); window.__shack(); window.__jump(30);
+                 window.__fast(6); window.__look(window.__state().shackX - 200);`,
+
   shackboard: `${RICH} window.__school({breakers:3}); window.__shack(); window.__board('shack');`,
   houseboard: `${RICH} window.__crew(3,2,2,2); window.__board('house');`,
   schoolboard: `${RICH} window.__school({breakers:3,carters:1}); window.__board('school');`,
