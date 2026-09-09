@@ -5,7 +5,7 @@
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
-         haveBench } from './kit.js';
+         runUntil, haveBench } from './kit.js';
 
 export const TESTS = [
   // Space stops the clock. Not a flag every system checks -- the clock simply
@@ -136,7 +136,11 @@ export const TESTS = [
     // takes a rock that has one in it, which the first four do not.
     window.__jump(5);
     window.__next();
-    run(3);
+    // Until there is one, not for three seconds and a hope. Building the bench
+    // above turns the clock twenty seconds further than this check used to, and
+    // a fixed wait after that landed either side of the core coming free -- the
+    // rock is a fact about the game, so wait for the fact.
+    runUntil(() => !!state().coreItem, 30);
     const k = state().coreItem;
     const core = k ? at(k.x + 9, k.y + 9) : null;
 
