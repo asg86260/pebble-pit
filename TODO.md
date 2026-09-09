@@ -55,6 +55,25 @@ not cause this. The check has been going green on a seed that happened to miss i
 above it. `stand` -> `climbTo(w, surfaceUnder(w))` is the path, and
 `feetOn(wayAt(x, y), x)` reads 1980 for a body at 1980 -- so it is the sunk `y`
 feeding `wayAt` that keeps it there, and the first push down is still unfound.
+## The bench arrives out of nothing (2026-09-08)
+
+**Designed, not built. Awaiting approval before any code.** See "The bench is built, not
+delivered (design, not built)" at the end of DESIGN.md.
+
+The `bench` step in `STEPS` flips `S.seenBench` the frame `canAfford()` first goes true and a
+workbench appears on ground that was bare -- the one structure in the game that teleports, and the
+first one the player sees. The design replaces it with a call to build standing on the bench's
+footprint: press it, an 18-worker-second `place` work opens on the `yard` site under a hidden
+`raisebench` row, the existing lending rule takes your one digger off the rock, it walks over and
+hammers, the standard bar runs over the footprint, and the bench is drawn when the work lands.
+
+No dust price -- the row you could afford is still there to buy afterwards -- and the call cannot
+time out or be dismissed, because everything you can ever buy is on that bench.
+
+**One call to make before any code:** whether the control is drawn in the yard (recommended: the
+machine's run switch is the precedent, and everything else in this yard is drawn) or a real DOM
+button floated over the canvas the way the boards are.
+
 
 ## The shop boards resize while you read them (2026-09-08)
 

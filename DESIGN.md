@@ -5904,3 +5904,97 @@ genuinely up for grabs), and the check waits for the swap with `runUntil` instea
 of reading whatever is true twenty seconds later — the helmet changes hands more
 than once in that window. The fixed check passes on a tree with the shack and on
 one without, which is the point: it is not a fact about a layout any more.
+
+## The bench is built, not delivered (design, not built)
+
+The bench is the one thing in this yard that teleports. `STEPS`' `bench` step in
+game.js watches `canAfford()`, and the frame it first goes true it sets
+`S.seenBench` and a workbench is simply *there* -- top slab, legs, something
+clamped to it -- on ground that was bare the frame before. Nobody walked, nobody
+swung anything, nothing was fenced. It is the first structure the game puts up
+and it is the only one it does not build.
+
+Every other structure is a work: paid for, its ground reserved, a body standing
+at it, a bar over it that stops dead when the body leaves. That mechanic is what
+the whole middle of the game is made of, and the first time a player meets it is
+somewhere around the shack, by which point there is a yard full of things moving
+to miss it against.
+
+**So the bench is built, by the one body you have, and it is the first thing the
+game teaches.**
+
+### What happens instead
+
+Nothing appears when `canAfford()` first goes true except a **call to build**,
+standing on the bare ground where the bench will go. It is a control, not an
+announcement: it does nothing until it is pressed.
+
+Press it, and a work starts on the `yard` site under a key of its own. The
+existing rules take it from there and none of them need changing:
+
+- `busyBuilderSites` names the yard, `rebalance` finds no spare hand, and
+  `nearestLendable` **lends your one digger** -- taken off the rock, marked
+  `lentFrom`, given back the frame the work lands.
+- It walks. It stands inside the fenced ground, swings the hammer in bursts, and
+  throws grit off every blow, because that is what a builder already does.
+- The standard bar hangs over the footprint and stops if the body is pulled off.
+- When it lands, `S.seenBench = true` and the bench is drawn -- by somebody who
+  walked there, which is the rule the rest of the yard keeps.
+
+Eighteen worker-seconds: `place` in `WORK_BASE`, the figure for a bench in the
+cut, a furrow, a hat off the stand. The workbench is that size of job and gets
+that number rather than one written for it.
+
+### What it costs, and why that is the point
+
+Your only body is off the rock for those eighteen seconds. The dust stops
+climbing while the bench goes up, and you can watch it not climb.
+
+That is the first bargain the game asks you to make, and it is the same bargain
+every later one is: **a body doing this is a body not doing that.** Teaching it
+here is free, because at this moment there is exactly one body and exactly one
+thing it could otherwise be doing, so the trade is legible in a way it will
+never be again once there are nine of them.
+
+**No dust price.** The bench arriving was never a purchase and is not one now --
+the row you could afford is still sitting there to buy once the bench stands. A
+cost here would be a second toll on one moment, and would let a player press the
+button and be left with neither the bench nor the row.
+
+### The rule it must not break
+
+The bench must stay **inevitable**. Everything you can ever buy is on it, so a
+player who never presses this can never buy anything, ever. Therefore: the call
+never times out, cannot be dismissed, does not move, and once pressed the build
+stands whatever happens to your dust afterward. It is a *when*, not a *whether*.
+It is also the reason it wants to look like an ask rather than like scenery.
+
+### The control itself
+
+The second control in this yard that is not on a board -- the machine's run
+switch is the first, and this is caught the same way, in `input.js` ahead of the
+ground, because a thing you press comes before the ground you have not pressed.
+
+Drawn on the bench's own footprint: a hollow square of two-cell black rule with
+the hammer mark inside it, `build the bench` set under it in the yard's
+lettering, bobbing on the intro arrow's beat so it reads as asking for something.
+Black and white, flat, on the `P` grid, like everything else.
+
+While it stands, `drawPileMarks`, the tape and the fence all behave as they do
+for any other yard build once it is pressed; before that it is one drawn control
+and nothing else.
+
+### What it needs in code
+
+- A hidden row, `raisebench`, registered through `registerRows` and on no board:
+  `works.js` finishes a work by calling `rowFor(w.key).buy()`, so the bench needs
+  a key to be finished under. Its `buy` is one line -- `S.seenBench = true`.
+- `YARD_ROW_SITE` and `siteBox` learn that `raisebench`'s ground is the bench's
+  own rect, so the fence, the bar and the builder all stand on it.
+- The `bench` step in `STEPS` stops setting `S.seenBench` and starts deciding
+  whether the call is out: `!S.seenBench && canAfford() && !workOn('raisebench')`.
+  Derived, so **nothing new is saved** -- the work itself already rides in
+  `S.works.yard`, and a save mid-build comes back mid-build.
+- One check, bought the player's way: mine to the first affordable row, assert no
+  bench, click the call, run the yard until the work lands, assert the bench and
+  assert the digger went back to the rock.
