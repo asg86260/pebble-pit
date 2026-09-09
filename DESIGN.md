@@ -1456,11 +1456,12 @@ already is. The old board had two speeds and no yield at all.
 
 ### A ladder is four cards, not one
 
-Ten rungs each, in bands of three, three, three and one -- and **each band is
-its own card, with its own name and its own words**. The card you can see is
+Twelve rungs each, in four bands of three -- and **each band is its own card,
+with its own name and its own words**. The card you can see is
 the band you are on; finishing a band retires that card and the next one takes
 its place. So the board still shows one yield row and one speed row at a time,
-and the ladder is ten rungs long without ever being a ten-pip row nobody reads.
+and the ladder is twelve rungs long without ever being a twelve-pip row nobody
+reads.
 
 What deepens across the bands is the **bill**. `bill` is already a list of
 `[coin, n]` pairs that `billOf`, `canPay` and the price text all handle -- the
@@ -1471,7 +1472,7 @@ machines are priced that way -- so this costs nothing structurally.
 | 1 | 1-3 | dust, and a lot of it |
 | 2 | 4-6 | dust **and the ground's own coin** |
 | 3 | 7-9 | dust, its own coin, **and the other ground's** |
-| 4 | 10 | dust, shard, spore, core and a spark -- everything the yard makes |
+| 4 | 10-12 | dust, shard, spore, core and a spark -- everything the yard makes |
 
 **The ground's own coin, and why that is not the rule being broken.** A station
 is not bought *deeper* with the thing it makes -- that is why a plot costs dust
@@ -1480,36 +1481,68 @@ the crop going back into the ground it came off, which is what fertilizer *is*,
 and it means a farm that has stopped being tended cannot climb its own ladder.
 The places keep the old rule; the ladders ask the place to feed itself.
 
-**The last rung is the research.** `labtend` and `labcave` -- the multipliers
-that were the lab's -- become band four, one rung, the all-coins card, still
-gated on the bench standing and still a BUILD that bodies have to finish. That
+**The last band is the research.** `labtend` and `labcave` -- the multipliers
+that were the lab's -- become band four of the speed ladders: three rungs, the
+all-coins card, still gated on the bench standing and still a BUILD that bodies
+have to finish. That
 is where the second speed row went: it is not a rival ladder any more, it is
 the top of the only one.
 
-### The eight cards
+### The sixteen cards
 
-The farm, in the order you meet them:
+A card is a **name** and a **note** -- the two fields `tuneRow` already uses --
+and the gain line under them is written by `gainText` as it is everywhere else.
+The name is a thing standing in the yard; the note is the sentence that says
+what it does. Neither states a number the game is keeping.
 
-| band | yield card | speed card |
+**The farm's yield ladder.** What one cut is worth.
+
+| band | name | note |
 |---|---|---|
-| 1 | **compost** — what the row throws off, turned back in | **hand tools** — a hoe apiece, and hands that stoop faster |
-| 2 | **fertilizer** — a sack at the head of the row, the soil band darker per rung | **the sprinkler** — a standpipe throwing an arc over the plots while somebody works it |
-| 3 | **the seed line** — the best of each crop kept back for the next | **the ditch** — water walked to the row once and running after |
-| 4 | **the strain** — a crop bred for the yard it stands in | **the glasshouse** — the old `labtend`, the research rung, at the top of the speed ladder |
+| 1 | **compost** | what the row throws off, turned back into it |
+| 2 | **fertilizer** | a sack at the head of the row, and the soil goes dark |
+| 3 | **the seed line** | the best of each crop held back to sow the next |
+| 4 | **the strain** | a crop bred for the yard it stands in |
 
-The quarry, the same four beats in its own words:
+**The farm's speed ladder.** How often a hand gets a cut.
 
-| band | yield card | speed card |
+| band | name | note |
 |---|---|---|
-| 1 | **the sledge** — break what comes out rather than carry it whole | **the ramp** — a graded way in and out instead of a scramble |
-| 2 | **powder** — a crate at the rim, shot marks on the face | **the shoring** — timbers down the wall, a stage per rung |
-| 3 | **the assay** — knowing which seam is worth the swing | **the tramway** — a way for stone to leave the hole that is not somebody's arms |
-| 4 | **the deep seam** — the ground under the ground | **the survey** — the old `labcave`, the research rung, at the top of the speed ladder |
+| 1 | **hand tools** | a hoe apiece, so a hand works the plot without kneeling in it |
+| 2 | **the sprinkler** | a standpipe at the head of the row, throwing over the plots |
+| 3 | **the ditch** | water walked to the row once and running there after |
+| 4 | **the glasshouse** | the row grows under glass, and the weather stops having a say |
 
-Every one of those draws something. The rule the yard already keeps is that a
-number that changes without something appearing in the world is a spreadsheet
-with a picture on top, and a band that is three purchases long has earned a
-visible stage.
+**The quarry's yield ladder.** What one dig turns up.
+
+| band | name | note |
+|---|---|---|
+| 1 | **the sledge** | break the stone at the face rather than carry it whole |
+| 2 | **powder** | a crate at the rim, and the face wears the marks of the last shot |
+| 3 | **the assay** | knowing which seam is worth the swing before you take it |
+| 4 | **the deep seam** | the ground under the ground, and it is not the same stone |
+
+**The quarry's speed ladder.** How often a swing lands.
+
+| band | name | note |
+|---|---|---|
+| 1 | **the ramp** | a graded way in and out instead of a scramble |
+| 2 | **the shoring** | timbers down the wall, a stage of them per rung |
+| 3 | **the tramway** | a way for stone to leave the hole that is not somebody's arms |
+| 4 | **the survey** | the whole cut read off before a swing is spent on it |
+
+**These names break the rule that killed "quarry lamps", and on purpose.** That
+row was renamed to `speed` because "nothing else on these boards is named after
+the *reason* it works, and a lamp is not a thing this game ever draws". The
+second half was the real objection. Every card above draws its own stage in the
+yard -- the sack, the standpipe, the ditch, the glass, the crate, the timbers,
+the tramway -- so the name is not a reason invented for a number, it is a label
+for the thing that appeared when you bought it. A card that cannot be drawn
+does not get a name; it gets cut and the band gets a different idea.
+
+The ladder itself is still called what it does. The card's title is the thing,
+and the row keeps its `unit` -- `plots/min`, `trips/min`, spores or shards a go
+-- so what the ladder *is* never depends on reading the flavor.
 
 ### The mechanism
 
@@ -1518,15 +1551,15 @@ One helper, used four times, rather than eight hand-written rows:
 `tierRows(field, bands)` takes the level field the whole ladder counts on
 (`S.tendLevel` and three new ones) and a table of four bands -- name, the
 sentence the card says, the coins it adds -- and returns the four rows. Which
-card shows is `Math.floor(level / 3)`; `rung()` is the level within the band
-and `rungs()` is three (one at band four). A new band is a line in the table,
+card shows is `Math.floor(level / 3)`; `rung()` is the level within the band and
+`rungs()` is three, every band, which is why the bands are equal. A new band is a line in the table,
 and the wording of every card in the game sits in one readable block per
 ladder. There is no per-card price code: the bill is `rungCost(first, level)`
 in dust plus the band's coins at `DUST_PER` of that.
 
 **The speed ladders keep the range they have.** `tendMs` and `cellMs` run from
-their base to their floor over `RUNGS` rungs today; over ten they run from the
-same base to the same floor in finer steps. The end of the ladder is where it
+their base to their floor over `RUNGS` rungs today; over twelve they run from
+the same base to the same floor in finer steps. The end of the ladder is where it
 is now -- this is not a speed increase, it is the same climb sold in more
 decisions.
 
