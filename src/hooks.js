@@ -177,10 +177,18 @@ export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire
   // sent back to carrying dust.
   S.benchLevel = Math.max(S.benchLevel, sp - QUARRY_BENCH0);
   S.plotLevel = Math.max(S.plotLevel, f - FARM_PLOTS0);
-  resite();
-  rebalance();                                      // and the rest carry dust
+  // The places open BEFORE the crew are shared out, because sharing them out is
+  // what reads the room. These two lines used to sit under `rebalance`, which
+  // worked only for as long as a shut station still reported standing room in
+  // it: the bodies were placed in a quarry that did not exist yet and the flag
+  // caught up a line later. Now that the floor plan asks whether a place is
+  // standing (`STANDING`, upgrades.js), asking for three down the quarry and
+  // opening it afterwards shares all three out to carrying dust and then opens
+  // an empty hole.
   if (sp > 0) S.quarryOpen = true;
   if (f > 0) S.farmOpen = true;
+  resite();
+  rebalance();                                      // and the rest carry dust
   if (S.crew) S.seenCore = true;
   syncWorkers(); buildShop(); S.dirty = true;
 };
