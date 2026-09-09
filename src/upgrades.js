@@ -1062,26 +1062,39 @@ export function buy(u) {
   // and not while the site is already putting something up. One work per site is
   // the whole of what makes the waiting a decision -- see works.js.
   if (siteBusy(u)) return false;
-  // What is spent flies to the station that sold the row, not to the bench: buy a
-  // rung of the farm and the dust arcs to the farm, buy a brew rung and it arcs
-  // to the cauldron. The destination is the row's own site (`siteBox`), and it is
-  // set for the length of the payment and cleared straight after, so a spend with
-  // nobody's `payTo` around it -- the rift -- still falls back to the bench. A
-  // row with no site of its own (the bench's own, a yard building) leaves it null
-  // and pays to the bench, which is where it is bought.
-  const box = u.site && u.site !== 'yard' ? siteBox(u.site) : null;
+  // Past the bench, paying does not buy the thing: it starts the yard building
+  // it, and the row's own `buy` runs when somebody has finished the work. The
+  // coin is taken either way and taken now -- what you are waiting on is the
+  // labour, not the bill.
+  //
+  // The work is started BEFORE the bill is taken, and that order is the whole
+  // of what makes a building's dust fly to the right place. A yard row's
+  // destination is the ground the thing is going up on, and that ground does
+  // not exist until `start` reserves it (`reserve` in works.js, which re-lays
+  // the yard on the spot) -- so a payment taken first had nowhere to aim and
+  // fell back to the bench, which is the one place the dust is not going. A
+  // start that comes to nothing returns before a coin is touched, which is the
+  // same bargain as the checks above it.
+  if (takesTime(u) && !start(u.site, u, u.at?.())) return false;
+
+  // What is spent flies to where it is going, not to the bench: buy a rung of
+  // the farm and the dust arcs to the farm, buy a brew rung and it arcs to the
+  // cauldron, buy a whole new building and it arcs to the fenced-off patch it
+  // is rising on. The destination is the row's own site (`siteBox`) -- for a
+  // yard row, the box of the work just started -- and it is set for the length
+  // of the payment and cleared straight after, so a spend with nobody's `payTo`
+  // around it -- the rift -- still falls back to the bench. A row with no site
+  // at all is the bench's own and pays there, which is where it is bought.
+  const box = u.site === 'yard' ? siteBox('yard', workOn(u.key))
+            : u.site           ? siteBox(u.site)
+            : null;
   if (box) payTo(box.x + box.w / 2, (box.y ?? S.groundY) - P * 2);
   // Nothing is taken until all of it can be: a bill you can half afford would
   // leave you with less of everything and none of the thing.
   for (const [money, n] of billOf(u)) if (money !== 'time') take(money, n);
   payTo();                                       // back to the bench for the next spend
 
-  // Past the bench, paying does not buy the thing: it starts the yard building
-  // it, and the row's own `buy` runs when somebody has finished the work. The
-  // coin is taken either way and taken now -- what you are waiting on is the
-  // labour, not the bill.
-  if (takesTime(u)) start(u.site, u, u.at?.());
-  else u.buy();
+  if (!takesTime(u)) u.buy();
   S.dirty = true;
   buildShop();
   return true;
