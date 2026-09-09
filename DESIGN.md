@@ -3479,7 +3479,10 @@ came by. Nobody teleports and nobody is lost; `rebalance` counts the spare hand
 without being told.
 
 ## Open questions
-- Sound: soft ticks on a hit, a low tone when a core banks. Optional, off by default.
+- Sound: answered. See "The sound of the yard (design, not built)" at the end of this file — the
+  seed was soft ticks on a hit and a low tone when a core banks, optional and off by default, and
+  what it grew into is a rule rather than a list. Whether it ships off by default is still open,
+  and is one of the three questions there.
 
 ## Time is a price (built)
 
@@ -5490,3 +5493,198 @@ moves for a height that does.
 
 This is the page tier for both halves of the size question, because a sheet's
 width is a fact about layout and there is nothing in the yard that knows it.
+=======
+## The sound of the yard (design, not built)
+
+The seed for this was one line under "Open questions": soft ticks on a hit, a low tone when a core
+banks, optional, off by default. That is a list of two sounds, and a list of sounds is exactly the
+wrong thing to write down first. The visual side of this game is not held together by a list of
+sprites — it is held together by *black and white, flat shapes, everything on the P = 6 grid*, and
+every sprite anybody has drawn since has been drawn to that. The audio needs its own sentence of
+that kind before it needs a single oscillator, because a hundred individually pleasant noises with
+no rule behind them is what a bad idle game sounds like.
+
+### The law
+
+> **You hear the yard, not the game. Everything is struck, and nothing is played.**
+
+Two clauses, and each one throws work out.
+
+**You hear the yard, not the game** is the audio of *nothing teleports*. The yard is a works with
+people in it; sound is the evidence of material being moved by a body. So a sound exists when and
+only when something physically happened somewhere you could have been looking: a pick meets stone,
+a load lands on the belt, rain arrives, a building comes down onto its footprint. The corollary is
+the useful half — **if a number changes and no body caused it, it makes no sound.** Dust ticking up
+is silent. A price going green is silent. A row unlocking in the shop is silent. The shop opening,
+closing, scrolling, hovering: silent. There is no UI chrome in this soundscape, no confirmation
+blip, no menu whoosh, no reward jingle, because none of those things are events in the yard — they
+are events in a spreadsheet with a picture on top, and the whole game is an argument against being
+that. The one place this bites, and it is worth accepting: **buying something is silent at the
+moment you press.** You hear it when the builders start swinging, which is when it actually
+happened.
+
+**Everything is struck, and nothing is played** is the audio of *flat shapes, six greys*. Every
+voice in the game is a short percussive event or a slow bed of moving air. Nothing is pitched into
+a scale, nothing plays a melody, nothing arpeggiates, nothing swells to announce itself. There is
+no key and there is no tempo, so nothing can ever be *out* of key or off the beat — which is the
+property that lets a soundscape run for two hours without turning into a tune you are sick of. The
+sonic reading of the six-grey palette is a narrow band: **nothing bright, nothing long.** No content
+much above 5 kHz, because high frequency is what wears an ear out over an hour, and this is a game
+about grey rock under an overcast sky, not a game about glass. Nothing rings longer than a footstep
+unless it is a bed.
+
+Held together, those two clauses settle most of what would otherwise be argued one sound at a time.
+
+### The palette: six voices, one set of parts
+
+A yard sounds like *a place* rather than a folder of effects because everything in it is heard
+through the same room and made of the same handful of materials. So the palette is not six sound
+designs. It is one signal chain, built once, with six settings.
+
+**The shared DNA.** One noise buffer generated at boot — a few seconds, pinkish, filled from the
+game's own `rand()`, so a seeded run has a seeded soundtrack — and one sine. Every one-shot in the
+game is `source (noise or sine) → bandpass → gain envelope → the yard bus`. What separates stone
+from metal is center frequency, bandwidth and decay length; not a different technique, and certainly
+not a different sample pack. Everything sits around one low center — call it the yard's note, a
+frequency rather than a pitch — so that fifty unrelated events in one second still sound like fifty
+things happening in one room.
+
+| voice | what it is | how it is made |
+|---|---|---|
+| **stone** | the pick, the crack, a grain landing, the boulder | low-Q bandpass noise, center low, 40–90 ms decay; the big ones get a sine thump underneath that tunes down as it goes |
+| **wood** | boards, sheds, the bench, a hatch | narrower band, higher center, faster decay, one weak second resonance so it reads as hollow |
+| **metal** | the ram, the belt, a machine's beat | two slightly detuned bandpasses and a longer ring — still dull. Never a bell and never a chime; a bell is a tune with one note in it |
+| **water** | rain, the drowned pit | broadband noise under a slowly wandering lowpass. No transients at all: rain here is not a sequence of drops, it is a band that opens |
+| **air** | wind, the sky, the smog band | the same noise with the cutoff far lower, its cutoff and gain driven straight off `gust()` and `give()` in wind.js — so **the wind you can see is the wind you can hear**, one source of truth, the way the sky band already works |
+| **the rift** | the tear, the pull, the abyss | the only voice that is not struck: two very low sines, detuned a few cents, beating slowly against each other. That beat *is* the flowing interference the pit already draws. Never a whoosh, never a riser |
+
+Six voices. If a new station cannot be built out of one of them, that is a question about the
+station, not a request for a seventh voice — the same way a new sprite does not get a seventh grey.
+
+### Density: what always sounds, what is folded, what is a bed
+
+This is the part that decides whether the game is bearable at minute ninety, and it is where idle
+games with bad audio actually go wrong. The failure is never a bad sound. It is a fine sound played
+four hundred times.
+
+**Four classes, and every event in the game belongs to exactly one.**
+
+1. **Always — the player's own hand.** The click on the rock. Never throttled, never stolen by the
+   voice cap, never ducked. It is the one event the player caused directly and it is allowed to be
+   the clearest thing in the mix. It carries the information the click already has: harder rock is
+   lower and duller, a crit is the same voice with more body under it, breaking through a layer
+   moves the band. Not louder — *different*. A reward that is merely louder is the slot machine
+   this game has spent five thousand lines refusing to be.
+
+2. **Folded — everything the yard does in quantity.** Grains landing, footsteps, the belt's loads, a
+   machine's per-beat tick, dust going into the hole. The rule is one line and it is the whole of
+   the discipline here: **a handful of gravel is one sound, not forty.** Each class holds a short
+   window, of the order of 60–100 ms; events arriving inside a window neither queue nor each fire —
+   they fold into the single sound that window will emit, making it a little louder and a little
+   wider in the band. Past that, each class has a hard rate ceiling per second, and events over the
+   ceiling are *dropped*, not deferred. A ceiling that defers is a ceiling that runs permanently
+   late once the endgame yard gets going, and then you are hearing last minute's yard.
+
+3. **Beds — the things that are simply true right now.** Rain, wind, the machines' hum, the rift,
+   the drowned pit. Continuous, present while their cause is present, gain crossfading over
+   *seconds* and never over frames. They are not triggered by events at all: they are driven once a
+   frame from state, in one `stepAudio(dt)` that reads the yard and sets levels. That structure is
+   not tidiness — an event-triggered bed is a bed that eventually gets stuck on when some edge case
+   fails to send its stop, and a stuck bed is the worst bug this layer can have.
+
+4. **Punctuation — rare by construction.** A building landing on its footprint. A core banking. A
+   star. The rift tearing. The boulder in the opening. These may be the loudest things in the game
+   and may **duck the beds** a few dB for about a second underneath them. They have earned it by
+   being rare, and they are rare because the game made them rare rather than because a cooldown is
+   holding them back.
+
+**Silence is in the palette.** The opening already has the only silence in the game: the body lies
+flat on its back after the boulder lands, and the design says nothing in it is hurried. Audio honors
+that literally — not a quiet moment but *nothing*, not even wind, until the body gets up. The lull
+between rocks is the same. A soundscape with no holes in it is one you stop hearing by minute ten,
+and after that it is fatigue with no information in it.
+
+### The mix law
+
+- **Very quiet by default, and satisfying at that volume.** Anything that has to be loud to be good
+  is a sound that has not been designed yet. The target is a laptop speaker at half volume in a
+  room with other things going on.
+- **Master chain, in order:** yard bus → a gentle one-pole lowpass around 5 kHz, which is the
+  six-grey palette enforced in one place instead of voice by voice → a soft limiter with a slow
+  release, which exists so the endgame yard at full tilt is *the same loudness* as the opening yard
+  rather than louder → master gain, default low.
+- **Everything is enveloped; no gain value ever jumps.** At least a few milliseconds of attack on
+  every voice, beds included; releases through `setTargetAtTime` rather than an exponential ramp to
+  zero, which is not a thing that exists. A voice stolen by the cap fades over about 20 ms, never
+  stops. This is the abyss note read into audio: full fades, no popping.
+- **Nothing repeats exactly.** Every one-shot takes detune within about a semitone, a couple of dB
+  of level and a few milliseconds of timing scatter, all from the game's `rand()`. Two semitones is
+  the outer limit before variation stops sounding like variation and starts sounding like a fault.
+- **Nearly mono.** The yard is drawn flat, so pan shallowly from world x against the camera center
+  and cap it well short of hard — about ±0.3. A hard-panned yard is a yard you have to sit in the
+  middle of.
+- **A voice cap with per-class shares**, stealing the oldest and quietest first. The player's click
+  is exempt.
+
+### Architecture, in one paragraph and no code
+
+A single `src/audio.js` owns the `AudioContext` and is the only file in the repo that has ever heard
+of one. Modules never build a node; they say what happened — a call of the shape `sfx('stone', { x,
+hard })` — and audio.js alone decides whether that survives the window and the ceiling. Beds come
+from one `stepAudio(dt)` reading state, per the class rules above. Every number lives in `config.js`
+behind an `SND_` prefix, and the handful that want an ear — master gain, the lowpass corner, each
+class's ceiling — hang on `dev.js` as knobs, because that panel is where every other number in this
+game was actually found. The context is created on the first real pointer gesture, because browsers
+allow nothing else; before that, calls are no-ops and are **not** queued, or the yard coughs up its
+whole first second at once. Mute lives on the settings sheet beside the reduced-motion switch when
+that sheet exists, and it remembers. `ARCHITECTURE.md` gets an entry, and the mute state goes in one
+of state.js's three lists like any other fact.
+
+**How it gets checked.** Neither tier can hear anything, exactly as neither can see a sprite — so
+the ear is the check, the way the shot is the check for drawing, and a green suite is not evidence
+this layer is right. What the node tier *can* hold is the decision half, provided audio.js keeps its
+decisions separate from its context: given forty grains in one frame, how many voices does it decide
+to fire, and does a bed's target level follow the storm. That is a fact about the yard and belongs
+in the node tier as its own file. Everything downstream of the decision is a listening job.
+
+### What the research turned up that is worth taking
+
+- **Mini Metro** (Vreeland) proves the thing is possible without music: a line's sound is *derived*
+  from game state — station count is the sequence length, station type the timbre, occupancy the
+  dynamic. Worth stealing: the derivation, and the hard caps on how much may sound at once. Worth
+  leaving: the quantized tempo grid. This yard has no beat, and quantizing a pick swing would move
+  the sound off the body that made it, which breaks the law's first clause outright.
+- **Its density trick specifically:** when events exceed capacity the excess is dropped, not queued.
+  That is where class 2's ceiling comes from, and it is the opposite of what a naive event queue
+  does.
+- **Balatro** is the counter-example, held at arm's length. Its card sounds are wonderful and its
+  score counter is a slot machine on purpose. Take the tactility — a sound that lands just behind
+  the hand and has weight in it — and leave the escalation: there is no prestige loop here to feed,
+  and the pillars say the simulation is the reward.
+- **Ordinary game-audio practice on repetition** — round-robin variants, about a semitone of pitch
+  jitter, a couple of dB of level jitter — is right, and is cheaper here than anywhere else, because
+  the voices are synthesized and the round robin is a random number rather than ten recorded takes.
+- **Web Audio specifics:** an exponential ramp cannot reach zero, so `setTargetAtTime` is the
+  release; a gain assigned directly rather than scheduled is the click you are trying not to make;
+  and one noise buffer generated once and read from different offsets is an unlimited supply of
+  non-identical noise for nothing.
+
+### Open questions — the three that change the shape of the work
+
+1. **Music: none, a drone, or the sky?** Three honest options. (a) No music ever, only the yard.
+   (b) A generative drone under everything, tied to progress. (c) **The sky is the only score** —
+   no music as such, but the air and water beds written *as* music, so the weather is what swells
+   and recedes across an hour and the yard plays on top of it. The recommendation is (c): the sky is
+   already a live decision the player invests in, and it is the only system in the game with a
+   natural arc. This is the call that decides whether an hour has a shape or is flat, so it wants
+   deciding on purpose rather than by default.
+2. **Off by default, or on and quiet?** The seed said off. An audio layer built to this standard and
+   shipped off by default is one most players never hear. The alternative is on, pitched quiet
+   enough that nobody's first act is reaching for the mute, with a mute that remembers. A taste
+   call, not an engineering one.
+3. **Does the tower get a voice — and does the rift?** These are the two things in the yard that are
+   not material, and the law says everything is struck. Either they stay silent, which is austere
+   and consistent and makes the game's two strangest systems its quietest; or one of them is the
+   single deliberate exception — the only sustained, pitched, non-percussive voice in the game —
+   which would make magic legible by contrast the moment you first heard it. Taking that exception
+   once is a design. Taking it twice is the start of a soundtrack.
