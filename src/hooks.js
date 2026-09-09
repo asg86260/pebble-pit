@@ -287,6 +287,9 @@ export const levels = (o = {}) => {             // set upgrade levels, for weigh
   for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'rockhandSpeedLevel',
                    'rockhandPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',
+                   // The two grounds' yield ladders, which climb their own
+                   // fields exactly as the speed ones beside them do.
+                   'cropLevel', 'seamLevel',
                    'wizSpeedLevel', 'wizPowerLevel', 'labKitLevel',
                    'harnessLevel', 'bootsLevel', 'fanLevel', 'riftLevel',
                    'critChanceLevel', 'critMultLevel']) {

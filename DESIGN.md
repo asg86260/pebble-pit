@@ -1418,7 +1418,7 @@ explanation. The scrubbing house's rule: the disease is the advertisement.
 are the ones at which a yard that has been playing along has *just* opened
 those stations, and that is a thing to measure on a save rather than pick.
 
-## What the two grounds sell (design, not built)
+## What the two grounds sell (built)
 
 The farm and the quarry sell the same four rows as each other, and two of those
 four are the same rate sold twice. Open the farm and the board is *another
@@ -1600,6 +1600,40 @@ factor for the same reason.
 ladders, and how much a yield rung is worth -- a flat extra per go, or a share
 of a go. Both are dev-panel questions, one `export let` and one `TUNABLE` row
 each, and are worth answering on a yard rather than on paper.
+
+### What landed, and the two calls the design left open
+
+Built. `tierRows` is in `src/upgrades/tiers.js` and is called four times, off
+four tables of four lines; the shape of a ladder -- three to a band, four bands,
+nine rungs of the ladder's own field -- is `TIER_BAND`, `TIER_BANDS` and
+`TIER_OWN` in `src/config/tiers.js`, with `MULT_MAX` beside them. `levelOf`
+reads that table in the one place it clamps. `labtend` and `labcave` are band
+four of the two speed ladders and keep their keys; `labcrop` and `labseam` are
+the two new yield multipliers, over `S.mult.crop` and `S.mult.seam`. All four
+bands of all four ladders are works the station's own hands stand and finish,
+which the speed rungs already were and the last band was as the lab's row.
+
+The two open numbers were answered like this, and both are dials:
+
+- **A rung costs what a rung always cost.** `rungCost` is half again a rung over
+  five rungs, which is about six and a half times across a whole ladder, and
+  that span is the thing worth keeping rather than the exponent, which was
+  written for a ladder of five. `tierCost` is `rungCost` asked for a fractional
+  level, so twelve rungs span what five did. 1.6 twelve times over is a hundred
+  and seventy times the first price at the top, which is a row nobody buys.
+  `CROP_COST`, `TEND_COST`, `SEAM_COST` and `QUARRY_PACE_COST` all open at 720
+  dust and are all `export let`.
+- **A yield rung is a share of a go, and both grounds use the same arithmetic.**
+  `tierGain` is one call: a share again of itself per own rung, and the
+  multiplier's quarter again per rung of band four. The farm's base is one
+  spore, so a share of one is the flat extra spore the design offered as the
+  other option; the cut's base is already a handful a bench, so the same call
+  reads there as a share. `CROP_PER_RUNG` and `SEAM_PER_RUNG` are the dials.
+
+Band four's bill is the dust price converted at `DUST_PER` in each of the four
+other coins, which at the top of a ladder is seven cores -- steep, and steep by
+the economy's own exchange rate rather than by a number picked for this row. It
+is the first thing to argue with on a yard.
 
 ## Not doing
 

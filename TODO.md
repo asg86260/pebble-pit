@@ -2,26 +2,27 @@
 
 ## The farm and the quarry sell the same rate twice (2026-09-08)
 
-**Designed, not built. Awaiting approval.** Both boards open with a place row, a
-`speed` rung and a `speed ×` multiplier over that same rung -- two rows for one
-variable, and the `tend` rung's own comment admits it is "a rate on a rate of
-nothing" before there is a second plot. The design in DESIGN.md, "What the two
-grounds sell", gives each ground a place row and **two ten-rung ladders** --
-yield and speed -- climbed through four cards of three, three, three and one
-rung, each card its own name and wording. The bill deepens by band: dust, then
-dust and the ground's own coin, then the other ground's too, then everything
-the yard makes. `labtend` and `labcave` become band four of each speed ladder
-rather than a rival row, and the yield ladders get a multiplier each on the same
-machinery -- so a ladder is nine rungs of its own field and three of a
-multiplier, and `levelOf` takes a cap per key instead of one `RUNGS` for all. One helper, `tierRows`, builds all eight cards
-from a table. The farm's opening prices roughly double (`PLOT_COST` 260 → 520,
-first yield rung 720 dust), which was the request this started as.
+**Built, 2026-09-09.** Both boards sold a `speed` rung and a `speed x` over that
+same rung. Each ground now sells a place and two ladders -- a yield one and a
+speed one -- twelve rungs each in four bands of three, each band its own card
+with its own name and its own bill. `tierRows` in `src/upgrades/tiers.js` builds
+all sixteen cards from four tables; a new band is a line in a table.
+`labtend`/`labcave` are band four of the speed ladders, keys and all, and
+`labcrop`/`labseam` are the two new yield multipliers; `levelOf` clamps per key
+off `MULT_MAX`. The speed curves run to the same floor over nine rungs, so no
+rate got faster. `PLOT_COST` is 520, `BENCH_COST` 20 and all four ladders open
+at 720 dust. Checks in `test/ladders.test.mjs`, bought through the rows.
 
-**Blocked on:** approval of the design. The numbers it leaves open are dev-panel
-work: each ladder's first price and steepness, whether a yield rung is a flat
-extra per go or a share of one, and the multiplier `STEP` -- three rungs at a
-quarter again is about a third less at the top of a rate than the five rungs
-`labtend` had.
+**Left open**, and both are dev-panel questions rather than code:
+
+- **The four first prices and the ladder's steepness.** `tierCost` spreads
+  `rungCost`'s five-rung span over twelve, which keeps the top of a ladder where
+  a ladder's top has always been. Every first price is an `export let` with a
+  `TUNABLE` row.
+- **Band four's core line.** The bill is the dust price converted at `DUST_PER`
+  in each of the other four coins, which at the top of a ladder is seven cores
+  -- fair value by the economy's own exchange rate, and still seven rocks. Worth
+  looking at on a played yard before anything is changed about it.
 
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
