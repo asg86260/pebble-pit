@@ -82,7 +82,7 @@ export const TESTS = [
       const h = heads.find(el => el.dataset.sect === title);
       return h && h.querySelector('.badge');
     };
-    const rock = badge('the rock'), dust = badge('the dust'), quarry = badge('the quarry');
+    const rock = badge('rock miners'), dust = badge('dust carters'), quarry = badge('quarry blasters');
 
     await hoverAway();
     window.__look(state().openCamX);
@@ -94,7 +94,7 @@ export const TESTS = [
       ok(dust && dust.textContent === '1',
          'each trade counts its own, not the whole school', dust && dust.textContent),
       ok(!quarry, 'a trade you own none of carries no badge, the way an empty section does not'),
-      ok(rock && rock.parentElement.firstChild.nodeValue === 'the rock',
+      ok(rock && rock.parentElement.firstChild.nodeValue === 'rock miners',
          'and the heading keeps its own title as plain text',
          rock && rock.parentElement.firstChild.nodeValue)
     ];

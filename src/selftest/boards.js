@@ -1317,7 +1317,7 @@ export const TESTS = [
     // it. Without `pinWidth` this takes the bench from 525 pixels to over 1100.
     const anyGain = shop().querySelector('button[data-key] .gain');
     const said = anyGain.textContent;
-    anyGain.textContent = 'busy: break the ground, put up the school, the next furrow';
+    anyGain.textContent = 'busy: build the farm, build the training grounds, the next furrow';
     const shouted = size();
     anyGain.textContent = said;
 

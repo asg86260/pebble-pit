@@ -859,10 +859,10 @@ registerRows(UPGRADES);
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
-  { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
+  { title: 'your gear', keys: ['carry', 'auto', 'speed', 'pick'] },
   // Placeholder heading -- Track A owns the final wording. The crit rows apply
   // to the whole yard, so the bench is their natural home.
-  { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
+  { title: 'critical hits', keys: ['critchance', 'critmult'] },
   // "the crew" is not here any more: what they carry and how fast they walk is
   // sold at the block they live in, under "their gear" -- see crewboard.js. The
   // rows themselves are still in UPGRADES below, because moving a row between
@@ -874,24 +874,24 @@ export const SECTIONS = [
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
   { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
-  // Everything the yard has not put up yet, under one heading.
+  // Everything the yard has not built yet, under one heading.
   //
   // These were ten headings, each carrying a single row -- "the quarry" over
   // "open the quarry", "the tower" over "raise the tower", and so on down. That
   // is roughly six hundred pixels of bench spent on a table of contents, and a
   // heading over one row was never telling you anything the row did not.
   //
-  // The rows keep their own verbs rather than being flattened to the building's
-  // name. "Open the quarry", "break the ground", "raise the tower" each say what
-  // the work actually is, and under one heading they read as a list of jobs to
-  // be done rather than a list of things to be owned -- which is the truer
-  // description of a yard you are building.
+  // Every row under it says "build the <place>", and the heading says "build".
+  // They each had their own verb once -- "open the quarry", "break the ground",
+  // "raise the tower" -- which read well one row at a time and badly as a list:
+  // ten rows, ten verbs, and nothing to tell you at a glance that they were all
+  // the same kind of purchase. A heading is a label, not a voice.
   //
   // They are the one group that cannot be moved to the place it belongs to,
   // which is the rule every other section on this board now follows: a decision
   // about a place is made at the place, and these cannot be, because the place
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
-  { title: 'put up', keys: [
+  { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool',
     'unlockscrub'

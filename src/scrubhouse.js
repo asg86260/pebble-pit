@@ -147,7 +147,7 @@ export const SCRUB_UPGRADES = [
 
 export const SCRUB_SECTIONS = [
   airSection(),
-  { title: 'the works', keys: ['fan', 'balloon', 'recycler'] }
+  { title: 'equipment', keys: ['fan', 'balloon', 'recycler'] }
 ];
 
 // what it costs to put the place up at all

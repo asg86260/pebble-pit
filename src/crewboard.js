@@ -251,7 +251,7 @@ function people() {
   }));
 }
 
-// Two headings: what you can put up, and who is already living in it. The people
+// Two headings: what you can build, and who is already living in it. The people
 // are not cut up by job -- that would put the same body under a different word
 // every time it was moved -- but a purchase is not a person, and a row you can
 // spend dust on sitting unlabelled next to one is a row you press by accident.
@@ -261,10 +261,10 @@ function people() {
 // submenu says which heading it came out of.
 export const crewSections = () => [
   { title: 'the crew', keys: [CREW_ROW.key] },
-  { title: 'the block', keys: [HOUSE_ROW.key] },
+  { title: 'housing', keys: [HOUSE_ROW.key] },
   // What they carry and how fast they walk. Its own heading rather than folded
   // into "the crew" above, because that one is the door through to the people
   // and this is a shelf of gear -- the same distinction the board already draws
   // between a person and a purchase.
-  { title: 'their gear', keys: CREW_GEAR }
+  { title: 'crew gear', keys: CREW_GEAR }
 ];

@@ -457,6 +457,14 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
+  // The three boards whose headings name a trade or a purchase rather than a
+  // place -- the shack's "rock miners", the house's "housing" and "crew gear",
+  // the school's four trades. Headings are the only thing these shots are for,
+  // and no suite can read one, so they are shot rather than asserted.
+  shackboard: `${RICH} window.__school({breakers:3}); window.__shack(); window.__board('shack');`,
+  houseboard: `${RICH} window.__crew(3,2,2,2); window.__board('house');`,
+  schoolboard: `${RICH} window.__school({breakers:3,carters:1}); window.__board('school');`,
+
   // Track F3 (wave5). The bench, which is the longest board in the game: every
   // heading, the pips under every ladder, and the clocks in the bills of the
   // rows that have to be built. This is the shot for the pips and for the clock

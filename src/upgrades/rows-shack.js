@@ -14,7 +14,7 @@ export const SHACK_ROWS = [
   {
     key: 'unlockshack',
     kind: 'building', site: 'yard', at: () => shack.x + shack.w / 2,
-    name: 'put up the shack',
+    name: 'build the shack',
     note: () => 'somewhere for the gang to keep their gear.',
     cost: () => SHACK_DUST,
     // A third of what a building takes. It is a third of a building, and it is

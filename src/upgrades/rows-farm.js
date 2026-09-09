@@ -3,7 +3,7 @@ import { S, farm } from '../state.js';
 import { nearly, seenACore, site } from './site.js';
 
 const FARM = site({
-  key: 'unlockfarm', name: 'break the ground',
+  key: 'unlockfarm', name: 'build the farm',
   cores: FARM_CORES, dust: FARM_DUST, open: 'farmOpen',
   at: () => farm.x + farm.w / 2,                   // show them what they just bought
   // Revealed once you have been within reach of the price, and then it stays:

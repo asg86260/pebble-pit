@@ -174,10 +174,10 @@ export const SCHOOL_UPGRADES = TRADES.map(t => ({
 // A heading with nothing showing under it is left out, so the plots turn up as
 // their own line on the day the ground is broken. See `shape` in shop.js.
 export const SCHOOL_SECTIONS = [
-  { title: 'the rock', keys: ['breaker'] },
-  { title: 'the dust', keys: ['carter'] },
-  { title: 'the quarry', keys: ['blaster'] },
-  { title: 'the farm', keys: ['grower'] }
+  { title: 'rock miners', keys: ['breaker'] },
+  { title: 'dust carters', keys: ['carter'] },
+  { title: 'quarry blasters', keys: ['blaster'] },
+  { title: 'farm growers', keys: ['grower'] }
 ];
 
 // How much of that kit the station owns, for the badge on the heading.
