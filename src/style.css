@@ -159,8 +159,19 @@ canvas {
      underneath. Two columns inside the card rather than the sheet's tracks --
      the gain takes what it needs on the left and the bill sits hard right, and
      because the card owns its own tracks a long bill in one card cannot push
-     every other card's price across the board. */
-  grid-template-columns: 1fr auto;
+     every other card's price across the board.
+
+     `min-content` is the floor under the left-hand column, and it is what keeps
+     what a card GIVES you on the card. The gain line does not wrap, so its
+     min-content IS the whole line -- which means the column can never be
+     squeezed narrower than the words in it. Without the floor a plain `1fr`
+     gives way first and the bill takes everything: the farm's astral GMOs, whose
+     bill is six coins deep, had a gain cell exactly zero pixels wide and the
+     line "10 -> 13 spores a cut" was clipped out of existence. The bill is the
+     thing that can afford to give way, because it wraps -- it takes another
+     line inside its own cell and the card is a line taller, which is a card you
+     can still read. */
+  grid-template-columns: minmax(min-content, 1fr) auto;
   gap: var(--card-gap);
   align-items: baseline;
   font: inherit;
@@ -308,15 +319,19 @@ canvas {
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column
    of pluses is a column you can run your eye down. */
-/* `min-width: 0` and the clip are the belt to `pinWidth`'s braces (board.js).
-   The sheet is a fixed box now, so a line longer than this cell can only spill
-   over the card's own border -- it can no longer push the whole board wider.
-   Every word this cell is ever given fits: measured across every board, the
-   widest status in the vocabulary is "nobody on it" at 101 pixels and the
-   tightest cell one can land in holds 102 (see the rule for `.waiting` below,
-   which is what buys the room). The clip is here for the word nobody has written
-   yet, so that it truncates rather than bleeding into the card beside it -- and
-   the check in selftest/boards.js is what actually holds the margin. */
+/* And it is never truncated. What a card gives you is the reason to press it;
+   a card that says what it costs and eats what it is worth is a card you cannot
+   read. The column's `min-content` floor (see `.rows button` above) is what
+   holds it: this line does not wrap, so its min-content is the whole of it and
+   the track cannot come out narrower.
+   `min-width: 0` and the clip are the belt to `pinWidth`'s braces (board.js),
+   and they are for the LINE THIS CELL IS LENT -- a status, which spans the whole
+   card and is written live while a build runs. The sheet is a fixed box, so a
+   status longer than the card can only spill over its own border; the clip is
+   there so the word nobody has written yet truncates rather than bleeding into
+   the card beside it. Every status in the vocabulary fits today -- the widest is
+   "nobody on it" -- and the check in selftest/boards.js is what holds that
+   margin, along with the one that says no gain line is ever clipped. */
 .rows button .gain {
   grid-column: 1;
   grid-row: 2;
