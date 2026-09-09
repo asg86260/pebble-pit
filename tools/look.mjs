@@ -507,6 +507,17 @@ const SCENES = {
   // board with the four rungs gone off it.
   houseboard: `${RICH} window.__board('house');
                window.__look(window.__state().houses[0].x - 320);`,
+  // The two grounds' own sheets, which are what "a place and two ladders" looks
+  // like: a place row, one yield card and one speed card, with the pips under
+  // each saying where on its twelve-rung ladder the card sits. The shot for the
+  // card names and their gain lines -- neither test tier can see a word of it.
+  farmboard: `${RICH} window.__board('farm');`,
+  quarryboard: `${RICH} window.__board('quarry');`,
+  // And the far end of the same two ladders, which is where the bills get
+  // interesting: band four asks for every coin the yard makes and band two for
+  // two of them, so this is the shot for a deep bill fitting in a row.
+  laddersdeep: `${RICH} window.__buildbench(true);
+    window.__levels({cropLevel: 9, tendLevel: 4}); window.__board('farm');`,
 
   // And the books over the pit: the measured rate for every currency the yard
   // has met. It is run for a minute first, because a rate is a thing that takes

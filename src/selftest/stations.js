@@ -57,13 +57,18 @@ export const TESTS = [
          !bench.includes('farmplot') && !bench.includes('tend'),
          'the bench sells neither of them any more', bench.join(',')),
       ok(atQuarry.quarryBoardOpen, 'standing at the quarry opens its own board'),
-      ok(quarryRows.join(',') === 'quarrybench,quarrypace',
-         'holding how deep it goes and how fast it works', quarryRows.join(',')),
+      // A place row and the first card of each of the cut's two ladders. Only
+      // the band you are on is ever drawn, so a fresh cut shows band one of
+      // each and nothing else. See DESIGN.md, "What the two grounds sell".
+      ok(quarryRows.join(',') === 'quarrybench,seam,quarrypace',
+         'holding how deep it goes, what a dig turns up and how fast it works',
+         quarryRows.join(',')),
       ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      ok(plotRows.join(',') === 'farmplot,tend',
-         'holding the next plot and how fast a plot comes on', plotRows.join(','))
+      ok(plotRows.join(',') === 'farmplot,crop,tend',
+         'holding the next plot, what a cut is worth and how fast a plot comes on',
+         plotRows.join(','))
     ];
   }],
 

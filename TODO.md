@@ -1,5 +1,29 @@
 # Still to do
 
+## The farm and the quarry sell the same rate twice (2026-09-08)
+
+**Built, 2026-09-09.** Both boards sold a `speed` rung and a `speed x` over that
+same rung. Each ground now sells a place and two ladders -- a yield one and a
+speed one -- twelve rungs each in four bands of three, each band its own card
+with its own name and its own bill. `tierRows` in `src/upgrades/tiers.js` builds
+all sixteen cards from four tables; a new band is a line in a table.
+`labtend`/`labcave` are band four of the speed ladders, keys and all, and
+`labcrop`/`labseam` are the two new yield multipliers; `levelOf` clamps per key
+off `MULT_MAX`. The speed curves run to the same floor over nine rungs, so no
+rate got faster. `PLOT_COST` is 520, `BENCH_COST` 20 and all four ladders open
+at 720 dust. Checks in `test/ladders.test.mjs`, bought through the rows.
+
+**Left open**, and both are dev-panel questions rather than code:
+
+- **The four first prices and the ladder's steepness.** `tierCost` spreads
+  `rungCost`'s five-rung span over twelve, which keeps the top of a ladder where
+  a ladder's top has always been. Every first price is an `export let` with a
+  `TUNABLE` row.
+- **Band four's core line.** The bill is the dust price converted at `DUST_PER`
+  in each of the other four coins, which at the top of a ladder is seven cores
+  -- fair value by the economy's own exchange rate, and still seven rocks. Worth
+  looking at on a played yard before anything is changed about it.
+
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
 **Open. Six browser checks red on main; the node tier is green.** The shack was

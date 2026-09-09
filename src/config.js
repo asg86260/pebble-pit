@@ -36,6 +36,7 @@ export * from './config/rift.js';
 export * from './config/view.js';
 export * from './config/dust.js';
 export * from './config/crew.js';
+export * from './config/tiers.js';
 export * from './config/rocks.js';
 export * from './config/quarry.js';
 export * from './config/machines.js';

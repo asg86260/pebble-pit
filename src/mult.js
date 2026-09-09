@@ -7,7 +7,7 @@
 // See DESIGN.md, "The lab is deleted".
 
 import { S } from './state.js';
-import { RUNGS, LAB_WORK } from './config.js';
+import { LAB_WORK, MULT_MAX, RUNGS } from './config.js';
 
 // Each level is a quarter again on top. Four ladders, deliberately few: three
 // currencies and a wall of percentages is where cozy turns into a spreadsheet.
@@ -26,13 +26,21 @@ export const STEP = 1.25;
 // Clamped where it is read rather than only where it is bought, so a save from
 // before the ceiling -- which may hold any level at all -- reads as a finished
 // ladder rather than as a multiplier nothing else in the game agrees with.
-export const levelOf = k => Math.min(RUNGS, S.mult[k] || 0);
+// The cap is per key rather than one for all of them -- `MULT_MAX` in
+// config/tiers.js says why -- and it is still applied on read, which is the
+// whole trick: a save from before a ceiling existed may hold any level at all,
+// and it reads as a finished ladder rather than as a multiplier nothing else in
+// the game agrees with.
+export const levelOf = k => Math.min(MULT_MAX[k] ?? RUNGS, S.mult[k] || 0);
 export const mult = k => Math.pow(STEP, levelOf(k));
 
 // Which of the four rates each row climbs. The keys are the old lab keys, kept
 // because a work in flight in somebody's save quotes them -- see the note at the
 // top of upgrades/rows-mult.js.
-export const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend' };
+// The four speed keys are the old lab keys; the two yield ones are new, and are
+// the only multipliers in the game that never belonged to the lab.
+export const FIELD = { labswing: 'swing', labhaul: 'haul', labcave: 'quarry', labtend: 'tend',
+                       labcrop: 'crop', labseam: 'seam' };
 
 // What a rung asks of the crew, in worker-seconds, climbing with the rung the
 // way the price does.

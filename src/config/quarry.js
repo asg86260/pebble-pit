@@ -23,9 +23,26 @@ export const QUARRY_DEEPEN = P * 4;  // how much further down each one goes
 // shards for a year while the row spent spores), and priced against a farm that
 // mints them by the hundred: the grind pass measured a spore glut two hundred
 // times the shard trickle, with both coins priced as equals.
-export const BENCH_COST = 10;      // spores for the first of them
+//
+// Doubled with the farm's `PLOT_COST`, and for the same reason: a place row on
+// either ground should cost like a place you open once the yard is running.
+export const BENCH_COST = 20;      // spores for the first of them
 export const BENCH_RATE = 1.7;     // and how much steeper each one gets
-export const QUARRY_PACE_COST = 12; // the dig-speed ladder's first rung, spores
+
+// --- what the two ladders cost and are worth ---------------------------------
+// Both of the cut's ladders open in dust, because band one of every one of these
+// is dust and a lot of it -- the pace rung used to open in spores, which is band
+// two's coin here and not band one's. Priced level with the farm's, which is the
+// ground next door and the one you open first.
+//
+// The first price and the steepness of each ladder are the numbers the design
+// left open, so both are dials rather than constants.
+export let QUARRY_PACE_COST = 720; // dust for the first rung of the speed ladder
+export let SEAM_COST = 720;        // and for the first rung of the yield one
+// What one more rung of the yield ladder puts on a dig, as a share of the plain
+// handful `seamShards` deals out. A quarter a rung, against the farm's whole
+// spore, because the base here is already a handful a bench rather than one.
+export let SEAM_PER_RUNG = 0.25;
 // It is a worked cut, not a hole somebody cut with a square. Both walls come
 // down in benches and the floor they leave is uneven, which is what months of
 // working a face does to one. The shape is a pattern rather than a scatter: a
@@ -101,5 +118,11 @@ export const QUARRY_KNOBS = [
   { key: 'CUT_STEP', label: 'pace along a face', min: 0.1, max: 3, step: 0.05,
     get: () => CUT_STEP, set: v => { CUT_STEP = v; } },
   { key: 'QUARRY_BASE', label: 'quarry pace', min: 200, max: 20000, step: 200,
-    get: () => QUARRY_BASE, set: v => { QUARRY_BASE = v; } }
+    get: () => QUARRY_BASE, set: v => { QUARRY_BASE = v; } },
+  { key: 'SEAM_COST', label: 'seam rung 1', min: 60, max: 4000, step: 20,
+    get: () => SEAM_COST, set: v => { SEAM_COST = v; } },
+  { key: 'QUARRY_PACE_COST', label: 'dig pace rung 1', min: 60, max: 4000, step: 20,
+    get: () => QUARRY_PACE_COST, set: v => { QUARRY_PACE_COST = v; } },
+  { key: 'SEAM_PER_RUNG', label: 'a dig, a rung', min: 0.05, max: 2, step: 0.05,
+    get: () => SEAM_PER_RUNG, set: v => { SEAM_PER_RUNG = v; } }
 ];
