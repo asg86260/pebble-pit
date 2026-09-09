@@ -44,7 +44,7 @@ export const TESTS = [
          `${earned.benchMark}`),
       ok(read.benchMark === 'dot', 'once read it is back to a dot for what you can afford',
          `${read.benchMark}`),
-      ok(read.seenSects.includes('you'), 'the heading counts as read',
+      ok(read.seenSects.includes('your gear'), 'the heading counts as read',
          JSON.stringify(read.seenSects))
     ];
   }],
