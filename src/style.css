@@ -67,6 +67,16 @@ canvas {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
   gap: 4px;
+  /* The air inside a card, set once here for every kind of card on the sheet.
+     Until this existed the cells of a card sat edge to edge, so a title long
+     enough to fill its track ran straight into the price beside it and the two
+     read as one string -- and the same where the gain meets the pips. One
+     number on the sheet rather than a margin per cell: there are four things in
+     those two columns, on three kinds of card, and a margin on each of them is
+     a set of numbers that would drift apart the first time one was retuned.
+     The column gap is the wide one because that is where words meet words; the
+     row gap is a hairline, because the two lines are already a line apart. */
+  --card-gap: 2px 12px;
 }
 /* Headings and anything else loose span the sheet; a card takes one cell of it. */
 .rows > * { grid-column: 1 / -1; }
@@ -151,6 +161,7 @@ canvas {
      because the card owns its own tracks a long bill in one card cannot push
      every other card's price across the board. */
   grid-template-columns: 1fr auto;
+  gap: var(--card-gap);
   align-items: baseline;
   font: inherit;
   letter-spacing: .1em;
@@ -453,6 +464,9 @@ canvas {
      share a set of tracks before the card existed and is what keeps them one
      shape now. */
   grid-template-columns: 1fr auto;
+  /* The same air as a price card, from the same place: a job row is the same
+     card, and a name that ran into its stepper would read the same way. */
+  gap: var(--card-gap);
   align-items: baseline;
   letter-spacing: .1em;
   text-transform: uppercase;
