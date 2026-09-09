@@ -1502,7 +1502,7 @@ what it does. Neither states a number the game is keeping.
 | 1 | **compost** | what the row throws off, turned back into it |
 | 2 | **fertilizer** | a sack at the head of the row, and the soil goes dark |
 | 3 | **the seed line** | the best of each crop held back to sow the next |
-| 4 | **the strain** | a crop bred for the yard it stands in |
+| 4 | **the greening** | a mark cut into the head-post, and the row comes up heavier than it was sown |
 
 **The farm's speed ladder.** How often a hand gets a cut.
 
@@ -1511,7 +1511,7 @@ what it does. Neither states a number the game is keeping.
 | 1 | **hand tools** | a hoe apiece, so a hand works the plot without kneeling in it |
 | 2 | **the sprinkler** | a standpipe at the head of the row, throwing over the plots |
 | 3 | **the ditch** | water walked to the row once and running there after |
-| 4 | **the glasshouse** | the row grows under glass, and the weather stops having a say |
+| 4 | **the quickening** | the same working laid on the hour instead of on the crop |
 
 **The quarry's yield ladder.** What one dig turns up.
 
@@ -1520,7 +1520,7 @@ what it does. Neither states a number the game is keeping.
 | 1 | **the sledge** | break the stone at the face rather than carry it whole |
 | 2 | **powder** | a crate at the rim, and the face wears the marks of the last shot |
 | 3 | **the assay** | knowing which seam is worth the swing before you take it |
-| 4 | **the deep seam** | the ground under the ground, and it is not the same stone |
+| 4 | **the seeking** | the stone is asked what it is holding, and it answers |
 
 **The quarry's speed ladder.** How often a swing lands.
 
@@ -1529,14 +1529,24 @@ what it does. Neither states a number the game is keeping.
 | 1 | **the ramp** | a graded way in and out instead of a scramble |
 | 2 | **the shoring** | timbers down the wall, a stage of them per rung |
 | 3 | **the tramway** | a way for stone to leave the hole that is not somebody's arms |
-| 4 | **the survey** | the whole cut read off before a swing is spent on it |
+| 4 | **the driving** | a swing that lands before the arm has finished making it |
+
+**Band four is magic, because band four costs sparks.** The first three bands
+are things a yard builds -- a sack, a standpipe, a crate, timbers -- and the
+last one cannot be, because a spark is what the machines and the rift are bought
+with and nothing mundane is priced in one. So the top of every ladder is a
+working: **the greening**, **the quickening**, **the seeking**, **the driving**,
+one set of words across both grounds, and each is drawn the same way -- a mark
+cut into the post or the face, and motes off it while the yard is at that work.
+It is also why band four stays a BUILD: a working somebody has to stand and
+finish is a decision, and one you simply buy is a number.
 
 **These names break the rule that killed "quarry lamps", and on purpose.** That
 row was renamed to `speed` because "nothing else on these boards is named after
 the *reason* it works, and a lamp is not a thing this game ever draws". The
 second half was the real objection. Every card above draws its own stage in the
-yard -- the sack, the standpipe, the ditch, the glass, the crate, the timbers,
-the tramway -- so the name is not a reason invented for a number, it is a label
+yard -- the sack, the standpipe, the ditch, the crate, the timbers, the tramway,
+the cut marks -- so the name is not a reason invented for a number, it is a label
 for the thing that appeared when you bought it. A card that cannot be drawn
 does not get a name; it gets cut and the band gets a different idea.
 
