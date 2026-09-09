@@ -4,7 +4,8 @@
 // 3 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
-import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run } from './kit.js';
+import { sleep, newRun, settle, state, ok, canvas, panel, point, hoverAway, run,
+         runUntil, haveBench } from './kit.js';
 
 export const TESTS = [
   // Space stops the clock. Not a flag every system checks -- the clock simply
@@ -49,6 +50,9 @@ export const TESTS = [
     window.__crew(2, 2);
     window.__give(400);
     run(2);
+    // The bench is built rather than delivered now (raise.js), and this check is
+    // about walking up to one: the dust alone only puts the call up.
+    await haveBench();
     const panel = document.getElementById('panel');
     // looking at the bench, which is where you are when you walk up to it: the
     // board is clamped inside the window and the station is not, so a station
@@ -112,6 +116,7 @@ export const TESTS = [
     window.__crew(2, 2);
     window.__give(400);
     run(2);
+    await haveBench();            // a place with a board on it has to be built first
     const canvasEl = canvas();
     const at = (wx, wy) => {
       const s = state();
@@ -131,7 +136,11 @@ export const TESTS = [
     // takes a rock that has one in it, which the first four do not.
     window.__jump(5);
     window.__next();
-    run(3);
+    // Until there is one, not for three seconds and a hope. Building the bench
+    // above turns the clock twenty seconds further than this check used to, and
+    // a fixed wait after that landed either side of the core coming free -- the
+    // rock is a fact about the game, so wait for the fact.
+    runUntil(() => !!state().coreItem, 30);
     const k = state().coreItem;
     const core = k ? at(k.x + 9, k.y + 9) : null;
 

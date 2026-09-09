@@ -63,7 +63,12 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
-import { canAfford, mineMs, restaff, staffSheds, take } from './upgrades.js';
+import { mineMs, restaff, staffSheds, take } from './upgrades.js';
+// The bench is built rather than delivered, and the row it is finished under is
+// registered by this file being loaded. Imported here rather than by the page,
+// because a yard with no document still has to be able to raise a bench --
+// see raise.js.
+import './raise.js';
 // The pot pays for its crop through the same `take` every price uses; wired here
 // rather than imported into apothecary.js, which would close a ring back to
 // upgrades. See `setTake`.
@@ -186,11 +191,6 @@ function holdToMine(now) {
 }
 
 export const STEPS = [
-  // The bench arrives the moment there is something on it worth buying, and
-  // stays from then on: a bench that came and went would be worse than one that
-  // sat there empty.
-  { name: 'bench', step: () => {
-      if (!S.seenBench && canAfford()) { S.seenBench = true; S.dirty = true; } } },
   // The plots are dug when the ground is broken, not when the first farmhand
   // walks up to them: a plot you have paid for that shows nothing but fence
   // posts reads as a purchase that did not happen. Asked every frame rather
@@ -296,21 +296,36 @@ function stepChips(now) {
     ch.x += ch.vx * f;
     ch.y += ch.vy * f;
 
-    if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
-    if (ch.x > S.worldW - P) {
-      ch.x = S.worldW - P;
-      ch.vx = -Math.abs(ch.vx) * 0.3;
-    }
-
     // The far wall of the hole is a wall at every height, not only below the
     // ground line. Everything is thrown at the pit from the near lip, so a grain
     // that gets past the far wall is a throw that sailed -- and it used to be
     // stopped only once it was already down inside the mouth, which let the odd
     // one over the top and out onto the strip of ground behind, where it lies
     // for the rest of the run with nobody able to reach it.
-    if (ch.vx > 0 && ch.x + P > pit.x + pit.w && ch.x < S.worldW - P) {
+    //
+    // Asked BEFORE the world's own edge, and without asking where that edge is.
+    // It used to run after, and to stand down for a grain already out at
+    // `S.worldW - P`, which is a wall that gives way exactly when it is hit
+    // hardest: a hauler's toss leaves the lip at over a hundred pixels a frame,
+    // and the ground behind the hole is eighteen columns. One frame takes such a
+    // grain from inside the mouth to past the end of the world, so the edge
+    // clamp below caught it first -- pinning it on the last column with its
+    // speed reversed -- and this test then declined to look at it because that
+    // is where it now was. Measured: born at the lip at vx 112.7, found at rest
+    // on column 1722 with vx -33.8, on ground nobody can reach.
+    //
+    // The two clamps are a sequence, not a pair of opinions: the hole's wall
+    // stops the throw, and the world's edge is the last word for anything that
+    // was never thrown at the hole at all.
+    if (ch.vx > 0 && ch.x + P > pit.x + pit.w) {
       ch.x = pit.x + pit.w - P;
       ch.vx = 0;
+    }
+
+    if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
+    if (ch.x > S.worldW - P) {
+      ch.x = S.worldW - P;
+      ch.vx = -Math.abs(ch.vx) * 0.3;
     }
 
     // Onto the belt's band, which is a surface like the ground is a surface --

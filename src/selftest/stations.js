@@ -57,13 +57,18 @@ export const TESTS = [
          !bench.includes('farmplot') && !bench.includes('tend'),
          'the bench sells neither of them any more', bench.join(',')),
       ok(atQuarry.quarryBoardOpen, 'standing at the quarry opens its own board'),
-      ok(quarryRows.join(',') === 'quarrybench,quarrypace',
-         'holding how deep it goes and how fast it works', quarryRows.join(',')),
+      // A place row and the first card of each of the cut's two ladders. Only
+      // the band you are on is ever drawn, so a fresh cut shows band one of
+      // each and nothing else. See DESIGN.md, "What the two grounds sell".
+      ok(quarryRows.join(',') === 'quarrybench,seam,quarrypace',
+         'holding how deep it goes, what a dig turns up and how fast it works',
+         quarryRows.join(',')),
       ok(nowBenches === wasBenches + 1, 'and the row on it digs the quarry deeper',
          `${wasBenches} -> ${nowBenches}`),
       ok(atPlots.farmBoardOpen, 'and the plots have theirs'),
-      ok(plotRows.join(',') === 'farmplot,tend',
-         'holding the next plot and how fast a plot comes on', plotRows.join(','))
+      ok(plotRows.join(',') === 'farmplot,crop,tend',
+         'holding the next plot, what a cut is worth and how fast a plot comes on',
+         plotRows.join(','))
     ];
   }],
 
@@ -82,7 +87,7 @@ export const TESTS = [
       const h = heads.find(el => el.dataset.sect === title);
       return h && h.querySelector('.badge');
     };
-    const rock = badge('the rock'), dust = badge('the dust'), quarry = badge('the quarry');
+    const rock = badge('rock miners'), dust = badge('dust carters'), quarry = badge('quarry blasters');
 
     await hoverAway();
     window.__look(state().openCamX);
@@ -94,7 +99,7 @@ export const TESTS = [
       ok(dust && dust.textContent === '1',
          'each trade counts its own, not the whole school', dust && dust.textContent),
       ok(!quarry, 'a trade you own none of carries no badge, the way an empty section does not'),
-      ok(rock && rock.parentElement.firstChild.nodeValue === 'the rock',
+      ok(rock && rock.parentElement.firstChild.nodeValue === 'rock miners',
          'and the heading keeps its own title as plain text',
          rock && rock.parentElement.firstChild.nodeValue)
     ];

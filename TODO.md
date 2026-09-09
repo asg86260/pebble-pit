@@ -28,6 +28,30 @@ Not a fix, and big enough for the wave treatment: the catalog, the board and its
 two sheets, the site row, and the witnesses at their event sites are four tracks
 with nearly disjoint ownership.
 
+## The farm and the quarry sell the same rate twice (2026-09-08)
+
+**Built, 2026-09-09.** Both boards sold a `speed` rung and a `speed x` over that
+same rung. Each ground now sells a place and two ladders -- a yield one and a
+speed one -- twelve rungs each in four bands of three, each band its own card
+with its own name and its own bill. `tierRows` in `src/upgrades/tiers.js` builds
+all sixteen cards from four tables; a new band is a line in a table.
+`labtend`/`labcave` are band four of the speed ladders, keys and all, and
+`labcrop`/`labseam` are the two new yield multipliers; `levelOf` clamps per key
+off `MULT_MAX`. The speed curves run to the same floor over nine rungs, so no
+rate got faster. `PLOT_COST` is 520, `BENCH_COST` 20 and all four ladders open
+at 720 dust. Checks in `test/ladders.test.mjs`, bought through the rows.
+
+**Left open**, and both are dev-panel questions rather than code:
+
+- **The four first prices and the ladder's steepness.** `tierCost` spreads
+  `rungCost`'s five-rung span over twelve, which keeps the top of a ladder where
+  a ladder's top has always been. Every first price is an `export let` with a
+  `TUNABLE` row.
+- **Band four's core line.** The bill is the dust price converted at `DUST_PER`
+  in each of the other four coins, which at the top of a ladder is seven cores
+  -- fair value by the economy's own exchange rate, and still seven rocks. Worth
+  looking at on a played yard before anything is changed about it.
+
 ## The shack landed on the browser tier without ever being run against it (2026-09-08)
 
 **Open. Six browser checks red on main; the node tier is green.** The shack was
@@ -85,8 +109,7 @@ above it. `stand` -> `climbTo(w, surfaceUnder(w))` is the path, and
 feeding `wayAt` that keeps it there, and the first push down is still unfound.
 ## The bench arrives out of nothing (2026-09-08)
 
-**Designed, not built. Awaiting approval before any code.** See "The bench is built, not
-delivered (design, not built)" at the end of DESIGN.md.
+**Built.** See "The bench is built, not delivered (built)" at the end of DESIGN.md.
 
 The `bench` step in `STEPS` flips `S.seenBench` the frame `canAfford()` first goes true and a
 workbench appears on ground that was bare -- the one structure in the game that teleports, and the
@@ -98,9 +121,15 @@ hammers, the standard bar runs over the footprint, and the bench is drawn when t
 No dust price -- the row you could afford is still there to buy afterwards -- and the call cannot
 time out or be dismissed, because everything you can ever buy is on that bench.
 
-**One call to make before any code:** whether the control is drawn in the yard (recommended: the
-machine's run switch is the precedent, and everything else in this yard is drawn) or a real DOM
-button floated over the canvas the way the boards are.
+The control is a real button on the page, floated over the bench's footprint by `seatCall` in
+board.js and seated off the same world-to-screen arithmetic the boards use -- the user's call. It is
+the one control a player *must* find, and chrome reads as chrome in a way a mark on the ground does
+not.
+
+Checked in both tiers: `test/bench-raise.test.mjs` presses the same function the button calls and
+follows the digger off the rock and back, and the browser tier's opening group finds the button with
+`elementFromPoint` and clicks whatever is actually there. Two scenes for the picture: `call` and
+`benchup`.
 
 
 ## The shop boards resize while you read them (2026-09-08)

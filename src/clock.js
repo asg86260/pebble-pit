@@ -77,6 +77,12 @@ let scale = 1;
 // whole steps that check where they are going, so the cap is what keeps a hitch
 // from putting somebody on the wrong side of something.
 export const frames = () => scale;
+// How long the frame just drawn actually was, in milliseconds. `frames()` is
+// that same length as a multiple of the sixtieth the game was tuned in, which is
+// the right shape for a per-frame speed and the wrong one for anything reasoning
+// about instants on the clock. The dance needs the latter: whether a beat can be
+// over before a given moment is a question about how far apart two frames are.
+export const frameMs = () => scale * TUNED;
 export function setFrames(dt) {
   scale = Math.max(0, Math.min(3, dt / TUNED));
 }

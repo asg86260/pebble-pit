@@ -139,7 +139,7 @@ export const STATS_UPGRADES = BOOKS.map(b => ({
 }));
 
 export const STATS_SECTIONS = [
-  { title: 'coming in', keys: STATS_UPGRADES.map(u => u.key) }
+  { title: 'income', keys: STATS_UPGRADES.map(u => u.key) }
 ];
 
 // --- what the books are reading ------------------------------------------------

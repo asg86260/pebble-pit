@@ -20,6 +20,7 @@ import { MACHINES, machine } from './machines.js';
 import { wizMs, wizBite } from './wizard.js';
 import { SITES, workAt, worksAt, workOn, progressOf, handsAt } from './works.js';
 import { BOLTS, SPARKLE } from './meteor.js';
+import { callOut, raising } from './raise.js';
 import { riftCells } from './rift.js';
 
 // how much of the meteor is still up there, rind or core
@@ -482,6 +483,11 @@ export const snapshot = () => ({
   seenBench: S.seenBench,
   seenSects: [...S.seenSects],
   benchMark: benchMark(),
+  // The call to build the bench: whether it is standing there to be pressed,
+  // and whether the bench is going up. Both derived (see raise.js), so this is
+  // the only place a check can read them.
+  benchCall: callOut(),
+  benchRising: raising(),
 
   // The dust in the pit, grain by grain.
   pitGrains: count(pit),

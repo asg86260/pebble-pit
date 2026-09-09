@@ -472,7 +472,7 @@ export const TESTS = [
     // to look at: a section is only there while it has a row under it.
     //
     // That heading used to be "the farm" -- the bench carried one per building it
-    // could sell you. The ten of them are one group called "put up" now, so the
+    // could sell you. The ten of them are one group called "build" now, so the
     // section with nobody under it is that one. See DESIGN.md, "The bench is a
     // catch-all".
     window.__give(600);                      // the price of the plots
@@ -480,7 +480,7 @@ export const TESTS = [
     await sleep(50);
     const rows = [...shop().children].filter(el => el.dataset.sect);
     const rock = rows.find(el => el.dataset.sect === 'the rock');
-    const idle = rows.find(el => el.dataset.sect === 'put up');
+    const idle = rows.find(el => el.dataset.sect === 'build');
     const rockBadge = rock && rock.querySelector('.badge');
     const idleBadge = idle && idle.querySelector('.badge');
     const s = state();

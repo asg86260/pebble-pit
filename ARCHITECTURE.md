@@ -38,6 +38,7 @@ field or two on `S` and a constant or two in `config.js`.
 | `upgrades.js` | the economy (`buy`, `rebalance`, lending); the rows themselves are data files in `src/upgrades/` | yes |
 | `shop.js` | turning those rows into a board | yes |
 | `board.js` | the one menu: where it stands, and the counter above the pit | yes |
+| `raise.js` | the call to build the bench: the row it is finished under, and what pressing it does (the button itself is seated by `board.js`) | rarely |
 | `hands.js` | what a click, a drag and a flick do | yes |
 | `input.js` | events to calls, and nothing else | yes |
 | `render.js` | the `LAYERS` list — painting order as data, one entry a line, every draw body in `src/render/` | the **order** of the list is the picture |
@@ -53,8 +54,9 @@ field or two on `S` and a constant or two in `config.js`.
 stale number. Nothing else changes — the board builds itself from the list.
 
 The bench works the same list out loud: `canAfford` and `unseenSection` in
-`upgrades.js` are what decide whether it is in the yard at all and which mark
-it wears, so a new row or a new section is picked up without touching them.
+`upgrades.js` are what decide whether the call to build one goes up (`raise.js`)
+and which mark it then wears, so a new row or a new section is picked up without
+touching them.
 
 **A new job for the crew.** One file in `src/crew/` for the work, one row in
 the `JOBS` registry in `src/crew/jobs.js` (`factory`, `want`, `step`), the words

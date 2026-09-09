@@ -107,15 +107,22 @@ group('the crew starts quicker: haul base and commute pace are up', async () => 
 });
 
 // --- A5: the farm's first rows are not free the moment it opens --------------
+// The numbers doubled again when the two grounds went over to a place and two
+// ladders: the farm is a board you open after the rock has been paying for a
+// while, and it should cost like it. The old tending rung asked 360 and the two
+// ladders open at twice that. See DESIGN.md, "What the two grounds sell", and
+// test/ladders.test.mjs for what the ladders themselves do.
 group('the farm costs a real stretch of dust to open, not pocket change', async () => {
   const plotBill = lvl => Math.round(PLOT_COST * Math.pow(PLOT_RATE, lvl));
-  const tendBill = lvl => Math.round(360 * Math.pow(1.6, lvl));
+  const dust = key => window.__rows().filter(r => r.key === key)[0]
+                            ?.bill.find(([m]) => m === 'dust')?.[1];
   return [
-    ok(PLOT_COST === 260, 'PLOT_COST is 260', PLOT_COST),
-    ok(plotBill(0) === 260 && plotBill(1) === 442 && plotBill(2) === 751,
+    ok(PLOT_COST === 520, 'PLOT_COST is 520', PLOT_COST),
+    ok(plotBill(0) === 520 && plotBill(1) === 884 && plotBill(2) === 1503,
        'first three plot bills', `${plotBill(0)}, ${plotBill(1)}, ${plotBill(2)}`),
-    ok(tendBill(0) === 360 && tendBill(1) === 576 && tendBill(2) === 922,
-       'first three tending bills', `${tendBill(0)}, ${tendBill(1)}, ${tendBill(2)}`)
+    ok(dust('crop') === 720 && dust('tend') === 720,
+       "and both of the plots' ladders open at 720 dust",
+       `${dust('crop')}, ${dust('tend')}`)
   ];
 });
 

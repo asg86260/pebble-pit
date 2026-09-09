@@ -806,7 +806,7 @@ export const APOTHECARY_UPGRADES = [
 // and how deep each recipe goes.
 export const APOTHECARY_SECTIONS = [
   { title: 'the pot', keys: ['potkeep', 'potprefer', 'anotherpot'] },
-  { title: 'the craft', keys: ['brewspeed', 'bufflength', 'brewdoses', 'dosecarry'] },
+  { title: 'brewing', keys: ['brewspeed', 'bufflength', 'brewdoses', 'dosecarry'] },
   { title: 'the recipes', keys: TONICS.map(t => `potency-${t.key}`) }
 ];
 

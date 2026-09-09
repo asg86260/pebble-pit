@@ -52,6 +52,22 @@ const SKYAT = `${RICH} window.__look(window.__state().rockLeftX - 300);`;
 
 
 const SCENES = {
+  // The call to build the bench, standing over the bare patch it will go on.
+  // The first thing a player is ever asked to press -- see raise.js -- so this
+  // is a picture of an empty yard with one button in it.
+  call: `window.__reset(); window.__crew(1); window.__give(100); window.__fast(2);
+         window.__look(window.__state().benchX - 380);`,
+
+  // ...and the same patch nine seconds after it was pressed: the fence, the
+  // tape, the bar, the one body swinging at it, and as much of the bench as has
+  // actually gone up.
+  benchup: `window.__reset(); window.__crew(1); window.__give(100); window.__fast(2);
+            requestAnimationFrame(() => {
+              document.getElementById('raise').click();
+              window.__fast(12);
+              window.__look(window.__state().benchX - 380);
+            });`,
+
   // Bodies, wearing everything the school sells, standing where you can see them.
   crew: `window.__reset(); window.__crew(3,2,2,2);
          window.__school({breakers:3,blasters:2,growers:2,carters:2});
@@ -457,12 +473,51 @@ const SCENES = {
   // A board, open, with everything on it.
   boards: `${RICH} window.__board('tower');`,
 
+  // The three boards whose headings name a trade or a purchase rather than a
+  // place -- the shack's "rock miners", the house's "housing" and "crew gear",
+  // the school's four trades. Headings are the only thing these shots are for,
+  // and no suite can read one, so they are shot rather than asserted.
+  // The shack against the rock, at both ends of the rock's growth: the walk
+  // leaves it exactly the room `rockSize` needs off its flank and no more, so
+  // these two are what "no more" looks like at boulder one and at the ceiling.
+  // Jumped and then run, the same as the `shack` scene above: RICH leaves the
+  // first rock still falling and nine cores tearing the rift, and neither of
+  // those is a flank to stand a hut against.
+  shackrock: `${RICH} window.__school({breakers:3}); window.__shack(); window.__jump(1);
+              window.__fast(6); window.__look(window.__state().shackX - 200);`,
+  shackrockbig: `${RICH} window.__school({breakers:3}); window.__shack(); window.__jump(30);
+                 window.__fast(6); window.__look(window.__state().shackX - 200);`,
+
+  shackboard: `${RICH} window.__school({breakers:3}); window.__shack(); window.__board('shack');`,
+  houseboard: `${RICH} window.__crew(3,2,2,2); window.__board('house');`,
+  schoolboard: `${RICH} window.__school({breakers:3,carters:1}); window.__board('school');`,
+
   // Track F3 (wave5). The bench, which is the longest board in the game: every
   // heading, the pips under every ladder, and the clocks in the bills of the
   // rows that have to be built. This is the shot for the pips and for the clock
   // icon -- both of them are three or four pixels of a row, and this is the only
   // place several of each stand together to be compared.
   bench: `${RICH} window.__board('bench');`,
+
+  // The block's board: the door through to the people, the row that puts
+  // another one up, and the gear the crew own that stands out in the yard --
+  // the belt, its tuning and the multiplier over their pace. What they carry
+  // and how fast they walk is not on it; that is fitted at the workbench and
+  // sold there, so this is the shot for whether the sheet still reads as a
+  // board with the four rungs gone off it.
+  houseboard: `${RICH} window.__board('house');
+               window.__look(window.__state().houses[0].x - 320);`,
+  // The two grounds' own sheets, which are what "a place and two ladders" looks
+  // like: a place row, one yield card and one speed card, with the pips under
+  // each saying where on its twelve-rung ladder the card sits. The shot for the
+  // card names and their gain lines -- neither test tier can see a word of it.
+  farmboard: `${RICH} window.__board('farm');`,
+  quarryboard: `${RICH} window.__board('quarry');`,
+  // And the far end of the same two ladders, which is where the bills get
+  // interesting: band four asks for every coin the yard makes and band two for
+  // two of them, so this is the shot for a deep bill fitting in a row.
+  laddersdeep: `${RICH} window.__buildbench(true);
+    window.__levels({cropLevel: 9, tendLevel: 4}); window.__board('farm');`,
 
   // And the books over the pit: the measured rate for every currency the yard
   // has met. It is run for a minute first, because a rate is a thing that takes

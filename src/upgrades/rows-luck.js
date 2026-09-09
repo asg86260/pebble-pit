@@ -10,8 +10,8 @@ export const LUCK_ROWS = [
   // station -- one rule, one home. See src/crit.js and "Crits" in DESIGN.md.
   //
   // Named to the shop's grammar (see DESIGN.md "The shop's language"): a rung is
-  // a bare noun for the quantity, and the section heading -- "a lucky swing" --
-  // says what it is a swing of. So "chance" (how often a crit comes up) and
+  // a bare noun for the quantity, and the section heading -- "critical hits" --
+  // says what the quantity is of. So "chance" (how often a crit comes up) and
   // "power" (how much it is worth), not the "lucky strike" / "heavy hit" the
   // build first shipped.
   {

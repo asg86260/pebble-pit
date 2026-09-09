@@ -69,6 +69,21 @@ export const DUCK_PACE = 2.4;    // pixels a frame out from under a falling rock
 export const IDLE_BEAT = 0.9;    // radians a second a stood-down rockhand sways through
 export const IDLE_STRIDE = 0.37; // and how much slower it paces than it sways
 
+// What a rockhand's body does on top of the ground it is standing on. Both ride
+// over `climbTo`'s answer rather than into it -- they are what the body is
+// doing, and easing them would damp them into nothing -- so they are also the
+// two things that can move a rockhand further in one frame than a climb can.
+//
+// That makes them the bound `route.test.mjs` holds the walk over the hill to.
+// It held it to a typed 12, which is a number nobody could have derived: a
+// climb is a cell a frame and the drive alone is nearly a cell and a half, so
+// the real ceiling was always over fourteen and the check was passing on the
+// margin the yard's layout happened to leave. Moving the shack closed that
+// margin and it read 13. A bound worth asserting comes out of the numbers that
+// produce it.
+export const SWING_BOB = 1.2;    // pixels either way a working rockhand rocks through
+export const SWING_DRIVE = 1.4;  // cells a swing drives the body down at full lunge
+
 // --- breaks -------------------------------------------------------------------
 // What a body does during the standing about. None of it makes, spends or moves
 // anything, and none of it ever happens to somebody who was working: a break is

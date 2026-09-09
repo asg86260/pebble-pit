@@ -5,7 +5,7 @@
 // see src/selftest.js, which is where the order lives.
 
 import { sleep, newRun, raf, settle, state, ok, canvas, board, shop, point, onScreen,
-  hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
+  haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run } from './kit.js';
 
 // The ink standing in the band of sky over a station -- where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -378,12 +378,13 @@ export const TESTS = [
     await settle();
     await hoverAway();
 
-    // The bench arrives with the first row you can afford, so a purse is what
-    // puts it there -- and its headings have still never been opened. It has no
-    // stand box at all before that, which is why the view is aimed at it after
-    // the grant rather than before.
+    // The bench is built with the first row you can afford, so a purse is what
+    // starts it -- and its headings have still never been opened. It has no
+    // stand box at all before it is up, which is why the view is aimed at it
+    // after the build rather than before. See raise.js.
     window.__grant({ dust: 3000 });
     run(2);
+    await haveBench();
     window.__look(state().stands.bench.x - 400);
     await sleep(300);
     const rich = { has: state().offers.includes('bench'), ink: flagInk('bench') };
@@ -1317,7 +1318,7 @@ export const TESTS = [
     // it. Without `pinWidth` this takes the bench from 525 pixels to over 1100.
     const anyGain = shop().querySelector('button[data-key] .gain');
     const said = anyGain.textContent;
-    anyGain.textContent = 'busy: break the ground, put up the school, the next furrow';
+    anyGain.textContent = 'busy: build the farm, build the training grounds, the next furrow';
     const shouted = size();
     anyGain.textContent = said;
 

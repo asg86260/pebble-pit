@@ -19,7 +19,10 @@ export const FARM_PLOTS_MAX = 7;  // and the whole plot, once it is all broken
 // just opened" and "the farm is already growing" the same moment. A dig at the
 // rock should still be ahead of it, so the first plot costs a real stretch of
 // the yard's early dust rather than change already in the pile.
-export const PLOT_COST = 260;      // dust for the first plot after it
+// And doubled again with the two ladders: the farm is a place you open after the
+// rock has been paying for a while, and its board should cost like it. See
+// DESIGN.md, "What the two grounds sell".
+export const PLOT_COST = 520;      // dust for the first plot after it
 export const PLOT_RATE = 1.7;     // and how much steeper each one gets
 export const FARM_GAP = 42;      // world pixels between one plot and the next
 export const FARM_H = 54;        // how tall a ripe stalk stands
@@ -47,6 +50,21 @@ export const FARM_WALK = 1.1;
 // a full complement, one hand to each plot, puts a whole share on every plot
 // between them and lands exactly where the old one-hand-one-plot rule did.
 export const TEND_HERE = 0.5;
+
+// --- what the two ladders cost and are worth ---------------------------------
+// Both of the farm's ladders open at the same price, in dust, because band one
+// of every one of these is dust and a lot of it. Twice what the retired `tend`
+// rung asked, which is the same factor `PLOT_COST` took.
+//
+// The first price and the steepness of each ladder are the numbers the design
+// left open, so both are dials rather than constants: the way to settle them is
+// to sit with a yard and push them about, not to reason about them here.
+export let CROP_COST = 720;    // dust for the first rung of the yield ladder
+export let TEND_COST = 720;    // and for the first rung of the speed one
+// What one more rung of the yield ladder puts on a cut, as a share of the plain
+// one-spore cut. A whole spore a rung, so the gain line is a count going up by
+// one rather than a rounded fraction that reads as nothing on half the rungs.
+export let CROP_PER_RUNG = 1;
 // A ripe plot is not cut the instant it ripens. The spore forms at the tip of
 // the stalk and sits there long enough to be seen, and the farmhand takes it
 // off from exactly where it grew.
@@ -60,5 +78,11 @@ export const TEND_HERE = 0.5;
 // `let` is. config.js gathers every file's rows into one TUNABLE.
 export const FARM_KNOBS = [
   { key: 'TEND_BASE', label: 'tending', min: 200, max: 20000, step: 200,
-    get: () => TEND_BASE, set: v => { TEND_BASE = v; } }
+    get: () => TEND_BASE, set: v => { TEND_BASE = v; } },
+  { key: 'CROP_COST', label: 'crop rung 1', min: 60, max: 4000, step: 20,
+    get: () => CROP_COST, set: v => { CROP_COST = v; } },
+  { key: 'TEND_COST', label: 'tending rung 1', min: 60, max: 4000, step: 20,
+    get: () => TEND_COST, set: v => { TEND_COST = v; } },
+  { key: 'CROP_PER_RUNG', label: 'spores a cut, a rung', min: 0.25, max: 4, step: 0.25,
+    get: () => CROP_PER_RUNG, set: v => { CROP_PER_RUNG = v; } }
 ];

@@ -7,7 +7,8 @@
 // It turns at the ends of the layer and turns before walking into a mate, so the
 // gang works back and forth across the rock like a line of men on a bench.
 
-import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE } from '../config.js';
+import { P, WORKER, IDLE_BEAT, IDLE_STRIDE, IDLE_PACE,
+         SWING_BOB, SWING_DRIVE } from '../config.js';
 import { S } from '../state.js';
 import { standOn, rockLeft } from '../world.js';
 import { climbTo } from '../route.js';
@@ -145,7 +146,8 @@ export function rockhandWork(w, c) {
   // Where it is standing, climbed to rather than assigned. The bob and the
   // swing go on top of the foot, not into it: they are what the body is
   // doing, and easing them would damp them into nothing.
-  w.y = climbTo(w, standOn(surf)) + Math.sin(t * w.sp + w.ph) * 1.2 + w.lunge * P * 1.4;
+  w.y = climbTo(w, standOn(surf)) + Math.sin(t * w.sp + w.ph) * SWING_BOB
+      + w.lunge * P * SWING_DRIVE;
 
   if (boulderAlive() && now >= w.next && S.rockTops[col] >= 0) {
     // twice the bite for a breaker: the shards bought a bigger swing on a

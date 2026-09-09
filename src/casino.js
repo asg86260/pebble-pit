@@ -630,5 +630,5 @@ const MARKOF = cur => `<i class="${cur || 'dust'}"></i>`;
 
 export const CASINO_SECTIONS = [
   { title: 'the table', keys: ['chip', 'stakedust', 'stakeshard', 'stakespore'] },
-  { title: 'the pot', keys: ['bank', 'ride'] }
+  { title: 'winnings', keys: ['bank', 'ride'] }
 ];

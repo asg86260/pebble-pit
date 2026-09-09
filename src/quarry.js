@@ -9,7 +9,8 @@
 // cores is shown until one is banked.
 
 import { keepTo, stepRoute, ways, wayAt, feetOn, climbTo } from './route.js';
-import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS } from './config.js';
+import { BENCH_COST, BENCH_RATE, QUARRY_PACE_COST, SEAM_COST, SEAM_PER_RUNG,
+         QUARRY_BENCH_MAX, CUT_DIG_MS, CUT_SEAM, JAW_BILL, RUNGS, TIER_OWN } from './config.js';
 import { P, WORKER, QUARRY_BASE, QUARRY_FLOOR, QUARRY_WALK, CUT_STEP, QUARRY_SWING, QUARRY_SHUFFLE,
          QUARRY_NEAR_BENCH, QUARRY_FAR_BENCH, QUARRY_FLOOR_STEP, QUARRY_FLOOR_JAG,
          CLIMB_PACE, SHARD_CELL, someFind, QUARRY_H, QUARRY_DEEPEN, QUARRY_BENCH0 } from './config.js';
@@ -21,8 +22,8 @@ import { walkY, groundAt, benches, resite, pileOf, bridgeSpan } from './world.js
 import { at, put, wakeGrid, isDust, surfaceY, topRow, colOf } from './grid.js';
 import { makePainter } from './painter.js';
 import { ROCK_CELL } from './config.js';
-import { mult } from './mult.js';
-import { QUARRY_MULT } from './upgrades/rows-mult.js';
+import { STEP as MULT_STEP } from './mult.js';
+import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
 import { spawnChip, aim, bell, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -54,11 +55,20 @@ import { JOB, TYPE } from './jobs.js';
 // answering with the number the game started with -- and upgrades.js imports
 // this file, so a `swing(...)` run while this module's body is being evaluated
 // can be reached before upgrades.js has finished defining it.
-const quarryGap = lvl => swing(QUARRY_BASE, QUARRY_FLOOR, RUNGS)(Math.min(lvl, RUNGS));
-export const quarryMs = (lvl = S.quarryPaceLevel) =>
-  Math.max(500, Math.round(quarryGap(lvl) / mult('quarry')));
+// Where the two quarry ladders stand: nine rungs of the level field, then three
+// of the multiplier over it. See `tierLevel`.
+export const paceLadder = () => tierLevel('quarryPaceLevel', 'quarry');
+export const seamLadder = () => tierLevel('seamLevel', 'seam');
 
-export const quarryRate = (lvl = S.quarryPaceLevel) => 60000 / quarryMs(lvl);   // trips a minute
+// From the base to the floor over the ladder's own nine rungs, the ninth rung
+// being the floor itself. It ran over `RUNGS` when the speed ladder was five
+// rungs and the multiplier was a rival row beside it; the ends have not moved,
+// only the number of steps between them.
+const quarryGap = lvl => swing(QUARRY_BASE, QUARRY_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
+export const quarryMs = (lvl = paceLadder()) =>
+  Math.max(500, Math.round(quarryGap(lvl) / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN))));
+
+export const quarryRate = (lvl = paceLadder()) => 60000 / quarryMs(lvl);   // trips a minute
 
 // --- the ladder ---------------------------------------------------------------
 // Bodies used to sink into the quarry and rise out of it wherever they happened to
@@ -795,8 +805,32 @@ export function fillQuarry() {
 
 // What the seam is worth: a handful per bench, so taking the quarry deeper is worth
 // something at the bottom rather than only being further to climb.
+// The yield ladder is a share on top of that handful rather than a flat extra,
+// because the handful already scales with how deep the cut is: an extra shard a
+// bench and an extra shard a dig are two different rows, and this is the one
+// that stays true however deep the hole goes.
+//
+// It multiplies here, at the one place the amount is decided, so the invariant
+// underneath `findShards` is untouched: `S.quarryOwed` is still set once when
+// the ground is laid and only ever comes down, and a dig still pays exactly
+// what the board says it is worth.
+// What one dig is worth: the handful a bench, and the yield ladder's share on
+// top of it. A share rather than a flat extra, because the handful already
+// scales with how deep the cut is -- an extra shard a bench and an extra shard
+// a dig are two different rows, and this is the one that stays true however deep
+// the hole goes. It is what the row's own gain line reads, in shards a dig.
+export const seamDig = (lvl = seamLadder()) =>
+  Math.max(1, Math.round(benches() * CUT_SEAM * tierGain(lvl, SEAM_PER_RUNG)));
+
+// And what actually goes into the ground when a cut is laid, which is that with
+// the luck spell over it.
+//
+// The ladder multiplies here, at the one place the amount is decided, so the
+// invariant underneath `findShards` is untouched: `S.quarryOwed` is still set
+// once when the ground is laid and only ever comes down, and a dig still pays
+// exactly what the board says it is worth.
 export const seamShards = () =>
-  Math.max(1, Math.round(benches() * CUT_SEAM * (spelled('luck') ? SPELL_LUCK : 1)));
+  Math.max(1, Math.round(seamDig() * (spelled('luck') ? SPELL_LUCK : 1)));
 
 // How long one cell takes. The whole dig is CUT_DIG_MS at pace nought, spread
 // over however many cells the quarry is -- so taking the quarry deeper makes the dig
@@ -807,7 +841,14 @@ export function cellMs() {
   let want = 0;
   for (let c = 0; c < cells.length; c++) want += quarryTarget(c);
   const per = CUT_DIG_MS / Math.max(1, want);
-  return Math.max(60, per * Math.pow(0.82, S.quarryPaceLevel) / mult('quarry'));
+  // The same climb it always made, in finer steps: the pace ladder was five
+  // rungs of a fifth off each and the last band multiplied on top, and it is
+  // nine rungs to the same floor now. `RUNGS` is still in here because it is
+  // what the floor was measured in -- nine rungs land exactly where five used
+  // to, which is the whole of what "the same floor" means.
+  const lvl = paceLadder();
+  const own = Math.pow(0.82, RUNGS * Math.min(TIER_OWN, lvl) / TIER_OWN);
+  return Math.max(60, per * own / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN)));
 }
 
 
@@ -821,9 +862,50 @@ export function cellMs() {
 //
 // The row that *opens* it stays on the bench, because you cannot walk up to a
 // quarry that has not been dug yet.
+// The cut's two ladders, twelve rungs each in four cards of three -- what one
+// dig turns up, and how often a dig happens. The second used to be sold twice,
+// as a `speed` rung with a `speed x` beside it. See DESIGN.md, "What the two
+// grounds sell".
+//
+// Band four keeps the key `labcave` it had as the lab's row, because a piece of
+// research in flight in somebody's save quotes it and a key is never renamed.
+const QUARRY_YIELD = tierRows({
+  field: 'seamLevel', multKey: 'seam',
+  unit: 'shards/dig',
+  value: lvl => seamDig(lvl),
+  first: SEAM_COST,
+  site: 'quarry', board: 'quarry',
+  show: () => S.quarryOpen,
+  bands: [
+    { key: 'seam',    name: 'sledges',       coins: [] },
+    { key: 'seam2',   name: 'black powder',  coins: ['shard'] },
+    { key: 'seam3',   name: 'dynamite',      coins: ['shard', 'spore'] },
+    { key: 'labseam', name: 'enchanted TNT',
+      coins: ['shard', 'spore', 'core', 'spark'],
+      gate: () => S.buildbenchOpen }
+  ]
+});
+
+const QUARRY_SPEED = tierRows({
+  field: 'quarryPaceLevel', multKey: 'quarry',
+  unit: 'trips/min', pct: true,
+  value: lvl => quarryRate(lvl),
+  first: QUARRY_PACE_COST,
+  site: 'quarry', board: 'quarry',
+  show: () => S.quarryOpen,
+  bands: [
+    { key: 'quarrypace',  name: 'ramps',            coins: [] },
+    { key: 'quarrypace2', name: 'scaffolding',      coins: ['shard'] },
+    { key: 'quarrypace3', name: 'rail carts',       coins: ['shard', 'spore'] },
+    { key: 'labcave',     name: 'anti-gravity zone',
+      coins: ['shard', 'spore', 'core', 'spark'],
+      gate: () => S.buildbenchOpen }
+  ]
+});
+
 export const QUARRY_UPGRADES = [
-  // The cut's multiplier, which the lab used to sell from across the yard.
-  QUARRY_MULT,
+  ...QUARRY_YIELD,
+  ...QUARRY_SPEED,
   {
     key: 'quarrybench',
     // A place, and the cut's own gang takes it out. While the quarriers are
@@ -861,33 +943,6 @@ export const QUARRY_UPGRADES = [
     show: () => S.quarryOpen && canBuy('jaw', () => benches() >= QUARRY_BENCH_MAX,
                                        () => kitFull(JOB.QUARRY))
   },
-  {
-    key: 'quarrypace',
-    kind: 'rung', site: 'quarry',
-    // It was "quarry lamps" -- the fiction being that you work faster when you
-    // can see. A nice thought and a bad row: nothing else on these boards is
-    // named after the *reason* it works, and a lamp is not a thing this game
-    // ever draws. It is how often a shard comes off the face, which is speed.
-    name: 'speed',
-    unit: 'trips/min',
-    pct: true,
-    from: () => quarryRate(),
-    to: () => quarryRate(S.quarryPaceLevel + 1),
-    rung: () => S.quarryPaceLevel,
-    // A rung of its own, on its own price. It used to be `BENCH_COST` on
-    // `BENCH_RATE` -- the very numbers the row above it uses -- so a bench in
-    // the wall and a rung of speed cost exactly the same at every level, which
-    // is a coincidence rather than a decision. A rung is a rung now: `rungCost`,
-    // like every other ladder in the game, and its own first price.
-    cost: () => rungCost(QUARRY_PACE_COST, S.quarryPaceLevel),
-    currency: 'spore',
-    buy: () => S.quarryPaceLevel++,
-    // It stays on the board once it is finished, saying "done" -- it used to
-    // vanish the moment it reached the floor, which is a cap the game had and
-    // would not admit to.
-    show: () => S.quarryOpen
-  }
-,
 
   // The drill's own ladder, on the quarry's own board. It never ends -- see
   // `tuneRow` in machines.js: the machines are where an endgame's dust goes.
@@ -901,11 +956,14 @@ export const QUARRY_UPGRADES = [
 
 // One heading. The quarry is one place and everything on this board is about the
 // same hole, so a second would be a heading for the sake of having two.
+// Every card of both ladders is named here; only the band you are on answers
+// `true` to `show`, so what the board draws is a place row, one yield card and
+// one speed card.
 export const QUARRY_SECTIONS = [
-  // `labcave` is the multiplier over the cut's pace, beside the rung it
-  // multiplies -- it was the lab's, one board and one walk away. See DESIGN.md,
-  // "The lab is deleted".
-  { title: 'the quarry', keys: ['quarrybench', 'quarrypace', 'labcave', 'jaw', 'tunejaw'] }
+  { title: 'the quarry', keys: ['quarrybench',
+                                'seam', 'seam2', 'seam3', 'labseam',
+                                'quarrypace', 'quarrypace2', 'quarrypace3', 'labcave',
+                                'jaw', 'tunejaw'] }
 ];
 
 

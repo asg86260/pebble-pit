@@ -8,7 +8,8 @@
 // still*. What a hand is worth is one plot's worth of tending in the time one
 // plot takes, however many plots that is spread across.
 
-import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, RUNGS } from './config.js';
+import { PLOT_COST, PLOT_RATE, FARM_PLOTS_MAX, TILLER_BILL, CROP_COST, TEND_COST,
+         CROP_PER_RUNG, TIER_OWN } from './config.js';
 import { P, WORKER, FARM_GAP, FARM_H, TEND_BASE, TEND_FLOOR, FARM_WALK, CUT_MS, TEND_STOOP, TEND_HERE, SPORE_CELL, someFind }
   from './config.js';
 import { throughPlotMuck } from './smog.js';
@@ -22,8 +23,8 @@ import { frames } from './clock.js';
 import { tuneRow } from './machines.js';
 import { MACHINE_TUNE } from './config.js';
 import { spriteW, spriteH, stackCol, TILLER } from './sprites.js';
-import { mult } from './mult.js';
-import { FARM_MULT } from './upgrades/rows-mult.js';
+import { STEP as MULT_STEP } from './mult.js';
+import { tierRows, tierLevel, tierGain } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, workBoost } from './apothecary.js';
@@ -33,17 +34,31 @@ import { rand } from './rng.js';
 import { registerRows } from './works.js';
 import { JOB, TYPE } from './jobs.js';
 
-// how long one plot takes to come on, at this level of tending
-// Five rungs from the base to the floor, the fifth rung being the floor itself
-// -- the same shape as every other rate in the game. See `swing` in upgrades.js,
-// and `quarryMs`, which was the same fraction-a-level-for-ever and is fixed the
-// same way.
-// Built when it is read, for the two reasons `quarryMs` sets out.
-const tendGap = lvl => swing(TEND_BASE, TEND_FLOOR, RUNGS)(Math.min(lvl, RUNGS));
-export const tendMs = (lvl = S.tendLevel) =>
-  Math.max(400, Math.round(tendGap(lvl) / mult('tend')));
+// Where the two farm ladders stand: nine rungs of the level field, then three of
+// the multiplier over it. Everything that asks what the farm is worth asks in
+// these terms, so a rung and the multiplier over it are one number rather than
+// two that have to be combined at each call.
+export const tendLadder = () => tierLevel('tendLevel', 'tend');
+export const cropLadder = () => tierLevel('cropLevel', 'crop');
 
-export const tendRate = (lvl = S.tendLevel) => 60000 / tendMs(lvl);   // plots a minute
+// how long one plot takes to come on, at this level of tending
+// From the base to the floor over the ladder's own nine rungs, the ninth rung
+// being the floor itself -- the same climb it always made, in finer steps. It
+// ran over `RUNGS` when the speed ladder was five rungs and the multiplier was a
+// rival row beside it; the ends have not moved.
+// Built when it is read, for the two reasons `quarryMs` sets out.
+const tendGap = lvl => swing(TEND_BASE, TEND_FLOOR, TIER_OWN)(Math.min(lvl, TIER_OWN));
+export const tendMs = (lvl = tendLadder()) =>
+  Math.max(400, Math.round(tendGap(lvl) / Math.pow(MULT_STEP, Math.max(0, lvl - TIER_OWN))));
+
+export const tendRate = (lvl = tendLadder()) => 60000 / tendMs(lvl);   // plots a minute
+
+// What one cut off a ripe plot is worth. One spore is what it always was and
+// what the ladder starts from; every rung puts another whole one on it, and the
+// last band multiplies the lot. A count rather than a fraction, because a cut
+// drops spores and half a spore is not a thing the yard can draw.
+export const cropYield = (lvl = cropLadder()) =>
+  Math.max(1, Math.round(tierGain(lvl, CROP_PER_RUNG)));
 
 export const plotX = i => farm.x + i * FARM_GAP;
 export const plotTop = i => S.groundY - FARM_H * S.plots[i];
@@ -160,19 +175,24 @@ function pickPlot(w) {
 // so a crit ADDS: the plot gives up a lump of crop in one cut rather than the
 // single spore, and each extra one is real dust thrown up as a fountain and
 // banked like any other. A crit does not add pollution; nothing here does.
+//
+// How many come off is the yield ladder's answer times the crit's. A crit was
+// already a multiple of the one spore a cut used to be worth, so multiplying
+// the two is the same rule it always had over a base that now moves: a lump of
+// crop on a critting cut, and a bigger lump on a plot that has been worked.
 function cut(i, x, w) {
   const tone = S.plotTone[i] || someFind(SPORE_CELL);
   // A bracing tonic on this hand lifts its crit chance for as long as it is worn
   // -- nobody else's. See apothecary.js.
   const crit = critRoll(critBoost(w));
-  if (crit > 1) {
-    for (let n = 0; n < crit; n++) critToss(x, plotTop(i) - P, tone, 'farm', crit);
-  } else {
-    spawnSpoil(x, plotTop(i) - P, tone, 'farm');
+  const got = cropYield() * crit;
+  for (let n = 0; n < got; n++) {
+    if (crit > 1) critToss(x, plotTop(i) - P, tone, 'farm', crit);
+    else spawnSpoil(x, plotTop(i) - P, tone, 'farm');
   }
   S.plots[i] = 0;
   S.plotTone[i] = 0;
-  return crit;
+  return got;
 }
 
 // one farmhand, one frame
@@ -263,9 +283,54 @@ export function stepFarmhand(w, now, dt, c = null) {
 // The same move the quarry made, for the same reason: you break the next bit of
 // ground standing on the ground you are breaking. The row that opens the farm
 // stays on the bench, because there is nowhere to walk to until it is bought.
+// The plots' two ladders, twelve rungs each in four cards of three. What they
+// sell is the two questions a ground can answer -- what one go is worth, and how
+// often a go happens -- and the second of them used to be sold twice over, as a
+// `speed` rung and a `speed x` beside it. See DESIGN.md, "What the two grounds
+// sell".
+//
+// Band four is the multiplier, and it keeps the key `labtend` it had as the
+// lab's row: a piece of research in flight in somebody's save quotes it, and a
+// key is never renamed. See the note at the top of upgrades/rows-mult.js.
+const FARM_YIELD = tierRows({
+  field: 'cropLevel', multKey: 'crop',
+  unit: 'spores/cut',
+  value: lvl => cropYield(lvl),
+  first: CROP_COST,
+  site: 'farm', board: 'farm',
+  show: () => S.farmOpen,
+  bands: [
+    { key: 'crop',    name: 'compost',     coins: [] },
+    { key: 'crop2',   name: 'fertilizer',  coins: ['spore'] },
+    { key: 'crop3',   name: 'hybrid seed', coins: ['spore', 'shard'] },
+    { key: 'labcrop', name: 'astral GMOs',
+      coins: ['shard', 'spore', 'core', 'spark'],
+      // The last band is the research, and the research still waits on the
+      // trestle: there is nowhere to work from without it.
+      gate: () => S.buildbenchOpen }
+  ]
+});
+
+const FARM_SPEED = tierRows({
+  field: 'tendLevel', multKey: 'tend',
+  unit: 'plots/min', pct: true,
+  value: lvl => tendRate(lvl),
+  first: TEND_COST,
+  site: 'farm', board: 'farm',
+  show: () => S.farmOpen,
+  bands: [
+    { key: 'tend',    name: 'hand tools',    coins: [] },
+    { key: 'tend2',   name: 'sprinklers',    coins: ['spore'] },
+    { key: 'tend3',   name: 'greenhouses',   coins: ['spore', 'shard'] },
+    { key: 'labtend', name: "summer's aura",
+      coins: ['shard', 'spore', 'core', 'spark'],
+      gate: () => S.buildbenchOpen }
+  ]
+});
+
 export const FARM_UPGRADES = [
-  // The plots' multiplier, which the lab used to sell from across the yard.
-  FARM_MULT,
+  ...FARM_YIELD,
+  ...FARM_SPEED,
   {
     key: 'farmplot',
     // A place, broken by the hands that work the row. See works.js.
@@ -303,44 +368,20 @@ export const FARM_UPGRADES = [
     show: () => S.farmOpen && canBuy('tiller', () => plotCount() >= FARM_PLOTS_MAX,
                                       () => kitFull(JOB.FARM))
   },
-  {
-    key: 'tend',
-    kind: 'rung', site: 'farm',
-    // "tending" was the truest word for it -- a farmhand tends a plot and this is
-    // how fast -- and it was the odd one out on a board where every other rate
-    // says speed. One word meaning one thing beats five words each meaning it
-    // slightly better.
-    name: 'speed',
-    unit: 'plots/min',
-    pct: true,
-    from: () => tendRate(),
-    to: () => tendRate(S.tendLevel + 1),
-    rung: () => S.tendLevel,
-    // Its own price on the ordinary rung curve, rather than the plot's. The two
-    // used to share `PLOT_COST` and `PLOT_RATE` between them, so breaking a
-    // furrow and buying a rung of tending speed cost the same at every level --
-    // a coincidence, not a decision. Dust either way: the plots are tier one and
-    // the rock has been making dust since the first swing.
-    //
-    // The first rung is three times what it was: at the old price, tending
-    // speed was worth buying before there was a second plot to tend, which is
-    // the farm selling you a rate on a rate of nothing.
-    cost: () => rungCost(360, S.tendLevel),
-    currency: 'dust',
-    buy: () => S.tendLevel++,
-    // and stays on the board once it is finished, saying so. See `quarrypace`.
-    show: () => S.farmOpen
-  }
-,
 
   // The tiller's ladder, on the farm's board, and endless like the rest.
   tuneRow('tiller', 'tune the tiller',
           () => `the tiller works ${MACHINE_TUNE}x faster, again`, 'farm')
 ];
 
+// One heading, and every card of both ladders named in it. Only the band you are
+// on is ever shown -- the rest answer `false` to `show` -- so the board draws a
+// place row, one yield card and one speed card, whichever bands those are.
 export const FARM_SECTIONS = [
-  // `labtend` is the multiplier over tending, beside the rung it multiplies.
-  { title: 'the farm', keys: ['farmplot', 'tend', 'labtend', 'tiller', 'tunetiller'] }
+  { title: 'the farm', keys: ['farmplot',
+                              'crop', 'crop2', 'crop3', 'labcrop',
+                              'tend', 'tend2', 'tend3', 'labtend',
+                              'tiller', 'tunetiller'] }
 ];
 
 

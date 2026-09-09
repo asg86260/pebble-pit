@@ -1418,6 +1418,223 @@ explanation. The scrubbing house's rule: the disease is the advertisement.
 are the ones at which a yard that has been playing along has *just* opened
 those stations, and that is a thing to measure on a save rather than pick.
 
+## What the two grounds sell (built)
+
+The farm and the quarry sell the same four rows as each other, and two of those
+four are the same rate sold twice. Open the farm and the board is *another
+plot*, *speed* (a dust rung over tending) and *speed ×* (the old lab
+multiplier, over that same tending, in spores) -- one row that makes the plots
+faster, and beside it a second row that makes the first row's answer bigger.
+The quarry does it too: *another shovel*, *speed*, *speed ×*. A player reading
+either board has to work out which speed is which before spending anything, and
+the honest answer is that there was never a reason for two.
+
+It is worse than redundant. The `tend` rung's own comment concedes that at the
+old price "tending speed was worth buying before there was a second plot to
+tend, which is the farm selling you a rate on a rate of nothing" -- and the fix
+applied then was to triple the price, which makes a bad row expensive rather
+than making it a good row.
+
+### The shape
+
+Each ground sells **a place, and two ladders**, and nothing else until its
+machine.
+
+- **The place** is what it is today. *another plot* to `FARM_PLOTS_MAX`,
+  *another shovel* to `QUARRY_BENCH_MAX`, one coin, one price curve, and it
+  ends where it ends now.
+- **A yield ladder** -- how much a single go is worth. A cut comes off the plot
+  worth more than one spore; a dig turns up more than `seamShards()` says
+  today.
+- **A speed ladder** -- how often that go happens. This is `tendMs` and
+  `cellMs`, the rungs that exist now.
+
+Two ladders, and they answer different questions: a yield rung pays the same
+on a yard with one hand as on a full one, so it is the row a thin early yard
+actually wants, while a speed rung is only ever worth what the headcount
+already is. The old board had two speeds and no yield at all.
+
+### A ladder is four cards, not one
+
+Twelve rungs each, in four bands of three -- and **each band is its own card,
+with its own name and its own words**. The card you can see is
+the band you are on; finishing a band retires that card and the next one takes
+its place. So the board still shows one yield row and one speed row at a time,
+and the ladder is twelve rungs long without ever being a twelve-pip row nobody
+reads.
+
+What deepens across the bands is the **bill**. `bill` is already a list of
+`[coin, n]` pairs that `billOf`, `canPay` and the price text all handle -- the
+machines are priced that way -- so this costs nothing structurally.
+
+| band | rungs | what it costs |
+|---|---|---|
+| 1 | 1-3 | dust, and a lot of it |
+| 2 | 4-6 | dust **and the ground's own coin** |
+| 3 | 7-9 | dust, its own coin, **and the other ground's** |
+| 4 | 10-12 | dust, shard, spore, core and a spark -- everything the yard makes |
+
+**The ground's own coin, and why that is not the rule being broken.** A station
+is not bought *deeper* with the thing it makes -- that is why a plot costs dust
+and a bench costs spores, and that stands. A ladder is not depth. Band two is
+the crop going back into the ground it came off, which is what fertilizer *is*,
+and it means a farm that has stopped being tended cannot climb its own ladder.
+The places keep the old rule; the ladders ask the place to feed itself.
+
+**The last band is the research.** `labtend` and `labcave` -- the multipliers
+that were the lab's -- become band four of the speed ladders, and the yield
+ladders get a multiplier of their own on the same machinery: three rungs, the
+all-coins card, still gated on the bench standing and still a BUILD that bodies
+have to finish. See "Band four is the multiplier". That
+is where the second speed row went: it is not a rival ladder any more, it is
+the top of the only one.
+
+### The sixteen cards
+
+A card is a **name** and its gain line, and nothing else. No `note`: the row
+already says what it does, in the two shapes `gainText` writes -- a percentage
+for a rate, a count for a count -- over the `unit` the ladder names. A sentence
+under that would be the board explaining the same thing twice in worse words,
+and the machines' tune rows are the only place in the game that needs one
+because they alone have no `from`/`to` to show.
+
+Each ladder is one idea escalating, and the last band is the fantastical version
+of the band before it: seed becomes astral seed, a greenhouse becomes a season
+you own, powder becomes charmed powder, a rail cart becomes no gravity at all.
+That is what makes a band worth a new card rather than a new pip -- the words
+move as far as the price does.
+
+| band | bill | yield, the farm | speed, the farm | yield, the quarry | speed, the quarry |
+|---|---|---|---|---|---|
+| 1 | dust | compost | hand tools | sledges | ramps |
+| 2 | + the ground's own coin | fertilizer | sprinklers | black powder | scaffolding |
+| 3 | + the other ground's | hybrid seed | greenhouses | dynamite | rail carts |
+| 4 | everything, sparks and all | astral GMOs | summer's aura | enchanted TNT | anti-gravity zone |
+
+The unit each one shows is the ladder's, not the card's: `spores/cut` and
+`plots/min` down the farm's two, `shards/dig` and `trips/min` down the quarry's.
+So the four cards of a ladder read as one ladder however the words change.
+
+**No card draws a prop, and that is not an oversight.** An earlier pass had each
+band build a thing in the yard -- a sack, a standpipe, timbers -- which is
+fourteen sprites for four ladders, and none of it is what the ladder actually
+is. No ladder in this game has ever drawn a stage per rung: the kit ladders, the
+crew's rungs and the machines' endless tune rows all sell a rate and draw
+nothing, and the yard reads fine.
+
+This is the "quarry lamps" rule kept rather than broken. That row was renamed
+because it was *called* the reason it worked while the ladder said nothing about
+its rate. These cards say the rate in the unit and the gain line, every one of
+them; the name sits on top and is allowed to be fun.
+
+### Band four is the multiplier
+
+The last three rungs of a ladder are not more of the rung field -- they are the
+multiplier over it, on the machinery that is already there. `mult.js` keeps four
+of these and each is a level in `S.mult`, a `STEP` of a quarter again per rung,
+a work cost that climbs with the rung, and `finish()` to land one. `labtend` and
+`labcave` were exactly this, sold as a rival row beside the rung they multiplied;
+band four is the same rung in the only place it makes sense, at the top of the
+ladder it multiplies.
+
+So a ladder's twelve rungs are **nine of its own field and three of a
+multiplier**, and `rung()` reads `level` up to nine and `9 + levelOf(field)`
+after. The yield ladders get two new multiplier fields on the same machinery --
+`crop` for the farm, `seam` for the quarry -- so all four ladders end the same
+way and nothing about band four is special-cased per ground.
+
+Two consequences, both wanted:
+
+- **A working is a BUILD.** These rows carry `work`, so bodies leave what they
+  are doing and stand at the site until it is finished. That was the lab's whole
+  bargain and it survives the lab.
+- **`levelOf` needs a cap per key, not one for all four.** It clamps at `RUNGS`
+  today, which is five. The crew's two -- `swing` and `haul`, on the shack and
+  the house -- keep five; the four station ladders end at three, because a band
+  is three rungs. One table, `MULT_MAX`, read by `levelOf` in the one place it
+  clamps.
+
+**What that costs at the top.** Tending and the cut used to run five rungs to
+the floor and then multiply by up to 3.05; now they run nine rungs to the same
+floor and multiply by up to 1.95. The very top of both rates comes down by
+about a third. That is a `STEP` question rather than a shape question -- a
+per-key step, or a fourth rung -- and it is a knob, so it is the dev panel's to
+settle on a yard.
+
+**Band four costs sparks, so band four is magic.** A spark is what the machines
+and the rift are bought with and nothing mundane is priced in one, so the top of
+each ladder is the yard admitting what it has become. It is also why band four
+stays a BUILD: a working somebody has to stand and finish is a decision, and one
+you simply buy is a number.
+
+### The mechanism
+
+One helper, used four times, rather than eight hand-written rows:
+
+`tierRows(field, bands)` takes the level field the whole ladder counts on
+(`S.tendLevel` and three new ones) and a table of four bands -- a name and the
+coins it adds, which is all a band is -- and returns the four rows. Which
+card shows is `Math.floor(level / 3)`; `rung()` is the level within the band and
+`rungs()` is three, every band, which is why the bands are equal. A new band is a line in the table,
+and the wording of every card in the game sits in one readable block per
+ladder. There is no per-card price code: the bill is `rungCost(first, level)`
+in dust plus the band's coins at `DUST_PER` of that.
+
+**The speed ladders keep the range they have.** `tendMs` and `cellMs` run from
+their base to their floor over `RUNGS` rungs today; over twelve they run from
+the same base to the same floor in finer steps. The end of the ladder is where it
+is now -- this is not a speed increase, it is the same climb sold in more
+decisions.
+
+**Saves.** `S.tendLevel` and `S.quarryPaceLevel` keep their meaning and their
+place in `SAVED`; a save at rung four simply opens on band two's card. The two
+yield levels are new fields and go in `SAVED`.
+
+**Prices.** Band one is deliberately steep in dust: the farm is a place you
+open after the rock has been paying for a while and its board should cost like
+it. `PLOT_COST` 260 → 520, and the first yield rung 720 dust where the retired
+`tend` rung asked 360. The quarry's `BENCH_COST` and its band one want the same
+factor for the same reason.
+
+**Not decided:** the exact first price and steepness of each of the four
+ladders, and how much a yield rung is worth -- a flat extra per go, or a share
+of a go. Both are dev-panel questions, one `export let` and one `TUNABLE` row
+each, and are worth answering on a yard rather than on paper.
+
+### What landed, and the two calls the design left open
+
+Built. `tierRows` is in `src/upgrades/tiers.js` and is called four times, off
+four tables of four lines; the shape of a ladder -- three to a band, four bands,
+nine rungs of the ladder's own field -- is `TIER_BAND`, `TIER_BANDS` and
+`TIER_OWN` in `src/config/tiers.js`, with `MULT_MAX` beside them. `levelOf`
+reads that table in the one place it clamps. `labtend` and `labcave` are band
+four of the two speed ladders and keep their keys; `labcrop` and `labseam` are
+the two new yield multipliers, over `S.mult.crop` and `S.mult.seam`. All four
+bands of all four ladders are works the station's own hands stand and finish,
+which the speed rungs already were and the last band was as the lab's row.
+
+The two open numbers were answered like this, and both are dials:
+
+- **A rung costs what a rung always cost.** `rungCost` is half again a rung over
+  five rungs, which is about six and a half times across a whole ladder, and
+  that span is the thing worth keeping rather than the exponent, which was
+  written for a ladder of five. `tierCost` is `rungCost` asked for a fractional
+  level, so twelve rungs span what five did. 1.6 twelve times over is a hundred
+  and seventy times the first price at the top, which is a row nobody buys.
+  `CROP_COST`, `TEND_COST`, `SEAM_COST` and `QUARRY_PACE_COST` all open at 720
+  dust and are all `export let`.
+- **A yield rung is a share of a go, and both grounds use the same arithmetic.**
+  `tierGain` is one call: a share again of itself per own rung, and the
+  multiplier's quarter again per rung of band four. The farm's base is one
+  spore, so a share of one is the flat extra spore the design offered as the
+  other option; the cut's base is already a handful a bench, so the same call
+  reads there as a share. `CROP_PER_RUNG` and `SEAM_PER_RUNG` are the dials.
+
+Band four's bill is the dust price converted at `DUST_PER` in each of the four
+other coins, which at the top of a ladder is seven cores -- steep, and steep by
+the economy's own exchange rate rather than by a number picked for this row. It
+is the first thing to argue with on a yard.
+
 ## Not doing
 
 Prestige. Ascension. Timed events. Offline accrual. Achievement grids. Anything that asks the
@@ -3987,9 +4204,18 @@ a row is called on one board cannot use that anywhere else.
 
 The bench names the same stat the same way for different bodies, and lets the
 section heading say whose it is: `carry` and `haulcarry` are both **strength**,
-under *you* and *the crew*; `speed` and `minerspeed` are both **swing**, under
-*you* and *the rock*. That is not a collision to be fixed. It is the language,
-and everything below is an attempt to make the rest of the boards speak it.
+under *your gear* and *crew gear*; `speed` and `minerspeed` are both **swing**,
+under *your gear* and *rock miners*. That is not a collision to be fixed. It is
+the language, and everything below is an attempt to make the rest of the boards
+speak it.
+
+**A heading is a label, not a voice.** It says who or what the rows under it are
+about, in the plainest words the game has for that -- *rock miners*, *housing*,
+*critical hits*, *build*. The personality lives in the rows and their notes,
+where it is attached to a thing you are actually deciding about; a heading with
+a voice on it is a riddle standing between you and a list. This is why *a lucky
+swing* became *critical hits*, *the block* became *housing*, *the rock* became
+*rock miners* and *put up* became *build*.
 
 ### The rules
 
@@ -4002,7 +4228,7 @@ remember. See `test/boards.test.mjs`.
 | `rung` | a bare noun, naming the quantity. The board and its section say whose it is. |
 | `place` | **"another X"**, where X is what marks one body's place at that station. |
 | `machine` | **"the X"**. |
-| `building` | **"⟨verb⟩ the X"**, one verb per place, chosen once and kept. |
+| `building` | **"build the X"**. One verb for all of them: ten rows with ten verbs read as ten unrelated purchases. The narrative shield rows are the exception -- they are a scripted arc, not a catalogue. |
 | tune rows | **"tune the X"**, the same verb for all four. The note carries the flavour. |
 | capability | the plain sentence of what you can now do. |
 
@@ -5739,6 +5965,41 @@ rock's own left edge, and at full rock size that edge comes a long way out. The 
 and a standing ram must not overlap. It is a clearance, so it is measured off a screenshot at the
 biggest rock, not reasoned about from the numbers.
 
+### Amendment — the gap is derived now, and the shack moved in
+
+The shack went up three hundred and forty pixels off the boulder, and every other station in this
+yard wears its shed three cells from the wall. The gap was not spacing. It was room the rock had
+not grown into yet: `TO_FIRST_SITE` was a hand-measured 264 -- the width of rock one, by eye --
+and `rockSize` kept its own `P * 14` of clearance off the flank building. Two numbers, one
+decision, in two files that could not be read against each other, and the spacing one was wrong.
+
+Both ends are one rule now. `ROCK_W_MAX` and the newly-named `ROCK_FLANK_CLEAR` sit at the top of
+the site table, ahead of the walk, because the walk is measured off them:
+
+    TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR - SLOT_PAD
+
+The first slot along stands exactly where the biggest rock stops needing the ground, and no
+further. The shack closes from 342px to 228px at boulder one and to 84px -- the clearance itself --
+from boulder seventeen on, which is where a run spends most of its time; and `gw` still reaches its
+full 92 cells, so the move costs the rock nothing. That is the whole bargain: the hut reads as
+attached to the thing it belongs to, and the hill is the size it always was.
+
+**Why not closer.** Two options were weighed and dropped. Standing the shack one `SHED_GAP` off the
+biggest rock would read properly attached at the end, but it takes the clearance out of the rock and
+caps it near 70 cells -- the endgame boulder a quarter narrower, which is the one thing on this
+ground that must not get smaller. Riding the rock's live flank would be attached at every size, but
+the shack would then slide 144px left over a run, and placing the walk off `rockLeft()` re-ties the
+knot `placeSites` already says it hit and undid: the rock sized by its flank, the flank placed off
+the rock.
+
+**The world got narrower, which had never happened before.** `gridSlide` in persist.js only ever
+handled the ground *growing* in front of the boulder -- every change to the yard until now added
+columns on the left. Nineteen columns came off, and a save from the wider world fell through to
+`fillFlat`, which re-packs the same number of grains flat along the floor and loses where each one
+lay and what kind it was: the exact loss that function exists to prevent, in the one direction it
+did not cover. It takes a negative shift now, dropping what runs off the near end -- bare
+`YARD_MARGIN` ground past the last building, which nobody heaps on.
+
 ### What moves in
 
 | row | from | why it can move now |
@@ -5905,7 +6166,7 @@ of reading whatever is true twenty seconds later — the helmet changes hands mo
 than once in that window. The fixed check passes on a tree with the shack and on
 one without, which is the point: it is not a fact about a layout any more.
 
-## The bench is built, not delivered (design, not built)
+## The bench is built, not delivered (built)
 
 The bench is the one thing in this yard that teleports. `STEPS`' `bench` step in
 game.js watches `canAfford()`, and the frame it first goes true it sets
@@ -5971,18 +6232,22 @@ It is also the reason it wants to look like an ask rather than like scenery.
 
 ### The control itself
 
-The second control in this yard that is not on a board -- the machine's run
-switch is the first, and this is caught the same way, in `input.js` ahead of the
-ground, because a thing you press comes before the ground you have not pressed.
+A real button on the page, floated over the bench's own footprint -- the same
+kind of thing a board is, seated the same way a board is, in the same voice: a
+white sheet, a one-pixel black rule, the boards' uppercase monospace. It says
+`build the bench` and it is the only thing in the window that does.
 
-Drawn on the bench's own footprint: a hollow square of two-cell black rule with
-the hammer mark inside it, `build the bench` set under it in the yard's
-lettering, bobbing on the intro arrow's beat so it reads as asking for something.
-Black and white, flat, on the `P` grid, like everything else.
+It is a button and not a drawn mark because it is the one control in the game a
+player *must* find. Everything else that is not on a board -- the machine's run
+switch, a cauldron -- is a thing you may notice; this is a thing that has to be
+pressed before there is a game at all, and chrome is unmistakably chrome in a way
+a hollow square on the ground is not.
 
-While it stands, `drawPileMarks`, the tape and the fence all behave as they do
-for any other yard build once it is pressed; before that it is one drawn control
-and nothing else.
+Seated in `hud()` off the same world-to-screen arithmetic the boards use, so it
+stands over the bench's footprint through a pan and a zoom, and clamped inside
+the window for the same reason a board is. It vanishes the frame it is pressed:
+from then on the fence, the tape and the bar are the announcement, exactly as
+they are for every other build.
 
 ### What it needs in code
 

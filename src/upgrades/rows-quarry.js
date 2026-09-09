@@ -12,7 +12,7 @@ import { site } from './site.js';
 // body and a body swings a pick, so the place that makes bodies stronger opens
 // before the place that gives them better tools.
 const CAVE = site({
-  key: 'unlockquarry', name: 'open the quarry',
+  key: 'unlockquarry', name: 'build the quarry',
   cores: QUARRY_CORES, dust: QUARRY_DUST, open: 'quarryOpen',
   at: () => quarry.x + quarry.w / 2,
   show: () => S.farmOpen && !S.quarryOpen,

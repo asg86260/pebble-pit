@@ -5,7 +5,7 @@
 // on body.js for onYard; the spine in turn calls stopJig, workJig, celebrate
 // and MOVE_KEYS from here.
 
-import { frames, now } from '../clock.js';
+import { frames, frameMs, now } from '../clock.js';
 import { BUILD_HAMMER_H, BUILD_HAMMER_MS, BUILD_HITS_MAX, BUILD_HITS_MIN, BUILD_REST_MS, BUILD_SHIFT, BUILD_SHIFT_SPAN,
          DANCE_BEAT, DANCE_JUMP_H, DANCE_TEMPO_HI, DANCE_TEMPO_LO, danceJumpBeat,
          P, WORKER } from '../config.js';
@@ -143,6 +143,25 @@ MOVES.build = {
 // nobody needs a slot to join in.
 const beatMs = (w, move) => 1000 / (DANCE_BEAT * move.beat * (w.jigRate || 1));
 
+// Whether a beat starting at `at` would still be in the air when the yard stops
+// watching -- which is the question both wind-down sites below ask, written once
+// because they were two copies of it and only one of them was ever read closely.
+//
+// The horizon is one frame earlier than `endsAt`, and that is the whole of it.
+// The dance draws while `now < endsAt` (`dancing`, step.js), so the frame at
+// `endsAt` is the first one it does not draw, and a beat whose landing falls on
+// that frame -- or anywhere in the gap before it -- never gets the frame that
+// would have put its feet down. The body's last drawn position is wherever the
+// arc had reached.
+//
+// It read `at + beatMs(w, move) > endsAt`, which calls a beat landing exactly on
+// `endsAt` "in time". Measured on the stuck-yard fixture: a hauler's beat began
+// at 4517 and ran 500ms against a `danceUntil` of 5017, so the test was
+// `5017 > 5017` -- false -- and the body was switched off 1.2px off the ground,
+// one frame short of landing. A quarrier beside it went the same way.
+const overruns = (w, move, at, endsAt) =>
+  at + beatMs(w, move) > endsAt - frameMs();
+
 // Start a move at a given instant -- which is the instant the last one ended,
 // not the instant this frame began, so the overshoot of a frame is not thrown
 // away and the beats stay flush with each other.
@@ -245,7 +264,7 @@ function jig(w, now, zone, endsAt) {
   const whole = Math.floor(beat);
   if (endsAt != null && whole !== w.jigBeat) {
     w.jigBeat = whole;
-    w.jigDown = now + beatMs(w, move) > endsAt;
+    w.jigDown = overruns(w, move, now, endsAt);
   }
 
   // A move ends on a whole beat and the next one starts from that same instant.
@@ -285,7 +304,7 @@ function jig(w, now, zone, endsAt) {
     // beat that starts *there* has landed by `endsAt`, and the frame's own
     // overshoot is not part of it.
     w.jigBeat = Math.floor(beat);
-    if (endsAt != null) w.jigDown = w.moveAt + beatMs(w, move) > endsAt;
+    if (endsAt != null) w.jigDown = overruns(w, move, w.moveAt, endsAt);
     // and something over its head, now and then rather than every time: five
     // bodies all shouting at once is noise
     if (rand() < 0.5)

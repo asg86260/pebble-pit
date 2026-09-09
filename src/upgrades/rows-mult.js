@@ -17,7 +17,7 @@
 // would strand a piece of research that was in flight when the game was saved.
 // The same call the outhouse made when it stopped being called that.
 import { S } from '../state.js';
-import { RUNGS, LAB_CAVE_COST, LAB_TEND_COST } from '../config.js';
+import { RUNGS } from '../config.js';
 import { rungCost } from '../upgrades.js';
 import { STEP, levelOf, mult, workFor, finish } from '../mult.js';
 
@@ -90,26 +90,9 @@ export const HAUL_MULT = ladder({
   show: () => standing() && S.seenShard
 });
 
-export const QUARRY_MULT = ladder({
-  key: 'labcave', field: 'quarry',
-  name: 'speed ×',
-  unit: 'trips/min',
-  cost: () => rungCost(LAB_CAVE_COST, levelOf('quarry')),
-  currency: 'spore',
-  // Drawn by the quarry's own board, which builds its list directly rather than
-  // filtering UPGRADES -- so this one is named in QUARRY_SECTIONS instead.
-  board: 'quarry',
-  show: () => standing() && S.quarryOpen
-});
-
-export const FARM_MULT = ladder({
-  key: 'labtend', field: 'tend',
-  name: 'speed ×',
-  unit: 'plots/min',
-  cost: () => rungCost(LAB_TEND_COST, levelOf('tend')),
-  currency: 'spore',
-  board: 'farm',
-  show: () => standing() && S.seenSpore
-});
-
-export const MULT_ROWS = [SWING_MULT, HAUL_MULT, QUARRY_MULT, FARM_MULT];
+// The cut's and the plots' used to be here too, sold as a rival row beside the
+// rung each of them multiplied. They are band four of those ladders now -- the
+// top of the only ladder rather than a second one -- and are built by
+// `tierRows` in upgrades/tiers.js off the same `mult.js` machinery, keys and
+// all. See DESIGN.md, "Band four is the multiplier".
+export const MULT_ROWS = [SWING_MULT, HAUL_MULT];

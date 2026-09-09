@@ -190,7 +190,11 @@ export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
   'trips/min': '<i class="shard"></i>/min',
-  'plots/min': '<i class="spore"></i>/min'
+  'plots/min': '<i class="spore"></i>/min',
+  // What one go on either ground is worth, which is the other half of what the
+  // two grounds sell -- a rate says how often, these say how much.
+  'shards/dig': '<i class="shard"></i>/dig',
+  'spores/cut': '<i class="spore"></i>/cut'
 };
 
 // A second is the clock, never the letter.
@@ -363,7 +367,30 @@ export const spareKit = job => Math.max(0, hats(job) - worn(job) - loose(job));
 // below, because a second hand-kept copy of it is precisely the bug `rebalance`
 // was fixed for one screen down: the copy that gets forgotten is the one that
 // matters.
+//
+// ...and a station that is not standing holds nobody at all, which is asked
+// first because it is a different question from how many a place holds.
+//
+// `benches()` and `plotCount()` count what a quarry or a farm WOULD hold: they
+// are read by the drawing as much as by the staffing, and a quarry draws its
+// benches from the frame it is dug. Neither of them knows whether the place has
+// been opened, so the floor plan reported standing room for a hole nobody had
+// broken -- and `assignJob` filled it. Two bodies were put down a quarry that
+// did not exist, walked to where the cut will be, and stood twenty-four pixels
+// under the ground line inside a working `ways()` has no entry for, because
+// there is no cut. `verify.js` called it what it looked like: a body under the
+// yard with nothing under it.
+//
+// Only these two need asking. Every other station's count is already nought
+// until the place is built -- the pots, the wizards' hats -- because it is a
+// count of things that get built rather than a level that can be bought ahead.
+const STANDING = {
+  [JOB.QUARRY]: () => S.quarryOpen,
+  [JOB.FARM]: () => S.farmOpen
+};
+
 const capOfBare = job =>
+  STANDING[job] && !STANDING[job]() ? 0 :
   job === JOB.QUARRY ? benches() :
   job === JOB.FARM ? plotCount() :
   // One stirrer to a pot -- the farm's "one hand a plot", said of the pots the
@@ -859,14 +886,17 @@ registerRows(UPGRADES);
 // The order and the grouping on the board. A section with nothing to show in it
 // is left out, so rows appear as they are unlocked.
 export const SECTIONS = [
-  { title: 'you', keys: ['carry', 'auto', 'speed', 'pick'] },
+  { title: 'your gear', keys: ['carry', 'auto', 'speed', 'pick'] },
   // Placeholder heading -- Track A owns the final wording. The crit rows apply
   // to the whole yard, so the bench is their natural home.
-  { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
-  // "the crew" is not here any more: what they carry and how fast they walk is
-  // sold at the block they live in, under "their gear" -- see crewboard.js. The
-  // rows themselves are still in UPGRADES below, because moving a row between
-  // boards is a question of which sheet draws it and nothing else.
+  { title: 'critical hits', keys: ['critchance', 'critmult'] },
+  // What they carry and how fast they walk. These went to the block with the
+  // crew's other gear and have come back: they are `site: 'bench'`, so the body
+  // walks to the workbench to fit the kit and the bar hangs there -- which read
+  // as a stray bar when the row was pressed at the house. The belt and the
+  // multiplier over their pace stay at the block; both are built where they
+  // stand. See crewboard.js.
+  { title: 'crew gear', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no
@@ -874,24 +904,24 @@ export const SECTIONS = [
   // What the yard puts between itself and the sky, in the order it thinks of
   // them. The dome is the tower's and is on the tower's board.
   { title: 'the shields', keys: ['props', 'net', 'arch', 'jack', 'askwizards'] },
-  // Everything the yard has not put up yet, under one heading.
+  // Everything the yard has not built yet, under one heading.
   //
   // These were ten headings, each carrying a single row -- "the quarry" over
   // "open the quarry", "the tower" over "raise the tower", and so on down. That
   // is roughly six hundred pixels of bench spent on a table of contents, and a
   // heading over one row was never telling you anything the row did not.
   //
-  // The rows keep their own verbs rather than being flattened to the building's
-  // name. "Open the quarry", "break the ground", "raise the tower" each say what
-  // the work actually is, and under one heading they read as a list of jobs to
-  // be done rather than a list of things to be owned -- which is the truer
-  // description of a yard you are building.
+  // Every row under it says "build the <place>", and the heading says "build".
+  // They each had their own verb once -- "open the quarry", "break the ground",
+  // "raise the tower" -- which read well one row at a time and badly as a list:
+  // ten rows, ten verbs, and nothing to tell you at a glance that they were all
+  // the same kind of purchase. A heading is a label, not a voice.
   //
   // They are the one group that cannot be moved to the place it belongs to,
   // which is the rule every other section on this board now follows: a decision
   // about a place is made at the place, and these cannot be, because the place
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
-  { title: 'put up', keys: [
+  { title: 'build', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool',
     'unlockscrub'
