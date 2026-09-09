@@ -863,10 +863,13 @@ export const SECTIONS = [
   // Placeholder heading -- Track A owns the final wording. The crit rows apply
   // to the whole yard, so the bench is their natural home.
   { title: 'a lucky swing', keys: ['critchance', 'critmult'] },
-  // "the crew" is not here any more: what they carry and how fast they walk is
-  // sold at the block they live in, under "their gear" -- see crewboard.js. The
-  // rows themselves are still in UPGRADES below, because moving a row between
-  // boards is a question of which sheet draws it and nothing else.
+  // What they carry and how fast they walk. These went to the block with the
+  // crew's other gear and have come back: they are `site: 'bench'`, so the body
+  // walks to the workbench to fit the kit and the bar hangs there -- which read
+  // as a stray bar when the row was pressed at the house. The belt and the
+  // multiplier over their pace stay at the block; both are built where they
+  // stand. See crewboard.js.
+  { title: 'the crew', keys: ['haulcarry', 'haulpace', 'harness', 'boots'] },
   // "the rock" is not here any more either: the gang's ladders, the multiplier
   // over their swing and their machine are sold at the hut they work out of --
   // see shack.js. What is left under "you" above is your own gear, which has no

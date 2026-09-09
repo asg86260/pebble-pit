@@ -185,16 +185,22 @@ function point(w) {
 // up went through the settlement on the way and threw the sheet open sideways.
 // A row that only puts a list up is a fine thing to have to reach for; a row you
 // came to press is not.
-// The crew's own gear came here off the bench, and this is where it belonged:
-// a decision about a place is made at the place, and what the crew carry and how
-// fast they walk is a decision about the crew. It sat on the workbench under a
-// heading reading "the crew", one yard away from the block the crew live in, for
-// no better reason than that the bench was where every row started life.
+// What the crew own that is built out here in the yard: the multiplier over
+// their pace, the belt, and the belt's tuning ladder. All three are
+// `site: 'yard'` -- the work happens where the thing stands, and the bar hangs
+// over it.
+//
+// Their four ladders -- strength, speed, the harness, the boots -- came here
+// with them and have gone back to the bench. A decision about a place is made
+// at the place, which is why these are here; but that rule cuts the other way
+// for a row whose work is done at the workbench. Those four are `site: 'bench'`,
+// so buying one from the block put the bar a yard away from the row you pressed,
+// over a bench the sheet had nothing to do with. See rows-crew.js.
 //
 // Read from UPGRADES rather than copied, so these are the same row objects the
 // game already prices, gates and builds -- moving a row between boards is a
 // question of which sheet draws it, and nothing else.
-export const CREW_GEAR = ['haulcarry', 'haulpace', 'labhaul', 'harness', 'boots', 'belt', 'tunebelt'];
+export const CREW_GEAR = ['labhaul', 'belt', 'tunebelt'];
 // Read when asked, never at load: upgrades.js reaches this file on the way to
 // building UPGRADES, so the ring is still closing while this module's body runs
 // and a list gathered here would be `undefined`. Same trick, same reason, as
@@ -262,9 +268,11 @@ function people() {
 export const crewSections = () => [
   { title: 'the crew', keys: [CREW_ROW.key] },
   { title: 'the block', keys: [HOUSE_ROW.key] },
-  // What they carry and how fast they walk. Its own heading rather than folded
-  // into "the crew" above, because that one is the door through to the people
-  // and this is a shelf of gear -- the same distinction the board already draws
-  // between a person and a purchase.
+  // The belt they push their loads onto, its tuning, and the multiplier over
+  // their pace. Its own heading rather than folded into "the crew" above,
+  // because that one is the door through to the people and this is a shelf of
+  // gear -- the same distinction the board already draws between a person and a
+  // purchase. What they carry and how fast they walk is not here: those are
+  // fitted at the workbench, so they are sold there. See CREW_GEAR above.
   { title: 'their gear', keys: CREW_GEAR }
 ];

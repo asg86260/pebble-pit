@@ -4,10 +4,17 @@ import { HAUL_CARRY_COST, HAUL_PACE_COST } from '../config.js';
 
 // The bench's crew rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
+//
+// These went to the house board with the crew's other gear and have come back,
+// because a row is sold where its work is done. Every one of them is
+// `site: 'bench'` -- somebody walks to the workbench and fits the kit, and the
+// standard bar hangs over the bench while they do it. Sold from the block, the
+// press was in one place and the picture of it in another, which reads as the
+// bar having wandered. The belt and the crew's multiplier are still sold at the
+// block: those are `site: 'yard'` and are built where they stand.
 export const CREW_ROWS = [
   {
     key: 'haulcarry',
-    board: 'house',
     kind: 'rung', site: 'bench',
     // The heading over these rows already says "the crew", so the rows do not
     // need to say "worker" as well -- and what a body can pick up in one go is
@@ -34,7 +41,6 @@ export const CREW_ROWS = [
   // and say so -- they are gear, which is what blue is for.
   {
     key: 'harness',
-    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'harness',
     unit: 'px',
@@ -50,7 +56,6 @@ export const CREW_ROWS = [
   },
   {
     key: 'boots',
-    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'boots',
     unit: 'px/s',
@@ -65,7 +70,6 @@ export const CREW_ROWS = [
   },
   {
     key: 'haulpace',
-    board: 'house',
     kind: 'rung', site: 'bench',
     name: 'speed',
     unit: 'px/s',

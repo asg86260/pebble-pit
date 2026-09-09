@@ -464,6 +464,15 @@ const SCENES = {
   // place several of each stand together to be compared.
   bench: `${RICH} window.__board('bench');`,
 
+  // The block's board: the door through to the people, the row that puts
+  // another one up, and the gear the crew own that stands out in the yard --
+  // the belt, its tuning and the multiplier over their pace. What they carry
+  // and how fast they walk is not on it; that is fitted at the workbench and
+  // sold there, so this is the shot for whether the sheet still reads as a
+  // board with the four rungs gone off it.
+  houseboard: `${RICH} window.__board('house');
+               window.__look(window.__state().houses[0].x - 320);`,
+
   // And the books over the pit: the measured rate for every currency the yard
   // has met. It is run for a minute first, because a rate is a thing that takes
   // time to be true -- a board opened on a yard one frame old reads noughts.
