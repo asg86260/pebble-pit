@@ -6,7 +6,7 @@
 
 import { P, MINE_DELAY, WORKER, CORE_CELL, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
          FARM_H } from './config.js';
-import { S, bench, floor, pit, table, outhouse, rift } from './state.js';
+import { S, bench, floor, pit, table, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
 import { sweep, release, track, overCore } from './hands.js';
@@ -15,7 +15,7 @@ import { stirAir } from './air.js';
 import { stirSmoke } from './smog.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
 import { at, inside, colOf, bottomY, isDust } from './grid.js';
-import { nearBench, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, showPanel, placeBoard, showTip,
+import { nearBench, nearSchool, nearCasino, nearHouse, nearScrub, nearQuarry, nearFarm, nearApothecary, nearTower, nearStats, nearOuthouse, nearShack, showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, standRect } from './board.js';
 import { overPileMark, pileMarkAt, overDoneMark, doneMarkAt } from './render.js';
 import { doneName } from './works.js';
@@ -91,7 +91,7 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // Standing at any station at all. The click handler and the move handler ask the
 // same question of the same list, so a station that answers one answers both.
 const atStation = (x, y) =>
-  nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
+  nearShack(x, y) || nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
   nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) || nearApothecary(x, y) || nearTower(x, y) ||
   nearHouse(x, y) || nearStats(x, y) || nearOuthouse(x, y);
 
@@ -231,6 +231,8 @@ canvas.addEventListener('pointermove', e => {
                : nearFarm(S.mouse.x, S.mouse.y) ? 'farm'
                : nearApothecary(S.mouse.x, S.mouse.y) ? 'apothecary'
                : nearTower(S.mouse.x, S.mouse.y) ? 'tower'
+               // The gang's hut, before the bench it stands in front of.
+               : nearShack(S.mouse.x, S.mouse.y) ? 'shack'
                : nearBench(S.mouse.x, S.mouse.y) ? 'bench'
                : nearOuthouse(S.mouse.x, S.mouse.y) ? 'outhouse'
                : nearHouse(S.mouse.x, S.mouse.y) ? 'house'
@@ -292,7 +294,8 @@ export function endDrag(e) {
     // one board at a time: two of them open at once on a phone screen would
     // simply sit on top of each other
     const p = pos(e);
-    if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
+    if (nearShack(p.x, p.y)) showPanel(S.shackBoardOpen ? null : 'shack', true);
+    else if (nearBench(p.x, p.y)) showPanel(S.boardOpen ? null : 'bench', true);
     else if (nearSchool(p.x, p.y)) showPanel(S.schoolBoardOpen ? null : 'school', true);
     else if (nearCasino(p.x, p.y)) showPanel(S.casinoBoardOpen ? null : 'casino', true);
     else if (nearScrub(p.x, p.y)) showPanel(S.scrubBoardOpen ? null : 'scrub', true);
@@ -386,6 +389,7 @@ function cellLabel(v) {
 // the whole answer to where you stand, where you click and where the board
 // hangs (see #1, "Wave 3.1" in wave-feedback3.md; `standAt` in board.js).
 const BUILDING_NAME = {
+  shack: 'the shack',
   bench: 'the bench', lab: 'the lab', school: 'the school', casino: 'the casino',
   scrub: 'the scrubbing house', quarry: 'the quarry', farm: 'the farm', tower: 'the tower'
 };
@@ -600,7 +604,7 @@ const CURSORS = [
   [(x, y) => overCore(x, y), 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
-  [(x, y) => nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
+  [(x, y) => nearShack(x, y) || nearBench(x, y) || nearSchool(x, y) || nearCasino(x, y) ||
              nearHouse(x, y) || nearScrub(x, y) || nearQuarry(x, y) || nearFarm(x, y) ||
              nearApothecary(x, y) || nearTower(x, y) || nearStats(x, y) ||
              nearOuthouse(x, y), 'pointer'],

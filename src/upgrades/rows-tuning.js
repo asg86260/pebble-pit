@@ -16,11 +16,12 @@ export const TUNING_ROWS = [
   // first place. What stands here instead is the rift: the overflow goes
   // somewhere else entirely, and what you buy is how fast it goes.
   // The ram's ladder and the belt's, on the boards their machines stand on --
-  // the rock and the crew. Neither has a station board of its own, the rock
-  // being the rock and carrying being what everybody does. Endless, like the
-  // other two: see `tuneRow` in machines.js.
+  // the rock and the crew. The ram's is the shack's now, beside the row that
+  // buys the machine itself; carrying still has no station board of its own,
+  // because carrying is what everybody does. Endless, like the other two: see
+  // `tuneRow` in machines.js.
   tuneRow('ram', 'tune the ram',
-          () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard'),
+          () => `the ram strikes ${MACHINE_TUNE}x harder, again`, 'yard', 'shack'),
   // The belt is the crew's machine, so its tuning is sold where the crew live,
   // beside the row that buys the belt itself.
   tuneRow('belt', 'tune the belt',

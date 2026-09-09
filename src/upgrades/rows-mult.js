@@ -70,9 +70,11 @@ export const SWING_MULT = ladder({
   unit: 'px/s',
   cost: () => rungCost(3, levelOf('swing')),
   currency: 'shard',
-  // The bench draws it: the rock has no board of its own, and the bench stands
-  // at the rock's left flank, which is what makes it the rock's board.
-  board: undefined,
+  // The shack draws it, directly under the rung it multiplies. The bench used
+  // to, on the argument that the rock had no board of its own and the bench
+  // stood at its flank -- which is the sentence the shack was built to make
+  // false.
+  board: 'shack',
   // Not before a shard has been seen, or it is a row asking for a currency a
   // fresh yard has never been shown. See A8 in feedback3.md.
   show: () => standing() && S.seenShard

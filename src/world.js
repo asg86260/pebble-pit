@@ -11,11 +11,11 @@ import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
-        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H,
+        BENCH_W, QUARRY_BENCH0, QUARRY_BENCH_MAX, QUARRY_DEEPEN, LOOSE_DEEP, SCRUB_CHUTE , TO_TOWER, TOWER_W, TOWER_H, TO_OUTHOUSE, OUTHOUSE_W, OUTHOUSE_H, SHACK_W, SHACK_H,
         FARM_SHED_W, FARM_SHED_H, QUARRY_SHED_W, QUARRY_SHED_H, SHED_GAP,
         APOTH_POT_ROW, POT_PITCH, POT_W, BUILDBENCH_H, SLOT_PAD } from './config.js';
 import { frames } from './clock.js';
-import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse } from './state.js';
+import { S, floor, pit, bench, quarry, farm, apothecary, sky, school, casino, scrub, table , tower, outhouse, shack } from './state.js';
 import { seatRift } from './rift.js';
 import { shapePit } from './pit.js';
 import { wakeGrid } from './grid.js';
@@ -110,7 +110,16 @@ export function atStation(job, x) {
 }
 
 export const kitX = job =>
-  job === JOB.ROCK ? rockLeft() - P * 4 :
+  // The gang's, outside the shack, which is where their helmets come from -- the
+  // hut keeps them the way the shed keeps the caps and the tower keeps the
+  // cones. Clear to the left of the front, off the doorway, like the janitor's.
+  //
+  // Before there is a shack it is the rock's own left flank, which is where the
+  // stand has always been: the row exists from the first hire and the building
+  // does not, so the stand has to have both answers. A helmet on a stand in the
+  // middle of the thing you are clicking was never right -- it is furniture
+  // standing on the works -- and this is the move that takes it off.
+  job === JOB.ROCK ? (S.shackOpen ? shack.x - P * 6 : rockLeft() - P * 4) :
   // well back from the lip: the full-hole warning stands five cells short of
   // the edge, and a trestle under a warning triangle is two marks in one place
   job === JOB.HAUL ? pit.x - P * 16 :
@@ -225,7 +234,11 @@ export function layPiles() {
 // who bought it early have it nearest to hand, which is the exact opposite of
 // what it is for. `boards.js` says so too, and said so out loud the first time
 // this was written without the pin.
-const PINNED_FIRST = ['bench', 'house'];
+// The shack is pinned with them, and for the same kind of reason: it belongs to
+// the rock, which is the one station that was standing before anything was
+// bought. Ordering it by purchase would let a yard that put it up late have the
+// gang's hut out past the plots, which is the one place it cannot be.
+const PINNED_FIRST = ['shack', 'bench', 'house'];
 const PINNED_LAST = ['casino'];
 
 function siteOrder() {
@@ -602,6 +615,27 @@ export const walkY = x => Math.min(groundAt(x), S.groundY) - WORKER;
 // not about the yard -- but where it stands is the table's business, and the
 // strips its heap lies on come off the same pass rather than being worked out
 // afterwards from where the buildings ended up.
+// The rock's left flank: the right-hand edge of whatever building stands
+// nearest it. This is what the biggest rock is measured against (see `rockSize`
+// in rock.js), and it is asked as a question about the yard rather than named
+// as a building.
+//
+// It used to be `bench.x + bench.w` outright, which was true for exactly as
+// long as the bench was the first thing along -- and the shack put a building
+// in front of it. A rule that names one site is a rule that goes quietly wrong
+// the next time the walk is reordered, and the way it goes wrong is a rock
+// growing through a wall.
+//
+// Every seated site is asked, not just the first, because the walk's order is
+// something the player decides by buying (`siteOrder`) -- and the greatest
+// right-hand edge is the nearest thing to the rock by definition, whichever row
+// of the table it came out of.
+export function flankX() {
+  let x = -Infinity;
+  for (const spot of Object.values(S.placed || {})) x = Math.max(x, spot.x + spot.w);
+  return x;
+}
+
 export function seatSites() {
   const placed = placeSites();
   S.placed = placed.at;
@@ -662,6 +696,11 @@ export function seatSites() {
   // how deep the quarry has been taken and how many plots have been broken:
   // facts about the two boxes above, and read straight after they are placed.
   resite();
+
+  // The rockhands' hut, the first thing along from the rock. Seated whether or
+  // not it has been bought, like every other site: the ground is reserved from
+  // the moment the table names it, and the draw is what waits on the flag.
+  seat(shack, 'shack', SHACK_H);
 
   seat(school, 'school', SCHOOL_H);
 

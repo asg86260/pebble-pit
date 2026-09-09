@@ -26,9 +26,12 @@ export const BENCH_ROWS = [
     show: () => true
   },
   {
-    // The rock's machine, and the only one of the three sold from the bench --
-    // because the rock is the one station with no board of its own, its two kit
-    // rows having always lived here under 'the rock'.
+    // The rock's machine, sold at the rock like the other two are sold at
+    // theirs. It was the odd one out for as long as the rock had no board of
+    // its own; the shack is that board, so this row is on it -- `board:
+    // 'shack'` below, and the row is still in this file because where a
+    // machine is BOUGHT and where it is BUILT are different questions and only
+    // the first one moved.
     //
     // Its gate is those two rows bought right out. The cut has benches and the
     // plots have furrows; the rock has no floor plan to fill, so what stands for
@@ -39,7 +42,7 @@ export const BENCH_ROWS = [
     // Put up where it will stand, which the machine's own spec knows and this
     // row does not: the builders walk to it rather than building it from
     // wherever they happened to be.
-    kind: 'machine', site: 'yard', at: () => specOf('ram')?.at(),
+    kind: 'machine', site: 'yard', at: () => specOf('ram')?.at(), board: 'shack',
     name: 'the ram',
     bill: () => RAM_BILL,
     buy: () => { buyMachine('ram'); rebalance(); },

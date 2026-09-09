@@ -1,5 +1,5 @@
 import { APOTHECARY_W } from './apothecary.js';
-import { CASINO_W, OUTHOUSE_W, TOWER_W } from './buildings.js';
+import { CASINO_W, OUTHOUSE_W, SHACK_W, TOWER_W } from './buildings.js';
 import { FARM_GAP, FARM_PLOTS_MAX } from './farm.js';
 import { HOUSE_COLS, HOUSE_CUBE } from './house.js';
 import { heapBase } from './piles.js';
@@ -96,6 +96,13 @@ export const SHACK_RISE = P;
 export const SHACK_EAVE = P / 2;   // how far a roof hangs past its own wall
 
 export const SITES = [
+  // The rockhands' hut, and the first thing along from the rock: it is the one
+  // building that belongs to the station that was always there. Its ground is
+  // reserved from the moment this row names it, like everybody's, so the bench
+  // and the whole walk behind it stand one shack further out whether or not
+  // anybody has bought one -- and the rock, which is measured off whatever is
+  // nearest rather than off the bench by name, is exactly the size it was.
+  { key: 'shack',    w: () => SHACK_W,                     standoff: 0,  pile: null },
   { key: 'bench',    w: () => BENCH_W,                     standoff: 0,  pile: null },
   // wave7b-build: the construction bench, standing right beside the work bench
   // -- where you buy a thing and where somebody is hired to build it are next

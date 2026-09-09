@@ -7,7 +7,7 @@
 // went through -- so the checks are about the books and about the table, which
 // are the two places the drawing and the errand both read from.
 
-import { group, ok, state, run, yard, WORKER, buyBuilt } from './helpers.mjs';
+import { group, ok, state, run, runUntil, yard, WORKER, buyBuilt } from './helpers.mjs';
 import { KIT, KIT_JOBS, KIT_MARK, TRADE_OF, boughtKit } from '../src/kit.js';
 import { DIZZY_MS } from '../src/config.js';
 
@@ -320,17 +320,48 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
   window.__shake(S.workers.indexOf(owner));
   run(0.5);                                   // the hat comes to rest
 
-  // And the owner is carried off across the yard before it can come round, so
-  // that the walk back is a real walk and the race is a race. This is the
-  // player's own gesture -- picked up and put down somewhere else -- and the hat
-  // stays where it fell.
+  // And the owner is carried off across the yard and HELD there while the race
+  // runs. This is the player's own gesture -- a body picked up off the ground --
+  // and the hat stays where it fell.
+  //
+  // It used to be picked up, moved and put straight back down, which was a
+  // gesture that did nothing: a rockhand walks briskly back to its own layer
+  // (`nearestInBand` in crew/rockhand.js), so the owner was standing over its
+  // own helmet again well before its stars cleared. What actually decided this
+  // check was whether some hauler's errand happened to have it near the rock at
+  // that instant -- the owner is the nearest body to a hat that fell off its own
+  // head, so once it is racing it wins (`ownerRacing` in crew/kitwalk.js). That
+  // held while the houses stood where they stood, and went red the first time a
+  // site was added at the head of the walk and every hauler's errands started
+  // one slot further out.
+  //
+  // A body in the air is not in the race, and that is the rule that turns this
+  // from a coincidence into a decision: hold the owner up, and the helmet is
+  // genuinely up for grabs until somebody comes for it.
   const hatAt = owner.hatOff && owner.hatOff.x;
   lift(owner);
   owner.x -= 600;
   owner.y -= 120;
-  drop(owner);
 
-  run(DIZZY_MS / 1000 + 20);
+  // Run until the swap happens, rather than for a fixed stretch and then
+  // looking at whatever is true by then.
+  //
+  // The helmet changes hands more than once: a hauler takes it while the owner
+  // is still rocking, and the owner -- which is a racer too once its stars clear
+  // (see `ownerRacing` in crew/kitwalk.js) -- walks back and takes it off
+  // whoever has it. Traced a body at a time, the swap this check is about
+  // happens about two seconds in and had come back round by twenty. So the
+  // window was asking which lap the yard was on, and the answer moved the first
+  // time a site was added at the head of the walk and every hauler's errands
+  // started one slot further out. What the check is about is that the swap
+  // happens and that it is one body, so it waits for it and reads it there.
+  const swapped = () => S.workers.some(o => o.trained && o.kitOf === 'rockhands'
+                                            && cartersBefore.includes(o));
+  const took = runUntil(swapped, DIZZY_MS / 1000 + 20);
+
+  // ...and only then is the owner set down, to find its job gone.
+  drop(owner);
+  run(2);
 
   const wearer = S.workers.find(o => o.trained && o.kitOf === 'rockhands');
   const carter = wearer && cartersBefore.includes(wearer) ? wearer : cartersBefore[0];
@@ -338,7 +369,7 @@ group('a hauler that picks the helmet up is a rockhand, and the swap is one body
 
   return [
     ok(hatAt != null, 'the helmet was lying in the yard', `${hatAt}`),
-    ok(wearer !== owner && cartersBefore.includes(wearer) && wearer.type === 'rockhand',
+    ok(took && wearer !== owner && cartersBefore.includes(wearer) && wearer.type === 'rockhand',
        'the body that was carrying dust walked over, put it on, and is a rockhand',
        `${carter.type}, kit ${carter.kitOf}`),
     // The other half of it. The hat is the job, so losing it loses the job: the

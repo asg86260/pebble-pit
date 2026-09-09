@@ -22,7 +22,6 @@ Left alone deliberately: the casino's four table rows come and go between hands,
 which is a table doing what a table does, and a row leaving because its build
 landed still resizes the board -- that is a change to what the board holds, and
 the design says a board may resize for those.
-=======
 ## Audio — the rule is written, nothing is built (2026-09-08)
 
 **Designed, not built. Awaiting approval before any code.** See "The sound of the yard
@@ -47,6 +46,36 @@ No test tier can hear anything, so the ear is the check the way a shot is the ch
 but the *decision* half (how many voices a burst of forty grains fires, whether a bed's level
 tracks the storm) is a fact about the yard and gets a node-tier file if audio.js keeps its decisions
 away from its `AudioContext`.
+## A shack at the rock — built (2026-09-08)
+
+**Built**, on `worktree-rock-shack-design`. See "The shack at the rock" at the
+end of DESIGN.md, whose last subsection records the five things the build
+changed about the design.
+
+The rockhands have a hut off the rock's left flank, and the gang's two ladders,
+the rock's `swing ×`, the ram and the ram's tuning ladder are sold on its board
+rather than the bench's. Your own pickaxe, swing and hold-to-mine stay on the
+bench, because you are the cursor. `put up the shack` is a bench row at 150 dust
+and a third of a building's work, offered once the price is within reach. The
+helmets and the headcount moved off the middle of the rock to the hut's door.
+
+The layout cost nothing it was feared to: `SITES` is a declarative table, so the
+shack is one row at the front of it, and the rock's size rule and the ram's
+parking clamp both read `flankX()` — the nearest building — instead of naming the
+bench.
+
+**Checked:** test/shack.test.mjs (7 groups, all green), test/mult.test.mjs
+re-pointed, test/kit.test.mjs's fallen-helmet race fixed (it was passing by
+geometric coincidence -- see the end of the DESIGN.md section; the fix passes
+with and without the shack), test/golden, test/boards, test/machines,
+test/persist-roundtrip, test/wave3-buildings green, browser
+boards/places/cursor/press groups green, and the layout read off
+`shots/shack.png` at the biggest boulder.
+
+**Known red, not mine:** `every field on S is accounted for` in
+test/persist-roundtrip.test.mjs fails on `rescued`, `rescueTo`, `landAt`,
+`shield`, `shieldsDone` and `rockHeld` — six fields in none of state.js's three
+lists. It is red on main too; the shack's own fields are listed.
 
 ## Everything that is not content (2026-09-08)
 

@@ -95,6 +95,7 @@ export const SITES = Object.keys(SITE_JOB);
 // Exported so that render.js can tell which place, if any, a `kind: 'building'`
 // work on the yard is actually raising -- see #3, "Wave 3.1".
 export const OPENS_PLACE = {
+  unlockshack: 'shack',
   unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm', unlocklab: 'lab',
   unlockscrub: 'scrub', unlockcasino: 'casino', unlocktower: 'tower',
@@ -247,7 +248,7 @@ export const takesTime = u => !!u.kind && workFor(u) > 0;
 // A station IS its own box. The yard's slot is whatever is being put up there,
 // which the row itself names.
 const YARD_ROW_SITE = {
-  house: 'house', unlockouthouse: 'outhouse', unlockschool: 'school',
+  house: 'house', unlockshack: 'shack', unlockouthouse: 'outhouse', unlockschool: 'school',
   unlockquarry: 'quarry', unlockfarm: 'farm',
   unlocklab: 'lab', unlockcasino: 'casino', unlocktower: 'tower', unlockscrub: 'scrub',
   unlockapothecary: 'apothecary', unlockbuildbench: 'buildbench'

@@ -46,6 +46,7 @@ import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
+import { shackRows, shackSections } from './shack.js';
 import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
@@ -482,6 +483,11 @@ export const openBuildBench = (open = true) => { S.buildbenchOpen = open; buildS
 // dev: the shed, without paying for it -- for a look at what the crew do with it
 export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
 
+// dev: the gang's hut, for a check whose subject is what is ON its board rather
+// than how it got there. The check that buys it goes through `unlockshack` on
+// the bench, like a player -- see test/shack.test.mjs.
+export const openShack = (open = true) => { S.shackOpen = open; buildShop(); S.dirty = true; };
+
 // dev: the table, without the twenty cores it costs -- for a check about the
 // wheel, which is not a check about how the building gets built
 export const openCasino = (open = true) => { S.casinoOpen = open; buildShop(); S.dirty = true; };
@@ -643,7 +649,11 @@ export const boards = () => [
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
   { name: 'quarry', keys: QUARRY_UPGRADES.map(u => u.key), sections: QUARRY_SECTIONS.map(x => x.keys) },
   { name: 'farm',   keys: FARM_UPGRADES.map(u => u.key),   sections: FARM_SECTIONS.map(x => x.keys) },
-  { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) }
+  { name: 'outhouse', keys: OUTHOUSE_UPGRADES.map(u => u.key), sections: OUTHOUSE_SECTIONS.map(x => x.keys) },
+  // The rock's board. Its rows are the same objects the bench used to draw, so
+  // they are already in UPGRADES above -- what is checked here is that they are
+  // on this sheet and off that one.
+  { name: 'shack',  keys: shackRows().map(u => u.key),    sections: shackSections().map(x => x.keys) }
 ];
 
 export const allRows = () => everyRow().map(u => ({
@@ -998,7 +1008,7 @@ export const HANDLES = {
   __dustSpan: dustSpan, __dustOverPit: dustOverPit, __skyJoin: skyJoin, __skyXY: skyXY,
   __pitTop: pitTop, __overPit: overPit, __muckSet: muckSet, __poopSet: poopSet, __shake: shake,
   __meteor: openMeteor, __rift: openRift, __tear: tearRift, __wizardHat: wizardHat,
-  __loo: openLoo, __brew: brewWizard, __casino: openCasino,
+  __loo: openLoo, __shack: openShack, __brew: brewWizard, __casino: openCasino,
   // Setting the pot the way the board does: clicking a tonic row calls its
   // `set`, the keep/one-off dial its toggle, the favor dial its step. These are
   // the same functions the pointer calls, so a check that sets the pot this way

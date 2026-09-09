@@ -73,3 +73,30 @@ export const TOWER_H = P * 34;       // tall and thin: the one building that goe
 // which suits the one building here that produces nothing.
 export const CASINO_W = P * 26;
 export const CASINO_H = P * 12;
+
+// --- the shack at the rock ----------------------------------------------------
+// The rockhands' hut, standing off the rock's left flank. The gang was the one
+// trade in the yard with no building: the growers have the plots, the blasters
+// have the cut, the janitor has the shed, and the crew who were here first
+// worked out of thin air with their helmets on a stand in the middle of the
+// rock they were trying to take down. See DESIGN.md, "The shack at the rock".
+//
+// Eight cells across, which is what the front has to hold rather than a size
+// picked to look about right: `DOOR_W` is four everywhere in this yard, and a
+// doorway needs two cells of wall either side of it or the wall reads as two
+// posts. That makes it a cell wider than the outhouse and a course taller --
+// the outhouse keeps its title as the smallest thing anybody builds, and this
+// is the next one up, because a body carries a pickaxe through this door and
+// nothing through that one.
+export const SHACK_W = P * 8;
+export const SHACK_H = P * 11;
+// What it costs. The cheapest bill in the game, and the only one paid in dust
+// alone: this is a hut for the gang that digs the dust, put up before the yard
+// has any other coin to its name, and a bill in a currency the rock does not
+// give would gate the gang's own ladders behind somewhere else entirely.
+export const SHACK_DUST = 150;
+// And how long it takes to stand up, against `WORK_BASE.building`'s forty-five.
+// A third, because it is a third of a building -- and because this is the first
+// thing most players will ever put up, and the first build in a game should be
+// over before you have started wondering whether it is stuck.
+export const SHACK_WORK = 15;

@@ -11,11 +11,11 @@ import {
 } from './config.js';
 import { throughRockMuck } from './smog.js';
 import { frames, now } from './clock.js';
-import { S, floor, bench } from './state.js';
+import { S, floor } from './state.js';
 import { spriteW, spriteH, stackCol, roofRow, seatCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
 import { at, put, depthShade, colOf, bottomY } from './grid.js';
-import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView } from './world.js';
+import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost } from './apothecary.js';
@@ -35,23 +35,25 @@ export function depthOf() {
   return Math.min(MAX_DEPTH, 1 + Math.floor(S.boulderNo / 2));
 }
 
-// how big rock n is, in cells. It may never grow into the bench, nor out of the
-// sky kept clear above the ground line
+// how big rock n is, in cells. It may never grow into the building on its flank,
+// nor out of the sky kept clear above the ground line
 export function rockSize() {
   const w = Math.round(ROCK_W + (S.boulderNo - 1) * ROCK_GROW_W);
   const h = Math.round(ROCK_H + (S.boulderNo - 1) * ROCK_GROW_H);
   // The width is kept even. The rock is anchored by its middle, so an odd width
   // puts its left edge half a cell off the grid, and half a cell is a fraction
   // of a device pixel: every column then seams against its neighbour.
-  // The bench stands off one flank, so what the rock has to spread into is the
+  // A building stands off one flank, so what the rock has to spread into is the
   // gap to whichever of its edges faces the rock -- and it keeps a hand's width
   // clear of that, rather than growing up against it.
-  // Measured off where the bench actually stands, not off the offset it used to
-  // be placed by. The two said the same thing only for as long as nobody moved
-  // the bench; now that placement comes out of the SITES table, an edit to that
-  // table would have let the rock grow quietly into the bench.
-  const toBench = Math.abs(S.cx - (bench.x + bench.w));
-  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((toBench - P * 14) * 2 / P)));
+  // Measured off where the nearest building actually stands, not off the offset
+  // it used to be placed by and not off the bench by name. The two said the same
+  // thing only for as long as nobody moved the bench; now that placement comes
+  // out of the SITES table, an edit to that table would have let the rock grow
+  // quietly into a wall -- which is exactly what adding the shack in front of
+  // the bench would have done. `flankX` (world.js) asks the yard instead.
+  const toFlank = Math.abs(S.cx - flankX());
+  const wide = Math.max(10, Math.min(w, ROCK_W_MAX, Math.floor((toFlank - P * 14) * 2 / P)));
   return {
     w: wide - (wide % 2),
     h: Math.max(6, Math.min(h, ROCK_H_MAX, Math.floor((ROCK_SKY - P * 4) / P)))
@@ -682,12 +684,17 @@ export const RAM_REACH = 8;
 // fresh page starts the machine at its spot rather than driving it in from
 // nowhere.
 //
-// And never into the bench: the target itself is clamped clear of it. The spot
-// is measured off the face, and a fresh boulder's face is near enough that the
-// machine stood into the bench's own silhouette.
+// And never into the wall behind it: the target itself is clamped clear of
+// whatever building stands nearest the rock. The spot is measured off the face,
+// and a fresh boulder's face is near enough that the machine stood into that
+// building's own silhouette.
+//
+// `flankX` rather than the bench, for the same reason `rockSize` asks it: the
+// shack stands in front of the bench now, and a clamp that named the bench
+// would have parked the ram inside the hut it is supposed to stop short of.
 const ramTargetX = () => {
   const parked = rockFaceX() - P * (RAM_REACH + spriteW(RAM));
-  return Math.round(Math.max(bench.x + bench.w + RAM_CLEAR, parked) / P) * P;
+  return Math.round(Math.max(flankX() + RAM_CLEAR, parked) / P) * P;
 };
 let ramNowX = null, ramMovedAt = 0;
 export function ramX() {
