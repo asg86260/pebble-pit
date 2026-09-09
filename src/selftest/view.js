@@ -4,8 +4,8 @@
 // 9 groups, in the order they have always run in --
 // see src/selftest.js, which is where the order lives.
 
-import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench, run,
-  buy, asScreen, finger } from './kit.js';
+import { sleep, state, ok, canvas, board, panel, point, onScreen, haveBench, hoverBench,
+  hoverStation, run, buy, asScreen, finger } from './kit.js';
 
 export const TESTS = [
   ['the opening view is looking at the rock', async () => {
@@ -92,10 +92,17 @@ export const TESTS = [
     // stops being worth digging. See "The ladder" in DESIGN.md.
     window.__grant({ shards: 200, spores: 200 });
     window.__give(4000);
-    await hoverBench();
+    // Two rows on two boards, and that is the point of the check now. The gang's
+    // bite is sold at their hut -- everything about the rock moved onto that
+    // sheet -- and your own pick is still yours, on the bench. Standing at each
+    // in turn is how a player buys them, and it is the part that would have gone
+    // unnoticed if this had gone on pressing both from one board.
+    window.__shack();
+    await hoverStation('shack');
     const before = state();
     const gotBite = await buy('rockhandpick');
     const mid = state();
+    await hoverBench();
     const gotPick = await buy('pick');
     const after = state();
     window.__crew(0, 0);

@@ -1,5 +1,61 @@
 # Still to do
 
+## The shack landed on the browser tier without ever being run against it (2026-09-08)
+
+**Open. Six browser checks red on main; the node tier is green.** The shack was
+built and merged with seven green node checks of its own and the browser tier
+never run, so everything below is the join between "the rock's rows moved to the
+hut" and the checks that still look for them on the bench. Diagnosis for each,
+because none of it has to be re-derived:
+
+- **`your pick and a rockhand bite are bought apart` (view.js).** Fixed for the
+  group run alone -- it opens the hut and stands at it for the bite, at the bench
+  for the pick -- and still red under `tools/test.mjs`, which shards and so hands
+  the group a different yard than `--only view` does. State from a neighbor, not
+  the fix.
+- **`the headcount rides on the section as a badge` (crew.js:494).** This is the
+  real one, and it is not a check problem. The badge rides the section named
+  "the rock", which has moved to the hut's sheet -- and the hut has a single
+  group, so `lone` in shop.js draws no heading at all. The rockhands' headcount
+  now has nowhere in the game to be shown. It throws rather than fails because
+  the detail argument is evaluated before the guard.
+  **Blocked on a call:** does the hut draw its heading after all so the badge has
+  a home, does the badge move onto the board's own title, or do the rockhands
+  stop carrying one?
+- **`the opening view is looking at the rock` (view.js).** The shack reserves its
+  ground whether or not you have bought one, so the bench and the whole walk
+  behind it stand 154px further out, and a desk-sized window (1440x900) no longer
+  reaches the bench. Measured: the opening camera misses it by 540px where it
+  missed by 386 before.
+  **Blocked on a call:** widen the opening view, or accept that the first thing
+  along is now the hut's ground and the bench may sit off the edge at open.
+- **`shop opens at the bench and is not buried` and `a card is only ever taller
+  by a whole line of title` (boards.js).** Both pass on a fresh page and both
+  fail in the sharded suite, so both are reading a bench that a neighbor filled.
+  The bench lost five rows to the hut, so which rows are on it under a given
+  purse changed underneath every check that assumed the old set.
+
+## A body assigned to a closed quarry stands a body-height into the ground (2026-09-08)
+
+**Open, and NOT new -- it predates the shack.** `test/home.test.mjs`, "a body put
+to work comes out of the house first", trips `verify.js`'s ladder rule: a
+quarrier walks with its feet up to 31px below a flat ground line with no working
+under it. Its `foot` is right (1980) and its `y` is wrong (1998, exactly the
+ground line) -- a body-height, which is the y/feet confusion this codebase warns
+about.
+
+It is reached with the quarry *closed* and two quarriers put on by `__assign`,
+which is a state a player cannot get to. Seed-swept on both sides of the merge to
+be sure it is not the shack's: pre-merge main sinks on seeds 2, 3, 4 and 7 and is
+clean on the suite's 20250830; post-merge it sinks on 20250830, 3, 5, 6 and 7.
+The merge only moved the crew block 54px and shifted the run's phase -- it did
+not cause this. The check has been going green on a seed that happened to miss it.
+
+**Blocked on:** finding what sets `y` to the surface rather than a body-height
+above it. `stand` -> `climbTo(w, surfaceUnder(w))` is the path, and
+`feetOn(wayAt(x, y), x)` reads 1980 for a body at 1980 -- so it is the sunk `y`
+feeding `wayAt` that keeps it there, and the first push down is still unfound.
+
 ## The shop boards resize while you read them (2026-09-08)
 
 **Built.** See "A board has a size" at the end of DESIGN.md.
