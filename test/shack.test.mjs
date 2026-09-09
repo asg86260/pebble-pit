@@ -8,7 +8,7 @@
 // building, the rows land on its board and leave the bench's, and the helmets
 // come off the middle of the rock.
 
-import { group, ok, P, runUntil, state, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, state, yard } from './helpers.mjs';
 import { SECTIONS, UPGRADES } from '../src/upgrades.js';
 import { shackRows, shackSections } from '../src/shack.js';
 import { standRect, STATIONS } from '../src/board.js';
@@ -161,31 +161,53 @@ group('the gang\'s helmets hang at the hut, not in the middle of the rock', asyn
 // --- the yard made room, and the rock did not pay for it ---------------------------
 // The shack stands where the bench used to and the bench moved out behind it.
 // The rock is measured off whatever building is nearest it rather than off the
-// bench by name, which is the whole reason that move is free -- so the biggest
-// rock there is still stops short of the wall.
-group('the walk moved out to make room, and the rock is the size it was', async () => {
+// bench by name, which is the whole reason that move is free.
+//
+// And the hut keeps the same bare gap off every rock, not just off the biggest
+// one. Its slot is sized for a boulder that will not exist for hours, so a hut
+// left standing on it waits out the early rocks a long way across empty ground;
+// it is seated off the rock that is actually there and gives that ground back
+// as the rock grows into it (see `seatSites`, world.js). The gap is the claim,
+// checked at both ends of the rock's growth rather than at one.
+group('the hut keeps the same gap off the rock at every size', async () => {
   window.__reset();
   const s = state();
-  const shackRight = s.shackX + s.shackW;
 
   // The biggest boulder the game has, measured rather than driven to: what the
   // rule answers is the subject here, and forty rocks of waiting is not.
   const was = S.boulderNo;
   S.boulderNo = 40;
-  const widest = rockSize().w * P;
+  const widest = rockSize().w;
   S.boulderNo = was;
-  const leftEdge = S.cx - widest / 2;
+
+  // Every size from the first rock to the widest one there is. The layout
+  // follows the rock on the frame after it lands -- the ground is laid in a
+  // step, not in the setter -- so each one is given a frame to be seen in.
+  const gaps = [];
+  for (const n of [1, 5, 12, 40]) {
+    window.__jump(n);
+    await run(1 / 30);
+    const now = state();
+    gaps.push({ n, gw: now.gw,
+                gap: now.rockLeftX - (now.shackX + now.shackW),
+                x: now.shackX });
+  }
+  const one = gaps[0], big = gaps[gaps.length - 1];
+  const said = gaps.map(g => `rock ${g.n}: ${g.gap} at ${g.x}`).join(', ');
 
   window.__reset();
   return [
     ok(s.shackOpen === false, 'the ground is reserved before anything is bought'),
-    ok(shackRight < S.cx, 'and the hut stands left of the rock',
-       `${shackRight} vs ${S.cx}`),
+    ok(s.shackX + s.shackW < S.cx, 'and the hut stands left of the rock',
+       `${s.shackX + s.shackW} vs ${S.cx}`),
     ok(s.benchX < s.shackX, 'with the bench out behind it',
        `bench ${s.benchX}, shack ${s.shackX}`),
-    ok(leftEdge > shackRight,
-       "the biggest rock still stops short of the hut's wall",
-       `rock edge ${Math.round(leftEdge)}, hut ${shackRight}`)
+    ok(gaps.every(g => g.gap === one.gap), 'the same bare gap off every rock', said),
+    ok(gaps.every(g => g.gap > 0), 'and the biggest rock still stops short of its wall',
+       said),
+    ok(big.gw === widest && big.x < one.x,
+       'the hut gives that ground back as the rock grows into it',
+       `${one.x} at rock 1, ${big.x} at the widest (${big.gw} cells)`)
   ];
 });
 

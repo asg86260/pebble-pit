@@ -5984,6 +5984,24 @@ from boulder seventeen on, which is where a run spends most of its time; and `gw
 full 92 cells, so the move costs the rock nothing. That is the whole bargain: the hut reads as
 attached to the thing it belongs to, and the hill is the size it always was.
 
+### Amendment — and the hut walks in with the rock (built)
+
+228px at boulder one was still a hut standing across bare ground, and what it was standing across
+was ground reserved for a boulder that will not exist for hours. A slot sized for the widest rock
+is right about where the hut may *never* go; it is wrong about where the hut should *stand* while
+the rock is small.
+
+So the seat follows the rock. The hut keeps `ROCK_FLANK_CLEAR` off the boulder's real left edge --
+84px, the same clearance the rock is grown against, read from the other side -- and gives that
+ground back a few pixels at a time as the rock grows into it. At the widest boulder the two
+answers meet exactly on the reserved slot, which is what makes the clamp one-way and safe.
+
+What is deliberately *not* done is moving the walk. The slot is still what `flankX` reports and
+still what the rock is sized against, so where the hut is drawn can never feed back into how big
+the rock may grow -- the knot that once put a bench a hundred and thirty pixels out. Everything
+behind the hut stands where it always did; only the hut moves, and it moves the way everything
+else in this yard moves, because the thing beside it changed size.
+
 **Why not closer.** Two options were weighed and dropped. Standing the shack one `SHED_GAP` off the
 biggest rock would read properly attached at the end, but it takes the clearance out of the rock and
 caps it near 70 cells -- the endgame boulder a quarter narrower, which is the one thing on this

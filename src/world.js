@@ -7,7 +7,7 @@
 
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
-        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE,
+        SITES, TO_FIRST_SITE, STATION_GAP, SHACK_RISE, ROCK_FLANK_CLEAR,
         PIT_W_MAX, PIT_PAD, FLOOR_MARGIN, WORKER, DEVICE_PIXELS, QUARRY_W, QUARRY_H, SHAKE_RATE,
         SHAKE_DECAY, TO_FARM, TO_LAB, TO_SCHOOL, TO_CASINO, CASINO_W, CASINO_H, TO_SCRUB,
         SCRUB_W, SCRUB_H, SCHOOL_W, SCHOOL_H, LAB_W, LAB_H, APOTHECARY_W, APOTHECARY_H, FARM_PLOTS0, FARM_PLOTS_MAX, FARM_GAP, FARM_H,
@@ -172,8 +172,13 @@ let laid = null;
 // SITES), so it is already covered by `buildOrder` -- and a key that depended
 // on something the walk itself sets is a key that says "lay again" on the frame
 // after every laying.
+//
+// `S.gw` is in it because the shack is seated off the rock's own left edge (see
+// `seatSites`), so a wider boulder is a thing that moves a building. It changes
+// once a boulder rather than once a frame, which is the same handful-of-times
+// cost the rest of the key already pays.
 const groundKey = () =>
-  `${S.scrubOpen}|${S.meteorOpen}|${S.apothPots}|${(S.buildOrder || []).join(',')}`;
+  `${S.scrubOpen}|${S.meteorOpen}|${S.apothPots}|${S.gw}|${(S.buildOrder || []).join(',')}`;
 
 export function layPiles() {
   const now = groundKey();
@@ -342,7 +347,15 @@ export function placeSites() {
 }
 
 export function refreshPiles() {
-  laid = groundKey();
+  // This does NOT stamp `laid`. It used to, and the stamp was a lie: laying the
+  // ground is two jobs -- the strips here and the seats in `seatSites` -- and
+  // this is one of them. Every caller that rebuilt the strips on its own (a new
+  // boulder, in `makeBoulder`) therefore told `layPiles` the ground was already
+  // laid under a key it had never seated anything for, and the buildings kept
+  // the places the last full pass had given them. The shack, which follows the
+  // rock's width, stood at the first rock's distance for every rock after it.
+  //
+  // `layPiles` stamps it, because `layPiles` is what does both.
   S.piles = [
     // Off the walk that reserved the ground for them, in
     // `placeSites`. They used to be rebuilt here from where the buildings had
@@ -701,6 +714,29 @@ export function seatSites() {
   // not it has been bought, like every other site: the ground is reserved from
   // the moment the table names it, and the draw is what waits on the flag.
   seat(shack, 'shack', SHACK_H);
+
+  // ...and then pulled in against the rock that is actually standing there.
+  //
+  // Its slot is sized for the BIGGEST rock -- `TO_FIRST_SITE` is the room the
+  // widest boulder needs and no more -- so a yard on rock one, forty-four cells
+  // wide against a ceiling of far more, had the gang's hut standing a long way
+  // out across bare ground for a rock that will not exist for hours. The gap
+  // read as a mistake because it was reserved for something not there yet.
+  //
+  // So the hut keeps ROCK_FLANK_CLEAR off the rock's real left edge, and gives
+  // that ground back one boulder at a time as the rock grows into it. It is the
+  // same clearance `rockSize` measures against, from the other side: the rock
+  // grows until it is that far from the hut, the hut stands that far from the
+  // rock, and at the widest boulder the two answers meet exactly on the slot.
+  //
+  // What is NOT done here is moving the walk. The reserved slot is what
+  // `flankX` reports and what the rock is sized against, so where the shack is
+  // DRAWN cannot feed back into how big the rock may grow -- otherwise the rock
+  // is sized off the hut which is placed off the rock, and that knot is the one
+  // that put a bench a hundred and thirty pixels out (see `placeSites`). The
+  // clamp is one-way for the same reason: the hut moves toward the rock, never
+  // past its slot into the ground behind it, whatever the table is edited to.
+  shack.x = Math.max(shack.x, Math.round((rockLeft() - ROCK_FLANK_CLEAR - shack.w) / P) * P);
 
   seat(school, 'school', SCHOOL_H);
 
