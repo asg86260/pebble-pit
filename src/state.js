@@ -275,7 +275,10 @@ export const S = {
   // research calls exactly these back, so the game undoing its own tidying is
   // not a chore it hands to you.
   labLeft: 0,
-  mult: { swing: 0, haul: 0, quarry: 0, tend: 0 },
+  // Six of them: the crew's two, and the last band of each of the four ladders
+  // the two grounds sell. `crop` and `seam` are the yield ones and are the only
+  // multipliers here that were never the lab's.
+  mult: { swing: 0, haul: 0, quarry: 0, tend: 0, crop: 0, seam: 0 },
 
   // --- the crew ---
   // One pool of bodies, hired once and put wherever you like. A job is a count
@@ -286,7 +289,7 @@ export const S = {
   crew: 0,                // bodies hired, all told
   rockhands: 0, rockhandSpeedLevel: 0, rockhandPickLevel: 0,
   haulers: 0, haulCarryLevel: 0, haulPaceLevel: 0,    // haulers: whatever is spare
-  quarriers: 0, quarryPaceLevel: 0,
+  quarriers: 0, quarryPaceLevel: 0, seamLevel: 0,
   // How many cells deep each column of the quarry has been dug. Nought everywhere is
   // bare ground with no hole in it: the quarry is what has been taken out, not a
   // shape the yard was drawn with. See quarry.js.
@@ -342,7 +345,7 @@ export const S = {
   wizSpeedLevel: 0,
   wizPowerLevel: 0,
   scholars: 0,             // and the ones standing in the lab, working on the research
-  farmhands: 0, tendLevel: 0,
+  farmhands: 0, tendLevel: 0, cropLevel: 0,
 
   // --- the apothecary, and the pot on the boil ---
   // A pot the whole yard is under. You set what it brews and it brews that again
@@ -557,6 +560,7 @@ export const SAVED = [
   'siteDone',
   'labLeft',
   'tendLevel',
+  'cropLevel',            // and what one cut off a plot is worth
   // The apothecary: the building, its crew, and the pot's standing order. A
   // save from before it existed comes back with the pot idle and one pot to a
   // building, which is what a fresh apothecary is.
@@ -660,6 +664,7 @@ export const SAVED_BY_HAND = [
   'quarryOpen',           // renamed from the cave, along with the three below
   JOB.QUARRY,
   'quarryPaceLevel',
+  'seamLevel',            // and what one dig turns up
   'benchLevel',           // grandfathered up to the crew already standing in it
   'quarryCells',          // how deep each column has been dug
   'quarryOwed',           // and how much of the seam is still in it: guessed, for an old save

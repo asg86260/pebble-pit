@@ -190,7 +190,11 @@ export const UNITS = {
   'px': '<i class="dust"></i>',
   'px/s': '<i class="dust"></i>/s',
   'trips/min': '<i class="shard"></i>/min',
-  'plots/min': '<i class="spore"></i>/min'
+  'plots/min': '<i class="spore"></i>/min',
+  // What one go on either ground is worth, which is the other half of what the
+  // two grounds sell -- a rate says how often, these say how much.
+  'shards/dig': '<i class="shard"></i>/dig',
+  'spores/cut': '<i class="spore"></i>/cut'
 };
 
 // A second is the clock, never the letter.

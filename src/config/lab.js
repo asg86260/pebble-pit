@@ -6,11 +6,10 @@
 // game asks.
 export const LAB_EFFORT = 1;      // a worker does one second of work a second
 export let LAB_WORK = 45;         // and this many worker-seconds finishes a piece
-// The two spore-priced multipliers, priced against the farm that mints the coin
-// by the hundred a minute (the grind pass, DESIGN.md); the shard pair next to
-// them keeps its old firsts because shards are dear already.
-export const LAB_CAVE_COST = 10;  // the quarry multiplier's first rung, spores
-export const LAB_TEND_COST = 12;  // and the farm's own, spores
+// The two spore-priced multipliers that were here -- the cut's and the plots' --
+// are the last band of the two grounds' own ladders now, and are priced off
+// those ladders' first rungs in config/quarry.js and config/farm.js. The crew's
+// two keep their own firsts in upgrades/rows-mult.js.
 // What a bench costs, and how much steeper each one gets. The lab's own ladder:
 // it is the one building that never made itself quicker, so every piece of
 // research took exactly as long as the first one did however far into a run you
