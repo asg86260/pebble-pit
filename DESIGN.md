@@ -1492,67 +1492,71 @@ the top of the only one.
 
 A card is a **name** and a **note** -- the two fields `tuneRow` already uses --
 and the gain line under them is written by `gainText` as it is everywhere else.
-The name is a thing standing in the yard; the note is the sentence that says
-what it does. Neither states a number the game is keeping.
+The name is the wording; the note is the sentence that says what it does.
+Neither states a number the game is keeping.
+
+Each ladder is one idea escalating, and the last band is the fantastical version
+of the band before it: seed becomes astral seed, a greenhouse becomes a season
+you own, powder becomes charmed powder, a rail cart becomes no gravity at all.
+That is what makes a band worth a new card rather than a new pip -- the words
+move as far as the price does.
 
 **The farm's yield ladder.** What one cut is worth.
 
 | band | name | note |
 |---|---|---|
-| 1 | **compost** | what the row throws off, turned back into it |
-| 2 | **fertilizer** | a sack at the head of the row, and the soil goes dark |
-| 3 | **the seed line** | the best of each crop held back to sow the next |
-| 4 | **the greening** | a mark cut into the head-post, and the row comes up heavier than it was sown |
+| 1 | compost | the row's own leavings, turned back into it |
+| 2 | fertilizer | a sack at the head of the row, and the soil goes dark |
+| 3 | hybrid seed | the best of each crop held back to sow the next |
+| 4 | astral GMOs | seed that has been somewhere the yard has not |
 
 **The farm's speed ladder.** How often a hand gets a cut.
 
 | band | name | note |
 |---|---|---|
-| 1 | **hand tools** | a hoe apiece, so a hand works the plot without kneeling in it |
-| 2 | **the sprinkler** | a standpipe at the head of the row, throwing over the plots |
-| 3 | **the ditch** | water walked to the row once and running there after |
-| 4 | **the quickening** | the same working laid on the hour instead of on the crop |
+| 1 | hand tools | a hoe apiece, so a hand works the plot without kneeling in it |
+| 2 | sprinklers | the row is watered whether or not somebody is carrying it |
+| 3 | greenhouses | the weather stops having the last word |
+| 4 | summer's aura | one season, kept over the row, whatever the sky is doing |
 
 **The quarry's yield ladder.** What one dig turns up.
 
 | band | name | note |
 |---|---|---|
-| 1 | **the sledge** | break the stone at the face rather than carry it whole |
-| 2 | **powder** | a crate at the rim, and the face wears the marks of the last shot |
-| 3 | **the assay** | knowing which seam is worth the swing before you take it |
-| 4 | **the seeking** | the stone is asked what it is holding, and it answers |
+| 1 | sledges | break the stone at the face rather than carry it whole |
+| 2 | black powder | a shot hole, and the face gives up more than a swing can |
+| 3 | dynamite | the same idea, and it no longer has to be persuaded |
+| 4 | enchanted TNT | it goes off knowing what it is looking for |
 
 **The quarry's speed ladder.** How often a swing lands.
 
 | band | name | note |
 |---|---|---|
-| 1 | **the ramp** | a graded way in and out instead of a scramble |
-| 2 | **the shoring** | timbers down the wall, a stage of them per rung |
-| 3 | **the tramway** | a way for stone to leave the hole that is not somebody's arms |
-| 4 | **the driving** | a swing that lands before the arm has finished making it |
+| 1 | ramps | a graded way in and out instead of a scramble |
+| 2 | scaffolding | boards and timbers across the wall, so a body climbs less to swing more |
+| 3 | rail carts | stone leaves the hole without an arm under it |
+| 4 | anti-gravity zone | the hole stops charging for depth |
 
-**Band four is magic, because band four costs sparks.** The first three bands
-are things a yard builds -- a sack, a standpipe, a crate, timbers -- and the
-last one cannot be, because a spark is what the machines and the rift are bought
-with and nothing mundane is priced in one. So the top of every ladder is a
-working: **the greening**, **the quickening**, **the seeking**, **the driving**,
-one set of words across both grounds, and each is drawn the same way -- a mark
-cut into the post or the face, and motes off it while the yard is at that work.
-It is also why band four stays a BUILD: a working somebody has to stand and
-finish is a decision, and one you simply buy is a number.
+**No card draws a prop, and that is not an oversight.** An earlier pass had each
+band build a thing in the yard -- a sack, a standpipe, timbers -- which is
+fourteen sprites for four ladders, and none of it is what the ladder actually
+is. No ladder in this game has ever drawn a stage per rung: the kit ladders, the
+crew's rungs and the machines' endless tune rows all sell a rate and draw
+nothing, and the yard reads fine. The words are flavor over a ladder that still
+states its own `unit` -- `plots/min`, `trips/min`, spores or shards a go -- and
+the gain line is a percentage as it is everywhere else, so nothing about what
+you are buying depends on reading the flavor.
 
-**These names break the rule that killed "quarry lamps", and on purpose.** That
-row was renamed to `speed` because "nothing else on these boards is named after
-the *reason* it works, and a lamp is not a thing this game ever draws". The
-second half was the real objection. Every card above draws its own stage in the
-yard -- the sack, the standpipe, the ditch, the crate, the timbers, the tramway,
-the cut marks -- so the name is not a reason invented for a number, it is a label
-for the thing that appeared when you bought it. A card that cannot be drawn
-does not get a name; it gets cut and the band gets a different idea.
+This is the "quarry lamps" rule, kept rather than broken. That row was renamed
+because it was *called* the reason it worked while the ladder said nothing about
+its rate. These cards say the rate in the unit and the gain line, every one of
+them; the name sits on top and is allowed to be fun.
 
-The ladder itself is still called what it does. The card's title is the thing,
-and the row keeps its `unit` -- `plots/min`, `trips/min`, spores or shards a go
--- so what the ladder *is* never depends on reading the flavor.
+**Band four costs sparks, so band four is magic.** A spark is what the machines
+and the rift are bought with and nothing mundane is priced in one, so the top of
+each ladder is the yard admitting what it has become. It is also why band four
+stays a BUILD: a working somebody has to stand and finish is a decision, and one
+you simply buy is a number.
 
 ### The mechanism
 
