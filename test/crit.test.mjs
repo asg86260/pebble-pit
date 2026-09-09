@@ -7,7 +7,7 @@
 // never), and where a real roll is measured the levels are pinned and the run is
 // long, so the number is the mechanic rather than the seed.
 
-import { group, ok, state, run, haveRock, openSites, P, WORKER } from './helpers.mjs';
+import { group, ok, state, run, haveRock, openSites, buyBuilt, P, WORKER } from './helpers.mjs';
 import { S, floor } from '../src/state.js';
 import { findShards, seamShards } from '../src/quarry.js';
 import { critMult, critChance, critEV } from '../src/crit.js';
@@ -135,5 +135,41 @@ group('a crit throws real dust that is flagged, swells, and banks', async () => 
     ok(settled === 0, 'and the fountain has all come down', `${settled} left aloft`),
     ok(after - before === removed, 'count conserved: the grains banked as dust',
        `+${after - before} vs ${removed}`),
+  ];
+});
+
+// --- 4. the two ladders are bought in blue and green ---------------------------
+//
+// A crit lands at every station, so its rungs are owed to more than one of them:
+// the quarry's shard and the farm's spore, plus the dust every bill carries.
+// Bought through the row a player presses, because what is being asked is
+// whether the price is really taken out of those two purses -- a check that set
+// `S.critChanceLevel` would prove nothing about the bill at all.
+group('a crit rung is paid for in shards and spores', async () => {
+  window.__reset();
+  window.__crew(1, 0);                       // a hand to walk it to the bench
+  window.__give(200000);
+  window.__grant({ shards: 500, spores: 500 });
+
+  const purse = () => [state().shards, state().spores];
+  const [sh0, sp0] = purse();
+  const lvl0 = S.critChanceLevel;
+  // Bought through the row a player presses, and built the way a bench row is
+  // built -- a body walks over and fits it -- rather than by setting the level.
+  const gotChance = buyBuilt('critchance');
+  const [sh1, sp1] = purse();
+
+  // And the power rung out of the same two, so neither row was left on dust.
+  const mult0 = S.critMultLevel;
+  const gotMult = buyBuilt('critmult');
+  const [sh2, sp2] = purse();
+
+  return [
+    ok(gotChance && S.critChanceLevel === lvl0 + 1, 'the chance rung was bought at the row'),
+    ok(sh1 < sh0, 'it took shards', `${sh0} -> ${sh1}`),
+    ok(sp1 < sp0, 'and spores', `${sp0} -> ${sp1}`),
+    ok(gotMult && S.critMultLevel === mult0 + 1, 'the power rung was bought too'),
+    ok(sh2 < sh1 && sp2 < sp1, 'out of the same two purses',
+       `${sh1}->${sh2} shard, ${sp1}->${sp2} spore`),
   ];
 });

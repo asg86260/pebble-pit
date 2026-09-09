@@ -27,8 +27,7 @@ import { MACHINE_GAIN, ROCK_GANG, LIP_GANG, RAM_BILL, BELT_BILL,
          SPELL_DRIVE, SPELL_THRIFT, DUST_PER_SPARK, DUST_PER_SHARD, DUST_PER_SPORE, DUST_PER_CORE,
          HOUSE_COST0, HOUSE_RATE,
          MACHINE_TUNE,
-         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX,
-  CRIT_CHANCE_COST, CRIT_MULT_COST } from './config.js';
+         HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
 import { critChance, critMult } from './crit.js';
 import { spelled } from './tower.js';
 import { makeMeteor } from './meteor.js';
