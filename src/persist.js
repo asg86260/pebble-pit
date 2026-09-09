@@ -387,8 +387,29 @@ export function persist() {
 //
 // It is written straight into the cells rather than through `put` for the same
 // reason `gridFill` is: a run at a time, with one `recount` at the end.
+// `dx` may be negative. The world only ever GREW when this was written -- the
+// comment above still says so, because that was true of every change that had
+// happened to it -- and then a spacing number turned out to be reserving ground
+// the rock had already stopped needing (see TO_FIRST_SITE, config/sites.js), and
+// the yard got nineteen columns narrower. A save from the wider world fell
+// through to `fillFlat` and had its heaps re-dealt as flat grey dust: the exact
+// loss this function exists to prevent, in the one direction it did not cover.
+//
+// Sliding left is the same walk with the same anchor. What runs off the near
+// end is dropped rather than refused, because those columns are the bare
+// YARD_MARGIN ground past the last building -- somewhere for the camera to stop,
+// which nobody heaps on. A grain out there is a grain the yard has no room for
+// any more, and dropping it is the truthful answer; keeping it would mean
+// folding it back on to a column that already has its own.
 function gridSlide(b, s, dx) {
-  if (!(dx > 0 && s.rows === b.rows && s.cols + dx <= b.cols)) return false;
+  if (s.rows !== b.rows) return false;
+  // The far end has to land inside the new floor whichever way the walk went:
+  // what may be dropped is the near end, and only the near end. A saved grid
+  // that would hang off the RIGHT is not a moved world, it is a different one,
+  // and `fillFlat` is the right answer to that.
+  if (s.cols + dx > b.cols) return false;
+  // and a slide of nought is only a slide if the two floors are the same width
+  if (dx === 0 && s.cols !== b.cols) return false;
   const from = new b.grid.constructor(s.cols * s.rows);
   let i = 0;
   for (const part of String(s.cells || '').split('.')) {
@@ -403,7 +424,8 @@ function gridSlide(b, s, dx) {
   for (let r = 0; r < s.rows; r++)
     for (let c = 0; c < s.cols; c++) {
       const v = from[r * s.cols + c];
-      if (v) b.grid[r * b.cols + c + dx] = v;
+      const to = c + dx;
+      if (v && to >= 0 && to < b.cols) b.grid[r * b.cols + to] = v;
     }
   return true;
 }
@@ -431,8 +453,10 @@ export function restoreGrid(b, s, dx = 0) {
 // it was written -- so the answer is exact whichever end of the world moved.
 // A save from before that was written down does not, and for those the column
 // count is the answer: the only thing that has ever changed the floor's width is
-// the ground in front of the boulder, so every column it gained, it gained on
-// the left.
+// the ground in front of the boulder, so every column it gained or lost, it
+// gained or lost on the left. The `max(0, ...)` stays on that older path -- a
+// save with no anchor cannot say which way the ground moved, and guessing a
+// slide on one is worse than not sliding at all.
 const floorShift = saved =>
   !saved ? 0
   : Number.isFinite(saved.cx) ? Math.round((S.cx - saved.cx) / P)

@@ -137,10 +137,42 @@ export const SITES = [
 export const SLOT_PAD = Math.max(...SITES.filter(r => r.pile)
   .map(r => r.standoff + heapBase(r.pile) * P));
 
-// The bare ground between the rock's centre and the far edge of the first site
+// How wide the rock is ever allowed to get, and how much bare ground it keeps
+// off the building on its flank. They live up here, ahead of the walk, because
+// the walk has to know them: the first site along stands where the biggest rock
+// leaves room for it, and that is the one spacing in the yard measured against
+// something that grows.
+//
+// Rocks go on for ever, so they must stop growing at some point or rock ninety
+// would fill the sky. They plateau at about what the twelfth was.
+export const ROCK_W_MAX = 92;
+// The hand's width the rock keeps clear of its flank building, rather than
+// growing up against the wall. It was `P * 14` written into `rockSize`
+// (rock.js) -- a number in a module, and the module could not be read against
+// the spacing that had to agree with it. The two ends of one decision.
+export const ROCK_FLANK_CLEAR = P * 14;
+
+// The bare ground between the rock's centre and the far edge of the first slot
 // along. Measured from `S.cx` rather than from the rock's edge, because the rock
 // changes size and the yard does not rearrange itself around it.
-export const TO_FIRST_SITE = 264;
+//
+// Derived, not measured. It was 264 -- the width of rock one, by eye -- which
+// left the shack standing three hundred and forty pixels off the boulder while
+// every other station in the yard wears its shed three cells from the wall. The
+// gap was not spacing, it was room the rock had not grown into yet.
+//
+// So it is the room the rock actually needs and no more: the biggest rock
+// reaches ROCK_W_MAX / 2 cells either side of `S.cx`, `rockSize` keeps
+// ROCK_FLANK_CLEAR of bare ground off whatever stands on its flank, and the
+// slot's own SLOT_PAD apron is already inside this distance. Any closer and the
+// rock quietly stops growing short of its own ceiling -- a cap nobody asked for,
+// hidden in a spacing number. Any further and the shack is standing out in the
+// yard for no reason, which is where it was.
+//
+// The shack is what this places, and it is the only site that has a neighbour
+// on its rock side that is not a building. Everything behind it is spaced off
+// its neighbours as before.
+export const TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR - SLOT_PAD;
 
 // Bare ground kept past the last building, at the far end of the walk, before
 // the world runs out. Somewhere for the camera to stop and for the casino to
@@ -181,9 +213,9 @@ export const ROCK_GROW_W = 3;    // each rock is a little broader than the last
 export const ROCK_GROW_H = 1.4;  // and a little higher
 export const ROCK_SINK = 0;      // its foot sits on the ground line, like everything else
 export const ROCK_SKY = 520;     // sky kept clear above the ground line, for the rock
+// ROCK_W_MAX is up with the walk, which is measured off it -- see TO_FIRST_SITE.
 // Rocks go on for ever, so they must stop growing at some point or rock ninety
 // would fill the sky. They plateau at about what the twelfth was.
-export const ROCK_W_MAX = 92;
 export const ROCK_H_MAX = 42;
 export const ROCK_CLEAR = 24;    // bare ground kept either side of the rock, so the spoil stands off it
 // A bank may stand this many cells high per cell of distance from the apron.

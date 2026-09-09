@@ -5748,6 +5748,41 @@ rock's own left edge, and at full rock size that edge comes a long way out. The 
 and a standing ram must not overlap. It is a clearance, so it is measured off a screenshot at the
 biggest rock, not reasoned about from the numbers.
 
+### Amendment — the gap is derived now, and the shack moved in
+
+The shack went up three hundred and forty pixels off the boulder, and every other station in this
+yard wears its shed three cells from the wall. The gap was not spacing. It was room the rock had
+not grown into yet: `TO_FIRST_SITE` was a hand-measured 264 -- the width of rock one, by eye --
+and `rockSize` kept its own `P * 14` of clearance off the flank building. Two numbers, one
+decision, in two files that could not be read against each other, and the spacing one was wrong.
+
+Both ends are one rule now. `ROCK_W_MAX` and the newly-named `ROCK_FLANK_CLEAR` sit at the top of
+the site table, ahead of the walk, because the walk is measured off them:
+
+    TO_FIRST_SITE = (ROCK_W_MAX / 2) * P + ROCK_FLANK_CLEAR - SLOT_PAD
+
+The first slot along stands exactly where the biggest rock stops needing the ground, and no
+further. The shack closes from 342px to 228px at boulder one and to 84px -- the clearance itself --
+from boulder seventeen on, which is where a run spends most of its time; and `gw` still reaches its
+full 92 cells, so the move costs the rock nothing. That is the whole bargain: the hut reads as
+attached to the thing it belongs to, and the hill is the size it always was.
+
+**Why not closer.** Two options were weighed and dropped. Standing the shack one `SHED_GAP` off the
+biggest rock would read properly attached at the end, but it takes the clearance out of the rock and
+caps it near 70 cells -- the endgame boulder a quarter narrower, which is the one thing on this
+ground that must not get smaller. Riding the rock's live flank would be attached at every size, but
+the shack would then slide 144px left over a run, and placing the walk off `rockLeft()` re-ties the
+knot `placeSites` already says it hit and undid: the rock sized by its flank, the flank placed off
+the rock.
+
+**The world got narrower, which had never happened before.** `gridSlide` in persist.js only ever
+handled the ground *growing* in front of the boulder -- every change to the yard until now added
+columns on the left. Nineteen columns came off, and a save from the wider world fell through to
+`fillFlat`, which re-packs the same number of grains flat along the floor and loses where each one
+lay and what kind it was: the exact loss that function exists to prevent, in the one direction it
+did not cover. It takes a negative shift now, dropping what runs off the near end -- bare
+`YARD_MARGIN` ground past the last building, which nobody heaps on.
+
 ### What moves in
 
 | row | from | why it can move now |
