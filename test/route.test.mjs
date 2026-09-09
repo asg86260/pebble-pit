@@ -11,6 +11,7 @@
 import { group, ok, state, run, runUntil } from './helpers.mjs';
 
 import { S } from '../src/state.js';
+import { P as CELL_W, SWING_BOB, SWING_DRIVE } from '../src/config.js';
 import { stepQuarrier } from '../src/quarry.js';
 
 const detail = () => state().crewDetail.map(d => {
@@ -192,6 +193,11 @@ group('the hill is a workplace, not a road', async () => {
   ];
 });
 
+// The most a rockhand's drawn height can honestly change in one frame: the cell
+// `climbTo` will carry it, the full drive of a swing landing, and the bob, which
+// can be at one end of its travel on one frame and the other end on the next.
+const WALKED_DOWN = CELL_W + CELL_W * SWING_DRIVE + 2 * SWING_BOB;
+
 group('the way over the hill is the hill that is left', async () => {
   window.__reset();
   window.__crew(4, 0, 0, 0);
@@ -280,11 +286,22 @@ group('the way over the hill is the hill that is left', async () => {
     ok(into <= 12, 'and nobody on it is ever buried in the shape it is left with',
        `worst ${Math.round(into)}px into the face`),
     // A cell a frame is what `climbTo` allows, and the bob and the swing ride on
-    // top of that. Anything much over it is a body being put on the new surface
-    // rather than walking down to it -- a rockhand hopping down the hill a cell at
-    // a time as the swings land, which is what easing is here to stop.
-    ok(jump <= 12, 'and it walks down to the new surface rather than being put on it',
-       `worst ${Math.round(jump)}px in a frame`)
+    // top of that. Anything over the three of them together is a body being put
+    // on the new surface rather than walking down to it -- a rockhand hopping
+    // down the hill a cell at a time as the swings land, which is what easing is
+    // here to stop.
+    //
+    // Added up from the three, rather than typed. It was 12, which is a number
+    // that cannot be right: the climb alone is a cell and the drive is nearly a
+    // cell and a half, so what the mechanism can do in a frame was always over
+    // fourteen and this was asserting the margin one yard happened to leave
+    // rather than the rule. Moving the shack in against the rock closed that
+    // margin and it read 13 -- a body doing exactly what it is built to do.
+    //
+    // A crater is cells deep, so a body genuinely put on a new surface still
+    // clears this by a distance.
+    ok(jump <= WALKED_DOWN, 'and it walks down to the new surface rather than being put on it',
+       `worst ${Math.round(jump)}px in a frame, against ${WALKED_DOWN}`)
   ];
 });
 
