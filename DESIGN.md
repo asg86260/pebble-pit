@@ -6282,7 +6282,7 @@ ladder, not a rung -- a record.
 no notice makes anything faster. This is the one decision the whole feature hangs
 off, and it is the same bargain the crew's own records already strike (see
 `records.js`: "None of it does anything -- no number here feeds a rate"). A yard
-of forty-eight little payouts is forty-eight balance decisions, and every one of
+of fifty little payouts is fifty balance decisions, and every one of
 them turns into a number you buy once and stop thinking about -- the thing the
 sky rule already refuses. A record that pays is a quest log. A record that does
 not is a record.
@@ -6383,7 +6383,7 @@ and look at it before deciding.
 ### What the sheet shows
 
 **What you have done, and how much board there is left.** Earned notices, newest
-first, each with its name and its note. Under them, one line: `14 of 48`.
+first, each with its name and its note. Under them, one line: `14 of 52`.
 
 Unearned notices are **not named**. That is the rule the whole game already
 follows -- the books show only currencies you have seen, the counter names nothing
@@ -6460,7 +6460,7 @@ it needs. This is where the work is.
 | the table beaten, and the table ruinous | tally: hands won and lost running |
 | broke, having been rich | tally: a million held, then nothing of any of them |
 
-Call it forty-eight. The count is not a target -- it is what fell out of asking
+Fifty-two, written out. The count is not a target -- it is what fell out of asking
 what this yard can honestly recognize -- and the right response to "that is too
 many" is to cut the ones that are not worth noticing, not to spread the
 thresholds thinner.

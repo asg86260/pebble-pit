@@ -17,7 +17,7 @@ is the decision the whole feature hangs off, and it is the same bargain
 would settle faster than an argument --
 
 - **The locked list.** The design says unearned notices are not named, only
-  counted (`14 of 48`), which is the rule the books and the counter already
+  counted (`14 of 52`), which is the rule the books and the counter already
   follow. Many players want a list to work through. One predicate either way.
 - **The walk.** Whether a body comes over and stands at the board when a notice
   lands, or whether the bobbing tick over the station is the whole of it.
