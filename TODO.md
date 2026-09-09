@@ -426,10 +426,15 @@ this section.
 ## Wave 7b — BUILT (2026-09-06): items 16 and 27
 
 Hand-assignment and the build yard, canon in `docs/wave7b.md`, both DESIGN.md
-sections flipped to `(built)`. Follow-ups, none blocking: the buildbench has
-no under-staffed mark (markAnchor doesn't know its geometry); `leftAt` quotes
-the site total so a two-build yard's row clock is approximate while one work
-is manned; bulk assignment and touch lift are future work by design.
+sections flipped to `(built)`. Bulk assignment and touch lift are future work
+by design.
+
+**The construction bench has since been scrapped** (see DESIGN.md, "The build
+yard"): workers build things themselves again, which is what the else branch
+of that one `if` had been doing all along. Its two follow-ups went with it --
+the missing under-staffed mark and the approximate `leftAt` on a two-build
+yard -- because the yard holds one build at a time again. Hand-assignment is
+untouched.
 
 ## Wave 7 — BUILT (2026-09-06), on `wave7-landing`, awaiting fast-forward
 

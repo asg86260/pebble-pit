@@ -1,6 +1,7 @@
 import { TOWER_CORES, TOWER_DUST } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
+import { invested } from './site.js';
 
 // The bench's tower rows. Data only: upgrades.js strings the files together
 // into UPGRADES, in this order.
@@ -40,11 +41,10 @@ export const TOWER_ROWS = [
     // end of that chain rather than a fourth thing competing with it.
     show: () => !S.towerOpen && S.seenCore
               // The last thing the chain offers, so it waits on the places
-              // before it. That used to include the lab, which is gone -- and a
-              // gate on a flag nothing can set any more is a building that never
-              // comes up for sale, which is what this was. The construction
-              // bench took the lab's place in the run: it lands at about the
-              // same tier, and it is what the multipliers wait on too.
-              && S.farmOpen && S.quarryOpen && S.buildbenchOpen
+              // before it -- and on the same investment beat the multipliers
+              // wait on. It used to name the lab, and then the trestle; both
+              // are gone, and a gate on a flag nothing can set any more is a
+              // building that never comes up for sale, which is what that was.
+              && S.farmOpen && invested()
   }
 ];

@@ -4,7 +4,7 @@
 import { WORKER, CORE_SIZE } from '../config.js';
 import { S } from '../state.js';
 import { spawnChip, bell } from '../dust.js';
-import { SITE_JOB, setHands, setHandsOn, setStaff, worksAt, builderManned, hasRisingWork } from '../works.js';
+import { SITE_JOB, setHands, setHandsOn, setStaff, worksAt, builderManned } from '../works.js';
 import { JOB_OF, hats, rockhandMs, rebalance } from '../upgrades.js';
 import { KIT_JOBS } from '../kit.js';
 import { TYPE } from '../jobs.js';
@@ -62,15 +62,9 @@ setHands(site => {
   // producing and none of it credits the bar. A station with no gang at all is
   // still helped by a lent builder, through `helping` above. (wave6-sim, item 2)
   const shedwork = site === 'quarry' || site === 'farm';
-  // wave7b-build: with the construction bench open, a building or a machine is
-  // the builders' and nobody else's -- the site's own gang goes on producing
-  // and does not credit the bar. Everything that is not a rising kind (a bench
-  // in the cut, a furrow, a hat) stays exactly whose it was.
-  const buildersOnly = S.buildbenchOpen && hasRisingWork(site);
   const there = S.workers.filter(w => helping(w)
-                                   || (!buildersOnly
-                                       && (shedwork ? atShed(w) && w.onBuild === site
-                                                    : at(w) && (w.type !== TYPE.BUILD || w.site === site)))).length;
+                                   || (shedwork ? atShed(w) && w.onBuild === site
+                                               : at(w) && (w.type !== TYPE.BUILD || w.site === site))).length;
   // One pair of hands on a piece of work, whoever owns the site.
   //
   // `BUILD_GANG` already said this for the yard and the bench -- one spare body
@@ -86,14 +80,14 @@ setHands(site => {
   // four things to keep in step. The gang is not idle meanwhile -- the others
   // go on quarrying, farming and scrubbing; what they no longer do is stack up
   // on the one piece of work.
-  // wave7b-build: a builder-manned site with several works on the go holds one
-  // pair of hands PER WORK, because each body is at exactly one of them (see
-  // `handsOn` below). Everywhere else the cap stays at one.
+  // A builder-manned site with several works on the go holds one pair of hands
+  // PER WORK, because each body is at exactly one of them (see `handsOn`
+  // below). Everywhere else the cap stays at one.
   const cap = builderManned(site) ? Math.max(1, worksAt(site).length) : 1;
   return Math.min(cap, there);
 });
 
-// wave7b-build: the hands at ONE work of a site's several -- only ever asked
+// The hands at ONE work of a site's several -- only ever asked
 // about builder-manned sites, so only builders answer. A body counts toward the
 // work it was given (`w.workKey`, see `slotFor` in builders.js); one with no
 // key yet is still walking and counts toward nothing.

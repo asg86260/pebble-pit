@@ -24,7 +24,7 @@ group('a multiplier is bought at the thing it multiplies, and takes work', async
   // would go up and the rate would not, and the check would be measuring the
   // ceiling rather than the purchase.
   window.__fullSites();
-  window.__buildbench(true);                 // the trestle is what they wait on
+  window.__invest();                 // the trestle is what they wait on
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
   window.__crew(0, 3);
   // Somebody has to build it. With the trestle standing, a builder is a post you
@@ -65,7 +65,7 @@ group('no multiplier is for sale before there is a bench to work at', async () =
   openSites();
   window.__grant({ shards: 900, dust: 90000, spores: 900, cores: 9 });
   const shut = window.__rows().filter(r => r.key === 'labswing')[0];
-  window.__buildbench(true);
+  window.__invest();
   const open = window.__rows().filter(r => r.key === 'labswing')[0];
   return [
     ok(shut && !shut.shown, 'with no work bench the row is not on the board',
@@ -84,7 +84,7 @@ group('no multiplier is for sale before there is a bench to work at', async () =
 group('each multiplier sits on the board of the thing it multiplies', async () => {
   window.__reset();
   openSites();
-  window.__buildbench(true);
+  window.__invest();
   const boards = window.__boards();
   const at = key => boards.filter(b => b.sections.flat().includes(key)).map(b => b.name);
   return [

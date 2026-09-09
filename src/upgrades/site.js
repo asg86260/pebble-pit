@@ -42,3 +42,13 @@ export const nearly = n => S.stored >= n * UNLOCK_SHOW;
 // ...and a place is only worth showing once a core has been seen at all, because
 // until then the price is in a currency you have no idea exists.
 export const seenACore = () => S.seenCore;
+
+// The yard has been invested in: two places bought and the first rock behind
+// you. Three rows wait on this -- the casino, the multipliers and the tower --
+// and each of them used to name the building that happened to sit at this tier
+// instead. That was the lab, then the construction bench, and both are gone
+// now, so each of the three had to be re-pointed at whatever stood there next.
+// Written once here so the next thing to be scrapped does not cost a third
+// round of that: what these rows are actually waiting for is the player having
+// committed to the place, not any one building being up.
+export const invested = () => S.quarryOpen && S.boulderNo >= 2;

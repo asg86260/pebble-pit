@@ -25,30 +25,30 @@ export const TESTS = [
     window.__build();                        // `give` banks dust; it does not redraw
     await sleep(150);
     const withDust = { farm: has('unlockfarm'), quarry: has('unlockquarry'),
-                       bench: has('unlockbuildbench') };
+                       casino: has('unlockcasino') };
 
     window.__crew(1, 1, 0, 1);               // the plots broken
     await sleep(150);
-    const withPlots = { quarry: has('unlockquarry'), bench: has('unlockbuildbench') };
+    const withPlots = { quarry: has('unlockquarry'), casino: has('unlockcasino') };
 
-    // The third beat was the lab, revealed by the first shard. The lab is gone,
-    // and what stands in its place in the run is the construction bench -- which
-    // is revealed by getting to the second rock rather than by a coin. See
-    // DESIGN.md, "The lab is deleted".
-    window.__jump(2);
+    // The third beat was the lab, revealed by the first shard. The lab is gone
+    // and so is the trestle that stood in for it; what sits at that tier now is
+    // the casino, revealed by the yard having been invested in -- two places
+    // bought and a rock behind you. See `invested` in upgrades/site.js.
+    window.__invest();
     window.__build();                      // as above: the yard moved, the sheet has not
     await sleep(150);
-    const withRock = { bench: has('unlockbuildbench') };
+    const withRock = { casino: has('unlockcasino') };
 
     window.__crew(0, 0);
     return [
       ok(!fresh.includes('pick') && !fresh.includes('unlockfarm'),
          'a fresh game offers nothing about cores or places', fresh.join(' ')),
-      ok(withDust.farm && !withDust.quarry && !withDust.bench,
+      ok(withDust.farm && !withDust.quarry && !withDust.casino,
          'a rock and a pile of dust offer the plots, and only the plots',
          JSON.stringify(withDust)),
-      ok(withPlots.quarry && !withPlots.bench, 'breaking the ground offers the quarry'),
-      ok(withRock.bench, 'and the second rock offers the work bench')
+      ok(withPlots.quarry && !withPlots.casino, 'breaking the ground offers the quarry'),
+      ok(withRock.casino, 'and an invested yard offers the casino')
     ];
   }],
 

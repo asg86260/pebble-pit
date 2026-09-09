@@ -47,7 +47,6 @@ import { skipCutscene } from './cutscene.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
 import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
-import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
          brewCost, TONICS, tonicShown } from './apothecary.js';
@@ -481,7 +480,6 @@ export const coldReload = () => {
 // It replaced `__lab`, and the checks that called that one now call this: what
 // they wanted was the multiplier rows on a board, and the construction bench is
 // what gates them since the lab went. See DESIGN.md, "The lab is deleted".
-export const openBuildBench = (open = true) => { S.buildbenchOpen = open; buildShop(); S.dirty = true; };
 
 // dev: the shed, without paying for it -- for a look at what the crew do with it
 export const openLoo = (open = true) => { S.outhouseOpen = open; buildShop(); S.dirty = true; };
@@ -527,6 +525,20 @@ export const dose = (type = TYPE.ROCK, tonic = 'stew') => {
   }
   S.dirty = true;
   return true;
+};
+
+// The investment beat three boards wait on -- see `invested` in
+// upgrades/site.js. A check whose subject is a multiplier, the casino or the
+// tower is not about how you come to have two places and a second rock, so it
+// says so here rather than buying its way there. The boulder is set directly
+// rather than through `jump`, which would make a new rock under a check that
+// may be standing on one.
+export const invest = () => {
+  S.farmOpen = true;
+  S.quarryOpen = true;
+  S.boulderNo = Math.max(2, S.boulderNo);
+  buildShop();
+  S.dirty = true;
 };
 
 export const grant = (o = {}) => {              // shards and spores, for looking at things
@@ -646,8 +658,6 @@ export const boards = () => [
   { name: 'bench',  keys: UPGRADES.filter(u => !u.board).map(u => u.key),
                                                           sections: SECTIONS.map(x => x.keys) },
   { name: 'house',  keys: crewRows().map(u => u.key),      sections: crewSections().map(x => x.keys) },
-  { name: 'buildbench', keys: BUILDBENCH_UPGRADES.map(u => u.key),
-                                                          sections: BUILDBENCH_SECTIONS.map(x => x.keys) },
   { name: 'tower',  keys: TOWER_UPGRADES.map(u => u.key),  sections: TOWER_SECTIONS.map(x => x.keys) },
   { name: 'school', keys: SCHOOL_UPGRADES.map(u => u.key), sections: SCHOOL_SECTIONS.map(x => x.keys) },
   { name: 'scrub',  keys: SCRUB_UPGRADES.map(u => u.key),  sections: SCRUB_SECTIONS.map(x => x.keys) },
@@ -685,7 +695,7 @@ export const allRows = () => everyRow().map(u => ({
 // The casino's rows are in here too, for the same reason the station boards
 // were added: a check that wants to put a chip down should put it down through
 // the row that puts it down, prices and rules and dead states and all.
-const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES, ...BUILDBENCH_UPGRADES,
+const everyRow = () => [...UPGRADES, ...TOWER_UPGRADES,
                         // The outhouse board's own rows -- `unlockouthouse`
                         // itself is a bench row in UPGRADES above -- and
                         // `__buy('loopost')` has to keep reaching them or every
@@ -989,7 +999,7 @@ export const HANDLES = {
   __machine: machineSet, __fullSites: fullSites,
   __swing: swing, __cold: coldReload,
   __rows: allRows, __boards: boards, __unsection: unsection,
-  __buildbench: openBuildBench, __research: finishResearch, __grant: grant, __dose: dose,
+  __invest: invest, __research: finishResearch, __grant: grant, __dose: dose,
   __spend: spendDust,
   // Pay a price in any coin, through the very function every row's bill goes
   // through. Not a way of setting a counter: what a check using this is about

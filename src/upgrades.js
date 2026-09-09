@@ -41,8 +41,6 @@ import { takesTime, workOn, workFor, leftAt, busyAt, fullAt, start, registerRows
 // building, and this is the one line of upgrades.js it edits. See C1 in
 // wave-feedback3.md.
 import { nextHouseAt } from './house.js';
-// wave7b-build: how many builder posts the construction bench holds.
-import { buildPosts } from './buildbench.js';
 
 // Every swing in the game is the same shape: a gap in milliseconds that shrinks
 // by a fixed fraction per level and never goes below a floor. One function, five
@@ -279,12 +277,10 @@ export const JOBS = [JOB.ROCK, JOB.QUARRY, JOB.FARM, JOB.SCHOLAR, JOB.PURIFY, JO
 
 // Bodies with nothing else to do. They are the haulers, always: every body in
 // the yard can be moved to every job, and nothing you buy changes that.
-// wave7b-build: once the construction bench stands, building is a job you put
-// somebody ON, so a hired builder is spoken for like anybody else. Before it
-// stands the count is derived FROM the spares (see `rebalance`), so it must
-// not be subtracted from them.
+// Builders are not subtracted here: the count is derived FROM the spares (see
+// `rebalance`), so subtracting it would take the same body off twice.
 export const spareHands = () =>
-  S.crew - JOBS.reduce((n, j) => n + S[j], 0) - (S.buildbenchOpen ? S.builders : 0);
+  S.crew - JOBS.reduce((n, j) => n + S[j], 0);
 export const idle = () => spareHands();
 
 // --- the kit ----------------------------------------------------------------
@@ -319,7 +315,6 @@ import { TUNING_ROWS } from './upgrades/rows-tuning.js';
 import { QUARRY_ROWS } from './upgrades/rows-quarry.js';
 import { OUTHOUSE_ROWS } from './upgrades/rows-outhouse.js';
 import { SHACK_ROWS } from './upgrades/rows-shack.js';
-import { BUILDBENCH_ROWS } from './upgrades/rows-buildbench.js';
 import { MULT_ROWS } from './upgrades/rows-mult.js';
 import { SHIELD_ROWS } from './upgrades/rows-shields.js';
 export { TRADE_OF, JOB_OF };
@@ -412,10 +407,12 @@ const capOfBare = job =>
   // there is a queue, not a second class. Nought before it is built, because a
   // teacher with no school is a body with nowhere to go. (wave6-sim, item 1)
   job === JOB.TEACH ? (S.schoolOpen ? 1 : 0) :
-  // wave7b-build: a builder needs a post at the construction bench, and the
-  // bench holds one plus a rung each of `buildposts`. Nought before it stands:
-  // building is not a job you assign until there is somewhere to be hired at.
-  job === JOB.BUILD ? (S.buildbenchOpen ? buildPosts() : 0) :
+  // Building is not a job you assign at all. The yard derives its builders from
+  // whoever is spare when something is going up (see `rebalance`), so there is
+  // no room to put anybody in -- and a save written while the construction
+  // bench stood lands its hired builders in the spare pool, the way the lab's
+  // scholars do above.
+  job === JOB.BUILD ? 0 :
   // The rock and the lip have no plan: a rock is as long as it is, and carrying
   // is what a body does when it is on nothing at all.
   Infinity;
@@ -635,27 +632,6 @@ export function rebalance() {
   // yard's attention rather than all of it. One a site (the old BUILD_GANG),
   // because the bench, the yard and the school are three places and a body at
   // one of them is not at the other two.
-  // wave7b-build: THE one `if`. With the construction bench standing, builders
-  // are a post the player fills -- an ask like any job, capped by the bench's
-  // posts -- and nothing is derived and nothing is lent: a build with no
-  // builder waits, fenced, which is the bargain the bench strikes. Any loan
-  // still out from before the bench opened is forgiven the way `!sites.length`
-  // forgives them below, so no station is left short a body it is owed.
-  if (S.buildbenchOpen) {
-    for (const w of S.workers) {
-      const job = w.lentFrom;
-      if (!job) continue;
-      delete w.lentFrom;
-      if (roomAt(job) > 0 && spareHands() > 0) S[job]++;
-    }
-    S.lent = [];
-    S.builders = Math.max(0, Math.min(S.builders, buildPosts()));
-    // ...and never more than the crew can stand behind: a shrunk crew gives
-    // the bench back its posts before it gives up its haulers.
-    while (spareHands() < 0 && S.builders > 0) S.builders--;
-    S.haulers = Math.max(0, spareHands());
-    return;
-  }
   const sites = busyBuilderSites();
   const gang = sites.length;
   // Nobody spare: the nearest body comes and does it. Carrying first -- a
@@ -847,7 +823,6 @@ export const UPGRADES = [
   ...QUARRY_ROWS,
   ...OUTHOUSE_ROWS,
   ...SHACK_ROWS,
-  ...BUILDBENCH_ROWS,
   ...MULT_ROWS,
   ...SHIELD_ROWS
 ];
@@ -893,7 +868,7 @@ export const SECTIONS = [
   // is what they buy. See DESIGN.md, "The bench is a catch-all".
   { title: 'put up', keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
-    'unlockshack', 'unlockouthouse', 'unlockbuildbench', 'unlocktower', 'unlockschool',
+    'unlockshack', 'unlockouthouse', 'unlocktower', 'unlockschool',
     'unlockscrub'
   ] }
 ];
