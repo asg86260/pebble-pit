@@ -63,7 +63,12 @@ import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
 import { stepCasino, stepTable, wireTable } from './casino.js';
 import { stepIntro, stepBuried, maybeReunion } from './intro.js';
-import { canAfford, mineMs, restaff, staffSheds, take } from './upgrades.js';
+import { mineMs, restaff, staffSheds, take } from './upgrades.js';
+// The bench is built rather than delivered, and the row it is finished under is
+// registered by this file being loaded. Imported here rather than by the page,
+// because a yard with no document still has to be able to raise a bench --
+// see raise.js.
+import './raise.js';
 // The pot pays for its crop through the same `take` every price uses; wired here
 // rather than imported into apothecary.js, which would close a ring back to
 // upgrades. See `setTake`.
@@ -186,11 +191,6 @@ function holdToMine(now) {
 }
 
 export const STEPS = [
-  // The bench arrives the moment there is something on it worth buying, and
-  // stays from then on: a bench that came and went would be worse than one that
-  // sat there empty.
-  { name: 'bench', step: () => {
-      if (!S.seenBench && canAfford()) { S.seenBench = true; S.dirty = true; } } },
   // The plots are dug when the ground is broken, not when the first farmhand
   // walks up to them: a plot you have paid for that shows nothing but fence
   // posts reads as a purchase that did not happen. Asked every frame rather

@@ -7,6 +7,7 @@ import { farmShed, quarryShed } from './world.js';
 import { crewRows, crewList, houseRect } from './crewboard.js';
 import { UPGRADES, markSectionsSeen, canPay, maxed, siteBusy } from './upgrades.js';
 import { markDoneSeen } from './works.js';
+import { callOut, raiseBench } from './raise.js';
 import { SCHOOL_UPGRADES, kitCount } from './school.js';
 import { CASINO_UPGRADES, busy } from './casino.js';
 import { SCRUB_UPGRADES } from './scrubhouse.js';
@@ -507,6 +508,47 @@ function place(el, at) {
 }
 
 const GAP = 4;                             // never flush against the edge
+
+// --- the call to build the bench ----------------------------------------------
+// The one button on this page that is not on a board. It stands over the bare
+// patch the bench is going to go on, until it is pressed; after that the fence,
+// the tape and the bar over the site say what is happening, the way they do for
+// every other build. See raise.js for why the bench is built at all.
+//
+// Seated here rather than in raise.js because this is the file that puts things
+// on the page, and because it is the same arithmetic `place` does above: over
+// the middle of the thing it is about, held inside the window, moved by its
+// bottom edge with a transform so the compositor carries it rather than the
+// layout engine.
+const raiseEl = document.getElementById('raise');
+raiseEl.addEventListener('click', raiseBench);
+
+// Measured when it appears and not again. Reading `offsetWidth` forces the page
+// to lay itself out, and this button's words never change -- the boards measure
+// every frame because their contents do.
+let callSize = { w: 0, h: 0 };
+let callAt = { x: null, y: null };
+
+export function seatCall() {
+  if (!callOut()) {
+    if (!raiseEl.hidden) { raiseEl.hidden = true; callAt = { x: null, y: null }; }
+    return;
+  }
+  if (raiseEl.hidden) {
+    raiseEl.hidden = false;
+    callSize = { w: raiseEl.offsetWidth, h: raiseEl.offsetHeight };
+  }
+  const mid = bench.x + bench.w / 2;
+  const want = (mid - S.camX) * S.zoom - callSize.w / 2;
+  const x = Math.round(Math.max(GAP, Math.min(want, S.W - callSize.w - GAP)));
+  // Its foot a couple of cells clear of the bench's own top, so it hangs in the
+  // air over the empty patch rather than sitting on the ground it is about.
+  const stands = S.H - (bench.y - S.camY) * S.zoom + P * 2;
+  const bottom = Math.round(Math.max(GAP, Math.min(stands, S.H - callSize.h - GAP)));
+  if (x === callAt.x && bottom === callAt.y) return;
+  callAt = { x, y: bottom };
+  raiseEl.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
+}
 
 // --- the way over to it -------------------------------------------------------
 // The board opens because the cursor is standing at a station, and it stands
@@ -1116,5 +1158,8 @@ export function hud() {
   // seated could end up hanging off the top of a short window. Seating it every
   // frame is a couple of style writes and it can never be wrong.
   placeBoard();
+  // ...and the call to build the bench, which is on this page too and stands
+  // over a place in the yard the same way a board does.
+  seatCall();
 }
 

@@ -5905,7 +5905,7 @@ of reading whatever is true twenty seconds later — the helmet changes hands mo
 than once in that window. The fixed check passes on a tree with the shack and on
 one without, which is the point: it is not a fact about a layout any more.
 
-## The bench is built, not delivered (design, not built)
+## The bench is built, not delivered (built)
 
 The bench is the one thing in this yard that teleports. `STEPS`' `bench` step in
 game.js watches `canAfford()`, and the frame it first goes true it sets
@@ -5971,18 +5971,22 @@ It is also the reason it wants to look like an ask rather than like scenery.
 
 ### The control itself
 
-The second control in this yard that is not on a board -- the machine's run
-switch is the first, and this is caught the same way, in `input.js` ahead of the
-ground, because a thing you press comes before the ground you have not pressed.
+A real button on the page, floated over the bench's own footprint -- the same
+kind of thing a board is, seated the same way a board is, in the same voice: a
+white sheet, a one-pixel black rule, the boards' uppercase monospace. It says
+`build the bench` and it is the only thing in the window that does.
 
-Drawn on the bench's own footprint: a hollow square of two-cell black rule with
-the hammer mark inside it, `build the bench` set under it in the yard's
-lettering, bobbing on the intro arrow's beat so it reads as asking for something.
-Black and white, flat, on the `P` grid, like everything else.
+It is a button and not a drawn mark because it is the one control in the game a
+player *must* find. Everything else that is not on a board -- the machine's run
+switch, a cauldron -- is a thing you may notice; this is a thing that has to be
+pressed before there is a game at all, and chrome is unmistakably chrome in a way
+a hollow square on the ground is not.
 
-While it stands, `drawPileMarks`, the tape and the fence all behave as they do
-for any other yard build once it is pressed; before that it is one drawn control
-and nothing else.
+Seated in `hud()` off the same world-to-screen arithmetic the boards use, so it
+stands over the bench's footprint through a pan and a zoom, and clamped inside
+the window for the same reason a board is. It vanishes the frame it is pressed:
+from then on the fence, the tape and the bar are the announcement, exactly as
+they are for every other build.
 
 ### What it needs in code
 
