@@ -1490,10 +1490,12 @@ the top of the only one.
 
 ### The sixteen cards
 
-A card is a **name** and a **note** -- the two fields `tuneRow` already uses --
-and the gain line under them is written by `gainText` as it is everywhere else.
-The name is the wording; the note is the sentence that says what it does.
-Neither states a number the game is keeping.
+A card is a **name** and its gain line, and nothing else. No `note`: the row
+already says what it does, in the two shapes `gainText` writes -- a percentage
+for a rate, a count for a count -- over the `unit` the ladder names. A sentence
+under that would be the board explaining the same thing twice in worse words,
+and the machines' tune rows are the only place in the game that needs one
+because they alone have no `from`/`to` to show.
 
 Each ladder is one idea escalating, and the last band is the fantastical version
 of the band before it: seed becomes astral seed, a greenhouse becomes a season
@@ -1501,53 +1503,25 @@ you own, powder becomes charmed powder, a rail cart becomes no gravity at all.
 That is what makes a band worth a new card rather than a new pip -- the words
 move as far as the price does.
 
-**The farm's yield ladder.** What one cut is worth.
+| band | bill | yield, the farm | speed, the farm | yield, the quarry | speed, the quarry |
+|---|---|---|---|---|---|
+| 1 | dust | compost | hand tools | sledges | ramps |
+| 2 | + the ground's own coin | fertilizer | sprinklers | black powder | scaffolding |
+| 3 | + the other ground's | hybrid seed | greenhouses | dynamite | rail carts |
+| 4 | everything, sparks and all | astral GMOs | summer's aura | enchanted TNT | anti-gravity zone |
 
-| band | name | note |
-|---|---|---|
-| 1 | compost | the row's own leavings, turned back into it |
-| 2 | fertilizer | a sack at the head of the row, and the soil goes dark |
-| 3 | hybrid seed | the best of each crop held back to sow the next |
-| 4 | astral GMOs | seed that has been somewhere the yard has not |
-
-**The farm's speed ladder.** How often a hand gets a cut.
-
-| band | name | note |
-|---|---|---|
-| 1 | hand tools | a hoe apiece, so a hand works the plot without kneeling in it |
-| 2 | sprinklers | the row is watered whether or not somebody is carrying it |
-| 3 | greenhouses | the weather stops having the last word |
-| 4 | summer's aura | one season, kept over the row, whatever the sky is doing |
-
-**The quarry's yield ladder.** What one dig turns up.
-
-| band | name | note |
-|---|---|---|
-| 1 | sledges | break the stone at the face rather than carry it whole |
-| 2 | black powder | a shot hole, and the face gives up more than a swing can |
-| 3 | dynamite | the same idea, and it no longer has to be persuaded |
-| 4 | enchanted TNT | it goes off knowing what it is looking for |
-
-**The quarry's speed ladder.** How often a swing lands.
-
-| band | name | note |
-|---|---|---|
-| 1 | ramps | a graded way in and out instead of a scramble |
-| 2 | scaffolding | boards and timbers across the wall, so a body climbs less to swing more |
-| 3 | rail carts | stone leaves the hole without an arm under it |
-| 4 | anti-gravity zone | the hole stops charging for depth |
+The unit each one shows is the ladder's, not the card's: `spores/cut` and
+`plots/min` down the farm's two, `shards/dig` and `trips/min` down the quarry's.
+So the four cards of a ladder read as one ladder however the words change.
 
 **No card draws a prop, and that is not an oversight.** An earlier pass had each
 band build a thing in the yard -- a sack, a standpipe, timbers -- which is
 fourteen sprites for four ladders, and none of it is what the ladder actually
 is. No ladder in this game has ever drawn a stage per rung: the kit ladders, the
 crew's rungs and the machines' endless tune rows all sell a rate and draw
-nothing, and the yard reads fine. The words are flavor over a ladder that still
-states its own `unit` -- `plots/min`, `trips/min`, spores or shards a go -- and
-the gain line is a percentage as it is everywhere else, so nothing about what
-you are buying depends on reading the flavor.
+nothing, and the yard reads fine.
 
-This is the "quarry lamps" rule, kept rather than broken. That row was renamed
+This is the "quarry lamps" rule kept rather than broken. That row was renamed
 because it was *called* the reason it worked while the ladder said nothing about
 its rate. These cards say the rate in the unit and the gain line, every one of
 them; the name sits on top and is allowed to be fun.
@@ -1563,8 +1537,8 @@ you simply buy is a number.
 One helper, used four times, rather than eight hand-written rows:
 
 `tierRows(field, bands)` takes the level field the whole ladder counts on
-(`S.tendLevel` and three new ones) and a table of four bands -- name, the
-sentence the card says, the coins it adds -- and returns the four rows. Which
+(`S.tendLevel` and three new ones) and a table of four bands -- a name and the
+coins it adds, which is all a band is -- and returns the four rows. Which
 card shows is `Math.floor(level / 3)`; `rung()` is the level within the band and
 `rungs()` is three, every band, which is why the bands are equal. A new band is a line in the table,
 and the wording of every card in the game sits in one readable block per
