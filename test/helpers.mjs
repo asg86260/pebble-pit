@@ -111,10 +111,15 @@ export function buyBuilt(key, limit = 120) {
   return !going();
 }
 
-// the quarry and the plots, opened without paying for them
+// the quarry, the plots and the gang's hut, opened without paying for them
 export function openSites() {
   window.__crew(0, 0, 1, 1);      // opens both places
   window.__crew(0, 0);
+  // The hut is one of them now. Everything the rock sells moved onto its sheet,
+  // so a check that opened "the sites" and not the shack was handed a yard with
+  // the rock's whole ladder missing and no way to tell that from a yard that
+  // never had it.
+  window.__shack();
   window.__levels({ benchLevel: 0, plotLevel: 0 });
 }
 

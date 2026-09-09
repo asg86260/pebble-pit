@@ -1184,7 +1184,12 @@ group('a grain rides the belt rather than being thrown over it', async () => {
   // a bug to be tested for here.
   const s0 = state();
   for (let i = 0; i < 120; i++) window.__pile(s0.pitX - 500 + (i % 40) * 6, 3);
-  run(1);
+  // Wait on the band actually running, not on a count of seconds. The tender has
+  // to walk to the post before the belt takes anything at all, and how long that
+  // walk is depends on how wide the yard happens to be -- which changed the day
+  // the shack pushed the walk out, and left this reading an empty band and
+  // calling it a belt that does not carry.
+  runUntil(() => state().belt > 0, 20);
   const before = state();
 
   // Part-way through: there is dust on the band, out along it, and it is not in

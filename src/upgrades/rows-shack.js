@@ -32,6 +32,12 @@ export const SHACK_ROWS = [
     // actually puts this row on the board is the first seventy-five grains in
     // the hole, which is early, and meant to be -- this is the first thing most
     // players will ever put up.
-    show: () => !S.shackOpen && S.crew > 0 && nearly(SHACK_DUST)
+    // Split the way every other door on this board is split: `once` reveals and
+    // `show` retires. `nearly` reads the dust in the hole, so asked as `show` the
+    // row came and went every time you spent on anything at all -- which walked
+    // the bench sideways for a reason that had nothing to do with the shack. See
+    // `revealed` in shop.js.
+    once: () => S.crew > 0 && nearly(SHACK_DUST),
+    show: () => !S.shackOpen
   }
 ];

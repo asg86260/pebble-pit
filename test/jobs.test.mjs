@@ -259,7 +259,13 @@ group('a full rock pile does not stop the crew fetching the other grounds', asyn
   window.__toss('shard', state().farmX + 40);
   run(1);
   const before = state().shards;
-  const got = runUntil(() => state().shards > before, 90);
+  // A backstop, not a threshold. What is being checked is that the shard is
+  // fetched at all -- the crew used to answer "some heap is backing up" with
+  // "fetch dust" and leave it lying there for ever -- and how many seconds it
+  // takes is a fact about the length of the walk, which the shack changed when
+  // it pushed the walk out. At ninety this read the walk instead of the rule and
+  // went red or green on which group had run before it.
+  const got = runUntil(() => state().shards > before, 300);
 
   window.__crew(0, 0, 0);
   return [

@@ -35,4 +35,11 @@ export const shackRows = () =>
 // One heading, and it is the board's own name, so the sheet draws no heading at
 // all -- see `lone` in shop.js, which is what keeps a board with a single group
 // from saying its own name twice with a rule between.
-export const shackSections = () => [{ title: 'the rock', keys: SHACK_GEAR }];
+//
+// The list itself, not a maker of lists: every other station's sections are a
+// module-level constant, and `unsection` (hooks.js) proves a board still draws a
+// row by taking its key out of the section that names it. Handed a fresh array
+// on every call it edited a copy nothing would ever read again, so the shack's
+// only row group was the one no check could reach.
+export const SHACK_SECTIONS = [{ title: 'the rock', keys: SHACK_GEAR }];
+export const shackSections = () => SHACK_SECTIONS;

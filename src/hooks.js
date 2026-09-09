@@ -46,7 +46,7 @@ import { QUARRY_UPGRADES, QUARRY_SECTIONS } from './quarry.js';
 import { skipCutscene } from './cutscene.js';
 import { FARM_UPGRADES, FARM_SECTIONS } from './farm.js';
 import { OUTHOUSE_UPGRADES, OUTHOUSE_SECTIONS } from './outhouse.js';
-import { shackRows, shackSections } from './shack.js';
+import { SHACK_SECTIONS, shackRows, shackSections } from './shack.js';
 import { BUILDBENCH_UPGRADES, BUILDBENCH_SECTIONS } from './upgrades/rows-buildbench.js';
 import { crewRows, crewSections } from './crewboard.js';
 import { APOTHECARY_UPGRADES, setKeep, setPrefer, setStock, setPotTonic, potBox,
@@ -101,6 +101,9 @@ export const fullSites = () => {
   S.blasters = Math.max(S.blasters, kitCap(JOB.QUARRY));
   S.growers = Math.max(S.growers, kitCap(JOB.FARM));
   S.schoolOpen = true;
+  // The shack too: the rock's own rows are sold there now, so a yard with every
+  // other door open and no hut is a yard missing a board rather than a building.
+  S.shackOpen = true;
   resite();
   rebalance();
   buildShop();
@@ -615,7 +618,8 @@ export const upgrades = () => UPGRADES;
 let unsectioned = null;
 export const unsection = key => {
   const all = [SECTIONS, TOWER_SECTIONS, SCHOOL_SECTIONS,
-               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS];
+               SCRUB_SECTIONS, QUARRY_SECTIONS, FARM_SECTIONS, OUTHOUSE_SECTIONS,
+               SHACK_SECTIONS];
   if (unsectioned) {
     for (const [sect, keys] of unsectioned) sect.keys = keys;
     unsectioned = null;
