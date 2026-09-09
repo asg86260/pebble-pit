@@ -1114,3 +1114,40 @@ it against the airborne `rockTopY` — "743px into the rock" while the rock is i
 the air. Today's falls run 42 frames, under `BURIED_FRAMES` = 60, so it never
 fires; a longer fall or a lower threshold would make it spuriously true.
 `rockDown()` in rock.js is the predicate that would exempt it.
+
+---
+
+## The floor plan reports room in places that are not there
+
+`capOfBare` (upgrades.js) asks what a station holds and answers off `benches()`
+and `plotCount()`. Both of those count what a quarry or a farm *would* hold —
+they are read by the drawing as much as by the staffing, and a quarry draws its
+benches from the frame it is dug — so neither knows whether the place was ever
+opened. A shut station reports standing room, and `assignJob` will fill it.
+
+**What it cost.** `home.test.mjs` assigned two quarriers without opening a
+quarry. They walked to where the cut will be and stood 24px under the ground
+line, inside a working `ways()` has no entry for, because `ways()` only makes a
+`cut` while `S.quarryOpen`. `verify.js` reported it as "a body is under the yard
+with no working under it", which is exactly what it was — the verifier was right
+and the yard was wrong.
+
+**Why it is not fixed here.** The rule that says it once for everybody is a gate
+in `capOfBare`: a station that is not standing holds nobody. That was built and
+backed out. It is correct, and it moves bodies in every check that ever staffed
+a station before opening one — three checks went red on it (`dance`,
+`reload`, `sky-fan`), none of them about staffing, all of them shifted by bodies
+landing somewhere else. That is a change worth making deliberately, with the
+fallout read one check at a time, and not as a rider on a bug fix.
+
+**What was done instead.** The two ways in are shut. `__crew` already opened the
+places it was asked to staff; `__assign` now does the same, so the two dev
+handles agree. The board cannot reach this state at all — a shut station has no
+board to press — so with both handles honest there is no route to it left, and
+the gate is a tidying rather than a fix.
+
+**Where to start.** `capOfBare` in upgrades.js; the flags are `S.quarryOpen` and
+`S.farmOpen`. Only those two stations need it: every other count is already
+nought until the place is built, because it counts things that get built rather
+than a level that can be bought ahead. Expect `__crew` to need its station-open
+lines moved above `rebalance()`, which is what shares the bodies out.
